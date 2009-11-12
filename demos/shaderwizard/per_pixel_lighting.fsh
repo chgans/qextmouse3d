@@ -4,7 +4,10 @@
 // mediump vec4 gl_FragColor;
 // mediump vec4 gl_FragData[gl_MaxDrawBuffers]
 // mediump vec2 gl_PointCoord; // Not defined unless drawing points.
+uniform mediump vec4 scli;
+uniform mediump vec4 scm;
 uniform mediump vec4 color;
+uniform float shininess;
 varying float intensity;
 
 varying mediump vec4 qAmbient;
@@ -19,5 +22,12 @@ varying highp vec4 qTexCoord1;
 
 void main(void)
 {
-    gl_FragColor = vec4(color[0] * intensity, color[1] * intensity, color[2] * intensity, color[3]);
+    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0);
+    if(intensity > 0.0)
+    {
+        float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );
+        if(specularIntensity > 0.0)
+            specularComponent = scm * scli * pow(specularIntensity, shininess);
+    }
+    gl_FragColor = qAmbient + qDiffuse * intensity + specularComponent;
 };

@@ -55,6 +55,8 @@
 #include <QtCore/qmath.h>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
+#include "qglmaterialparameters.h"
+#include "qglmaterialcollection.h"
 
 class ShaderWizardGLWidgetPrivate
 {
@@ -66,10 +68,6 @@ public:
             , ambientLightColor()
             , diffuseLightColor()
             , specularLightColor()
-            , ambientMaterialColor()
-            , diffuseMaterialColor()
-            , specularMaterialColor()
-            , shininess(0)
     {
     }
     void setEffect(QGLShaderProgramEffect *effect)
@@ -99,8 +97,17 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mSceneRoot(0)
         , mLightParameters(new QGLLightParameters(this))
         , mLightModel(new QGLLightModel(this))
+        , mMaterial(new QGLMaterialParameters(this))
+        , mMaterialCollection(new QGLMaterialCollection(this))
 {
     d = new ShaderWizardGLWidgetPrivate;
+
+    // The defaults for specular color and shininess (black and 0) are ugly
+    // so use white and 64 for a reasonable default specular effect
+    setSpecularMaterialColor(QColor(255, 255, 255, 255));
+    setMaterialShininess(64);
+    mMaterial->setObjectName("ShaderWizardGLWidgetMaterial");
+
     setTeapotGeometry();
 }
 
@@ -157,8 +164,9 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 //    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 //    painter->modelViewMatrix().translate(0.5f, 0.0f, -3.0f);
 
-    QGLMaterialParameters defaultMaterial;
-    painter->setFaceMaterial(QGL::FrontFaces, &defaultMaterial);
+    painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
+
+    painter->setLightEnabled(0, true);
 
     if( d->effect && d->effect->isActive() )
         painter->setUserEffect(d->effect);
@@ -166,7 +174,7 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     if(mGeometry)
         mGeometry->draw(painter);
 
-    //    painter->modelViewMatrix().pop();
+//    painter->modelViewMatrix().pop();
 
     if (mSceneRoot)
         mSceneRoot->draw(painter);
@@ -181,8 +189,19 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 void ShaderWizardGLWidget::setGeometry(QGLGeometry *newGeometry)
 {
     mGeometry = newGeometry;
-    if(newGeometry)
+
+    if( mGeometry )
+    {
         setDefaultCamera(newGeometry);
+        if(!mGeometry->palette())
+            mGeometry->setPalette(mMaterialCollection);
+        int materialIndex = mGeometry->palette()->materialIndexByName("ShaderWizardGLWidgetMaterial");
+        if(materialIndex == -1)
+            materialIndex = mGeometry->palette()->addMaterial(mMaterial);
+        mGeometry->setMaterial(materialIndex);
+    }
+
+    setDefaultCamera(newGeometry);
 
     clearScene();
 }
@@ -520,29 +539,29 @@ void ShaderWizardGLWidget::setSpecularLightColor(QColor color)
 
 void ShaderWizardGLWidget::setAmbientMaterialColor(QColor color)
 {
-     d->ambientMaterialColor = color;
+     mMaterial->setAmbientColor(color);
 }
 
 void ShaderWizardGLWidget::setDiffuseMaterialColor(QColor color)
 {
-     d->diffuseMaterialColor = color;
+     mMaterial->setDiffuseColor(color);
 }
 
 void ShaderWizardGLWidget::setSpecularMaterialColor(QColor color)
 {
-     d->specularMaterialColor = color;
+     mMaterial->setSpecularColor(color);
 }
 
 void ShaderWizardGLWidget::setMaterialShininess(int shininess)
 {
-     d->shininess = shininess;
+     mMaterial->setShininess(shininess);
 }
 
 QColor ShaderWizardGLWidget::painterColor() { return d->painterColor; }
 QColor ShaderWizardGLWidget::ambientLightColor() { return d->ambientLightColor; }
 QColor ShaderWizardGLWidget::diffuseLightColor() { return d->diffuseLightColor; }
 QColor ShaderWizardGLWidget::specularLightColor() { return d->specularLightColor; }
-QColor ShaderWizardGLWidget::ambientMaterialColor() { return d->ambientMaterialColor; }
-QColor ShaderWizardGLWidget::diffuseMaterialColor() { return d->diffuseMaterialColor; }
-QColor ShaderWizardGLWidget::specularMaterialColor() { return d->specularMaterialColor; }
-int ShaderWizardGLWidget::materialShininess() { return d->shininess; }
+QColor ShaderWizardGLWidget::ambientMaterialColor() { return mMaterial->ambientColor(); }
+QColor ShaderWizardGLWidget::diffuseMaterialColor() { return mMaterial->diffuseColor(); }
+QColor ShaderWizardGLWidget::specularMaterialColor() { return mMaterial->specularColor(); }
+int ShaderWizardGLWidget::materialShininess() { return mMaterial->shininess(); }

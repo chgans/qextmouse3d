@@ -6,10 +6,12 @@ uniform mediump mat4 matrix;
 
 uniform mediump vec4 acli;      // Ambient intensity of the light
 uniform mediump vec4 dcli;      // Diffuse intensity of the light
+uniform mediump vec4 scli;      // Specular intensity of the light
 uniform mediump vec3 pli;       // Position of the light
 uniform mediump vec4 acm;       // Ambient color of the material
 uniform mediump vec4 dcm;       // Diffuse color of the material
 uniform mediump vec4 ecm;       // Emissive color of the material
+uniform mediump vec4 scm;       // specular color of the material
 uniform mediump vec4 acs;       // Light model's ambient color of the scene
 uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
 

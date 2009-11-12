@@ -128,6 +128,8 @@ private:
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
+    QGLMaterialParameters *mMaterial;
+    QGLMaterialCollection *mMaterialCollection;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

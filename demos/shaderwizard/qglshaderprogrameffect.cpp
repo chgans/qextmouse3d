@@ -97,7 +97,7 @@ static char const perPixelLightingVertexShader[] =
     "    gl_Position = matrix * v;\n"
     "}\n";
 
-static char const prePixelColorFragmentShader[] =
+static char const perPixelColorFragmentShader[] =
 
         "// Built-in variables:\n"
     "// mediump vec4 gl_FragCoord;\n"
@@ -206,7 +206,7 @@ void QGLShaderProgramEffect::reloadShaders()
         program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
     }
     else
-        program->addShaderFromSourceCode(QGLShader::Fragment, prePixelColorFragmentShader);
+        program->addShaderFromSourceCode(QGLShader::Fragment, perPixelColorFragmentShader);
 }
 
 void QGLShaderProgramEffect::bindProgramAttributes()
@@ -294,6 +294,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue("dcm", material->diffuseColor());
         program->setUniformValue("scm", material->specularColor());
         program->setUniformValue("ecm", material->emittedLight());
+        program->setUniformValue("shininess", float(material->shininess()));
     }
 }
 

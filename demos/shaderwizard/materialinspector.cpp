@@ -62,6 +62,7 @@ void MaterialInspector::setAmbientColor(QColor color)
     {
         currentMaterial->setAmbientColor(color);
     }
+    emit ambientColorChanged(color);
 }
 
 void MaterialInspector::setDiffuseColor(QColor color)
@@ -71,6 +72,7 @@ void MaterialInspector::setDiffuseColor(QColor color)
     {
         currentMaterial->setDiffuseColor(color);
     }
+    emit diffuseColorChanged(color);
 }
 
 void MaterialInspector::setSpecularColor(QColor color)
@@ -80,6 +82,7 @@ void MaterialInspector::setSpecularColor(QColor color)
     {
         currentMaterial->setSpecularColor(color);
     }
+    emit specularColorChanged(color);
 }
 
 void MaterialInspector::setShininess(int shininess)
@@ -87,6 +90,7 @@ void MaterialInspector::setShininess(int shininess)
     m_ui->shininessSpinBox->setValue(shininess);
     if(currentMaterial)
         currentMaterial->setShininess(shininess);
+    emit shininessChanged(shininess);
 }
 
 
