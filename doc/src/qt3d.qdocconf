@@ -1,0 +1,49 @@
+include(qt-cpp-ignore.qdocconf)
+
+project                 = Qt/3D
+description             = Qt/3D Documentation
+url                     = http://doc.trolltech.com/qt/qt3d
+
+language                = Cpp
+imagedirs               = $TOPSRC/doc/src/images
+indexes                 = 
+headerdirs              = $TOPSRC/threed
+headers.fileextensions  = "*.h"
+sourcedirs              = $TOPSRC/threed $TOPSRC/doc/src
+sources.fileextensions  = "*.qdoc *.cpp"
+exampledirs             = $TOPSRC/examples $TOPSRC/demos
+examples.fileextensions = "*.cpp *.h *.js *.xq *.svg *.xml *.ui *.qrc *.txt"
+outputdir               = $DESTDIR
+base                    = file:$DESTDIR
+defines                 = 
+extraimages.HTML        = qt-logo teapot-logo
+
+HTML.stylesheets        = classic.css
+HTML.postheader         = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" \
+                          "<tr>\n" \
+                          "<td align=\"left\" valign=\"top\" width=\"150\">" \
+                          "<img src=\"images/qt-logo.png\" align=\"left\" border=\"0\" />" \
+                          "&nbsp;&nbsp;<img src=\"images/teapot-logo.png\" border=\"0\" />" \
+                          "</td>\n" \
+                          "<td width=\"1\">&nbsp;&nbsp;</td>" \
+                          "<td class=\"postheader\" valign=\"center\">" \
+                          " <a href=\"index.html\">" \
+                          "<font color=\"#004faf\">Home</font></a>&nbsp;&middot;" \
+                          " <a href=\"qt3d-all-classes.html\">" \
+                          "<font color=\"#004faf\">All Classes</font></a>&nbsp;&middot;" \
+                          " <a href=\"qt3d-building.html\">" \
+                          "<font color=\"#004faf\">Building</font></a>&nbsp;&middot;" \
+                          " <a href=\"qt3d-examples.html\">" \
+                          "<font color=\"#004faf\">Examples</font></a>&nbsp;&middot;" \
+                          " <a href=\"qt3d-demos.html\">" \
+                          "<font color=\"#004faf\">Demos</font></a>&nbsp;&middot;" \
+                          " <a href=\"qt3d-tutorials.html\">" \
+                          "<font color=\"#004faf\">Tutorials</font></a>&nbsp;" \
+                          "</td>\n" \
+                          "</table>"
+
+HTML.footer             = "<p /><address><hr /><div align=\"center\">\n" \
+                          "<table width=\"100%\" cellspacing=\"0\" border=\"0\"><tr class=\"address\">\n" \
+                          "<td align=\"left\">Copyright &copy; 2009 Nokia Corporation</td>\n" \
+                          "<td align=\"right\">Qt/3D Documentation</td>\n" \
+                          "</tr></table></div></address>"

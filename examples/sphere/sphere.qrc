@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/" >
+        <file>moon-4k-18.jpg</file>
+        <file>gridCube.jpg</file>
+        <file>gridUV.jpg</file>
+        <file>gridIco.jpg</file>
+        <file>faceCube.jpg</file>
+        <file>faceUV.jpg</file>
+        <file>faceIco.png</file>
+    </qresource>
+</RCC>

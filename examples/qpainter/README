@@ -1,0 +1,2 @@
+This example demonstrates how to use a QGLPainter on a regular widget
+from within a paintEvent() when the GL graphics system is active.

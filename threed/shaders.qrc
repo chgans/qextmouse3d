@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/QtOpenGL">
+    <file>shaders/lighting.vsh</file>
+</qresource>
+</RCC>

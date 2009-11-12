@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>929</width>
+    <height>542</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>1</horstretch>
+    <verstretch>1</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="sizeIncrement">
+   <size>
+    <width>1</width>
+    <height>1</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>ShaderWizard</string>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="sizeIncrement">
+    <size>
+     <width>1</width>
+     <height>1</height>
+    </size>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <widget class="QWidget" name="displayWidget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>2</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="sizeIncrement">
+       <size>
+        <width>1</width>
+        <height>1</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>929</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuShaderWizard">
+    <property name="title">
+     <string>ShaderWizard</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuModel">
+    <property name="title">
+     <string>Model</string>
+    </property>
+    <addaction name="actionLoad_From_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionCube"/>
+    <addaction name="actionSphere"/>
+    <addaction name="actionTeapot"/>
+    <addaction name="actionSquare"/>
+    <addaction name="actionHeightMap"/>
+   </widget>
+   <widget class="QMenu" name="menuShaders">
+    <property name="title">
+     <string>Shaders</string>
+    </property>
+    <addaction name="actionFlat_Shader"/>
+    <addaction name="actionToon_Shader"/>
+    <addaction name="actionPer_Pixel_Lighting_Shader"/>
+   </widget>
+   <addaction name="menuShaderWizard"/>
+   <addaction name="menuModel"/>
+   <addaction name="menuShaders"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="toolTip">
+    <string/>
+   </property>
+   <property name="whatsThis">
+    <string>Model Information Dock</string>
+   </property>
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QTreeView" name="sceneTreeView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="sizeIncrement">
+        <size>
+         <width>1</width>
+         <height>1</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Loaded Model Information</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <widget class="QTabWidget" name="editorTabWidget">
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="shaderEditorTab">
+        <attribute name="title">
+         <string>Shader Editor</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout">
+             <item>
+              <widget class="QTextEdit" name="textEditVertexShader"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonApplyVertexShader">
+               <property name="text">
+                <string>Apply Vertex Shader</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <widget class="QTextEdit" name="textEditFragmentShader"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButtonApplyFragmentShader">
+               <property name="text">
+                <string>Apply Fragment Shader</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+        <zorder></zorder>
+       </widget>
+       <widget class="QWidget" name="tab">
+        <attribute name="title">
+         <string>Material Editor</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="MaterialInspector" name="materialInspectorWidget" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionCube">
+   <property name="text">
+    <string>Cube</string>
+   </property>
+   <property name="toolTip">
+    <string>Set a Cube as the Model</string>
+   </property>
+  </action>
+  <action name="actionSphere">
+   <property name="text">
+    <string>Sphere</string>
+   </property>
+  </action>
+  <action name="actionBezier">
+   <property name="text">
+    <string>Bezier</string>
+   </property>
+  </action>
+  <action name="actionTeapot">
+   <property name="text">
+    <string>Teapot</string>
+   </property>
+  </action>
+  <action name="actionSquare">
+   <property name="text">
+    <string>Square</string>
+   </property>
+  </action>
+  <action name="actionHeightMap">
+   <property name="text">
+    <string>HeightMap</string>
+   </property>
+  </action>
+  <action name="actionFlat_Color_Effect">
+   <property name="text">
+    <string>Flat Color Effect</string>
+   </property>
+  </action>
+  <action name="actionFlat_Shader">
+   <property name="text">
+    <string>Flat Shader</string>
+   </property>
+  </action>
+  <action name="actionToon_Shader">
+   <property name="text">
+    <string>Toon Shader</string>
+   </property>
+  </action>
+  <action name="actionPer_Pixel_Lighting_Shader">
+   <property name="text">
+    <string>Per-Pixel Lighting Shader</string>
+   </property>
+  </action>
+  <action name="actionLoad_From_File">
+   <property name="text">
+    <string>Load From File</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MaterialInspector</class>
+   <extends>QWidget</extends>
+   <header>materialinspector.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
