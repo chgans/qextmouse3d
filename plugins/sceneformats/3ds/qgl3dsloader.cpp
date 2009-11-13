@@ -96,19 +96,18 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
 {
 #ifndef QT_NO_DEBUG_STREAM
     if (mesh->points == 0)
-        qDebug() << "Mesh" << mesh->name << "has zero vertex count - ignoring";
+        qDebug() << "Mesh" << mesh->name << "has zero vertex count";
     else if (mesh->faces == 0)
-        qDebug() << "Mesh" << mesh->name << "has zero face count - ignoring";
+        qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
-    if (mesh->faces == 0 || mesh->points == 0)
-        return;
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode);
     m->setPalette(mRootNode->geometry()->palette());
     m->setObjectName(QString(mesh->name) + "Mesh");
-    qDebug() << "Loaded" << m->objectName();
-    m->initialize();
     mMeshes.insert(mesh->name, m);
     mRefMap.insert(m, false);
+    if (mesh->faces == 0 || mesh->points == 0)
+        return;
+    m->initialize();
     if (!mHasTextures)
         mHasTextures = m->hasTexture();
     if (!mHasLitMaterials)
