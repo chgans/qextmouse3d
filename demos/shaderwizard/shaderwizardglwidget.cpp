@@ -132,6 +132,15 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
         free(bezierRawData);
         bezierRawData = 0;
     }
+
+    if( mMaterial && mMaterialCollection)
+    {
+        mMaterialCollection->removeMaterial(mMaterial);
+        delete mMaterial;
+        mMaterial = 0;
+        delete mMaterialCollection;
+        mMaterialCollection = 0;
+    }
 }
 
 void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
