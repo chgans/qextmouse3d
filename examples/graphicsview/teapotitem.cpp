@@ -62,7 +62,7 @@ TeapotItem::~TeapotItem()
 void TeapotItem::paintGL
     (QGLPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    painter->clear(GL_DEPTH_BUFFER_BIT);
+    painter->clear(QGL::ClearDepthBuffer);
     painter->setCullFaces(QGL::CullDisabled);
     depthBufferOptions.apply(painter);
     blendOptions.apply(painter);

@@ -110,9 +110,19 @@ namespace QGL
         ClampToEdge                 = 0x812F,   // GL_CLAMP_TO_EDGE
         MirroredRepeat              = 0x8370    // GL_MIRRORED_REPEAT
     };
+
+    enum ClearBuffer
+    {
+        NoClearBuffers              = 0x0000,
+        ClearDepthBuffer            = 0x0100,   // GL_DEPTH_BUFFER_BIT
+        ClearStencilBuffer          = 0x0400,   // GL_STENCIL_BUFFER_BIT
+        ClearColorBuffer            = 0x4000    // GL_COLOR_BUFFER_BIT
+    };
+    Q_DECLARE_FLAGS(ClearBuffers, ClearBuffer)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::ClearBuffers)
 
 QT_END_NAMESPACE
 
