@@ -70,6 +70,7 @@ public:
             , specularLightColor()
     {
     }
+
     void setEffect(QGLShaderProgramEffect *effect)
     {
         this->effect = effect;
@@ -182,8 +183,6 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     {
         mDefaultSceneObject->draw(painter);
     }
-
-    update();
 }
 
 void ShaderWizardGLWidget::setGeometry(QGLGeometry *newGeometry)
@@ -204,6 +203,7 @@ void ShaderWizardGLWidget::setGeometry(QGLGeometry *newGeometry)
     setDefaultCamera(newGeometry);
 
     clearScene();
+    update();
 }
 
 // TODO: Reset GL environment - set lights, camera etc. back to reasonable defaults
@@ -212,6 +212,7 @@ void ShaderWizardGLWidget::clearScene()
     mSceneManager = 0;
     mSceneRoot = 0;
     mDefaultSceneObject = 0;
+    update();
 }
 
 static float zFunc(float x, float y)
@@ -482,12 +483,14 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     {
         setDefaultCamera(mSceneRoot->geometry());
     }
+    update();
 }
 
 void ShaderWizardGLWidget::setSceneObject(QObject* object)
 {
     // Get more information about more complex scenes if available
     mSceneRoot = qobject_cast<QGLSceneNode *>(object);
+    update();
 }
 
 void ShaderWizardGLWidget::setDefaultCamera(QGLGeometry* geometry)
@@ -514,47 +517,56 @@ void ShaderWizardGLWidget::setDefaultCamera(QGLGeometry* geometry)
 
     this->camera()->setEye(QVector3D(0.0, 0.0, viewDistance));
     this->camera()->setCenter(boxOrigin);
+    update();
 }
 
 void ShaderWizardGLWidget::setPainterColor(QColor color)
 {
     d->painterColor = color;
+    update();
 }
 
 void ShaderWizardGLWidget::setAmbientLightColor(QColor color)
 {
     d->ambientLightColor = color;
+    update();
 }
 
 void ShaderWizardGLWidget::setDiffuseLightColor(QColor color)
 {
     d->diffuseLightColor = color;
+    update();
 }
 
 void ShaderWizardGLWidget::setSpecularLightColor(QColor color)
 {
      d->specularLightColor = color;
+    update();
 }
 
 
 void ShaderWizardGLWidget::setAmbientMaterialColor(QColor color)
 {
      mMaterial->setAmbientColor(color);
+    update();
 }
 
 void ShaderWizardGLWidget::setDiffuseMaterialColor(QColor color)
 {
      mMaterial->setDiffuseColor(color);
+    update();
 }
 
 void ShaderWizardGLWidget::setSpecularMaterialColor(QColor color)
 {
      mMaterial->setSpecularColor(color);
+    update();
 }
 
 void ShaderWizardGLWidget::setMaterialShininess(int shininess)
 {
      mMaterial->setShininess(shininess);
+    update();
 }
 
 QColor ShaderWizardGLWidget::painterColor() { return d->painterColor; }
