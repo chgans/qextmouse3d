@@ -66,6 +66,7 @@ private:
     void loadNodes(Lib3dsNode *, QGLSceneNode *);
     void loadMaterial(Lib3dsMaterial *);
     QString ensureResourceFile(const QString &);
+    void populateSceneNode(QGLSceneNode *, Lib3dsNode *);
 
     QGLSceneNode *mRootNode;
     Lib3dsFile *mFile;

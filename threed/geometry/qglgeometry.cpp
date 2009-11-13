@@ -103,7 +103,7 @@ QT_BEGIN_NAMESPACE
 
 class QGLGeometryPrivate : public QObjectPrivate
 {
-    Q_DECLARE_PUBLIC(QGLFogParameters)
+    Q_DECLARE_PUBLIC(QGLGeometry);
 public:
     QGLGeometryPrivate(int version = QObjectPrivateVersion)
         : QObjectPrivate(version)

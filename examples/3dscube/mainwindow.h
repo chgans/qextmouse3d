@@ -67,7 +67,7 @@ protected:
     void changeEvent(QEvent *e);
 
 private:
-    void populateModelMenu();
+    QString populateModelMenu();
 
     Ui::MainWindow *mUi;
     CubeView *mView;

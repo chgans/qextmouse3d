@@ -82,10 +82,13 @@ MainWindow::MainWindow(QWidget *parent)
             mView, SLOT(selectColorChanged(QColor)));
     connect(this, SIGNAL(openFile(QString)),
             mView, SLOT(openModelFile(QString)));
+    connect(mView, SIGNAL(modelLoaded(QString)),
+            this, SLOT(setWindowTitle(QString)));
     QPixmap px(32, 32);
     px.fill(QColor(mSelectColor));
     mUi->selectColorButton->setIcon(QIcon(px));
-    populateModelMenu();
+    QString initialModel = populateModelMenu();
+    mView->setInitialModel(initialModel);
 }
 
 MainWindow::~MainWindow()
@@ -105,8 +108,9 @@ void MainWindow::changeEvent(QEvent *e)
     }
 }
 
-void MainWindow::populateModelMenu()
+QString MainWindow::populateModelMenu()
 {
+    QString first;
     QMenu *menu = mUi->menuModels;
     QStringList searchDirs;
     searchDirs << ":/" << "./";
@@ -124,12 +128,14 @@ void MainWindow::populateModelMenu()
         {
             QString name = *mit;
             name.prepend(*it);
+            first = name;
             QAction *act = new QAction(name, this);
             menu->addAction(act);
             QObject::connect(act, SIGNAL(triggered()),
                              mView, SLOT(load()));
         }
     }
+    return first;
 }
 
 void MainWindow::signalColor(const QColor &color)
