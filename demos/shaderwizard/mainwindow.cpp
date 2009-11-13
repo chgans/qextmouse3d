@@ -43,23 +43,32 @@
 #include "ui_mainwindow.h"
 #include <QtDebug>
 #include <QFile>
-#include "shaderwizardglwidget.h"
-#include "qglslsyntaxhighlighter.h"
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QDir>
 #include <QStandardItemModel>
 #include <QPixmap>
+#include <QCloseEvent>
+#include <QSettings>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglmaterialcollection.h"
 #include "qglmaterialparameters.h"
 
+#include "shaderwizardglwidget.h"
+#include "qglslsyntaxhighlighter.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
     , sceneModel(0)
     , mScene(0)
+    , recentFilesSeperatorAdded(false)
 {
     ui->setupUi(this);
+
+    QCoreApplication::setOrganizationName("Nokia");
+    QCoreApplication::setOrganizationDomain("nokia.com");
+    QCoreApplication::setApplicationName("Shader Wizard");
 
     glDisplayWidget = new ShaderWizardGLWidget;
     mainWindowLayout = new QVBoxLayout();
@@ -93,9 +102,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->materialInspectorWidget->setDiffuseColor(glDisplayWidget->diffuseMaterialColor());
     ui->materialInspectorWidget->setSpecularColor(glDisplayWidget->specularMaterialColor());
     ui->materialInspectorWidget->setShininess(glDisplayWidget->materialShininess());
+
+    readSettings();
+
+    doRecentFileMenu();
 }
 
-MainWindow::~MainWindow()
+
+ MainWindow::~MainWindow()
 {
     delete ui;
     delete sceneModel;
@@ -218,6 +232,7 @@ void MainWindow::loadScene(const QString& fileName)
     ui->sceneTreeView->expandAll();
 
     emit sceneCreated(mScene);
+    doRecentFileMenu(fileName);
 }
 
 static void addSceneNodeToDataModel(QStandardItem *parent, QGLSceneNode *node)
@@ -308,7 +323,91 @@ void MainWindow::modelItemActivated(QModelIndex index)
         QGLSceneNode *scene = qobject_cast<QGLSceneNode *>(object);
         if(scene && scene->geometry() && scene->geometry()->material() != -1)
         {
-            emit materialSelected(scene->geometry()->palette()->materialByIndex( scene->geometry()->material() ));
+            emit materialSelected( scene->geometry()->palette()->materialByIndex( scene->geometry()->material() ));
         }
     }
 }
+
+void MainWindow::closeEvent(QCloseEvent *event)
+ {
+         writeSettings();
+         event->accept();
+ }
+
+ void MainWindow::readSettings()
+ {
+     QSettings settings;
+
+     settings.beginGroup("MainWindow");
+     resize(settings.value("size", QSize(1280, 640)).toSize());
+     move(settings.value("pos", QPoint(100, 100)).toPoint());
+     settings.endGroup();
+
+     settings.beginGroup("Recent Files");
+     this->recentFiles = settings.value("recentFileList", QStringList()).toStringList();
+     settings.endGroup();
+ }
+
+ void MainWindow::writeSettings()
+ {
+     QSettings settings;
+
+     settings.beginGroup("MainWindow");
+     settings.setValue("size", size());
+     settings.setValue("pos", pos());
+     settings.endGroup();
+
+     settings.beginGroup("Recent Files");
+     settings.setValue("recentFileList", recentFiles);
+     settings.endGroup();
+ }
+
+void MainWindow::doRecentFileMenu(QString newFileName)
+{
+    const int maxRecent = 4;
+    int indexInRecent = recentFiles.indexOf(newFileName);
+
+    if(indexInRecent != -1)
+    {
+        recentFiles.removeAt(indexInRecent);
+    }
+
+    if(!newFileName.isEmpty())
+    {
+        while(recentFiles.size() >= maxRecent)
+            recentFiles.pop_back();
+        recentFiles.push_front(newFileName);
+        writeSettings();
+    }
+
+    if(recentFiles.size() > 0 && !recentFilesSeperatorAdded)
+    {
+        ui->menuModel->addSeparator();
+        recentFilesSeperatorAdded = true;
+    }
+
+    for(int i = 0; i < recentFiles.size(); i++)
+    {
+        QAction *workingAction;
+        if(recentFileActions.size() < i + 1)
+        {
+            recentFileActions.append(( workingAction = new QAction(recentFiles.at(i), this) ));
+            ui->menuModel->addAction(workingAction);
+            connect(workingAction, SIGNAL(triggered()), this, SLOT(recentFileActionTriggered()));
+        }
+        else
+            workingAction = recentFileActions.at(i);
+
+        workingAction->setText(recentFiles.at(i));
+    }
+}
+
+void MainWindow::recentFileActionTriggered()
+{
+    QAction *triggeredAction = qobject_cast<QAction*>(sender());
+    if(triggeredAction)
+    {
+        loadScene(triggeredAction->text());
+    }
+
+};
