@@ -61,6 +61,7 @@ public:
     ~CubeView();
     void setColorMenu(QMenu *menu) { mColorMenu = menu; }
     void setComponentMenu(QMenu *menu) { mComponentMenu = menu; }
+    void setInitialModel(const QString &model) { mInitialModel = model; }
 
 public slots:
     void load();
@@ -75,6 +76,7 @@ public slots:
 
 signals:
     void colorUpdate(const QColor &);
+    void modelLoaded(const QString &);
 
 protected:
     void initializeGL();
@@ -118,6 +120,8 @@ private:
     int mSelectColorAnimate;
     QMap<QGLGeometry *, int> mSaveMaterials;
     bool mAnimationEnabled;
+    QString mInitialModel;
+    bool mWarningDisplayed;
 };
 
 

@@ -86,6 +86,7 @@ CubeView::CubeView(QWidget *parent)
     , mCurrentSelected(0)
     , mSelectColorAnimate(0)
     , mAnimationEnabled(true)
+    , mWarningDisplayed(false)
 {
 }
 
@@ -103,9 +104,11 @@ void CubeView::load()
 
 void CubeView::openModelFile(const QString &fileName)
 {
+    mWarningDisplayed = false;
     importModel(fileName);
     loadColors();
     loadComponents();
+    emit modelLoaded(fileName);
 }
 
 void CubeView::importModel(const QString &name)
@@ -208,7 +211,19 @@ void CubeView::loadComponents()
     for ( ; it != components.end(); ++it)
     {
         QGLSceneNode *nodeObj = qobject_cast<QGLSceneNode *>(*it);
+        if (!nodeObj)
+        {
+            qWarning("Could not make scene node from scene object %s",
+                     qPrintable((*it)->objectName()));
+            continue;
+        }
         QGLGeometry *mesh = nodeObj->geometry();
+        if (!mesh)
+        {
+            qWarning("Could not get mesh from scene node %s",
+                     qPrintable(nodeObj->objectName()));
+            continue;
+        }
         QString meshName = mesh->objectName();
         QAction *act = new QAction(meshName, this);
         mComponentMenu->addAction(act);
@@ -360,12 +375,20 @@ void CubeView::selectColorChanged(const QColor &color)
 
 void CubeView::initializeGL()
 {
-    importModel(":/basic-cube.3ds");
-    loadColors();
-    loadComponents();
+    if (mInitialModel.isEmpty())
+    {
+        QMessageBox::warning(this, tr("No Models Found"),
+                             tr("Could not find any model to load.  Select "
+                                "Open from the File menu to navigate to a model file."));
+    }
+    else
+    {
+        importModel(mInitialModel);
+        loadColors();
+        loadComponents();
+    }
 
     QGLPainter painter(this);
-    painter.clear();
     initializeGL(&painter);
 }
 
@@ -449,14 +472,22 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().translate(-sceneOrigin);
 
     if (mSceneRoot)
+    {
         mSceneRoot->draw(painter);
+    }
     else
-        QMessageBox::warning(this,
-                             tr("Unable to load model"),
-                             (mSceneManager ?
-                              tr("Could not find main scene") :
-                              tr("Could not load file %1").arg(mCurrentModelName))
-                             );
+    {
+        if (!mWarningDisplayed)
+        {
+            QMessageBox::warning(this,
+                                 tr("Unable to load model"),
+                                 (mSceneManager ?
+                                  tr("Could not find main scene") :
+                                  tr("Could not load file %1").arg(mCurrentModelName))
+                                 );
+            mWarningDisplayed = true;
+        }
+    }
 
     painter->modelViewMatrix().pop();
 }

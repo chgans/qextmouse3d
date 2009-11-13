@@ -105,6 +105,7 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode);
     m->setPalette(mRootNode->geometry()->palette());
     m->setObjectName(QString(mesh->name) + "Mesh");
+    qDebug() << "Loaded" << m->objectName();
     m->initialize();
     mMeshes.insert(mesh->name, m);
     mRefMap.insert(m, false);
@@ -129,6 +130,49 @@ static const char *node_type_names[] = {
 };
 #endif
 
+inline static QMatrix4x4 getNodeMatrix(Lib3dsNode *node)
+{
+    QMatrix4x4 nodeMatrix;
+    for (int col = 0; col < 4; ++col)
+        for (int row = 0; row < 4; ++row)
+            nodeMatrix(row, col) = node->matrix[col][row];
+    nodeMatrix.optimize();
+    Lib3dsObjectData *d = &node->data.object;
+    if (!qFuzzyIsNull(d->pivot[0]) || !qFuzzyIsNull(d->pivot[1]) || !qFuzzyIsNull(d->pivot[2]))
+        nodeMatrix.translate(-d->pivot[0], -d->pivot[1], -d->pivot[2]);
+    return nodeMatrix;
+}
+
+void QGL3dsLoader::populateSceneNode(QGLSceneNode *sceneNode, Lib3dsNode *node)
+{
+    Lib3dsObjectData *d = &node->data.object;
+    QString meshName = d->morph;
+    if (meshName.isEmpty())
+        meshName = d->instance;
+    if (meshName.isEmpty())
+        meshName = node->name;
+    if (!meshName.isEmpty() && mMeshes.contains(meshName))
+    {
+        QGL3dsMesh *mesh = mMeshes[meshName];
+        sceneNode->setGeometry(mesh);
+        sceneNode->setObjectName(meshName + "Node");
+        if (mesh->hasTexture())
+            sceneNode->setEffect(QGL::LitModulateTexture2D);
+        else
+            sceneNode->setEffect(QGL::LitMaterial);
+        Q_ASSERT(mRefMap.contains(mesh));
+        mRefMap[mesh] = true;
+    }
+    else
+    {
+        qWarning("Object node named \'%s\':"
+                 "cannot find a target mesh \'%s\'",
+                 node->name,
+                 meshName.toLocal8Bit().constData());
+        sceneNode->setObjectName("No target");
+    }
+}
+
 void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
 {
     Lib3dsNode *node;
@@ -136,40 +180,18 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
     {
         if (node->type == LIB3DS_OBJECT_NODE)
         {
-            QMatrix4x4 nodeMatrix;
-            for (int col = 0; col < 4; ++col)
-                for (int row = 0; row < 4; ++row)
-                    nodeMatrix(row, col) = node->matrix[col][row];
-            nodeMatrix.optimize();
-            Lib3dsObjectData *d;
-            d=&node->data.object;
-            if (!qFuzzyIsNull(d->pivot[0]) || !qFuzzyIsNull(d->pivot[1]) || !qFuzzyIsNull(d->pivot[2]))
-                nodeMatrix.translate(-d->pivot[0], -d->pivot[1], -d->pivot[2]);
             QGLSceneNode *sceneNode = new QGLSceneNode(parentNode);
-            if (!nodeMatrix.isIdentity())
-                sceneNode->setLocalTransform(nodeMatrix);
-            QString meshName = node->data.object.morph;
-            if (meshName.isEmpty())
-                meshName = node->name;
-            if (!meshName.isEmpty() && mMeshes.contains(meshName))
+            sceneNode->setLocalTransform(getNodeMatrix(node));
+            QString nodeName(node->name);
+            if (nodeName == QLatin1String("$$$DUMMY"))
             {
-                QGL3dsMesh *mesh = mMeshes[meshName];
-                sceneNode->setGeometry(mesh);
-                sceneNode->setObjectName(meshName + "Node");
-                if (mesh->hasTexture())
-                    sceneNode->setEffect(QGL::LitModulateTexture2D);
-                else
-                    sceneNode->setEffect(QGL::LitMaterial);
-                Q_ASSERT(mRefMap.contains(mesh));
-                mRefMap[mesh] = true;
+                nodeName = node->data.object.instance;
+                sceneNode->setObjectName(nodeName);
+                loadNodes(node->childs, sceneNode);
             }
             else
             {
-                qWarning("Object node named \'%s\':"
-                         "cannot find a target mesh \'%s\'",
-                         node->name,
-                         meshName.toLocal8Bit().constData());
-                sceneNode->setObjectName("No target");
+                populateSceneNode(sceneNode, node);
             }
         }
 #ifndef QT_NO_DEBUG_STREAM
