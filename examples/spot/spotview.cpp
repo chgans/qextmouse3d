@@ -115,7 +115,7 @@ void SpotView::paintGL()
 {
     QGLPainter painter(this);
     //painter.begin();
-    painter.clear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    painter.clear();
 
     // Set perspective transformation and position model-view matrix
     QGLCamera camera;
@@ -129,7 +129,7 @@ void SpotView::paintGL()
 
 void SpotView::paintGL(QGLPainter *painter)
 {
-    painter->clear(GL_COLOR_BUFFER_BIT);
+    painter->clear(QGL::ClearColorBuffer);
 
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().rotate(spin, 0.0f, 1.0f, 0.0f);

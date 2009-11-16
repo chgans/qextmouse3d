@@ -101,7 +101,7 @@ public:
     };
     Q_DECLARE_FLAGS(Updates, Update);
 
-    void clear(GLuint mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    void clear(QGL::ClearBuffers buffers = QGL::ClearColorBuffer | QGL::ClearDepthBuffer);
     void setClearColor(const QColor& color);
     void setClearDepth(qreal depth);
     void setClearStencil(GLint value);

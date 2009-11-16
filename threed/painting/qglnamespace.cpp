@@ -183,4 +183,15 @@ QT_BEGIN_NAMESPACE
         will be treated the same as Repeat.
 */
 
+/*!
+    \enum QGL::ClearBuffer
+    \since 4.6
+    This enum defines a buffer to be cleared with glClear().
+
+    \value NoClearBuffers No buffers should be cleared.
+    \value ClearDepthBuffer Clears the depth buffer.
+    \value ClearStencilBuffer Clears the stencil buffer.
+    \value ClearColorBuffer Clears the color buffer.
+*/
+
 QT_END_NAMESPACE

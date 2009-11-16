@@ -219,11 +219,7 @@ void CubeView::loadComponents()
         }
         QGLGeometry *mesh = nodeObj->geometry();
         if (!mesh)
-        {
-            qWarning("Could not get mesh from scene node %s",
-                     qPrintable(nodeObj->objectName()));
             continue;
-        }
         QString meshName = mesh->objectName();
         QAction *act = new QAction(meshName, this);
         mComponentMenu->addAction(act);
@@ -436,7 +432,7 @@ void CubeView::paintGL(QGLPainter *painter)
         mSceneInitialized = true;
     }
 
-    painter->clear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    painter->clear();
 
     // Set perspective transformation and position model-view matrix
     QVector3D sceneOrigin;

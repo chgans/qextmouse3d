@@ -259,7 +259,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
     // If we have a QmlGraphicsItem parent, then assume that it has cleared
     // the screen (e.g. Rect::color), and just clear the depth buffer.
     if (parentItem())
-        painter->clear(GL_DEPTH_BUFFER_BIT);
+        painter->clear(QGL::ClearDepthBuffer);
     else
         painter->clear();
 

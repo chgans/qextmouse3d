@@ -501,15 +501,15 @@ const QGLContext *QGLPainter::context() const
 }
 
 /*!
-    Clears the rendering buffers according to \a mask.  The default
-    value is \c{GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT}, which
-    indicates that the color buffer and depth buffers should be cleared.
+    Clears the specified rendering \a buffers.  The default \a buffers
+    value is QGL::ClearColorBuffer | QGL::ClearDepthBuffer, which
+    indicates that the color and depth buffers should be cleared.
 
     \sa setClearColor(), setClearDepth(), setClearStencil()
 */
-void QGLPainter::clear(GLuint mask)
+void QGLPainter::clear(QGL::ClearBuffers buffers)
 {
-    glClear(mask);
+    glClear(GLuint(buffers));
 }
 
 /*!
