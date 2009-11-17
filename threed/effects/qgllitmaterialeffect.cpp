@@ -184,14 +184,18 @@ void QGLLitMaterialEffect::setActive(bool flag)
         normalMatrixUniform = program->uniformLocation("normalMatrix");
         textureCoordsAttribute = program->attributeLocation("texcoord");
         program->bind();
-        if (textureCoordsAttribute != -1)
+        if (textureCoordsAttribute != -1) {
             program->setUniformValue("tex", 0);
+            program->enableAttributeArray(textureCoordsAttribute);
+        }
         program->enableAttributeArray(0);
         program->enableAttributeArray(1);
     } else if (flag) {
         program->bind();
-        if (textureCoordsAttribute != -1)
+        if (textureCoordsAttribute != -1) {
             program->setUniformValue("tex", 0);
+            program->enableAttributeArray(textureCoordsAttribute);
+        }
         program->enableAttributeArray(0);
         program->enableAttributeArray(1);
     } else {
