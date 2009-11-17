@@ -118,7 +118,7 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 };
 
 /*!
-    Constructs the geometry for a regular cube of \a size
+    Constructs the geometry for a regular cube of 1
     units on a side, and attaches it to \a parent.
 */
 QGLCube::QGLCube(QObject *parent)
@@ -132,7 +132,7 @@ QGLCube::QGLCube(QObject *parent)
 }
 
 /*!
-    Constructs the geometry for a regular cube of size 1
+    Constructs the geometry for a regular cube of \a size
     units on a side, and attaches it to \a parent.
 */
 QGLCube::QGLCube(qreal size, QObject *parent)
