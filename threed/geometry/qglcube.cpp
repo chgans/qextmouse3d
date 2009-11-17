@@ -119,9 +119,24 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 
 /*!
     Constructs the geometry for a regular cube of \a size
-    units on a side.
+    units on a side, and attaches it to \a parent.
 */
-QGLCube::QGLCube(qreal size)
+QGLCube::QGLCube(QObject *parent)
+    : QGLGeometry(parent)
+{
+    setDrawingMode(QGL::Triangles);
+    QGLVertexArray array
+        (QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
+    array.setRawData(cubeVertices, QGL_CUBE_SIZE);
+    setVertexArray(array);
+}
+
+/*!
+    Constructs the geometry for a regular cube of size 1
+    units on a side, and attaches it to \a parent.
+*/
+QGLCube::QGLCube(qreal size, QObject *parent)
+    : QGLGeometry(parent)
 {
     setDrawingMode(QGL::Triangles);
     if (size == 1.0f) {
@@ -138,12 +153,14 @@ QGLCube::QGLCube(qreal size)
 /*!
     Constructs the geometry for a prism which is \a width units
     in size in the x direction, \a height units in size in the y
-    direction, and \a depth units in size in the z direction.
+    direction, and \a depth units in size in the z direction,
+    and attaches it to \a parent.
 
     If \a width, \a height, and \a depth are all the same,
     the result will be a regular cube.
 */
-QGLCube::QGLCube(qreal width, qreal height, qreal depth)
+QGLCube::QGLCube(qreal width, qreal height, qreal depth, QObject *parent)
+    : QGLGeometry(parent)
 {
     setDrawingMode(QGL::Triangles);
     init(width, height, depth);

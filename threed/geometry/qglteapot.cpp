@@ -80,9 +80,11 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    Constructs a new 3D teapot geometry object and populates it.
+    Constructs a new 3D teapot geometry object, populates it,
+    and attaches it to \a parent.
 */
-QGLTeapot::QGLTeapot()
+QGLTeapot::QGLTeapot(QObject *parent)
+    : QGLBezierGeometry(parent)
 {
     teapotLoadBezier(*this);
 }

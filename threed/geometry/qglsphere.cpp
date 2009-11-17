@@ -110,7 +110,8 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    Constructs the geometry for a sphere with a diameter of the given \a size.
+    Constructs the geometry for a sphere with a diameter of the given \a size
+    and attaches it to \a parent.
     The method of generating the sphere is given by mode.
 
     Depending on the \a mode used, the sphere must have at least 6, 8, or 20 faces
@@ -119,8 +120,8 @@ QT_BEGIN_NAMESPACE
     the given \a maxFaces.
 */
 
-QGLSphere::QGLSphere(qreal size, Mode mode, int maxFaces)
-    : QGLGeometry()
+QGLSphere::QGLSphere(qreal size, Mode mode, int maxFaces, QObject *parent)
+    : QGLGeometry(parent)
 {
     switch(mode) {
     case IcoSphere:
@@ -136,7 +137,8 @@ QGLSphere::QGLSphere(qreal size, Mode mode, int maxFaces)
 }
 
 /*!
-    Constructs the geometry for a sphere with a diameter of 1.0.
+    Constructs the geometry for a sphere with a diameter of 1.0
+    and attaches it to \a parent.
     The method of generating the sphere is given by mode.
 
     Depending on the mode used, the sphere must have at least 6, 8, or 20 faces
@@ -144,8 +146,8 @@ QGLSphere::QGLSphere(qreal size, Mode mode, int maxFaces)
     will then be subdivided until the sphere can no longer be subdivided without exceeding
     the given \a maxFaces.
 */
-QGLSphere::QGLSphere(Mode mode, int maxFaces)
-    : QGLGeometry()
+QGLSphere::QGLSphere(Mode mode, int maxFaces, QObject *parent)
+    : QGLGeometry(parent)
 {
     switch(mode) {
     case IcoSphere:

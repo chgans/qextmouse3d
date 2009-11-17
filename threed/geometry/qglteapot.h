@@ -52,8 +52,9 @@ QT_MODULE(Qt3d)
 
 class Q_QT3D_EXPORT QGLTeapot : public QGLBezierGeometry
 {
+    Q_OBJECT
 public:
-    QGLTeapot();
+    explicit QGLTeapot(QObject *parent = 0);
     ~QGLTeapot();
 };
 

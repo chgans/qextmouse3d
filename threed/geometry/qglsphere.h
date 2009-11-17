@@ -52,14 +52,15 @@ QT_MODULE(Qt3d)
 
 class Q_QT3D_EXPORT QGLSphere : public QGLGeometry
 {
+    Q_OBJECT
 public:
     enum Mode {
         IcoSphere,
         CubeSphere,
         UVSphere,
     };
-    QGLSphere(qreal size, Mode = UVSphere, int divisions = 3);
-    QGLSphere(Mode = UVSphere, int divisions = 3);
+    explicit QGLSphere(qreal size, Mode = UVSphere, int divisions = 3, QObject *parent = 0);
+    explicit QGLSphere(Mode = UVSphere, int divisions = 3, QObject *parent = 0);
     virtual ~QGLSphere();
 
 private:
