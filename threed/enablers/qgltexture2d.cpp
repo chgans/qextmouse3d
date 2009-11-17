@@ -212,8 +212,9 @@ void QGLTexture2D::setSize(const QSize& value)
     Q_D(QGLTexture2D);
     if (d->requestedSize == value)
         return;
-    if (!(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0) &&
-        !(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_ES_Version_2_0))
+    // TODO: find out why NPOT textures don't work under ES 2.0.
+    if (!(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0))
+        //!(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_ES_Version_2_0))
         d->size = QSize(qt_gl_next_power_of_two(value.width()),
                         qt_gl_next_power_of_two(value.height()));
     else
