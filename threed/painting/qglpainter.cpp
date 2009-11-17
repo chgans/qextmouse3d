@@ -1467,10 +1467,14 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 #endif
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
+#if !defined(QGL_SHADERS_ONLY)
         glDisable(GL_TEXTURE_2D);
+#endif
     } else {
         texture->bind();
+#if !defined(QGL_SHADERS_ONLY)
         glEnable(GL_TEXTURE_2D);
+#endif
     }
 
     // Leave the default setting on texture unit 0 just in case
@@ -1516,10 +1520,14 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 #endif
     if (!texture) {
         QGLTextureCube::release();
+#if !defined(QGL_SHADERS_ONLY)
         glDisable(GL_TEXTURE_CUBE_MAP);
+#endif
     } else {
         texture->bind();
+#if !defined(QGL_SHADERS_ONLY)
         glEnable(GL_TEXTURE_CUBE_MAP);
+#endif
     }
 
     // Leave the default setting on texture unit 0 just in case
