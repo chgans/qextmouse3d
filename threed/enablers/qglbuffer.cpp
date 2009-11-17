@@ -383,8 +383,6 @@ void QGLBuffer::write(int offset, const void *data, int size)
     if (d->guard.id()) {
         // Upload the new data into the server-side buffer.
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
-        if (QGLContext::currentContext())
-            return;
         glBufferSubData(d->type, offset, size, data);
 #else
         QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
@@ -413,8 +411,6 @@ void QGLBuffer::write(const void *data, int size)
     Q_D(QGLBuffer);
     if (d->guard.id()) {
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
-        if (QGLContext::currentContext())
-            return;
         glBufferData(d->type, size, data, d->actualUsagePattern);
 #else
         QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
