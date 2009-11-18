@@ -47,6 +47,7 @@
 #include <QtCore/qbitarray.h>
 #include <QtCore/qmap.h>
 #include <QtGui/private/qpaintengineex_p.h>
+#include <QtOpengl/private/qglextensions_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -85,6 +86,12 @@ typedef void (APIENTRYP q_PFNGLGETBUFFERSUBDATAPROC) (GLenum target, qGLintptr o
 typedef void (APIENTRYP q_PFNGLGETBUFFERPARAMETERIVPROC) (GLenum target, GLenum pname, GLint *params);
 typedef GLvoid* (APIENTRYP q_PFNGLMAPBUFFERPROC) (GLenum target, GLenum access);
 typedef GLboolean (APIENTRYP q_PFNGLUNMAPBUFFERPROC) (GLenum target);
+
+typedef void (APIENTRY *_glActiveTexture) (GLenum);
+typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
+
+typedef void (APIENTRY *_glActiveTextureARB) (GLenum);
+typedef void (APIENTRY *_glClientActiveTextureARB) (GLenum);
 
 // We can call the buffer functions directly in OpenGL/ES 1.1 or higher,
 // but all other platforms need to resolve the extensions.
@@ -125,6 +132,12 @@ public:
 #endif
         mapBuffer = 0;
         unmapBuffer = 0;
+        qt_glActiveTexture = 0;
+        qt_glClientActiveTexture = 0;
+        multiTextureResolved = false;
+		qt_glActiveTextureARB = 0;
+		qt_glClientActiveTextureARB = 0;
+		multiTextureARBResolved = false;
     }
 
 #if !defined(QT_OPENGL_ES)
@@ -151,7 +164,14 @@ public:
 #endif
     q_PFNGLMAPBUFFERPROC mapBuffer;
     q_PFNGLUNMAPBUFFERPROC unmapBuffer;
+    _glActiveTexture qt_glActiveTexture;
+    _glClientActiveTexture qt_glClientActiveTexture;
+	_glActiveTextureARB qt_glActiveTextureARB;
+	_glClientActiveTextureARB qt_glClientActiveTextureARB;
+	bool multiTextureARBResolved;
+    bool multiTextureResolved;
 };
+
 
 #define QGL_MAX_LIGHTS      32
 #define QGL_MAX_STD_EFFECTS 16
@@ -215,7 +235,47 @@ public:
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
 
-    QGLPainterExtensions *extensions();
+    QGLPainterExtensions *extensions();    
+
+    #if defined(Q_WS_WIN)
+    QGLPainterExtensions *resolveMultiTextureExtensions()
+    {
+        QGLPainterExtensions *extn = extensions();
+        if (!(extn->multiTextureResolved)) {
+            extn->multiTextureResolved = true;
+            if (!extn->qt_glActiveTexture) {
+                extn->qt_glActiveTexture = (_glActiveTexture)
+                    this->context->getProcAddress
+                        (QLatin1String("glActiveTexture"));
+            }
+            if (!extn->qt_glClientActiveTexture) {
+                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
+                    this->context->getProcAddress
+                        (QLatin1String("glClientActiveTexture"));
+            }
+        }
+        return extn;
+    }
+
+    QGLPainterExtensions *resolveMultiTextureExtensionsARB()
+    {
+        QGLPainterExtensions *extn = extensions();
+        if (!(extn->multiTextureARBResolved)) {
+            extn->multiTextureARBResolved = true;
+            if (!extn->qt_glActiveTextureARB) {
+                extn->qt_glActiveTextureARB = (_glActiveTextureARB)
+                    this->context->getProcAddress
+                        (QLatin1String("glActiveTextureARB"));
+            }
+            if (!extn->qt_glClientActiveTextureARB) {
+                extn->qt_glClientActiveTextureARB = (_glClientActiveTextureARB)
+                    this->context->getProcAddress
+                        (QLatin1String("glClientActiveTextureARB"));
+            }
+        }
+        return extn;
+	}
+    #endif
 
     inline void ensureEffect() { if (!effect) createEffect(); }
     void createEffect();

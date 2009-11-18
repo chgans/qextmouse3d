@@ -67,6 +67,8 @@
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
 
+
+
 QT_BEGIN_NAMESPACE
 
 /*!
@@ -1106,6 +1108,30 @@ void QGLPainter::setColor(const QColor& color)
     d->updates |= UpdateColor;
 }
 
+
+#if !defined(QT_OPENGL_ES)
+
+static QGLPainterExtensions *resolveMultiTextureExtensions(QGLPainterPrivate *pd)
+{
+    QGLPainterExtensions *extn = pd->extensions();
+    if (!(extn->multiTextureResolved)) {
+        extn->multiTextureResolved = true;
+        if (!extn->qt_glActiveTexture) {
+            extn->qt_glActiveTexture = (_glActiveTexture)
+                pd->context->getProcAddress
+                    (QLatin1String("glActiveTexture"));
+        }
+        if (!extn->qt_glClientActiveTexture) {
+            extn->qt_glClientActiveTexture = (_glClientActiveTexture)
+                pd->context->getProcAddress
+                    (QLatin1String("glClientActiveTexture"));
+        }
+    }
+    return extn;
+}
+
+#endif
+
 void QGLAbstractEffect::setVertexArray(const QGLVertexArray& array)
 {
 #if !defined(QT_OPENGL_ES_2)
@@ -1138,12 +1164,48 @@ void QGLAbstractEffect::setVertexArray(const QGLVertexArray& array)
         case QGL::TextureCoord7:
         {
             int unit = (int)(array.m_fields.fieldAttribute(field) - QGL::TextureCoord0);
-#if defined(QGL_TEXTURE0)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
+
+#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)			
+            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
+            QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
+				glTexCoordPointer(value.size(), GL_FLOAT,
+								  value.stride(), value.data());
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
+			}
+			else if (unit!=0)
+			{
+				glTexCoordPointer(value.size(), GL_FLOAT,
+                                  value.stride(), value.data());
+			}
+#elif defined(QGL_TEXTURE0)
+			glClientActiveTexture(QGL_TEXTURE0 + unit);
             glTexCoordPointer(value.size(), GL_FLOAT,
                               value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
+#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+           QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+				glTexCoordPointer(value.size(), GL_FLOAT,
+								  value.stride(), value.data());
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
+			}
+			else if (unit!=0)
+			{
+				glTexCoordPointer(value.size(), GL_FLOAT,
+                                  value.stride(), value.data());
+			}
 #elif defined(GL_TEXTURE0_ARB)
             glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
             glTexCoordPointer(value.size(), GL_FLOAT,
@@ -1151,7 +1213,6 @@ void QGLAbstractEffect::setVertexArray(const QGLVertexArray& array)
             if (unit != 0)
                 glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            // The GL implementation does not support multitexturing.
             if (unit == 0)
                 glTexCoordPointer(value.size(), GL_FLOAT,
                                   value.stride(), value.data());
@@ -1196,11 +1257,40 @@ void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QGL_TEXTURE0)
+#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
+            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
+            QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
+			}
+            // The GL implementation does not support multitexturing.
+            else if (unit == 0)
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#elif defined(QGL_TEXTURE0)
             glClientActiveTexture(QGL_TEXTURE0 + unit);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
+#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+           QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
+			}
+			// The GL implementation does not support multitexturing.
+            else if (unit == 0)
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 #elif defined(GL_TEXTURE0_ARB)
             glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1245,18 +1335,46 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QGL_TEXTURE0)
+#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
+            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
+            QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
+			}
+            // The GL implementation does not support multitexturing.
+            else if (unit == 0)
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#elif defined(QGL_TEXTURE0)
             glClientActiveTexture(QGL_TEXTURE0 + unit);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
+#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+           QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
+			}
+			// The GL implementation does not support multitexturing.
+            else if (unit == 0)
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #elif defined(GL_TEXTURE0_ARB)
             glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             if (unit != 0)
                 glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            // The GL implementation does not support multitexturing.
             if (unit == 0)
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 #endif
@@ -1300,12 +1418,49 @@ bool QGLAbstractEffect::setVertexAttribute
         case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QGL_TEXTURE0)
+
+
+#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)			
+            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
+            QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
+				glTexCoordPointer(value.size(), GL_FLOAT,
+								  value.stride(), value.data());
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
+			}
+			else if (unit==0)
+			{
+				glTexCoordPointer(value.size(), GL_FLOAT,
+                                  value.stride(), value.data());
+			}
+#elif defined(QGL_TEXTURE0)
             glClientActiveTexture(QGL_TEXTURE0 + unit);
             glTexCoordPointer(value.size(), GL_FLOAT,
                               value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
+#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+           QGLPainter painter(QGLContext::currentContext());
+			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
+
+			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
+			{
+				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+				glTexCoordPointer(value.size(), GL_FLOAT,
+								  value.stride(), value.data());
+				if (unit != 0)  // Stay on unit 0 between requests.
+					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
+			}
+			else if (unit==0)
+			{
+				glTexCoordPointer(value.size(), GL_FLOAT,
+                                  value.stride(), value.data());
+			}
 #elif defined(GL_TEXTURE0_ARB)
             glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
             glTexCoordPointer(value.size(), GL_FLOAT,
@@ -1313,12 +1468,12 @@ bool QGLAbstractEffect::setVertexAttribute
             if (unit != 0)
                 glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            // The GL implementation does not support multitexturing.
+
             if (unit == 0)
                 glTexCoordPointer(value.size(), GL_FLOAT,
                                   value.stride(), value.data());
 #endif
-        }
+		}
         break;
 #endif
 
@@ -1460,10 +1615,19 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 //#else
 //#undef glActiveTexture      // Remove definition in qglextensions_p.h.
 //#endif
-#if defined(QGL_TEXTURE0)
+
+#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
+    d->resolveMultiTextureExtensions();
+    if (d->extensionFuncs->qt_glActiveTexture) 
+		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
+#elif defined(QGL_TEXTURE0)
     glActiveTexture(QGL_TEXTURE0 + unit);
+#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+    d->resolveMultiTextureExtensionsARB();
+    if (d->extensionFuncs->qt_glActiveTextureARB)
+		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
 #elif defined(GL_TEXTURE0_ARB)
-    glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+  glActiveTextureARB(GL_TEXTURE0_ARB + unit);
 #endif
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -1475,9 +1639,17 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QGL_TEXTURE0)
+#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
+    d->resolveMultiTextureExtensions();
+    if (d->extensionFuncs->qt_glActiveTexture && unit!=0) 
+		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
+#elif defined(QGL_TEXTURE0)
     if (unit != 0)
         glActiveTexture(QGL_TEXTURE0);
+#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+	d->resolveMultiTextureExtensionsARB();
+    if (d->extensionFuncs->qt_glActiveTextureARB && unit!=0) 
+		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
 #elif defined(GL_TEXTURE0_ARB)
     if (unit != 0)
         glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -1504,13 +1676,23 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 
     // Select the texture unit and bind the texture.
 #undef glActiveTexture      // Remove definition in qglextensions_p.h.
+
 //#if !defined(QT_OPENGL_ES)
 //    const QGLContext *ctx = d->context;
 //#else
 //#undef glActiveTexture      // Remove definition in qglextensions_p.h.
 //#endif
-#if defined(QGL_TEXTURE0)
+
+#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
+    d->resolveMultiTextureExtensions();
+    if (d->extensionFuncs->qt_glActiveTexture) 
+		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
+#elif defined(QGL_TEXTURE0)
     glActiveTexture(QGL_TEXTURE0 + unit);
+#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+	d->resolveMultiTextureExtensionsARB();
+    if (d->extensionFuncs->qt_glActiveTextureARB) 
+		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
 #elif defined(GL_TEXTURE0_ARB)
     glActiveTextureARB(GL_TEXTURE0_ARB + unit);
 #endif
@@ -1524,9 +1706,17 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QGL_TEXTURE0)
+#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
+    d->resolveMultiTextureExtensions();
+    if (d->extensionFuncs->qt_glActiveTexture && unit!=0) 
+		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
+#elif defined(QGL_TEXTURE0)
     if (unit != 0)
         glActiveTexture(QGL_TEXTURE0);
+#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
+	d->resolveMultiTextureExtensionsARB();
+    if (d->extensionFuncs->qt_glActiveTextureARB && unit!=0) 
+		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
 #elif defined(GL_TEXTURE0_ARB)
     if (unit != 0)
         glActiveTextureARB(GL_TEXTURE0_ARB);

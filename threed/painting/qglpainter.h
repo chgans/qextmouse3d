@@ -204,6 +204,7 @@ private:
 
     friend class QGLStencilBufferOptions;
     friend class QGLBlendOptions;
+    friend class QGLAbstractEffect;
 
 #ifndef QT_NO_DEBUG
     void checkRequiredFields();

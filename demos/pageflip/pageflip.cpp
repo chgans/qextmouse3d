@@ -46,6 +46,7 @@
 #include "qglabstracteffect.h"
 #include "qglblendoptions.h"
 #include "qgltexture2d.h"
+
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
 #endif
