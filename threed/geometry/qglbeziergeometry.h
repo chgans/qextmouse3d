@@ -54,8 +54,9 @@ class QGLBezierGeometryPrivate;
 
 class Q_QT3D_EXPORT QGLBezierGeometry : public QGLGeometry
 {
+    Q_OBJECT
 public:
-    QGLBezierGeometry();
+    explicit QGLBezierGeometry(QObject *parent = 0);
     ~QGLBezierGeometry();
 
     QVector3D normal(int index) const;

@@ -14,7 +14,6 @@ uniform mediump vec4 acs;       // Light model's ambient color of the scene
 uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
 
 uniform float time;
-varying float intensity;
 uniform vec3 lightDir;
 
 varying mediump vec4 qAmbient;
@@ -27,12 +26,9 @@ varying highp vec4 qTexCoord0;
 varying highp vec4 qTexCoord1;
 
 
-void qLightVertex(vec4 vertex, vec4 normal)
+void qLightVertex(vec4 vertex, vec3 normal)
 {
     vec3 toEye;
-    qNormal = vec3(normal);
-    qAmbient = ecm + acm * acs + acm * acli;
-    qDiffuse = dcm * dcli;
     qLightDirection = normalize(pli);
     if (viewerAtInfinity)
         toEye = vec3(0, 0, 1);
@@ -46,7 +42,7 @@ void main(void)
 {
     vec4 v = vertex;
     vec3 toEye;
-    qLightVertex(vertex, normal);
-   intensity = dot(pli, vec3(normal));
+    qNormal = normalize(gl_NormalMatrix * vec3(normal));
+    qLightVertex(vertex, qNormal);
     gl_Position = matrix * v;
 };

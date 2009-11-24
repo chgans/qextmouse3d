@@ -5,7 +5,6 @@
 // mediump vec4 gl_FragData[gl_MaxDrawBuffers]
 // mediump vec2 gl_PointCoord; // Not defined unless drawing points.
 uniform mediump vec4 color;
-varying float intensity;
 
 varying mediump vec4 qAmbient;
 varying mediump vec4 qDiffuse;
@@ -20,6 +19,7 @@ varying highp vec4 qTexCoord1;
 void main(void)
 {
 vec4 myColor;
+float intensity =  max(dot(qNormal, qLightDirection), 0.0);
 if (intensity > 0.95)
         myColor = vec4(1.0,0.5,0.5,1.0);
 else if (intensity > 0.5)

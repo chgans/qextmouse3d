@@ -52,9 +52,11 @@ QT_MODULE(Qt3d)
 
 class Q_QT3D_EXPORT QGLCube : public QGLGeometry
 {
+    Q_OBJECT
 public:
-    QGLCube(qreal size = 1.0f);
-    QGLCube(qreal width, qreal height, qreal depth);
+    explicit QGLCube(QObject *parent = 0);
+    explicit QGLCube(qreal size, QObject *parent = 0);
+    QGLCube(qreal width, qreal height, qreal depth, QObject *parent = 0);
     virtual ~QGLCube();
 
     void setTextureCoords(const QVector2D& c1,

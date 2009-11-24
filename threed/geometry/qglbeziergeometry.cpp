@@ -544,9 +544,10 @@ void QGLBezierGeometryPrivate::subdivide
 }
 
 /*!
-    Constructs a new Bezier geometry object.
+    Constructs a new Bezier geometry object and attaches it to \a parent.
 */
-QGLBezierGeometry::QGLBezierGeometry()
+QGLBezierGeometry::QGLBezierGeometry(QObject *parent)
+    : QGLGeometry(parent)
 {
     d = new QGLBezierGeometryPrivate();
 }

@@ -289,7 +289,8 @@ public:
 #else
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { Q_UNUSED(fields); }
-    inline void removeRequiredFields(const QGLVertexArray& array) {}
+    inline void removeRequiredFields(const QGLVertexArray& array)
+        { Q_UNUSED(array); }
 #endif
 };
 

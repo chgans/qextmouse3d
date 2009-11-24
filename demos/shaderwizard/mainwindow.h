@@ -46,6 +46,7 @@
 #include <QGLWidget>
 #include <QVBoxLayout>
 #include <QModelIndex>
+#include <QMenu>
 
 class ShaderWizardGLWidget;
 class QAbstractItemModel;
@@ -71,7 +72,7 @@ public:
     enum DataRoles
     {
         SceneObjectRole = Qt::UserRole
-    };
+                      };
 
 private slots:
     void on_actionLoad_From_File_triggered();
@@ -88,25 +89,34 @@ private slots:
     void setTeapotGeometry(bool ignored);
     void setHeightMapGeometry(bool ignored);
     void modelItemActivated(QModelIndex);
+    void recentFileActionTriggered();
 signals:
     void openFile(const QString &);
     void sceneCreated(QObject* object);
     void sceneSelected(QObject* object);
     void materialSelected(QGLMaterialParameters*);
-private:
-    Ui::MainWindow *ui;
-
+protected:
+    void closeEvent(QCloseEvent *event);
     void setupSceneModel();
     void setupSceneView();
     void loadScene(const QString &fileName);
     void handleScene(QGLAbstractScene *scene);
     void handleScene(QGLSceneNode *scene);
+    void writeSettings();
+    void readSettings();
+    void doRecentFileMenu(QString newFile = QString());
+
+private:
+    Ui::MainWindow *ui;
 
     ShaderWizardGLWidget *glDisplayWidget;
     QVBoxLayout *mainWindowLayout;
     void setShadersFromFiles(QString vertexShaderFileName, QString fragmentShaderFileName);
     QStandardItemModel *sceneModel;
     QGLAbstractScene *mScene;
+    QList<QAction *> recentFileActions;
+    QStringList recentFiles;
+    bool recentFilesSeperatorAdded;
 };
 
 #endif // MAINWINDOW_H
