@@ -1,5 +1,15 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file>qtlogo.png</file>
-</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>qtlogo.png</file>
+        <file>flat_color_shader.fsh</file>
+        <file>flat_color_shader.vsh</file>
+        <file>minimal_texture_shader.fsh</file>
+        <file>minimal_texture_shader.vsh</file>
+        <file>per_pixel_lighting.fsh</file>
+        <file>per_pixel_lighting.vsh</file>
+        <file>per_pixel_texture.fsh</file>
+        <file>per_pixel_texture.vsh</file>
+        <file>toon_shader.fsh</file>
+        <file>toon_shader.vsh</file>
+    </qresource>
 </RCC>
