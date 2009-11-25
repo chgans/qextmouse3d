@@ -159,17 +159,27 @@ void MainWindow::on_pushButtonApplyFragmentShader_clicked()
 
 void MainWindow::on_actionFlat_Shader_triggered(bool)
 {
-    setShadersFromFiles("flat_color_shader.vsh","flat_color_shader.fsh");
+    setShadersFromFiles(":/flat_color_shader.vsh",":/flat_color_shader.fsh");
 }
 
 void MainWindow::on_actionToon_Shader_triggered(bool)
 {
-    setShadersFromFiles("toon_shader.vsh","toon_shader.fsh");
+    setShadersFromFiles(":/toon_shader.vsh",":/toon_shader.fsh");
 }
 
 void MainWindow::on_actionPer_Pixel_Lighting_Shader_triggered(bool)
 {
-    setShadersFromFiles("per_pixel_lighting.vsh","per_pixel_lighting.fsh");
+    setShadersFromFiles(":/per_pixel_lighting.vsh",":/per_pixel_lighting.fsh");
+}
+
+void MainWindow::on_actionMinimal_Texture_Shader_triggered()
+{
+    setShadersFromFiles(":/minimal_texture_shader.vsh",":/minimal_texture_shader.fsh");
+}
+
+void MainWindow::on_actionPer_Pixel_Lit_Texture_Shader_triggered()
+{
+    setShadersFromFiles(":/per_pixel_texture.vsh",":/per_pixel_texture.fsh");
 }
 
 void MainWindow::on_actionLoad_From_File_triggered()
@@ -182,6 +192,7 @@ void MainWindow::on_actionLoad_From_File_triggered()
     emit openFile(fileName);
     loadScene(fileName);
 }
+
 
 void MainWindow::setShadersFromFiles(QString vertexShaderFileName, QString fragmentShaderFileName)
 {
@@ -411,3 +422,5 @@ void MainWindow::recentFileActionTriggered()
     }
 
 };
+
+

@@ -41,6 +41,7 @@
 
 #include "shaderwizardglwidget.h"
 #include "qglview.h"
+#include "qglcube.h"
 #include "qglteapot.h"
 #include "qglsphere.h"
 #include "qglbeziergeometry.h"
@@ -100,6 +101,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mLightModel(new QGLLightModel(this))
         , mMaterial(new QGLMaterialParameters(this))
         , mMaterialCollection(new QGLMaterialCollection(this))
+        , mTexture(new QGLTexture2D())
 {
     d = new ShaderWizardGLWidgetPrivate;
 
@@ -157,23 +159,26 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setLightParameters(0, mLightParameters);
     painter->setFaceColor(QGL::AllFaces, d->painterColor);
 
-    QImage textureImage(":/qtlogo.png");
-    texture.setImage(textureImage);
+    mTexture->setImage(QImage (":/qtlogo.png"));
 
     painter->setDepthTestingEnabled(true);
     painter->setCullFaces(QGL::CullBackFaces);
+
+    d->setEffect(new QGLShaderProgramEffect());
+    d->effect->setActive(true);
 }
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 {
 
     painter->setColor(d->painterColor); // Nokia blue
-    painter->setClearColor(QColor(125,125,0,0));
+    painter->setClearColor(QColor(32, 32, 32, 0));
 //    painter->modelViewMatrix().push();
 //    painter->modelViewMatrix().scale(1.5f);
 //    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 //    painter->modelViewMatrix().translate(0.5f, 0.0f, -3.0f);
 
+    painter->setTexture(mTexture);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
     painter->setLightEnabled(0, true);

@@ -42,41 +42,40 @@
 #include "qglshaderprogrameffect.h"
 #include "qglabstracteffect.h"
 #include <QtOpenGL/qglshaderprogram.h>
+#include "qgltexture2d.h"
 
-static char const perPixelLightingVertexShader[] =
-    "//highp vec4 gl_Position; // should be written to\n"
-    "//mediump float gl_PointSize; // may be written to\n"
+static char const FallbackPerPixelLightingVertexShader[] =
+    "// Per-pixel lighting - vertex shader side.\n"
+
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 normal;\n"
-    "uniform mediump mat4 matrix;\n"
+    "uniform highp mat4 matrix;\n"
+    "uniform mediump mat3 gl_NormalMatrix;\n"
 
     "uniform mediump vec4 acli;      // Ambient intensity of the light\n"
     "uniform mediump vec4 dcli;      // Diffuse intensity of the light\n"
+    "uniform mediump vec4 scli;      // Specular intensity of the light\n"
     "uniform mediump vec3 pli;       // Position of the light\n"
     "uniform mediump vec4 acm;       // Ambient color of the material\n"
     "uniform mediump vec4 dcm;       // Diffuse color of the material\n"
     "uniform mediump vec4 ecm;       // Emissive color of the material\n"
+    "uniform mediump vec4 scm;       // specular color of the material\n"
     "uniform mediump vec4 acs;       // Light model's ambient color of the scene\n"
     "uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity\n"
 
     "uniform float time;\n"
-    "varying float intensity;\n"
-    "uniform vec3 lightDir;\n"
 
     "varying mediump vec4 qAmbient;\n"
     "varying mediump vec4 qDiffuse;\n"
     "varying mediump vec3 qNormal;\n"
     "varying mediump vec3 qLightDirection;\n"
     "varying mediump vec3 qHalfVector;\n"
-    "varying mediump vec3 qVertexToLight;\n"
     "varying highp vec4 qTexCoord0;\n"
     "varying highp vec4 qTexCoord1;\n"
-
 
     "void qLightVertex(vec4 vertex, vec3 normal)\n"
     "{\n"
     "    vec3 toEye;\n"
-    "    qNormal = normal;\n"
     "    qAmbient = ecm + acm * acs + acm * acli;\n"
     "    qDiffuse = dcm * dcli;\n"
     "    qLightDirection = normalize(pli);\n"
@@ -85,28 +84,24 @@ static char const perPixelLightingVertexShader[] =
     "    else\n"
     "        toEye = normalize(-vertex.xyz);\n"
     "    qHalfVector = normalize(qLightDirection + toEye);\n"
-    "    qVertexToLight = vertex.xyz - pli;\n"
     "}\n"
 
-   "void main(void)\n"
+    "void main(void)\n"
     "{\n"
-    "    vec4 v = vertex;\n"
-    "    vec3 toEye;\n"
-    "    qLightVertex(vertex, normal);\n"
-    "   intensity = dot(pli, vec3(normal));\n"
-    "    gl_Position = matrix * v;\n"
-    "}\n";
+    "    qNormal = normalize(gl_NormalMatrix * vec3(normal));\n"
+    "    qLightVertex(vertex, qNormal);\n"
+    "    gl_Position = matrix * vertex;\n"
+    "};\n";
 
-static char const perPixelColorFragmentShader[] =
 
-        "// Built-in variables:\n"
-    "// mediump vec4 gl_FragCoord;\n"
-    "// bool gl_FrontFacing;\n"
-    "// mediump vec4 gl_FragColor;\n"
-    "// mediump vec4 gl_FragData[gl_MaxDrawBuffers]\n"
-    "// mediump vec2 gl_PointCoord;\n" // Not defined unless drawing points.
+
+static char const FallbackPerPixelLightingFragmentShader[] =
+    "// Per-pixel lighting - fragment shader side.\n"
+    "uniform mediump vec4 scli;\n"
+    "uniform mediump vec4 scm;\n"
     "uniform mediump vec4 color;\n"
-    "varying float intensity;"
+    "uniform float shininess;\n"
+    "varying float intensity;\n"
 
     "varying mediump vec4 qAmbient;\n"
     "varying mediump vec4 qDiffuse;\n"
@@ -117,18 +112,28 @@ static char const perPixelColorFragmentShader[] =
     "varying highp vec4 qTexCoord0;\n"
     "varying highp vec4 qTexCoord1;\n"
 
-
     "void main(void)\n"
     "{\n"
-    "    gl_FragColor = vec4(color[0] * intensity, color[1] * intensity, color[2] * intensity, color[3]);\n"
-    "}\n";
+    "    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
+    "    qNormal = normalize(qNormal);\n"
+    "    float intensity =  max(dot(qNormal, qLightDirection), 0.0);\n"
+    "    if(intensity > 0.0)\n"
+    "    {\n"
+    "        float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );\n"
+    "        if(specularIntensity > 0.0)\n"
+    "            specularComponent = scm * scli * pow(specularIntensity, shininess);\n"
+    "    }\n"
+    "    gl_FragColor = qAmbient + qDiffuse * intensity + specularComponent;\n"
+    "};\n";
 
+char * foo =     "        float specularIntensity = max( dot(normalize(qNormal), qHalfVector), 0.0 );\n";
 QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
+    , program(0)
+    , colorUniform(-1)
+    , matrixUniform(-1)
+    , lightDirectionUniform(-1)
+    , textureAttributeSet(false)
 {
-    program = 0;
-    colorUniform = -1;
-    matrixUniform = -1;
-    lightDirectionUniform = -1;
 }
 
 QGLShaderProgramEffect::~QGLShaderProgramEffect()
@@ -178,10 +183,12 @@ void QGLShaderProgramEffect::setActive(bool flag)
         program->bind();
         program->enableAttributeArray(0);
         program->enableAttributeArray(1);
+        program->enableAttributeArray(2);
         currentlyActive = true;
     } else {
         program->disableAttributeArray(0);
         program->disableAttributeArray(1);
+        program->disableAttributeArray(2);
         program->release();
         currentlyActive = false;
     }
@@ -199,14 +206,18 @@ void QGLShaderProgramEffect::reloadShaders()
         program->addShaderFromSourceCode(QGLShader::Vertex, vertexShader);
     }
     else
-        program->addShaderFromSourceCode(QGLShader::Vertex, perPixelLightingVertexShader);
+    {
+        program->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
+    }
 
     if(fragmentShader.length() > 0)
     {
         program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
     }
     else
-        program->addShaderFromSourceCode(QGLShader::Fragment, perPixelColorFragmentShader);
+    {
+        program->addShaderFromSourceCode(QGLShader::Fragment, FallbackPerPixelLightingFragmentShader);
+    }
 }
 
 void QGLShaderProgramEffect::bindProgramAttributes()
@@ -215,6 +226,7 @@ void QGLShaderProgramEffect::bindProgramAttributes()
         return;
     program->bindAttributeLocation("vertex", 0);
     program->bindAttributeLocation("normal", 1);
+    program->bindAttributeLocation("texCoords", 2);
 }
 
 void QGLShaderProgramEffect::bindProgramUniforms()
@@ -230,7 +242,10 @@ void QGLShaderProgramEffect::bindProgramUniforms()
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     static float time = 0.0f;
-    time += 3.14159 / 1200; // TODO: use a clock instead of a frame counter
+    time += 3.14159 / 120; // TODO: use a clock instead of a frame counter
+    if(!program)
+        return;
+
     program->setUniformValue(timeUniform, time);
 
     if ((updates & QGLPainter::UpdateColor) != 0) {
@@ -246,7 +261,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue(matrixUniform, proj * mv);
     }
 
-    if ((updates & QGLPainter::UpdateLights) != 0 || true ) { //TEMP
+        if ((updates & QGLPainter::UpdateLights) != 0 || true ) { //TEMP
         // Find the first enabled light.
         const QGLLightParameters *lparams = 0;
         QMatrix4x4 ltransform;
@@ -289,12 +304,14 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue("separateSpecular", (int)(model->colorControl() == QGLLightModel::SeparateSpecularColor));
         program->setUniformValue("acs", model->ambientSceneColor());
 
+        // Set the uniform variables for the material
         const QGLMaterialParameters *material = painter->faceMaterial(QGL::FrontFaces);
         program->setUniformValue("acm", material->ambientColor());
         program->setUniformValue("dcm", material->diffuseColor());
         program->setUniformValue("scm", material->specularColor());
         program->setUniformValue("ecm", material->emittedLight());
         program->setUniformValue("shininess", float(material->shininess()));
+        program->setUniformValue("texture", 0);
     }
 }
 
@@ -310,6 +327,12 @@ void QGLShaderProgramEffect::setVertexArray(const QGLVertexArray& array)
     if(program && !value.isNull())
     {
         program->setAttributeArray( 1, value.floatData(), value.size(),
+                                    value.stride());
+    }
+    value = array.attributeValue(QGL::TextureCoord0);
+    if(program && !value.isNull())
+    {
+        program->setAttributeArray( 2, value.floatData(), value.size(),
                                     value.stride());
     }
 }

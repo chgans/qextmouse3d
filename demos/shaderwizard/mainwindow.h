@@ -75,6 +75,8 @@ public:
                       };
 
 private slots:
+    void on_actionPer_Pixel_Lit_Texture_Shader_triggered();
+    void on_actionMinimal_Texture_Shader_triggered();
     void on_actionLoad_From_File_triggered();
     void on_actionPer_Pixel_Lighting_Shader_triggered(bool checked);
     void on_actionToon_Shader_triggered(bool checked);
