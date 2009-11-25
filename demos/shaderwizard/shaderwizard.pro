@@ -33,5 +33,9 @@ OTHER_FILES += qtlogo.png \
     flat_color_shader.fsh \
     flat_color_shader.vsh \
     per_pixel_lighting_color.fsh \
-    per_pixel_lighting_color.vsh
+    per_pixel_lighting_color.vsh \
+    minimal_texture_shader.fsh \
+    minimal_texture_shader.vsh \
+    per_pixel_texture.fsh \
+    per_pixel_texture.vsh
 include(../../threed/threed_dep.pri)

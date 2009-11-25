@@ -93,6 +93,8 @@
     <addaction name="actionFlat_Shader"/>
     <addaction name="actionToon_Shader"/>
     <addaction name="actionPer_Pixel_Lighting_Shader"/>
+    <addaction name="actionMinimal_Texture_Shader"/>
+    <addaction name="actionPer_Pixel_Lit_Texture_Shader"/>
    </widget>
    <addaction name="menuShaderWizard"/>
    <addaction name="menuModel"/>
@@ -266,6 +268,16 @@
   <action name="actionLoad_From_File">
    <property name="text">
     <string>Load From File</string>
+   </property>
+  </action>
+  <action name="actionMinimal_Texture_Shader">
+   <property name="text">
+    <string>Minimal Texture Shader</string>
+   </property>
+  </action>
+  <action name="actionPer_Pixel_Lit_Texture_Shader">
+   <property name="text">
+    <string>Per-Pixel Lit Texture Shader</string>
    </property>
   </action>
  </widget>

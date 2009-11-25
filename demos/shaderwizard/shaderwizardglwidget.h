@@ -116,7 +116,6 @@ private:
     void populateBezierData(float* dataArray, int width, int depth, float height);
     void setDefaultCamera(QGLGeometry* geometry);
 
-    QGLTexture2D texture;
     QGLGeometry *mGeometry;
 
     QGLBezierGeometry *bezierModel;
@@ -130,6 +129,8 @@ private:
     QGLLightModel *mLightModel;
     QGLMaterialParameters *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
+
+    QGLTexture2D *mTexture;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

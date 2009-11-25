@@ -172,6 +172,16 @@ void MainWindow::on_actionPer_Pixel_Lighting_Shader_triggered(bool)
     setShadersFromFiles("per_pixel_lighting.vsh","per_pixel_lighting.fsh");
 }
 
+void MainWindow::on_actionMinimal_Texture_Shader_triggered()
+{
+    setShadersFromFiles("minimal_texture_shader.vsh","minimal_texture_shader.fsh");
+}
+
+void MainWindow::on_actionPer_Pixel_Lit_Texture_Shader_triggered()
+{
+    setShadersFromFiles("per_pixel_texture.vsh","per_pixel_texture.fsh");
+}
+
 void MainWindow::on_actionLoad_From_File_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
@@ -182,6 +192,7 @@ void MainWindow::on_actionLoad_From_File_triggered()
     emit openFile(fileName);
     loadScene(fileName);
 }
+
 
 void MainWindow::setShadersFromFiles(QString vertexShaderFileName, QString fragmentShaderFileName)
 {
@@ -411,3 +422,5 @@ void MainWindow::recentFileActionTriggered()
     }
 
 };
+
+
