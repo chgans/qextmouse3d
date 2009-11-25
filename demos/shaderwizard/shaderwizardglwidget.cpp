@@ -172,7 +172,7 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 {
 
     painter->setColor(d->painterColor); // Nokia blue
-    painter->setClearColor(QColor(125,125,0,0));
+    painter->setClearColor(QColor(32, 32, 32, 0));
 //    painter->modelViewMatrix().push();
 //    painter->modelViewMatrix().scale(1.5f);
 //    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
