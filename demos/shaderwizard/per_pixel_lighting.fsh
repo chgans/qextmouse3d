@@ -23,7 +23,7 @@ varying highp vec4 qTexCoord1;
 void main(void)
 {
     vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );
-
+    qNormal = normalize(qNormal);
     float intensity =  max(dot(qNormal, qLightDirection), 0.0);
 
     if(intensity > 0.0)
