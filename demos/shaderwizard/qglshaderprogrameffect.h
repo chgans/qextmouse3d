@@ -78,6 +78,7 @@ protected:
     int lightDirectionUniform ;
     bool currentlyActive;
     bool textureAttributeSet;
+    int textureId;
     QGLShaderProgramEffectPrivate *d;
 
 };

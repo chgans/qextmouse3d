@@ -105,6 +105,7 @@ public slots:
     void setDiffuseMaterialColor( QColor color);
     void setSpecularMaterialColor ( QColor color );
     void setMaterialShininess(int shininess);
+    void setTextureImage(const QImage &image);
 
     void clearScene();
 

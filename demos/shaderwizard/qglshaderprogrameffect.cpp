@@ -126,13 +126,13 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     "    gl_FragColor = qAmbient + qDiffuse * intensity + specularComponent;\n"
     "};\n";
 
-char * foo =     "        float specularIntensity = max( dot(normalize(qNormal), qHalfVector), 0.0 );\n";
 QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
     , program(0)
     , colorUniform(-1)
     , matrixUniform(-1)
     , lightDirectionUniform(-1)
     , textureAttributeSet(false)
+    , textureId(0)
 {
 }
 
@@ -311,7 +311,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue("scm", material->specularColor());
         program->setUniformValue("ecm", material->emittedLight());
         program->setUniformValue("shininess", float(material->shininess()));
-        program->setUniformValue("texture", 0);
+        program->setUniformValue("texture", textureId);
     }
 }
 

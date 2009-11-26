@@ -97,11 +97,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->materialInspectorWidget, SIGNAL(diffuseColorChanged(QColor)), glDisplayWidget, SLOT(setDiffuseMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(specularColorChanged(QColor)), glDisplayWidget, SLOT(setSpecularMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(shininessChanged(int)), glDisplayWidget, SLOT(setMaterialShininess(int)));
+    connect(ui->materialInspectorWidget, SIGNAL(textureChanged(QImage)), glDisplayWidget, SLOT(setTextureImage(QImage)));
 
     ui->materialInspectorWidget->setAmbientColor(glDisplayWidget->ambientMaterialColor());
     ui->materialInspectorWidget->setDiffuseColor(glDisplayWidget->diffuseMaterialColor());
     ui->materialInspectorWidget->setSpecularColor(glDisplayWidget->specularMaterialColor());
     ui->materialInspectorWidget->setShininess(glDisplayWidget->materialShininess());
+    ui->materialInspectorWidget->setTexture(QImage(":/qtlogo.png"));
 
     readSettings();
 

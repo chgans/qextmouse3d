@@ -2,6 +2,10 @@
 #include "ui_materialinspector.h"
 
 #include <QColorDialog>
+#include <QImageReader>
+#include <QFileDialog>
+#include <QVBoxLayout>
+#include <QLabel>
 #include <QDebug>
 
 MaterialInspector::MaterialInspector(QWidget *parent) :
@@ -10,6 +14,7 @@ MaterialInspector::MaterialInspector(QWidget *parent) :
     , dialog(0)
     , target(NoTarget)
     , backupColor()
+    , textureLabel(new QLabel)
 {
     m_ui->setupUi(this);
     connect(m_ui->ambientButton, SIGNAL(clicked()), this, SLOT(ambientColorDialog()));
@@ -20,6 +25,11 @@ MaterialInspector::MaterialInspector(QWidget *parent) :
     connect(m_ui->shininessSlider, SIGNAL(valueChanged(int)), m_ui->shininessSpinBox, SLOT(setValue(int)));
     connect(m_ui->shininessSpinBox, SIGNAL(valueChanged(int)), m_ui->shininessSlider, SLOT(setValue(int)));
     connect(m_ui->shininessSpinBox, SIGNAL(valueChanged(int)), this, SIGNAL(shininessChanged(int)));
+
+    textureLabel->setScaledContents(true);
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget(textureLabel);
+    m_ui->textureButton->setLayout(layout);
 
     dialog = new QColorDialog();
     dialog->setOption(QColorDialog::ShowAlphaChannel, true);
@@ -93,10 +103,14 @@ void MaterialInspector::setShininess(int shininess)
     emit shininessChanged(shininess);
 }
 
+void MaterialInspector::setTexture(const QImage& image)
+{
+    textureLabel->setPixmap(QPixmap::fromImage(image));
+    emit textureChanged(image);
+}
 
 void MaterialInspector::on_textureButton_clicked(bool )
 {
-    qWarning() << "Texture inspection not yet implemented";
 }
 
 void MaterialInspector::ambientColorDialog()
@@ -156,7 +170,21 @@ void MaterialInspector::setColor(QColor color)
 
 void MaterialInspector::selectTexture()
 {
-    qWarning() << "select Texture not implemented yet";
+    QList<QByteArray> formats = QImageReader::supportedImageFormats();
+    QStringList supportedFormats;
+    QString format;
+    foreach (format, formats)
+        supportedFormats << "*." + format.toLower();
+
+    static QDir path  = QDir::homePath();
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Texture Image"),
+                            path.path(), tr("Images") + " ("+ supportedFormats.join(" ") + ")");
+    if (fileName.isEmpty())
+        return;
+
+    path = QDir(fileName);
+    setTexture(QImage(fileName));
+
 }
 
 void MaterialInspector::restoreColor()
