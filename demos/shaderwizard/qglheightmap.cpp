@@ -221,10 +221,10 @@ void QGLHeightMap::calculateVertexes()
     {
         for(int x = 0; x < d->xPoints - 1; x++)
         {
-            topLeftIndex = d->XYToIndex(x,y);
-            topRightIndex = d->XYToIndex(x + 1,y);
-            bottomLeftIndex = d->XYToIndex(x,y + 1);
-            bottomRightIndex = d->XYToIndex(x + 1, y + 1);
+            topLeftIndex = d->XYToIndex(x, y + 1);
+            topRightIndex = d->XYToIndex(x + 1, y + 1);
+            bottomLeftIndex = d->XYToIndex(x, y);
+            bottomRightIndex = d->XYToIndex(x + 1, y);
 
             // Add the two triangles that make up this quad to the index array
             indexArray.append(topLeftIndex, bottomLeftIndex, topRightIndex);
@@ -237,7 +237,7 @@ void QGLHeightMap::calculateVertexes()
             QVector3D bottomRightPos = positions.vector3DAt(bottomRightIndex, 0);
 
             QVector3D topLeftTriangleNormal =
-                QVector3D::crossProduct(
+                 -QVector3D::crossProduct(
                         // middle edge anticlockwise:
                         topRightPos - bottomLeftPos,
                         // left edge anticlockwise:
@@ -252,7 +252,7 @@ void QGLHeightMap::calculateVertexes()
                 normals.vector3DAt(bottomLeftIndex, 0) + topLeftTriangleNormal);
 
              QVector3D bottomRightTriangleNormal =
-                QVector3D::crossProduct(
+                -QVector3D::crossProduct(
                         // bottom edge anticlockwise:
                         bottomRightPos - bottomLeftPos,
                         // middle edge anticlockwise (reverse of other triangle):
