@@ -170,21 +170,22 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 {
-
-    painter->setColor(d->painterColor); // Nokia blue
+    painter->setColor(d->painterColor);
     painter->setClearColor(QColor(32, 32, 32, 0));
 //    painter->modelViewMatrix().push();
 //    painter->modelViewMatrix().scale(1.5f);
 //    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 //    painter->modelViewMatrix().translate(0.5f, 0.0f, -3.0f);
 
-    painter->setTexture(mTexture);
+    painter->setTexture(0, mTexture);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
     painter->setLightEnabled(0, true);
 
     if( d->effect && d->effect->isActive() )
+    {
         painter->setUserEffect(d->effect);
+    }
 
     if(mGeometry)
         mGeometry->draw(painter);
@@ -581,6 +582,11 @@ void ShaderWizardGLWidget::setMaterialShininess(int shininess)
 {
      mMaterial->setShininess(shininess);
     update();
+}
+
+void ShaderWizardGLWidget::setTextureImage(const QImage &image)
+{
+   mTexture->setImage(image);
 }
 
 QColor ShaderWizardGLWidget::painterColor() { return d->painterColor; }

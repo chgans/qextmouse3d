@@ -4,9 +4,11 @@
 #include <QtGui/QWidget>
 #include "qglmaterialparameters.h"
 #include <QPointer>
+#include <QDialog>
+
 class QPushButton;
 class QColorDialog;
-#include <QDialog>
+class QLabel;
 
 namespace Ui {
     class MaterialInspector;
@@ -32,6 +34,7 @@ public slots:
     void setDiffuseColor(QColor color);
     void setSpecularColor(QColor color);
     void setShininess(int shininess);
+    void setTexture(const QImage&);
 
      void colorDialog();
      void setTarget(SignalTarget target);
@@ -51,6 +54,7 @@ signals:
     void diffuseColorChanged(QColor color);
     void specularColorChanged(QColor color);
     void shininessChanged(int shininess);
+    void textureChanged(const QImage& image);
 
 protected:
     virtual void changeEvent(QEvent *e);
@@ -61,6 +65,8 @@ private:
     QColorDialog *dialog;
     SignalTarget target;
     QColor backupColor;
+    QLabel *textureLabel;
+
 
 private slots:
     void on_textureButton_clicked(bool checked);
