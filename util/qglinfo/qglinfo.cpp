@@ -1,52 +1,70 @@
-/****************************************************************************
-**
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
-** All rights reserved.
-** Contact: Nokia Corporation (qt-info@nokia.com)
-**
-** This file is part of the Qt3D module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** No Commercial Usage
-** This file contains pre-release code and may not be distributed.
-** You may use this file in accordance with the terms and conditions
-** contained in the Technology Preview License Agreement accompanying
-** this package.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** In addition, as a special exception, Nokia gives you certain additional
-** rights.  These rights are described in the Nokia Qt LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
-**
-** If you have questions regarding the use of this file, please contact
-** Nokia at qt-info@nokia.com.
-**
-**
-**
-**
-**
-**
-**
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+#include "qglinfo.h"
 
-#include <QApplication>
 #include <QtOpenGL/qgl.h>
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtOpenGL/qglshaderprogram.h>
-#include <stdio.h>
 
-static void printQtGLVersionInfo()
+#include <QtCore/qtimer.h>
+#include <QtCore/qdatetime.h>
+
+QGLInfo::QGLInfo(QObject *parent)
+    : QObject(parent)
+{
+    QTimer::singleShot(0, this, SLOT(initialize()));
+}
+
+static QString nice(const QString &s)
+{
+    QString r(s);
+    r.replace("\n", "<br>\n");
+    r.replace("true", "<span style=\"color: green\">true</span>");
+    r.replace("false", "<span style=\"color: red\">false</span>");
+    return r;
+}
+
+void QGLInfo::initialize()
+{
+    QWidget *win = qobject_cast<QGLWidget *>(parent());
+    // We need some kind of GL context to do the querying.
+    QGLWidget *glWidget = new QGLWidget(win);
+    glWidget->makeCurrent();
+    m_qtGLVersionInfo = reportQtGLVersionInfo();
+    m_qtGLFeatures = reportQtGLFeatures();
+    m_glVersionInfo = reportGLVersionInfo();
+    m_glExtensionInfo = reportGLExtensionInfo();
+    glWidget->doneCurrent();
+    delete glWidget;
+
+    QString html = tr("<h1>Qt GL Info Report</h1>"
+                      "<p>Generated at: %1</p>"
+                      "<h2>Qt GL Version Info</h2>"
+                      "<p>%2</p>"
+                      "<h2>Qt GL Features</h2>"
+                      "<p>%3</p>"
+                      "<h2>GL Version Info</h2>"
+                      "<p>%4</p>"
+                      "<h2>GL Extension Info</h2"
+                      "<p>%5</p>")
+            .arg(QDateTime::currentDateTime().toString())
+            .arg(nice(m_qtGLVersionInfo))
+            .arg(nice(m_qtGLFeatures))
+            .arg(nice(m_glVersionInfo))
+            .arg(nice(m_glExtensionInfo));
+    emit reportHtml(html);
+}
+
+QString QGLInfo::report() const
+{
+    QString report;
+    report += m_qtGLVersionInfo;
+    report += m_qtGLFeatures;
+    report += m_glVersionInfo;
+    report += m_glExtensionInfo;
+    return report;
+}
+
+QString QGLInfo::reportQtGLVersionInfo() const
 {
     // Dump what Qt thinks the version is.
     QGLFormat::OpenGLVersionFlags flags = QGLFormat::openGLVersionFlags();
@@ -92,43 +110,47 @@ static void printQtGLVersionInfo()
                QGLFormat::OpenGL_ES_Version_2_0);
     if (flags != 0)
         version += "Other=0x" + QByteArray::number(int(flags), 16);
-    printf("QGLFormat::openGLVersionFlags: %s\n", version.constData());
+    return QString("QGLFormat::openGLVersionFlags:") + version;
 }
 
-static void printBool(const char *tag, bool value)
+static QString printBool(const char *text, bool value)
 {
-    printf("%s: %s\n", tag, (value ? "yes" : "no"));
+    return QString(text) + (value ? "true\n" : "false\n");
 }
 
-static void printQtGLFeatures()
+QString QGLInfo::reportQtGLFeatures() const
 {
-    printBool("QGLFormat::hasOpenGL", QGLFormat::hasOpenGL());
-    printBool("QGLFormat::hasOpenGLOverlays", QGLFormat::hasOpenGLOverlays());
-    printBool("QGLPixelBuffer::hasOpenGLPbuffers", QGLPixelBuffer::hasOpenGLPbuffers());
-    printBool("QGLFramebufferObject::hasOpenGLFramebufferObjects",
+    QString d;
+    d += printBool("QGLFormat::hasOpenGL: ", QGLFormat::hasOpenGL());
+    d += printBool("QGLFormat::hasOpenGLOverlays: ", QGLFormat::hasOpenGLOverlays());
+    d += printBool("QGLPixelBuffer::hasOpenGLPbuffers: ", QGLPixelBuffer::hasOpenGLPbuffers());
+    d += printBool("QGLFramebufferObject::hasOpenGLFramebufferObjects: ",
               QGLFramebufferObject::hasOpenGLFramebufferObjects());
-    printBool("QGLFramebufferObject::hasOpenGLFramebufferBlit",
+    d += printBool("QGLFramebufferObject::hasOpenGLFramebufferBlit: ",
               QGLFramebufferObject::hasOpenGLFramebufferBlit());
 #if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
-    printBool("QGLShaderProgram::hasOpenGLShaderPrograms",
+    d += printBool("QGLShaderProgram::hasOpenGLShaderPrograms: ",
               QGLShaderProgram::hasOpenGLShaderPrograms());
 #endif
+    return d;
 }
 
-static void printGLVersionInfo()
+QString QGLInfo::reportGLVersionInfo() const
 {
-    printf("\n");
-    printf("OpenGL vendor string: %s\n",
-           reinterpret_cast<const char *>(glGetString(GL_VENDOR)));
-    printf("OpenGL renderer string: %s\n",
-           reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
-    printf("OpenGL version string: %s\n",
-           reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+    QString d;
+    d += "OpenGL vendor string:";
+    d += reinterpret_cast<const char *>(glGetString(GL_VENDOR));
+    d += "\n";
+    d += "OpenGL renderer string:";
+    d += reinterpret_cast<const char *>(glGetString(GL_RENDERER));
+    d += "OpenGL version string:";
+    d += reinterpret_cast<const char *>(glGetString(GL_VERSION));
+    return d;
 }
 
-static void printGLExtensionInfo()
+QString QGLInfo::reportGLExtensionInfo() const
 {
-    printf("OpenGL extensions:\n");
+    QString d("OpenGL extensions:\n");
     QByteArray extString
         (reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     QList<QByteArray> extns = extString.split(' ');
@@ -138,29 +160,13 @@ static void printGLExtensionInfo()
         if (extn.isEmpty())
             continue;
         if (!line.isEmpty() && (line.size() + extn.size() + 1) > 70) {
-            printf("    %s\n", line.constData());
+            d += "    " + line + "\n";
             line = QByteArray();
         }
         line += extn;
         line += char(' ');
     }
     if (!line.isEmpty())
-        printf("    %s\n", line.constData());
-}
-
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
-
-    // We need some kind of GL context to do the querying.
-    QGLWidget glWidget;
-    glWidget.makeCurrent();
-
-    printQtGLVersionInfo();
-    printQtGLFeatures();
-    printGLVersionInfo();
-    printGLExtensionInfo();
-
-    glWidget.doneCurrent();
-    return 0;
+        d += line + "\n";
+    return d;
 }
