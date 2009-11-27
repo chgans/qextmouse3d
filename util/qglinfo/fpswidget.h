@@ -14,7 +14,7 @@ public:
     ~FPSWidget();
     void initializeGL();
     void resizeGL(int, int);
-    void paintEvent(QPaintEvent *);
+    void paintGL();
 signals:
     void fps(int);
 private slots:
@@ -24,6 +24,9 @@ private:
     QTimer *timer;
     QTimer *goAwayTimer;
     int xrot, yrot, zrot;
+    int totElapsed;
+    int numFrameTime;
+    int totalFrameTime;
 };
 
 #endif // FPSWIDGET_H
