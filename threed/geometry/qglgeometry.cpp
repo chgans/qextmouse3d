@@ -40,13 +40,13 @@
 ****************************************************************************/
 
 #include "qglgeometry.h"
+#include "qglgeometry_p.h"
 #include "qglpainter.h"
 #include "qglmaterialparameters.h"
 #include "qglmaterialcollection.h"
 
 #include <QtCore/qlist.h>
 #include <QtCore/qpair.h>
-#include <QtCore/private/qobject_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -101,6 +101,7 @@ QT_BEGIN_NAMESPACE
     \sa QGLCube, QGLBezierGeometry
 */
 
+
 class QGLGeometryPrivate : public QObjectPrivate
 {
     Q_DECLARE_PUBLIC(QGLGeometry);
@@ -130,9 +131,16 @@ public:
     Constructs a new geometry object with the given \a parent.
 */
 QGLGeometry::QGLGeometry(QObject *parent)
-        : QObject(*new QGLGeometryPrivate(), parent)
+        : QObject(*new QGLGeometryPrivate, parent)
         , mMaterial(-1)
         , mPalette(0)
+{
+}
+
+QGLGeometry::QGLGeometry(QGLGeometryPrivate &dd, QObject *parent)
+    : QObject(dd, parent)
+    , mMaterial(-1)
+    , mPalette(0)
 {
 }
 
@@ -357,6 +365,7 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     d->modified = false;
 
     // Draw the geometry.
+    qDebug() << "QGLGeometry::draw() - indexes" << d->indexArray.size() << "start:" << start << "count:" << count;
     painter->setVertexArray(d->vertexArray);
     if (d->indexArray.isEmpty()) {
         if (count == 0)

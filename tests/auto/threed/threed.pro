@@ -13,4 +13,6 @@ SUBDIRS = \
     qglvertexdescription \
     qglgeometry \
     qglindexarray \
-    qglpainter
+    qglpainter \
+    qgldisplaylist \
+    qglsection

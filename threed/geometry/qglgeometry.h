@@ -90,6 +90,7 @@ public:
     inline void setPalette(QGLMaterialCollection *palette);
 
 protected:
+    QGLGeometry(QGLGeometryPrivate &, QObject *);
     virtual void draw(QGLPainter *painter, int start, int count);
     bool isModified() const;
 

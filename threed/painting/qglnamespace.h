@@ -119,6 +119,13 @@ namespace QGL
         ClearColorBuffer            = 0x4000    // GL_COLOR_BUFFER_BIT
     };
     Q_DECLARE_FLAGS(ClearBuffers, ClearBuffer)
+
+    enum Smoothing
+    {
+        Unspecified,
+        Smooth,
+        Faceted
+    };
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)
