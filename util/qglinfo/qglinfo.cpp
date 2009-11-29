@@ -44,7 +44,7 @@ void QGLInfo::initialize()
                       "<p>%3</p>"
                       "<h2>GL Version Info</h2>"
                       "<p>%4</p>"
-                      "<h2>GL Extension Info</h2"
+                      "<h2>GL Extension Info</h2>"
                       "<p>%5</p>")
             .arg(QDateTime::currentDateTime().toString())
             .arg(nice(m_qtGLVersionInfo))
@@ -58,8 +58,10 @@ QString QGLInfo::report() const
 {
     QString report;
     report += m_qtGLVersionInfo;
+    report += QChar('\n');
     report += m_qtGLFeatures;
     report += m_glVersionInfo;
+    report += tr("OpenGL extensions:\n");
     report += m_glExtensionInfo;
     return report;
 }
@@ -110,7 +112,7 @@ QString QGLInfo::reportQtGLVersionInfo() const
                QGLFormat::OpenGL_ES_Version_2_0);
     if (flags != 0)
         version += "Other=0x" + QByteArray::number(int(flags), 16);
-    return QString("QGLFormat::openGLVersionFlags:") + version;
+    return QString("QGLFormat::openGLVersionFlags: ") + version;
 }
 
 static QString printBool(const char *text, bool value)
@@ -138,19 +140,21 @@ QString QGLInfo::reportQtGLFeatures() const
 QString QGLInfo::reportGLVersionInfo() const
 {
     QString d;
-    d += "OpenGL vendor string:";
+    d += "OpenGL vendor string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_VENDOR));
     d += "\n";
-    d += "OpenGL renderer string:";
+    d += "OpenGL renderer string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_RENDERER));
-    d += "OpenGL version string:";
+    d += "\n";
+    d += "OpenGL version string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_VERSION));
+    d += "\n";
     return d;
 }
 
 QString QGLInfo::reportGLExtensionInfo() const
 {
-    QString d("OpenGL extensions:\n");
+    QString d;
     QByteArray extString
         (reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     QList<QByteArray> extns = extString.split(' ');
@@ -167,6 +171,6 @@ QString QGLInfo::reportGLExtensionInfo() const
         line += char(' ');
     }
     if (!line.isEmpty())
-        d += line + "\n";
+        d += "    " + line + "\n";
     return d;
 }
