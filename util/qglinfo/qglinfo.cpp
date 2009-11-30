@@ -8,6 +8,24 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 
+#if !defined(QT_NO_EGL)
+#include <QtGui/private/qegl_p.h>
+//#if defined(QT_GLES_EGL)
+//#include <GLES/egl.h>
+//#else
+//#include <EGL/egl.h>
+//#endif
+//#if !defined(EGL_VERSION_1_3) && !defined(QEGL_NATIVE_TYPES_DEFINED)
+//#undef EGLNativeWindowType
+//#undef EGLNativePixmapType
+//#undef EGLNativeDisplayType
+//typedef NativeWindowType EGLNativeWindowType;
+//typedef NativePixmapType EGLNativePixmapType;
+//typedef NativeDisplayType EGLNativeDisplayType;
+//#define QEGL_NATIVE_TYPES_DEFINED 1
+//#endif
+#endif
+
 QGLInfo::QGLInfo(QObject *parent)
     : QObject(parent)
 {
@@ -33,6 +51,8 @@ void QGLInfo::initialize()
     m_qtGLFeatures = reportQtGLFeatures();
     m_glVersionInfo = reportGLVersionInfo();
     m_glExtensionInfo = reportGLExtensionInfo();
+    m_eglVersionInfo = reportEGLVersionInfo();
+    m_eglExtensionInfo = reportEGLExtensionInfo();
     glWidget->doneCurrent();
     delete glWidget;
 
@@ -51,6 +71,14 @@ void QGLInfo::initialize()
             .arg(nice(m_qtGLFeatures))
             .arg(nice(m_glVersionInfo))
             .arg(nice(m_glExtensionInfo));
+#if !defined(QT_NO_EGL)
+    html += tr("<h2>EGL Version Info</h2>"
+               "<p>%1</p>"
+               "<h2>EGL Extension Info</h2>"
+               "<p>%2</p>")
+            .arg(nice(m_eglVersionInfo))
+            .arg(nice(m_eglExtensionInfo));
+#endif
     emit reportHtml(html);
 }
 
@@ -63,6 +91,11 @@ QString QGLInfo::report() const
     report += m_glVersionInfo;
     report += tr("OpenGL extensions:\n");
     report += m_glExtensionInfo;
+#if !defined(QT_NO_EGL)
+    report += m_eglVersionInfo;
+    report += tr("EGL extensions:\n");
+    report += m_eglExtensionInfo;
+#endif
     return report;
 }
 
@@ -154,9 +187,14 @@ QString QGLInfo::reportGLVersionInfo() const
 
 QString QGLInfo::reportGLExtensionInfo() const
 {
-    QString d;
     QByteArray extString
         (reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    return formatExtensions(extString);
+}
+
+QString QGLInfo::formatExtensions(const QByteArray& extString) const
+{
+    QString d;
     QList<QByteArray> extns = extString.split(' ');
     qSort(extns);
     QByteArray line;
@@ -173,4 +211,38 @@ QString QGLInfo::reportGLExtensionInfo() const
     if (!line.isEmpty())
         d += "    " + line + "\n";
     return d;
+}
+
+QString QGLInfo::reportEGLVersionInfo() const
+{
+#if !defined(QT_NO_EGL)
+    QString d;
+    EGLDisplay dpy = QEglContext::defaultDisplay(0);
+    d += "EGL vendor string: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_VENDOR));
+    d += "\n";
+    d += "EGL version string: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_VERSION));
+    d += "\n";
+#ifdef EGL_CLIENT_APIS
+    d += "EGL client API's: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_CLIENT_APIS));
+    d += "\n";
+#endif
+    return d;
+#else
+    return QString();
+#endif
+}
+
+QString QGLInfo::reportEGLExtensionInfo() const
+{
+#if !defined(QT_NO_EGL)
+    EGLDisplay dpy = QEglContext::defaultDisplay(0);
+    QByteArray extString
+        (reinterpret_cast<const char *>(eglQueryString(dpy, EGL_EXTENSIONS)));
+    return formatExtensions(extString);
+#else
+    return QString();
+#endif
 }
