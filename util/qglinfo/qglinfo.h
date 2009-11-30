@@ -22,6 +22,7 @@ private:
     QString reportGLExtensionInfo() const;
     QString reportEGLVersionInfo() const;
     QString reportEGLExtensionInfo() const;
+    QString reportEGLConfigInfo() const;
     QString formatExtensions(const QByteArray& extString) const;
 
     QString m_qtGLVersionInfo;
@@ -30,6 +31,7 @@ private:
     QString m_glExtensionInfo;
     QString m_eglVersionInfo;
     QString m_eglExtensionInfo;
+    QString m_eglConfigInfo;
 };
 
 #endif // QGLINFO_H
