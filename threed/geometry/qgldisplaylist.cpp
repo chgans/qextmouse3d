@@ -157,7 +157,7 @@ public:
     operator QVector3D () const;
     inline bool operator<(const QVector3DMapped &rhs) const;
     inline bool operator==(const QVector3D &rhs) const;
-    inline bool QVector3DMapped::findNormal(const QVector3D &norm,
+    inline bool findNormal(const QVector3D &norm,
                                             const VList &list) const;
     inline void appendNormal(int, QGLDisplayList::VectorArray *, QVector3DMapped::VList &);
 
@@ -263,21 +263,34 @@ inline void QVector3DMapped::appendNormal(int vec, QGLDisplayList::VectorArray *
 
 class QGLDisplayListPrivate : public QGLGeometryPrivate
 {
-    Q_DECLARE_PUBLIC(QGLDisplayList)
+    Q_DECLARE_PUBLIC(QGLDisplayList);
 public:
+    typedef QMap<QVector3DMapped, int> VecMap;
+    typedef QMap<QGLSection *, VecMap> DedupMap;
+
     QGLDisplayListPrivate(int version = QObjectPrivateVersion);
     ~QGLDisplayListPrivate();
     bool finalizeNeeded;
     bool loadNeeded;
     const QGLContext *context;
 
-    typedef QMap<QVector3DMapped, int> VecMap;
-    typedef QMap<QGLSection *, VecMap> DedupMap;
-    DedupMap dedupMap;
+    enum FillWhich {
+        FillNone      = 0x0,
+        FillNormals   = 0x1,
+        FillColors    = 0x2,
+        FillTextures  = 0x4
+    };
+    Q_DECLARE_FLAGS(FillWhichSet, FillWhich);
+
+    void fillArrays(FillWhichSet which);
     VecMap &getMap(QGLSection *s = 0);
     const VecMap &getMap(QGLSection *s = 0) const;
+
+    DedupMap dedupMap;
     QVector3DMapped::VList smoothedNormals;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLDisplayListPrivate::FillWhichSet)
 
 QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
     : QGLGeometryPrivate(version)
@@ -289,6 +302,37 @@ QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
 
 QGLDisplayListPrivate::~QGLDisplayListPrivate()
 {
+}
+
+/*!
+    \internal
+    Pads the arrays specified by \a which to allow for a new vertex which
+    has been just added.
+*/
+void QGLDisplayListPrivate::fillArrays(QGLDisplayListPrivate::FillWhichSet which)
+{
+    Q_Q(QGLDisplayList);
+    if (q->hasNormals() && (which & FillNormals))
+    {
+        if (q->m_normals.isEmpty())
+            q->m_normals.fill(QVector3D(), q->m_vertices.size());
+        while (q->m_normals.size() < q->m_vertices.size())
+            q->m_normals.append(QVector3D());
+    }
+    if (q->hasTexCoords() && (which & FillTextures))
+    {
+        if (q->m_texCoords.isEmpty())
+            q->m_texCoords.fill(QGLTextureSpecifier::InvalidTexCoord, q->m_vertices.size());
+        while (q->m_texCoords.size() < q->m_vertices.size())
+            q->m_texCoords.append(QGLTextureSpecifier::InvalidTexCoord);
+    }
+    if (q->hasColors() && (which & FillColors))
+    {
+        if (q->m_colors.isEmpty())
+            q->m_colors.fill(QColor4b(), q->m_vertices.size());
+        while (q->m_colors.size() < q->m_vertices.size())
+            q->m_colors.append(QColor4b());
+    }
 }
 
 /*!
@@ -360,7 +404,8 @@ void QGLDisplayList::draw(QGLPainter *painter)
     reallocations in underlying storage will need to be done if the \a n is close
     to the number of vertices actually stored.  If the approximate number of
     vertices to be stored in advance is known then calling this function can
-    improve perfomance during building of geometry.
+    improve perfomance during building of geometry.  When the finalize() method
+    is called, the display list will be squeezed down to just the storage required.
 */
 void QGLDisplayList::reserve(int n)
 {
@@ -606,36 +651,6 @@ QGLDisplayList::VectorArray QGLDisplayList::extrude(const QGLDisplayList::Vector
 }
 
 /*!
-    \internal
-    Pads the arrays specified by \a which to allow for a new vertex which
-    has been just added.
-*/
-void QGLDisplayList::fillArrays(QGLDisplayList::FillWhichSet which)
-{
-    if (m_hasNormals && (which & FillNormals))
-    {
-        if (m_normals.isEmpty())
-            m_normals.fill(QVector3D(), m_vertices.size());
-        else
-            m_normals.append(QVector3D());
-    }
-    if (m_hasTexCoords && (which & FillTextures))
-    {
-        if (m_texCoords.isEmpty())
-            m_texCoords.fill(QGLTextureSpecifier::InvalidTexCoord, m_vertices.size());
-        else
-            m_texCoords.append(QGLTextureSpecifier::InvalidTexCoord);
-    }
-    if (m_hasColors && (which & FillColors))
-    {
-        if (m_colors.isEmpty())
-            m_colors.fill(QColor4b(), m_vertices.size());
-        else
-            m_colors.append(QColor4b());
-    }
-}
-
-/*!
     Adds the vertex \a a to this display list, with the lighting normal \a n, and
     texture coordinate \a t.
 
@@ -677,7 +692,7 @@ void QGLDisplayList::appendSmooth(const QVector3D &a, const QVector3D &n, const 
         m.appendNormal(nix, &m_normals, d->smoothedNormals);
         setTexCoord(v, t);
         dd.insert(m, v);
-        fillArrays(FillColors);
+        d->fillArrays(QGLDisplayListPrivate::FillColors);
     }
     else
     {
@@ -748,7 +763,7 @@ void QGLDisplayList::appendFaceted(const QVector3D &a, const QVector3D &n, const
         m_vertices.append(a);
         m_normals.append(n);
         setTexCoord(v, t);
-        fillArrays(FillColors);
+        d->fillArrays(QGLDisplayListPrivate::FillColors);
         dd.insertMulti(&m_vertices[v], v);
     }
     m_indices.append(v);
@@ -785,7 +800,7 @@ void QGLDisplayList::appendColor(const QVector3D &a, const QColor4b &c, const QV
         m_vertices.append(a);
         m_colors.append(c);
         setTexCoord(v, t);
-        fillArrays(FillNormals);
+        d->fillArrays(QGLDisplayListPrivate::FillNormals);
     }
     m_indices.append(v);
     m_currentSection->m_count += 1;
@@ -810,7 +825,8 @@ void QGLDisplayList::append(const QVector3D &a, const QVector2D &t)
         v = m_vertices.count();
         m_vertices.append(a);
         setTexCoord(v, t);
-        fillArrays(FillColors | FillNormals);
+        d->fillArrays(QGLDisplayListPrivate::FillColors |
+                      QGLDisplayListPrivate::FillNormals);
         dd.insert(&m_vertices[v], v);
     }
     else
@@ -880,8 +896,7 @@ void QGLDisplayList::setNormal(int position, const QVector3D &n)
     Q_D(QGLDisplayList);
     if (!n.isNull())
     {
-        if (m_normals.isEmpty())
-            m_normals.fill(QVector3D(), m_vertices.size());
+        d->fillArrays(QGLDisplayListPrivate::FillNormals);
         m_normals[position] = n;
         d->finalizeNeeded = true;
         d->loadNeeded = true;
@@ -904,8 +919,7 @@ inline void QGLDisplayList::setTexCoord(int position, const QVector2D &t)
     Q_D(QGLDisplayList);
     if (t != QGLTextureSpecifier::InvalidTexCoord)
     {
-        if (m_texCoords.isEmpty())
-            m_texCoords.fill(QGLTextureSpecifier::InvalidTexCoord, m_vertices.size());
+        d->fillArrays(QGLDisplayListPrivate::FillTextures);
         m_texCoords[position] = t;
         m_hasTexCoords = true;
         d->finalizeNeeded = true;
@@ -924,8 +938,7 @@ inline void QGLDisplayList::setTexCoord(int position, const QVector2D &t)
 void QGLDisplayList::setColor(int position, const QColor4b &c)
 {
     Q_D(QGLDisplayList);
-    if (m_colors.isEmpty())
-        m_colors.fill(QColor4b(), m_vertices.size());
+    d->fillArrays(QGLDisplayListPrivate::FillColors);
     m_colors[position] = c;
     m_hasColors = true;
     d->finalizeNeeded = true;
@@ -973,10 +986,8 @@ int QGLDisplayList::updateTexCoord(int index, const QVector2D &t)
         {
             v = m_vertices.count();
             m_vertices.append(m_vertices[index]);
-            if (m_hasNormals)
-                m_normals.append(m_normals[index]);
-            if (m_hasColors)
-                m_colors.append(m_colors[index]);
+            d->fillArrays(QGLDisplayListPrivate::FillColors |
+                          QGLDisplayListPrivate::FillNormals);
             m_texCoords.append(t);
             d->getMap().insert(&m_vertices[index], v);
         }
@@ -1004,7 +1015,15 @@ void QGLDisplayList::finalize()
         QBox3D bb;
         for (int i = 0; i < m_vertices.count(); ++i)
             bb.expand(m_vertices.at(i));
+        d->fillArrays(QGLDisplayListPrivate::FillColors |
+                      QGLDisplayListPrivate::FillNormals |
+                      QGLDisplayListPrivate::FillTextures);
         setBoundingBox(bb);
+        m_vertices.squeeze();
+        m_normals.squeeze();
+        m_texCoords.squeeze();
+        m_colors.squeeze();
+        m_indices.squeeze();
         d->finalizeNeeded = false;
     }
 }

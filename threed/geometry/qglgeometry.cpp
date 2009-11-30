@@ -101,32 +101,6 @@ QT_BEGIN_NAMESPACE
     \sa QGLCube, QGLBezierGeometry
 */
 
-
-class QGLGeometryPrivate : public QObjectPrivate
-{
-    Q_DECLARE_PUBLIC(QGLGeometry);
-public:
-    QGLGeometryPrivate(int version = QObjectPrivateVersion)
-        : QObjectPrivate(version)
-        , drawingMode(QGL::NoDrawingMode)
-        , bufferThreshold(32)
-        , modified(false)
-        , uploadState(true)
-    {
-    }
-    ~QGLGeometryPrivate()
-    {
-    }
-
-    QGL::DrawingMode drawingMode;
-    QGLIndexArray indexArray;
-    QGLVertexArray vertexArray;
-    int bufferThreshold;
-    mutable bool modified;
-    bool uploadState;
-    QBox3D boundingBox;
-};
-
 /*!
     Constructs a new geometry object with the given \a parent.
 */

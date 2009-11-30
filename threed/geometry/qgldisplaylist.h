@@ -140,15 +140,6 @@ private:
     Q_DISABLE_COPY(QGLDisplayList);
 
     QGLVertexArray toVertexArray() const;
-    enum FillWhich {
-        FillNone      = 0x0,
-        FillNormals   = 0x1,
-        FillColors    = 0x2,
-        FillTextures  = 0x4
-    };
-    Q_DECLARE_FLAGS(FillWhichSet, FillWhich);
-    void fillArrays(FillWhichSet which);
-
     friend class QGLSection;
 
 #ifndef QT_NO_DEBUG_STREAM
@@ -168,7 +159,6 @@ private:
     QGLSection *m_currentSection;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGLDisplayList::FillWhichSet)
 
 inline QGLSection *QGLDisplayList::currentSection()
 {
