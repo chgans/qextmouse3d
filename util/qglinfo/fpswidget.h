@@ -2,11 +2,14 @@
 #define FPSWIDGET_H
 
 #include <QGLWidget>
+#if defined(QT_OPENGL_ES_2)
+#include <QtGui/qvector3d.h>
+#include <QtGui/qmatrix4x4.h>
+#include <QtOpenGL/qglshaderprogram.h>
+#endif
 
 class QTime;
 class QTimer;
-class QGLShaderProgram;
-class QMatrix4x4;
 
 class FPSWidget : public QGLWidget
 {
@@ -32,9 +35,9 @@ private:
 #if defined(QT_OPENGL_ES_2)
     void setupShaders();
 
-    QGLShaderProgram *program;
-    QMatrix4x4 *projection;
-    QMatrix4x4 *modelView;
+    QGLShaderProgram program;
+    QMatrix4x4 projection;
+    QMatrix4x4 modelView;
     int vertexAttr;
     int normalAttr;
     int matrixUniform;

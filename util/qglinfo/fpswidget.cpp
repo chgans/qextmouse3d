@@ -3,12 +3,6 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 
-#if defined(QT_OPENGL_ES_2)
-#include <QtGui/qvector3d.h>
-#include <QtGui/qmatrix4x4.h>
-#include <QtOpenGL/qglshaderprogram.h>
-#endif
-
 #include <QDebug>
 
 static GLfloat materialColor[] = { 0.1f, 0.85f, 0.25f, 1.0f };
@@ -72,9 +66,6 @@ FPSWidget::FPSWidget(QWidget *parent)
     , frameElapsed(0)
     , frameCount(0)
     , totalFrameTime(0)
-    , program(new QGLShaderProgram(this))
-    , projection(new QMatrix4x4())
-    , modelView(new QMatrix4x4())
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("Generating Frames/Second"));
@@ -127,16 +118,16 @@ void FPSWidget::setupShaders()
 
     qDebug() << "Fragment Shader Log\n===================\n" << fshader->log();
 
-    program->addShader(vshader);
-    program->addShader(fshader);
-    program->link();
+    program.addShader(vshader);
+    program.addShader(fshader);
+    program.link();
 
-    vertexAttr = program->attributeLocation("vertex");
-    normalAttr = program->attributeLocation("normal");
-    matrixUniform = program->uniformLocation("matrix");
-    materialUniform = program->uniformLocation("material");
+    vertexAttr = program.attributeLocation("vertex");
+    normalAttr = program.attributeLocation("normal");
+    matrixUniform = program.uniformLocation("matrix");
+    materialUniform = program.uniformLocation("material");
 
-    program->bind();
+    program.bind();
 }
 
 #endif
@@ -172,9 +163,9 @@ void FPSWidget::resizeGL(int w, int h)
 #if defined(QT_OPENGL_ES_1)
     glOrthof(-ws, ws, -hs, hs, -10.0f, 10.0f);
 #elif defined(QT_OPENGL_ES_2)
-    projection->setToIdentity();
-    projection->ortho(-ws, ws, -hs, hs, -10.0f, 10.0f);
-    qDebug() << "   projection->ortho(" << -ws << ", " << ws << ", " << -hs << ", " << hs << ", -10.0f, 10.0f)";
+    projection.setToIdentity();
+    projection.ortho(-ws, ws, -hs, hs, -10.0f, 10.0f);
+    qDebug() << "   projection.ortho(" << -ws << ", " << ws << ", " << -hs << ", " << hs << ", -10.0f, 10.0f)";
 #else
     glOrtho(-ws, ws, -hs, hs, -10.0f, 10.0f);
 #endif
@@ -200,20 +191,20 @@ void FPSWidget::paintGL()
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialColor);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialColor);
 #else
-    modelView->setToIdentity();
-    modelView->rotate(xrot, 1.0f, 0.0f, 0.0f);
-    modelView->rotate(yrot, 0.0f, 1.0f, 0.0f);
-    modelView->rotate(zrot, 0.0f, 0.0f, 1.0f);
-    program->setUniformValue(matrixUniform, *projection * *modelView);
+    modelView.setToIdentity();
+    modelView.rotate(xrot, 1.0f, 0.0f, 0.0f);
+    modelView.rotate(yrot, 0.0f, 1.0f, 0.0f);
+    modelView.rotate(zrot, 0.0f, 0.0f, 1.0f);
+    program.setUniformValue(matrixUniform, projection * modelView);
 
     QVector4D mat(materialColor[0], materialColor[1],
                   materialColor[2], materialColor[3]);
-    program->setUniformValue(materialUniform, mat);
+    program.setUniformValue(materialUniform, mat);
 
-    program->setAttributeArray(vertexAttr, cubeVertices, 3, 6 * sizeof(GLfloat));
-    program->setAttributeArray(normalAttr, cubeVertices+3, 3, 6 * sizeof(GLfloat));
-    program->enableAttributeArray(vertexAttr);
-    program->enableAttributeArray(normalAttr);
+    program.setAttributeArray(vertexAttr, cubeVertices, 3, 6 * sizeof(GLfloat));
+    program.setAttributeArray(normalAttr, cubeVertices+3, 3, 6 * sizeof(GLfloat));
+    program.enableAttributeArray(vertexAttr);
+    program.enableAttributeArray(normalAttr);
 #endif
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -222,8 +213,8 @@ void FPSWidget::paintGL()
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 #else
-    program->disableAttributeArray(vertexAttr);
-    program->disableAttributeArray(normalAttr);
+    program.disableAttributeArray(vertexAttr);
+    program.disableAttributeArray(normalAttr);
 #endif
 }
 
