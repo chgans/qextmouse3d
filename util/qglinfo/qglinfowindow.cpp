@@ -6,6 +6,7 @@
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qfiledialog.h>
+#include <QtGui/qfont.h>
 #include <QtCore/qdir.h>
 #include <QtCore/qfile.h>
 #include <QtCore/QTextStream>
@@ -30,6 +31,9 @@ QGLInfoWindow::QGLInfoWindow(QWidget *parent) :
                 this, SLOT(on_actionRun_FPS_Test_triggered()));
         connect(ui->saveAsPushButton, SIGNAL(clicked()),
                 this, SLOT(on_action_Save_As_triggered()));
+        QFont f = font();
+        f.setPointSize(f.pointSize() * 1.4);
+        setFont(f);
     }
     else
     {

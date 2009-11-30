@@ -5,6 +5,8 @@
 
 class QTime;
 class QTimer;
+class QGLShaderProgram;
+class QMatrix4x4;
 
 class FPSWidget : public QGLWidget
 {
@@ -24,9 +26,20 @@ private:
     QTimer *timer;
     QTimer *goAwayTimer;
     int xrot, yrot, zrot;
-    int totElapsed;
-    int numFrameTime;
+    int frameElapsed;
+    int frameCount;
     int totalFrameTime;
+#if defined(QT_OPENGL_ES_2)
+    void setupShaders();
+
+    QGLShaderProgram *program;
+    QMatrix4x4 *projection;
+    QMatrix4x4 *modelView;
+    int vertexAttr;
+    int normalAttr;
+    int matrixUniform;
+    int materialUniform;
+#endif
 };
 
 #endif // FPSWIDGET_H
