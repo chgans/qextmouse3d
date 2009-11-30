@@ -58,6 +58,7 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 FPSWidget::FPSWidget(QWidget *parent)
     : QGLWidget(parent)
     , time(new QTime())
+    , frameTime(new QTime())
     , timer(new QTimer(this))
     , goAwayTimer(new QTimer(this))
     , xrot(0)
@@ -70,6 +71,7 @@ FPSWidget::FPSWidget(QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("Generating Frames/Second"));
     time->start();
+    frameTime->start();
     connect(timer, SIGNAL(timeout()),
             this, SLOT(animate()));
     timer->start(0);   // call the animation as soon as we return to the event loop
@@ -216,6 +218,7 @@ void FPSWidget::paintGL()
     program.disableAttributeArray(vertexAttr);
     program.disableAttributeArray(normalAttr);
 #endif
+    QString framesPerSecond = QString("%1 fps").arg(1000.0f / ((qreal)totalFrameTime / (qreal)frameCount));
 }
 
 void FPSWidget::animate()
@@ -230,7 +233,7 @@ void FPSWidget::animate()
         {
             frameCount += 1;
             totalFrameTime += frameElapsed;
-            emit fps(1000 / (totalFrameTime / frameCount));
+            emit fps(1000.0f / ((qreal)frameTime->elapsed() / (qreal)frameCount));
             xrot = (xrot + adv) % 360;
             yrot = (xrot + adv) % 360;
             zrot = (xrot + adv) % 360;

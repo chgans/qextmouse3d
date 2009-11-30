@@ -96,9 +96,7 @@ void QGLInfoWindow::on_actionAbout_triggered()
 void QGLInfoWindow::on_actionRun_FPS_Test_triggered()
 {
     fps = new FPSWidget(0);
-    QRect r = rect();
-    r.setBottom(r.bottom() - 70);
-    fps->setGeometry(r);
+    fps->setGeometry(rect());
     fps->move(this->pos());
     connect(fps, SIGNAL(fps(int)),
             ui->fpsLcdNumber, SLOT(display(int)));

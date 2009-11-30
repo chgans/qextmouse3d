@@ -20,12 +20,16 @@ public:
     void initializeGL();
     void resizeGL(int, int);
     void paintGL();
+protected:
+    void keyPressEvent(QKeyEvent *) { close(); }
+    void mousePressEvent(QMouseEvent *) { close(); }
 signals:
     void fps(int);
 private slots:
     void animate();
 private:
     QTime *time;
+    QTime *frameTime;
     QTimer *timer;
     QTimer *goAwayTimer;
     int xrot, yrot, zrot;
