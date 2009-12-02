@@ -112,13 +112,25 @@ enum QGLImageFormat
 
 static void qt_gl_flip_image(QImage& img)
 {
-    int ipl = img.bytesPerLine() / sizeof(int);
-    int h = img.height();
-    for (int y=0; y<h/2; ++y) {
-        int *a = (int *) img.scanLine(y);
-        int *b = (int *) img.scanLine(h - y - 1);
-        for (int x=0; x<ipl; ++x)
-            qSwap(a[x], b[x]);
+    if (img.isDetached()) {
+        // Swap the lines in-place.
+        int ipl = img.bytesPerLine() / sizeof(int);
+        int h = img.height();
+        for (int y=0; y<h/2; ++y) {
+            int *a = (int *) img.scanLine(y);
+            int *b = (int *) img.scanLine(h - y - 1);
+            for (int x=ipl; x>0; --x) {
+                int t = *a;
+                *a++ = *b;
+                *b++ = t;
+            }
+        }
+    } else {
+        // Create a new image and copy across.  If we use the
+        // above in-place code then a full copy of the image is
+        // made before the lines are swapped, which processes the
+        // data twice.  This version should only do it once.
+        img = img.mirrored();
     }
 }
 
