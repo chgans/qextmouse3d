@@ -253,6 +253,8 @@ public:
 private slots:
     void convertToTexture_data();
     void convertToTexture();
+    void convertPerformance_data();
+    void convertPerformance();
 
 private:
     QImage image1;
@@ -471,6 +473,80 @@ void tst_BindTexture::compareImages
                 QVERIFY(imgpix == respix);
             }
         }
+    }
+}
+
+void tst_BindTexture::convertPerformance_data()
+{
+    QTest::addColumn<int>("qimageFormat");
+    QTest::addColumn<int>("glimageFormat");
+
+    QTest::newRow("ARGB32 -> BGRA8")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8);
+
+    QTest::newRow("ARGB32 -> BGRA8 [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8 | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> BGRA8_Premul")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8_Premul);
+
+    QTest::newRow("ARGB32 -> BGRA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32_Premul -> BGRA8_Premul")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_BGRA8_Premul);
+
+    QTest::newRow("ARGB32_Premul -> BGRA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_BGRA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> RGBA8")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8);
+
+    QTest::newRow("ARGB32 -> RGBA8 [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8 | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> RGBA8_Premul")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8_Premul);
+
+    QTest::newRow("ARGB32 -> RGBA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32_Premul -> RGBA8_Premul")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_RGBA8_Premul);
+
+    QTest::newRow("ARGB32_Premul -> RGBA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_RGBA8_Premul | QGLI_Flip);
+
+    QTest::newRow("RGB16 -> RGB565")
+        << int(QImage::Format_RGB16)
+        << int(QGLI_RGB565);
+
+    QTest::newRow("RGB16 -> RGB565 [Flip]")
+        << int(QImage::Format_RGB16)
+        << int(QGLI_RGB565 | QGLI_Flip);
+}
+
+void tst_BindTexture::convertPerformance()
+{
+    QFETCH(int, qimageFormat);
+    QFETCH(int, glimageFormat);
+
+    QImage img = image1.convertToFormat(QImage::Format(qimageFormat));
+
+    QBENCHMARK {
+        qt_gl_convert_image_to_gl(img, QGLImageFormat(glimageFormat));
     }
 }
 
