@@ -43,6 +43,7 @@
 #define QGLTEXTURESPECIFIER_H
 
 #include "qt3dglobal.h"
+#include "qlogicalvertex.h"
 
 #include <QtCore/qrect.h>
 #include <QtGui/qvector2d.h>
@@ -56,9 +57,6 @@ QT_MODULE(Qt3d)
 class Q_QT3D_EXPORT QGLTextureSpecifier
 {
 public:
-    static const qreal InvalidTexValue;
-    static const QVector2D InvalidTexCoord;
-
     QGLTextureSpecifier();
     QGLTextureSpecifier(qreal left, qreal bottom,
                                qreal width, qreal height);
@@ -148,8 +146,10 @@ inline void QGLTextureSpecifier::setTopRight(const QVector2D &v)
 
 inline bool QGLTextureSpecifier::isNull() const
 {
-    return m_bl == InvalidTexCoord && m_br == InvalidTexCoord &&
-            m_tr == InvalidTexCoord && m_tl == InvalidTexCoord;
+    return m_bl == QLogicalVertex::InvalidTexCoord &&
+            m_br == QLogicalVertex::InvalidTexCoord &&
+            m_tr == QLogicalVertex::InvalidTexCoord &&
+            m_tl == QLogicalVertex::InvalidTexCoord;
 }
 
 inline void QGLTextureSpecifier::startTileRight(qreal divisor)

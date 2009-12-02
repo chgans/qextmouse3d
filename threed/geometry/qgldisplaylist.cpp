@@ -43,12 +43,8 @@
 #include "qglsection.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
-#include "qglgeometry_p.h"
+#include "qgldisplaylist_p.h"
 
-#include <QtCore/qobject.h>
-#include <QtCore/qobjectdefs.h>
-#include <QtCore/private/qobject_p.h>
-#include <QtCore/qmap.h>
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
 
@@ -145,153 +141,6 @@
     \sa QGLSection
 */
 
-class QVector3DMapped
-{
-public:
-    typedef QVector<QVector3DMapped> VList;
-
-    QVector3DMapped(int v = -1, QGLDisplayList::VectorArray *sto = 0);
-    QVector3DMapped(const QVector3D* vec);
-    ~QVector3DMapped();
-    inline bool isNull() const;
-    operator QVector3D () const;
-    inline bool operator<(const QVector3DMapped &rhs) const;
-    inline bool operator==(const QVector3D &rhs) const;
-    inline bool findNormal(const QVector3D &norm,
-                                            const VList &list) const;
-    inline void appendNormal(int, QGLDisplayList::VectorArray *, QVector3DMapped::VList &);
-
-    QString toString() const {
-        const QVector3D &v = vecPtr ? *vecPtr : store->at(vecIx);
-        QString vs = QString("QVector3D( %1, %2, %3 )").arg(v.x()).arg(v.y()).arg(v.z());
-        return vs + "\n" + QString("[QVector3DMapped - vecIx: %1 - vecPtr: %2 - normPtr: %3 - store %4]\n").arg(vecIx).arg((int)vecPtr).arg(normPtr).arg((int)store);
-    }
-
-//private:
-    int vecIx;
-    const QVector3D *vecPtr;
-    int normPtr;
-    QGLDisplayList::VectorArray *store;
-};
-
-inline bool QVector3DMapped::isNull() const
-{
-    return (vecPtr == NULL) && ((vecIx < 0) || (store == NULL));
-}
-
-QVector3DMapped::QVector3DMapped(int v, QGLDisplayList::VectorArray *sto)
-    : vecIx(v)
-    , vecPtr(0)
-    , normPtr(-1)
-    , store(sto)
-{
-}
-
-QVector3DMapped::QVector3DMapped(const QVector3D* vec)
-    : vecIx(-1)
-    , vecPtr(vec)
-    , normPtr(-1)
-    , store(0)
-{
-}
-
-QVector3DMapped::~QVector3DMapped()
-{
-}
-
-QVector3DMapped::operator QVector3D () const
-{
-    Q_ASSERT(!isNull());
-    return vecPtr ? *vecPtr : store->at(vecIx);
-}
-
-inline bool QVector3DMapped::operator<(const QVector3DMapped &rhs) const
-{
-    Q_ASSERT(!isNull());
-    Q_ASSERT(!rhs.isNull());
-    const QVector3D &a = vecPtr ? *vecPtr : store->at(vecIx);
-    const QVector3D &b = rhs.vecPtr ? *rhs.vecPtr : rhs.store->at(rhs.vecIx);
-    if (qFuzzyCompare(a.x(), b.x()))
-    {
-        if (qFuzzyCompare(a.y(), b.y()))
-        {
-            if (qFuzzyCompare(a.z(), b.z()))
-            {
-                return false;
-            }
-            else
-            {
-                return a.z() < b.z();
-            }
-        }
-        else
-        {
-            return a.y() < b.y();
-        }
-    }
-    else
-    {
-        return a.x() < b.x();
-    }
-}
-
-inline bool QVector3DMapped::operator==(const QVector3D &rhs) const
-{
-    Q_ASSERT(!isNull());
-    Q_ASSERT(!rhs.isNull());
-    const QVector3D &a = vecPtr ? *vecPtr : store->at(vecIx);
-    return qFuzzyCompare(a, rhs);
-}
-
-inline bool QVector3DMapped::findNormal(const QVector3D &norm,
-                                       const QVector3DMapped::VList &list) const
-{
-    const QVector3DMapped *nx = this;
-    for ( ; nx->normPtr != -1; nx = &(list[nx->normPtr]))
-        if (qFuzzyCompare(norm, list[nx->normPtr]))
-            return true;
-    return false;
-}
-
-inline void QVector3DMapped::appendNormal(int vec, QGLDisplayList::VectorArray *normals, QVector3DMapped::VList &list)
-{
-    QVector3DMapped &nx = *this;
-    for ( ; nx.normPtr != -1; nx = list[nx.normPtr]) {}
-    nx.normPtr = list.count();
-    list.append(QVector3DMapped(vec, normals));
-}
-
-class QGLDisplayListPrivate : public QGLGeometryPrivate
-{
-    Q_DECLARE_PUBLIC(QGLDisplayList);
-public:
-    typedef QMap<QVector3DMapped, int> VecMap;
-    typedef QMap<QGLSection *, VecMap> DedupMap;
-
-    QGLDisplayListPrivate(int version = QObjectPrivateVersion);
-    ~QGLDisplayListPrivate();
-    bool finalizeNeeded;
-    bool loadNeeded;
-    const QGLContext *context;
-
-    enum FillWhich {
-        FillNone      = 0x0,
-        FillNormals   = 0x1,
-        FillColors    = 0x2,
-        FillTextures  = 0x4
-    };
-    Q_DECLARE_FLAGS(FillWhichSet, FillWhich);
-
-    void fillArrays(FillWhichSet which);
-    VecMap &getMap(QGLSection *s = 0);
-    const VecMap &getMap(QGLSection *s = 0) const;
-
-    DedupMap dedupMap;
-    QVector3DMapped::VList smoothedNormals;
-};
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGLDisplayListPrivate::FillWhichSet)
-
 QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
     : QGLGeometryPrivate(version)
     , finalizeNeeded(true)
@@ -305,72 +154,11 @@ QGLDisplayListPrivate::~QGLDisplayListPrivate()
 }
 
 /*!
-    \internal
-    Pads the arrays specified by \a which to allow for a new vertex which
-    has been just added.
-*/
-void QGLDisplayListPrivate::fillArrays(QGLDisplayListPrivate::FillWhichSet which)
-{
-    Q_Q(QGLDisplayList);
-    if (q->hasNormals() && (which & FillNormals))
-    {
-        if (q->m_normals.isEmpty())
-            q->m_normals.fill(QVector3D(), q->m_vertices.size());
-        while (q->m_normals.size() < q->m_vertices.size())
-            q->m_normals.append(QVector3D());
-    }
-    if (q->hasTexCoords() && (which & FillTextures))
-    {
-        if (q->m_texCoords.isEmpty())
-            q->m_texCoords.fill(QGLTextureSpecifier::InvalidTexCoord, q->m_vertices.size());
-        while (q->m_texCoords.size() < q->m_vertices.size())
-            q->m_texCoords.append(QGLTextureSpecifier::InvalidTexCoord);
-    }
-    if (q->hasColors() && (which & FillColors))
-    {
-        if (q->m_colors.isEmpty())
-            q->m_colors.fill(QColor4b(), q->m_vertices.size());
-        while (q->m_colors.size() < q->m_vertices.size())
-            q->m_colors.append(QColor4b());
-    }
-}
-
-/*!
-    \internal
-    Returns a reference to the dedup map for the given section \a s, or if
-    \a s is null (the default), the current section.
-*/
-QGLDisplayListPrivate::VecMap &QGLDisplayListPrivate::getMap(QGLSection *s)
-{
-    Q_Q(QGLDisplayList);
-    Q_ASSERT(s || q->m_currentSection);
-    DedupMap::iterator section = s ? dedupMap.find(s) : dedupMap.find(q->m_currentSection);
-    Q_ASSERT(section != dedupMap.end());
-    return section.value();
-}
-
-/*!
-    \internal
-    \overload
-*/
-const QGLDisplayListPrivate::VecMap &QGLDisplayListPrivate::getMap(QGLSection *s) const
-{
-    Q_Q(const QGLDisplayList);
-    Q_ASSERT(s || q->m_currentSection);
-    DedupMap::const_iterator section = s ? dedupMap.constFind(s) : dedupMap.constFind(q->m_currentSection);
-    Q_ASSERT(section != dedupMap.constEnd());
-    return section.value();
-}
-
-/*!
     Construct a new QGLDisplayList with \a materials and \a parent.  If the
     \a materials argument is null, then a new collection is created internally.
 */
 QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials)
     : QGLGeometry(*new QGLDisplayListPrivate, parent)
-    , m_hasColors(false)
-    , m_hasNormals(false)
-    , m_hasTexCoords(false)
     , m_materials(materials)
 {
     if (!m_materials)
@@ -396,29 +184,6 @@ void QGLDisplayList::draw(QGLPainter *painter)
     loadArrays(painter);
     for (int i = 0; i < m_sections.count(); ++i)
         m_sections[i]->draw(painter);
-}
-
-/*!
-    Reserves space in this display list for \a n vertices.  The sole purpose
-    of this function is to fine tune the display lists memory management - fewer
-    reallocations in underlying storage will need to be done if the \a n is close
-    to the number of vertices actually stored.  If the approximate number of
-    vertices to be stored in advance is known then calling this function can
-    improve perfomance during building of geometry.  When the finalize() method
-    is called, the display list will be squeezed down to just the storage required.
-*/
-void QGLDisplayList::reserve(int n)
-{
-    if (m_vertices.capacity() < n)
-        m_vertices.reserve(n);
-    if (m_indices.capacity() < (n * 3))
-        m_indices.reserve(n * 3);
-    if (m_hasColors && m_colors.capacity() < n)
-        m_colors.reserve(n);
-    if (m_hasTexCoords && m_texCoords.capacity() < n)
-        m_texCoords.reserve(n);
-    if (m_hasNormals && m_normals.capacity() < n)
-        m_normals.reserve(n);
 }
 
 /*!
@@ -456,21 +221,13 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     QVector3D norm = n;
     if (norm.isNull())
         norm = QVector3D::normal(a, b, c);
-    if (!textureModel.isNull())
-        m_hasTexCoords = true;
-    qDebug() << "Adding triangle:" << a << b << c << " - normal:" << n << "tex:" << textureModel.topLeft() << "-" << textureModel.bottomRight();
-    if (m_currentSection->smoothing() == QGL::Smooth)
-    {
-        appendSmooth(a, norm, textureModel.bottomLeft());
-        appendSmooth(b, norm, inverted ? textureModel.topRight() : textureModel.bottomRight());
-        appendSmooth(c, norm, inverted ? textureModel.topLeft() : textureModel.topRight());
-    }
-    else
-    {
-        appendFaceted(a, norm, textureModel.bottomLeft());
-        appendFaceted(b, norm, inverted ? textureModel.topRight() : textureModel.bottomRight());
-        appendFaceted(c, norm, inverted ? textureModel.topLeft() : textureModel.topRight());
-    }
+    qDebug() << "Adding triangle:" << a << b << c << " - normal:"
+            << n << "tex:" << textureModel.topLeft() << "-" << textureModel.bottomRight();
+    m_currentSection->append(a, norm, textureModel.bottomLeft());
+    m_currentSection->append(b, norm, inverted
+                             ? textureModel.topRight() : textureModel.bottomRight());
+    m_currentSection->append(c, norm, inverted
+                             ? textureModel.topLeft() : textureModel.topRight());
 }
 
 /*!
@@ -538,7 +295,7 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     is non-null.
 */
 void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
-                                         const QGLDisplayList::VectorArray &edges,
+                                         const QGeometryData::VectorArray &edges,
                                          const QGLTextureSpecifier &textureModel)
 {
     Q_ASSERT(edges.count() > 1);
@@ -650,353 +407,6 @@ QGLDisplayList::VectorArray QGLDisplayList::extrude(const QGLDisplayList::Vector
     return temp;
 }
 
-/*!
-    Adds the vertex \a a to this display list, with the lighting normal \a n, and
-    texture coordinate \a t.
-
-    The vertex will be drawn as part of a smooth continuous surface, with
-    no distinct edge.  To acheive this, duplicates of vertex \a a are
-    coalesced into one vertex (within the current section).  This one vertex
-    has a normal set to the average of supplied normals.
-
-    Call this method to add the vertices of a smooth face to the display
-    list, or preferably use:
-
-    \code
-    myDisplayList->openSection(QGLDisplayList::Smooth);
-    myDisplayList->addTriangle(a, b, c);
-    \endcode
-
-    In smooth surfaces, the vertex and its normal is only sent to the
-    graphics hardware once (not once per face), thus smooth geometry may
-    consume fewer resources.
-
-    \sa appendFaceted(), openSection()
-*/
-void QGLDisplayList::appendSmooth(const QVector3D &a, const QVector3D &n, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    int v;
-    if (!m_currentSection)
-        newSection();
-    QGLDisplayListPrivate::VecMap &dd = d->getMap();
-    QGLDisplayListPrivate::VecMap::iterator it = dd.find(QVector3DMapped(&a));
-    if (it == dd.end())
-    {
-        v = m_vertices.count();
-        m_vertices.append(a);
-        qDebug() << a << "not found, adding at" << v << "here";
-        int nix = m_normals.count();
-        m_normals.append(n);
-        QVector3DMapped m(v, &m_vertices);
-        m.appendNormal(nix, &m_normals, d->smoothedNormals);
-        setTexCoord(v, t);
-        dd.insert(m, v);
-        d->fillArrays(QGLDisplayListPrivate::FillColors);
-    }
-    else
-    {
-        v = it.value();
-        qDebug() << a << "found at" << v;
-        int ix = updateTexCoord(v, t);
-        if (ix != -1)
-            v = ix;
-        if (ix != -1)
-            qDebug() << "after updating tex coord" << t;
-        QVector3DMapped &vm = const_cast<QVector3DMapped&>(it.key());
-        if (!vm.findNormal(n, d->smoothedNormals))
-        {
-            for ( ; it != dd.end() && it.key() == a; ++it)
-                m_normals[it.value()] += n;
-            vm.appendNormal(v, &m_normals, d->smoothedNormals);
-        }
-    }
-    m_indices.append(v);
-    m_currentSection->m_count += 1;
-    m_hasNormals = true;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Add the vertex \a a to this display list, with the lighting normal \a n, and
-    texture coordinate \a t.
-
-    The vertex will be drawn as a distinct edge, instead of just part of a
-    continuous smooth surface.  To acheive this a duplicate of \a a is
-    added for each normal \a n (in the current section).
-
-    Call this method to add the vertices of a faceted face to the display
-    list, or preferably use:
-
-    \code
-    myDisplayList->openSection(QGLDisplayList::Faceted);
-    myDisplayList->addTriangle(a, b, c);
-    \endcode
-
-    In faceted surfaces, the vertex is sent to the graphics hardware once for
-    each normal it has, and thus may consume more resources.
-
-    \sa appendSmooth()
-*/
-void QGLDisplayList::appendFaceted(const QVector3D &a, const QVector3D &n, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    int v;
-    if (!m_currentSection)
-        newSection();
-    QGLDisplayListPrivate::VecMap &dd = d->getMap();
-    QGLDisplayListPrivate::VecMap::const_iterator it = dd.constFind(&a);
-    for ( ; it != dd.constEnd() && it.key() == a; ++it)
-        if (qFuzzyCompare(m_normals[it.value()], n))
-            break;
-    if (it != dd.constEnd() && it.key() == a) // found
-    {
-        v = it.value();
-        int ix = updateTexCoord(v, t);
-        if (ix != -1)
-            v = ix;
-    }
-    else
-    {
-        v = m_vertices.count();
-        m_vertices.append(a);
-        m_normals.append(n);
-        setTexCoord(v, t);
-        d->fillArrays(QGLDisplayListPrivate::FillColors);
-        dd.insertMulti(&m_vertices[v], v);
-    }
-    m_indices.append(v);
-    m_currentSection->m_count += 1;
-    m_hasNormals = true;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Add the vertex \a a to this display list, with the flat color \a c.
-*/
-void QGLDisplayList::appendColor(const QVector3D &a, const QColor4b &c, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    int v;
-    if (!m_currentSection)
-        newSection();
-    QGLDisplayListPrivate::VecMap &dd = d->getMap();
-    QGLDisplayListPrivate::VecMap::const_iterator it = dd.constFind(&a);
-    for ( ; it != dd.constEnd() && it.key() == a; ++it)
-        if (m_colors[it.value()] == c)
-            break;
-    if (it != dd.constEnd() && it.key() == a) // found
-    {
-        v = it.value();
-        int ix = updateTexCoord(v, t);
-        if (ix != -1)
-            v = ix;
-    }
-    else
-    {
-        v = m_vertices.count();
-        m_vertices.append(a);
-        m_colors.append(c);
-        setTexCoord(v, t);
-        d->fillArrays(QGLDisplayListPrivate::FillNormals);
-    }
-    m_indices.append(v);
-    m_currentSection->m_count += 1;
-    m_hasColors = true;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Add the vertex \a a to this display list.
-*/
-void QGLDisplayList::append(const QVector3D &a, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    int v;
-    if (!m_currentSection)
-        newSection();
-    QGLDisplayListPrivate::VecMap &dd = d->getMap();
-    QGLDisplayListPrivate::VecMap::const_iterator it = dd.constFind(&a);
-    if (it == dd.constEnd())
-    {
-        v = m_vertices.count();
-        m_vertices.append(a);
-        setTexCoord(v, t);
-        d->fillArrays(QGLDisplayListPrivate::FillColors |
-                      QGLDisplayListPrivate::FillNormals);
-        dd.insert(&m_vertices[v], v);
-    }
-    else
-    {
-        v = it.value();
-        int ix = updateTexCoord(v, t);
-        if (ix != -1)
-            v = ix;
-    }
-    m_indices.append(v);
-    m_currentSection->m_count += 1;
-    m_hasNormals = true;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Returns the position of the first vertex matching \a in the given \a section,
-    or if \a section is null (the defaut) in the current section.  If no such
-    matching vertex is found, returns -1.
-*/
-int QGLDisplayList::indexOf(const QVector3D &a, QGLSection *section) const
-{
-    Q_D(const QGLDisplayList);
-    int v;
-    if (!m_currentSection && !section)
-        return -1;
-    const QGLDisplayListPrivate::VecMap &dd = d->getMap(section);
-    QGLDisplayListPrivate::VecMap::const_iterator it = dd.constFind(&a);
-    if (it == dd.constEnd())
-        v = -1;
-    else
-        v = it.value();
-    return v;
-}
-
-
-/*!
-    Sets the vertex at \a position to have coordinates \a v.
-
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-void QGLDisplayList::setVertex(int position, const QVector3D &v)
-{
-    Q_D(QGLDisplayList);
-    m_vertices[position] = v;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Sets the vertex normal at \a position to have value \a n.
-
-    If \a n is a null vector, in other words an invalid normals, then this
-    function does nothing.
-
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-void QGLDisplayList::setNormal(int position, const QVector3D &n)
-{
-    Q_D(QGLDisplayList);
-    if (!n.isNull())
-    {
-        d->fillArrays(QGLDisplayListPrivate::FillNormals);
-        m_normals[position] = n;
-        d->finalizeNeeded = true;
-        d->loadNeeded = true;
-    }
-}
-
-/*!
-    Sets the vertex at \a position to have texture coordinate value \a t.
-
-    If \a t is equal to QGLTextureSpecifier::InvalidTexCoord then this
-    function does nothing.
-
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
-
-    \sa updateTexCoord()
-*/
-inline void QGLDisplayList::setTexCoord(int position, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    if (t != QGLTextureSpecifier::InvalidTexCoord)
-    {
-        d->fillArrays(QGLDisplayListPrivate::FillTextures);
-        m_texCoords[position] = t;
-        m_hasTexCoords = true;
-        d->finalizeNeeded = true;
-        d->loadNeeded = true;
-    }
-}
-
-/*!
-    Sets the vertex color at \a position to have value \a c.
-
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
-
-    \sa appendColor()
-*/
-void QGLDisplayList::setColor(int position, const QColor4b &c)
-{
-    Q_D(QGLDisplayList);
-    d->fillArrays(QGLDisplayListPrivate::FillColors);
-    m_colors[position] = c;
-    m_hasColors = true;
-    d->finalizeNeeded = true;
-    d->loadNeeded = true;
-}
-
-/*!
-    Updates texture data at \a position to include value \a t.
-
-    If no texture has been set at \a position then the effect is the same
-    as setTexCoord().
-
-    If \a t is QGLTextureSpecifier::InvalidTexCoord this function does
-    nothing and returns -1.
-
-    If the vertex at \a position is equal to \a t, then this function does
-    nothing and returns -1.
-
-    If the vertex at \a position already has texture coordinates set, then
-    a duplicate of the vertex is added, to carry the additional texture
-    coordinates.
-
-    Two or more texture coordinates for one logical vertex occurs where a texture
-    is split, or wraps around an object and thus a line of vertices on
-    the object forms a "seam".
-
-    Returns the index of the vertex that received the texture coordinate
-    \a t, which will be either \a index, in the simple case, or a new index
-    in the case of a seam.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-int QGLDisplayList::updateTexCoord(int index, const QVector2D &t)
-{
-    Q_D(QGLDisplayList);
-    int v = -1;
-    if (t != QGLTextureSpecifier::InvalidTexCoord  && t != m_texCoords[index])
-    {
-        if (m_texCoords[index] == QGLTextureSpecifier::InvalidTexCoord)
-        {
-            v = index;
-            m_texCoords[index] = t;
-        }
-        else
-        {
-            v = m_vertices.count();
-            m_vertices.append(m_vertices[index]);
-            d->fillArrays(QGLDisplayListPrivate::FillColors |
-                          QGLDisplayListPrivate::FillNormals);
-            m_texCoords.append(t);
-            d->getMap().insert(&m_vertices[index], v);
-        }
-        m_hasTexCoords = true;
-        d->finalizeNeeded = true;
-        d->loadNeeded = true;
-    }
-    return v;
-}
 
 /*!
     Finish the building of this display list and optimize it for
@@ -1073,7 +483,6 @@ void QGLDisplayList::addSection(QGLSection *sec)
 {
     Q_D(QGLDisplayList);
     m_currentSection = sec;
-    d->dedupMap.insert(sec, QGLDisplayListPrivate::VecMap());
     m_sections.append(sec);
 }
 
@@ -1081,26 +490,6 @@ void QGLDisplayList::addSection(QGLSection *sec)
     \fn QList<QGLSection*> &QGLDisplayList::sections()
     Returns a list of the sectiones of the geometry in this display list
     as a QList of QGLSection instances.
-*/
-
-/*!
-    \fn QGLDisplayList::VectorArray QGLDisplayList::vertices() const
-    Returns a list of all the vertices in this display list.
-*/
-
-/*!
-    \fn QGLDisplayList::VectorArray QGLDisplayList::normals() const
-    Returns a list of all the normals in this display list.
-*/
-
-/*!
-    \fn QGLDisplayList::TexCoordArray QGLDisplayList::texCoords() const
-    Returns a list of all the texture coordinates in this display list.
-*/
-
-/*!
-    \fn QGLDisplayList::IndexArray QGLDisplayList::indices() const
-    Returns a list of all the face indexes in this display list.
 */
 
 /*!
@@ -1144,31 +533,12 @@ QGLVertexArray QGLDisplayList::toVertexArray() const
 }
 
 /*!
-    \fn QGLDisplayList::IndexArray QGLDisplayList::indexArray() const
-    Returns the indices of this display list.  The result type is implictly
-    shared so although it is a copy this method is inexpensive.  If the
-    copy has a non-const method called on it then a copy is done (which may
-    be expensive).
+    \internal
+    Mark the data as dirty and in need of loading/finalizing.
 */
-
-/*!
-    \fn bool QGLDisplayList::hasColors() const
-    Returns true if this display list is utilizing flat coloring, and
-    false otherwise.  If the appendColor() method has been called then
-    this function will return true.
-*/
-
-/*!
-    \fn bool QGLDisplayList::hasNormals() const
-    Returns true if this display list is utilizing lighting normals, and
-    false otherwise.  After calling one of the append methods which takes
-    a normal, such as appendSmooth() or appendFaceted() this function
-    will return true.
-*/
-
-/*!
-    \fn bool QGLDisplayList::hasTexCoords() const
-    Returns true if this display list is utilizing texture coordinates,
-    and false otherwise.  After calling appendTexCoord(), this function
-    will return true.
-*/
+void QGLDisplayList::setDirty(bool dirty)
+{
+    Q_D(QGLDisplayList);
+    d->loadNeeded = dirty;
+    d->finalizeNeeded = dirty;
+}

@@ -44,6 +44,11 @@
 
 #include "qt3dglobal.h"
 
+#include <QtCore/qvector.h>
+#include <QtGui/qvector3d.h>
+#include <QtGui/qvector2d.h>
+#include "qcolor4b.h"
+
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
@@ -126,6 +131,13 @@ namespace QGL
         Smooth,
         Faceted
     };
+
+    // useful type definitions
+    typedef QVector<QVector3D> VectorArray;
+    typedef QVector<QVector2D> TexCoordArray;
+    typedef QVector<QColor4b> ColorArray;
+    typedef QVector<int> IndexArray;
+
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)

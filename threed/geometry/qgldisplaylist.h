@@ -51,6 +51,8 @@
 #include "qgltexturespecifier.h"
 #include "qglgeometry.h"
 #include "qglnamespace.h"
+#include "qglsection.h"
+#include "qlogicalvertex.h"
 
 QT_BEGIN_HEADER
 
@@ -68,12 +70,6 @@ class Q_QT3D_EXPORT QGLDisplayList : public QGLGeometry
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLDisplayList);
 public:
-    // useful type definitions
-    typedef QVector<QVector3D> VectorArray;
-    typedef QVector<QVector2D> TexCoordArray;
-    typedef QVector<QColor4b> ColorArray;
-    typedef QVector<int> IndexArray;
-
     QGLDisplayList(QObject *parent = 0, QGLMaterialCollection *materials = 0);
     virtual ~QGLDisplayList();
 
@@ -83,7 +79,7 @@ public:
     // section management
     QGLSection *newSection(QGL::Smoothing = QGL::Smooth);
     QGLSection *currentSection();
-    QList<QGLSection*> &sections();
+    QVector<QGLSection*> &sections();
 
     // geometry building
     void reserve(int n);
@@ -94,68 +90,37 @@ public:
     void addQuad(const QVector3D &a, const QVector3D &b,
                  const QVector3D &c, const QVector3D &d,
                  const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
-    void addTriangleFan(const QVector3D &center, const VectorArray &edges,
+    void addTriangleFan(const QVector3D &center,
+                        const QGL::VectorArray &edges,
                         const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
-    void addTriangulatedFace(const QVector3D &center, const VectorArray &edges,
-                        const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
-    QVector<QVector3D> extrude(const VectorArray &edges,
+    void addTriangulatedFace(const QVector3D &center,
+                             const QGL::VectorArray &edges,
+                             const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
+    QVector<QVector3D> extrude(const QGL::VectorArray &edges,
                                const QVector3D &dir = QVector3D(),
                                const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
 
     // data accessors
     inline QGLMaterialCollection *materials() const;
-    inline VectorArray vertexArray() const;
-    inline VectorArray normalArray() const;
-    inline TexCoordArray texCoordArray() const;
-    inline ColorArray colorArray() const;
-    inline IndexArray indexArray() const;
-    int indexOf(const QVector3D &a, QGLSection *section = 0) const;
-    void setVertex(int, const QVector3D &v);
-    void setNormal(int, const QVector3D &n);
-    void setTexCoord(int, const QVector2D &t);
-    void setColor(int, const QColor4b &c);
-
-    // state accessors
-    inline int count() const;
-    inline bool hasColors() const;
-    inline bool hasNormals() const;
-    inline bool hasTexCoords() const;
 protected:
-    virtual void appendSmooth(const QVector3D &a, const QVector3D &n,
-                              const QVector2D &t = QGLTextureSpecifier::InvalidTexCoord);
-    virtual void appendFaceted(const QVector3D &a, const QVector3D &n,
-                               const QVector2D &t = QGLTextureSpecifier::InvalidTexCoord);
-    virtual void appendColor(const QVector3D &a, const QColor4b &c,
-                             const QVector2D &t = QGLTextureSpecifier::InvalidTexCoord);
-    virtual int updateTexCoord(int position, const QVector2D &t);
-    virtual void append(const QVector3D &a,
-                        const QVector2D &t = QGLTextureSpecifier::InvalidTexCoord);
-
     virtual void finalize();
     virtual void loadArrays(QGLPainter *painter);
 
     virtual void addSection(QGLSection *section);
-    virtual void draw(QGLPainter *painter, int start, int count);
 private:
     Q_DISABLE_COPY(QGLDisplayList);
 
-    QGLVertexArray toVertexArray() const;
     friend class QGLSection;
+
+    QGLVertexArray toVertexArray() const;
+    void setDirty(bool dirty);
+    void draw(QGLPainter *, int, int);
 
 #ifndef QT_NO_DEBUG_STREAM
     friend QDebug operator<<(QDebug, const QGLSection &);
 #endif
-    bool m_hasColors;
-    bool m_hasNormals;
-    bool m_hasTexCoords;
-
     QGLMaterialCollection *m_materials;
-    VectorArray m_vertices;
-    VectorArray m_normals;
-    TexCoordArray m_texCoords;
-    ColorArray m_colors;
-    IndexArray m_indices;
-    QList<QGLSection *> m_sections;
+    QVector<QGLSection *> m_sections;
     QGLSection *m_currentSection;
 };
 
@@ -165,7 +130,7 @@ inline QGLSection *QGLDisplayList::currentSection()
     return m_currentSection;
 }
 
-inline QList<QGLSection*> &QGLDisplayList::sections()
+inline QVector<QGLSection*> &QGLDisplayList::sections()
 {
     return m_sections;
 }
@@ -175,56 +140,10 @@ inline QGLMaterialCollection *QGLDisplayList::materials() const
     return m_materials;
 }
 
-inline QGLDisplayList::VectorArray QGLDisplayList::vertexArray() const
-{
-    return m_vertices;
-}
-
-inline QGLDisplayList::VectorArray QGLDisplayList::normalArray() const
-{
-    return m_normals;
-}
-
-inline QGLDisplayList::TexCoordArray QGLDisplayList::texCoordArray() const
-{
-    return m_texCoords;
-}
-
-inline QGLDisplayList::ColorArray QGLDisplayList::colorArray() const
-{
-    return m_colors;
-}
-
-inline QGLDisplayList::IndexArray QGLDisplayList::indexArray() const
-{
-    return m_indices;
-}
-
-inline int QGLDisplayList::count() const
-{
-    return m_indices.count();
-}
-
-inline bool QGLDisplayList::hasColors() const
-{
-    return m_hasColors;
-}
-
-inline bool QGLDisplayList::hasNormals() const
-{
-    return m_hasNormals;
-}
-
-inline bool QGLDisplayList::hasTexCoords() const
-{
-    return m_hasTexCoords;
-}
-
 inline void QGLDisplayList::draw(QGLPainter *painter, int start, int count)
 {
     QGLGeometry::draw(painter, start, count);
 }
-
 
 QT_END_NAMESPACE
 

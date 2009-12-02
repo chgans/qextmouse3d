@@ -314,6 +314,8 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (!d->boundingBox.isNull() && !painter->isVisible(d->boundingBox))
         return;
 
+    qDebug() << "fsk";
+
     QGLMaterialCollection *p = palette();
     const QGLMaterialParameters *save = 0;
     if (mPalette && mMaterial != -1)
@@ -339,7 +341,6 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     d->modified = false;
 
     // Draw the geometry.
-    qDebug() << "QGLGeometry::draw() - indexes" << d->indexArray.size() << "start:" << start << "count:" << count;
     painter->setVertexArray(d->vertexArray);
     if (d->indexArray.isEmpty()) {
         if (count == 0)

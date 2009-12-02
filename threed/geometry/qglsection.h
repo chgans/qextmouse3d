@@ -43,8 +43,9 @@
 #define QGLSECTION_H
 
 #include "qglnamespace.h"
-#include "qgldisplaylist.h"
 #include "qglpainter.h"
+#include "qgeometrydata_p.h"
+#include "qlogicalvertex.h"
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qmatrix4x4.h>
@@ -56,14 +57,26 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLPainter;
+class QGLDisplayList;
+class QGLSectionPrivate;
 
 class Q_QT3D_EXPORT QGLSection
 {
 public:
-    inline QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
+    QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
     ~QGLSection();
 
+    // data accessors
+    QGL::VectorArray vertices() const;
+    QGL::VectorArray normals() const;
+    QGL::IndexArray indices() const;
+    QGL::TexCoordArray texCoords() const;
+    QGL::ColorArray colors() const;
+    int indexOf(const QLogicalVertex &lv) const;
+    const QLogicalVertex &vertexAt(int i) const;
+
     // state accessors
+    inline bool hasData(QLogicalVertex::Types types);
     inline QGL::Smoothing smoothing() const;
     inline int start() const;
     inline int count() const;
@@ -71,6 +84,13 @@ public:
 
     // display methods
     inline void draw(QGLPainter *painter) const;
+
+    // data update methods
+    inline void append(const QLogicalVertex &vertex);
+protected:
+    virtual void appendSmooth(const QLogicalVertex &vertex);
+    virtual void appendFaceted(const QLogicalVertex &vertex);
+    virtual int updateTexCoord(int position, const QVector2D &t);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
@@ -80,45 +100,42 @@ private:
 
     QGL::Smoothing m_smoothing;
     QGLDisplayList *m_displayList;
+    QLogicalVertex::Types m_dataTypes;
+    QGLSectionPrivate *d;
 };
 
-inline QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
-    : m_start(0)
-    , m_count(0)
-    , m_smoothing(s)
-    , m_displayList(d)
-{
-    Q_ASSERT(m_displayList);
-    m_start = m_displayList->count();
-    m_displayList->addSection(this);
-}
-
-QGL::Smoothing QGLSection::smoothing() const
+inline QGL::Smoothing QGLSection::smoothing() const
 {
     return m_smoothing;
 }
 
-int QGLSection::start() const
+inline int QGLSection::start() const
 {
     return m_start;
 }
 
-int QGLSection::count() const
+inline int QGLSection::count() const
 {
     return m_count;
 }
 
-QGLDisplayList *QGLSection::displayList() const
+inline QGLDisplayList *QGLSection::displayList() const
 {
     return m_displayList;
 }
 
-void QGLSection::draw(QGLPainter *painter) const
+inline bool QGLSection::hasData(QLogicalVertex::Types types)
 {
-    m_displayList->finalize();
-    m_displayList->draw(painter, m_start, m_count);
+    return (types & m_dataTypes);
 }
 
+inline void QGLSection::append(const QLogicalVertex &vertex)
+{
+    if (m_smoothing == QGL::Smooth)
+        appendSmooth(vertex);
+    else
+        appendFaceted(vertex);
+}
 
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGLSection &section);

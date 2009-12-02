@@ -91,8 +91,8 @@ void DisplayListView::buildGeometry()
     const int numSlices = 16;
 
     // definitional data for our can
-    QGLDisplayList::VectorArray topCanRim;
-    QGLDisplayList::VectorArray bottomCanRim;
+    QGL::VectorArray topCanRim;
+    QGL::VectorArray bottomCanRim;
     QVector3D canLidCenter;  // center is origin: 0, 0, 0
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
     QVector3D canBottomCenter = canLidCenter + canExtrudeVec;

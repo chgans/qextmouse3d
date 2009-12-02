@@ -77,18 +77,14 @@
     \endcode
 */
 
-const qreal QGLTextureSpecifier::InvalidTexValue = -std::numeric_limits<qreal>::max();
-const QVector2D QGLTextureSpecifier::InvalidTexCoord = QVector2D(QGLTextureSpecifier::InvalidTexValue,
-                                                       QGLTextureSpecifier::InvalidTexValue);
-
 /*!
     Construct a null texture specifier.
 */
 QGLTextureSpecifier::QGLTextureSpecifier()
-    : m_bl(InvalidTexCoord)
-    , m_br(InvalidTexCoord)
-    , m_tr(InvalidTexCoord)
-    , m_tl(InvalidTexCoord)
+    : m_bl(QLogicalVertex::InvalidTexCoord)
+    , m_br(QLogicalVertex::InvalidTexCoord)
+    , m_tr(QLogicalVertex::InvalidTexCoord)
+    , m_tl(QLogicalVertex::InvalidTexCoord)
     , m_divisor(1.0f)
     , m_tile(0)
 {
