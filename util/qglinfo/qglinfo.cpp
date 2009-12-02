@@ -8,6 +8,10 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 
+#if !defined(QT_NO_EGL)
+#include <QtGui/private/qegl_p.h>
+#endif
+
 QGLInfo::QGLInfo(QObject *parent)
     : QObject(parent)
 {
@@ -33,6 +37,9 @@ void QGLInfo::initialize()
     m_qtGLFeatures = reportQtGLFeatures();
     m_glVersionInfo = reportGLVersionInfo();
     m_glExtensionInfo = reportGLExtensionInfo();
+    m_eglVersionInfo = reportEGLVersionInfo();
+    m_eglExtensionInfo = reportEGLExtensionInfo();
+    m_eglConfigInfo = reportEGLConfigInfo();
     glWidget->doneCurrent();
     delete glWidget;
 
@@ -44,13 +51,24 @@ void QGLInfo::initialize()
                       "<p>%3</p>"
                       "<h2>GL Version Info</h2>"
                       "<p>%4</p>"
-                      "<h2>GL Extension Info</h2"
+                      "<h2>GL Extension Info</h2>"
                       "<p>%5</p>")
             .arg(QDateTime::currentDateTime().toString())
             .arg(nice(m_qtGLVersionInfo))
             .arg(nice(m_qtGLFeatures))
             .arg(nice(m_glVersionInfo))
             .arg(nice(m_glExtensionInfo));
+#if !defined(QT_NO_EGL)
+    html += tr("<h2>EGL Version Info</h2>"
+               "<p>%1</p>"
+               "<h2>EGL Extension Info</h2>"
+               "<p>%2</p>"
+               "<h2>EGL Configurations</h2>"
+               "<p>%3</p>")
+            .arg(nice(m_eglVersionInfo))
+            .arg(nice(m_eglExtensionInfo))
+            .arg(nice(m_eglConfigInfo));
+#endif
     emit reportHtml(html);
 }
 
@@ -58,9 +76,18 @@ QString QGLInfo::report() const
 {
     QString report;
     report += m_qtGLVersionInfo;
+    report += QChar('\n');
     report += m_qtGLFeatures;
     report += m_glVersionInfo;
+    report += tr("OpenGL extensions:\n");
     report += m_glExtensionInfo;
+#if !defined(QT_NO_EGL)
+    report += m_eglVersionInfo;
+    report += tr("EGL extensions:\n");
+    report += m_eglExtensionInfo;
+    report += tr("EGL configurations:\n");
+    report += m_eglConfigInfo;
+#endif
     return report;
 }
 
@@ -110,7 +137,7 @@ QString QGLInfo::reportQtGLVersionInfo() const
                QGLFormat::OpenGL_ES_Version_2_0);
     if (flags != 0)
         version += "Other=0x" + QByteArray::number(int(flags), 16);
-    return QString("QGLFormat::openGLVersionFlags:") + version;
+    return QString("QGLFormat::openGLVersionFlags: ") + version;
 }
 
 static QString printBool(const char *text, bool value)
@@ -138,21 +165,28 @@ QString QGLInfo::reportQtGLFeatures() const
 QString QGLInfo::reportGLVersionInfo() const
 {
     QString d;
-    d += "OpenGL vendor string:";
+    d += "OpenGL vendor string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_VENDOR));
     d += "\n";
-    d += "OpenGL renderer string:";
+    d += "OpenGL renderer string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_RENDERER));
-    d += "OpenGL version string:";
+    d += "\n";
+    d += "OpenGL version string: ";
     d += reinterpret_cast<const char *>(glGetString(GL_VERSION));
+    d += "\n";
     return d;
 }
 
 QString QGLInfo::reportGLExtensionInfo() const
 {
-    QString d("OpenGL extensions:\n");
     QByteArray extString
         (reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    return formatExtensions(extString);
+}
+
+QString QGLInfo::formatExtensions(const QByteArray& extString) const
+{
+    QString d;
     QList<QByteArray> extns = extString.split(' ');
     qSort(extns);
     QByteArray line;
@@ -167,6 +201,68 @@ QString QGLInfo::reportGLExtensionInfo() const
         line += char(' ');
     }
     if (!line.isEmpty())
-        d += line + "\n";
+        d += "    " + line + "\n";
     return d;
+}
+
+QString QGLInfo::reportEGLVersionInfo() const
+{
+#if !defined(QT_NO_EGL)
+    QString d;
+    EGLDisplay dpy = eglGetCurrentDisplay();
+    d += "EGL vendor string: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_VENDOR));
+    d += "\n";
+    d += "EGL version string: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_VERSION));
+    d += "\n";
+#ifdef EGL_CLIENT_APIS
+    d += "EGL client API's: ";
+    d += reinterpret_cast<const char *>(eglQueryString(dpy, EGL_CLIENT_APIS));
+    d += "\n";
+#endif
+    return d;
+#else
+    return QString();
+#endif
+}
+
+QString QGLInfo::reportEGLExtensionInfo() const
+{
+#if !defined(QT_NO_EGL)
+    EGLDisplay dpy = eglGetCurrentDisplay();
+    QByteArray extString
+        (reinterpret_cast<const char *>(eglQueryString(dpy, EGL_EXTENSIONS)));
+    return formatExtensions(extString);
+#else
+    return QString();
+#endif
+}
+
+QString QGLInfo::reportEGLConfigInfo() const
+{
+#if !defined(QT_NO_EGL)
+    QString d;
+    QEglProperties props;
+    EGLint count = 0;
+    EGLDisplay dpy = eglGetCurrentDisplay();
+    EGLContext ctx = eglGetCurrentContext();
+    EGLint cfgnum = 0;
+    if (eglQueryContext(dpy, ctx, EGL_CONFIG_ID, &cfgnum)) {
+        d += QString("Window configuration in use: ") + QString::number(cfgnum) +
+             QLatin1String("\n\n");
+    }
+    if (!eglGetConfigs(dpy, 0, 0, &count) || count < 1)
+        return d;
+    EGLConfig *configs = new EGLConfig [count];
+    eglGetConfigs(dpy, configs, count, &count);
+    for (EGLint index = 0; index < count; ++index) {
+        props = QEglProperties(configs[index]);
+        d += props.toString() + QLatin1String("\n\n");
+    }
+    delete [] configs;
+    return d;
+#else
+    return QString();
+#endif
 }

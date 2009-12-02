@@ -2,6 +2,11 @@
 #define FPSWIDGET_H
 
 #include <QGLWidget>
+#if defined(QT_OPENGL_ES_2)
+#include <QtGui/qvector3d.h>
+#include <QtGui/qmatrix4x4.h>
+#include <QtOpenGL/qglshaderprogram.h>
+#endif
 
 class QTime;
 class QTimer;
@@ -14,16 +19,34 @@ public:
     ~FPSWidget();
     void initializeGL();
     void resizeGL(int, int);
-    void paintEvent(QPaintEvent *);
+    void paintGL();
+protected:
+    void keyPressEvent(QKeyEvent *) { close(); }
+    void mousePressEvent(QMouseEvent *) { close(); }
 signals:
     void fps(int);
 private slots:
     void animate();
 private:
     QTime *time;
+    QTime *frameTime;
     QTimer *timer;
     QTimer *goAwayTimer;
     int xrot, yrot, zrot;
+    int frameElapsed;
+    int frameCount;
+    int totalFrameTime;
+#if defined(QT_OPENGL_ES_2)
+    void setupShaders();
+
+    QGLShaderProgram program;
+    QMatrix4x4 projection;
+    QMatrix4x4 modelView;
+    int vertexAttr;
+    int normalAttr;
+    int matrixUniform;
+    int materialUniform;
+#endif
 };
 
 #endif // FPSWIDGET_H

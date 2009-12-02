@@ -163,6 +163,8 @@ void QGLAbstractEffect::setCommonNormal(const QVector3D& value)
 #if !defined(QT_OPENGL_ES_2)
     glNormal3f(value.x(), value.y(), value.z());
     glDisableClientState(GL_NORMAL_ARRAY);
+#else
+    Q_UNUSED(value)
 #endif
 }
 
