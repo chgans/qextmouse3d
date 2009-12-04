@@ -86,6 +86,7 @@ enum QGLImageFormat
     QGLI_Dest_RGB565            = 0x0300,
     QGLI_Dest_RGB8              = 0x0400,
     QGLI_Dest_Format            = 0x0F00,
+    QGLI_Reverse                = 0x1000,
     QGLI_Premul                 = 0x2000,
     QGLI_Scale                  = 0x4000,
     QGLI_Flip                   = 0x8000,
@@ -108,6 +109,30 @@ enum QGLImageFormat
     QGLI_RGB8                   = QGLI_Source_RGB888 |
                                   QGLI_Dest_RGB8
 };
+
+static void qt_gl_flip_image(QImage& img)
+{
+    if (img.isDetached()) {
+        // Swap the lines in-place.
+        int ipl = img.bytesPerLine() / sizeof(int);
+        int h = img.height();
+        for (int y=0; y<h/2; ++y) {
+            int *a = (int *) img.scanLine(y);
+            int *b = (int *) img.scanLine(h - y - 1);
+            for (int x=ipl; x>0; --x) {
+                int t = *a;
+                *a++ = *b;
+                *b++ = t;
+            }
+        }
+    } else {
+        // Create a new image and copy across.  If we use the
+        // above in-place code then a full copy of the image is
+        // made before the lines are swapped, which processes the
+        // data twice.  This version should only do it once.
+        img = img.mirrored();
+    }
+}
 
 static QImage qt_gl_convert_image_to_gl
     (const QImage& image, QGLImageFormat format)
@@ -181,18 +206,53 @@ static QImage qt_gl_convert_image_to_gl
     }
 
     // Flip the image upside down if necessary.
-    if ((format & QGLI_Flip) != 0) {
-        int ipl = img.bytesPerLine() / sizeof(int);
-        int h = img.height();
-        for (int y=0; y<h/2; ++y) {
-            int *a = (int *) img.scanLine(y);
-            int *b = (int *) img.scanLine(h - y - 1);
-            for (int x=0; x<ipl; ++x)
-                qSwap(a[x], b[x]);
-        }
-    }
+    if ((format & QGLI_Flip) != 0)
+        qt_gl_flip_image(img);
 
     return img;
+}
+
+static void qt_gl_convert_image_from_gl(QImage& img, QGLImageFormat format)
+{
+    // Byte-swap according to the format we downloaded from the GL server.
+    // This will put it back into the "source" format.
+    int width = img.width();
+    int height = img.height();
+    switch (format & QGLI_Dest_Format) {
+    case QGLI_Dest_RGBA8:
+        if (QSysInfo::ByteOrder == QSysInfo::LittleEndian) {
+            for (int i=0; i < height; ++i) {
+                uint *p = (uint *) img.scanLine(i);
+                for (int x=0; x<width; ++x)
+                    p[x] = ((p[x] << 16) & 0xff0000) | ((p[x] >> 16) & 0xff) | (p[x] & 0xff00ff00);
+            }
+        } else {
+            // TODO: legacy fix for PowerPC from qgl.cpp, convertFromGLImage.
+            for (int i=0; i < height; ++i) {
+                uint *p = (uint *) img.scanLine(i);
+                for (int x=0; x<width; ++x)
+                    p[x] = ((p[x] >> 8) & 0xffffff) | (p[x] << 24);
+            }
+        }
+        break;
+
+    case QGLI_Dest_BGRA8:
+        if (QSysInfo::ByteOrder == QSysInfo::BigEndian) {
+            for (int i=0; i < height; ++i) {
+                uint *p = (uint *) img.scanLine(i);
+                for (int x=0; x<width; ++x)
+                    p[x] = qbswap(p[x]);
+            }
+        }
+        break;
+
+    case QGLI_Dest_RGB565: break;
+    case QGLI_Dest_RGB8: break;
+    }
+
+    // Flip the image upside down if necessary.
+    if ((format & QGLI_Flip) != 0)
+        qt_gl_flip_image(img);
 }
 
 class tst_BindTexture : public QObject
@@ -205,10 +265,14 @@ public:
 private slots:
     void convertToTexture_data();
     void convertToTexture();
+    void convertPerformance_data();
+    void convertPerformance();
 
 private:
     QImage image1;
     QImage image2;
+
+    void compareImages(const QImage& img, const QImage& result, int glimageFormat);
 };
 
 tst_BindTexture::tst_BindTexture()
@@ -221,7 +285,7 @@ void tst_BindTexture::convertToTexture_data()
 {
     QTest::addColumn<int>("qimageFormat");
     QTest::addColumn<int>("glimageFormat");
-    QTest::addColumn<QImage>("image");
+    QTest::addColumn<QImage>("img");
 
     struct FormatPair
     {
@@ -289,66 +353,67 @@ void tst_BindTexture::convertToTexture_data()
         name1 += p->name;
         name2 += p->name;
 
+        QImage img1 = image1.convertToFormat(QImage::Format(p->qimageFormat));
+        QImage img2 = image2.convertToFormat(QImage::Format(p->qimageFormat));
+
         QTest::newRow(name1.constData())
             << p->qimageFormat
             << p->glimageFormat
-            << image1;
+            << img1;
 
         QTest::newRow(name2.constData())
             << p->qimageFormat
             << p->glimageFormat
-            << image2;
+            << img2;
 
         QTest::newRow((name1 + " [Flip]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Flip)
-            << image1;
+            << img1;
 
         QTest::newRow((name2 + " [Flip]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Flip)
-            << image2;
+            << img2;
 
         QTest::newRow((name1 + " [Scale]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Scale)
-            << image1;
+            << img1;
 
         QTest::newRow((name2 + " [Scale]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Scale)
-            << image2;
+            << img2;
 
         QTest::newRow((name1 + " [Flip, Scale]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Flip | QGLI_Scale)
-            << image1;
+            << img1;
 
         QTest::newRow((name2 + " [Flip, Scale]").constData())
             << p->qimageFormat
             << (p->glimageFormat | QGLI_Flip | QGLI_Scale)
-            << image2;
+            << img2;
 
         ++p;
     }
-}
-
-static const uchar *constBits(const QImage& img)
-{
-    return img.bits();
 }
 
 void tst_BindTexture::convertToTexture()
 {
     QFETCH(int, qimageFormat);
     QFETCH(int, glimageFormat);
-    QFETCH(QImage, image);
+    QFETCH(QImage, img);
+
+    Q_UNUSED(qimageFormat);
 
     // Print the name of each test case as we execute them.
     qWarning() << "";
 
-    QImage img = image.convertToFormat(QImage::Format(qimageFormat));
-    QImage result = qt_gl_convert_image_to_gl(img, QGLImageFormat(glimageFormat));
+    // Perform the conversion.
+    QImage result = qt_gl_convert_image_to_gl
+        (img, QGLImageFormat(glimageFormat));
 
     // Verify that the correct output image was created.
     if ((glimageFormat & QGLI_Scale) != 0) {
@@ -356,7 +421,17 @@ void tst_BindTexture::convertToTexture()
         int tx_h = qt_next_power_of_two(img.height());
         img = img.scaled(tx_w, tx_h);
     }
-    const uchar *resbits = constBits(result);
+    compareImages(img, result, glimageFormat);
+
+    // Reverse the conversion and check again.
+    qt_gl_convert_image_from_gl(result, QGLImageFormat(glimageFormat));
+    compareImages(img, result, glimageFormat | QGLI_Reverse);
+}
+
+void tst_BindTexture::compareImages
+    (const QImage& img, const QImage& result, int glimageFormat)
+{
+    const uchar *resbits = result.bits();
     int resy;
     for (int y = 0; y < img.height(); ++y) {
         if ((glimageFormat & QGLI_Flip) != 0)
@@ -367,25 +442,29 @@ void tst_BindTexture::convertToTexture()
             QRgb imgpix = img.pixel(x, y);
             QRgb respix = 0;
             int offset;
-            switch (glimageFormat & QGLI_Dest_Format) {
-            case QGLI_Dest_RGBA8:
-                offset = (resy * img.width() + x) * 4;
-                respix = qRgba(resbits[offset + 0], resbits[offset + 1],
-                               resbits[offset + 2], resbits[offset + 3]);
-                break;
-            case QGLI_Dest_BGRA8:
-                offset = (resy * img.width() + x) * 4;
-                respix = qRgba(resbits[offset + 2], resbits[offset + 1],
-                               resbits[offset + 0], resbits[offset + 3]);
-                break;
-            case QGLI_Dest_RGB565:
-                respix = result.pixel(x, resy);
-                break;
-            case QGLI_Dest_RGB8:
-                offset = resy * result.bytesPerLine() + x * 3;
-                respix = qRgb(resbits[offset + 0], resbits[offset + 1],
-                              resbits[offset + 2]);
-                break;
+            if ((glimageFormat & QGLI_Reverse) != 0) {
+                respix = result.pixel(x, y);
+            } else {
+                switch (glimageFormat & QGLI_Dest_Format) {
+                case QGLI_Dest_RGBA8:
+                    offset = (resy * img.width() + x) * 4;
+                    respix = qRgba(resbits[offset + 0], resbits[offset + 1],
+                                   resbits[offset + 2], resbits[offset + 3]);
+                    break;
+                case QGLI_Dest_BGRA8:
+                    offset = (resy * img.width() + x) * 4;
+                    respix = qRgba(resbits[offset + 2], resbits[offset + 1],
+                                   resbits[offset + 0], resbits[offset + 3]);
+                    break;
+                case QGLI_Dest_RGB565:
+                    respix = result.pixel(x, resy);
+                    break;
+                case QGLI_Dest_RGB8:
+                    offset = resy * result.bytesPerLine() + x * 3;
+                    respix = qRgb(resbits[offset + 0], resbits[offset + 1],
+                                  resbits[offset + 2]);
+                    break;
+                }
             }
             if ((glimageFormat & QGLI_Premul) != 0 &&
                     img.format() != QImage::Format_ARGB32_Premultiplied)
@@ -406,6 +485,80 @@ void tst_BindTexture::convertToTexture()
                 QVERIFY(imgpix == respix);
             }
         }
+    }
+}
+
+void tst_BindTexture::convertPerformance_data()
+{
+    QTest::addColumn<int>("qimageFormat");
+    QTest::addColumn<int>("glimageFormat");
+
+    QTest::newRow("ARGB32 -> BGRA8")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8);
+
+    QTest::newRow("ARGB32 -> BGRA8 [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8 | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> BGRA8_Premul")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8_Premul);
+
+    QTest::newRow("ARGB32 -> BGRA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_BGRA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32_Premul -> BGRA8_Premul")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_BGRA8_Premul);
+
+    QTest::newRow("ARGB32_Premul -> BGRA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_BGRA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> RGBA8")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8);
+
+    QTest::newRow("ARGB32 -> RGBA8 [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8 | QGLI_Flip);
+
+    QTest::newRow("ARGB32 -> RGBA8_Premul")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8_Premul);
+
+    QTest::newRow("ARGB32 -> RGBA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32)
+        << int(QGLI_RGBA8_Premul | QGLI_Flip);
+
+    QTest::newRow("ARGB32_Premul -> RGBA8_Premul")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_RGBA8_Premul);
+
+    QTest::newRow("ARGB32_Premul -> RGBA8_Premul [Flip]")
+        << int(QImage::Format_ARGB32_Premultiplied)
+        << int(QGLI_RGBA8_Premul | QGLI_Flip);
+
+    QTest::newRow("RGB16 -> RGB565")
+        << int(QImage::Format_RGB16)
+        << int(QGLI_RGB565);
+
+    QTest::newRow("RGB16 -> RGB565 [Flip]")
+        << int(QImage::Format_RGB16)
+        << int(QGLI_RGB565 | QGLI_Flip);
+}
+
+void tst_BindTexture::convertPerformance()
+{
+    QFETCH(int, qimageFormat);
+    QFETCH(int, glimageFormat);
+
+    QImage img = image1.convertToFormat(QImage::Format(qimageFormat));
+
+    QBENCHMARK {
+        qt_gl_convert_image_to_gl(img, QGLImageFormat(glimageFormat));
     }
 }
 
