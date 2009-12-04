@@ -39,67 +39,36 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSCENENODE_H
-#define QGLSCENENODE_H
+#ifndef QGLSCENEOBJECT_P_H
+#define QGLSCENEOBJECT_P_H
 
-#include "qglsceneobject.h"
-#include "qglgeometry.h"
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
-QT_BEGIN_HEADER
+#include <QtCore/qobject.h>
+#include <QtCore/private/qobject_p.h>
+#include <QtCore/qobjectdefs.h>
 
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-class QGLSceneNodePrivate;
-class QGLGeometry;
-class QGLAbstractEffect;
-
-class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
+class QGLSceneObjectPrivate : public QObjectPrivate
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLSceneNode);
+    Q_DECLARE_PUBLIC(QGLSceneObject);
 public:
-    explicit QGLSceneNode(QObject *parent = 0);
-    explicit QGLSceneNode(QGLGeometry *geometry, QObject *parent = 0);
-    virtual ~QGLSceneNode();
+    QGLSceneObjectPrivate(QGLSceneObject::Type t, int version = QObjectPrivateVersion)
+        : QObjectPrivate(version)
+        , type(t)
+    {
+    }
 
-    QGLGeometry *geometry() const;
-    void setGeometry(QGLGeometry *);
-
-    QMatrix4x4 localTransform() const;
-    void setLocalTransform(const QMatrix4x4 &);
-
-    QGL::StandardEffect effect() const;
-    void setEffect(QGL::StandardEffect);
-
-    QGLAbstractEffect *userEffect() const;
-    void setUserEffect(QGLAbstractEffect *effect);
-
-    bool hasEffect() const;
-    void setEffectEnabled(bool);
-
-    int start() const;
-    void setStart(int start);
-
-    int count() const;
-    void setCount(int count);
-
-    int material() const;
-    void setMaterial(int material);
-
-    virtual void draw(QGLPainter *painter);
-    virtual void apply(QGLPainter *painter);
-    virtual QGLSceneNode *clone(QObject *parent = 0) const;
-protected:
-    QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
-
-private:
-    Q_DISABLE_COPY(QGLSceneNode)
+    QGLSceneObject::Type type;
+    QString name;
 };
 
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+#endif // QGLSCENEOBJECT_P_H
