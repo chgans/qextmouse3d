@@ -3,8 +3,6 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 
-#include <QDebug>
-
 static GLfloat materialColor[] = { 0.1f, 0.85f, 0.25f, 1.0f };
 
 // dont drive the updates any faster than every this many millisecondss
@@ -105,8 +103,6 @@ void FPSWidget::setupShaders()
     };
     vshader->compileSourceCode(vsrc);
 
-    qDebug() << "Vertex Shader Log\n=================\n" << vshader->log();
-
     QGLShader *fshader = new QGLShader(QGLShader::Fragment, this);
     const char *fsrc = {
         "uniform mediump vec4 material;\n"
@@ -117,8 +113,6 @@ void FPSWidget::setupShaders()
         "}\n"
     };
     fshader->compileSourceCode(fsrc);
-
-    qDebug() << "Fragment Shader Log\n===================\n" << fshader->log();
 
     program.addShader(vshader);
     program.addShader(fshader);
@@ -154,7 +148,6 @@ void FPSWidget::initializeGL()
 void FPSWidget::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
-    qDebug() << "resizeGL(" << w << ", " << h << ")";
 #if !defined(QT_OPENGL_ES_2)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -167,7 +160,6 @@ void FPSWidget::resizeGL(int w, int h)
 #elif defined(QT_OPENGL_ES_2)
     projection.setToIdentity();
     projection.ortho(-ws, ws, -hs, hs, -10.0f, 10.0f);
-    qDebug() << "   projection.ortho(" << -ws << ", " << ws << ", " << -hs << ", " << hs << ", -10.0f, 10.0f)";
 #else
     glOrtho(-ws, ws, -hs, hs, -10.0f, 10.0f);
 #endif
