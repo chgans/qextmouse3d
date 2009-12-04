@@ -75,8 +75,8 @@ public:
     QString toString() const {
         const QVector3D &v = vecPtr ? *vecPtr : QVector3D(99.9f, 99.9f, 99.9f);
         QString vs = QString("QVector3D( %1, %2, %3 )").arg(v.x()).arg(v.y()).arg(v.z());
-        return vs + "\n" + QString("[QVector3DMapped - vecPtr: %1 - normPtr: %2]\n")
-                .arg((int)vecPtr).arg(normPtr);
+        return vs + "\n" + QString("[QVector3DMapped - vecPtr: (%1, %2, %3) - normPtr: %4]\n")
+                .arg(vecPtr->x()).arg(vecPtr->y()).arg(vecPtr->z()).arg(normPtr);
     }
 
     const QVector3D *vecPtr;
