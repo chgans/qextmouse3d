@@ -44,6 +44,8 @@
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgldisplaylist_p.h"
+#include "qglsection_p.h"
+#include "qgltexturemodel.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -71,86 +73,74 @@
     OpenGL calls (since those calls are not implemented on all platforms) it
     provides the same convenience and improved performance.
 
-    The geometry data in a QGLDisplayList is divided into QGLSection
-    instances which reference sections of the geometry in order to
-    display them with different attributes.  For example a
-    QGLDisplayList representing a 3D can of soup might have a smooth
-    QGLSection for the rounded outside cylinder and a faceted QGLSection
-    instance for the flat top and bottom.
+    QGLSceneNodes are used to manage application of local transformations,
+    materials and effects, in the same way that glRotate() or glMaterial()
+    might be used inside a display list.
+
+    Since QGLDisplayList is itself a (sub-class of) QGLSceneNode materials
+    and effects may be applied to the whole list, or to parts of it.
 
     \snippet displaylist/displaylist.cpp 0
 
-    Alternatively for unusual requirements, QGLDisplayList may be sub-classed
-    and the range of append methods used to add geometry vertex by vertex.
+    Use the functions newNode() or pushNode() and popNode() to manage
+    QGLSceneNode generation inside a display list.
 
-    Accessor functions are provided for getting copies of the data in
-    the display list:
-    \list
-        \o vertexArray()
-        \o normalArray()
-        \o texCoordArray()
-        \o colorArray()
-        \o indexArray()
-        \o materials()
-    \endlist
+    To draw a display list, simply call its draw function as for any
+    QGLSceneNode:
 
-    These functions all return QVector values (except for the
-    materials() function which returns a pointer). QVector instances are
-    implicitly shared, thus the copies are inexpensive unless a
-    non-const function is called, triggering a copy-on-write.
+    \snippet displaylist/displaylist.cpp 1
 
-    \section1 Sub-classing QGLDisplayList
+    Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
+    geometry to get the QGLMaterialCollection for the node, and record textures
+    and materials into it.
 
-    Generally for triangulated geometry, use appendTriangle() or appendQuad().
-    If the geometry cannot be built this way, sub-class QGLDisplayList and
-    (for example) create a build() function which calls the append functions.
-    The build function can be called during initialization.
+    \snippet displaylist/displaylist.cpp 2
 
-    When subclassing and using the append functions it will be seen that
-    QGLDisplayList supports the following two main types of scenes:
-    \list
-        \o lit scenes; with lighting and materials, and
-        \o flat color scenes; wth per-vertex colors
-    \endlist
+    These may then be applied as needed throughout the building of the
+    geometry using the integer reference (see the next snippet).
 
-    For lit scenes use appendSmooth() or appendFaceted() to supply lighting
-    normals along with each vertex.  For flat color scenes use appendColor()
-    to supply color values for each vertex.  Flat scenes can also use append()
-    to create uncolored vertices.
+    The geometry data in a QGLDisplayList is divided into QGLSection
+    instances which manage the smoothing properties of the mesh. For
+    example a QGLDisplayList representing a 3D can of soup might have a
+    smooth QGLSection for the rounded outside cylinder and seperate
+    QGLSection instances for the flat top and bottom.  This will cause
+    the can to have lighting normals such that a sharp edge seperates
+    the top, bottom and sides whilst retaining the smoothly rounded sides.
 
-    Within the lit scenes QGLDisplayList allows creation of smooth surfaces,
-    via the appendSmooth() function, to model for example a light globe; and
-    faceted surfaces via the appendFaceted() function, to model for example a
-    gemstone or dice.
+    \snippet displaylist/displaylist.cpp 3
 
     Smooth surfaces are continuous over vertices, where faceted surfaces have
     hard edges at the vertices.  In reality both surfaces are made of faces,
     but in the smooth case lighting normals are calculated to make for a smooth
-    appearance.
+    appearance.  In 3D applications this concept is often referred to as
+    \l{http://www.google.com/search?smoothing+groups}{smoothing groups}.
 
-    Once the geometry has been accumulated in the display list, first call
+    Once the geometry has been accumulated in the display list, call
     the finalize() method to complete the geometry and optimize it for
-    display; then call the loadArrays() method to register the data for
-    OpenGL to render it.  Generally finalize() only needs to be called once
-    in the application lifetime.  loadArrays() may need to be called more
-    often if multiple display lists are being used.
+    display.  Finalize makes several passes through the data, optimizing it
+    and preparing it for display, and thus it may be expensive for large
+    geometry.  Generally finalize() only needs to be called once
+    in the application lifetime.
 
-    The finalize() and loadArrays() functions are called by the default
-    draw() function of QGLDisplayList.
+    QGLDisplayList reimplements QGLSceneNode's draw function to simply call
+    finalize() and then QGLSceneNode::draw(), but finalize() may be called
+    explicitly to control when the overhead of the finalize() function is
+    incurred.
 
     \sa QGLSection
 */
 
 QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
-    : QGLGeometryPrivate(version)
+    : QGLSceneNodePrivate(QGLSceneObject::Main, version)
     , finalizeNeeded(true)
-    , loadNeeded(true)
-    , context(0)
+    , currentSection(0)
+    , currentNode(0)
 {
 }
 
 QGLDisplayListPrivate::~QGLDisplayListPrivate()
 {
+    qDeleteAll(sections);
 }
 
 /*!
@@ -158,13 +148,12 @@ QGLDisplayListPrivate::~QGLDisplayListPrivate()
     \a materials argument is null, then a new collection is created internally.
 */
 QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials)
-    : QGLGeometry(*new QGLDisplayListPrivate, parent)
-    , m_materials(materials)
+    : QGLSceneNode(*new QGLDisplayListPrivate, parent)
 {
-    if (!m_materials)
-        m_materials = new QGLMaterialCollection(this);
-    setPalette(m_materials);
-    setDrawingMode(QGL::Triangles);
+    setGeometry(new QGLGeometry(this));
+    if (!materials)
+        materials = new QGLMaterialCollection(this);
+    geometry()->setPalette(materials);
 }
 
 /*!
@@ -172,18 +161,6 @@ QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials
 */
 QGLDisplayList::~QGLDisplayList()
 {
-}
-
-/*!
-    Draws the contents of the display list onto this painter.
-    This is a convenience method which simply calls draw() on all
-    the sections of this list.
-*/
-void QGLDisplayList::draw(QGLPainter *painter)
-{
-    loadArrays(painter);
-    for (int i = 0; i < m_sections.count(); ++i)
-        m_sections[i]->draw(painter);
 }
 
 /*!
@@ -216,18 +193,23 @@ void QGLDisplayList::draw(QGLPainter *painter)
 */
 void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
                       const QVector3D &c, const QVector3D &n,
-                      const QGLTextureSpecifier &textureModel, bool inverted)
+                      const QGLTextureModel &textureModel, bool inverted)
 {
+    Q_D(QGLDisplayList);
+    Q_ASSERT(d->currentSection);
+    Q_ASSERT(d->currentNode);
     QVector3D norm = n;
     if (norm.isNull())
         norm = QVector3D::normal(a, b, c);
     qDebug() << "Adding triangle:" << a << b << c << " - normal:"
             << n << "tex:" << textureModel.topLeft() << "-" << textureModel.bottomRight();
-    m_currentSection->append(a, norm, textureModel.bottomLeft());
-    m_currentSection->append(b, norm, inverted
-                             ? textureModel.topRight() : textureModel.bottomRight());
-    m_currentSection->append(c, norm, inverted
-                             ? textureModel.topLeft() : textureModel.topRight());
+    QLogicalVertex va(a, norm, textureModel.bottomLeft());
+    QLogicalVertex vb(b, norm, inverted ? textureModel.topRight() : textureModel.bottomRight());
+    QLogicalVertex vc(c, norm, inverted ? textureModel.topLeft() : textureModel.topRight());
+    d->currentSection->append(va);
+    d->currentSection->append(vb);
+    d->currentSection->append(vc);
+    d->currentNode->setCount(d->currentNode->count() + 3);
 }
 
 /*!
@@ -237,7 +219,7 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
 */
 void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
                              const QVector3D &c, const QVector3D &d,
-                             const QGLTextureSpecifier &textureModel)
+                             const QGLTextureModel &textureModel)
 {
     QVector3D norm = QVector3D::normal(a, b, c);
     addTriangle(a, b, c, norm, textureModel);
@@ -260,8 +242,8 @@ void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
     must lie in the same plane.
 */
 void QGLDisplayList::addTriangleFan(const QVector3D &center,
-                                    const QGLDisplayList::VectorArray &edges,
-                                    const QGLTextureSpecifier &textureModel)
+                                    const QGL::VectorArray &edges,
+                                    const QGLTextureModel &textureModel)
 {
     Q_ASSERT(edges.count() > 1);
     if (!textureModel.isNull())
@@ -295,8 +277,8 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     is non-null.
 */
 void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
-                                         const QGeometryData::VectorArray &edges,
-                                         const QGLTextureSpecifier &textureModel)
+                                         const QGL::VectorArray &edges,
+                                         const QGLTextureModel &textureModel)
 {
     Q_ASSERT(edges.count() > 1);
     if (!textureModel.isNull())
@@ -349,14 +331,14 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     must lie in the same plane, which is the case anyway if they are the
     perimeter vertices of a polygon.
 */
-QGLDisplayList::VectorArray QGLDisplayList::extrude(const QGLDisplayList::VectorArray &edges,
-                                           const QVector3D &offset,
-                                           const QGLTextureSpecifier &textureModel)
+QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
+                                         const QVector3D &offset,
+                                         const QGLTextureModel &textureModel)
 {
     // cannot extrude just a point, need at least 2 points
     Q_ASSERT(edges.count() > 1);
     QVector3D o = offset;
-    QGLDisplayList::VectorArray result;
+    QGL::VectorArray result;
     if (offset.isNull())
     {
         if (edges.count() > 2)
@@ -373,9 +355,8 @@ QGLDisplayList::VectorArray QGLDisplayList::extrude(const QGLDisplayList::Vector
         result.append(edges.at(i) + o);
     if (!textureModel.isNull())
     {
-        m_hasTexCoords = true;
         // calculate texturecoords
-        QGLTextureSpecifier tx(textureModel);
+        QGLTextureModel tx(textureModel);
         qreal totalExtents = 0.0f;
         QVarLengthArray<qreal> extents(edges.count());
         for (int i = 0; i < edges.count(); ++i)
@@ -400,8 +381,8 @@ QGLDisplayList::VectorArray QGLDisplayList::extrude(const QGLDisplayList::Vector
             addQuad(result[i], result[n], edges[n], edges[i]);
         }
     }
-    QGLDisplayList::VectorArray temp;
-    QGLDisplayList::VectorArray::const_iterator it = result.constEnd();
+    QGL::VectorArray temp;
+    QGL::VectorArray::const_iterator it = result.constEnd();
     for ( ; it != result.constBegin(); )
         temp.append(*--it);
     return temp;
@@ -420,49 +401,53 @@ void QGLDisplayList::finalize()
     Q_D(QGLDisplayList);
     if (d->finalizeNeeded)
     {
-        for (int i = 0; i < m_normals.count(); ++i)
-            m_normals[i].normalize();
-        QBox3D bb;
-        for (int i = 0; i < m_vertices.count(); ++i)
-            bb.expand(m_vertices.at(i));
-        d->fillArrays(QGLDisplayListPrivate::FillColors |
-                      QGLDisplayListPrivate::FillNormals |
-                      QGLDisplayListPrivate::FillTextures);
-        setBoundingBox(bb);
-        m_vertices.squeeze();
-        m_normals.squeeze();
-        m_texCoords.squeeze();
-        m_colors.squeeze();
-        m_indices.squeeze();
+        QGLGeometry *g = 0;
+        QMap<QLogicalVertex::Types, QGLGeometry *> geos;
+        for (int i = 0; i < d->sections.count(); ++i)
+        {
+            // pack sections that have the same types into one geometry
+            QGLSection &s = *d->sections[i];
+            QGL::IndexArray &indexData = s.d->data->indices;
+            s.finalize();
+            int sectionOffset = 0;
+            QMap<QLogicalVertex::Types, QGLGeometry *>::const_iterator it =
+                    geos.constFind(s.dataTypes());
+            if (it != geos.constEnd())
+            {
+                g = it.value();
+                QGLVertexArray va = g->vertexArray();
+                sectionOffset = va.vertexCount();
+                va.append(s.d->data->toVertexArray());
+                QGLIndexArray ia = g->indexArray();
+                for (int i = 0; i < indexData.size(); ++i)
+                    ia.append(indexData[i] + sectionOffset);
+                g->setVertexArray(va);
+                g->setIndexArray(ia);
+            }
+            else
+            {
+                if (g == 0)
+                    g = geometry();
+                else
+                    g = new QGLGeometry(this);
+                g->setVertexArray(s.d->data->toVertexArray());
+                g->setIndexArray(QGLIndexArray::fromRawData(indexData.constData(),
+                                                            indexData.size()));
+                g->setDrawingMode(QGL::Triangles);
+                geos.insert(s.dataTypes(), g);
+            }
+            QMap<QGLSection *, QGLSceneNode *>::const_iterator nit =
+                    d->sectionNodeMap.constFind(&s);
+            while (nit != d->sectionNodeMap.constEnd() && nit.key() == &s)
+            {
+                QGLSceneNode *node = nit.value();
+                node->setStart(node->start() + sectionOffset);
+                node->setGeometry(g);
+            }
+            g->setBoundingBox(g->boundingBox().expanded(s.boundingBox()));
+        }
         d->finalizeNeeded = false;
     }
-}
-
-/*!
-    Registers the display lists geometry with the \a painter, and loads
-    any vertex buffer objects ready for efficient display.
-
-    If a new context has been switched in, or a different display list
-    has been rendering to the current context, call this function to switch
-    back to rendering this display list on the current context.
-
-    If the geometry of this display list has already been regsitered with
-    this painter's context, then this function does nothing.
-*/
-void QGLDisplayList::loadArrays(QGLPainter *painter)
-{
-    Q_D(QGLDisplayList);
-    Q_ASSERT(painter);
-    finalize();
-    if (d->loadNeeded || painter->context() != d->context)
-    {
-        setVertexArray(toVertexArray());
-        setIndexArray(QGLIndexArray::fromRawData(m_indices.constData(),
-                                                 m_indices.count()));
-        d->context = painter->context();
-        d->loadNeeded = false;
-    }
-    upload();
 }
 
 /*!
@@ -471,65 +456,111 @@ void QGLDisplayList::loadArrays(QGLPainter *painter)
 
     Returns the new current active QGLSection.
 
+    Also a new QGLSceneNode is created and made current.  The new node is a
+    copy of the previously current node, so any materials or effects set
+    will apply to this new section.
+
     \sa currentSection()
 */
 QGLSection *QGLDisplayList::newSection(QGL::Smoothing s)
 {
+    Q_D(QGLDisplayList);
     addSection(new QGLSection(this, s));
-    return m_currentSection;
+    return d->currentSection;
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)
 {
     Q_D(QGLDisplayList);
-    m_currentSection = sec;
-    m_sections.append(sec);
+    d->currentSection = sec;
+    d->sections.append(sec);
+    newNode();
+}
+
+/*!
+    Returns the current section, in which new geometry is being added.
+*/
+QGLSection *QGLDisplayList::currentSection() const
+{
+    Q_D(const QGLDisplayList);
+    return d->currentSection;
 }
 
 /*!
     \fn QList<QGLSection*> &QGLDisplayList::sections()
-    Returns a list of the sectiones of the geometry in this display list
-    as a QList of QGLSection instances.
+    Returns a list of the sections of the geometry in this display list.
 */
-
-/*!
-    \fn QGLMaterialCollection *QGLDisplayList::materials() const
-    Returns the QGLMaterialCollection object referenced by this display
-    list.
-*/
-
-/*!
-    \internal
-    Temporary hack to use QGLVertexArray as an intermediary between
-    display list and painter.
-*/
-QGLVertexArray QGLDisplayList::toVertexArray() const
+QList<QGLSection*> QGLDisplayList::sections() const
 {
-    QGLVertexArray array;
-    if (!m_hasNormals && !m_hasColors && !m_hasTexCoords)
-    {
-        array.setRawData(reinterpret_cast<const float *>(m_vertices.constData()),
-                         m_vertices.count());
-        return array;
-    }
-    array.addField(QGL::Position, 3);
-    if (m_hasNormals)
-        array.addField(QGL::Normal, 3);
-    if (m_hasTexCoords)
-        array.addField(QGL::TextureCoord0, 2);
-    if (m_hasColors)
-        array.addField(QGL::Color, 1);
-    for (int i = 0; i < m_vertices.count(); ++i)
-    {
-        array.append(m_vertices.at(i));
-        if (m_hasNormals)
-            array.append(m_normals.at(i));
-        if (m_hasTexCoords)
-            array.append(m_texCoords.at(i));
-        if (m_hasColors)
-            array.append(m_colors.at(i));
-    }
-    return array;
+    Q_D(const QGLDisplayList);
+    return d->sections;
+}
+
+/*!
+    Creates a new QGLSceneNode within the current section of this
+    display list, and makes it current.  A pointer to the new node is
+    returned.  Any current node is copied to make this new node so
+    any transformations, materials or effects previously set will apply
+    to this new node.
+*/
+QGLSceneNode *QGLDisplayList::newNode()
+{
+    Q_D(QGLDisplayList);
+    QGLSceneNode *parentNode = this;
+    if (d->nodeStack.count() > 0)
+        parentNode = d->nodeStack.last();
+    if (d->currentNode)
+        d->currentNode = d->currentNode->clone(parentNode);
+    else
+        d->currentNode = new QGLSceneNode(parentNode);
+    d->currentNode->setStart(d->currentSection->count());
+    d->currentNode->setCount(0);
+    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
+    return d->currentNode;
+}
+
+/*!
+    Returns a pointer to the current scene node.
+
+    \sa newNode(), newSection()
+*/
+QGLSceneNode *QGLDisplayList::currentNode()
+{
+    Q_D(QGLDisplayList);
+    return d->currentNode;
+}
+
+/*!
+    Creates a new scene node that is a child of the current node and,
+    makes it the current node.  A pointer to the new node is returned.
+    The previous current node is saved on a stack and may be made
+    current again by calling popNode().
+
+    As a child of the current node, the new node will be affected by any
+    transformations and effects or materials on its parent.  The new child
+    has no current effects or materials set on itself.
+
+    \sa popNode(), newNode()
+*/
+QGLSceneNode *QGLDisplayList::pushNode()
+{
+    Q_D(QGLDisplayList);
+    d->nodeStack.append(d->currentNode);
+    d->currentNode = new QGLSceneNode(d->currentNode);
+    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
+    return d->currentNode;
+}
+
+/*!
+    Makes the node on the top of the stack current again.  If the stack
+    is empty, behaviour is undefined.  In debug mode, calling this function
+    when the stack is empty will cause an assert.
+*/
+QGLSceneNode *QGLDisplayList::popNode()
+{
+    Q_D(QGLDisplayList);
+    d->currentNode = d->nodeStack.takeLast();
+    return d->currentNode;
 }
 
 /*!
@@ -539,6 +570,5 @@ QGLVertexArray QGLDisplayList::toVertexArray() const
 void QGLDisplayList::setDirty(bool dirty)
 {
     Q_D(QGLDisplayList);
-    d->loadNeeded = dirty;
     d->finalizeNeeded = dirty;
 }

@@ -46,7 +46,7 @@ QGeometryData::QGeometryData(QLogicalVertex::Types type)
 {
 }
 
-~QGeometryData()
+QGeometryData::~QGeometryData()
 {
     delete normals;
     delete texCoords;
@@ -80,8 +80,7 @@ void QGeometryData::squeeze()
 
 /*!
     \internal
-    Temporary hack to use QGLVertexArray as an intermediary between
-    display list and painter.
+    Use QGLVertexArray as an intermediary between display list and painter.
 */
 QGLVertexArray QGeometryData::toVertexArray() const
 {
@@ -90,7 +89,7 @@ QGLVertexArray QGeometryData::toVertexArray() const
                  QLogicalVertex::Color))
     {
         array.setRawData(reinterpret_cast<const float *>(vertices.constData()),
-                         m_vertices.count());
+                         vertices.count());
     }
     else
     {
@@ -101,15 +100,15 @@ QGLVertexArray QGeometryData::toVertexArray() const
             array.addField(QGL::TextureCoord0, 2);
         if (hasType(QLogicalVertex::Color))
             array.addField(QGL::Color, 1);
-        for (int i = 0; i < m_vertices.count(); ++i)
+        for (int i = 0; i < vertices.count(); ++i)
         {
             array.append(vertices.at(i));
             if (hasType(QLogicalVertex::Normal))
-                array.append(normals.at(i));
+                array.append(normals->at(i));
             if (hasType(QLogicalVertex::Texture))
-                array.append(texCoords.at(i));
+                array.append(texCoords->at(i));
             if (hasType(QLogicalVertex::Color))
-                array.append(colors.at(i));
+                array.append(colors->at(i));
         }
     }
     return array;

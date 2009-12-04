@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLTEXTURESPECIFIER_H
-#define QGLTEXTURESPECIFIER_H
+#ifndef QGLTEXTUREMODEL_H
+#define QGLTEXTUREMODEL_H
 
 #include "qt3dglobal.h"
 #include "qlogicalvertex.h"
@@ -54,15 +54,15 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QGLTextureSpecifier
+class Q_QT3D_EXPORT QGLTextureModel
 {
 public:
-    QGLTextureSpecifier();
-    QGLTextureSpecifier(qreal left, qreal bottom,
+    QGLTextureModel();
+    QGLTextureModel(qreal left, qreal bottom,
                                qreal width, qreal height);
-    ~QGLTextureSpecifier();
-    inline QGLTextureSpecifier(const QGLTextureSpecifier &);
-    inline QGLTextureSpecifier &operator=(const QGLTextureSpecifier &);
+    ~QGLTextureModel();
+    inline QGLTextureModel(const QGLTextureModel &);
+    inline QGLTextureModel &operator=(const QGLTextureModel &);
     inline QVector2D bottomLeft() const;
     inline void setBottomLeft(const QVector2D &);
     inline QVector2D bottomRight() const;
@@ -73,17 +73,17 @@ public:
     inline void setTopRight(const QVector2D &);
     inline bool isNull() const;
     inline void startTileRight(qreal divisor);
-    QGLTextureSpecifier tileRight(qreal extent) const;
+    QGLTextureModel tileRight(qreal extent) const;
 private:
     QVector2D m_bl;
     QVector2D m_br;
     QVector2D m_tr;
     QVector2D m_tl;
     qreal m_divisor;
-    QGLTextureSpecifier *m_tile;
+    QGLTextureModel *m_tile;
 };
 
-inline QGLTextureSpecifier::QGLTextureSpecifier(const QGLTextureSpecifier &other)
+inline QGLTextureModel::QGLTextureModel(const QGLTextureModel &other)
     : m_bl(other.m_bl)
     , m_br(other.m_br)
     , m_tr(other.m_tr)
@@ -93,7 +93,7 @@ inline QGLTextureSpecifier::QGLTextureSpecifier(const QGLTextureSpecifier &other
 {
 }
 
-inline QGLTextureSpecifier &QGLTextureSpecifier::operator=(const QGLTextureSpecifier &rhs)
+inline QGLTextureModel &QGLTextureModel::operator=(const QGLTextureModel &rhs)
 {
     m_bl = rhs.m_bl;
     m_br = rhs.m_br;
@@ -104,47 +104,47 @@ inline QGLTextureSpecifier &QGLTextureSpecifier::operator=(const QGLTextureSpeci
     return *this;
 }
 
-inline QVector2D QGLTextureSpecifier::bottomLeft() const
+inline QVector2D QGLTextureModel::bottomLeft() const
 {
     return m_bl;
 }
 
-inline void QGLTextureSpecifier::setBottomLeft(const QVector2D &v)
+inline void QGLTextureModel::setBottomLeft(const QVector2D &v)
 {
     m_bl = v;
 }
 
-inline QVector2D QGLTextureSpecifier::bottomRight() const
+inline QVector2D QGLTextureModel::bottomRight() const
 {
     return m_br;
 }
 
-inline void QGLTextureSpecifier::setBottomRight(const QVector2D &v)
+inline void QGLTextureModel::setBottomRight(const QVector2D &v)
 {
     m_br = v;
 }
 
-inline QVector2D QGLTextureSpecifier::topLeft() const
+inline QVector2D QGLTextureModel::topLeft() const
 {
     return m_tl;
 }
 
-inline void QGLTextureSpecifier::setTopLeft(const QVector2D &v)
+inline void QGLTextureModel::setTopLeft(const QVector2D &v)
 {
     m_tl = v;
 }
 
-inline QVector2D QGLTextureSpecifier::topRight() const
+inline QVector2D QGLTextureModel::topRight() const
 {
     return m_tr;
 }
 
-inline void QGLTextureSpecifier::setTopRight(const QVector2D &v)
+inline void QGLTextureModel::setTopRight(const QVector2D &v)
 {
     m_tr = v;
 }
 
-inline bool QGLTextureSpecifier::isNull() const
+inline bool QGLTextureModel::isNull() const
 {
     return m_bl == QLogicalVertex::InvalidTexCoord &&
             m_br == QLogicalVertex::InvalidTexCoord &&
@@ -152,23 +152,23 @@ inline bool QGLTextureSpecifier::isNull() const
             m_tl == QLogicalVertex::InvalidTexCoord;
 }
 
-inline void QGLTextureSpecifier::startTileRight(qreal divisor)
+inline void QGLTextureModel::startTileRight(qreal divisor)
 {
     if (!m_tile)
-        m_tile = new QGLTextureSpecifier;
+        m_tile = new QGLTextureModel;
     m_divisor = divisor;
     m_tile->m_br = m_bl;
     m_tile->m_tr = m_tl;
 }
 
-inline QGLTextureSpecifier QGLTextureSpecifier::tileRight(qreal extent) const
+inline QGLTextureModel QGLTextureModel::tileRight(qreal extent) const
 {
     if (!m_tile)
     {
 #ifndef QT_NO_DEBUG
-        qWarning("QGLTextureSpecifier::tileRight() - call startTileRight() first!");
+        qWarning("QGLTextureMODEL::tileRight() - call startTileRight() first!");
 #endif
-        return QGLTextureSpecifier();
+        return QGLTextureModel();
     }
     qreal factor = extent / m_divisor;
     m_tile->m_bl = m_tile->m_br;
@@ -178,4 +178,4 @@ inline QGLTextureSpecifier QGLTextureSpecifier::tileRight(qreal extent) const
     return *m_tile;
 }
 
-#endif // QGLTEXTURESPECIFIER_H
+#endif // QGLTEXTUREMODEL_H

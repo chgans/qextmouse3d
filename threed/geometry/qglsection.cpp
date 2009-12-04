@@ -41,6 +41,7 @@
 
 #include "qglsection.h"
 #include "qgldisplaylist_p.h"
+#include "qvector3dmapped_p.h"
 
 #include <QtGui/qvector3d.h>
 
@@ -57,41 +58,31 @@
     \l{QGLSection::GLDataFlag}{data types}.
 
     Each QGLSection references a contiguous range of vertices in a
-    QGLDisplayList - the start and count of this range are available via
-    the start() and count() methods.
+    QGLDisplayList.
 
     A QGLDisplayList instance has the \l{QGLDisplayList::newSection()}{newSection()}
     function which creates a new QGLSection to reference its data.  Use this
     to construct new QGLSection instances, or alternatively construct
     a new QGLSection() and pass a non-null QGLDisplayList pointer.
 
-    The draw() method draws just the vertices in the range of the section.
-    Call the QGLDisplayList::draw() convenience function to draw all the
-    QGLSection objects that make up the list.
+    Accessor functions are provided for getting copies of the data in
+    the section:
+    \list
+        \o vertexArray()
+        \o normalArray()
+        \o texCoordArray()
+        \o colorArray()
+        \o indexArray()
+    \endlist
 
-    All faces in a QGLSection are triangles, although if drawn with the
-    addQuad method, the two adjoining triangles making up the quad are made
-    without a hard edge between them.  The triangle data can be accessed
-    by indexing the QGLDisplayList via the start() and count() methods of
-    the QGLSection class:
-    \code
-    const QVector<QVector3D> &v = displayList->vertexArray();
-    qreal area = 0.0;
-    int start = section->start();
-    int end = start + section->count();
-    for (int i = start; i < end; i += 3)
-        area += calcTriangleArea(v[i], v[i+1], v[i+2]);
-    \endcode
-*/
+    These functions all return QVector values. QVector instances are
+    implicitly shared, thus the copies are inexpensive unless a
+    non-const function is called on them, triggering a copy-on-write.
 
-/*!
-    \enum QGLSection::GLDataFlag
-    This enumeration specifies which types of OpenGL data this section is
-    utilizing for its geometry.
-    \value Vertex Only vertex data is utilized
-    \value Normals Normal vector data is utilized
-    \value Textures Texture coordinate data is utilized
-    \value Color per vertex data is utilized
+    Generally for triangulated geometry, use append().  This function simply
+    calls virtual protected functions appendSmooth() (for smoothed vertices)
+    and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
+    discussion of smoothing.
 */
 
 class QGLSectionPrivate
@@ -110,7 +101,9 @@ public:
     Construct a new QGLSection on the display list \a d, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
-    The \a d must be non-null, and in debug mode, unless QT_NO_DEBUG is
+    See QGLDisplayList for a discussion of smoothing.
+
+    The pointer \a d must be non-null, and in debug mode, unless QT_NO_DEBUG is
     defined, this function will assert if \a d is null.
 
     The following lines of code have identical effect:
@@ -124,9 +117,7 @@ public:
     list.
 */
 QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
-    : m_start(0)
-    , m_count(0)
-    , m_smoothing(s)
+    : m_smoothing(s)
     , m_displayList(d)
     , m_dataTypes(QLogicalVertex::Vertex)
     , d(new QGLSectionPrivate)
@@ -143,23 +134,38 @@ QGLSection::~QGLSection()
     delete d;
 }
 
-
-void QGLSection::draw(QGLPainter *painter) const
+/*!
+    Finalizes this section by squeezing the data to fit in the optimal memory
+    and normalizing its normal vectors to unit length.
+*/
+void QGLSection::finalize()
 {
-    m_displayList->finalize();
-    m_displayList->draw(painter, m_start, m_count);
+    d->data->squeeze();
+    for (int i = 0; i < d->data->normals->count(); ++i)
+        (*d->data->normals)[i].normalize();
 }
 
 /*!
-    Adds the logical vertex \a lv to this display list.
+    Returns a bounding box for the vertices in this section.
+*/
+QBox3D QGLSection::boundingBox() const
+{
+    QBox3D bb;
+    for (int i = 0; i < d->data->vertices.count(); ++i)
+        bb.expand(d->data->vertices.at(i));
+    return bb;
+}
+
+/*!
+    Adds the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as part of a smooth continuous surface, with
     no distinct edge.  To acheive this, duplicates of vertex \a lv are
     coalesced into one vertex (within this section).  This one vertex
     has its normal set to the average of supplied normals.
 
-    Call this function to add the vertices of a smooth face to the display
-    list, or use:
+    Call this function to add the vertices of a smooth face to the section
+    of a display list, or use:
 
     \code
     myDisplayList->openSection(QGLDisplayList::Smooth);
@@ -195,17 +201,17 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
         QVector3DMapped &vm = const_cast<QVector3DMapped&>(it.key());
         if (!vm.findNormal(lv.normal(), d->smoothedNormals))
         {
+            QGL::VectorArray &va = *d->data->normals;
             for ( ; it != d->map.end() && it.key() == lv.vertex(); ++it)
-                (*d->data->normals)[it.value()] += lv.normal();
-            vm.appendNormal(v, d->data, d->smoothedNormals);
+                va[it.value()] += lv.normal();
+            vm.appendNormal(&va[v], d->smoothedNormals);
         }
     }
-    m_count += 1;
     m_displayList->setDirty(true);
 }
 
 /*!
-    Add the \a vertex to this display list.
+    Add the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as a distinct edge, instead of just part of a
     continuous smooth surface.  To acheive this a duplicate of \a a is
@@ -228,9 +234,9 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLDisplayListPrivate::VecMap::const_iterator it = d->map.constFind(&lv.vertex());
+    QGLSectionPrivate::VecMap::const_iterator it = d->map.constFind(&lv.vertex());
     for ( ; it != d->map.constEnd() && it.key() == lv.vertex(); ++it)
-        if (qFuzzyCompare(d->data->normals[it.value()], lv.normal()))
+        if (qFuzzyCompare((*d->data->normals)[it.value()], lv.normal()))
             break;
     if (it != d->map.constEnd() && it.key() == lv.vertex()) // found
     {
@@ -244,7 +250,6 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
         int v = d->data->appendVertex(lv);
         d->map.insertMulti(&d->data->vertices[v], v);
     }
-    m_count += 1;
     m_displayList->setDirty(true);
 }
 
@@ -277,20 +282,20 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 int QGLSection::updateTexCoord(int index, const QVector2D &t)
 {
     int v = -1;
-    if (t != QGLTextureSpecifier::InvalidTexCoord  && t != d->data->texCoords[index])
+    Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
+    if (t != QLogicalVertex::InvalidTexCoord  && t != (*d->data->texCoords)[index])
     {
-        if (d->data->texCoords[index] == QGLTextureSpecifier::InvalidTexCoord)
+        if ((*d->data->texCoords)[index] == QLogicalVertex::InvalidTexCoord)
         {
             v = index;
-            d->data->texCoords[index] = t;
+            (*d->data->texCoords)[index] = t;
         }
         else
         {
-            QLogicalVertex vx(d->data->vertexAt(index));
-            v = d->data->append(vx);
-            d->map.insert(QVector3DMapped(index, d->data), v);
+            v = d->data->appendVertex(d->data->vertexAt(index));
+            d->map.insert(QVector3DMapped(&d->data->vertices[v]), v);
         }
-        d->setDirty(true);
+        m_displayList->setDirty(true);
     }
     return v;
 }
@@ -302,6 +307,8 @@ QGL::VectorArray QGLSection::vertices() const
 
 QGL::VectorArray QGLSection::normals() const
 {
+    if (!d->data->normals)
+        return QGL::VectorArray();
     return *d->data->normals;
 }
 
@@ -312,11 +319,15 @@ QGL::IndexArray QGLSection::indices() const
 
 QGL::TexCoordArray QGLSection::texCoords() const
 {
+    if (!d->data->texCoords)
+        return QGL::TexCoordArray();
     return *d->data->texCoords;
 }
 
 QGL::ColorArray QGLSection::colors() const
 {
+    if (!d->data->colors)
+        return QGL::ColorArray();
     return *d->data->colors;
 }
 
@@ -326,7 +337,7 @@ QGL::ColorArray QGLSection::colors() const
 */
 int QGLSection::indexOf(const QLogicalVertex &lv) const
 {
-    QGLSectionPrivate::VecMap::const_iterator it = d->map.constFind(lv.vertex());
+    QGLSectionPrivate::VecMap::const_iterator it = d->map.constFind(&lv.vertex());
     while (it != d->map.constEnd())
     {
         if (it.key() != lv.vertex())
@@ -340,7 +351,7 @@ int QGLSection::indexOf(const QLogicalVertex &lv) const
 /*!
     Returns the vertex data for the \a index.  The \a index must be valid.
 */
-const QLogicalVertex &QGLSection::vertexAt(int index) const
+QLogicalVertex QGLSection::vertexAt(int index) const
 {
     return d->data->vertexAt(index);
 }
@@ -390,11 +401,11 @@ void QGLSection::setNormal(int position, const QVector3D &n)
 
     \sa updateTexCoord()
 */
-inline void QGLSection::setTexCoord(int position, const QVector2D &t)
+void QGLSection::setTexCoord(int position, const QVector2D &t)
 {
-    if (t != QGLTextureSpecifier::InvalidTexCoord)
+    if (t != QLogicalVertex::InvalidTexCoord)
     {
-        d->data->setTexCoords(position, t);
+        d->data->setTexCoord(position, t);
         m_displayList->setDirty(true);
     }
 }
@@ -421,34 +432,15 @@ void QGLSection::setColor(int position, const QColor4b &c)
 */
 
 /*!
-   \fn int QGLSection::start() const
-
-   Returns the current start index for this section, as an index into
-   the associated QGLDisplayList.
-
-   \sa setStart(), displayList()
-*/
-
-/*!
-    \fn void QGLSection::setStart(int s)
-
-    Sets the current start index for this section, to \a s, an index into
-    the associated QGLDisplayList
-
-    \sa start(), displayList()
-*/
-
-/*!
    \fn int QGLSection::count() const
 
-   Returns the current index count for this section, as a count of indexed
-   vertices in the associated QGLDisplayList.
-
-   While this section is not finalized this value may increase as new
-   geometry is added to it.
-
-   \sa displayList()
+   Returns the current count of vertices referenced for this section.  This is
+   the same as \c{section->indices().count()}.
 */
+int QGLSection::count() const
+{
+    return d->data->indices.count();
+}
 
 /*!
     \fn QGLDisplayList *QGLSection::displayList() const
@@ -489,7 +481,6 @@ QDebug operator<<(QDebug dbg, const QGLSection &section)
 {
     dbg.space()
             << "QGLSection("
-            << ", start:" << section.start()
             << ", count:" << section.count()
             << ", smoothing mode:" << (section.smoothing() == QGL::Smooth ?
                                        "QGL::Smooth" : "QGL::Faceted");

@@ -42,6 +42,17 @@
 #ifndef QGEOMETRYDATA_H
 #define QGEOMETRYDATA_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include "qcolor4b.h"
 #include "qlogicalvertex.h"
 #include "qglnamespace.h"
@@ -58,14 +69,14 @@ public:
 
     inline int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int) const;
-    QGLVertexArray QGeometryData::toVertexArray() const;
+    QGLVertexArray toVertexArray() const;
 
     inline void setVertex(int, const QVector3D &v);
     inline void setNormal(int, const QVector3D &n);
     inline void setTexCoord(int, const QVector2D &t);
     inline void setColor(int, const QColor4b &c);
 
-    inline bool hasType(QLogicalVertex::Types type);
+    inline bool hasType(QLogicalVertex::Types type) const;
 
     QGL::VectorArray vertices;
     QGL::VectorArray *normals;
@@ -139,7 +150,7 @@ inline void QGeometryData::setColor(int index, const QColor4b &c)
     (*colors)[index] = c;
 }
 
-inline bool QGeometryData::hasType(QLogicalVertex::Types type)
+inline bool QGeometryData::hasType(QLogicalVertex::Types type) const
 {
     return (type & dataTypes);
 }

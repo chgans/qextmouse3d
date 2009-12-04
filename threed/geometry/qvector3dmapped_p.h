@@ -42,6 +42,17 @@
 #ifndef QVECTOR3DMAPPED_P_H
 #define QVECTOR3DMAPPED_P_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include <QtGui/qvector3d.h>
 #include "qgldisplaylist.h"
 #include "qglsection.h"
@@ -52,19 +63,20 @@ class QVector3DMapped
 public:
     typedef QVector<QVector3DMapped> VList;
 
-    QVector3DMapped(const QVector3D* vec);
+    QVector3DMapped(const QVector3D* vec = 0);
     inline bool isNull() const;
-    operator QVector3D () const;
+    inline operator QVector3D () const;
     inline bool operator<(const QVector3DMapped &rhs) const;
     inline bool operator==(const QVector3D &rhs) const;
-    inline bool findNormal(const QVector3D &norm,
-                           const VList &list) const;
-    inline void appendNormal(int, QGeometryData *, QVector3DMapped::VList &);
+    bool findNormal(const QVector3D &norm,
+                    const VList &list) const;
+    void appendNormal(QVector3D *, QVector3DMapped::VList &);
 
     QString toString() const {
-        const QVector3D &v = vecPtr ? *vecPtr : store->vertices.at(vecIx);
+        const QVector3D &v = vecPtr ? *vecPtr : QVector3D(99.9f, 99.9f, 99.9f);
         QString vs = QString("QVector3D( %1, %2, %3 )").arg(v.x()).arg(v.y()).arg(v.z());
-        return vs + "\n" + QString("[QVector3DMapped - vecIx: %1 - vecPtr: %2 - normPtr: %3 - store %4]\n").arg(vecIx).arg((int)vecPtr).arg(normPtr).arg((int)store);
+        return vs + "\n" + QString("[QVector3DMapped - vecPtr: %1 - normPtr: %2]\n")
+                .arg((int)vecPtr).arg(normPtr);
     }
 
     const QVector3D *vecPtr;
@@ -77,7 +89,7 @@ inline QVector3DMapped::QVector3DMapped(const QVector3D* vec)
 {
 }
 
-QVector3DMapped::operator QVector3D () const
+inline QVector3DMapped::operator QVector3D () const
 {
     Q_ASSERT(!isNull());
     return *vecPtr;

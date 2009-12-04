@@ -314,8 +314,6 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (!d->boundingBox.isNull() && !painter->isVisible(d->boundingBox))
         return;
 
-    qDebug() << "fsk";
-
     QGLMaterialCollection *p = palette();
     const QGLMaterialParameters *save = 0;
     if (mPalette && mMaterial != -1)

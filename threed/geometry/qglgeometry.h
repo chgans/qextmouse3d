@@ -81,6 +81,7 @@ public:
     void setBoundingBox(const QBox3D& value);
 
     virtual void draw(QGLPainter *painter);
+    virtual void draw(QGLPainter *painter, int start, int count);
     virtual bool upload();
 
     inline int material() const;
@@ -91,7 +92,6 @@ public:
 
 protected:
     QGLGeometry(QGLGeometryPrivate &, QObject *);
-    virtual void draw(QGLPainter *painter, int start, int count);
     bool isModified() const;
 
 private:

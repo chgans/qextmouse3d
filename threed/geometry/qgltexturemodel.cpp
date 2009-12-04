@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgltexturespecifier.h"
+#include "qgltexturemodel.h"
 
 /*!
     \class QGLTextureSpecifier
@@ -80,7 +80,7 @@
 /*!
     Construct a null texture specifier.
 */
-QGLTextureSpecifier::QGLTextureSpecifier()
+QGLTextureModel::QGLTextureModel()
     : m_bl(QLogicalVertex::InvalidTexCoord)
     , m_br(QLogicalVertex::InvalidTexCoord)
     , m_tr(QLogicalVertex::InvalidTexCoord)
@@ -95,7 +95,7 @@ QGLTextureSpecifier::QGLTextureSpecifier()
     coordinates, and the other coordinates determined by the \a width and \a height.
     By default all values are 0, making a null texture specifier.
 */
-QGLTextureSpecifier::QGLTextureSpecifier(qreal left, qreal bottom,
+QGLTextureModel::QGLTextureModel(qreal left, qreal bottom,
                                                 qreal width, qreal height)
     : m_bl(left, bottom)
     , m_br(left + width, bottom)
@@ -109,7 +109,7 @@ QGLTextureSpecifier::QGLTextureSpecifier(qreal left, qreal bottom,
 /*!
     Delete this texture specifier, recovering any resources.
 */
-QGLTextureSpecifier::~QGLTextureSpecifier()
+QGLTextureModel::~QGLTextureModel()
 {
     delete m_tile;
 }

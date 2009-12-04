@@ -44,6 +44,7 @@
 
 #include "qglview.h"
 
+class QGLSceneNode;
 class QGLDisplayList;
 
 class DisplayListView : public QGLView
@@ -58,9 +59,9 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    void buildGeometry();
+    QGLDisplayList *buildGeometry();
 
-    QGLDisplayList *soupCan;
+    QGLSceneNode *canScene;
 };
 
 #endif

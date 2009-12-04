@@ -45,22 +45,62 @@
 #include "qgltexture2d.h"
 #include "qglmaterialparameters.h"
 #include "qglsection.h"
+#include "qglscenenode.h"
+#include <QtGui/qmatrix4x4.h>
 
 #include <QtCore/qmath.h>
 
 DisplayListView::DisplayListView(QWidget *parent)
     : QGLView(parent)
-    , soupCan(new QGLDisplayList(this))
+    , canScene(new QGLSceneNode(this))
 {
-    buildGeometry();
+    QGLDisplayList *displayList = buildGeometry();
+    displayList->setParent(canScene);
+
+    //! [0]
+    // clone a can to the left
+    QGLSceneNode *node = displayList->clone(canScene);
+    {
+        QMatrix4x4 mat;
+        mat.translate(-2.0f, 2.0f, 0.0f);
+        node->setLocalTransform(mat);
+    }
+
+    // clone a can to the right
+    node = displayList->clone(canScene);
+    {
+        QMatrix4x4 mat;
+        mat.translate(2.0f, 2.0f, 0.0f);
+        node->setLocalTransform(mat);
+    }
+
+    // rotate the whole scene 90 degrees about x-axis so that
+    // can bottoms are facing down when scene is first displayed
+    {
+        QMatrix4x4 mat;
+        mat.rotate(90.0f, 1.0f, 0.0f, 0.0f);
+        canScene->setLocalTransform(mat);
+    }
+    //! [0]
 }
 
 void DisplayListView::initializeGL(QGLPainter *painter)
 {
-    //! [0]
     painter->setLightEnabled(0, true);
+}
 
-    QGLMaterialCollection *mats = soupCan->materials();
+//! [1]
+void DisplayListView::paintGL(QGLPainter *painter)
+{
+    canScene->draw(painter);
+}
+//! [1]
+
+QGLDisplayList *DisplayListView::buildGeometry()
+{
+    //! [2]
+    QGLDisplayList *soupCan = new QGLDisplayList();
+    QGLMaterialCollection *mats = soupCan->geometry()->palette();
 
     QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
     parms->setAmbientColor(QColor(170, 202, 0));
@@ -72,20 +112,9 @@ void DisplayListView::initializeGL(QGLPainter *painter)
     tex->setImage(soupLabel);
     mats->setTexture(canMat, tex);
 
-    painter->setStandardEffect(QGL::LitDecalTexture2D);
-    //! [0]
-}
-
-void DisplayListView::paintGL(QGLPainter *painter)
-{
-    //! [1]
-    soupCan->draw(painter);
-    //! [1]
-}
-
-void DisplayListView::buildGeometry()
-{
+    soupCan->setEffect(QGL::LitDecalTexture2D);
     //! [2]
+
     const qreal canRadius = 2.0f;
     const qreal canHeight = 6.0f;
     const int numSlices = 16;
@@ -96,7 +125,7 @@ void DisplayListView::buildGeometry()
     QVector3D canLidCenter;  // center is origin: 0, 0, 0
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
     QVector3D canBottomCenter = canLidCenter + canExtrudeVec;
-    QGLTextureSpecifier texMap(0, 0, 1, 1);
+    QGLTextureModel texMap(0, 0, 1, 1);
 
     // do the math for the defining points
     for (int i = 0; i < numSlices; ++i)
@@ -105,16 +134,21 @@ void DisplayListView::buildGeometry()
         topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle), 0.0f);
     }
 
+    //! [3]
     // create the flat top lid of the can
     soupCan->newSection();
     soupCan->addTriangulatedFace(canLidCenter, topCanRim);
 
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
+    soupCan->currentNode()->setMaterial(canMat);
     bottomCanRim = soupCan->extrude(topCanRim, canExtrudeVec, texMap);
 
     // create the flat bottom lid of the can
     soupCan->newSection();
     soupCan->addTriangulatedFace(canBottomCenter, bottomCanRim);
-    //! [2]
+
+    soupCan->finalize();
+    return soupCan;
+    //! [3]
 }

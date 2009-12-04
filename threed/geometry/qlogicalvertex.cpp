@@ -47,6 +47,18 @@ const qreal QLogicalVertex::InvalidTexValue = -std::numeric_limits<qreal>::max()
 const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::InvalidTexValue,
                                                             QLogicalVertex::InvalidTexValue);
 
+/*!
+    \enum QLogicalVertex::Type
+    This enumeration specifies which types of OpenGL data is
+    utilized in specifying geometry.
+    \value None No vertex data is utilized.
+    \value Vertex Vertex data is utilized
+    \value Normals Normal vector data is utilized
+    \value Textures Texture coordinate data is utilized
+    \value Color per vertex data is utilized
+*/
+
+
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
 {

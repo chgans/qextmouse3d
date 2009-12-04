@@ -42,31 +42,43 @@
 #ifndef QGLDISPLAYLIST_P_H
 #define QGLDISPLAYLIST_P_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include "qglgeometry_p.h"
 #include "qvector3dmapped_p.h"
-#include <QtCore/qobject.h>
-#include <QtCore/qobjectdefs.h>
-#include <QtCore/private/qobject_p.h>
+#include "qglscenenode_p.h"
 #include <QtCore/qmap.h>
 
 class QGLDisplayList;
 
-class QGLDisplayListPrivate : public QGLGeometryPrivate
+class QGLDisplayListPrivate : public QGLSceneNodePrivate
 {
     Q_DECLARE_PUBLIC(QGLDisplayList);
 public:
     QGLDisplayListPrivate(int version = QObjectPrivateVersion);
     ~QGLDisplayListPrivate();
-    bool finalizeNeeded;
-    bool loadNeeded;
-    const QGLContext *context;
     inline void setDirty(bool dirty = true);
+
+    bool finalizeNeeded;
+    QList<QGLSection*> sections;
+    QGLSection *currentSection;
+    QList<QGLSceneNode*> nodeStack;
+    QGLSceneNode *currentNode;
+    QMap<QGLSection *, QGLSceneNode *> sectionNodeMap;
 };
 
 inline void QGLDisplayListPrivate::setDirty(bool dirty)
 {
     finalizeNeeded = dirty;
-    loadNeeded = dirty;
 }
 
 #endif // QGLDISPLAYLIST_P_H

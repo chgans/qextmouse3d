@@ -8,7 +8,7 @@ HEADERS += qglcube.h \
     qglbeziergeometry.h \
     qglmaterialcollection.h \
     qglteapot.h \
-    qgltexturespecifier.h \
+    qgltexturemodel.h \
     qlogicalvertex.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
@@ -18,7 +18,7 @@ SOURCES += qglcube.cpp \
     qglbeziergeometry.cpp \
     qglmaterialcollection.cpp \
     qglteapot.cpp \
-    qgltexturespecifier.cpp \
+    qgltexturemodel.cpp \
     qvector3dmapped.cpp \
     qlogicalvertex.cpp \
     qgeometrydata.cpp

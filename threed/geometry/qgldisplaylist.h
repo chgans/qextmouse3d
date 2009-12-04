@@ -42,15 +42,14 @@
 #ifndef QGLDISPLAYLIST_H
 #define QGLDISPLAYLIST_H
 
-#include <QtCore/qobject.h>
 #include <QtCore/qvector.h>
 #include <QtCore/qlist.h>
 #include <QtGui/qvector3d.h>
 #include <QtOpenGL/qgl.h>
 
-#include "qgltexturespecifier.h"
-#include "qglgeometry.h"
+#include "qgltexturemodel.h"
 #include "qglnamespace.h"
+#include "qglscenenode.h"
 #include "qglsection.h"
 #include "qlogicalvertex.h"
 
@@ -65,7 +64,7 @@ class QGLMaterialCollection;
 class QGLDisplayListPrivate;
 class QGLPainter;
 
-class Q_QT3D_EXPORT QGLDisplayList : public QGLGeometry
+class Q_QT3D_EXPORT QGLDisplayList : public QGLSceneNode
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLDisplayList);
@@ -73,77 +72,55 @@ public:
     QGLDisplayList(QObject *parent = 0, QGLMaterialCollection *materials = 0);
     virtual ~QGLDisplayList();
 
-    // drawing
-    void draw(QGLPainter *painter);
+    void draw(QGLPainter *painter)
+    {
+        finalize();
+        QGLSceneNode::draw(painter);
+    }
 
     // section management
     QGLSection *newSection(QGL::Smoothing = QGL::Smooth);
-    QGLSection *currentSection();
-    QVector<QGLSection*> &sections();
+    QGLSection *currentSection() const;
+    QList<QGLSection*> sections() const;
+
+    // scene management
+    QGLSceneNode *currentNode();
+    QGLSceneNode *newNode();
+    QGLSceneNode *pushNode();
+    QGLSceneNode *popNode();
 
     // geometry building
     void reserve(int n);
     void addTriangle(const QVector3D &a, const QVector3D &b,
                      const QVector3D &c, const QVector3D &n = QVector3D(),
-                     const QGLTextureSpecifier &textureModel = QGLTextureSpecifier(),
+                     const QGLTextureModel &textureModel = QGLTextureModel(),
                      bool inverted = false);
     void addQuad(const QVector3D &a, const QVector3D &b,
                  const QVector3D &c, const QVector3D &d,
-                 const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
+                 const QGLTextureModel &textureModel = QGLTextureModel());
     void addTriangleFan(const QVector3D &center,
                         const QGL::VectorArray &edges,
-                        const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
+                        const QGLTextureModel &textureModel = QGLTextureModel());
     void addTriangulatedFace(const QVector3D &center,
                              const QGL::VectorArray &edges,
-                             const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
+                             const QGLTextureModel &textureModel = QGLTextureModel());
     QVector<QVector3D> extrude(const QGL::VectorArray &edges,
                                const QVector3D &dir = QVector3D(),
-                               const QGLTextureSpecifier &textureModel = QGLTextureSpecifier());
-
-    // data accessors
-    inline QGLMaterialCollection *materials() const;
-protected:
-    virtual void finalize();
-    virtual void loadArrays(QGLPainter *painter);
-
-    virtual void addSection(QGLSection *section);
+                               const QGLTextureModel &textureModel = QGLTextureModel());
+    void finalize();
 private:
     Q_DISABLE_COPY(QGLDisplayList);
+    virtual void addSection(QGLSection *section);
 
     friend class QGLSection;
 
     QGLVertexArray toVertexArray() const;
     void setDirty(bool dirty);
-    void draw(QGLPainter *, int, int);
 
 #ifndef QT_NO_DEBUG_STREAM
     friend QDebug operator<<(QDebug, const QGLSection &);
 #endif
-    QGLMaterialCollection *m_materials;
-    QVector<QGLSection *> m_sections;
-    QGLSection *m_currentSection;
 };
-
-
-inline QGLSection *QGLDisplayList::currentSection()
-{
-    return m_currentSection;
-}
-
-inline QVector<QGLSection*> &QGLDisplayList::sections()
-{
-    return m_sections;
-}
-
-inline QGLMaterialCollection *QGLDisplayList::materials() const
-{
-    return m_materials;
-}
-
-inline void QGLDisplayList::draw(QGLPainter *painter, int start, int count)
-{
-    QGLGeometry::draw(painter, start, count);
-}
 
 QT_END_NAMESPACE
 

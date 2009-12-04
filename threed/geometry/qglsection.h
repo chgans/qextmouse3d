@@ -42,10 +42,10 @@
 #ifndef QGLSECTION_H
 #define QGLSECTION_H
 
-#include "qglnamespace.h"
 #include "qglpainter.h"
-#include "qgeometrydata_p.h"
 #include "qlogicalvertex.h"
+#include "qglnamespace.h"
+#include "qbox3d.h"
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qmatrix4x4.h>
@@ -59,6 +59,7 @@ QT_MODULE(Qt3d)
 class QGLPainter;
 class QGLDisplayList;
 class QGLSectionPrivate;
+class QGeometryData;
 
 class Q_QT3D_EXPORT QGLSection
 {
@@ -73,20 +74,23 @@ public:
     QGL::TexCoordArray texCoords() const;
     QGL::ColorArray colors() const;
     int indexOf(const QLogicalVertex &lv) const;
-    const QLogicalVertex &vertexAt(int i) const;
+    QLogicalVertex vertexAt(int i) const;
+    void setVertex(int position, const QVector3D &v);
+    void setNormal(int position, const QVector3D &n);
+    void setTexCoord(int position, const QVector2D &t);
+    void setColor(int position, const QColor4b &c);
 
     // state accessors
     inline bool hasData(QLogicalVertex::Types types);
+    inline QLogicalVertex::Types dataTypes() const;
     inline QGL::Smoothing smoothing() const;
-    inline int start() const;
-    inline int count() const;
+    int count() const;
     inline QGLDisplayList *displayList() const;
-
-    // display methods
-    inline void draw(QGLPainter *painter) const;
+    QBox3D boundingBox() const;
 
     // data update methods
     inline void append(const QLogicalVertex &vertex);
+    void finalize();
 protected:
     virtual void appendSmooth(const QLogicalVertex &vertex);
     virtual void appendFaceted(const QLogicalVertex &vertex);
@@ -94,9 +98,6 @@ protected:
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
-
-    GLuint m_start;
-    GLuint m_count;
 
     QGL::Smoothing m_smoothing;
     QGLDisplayList *m_displayList;
@@ -109,19 +110,14 @@ inline QGL::Smoothing QGLSection::smoothing() const
     return m_smoothing;
 }
 
-inline int QGLSection::start() const
-{
-    return m_start;
-}
-
-inline int QGLSection::count() const
-{
-    return m_count;
-}
-
 inline QGLDisplayList *QGLSection::displayList() const
 {
     return m_displayList;
+}
+
+inline QLogicalVertex::Types QGLSection::dataTypes() const
+{
+    return m_dataTypes;
 }
 
 inline bool QGLSection::hasData(QLogicalVertex::Types types)

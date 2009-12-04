@@ -78,7 +78,7 @@ public:
     inline const QVector3D &vertex() const;
     inline void setVertex(const QVector3D &v);
     inline QVector3D &vertexRef();
-    operator QVector3D () const;
+    inline operator QVector3D () const;
     inline const QVector3D &normal() const;
     inline void setNormal(const QVector3D &n);
     inline QVector3D &normalRef();
@@ -149,7 +149,7 @@ inline QVector3D &QLogicalVertex::vertexRef()
     return m_vertex;
 }
 
-QLogicalVertex::operator QVector3D () const
+inline QLogicalVertex::operator QVector3D () const
 {
     return m_vertex;
 }

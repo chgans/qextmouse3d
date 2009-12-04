@@ -43,7 +43,7 @@
 #define QGLSECTION_P_H
 
 #include "qvector3dmapped_p.h"
-#include "qgeometrydata.h"
+#include "qgeometrydata_p.h"
 
 class QGLSectionPrivate
 {
