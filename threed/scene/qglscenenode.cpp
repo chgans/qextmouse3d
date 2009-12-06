@@ -296,24 +296,44 @@ void QGLSceneNode::setStart(int start)
     d->start = start;
 }
 
+/*!
+    Returns the count of vertices referenced for this scene node.
+
+    \sa setCount()
+*/
 int QGLSceneNode::count() const
 {
     Q_D(const QGLSceneNode);
     return d->count;
 }
 
+/*!
+    Sets the count of vertices referenced to \a count for this scene node.
+
+    \sa count()
+*/
 void QGLSceneNode::setCount(int count)
 {
     Q_D(QGLSceneNode);
     d->count = count;
 }
 
+/*!
+    Returns the material index for this scene node.
+
+    \sa setMaterial()
+*/
 int QGLSceneNode::material() const
 {
     Q_D(const QGLSceneNode);
     return d->material;
 }
 
+/*!
+    Sets the material index for this scene node to \a material.
+
+    \sa material()
+*/
 void QGLSceneNode::setMaterial(int material)
 {
     Q_D(QGLSceneNode);
