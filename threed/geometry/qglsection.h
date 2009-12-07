@@ -73,7 +73,7 @@ public:
     QGL::IndexArray indices() const;
     QGL::TexCoordArray texCoords() const;
     QGL::ColorArray colors() const;
-    int indexOf(const QLogicalVertex &lv) const;
+
     QLogicalVertex vertexAt(int i) const;
     void setVertex(int position, const QVector3D &v);
     void setNormal(int position, const QVector3D &n);
@@ -95,6 +95,7 @@ protected:
     virtual void appendSmooth(const QLogicalVertex &vertex);
     virtual void appendFaceted(const QLogicalVertex &vertex);
     virtual int updateTexCoord(int position, const QVector2D &t);
+    virtual void appendFlat(const QLogicalVertex &vertex);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
@@ -127,10 +128,17 @@ inline bool QGLSection::hasData(QLogicalVertex::Types types)
 
 inline void QGLSection::append(const QLogicalVertex &vertex)
 {
-    if (m_smoothing == QGL::Smooth)
-        appendSmooth(vertex);
+    if (!vertex.hasType(QLogicalVertex::Normal))
+    {
+        appendFlat(vertex);
+    }
     else
-        appendFaceted(vertex);
+    {
+        if (m_smoothing == QGL::Smooth)
+            appendSmooth(vertex);
+        else
+            appendFaceted(vertex);
+    }
 }
 
 #ifndef QT_NO_DEBUG_STREAM

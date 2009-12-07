@@ -41,40 +41,45 @@
 
 #include "qgeometrydata_p.h"
 
+#include <QtCore/qdebug.h>
+
 QGeometryData::QGeometryData(QLogicalVertex::Types type)
-    : dataTypes(type)
+    : m_normals(0)
+    , m_texCoords(0)
+    , m_colors(0)
+    , m_dataTypes(type)
 {
 }
 
 QGeometryData::~QGeometryData()
 {
-    delete normals;
-    delete texCoords;
-    delete colors;
+    delete m_normals;
+    delete m_texCoords;
+    delete m_colors;
 }
 
 void QGeometryData::reserve(int capacity)
 {
-    vertices.reserve(capacity);
-    indices.reserve(capacity * 3);
-    if (normals)
-        normals->reserve(capacity);
-    if (texCoords)
-        texCoords->reserve(capacity);
-    if (colors)
-        colors->reserve(capacity);
+    m_vertices.reserve(capacity);
+    m_indices.reserve(capacity * 3);
+    if (m_normals)
+        m_normals->reserve(capacity);
+    if (m_texCoords)
+        m_texCoords->reserve(capacity);
+    if (m_colors)
+        m_colors->reserve(capacity);
 }
 
 void QGeometryData::squeeze()
 {
-    vertices.squeeze();
-    indices.squeeze();
-    if (normals)
-        normals->squeeze();
-    if (texCoords)
-        texCoords->squeeze();
-    if (colors)
-        colors->squeeze();
+    m_vertices.squeeze();
+    m_indices.squeeze();
+    if (m_normals)
+        m_normals->squeeze();
+    if (m_texCoords)
+        m_texCoords->squeeze();
+    if (m_colors)
+        m_colors->squeeze();
 }
 
 
@@ -88,8 +93,8 @@ QGLVertexArray QGeometryData::toVertexArray() const
     if (!hasType(QLogicalVertex::Normal | QLogicalVertex::Texture |
                  QLogicalVertex::Color))
     {
-        array.setRawData(reinterpret_cast<const float *>(vertices.constData()),
-                         vertices.count());
+        array.setRawData(reinterpret_cast<const float *>(m_vertices.constData()),
+                         m_vertices.count());
     }
     else
     {
@@ -100,17 +105,29 @@ QGLVertexArray QGeometryData::toVertexArray() const
             array.addField(QGL::TextureCoord0, 2);
         if (hasType(QLogicalVertex::Color))
             array.addField(QGL::Color, 1);
-        for (int i = 0; i < vertices.count(); ++i)
+        for (int i = 0; i < m_vertices.count(); ++i)
         {
-            array.append(vertices.at(i));
+            array.append(m_vertices.at(i));
             if (hasType(QLogicalVertex::Normal))
-                array.append(normals->at(i));
+                array.append(m_normals->at(i));
             if (hasType(QLogicalVertex::Texture))
-                array.append(texCoords->at(i));
+                array.append(m_texCoords->at(i));
             if (hasType(QLogicalVertex::Color))
-                array.append(colors->at(i));
+                array.append(m_colors->at(i));
         }
     }
     return array;
 }
 
+/*!
+    \internal
+    Normalize all the m_normals.
+*/
+void QGeometryData::normalizeNormals()
+{
+    if (!hasType(QLogicalVertex::Normal))
+    {
+        for (int i = 0; i < m_normals->count(); ++i)
+            (*m_normals)[i].normalize();
+    }
+}

@@ -44,6 +44,7 @@
 #include "qvector3dmapped_p.h"
 
 #include <QtGui/qvector3d.h>
+#include <QtCore/qdebug.h>
 
 /*!
     \class QGLSection
@@ -85,15 +86,80 @@
     discussion of smoothing.
 */
 
+uint qHash(float data)
+{
+    union U {
+        quint32 n;
+        float f;
+    };
+    U u;
+    u.f = data;
+    return u.f;
+}
+
+uint qHash(double data)
+{
+    union U {
+        quint32 n;
+        double f;
+    };
+    U u;
+    u.f = data;
+    return u.f;
+}
+
+uint qHash(const QVector3D &v)
+{
+    return qHash(v.x()) ^ qHash(v.y()) ^ qHash(v.z());
+}
+
 class QGLSectionPrivate
 {
 public:
-    typedef QMap<QVector3DMapped, int> VecMap;
+    typedef QHash<QVector3D, int> VecMap;
+    typedef QHash<int, QVector3D> NormMap;
 
-    VecMap map;
-    QVector3DMapped::VList smoothedNormals;
+    QGLSectionPrivate()
+        : data(new QGeometryData)
+        , map(new VecMap)
+        , norms(new NormMap)
+        , finalized(false)
+    {
+    }
+    ~QGLSectionPrivate()
+    {
+        delete data;
+        delete map;
+        delete norms;
+    }
+    void finalize()
+    {
+        delete map;
+        map = 0;
+        delete norms;
+        norms = 0;
+        finalized = true;
+    }
+    bool normalAccumulated(int index, const QVector3D &norm) const
+    {
+        Q_ASSERT(norms);  // dont call this after finalizing
+        QGLSectionPrivate::NormMap::const_iterator nit = norms->constFind(index);
+        while (nit != norms->constEnd() && nit.key() == index)
+            if (*nit == norm)
+                return true;
+        return false;
+    }
+    void accumulateNormal(int index, const QVector3D &norm)
+    {
+        Q_ASSERT(norms);  // dont call this after finalizing
+        norms->insertMulti(index, norm);
+    }
+
+
     QGeometryData *data;
-    bool uploaded;
+    VecMap *map;
+    NormMap *norms;
+    bool finalized;
 };
 
 /*!
@@ -136,13 +202,15 @@ QGLSection::~QGLSection()
 
 /*!
     Finalizes this section by squeezing the data to fit in the optimal memory
-    and normalizing its normal vectors to unit length.
+    and normalizing any normal vectors to unit length.
 */
 void QGLSection::finalize()
 {
+    if (d->finalized)
+        return;
+    d->finalize();
     d->data->squeeze();
-    for (int i = 0; i < d->data->normals->count(); ++i)
-        (*d->data->normals)[i].normalize();
+    d->data->normalizeNormals();
 }
 
 /*!
@@ -150,10 +218,7 @@ void QGLSection::finalize()
 */
 QBox3D QGLSection::boundingBox() const
 {
-    QBox3D bb;
-    for (int i = 0; i < d->data->vertices.count(); ++i)
-        bb.expand(d->data->vertices.at(i));
-    return bb;
+    return d->data->boundingBox();
 }
 
 /*!
@@ -180,31 +245,37 @@ QBox3D QGLSection::boundingBox() const
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
+    Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecMap::iterator it = d->map.find(&lv.vertex());
-    if (it == d->map.end())
+    d->data->enableType(QLogicalVertex::Normal);
+    QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
+    if (it == d->map->constEnd())
     {
         int v = d->data->appendVertex(lv);
-        qDebug() << lv << "not found, adding at" << v << "here";
-        d->map.insert(&d->data->vertices[v], v);
+        //qDebug() << lv << "not found, adding at" << v << "here";
+        d->map->insert(lv.vertex(), v);
     }
     else
     {
-        int v = it.value();
-        qDebug() << lv << "found at" << v;
+        int v = *it;
+        //qDebug() << lv << "found at" << v;
         int ix = updateTexCoord(v, lv.texCoord());
         if (ix != -1)
-            v = ix;
-        if (ix != -1)
-            qDebug() << "after updating tex coord" << lv.texCoord();
-        QVector3DMapped &vm = const_cast<QVector3DMapped&>(it.key());
-        if (!vm.findNormal(lv.normal(), d->smoothedNormals))
         {
-            QGL::VectorArray &va = *d->data->normals;
-            for ( ; it != d->map.end() && it.key() == lv.vertex(); ++it)
-                va[it.value()] += lv.normal();
-            vm.appendNormal(&va[v], d->smoothedNormals);
+            v = ix;
+            //qDebug() << "after updating, added new for tex coord" << lv.texCoord();
+        }
+        else
+        {
+            d->data->appendIndex(v);
+            while (it != d->map->constEnd() && it.key() == lv.vertex())
+            if (!d->normalAccumulated(v, lv.normal()))
+            {
+                QVector3D *va = d->data->normalData();
+                va[v] += lv.normal();
+                d->accumulateNormal(v, lv.normal());
+            }
         }
     }
     m_displayList->setDirty(true);
@@ -232,23 +303,50 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
+    Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecMap::const_iterator it = d->map.constFind(&lv.vertex());
-    for ( ; it != d->map.constEnd() && it.key() == lv.vertex(); ++it)
-        if (qFuzzyCompare((*d->data->normals)[it.value()], lv.normal()))
-            break;
-    if (it != d->map.constEnd() && it.key() == lv.vertex()) // found
+    d->data->enableType(QLogicalVertex::Normal);
+    QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
+    if (it != d->map->constEnd())
     {
-        int v = it.value();
+        qDebug() << "--- someting matched at" << *it << "Key:" << it.key();
+    }
+    const QVector3D *vn = d->data->normalConstData();
+    for ( ; it != d->map->constEnd() && it.key() == lv.vertex(); ++it)
+    {
+        qDebug() << "comparing existing:" << it.key() << " - to incoming:" << lv.normal();
+        if (qFuzzyCompare(vn[*it], lv.normal()))
+        {
+            qDebug() << "    match found: break";
+            break;
+        }
+        else
+        {
+            qDebug() << "    didn't match";
+        }
+    }
+    if (it != d->map->constEnd() && it.key() == lv.vertex()) // found
+    {
+        int v = *it;
+        qDebug() << lv << "found at" << v;
         int ix = updateTexCoord(v, lv.texCoord());
         if (ix != -1)
+        {
             v = ix;
+            qDebug() << "after updating, added new for tex coord" << lv.texCoord();
+        }
+        else
+        {
+            d->data->appendIndex(v);
+        }
     }
     else
     {
         int v = d->data->appendVertex(lv);
-        d->map.insertMulti(&d->data->vertices[v], v);
+        const QVector3D *va = d->data->vertexConstData();
+        qDebug() << va[v] << "not found, adding at" << v << "here";
+        d->map->insertMulti(lv.vertex(), v);
     }
     m_displayList->setDirty(true);
 }
@@ -282,70 +380,55 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 int QGLSection::updateTexCoord(int index, const QVector2D &t)
 {
     int v = -1;
-    Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
-    if (t != QLogicalVertex::InvalidTexCoord  && t != (*d->data->texCoords)[index])
+    d->data->enableType(QLogicalVertex::Texture);
+    QVector2D *vt = d->data->texCoordData();
+    if (t != QLogicalVertex::InvalidTexCoord  && t != vt[index])
     {
-        if ((*d->data->texCoords)[index] == QLogicalVertex::InvalidTexCoord)
+        if (vt[index] == QLogicalVertex::InvalidTexCoord)
         {
             v = index;
-            (*d->data->texCoords)[index] = t;
+            vt[index] = t;
         }
         else
         {
-            v = d->data->appendVertex(d->data->vertexAt(index));
-            d->map.insert(QVector3DMapped(&d->data->vertices[v]), v);
+            QLogicalVertex vx = d->data->vertexAt(index);
+            vx.setTexCoord(t);
+            v = d->data->appendVertex(vx);
+            d->map->insert(vx.vertex(), v);
         }
         m_displayList->setDirty(true);
     }
     return v;
 }
 
+void QGLSection::appendFlat(const QLogicalVertex &lv)
+{
+    d->data->appendVertex(lv);
+}
+
 QGL::VectorArray QGLSection::vertices() const
 {
-    return d->data->vertices;
+    return d->data->vertices();
 }
 
 QGL::VectorArray QGLSection::normals() const
 {
-    if (!d->data->normals)
-        return QGL::VectorArray();
-    return *d->data->normals;
+    return d->data->normals();
 }
 
 QGL::IndexArray QGLSection::indices() const
 {
-    return d->data->indices;
+    return d->data->indices();
 }
 
 QGL::TexCoordArray QGLSection::texCoords() const
 {
-    if (!d->data->texCoords)
-        return QGL::TexCoordArray();
-    return *d->data->texCoords;
+    return d->data->texCoords();
 }
 
 QGL::ColorArray QGLSection::colors() const
 {
-    if (!d->data->colors)
-        return QGL::ColorArray();
-    return *d->data->colors;
-}
-
-/*!
-    Returns the position of the first vertex matching \a lv in this section.
-    If no such matching vertex is found, returns -1.
-*/
-int QGLSection::indexOf(const QLogicalVertex &lv) const
-{
-    QGLSectionPrivate::VecMap::const_iterator it = d->map.constFind(&lv.vertex());
-    while (it != d->map.constEnd())
-    {
-        if (it.key() != lv.vertex())
-            return -1;
-        if (lv == d->data->vertexAt(it.value()))
-            return it.value();
-    }
-    return -1;
+    return d->data->colors();
 }
 
 /*!
@@ -366,7 +449,9 @@ QLogicalVertex QGLSection::vertexAt(int index) const
 */
 void QGLSection::setVertex(int position, const QVector3D &v)
 {
-    d->data->setVertex(position, v);
+    Q_ASSERT(position < d->data->vertexCount());
+    QVector3D *va = d->data->vertexData();
+    va[position] = v;
     m_displayList->setDirty(true);
 }
 
@@ -385,7 +470,10 @@ void QGLSection::setNormal(int position, const QVector3D &n)
 {
     if (!n.isNull())
     {
-        d->data->setNormal(position, n);
+        Q_ASSERT(position < d->data->vertexCount());
+        Q_ASSERT(d->data->hasType(QLogicalVertex::Normal));
+        QVector3D *vn = d->data->normalData();
+        vn[position] = n;
         m_displayList->setDirty(true);
     }
 }
@@ -396,8 +484,8 @@ void QGLSection::setNormal(int position, const QVector3D &n)
     If \a t is equal to QGLTextureSpecifier::InvalidTexCoord then this
     function does nothing.
 
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
+    The \a position must be a valid vertex with texture data, in other words,
+    one that has already been added by one of the append functions.
 
     \sa updateTexCoord()
 */
@@ -405,7 +493,10 @@ void QGLSection::setTexCoord(int position, const QVector2D &t)
 {
     if (t != QLogicalVertex::InvalidTexCoord)
     {
-        d->data->setTexCoord(position, t);
+        Q_ASSERT(position < d->data->vertexCount());
+        Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
+        QVector2D *vt = d->data->texCoordData();
+        vt[position] = t;
         m_displayList->setDirty(true);
     }
 }
@@ -413,14 +504,17 @@ void QGLSection::setTexCoord(int position, const QVector2D &t)
 /*!
     Sets the vertex color at \a position to have value \a c.
 
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
+    The \a position must be a valid vertex with color data, in other words,
+    one that has already been added by one of the append functions.
 
     \sa appendColor()
 */
 void QGLSection::setColor(int position, const QColor4b &c)
 {
-    d->data->setColor(position, c);
+    Q_ASSERT(position < d->data->vertexCount());
+    Q_ASSERT(d->data->hasType(QLogicalVertex::Color));
+    QColor4b *vc = d->data->colorData();
+    vc[position] = c;
     m_displayList->setDirty(true);
 }
 
@@ -435,11 +529,11 @@ void QGLSection::setColor(int position, const QColor4b &c)
    \fn int QGLSection::count() const
 
    Returns the current count of vertices referenced for this section.  This is
-   the same as \c{section->indices().count()}.
+   the same as \c{section->indices().count()} (but faster).
 */
 int QGLSection::count() const
 {
-    return d->data->indices.count();
+    return d->data->count();
 }
 
 /*!

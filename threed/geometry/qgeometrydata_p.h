@@ -57,6 +57,7 @@
 #include "qlogicalvertex.h"
 #include "qglnamespace.h"
 #include "qglvertexarray.h"
+#include "qbox3d.h"
 
 class QGeometryData
 {
@@ -70,89 +71,230 @@ public:
     inline int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int) const;
     QGLVertexArray toVertexArray() const;
+    void normalizeNormals();
 
-    inline void setVertex(int, const QVector3D &v);
-    inline void setNormal(int, const QVector3D &n);
-    inline void setTexCoord(int, const QVector2D &t);
-    inline void setColor(int, const QColor4b &c);
+    inline void appendVertex(const QVector3D &v);
+    inline void appendNormal(const QVector3D &n);
+    inline void appendTexCoord(const QVector2D &t);
+    inline void appendColor(const QColor4b &c);
+    inline void appendIndex(int);
+
+    inline const QVector3D *vertexConstData() const;
+    inline QVector3D *vertexData();
+    inline QGL::VectorArray vertices() const;
+
+    inline const QVector3D *normalConstData() const;
+    inline QVector3D *normalData();
+    inline QGL::VectorArray normals() const;
+
+    inline const QVector2D *texCoordConstData() const;
+    inline QVector2D *texCoordData();
+    inline QGL::TexCoordArray texCoords() const;
+
+    inline const QColor4b *colorConstData() const;
+    inline QColor4b *colorData();
+    inline QGL::ColorArray colors() const;
+
+    inline const int *indexConstData() const;
+    inline int *indexData();
+    inline const QGL::IndexArray indices() const;
 
     inline bool hasType(QLogicalVertex::Types type) const;
+    inline void enableType(QLogicalVertex::Types type);
+    inline QBox3D boundingBox() const;
+    inline int vertexCount() const;
+    inline int count() const;
 
-    QGL::VectorArray vertices;
-    QGL::VectorArray *normals;
-    QGL::TexCoordArray *texCoords;
-    QGL::ColorArray *colors;
-    QGL::IndexArray indices;
-    QLogicalVertex::Types dataTypes;
+private:
+    QGL::VectorArray m_vertices;
+    QGL::VectorArray *m_normals;
+    QGL::TexCoordArray *m_texCoords;
+    QGL::ColorArray *m_colors;
+    QGL::IndexArray m_indices;
+    QLogicalVertex::Types m_dataTypes;
 };
 
 inline int QGeometryData::appendVertex(const QLogicalVertex &v)
 {
-    int index = vertices.count();
-    vertices.append(v.vertex());
-    indices.append(index);
+    int index = m_vertices.count();
+    m_vertices.append(v.vertex());
+    const QVector3D *va = m_vertices.constData();
+    qDebug() << "just appended" << va[index] << "into array" << va;
+    m_indices.append(index);
     if (v.hasType(QLogicalVertex::Normal))
-        setNormal(index, v.normal());
+        appendNormal(v.normal());
     if (v.hasType(QLogicalVertex::Texture))
-        setTexCoord(index, v.texCoord());
+        appendTexCoord(v.texCoord());
     if (v.hasType(QLogicalVertex::Color))
-        setColor(index, v.color());
+        appendColor(v.color());
     return index;
 }
 
 inline QLogicalVertex QGeometryData::vertexAt(int index) const
 {
-    QLogicalVertex lv(vertices.at(index));
-    if (dataTypes & QLogicalVertex::Normal)
-        lv.setNormal(normals->at(index));
-    if (dataTypes & QLogicalVertex::Texture)
-        lv.setTexCoord(texCoords->at(index));
-    if (dataTypes & QLogicalVertex::Color)
-        lv.setColor(colors->at(index));
+    QLogicalVertex lv(m_vertices.at(index));
+    if (m_dataTypes & QLogicalVertex::Normal)
+        lv.setNormal(m_normals->at(index));
+    if (m_dataTypes & QLogicalVertex::Texture)
+        lv.setTexCoord(m_texCoords->at(index));
+    if (m_dataTypes & QLogicalVertex::Color)
+        lv.setColor(m_colors->at(index));
     return lv;
 }
 
-inline void QGeometryData::setVertex(int index, const QVector3D &v)
+inline void QGeometryData::appendVertex(const QVector3D &v)
 {
-    vertices[index] = v;
+    m_vertices.append(v);
 }
 
-inline void QGeometryData::setNormal(int index, const QVector3D &n)
+inline void QGeometryData::appendNormal(const QVector3D &n)
 {
-    if (!normals)
-    {
-        normals = new QGL::VectorArray;
-        normals->reserve(vertices.capacity());
-        dataTypes |= QLogicalVertex::Normal;
-    }
-    (*normals)[index] = n;
+    enableType(QLogicalVertex::Normal);
+    m_normals->append(n);
 }
 
-inline void QGeometryData::setTexCoord(int index, const QVector2D &t)
+inline void QGeometryData::appendTexCoord(const QVector2D &t)
 {
-    if (!texCoords)
-    {
-        texCoords = new QGL::TexCoordArray;
-        texCoords->reserve(vertices.capacity());
-        dataTypes |= QLogicalVertex::Texture;
-    }
-    (*texCoords)[index] = t;
+    enableType(QLogicalVertex::Texture);
+    m_texCoords->append(t);
 }
 
-inline void QGeometryData::setColor(int index, const QColor4b &c)
+inline void QGeometryData::appendColor(const QColor4b &c)
 {
-    if (!colors)
-    {
-        colors = new QGL::ColorArray;
-        colors->reserve(vertices.capacity());
-        dataTypes |= QLogicalVertex::Color;
-    }
-    (*colors)[index] = c;
+    enableType(QLogicalVertex::Color);
+    m_colors->append(c);
+}
+
+inline void QGeometryData::appendIndex(int index)
+{
+    m_indices.append(index);
+}
+
+inline const QVector3D *QGeometryData::vertexConstData() const
+{
+    return m_vertices.constData();
+}
+
+inline QVector3D *QGeometryData::vertexData()
+{
+    return m_vertices.data();
+}
+
+inline QGL::VectorArray QGeometryData::vertices() const
+{
+    return m_vertices;  // return copy
+}
+
+inline const QVector3D *QGeometryData::normalConstData() const
+{
+    return m_normals->constData();
+}
+
+inline QVector3D *QGeometryData::normalData()
+{
+    return m_normals->data();
+}
+
+inline QGL::VectorArray QGeometryData::normals() const
+{
+    if (m_normals)
+        return *m_normals;
+    return QGL::VectorArray();
+}
+
+inline const QVector2D *QGeometryData::texCoordConstData() const
+{
+    return m_texCoords->constData();
+}
+
+inline QVector2D *QGeometryData::texCoordData()
+{
+    return m_texCoords->data();
+}
+
+inline QGL::TexCoordArray QGeometryData::texCoords() const
+{
+    if (m_texCoords)
+        return *m_texCoords;  // return copy
+    return QGL::TexCoordArray();
+}
+
+inline const QColor4b *QGeometryData::colorConstData() const
+{
+    return m_colors->constData();
+}
+
+inline QColor4b *QGeometryData::colorData()
+{
+    return m_colors->data();
+}
+
+inline QGL::ColorArray QGeometryData::colors() const
+{
+    if (m_colors)
+        return *m_colors;
+    return QGL::ColorArray();
+}
+
+inline const int *QGeometryData::indexConstData() const
+{
+    return m_indices.constData();
+}
+
+inline int *QGeometryData::indexData()
+{
+    return m_indices.data();
+}
+
+inline const QGL::IndexArray QGeometryData::indices() const
+{
+    return m_indices;
 }
 
 inline bool QGeometryData::hasType(QLogicalVertex::Types type) const
 {
-    return (type & dataTypes);
+    return (type & m_dataTypes);
+}
+
+inline void QGeometryData::enableType(QLogicalVertex::Types type)
+{
+    if (type == QLogicalVertex::Normal && !m_normals)
+    {
+        m_normals = new QGL::VectorArray;
+        m_normals->reserve(m_vertices.capacity());
+        m_dataTypes |= QLogicalVertex::Normal;
+    }
+    else if (type == QLogicalVertex::Texture && !m_texCoords)
+    {
+        m_texCoords = new QGL::TexCoordArray;
+        m_texCoords->reserve(m_vertices.capacity());
+        m_dataTypes |= QLogicalVertex::Texture;
+    }
+    else if (type == QLogicalVertex::Color && !m_colors)
+    {
+        m_colors = new QGL::ColorArray;
+        m_colors->reserve(m_vertices.capacity());
+        m_dataTypes |= QLogicalVertex::Color;
+    }
+    m_dataTypes |= type;
+}
+
+inline QBox3D QGeometryData::boundingBox() const
+{
+    QBox3D bb;
+    for (int i = 0; i < m_vertices.count(); ++i)
+        bb.expand(m_vertices.at(i));
+    return bb;
+}
+
+inline int QGeometryData::vertexCount() const
+{
+    return m_vertices.count();
+}
+
+inline int QGeometryData::count() const
+{
+    return m_indices.count();
 }
 
 #endif // QGEOMETRYDATA_H

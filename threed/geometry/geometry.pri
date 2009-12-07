@@ -19,11 +19,9 @@ SOURCES += qglcube.cpp \
     qglmaterialcollection.cpp \
     qglteapot.cpp \
     qgltexturemodel.cpp \
-    qvector3dmapped.cpp \
     qlogicalvertex.cpp \
     qgeometrydata.cpp
 PRIVATE_HEADERS += qglteapot_data_p.h \
     qglgeometry_p.h \
-    qvector3dmapped_p.h \
     qgeometrydata_p.h \
     qgldisplaylist_p.h
