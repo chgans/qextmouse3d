@@ -42,27 +42,20 @@
 #ifndef TEAPOTITEM_H
 #define TEAPOTITEM_H
 
-#include "qglgraphicsitem.h"
+#include "qglgraphicsviewportitem.h"
 #include "qglteapot.h"
-#include "qglcamera.h"
-#include "qgldepthbufferoptions.h"
-#include "qglblendoptions.h"
 
-
-class TeapotItem : public QGLGraphicsItem
+class TeapotItem : public QGLGraphicsViewportItem
 {
 public:
     TeapotItem(QGraphicsItem *parent = 0);
     ~TeapotItem();
 
 protected:
-    void paintGL(QGLPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paintGL(QGLPainter *painter);
 
 private:
     QGLTeapot teapot;
-    QGLCamera camera;
-    QGLDepthBufferOptions depthBufferOptions;
-    QGLBlendOptions blendOptions;
 };
 
 #endif
