@@ -43,32 +43,16 @@
 #include "qglpainter.h"
 
 TeapotItem::TeapotItem(QGraphicsItem *parent)
-    : QGLGraphicsItem(parent)
+    : QGLGraphicsViewportItem(parent)
 {
-    depthBufferOptions.setEnabled(true);
-    depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
-
-    blendOptions.setEnabled(true);
-    blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
 }
 
 TeapotItem::~TeapotItem()
 {
 }
 
-void TeapotItem::paintGL
-    (QGLPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
+void TeapotItem::paintGL(QGLPainter *painter)
 {
-    painter->clear(QGL::ClearDepthBuffer);
-    painter->setCullFaces(QGL::CullDisabled);
-    depthBufferOptions.apply(painter);
-    blendOptions.apply(painter);
-
-    camera.apply(painter);
-
     painter->setStandardEffect(QGL::LitMaterial);
     painter->setLightEnabled(0, true);
     teapot.draw(painter);
