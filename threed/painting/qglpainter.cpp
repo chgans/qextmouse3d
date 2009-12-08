@@ -1109,7 +1109,7 @@ void QGLPainter::setColor(const QColor& color)
 }
 
 
-#if !defined(QT_OPENGL_ES)
+#if !defined(QT_OPENGL_ES) && defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
 
 static QGLPainterExtensions *resolveMultiTextureExtensions(QGLPainterPrivate *pd)
 {
