@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLFLATCOLOREFFECT_P_H
-#define QGLFLATCOLOREFFECT_P_H
+#ifndef QGLSCENENODE_P_H
+#define QGLSCENENODE_P_H
 
 //
 //  W A R N I N G
@@ -53,78 +53,38 @@
 // We mean it.
 //
 
-#include "qglabstracteffect.h"
+#include "qglnamespace.h"
+#include "qglsceneobject_p.h"
 
-QT_BEGIN_NAMESPACE
+#include <QtGui/qmatrix4x4.h>
 
-#if !defined(QGL_SHADERS_ONLY)
+class QGLGeometry;
+class QGLAbstractEffect;
 
-class QGLFlatColorEffect : public QGLAbstractEffect
+class QGLSceneNodePrivate : public QGLSceneObjectPrivate
 {
+    Q_DECLARE_PUBLIC(QGLSceneNode)
 public:
-    QGLFlatColorEffect();
-    virtual ~QGLFlatColorEffect();
+    QGLSceneNodePrivate(QGLSceneObject::Type type, int version = QObjectPrivateVersion)
+        : QGLSceneObjectPrivate(type, version)
+        , geometry(0)
+        , localEffect(QGL::LitMaterial)
+        , customEffect(0)
+        , hasEffect(false)
+        , material(-1)
+        , start(0)
+        , count(0)
+    {
+    }
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QGLGeometry *geometry;
+    QMatrix4x4 localTransform;
+    QGL::StandardEffect localEffect;
+    QGLAbstractEffect *customEffect;
+    bool hasEffect;
+    int material;
+    int start;
+    int count;
 };
 
-class QGLPerVertexColorEffect : public QGLAbstractEffect
-{
-public:
-    QGLPerVertexColorEffect();
-    virtual ~QGLPerVertexColorEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLShaderProgram;
-
-class QGLFlatColorEffect : public QGLAbstractEffect
-{
-public:
-    QGLFlatColorEffect();
-    virtual ~QGLFlatColorEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexArray(const QGLVertexArray& array);
-
-private:
-    QGLShaderProgram *program;
-    int colorUniform;
-    int matrixUniform;
-};
-
-class QGLPerVertexColorEffect : public QGLAbstractEffect
-{
-public:
-    QGLPerVertexColorEffect();
-    virtual ~QGLPerVertexColorEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexArray(const QGLVertexArray& array);
-
-private:
-    QGLShaderProgram *program;
-    int matrixUniform;
-};
-
-#endif // QGL_SHADERS_ONLY
-
-QT_END_NAMESPACE
-
-#endif
+#endif // QGLSCENENODE_P_H

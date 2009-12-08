@@ -3,7 +3,9 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 
 HEADERS += \
-    qglgraphicsitem.h
+    qglgraphicsviewportitem.h \
+    qglgraphicsnavigationitem.h
 
 SOURCES += \
-    qglgraphicsitem.cpp
+    qglgraphicsviewportitem.cpp \
+    qglgraphicsnavigationitem.cpp

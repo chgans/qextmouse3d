@@ -53,10 +53,12 @@ QT_MODULE(Qt3d)
 
 class QGLSceneNodePrivate;
 class QGLGeometry;
+class QGLAbstractEffect;
 
 class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
 {
     Q_OBJECT
+    Q_DECLARE_PRIVATE(QGLSceneNode);
 public:
     explicit QGLSceneNode(QObject *parent = 0);
     explicit QGLSceneNode(QGLGeometry *geometry, QObject *parent = 0);
@@ -66,7 +68,7 @@ public:
     void setGeometry(QGLGeometry *);
 
     QMatrix4x4 localTransform() const;
-    void setLocalTransform(const QMatrix4x4 &) const;
+    void setLocalTransform(const QMatrix4x4 &);
 
     QMatrix4x4 userTransform() const;
     void setUserTransform(const QMatrix4x4 &transform);
@@ -74,15 +76,28 @@ public:
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
 
+    QGLAbstractEffect *userEffect() const;
+    void setUserEffect(QGLAbstractEffect *effect);
+
     bool hasEffect() const;
     void setEffectEnabled(bool);
 
+    int start() const;
+    void setStart(int start);
+
+    int count() const;
+    void setCount(int count);
+
+    int material() const;
+    void setMaterial(int material);
+
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
+    virtual QGLSceneNode *clone(QObject *parent = 0) const;
+protected:
+    QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
 
 private:
-    QGLSceneNodePrivate *d_ptr;
-
     Q_DISABLE_COPY(QGLSceneNode)
 };
 

@@ -411,7 +411,7 @@ bool QGLTexture2D::setDdsImage(const QString &path)
     if (!d->ddsHeader)
         d->ddsHeader = (DDSFormat *)(malloc(sizeof(DDSFormat)));
     Q_CHECK_PTR(d->ddsHeader);
-    if (f.read((char *)d->ddsHeader, sizeof(DDSFormat)) < sizeof(DDSFormat))
+    if (f.read((char *)d->ddsHeader, sizeof(DDSFormat)) < (int)sizeof(DDSFormat))
     {
         qWarning("QGLTexture2D::setDdsImage(%s): reading failed.",
                  path.toLocal8Bit().constData());

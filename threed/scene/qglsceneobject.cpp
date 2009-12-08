@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglsceneobject.h"
+#include "qglsceneobject_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -66,27 +67,22 @@ QT_BEGIN_NAMESPACE
            the top-level, or "root", objects in a scene.
 */
 
-class QGLSceneObjectPrivate
-{
-public:
-    QGLSceneObjectPrivate(QGLSceneObject::Type t)
-    {
-        type = t;
-    }
-
-    QGLSceneObject::Type type;
-    QString name;
-};
-
 /*!
     Constructs a scene object of the specified \a type and attaches
     it to \a parent.
 */
-QGLSceneObject::QGLSceneObject
-        (QGLSceneObject::Type type, QObject *parent)
-    : QObject(parent)
+QGLSceneObject::QGLSceneObject(QGLSceneObject::Type type, QObject *parent)
+    : QObject(*new QGLSceneObjectPrivate(type), parent)
 {
-    d_ptr = new QGLSceneObjectPrivate(type);
+}
+
+/*!
+    \internal
+    Constructor for use by QObjectPrivate-using subclasses of QGLSceneObject.
+*/
+QGLSceneObject::QGLSceneObject(QGLSceneObjectPrivate &dd, QObject *parent)
+    : QObject(dd, parent)
+{
 }
 
 /*!
@@ -94,7 +90,6 @@ QGLSceneObject::QGLSceneObject
 */
 QGLSceneObject::~QGLSceneObject()
 {
-    delete d_ptr;
 }
 
 /*!
@@ -102,7 +97,8 @@ QGLSceneObject::~QGLSceneObject()
 */
 QGLSceneObject::Type QGLSceneObject::type() const
 {
-    return d_ptr->type;
+    Q_D(const QGLSceneObject);
+    return d->type;
 }
 
 /*!

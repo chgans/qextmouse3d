@@ -57,6 +57,7 @@ class QGLPainter;
 class Q_QT3D_EXPORT QGLSceneObject : public QObject
 {
     Q_OBJECT
+    Q_DECLARE_PRIVATE(QGLSceneObject);
 public:
     virtual ~QGLSceneObject();
 
@@ -80,11 +81,10 @@ Q_SIGNALS:
     void changed();
 
 protected:
+    QGLSceneObject(QGLSceneObjectPrivate &dd, QObject *parent = 0);
     explicit QGLSceneObject(QGLSceneObject::Type type, QObject *parent = 0);
 
 private:
-    QGLSceneObjectPrivate *d_ptr;
-
     Q_DISABLE_COPY(QGLSceneObject)
 };
 

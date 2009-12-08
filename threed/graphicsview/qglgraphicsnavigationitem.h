@@ -39,26 +39,47 @@
 **
 ****************************************************************************/
 
-#ifndef QGLPICKCOLORS_P_H
-#define QGLPICKCOLORS_P_H
+#ifndef QGLGRAPHICSNAVIGATIONITEM_H
+#define QGLGRAPHICSNAVIGATIONITEM_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#include "qglnamespace.h"
+#include <QtGui/qgraphicsitem.h>
 
-#include <QtCore/qglobal.h>
-#include <QtGui/qrgb.h>
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QRgb qt_qgl_pick_color(int index);
-QRgb qt_qgl_normalize_pick_color(QRgb color, bool is444 = false);
+QT_MODULE(Qt3d)
+
+class QGLGraphicsViewportItem;
+class QGLGraphicsNavigationItemPrivate;
+
+class Q_QT3D_EXPORT QGLGraphicsNavigationItem : public QGraphicsItem
+{
+public:
+    explicit QGLGraphicsNavigationItem(QGraphicsItem *parent = 0);
+    explicit QGLGraphicsNavigationItem(QGLGraphicsViewportItem *affectedItem, QGraphicsItem *parent = 0);
+    ~QGLGraphicsNavigationItem();
+
+    QGLGraphicsViewportItem *viewportItem() const;
+    void setViewportItem(QGLGraphicsViewportItem *item);
+
+    QRectF boundingRect() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+protected:
+    bool sceneEventFilter(QGraphicsItem *watched, QEvent *event);
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+
+private:
+    QScopedPointer<QGLGraphicsNavigationItemPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLGraphicsNavigationItem)
+    Q_DISABLE_COPY(QGLGraphicsNavigationItem)
+};
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

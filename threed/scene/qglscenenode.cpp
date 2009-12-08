@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglscenenode.h"
+#include "qglscenenode_p.h"
 #include "qglpainter.h"
 #include <QtGui/qmatrix4x4.h>
 
@@ -56,15 +57,31 @@ QT_BEGIN_NAMESPACE
     other geometry and manipulate them as part of a scene.
 
     Also multiple QGLSceneNodes can reference the same geometry, whilst
-    applying different transformations and treatments to it.
+    applying different transformations and treatments to it.  Since
+    QGLSceneNode is a QObject sub class it cannot be copied directly, so
+    instead use the clone() function for this purpose.
+
+    A scene node allows referencing into sections of geometry, via the start
+    and count properties.
+
+    The start index is an offset into the geometry at which drawing will start.
+    The default start index is 0, so that drawing will start from the beginning
+    of the geometry.  The count dictates how many vertices will be drawn.  The
+    default count is 0, which instructs the underlying geometry to draw all
+    vertices.
+
+    Also a node may have a local material.  This allows drawing the same geometry
+    with different materials (which includes different textures).
 
     As a QGLSceneObject, QGLSceneNode provides a draw() implementation.  This
     default implementation does the following:
     \list
     \i ensures the effect specified by effect() is current on the painter
     \i applies any local transformation that may be set for this node
+    \i sets the nodes material onto the geometry, if the material is valid
     \i calls draw() for all the child nodes
-    \i calls draw() on this nodes QGLGeometry object (if any)
+    \i calls draw(start, count) on this nodes QGLGeometry object (if any)
+    \i restores the geometry's original material if it was changed
     \i restores the model-view matrix if any local transform was applied
     \endlist
 
@@ -76,51 +93,43 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
-class QGLSceneNodePrivate
-{
-public:
-    QGLSceneNodePrivate()
-        : geometry(0)
-        , localEffect(QGL::LitMaterial)
-        , hasEffect(false)
 		, isVisible(true)
-    {
 		
-    }
-
-    QGLGeometry *geometry;
-    QMatrix4x4 localTransform;
 	QMatrix4x4 userTransform;
-    QGL::StandardEffect localEffect;
-    bool hasEffect;
 	bool isVisible;
-};
-
 /*!
     Constructs a new scene node and attaches it to \a parent.
 */
 QGLSceneNode::QGLSceneNode(QObject *parent)
-    : QGLSceneObject(QGLSceneObject::Mesh, parent)
+    : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
 {
-    d_ptr = new QGLSceneNodePrivate();
 }
 
 /*!
     Constructs a new scene node referencing \a geometry and attaches it to \a parent.
 */
 QGLSceneNode::QGLSceneNode(QGLGeometry *geometry, QObject *parent)
-    : QGLSceneObject(QGLSceneObject::Mesh, parent)
+    : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
 {
-    d_ptr = new QGLSceneNodePrivate();
-    d_ptr->geometry = geometry;
+    Q_D(QGLSceneNode);
+    d->geometry = geometry;
 }
+
+/*!
+    \internal
+    Constructor for use by QObjectPrivate-using subclasses of QGLSceneObject.
+*/
+QGLSceneNode::QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent)
+    : QGLSceneObject(dd, parent)
+{
+}
+
 
 /*!
     Destroys this scene node.
 */
 QGLSceneNode::~QGLSceneNode()
 {
-    delete d_ptr;
 }
 
 /*!
@@ -131,7 +140,8 @@ QGLSceneNode::~QGLSceneNode()
 */
 QGLGeometry *QGLSceneNode::geometry() const
 {
-    return d_ptr->geometry;
+    Q_D(const QGLSceneNode);
+    return d->geometry;
 }
 
 /*!
@@ -144,7 +154,8 @@ QGLGeometry *QGLSceneNode::geometry() const
 */
 void QGLSceneNode::setGeometry(QGLGeometry *geometry)
 {
-    d_ptr->geometry = geometry;
+    Q_D(QGLSceneNode);
+    d->geometry = geometry;
 }
 
 /*!
@@ -156,7 +167,8 @@ void QGLSceneNode::setGeometry(QGLGeometry *geometry)
 */
 QMatrix4x4 QGLSceneNode::localTransform() const
 {
-    return d_ptr->localTransform;
+    Q_D(const QGLSceneNode);
+    return d->localTransform;
 }
 
 /*!
@@ -166,9 +178,10 @@ QMatrix4x4 QGLSceneNode::localTransform() const
 
     \sa localTransform()
 */
-void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform) const
+void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 {
-    d_ptr->localTransform = transform;
+    Q_D(QGLSceneNode);
+    d->localTransform = transform;
 }
 
 QMatrix4x4 QGLSceneNode::userTransform() const
@@ -191,7 +204,8 @@ void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
 */
 QGL::StandardEffect QGLSceneNode::effect() const
 {
-    return d_ptr->localEffect;
+    Q_D(const QGLSceneNode);
+    return d->localEffect;
 }
 
 /*!
@@ -209,9 +223,46 @@ QGL::StandardEffect QGLSceneNode::effect() const
 */
 void QGLSceneNode::setEffect(QGL::StandardEffect effect)
 {
-    d_ptr->localEffect = effect;
-    d_ptr->hasEffect = true;
+    Q_D(QGLSceneNode);
+    d->localEffect = effect;
+    d->hasEffect = true;
 }
+
+/*!
+    Returns the user effect associated with this node, or NULL if one is not
+    set.  The default value is NULL.  If the value of hasEffect() is false,
+    then this effect is ignored.
+
+    \sa setUserEffect(), hasEffect()
+*/
+QGLAbstractEffect *QGLSceneNode::userEffect() const
+{
+    Q_D(const QGLSceneNode);
+    return d->customEffect;
+}
+
+/*!
+    Sets the local effect associated with this node to be the custom
+    \a effect.  hasEffect() will return true after calling this method.
+
+    This custom effect will supersede any standard effect.
+
+    The default implementation of QGLSceneNode::apply() will set this effect
+    during initialization of the model.
+
+    The default implementation of the QGLSceneNode::draw() method will
+    ensure that \a effect is applied to the QGLPainter before drawing
+    any geometry.
+
+    \sa userEffect(), hasEffect()
+*/
+void QGLSceneNode::setUserEffect(QGLAbstractEffect *effect)
+{
+    Q_D(QGLSceneNode);
+    d->customEffect = effect;
+    d->hasEffect = true;
+}
+
 
  /*!
      Returns true if the local effect on this node is enabled, otherwise
@@ -221,18 +272,87 @@ void QGLSceneNode::setEffect(QGL::StandardEffect effect)
  */
 bool QGLSceneNode::hasEffect() const
 {
-    return d_ptr->hasEffect;
+    Q_D(const QGLSceneNode);
+    return d->hasEffect;
 }
 
 /*!
-     Sets whether the current value of effect() will be applied to the GL
-     painter prior to drawing to \a enabled.
+    Sets whether the current value of effect() or userEffect() will be
+    applied to the QGLPainter prior to drawing.  If \a enabled is true,
+    then the effect is applied, otherwise it is not.
 
      \sa setEffect(), effect(), hasEffect()
 */
 void QGLSceneNode::setEffectEnabled(bool enabled)
 {
-    d_ptr->hasEffect = enabled;
+    Q_D(QGLSceneNode);
+    d->hasEffect = enabled;
+}
+
+/*!
+    Returns the start index for this scene node.
+
+    \sa setStart()
+*/
+int QGLSceneNode::start() const
+{
+    Q_D(const QGLSceneNode);
+    return d->start;
+}
+
+/*!
+    Sets the start index for this scene node to \a start.
+
+    \sa start()
+*/
+void QGLSceneNode::setStart(int start)
+{
+    Q_D(QGLSceneNode);
+    d->start = start;
+}
+
+/*!
+    Returns the count of vertices referenced for this scene node.
+
+    \sa setCount()
+*/
+int QGLSceneNode::count() const
+{
+    Q_D(const QGLSceneNode);
+    return d->count;
+}
+
+/*!
+    Sets the count of vertices referenced to \a count for this scene node.
+
+    \sa count()
+*/
+void QGLSceneNode::setCount(int count)
+{
+    Q_D(QGLSceneNode);
+    d->count = count;
+}
+
+/*!
+    Returns the material index for this scene node.
+
+    \sa setMaterial()
+*/
+int QGLSceneNode::material() const
+{
+    Q_D(const QGLSceneNode);
+    return d->material;
+}
+
+/*!
+    Sets the material index for this scene node to \a material.
+
+    \sa material()
+*/
+void QGLSceneNode::setMaterial(int material)
+{
+    Q_D(QGLSceneNode);
+    d->material = material;
 }
 
 /*!
@@ -240,20 +360,39 @@ void QGLSceneNode::setEffectEnabled(bool enabled)
 */
 void QGLSceneNode::draw(QGLPainter *painter)
 {
-    if (d_ptr->geometry)
+    Q_D(QGLSceneNode);
+    if (d->geometry)
     {
-        QBox3D bb = d_ptr->geometry->boundingBox();
+        QBox3D bb = d->geometry->boundingBox();
         if (bb.isFinite() && !painter->isVisible(bb))
             return;
     }
-    if (d_ptr->hasEffect && painter->standardEffect() != d_ptr->localEffect)
-        painter->setStandardEffect(d_ptr->localEffect);
+    if (d->hasEffect)
+    {
+        if (d->customEffect)
+        {
+            if (painter->userEffect() != d->customEffect)
+                painter->setUserEffect(d->customEffect);
+        }
+        else
+        {
+            if (painter->standardEffect() != d->localEffect)
+                painter->setStandardEffect(d->localEffect);
+        }
+    }
 
     if (!d_ptr->localTransform.isIdentity() || !d_ptr->userTransform.isIdentity())
 	{
 		 painter->modelViewMatrix().push();
 		 if (!d_ptr->localTransform.isIdentity())  painter->modelViewMatrix() *= d_ptr->localTransform;
 		 if (!d_ptr->userTransform.isIdentity()) painter->modelViewMatrix() *= d_ptr->userTransform;
+
+    int saveMat = -1;
+    if (d->material != -1)
+    {
+        saveMat = d->geometry->material();
+        Q_ASSERT(saveMat != -1);
+        d->geometry->setMaterial(d->material);
 	}
 		
 
@@ -265,10 +404,20 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (n)
             n->draw(painter);
     }
-    if (d_ptr->geometry && d_ptr->geometry->drawingMode() != QGL::NoDrawingMode)
-        d_ptr->geometry->draw(painter);
 
-    if (!d_ptr->localTransform.isIdentity() || !d_ptr->userTransform.isIdentity())
+
+    if (d->geometry && d->geometry->drawingMode() != QGL::NoDrawingMode)
+    {
+        if (d->start == 0 && (d->count == 0 || d->count == d->geometry->indexArray().size()))
+            d->geometry->draw(painter);
+        else
+            d->geometry->draw(painter, d->start, d->count);
+    }
+
+    if (saveMat != -1)
+        d->geometry->setMaterial(saveMat);
+
+    if (!d->localTransform.isIdentity() || || !d_ptr->userTransform.isIdentity()))
         painter->modelViewMatrix().pop();
 }
 
@@ -277,8 +426,9 @@ void QGLSceneNode::draw(QGLPainter *painter)
 */
 void QGLSceneNode::apply(QGLPainter *painter)
 {
-    if (d_ptr->hasEffect && painter->standardEffect() != d_ptr->localEffect)
-        painter->setStandardEffect(d_ptr->localEffect);
+    Q_D(QGLSceneNode);
+    if (d->hasEffect && painter->standardEffect() != d->localEffect)
+        painter->setStandardEffect(d->localEffect);
     QObjectList subNodes = children();
     QObjectList::iterator cit(subNodes.begin());
     for ( ; cit != subNodes.end(); ++cit)
@@ -289,5 +439,27 @@ void QGLSceneNode::apply(QGLPainter *painter)
     }
 }
 
+/*!
+    Creates a new QGLSceneNode that is a copy of this scene node, with
+    \a parent as the parent of the new copy.  If parent is NULL then parent
+    is set to this nodes parent.
+
+    The copy will reference the same underlying geometry, and have all
+    effects, transforms and other properties copied from this node.
+*/
+QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
+{
+    Q_D(const QGLSceneNode);
+    QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
+    node->setGeometry(d->geometry);
+    node->setLocalTransform(d->localTransform);
+    node->setEffect(d->localEffect);
+    node->setUserEffect(d->customEffect);
+    node->setEffectEnabled(d->hasEffect);
+    node->setMaterial(d->material);
+    node->setStart(d->start);
+    node->setCount(d->count);
+    return node;
+}
 
 QT_END_NAMESPACE

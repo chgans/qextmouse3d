@@ -39,12 +39,13 @@
 **
 ****************************************************************************/
 
-#ifndef QGLGRAPHICSITEM_H
-#define QGLGRAPHICSITEM_H
+#ifndef QGLGRAPHICSVIEWPORTITEM_H
+#define QGLGRAPHICSVIEWPORTITEM_H
 
 #include "qglnamespace.h"
+#include "qgldepthbufferoptions.h"
+#include "qglblendoptions.h"
 #include <QtGui/qgraphicsitem.h>
-#include <QtGui/qmatrix4x4.h>
 
 QT_BEGIN_HEADER
 
@@ -52,17 +53,30 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLGraphicsItemPrivate;
+class QGLGraphicsViewportItemPrivate;
 class QGLPainter;
+class QGLCamera;
 
-class Q_QT3D_EXPORT QGLGraphicsItem : public QGraphicsItem
+class Q_QT3D_EXPORT QGLGraphicsViewportItem : public QGraphicsItem
 {
 public:
-    QGLGraphicsItem(QGraphicsItem *parent = 0);
-    QGLGraphicsItem(const QRectF& rect, QGraphicsItem *parent = 0);
-    QGLGraphicsItem(qreal x, qreal y, qreal w, qreal h,
-                    QGraphicsItem *parent = 0);
-    ~QGLGraphicsItem();
+    QGLGraphicsViewportItem(QGraphicsItem *parent = 0);
+    QGLGraphicsViewportItem(const QRectF& rect, QGraphicsItem *parent = 0);
+    QGLGraphicsViewportItem(qreal x, qreal y, qreal w, qreal h,
+                            QGraphicsItem *parent = 0);
+    ~QGLGraphicsViewportItem();
+
+    enum Option
+    {
+        ObjectPicking       = 0x0001,
+        ShowPicking         = 0x0002,
+        CameraNavigation    = 0x0004
+    };
+    Q_DECLARE_FLAGS(Options, Option)
+
+    QGLGraphicsViewportItem::Options options() const;
+    void setOptions(QGLGraphicsViewportItem::Options value);
+    void setOption(QGLGraphicsViewportItem::Option option, bool value);
 
     QRectF rect() const;
     void setRect(const QRectF &rect);
@@ -70,23 +84,44 @@ public:
 
     QRectF boundingRect() const;
 
-    QMatrix4x4 transform3D() const;
+    QGLCamera *camera() const;
+    void setCamera(QGLCamera *camera);
+
+    bool clearDepthBuffer() const;
+    void setClearDepthBuffer(bool value);
+
+    QGLDepthBufferOptions depthBufferOptions() const;
+    void setDepthBufferOptions(const QGLDepthBufferOptions& options);
+
+    QGLBlendOptions blendOptions() const;
+    void setBlendOptions(const QGLBlendOptions& options);
+
+    QGL::CullFaces cullFaces() const;
+    void setCullFaces(QGL::CullFaces faces);
+
+    QColor backgroundColor() const;
+    void setBackgroundColor(const QColor& color);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
 
+    virtual QObject *objectForPosition(const QPointF& pos) const;
+
 protected:
-    virtual void paintGL(QGLPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) = 0;
+    virtual void paintGL(QGLPainter *painter) = 0;
 
 private:
-    Q_DISABLE_COPY(QGLGraphicsItem)
+    QScopedPointer<QGLGraphicsViewportItemPrivate> d_ptr;
 
-    QGLGraphicsItemPrivate *d;
+    Q_DECLARE_PRIVATE(QGLGraphicsViewportItem)
+    Q_DISABLE_COPY(QGLGraphicsViewportItem)
 };
 
-void QGLGraphicsItem::setRect(qreal x, qreal y, qreal w, qreal h)
+void QGLGraphicsViewportItem::setRect(qreal x, qreal y, qreal w, qreal h)
 {
     setRect(QRectF(x, y, w, h));
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLGraphicsViewportItem::Options)
 
 QT_END_NAMESPACE
 
