@@ -41,7 +41,7 @@
 
 #include "qglsection.h"
 #include "qgldisplaylist_p.h"
-#include "qvector3dmapped_p.h"
+#include "qgeometrydata_p.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
@@ -429,6 +429,11 @@ QGL::TexCoordArray QGLSection::texCoords() const
 QGL::ColorArray QGLSection::colors() const
 {
     return d->data->colors();
+}
+
+QGLVertexArray QGLSection::toVertexArray() const
+{
+    return d->data->toVertexArray();
 }
 
 /*!

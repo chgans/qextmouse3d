@@ -54,11 +54,13 @@
 //
 
 #include "qglgeometry_p.h"
-#include "qvector3dmapped_p.h"
 #include "qglscenenode_p.h"
+#include "qgldisplaylist.h"
+
 #include <QtCore/qmap.h>
 
 class QGLDisplayList;
+class QGLSection;
 
 class QGLDisplayListPrivate : public QGLSceneNodePrivate
 {

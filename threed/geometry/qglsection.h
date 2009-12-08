@@ -44,8 +44,8 @@
 
 #include "qglpainter.h"
 #include "qlogicalvertex.h"
-#include "qglnamespace.h"
 #include "qbox3d.h"
+#include "qglnamespace.h"
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qmatrix4x4.h>
@@ -73,6 +73,7 @@ public:
     QGL::IndexArray indices() const;
     QGL::TexCoordArray texCoords() const;
     QGL::ColorArray colors() const;
+    QGLVertexArray toVertexArray() const;
 
     QLogicalVertex vertexAt(int i) const;
     void setVertex(int position, const QVector3D &v);

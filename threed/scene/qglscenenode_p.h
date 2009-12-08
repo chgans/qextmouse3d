@@ -55,6 +55,7 @@
 
 #include "qglnamespace.h"
 #include "qglsceneobject_p.h"
+#include "qglscenenode.h"
 
 #include <QtGui/qmatrix4x4.h>
 

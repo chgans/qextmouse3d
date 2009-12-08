@@ -40,11 +40,10 @@
 ****************************************************************************/
 
 #include "qgldisplaylist.h"
+#include "qgldisplaylist_p.h"
 #include "qglsection.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
-#include "qgldisplaylist_p.h"
-#include "qglsection_p.h"
 #include "qgltexturemodel.h"
 
 #include <QtCore/qvarlengtharray.h>
@@ -407,9 +406,10 @@ void QGLDisplayList::finalize()
         {
             // pack sections that have the same types into one geometry
             QGLSection &s = *d->sections[i];
-            const int *vi = s.d->data->indexConstData();
-            int vcnt = s.d->data->count();
             s.finalize();
+            QGL::IndexArray indices = s.indices();
+            const int *vi = indices.constData();
+            int vcnt = indices.count();
             int sectionOffset = 0;
             QMap<QLogicalVertex::Types, QGLGeometry *>::const_iterator it =
                     geos.constFind(s.dataTypes());
@@ -418,7 +418,7 @@ void QGLDisplayList::finalize()
                 g = it.value();
                 QGLVertexArray va = g->vertexArray();
                 sectionOffset = va.vertexCount();
-                va.append(s.d->data->toVertexArray());
+                va.append(s.toVertexArray());
                 QGLIndexArray ia = g->indexArray();
                 for (int i = 0; i < vcnt; ++i)
                     ia.append(vi[i] + sectionOffset);
@@ -431,7 +431,7 @@ void QGLDisplayList::finalize()
                     g = geometry();
                 else
                     g = new QGLGeometry(this);
-                g->setVertexArray(s.d->data->toVertexArray());
+                g->setVertexArray(s.toVertexArray());
                 g->setIndexArray(QGLIndexArray::fromRawData(vi, vcnt));
                 g->setDrawingMode(QGL::Triangles);
                 geos.insert(s.dataTypes(), g);

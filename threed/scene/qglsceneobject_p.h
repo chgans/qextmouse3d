@@ -57,6 +57,8 @@
 #include <QtCore/private/qobject_p.h>
 #include <QtCore/qobjectdefs.h>
 
+#include "qglsceneobject.h"
+
 class QGLSceneObjectPrivate : public QObjectPrivate
 {
     Q_DECLARE_PUBLIC(QGLSceneObject);
