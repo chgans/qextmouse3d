@@ -82,8 +82,8 @@ public:
     void setColor(int position, const QColor4b &c);
 
     // state accessors
-    inline bool hasData(QLogicalVertex::Types types);
-    inline QLogicalVertex::Types dataTypes() const;
+    bool hasData(QLogicalVertex::Types types);
+    QLogicalVertex::Types dataTypes() const;
     inline QGL::Smoothing smoothing() const;
     int count() const;
     inline QGLDisplayList *displayList() const;
@@ -103,7 +103,6 @@ private:
 
     QGL::Smoothing m_smoothing;
     QGLDisplayList *m_displayList;
-    QLogicalVertex::Types m_dataTypes;
     QGLSectionPrivate *d;
 };
 
@@ -115,16 +114,6 @@ inline QGL::Smoothing QGLSection::smoothing() const
 inline QGLDisplayList *QGLSection::displayList() const
 {
     return m_displayList;
-}
-
-inline QLogicalVertex::Types QGLSection::dataTypes() const
-{
-    return m_dataTypes;
-}
-
-inline bool QGLSection::hasData(QLogicalVertex::Types types)
-{
-    return (types & m_dataTypes);
 }
 
 inline void QGLSection::append(const QLogicalVertex &vertex)

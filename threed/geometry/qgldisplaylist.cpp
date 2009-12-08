@@ -200,8 +200,6 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     QVector3D norm = n;
     if (norm.isNull())
         norm = QVector3D::normal(a, b, c);
-    qDebug() << "Adding triangle:" << a << b << c << " - normal:"
-            << n << "tex:" << textureModel.topLeft() << "-" << textureModel.bottomRight();
     QLogicalVertex va(a, norm, textureModel.bottomLeft());
     QLogicalVertex vb(b, norm, inverted ? textureModel.topRight() : textureModel.bottomRight());
     QLogicalVertex vc(c, norm, inverted ? textureModel.topLeft() : textureModel.topRight());

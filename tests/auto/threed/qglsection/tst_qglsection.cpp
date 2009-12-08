@@ -272,7 +272,6 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->vertices().at(1), testVertex);
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal + testNormal);
-    qDebug() << "got" << section->normals().at(1) << "expected" << (testNormal + testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().count(), 3);
@@ -318,7 +317,7 @@ void tst_QGLSection::appendTexCoord()
 
     QVERIFY(section->hasData(QLogicalVertex::Normal));
     QVERIFY(section->hasData(QLogicalVertex::Texture));
-    QVERIFY(section->hasData(QLogicalVertex::Color));
+    QVERIFY(!section->hasData(QLogicalVertex::Color));
 }
 
 void tst_QGLSection::appendColor()
@@ -335,19 +334,19 @@ void tst_QGLSection::appendColor()
     QCOMPARE(section->colors().at(0), color);
 
     QVERIFY(section->hasData(QLogicalVertex::Color));
-    QVERIFY(section->hasData(QLogicalVertex::Texture));
-    QVERIFY(section->hasData(QLogicalVertex::Normal));
+    QVERIFY(!section->hasData(QLogicalVertex::Texture));
+    QVERIFY(!section->hasData(QLogicalVertex::Normal));
 
     section = new QGLSectionTest(&list);
 
     QVector2D testTexCoord(0.0f, 0.0f);
     section->append(QLogicalVertex(testVertex, color, QVector3D(), testTexCoord));
-    QCOMPARE(section->vertices().count(), 2);
-    QCOMPARE(section->vertices().at(1), testVertex);
-    QCOMPARE(section->colors().count(), 2);
-    QCOMPARE(section->colors().at(1), color);
-    QCOMPARE(section->texCoords().count(), 2);
-    QCOMPARE(section->texCoords().at(1), testTexCoord);
+    QCOMPARE(section->vertices().count(), 1);
+    QCOMPARE(section->vertices().at(0), testVertex);
+    QCOMPARE(section->colors().count(), 1);
+    QCOMPARE(section->colors().at(0), color);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->texCoords().at(0), testTexCoord);
 
     QVERIFY(section->hasData(QLogicalVertex::Color));
     QVERIFY(section->hasData(QLogicalVertex::Texture));
@@ -365,19 +364,36 @@ void tst_QGLSection::accessors()
     QVector2D textureCoord2(1.0f, 1.0f);
     QColor4b color;
     QColor4b color2(16, 32, 64, 128);
-    QVector3D normal;
+    QVector3D normal(0.0f, 1.0f, 0.0f);
     QVector3D normal2(1.0f, 0.0f, 0.0f);
+    QLogicalVertex lv(vertex, color, normal, textureCoord);
+    QLogicalVertex lv2(vertex2, color2, normal2, textureCoord2);
 
     QCOMPARE(section->count(), 0);
     QVERIFY(!section->hasData(QLogicalVertex::Color));
     QVERIFY(!section->hasData(QLogicalVertex::Texture));
     QVERIFY(!section->hasData(QLogicalVertex::Normal));
 
-    section->append(vertex);
+    section->append(lv);
     QCOMPARE(section->count(), 1);
 
     section->setVertex(0, vertex2);
     QCOMPARE(section->count(), 1);
+
+    section->setNormal(0, normal2);
+    QCOMPARE(section->normals().count(), 1);
+    QCOMPARE(section->normals().at(0), normal2);
+    QVERIFY(section->hasData(QLogicalVertex::Normal));
+
+    section->setTexCoord(0, textureCoord2);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->texCoords().at(0), textureCoord2);
+    QVERIFY(section->hasData(QLogicalVertex::Texture));
+
+    section->setColor(0, color2);
+    QCOMPARE(section->colors().count(), 1);
+    QCOMPARE(section->colors().at(0), color2);
+    QVERIFY(section->hasData(QLogicalVertex::Color));
 
     section->setNormal(0, normal);
     QCOMPARE(section->normals().count(), 1);

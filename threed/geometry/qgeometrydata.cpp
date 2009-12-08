@@ -125,7 +125,7 @@ QGLVertexArray QGeometryData::toVertexArray() const
 */
 void QGeometryData::normalizeNormals()
 {
-    if (!hasType(QLogicalVertex::Normal))
+    if (hasType(QLogicalVertex::Normal))
     {
         for (int i = 0; i < m_normals->count(); ++i)
             (*m_normals)[i].normalize();

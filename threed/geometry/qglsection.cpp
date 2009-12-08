@@ -185,7 +185,6 @@ public:
 QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
     : m_smoothing(s)
     , m_displayList(d)
-    , m_dataTypes(QLogicalVertex::Vertex)
     , d(new QGLSectionPrivate)
 {
     Q_ASSERT(m_displayList);
@@ -253,19 +252,15 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     if (it == d->map->constEnd())
     {
         int v = d->data->appendVertex(lv);
-        //qDebug() << lv << "not found, adding at" << v << "here";
         d->map->insert(lv.vertex(), v);
     }
     else
     {
-        //qDebug() << lv << "found at" << v;
         if (updateTexCoord(*it, lv.texCoord()) == -1)
         {
-            // did not create a dup vert due to texture seam, add here
             d->data->appendIndex(*it);
             do
             {
-                // accumulate normals to this copy of vert, and any seam dups
                 if (!d->normalAccumulated(*it, lv.normal()))
                 {
                     QVector3D *va = d->data->normalData();
@@ -307,59 +302,35 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
     d->data->enableType(QLogicalVertex::Normal);
     QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
-    qDebug() << "#####" << this << "appendFaceted(" << lv << ")";
-    if (it != d->map->constEnd())
-    {
-        qDebug() << "--- something matched at" << *it << "Key:" << it.key();
-    }
     const QVector3D *vn = d->data->normalConstData();
     const QVector2D *vt = 0;
     if (d->data->hasType(QLogicalVertex::Texture))
         vt = d->data->texCoordConstData();
     for ( ; it != d->map->constEnd() && it.key() == lv.vertex(); ++it)
     {
-        qDebug() << "comparing existing:" << vn[*it] << " - to incoming:" << lv.normal();
         if (qFuzzyCompare(vn[*it], lv.normal()))
         {
             if (vt && lv.hasType(QLogicalVertex::Texture))
             {
                 if (qFuzzyCompare(vt[*it], lv.texCoord()))
-                {
-                    qDebug() << "   matched with normal & texture - found: break";
                     break;
-                }
             }
             else
             {
-                qDebug() << "    matched with normal only - found: break";
                 break;
             }
-        }
-        else
-        {
-            qDebug() << "    didn't match";
         }
     }
     if (it != d->map->constEnd() && it.key() == lv.vertex()) // found
     {
-        int v = *it;
-        qDebug() << lv << "found at" << v;
-        int ix = updateTexCoord(v, lv.texCoord());
-        if (ix != -1)
+        if (updateTexCoord(*it, lv.texCoord()) == -1)
         {
-            v = ix;
-            qDebug() << "after updating, added new for tex coord" << lv.texCoord();
-        }
-        else
-        {
-            d->data->appendIndex(v);
+            d->data->appendIndex(*it);
         }
     }
     else
     {
         int v = d->data->appendVertex(lv);
-        const QVector3D *va = d->data->vertexConstData();
-        qDebug() << va[v] << "not found, adding at" << v << "here";
         d->map->insertMulti(lv.vertex(), v);
     }
     m_displayList->setDirty(true);
@@ -553,6 +524,16 @@ void QGLSection::setColor(int position, const QColor4b &c)
 int QGLSection::count() const
 {
     return d->data->count();
+}
+
+QLogicalVertex::Types QGLSection::dataTypes() const
+{
+    return d->data->types();
+}
+
+bool QGLSection::hasData(QLogicalVertex::Types types)
+{
+    return d->data->hasType(types);
 }
 
 /*!

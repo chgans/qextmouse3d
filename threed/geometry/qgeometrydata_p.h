@@ -101,6 +101,7 @@ public:
 
     inline bool hasType(QLogicalVertex::Types type) const;
     inline void enableType(QLogicalVertex::Types type);
+    inline QLogicalVertex::Types types() const;
     inline QBox3D boundingBox() const;
     inline int vertexCount() const;
     inline int count() const;
@@ -118,8 +119,6 @@ inline int QGeometryData::appendVertex(const QLogicalVertex &v)
 {
     int index = m_vertices.count();
     m_vertices.append(v.vertex());
-    const QVector3D *va = m_vertices.constData();
-    qDebug() << "just appended" << va[index] << "into array" << va;
     m_indices.append(index);
     if (v.hasType(QLogicalVertex::Normal))
         appendNormal(v.normal());
@@ -277,6 +276,11 @@ inline void QGeometryData::enableType(QLogicalVertex::Types type)
         m_dataTypes |= QLogicalVertex::Color;
     }
     m_dataTypes |= type;
+}
+
+inline QLogicalVertex::Types QGeometryData::types() const
+{
+    return m_dataTypes;
 }
 
 inline QBox3D QGeometryData::boundingBox() const
