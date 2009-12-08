@@ -93,10 +93,7 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
-		, isVisible(true)
-		
-	QMatrix4x4 userTransform;
-	bool isVisible;
+
 /*!
     Constructs a new scene node and attaches it to \a parent.
 */
@@ -186,12 +183,14 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 
 QMatrix4x4 QGLSceneNode::userTransform() const
 {
-	return d_ptr->userTransform;
+	Q_D(const QGLSceneNode);
+	return d->userTransform;
 }
 
 void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
 {
-        d_ptr->userTransform = transform;
+	Q_D(QGLSceneNode);
+    d->userTransform = transform;
 }
 
 
@@ -381,11 +380,12 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
     }
 
-    if (!d_ptr->localTransform.isIdentity() || !d_ptr->userTransform.isIdentity())
+	if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
 	{
 		 painter->modelViewMatrix().push();
-		 if (!d_ptr->localTransform.isIdentity())  painter->modelViewMatrix() *= d_ptr->localTransform;
-		 if (!d_ptr->userTransform.isIdentity()) painter->modelViewMatrix() *= d_ptr->userTransform;
+		 if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
+		 if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
+	}
 
     int saveMat = -1;
     if (d->material != -1)
@@ -417,7 +417,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (saveMat != -1)
         d->geometry->setMaterial(saveMat);
 
-    if (!d->localTransform.isIdentity() || || !d_ptr->userTransform.isIdentity()))
+    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
         painter->modelViewMatrix().pop();
 }
 
@@ -453,6 +453,7 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
     node->setLocalTransform(d->localTransform);
+	node->setUserTransform(d->userTransform);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);
