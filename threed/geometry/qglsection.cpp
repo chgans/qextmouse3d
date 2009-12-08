@@ -145,7 +145,7 @@ public:
         Q_ASSERT(norms);  // dont call this after finalizing
         QGLSectionPrivate::NormMap::const_iterator nit = norms->constFind(index);
         while (nit != norms->constEnd() && nit.key() == index)
-            if (*nit == norm)
+            if (*nit++ == norm)
                 return true;
         return false;
     }
@@ -258,24 +258,23 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     }
     else
     {
-        int v = *it;
         //qDebug() << lv << "found at" << v;
-        int ix = updateTexCoord(v, lv.texCoord());
-        if (ix != -1)
+        if (updateTexCoord(*it, lv.texCoord()) == -1)
         {
-            v = ix;
-            //qDebug() << "after updating, added new for tex coord" << lv.texCoord();
-        }
-        else
-        {
-            d->data->appendIndex(v);
-            while (it != d->map->constEnd() && it.key() == lv.vertex())
-            if (!d->normalAccumulated(v, lv.normal()))
+            // did not create a dup vert due to texture seam, add here
+            d->data->appendIndex(*it);
+            do
             {
-                QVector3D *va = d->data->normalData();
-                va[v] += lv.normal();
-                d->accumulateNormal(v, lv.normal());
-            }
+                // accumulate normals to this copy of vert, and any seam dups
+                if (!d->normalAccumulated(*it, lv.normal()))
+                {
+                    QVector3D *va = d->data->normalData();
+                    va[*it] += lv.normal();
+                    d->accumulateNormal(*it, lv.normal());
+                }
+                ++it;
+
+            } while (it != d->map->constEnd() && it.key() == lv.vertex());
         }
     }
     m_displayList->setDirty(true);
@@ -308,18 +307,33 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
     d->data->enableType(QLogicalVertex::Normal);
     QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
+    qDebug() << "#####" << this << "appendFaceted(" << lv << ")";
     if (it != d->map->constEnd())
     {
-        qDebug() << "--- someting matched at" << *it << "Key:" << it.key();
+        qDebug() << "--- something matched at" << *it << "Key:" << it.key();
     }
     const QVector3D *vn = d->data->normalConstData();
+    const QVector2D *vt = 0;
+    if (d->data->hasType(QLogicalVertex::Texture))
+        vt = d->data->texCoordConstData();
     for ( ; it != d->map->constEnd() && it.key() == lv.vertex(); ++it)
     {
-        qDebug() << "comparing existing:" << it.key() << " - to incoming:" << lv.normal();
+        qDebug() << "comparing existing:" << vn[*it] << " - to incoming:" << lv.normal();
         if (qFuzzyCompare(vn[*it], lv.normal()))
         {
-            qDebug() << "    match found: break";
-            break;
+            if (vt && lv.hasType(QLogicalVertex::Texture))
+            {
+                if (qFuzzyCompare(vt[*it], lv.texCoord()))
+                {
+                    qDebug() << "   matched with normal & texture - found: break";
+                    break;
+                }
+            }
+            else
+            {
+                qDebug() << "    matched with normal only - found: break";
+                break;
+            }
         }
         else
         {

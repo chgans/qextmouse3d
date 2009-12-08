@@ -223,12 +223,12 @@ void tst_QGLSection::appendFaceted()
     // append a vertex equal to one already appended, with same normal, BUT in a new section - check it was NOT coalesced
     section = new QGLSectionTest(&list);
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
-    QCOMPARE(section->vertices().count(), 3);
-    QCOMPARE(section->vertices().at(2), testVertex);
-    QCOMPARE(section->normals().count(), 3);
-    QCOMPARE(section->normals().at(2), testNormal2);
-    QCOMPARE(section->indices().count(), 4);
-    QCOMPARE(section->indices().at(3), 2);
+    QCOMPARE(section->vertices().count(), 1);
+    QCOMPARE(section->vertices().at(0), testVertex);
+    QCOMPARE(section->normals().count(), 1);
+    QCOMPARE(section->normals().at(0), testNormal2);
+    QCOMPARE(section->indices().count(), 1);
+    QCOMPARE(section->indices().at(0), 0);
 }
 
 void tst_QGLSection::appendTexCoord()
@@ -257,7 +257,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), testNormal);
+    QCOMPARE(section->normals().at(0), testNormal + testNormal);
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
     QCOMPARE(section->indices().count(), 2);
@@ -271,7 +271,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->vertices().count(), 2);
     QCOMPARE(section->vertices().at(1), testVertex);
     QCOMPARE(section->normals().count(), 2);
-    QCOMPARE(section->normals().at(1), testNormal);
+    QCOMPARE(section->normals().at(1), testNormal + testNormal);
+    qDebug() << "got" << section->normals().at(1) << "expected" << (testNormal + testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().count(), 3);
@@ -282,39 +283,38 @@ void tst_QGLSection::appendTexCoord()
     // append a faceted vertex with a tex coord check it appears in the data
     // in a new section now, so the same vert and normal wont be coalesced
     section->appendFaceted(QLogicalVertex(testVertex, testNormal, testTexCoord));
-    QCOMPARE(section->vertices().count(), 3);
-    QCOMPARE(section->vertices().at(2), testVertex);
-    QCOMPARE(section->normals().count(), 3);
-    QCOMPARE(section->normals().at(2), testNormal);
-    QCOMPARE(section->texCoords().count(), 3);
-    QCOMPARE(section->texCoords().at(2), testTexCoord);
-    QCOMPARE(section->indices().count(), 4);
-    QCOMPARE(section->indices().at(3), 2);
+    QCOMPARE(section->vertices().count(), 1);
+    QCOMPARE(section->vertices().at(0), testVertex);
+    QCOMPARE(section->normals().count(), 1);
+    QCOMPARE(section->normals().at(0), testNormal);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->texCoords().at(0), testTexCoord);
+    QCOMPARE(section->indices().count(), 1);
+    QCOMPARE(section->indices().at(0), 0);
 
     // append a vertex & normal equal to one already appended, but with different tex coord
     // check it was NOT coalesced, dup vert created
     section->appendFaceted(QLogicalVertex(testVertex, testNormal, testTexCoord2));
-    QCOMPARE(section->vertices().count(), 4);
-    QCOMPARE(section->vertices().at(3), testVertex);
-    QCOMPARE(section->normals().count(), 4);
-    QCOMPARE(section->normals().at(3), testNormal);
-    QCOMPARE(section->texCoords().count(), 4);
-    QCOMPARE(section->texCoords().at(3), testTexCoord2);
-    QCOMPARE(section->indices().count(), 5);
-    QCOMPARE(section->indices().at(4), 3);
+    QCOMPARE(section->vertices().count(), 2);
+    QCOMPARE(section->vertices().at(1), testVertex);
+    QCOMPARE(section->normals().count(), 2);
+    QCOMPARE(section->normals().at(1), testNormal);
+    QCOMPARE(section->texCoords().count(), 2);
+    QCOMPARE(section->texCoords().at(1), testTexCoord2);
+    QCOMPARE(section->indices().count(), 2);
+    QCOMPARE(section->indices().at(1), 1);
 
-    // append a vertex equal to one already appended, but with same normal, and
-    // same texture - check it WAS coalesced
+    // append a vertex equal to first one appended above, with same normal, and
+    // same texture - check it WAS coalesced to index 0
     section->appendFaceted(QLogicalVertex(testVertex, testNormal, testTexCoord));
-    QCOMPARE(section->vertices().count(), 4);
-    QCOMPARE(section->vertices().at(3), testVertex);
-    QCOMPARE(section->normals().count(), 4);
-    QCOMPARE(section->normals().at(3), testNormal);
-    QCOMPARE(section->texCoords().count(), 4);
-    QCOMPARE(section->texCoords().at(2), testTexCoord);
-    QCOMPARE(section->texCoords().at(3), testTexCoord2);
-    QCOMPARE(section->indices().count(), 6);
-    QCOMPARE(section->indices().at(5), 2);
+    QCOMPARE(section->vertices().count(), 2);
+    QCOMPARE(section->vertices().at(1), testVertex);
+    QCOMPARE(section->normals().count(), 2);
+    QCOMPARE(section->normals().at(1), testNormal);
+    QCOMPARE(section->texCoords().count(), 2);
+    QCOMPARE(section->texCoords().at(1), testTexCoord2);
+    QCOMPARE(section->indices().count(), 3);
+    QCOMPARE(section->indices().at(2), 0);
 
     QVERIFY(section->hasData(QLogicalVertex::Normal));
     QVERIFY(section->hasData(QLogicalVertex::Texture));
