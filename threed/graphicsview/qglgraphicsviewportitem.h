@@ -66,6 +66,18 @@ public:
                             QGraphicsItem *parent = 0);
     ~QGLGraphicsViewportItem();
 
+    enum Option
+    {
+        ObjectPicking       = 0x0001,
+        ShowPicking         = 0x0002,
+        CameraNavigation    = 0x0004
+    };
+    Q_DECLARE_FLAGS(Options, Option)
+
+    QGLGraphicsViewportItem::Options options() const;
+    void setOptions(QGLGraphicsViewportItem::Options value);
+    void setOption(QGLGraphicsViewportItem::Option option, bool value);
+
     QRectF rect() const;
     void setRect(const QRectF &rect);
     inline void setRect(qreal x, qreal y, qreal w, qreal h);
@@ -92,6 +104,8 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
 
+    virtual QObject *objectForPosition(const QPointF& pos) const;
+
 protected:
     virtual void paintGL(QGLPainter *painter) = 0;
 
@@ -106,6 +120,8 @@ void QGLGraphicsViewportItem::setRect(qreal x, qreal y, qreal w, qreal h)
 {
     setRect(QRectF(x, y, w, h));
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLGraphicsViewportItem::Options)
 
 QT_END_NAMESPACE
 
