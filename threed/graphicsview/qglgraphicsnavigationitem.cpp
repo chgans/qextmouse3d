@@ -87,6 +87,9 @@ public:
     bool handleMouseRelease(QGraphicsSceneMouseEvent *e);
     bool handleMouseDoubleClick(QGraphicsSceneMouseEvent *e);
     bool handleMouseMove(QGraphicsSceneMouseEvent *e);
+    bool handleWheel(QGraphicsSceneWheelEvent *e);
+    bool handleKeyPress(QKeyEvent *e);
+    bool handleLeave();
 
     void sendEnterEvent(QObject *object)
     {
@@ -161,6 +164,7 @@ void QGLGraphicsNavigationItem::setViewportItem(QGLGraphicsViewportItem *item)
         if (d->viewportItem && d->filterInstalled)
             d->viewportItem->removeSceneEventFilter(this);
         d->viewportItem = item;
+        d->viewportItem->setAcceptHoverEvents(true); // We need HoverLeave.
         if (!d->filterInstalled && scene())
             d->filterInstalled = true;  // The item now has a scene.
         if (d->viewportItem && d->filterInstalled)
@@ -210,6 +214,15 @@ bool QGLGraphicsNavigationItem::sceneEventFilter
 
     case QEvent::GraphicsSceneMouseDoubleClick:
         return d->handleMouseDoubleClick(static_cast<QGraphicsSceneMouseEvent *>(event));
+
+    case QEvent::GraphicsSceneWheel:
+        return d->handleWheel(static_cast<QGraphicsSceneWheelEvent *>(event));
+
+    case QEvent::KeyPress:
+        return d->handleKeyPress(static_cast<QKeyEvent *>(event));
+
+    case QEvent::GraphicsSceneHoverLeave:
+        return d->handleLeave();
 
     default: break;
     }
@@ -379,6 +392,103 @@ bool QGLGraphicsNavigationItemPrivate::handleMouseMove(QGraphicsSceneMouseEvent 
         return false;
     }
     return true;
+}
+
+bool QGLGraphicsNavigationItemPrivate::handleWheel(QGraphicsSceneWheelEvent *e)
+{
+    if ((viewportItem->options() &
+            QGLGraphicsViewportItem::CameraNavigation) != 0) {
+        wheel(e->delta());
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool QGLGraphicsNavigationItemPrivate::handleKeyPress(QKeyEvent *e)
+{
+    QGLCamera *camera;
+    qreal sep;
+
+    if ((viewportItem->options() &
+            QGLGraphicsViewportItem::CameraNavigation) == 0) {
+        return false;
+    }
+
+    switch (e->key()) {
+
+        case Qt::Key_Left:
+        {
+            if ((e->modifiers() & Qt::ShiftModifier) != 0) {
+                pan(-10, 0);
+            } else if ((e->modifiers() & Qt::ControlModifier) != 0) {
+                camera = viewportItem->camera();
+                sep = camera->eyeSeparation();
+                sep -= (sep / 10.0f);
+                if (sep < 0.0f)
+                    sep = 0.0f;
+                camera->setEyeSeparation(sep);
+                e->accept();
+            } else {
+                rotate(-10, 0);
+            }
+        }
+        break;
+
+        case Qt::Key_Right:
+        {
+            if ((e->modifiers() & Qt::ShiftModifier) != 0) {
+                pan(10, 0);
+            } else if ((e->modifiers() & Qt::ControlModifier) != 0) {
+                camera = viewportItem->camera();
+                sep = camera->eyeSeparation();
+                sep += (sep / 10.0f);
+                camera->setEyeSeparation(sep);
+                e->accept();
+                return true;
+            } else {
+                rotate(10, 0);
+            }
+        }
+        break;
+
+        case Qt::Key_Up:
+        {
+            if ((e->modifiers() & Qt::ControlModifier) != 0)
+                wheel(120);
+            else if ((e->modifiers() & Qt::ShiftModifier) != 0)
+                pan(0, -10);
+            else
+                rotate(0, -10);
+        }
+        break;
+
+        case Qt::Key_Down:
+        {
+            if ((e->modifiers() & Qt::ControlModifier) != 0)
+                wheel(-120);
+            else if ((e->modifiers() & Qt::ShiftModifier) != 0)
+                pan(0, 10);
+            else
+                rotate(0, 10);
+        }
+        break;
+
+        default: return false;
+    }
+
+    return true;
+}
+
+bool QGLGraphicsNavigationItemPrivate::handleLeave()
+{
+    if (!pressedObject && enteredObject) {
+        sendLeaveEvent(enteredObject);
+        enteredObject = 0;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // Zoom in and out according to the change in wheel delta.
