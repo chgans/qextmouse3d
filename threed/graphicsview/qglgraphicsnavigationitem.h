@@ -39,43 +39,47 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QGraphicsScene>
-#include <QGraphicsView>
-#include <QtOpenGL/qgl.h>
-#include "teapotitem.h"
-#include "qglcamera.h"
-#include "qglgraphicsnavigationitem.h"
+#ifndef QGLGRAPHICSNAVIGATIONITEM_H
+#define QGLGRAPHICSNAVIGATIONITEM_H
 
-int main(int argc, char *argv[])
+#include "qglnamespace.h"
+#include <QtGui/qgraphicsitem.h>
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QGLGraphicsViewportItem;
+class QGLGraphicsNavigationItemPrivate;
+
+class Q_QT3D_EXPORT QGLGraphicsNavigationItem : public QGraphicsItem
 {
-    QApplication app(argc, argv);
+public:
+    explicit QGLGraphicsNavigationItem(QGraphicsItem *parent = 0);
+    explicit QGLGraphicsNavigationItem(QGLGraphicsViewportItem *affectedItem, QGraphicsItem *parent = 0);
+    ~QGLGraphicsNavigationItem();
 
-    QGraphicsScene scene;
-    scene.setBackgroundBrush(Qt::black);
+    QGLGraphicsViewportItem *viewportItem() const;
+    void setViewportItem(QGLGraphicsViewportItem *item);
 
-    TeapotItem *item = new TeapotItem();
-    item->setRect(0, 0, 600, 480);
-    scene.addItem(item);
+    QRectF boundingRect() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-    TeapotItem *item2 = new TeapotItem();
-    item2->setRect(400, 0, 200, 150);
-    item2->camera()->setEye(QVector3D(8.0f, 0.0f, 6.0f));
-    item2->setBackgroundColor(QColor(255, 0, 0, 64));
-    item2->setZValue(1);
-    scene.addItem(item2);
+protected:
+    bool sceneEventFilter(QGraphicsItem *watched, QEvent *event);
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    QGLGraphicsNavigationItem *navigator = new QGLGraphicsNavigationItem();
-    navigator->setViewportItem(item);
-    scene.addItem(navigator);
+private:
+    QScopedPointer<QGLGraphicsNavigationItemPrivate> d_ptr;
 
-    QGLGraphicsNavigationItem *navigator2 = new QGLGraphicsNavigationItem();
-    navigator2->setViewportItem(item2);
-    scene.addItem(navigator2);
+    Q_DECLARE_PRIVATE(QGLGraphicsNavigationItem)
+    Q_DISABLE_COPY(QGLGraphicsNavigationItem)
+};
 
-    QGraphicsView view(&scene);
-    view.setViewport(new QGLWidget());
-    view.show();
+QT_END_NAMESPACE
 
-    return app.exec();
-}
+QT_END_HEADER
+
+#endif
