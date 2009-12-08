@@ -74,17 +74,20 @@ public:
         , material(-1)
         , start(0)
         , count(0)
+		, isVisible(true)
     {
     }
 
     QGLGeometry *geometry;
     QMatrix4x4 localTransform;
+	QMatrix4x4 userTransform;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     bool hasEffect;
     int material;
     int start;
     int count;
+	bool isVisible;
 };
 
 #endif // QGLSCENENODE_P_H

@@ -143,7 +143,7 @@ void Mesh::dataRequestFinished()
 
 QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
 {
-     return d->scene->object(type, name);
+    return d->scene->object(type, name);
 }
 
 void Mesh::setScene(QGLAbstractScene *scene)
