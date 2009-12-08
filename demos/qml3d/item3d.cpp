@@ -47,6 +47,8 @@
 #include "qml3dview.h"
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
+#include "qglscenenode.h"
+#include "subItem3d.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qmlcontext.h>
 #include <QtDeclarative/private/qmlstategroup_p.h>
@@ -333,6 +335,7 @@ void Item3d::setState(const QString &state)
     d->states()->setState(state);
 }
 
+
 Item3d::CullFaces Item3d::cullFaces() const
 {
     return d->cullFaces;
@@ -346,12 +349,19 @@ void Item3d::setCullFaces(Item3d::CullFaces value)
     }
 }
 
+QGLSceneObject *Item3d::getSceneObject(QGLSceneObject::Type type, const QString& name) const
+{
+    return mesh()->getSceneObject(type, name);
+}
+
 void Item3d::draw(QGLPainter *painter)
 {
     int prevId = painter->objectPickId();
     painter->setObjectPickId(d->objectPickId);
     QObjectList list = QObject::children();
     bool haveLights = false;
+
+	//Lighting
     foreach (QObject *child, list) {
         QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
         if (light) {
@@ -360,9 +370,17 @@ void Item3d::draw(QGLPainter *painter)
             haveLights = true;
         }
     }
+
+	//Culling
     painter->setCullFaces((QGL::CullFaces)(int)(d->cullFaces));
+
+	//Effects
     if (d->effect)
         d->effect->enableEffect(painter);
+
+	//Local and Global transforms
+
+	//1) Whole Item Transform
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
     if (!d->transforms.isEmpty()) {
@@ -375,13 +393,24 @@ void Item3d::draw(QGLPainter *painter)
     }
     if (d->scale != 1.0f)
         painter->modelViewMatrix().scale(d->scale);
-    drawItem(painter);
+	//2) Sub-items transforms
+	foreach (QObject *child, list) {
+		SubItem3d *subItem =qobject_cast<SubItem3d *>(child);	
+		if (subItem) 
+			subItem->performTransform();
+	}
+	
+	//Drawing
+	drawItem(painter);
     foreach (QObject *child, list) {
         Item3d *item = qobject_cast<Item3d *>(child);
         if (item)
             item->draw(painter);
     }
+
+	//Unset parameters for transforms, effects etc.
     painter->modelViewMatrix().pop();
+
     if (d->effect)
         d->effect->disableEffect(painter);
     if (d->cullFaces != CullDisabled)
@@ -411,6 +440,18 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
         Item3d *item = qobject_cast<Item3d *>(child);
         if (item)
             item->initialize(viewport, painter);
+		else
+		{
+			SubItem3d *subItem =qobject_cast<SubItem3d *>(child);	
+			if (subItem)
+			{
+				QGLSceneNode *subItemNode = qobject_cast<QGLSceneNode *>(getSceneObject(QGLSceneObject::Mesh, subItem->meshNode()));
+				if (subItemNode)
+					subItem->setMeshObject(subItemNode);
+				else
+					qWarning() << "Unable to cast QGLSceneObject to QGLSceneNode for SubItem3d initialisation.\n";
+			}
+		}
     }
 }
 

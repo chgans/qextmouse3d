@@ -83,13 +83,17 @@ public:
         : geometry(0)
         , localEffect(QGL::LitMaterial)
         , hasEffect(false)
+		, isVisible(true)
     {
+		
     }
 
     QGLGeometry *geometry;
     QMatrix4x4 localTransform;
+	QMatrix4x4 userTransform;
     QGL::StandardEffect localEffect;
     bool hasEffect;
+	bool isVisible;
 };
 
 /*!
@@ -167,6 +171,17 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform) const
     d_ptr->localTransform = transform;
 }
 
+QMatrix4x4 QGLSceneNode::userTransform() const
+{
+	return d_ptr->userTransform;
+}
+
+void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
+{
+        d_ptr->userTransform = transform;
+}
+
+
 /*!
     Returns the local effect associated with this node.  The default value
     is QGL::LitMaterial.  If the value of hasEffect() is false, then this
@@ -234,11 +249,13 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (d_ptr->hasEffect && painter->standardEffect() != d_ptr->localEffect)
         painter->setStandardEffect(d_ptr->localEffect);
 
-    if (!d_ptr->localTransform.isIdentity())
-    {
-        painter->modelViewMatrix().push();
-        painter->modelViewMatrix() *= d_ptr->localTransform;
-    }
+    if (!d_ptr->localTransform.isIdentity() || !d_ptr->userTransform.isIdentity())
+	{
+		 painter->modelViewMatrix().push();
+		 if (!d_ptr->localTransform.isIdentity())  painter->modelViewMatrix() *= d_ptr->localTransform;
+		 if (!d_ptr->userTransform.isIdentity()) painter->modelViewMatrix() *= d_ptr->userTransform;
+	}
+		
 
     QObjectList subNodes = children();
     QObjectList::iterator cit(subNodes.begin());
@@ -251,7 +268,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (d_ptr->geometry && d_ptr->geometry->drawingMode() != QGL::NoDrawingMode)
         d_ptr->geometry->draw(painter);
 
-    if (!d_ptr->localTransform.isIdentity())
+    if (!d_ptr->localTransform.isIdentity() || !d_ptr->userTransform.isIdentity())
         painter->modelViewMatrix().pop();
 }
 

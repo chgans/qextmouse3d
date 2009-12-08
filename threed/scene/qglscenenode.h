@@ -68,6 +68,9 @@ public:
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &) const;
 
+    QMatrix4x4 userTransform() const;
+    void setUserTransform(const QMatrix4x4 &transform);
+
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
 

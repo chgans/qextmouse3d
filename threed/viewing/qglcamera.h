@@ -69,8 +69,14 @@ class Q_QT3D_EXPORT QGLCamera : public QObject
     Q_PROPERTY(QSizeF viewSize READ viewSize WRITE setViewSize NOTIFY projectionChanged)
     Q_PROPERTY(QSizeF minViewSize READ minViewSize WRITE setMinViewSize NOTIFY projectionChanged)
     Q_PROPERTY(int screenRotation READ screenRotation WRITE setScreenRotation NOTIFY projectionChanged)
+    Q_PROPERTY(qreal x READ x WRITE setX NOTIFY viewChanged)
+    Q_PROPERTY(qreal y READ y WRITE setY NOTIFY viewChanged)
+    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY viewChanged)
     Q_PROPERTY(QVector3D eye READ eye WRITE setEye NOTIFY viewChanged)
     Q_PROPERTY(QVector3D upVector READ upVector WRITE setUpVector NOTIFY viewChanged)
+    Q_PROPERTY(qreal xCentre READ x WRITE setXCentre NOTIFY viewChanged)
+    Q_PROPERTY(qreal yCentre READ y WRITE setYCentre NOTIFY viewChanged)
+    Q_PROPERTY(qreal zCentre READ z WRITE setZCentre NOTIFY viewChanged)
     Q_PROPERTY(QVector3D center READ center WRITE setCenter NOTIFY viewChanged)
     Q_PROPERTY(qreal eyeSeparation READ eyeSeparation WRITE setEyeSeparation NOTIFY viewChanged)
     Q_PROPERTY(QVector3D motionAdjustment READ motionAdjustment WRITE setMotionAdjustment DESIGNABLE false NOTIFY viewChanged)
@@ -105,11 +111,25 @@ public:
     int screenRotation() const;
     void setScreenRotation(int angle);
 
+    qreal x() const;
+    void setX(qreal value);
+    qreal y() const;
+    void setY(qreal value);
+    qreal z() const;
+    void setZ(qreal value);
+
     QVector3D eye() const;
     void setEye(const QVector3D& vertex);
 
     QVector3D upVector() const;
     void setUpVector(const QVector3D& vector);
+
+    qreal xCentre() const;
+    void setXCentre(qreal value);
+    qreal yCentre() const;
+    void setYCentre(qreal value);
+    qreal zCentre() const;
+    void setZCentre(qreal value);
 
     QVector3D center() const;
     void setCenter(const QVector3D& vertex);

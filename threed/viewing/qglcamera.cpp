@@ -545,6 +545,66 @@ void QGLCamera::setScreenRotation(int angle)
 }
 
 /*!
+    \property QGLCamera::x
+    \brief the x position of the viewer's eye.  The default value is 0.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::x() const
+{
+	Q_D(QGLCamera);
+	return d->eye.x();
+}
+
+void QGLCamera::setX(qreal value)
+{
+    Q_D(QGLCamera);
+	d->eye.setX(value);
+    emit viewChanged();
+}
+
+/*!
+    \property QGLCamera::y
+    \brief the y position of the viewer's eye.  The default value is 0.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::y() const
+{
+    Q_D(QGLCamera);
+	return d->eye.y();
+}
+
+void QGLCamera::setY(qreal value)
+{
+    Q_D(QGLCamera);
+	d->eye.setY(value);
+    emit viewChanged();
+}
+
+/*!
+    \property QGLCamera::z
+    \brief the z position of the viewer's eye.  The default value is 10.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::z() const
+{
+    Q_D(QGLCamera);
+	return d->eye.z();
+}
+
+void QGLCamera::setZ(qreal value)
+{
+    Q_D(QGLCamera);
+	d->eye.setZ(value);
+    emit viewChanged();
+}
+
+/*!
     \property QGLCamera::eye
     \brief the position of the viewer's eye.  The default value is (0, 0, 10).
 
@@ -600,6 +660,69 @@ void QGLCamera::setUpVector(const QVector3D& vector)
         d->upVector = vector;
         emit viewChanged();
     }
+}
+
+/*!
+    \property QGLCamera::xCentre
+    \brief the x position of the center of the view visible from the 
+	viewer's position.  The default value is 0.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::xCentre() const
+{
+	Q_D(QGLCamera);
+	return d->center.x();
+}
+
+void QGLCamera::setXCentre(qreal value)
+{
+    Q_D(QGLCamera);
+	d->center.setX(value);
+    emit viewChanged();
+}
+
+/*!
+    \property QGLCamera::yCentre
+    \brief the y position of the center of the view visible from the 
+	viewer's position.  The default value is 0.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::yCentre() const
+{
+    Q_D(QGLCamera);
+	return d->center.y();
+}
+
+void QGLCamera::setYCentre(qreal value)
+{
+    Q_D(QGLCamera);
+	d->center.setY(value);
+    emit viewChanged();
+}
+
+/*!
+    \property QGLCamera::z
+    \brief the z position of the center of the view visible from the 
+	viewer's position.  The default value is 0.
+
+    \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
+    \sa motionAdjustment()
+*/
+qreal QGLCamera::zCentre() const
+{
+    Q_D(QGLCamera);
+	return d->center.z();
+}
+
+void QGLCamera::setZCentre(qreal value)
+{
+    Q_D(QGLCamera);
+	d->center.setZ(value);
+    emit viewChanged();
 }
 
 /*!

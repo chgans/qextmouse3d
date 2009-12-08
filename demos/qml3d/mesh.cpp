@@ -57,7 +57,7 @@ class MeshPrivate
 {
 public:
     MeshPrivate() : dataReply(0), scene(0), meshObject(0), refCount(1),
-                    completed(false), loaded(false) {}
+                    completed(false), loaded(false){}
     ~MeshPrivate()
     {
         delete scene;
@@ -65,6 +65,7 @@ public:
 
     QUrl data;
     QString meshName;
+    Mesh *parentMesh;
     QNetworkReply *dataReply;
     QGLAbstractScene *scene;
     QGLSceneObject *meshObject;
@@ -138,6 +139,11 @@ void Mesh::dataRequestFinished()
     setScene(QGLAbstractScene::loadScene(d->dataReply, d->data));
     d->dataReply->deleteLater();
     d->dataReply = 0;
+}
+
+QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
+{
+     return d->scene->object(type, name);
 }
 
 void Mesh::setScene(QGLAbstractScene *scene)
