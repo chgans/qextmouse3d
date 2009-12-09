@@ -3,6 +3,7 @@ VPATH += $$PWD
 HEADERS += qglarraydata.h \
     qglattributevalue.h \
     qglbuffer.h \
+    qglcontextscope.h \
     qglcontextwatcher.h \
     qglindexarray.h \
     qglreferencedbuffer.h \
@@ -12,6 +13,7 @@ HEADERS += qglarraydata.h \
     qgltexturecube.h
 SOURCES += qglattributevalue.cpp \
     qglbuffer.cpp \
+    qglcontextscope.cpp \
     qglcontextwatcher.cpp \
     qglindexarray.cpp \
     qglvertexarray.cpp \

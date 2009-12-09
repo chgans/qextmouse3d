@@ -43,6 +43,7 @@
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 #include "qglbuffer.h"
+#include "qglcontextscope.h"
 #include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -229,7 +230,7 @@ QGLBuffer::~QGLBuffer()
     GLuint bufferId = d->guard.id();
     if (bufferId) {
         // Switch to the original creating context to destroy it.
-        QGLShareContextScope scope(d->guard.context());
+        QGLContextScope scope(d->guard.context());
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glDeleteBuffers(1, &bufferId);
 #else
