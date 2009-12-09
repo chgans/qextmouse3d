@@ -5,6 +5,7 @@ HEADERS += qglarraydata.h \
     qglbuffer.h \
     qglcontextwatcher.h \
     qglindexarray.h \
+    qglreferencedbuffer.h \
     qglvertexarray.h \
     qglvertexdescription.h \
     qgltexture2d.h \

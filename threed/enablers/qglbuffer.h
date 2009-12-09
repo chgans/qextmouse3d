@@ -116,12 +116,6 @@ private:
 
     Q_DISABLE_COPY(QGLBuffer)
     Q_DECLARE_PRIVATE(QGLBuffer)
-
-    friend class QGLIndexArray;
-    friend class QGLVertexArray;
-
-    void ref();
-    bool deref();
 };
 
 QT_END_NAMESPACE

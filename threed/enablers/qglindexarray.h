@@ -43,7 +43,7 @@
 #define QGLINDEXARRAY_H
 
 #include "qglarraydata.h"
-#include "qglbuffer.h"
+#include "qglreferencedbuffer.h"
 
 QT_BEGIN_HEADER
 
@@ -103,7 +103,7 @@ public:
 
 private:
     QGLArrayData<ElementType> m_data;
-    mutable QGLBuffer *m_buffer;
+    mutable QGLReferencedBuffer *m_buffer;
 
     inline void detachBuffer();
 };

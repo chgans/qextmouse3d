@@ -191,15 +191,13 @@ class QGLBufferPrivate
 {
 public:
     QGLBufferPrivate(QGLBuffer::Type t)
-        : ref(1),
-          type(t),
+        : type(t),
           guard(0),
           usagePattern(QGLBuffer::StaticDraw),
           actualUsagePattern(QGLBuffer::StaticDraw)
     {
     }
 
-    QAtomicInt ref;
     QGLBuffer::Type type;
     QGLSharedResourceGuard guard;
     QGLBuffer::UsagePattern usagePattern;
@@ -590,23 +588,6 @@ bool QGLBuffer::unmap()
     if (!extensions || !extensions->unmapBuffer)
         return false;
     return extensions->unmapBuffer(d->type) == GL_TRUE;
-}
-
-// QGLIndexArray and QGLVertexArray keep reference-counted references
-// to the underlying buffer.  If the arrays are copied around without
-// modification, the same buffer is reused.  If one of the copies is
-// modified, then it will detach from the buffer leaving all of the
-// other copies with the original buffer contents.
-void QGLBuffer::ref()
-{
-    Q_D(QGLBuffer);
-    d->ref.ref();
-}
-
-bool QGLBuffer::deref()
-{
-    Q_D(QGLBuffer);
-    return d->ref.deref();
 }
 
 QT_END_NAMESPACE
