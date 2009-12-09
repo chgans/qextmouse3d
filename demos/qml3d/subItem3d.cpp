@@ -39,8 +39,6 @@
 **
 ****************************************************************************/
 
-#include <time.h>
-
 #include "subItem3d.h"
 #include "item3d.h"
 #include "viewport.h"
@@ -67,6 +65,7 @@ public:
         , position(0.0f, 0.0f, 0.0f)
         , scale(1.0f)
         , objectPickId(-1)
+		, targetNode(NULL)
     {
 		//meshNode init?
 		subTransform.setToIdentity();
@@ -82,7 +81,7 @@ public:
     Item3d::CullFaces cullFaces;
     QString meshNode;
     QGLSceneNode * targetNode;
-	QMatrix4x4 subTransform;
+    QMatrix4x4 subTransform;
 };
 
 SubItem3d::SubItem3d(QObject *parent)
@@ -105,8 +104,8 @@ void SubItem3d::setPosition(const QVector3D& value)
 {
     d->position = value;
     emit positionChanged();
-        transform();
-		update();
+    transform();
+    update();
 }
 
 qreal SubItem3d::x() const
@@ -119,7 +118,7 @@ void SubItem3d::setX(qreal value)
     d->position.setX(value);
     emit positionChanged();
     transform();
-	update();
+    update();
 }
 
 qreal SubItem3d::y() const
@@ -132,7 +131,7 @@ void SubItem3d::setY(qreal value)
     d->position.setY(value);
     emit positionChanged();
     transform();
-	update();
+    update();
 }
 
 qreal SubItem3d::z() const
@@ -145,7 +144,7 @@ void SubItem3d::setZ(qreal value)
     d->position.setZ(value);
     emit positionChanged();
     transform();
-	update();
+    update();
 }
 
 qreal SubItem3d::scale() const
@@ -158,46 +157,46 @@ void SubItem3d::setScale(qreal value)
     d->scale = value;
     emit scaleChanged();
     transform();
-	update();
+    update();
 }
 
 
 QString SubItem3d::meshNode() const
 {
-	return d->meshNode;
+    return d->meshNode;
 }
 
 void SubItem3d::setMeshNode(const QString &node)
 {
-	d->meshNode = node;
+    d->meshNode = node;
 }
 
 void SubItem3d::transform()
 {
     d->subTransform.setToIdentity();
-	d->subTransform.translate(x(),y(),z());
+    d->subTransform.translate(x(),y(),z());
 }
 
 void SubItem3d::update()
 {
-	Item3d * parentItem = (Item3d *)this->parent();
-	parentItem->update();
+    Item3d * parentItem = (Item3d *)this->parent();
+    parentItem->update();
 }
 
 void SubItem3d::performTransform()
 {
-	if (d->targetNode)
-		d->targetNode->setUserTransform(d->subTransform);
+    if (d->targetNode)
+    d->targetNode->setUserTransform(d->subTransform);
 }
 
 void SubItem3d::setMeshObject(QGLSceneNode *object)
 {
-	d->targetNode = object;
+    d->targetNode = object;
 }
 
 QGLSceneNode * SubItem3d::meshObject()
 {
-	return d->targetNode;
+    return d->targetNode;
 }
 
 QT_END_NAMESPACE

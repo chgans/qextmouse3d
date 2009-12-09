@@ -403,7 +403,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         QGLSceneNode *n = qobject_cast<QGLSceneNode *>(*cit);
         if (n)
             n->draw(painter);
-    }
+    } 
 
 
     if (d->geometry && d->geometry->drawingMode() != QGL::NoDrawingMode)

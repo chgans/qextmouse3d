@@ -88,14 +88,14 @@ public:
     QString meshNode() const;					
     void setMeshNode(const QString &);			
 
-	QGLSceneNode * meshObject();				
-	void setMeshObject(QGLSceneNode *object);	
+    QGLSceneNode * meshObject();
+    void setMeshObject(QGLSceneNode *object);
 
-	void performTransform();
+    void performTransform();
 
 public Q_SLOTS:
     void transform();
-	void update();
+    void update();
 
 protected:
 

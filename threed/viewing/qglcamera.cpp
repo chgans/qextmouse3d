@@ -545,59 +545,59 @@ void QGLCamera::setScreenRotation(int angle)
 }
 
 /*!
-    \property QGLCamera::x
+    \property QGLCamera::xEye
     \brief the x position of the viewer's eye.  The default value is 0.
 
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
-qreal QGLCamera::x() const
-{
-	Q_D(QGLCamera);
-	return d->eye.x();
-}
-
-void QGLCamera::setX(qreal value)
+qreal QGLCamera::xEye() const
 {
     Q_D(QGLCamera);
-	d->eye.setX(value);
+    return d->eye.x();
+}
+
+void QGLCamera::setXEye(qreal value)
+{
+    Q_D(QGLCamera);
+    d->eye.setX(value);
     emit viewChanged();
 }
 
 /*!
-    \property QGLCamera::y
+    \property QGLCamera::yEye
     \brief the y position of the viewer's eye.  The default value is 0.
 
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
-qreal QGLCamera::y() const
+qreal QGLCamera::yEye() const
 {
     Q_D(QGLCamera);
-	return d->eye.y();
+    return d->eye.y();
 }
 
-void QGLCamera::setY(qreal value)
+void QGLCamera::setYEye(qreal value)
 {
     Q_D(QGLCamera);
-	d->eye.setY(value);
+    d->eye.setY(value);
     emit viewChanged();
 }
 
 /*!
-    \property QGLCamera::z
+    \property QGLCamera::zEye
     \brief the z position of the viewer's eye.  The default value is 10.
 
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
-qreal QGLCamera::z() const
+qreal QGLCamera::zEye() const
 {
     Q_D(QGLCamera);
 	return d->eye.z();
 }
 
-void QGLCamera::setZ(qreal value)
+void QGLCamera::setZEye(qreal value)
 {
     Q_D(QGLCamera);
 	d->eye.setZ(value);
@@ -664,8 +664,8 @@ void QGLCamera::setUpVector(const QVector3D& vector)
 
 /*!
     \property QGLCamera::xCentre
-    \brief the x position of the center of the view visible from the 
-	viewer's position.  The default value is 0.
+    \brief the x position of the center of the view visible from the viewer's
+    position.  The default value is 0.
 
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()

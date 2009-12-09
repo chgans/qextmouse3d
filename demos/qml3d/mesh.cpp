@@ -143,7 +143,11 @@ void Mesh::dataRequestFinished()
 
 QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
 {
-    return d->scene->object(type, name);
+	if (d->scene)
+		return d->scene->object(type, name);
+	else
+		qWarning() << "No scene initialised - attempt to get scene object failed.\n";
+	return NULL;
 }
 
 void Mesh::setScene(QGLAbstractScene *scene)
