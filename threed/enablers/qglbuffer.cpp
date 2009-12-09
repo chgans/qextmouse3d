@@ -191,11 +191,12 @@ class QGLBufferPrivate
 {
 public:
     QGLBufferPrivate(QGLBuffer::Type t)
-        : ref(1), guard(0)
+        : ref(1),
+          type(t),
+          guard(0),
+          usagePattern(QGLBuffer::StaticDraw),
+          actualUsagePattern(QGLBuffer::StaticDraw)
     {
-        type = t;
-        usagePattern = QGLBuffer::StaticDraw;
-        actualUsagePattern = usagePattern;
     }
 
     QAtomicInt ref;
