@@ -705,7 +705,7 @@ void QGLCamera::setYCentre(qreal value)
 }
 
 /*!
-    \property QGLCamera::z
+    \property QGLCamera::zCentre
     \brief the z position of the center of the view visible from the 
 	viewer's position.  The default value is 0.
 

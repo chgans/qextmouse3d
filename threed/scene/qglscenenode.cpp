@@ -181,12 +181,27 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
     d->localTransform = transform;
 }
 
+/*!
+    Returns the transform set by the "user" associated with this node.  If no
+    local transform has been explicitly set, this method returns a
+    QMatrix4x4 set to the identity matrix.
+
+    \sa setUserTransform()
+*/
+
 QMatrix4x4 QGLSceneNode::userTransform() const
 {
 	Q_D(const QGLSceneNode);
 	return d->userTransform;
 }
 
+/*!
+    Returns the transform set by the "user" associated with this node.  If no
+    local transform has been explicitly set, this method returns a
+    QMatrix4x4 set to the identity matrix.
+
+    \sa userTransform()
+*/
 void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
 {
 	Q_D(QGLSceneNode);

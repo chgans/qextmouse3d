@@ -112,11 +112,11 @@ public:
     void setScreenRotation(int angle);
 
     qreal xEye() const;
-    void setX(qreal value);
+    void setXEye(qreal value);
     qreal yEye() const;
-    void setY(qreal value);
+    void setYEye(qreal value);
     qreal zEye() const;
-    void setZ(qreal value);
+    void setZEye(qreal value);
 
     QVector3D eye() const;
     void setEye(const QVector3D& vertex);
