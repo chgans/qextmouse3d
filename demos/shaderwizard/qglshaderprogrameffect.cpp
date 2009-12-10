@@ -125,7 +125,51 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     "    }\n"
     "    gl_FragColor = qAmbient + qDiffuse * intensity + specularComponent;\n"
     "};\n";
+/*!
+    \class QGLShaderProgramEffect
+    \brief The QGLShaderProgram is a convenience class for managing and displaying GLSL shader based
+    effects.
+    \since 4.6
+    \ingroup qt3d
 
+    The QGLShaderProgramEffect's primary role is to bundle a QGLShaderProgram
+    and a QGLAbstractEffect and to, and to make it very easy to create,
+    display, and manipulate shader based graphical effects.
+
+    It also calulates and binds a variety of standard attributes and uniforms
+    commonly needed by shader programs such as vertex, normal, and texture
+    coordinates, lighting and material parameters.
+
+    A material may be set on the QGLShaderProgramEffect and passed in to the
+    shaders.  If the material is unset, the material values for the
+    QGLPainter are used.
+
+    Lighting and texture values from the QGLPainter are passed in to the
+    shader program when
+*/
+
+class QGLShaderProgramEffectPrivate
+{
+public:
+    QGLShaderProgramEffectPrivate()
+        : material(0)
+    {
+    }
+
+    ~QGLShaderProgramEffectPrivate()
+    {
+        delete material;
+        material = 0;
+    }
+    QGLMaterialParameters* material;
+};
+
+/*!
+  Constructs a new QGLShaderProgramEffect.  By default, the effect
+  will use a per-pixel lighting algorithm, and the material specified by
+  the QGLPainter.
+
+*/
 QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
     , program(0)
     , colorUniform(-1)
@@ -133,9 +177,12 @@ QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
     , lightDirectionUniform(-1)
     , textureAttributeSet(false)
     , textureId(0)
+    , d(new QGLShaderProgramEffectPrivate)
 {
 }
-
+/*!
+  Destroys the QGLShaderProgramEffect
+*/
 QGLShaderProgramEffect::~QGLShaderProgramEffect()
 {
     if(program)
@@ -143,8 +190,13 @@ QGLShaderProgramEffect::~QGLShaderProgramEffect()
         delete program;
         program = 0;
     }
+    delete d;
+    d = 0;
 }
 
+/*!
+  Returns the minimum fields required by this effect.
+*/
 QList<QGL::VertexAttribute> QGLShaderProgramEffect::requiredFields() const
 {
     QList<QGL::VertexAttribute> fields;
@@ -153,11 +205,19 @@ QList<QGL::VertexAttribute> QGLShaderProgramEffect::requiredFields() const
     return fields;
 }
 
+/*!
+  Returns false.  QGLShaderProgramEffects do not support object picking.
+*/
 bool QGLShaderProgramEffect::supportsPicking() const
 {
     return false;
 }
 
+/*!
+    Activates or deactiviates , according to \a flag.
+    If \a flag is true, creates the default program if no program currently
+    exists.
+*/
 void QGLShaderProgramEffect::setActive(bool flag)
 {
     if (!program) {
@@ -194,6 +254,12 @@ void QGLShaderProgramEffect::setActive(bool flag)
     }
 }
 
+/*!
+  Clears all shaders from the program, and recreates the vertex and fragment
+  shader from the shaders set, or from the default shaders if the corresponding
+  shader is empty.
+  \sa setFragmentShader(), setVertexShader()
+*/
 void QGLShaderProgramEffect::reloadShaders()
 {
     if(!program)
@@ -220,6 +286,15 @@ void QGLShaderProgramEffect::reloadShaders()
     }
 }
 
+/*!
+  Binds vertexes, normals, and texture cooordinate attributes to the attribute
+  positions 0, 1 and 2 respectively.
+
+  Override in a subclass if more or less attributes are required, or if
+  fixed positions is not suitable.
+
+  Does nothing if there is no current program.
+*/
 void QGLShaderProgramEffect::bindProgramAttributes()
 {
     if(!program)
@@ -229,6 +304,9 @@ void QGLShaderProgramEffect::bindProgramAttributes()
     program->bindAttributeLocation("texCoords", 2);
 }
 
+/*!
+    Updates the positions for the uniforms from the program.
+*/
 void QGLShaderProgramEffect::bindProgramUniforms()
 {
     if(!program)
@@ -241,6 +319,8 @@ void QGLShaderProgramEffect::bindProgramUniforms()
 
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
+    // update the projection, modelview, texture matrices and lighting conditions
+    // as appropriate
     static float time = 0.0f;
     time += 3.14159 / 120; // TODO: use a clock instead of a frame counter
     if(!program)
@@ -261,11 +341,13 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue(matrixUniform, proj * mv);
     }
 
-        if ((updates & QGLPainter::UpdateLights) != 0 || true ) { //TEMP
+    if ((updates & QGLPainter::UpdateLights) != 0 )
+    {
         // Find the first enabled light.
         const QGLLightParameters *lparams = 0;
         QMatrix4x4 ltransform;
         int count = painter->lightCount();
+
         for (int index = 0; index < count; ++index) {
             if (painter->isLightEnabled(index)) {
                 lparams = painter->lightParameters(index);
@@ -305,7 +387,14 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program->setUniformValue("acs", model->ambientSceneColor());
 
         // Set the uniform variables for the material
-        const QGLMaterialParameters *material = painter->faceMaterial(QGL::FrontFaces);
+        const QGLMaterialParameters *material;
+        if(d->material)
+        {
+            material = d->material;
+        }
+        else
+            material = painter->faceMaterial(QGL::FrontFaces);
+
         program->setUniformValue("acm", material->ambientColor());
         program->setUniformValue("dcm", material->diffuseColor());
         program->setUniformValue("scm", material->specularColor());
@@ -357,4 +446,25 @@ void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
     } else {
         setActive(false);
     }
+}
+
+/*!
+  Sets this effect to use \a newMaterial.  If \a newMaterial is 0, sets this
+  effect to have no material, and instead use whatever material is set
+  on the QGLPainter.
+
+  \sa QGLPainter, material()
+*/
+void QGLShaderProgramEffect::setMaterial(QGLMaterialParameters* newMaterial)
+{
+    d->material = newMaterial;
+}
+
+/*!
+    Returns a pointer to the material of this effect.  If the effect has no material,
+    this function returns 0;
+*/
+QGLMaterialParameters* QGLShaderProgramEffect::material()
+{
+    return d->material;
 }
