@@ -9,7 +9,8 @@ HEADERS += qglcube.h \
     qglmaterialcollection.h \
     qglteapot.h \
     qgltexturemodel.h \
-    qlogicalvertex.h
+    qlogicalvertex.h \
+    qtest_helpers_p.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
     qglgeometry.cpp \

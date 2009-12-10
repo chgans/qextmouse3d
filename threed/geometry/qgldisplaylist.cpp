@@ -200,9 +200,15 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     QVector3D norm = n;
     if (norm.isNull())
         norm = QVector3D::normal(a, b, c);
-    QLogicalVertex va(a, norm, textureModel.bottomLeft());
-    QLogicalVertex vb(b, norm, inverted ? textureModel.topRight() : textureModel.bottomRight());
-    QLogicalVertex vc(c, norm, inverted ? textureModel.topLeft() : textureModel.topRight());
+    QLogicalVertex va(a, norm);
+    QLogicalVertex vb(b, norm);
+    QLogicalVertex vc(c, norm);
+    if (!textureModel.isNull())
+    {
+        va.setTexCoord(textureModel.bottomLeft());
+        vb.setTexCoord(inverted ? textureModel.topRight() : textureModel.bottomRight());
+        vc.setTexCoord(inverted ? textureModel.topLeft() : textureModel.topRight());
+    }
     d->currentSection->append(va);
     d->currentSection->append(vb);
     d->currentSection->append(vc);
@@ -281,10 +287,14 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     if (!textureModel.isNull())
         qWarning("NOT IMPLEMENTED YET");
     QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
+    QGLSection *s1 = currentSection();
     for (int i = 0; i < edges.count(); ++i)
     {
         int n = (i + 1) % edges.count();
+        qDebug() << i << "before - has textures" << s1->hasData(QLogicalVertex::Texture);
         addTriangle(edges[i], edges[n], center, norm, textureModel);
+        qDebug() << i << "after - has textures" << s1->hasData(QLogicalVertex::Texture);
+
     }
 }
 
@@ -497,9 +507,19 @@ QList<QGLSection*> QGLDisplayList::sections() const
 /*!
     Creates a new QGLSceneNode within the current section of this
     display list, and makes it current.  A pointer to the new node is
-    returned.  Any current node is copied to make this new node so
-    any transformations, materials or effects previously set will apply
-    to this new node.
+    returned.  The new node is made by copying the current node (if one
+    exists), which means that any transformations, materials or effects
+    previously set will apply to this new node by default.
+
+    The node is set to reference the geometry starting from the next
+    vertex created, such that QGLSceneNode::start() will return the
+    index of this next vertex.  QGLSceneNode::count() will return 0.
+
+    Any previous node that was current is finalized at the last vertex added
+    and QGLSceneNode::count() will correctly return the index of this last
+    vertex.
+
+    newSection()
 */
 QGLSceneNode *QGLDisplayList::newNode()
 {
@@ -507,18 +527,39 @@ QGLSceneNode *QGLDisplayList::newNode()
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
+    int sectionCount = 0;
+    if (d->currentSection)
+        sectionCount = d->currentSection->count();
     if (d->currentNode)
+    {
+        int nodeCount = sectionCount - d->currentNode->start();
+        QGLSceneNode *emptyNode = 0;
+        if (nodeCount == 0)
+            emptyNode = d->currentNode;
+        d->currentNode->setCount(nodeCount);
         d->currentNode = d->currentNode->clone(parentNode);
+        if (emptyNode)
+        {
+            QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.end();
+            for ( ; it != d->sectionNodeMap.begin(); --it)
+                if (it.value() == emptyNode)
+                    d->sectionNodeMap.erase(it);
+            delete emptyNode;
+        }
+    }
     else
+    {
         d->currentNode = new QGLSceneNode(parentNode);
-    d->currentNode->setStart(d->currentSection->count());
+    }
+    d->currentNode->setStart(sectionCount);
     d->currentNode->setCount(0);
     d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
 
 /*!
-    Returns a pointer to the current scene node.
+    Returns a pointer to the current scene node, if one exists; otherwise
+    returns null.
 
     \sa newNode(), newSection()
 */
@@ -531,8 +572,8 @@ QGLSceneNode *QGLDisplayList::currentNode()
 /*!
     Creates a new scene node that is a child of the current node and,
     makes it the current node.  A pointer to the new node is returned.
-    The previous current node is saved on a stack and may be made
-    current again by calling popNode().
+    The previous current node is saved on a stack and its settings may
+    be made current again by calling popNode().
 
     As a child of the current node, the new node will be affected by any
     transformations and effects or materials on its parent.  The new child
@@ -544,20 +585,43 @@ QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
     d->nodeStack.append(d->currentNode);
+    d->currentNode->setCount(d->currentSection->count() - d->currentNode->start());
     d->currentNode = new QGLSceneNode(d->currentNode);
+    d->currentNode->setStart(d->currentSection->count());
     d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
 
 /*!
-    Makes the node on the top of the stack current again.  If the stack
-    is empty, behaviour is undefined.  In debug mode, calling this function
-    when the stack is empty will cause an assert.
+    Removes the node from the top of the stack, makes a copy of it, and makes the
+    copy current.
+
+    If the stack is empty, behaviour is undefined.  In debug mode, calling
+    this function when the stack is empty will cause an assert.
+
+    A pointer to the new current node is returned.
+
+    The node is set to reference the geometry starting from the next
+    vertex created, such that QGLSceneNode::start() will return the
+    index of this next vertex.  QGLSceneNode::count() will return 0.
+
+    Any previous node that was current is finalized at the last vertex added
+    such that QGLSceneNode::count() on that node will correctly return the
+    index of the last vertex added.
 */
 QGLSceneNode *QGLDisplayList::popNode()
 {
     Q_D(QGLDisplayList);
-    d->currentNode = d->nodeStack.takeLast();
+    int cnt = d->currentSection->count();
+    d->currentNode->setCount(cnt - d->currentNode->start());
+    QGLSceneNode *s = d->nodeStack.takeLast();
+    QGLSceneNode *parentNode = this;
+    if (d->nodeStack.count() > 0)
+        parentNode = d->nodeStack.last();
+    d->currentNode = s->clone(parentNode);
+    d->currentNode->setStart(cnt);
+    d->currentNode->setCount(0);
+    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
 

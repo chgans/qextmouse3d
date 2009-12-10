@@ -90,7 +90,6 @@ public:
     QGLSceneNode *popNode();
 
     // geometry building
-    void reserve(int n);
     void addTriangle(const QVector3D &a, const QVector3D &b,
                      const QVector3D &c, const QVector3D &n = QVector3D(),
                      const QGLTextureModel &textureModel = QGLTextureModel(),

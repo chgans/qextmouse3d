@@ -213,6 +213,16 @@ void QGLSection::finalize()
 }
 
 /*!
+    Returns true if this section has been finalized, false otherwise.
+
+    \sa finalize()
+*/
+bool QGLSection::isFinalized() const
+{
+    return d->finalized;
+}
+
+/*!
     Returns a bounding box for the vertices in this section.
 */
 QBox3D QGLSection::boundingBox() const
@@ -247,7 +257,6 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    d->data->enableType(QLogicalVertex::Normal);
     QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
     if (it == d->map->constEnd())
     {
@@ -300,7 +309,6 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    d->data->enableType(QLogicalVertex::Normal);
     QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
     const QVector3D *vn = d->data->normalConstData();
     const QVector2D *vt = 0;
@@ -308,7 +316,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
         vt = d->data->texCoordConstData();
     for ( ; it != d->map->constEnd() && it.key() == lv.vertex(); ++it)
     {
-        if (qFuzzyCompare(vn[*it], lv.normal()))
+        if (vn && qFuzzyCompare(vn[*it], lv.normal()))
         {
             if (vt && lv.hasType(QLogicalVertex::Texture))
             {
@@ -339,14 +347,18 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 /*!
     Updates texture data at \a position to include value \a t.
 
-    If no texture has been set at \a position then the effect is the same
-    as setTexCoord().
-
     If \a t is QGLTextureSpecifier::InvalidTexCoord this function does
     nothing and returns -1.
 
+    The texture data at \a position is examined, and therefore this section
+    must have texture data - hasData(QLogicalVertex::Texture) is true; and
+    the \a position must be a valid vertex index.
+
     If the vertex at \a position is equal to \a t, then this function does
     nothing and returns -1.
+
+    If no texture has been set at \a position then the effect is the same
+    as setTexCoord().
 
     If the vertex at \a position already has texture coordinates set, then
     a duplicate of the vertex is added, to carry the additional texture
@@ -365,23 +377,27 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 int QGLSection::updateTexCoord(int index, const QVector2D &t)
 {
     int v = -1;
-    d->data->enableType(QLogicalVertex::Texture);
-    QVector2D *vt = d->data->texCoordData();
-    if (t != QLogicalVertex::InvalidTexCoord  && t != vt[index])
+    if (t != QLogicalVertex::InvalidTexCoord)
     {
-        if (vt[index] == QLogicalVertex::InvalidTexCoord)
+        Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
+        Q_ASSERT(index < d->data->vertexCount());
+        QVector2D *vt = d->data->texCoordData();
+        if (t != vt[index])
         {
-            v = index;
-            vt[index] = t;
+            if (vt[index] == QLogicalVertex::InvalidTexCoord)
+            {
+                v = index;
+                vt[index] = t;
+            }
+            else
+            {
+                QLogicalVertex vx = d->data->vertexAt(index);
+                vx.setTexCoord(t);
+                v = d->data->appendVertex(vx);
+                d->map->insert(vx.vertex(), v);
+            }
+            m_displayList->setDirty(true);
         }
-        else
-        {
-            QLogicalVertex vx = d->data->vertexAt(index);
-            vx.setTexCoord(t);
-            v = d->data->appendVertex(vx);
-            d->map->insert(vx.vertex(), v);
-        }
-        m_displayList->setDirty(true);
     }
     return v;
 }
@@ -534,6 +550,11 @@ QLogicalVertex::Types QGLSection::dataTypes() const
 bool QGLSection::hasData(QLogicalVertex::Types types)
 {
     return d->data->hasType(types);
+}
+
+void QGLSection::enableTypes(QLogicalVertex::Types types)
+{
+    d->data->enableTypes(types);
 }
 
 /*!

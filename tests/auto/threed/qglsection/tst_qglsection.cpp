@@ -43,6 +43,8 @@
 #include "qglsection.h"
 #include "qgldisplaylist.h"
 
+#include "qtest_helpers_p.h"
+
 class tst_QGLSection : public QObject
 {
     Q_OBJECT
@@ -54,6 +56,7 @@ private slots:
     void create();
     void modify();
     void append();
+    void updateTexCoord();
     void appendSmooth();
     void appendFaceted();
     void appendTexCoord();
@@ -125,8 +128,7 @@ void tst_QGLSection::append()
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(1.0f, 0.0f, 0.0f);
     QLogicalVertex vx(testVertex, testNormal);
-    section->append(vx);  // implicit construct of QLogicalVertex
-    QCOMPARE(section->vertexAt(0), vx);
+    section->append(vx);
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->vertices().count(), 1);
@@ -134,6 +136,58 @@ void tst_QGLSection::append()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->texCoords().count(), 0);
     QCOMPARE(section->colors().count(), 0);
+}
+
+void tst_QGLSection::updateTexCoord()
+{
+    QGLDisplayList list;
+    QGLSectionTest *section = new QGLSectionTest(&list);
+
+    QCOMPARE(section->hasData(QLogicalVertex::Texture), false);
+
+    // if arg is an InvalidTexCoord nothing happens, returns -1 without even
+    // accessing the texture data array, or indexing with the position
+    int result = section->updateTexCoord(1234, QLogicalVertex::InvalidTexCoord);
+    QCOMPARE(section->hasData(QLogicalVertex::Texture), false);
+    QCOMPARE(result, -1);
+
+    QVector3D testVertex(1.234f, 2.345f, 3.456f);
+    QVector3D testNormal(1.0f, 0.0f, 0.0f);
+    QVector2D testTexCoord(0.1f, 0.1f);
+    QLogicalVertex vx(testVertex, testNormal);
+
+    // if the previous texture coordinate was invalid, effect is same as
+    // setTexCoord() - just sets the value, returns that index.
+    section->append(vx);
+    section->enableTypes(QLogicalVertex::Texture);
+    QCOMPARE(section->texCoords().at(0), QLogicalVertex::InvalidTexCoord);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->vertices().count(), 1);
+
+    result = section->updateTexCoord(0, testTexCoord);
+    QCOMPARE(result, 0);
+    QCOMPARE(section->texCoords().at(0), testTexCoord);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->vertices().count(), 1);
+
+    // if arg is already in that position (must access the texture data array
+    // to confirm this) then return -1 without doing anything else
+    result = section->updateTexCoord(0, testTexCoord);
+    QCOMPARE(result, -1);
+    QCOMPARE(section->texCoords().at(0), testTexCoord);
+    QCOMPARE(section->texCoords().count(), 1);
+    QCOMPARE(section->vertices().count(), 1);
+
+    // if the previous texture coordinate is neither invalide, nor equal to
+    // the new incoming value, then duplicate the vertex to carry the new
+    // texture data - create a "seam".
+    QVector2D testTexCoord2(0.9f, 0.9f);
+    result = section->updateTexCoord(0, testTexCoord2);
+    QCOMPARE(result, 1);
+    QCOMPARE(section->texCoords().at(1), testTexCoord2);
+    QCOMPARE(section->texCoords().count(), 2);
+    QCOMPARE(section->vertices().count(), 2);
+    QCOMPARE(section->vertices().at(1), testVertex);
 }
 
 void tst_QGLSection::appendSmooth()

@@ -84,10 +84,12 @@ public:
     // state accessors
     bool hasData(QLogicalVertex::Types types);
     QLogicalVertex::Types dataTypes() const;
+    void enableTypes(QLogicalVertex::Types types);
     inline QGL::Smoothing smoothing() const;
     int count() const;
     inline QGLDisplayList *displayList() const;
     QBox3D boundingBox() const;
+    bool isFinalized() const;
 
     // data update methods
     inline void append(const QLogicalVertex &vertex);
