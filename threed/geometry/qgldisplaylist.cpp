@@ -98,14 +98,15 @@
     These may then be applied as needed throughout the building of the
     geometry using the integer reference (see the next snippet).
 
-    The geometry data in a QGLDisplayList is divided into QGLSection
-    instances which manage the smoothing properties of the mesh. For
-    example a QGLDisplayList representing a 3D can of soup might have a
-    smooth QGLSection for the rounded outside cylinder and seperate
-    QGLSection instances for the flat top and bottom.  This will cause
-    the can to have lighting normals such that a sharp edge seperates
-    the top, bottom and sides whilst retaining the smoothly rounded sides.
+    During initialization of the QGLDisplayList, while accumulating
+    geometry, the geometry data in a QGLDisplayList is divided into
+    QGLSection instances which manage the smoothing properties of the mesh.
 
+    For example a QGLDisplayList representing a 3D can of soup might have a
+    smooth QGLSection for the rounded outside cylinder and seperate
+    QGLSection instances for the flat top and bottom.  This will cause the
+    can to have lighting normals such that a sharp edge seperates the top,
+    bottom and sides whilst retaining the smoothly rounded sides.
     \snippet displaylist/displaylist.cpp 3
 
     Smooth surfaces are continuous over vertices, where faceted surfaces have
@@ -114,17 +115,34 @@
     appearance.  In 3D applications this concept is often referred to as
     \l{http://www.google.com/search?smoothing+groups}{smoothing groups}.
 
-    Once the geometry has been accumulated in the display list, call
-    the finalize() method to complete the geometry and optimize it for
-    display.  Finalize makes several passes through the data, optimizing it
-    and preparing it for display, and thus it may be expensive for large
-    geometry.  Generally finalize() only needs to be called once
-    in the application lifetime.
+    Once the geometry has been accumulated in the display list,  the
+    finalize() method must be called to normalize the geometry and optimize
+    it for display.  The finalize() method makes passes through the data of
+    each section, calling in turn its finalize() method, then optimizing
+    and preparing the data for display.  Thus it may be expensive for large
+    geometry.
 
-    QGLDisplayList reimplements QGLSceneNode's draw function to simply call
-    finalize() and then QGLSceneNode::draw(), but finalize() may be called
-    explicitly to control when the overhead of the finalize() function is
-    incurred.
+    The finalize method also destroys all the QGLSection instances, storing
+    all the geometry data in QGLGeometry objects, accessible via the
+    QGLSceneNode object graph.
+
+    \code
+    displayList->finalize();
+    QGLVertexArray data = displayList->geometry()->vertexArray();
+    QVector3D vec = data.vector3DAt(5);
+    \endcode
+
+    The finalize() function only needs to be called once in the application
+    lifetime, and since QGLDisplayList reimplements QGLSceneNode's draw
+    function to simply call finalize() and then QGLSceneNode::draw(), you do
+    not need to remember to explicitly call it, unless you want to control
+    when the overhead of the finalize() function is incurred.
+
+    The finalize() method for the current section is called when a new section is
+    opened, so if no changes have been made to the data - eg by calling
+    \c {somePreviousSection->setVertex(index, vec3d)}, then the display lists
+    finalize can complete more quickly, since sections are only finalized if data
+    has been changed.
 
     \sa QGLSection
 */
@@ -199,7 +217,14 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     Q_ASSERT(d->currentNode);
     QVector3D norm = n;
     if (norm.isNull())
-        norm = QVector3D::normal(a, b, c);
+        norm = QVector3D::crossProduct(b - a, c - a);
+#ifndef QT_NO_DEBUG
+    if (norm.isNull())
+    {
+        qDebug() << "Triangle" << a << b << "has null normal";
+        qWarning("### Invalid normal ###");
+    }
+#endif
     QLogicalVertex va(a, norm);
     QLogicalVertex vb(b, norm);
     QLogicalVertex vc(c, norm);
@@ -218,13 +243,14 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
 /*!
     Add to this section a quad face defined by vertices \a a, \a b, \a c and
     \a d.  The face is composed of two triangles having the same normal,
-    calculated from the face \a a, \a b and \a c.
+    calculated from the face \a a, \a b and \a c.  The vertices of the face
+    \a a, \a b, \a c and \a d must all lie in the same plane.
 */
 void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
                              const QVector3D &c, const QVector3D &d,
                              const QGLTextureModel &textureModel)
 {
-    QVector3D norm = QVector3D::normal(a, b, c);
+    QVector3D norm = QVector3D::crossProduct(b - a, c - a);
     addTriangle(a, b, c, norm, textureModel);
     addTriangle(a, c, d, norm, textureModel, true);
 }
@@ -243,6 +269,8 @@ void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
     Textures are generated according to \a textureModel, if textureModel
     is non-null.  When textures are generated all the points on \a edges
     must lie in the same plane.
+
+    \sa addTriangulatedFace()
 */
 void QGLDisplayList::addTriangleFan(const QVector3D &center,
                                     const QGL::VectorArray &edges,
@@ -251,9 +279,8 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     Q_ASSERT(edges.count() > 1);
     if (!textureModel.isNull())
         qWarning("NOT IMPLEMENTED YET");
-    QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
-    for (int i = 0; i < edges.count(); ++i)
-        addTriangle(edges[i], edges[(i + 1) % edges.count()], center, norm, textureModel);
+    for (int i = 0; i < edges.count() - 1; ++i)
+        addTriangle(edges[i], edges[(i + 1)], center, QVector3D(), textureModel);
 }
 
 /*!
@@ -287,14 +314,10 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     if (!textureModel.isNull())
         qWarning("NOT IMPLEMENTED YET");
     QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
-    QGLSection *s1 = currentSection();
     for (int i = 0; i < edges.count(); ++i)
     {
         int n = (i + 1) % edges.count();
-        qDebug() << i << "before - has textures" << s1->hasData(QLogicalVertex::Texture);
         addTriangle(edges[i], edges[n], center, norm, textureModel);
-        qDebug() << i << "after - has textures" << s1->hasData(QLogicalVertex::Texture);
-
     }
 }
 
@@ -401,6 +424,14 @@ QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
     rendering.  This method must be called once after building the
     scene, or after modifying the geometry.
 
+    This function does the following:
+    \list
+        \o packs all geometry data from sections into QGLGeomtry instances
+        \o references this data via QGLSceneNode start() and count()
+        \o uploads the data to the graphics hardware, if possible
+        \o deletes all QGLSection instances in this list
+    \endlist
+
     This function may be expensive.
 */
 void QGLDisplayList::finalize()
@@ -410,24 +441,27 @@ void QGLDisplayList::finalize()
     {
         QGLGeometry *g = 0;
         QMap<QLogicalVertex::Types, QGLGeometry *> geos;
-        for (int i = 0; i < d->sections.count(); ++i)
+        while (d->sections.count())
         {
             // pack sections that have the same types into one geometry
-            QGLSection &s = *d->sections[i];
-            s.finalize();
-            QGL::IndexArray indices = s.indices();
+            QGLSection *s = d->sections.takeFirst();
+            s->finalize();
+
+            QGL::IndexArray indices = s->indices();
             const int *vi = indices.constData();
             int vcnt = indices.count();
             int sectionOffset = 0;
+            int sectionIndexOffset = 0;
             QMap<QLogicalVertex::Types, QGLGeometry *>::const_iterator it =
-                    geos.constFind(s.dataTypes());
+                    geos.constFind(s->dataTypes());
             if (it != geos.constEnd())
             {
                 g = it.value();
                 QGLVertexArray va = g->vertexArray();
                 sectionOffset = va.vertexCount();
-                va.append(s.toVertexArray());
+                va.append(s->toVertexArray());
                 QGLIndexArray ia = g->indexArray();
+                sectionIndexOffset = ia.size();
                 for (int i = 0; i < vcnt; ++i)
                     ia.append(vi[i] + sectionOffset);
                 g->setVertexArray(va);
@@ -439,20 +473,25 @@ void QGLDisplayList::finalize()
                     g = geometry();
                 else
                     g = new QGLGeometry(this);
-                g->setVertexArray(s.toVertexArray());
-                g->setIndexArray(QGLIndexArray::fromRawData(vi, vcnt));
+                g->setVertexArray(s->toVertexArray());
+                QGLIndexArray iry;
+                iry.reserve(vcnt);
+                for (int i = 0; i < vcnt; ++i)
+                    iry.append(vi[i]);
+                g->setIndexArray(iry);
                 g->setDrawingMode(QGL::Triangles);
-                geos.insert(s.dataTypes(), g);
+                geos.insert(s->dataTypes(), g);
             }
             QMap<QGLSection *, QGLSceneNode *>::const_iterator nit =
-                    d->sectionNodeMap.constFind(&s);
-            while (nit != d->sectionNodeMap.constEnd() && nit.key() == &s)
+                    d->sectionNodeMap.constFind(s);
+            for ( ; nit != d->sectionNodeMap.constEnd() && nit.key() == s; ++nit)
             {
                 QGLSceneNode *node = nit.value();
-                node->setStart(node->start() + sectionOffset);
+                node->setStart(node->start() + sectionIndexOffset);
                 node->setGeometry(g);
             }
-            g->setBoundingBox(g->boundingBox().expanded(s.boundingBox()));
+            g->setBoundingBox(g->boundingBox().expanded(s->boundingBox()));
+            delete s;
         }
         d->finalizeNeeded = false;
     }
@@ -478,6 +517,8 @@ QGLSection *QGLDisplayList::newSection(QGL::Smoothing s)
 void QGLDisplayList::addSection(QGLSection *sec)
 {
     Q_D(QGLDisplayList);
+    if (d->currentNode && d->currentSection)
+        d->currentNode->setCount(d->currentSection->count() - d->currentNode->start());
     if (d->currentSection)
         d->currentSection->finalize();
     d->currentSection = sec;
@@ -532,18 +573,22 @@ QGLSceneNode *QGLDisplayList::newNode()
         sectionCount = d->currentSection->count();
     if (d->currentNode)
     {
-        int nodeCount = sectionCount - d->currentNode->start();
-        QGLSceneNode *emptyNode = 0;
-        if (nodeCount == 0)
-            emptyNode = d->currentNode;
-        d->currentNode->setCount(nodeCount);
+        if (sectionCount)
+            d->currentNode->setCount(sectionCount - d->currentNode->start());
+        QGLSceneNode *emptyNode = (d->currentNode->count()) ? 0 : d->currentNode;
         d->currentNode = d->currentNode->clone(parentNode);
         if (emptyNode)
         {
-            QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.end();
-            for ( ; it != d->sectionNodeMap.begin(); --it)
+            QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.begin();
+            for ( ; it != d->sectionNodeMap.end(); ++it)
+            {
                 if (it.value() == emptyNode)
+                {
                     d->sectionNodeMap.erase(it);
+                    break;
+                }
+            }
+            Q_ASSERT(it != d->sectionNodeMap.end());  // must be here somewhere
             delete emptyNode;
         }
     }

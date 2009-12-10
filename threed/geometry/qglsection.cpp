@@ -53,7 +53,12 @@
     \ingroup qt3d
     \ingroup qt3d::geometry
 
-    QGLSection instances partition a QGLDisplayList into related sections.
+    QGLSection instances partition a QGLDisplayList into related sections,
+    while the display list is being initialized with geometry data.
+
+    Once the display list is initialized, the QGLSection instances are
+    destroyed and the data is uploaded to the graphics hardware.
+
     All the vertices in a QGLSection are treated with the same
     \l{QGL::Smoothing}{smoothing}, and have the same
     \l{QGLSection::GLDataFlag}{data types}.
@@ -80,10 +85,36 @@
     implicitly shared, thus the copies are inexpensive unless a
     non-const function is called on them, triggering a copy-on-write.
 
-    Generally for triangulated geometry, use append().  This function simply
+    Generally for adding geometry, use append().  This function simply
     calls virtual protected functions appendSmooth() (for smoothed vertices)
     and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
     discussion of smoothing.
+
+    Calling a sections finalize() method to calculate normals.  Prior to
+    calling finalize() relying on normal values results in undefined behavior.
+    \code
+    // WRONG
+    displayList->extrude(verts);
+    QGL::VectorArray normals = displayList->currentSection()->normals();
+    doSomething(normals[0]);  // normals undefined at this point
+    \endcode
+
+    \code
+    // RIGHT
+    displayList->extrude(verts);
+    displayList->currentSection()->finalize();
+    // OR...
+    displayList->newSection();  // implicitly finalizes the previous section
+    // OR...
+    displayList->finalize();  // also finalizes that section
+    QGL::VectorArray normals = displayList->currentSection()->normals();
+    doSomething(normals[0]);  // normals now defined
+    \endcode
+
+    Note that after initialization of the display list, the QGLSection
+    instances are destroyed.  To access the geometry data during the run-time
+    of the application, if needed, call the geometry() method on the
+    display list and its child nodes.
 */
 
 uint qHash(float data)
@@ -100,7 +131,7 @@ uint qHash(float data)
 uint qHash(double data)
 {
     union U {
-        quint32 n;
+        quint64 n;
         double f;
     };
     U u;
@@ -116,34 +147,26 @@ uint qHash(const QVector3D &v)
 class QGLSectionPrivate
 {
 public:
-    typedef QHash<QVector3D, int> VecMap;
-    typedef QHash<int, QVector3D> NormMap;
+    typedef QHash<QVector3D, int> VecHash;
+    typedef QHash<int, QVector3D> NormHash;
 
     QGLSectionPrivate()
         : data(new QGeometryData)
-        , map(new VecMap)
-        , norms(new NormMap)
+        , hash(new VecHash)
+        , norms(new NormHash)
         , finalized(false)
     {
     }
     ~QGLSectionPrivate()
     {
         delete data;
-        delete map;
+        delete hash;
         delete norms;
-    }
-    void finalize()
-    {
-        delete map;
-        map = 0;
-        delete norms;
-        norms = 0;
-        finalized = true;
     }
     bool normalAccumulated(int index, const QVector3D &norm) const
     {
         Q_ASSERT(norms);  // dont call this after finalizing
-        QGLSectionPrivate::NormMap::const_iterator nit = norms->constFind(index);
+        NormHash::const_iterator nit = norms->constFind(index);
         while (nit != norms->constEnd() && nit.key() == index)
             if (*nit++ == norm)
                 return true;
@@ -157,8 +180,8 @@ public:
 
 
     QGeometryData *data;
-    VecMap *map;
-    NormMap *norms;
+    VecHash *hash;
+    NormHash *norms;
     bool finalized;
 };
 
@@ -200,16 +223,16 @@ QGLSection::~QGLSection()
 }
 
 /*!
-    Finalizes this section by squeezing the data to fit in the optimal memory
-    and normalizing any normal vectors to unit length.
+    Completes the calculations of normal values for this section.  This
+    function also performs local memory optimizations on the section.
 */
 void QGLSection::finalize()
 {
     if (d->finalized)
         return;
-    d->finalize();
     d->data->squeeze();
     d->data->normalizeNormals();
+    d->finalized = true;
 }
 
 /*!
@@ -254,14 +277,14 @@ QBox3D QGLSection::boundingBox() const
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
-    Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
-    if (it == d->map->constEnd())
+    QGLSectionPrivate::VecHash::const_iterator it = d->hash->constFind(lv.vertex());
+    if (it == d->hash->constEnd())
     {
         int v = d->data->appendVertex(lv);
-        d->map->insert(lv.vertex(), v);
+        d->hash->insert(lv.vertex(), v);
+        d->accumulateNormal(v, lv.normal());
     }
     else
     {
@@ -278,9 +301,10 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
                 }
                 ++it;
 
-            } while (it != d->map->constEnd() && it.key() == lv.vertex());
+            } while (it != d->hash->constEnd() && it.key() == lv.vertex());
         }
     }
+    d->finalized = false;
     m_displayList->setDirty(true);
 }
 
@@ -306,15 +330,14 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
-    Q_ASSERT(!d->finalized);
     Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
     Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecMap::const_iterator it = d->map->constFind(lv.vertex());
+    QGLSectionPrivate::VecHash::const_iterator it = d->hash->constFind(lv.vertex());
     const QVector3D *vn = d->data->normalConstData();
     const QVector2D *vt = 0;
     if (d->data->hasType(QLogicalVertex::Texture))
         vt = d->data->texCoordConstData();
-    for ( ; it != d->map->constEnd() && it.key() == lv.vertex(); ++it)
+    for ( ; it != d->hash->constEnd() && it.key() == lv.vertex(); ++it)
     {
         if (vn && qFuzzyCompare(vn[*it], lv.normal()))
         {
@@ -329,7 +352,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
             }
         }
     }
-    if (it != d->map->constEnd() && it.key() == lv.vertex()) // found
+    if (it != d->hash->constEnd() && it.key() == lv.vertex()) // found
     {
         if (updateTexCoord(*it, lv.texCoord()) == -1)
         {
@@ -339,8 +362,9 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     else
     {
         int v = d->data->appendVertex(lv);
-        d->map->insertMulti(lv.vertex(), v);
+        d->hash->insertMulti(lv.vertex(), v);
     }
+    d->finalized = false;
     m_displayList->setDirty(true);
 }
 
@@ -394,8 +418,9 @@ int QGLSection::updateTexCoord(int index, const QVector2D &t)
                 QLogicalVertex vx = d->data->vertexAt(index);
                 vx.setTexCoord(t);
                 v = d->data->appendVertex(vx);
-                d->map->insert(vx.vertex(), v);
+                d->hash->insert(vx.vertex(), v);
             }
+            d->finalized = false;
             m_displayList->setDirty(true);
         }
     }
@@ -405,6 +430,8 @@ int QGLSection::updateTexCoord(int index, const QVector2D &t)
 void QGLSection::appendFlat(const QLogicalVertex &lv)
 {
     d->data->appendVertex(lv);
+    d->finalized = false;
+    m_displayList->setDirty(true);
 }
 
 QGL::VectorArray QGLSection::vertices() const

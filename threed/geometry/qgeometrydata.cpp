@@ -90,31 +90,22 @@ void QGeometryData::squeeze()
 QGLVertexArray QGeometryData::toVertexArray() const
 {
     QGLVertexArray array;
-    if (!hasType(QLogicalVertex::Normal | QLogicalVertex::Texture |
-                 QLogicalVertex::Color))
+    array.addField(QGL::Position, 3);
+    if (hasType(QLogicalVertex::Normal))
+        array.addField(QGL::Normal, 3);
+    if (hasType(QLogicalVertex::Texture))
+        array.addField(QGL::TextureCoord0, 2);
+    if (hasType(QLogicalVertex::Color))
+        array.addField(QGL::Color, 1);
+    for (int i = 0; i < m_vertices.count(); ++i)
     {
-        array.setRawData(reinterpret_cast<const float *>(m_vertices.constData()),
-                         m_vertices.count());
-    }
-    else
-    {
-        array.addField(QGL::Position, 3);
+        array.append(m_vertices.at(i));
         if (hasType(QLogicalVertex::Normal))
-            array.addField(QGL::Normal, 3);
+            array.append(m_normals->at(i));
         if (hasType(QLogicalVertex::Texture))
-            array.addField(QGL::TextureCoord0, 2);
+            array.append(m_texCoords->at(i));
         if (hasType(QLogicalVertex::Color))
-            array.addField(QGL::Color, 1);
-        for (int i = 0; i < m_vertices.count(); ++i)
-        {
-            array.append(m_vertices.at(i));
-            if (hasType(QLogicalVertex::Normal))
-                array.append(m_normals->at(i));
-            if (hasType(QLogicalVertex::Texture))
-                array.append(m_texCoords->at(i));
-            if (hasType(QLogicalVertex::Color))
-                array.append(m_colors->at(i));
-        }
+            array.append(m_colors->at(i));
     }
     return array;
 }
