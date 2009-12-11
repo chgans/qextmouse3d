@@ -46,6 +46,8 @@
 #include "qglmaterialparameters.h"
 #include "qglsection.h"
 #include "qglscenenode.h"
+#include "qgllightmodel.h"
+
 #include <QtGui/qmatrix4x4.h>
 
 #include <QtCore/qmath.h>
@@ -56,29 +58,40 @@ DisplayListView::DisplayListView(QWidget *parent)
 {
     QGLDisplayList *displayList = buildGeometry();
     displayList->setParent(canScene);
+    {
+        // rotate the can around so its label shows; and down
+        // so the base is facing down
+        QMatrix4x4 mat;
+        QQuaternion q1 = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, 270.0f);
+        QQuaternion q2 = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 100.0f);
+        mat.rotate(q2 * q1);
+        displayList->setLocalTransform(mat);
+    }
 
     //! [0]
-    // clone a can to the left
-    QGLSceneNode *node = displayList->clone(canScene);
+    // a can to the left
+    QGLSceneNode *node = new QGLSceneNode(canScene);
+    node->addNode(displayList);
     {
         QMatrix4x4 mat;
-        mat.translate(-2.0f, 2.0f, 0.0f);
+        mat.translate(-2.0f, 0.0f, -2.0f);
         node->setLocalTransform(mat);
     }
 
     // clone a can to the right
-    node = displayList->clone(canScene);
+    node = new QGLSceneNode(canScene);
+    node->addNode(displayList);
     {
         QMatrix4x4 mat;
-        mat.translate(2.0f, 2.0f, 0.0f);
+        mat.translate(2.0f, 0.0f, -2.0f);
         node->setLocalTransform(mat);
     }
 
-    // rotate the whole scene 90 degrees about x-axis so that
-    // can bottoms are facing down when scene is first displayed
+    // rotate the whole scene about x-axis so that
+    // can tops are visible when scene is first displayed
     {
         QMatrix4x4 mat;
-        mat.rotate(90.0f, 1.0f, 0.0f, 0.0f);
+        mat.rotate(1.0f, 0.0f, 0.0f, -30.0f);
         canScene->setLocalTransform(mat);
     }
     //! [0]
@@ -86,7 +99,15 @@ DisplayListView::DisplayListView(QWidget *parent)
 
 void DisplayListView::initializeGL(QGLPainter *painter)
 {
+    QGLLightParameters *light0 = new QGLLightParameters(this);
+    light0->setAmbientColor(Qt::white);
+    light0->setDiffuseColor(Qt::white);
+    light0->setDirection(QVector3D(0.0f, 0.2f, 2.0f));
+    painter->setLightParameters(0, light0);
     painter->setLightEnabled(0, true);
+    QGLLightModel *model = new QGLLightModel(this);
+    model->setAmbientSceneColor(Qt::white);
+    painter->setLightModel(model);
 }
 
 //! [1]
@@ -103,26 +124,30 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QGLMaterialCollection *mats = soupCan->geometry()->palette();
 
     QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
-    parms->setAmbientColor(QColor(170, 202, 0));
-    parms->setDiffuseColor(QColor(170, 202, 0));
+    parms->setAmbientColor(QColor(32, 32, 64));
+    parms->setDiffuseColor(QColor(64, 64, 128));
     int canMat = mats->addMaterial(parms);
 
-    QImage soupLabel(":/qt-soup.png");
+    QImage soupLabel(":/images/qt-soup.png");
+    if (soupLabel.isNull())
+        qWarning("Could not load texture :/images/qt-soup.png");
     QGLTexture2D *tex = new QGLTexture2D();
     tex->setImage(soupLabel);
     mats->setTexture(canMat, tex);
 
-    soupCan->setEffect(QGL::LitDecalTexture2D);
+    // default effect for can where no other effect set
+    soupCan->setEffect(QGL::LitMaterial);
     //! [2]
 
-    const qreal canRadius = 2.0f;
-    const qreal canHeight = 6.0f;
-    const int numSlices = 16;
+    // size data for can
+    const qreal canRadius = 1.0f;
+    const qreal canHeight = 2.5f;
+    const int numSlices = 32;
 
-    // definitional data for our can
+    // defining coordinate data for can
     QGL::VectorArray topCanRim;
     QGL::VectorArray bottomCanRim;
-    QVector3D canLidCenter;  // center is origin: 0, 0, 0
+    QVector3D canLidCenter(0.0f, 0.0f, canHeight / 2.0f);
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
     QVector3D canBottomCenter = canLidCenter + canExtrudeVec;
     QGLTextureModel texMap(0, 0, 1, 1);
@@ -131,7 +156,8 @@ QGLDisplayList *DisplayListView::buildGeometry()
     for (int i = 0; i < numSlices; ++i)
     {
         qreal angle = (i * 2.0 * M_PI) / numSlices;
-        topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle), 0.0f);
+        topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle),
+                               canHeight / 2.0f);
     }
 
     //! [3]
@@ -142,6 +168,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
     soupCan->currentNode()->setMaterial(canMat);
+    soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
     bottomCanRim = soupCan->extrude(topCanRim, canExtrudeVec, texMap);
 
     // create the flat bottom lid of the can

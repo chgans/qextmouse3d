@@ -93,7 +93,6 @@ QGLTextureModel::QGLTextureModel()
 /*!
     Construct a rectangular QGLTextureModel with \a left and \a bottom origin
     coordinates, and the other coordinates determined by the \a width and \a height.
-    By default all values are 0, making a null texture specifier.
 */
 QGLTextureModel::QGLTextureModel(qreal left, qreal bottom,
                                                 qreal width, qreal height)
@@ -107,12 +106,22 @@ QGLTextureModel::QGLTextureModel(qreal left, qreal bottom,
 }
 
 /*!
+    \fn QGLTextureModel::QGLTextureModel(const QGLTextureModel &other)
+    Constructs a new texture model as a copy of \a other.
+*/
+
+/*!
     Delete this texture specifier, recovering any resources.
 */
 QGLTextureModel::~QGLTextureModel()
 {
     delete m_tile;
 }
+
+/*!
+    \fn QGLTextureModel::operator=(const QGLTextureModel &other)
+    Assigns this texture model to be a copy of \a other
+*/
 
 /*!
     \fn QVector2D QGLTextureModel::bottomLeft() const
@@ -190,10 +199,10 @@ QGLTextureModel::~QGLTextureModel()
 */
 
 /*!
-    \fn QGLTextureModel QGLTextureModel::tileRight(qreal extent)
-    const Returns a texture specifier for a tile \a extent wide.  The
+    \fn QGLTextureModel QGLTextureModel::tileRight(qreal extent) const
+    Returns a texture specifier for a tile \a extent wide.  The
     specifier returned will respectively have top-left and bottom-left
     equal to the top-right and bottom-right of the previously returned
     tiles; while the top-right and and bottom-right are advanced by the
-    \a extent along an interpolated path from this specifier corners.
+    \a extent along an interpolated path from this specifiers corners.
 */

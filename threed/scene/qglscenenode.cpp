@@ -85,6 +85,22 @@ QT_BEGIN_NAMESPACE
     \i restores the model-view matrix if any local transform was applied
     \endlist
 
+    This means that this nodes effects, materials and transformations will
+    apply by default to its child nodes.  Transformations are cumulative,
+    but effects and materials override those of any parent node.
+
+    Use childNodes() to obtain the list of child nodes, and add and remove
+    child nodes by the addNode() and removeNode() methods.
+
+    A child may be a child multiple times, that is multiple copies of the
+    node may exist; a child may be under more than one parent, and several
+    parents may reference the same child.
+
+    A child node for the purposes of rendering means a child added via the
+    addNode() method.  The default QGLSceneNode constructor will check to
+    see if its parent is a QGLSceneNode and add itself via the addNode()
+    function if it is.
+
     Note that the draw() method does \bold not restore the effect.  If the first
     step above results in a change to the current QGL::Standard effect then it
     will remain set to that effect.  In general any painting method should
@@ -94,30 +110,44 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    Constructs a new scene node and attaches it to \a parent.
+    Constructs a new scene node and attaches it to \a parent.  If parent is
+    a QGLSceneNode then this node is added to it as a child.
 */
 QGLSceneNode::QGLSceneNode(QObject *parent)
     : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
 {
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
 }
 
 /*!
-    Constructs a new scene node referencing \a geometry and attaches it to \a parent.
+    Constructs a new scene node referencing \a geometry and attaches it to
+    \a parent.    If parent is a QGLSceneNode then this node is added to it
+    as a child.
 */
 QGLSceneNode::QGLSceneNode(QGLGeometry *geometry, QObject *parent)
     : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
 {
     Q_D(QGLSceneNode);
     d->geometry = geometry;
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
 }
 
 /*!
     \internal
     Constructor for use by QObjectPrivate-using subclasses of QGLSceneObject.
+    If parent is a QGLSceneNode then this node is added to it
+    as a child.
 */
 QGLSceneNode::QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent)
     : QGLSceneObject(dd, parent)
 {
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
 }
 
 
@@ -341,6 +371,56 @@ void QGLSceneNode::setMaterial(int material)
 }
 
 /*!
+    Returns a list of the child nodes for this node.
+*/
+QList<QGLSceneNode*> QGLSceneNode::childNodes() const
+{
+    Q_D(const QGLSceneNode);
+    return d->childNodes;
+}
+
+/*!
+    Sets the list of child nodes for this node to be \a children.
+*/
+void QGLSceneNode::setChildNodes(const QList<QGLSceneNode*> &children)
+{
+    Q_D(QGLSceneNode);
+    d->childNodes = children;
+}
+
+/*!
+    Adds the \a node to the list of child nodes for this node.
+*/
+void QGLSceneNode::addNode(QGLSceneNode *node)
+{
+    Q_D(QGLSceneNode);
+    d->childNodes.append(node);
+}
+
+/*!
+    Removes the first child node matching \a node.
+*/
+void QGLSceneNode::removeNode(QGLSceneNode *node)
+{
+    Q_D(QGLSceneNode);
+    d->childNodes.removeOne(node);
+}
+
+/*!
+    Sets the \a parent to be the parent of this object.  If \a parent is
+    a QGLSceneNode then this node is added to it as a child.
+
+    \sa addNode()
+*/
+void QGLSceneNode::setParent(QObject *parent)
+{
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
+    QObject::setParent(parent);
+}
+
+/*!
     \reimp
 */
 void QGLSceneNode::draw(QGLPainter *painter)
@@ -373,21 +453,17 @@ void QGLSceneNode::draw(QGLPainter *painter)
     }
 
     int saveMat = -1;
+    bool matSaved = false;
     if (d->material != -1)
     {
         saveMat = d->geometry->material();
-        Q_ASSERT(saveMat != -1);
+        matSaved = true;
         d->geometry->setMaterial(d->material);
     }
 
-    QObjectList subNodes = children();
-    QObjectList::iterator cit(subNodes.begin());
-    for ( ; cit != subNodes.end(); ++cit)
-    {
-        QGLSceneNode *n = qobject_cast<QGLSceneNode *>(*cit);
-        if (n)
-            n->draw(painter);
-    }
+    QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
+    for ( ; cit != d->childNodes.end(); ++cit)
+        (*cit)->draw(painter);
 
     if (d->geometry && d->geometry->drawingMode() != QGL::NoDrawingMode)
     {
@@ -397,7 +473,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
             d->geometry->draw(painter, d->start, d->count);
     }
 
-    if (saveMat != -1)
+    if (matSaved)
         d->geometry->setMaterial(saveMat);
 
     if (!d->localTransform.isIdentity())
@@ -427,8 +503,8 @@ void QGLSceneNode::apply(QGLPainter *painter)
     \a parent as the parent of the new copy.  If parent is NULL then parent
     is set to this nodes parent.
 
-    The copy will reference the same underlying geometry, and have all
-    effects, transforms and other properties copied from this node.
+    The copy will reference the same underlying geometry, child nodes, and
+    have all effects, transforms and other properties copied from this node.
 */
 QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 {
@@ -442,7 +518,44 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     node->setMaterial(d->material);
     node->setStart(d->start);
     node->setCount(d->count);
+    node->setChildNodes(d->childNodes);
     return node;
 }
+
+#ifndef QT_NO_DEBUG_STREAM
+QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
+{
+    dbg << &node << "start:" << node.start() << " count:" << node.count();
+    dbg << "   geometry:" << node.geometry();
+    dbg << "   transform:" << node.localTransform();
+    dbg << "   material:" << node.material();
+    if (node.hasEffect())
+    {
+        switch (node.effect())
+        {
+        case QGL::FlatColor:
+            dbg << "  flat color effect"; break;
+        case QGL::FlatPerVertexColor:
+            dbg << "   flat per vertex color effect"; break;
+        case QGL::FlatReplaceTexture2D:
+            dbg << "   flat replace texture 2D effect"; break;
+        case QGL::FlatDecalTexture2D:
+            dbg << "   flat decal texture 2D effect"; break;
+        case QGL::LitMaterial:
+            dbg << "   lit material effect"; break;
+        case QGL::LitDecalTexture2D:
+            dbg << "   lit decal texture 2D effect"; break;
+        case QGL::LitModulateTexture2D:
+            dbg << "   lit modulate texture 2D effect"; break;
+        }
+    }
+    else
+    {
+        dbg << "no effect set";
+    }
+    return dbg;
+}
+
+#endif
 
 QT_END_NAMESPACE

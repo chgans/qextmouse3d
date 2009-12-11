@@ -181,16 +181,16 @@ QGLDisplayList::~QGLDisplayList()
 }
 
 /*!
-    Add to the current section a triangular face with lighting normal \a n; and
-    defined by vertices \a a, \a b, and \a c.
+    Add to the current section a triangular face with vertices \a a, \a b,
+    and \a c; and lighting normal \a n.
 
     If \a textureModel is non-null then the following texture coordinates will
     be applied to the vertices:
     \list
-        \o \a a - bottom-left
-        \o \a b - bottom-right
-        \o \a c - top-right
-    \endllist
+        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
+        \o \a b - \l{QGLTextureModel::bottomRight()}{bottom-right}
+        \o \a c - \l{QGLTextureModel::topRight()}{top-right}
+    \endlist
     which is the case for a triangle in an upright orientation with respect to
     texture-space, with its apex \a c at the high values of the texture and its
     base \a a - \a c at the low values of the texture.
@@ -200,11 +200,12 @@ QGLDisplayList::~QGLDisplayList()
     If \a inverted is true, the following texture coordinates
     will be applied:
     \list
-        \o \a a - bottom-left
-        \o \a b - bottom-right
-        \o \a c - top-right
-    \endllist
-    The inverted case is a triangle with the vertex at \a on the low values
+        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
+        \o \a b - \l{QGLTextureModel::topRight()}{top-right}
+        \o \a c - \l{QGLTextureModel::topLeft()}{top-left}
+    \endlist
+
+    The inverted case is a triangle with the vertex at \a a on the low values
     of the texture and the \a b - \a c edge along the high values of the
     texture.
 */
@@ -245,6 +246,15 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     \a d.  The face is composed of two triangles having the same normal,
     calculated from the face \a a, \a b and \a c.  The vertices of the face
     \a a, \a b, \a c and \a d must all lie in the same plane.
+
+    If \a textureModel is non-null then the following texture coordinates will
+    be applied to the vertices:
+    \list
+        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
+        \o \a b - \l{QGLTextureModel::bottomRight()}{bottom-right}
+        \o \a c - \l{QGLTextureModel::topRight()}{top-right}
+        \o \a d - \l{QGLTextureModel::topLeft()}{top-left}
+    \endlist
 */
 void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
                              const QVector3D &c, const QVector3D &d,
@@ -290,7 +300,7 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     and then \a center.
 
     One normal is calculated for the face, since a faces vertices lie in
-    the same plane.  The \a center and \e edges must all lie in the same
+    the same plane.  The \a center and \a edges must all lie in the same
     plane, and the center vertex must lie strictly within the region
     bounded by the \a edges or  or undefined behaviour will result.
 
@@ -357,9 +367,12 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     that the obverse face has the correct winding to face outwards.
 
     Textures are generated according to \a textureModel, if textureModel
-    is non-null.  When textures are generated all the points on \a line
+    is non-null.  When textures are generated all the points on \a edges
     must lie in the same plane, which is the case anyway if they are the
-    perimeter vertices of a polygon.
+    perimeter vertices of a polygon.  Textures are assigned with the high Y
+    values on the \a edge; low Y values on the extruded result edge;
+    low X values at the left of \c{edges[0]} and high X values on the
+    right of \c{edges.last()}.
 */
 QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
                                          const QVector3D &offset,
@@ -480,6 +493,7 @@ void QGLDisplayList::finalize()
                     iry.append(vi[i]);
                 g->setIndexArray(iry);
                 g->setDrawingMode(QGL::Triangles);
+                g->setPalette(geometry()->palette());
                 geos.insert(s->dataTypes(), g);
             }
             QMap<QGLSection *, QGLSceneNode *>::const_iterator nit =
@@ -509,9 +523,9 @@ void QGLDisplayList::finalize()
 
     \sa currentSection()
 */
-QGLSection *QGLDisplayList::newSection(QGL::Smoothing s)
+QGLSection *QGLDisplayList::newSection(QGL::Smoothing smooth)
 {
-    return new QGLSection(this, s);  // calls addSection
+    return new QGLSection(this, smooth);  // calls addSection
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)
@@ -536,7 +550,6 @@ QGLSection *QGLDisplayList::currentSection() const
 }
 
 /*!
-    \fn QList<QGLSection*> &QGLDisplayList::sections()
     Returns a list of the sections of the geometry in this display list.
 */
 QList<QGLSection*> QGLDisplayList::sections() const
@@ -548,9 +561,7 @@ QList<QGLSection*> QGLDisplayList::sections() const
 /*!
     Creates a new QGLSceneNode within the current section of this
     display list, and makes it current.  A pointer to the new node is
-    returned.  The new node is made by copying the current node (if one
-    exists), which means that any transformations, materials or effects
-    previously set will apply to this new node by default.
+    returned.
 
     The node is set to reference the geometry starting from the next
     vertex created, such that QGLSceneNode::start() will return the
@@ -575,29 +586,23 @@ QGLSceneNode *QGLDisplayList::newNode()
     {
         if (sectionCount)
             d->currentNode->setCount(sectionCount - d->currentNode->start());
-        QGLSceneNode *emptyNode = (d->currentNode->count()) ? 0 : d->currentNode;
-        d->currentNode = d->currentNode->clone(parentNode);
-        if (emptyNode)
+        if (d->currentNode->count() == 0)
         {
             QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.begin();
             for ( ; it != d->sectionNodeMap.end(); ++it)
             {
-                if (it.value() == emptyNode)
+                if (it.value() == d->currentNode)
                 {
                     d->sectionNodeMap.erase(it);
                     break;
                 }
             }
             Q_ASSERT(it != d->sectionNodeMap.end());  // must be here somewhere
-            delete emptyNode;
+            delete d->currentNode;
         }
     }
-    else
-    {
-        d->currentNode = new QGLSceneNode(parentNode);
-    }
+    d->currentNode = new QGLSceneNode(parentNode);
     d->currentNode->setStart(sectionCount);
-    d->currentNode->setCount(0);
     d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }

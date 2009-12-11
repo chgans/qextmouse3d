@@ -158,9 +158,9 @@ void tst_QGLDisplayList::newNode()
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 0);
     QCOMPARE(node2->parent(), &displayList);
-    QCOMPARE(node2->effect(), QGL::LitDecalTexture2D); // cloned from previous
-    QCOMPARE(node2->userEffect(), eff);
-    QCOMPARE(node2->material(), 5);
+    QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
+    QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
+    QCOMPARE(node2->material(), -1);
 
     sec->append(QLogicalVertex(QVector3D()));
     sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));

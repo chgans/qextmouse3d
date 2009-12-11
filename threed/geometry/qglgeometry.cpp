@@ -111,6 +111,12 @@ QGLGeometry::QGLGeometry(QObject *parent)
 {
 }
 
+/*!
+    \a internal
+    Constructs a new geometry object with \a parent and \a dd private
+    data.  This is for use by QGLGeometry sub-classes that use the
+    QObjectPrivate heierarchy.
+*/
 QGLGeometry::QGLGeometry(QGLGeometryPrivate &dd, QObject *parent)
     : QObject(dd, parent)
     , mMaterial(-1)
@@ -314,14 +320,13 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (!d->boundingBox.isNull() && !painter->isVisible(d->boundingBox))
         return;
 
-    QGLMaterialCollection *p = palette();
     const QGLMaterialParameters *save = 0;
     if (mPalette && mMaterial != -1)
     {
         save = painter->faceMaterial(QGL::FrontFaces);
         painter->setFaceMaterial(QGL::FrontFaces,
-                                 p->materialByIndex(mMaterial));
-        QGLTexture2D *tex = p->texture(mMaterial);
+                                 mPalette->materialByIndex(mMaterial));
+        QGLTexture2D *tex = mPalette->texture(mMaterial);
         if (tex)
             painter->setTexture(tex);
     }
@@ -352,6 +357,16 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
 
     if (save)
         painter->setFaceMaterial(QGL::FrontFaces, save);
+
+    // TODO: this is a possible performance hit.  If a lot of scene nodes
+    // reference the same material & texture, the painter->setTexture(tex)
+    // call above will happen for every node, and that call is expensive
+    // even if the same texture was already active.  Ideal solution is
+    // for the painter->setTexture() call to be cheap if setting a texture
+    // that is already bound.  This setting texture to null is needed in
+    // the case where textured geometry is mixed with geometry that is
+    // lit materials (for example) otherwise texture bleeding occurs.
+    painter->setTexture((QGLTexture2D*)0);
 }
 
 /*!

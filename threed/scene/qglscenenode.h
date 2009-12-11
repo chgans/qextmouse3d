@@ -88,6 +88,12 @@ public:
     int material() const;
     void setMaterial(int material);
 
+    QList<QGLSceneNode*> childNodes() const;
+    void setChildNodes(const QList<QGLSceneNode*> &children);
+    void addNode(QGLSceneNode *node);
+    void removeNode(QGLSceneNode *node);
+    void setParent(QObject *);
+
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
     virtual QGLSceneNode *clone(QObject *parent = 0) const;
@@ -97,6 +103,10 @@ protected:
 private:
     Q_DISABLE_COPY(QGLSceneNode)
 };
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLSceneNode &node);
+#endif
 
 QT_END_NAMESPACE
 

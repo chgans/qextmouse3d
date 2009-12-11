@@ -61,7 +61,7 @@
 
     All the vertices in a QGLSection are treated with the same
     \l{QGL::Smoothing}{smoothing}, and have the same
-    \l{QGLSection::GLDataFlag}{data types}.
+    \l{QLogicalVertex::Type}{data types}.
 
     Each QGLSection references a contiguous range of vertices in a
     QGLDisplayList.
@@ -588,30 +588,6 @@ void QGLSection::enableTypes(QLogicalVertex::Types types)
     \fn QGLDisplayList *QGLSection::displayList() const
 
     Returns the display list associated with this section.
-*/
-
-/*!
-    \fn void QGLSection::draw(QGLPainter *painter) const
-    Draws this section on the \a painter.
-*/
-
-/*!
-    \fn QString QGLSection::name() const
-
-    Returns the QString name assigned to this section, or a null QString
-    if no name has been assigned.  The name may be used to locate a
-    section by name, or to capture model domain information.  It is also
-    printed out by the QDebug stream operator.
-
-    \sa setName()
-*/
-
-/*!
-    \fn void QGLSection::setName(const QString &name)
-
-    Sets the QString \a name to be assigned to this section.
-
-    \sa name()
 */
 
 #ifndef QT_NO_DEBUG_STREAM

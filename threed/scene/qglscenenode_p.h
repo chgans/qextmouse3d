@@ -58,6 +58,7 @@
 #include "qglscenenode.h"
 
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qlist.h>
 
 class QGLGeometry;
 class QGLAbstractEffect;
@@ -82,6 +83,7 @@ public:
     QMatrix4x4 localTransform;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
+    QList<QGLSceneNode*> childNodes;
     bool hasEffect;
     int material;
     int start;
