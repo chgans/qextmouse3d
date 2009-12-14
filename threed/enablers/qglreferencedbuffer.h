@@ -55,7 +55,7 @@ QT_MODULE(Qt3d)
 class Q_QT3D_EXPORT QGLReferencedBuffer : public QGLBuffer
 {
 public:
-    explicit QGLReferencedBuffer(QGLBuffer::Type type) : QGLBuffer(type) {}
+    explicit QGLReferencedBuffer(QGLBuffer::Type type) : QGLBuffer(type), m_ref(1) {}
     ~QGLReferencedBuffer() {}
 
     void ref() { m_ref.ref(); }
