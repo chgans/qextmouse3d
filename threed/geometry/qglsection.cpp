@@ -56,8 +56,27 @@
     QGLSection instances partition a QGLDisplayList into related sections,
     while the display list is being initialized with geometry data.
 
-    Once the display list is initialized, the QGLSection instances are
-    destroyed and the data is uploaded to the graphics hardware.
+    Once the display list is initialized, and geometry building is complete
+    the QGLSection instances are destroyed and the data is uploaded to the
+    graphics hardware.
+
+    The QGLSection class is a work horse for the QGLDisplayList, and it
+    takes care of automatically managing vertex data.  As such
+    for usual use cases, its functionality will not need to be referenced
+    directly.  For low-level access to geometry, QGLSection provides a
+    range of accessors to reference geometry data during scene building.
+
+    Within a section, incoming geometry data will be coalesced and
+    indexes created to reference the fewest possible copies of the vertex
+    data.  For example, in smooth geometry all copies of a vertex are
+    coalesced into one, and referenced by indices - except in the case
+    where texture data forms a \i seam and a copy must be created to carry
+    the two texture coordinates of the seam.
+
+    \image texture-seam.png
+
+    This is handled automatically by QGLSection, to pack data into the
+    smallest space possible thus improving cache coherence and performance.
 
     All the vertices in a QGLSection are treated with the same
     \l{QGL::Smoothing}{smoothing}, and have the same
@@ -90,7 +109,7 @@
     and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
     discussion of smoothing.
 
-    Calling a sections finalize() method to calculate normals.  Prior to
+    Call a sections finalize() method to calculate normals.  Prior to
     calling finalize() relying on normal values results in undefined behavior.
     \code
     // WRONG
@@ -200,10 +219,6 @@ public:
     QGLSection *s = myDisplayList->newSection(QGL::Faceted);
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
-
-    The start of the section is initialized to be the first unassigned
-    index of the display list, in other words the current size of the
-    list.
 */
 QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
     : m_smoothing(s)
@@ -254,6 +269,22 @@ QBox3D QGLSection::boundingBox() const
 }
 
 /*!
+    \fn void QGLSection::append(const QLogicalVertex &vertex)
+    Adds the logical \a vertex to this section.
+
+    If the \a vertex has no lighting normal component, then the append will
+    be done by calling appendFlat().
+
+    Otherwise, if the \a vertex does have a lighting normal; then the
+    vertex processing depends on the smoothing property of this section.
+    If this section has smoothing QGL::Smooth, then the append will be done
+    by calling appendSmooth(); or if this section has smoothing QGL::Faceted,
+    then the append will be done by calling appendFaceted().
+
+    \sa appendSmooth(), appendFaceted(), appendFlat()
+*/
+
+/*!
     Adds the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as part of a smooth continuous surface, with
@@ -261,11 +292,14 @@ QBox3D QGLSection::boundingBox() const
     coalesced into one vertex (within this section).  This one vertex
     has its normal set to the average of supplied normals.
 
+    Vertices are not coalesced if \a lv has a different texture coordinate
+    than its duplicate.  See updateTexCoord() for details.
+
     Call this function to add the vertices of a smooth face to the section
     of a display list, or use:
 
     \code
-    myDisplayList->openSection(QGLDisplayList::Smooth);
+    myDisplayList->newSection(QGLDisplayList::Smooth);
     myDisplayList->addTriangle(a, b, c);
     \endcode
 
@@ -273,7 +307,7 @@ QBox3D QGLSection::boundingBox() const
     graphics hardware once (not once per face), thus smooth geometry may
     consume fewer resources.
 
-    \sa appendFaceted(), openSection()
+    \sa appendFaceted(), updateTexCoord(), QGLDisplayList::newSection()
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
@@ -312,8 +346,13 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     Add the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as a distinct edge, instead of just part of a
-    continuous smooth surface.  To acheive this a duplicate of \a a is
-    added for each normal \a n (in the current section).
+    continuous smooth surface.  To acheive this the vertex value of \a lv
+    is duplicated for each unique normal in the current section.  However
+    if a vertex is already present with a given normal it is coalesced
+    and simply referenced by index.
+
+    Vertices are not coalesced if \a lv has a different texture coordinate
+    than its duplicate.  See updateTexCoord() for details.
 
     Call this method to add the vertices of a faceted face to the list, or
     use:
@@ -326,7 +365,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     In faceted surfaces, the vertex is sent to the graphics hardware once for
     each normal it has, and thus may consume more resources.
 
-    \sa appendSmooth()
+    \sa appendSmooth(), updateTexCoord(), QGLDisplayList::newSection()
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
@@ -369,22 +408,24 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 }
 
 /*!
-    Updates texture data at \a position to include value \a t.
+    Updates texture data at \a index to include value \a t.  This function
+    is called by appendSmooth() and appendFaceted() when incoming vertex
+    data is to be coalesced, but has a texture coordinate associated.
 
     If \a t is QGLTextureSpecifier::InvalidTexCoord this function does
     nothing and returns -1.
 
-    The texture data at \a position is examined, and therefore this section
-    must have texture data - hasData(QLogicalVertex::Texture) is true; and
-    the \a position must be a valid vertex index.
+    The texture data at \a index is examined, and therefore this section
+    must have texture data, ie \c{hasData(QLogicalVertex::Texture)} is true; and
+    the \a index must be a valid vertex index.
 
-    If the vertex at \a position is equal to \a t, then this function does
+    If the texture data at \a index is equal to \a t, then this function does
     nothing and returns -1.
 
-    If no texture has been set at \a position then the effect is the same
+    If no texture has been set at \a index then the effect is the same
     as setTexCoord().
 
-    If the vertex at \a position already has texture coordinates set, then
+    If the vertex at \a index already has texture coordinates set, then
     a duplicate of the vertex is added, to carry the additional texture
     coordinates.
 
@@ -427,6 +468,12 @@ int QGLSection::updateTexCoord(int index, const QVector2D &t)
     return v;
 }
 
+/*!
+    Append the logical vertex \a lv to this section.
+
+    The vertex will be treated as flat colored, and thus no management
+    of lighting normals is done.
+*/
 void QGLSection::appendFlat(const QLogicalVertex &lv)
 {
     d->data->appendVertex(lv);
@@ -434,31 +481,61 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
     m_displayList->setDirty(true);
 }
 
+/*!
+    Return a copy of the vertex data for this section.  Since the data
+    is implicitly shared this call is inexpensive, unless the copy is
+    modified.
+*/
 QGL::VectorArray QGLSection::vertices() const
 {
     return d->data->vertices();
 }
 
+/*!
+    Return a copy of the normal data for this section.  Since the data
+    is implicitly shared this call is inexpensive, unless the copy is
+    modified.
+*/
 QGL::VectorArray QGLSection::normals() const
 {
     return d->data->normals();
 }
 
+/*!
+    Return a copy of the index data for this section.  Since the data
+    is implicitly shared this call is inexpensive, unless the copy is
+    modified.
+*/
 QGL::IndexArray QGLSection::indices() const
 {
     return d->data->indices();
 }
 
+/*!
+    Return a copy of the texture coordinate data for this section.
+    Since the data is implicitly shared this call is inexpensive, unless
+    the copy is modified.
+*/
 QGL::TexCoordArray QGLSection::texCoords() const
 {
     return d->data->texCoords();
 }
 
+/*!
+    Return a copy of the color data for this section.  Since the data
+    is implicitly shared this call is inexpensive, unless the copy is
+    modified.
+*/
 QGL::ColorArray QGLSection::colors() const
 {
     return d->data->colors();
 }
 
+/*!
+    Return a copy of the data for this section as a vertex array.  The
+    data is copied element-wise into a QGLVertexArray so this call is
+    expensive.
+*/
 QGLVertexArray QGLSection::toVertexArray() const
 {
     return d->data->toVertexArray();
@@ -540,7 +617,7 @@ void QGLSection::setTexCoord(int position, const QVector2D &t)
     The \a position must be a valid vertex with color data, in other words,
     one that has already been added by one of the append functions.
 
-    \sa appendColor()
+    \sa appendFlat()
 */
 void QGLSection::setColor(int position, const QColor4b &c)
 {
@@ -569,16 +646,29 @@ int QGLSection::count() const
     return d->data->count();
 }
 
+/*!
+    Returns the types of data that this section contains.
+*/
 QLogicalVertex::Types QGLSection::dataTypes() const
 {
     return d->data->types();
 }
 
+/*!
+    Returns true if this section has data of \a types.
+*/
 bool QGLSection::hasData(QLogicalVertex::Types types)
 {
     return d->data->hasType(types);
 }
 
+/*!
+    Forces this section to have \a types of data.
+
+    Normally the append functions will track what types of data are
+    required by examining the data contained in vertex arguments passed
+    to the append functions, and thus this method need not be called.
+*/
 void QGLSection::enableTypes(QLogicalVertex::Types types)
 {
     d->data->enableTypes(types);
@@ -592,7 +682,7 @@ void QGLSection::enableTypes(QLogicalVertex::Types types)
 
 #ifndef QT_NO_DEBUG_STREAM
 /*!
-    Output a string representation of the QGLSection to a debug stream.
+    Output a string representation of \a section to a debug stream \a dbg.
     \relates QGLSection
 */
 QDebug operator<<(QDebug dbg, const QGLSection &section)

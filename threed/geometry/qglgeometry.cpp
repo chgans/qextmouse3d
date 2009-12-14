@@ -112,7 +112,7 @@ QGLGeometry::QGLGeometry(QObject *parent)
 }
 
 /*!
-    \a internal
+    \internal
     Constructs a new geometry object with \a parent and \a dd private
     data.  This is for use by QGLGeometry sub-classes that use the
     QObjectPrivate heierarchy.

@@ -56,6 +56,7 @@ DisplayListView::DisplayListView(QWidget *parent)
     : QGLView(parent)
     , canScene(new QGLSceneNode(this))
 {
+    //! [0]
     QGLDisplayList *displayList = buildGeometry();
     displayList->setParent(canScene);
     {
@@ -68,8 +69,7 @@ DisplayListView::DisplayListView(QWidget *parent)
         displayList->setLocalTransform(mat);
     }
 
-    //! [0]
-    // a can to the left
+    // display a copy of the can to the left
     QGLSceneNode *node = new QGLSceneNode(canScene);
     node->addNode(displayList);
     {
@@ -78,7 +78,7 @@ DisplayListView::DisplayListView(QWidget *parent)
         node->setLocalTransform(mat);
     }
 
-    // clone a can to the right
+    // display a copy of the can to the right
     node = new QGLSceneNode(canScene);
     node->addNode(displayList);
     {
@@ -86,6 +86,7 @@ DisplayListView::DisplayListView(QWidget *parent)
         mat.translate(2.0f, 0.0f, -2.0f);
         node->setLocalTransform(mat);
     }
+    //! [0]
 
     // rotate the whole scene about x-axis so that
     // can tops are visible when scene is first displayed
@@ -94,7 +95,6 @@ DisplayListView::DisplayListView(QWidget *parent)
         mat.rotate(1.0f, 0.0f, 0.0f, -30.0f);
         canScene->setLocalTransform(mat);
     }
-    //! [0]
 }
 
 void DisplayListView::initializeGL(QGLPainter *painter)

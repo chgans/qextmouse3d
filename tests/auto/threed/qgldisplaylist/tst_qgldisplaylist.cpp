@@ -200,10 +200,10 @@ void tst_QGLDisplayList::newNodeEmptyPrev()
     QVERIFY(nodes.contains(node2));
 #endif
 
-    // even tho node was deleted, node2 still inherited its values
-    QCOMPARE(node2->effect(), QGL::LitDecalTexture2D); // cloned from previous
-    QCOMPARE(node2->userEffect(), eff);
-    QCOMPARE(node2->material(), 5);
+    // even tho node was deleted, node2 still works and is default
+    QCOMPARE(node2->effect(), QGL::LitMaterial); // cloned from previous
+    QCOMPARE(node2->userEffect(), (QGLAbstractEffect*)0);
+    QCOMPARE(node2->material(), -1);
 }
 
 void tst_QGLDisplayList::pushNode()

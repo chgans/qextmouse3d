@@ -64,24 +64,35 @@
     when an application starts up, then it can be efficiently and flexibly
     displayed during frames of rendering.
 
-    Traditional OpenGL programming uses display lists to build geometry once
-    during an initialization phase, and then efficiently display that geometry
-    each frame of rendering.
+    Traditional OpenGL programming uses
+    \l{http://www.opengl.org/documentation/specs/version1.1/glspec1.1/node123.html}{display lists}
+    to build geometry once during an initialization phase, and then efficiently
+    display that geometry each frame of rendering.
 
     While the underlying implementation of QGLDisplayList does not use the same
     OpenGL calls (since those calls are not implemented on all platforms) it
-    provides the same convenience and improved performance.
+    provides convenience and improved performance, and can be utilized in
+    the same paradigm as the OpenGL display list with an initial setup phase
+    and subsequent cheap drawing operations.
 
     QGLSceneNodes are used to manage application of local transformations,
     materials and effects, in the same way that glRotate() or glMaterial()
     might be used inside a display list.
 
     Since QGLDisplayList is itself a (sub-class of) QGLSceneNode materials
-    and effects may be applied to the whole list, or to parts of it.
+    and effects may be applied to the whole list, or to parts of it.  This
+    is demonstrated in the displaylist example application
+
+    \image soup.png
+
+    Here the front can is a display list and the other two are scene nodes
+    that simply reference it, without copying any geometry.
 
     \snippet displaylist/displaylist.cpp 0
 
-    Use the functions newNode() or pushNode() and popNode() to manage
+    QGLSceneNodes can be used after the display list is created to cheaply
+    copy and redisplay the whole list.  Or to reference parts of the list
+    use the functions newNode() or pushNode() and popNode() to manage
     QGLSceneNode generation inside a display list.
 
     To draw a display list, simply call its draw function as for any
@@ -91,12 +102,13 @@
 
     Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
     geometry to get the QGLMaterialCollection for the node, and record textures
-    and materials into it.
+    and materials into it.  (Typically a display lists nodes, and usually the
+    whole application will share the one palette).
 
     \snippet displaylist/displaylist.cpp 2
 
     These may then be applied as needed throughout the building of the
-    geometry using the integer reference (see the next snippet).
+    geometry using the integer reference, \c{canMat} in the above code.
 
     During initialization of the QGLDisplayList, while accumulating
     geometry, the geometry data in a QGLDisplayList is divided into
@@ -114,6 +126,9 @@
     but in the smooth case lighting normals are calculated to make for a smooth
     appearance.  In 3D applications this concept is often referred to as
     \l{http://www.google.com/search?smoothing+groups}{smoothing groups}.
+
+    Management of normals and vertices is handled automatically by the
+    QGLSection instances.
 
     Once the geometry has been accumulated in the display list,  the
     finalize() method must be called to normalize the geometry and optimize
@@ -179,6 +194,10 @@ QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials
 QGLDisplayList::~QGLDisplayList()
 {
 }
+/*!
+    \fn void QGLDisplayList::draw(QGLPainter *painter)
+    Draws the display list on the given \a painter.
+*/
 
 /*!
     Add to the current section a triangular face with vertices \a a, \a b,
@@ -334,8 +353,8 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
 /*!
     Add a series of quads based on the \a edges and \a offset given.
 
-    The quads and their normals are generated in such a way that if \a line
-    is the perimeter vertices of a polygon F, in counter-clockwise order, and
+    The quads and their normals are generated in such a way that if \a edges
+    are the perimeter vertices of a polygon F, in counter-clockwise order, and
     \a offset is the inverse of the face normal of polygon F then the
     quads form the sides of a solid rectangular prism with the polygon F
     as its end-face.
@@ -357,20 +376,21 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     Returns the extruded values of vertices in the line, but in reverse order.
     These values can be used to construct an obverse face, polygon F':
     \code
-    QGLDisplayList::VectorArray front;
+    QGL::VectorArray front;
     front << a << b << c << d;
-    QGLDisplayList::VectorArray obverse = displayList->extrude(front);
+    QGL::VectorArray obverse = displayList->extrude(front);
     // obverse now contains d', c', b' and a' in that order
     displayList->addQuad(obverse[0], obverse[1], obverse[2], obverse[3]);
     \endcode
     Note that the vertices in the returned array are reversed in sequence so
-    that the obverse face has the correct winding to face outwards.
+    that the obverse face has the correct winding to face outwards from an
+    extruded solid.
 
     Textures are generated according to \a textureModel, if textureModel
     is non-null.  When textures are generated all the points on \a edges
     must lie in the same plane, which is the case anyway if they are the
     perimeter vertices of a polygon.  Textures are assigned with the high Y
-    values on the \a edge; low Y values on the extruded result edge;
+    values on the \a edges; low Y values on the extruded result edge;
     low X values at the left of \c{edges[0]} and high X values on the
     right of \c{edges.last()}.
 */
@@ -445,7 +465,13 @@ QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
         \o deletes all QGLSection instances in this list
     \endlist
 
-    This function may be expensive.
+    This function may be expensive.  This function is called by the
+    default implementation of draw, so you don't have to remember to call
+    it, unless you explicitly want to control when the finalize cost is
+    incurred.
+
+    Finalize will exit quickly without doing anything if no modifications
+    have been made to any data since the last time finalize was called.
 */
 void QGLDisplayList::finalize()
 {

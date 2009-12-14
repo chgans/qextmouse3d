@@ -311,7 +311,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), testNormal + testNormal);
+    QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
     QCOMPARE(section->indices().count(), 2);
@@ -325,7 +325,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->vertices().count(), 2);
     QCOMPARE(section->vertices().at(1), testVertex);
     QCOMPARE(section->normals().count(), 2);
-    QCOMPARE(section->normals().at(1), testNormal + testNormal);
+    QCOMPARE(section->normals().at(1), testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().count(), 3);
