@@ -60,7 +60,7 @@ static QVariant interpolateVector3D
 {
     return qVariantFromValue(f + (t - f) * progress);
 }
-
+	
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);

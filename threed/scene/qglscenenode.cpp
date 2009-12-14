@@ -109,6 +109,7 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
+
 /*!
     Constructs a new scene node and attaches it to \a parent.  If parent is
     a QGLSceneNode then this node is added to it as a child.
@@ -209,6 +210,34 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
     Q_D(QGLSceneNode);
     d->localTransform = transform;
 }
+
+/*!
+    Returns the transform set by the "user" associated with this node.  If no
+    local transform has been explicitly set, this method returns a
+    QMatrix4x4 set to the identity matrix.
+
+    \sa setUserTransform()
+*/
+
+QMatrix4x4 QGLSceneNode::userTransform() const
+{
+	Q_D(const QGLSceneNode);
+	return d->userTransform;
+}
+
+/*!
+    Returns the transform set by the "user" associated with this node.  If no
+    local transform has been explicitly set, this method returns a
+    QMatrix4x4 set to the identity matrix.
+
+    \sa userTransform()
+*/
+void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
+{
+	Q_D(QGLSceneNode);
+    d->userTransform = transform;
+}
+
 
 /*!
     Returns the local effect associated with this node.  The default value
@@ -446,11 +475,12 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
     }
 
-    if (!d->localTransform.isIdentity())
-    {
-        painter->modelViewMatrix().push();
-        painter->modelViewMatrix() *= d->localTransform;
-    }
+	if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
+	{
+		 painter->modelViewMatrix().push();
+		 if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
+		 if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
+	}
 
     int saveMat = -1;
     bool matSaved = false;
@@ -459,7 +489,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
         saveMat = d->geometry->material();
         matSaved = true;
         d->geometry->setMaterial(d->material);
-    }
+	}
+		
 
     QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
     for ( ; cit != d->childNodes.end(); ++cit)
@@ -476,7 +507,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (matSaved)
         d->geometry->setMaterial(saveMat);
 
-    if (!d->localTransform.isIdentity())
+    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
         painter->modelViewMatrix().pop();
 }
 
@@ -512,6 +543,7 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
     node->setLocalTransform(d->localTransform);
+	node->setUserTransform(d->userTransform);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);

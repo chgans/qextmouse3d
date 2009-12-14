@@ -73,6 +73,8 @@ int main(int argc, char *argv[])
     navigator2->setViewportItem(item2);
     scene.addItem(navigator2);
 
+    item->setFocus();
+
     QGraphicsView view(&scene);
     view.setViewport(new QGLWidget());
     view.show();

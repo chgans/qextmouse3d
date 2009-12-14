@@ -41,6 +41,8 @@
 
 #include "qglmaterialcollection.h"
 
+#include <QtCore/qset.h>
+
 QT_BEGIN_NAMESPACE
 
 /*!
@@ -105,8 +107,8 @@ QGLMaterialCollection::QGLMaterialCollection(QObject *parent)
 */
 QGLMaterialCollection::~QGLMaterialCollection()
 {
-    qDeleteAll(mMaterials);
-    qDeleteAll(mTextures);
+    qDeleteAll(QSet<QGLMaterialParameters*>::fromList(mMaterials));
+    qDeleteAll(QSet<QGLTexture2D*>::fromList(mTextures));
 }
 
 /*!

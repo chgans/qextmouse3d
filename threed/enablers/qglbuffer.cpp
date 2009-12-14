@@ -43,6 +43,7 @@
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 #include "qglbuffer.h"
+#include "qglcontextscope.h"
 #include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -191,14 +192,13 @@ class QGLBufferPrivate
 {
 public:
     QGLBufferPrivate(QGLBuffer::Type t)
-        : ref(1), guard(0)
+        : type(t),
+          guard(0),
+          usagePattern(QGLBuffer::StaticDraw),
+          actualUsagePattern(QGLBuffer::StaticDraw)
     {
-        type = t;
-        usagePattern = QGLBuffer::StaticDraw;
-        actualUsagePattern = usagePattern;
     }
 
-    QAtomicInt ref;
     QGLBuffer::Type type;
     QGLSharedResourceGuard guard;
     QGLBuffer::UsagePattern usagePattern;
@@ -230,7 +230,7 @@ QGLBuffer::~QGLBuffer()
     GLuint bufferId = d->guard.id();
     if (bufferId) {
         // Switch to the original creating context to destroy it.
-        QGLShareContextScope scope(d->guard.context());
+        QGLContextScope scope(d->guard.context());
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glDeleteBuffers(1, &bufferId);
 #else
@@ -589,23 +589,6 @@ bool QGLBuffer::unmap()
     if (!extensions || !extensions->unmapBuffer)
         return false;
     return extensions->unmapBuffer(d->type) == GL_TRUE;
-}
-
-// QGLIndexArray and QGLVertexArray keep reference-counted references
-// to the underlying buffer.  If the arrays are copied around without
-// modification, the same buffer is reused.  If one of the copies is
-// modified, then it will detach from the buffer leaving all of the
-// other copies with the original buffer contents.
-void QGLBuffer::ref()
-{
-    Q_D(QGLBuffer);
-    d->ref.ref();
-}
-
-bool QGLBuffer::deref()
-{
-    Q_D(QGLBuffer);
-    return d->ref.deref();
 }
 
 QT_END_NAMESPACE

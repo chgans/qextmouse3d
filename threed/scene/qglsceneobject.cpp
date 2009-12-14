@@ -138,7 +138,7 @@ void QGLSceneObject::apply(QGLPainter *painter)
 void QGLSceneObject::draw(QGLPainter *painter)
 {
     Q_UNUSED(painter);
-}
+}	
 
 /*!
     Cleans up the settings in \a painter that were changed by apply().

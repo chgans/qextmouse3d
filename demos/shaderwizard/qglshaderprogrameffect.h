@@ -62,6 +62,9 @@ public:
     void setVertexShader(QString const &  shader );
     void setFragmentShader(QString const & shader );
 
+    void setMaterial(QGLMaterialParameters* newMaterial);
+    QGLMaterialParameters* material();
+
 protected:
     virtual void reloadShaders();
     virtual void bindProgramAttributes();

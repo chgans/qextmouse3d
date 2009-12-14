@@ -39,68 +39,28 @@
 **
 ****************************************************************************/
 
-#ifndef MESH_H
-#define MESH_H
+#ifndef QGLCONTEXTSCOPE_H
+#define QGLCONTEXTSCOPE_H
 
-#include <QtCore/qobject.h>
-#include <QtCore/qurl.h>
-#include <QtDeclarative/qml.h>
-#include <QtDeclarative/qmlengine.h>
-#include <QtDeclarative/qmlparserstatus.h>
-#include "qglpainter.h"
-#include "qglsceneobject.h"
+#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class MeshPrivate;
-class QGLAbstractScene;
-class QGLMaterialParameters;
-class QGLSceneObject;
+QT_MODULE(Qt3d)
 
-class Mesh : public QObject, public QmlParserStatus
+class QGLContext;
+
+class Q_QT3D_EXPORT QGLContextScope
 {
-    Q_OBJECT
-    Q_INTERFACES(QmlParserStatus)
-    Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY dataChanged)
-    Q_PROPERTY(QString meshName READ meshName WRITE setMeshName NOTIFY dataChanged)
-
 public:
-    Mesh(QObject *parent = 0);
-    ~Mesh();
-
-    QUrl source() const;
-    void setSource(const QUrl& value);
-
-    QString meshName() const;
-    void setMeshName(const QString& value);
-
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
-
-    virtual void draw(QGLPainter *painter);
-
-    void ref();
-    bool deref();
-
-    Q_INVOKABLE QObject *material(const QString& name) const;
-
-    void componentComplete();
-
-
-Q_SIGNALS:
-    void dataChanged();
-    void loaded();
-
-private Q_SLOTS:
-    void dataRequestFinished();
+    explicit QGLContextScope(const QGLContext *context);
+    ~QGLContextScope();
 
 private:
-    MeshPrivate *d;
-    void setScene(QGLAbstractScene *scene);
+    QGLContext *m_restoreContext;
 };
-
-QML_DECLARE_TYPE(Mesh)
 
 QT_END_NAMESPACE
 

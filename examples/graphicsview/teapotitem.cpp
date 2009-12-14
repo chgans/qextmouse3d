@@ -45,6 +45,7 @@
 TeapotItem::TeapotItem(QGraphicsItem *parent)
     : QGLGraphicsViewportItem(parent)
 {
+    setFlag(ItemIsFocusable, true);
 }
 
 TeapotItem::~TeapotItem()

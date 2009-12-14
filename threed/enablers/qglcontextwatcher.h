@@ -39,68 +39,49 @@
 **
 ****************************************************************************/
 
-#ifndef MESH_H
-#define MESH_H
+#ifndef QGLCONTEXTWATCHER_H
+#define QGLCONTEXTWATCHER_H
 
+#include "qt3dglobal.h"
 #include <QtCore/qobject.h>
-#include <QtCore/qurl.h>
-#include <QtDeclarative/qml.h>
-#include <QtDeclarative/qmlengine.h>
-#include <QtDeclarative/qmlparserstatus.h>
-#include "qglpainter.h"
-#include "qglsceneobject.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class MeshPrivate;
-class QGLAbstractScene;
-class QGLMaterialParameters;
-class QGLSceneObject;
+QT_MODULE(Qt3d)
 
-class Mesh : public QObject, public QmlParserStatus
+class QGLContext;
+
+class QGLContextWatcherPrivate;
+
+class Q_QT3D_EXPORT QGLContextWatcher : public QObject
 {
     Q_OBJECT
-    Q_INTERFACES(QmlParserStatus)
-    Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY dataChanged)
-    Q_PROPERTY(QString meshName READ meshName WRITE setMeshName NOTIFY dataChanged)
-
 public:
-    Mesh(QObject *parent = 0);
-    ~Mesh();
+    explicit QGLContextWatcher(QObject *parent = 0);
+    explicit QGLContextWatcher(const QGLContext *context, QObject *parent = 0);
+    ~QGLContextWatcher();
 
-    QUrl source() const;
-    void setSource(const QUrl& value);
+    const QGLContext *context() const;
+    void setContext(const QGLContext *context);
 
-    QString meshName() const;
-    void setMeshName(const QString& value);
-
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
-
-    virtual void draw(QGLPainter *painter);
-
-    void ref();
-    bool deref();
-
-    Q_INVOKABLE QObject *material(const QString& name) const;
-
-    void componentComplete();
-
+    bool trackResourceTransfer() const;
+    void setTrackResourceTransfer(bool enable);
 
 Q_SIGNALS:
-    void dataChanged();
-    void loaded();
+    void contextDestroyed();
+    void resourcesTransferred(const QGLContext *shareContext);
 
 private Q_SLOTS:
-    void dataRequestFinished();
+    void aboutToDestroyContext(const QGLContext *context);
 
 private:
-    MeshPrivate *d;
-    void setScene(QGLAbstractScene *scene);
-};
+    QScopedPointer<QGLContextWatcherPrivate> d_ptr;
 
-QML_DECLARE_TYPE(Mesh)
+    Q_DECLARE_PRIVATE(QGLContextWatcher)
+    Q_DISABLE_COPY(QGLContextWatcher)
+};
 
 QT_END_NAMESPACE
 

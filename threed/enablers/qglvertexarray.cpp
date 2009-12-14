@@ -978,7 +978,7 @@ void QGLVertexArray::release() const
 bool QGLVertexArray::upload() const
 {
     if (!m_buffer) {
-        m_buffer = new QGLBuffer(QGLBuffer::VertexBuffer);
+        m_buffer = new QGLReferencedBuffer(QGLReferencedBuffer::VertexBuffer);
         if (!m_buffer->create()) {
             delete m_buffer;
             m_buffer = 0;

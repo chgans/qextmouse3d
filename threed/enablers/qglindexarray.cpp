@@ -374,7 +374,7 @@ void QGLIndexArray::release() const
 bool QGLIndexArray::upload() const
 {
     if (!m_buffer) {
-        m_buffer = new QGLBuffer(QGLBuffer::IndexBuffer);
+        m_buffer = new QGLReferencedBuffer(QGLReferencedBuffer::IndexBuffer);
         if (!m_buffer->create()) {
             delete m_buffer;
             m_buffer = 0;

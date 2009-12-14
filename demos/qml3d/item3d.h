@@ -84,6 +84,7 @@ class Item3d : public QObject, public QmlParserStatus
     Q_PROPERTY(QmlList<QmlTransition *>* transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
+	
     Q_CLASSINFO("DefaultProperty", "data")
 public:
     Item3d(QObject *parent = 0);
@@ -117,6 +118,7 @@ public:
     Mesh *mesh() const;
     void setMesh(Mesh* value);
 
+
     Effect *effect() const;
     void setEffect(Effect *value);
 
@@ -137,6 +139,8 @@ public:
 
     virtual void draw(QGLPainter *painter);
     virtual void initialize(Viewport *viewport, QGLPainter *painter);
+
+    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
 
     void componentComplete();
 

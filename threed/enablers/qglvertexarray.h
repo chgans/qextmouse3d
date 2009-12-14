@@ -50,7 +50,7 @@
 #include "qglarraydata.h"
 #include "qglvertexdescription.h"
 #include "qglattributevalue.h"
-#include "qglbuffer.h"
+#include "qglreferencedbuffer.h"
 
 QT_BEGIN_HEADER
 
@@ -172,7 +172,7 @@ private:
     QGLVertexDescription m_fields;
     mutable int m_currentField;
     mutable int m_warnings;
-    mutable QGLBuffer *m_buffer;
+    mutable QGLReferencedBuffer *m_buffer;
 
     inline void detachBuffer();
 

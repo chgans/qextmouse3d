@@ -39,68 +39,76 @@
 **
 ****************************************************************************/
 
-#ifndef MESH_H
-#define MESH_H
+#ifndef SUBITEM3D_H
+#define SUBITEM3D_H
 
 #include <QtCore/qobject.h>
-#include <QtCore/qurl.h>
+#include <QtCore/qvariant.h>
+#include <QtGui/qvector3d.h>
+#include <QtGui/qgraphicstransform.h>
 #include <QtDeclarative/qml.h>
-#include <QtDeclarative/qmlengine.h>
-#include <QtDeclarative/qmlparserstatus.h>
 #include "qglpainter.h"
-#include "qglsceneobject.h"
+#include "mesh.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class MeshPrivate;
-class QGLAbstractScene;
-class QGLMaterialParameters;
-class QGLSceneObject;
+class SubItem3dPrivate;
+class QGLSceneNode;
 
-class Mesh : public QObject, public QmlParserStatus
+class SubItem3d : public QObject
 {
-    Q_OBJECT
-    Q_INTERFACES(QmlParserStatus)
-    Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY dataChanged)
-    Q_PROPERTY(QString meshName READ meshName WRITE setMeshName NOTIFY dataChanged)
-
+    Q_OBJECT    
+    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
+    Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
+    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
+    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
 public:
-    Mesh(QObject *parent = 0);
-    ~Mesh();
+	
+    SubItem3d(QObject *parent = 0);
+    ~SubItem3d();
+    
+    QVector3D position() const;
+    void setPosition(const QVector3D& value);
 
-    QUrl source() const;
-    void setSource(const QUrl& value);
+    qreal x() const;
 
-    QString meshName() const;
-    void setMeshName(const QString& value);
+    void setX(qreal value);
+    qreal y() const;
+    void setY(qreal value);
+    qreal z() const;
+    void setZ(qreal value);
 
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
+    qreal scale() const;
+    void setScale(qreal value);
 
-    virtual void draw(QGLPainter *painter);
+    QString meshNode() const;					
+    void setMeshNode(const QString &);			
 
-    void ref();
-    bool deref();
+    QGLSceneNode * meshObject();
+    void setMeshObject(QGLSceneNode *object);
 
-    Q_INVOKABLE QObject *material(const QString& name) const;
+    void performTransform();
 
-    void componentComplete();
+public Q_SLOTS:
+    void transform();
+    void update();
 
+protected:
 
 Q_SIGNALS:
-    void dataChanged();
-    void loaded();
-
-private Q_SLOTS:
-    void dataRequestFinished();
-
+    void positionChanged();
+    void scaleChanged();
+    void meshNodeChanged();
 private:
-    MeshPrivate *d;
-    void setScene(QGLAbstractScene *scene);
+    SubItem3dPrivate *d;
+
 };
 
-QML_DECLARE_TYPE(Mesh)
+QML_DECLARE_TYPE(SubItem3d)
 
 QT_END_NAMESPACE
 
