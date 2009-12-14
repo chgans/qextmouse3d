@@ -51,13 +51,10 @@
 #include "geometry.h"
 #include "quadplane.h"
 #include "qplane3d.h"
+#include "qglmaterialcollection.h"
 
 GeometryView::GeometryView(QWidget *parent)
     : QGLView(parent)
-    , icosahedron(new Geometry())
-    , floor(new QuadPlane(QPlane3D(QVector3D(0.0f, -3.0f, -3.0f),
-                                   QVector3D(0.0f, 1.0f, 2.0f)),
-                          QVector3D(0.0f, 2.0f, 1.0f)))
     , timer(new QTimer(this))
 {
     lp = new QGLLightParameters(this);
@@ -66,13 +63,24 @@ GeometryView::GeometryView(QWidget *parent)
     lp->setSpotExponent(24);
     lp->setSpotDirection(QVector3D(0.0, -1.0, -2.0));
 
-    mat1 = new QGLMaterialParameters(this);
-    mat1->setAmbientColor(QColor(32, 34, 32));
-    mat1->setDiffuseColor(QColor(32, 32, 32));
+    palette = new QGLMaterialCollection(this);
 
-    mat2 = new QGLMaterialParameters(this);
-    mat2->setAmbientColor(QColor(32, 64, 196));
-    mat2->setDiffuseColor(QColor(32, 32, 32));
+    // first set up the geometry - an icosahedron
+    // this one handles all its own colors and textures
+    icosahedron = new Geometry(this, palette);
+
+    // now a generic flat floor plane which will be painted grey
+    // and textured the same as the icosahedron
+    floor = new QuadPlane(this, palette);
+    QGLMaterialParameters *parms = new QGLMaterialParameters;
+    parms->setAmbientColor(Qt::darkGray);
+    parms->setDiffuseColor(Qt::gray);
+    int m = palette->addMaterial(parms);
+    palette->setTexture(m, palette->texture(icosahedron->material()));
+    floor->setMaterial(m);
+    QMatrix4x4 mat;
+    mat.translate(0.0f, 0.0f, -5.0f);
+    floor->setLocalTransform(mat);
 
     mdl = new QGLLightModel(this);
     mdl->setAmbientSceneColor(QColor(196,196,196));
@@ -87,12 +95,6 @@ GeometryView::~GeometryView()
 
 void GeometryView::initializeGL(QGLPainter *painter)
 {
-    painter->setFaceColor(QGL::AllFaces, QColor(196, 128, 128));
-
-    texture.setImage(icosahedron->getUvImage());
-    painter->setStandardEffect(QGL::LitDecalTexture2D);
-    painter->setTexture(&texture);
-
     painter->setLightModel(mdl);
 
     painter->setLightParameters(0, lp);
@@ -105,9 +107,7 @@ void GeometryView::initializeGL(QGLPainter *painter)
 void GeometryView::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().scale(0.7f);
-    painter->setFaceMaterial(QGL::FrontFaces, mat1);
     floor->draw(painter);
-    painter->setFaceMaterial(QGL::FrontFaces, mat2);
     painter->modelViewMatrix().rotate(angle, 0.10f, 1.0f, 0.0f);
     icosahedron->draw(painter);
 }

@@ -40,8 +40,8 @@
 ****************************************************************************/
 
 #include "geometry.h"
-#include "qglvertexarray.h"
-#include "qglindexarray.h"
+#include "qgltexture2d.h"
+#include "qglmaterialcollection.h"
 #include "qtriangle3d.h"
 
 #include <QImage>
@@ -51,8 +51,8 @@
 // http://en.wikipedia.org/wiki/Icosahedron#Cartesian_coordinates
 const qreal phi = 1.618033988749894848f;
 
-Geometry::Geometry()
-    : uv(512, 512, QImage::Format_ARGB32)
+Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
+    : QGLDisplayList(parent, materials)
 {
     float ico[12][3] = {
         { 0.0f, 1.0f, phi },    // A - 0
@@ -131,11 +131,7 @@ Geometry::Geometry()
         { { u4, v7 }, { u5, v8 }, { u5, v6 } }, // B-G-E
         { { u4, v9 }, { u5, v8 }, { u4, v7 } }  // L-G-B
     };
-
-    setDrawingMode(QGL::Triangles);
-    QGLIndexArray indexes;
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-
+    QImage uv(512, 512, QImage::Format_ARGB32);
     uv.fill(qRgba(196, 196, 196, 0));
     QPainter painter;
     painter.begin(&uv);
@@ -148,6 +144,8 @@ Geometry::Geometry()
     painter.setFont(font);
     QFontMetrics metrics = painter.fontMetrics();
 
+    newSection();
+    currentNode()->setEffect(QGL::LitDecalTexture2D);
     for (int ix = 0; ix < 20; ++ix)
     {
         QVector3D v0(ico[face[ix][0]][0], ico[face[ix][0]][1], ico[face[ix][0]][2]);
@@ -174,23 +172,32 @@ Geometry::Geometry()
         painter.setPen(QColor("green"));
         painter.drawText(QPointF(cen.x() - metrics.width(n) / 2.0, cen.y() + 3.0), n);
 
-        // Qt's texture coordinate system is upside down.  I'm ok with that.
+        // Qt's coordinate system is upside down.  I'm ok with that.
         t0.setY(1.0f - t0.y());
         t1.setY(1.0f - t1.y());
         t2.setY(1.0f - t2.y());
 
-        QVector3D norm = QVector3D::crossProduct(v1 - v0, v2 - v1);
-        vertices.append(v0);
-        vertices.append(norm);
-        vertices.append(t0);
-        vertices.append(v1);
-        vertices.append(norm);
-        vertices.append(t1);
-        vertices.append(v2);
-        vertices.append(norm);
-        vertices.append(t2);
+        QGLTextureModel tex;
+        tex.setBottomLeft(t0);
+        tex.setBottomRight(t1);
+        tex.setTopRight(t2);
+
+        // null vector says "work out the normal for me"
+        addTriangle(v0, v1, v2, QVector3D(), tex);
     }
+
+    QGLMaterialCollection *pal = geometry()->palette();
+    QGLMaterialParameters *mat = new QGLMaterialParameters;
+    mat->setAmbientColor(QColor(32, 64, 196));
+    mat->setDiffuseColor(QColor(32, 32, 32));
+    int m = pal->addMaterial(mat);
+
+    QGLTexture2D *texture = new QGLTexture2D;
+    texture->setImage(uv);
+    pal->setTexture(m, texture);
+
+    setMaterial(m);
+
     painter.end();
-    setVertexArray(vertices);
-    setIndexArray(indexes);
+    finalize();
 }

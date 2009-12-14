@@ -42,24 +42,17 @@
 #ifndef QUADPLANE_H
 #define QUADPLANE_H
 
-#include "qglgeometry.h"
+#include "qgldisplaylist.h"
 
 #include <QSizeF>
 
 class QPlane3D;
 
-class QuadPlane : public QGLGeometry
+class QuadPlane : public QGLDisplayList
 {
 public:
-    QuadPlane(const QPlane3D &plane,
-              const QVector3D &side,
-              QSizeF size = QSizeF(100.0f, 100.0f),
-              int level = 2);
-    ~QuadPlane();
-    void draw(QGLPainter *painter);
-    bool upload();
-private:
-    QVector<QGLGeometry*> mStrips;
+    QuadPlane(QObject *parent = 0, QGLMaterialCollection *materials = 0,
+              QSizeF size = QSizeF(100.0f, 100.0f), int level = 3);
 };
 
 #endif // QUADPLANE_H

@@ -42,17 +42,16 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "qglgeometry.h"
+#include "qgldisplaylist.h"
 
 #include <QImage>
 
-class Geometry : public QGLGeometry
+class QGLTexture2D;
+
+class Geometry : public QGLDisplayList
 {
 public:
-    Geometry();
-    QImage getUvImage() const { return uv; }
-private:
-    QImage uv;
+    Geometry(QObject *parent = 0, QGLMaterialCollection *materials = 0);
 };
 
 #endif // GEOMETRY_H

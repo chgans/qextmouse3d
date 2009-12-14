@@ -52,104 +52,44 @@
     When drawing a large flat plane, such as a wall or a floor, it is desirable
     to decompose it into smaller units to make the shading effects look correct.
     This class composes a plane out of a configurable number of quads.
-    The plane works no matter what the orientation or size.
 */
 
 /*!
-    Construct a new QuadPlane with the specified parameters.
-    The quad plane lies in the infinite plane specified by \a plane.  This
-    means that the QuadPlane has the same normal everywhere as \a plane, and
-    the sides of the QuadPlane are determined relative to the origin of \a plane.
-    The \a side vector specifies the orientation of the rectangular QuadPlane,
-    and the \a size specifies the QuadPlanes dimensions.  The default size
-    is 100.0f x 100.0f.  The resulting QuadPlane is a rectangle, \a size
-    in dimension, centered on the origin of the \a plane, and aligned to the
-    \a side vector.  The side vector is projected onto the plane first in case
-    it does not lie in the plane.  Specifying a side vector that is aligned to
-    the normal of \a plane is an error and leads to undefined behaviour.
-    The side vector can be understood this way: if the QuadPlane is a vertical
-    wall, then the side vector is an "up" vector, parallel to the two vertical
-    edges of the wall.  The QuadPlane will be divided up by halving lengthwise
-    and widthwise \a level times.  Level is clamped to a max of 8 (256
-    divisions) and min of 1 (2 divisions).
+    Construct a new QuadPlane with \a size, subdivided \a level times.  By default
+    the plane is 100.0f x 100.0f, and is subdivided 3 times - that is into an
+    8 x 8 grid.
+
+    It is centered on the origin, and lies in the z = 0 plane.
 */
-QuadPlane::QuadPlane(const QPlane3D &plane, const QVector3D &side,
+QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
                      QSizeF size, int level)
+                         : QGLDisplayList(parent, materials)
 {
     if (level > 8)
         level = 8;
     if (level < 1)
         level = 1;
-    int divisions = 2;
+    int divisions = 1;
     for ( ; level--; divisions *= 2) {}  // integer 2**n
     QSizeF div = size / float(divisions);
     QSizeF half = size / 2.0f;
-    QVector3D sideInPlane = plane.project(side);
-    sideInPlane.normalize();
-    QVector3D baseInPlane = QVector3D::crossProduct(plane.normal(), sideInPlane);
-    baseInPlane.normalize();
-    // sideInPlane/baseInPlane now form a coordinate system centered at the
-    // planes origin.  From there, create the tiled GL_QUADS
-    QVector3D bottomLeft = plane.origin() - baseInPlane * half.width()
-                           - sideInPlane * half.height();
-    QLine3D baseLine(bottomLeft, baseInPlane);
-    QLine3D sideLine(bottomLeft, sideInPlane);
-    QLine3D nxSideLine(sideLine);
-    // in the loop below, climb up these two lines like a ladder: for each
-    // column (ladder) create the quads, then move the two lines across (using
-    // pointers to minimize copies) to do the next column
-    QLine3D *l0 = &sideLine;
-    QLine3D *l1 = &nxSideLine;
-    setDrawingMode(QGL::TriangleStrip);
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-    for (int col = 0; col < divisions-1; ++col)
+    QGLTextureModel tex;
+    newSection();
+    for (int yy = 0; yy < divisions; ++yy)
     {
-        // ternary ops here are avoiding fmuls & rounding errors at bounds
-        float s0 = (col == 0) ? 0.0f : float(col) * div.width();
-        float s1 = (col == divisions-1) ? div.width() : s0 + div.width();
-        l1->setOrigin(baseLine.point(s1));
-        QGLGeometry *g = new QGLGeometry();
-        g->setDrawingMode(QGL::TriangleStrip);
-        for (int row = 0; row < divisions; ++row)
+        qreal t0 = half.height() - float(yy) * div.height();
+        qreal t1 = half.height() - float(yy + 1) * div.height();
+        QGLTextureModel tex(-half.width(), t0, size.width(), div.height());
+        tex.startTileRight(size.width());
+        for (int xx = 0; xx < divisions; ++xx)
         {
-            float t = row == 0 ? 0.0f : (row == divisions-1 ?
-                                         div.height() : float(row) * div.height());
-            vertices.append(l0->point(t));
-            vertices.append(plane.normal());
-            vertices.append(s0, t);
-            vertices.append(l1->point(t));
-            vertices.append(plane.normal());
-            vertices.append(s1, t);
+            qreal s0 = half.width() - float(xx) * div.width();
+            qreal s1 = half.width() - float(xx + 1) * div.width();
+            QVector3D a(s0, t0, 0.0f);
+            QVector3D b(s1, t0, 0.0f);
+            QVector3D c(s1, t1, 0.0f);
+            QVector3D d(s0, t1, 0.0f);
+            addQuad(a, b, c, d, tex.tileRight(div.width()));
         }
-        qSwap(l0, l1);
-        g->setVertexArray(vertices);
-        mStrips.append(g);
     }
-}
-
-QuadPlane::~QuadPlane()
-{
-    qDeleteAll(mStrips);
-}
-
-void QuadPlane::draw(QGLPainter *painter)
-{
-    QVector<QGLGeometry*>::iterator it = mStrips.begin();
-    for ( ; it != mStrips.end(); ++it)
-    {
-        QGLGeometry *g = *it;
-        g->draw(painter);
-    }
-}
-
-bool QuadPlane::upload()
-{
-    QVector<QGLGeometry*>::iterator it = mStrips.begin();
-    for ( ; it != mStrips.end(); ++it)
-    {
-        QGLGeometry *g = *it;
-        if (!g->upload())
-            return false;
-    }
-    return true;
 }

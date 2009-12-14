@@ -51,6 +51,7 @@ class Geometry;
 class QGLLightParameters;
 class QGLMaterialParameters;
 class QGLLightModel;
+class QGLMaterialCollection;
 
 class GeometryView : public QGLView
 {
@@ -75,6 +76,7 @@ private:
     QTimer *timer;
     int angle;
     QGLLightParameters *lp;
+    QGLMaterialCollection *palette;
     QGLMaterialParameters *mat1;
     QGLMaterialParameters *mat2;
     QGLLightModel *mdl;
