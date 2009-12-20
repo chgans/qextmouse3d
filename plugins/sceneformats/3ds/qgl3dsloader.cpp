@@ -47,6 +47,7 @@
 #include "qgltexture2d.h"
 #include "qgl3dsscene.h"
 #include "qglscenenode.h"
+#include "qgl3dslist.h"
 
 #include <lib3ds/mesh.h>
 #include <lib3ds/file.h>
@@ -100,6 +101,11 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
     else if (mesh->faces == 0)
         qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
+#ifdef Q_USE_DISPLAYLIST
+    QGL3dsList *l = new QGL3dsList(mesh, mRootNode,
+                                    mRootNode->geometry()->palette());
+    l->setObjectName(QString(mesh->name) + "Mesh");
+#else
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode);
     m->setPalette(mRootNode->geometry()->palette());
     m->setObjectName(QString(mesh->name) + "Mesh");
@@ -115,6 +121,7 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
     QBox3D bounds = m->boundingBox();
     QBox3D currentBounds = mRootNode->geometry()->boundingBox();
     mRootNode->geometry()->setBoundingBox(currentBounds.expanded(bounds));
+#endif
 }
 
 #ifndef QT_NO_DEBUG_STREAM
