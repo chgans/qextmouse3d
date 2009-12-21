@@ -65,7 +65,7 @@
     large negative floating point number.
 */
 
-const qreal QLogicalVertex::InvalidTexValue = -std::numeric_limits<qreal>::max();
+const qreal QLogicalVertex::InvalidTexValue = qreal(-1000000.0f);
 
 
 /*!
