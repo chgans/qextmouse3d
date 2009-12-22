@@ -40,10 +40,240 @@
 ****************************************************************************/
 
 #include "qgl3dslist.h"
+#include "qglmaterialcollection.h"
+
+#include <lib3ds/mesh.h>
+#include <lib3ds/material.h>
+#include <lib3ds/vector.h>
+
+#define FACETED_THRESHOLD 1000
 
 QGL3dsList::QGL3dsList(Lib3dsMesh *mesh, QObject *parent,
                        QGLMaterialCollection *materials)
     : QGLDisplayList(parent, materials)
     , m_mesh(mesh)
+    , m_smoothingGroupCount(0)
+    , m_texFlip(false)
 {
+    setObjectName(QString(mesh->name));
 }
+
+void QGL3dsList::initialize()
+{
+    determineMaterials();
+    setLocalTransform(meshMatrix());
+    determineSmoothing();
+    newSection(m_smoothingGroups ? QGL::Smooth : QGL::Faceted);
+    QString baseName = objectName();
+    // process all the plain materials first, then textured materials
+    // to limit swapping effects, to the minimum
+    QList<int> matList = m_plainMaterials.toList();
+    bool switchLists = true;
+    QGLMaterialCollection *palette = geometry()->palette();
+    while (matList.count() > 0 || switchLists)
+    {
+        if (matList.count() == 0 && switchLists)
+        {
+            matList = m_textureMaterials.toList();
+            switchLists = false;
+            continue;
+        }
+        int matIx = matList.takeLast();
+        QGLSceneNode *node = currentNode();
+        node->setMaterial(matIx);
+        checkTextures(matIx);
+        if (matIx == -1)
+            node->setObjectName(baseName + QLatin1String("::XX_No_Material_XX"));
+        else
+            node->setObjectName(baseName + "::" + palette->materialName(matIx));
+        generateVertices();
+        palette->markMaterialAsUsed(matIx);
+    }
+    if (m_hasTextures)
+        setEffect(QGL::LitModulateTexture2D);
+    else
+        setEffect(QGL::LitMaterial);
+}
+
+/*!
+    \internal
+    Figures out all the material indexes used in this mesh.  If any
+    face has no material assigned then a -1 index will be listed.
+*/
+void QGL3dsList::determineMaterials()
+{
+    QGLMaterialCollection *pal = geometry()->palette();
+    Lib3dsFace *face;
+    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+    {
+        face = &m_mesh->faceL[f];
+        int matIx = pal->materialIndexByName(face->material);
+#ifndef QT_NO_DEBUG_STREAM
+        if (matIx == -1 && strlen(face->material) != 0)
+            qDebug("Bad .3ds file: no material %s! (Referenced in mesh %s)\n",
+                     face->material, m_mesh->name);
+#endif
+        if (m_plainMaterials.contains(matIx) ||
+            m_textureMaterials.contains(matIx))
+            continue;
+        QGLTexture2D *tex = 0;
+        if (matIx != -1)
+            tex = pal->texture(matIx);
+        if (tex)
+            m_textureMaterials.insert(matIx);
+        else
+            m_plainMaterials.insert(matIx);
+    }
+    m_hasTextures = m_textureMaterials.count() > 0;
+}
+
+/*!
+    \internal
+    Calculates the smoothing group keys for this mesh, or if no smoothing is
+    set uses a zero key resulting in faceted rendering.
+
+    If the mesh is faceted (zero smoothing keys), but contains more than a
+    threshold number of faces (currently set at 1000) then smoothing will be
+    forced on.
+*/
+void QGL3dsList::determineSmoothing()
+{
+    Lib3dsFace *face;
+    Lib3dsDword keys = 0;
+    m_smoothingGroupCount = 0;
+    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+    {
+        face = &m_mesh->faceL[f];
+        if (face->smoothing)
+        {
+            if (!(face->smoothing & keys))
+            {
+                keys |= face->smoothing;
+                m_smoothingGroupCount += 1;
+            }
+        }
+    }
+    if (keys == 0 && m_mesh->faces > FACETED_THRESHOLD)
+    {
+#ifndef QT_NO_DEBUG_STREAM
+        qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
+               m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
+#endif
+        for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+        {
+            face = &m_mesh->faceL[f];
+            face->smoothing = 1;
+        }
+        keys = 1;
+        m_smoothingGroupCount = 1;
+    }
+    m_smoothingGroups = keys;
+}
+
+/*!
+    \internal
+    Check the meshes textures and update the record of whether this mesh
+    has textures or not.  In debug mode issue a warning if the textures are
+    corrupt (number of texels and vertices not equal).
+*/
+void QGL3dsList::checkTextures(int material)
+{
+    QGLTexture2D *tex = geometry()->palette()->texture(material);
+    if (tex)
+    {
+        m_hasTextures = true;
+#ifndef QT_NO_DEBUG_STREAM
+        if (m_mesh->points != m_mesh->texels)
+            qWarning("Mesh %s has unequal number of texels (%d) and vertices (%d)",
+                     m_mesh->name, m_mesh->texels, m_mesh->points);
+#endif
+        // all texture coordinates from 3ds have to be flipped because
+        // 3ds uses the correct coordinate system, whilst qt uses
+        // upside-down coordinates
+        m_texFlip = tex->flipVertically();
+    }
+}
+
+/*!
+    \internal
+    Returns any local transformation matrix for the mesh.
+*/
+QMatrix4x4 QGL3dsList::meshMatrix() const
+{
+    Lib3dsMatrix &m = m_mesh->matrix;  // typedef for float[4][4]
+    QMatrix4x4 mat;
+    for (int col = 0; col < 4; ++col)
+        for (int row = 0; row < 4; ++row) {
+            float e = m[col][row];
+            if (qFuzzyIsNull(e))
+                mat(row, col) = 0.0f;
+            else
+                mat(row, col) = e;
+        }
+    mat.optimize();  // setup to use optimizations
+    if (mat.isIdentity())
+        return mat;
+    // The reverse transform is what we apply to model-view in order
+    // to draw the underlying geometry
+    bool invertible = true;
+    mat = mat.inverted(&invertible);
+    if (invertible)
+         return mat;
+#ifndef QT_NO_DEBUG_STREAM
+    qWarning("Could not invert matrix for mesh %s", m_mesh->name);
+    qDebug() << mat;
+#endif
+    return QMatrix4x4();
+}
+
+/*!
+    \internal
+    Generate the vertices for the faces based on their smoothing keys and
+    the current nodes material.
+*/
+void QGL3dsList::generateVertices()
+{
+    QBox3D bb;
+    int matIx = currentNode()->material();
+    int keyCount = m_smoothingGroupCount;
+    QGLMaterialCollection *palette = geometry()->palette();
+    for (Lib3dsDword key = 1; key; key <<= 1)
+    {
+        keyCount -= 1;
+        if (key & m_smoothingGroups || key == 1)
+        {
+            for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+            {
+                Lib3dsFace *face = &m_mesh->faceL[f];
+                if (palette->materialIndexByName(face->material) == matIx &&
+                    ((key & face->smoothing) || (key == 1 && face->smoothing == 0)))
+                {
+                    Lib3dsVector &l3a = m_mesh->pointL[face->points[0]].pos;
+                    Lib3dsVector &l3b = m_mesh->pointL[face->points[1]].pos;
+                    Lib3dsVector &l3c = m_mesh->pointL[face->points[2]].pos;
+                    QVector3D a(l3a[0], l3a[1], l3a[2]);
+                    QVector3D b(l3b[0], l3b[1], l3b[2]);
+                    QVector3D c(l3c[0], l3c[1], l3c[2]);
+                    QGLTextureModel model;
+                    if (m_hasTextures)
+                    {
+                        Lib3dsTexel &t0 = m_mesh->texelL[face->points[0]];
+                        Lib3dsTexel &t1 = m_mesh->texelL[face->points[1]];
+                        Lib3dsTexel &t2 = m_mesh->texelL[face->points[2]];
+                        model.setBottomLeft(QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]));
+                        model.setBottomRight(QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]));
+                        model.setTopRight(QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]));
+                    }
+                    addTriangle(a, b, c, QVector3D(), model);
+                }
+            }
+        }
+        if (keyCount > 0)
+        {
+            newSection(QGL::Smooth);
+            currentNode()->setMaterial(matIx);
+            currentNode()->setEffect(m_currentEffect);
+        }
+    }
+}
+

@@ -44,7 +44,11 @@
 
 #include "qgldisplaylist.h"
 
+#include <lib3ds/types.h>
+
+
 class QGLMaterialCollection;
+class QGL3dsLoader;
 class Lib3dsMesh;
 
 class QGL3dsList : public QGLDisplayList
@@ -53,9 +57,25 @@ Q_OBJECT
 public:
     explicit QGL3dsList(Lib3dsMesh *mesh, QObject *parent = 0,
                         QGLMaterialCollection *materials = 0);
+    void initialize();
+    bool hasTextures() { return m_hasTextures; }
+
+protected:
+    void determineMaterials();
+    void determineSmoothing();
+    void checkTextures(int);
+    QMatrix4x4 meshMatrix() const;
+    void generateVertices();
 
 private:
     Lib3dsMesh *m_mesh;
+    bool m_hasTextures;
+    Lib3dsDword m_smoothingGroups;
+    int m_smoothingGroupCount;
+    QSet<int> m_plainMaterials;
+    QSet<int> m_textureMaterials;
+    QGL::StandardEffect m_currentEffect;
+    bool m_texFlip;
 };
 
 #endif // QGL3DSLIST_H
