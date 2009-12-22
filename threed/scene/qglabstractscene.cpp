@@ -44,6 +44,7 @@
 #include <QtCore/qfile.h>
 #include <QtCore/qfileinfo.h>
 #include <QtCore/private/qfactoryloader_p.h>
+#include <QtCore/qlibraryinfo.h>
 #include <QtNetwork/qnetworkreply.h>
 
 QT_BEGIN_NAMESPACE
@@ -268,6 +269,12 @@ QGLAbstractScene *QGLAbstractScene::loadScene
     }
 
     // If we get here, then the format is not supported by any of the plugins.
+#ifndef QT_NO_DEBUG
+    qWarning("Could not create handler for format %s"
+             "- check plugins are installed correctly in %s",
+             qPrintable(fmt),
+             qPrintable(QLibraryInfo::location(QLibraryInfo::PluginsPath)));
+#endif
     return 0;
 #else // QT_NO_LIBRARY || QT_NO_SETTINGS
     Q_UNUSED(device);
