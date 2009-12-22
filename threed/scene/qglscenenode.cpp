@@ -455,11 +455,26 @@ void QGLSceneNode::setParent(QObject *parent)
 void QGLSceneNode::draw(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
+    bool wasTransformed = false;
+    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
+    {
+         painter->modelViewMatrix().push();
+         if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
+         if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
+         wasTransformed = true;
+    }
+
     if (d->geometry)
     {
+        // If this node only references a small section of the geometry, then
+        // this bounding-box test may draw something that didn't need to be.
         QBox3D bb = d->geometry->boundingBox();
         if (bb.isFinite() && !painter->isVisible(bb))
+        {
+            if (wasTransformed)
+                painter->modelViewMatrix().pop();
             return;
+        }
     }
     if (d->hasEffect)
     {
@@ -474,13 +489,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
                 painter->setStandardEffect(d->localEffect);
         }
     }
-
-	if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
-	{
-		 painter->modelViewMatrix().push();
-		 if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
-		 if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
-	}
 
     int saveMat = -1;
     bool matSaved = false;
@@ -507,7 +515,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (matSaved)
         d->geometry->setMaterial(saveMat);
 
-    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
+    if (wasTransformed)
         painter->modelViewMatrix().pop();
 }
 
