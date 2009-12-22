@@ -480,6 +480,7 @@ void CubeView::paintGL(QGLPainter *painter)
                                  (mSceneManager ?
                                   tr("Could not find main scene") :
                                   tr("Could not load file %1").arg(mCurrentModelName))
+                                  + tr(".  Check console output for more details.")
                                  );
             mWarningDisplayed = true;
         }
