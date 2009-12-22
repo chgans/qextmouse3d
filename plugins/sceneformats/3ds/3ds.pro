@@ -3,17 +3,20 @@
 TARGET = qscene3ds
 include(../../qpluginbase.pri)
 HEADERS += qgl3dsloader.h \
-    qgl3dsmesh.h \
     qgl3dsscene.h \
-    qgl3dsscenehandler.h \
-    qgl3dslist.h
+    qgl3dsscenehandler.h
 SOURCES += main.cpp \
     qgl3dsloader.cpp \
-    qgl3dsmesh.cpp \
     qgl3dsscene.cpp \
-    qgl3dsscenehandler.cpp \
-    qgl3dslist.cpp
+    qgl3dsscenehandler.cpp
 DEFINES += Q_USE_DISPLAYLIST
+contains(DEFINES, Q_USE_DISPLAYLIST) {
+    SOURCES += qgl3dslist.cpp
+    HEADERS += qgl3dslist.h
+} else {
+    SOURCES += qgl3dsmesh.cpp
+    HEADERS += qgl3dsmesh.h
+}
 !isEmpty(QMAKE_LIBS_3DS):LIBS += -l$$QMAKE_LIBS_3DS
 else { 
     win32:LIBS += -llib3ds-1_3

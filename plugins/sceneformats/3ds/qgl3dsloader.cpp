@@ -43,11 +43,16 @@
 #include "qglmaterialparameters.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
-#include "qgl3dsmesh.h"
 #include "qgltexture2d.h"
 #include "qgl3dsscene.h"
 #include "qglscenenode.h"
+
+
+#ifdef Q_USE_DISPLAYLIST
 #include "qgl3dslist.h"
+#else
+#include "qgl3dsmesh.h"
+#endif
 
 #include <lib3ds/mesh.h>
 #include <lib3ds/file.h>
@@ -59,8 +64,6 @@
 #include <QtCore/qdir.h>
 #include <QtCore/qobject.h>
 #include <QtCore/qfileinfo.h>
-
-#define Q_USE_DISPLAYLIST 1
 
 QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file)
      : mRootNode(new QGLSceneNode())
@@ -104,22 +107,21 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
         qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
 #ifdef Q_USE_DISPLAYLIST
-    QGL3dsList *m = new QGL3dsList(mesh, mRootNode,
+    QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode,
                                     mRootNode->geometry()->palette());
 #else
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode);
     m->setPalette(mRootNode->geometry()->palette());
     m->setObjectName(QString(mesh->name) + "Mesh");
-    mMeshes.insert(mesh->name, m);
-    mRefMap.insert(m, false);
 #endif
+    mMeshes.insert(mesh->name, m);
     if (mesh->faces == 0 || mesh->points == 0)
         return;
     m->initialize();
     if (!mHasTextures)
-        mHasTextures = m->hasTextures();
+        mHasTextures = m->hasTexture();
     if (!mHasLitMaterials)
-        mHasLitMaterials = !m->hasTextures();
+        mHasLitMaterials = !m->hasTexture();
 #ifdef Q_USE_DISPLAYLIST
     QBox3D bounds = m->geometry()->boundingBox();
 #else
@@ -154,6 +156,8 @@ inline static QMatrix4x4 getNodeMatrix(Lib3dsNode *node)
     return nodeMatrix;
 }
 
+#ifndef Q_USE_DISPLAYLIST
+
 void QGL3dsLoader::populateSceneNode(QGLSceneNode *sceneNode, Lib3dsNode *node)
 {
     Lib3dsObjectData *d = &node->data.object;
@@ -166,13 +170,11 @@ void QGL3dsLoader::populateSceneNode(QGLSceneNode *sceneNode, Lib3dsNode *node)
     {
         QGL3dsMesh *mesh = mMeshes[meshName];
         sceneNode->setGeometry(mesh);
-        sceneNode->setObjectName(meshName + "Node");
+        sceneNode->setObjectName(meshName + "-Node");
         if (mesh->hasTexture())
             sceneNode->setEffect(QGL::LitModulateTexture2D);
         else
             sceneNode->setEffect(QGL::LitMaterial);
-        Q_ASSERT(mRefMap.contains(mesh));
-        mRefMap[mesh] = true;
     }
     else
     {
@@ -193,26 +195,19 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
         {
             QGLSceneNode *sceneNode = 0;
             QString nodeName(node->name);
-#ifdef Q_USE_DISPLAYLIST
-            if (nodeName == QLatin1String("$$$DUMMY"))
-#endif
-            {
-                sceneNode = new QGLSceneNode(parentNode);
-                sceneNode->setLocalTransform(getNodeMatrix(node));
-                //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
-            }
+            sceneNode = new QGLSceneNode(parentNode);
+            sceneNode->setLocalTransform(getNodeMatrix(node));
+            //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
             if (nodeName == QLatin1String("$$$DUMMY"))
             {
                 nodeName = node->data.object.instance;
                 sceneNode->setObjectName(nodeName);
                 loadNodes(node->childs, sceneNode);
             }
-#ifndef Q_USE_DISPLAYLIST
             else
             {
                 populateSceneNode(sceneNode, node);
             }
-#endif
         }
 #ifndef QT_NO_DEBUG_STREAM
         else
@@ -222,6 +217,54 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
 #endif
     }
 }
+
+#else
+
+void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
+{
+    Lib3dsNode *node;
+    for (node = nodeList; node != NULL; node = node->next)
+    {
+        if (node->type == LIB3DS_OBJECT_NODE)
+        {
+            Lib3dsObjectData *d = &node->data.object;
+            QString meshName = d->morph;
+            if (meshName.isEmpty())
+                meshName = d->instance;
+            if (meshName.isEmpty())
+                meshName = node->name;
+            if (!meshName.isEmpty() && mMeshes.contains(meshName))
+            {
+                QGL3dsMesh *mesh = mMeshes[meshName];
+                QMatrix4x4 mat = getNodeMatrix(node);
+                mat = mat * mesh->localTransform();
+                mesh->setLocalTransform(mat);
+            }
+            else
+            {
+                QGLSceneNode *sceneNode = new QGLSceneNode(parentNode);
+                sceneNode->setLocalTransform(getNodeMatrix(node));
+                //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
+                QString nodeName(node->name);
+                if (nodeName == QLatin1String("$$$DUMMY"))
+                {
+                    nodeName = node->data.object.instance;
+                    sceneNode->setObjectName(nodeName);
+                    loadNodes(node->childs, sceneNode);
+                }
+                qDebug() << "Node with no mesh" << meshName << "created" << nodeName;
+            }
+        }
+#ifndef QT_NO_DEBUG_STREAM
+        else
+        {
+            qDebug() << "Node" << node->name << "of type" << node_type_names[node->type] << "not currently supported";
+        }
+#endif
+    }
+}
+
+#endif // Q_USE_DISPLAYLIST
 
 /*!
     \internal

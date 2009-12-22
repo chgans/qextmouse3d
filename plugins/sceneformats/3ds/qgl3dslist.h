@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGL3DSLIST_H
-#define QGL3DSLIST_H
+#ifndef QGL3DSMESH_H
+#define QGL3DSMESH_H
 
 #include "qgldisplaylist.h"
 
@@ -51,14 +51,14 @@ class QGLMaterialCollection;
 class QGL3dsLoader;
 class Lib3dsMesh;
 
-class QGL3dsList : public QGLDisplayList
+class QGL3dsMesh : public QGLDisplayList
 {
 Q_OBJECT
 public:
-    explicit QGL3dsList(Lib3dsMesh *mesh, QObject *parent = 0,
+    explicit QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent = 0,
                         QGLMaterialCollection *materials = 0);
     void initialize();
-    bool hasTextures() { return m_hasTextures; }
+    bool hasTexture() { return m_hasTextures; }
 
 protected:
     void determineMaterials();
@@ -78,4 +78,4 @@ private:
     bool m_texFlip;
 };
 
-#endif // QGL3DSLIST_H
+#endif // QGL3DSMESH_H

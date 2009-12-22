@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgl3dslist.h"
+#include "QGL3dslist.h"
 #include "qglmaterialcollection.h"
 
 #include <lib3ds/mesh.h>
@@ -48,7 +48,7 @@
 
 #define FACETED_THRESHOLD 1000
 
-QGL3dsList::QGL3dsList(Lib3dsMesh *mesh, QObject *parent,
+QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
                        QGLMaterialCollection *materials)
     : QGLDisplayList(parent, materials)
     , m_mesh(mesh)
@@ -58,7 +58,7 @@ QGL3dsList::QGL3dsList(Lib3dsMesh *mesh, QObject *parent,
     setObjectName(QString(mesh->name));
 }
 
-void QGL3dsList::initialize()
+void QGL3dsMesh::initialize()
 {
     determineMaterials();
     setLocalTransform(meshMatrix());
@@ -100,7 +100,7 @@ void QGL3dsList::initialize()
     Figures out all the material indexes used in this mesh.  If any
     face has no material assigned then a -1 index will be listed.
 */
-void QGL3dsList::determineMaterials()
+void QGL3dsMesh::determineMaterials()
 {
     QGLMaterialCollection *pal = geometry()->palette();
     Lib3dsFace *face;
@@ -136,7 +136,7 @@ void QGL3dsList::determineMaterials()
     threshold number of faces (currently set at 1000) then smoothing will be
     forced on.
 */
-void QGL3dsList::determineSmoothing()
+void QGL3dsMesh::determineSmoothing()
 {
     Lib3dsFace *face;
     Lib3dsDword keys = 0;
@@ -176,7 +176,7 @@ void QGL3dsList::determineSmoothing()
     has textures or not.  In debug mode issue a warning if the textures are
     corrupt (number of texels and vertices not equal).
 */
-void QGL3dsList::checkTextures(int material)
+void QGL3dsMesh::checkTextures(int material)
 {
     QGLTexture2D *tex = geometry()->palette()->texture(material);
     if (tex)
@@ -198,7 +198,7 @@ void QGL3dsList::checkTextures(int material)
     \internal
     Returns any local transformation matrix for the mesh.
 */
-QMatrix4x4 QGL3dsList::meshMatrix() const
+QMatrix4x4 QGL3dsMesh::meshMatrix() const
 {
     Lib3dsMatrix &m = m_mesh->matrix;  // typedef for float[4][4]
     QMatrix4x4 mat;
@@ -231,7 +231,7 @@ QMatrix4x4 QGL3dsList::meshMatrix() const
     Generate the vertices for the faces based on their smoothing keys and
     the current nodes material.
 */
-void QGL3dsList::generateVertices()
+void QGL3dsMesh::generateVertices()
 {
     QBox3D bb;
     int matIx = currentNode()->material();
