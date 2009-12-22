@@ -238,13 +238,13 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     QVector3D norm = n;
     if (norm.isNull())
         norm = QVector3D::crossProduct(b - a, c - a);
-#ifndef QT_NO_DEBUG
     if (norm.isNull())
     {
-        qDebug() << "Triangle" << a << b << "has null normal";
-        qWarning("### Invalid normal ###");
-    }
+#ifndef QT_NO_DEBUG
+        qDebug() << "#### Triangle" << a << b << c << "has null normal ####";
 #endif
+        norm = QVector3D(1.0f, 0.0f, 0.0f);
+    }
     QLogicalVertex va(a, norm);
     QLogicalVertex vb(b, norm);
     QLogicalVertex vc(c, norm);
