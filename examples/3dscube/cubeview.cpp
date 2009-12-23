@@ -47,6 +47,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QColorDialog>
+#include <QTime>
 
 #include <math.h>
 
@@ -118,13 +119,16 @@ void CubeView::importModel(const QString &name)
     mSceneRoot = 0;
     mSelectMaterial = -1;
     mCurrentModelName = name;
+    QTime time;
+    time.start();
     mSceneManager = QGLAbstractScene::loadScene(mCurrentModelName);
+    qDebug() << "Time to load" << name << time.elapsed() << "ms";
     if (!mSceneManager)
         return;
     QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
-    qDumpScene(mSceneRoot);
+    //qDumpScene(mSceneRoot);
 }
 
 void CubeView::loadColors()
