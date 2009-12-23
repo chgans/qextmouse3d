@@ -46,16 +46,12 @@
 #include <QtCore/qstring.h>
 #include <QtCore/qmap.h>
 
-/// remove me
-#define Q_USE_DISPLAYLIST 1
-
 class Lib3dsFile;
 class Lib3dsMesh;
 class Lib3dsMaterial;
 class Lib3dsNode;
 class QGL3dsMesh;
 class QGLSceneNode;
-class QGL3dsList;
 
 class QGL3dsLoader
 {
@@ -70,9 +66,6 @@ private:
     void loadNodes(Lib3dsNode *, QGLSceneNode *);
     void loadMaterial(Lib3dsMaterial *);
     QString ensureResourceFile(const QString &);
-#ifndef Q_USE_DISPLAYLIST
-    void populateSceneNode(QGLSceneNode *, Lib3dsNode *);
-#endif
 
     QGLSceneNode *mRootNode;
     Lib3dsFile *mFile;

@@ -42,79 +42,42 @@
 #ifndef QGL3DSMESH_H
 #define QGL3DSMESH_H
 
-#include <QtCore/qlist.h>
-#include <QtGui/qvector3d.h>
-#include <QtGui/qmatrix4x4.h>
+#include "qgldisplaylist.h"
+
 #include <lib3ds/types.h>
 
-#include "qglgeometry.h"
 
-class QBox3D;
-class QGL3dsFace;
-class QGLGeometry;
-class QGLVertexArray;
-class QGLIndexArray;
-class QGLPainter;
-class QGL3dsGeometry;
 class QGLMaterialCollection;
+class QGL3dsLoader;
 class Lib3dsMesh;
 
-class QGL3dsMesh : public QGLGeometry
+class QGL3dsMesh : public QGLDisplayList
 {
-    Q_OBJECT
+Q_OBJECT
 public:
-    QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent = 0);
-    ~QGL3dsMesh();
+    explicit QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent = 0,
+                        QGLMaterialCollection *materials = 0);
     void initialize();
-    void draw(QGLPainter *painter);
-    bool upload();
-    bool hasTexture() const { return mHasTexture; }
+    bool hasTexture() { return m_hasTextures; }
+
+protected:
+    void analyzeMesh();
+    void checkTextures(int);
+    QMatrix4x4 meshMatrix() const;
+    void generateVertices();
 
 private:
-    QList<int> determineMaterials() const;
-    void determineSmoothing();
-    void checkTextures();
-    void generateFaces();
-    void generateStructure();
-    void processFace(int f, Lib3dsDword key,
-                     QMap<int, int> &indexMap,
-                     QGLVertexArray &verts,
-                     QGLIndexArray &indices,
-                     QList<int> &counts,
-                     QBox3D &bb,
-                     int &lastVertex);
-    void generateVertices();
-    void addVertex(QGLVertexArray &verts, QBox3D &bb,
-                   Lib3dsDword meshIndex, const QVector3D &normal = QVector3D());
-    QMatrix4x4 meshMatrix() const;
-    QVector3D normalFromFace(Lib3dsFace *) const;
-    void renormalize(QGLVertexArray &verts, const QList<int> &counts);
-    QMap<int, Lib3dsDword> mapFaces();
+    void processNodeForMaterial(int matIx, QGLSceneNode *node);
 
-    QMatrix4x4 mMatrix;
-    Lib3dsMesh *mMesh;
-
-    // Manage normals
-    struct NormalMap
-    {
-        int start;
-        int count;
-        int normal;
-    };
-    QList<QVector3D> mNormals;
-    QList<NormalMap> mNormalMappings;
-
-    // Smoothing information
-    Lib3dsDword mSmoothingGroups;
-
-    // Materials for this mesh    
-    bool mHasTexture;
-    bool mTexFlip;
-
-    // FIXME - remove this
-    bool mDebugged;
-
-    friend class QGL3dsLoader;
+    Lib3dsMesh *m_mesh;
+    bool m_hasTextures;
+    Lib3dsDword m_smoothingGroups;
+    int m_smoothingGroupCount;
+    QSet<int> m_plainMaterials;
+    QSet<int> m_textureMaterials;
+    QMap<int, int> m_groupCounts;
+    QMap<int, Lib3dsDword> m_keys;
+    bool m_texFlip;
 };
 
 #endif // QGL3DSMESH_H
