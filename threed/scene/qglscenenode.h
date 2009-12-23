@@ -108,6 +108,8 @@ private:
 };
 
 #ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT void qDumpScene(QGLSceneNode *, int indent = 0);
+
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLSceneNode &node);
 #endif
 

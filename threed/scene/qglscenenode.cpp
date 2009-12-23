@@ -563,35 +563,138 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 }
 
 #ifndef QT_NO_DEBUG_STREAM
+#include "qglmaterialcollection.h"
+
+/*!
+    \relates QGLSceneNode
+    Print a description of \a node, and all its descendants, to stderr.  Only
+    available when compiled in debug mode (without QT_NO_DEBUG defined).
+*/
+void qDumpScene(QGLSceneNode *node, int indent)
+{
+    QString ind;
+    ind.fill(' ', indent * 4);
+    fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
+            qPrintable(node->objectName()));
+    fprintf(stderr, "%s start: %d   count: %d\n", qPrintable(ind), node->start(), node->count());
+
+    if (node->localTransform().isIdentity())
+    {
+        fprintf(stderr, "%s local transform: identity\n", qPrintable(ind));
+    }
+    else
+    {
+        fprintf(stderr, "%s local transform:\n", qPrintable(ind));
+        QMatrix4x4 m = node->localTransform();
+        for (int i = 0; i < 4; ++i)
+            fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
+                    qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
+    }
+
+    if (node->userTransform().isIdentity())
+    {
+        fprintf(stderr, "%s user transform: identity\n", qPrintable(ind));
+    }
+    else
+    {
+        fprintf(stderr, "%s user transform:\n", qPrintable(ind));
+        QMatrix4x4 m = node->userTransform();
+        for (int i = 0; i < 4; ++i)
+            fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
+                    qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
+    }
+
+    if (node->geometry())
+    {
+        fprintf(stderr, "%s geometry: %p\n", qPrintable(ind), node->geometry());
+        fprintf(stderr, "%s material: %d == %s\n", qPrintable(ind), node->material(),
+                qPrintable(node->geometry()->palette()->materialName(node->material())));
+    }
+    else
+    {
+        fprintf(stderr, "%s geometry: NULL\n", qPrintable(ind));
+        fprintf(stderr, "%s material: %d\n", qPrintable(ind), node->material());
+    }
+
+    if (node->hasEffect())
+    {
+        switch (node->effect())
+        {
+        case QGL::FlatColor:
+            fprintf(stderr, "%s flat color effect\n", qPrintable(ind)); break;
+        case QGL::FlatPerVertexColor:
+            fprintf(stderr, "%s flat per vertex color effect\n", qPrintable(ind)); break;
+        case QGL::FlatReplaceTexture2D:
+            fprintf(stderr, "%s flat replace texture 2D effect\n", qPrintable(ind)); break;
+        case QGL::FlatDecalTexture2D:
+            fprintf(stderr, "%s flat decal texture 2D effect\n", qPrintable(ind)); break;
+        case QGL::LitMaterial:
+            fprintf(stderr, "%s lit material effect\n", qPrintable(ind)); break;
+        case QGL::LitDecalTexture2D:
+            fprintf(stderr, "%s lit decal texture 2D effect\n", qPrintable(ind)); break;
+        case QGL::LitModulateTexture2D:
+            fprintf(stderr, "%s lit modulate texture 2D effect\n", qPrintable(ind)); break;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "%s no effect set\n", qPrintable(ind));
+    }
+    QList<QGLSceneNode *> children = node->childNodes();
+    QList<QGLSceneNode *>::const_iterator it = children.constBegin();
+    for ( ; it != children.constEnd(); ++it)
+        qDumpScene(*it, indent + 1);
+}
+
 QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
 {
-    dbg << &node << "start:" << node.start() << " count:" << node.count();
-    dbg << "   geometry:" << node.geometry();
-    dbg << "   transform:" << node.localTransform();
-    dbg << "   material:" << node.material();
+    dbg << &node << "\n    start:" << node.start() << " count:" << node.count();
+
+    if (node.localTransform().isIdentity())
+        dbg << "\n    local transform: identity";
+    else
+        dbg << "\n    local transform:\n" << node.localTransform();
+
+    if (node.userTransform().isIdentity())
+        dbg << "\n    user transform: identity";
+    else
+        dbg << "\n    user transform:\n" << node.userTransform();
+
+    if (node.geometry())
+    {
+        dbg << "\n    geometry:" << node.geometry();
+        dbg << "\n    material:" << QString("#%1 ==").arg(QString::number(node.material()))
+                << node.geometry()->palette()->materialName(node.material());
+    }
+    else
+    {
+        dbg << "\n    geometry: NULL";
+        dbg << "\n    material:" << QString("#%1").arg(QString::number(node.material()));
+    }
+
     if (node.hasEffect())
     {
         switch (node.effect())
         {
         case QGL::FlatColor:
-            dbg << "  flat color effect"; break;
+            dbg << "\n    flat color effect"; break;
         case QGL::FlatPerVertexColor:
-            dbg << "   flat per vertex color effect"; break;
+            dbg << "\n    flat per vertex color effect"; break;
         case QGL::FlatReplaceTexture2D:
-            dbg << "   flat replace texture 2D effect"; break;
+            dbg << "\n    flat replace texture 2D effect"; break;
         case QGL::FlatDecalTexture2D:
-            dbg << "   flat decal texture 2D effect"; break;
+            dbg << "\n    flat decal texture 2D effect"; break;
         case QGL::LitMaterial:
-            dbg << "   lit material effect"; break;
+            dbg << "\n    lit material effect"; break;
         case QGL::LitDecalTexture2D:
-            dbg << "   lit decal texture 2D effect"; break;
+            dbg << "\n    lit decal texture 2D effect"; break;
         case QGL::LitModulateTexture2D:
-            dbg << "   lit modulate texture 2D effect"; break;
+            dbg << "\n    lit modulate texture 2D effect"; break;
         }
     }
     else
     {
-        dbg << "no effect set";
+        dbg << "\n    no effect set";
     }
     return dbg;
 }
