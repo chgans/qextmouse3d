@@ -39,71 +39,120 @@
 **
 ****************************************************************************/
 
-#include "QGL3dslist.h"
+#include "qgl3dslist.h"
 #include "qglmaterialcollection.h"
 
 #include <lib3ds/mesh.h>
 #include <lib3ds/material.h>
 #include <lib3ds/vector.h>
 
+// Faceted meshes look terrible when they have more than a small number
+// of faces.  Usually if large meshes are faceted its some kind of error
+// in the model, or in importing of the model by lib3ds.  Force on
+// smoothing when greater than this many faces are detected.
 #define FACETED_THRESHOLD 1000
 
 QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
                        QGLMaterialCollection *materials)
     : QGLDisplayList(parent, materials)
     , m_mesh(mesh)
-    , m_smoothingGroupCount(0)
     , m_texFlip(false)
 {
     setObjectName(QString(mesh->name));
 }
 
+void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
+{
+    QGLMaterialCollection *palette = geometry()->palette();
+    QString baseName = objectName();
+
+    node->setMaterial(matIx);
+    node->setObjectName(baseName + QLatin1String("::") +
+                        ((matIx == -1) ? QString("No_Material") : palette->materialName(matIx)));
+
+    checkTextures(matIx);
+    generateVertices();
+    palette->markMaterialAsUsed(matIx);
+}
+
 void QGL3dsMesh::initialize()
 {
-    determineMaterials();
-    setLocalTransform(meshMatrix());
-    determineSmoothing();
-    newSection(m_smoothingGroups ? QGL::Smooth : QGL::Faceted);
-    QString baseName = objectName();
-    // process all the plain materials first, then textured materials
-    // to limit swapping effects, to the minimum
-    QList<int> matList = m_plainMaterials.toList();
-    bool switchLists = true;
-    QGLMaterialCollection *palette = geometry()->palette();
-    while (matList.count() > 0 || switchLists)
+    analyzeMesh();
+    if (m_smoothingGroups == 0 && m_mesh->faces > FACETED_THRESHOLD)
     {
-        if (matList.count() == 0 && switchLists)
-        {
-            matList = m_textureMaterials.toList();
-            switchLists = false;
-            continue;
-        }
-        int matIx = matList.takeLast();
-        QGLSceneNode *node = currentNode();
-        node->setMaterial(matIx);
-        checkTextures(matIx);
-        if (matIx == -1)
-            node->setObjectName(baseName + QLatin1String("::XX_No_Material_XX"));
-        else
-            node->setObjectName(baseName + "::" + palette->materialName(matIx));
-        generateVertices();
-        palette->markMaterialAsUsed(matIx);
+#ifndef QT_NO_DEBUG_STREAM
+        qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
+               m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
+#endif
+        for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+            m_mesh->faceL[f].smoothing = 1;
+        analyzeMesh();
     }
-    if (m_hasTextures)
-        setEffect(QGL::LitModulateTexture2D);
+    bool mixedTexturedAndPlain = m_plainMaterials.count() > 0 &&
+                                 m_textureMaterials.count() > 0;
+
+    setLocalTransform(meshMatrix());
+
+    // start a new section and node
+    newSection(m_smoothingGroups ? QGL::Smooth : QGL::Faceted);
+    QGLSceneNode *node = currentNode();
+
+    // process all the plain materials first, then textured to avoid effect swapping
+    QList<int> matList = m_plainMaterials.toList();
+    if (mixedTexturedAndPlain)
+    {
+        node->setEffect(QGL::LitMaterial);
+        node->setObjectName(objectName() + "::Materials");
+        pushNode();
+    }
     else
-        setEffect(QGL::LitMaterial);
+    {
+        setEffect(m_textureMaterials.count() > 0 ? QGL::LitModulateTexture2D : QGL::LitMaterial);
+    }
+    while (matList.count() > 0)
+    {
+        int matIx = matList.takeFirst();
+        processNodeForMaterial(matIx, node);
+        if (matList.count() > 0)
+            node = newNode();
+    }
+    matList = m_textureMaterials.toList();
+    if (mixedTexturedAndPlain)
+    {
+        popNode();
+        newNode();
+        node->setEffect(QGL::LitModulateTexture2D);
+        node->setObjectName(objectName() + "::Textures");
+    }
+    while (matList.count() > 0)
+    {
+        int matIx = matList.takeFirst();
+        processNodeForMaterial(matIx, node);
+        if (matList.count() > 0)
+            node = newNode();
+    }
 }
 
 /*!
     \internal
-    Figures out all the material indexes used in this mesh.  If any
+    Find material indexes and smoothing groups used in this mesh.  If any
     face has no material assigned then a -1 index will be listed.
+    Also figures out how complex the mesh is, by finding the count of
+    smoothing groups for the material with the greatest number of groups.
+    If the mesh is faceted (no smoothing) but has greater than FACETED_THRESHOLD
+    faces then smoothing is forced on and the mesh rescanned.
+
 */
-void QGL3dsMesh::determineMaterials()
+void QGL3dsMesh::analyzeMesh()
 {
     QGLMaterialCollection *pal = geometry()->palette();
     Lib3dsFace *face;
+    Lib3dsDword allKeys = 0;
+    m_smoothingGroupCount = 0;
+    m_keys.clear();
+    m_groupCounts.clear();
+    m_plainMaterials.clear();
+    m_textureMaterials.clear();
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         face = &m_mesh->faceL[f];
@@ -113,61 +162,36 @@ void QGL3dsMesh::determineMaterials()
             qDebug("Bad .3ds file: no material %s! (Referenced in mesh %s)\n",
                      face->material, m_mesh->name);
 #endif
-        if (m_plainMaterials.contains(matIx) ||
-            m_textureMaterials.contains(matIx))
-            continue;
-        QGLTexture2D *tex = 0;
-        if (matIx != -1)
-            tex = pal->texture(matIx);
-        if (tex)
-            m_textureMaterials.insert(matIx);
-        else
-            m_plainMaterials.insert(matIx);
-    }
-    m_hasTextures = m_textureMaterials.count() > 0;
-}
-
-/*!
-    \internal
-    Calculates the smoothing group keys for this mesh, or if no smoothing is
-    set uses a zero key resulting in faceted rendering.
-
-    If the mesh is faceted (zero smoothing keys), but contains more than a
-    threshold number of faces (currently set at 1000) then smoothing will be
-    forced on.
-*/
-void QGL3dsMesh::determineSmoothing()
-{
-    Lib3dsFace *face;
-    Lib3dsDword keys = 0;
-    m_smoothingGroupCount = 0;
-    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
-    {
-        face = &m_mesh->faceL[f];
         if (face->smoothing)
         {
-            if (!(face->smoothing & keys))
+            if (!(face->smoothing & allKeys))
             {
-                keys |= face->smoothing;
+                allKeys |= face->smoothing;
                 m_smoothingGroupCount += 1;
+                if (!m_keys.contains(matIx))
+                {
+                    m_keys.insert(matIx, 0);
+                    m_groupCounts.insert(matIx, 0);
+                }
+                else
+                {
+                    if (!(face->smoothing & m_keys[matIx]))
+                    {
+                        m_keys[matIx] |= face->smoothing;
+                        m_groupCounts[matIx] += 1;
+                    }
+                }
             }
         }
-    }
-    if (keys == 0 && m_mesh->faces > FACETED_THRESHOLD)
-    {
-#ifndef QT_NO_DEBUG_STREAM
-        qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
-               m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
-#endif
-        for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+        if (!m_plainMaterials.contains(matIx) && !m_textureMaterials.contains(matIx))
         {
-            face = &m_mesh->faceL[f];
-            face->smoothing = 1;
+            if (pal->texture(matIx))
+                m_textureMaterials.insert(matIx);
+            else
+                m_plainMaterials.insert(matIx);
         }
-        keys = 1;
-        m_smoothingGroupCount = 1;
     }
-    m_smoothingGroups = keys;
+    m_smoothingGroups = allKeys;
 }
 
 /*!
@@ -179,6 +203,7 @@ void QGL3dsMesh::determineSmoothing()
 void QGL3dsMesh::checkTextures(int material)
 {
     QGLTexture2D *tex = geometry()->palette()->texture(material);
+    m_hasTextures = false;
     if (tex)
     {
         m_hasTextures = true;
@@ -233,15 +258,17 @@ QMatrix4x4 QGL3dsMesh::meshMatrix() const
 */
 void QGL3dsMesh::generateVertices()
 {
-    QBox3D bb;
     int matIx = currentNode()->material();
     int keyCount = m_smoothingGroupCount;
     QGLMaterialCollection *palette = geometry()->palette();
+    QString baseName = currentNode()->objectName();
     for (Lib3dsDword key = 1; key; key <<= 1)
     {
         keyCount -= 1;
         if (key & m_smoothingGroups || key == 1)
         {
+            if (key != 1)
+                currentNode()->setObjectName(baseName + "::" + QString::number(key));
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             {
                 Lib3dsFace *face = &m_mesh->faceL[f];
@@ -254,6 +281,9 @@ void QGL3dsMesh::generateVertices()
                     QVector3D a(l3a[0], l3a[1], l3a[2]);
                     QVector3D b(l3b[0], l3b[1], l3b[2]);
                     QVector3D c(l3c[0], l3c[1], l3c[2]);
+                    QVector3D norm = QVector3D::crossProduct(b - a, c - a);
+                    if (norm.isNull())
+                        continue; // null face
                     QGLTextureModel model;
                     if (m_hasTextures)
                     {
@@ -264,7 +294,7 @@ void QGL3dsMesh::generateVertices()
                         model.setBottomRight(QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]));
                         model.setTopRight(QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]));
                     }
-                    addTriangle(a, b, c, QVector3D(), model);
+                    addTriangle(a, b, c, norm, model);
                 }
             }
         }
@@ -272,8 +302,6 @@ void QGL3dsMesh::generateVertices()
         {
             newSection(QGL::Smooth);
             currentNode()->setMaterial(matIx);
-            currentNode()->setEffect(m_currentEffect);
         }
     }
 }
-

@@ -70,11 +70,13 @@ QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file)
      , mFile(file)
      , mHasTextures(false)
 {
+#ifdef Q_USE_DISPLAYLIST
     QGLGeometry *topGeometry = new QGLGeometry(mRootNode);
     mRootNode->setGeometry(topGeometry);
-    mRootNode->setObjectName(file->name);
     topGeometry->setObjectName(mRootNode->objectName() + "Geometry");
     topGeometry->setPalette(new QGLMaterialCollection(topGeometry));
+#endif
+    mRootNode->setObjectName(file->name);
 }
 
 QGL3dsLoader::~QGL3dsLoader()

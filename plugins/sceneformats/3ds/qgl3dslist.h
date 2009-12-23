@@ -61,20 +61,22 @@ public:
     bool hasTexture() { return m_hasTextures; }
 
 protected:
-    void determineMaterials();
-    void determineSmoothing();
+    void analyzeMesh();
     void checkTextures(int);
     QMatrix4x4 meshMatrix() const;
     void generateVertices();
 
 private:
+    void processNodeForMaterial(int matIx, QGLSceneNode *node);
+
     Lib3dsMesh *m_mesh;
     bool m_hasTextures;
     Lib3dsDword m_smoothingGroups;
     int m_smoothingGroupCount;
     QSet<int> m_plainMaterials;
     QSet<int> m_textureMaterials;
-    QGL::StandardEffect m_currentEffect;
+    QMap<int, int> m_groupCounts;
+    QMap<int, Lib3dsDword> m_keys;
     bool m_texFlip;
 };
 
