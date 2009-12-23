@@ -76,13 +76,13 @@ QT_BEGIN_NAMESPACE
     As a QGLSceneObject, QGLSceneNode provides a draw() implementation.  This
     default implementation does the following:
     \list
-    \i ensures the effect specified by effect() is current on the painter
-    \i applies any local transformation that may be set for this node
-    \i sets the nodes material onto the geometry, if the material is valid
-    \i calls draw() for all the child nodes
-    \i calls draw(start, count) on this nodes QGLGeometry object (if any)
-    \i restores the geometry's original material if it was changed
-    \i restores the model-view matrix if any local transform was applied
+    \o ensures the effect specified by effect() is current on the painter
+    \o applies any local transformation that may be set for this node
+    \o sets the nodes material onto the geometry, if the material is valid
+    \o calls draw() for all the child nodes
+    \o calls draw(start, count) on this nodes QGLGeometry object (if any)
+    \o restores the geometry's original material if it was changed
+    \o restores the model-view matrix if any local transform was applied
     \endlist
 
     This means that this nodes effects, materials and transformations will
@@ -226,9 +226,7 @@ QMatrix4x4 QGLSceneNode::userTransform() const
 }
 
 /*!
-    Returns the transform set by the "user" associated with this node.  If no
-    local transform has been explicitly set, this method returns a
-    QMatrix4x4 set to the identity matrix.
+    Sets by the "user" associated with this node to \a transform.
 
     \sa userTransform()
 */
@@ -569,6 +567,7 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     \relates QGLSceneNode
     Print a description of \a node, and all its descendants, to stderr.  Only
     available when compiled in debug mode (without QT_NO_DEBUG defined).
+    The \a indent parameter is used internally.
 */
 void qDumpScene(QGLSceneNode *node, int indent)
 {
