@@ -4,12 +4,10 @@ HEADERS += qglcube.h \
     qglsphere.h \
     qglgeometry.h \
     qgldisplaylist.h \
-    qglsection.h \
     qglbeziergeometry.h \
     qglmaterialcollection.h \
     qglteapot.h \
     qgltexturemodel.h \
-    qlogicalvertex.h \
     qtest_helpers_p.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
@@ -25,4 +23,6 @@ SOURCES += qglcube.cpp \
 PRIVATE_HEADERS += qglteapot_data_p.h \
     qglgeometry_p.h \
     qgeometrydata_p.h \
+    qglsection_p.h \
+    qlogicalvertex_p.h \
     qgldisplaylist_p.h

@@ -39,11 +39,12 @@
 **
 ****************************************************************************/
 
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 
 #include <QtCore/qdebug.h>
 
 /*!
+    \internal
     \class QLogicalVertex
     \brief The QLogicalVertex class encapsulates data for a single vertex.
     \since 4.6
@@ -59,6 +60,7 @@
 */
 
 /*!
+    \internal
     \variable QLogicalVertex::InvalidTexValue
 
     A constant qreal value representing an invalid texture coordinate, a
@@ -69,6 +71,7 @@ const qreal QLogicalVertex::InvalidTexValue = qreal(-1000000.0f);
 
 
 /*!
+    \internal
     \variable QLogicalVertex::InvalidTexCoord
 
     A constant QVector2D value representing invalid texture coordinates,
@@ -79,6 +82,7 @@ const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::Inva
                                                             QLogicalVertex::InvalidTexValue);
 
 /*!
+    \internal
     \enum QLogicalVertex::Type
     This enumeration specifies which types of OpenGL data is
     utilized in specifying geometry.
@@ -90,11 +94,13 @@ const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::Inva
 */
 
 /*!
+    \internal
     \fn QLogicalVertex::QLogicalVertex()
     Constructs a new invalid QLogicalVertex which has no types.
 */
 
 /*!
+    \internal
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, const QVector2D &t)
     Constructs a new QLogicalVertex with its vertex value set to \a a, normal set
     to \a n, and texture set to \a t.  By default \a n is the null QVector3D,
@@ -104,6 +110,7 @@ const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::Inva
 */
 
 /*!
+    \internal
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color, const QVector3D &n, const QVector2D &t)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
     color value set to \a color, normal set to \a n, and texture set
@@ -114,83 +121,99 @@ const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::Inva
 */
 
 /*!
+    \internal
     \fn const QVector3D &QLogicalVertex::vertex() const
     Returns a const reference to the vertex value for this vertex.
 */
 
 /*!
+    \internal
     \fn void QLogicalVertex::setVertex(const QVector3D &v)
     Sets the vertex value for this vertex to \a v.
 */
 
 /*!
+    \internal
     \fn QVector3D &QLogicalVertex::vertexRef()
     Returns a modifiable reference to the vertex value.
 */
 
 /*!
+    \internal
     \fn QLogicalVertex::operator QVector3D () const
     Returns a copy of the vertex value, by casting as a QVector3D.  This
     allows passing of a QLogicalVertex to functions that expect a QVector3D.
 */
 
 /*!
+    \internal
     \fn const QVector3D &QLogicalVertex::normal() const
     Returns a const reference to the normal value for this vertex.
 */
 
 /*!
+    \internal
     \fn void QLogicalVertex::setNormal(const QVector3D &n)
     Sets the normal value for this vertex to \a n.
 */
 
 /*!
+    \internal
     \fn QVector3D &QLogicalVertex::normalRef()
     Returns a modifiable reference to the normal value for this vertex.
 */
 
 /*!
+    \internal
     \fn const QVector2D &QLogicalVertex::texCoord() const
     Returns a const reference to the normal value for this vertex.
 */
 
 /*!
+    \internal
     \fn void QLogicalVertex::setTexCoord(const QVector2D &t)
     Sets the texture coordinate for this vertex to \a t.
 */
 
 /*!
+    \internal
     \fn QVector2D &QLogicalVertex::texCoordRef()
     Returns a modifiable reference to the texture coordinate for this vertex.
 */
 
 /*!
+    \internal
     \fn const QColor4b &QLogicalVertex::color() const
     Returns a const reference to the color value for this vertex.
 */
 
 /*!
+    \internal
     \fn void QLogicalVertex::setColor(const QColor4b &c)
     Sets the color value for this vertex to \a c.
 */
 
 /*!
+    \internal
     \fn QColor4b &QLogicalVertex::colorRef()
     Returns a modifiable reference to the color value for this vertex.
 */
 
 /*!
+    \internal
     \fn bool QLogicalVertex::hasType(Type t) const
     Returns true if this vertex has data type \a t, and false otherwise.
 */
 
 /*!
+    \internal
     \fn bool QLogicalVertex::operator==(const QLogicalVertex &rhs) const
     Returns true if all the components of this logical vertex are equal to
     the corresponding components of \a rhs, and false otherwise.
 */
 
 /*!
+    \internal
     \fn bool QLogicalVertex::isNull() const
     Returns true if this vertex is null, which is the case only if its
     data type is QLogicalVertex::None, and false otherwise

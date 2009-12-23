@@ -58,6 +58,8 @@
 #include "qglgeometry.h"
 #include "qglnamespace.h"
 
+QT_BEGIN_NAMESPACE
+
 class QGLGeometryPrivate : public QObjectPrivate
 {
     Q_DECLARE_PUBLIC(QGLGeometry)
@@ -82,5 +84,7 @@ public:
     bool uploadState;
     QBox3D boundingBox;
 };
+
+QT_END_NAMESPACE
 
 #endif // QGLGEOMETRY_P_H

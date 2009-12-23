@@ -50,8 +50,7 @@
 #include "qgltexturemodel.h"
 #include "qglnamespace.h"
 #include "qglscenenode.h"
-#include "qglsection.h"
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 
 QT_BEGIN_HEADER
 
@@ -79,9 +78,7 @@ public:
     }
 
     // section management
-    QGLSection *newSection(QGL::Smoothing = QGL::Smooth);
-    QGLSection *currentSection() const;
-    QList<QGLSection*> sections() const;
+    void newSection(QGL::Smoothing = QGL::Smooth);
 
     // scene management
     QGLSceneNode *currentNode();
@@ -107,9 +104,15 @@ public:
                                const QVector3D &dir = QVector3D(),
                                const QGLTextureModel &textureModel = QGLTextureModel());
     void finalize();
+
+protected:
+    // internal and test functions
+    QGLSection *currentSection() const;
+    QList<QGLSection*> sections() const;
+
 private:
     Q_DISABLE_COPY(QGLDisplayList);
-    virtual void addSection(QGLSection *section);
+    void addSection(QGLSection *section);
 
     friend class QGLSection;
 

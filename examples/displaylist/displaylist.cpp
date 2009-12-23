@@ -44,7 +44,6 @@
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
 #include "qglmaterialparameters.h"
-#include "qglsection.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 

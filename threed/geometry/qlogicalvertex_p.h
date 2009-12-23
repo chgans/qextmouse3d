@@ -47,13 +47,20 @@
 
 #include "qcolor4b.h"
 
-QT_BEGIN_HEADER
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-class Q_QT3D_EXPORT QLogicalVertex
+class QLogicalVertex
 {
 public:
     enum Type
@@ -228,7 +235,5 @@ QDebug operator<<(QDebug dbg, const QLogicalVertex &section);
 #endif
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif // QLOGICALVERTEX_H

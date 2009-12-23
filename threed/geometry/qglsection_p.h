@@ -42,26 +42,33 @@
 #ifndef QGLSECTION_H
 #define QGLSECTION_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include "qglpainter.h"
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 #include "qbox3d.h"
 #include "qglnamespace.h"
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qmatrix4x4.h>
 
-QT_BEGIN_HEADER
-
 QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
 
 class QGLPainter;
 class QGLDisplayList;
 class QGLSectionPrivate;
 class QGeometryData;
 
-class Q_QT3D_EXPORT QGLSection
+class QGLSection
 {
 public:
     QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
@@ -138,7 +145,5 @@ QDebug operator<<(QDebug dbg, const QGLSection &section);
 #endif
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif // QGLSECTION_H

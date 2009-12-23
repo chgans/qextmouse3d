@@ -42,6 +42,7 @@
 #include <QtTest/QtTest>
 #include <QtCore/qpointer.h>
 #include "qgldisplaylist.h"
+#include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"
 #include "qglabstracteffect.h"
@@ -70,10 +71,17 @@ private slots:
     void finalize();
 };
 
+class TestQGLDisplayList : public QGLDisplayList
+{
+public:
+    QGLSection *currentSection() { return QGLDisplayList::currentSection(); }
+    QList<QGLSection*> sections() { return QGLDisplayList::sections(); }
+};
+
 void tst_QGLDisplayList::createDefault()
 {
     // Test that a newly created list works with no defaults
-    QGLDisplayList displayList0;
+    TestQGLDisplayList displayList0;
     QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
     QCOMPARE(displayList0.sections().size(), 0);
     QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
@@ -96,13 +104,15 @@ void tst_QGLDisplayList::createDefault()
 
 void tst_QGLDisplayList::newSection()
 {
-    QGLDisplayList displayList;
-    QGLSection *s = displayList.newSection(); // defaults to smooth
+    TestQGLDisplayList displayList;
+    displayList.newSection(); // defaults to smooth
+    QGLSection *s = displayList.currentSection();
     QCOMPARE(s, displayList.currentSection());
     QCOMPARE(displayList.sections().count(), 1);
     QVERIFY(displayList.sections().contains(s));
     QCOMPARE(s->smoothing(), QGL::Smooth);
-    QGLSection *s2 = displayList.newSection(QGL::Faceted);
+    displayList.newSection(QGL::Faceted);
+    QGLSection *s2 = displayList.currentSection();
     QVERIFY(s->isFinalized());
     QCOMPARE(s2, displayList.currentSection());
     QCOMPARE(displayList.sections().count(), 2);
@@ -126,8 +136,9 @@ class TestEffect : public QGLAbstractEffect
 
 void tst_QGLDisplayList::newNode()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();  // calls new node
+    TestQGLDisplayList displayList;
+    displayList.newSection();  // calls new node
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
 
     // newly created node works and has all defaults
@@ -180,7 +191,7 @@ void tst_QGLDisplayList::newNode()
 
 void tst_QGLDisplayList::newNodeEmptyPrev()
 {
-    QGLDisplayList displayList;
+    TestQGLDisplayList displayList;
     QPointer<QGLSceneNode> node = displayList.newNode();
 
     node->setEffect(QGL::LitDecalTexture2D);
@@ -208,8 +219,9 @@ void tst_QGLDisplayList::newNodeEmptyPrev()
 
 void tst_QGLDisplayList::pushNode()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
@@ -233,8 +245,9 @@ void tst_QGLDisplayList::pushNode()
 
 void tst_QGLDisplayList::popNode()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
@@ -267,8 +280,9 @@ void tst_QGLDisplayList::popNode()
 
 void tst_QGLDisplayList::addTriangle()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
@@ -305,7 +319,8 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
 
-    sec = displayList.newSection(QGL::Faceted);
+    displayList.newSection();
+    sec = displayList.currentSection();
     node = displayList.currentNode();
     QGLTextureModel model(0.0f, 0.0f, 1.0f, 1.0f);
     displayList.addTriangle(a, b, c, QVector3D(), model);
@@ -354,8 +369,9 @@ void tst_QGLDisplayList::addTriangle()
 
 void tst_QGLDisplayList::addQuad()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
@@ -387,7 +403,8 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
 
-    sec = displayList.newSection(QGL::Faceted);
+    displayList.newSection();
+    sec = displayList.currentSection();
     node = displayList.currentNode();
     QGLTextureModel model(0.0f, 0.0f, 1.0f, 1.0f);
     displayList.addQuad(a, b, c, d, model);
@@ -423,8 +440,9 @@ void tst_QGLDisplayList::addQuad()
 
 void tst_QGLDisplayList::addTriangleFan()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection(QGL::Faceted);
+    TestQGLDisplayList displayList;
+    displayList.newSection(QGL::Faceted);
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
@@ -478,8 +496,9 @@ void tst_QGLDisplayList::addTriangleFan()
 
 void tst_QGLDisplayList::addTriangulatedFace()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection(QGL::Faceted);
+    TestQGLDisplayList displayList;
+    displayList.newSection(QGL::Faceted);
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
@@ -525,15 +544,15 @@ void tst_QGLDisplayList::addTriangulatedFace()
 
 void tst_QGLDisplayList::extrude()
 {
-    QGLDisplayList displayList;
-    QGLSection *sec = displayList.newSection();
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
-    QVector3D center(0.0f, 0.0f, 0.0f);
     QGL::VectorArray edges;
     edges << a << b << c << d;
 
@@ -636,7 +655,7 @@ void tst_QGLDisplayList::finalize()
     QVector3D n3(one_on_root2, one_on_root2, 0.0f);
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
-    QGLDisplayList displayList;
+    TestQGLDisplayList displayList;
     displayList.newSection();
     QGLSceneNode *node = displayList.currentNode();
 

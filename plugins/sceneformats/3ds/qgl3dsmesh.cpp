@@ -46,6 +46,8 @@
 #include <lib3ds/material.h>
 #include <lib3ds/vector.h>
 
+#include <QtGui/qmatrix4x4.h>
+
 // Faceted meshes look terrible when they have more than a small number
 // of faces.  Usually if large meshes are faceted its some kind of error
 // in the model, or in importing of the model by lib3ds.  Force on

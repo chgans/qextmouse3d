@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglsection.h"
+#include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
 #include "qgeometrydata_p.h"
 
@@ -47,6 +47,7 @@
 #include <QtCore/qdebug.h>
 
 /*!
+    \internal
     \class QGLSection
     \brief The QGLSection class clusters like geometry in a QGLDisplayList.
     \since 4.6
@@ -205,6 +206,7 @@ public:
 };
 
 /*!
+    \internal
     \fn QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
     Construct a new QGLSection on the display list \a d, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
@@ -230,6 +232,7 @@ QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
 }
 
 /*!
+    \internal
     Destroy this QGLSection, recovering any resources.
 */
 QGLSection::~QGLSection()
@@ -238,6 +241,7 @@ QGLSection::~QGLSection()
 }
 
 /*!
+    \internal
     Completes the calculations of normal values for this section.  This
     function also performs local memory optimizations on the section.
 */
@@ -251,6 +255,7 @@ void QGLSection::finalize()
 }
 
 /*!
+    \internal
     Returns true if this section has been finalized, false otherwise.
 
     \sa finalize()
@@ -261,6 +266,7 @@ bool QGLSection::isFinalized() const
 }
 
 /*!
+    \internal
     Returns a bounding box for the vertices in this section.
 */
 QBox3D QGLSection::boundingBox() const
@@ -269,6 +275,7 @@ QBox3D QGLSection::boundingBox() const
 }
 
 /*!
+    \internal
     \fn void QGLSection::append(const QLogicalVertex &vertex)
     Adds the logical \a vertex to this section.
 
@@ -285,6 +292,7 @@ QBox3D QGLSection::boundingBox() const
 */
 
 /*!
+    \internal
     Adds the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as part of a smooth continuous surface, with
@@ -343,6 +351,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 }
 
 /*!
+    \internal
     Add the logical vertex \a lv to this section of a display list.
 
     The vertex will be drawn as a distinct edge, instead of just part of a
@@ -408,6 +417,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 }
 
 /*!
+    \internal
     Updates texture data at \a index to include value \a t.  This function
     is called by appendSmooth() and appendFaceted() when incoming vertex
     data is to be coalesced, but has a texture coordinate associated.
@@ -469,6 +479,7 @@ int QGLSection::updateTexCoord(int index, const QVector2D &t)
 }
 
 /*!
+    \internal
     Append the logical vertex \a lv to this section.
 
     The vertex will be treated as flat colored, and thus no management
@@ -482,6 +493,7 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
 }
 
 /*!
+    \internal
     Return a copy of the vertex data for this section.  Since the data
     is implicitly shared this call is inexpensive, unless the copy is
     modified.
@@ -492,6 +504,7 @@ QGL::VectorArray QGLSection::vertices() const
 }
 
 /*!
+    \internal
     Return a copy of the normal data for this section.  Since the data
     is implicitly shared this call is inexpensive, unless the copy is
     modified.
@@ -502,6 +515,7 @@ QGL::VectorArray QGLSection::normals() const
 }
 
 /*!
+    \internal
     Return a copy of the index data for this section.  Since the data
     is implicitly shared this call is inexpensive, unless the copy is
     modified.
@@ -512,6 +526,7 @@ QGL::IndexArray QGLSection::indices() const
 }
 
 /*!
+    \internal
     Return a copy of the texture coordinate data for this section.
     Since the data is implicitly shared this call is inexpensive, unless
     the copy is modified.
@@ -522,6 +537,7 @@ QGL::TexCoordArray QGLSection::texCoords() const
 }
 
 /*!
+    \internal
     Return a copy of the color data for this section.  Since the data
     is implicitly shared this call is inexpensive, unless the copy is
     modified.
@@ -532,6 +548,7 @@ QGL::ColorArray QGLSection::colors() const
 }
 
 /*!
+    \internal
     Return a copy of the data for this section as a vertex array.  The
     data is copied element-wise into a QGLVertexArray so this call is
     expensive.
@@ -542,6 +559,7 @@ QGLVertexArray QGLSection::toVertexArray() const
 }
 
 /*!
+    \internal
     Returns the vertex data for the \a index.  The \a index must be valid.
 */
 QLogicalVertex QGLSection::vertexAt(int index) const
@@ -550,6 +568,7 @@ QLogicalVertex QGLSection::vertexAt(int index) const
 }
 
 /*!
+    \internal
     Sets the vertex at \a position to have coordinates \a v.
 
     The \a position must be a valid vertex, in other words, one that has
@@ -566,6 +585,7 @@ void QGLSection::setVertex(int position, const QVector3D &v)
 }
 
 /*!
+    \internal
     Sets the vertex normal at \a position to have value \a n.
 
     If \a n is a null vector, in other words an invalid normal, then this
@@ -589,6 +609,7 @@ void QGLSection::setNormal(int position, const QVector3D &n)
 }
 
 /*!
+    \internal
     Sets the vertex at \a position to have texture coordinate value \a t.
 
     If \a t is equal to QGLTextureSpecifier::InvalidTexCoord then this
@@ -612,6 +633,7 @@ void QGLSection::setTexCoord(int position, const QVector2D &t)
 }
 
 /*!
+    \internal
     Sets the vertex color at \a position to have value \a c.
 
     The \a position must be a valid vertex with color data, in other words,
@@ -629,6 +651,7 @@ void QGLSection::setColor(int position, const QColor4b &c)
 }
 
 /*!
+    \internal
     \fn QGL::Smoothing QGLSection::smoothing() const
     Returns the smoothing mode for this section.
 
@@ -636,6 +659,7 @@ void QGLSection::setColor(int position, const QColor4b &c)
 */
 
 /*!
+    \internal
    \fn int QGLSection::count() const
 
    Returns the current count of vertices referenced for this section.  This is
@@ -647,6 +671,7 @@ int QGLSection::count() const
 }
 
 /*!
+    \internal
     Returns the types of data that this section contains.
 */
 QLogicalVertex::Types QGLSection::dataTypes() const
@@ -655,6 +680,7 @@ QLogicalVertex::Types QGLSection::dataTypes() const
 }
 
 /*!
+    \internal
     Returns true if this section has data of \a types.
 */
 bool QGLSection::hasData(QLogicalVertex::Types types)
@@ -663,6 +689,7 @@ bool QGLSection::hasData(QLogicalVertex::Types types)
 }
 
 /*!
+    \internal
     Forces this section to have \a types of data.
 
     Normally the append functions will track what types of data are
@@ -675,6 +702,7 @@ void QGLSection::enableTypes(QLogicalVertex::Types types)
 }
 
 /*!
+    \internal
     \fn QGLDisplayList *QGLSection::displayList() const
 
     Returns the display list associated with this section.
@@ -682,6 +710,7 @@ void QGLSection::enableTypes(QLogicalVertex::Types types)
 
 #ifndef QT_NO_DEBUG_STREAM
 /*!
+    \internal
     Output a string representation of \a section to a debug stream \a dbg.
     \relates QGLSection
 */

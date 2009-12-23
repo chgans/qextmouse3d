@@ -57,7 +57,7 @@
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector2d.h>
 #include "qcolor4b.h"
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 
 namespace QTest {
     char *toString(const QVector3D &v)

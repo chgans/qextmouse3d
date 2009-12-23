@@ -59,6 +59,8 @@
 
 #include <QtCore/qmap.h>
 
+QT_BEGIN_NAMESPACE
+
 class QGLDisplayList;
 class QGLSection;
 
@@ -82,5 +84,7 @@ inline void QGLDisplayListPrivate::setDirty(bool dirty)
 {
     finalizeNeeded = dirty;
 }
+
+QT_END_NAMESPACE
 
 #endif // QGLDISPLAYLIST_P_H

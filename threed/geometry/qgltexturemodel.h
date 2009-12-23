@@ -43,7 +43,7 @@
 #define QGLTEXTUREMODEL_H
 
 #include "qt3dglobal.h"
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 
 #include <QtCore/qrect.h>
 #include <QtGui/qvector2d.h>

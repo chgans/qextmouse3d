@@ -54,10 +54,12 @@
 //
 
 #include "qcolor4b.h"
-#include "qlogicalvertex.h"
+#include "qlogicalvertex_p.h"
 #include "qglnamespace.h"
 #include "qglvertexarray.h"
 #include "qbox3d.h"
+
+QT_BEGIN_NAMESPACE
 
 class QGeometryData
 {
@@ -301,5 +303,7 @@ inline int QGeometryData::count() const
 {
     return m_indices.count();
 }
+
+QT_END_NAMESPACE
 
 #endif // QGEOMETRYDATA_H

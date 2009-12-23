@@ -41,7 +41,7 @@
 
 #include "qgldisplaylist.h"
 #include "qgldisplaylist_p.h"
-#include "qglsection.h"
+#include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexturemodel.h"
@@ -75,13 +75,15 @@
     the same paradigm as the OpenGL display list with an initial setup phase
     and subsequent cheap drawing operations.
 
+    \section1 Display Lists and Scene Nodes
+
     QGLSceneNodes are used to manage application of local transformations,
     materials and effects, in the same way that glRotate() or glMaterial()
     might be used inside a display list.
 
     Since QGLDisplayList is itself a (sub-class of) QGLSceneNode materials
     and effects may be applied to the whole list, or to parts of it.  This
-    is demonstrated in the displaylist example application
+    is demonstrated in the displaylist example application.
 
     \image soup.png
 
@@ -110,36 +112,78 @@
     These may then be applied as needed throughout the building of the
     geometry using the integer reference, \c{canMat} in the above code.
 
-    During initialization of the QGLDisplayList, while accumulating
-    geometry, the geometry data in a QGLDisplayList is divided into
-    QGLSection instances which manage the smoothing properties of the mesh.
+    \section1 Using Sections
 
-    For example a QGLDisplayList representing a 3D can of soup might have a
-    smooth QGLSection for the rounded outside cylinder and seperate
-    QGLSection instances for the flat top and bottom.  This will cause the
-    can to have lighting normals such that a sharp edge seperates the top,
-    bottom and sides whilst retaining the smoothly rounded sides.
+    During initialization of the QGLDisplayList, while accumulating
+    geometry, the geometry data in a QGLDisplayList is placed into
+    sections - there must be at least one section.
+
+    Call the newSection() function to create a new section, before putting
+    any geometry into a display list.
+
     \snippet displaylist/displaylist.cpp 3
 
-    Smooth surfaces are continuous over vertices, where faceted surfaces have
-    hard edges at the vertices.  In reality both surfaces are made of faces,
-    but in the smooth case lighting normals are calculated to make for a smooth
-    appearance.  In 3D applications this concept is often referred to as
-    \l{http://www.google.com/search?smoothing+groups}{smoothing groups}.
+    Here seperate sections for the rounded outside cylinder and flat top and
+    bottom of the soup can model makes for the appearance of a sharp edge
+    between them.  If the sides and top and bottom were in the same section
+    QGLDisplayList would attempt to average the normals around the edge resulting
+    in an unrealistic effect.
 
-    Management of normals and vertices is handled automatically by the
-    QGLSection instances.
+    In 3D applications this concept is referred to as
+    \l{http://www.google.com/search?smoothing+groups}{smoothing groups}.  Within
+    a section (smoothing group) all normals are averaged making it appear
+    as one smoothly shaded surface.
+
+    The can has 3 smoothing groups - bottom, top and sides.
+
+    This mesh of a Q is a faceted model - it has 0 smoothing groups:
+
+    \image faceted-q.png
+
+    To create geometry with a faceted appearance call newSection() with
+    an argument of QGL::Faceted thus \c{newSection(QGL::Faceted)}.
+
+    Faceted geometry is suitable for small models, where hard edges are
+    desired between every face - a dice, gem or geometric solid for example.
+
+    \section2 Geometry Data in a Section
+
+    Management of normals and vertices for smoothing, and other data is
+    handled automatically by the display list.
+
+    Within a section, incoming geometry data will be coalesced and
+    indices created to reference the fewest possible copies of the vertex
+    data.  For example, in smooth geometry all copies of a vertex are
+    coalesced into one, and referenced by indices.
+
+    One of the few exceptions to this is the case where texture data forms
+    a \i seam and a copy of a vertex must be created to carry the two
+    texture coordinates either side of the seam.
+
+    \image texture-seam.png
+
+    Coalescing has the effect of packing geometry data into the
+    smallest space possible thus improving cache coherence and performance.
+
+    Again all this is managed automatically by QGLDisplayList and all
+    that is required is to create smooth or faceted sections, and add
+    geometry to them.
+
+    Each QGLSection references a contiguous range of vertices in a
+    QGLDisplayList.
+
+    \section1 Finalizing a QGLDisplayList
 
     Once the geometry has been accumulated in the display list,  the
     finalize() method must be called to normalize the geometry and optimize
     it for display.  The finalize() method makes passes through the data of
-    each section, calling in turn its finalize() method, then optimizing
-    and preparing the data for display.  Thus it may be expensive for large
-    geometry.
+    each section, normalizing and then optimizing and preparing the data for
+    display.  Thus it may be expensive for large geometry.
 
-    The finalize method also destroys all the QGLSection instances, storing
-    all the geometry data in QGLGeometry objects, accessible via the
-    QGLSceneNode object graph.
+    The finalize method also destroys all the internal vertex management
+    data structures, with the result that no more geometry may be added to
+    the display list.  Once finalize() has finished its work, the geometry
+    data in a display list is acessible as a QGLVertexArray:
 
     \code
     displayList->finalize();
@@ -152,14 +196,6 @@
     function to simply call finalize() and then QGLSceneNode::draw(), you do
     not need to remember to explicitly call it, unless you want to control
     when the overhead of the finalize() function is incurred.
-
-    The finalize() method for the current section is called when a new section is
-    opened, so if no changes have been made to the data - eg by calling
-    \c {somePreviousSection->setVertex(index, vec3d)}, then the display lists
-    finalize can complete more quickly, since sections are only finalized if data
-    has been changed.
-
-    \sa QGLSection
 */
 
 QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
@@ -538,20 +574,16 @@ void QGLDisplayList::finalize()
 }
 
 /*!
-    Creates a new QGLSection with smoothing mode set to \a smooth and makes
+    Creates a new section with smoothing mode set to \a smooth and makes
     it current on this QGLDisplayList.
-
-    Returns the new current active QGLSection.
 
     Also a new QGLSceneNode is created and made current.  The new node is a
     copy of the previously current node, so any materials or effects set
     will apply to this new section.
-
-    \sa currentSection()
 */
-QGLSection *QGLDisplayList::newSection(QGL::Smoothing smooth)
+void QGLDisplayList::newSection(QGL::Smoothing smooth)
 {
-    return new QGLSection(this, smooth);  // calls addSection
+    new QGLSection(this, smooth);  // calls addSection
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)
@@ -567,6 +599,7 @@ void QGLDisplayList::addSection(QGLSection *sec)
 }
 
 /*!
+    \internal
     Returns the current section, in which new geometry is being added.
 */
 QGLSection *QGLDisplayList::currentSection() const
@@ -576,6 +609,7 @@ QGLSection *QGLDisplayList::currentSection() const
 }
 
 /*!
+    \internal
     Returns a list of the sections of the geometry in this display list.
 */
 QList<QGLSection*> QGLDisplayList::sections() const

@@ -40,8 +40,8 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
-#include "qglsection.h"
-#include "qgldisplaylist.h"
+#include "qglsection_p.h"
+#include "QGLDisplayList.h"
 
 #include "qtest_helpers_p.h"
 
@@ -91,11 +91,19 @@ public:
     }
 };
 
+class TestQGLDisplayList : public QGLDisplayList
+{
+public:
+    QGLSection *currentSection() { return QGLDisplayList::currentSection(); }
+    QList<QGLSection*> sections() { return QGLDisplayList::sections(); }
+};
+
 void tst_QGLSection::create()
 {
     // Test that a newly created object has the correct defaults.
-    QGLDisplayList list;
-    QGLSection *section = list.newSection();
+    TestQGLDisplayList list;
+    list.newSection();
+    QGLSection *section = list.currentSection();
     QVERIFY(section->hasData(QLogicalVertex::Vertex));
     QCOMPARE(section->dataTypes(), QLogicalVertex::Vertex);
     QCOMPARE(section->smoothing(), QGL::Smooth);
@@ -106,8 +114,9 @@ void tst_QGLSection::create()
 
 void tst_QGLSection::modify()
 {
-    QGLDisplayList list;
-    QGLSection *section = list.newSection();
+    TestQGLDisplayList list;
+    list.newSection();
+    QGLSection *section = list.currentSection();
 
     QVector3D va(-1.0f, -1.0f, 0.0f);
     QVector3D vb(1.0f, -1.0f, 0.0f);
@@ -115,15 +124,17 @@ void tst_QGLSection::modify()
     QVector3D n(0.0f, 0.0f, 1.0f);
     list.addTriangle(va, vb, vc, n);
     QCOMPARE(section->count(), 3);
-    QGLSection *section2 = list.newSection();
+    list.newSection();
+    QGLSection *section2 = list.currentSection();
     list.addTriangle(va, vb, vc, n);
     QCOMPARE(section2->count(), 3);
 }
 
 void tst_QGLSection::append()
 {
-    QGLDisplayList list;
-    QGLSection *section = list.newSection();
+    TestQGLDisplayList list;
+    list.newSection();
+    QGLSection *section = list.currentSection();
 
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(1.0f, 0.0f, 0.0f);
@@ -140,7 +151,7 @@ void tst_QGLSection::append()
 
 void tst_QGLSection::updateTexCoord()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     QCOMPARE(section->hasData(QLogicalVertex::Texture), false);
@@ -192,7 +203,7 @@ void tst_QGLSection::updateTexCoord()
 
 void tst_QGLSection::appendSmooth()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     // append a vertex - check it appears in the data along with its normal
@@ -241,7 +252,7 @@ void tst_QGLSection::appendSmooth()
 
 void tst_QGLSection::appendFaceted()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     // append a vertex - check it appears in the data along with its normal
@@ -287,7 +298,7 @@ void tst_QGLSection::appendFaceted()
 
 void tst_QGLSection::appendTexCoord()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     // note that the tests above do the case of texCoord, InvalidTexCoord
@@ -376,7 +387,7 @@ void tst_QGLSection::appendTexCoord()
 
 void tst_QGLSection::appendColor()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     QColor4b color(32, 64, 128, 255);
@@ -409,7 +420,7 @@ void tst_QGLSection::appendColor()
 
 void tst_QGLSection::accessors()
 {
-    QGLDisplayList list;
+    TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     QVector3D vertex;
