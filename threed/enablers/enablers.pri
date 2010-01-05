@@ -4,7 +4,6 @@ HEADERS += qglarraydata.h \
     qglattributevalue.h \
     qglbuffer.h \
     qglcontextscope.h \
-    qglcontextwatcher.h \
     qglindexarray.h \
     qglreferencedbuffer.h \
     qglvertexarray.h \
@@ -14,7 +13,6 @@ HEADERS += qglarraydata.h \
 SOURCES += qglattributevalue.cpp \
     qglbuffer.cpp \
     qglcontextscope.cpp \
-    qglcontextwatcher.cpp \
     qglindexarray.cpp \
     qglvertexarray.cpp \
     qglvertexdescription.cpp \
