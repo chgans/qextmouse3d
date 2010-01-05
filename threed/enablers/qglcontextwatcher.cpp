@@ -177,6 +177,9 @@ void QGLContextWatcher::setTrackResourceTransfer(bool enable)
     \sa contextDestroyed(), trackResourceTransfer()
 */
 
+// Private function in QtOpenGL.
+const QGLContext *qt_gl_transfer_context(const QGLContext *);
+
 /*!
     \internal
 */
@@ -186,11 +189,8 @@ void QGLContextWatcher::aboutToDestroyContext(const QGLContext *context)
     if (d->context != context)
         return;
     if (d->trackResourceTransfer) {
-        QList<const QGLContext *> shares;
-        shares = qgl_share_reg()->shares(context);
-        shares.removeAll(context);
-        if (!shares.isEmpty()) {
-            const QGLContext *shareContext = shares[0];
+        const QGLContext *shareContext = qt_gl_transfer_context(context);
+        if (shareContext) {
             emit resourcesTransferred(shareContext);
             d->context = shareContext;
             return;
