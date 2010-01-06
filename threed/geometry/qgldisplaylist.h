@@ -102,7 +102,8 @@ public:
                              const QGLTextureModel &textureModel = QGLTextureModel());
     QVector<QVector3D> extrude(const QGL::VectorArray &edges,
                                const QVector3D &dir = QVector3D(),
-                               const QGLTextureModel &textureModel = QGLTextureModel());
+                               const QGLTextureModel &textureModel = QGLTextureModel(),
+                               bool reverse = false);
     void finalize();
 
 protected:

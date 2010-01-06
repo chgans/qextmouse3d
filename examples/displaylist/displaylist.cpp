@@ -152,9 +152,9 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QGLTextureModel texMap(0, 0, 1, 1);
 
     // do the math for the defining points
-    for (int i = 0; i < numSlices; ++i)
+    for (int i = 0; i <= numSlices; ++i)
     {
-        qreal angle = (i * 2.0 * M_PI) / numSlices;
+        qreal angle = (qreal(i) * 2.0 * M_PI) / numSlices;
         topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle),
                                canHeight / 2.0f);
     }

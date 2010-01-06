@@ -329,6 +329,9 @@ void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
     and then \a center.  Other triangles are formed similarly, and all have
     windings and normals as for \c{addTriangle(edges[0], edges[1], center)}.
 
+    If edges has less than two elements this function exits without doing
+    anything.
+
     This function is very similar to the OpenGL mode GL_TRIANGLE_FAN.
 
     Textures are generated according to \a textureModel, if textureModel
@@ -341,7 +344,8 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
                                     const QGL::VectorArray &edges,
                                     const QGLTextureModel &textureModel)
 {
-    Q_ASSERT(edges.count() > 1);
+    if (edges.count() < 2)
+        return;
     if (!textureModel.isNull())
         qWarning("NOT IMPLEMENTED YET");
     for (int i = 0; i < edges.count() - 1; ++i)
@@ -353,6 +357,9 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     is composed of N triangular sub-faces, where N == edges.count(), each
     formed by taking two vertices from the \a edges, eg edges[0] and edges[1]
     and then \a center.
+
+    If edges has less than two elements this function exits without doing
+    anything.
 
     One normal is calculated for the face, since a faces vertices lie in
     the same plane.  The \a center and \a edges must all lie in the same
@@ -366,7 +373,8 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
 
     This function also differs from addTriangleFan(), in that it adds a closing
     sub-face \c{(edges[n], edges[0], center)} (ie between the last and first
-    vertex listed in \a edges) to form a closed edge.
+    vertex listed in \a edges) to form a closed face.  If the last and first
+    vertex are the same, then the last vertex is ignored.
 
     Textures are generated according to \a textureModel, if textureModel
     is non-null.
@@ -375,13 +383,15 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
                                          const QGL::VectorArray &edges,
                                          const QGLTextureModel &textureModel)
 {
-    Q_ASSERT(edges.count() > 1);
+    if (edges.count() < 2)
+        return;
     if (!textureModel.isNull())
         qWarning("NOT IMPLEMENTED YET");
     QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
-    for (int i = 0; i < edges.count(); ++i)
+    int cnt = edges.first() == edges.last() ? edges.count() - 1 : edges.count();
+    for (int i = 0; i < cnt; ++i)
     {
-        int n = (i + 1) % edges.count();
+        int n = (i + 1) % cnt;
         addTriangle(edges[i], edges[n], center, norm, textureModel);
     }
 }
@@ -394,6 +404,12 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     \a offset is the inverse of the face normal of polygon F then the
     quads form the sides of a solid rectangular prism with the polygon F
     as its end-face.
+
+    If \a reverse is true, then \a edges are treated as being in clockwise
+    order for the purpose of generating the winding and face normals.
+
+    If edges has less than 2 elements, this functions does nothing and
+    returns an empty array.
 
     If \a offset is null (the default) then offset is set to be the
     negative (inverse) of the normalized cross-product of the first two
@@ -422,7 +438,7 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     that the obverse face has the correct winding to face outwards from an
     extruded solid.
 
-    Textures are generated according to \a textureModel, if textureModel
+    Textures are generated according to \a textureModel, if \a textureModel
     is non-null.  When textures are generated all the points on \a edges
     must lie in the same plane, which is the case anyway if they are the
     perimeter vertices of a polygon.  Textures are assigned with the high Y
@@ -432,12 +448,13 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
 */
 QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
                                          const QVector3D &offset,
-                                         const QGLTextureModel &textureModel)
+                                         const QGLTextureModel &textureModel,
+                                         bool reverse)
 {
-    // cannot extrude just a point, need at least 2 points
-    Q_ASSERT(edges.count() > 1);
-    QVector3D o = offset;
     QGL::VectorArray result;
+    if (edges.count() < 2)
+        return result;
+    QVector3D o = offset;
     if (offset.isNull())
     {
         if (edges.count() > 2)
@@ -465,19 +482,24 @@ QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
             totalExtents += extents[i];
         }
         tx.startTileRight(totalExtents);
-        for (int i = 0; i < edges.count(); ++i)
+        for (int i = 0; i < edges.count() - 1; ++i)
         {
-            int n = (i + 1) % edges.count();
-            addQuad(result[i], result[n], edges[n], edges[i],
-                    tx.tileRight(extents[i]));
+            if (reverse)
+                addQuad(result[i+1], result[i], edges[i], edges[i+1],
+                        tx.tileRight(extents[i]));
+            else
+                addQuad(result[i], result[i+1], edges[i+1], edges[i],
+                        tx.tileRight(extents[i]));
         }
     }
     else
     {
-        for (int i = 0; i < edges.count(); ++i)
+        for (int i = 0; i < edges.count() - 1; ++i)
         {
-            int n = (i + 1) % edges.count();
-            addQuad(result[i], result[n], edges[n], edges[i]);
+            if (reverse)
+                addQuad(result[i+1], result[i], edges[i], edges[i+1]);
+            else
+                addQuad(result[i], result[i+1], edges[i+1], edges[i]);
         }
     }
     QGL::VectorArray temp;

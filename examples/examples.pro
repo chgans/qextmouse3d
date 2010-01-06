@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = teapot cube basket painter stereo qpainter geometry sphere
 SUBDIRS += tutorials spot graphicsview planets displaylist cubeaccel
+SUBDIRS += pvcolor
 3ds {
     SUBDIRS += 3dscube
 }

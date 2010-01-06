@@ -454,6 +454,13 @@ void tst_QGLDisplayList::addTriangleFan()
     QVector3D n3(0.0f, one_on_root2, one_on_root2);
     QVector3D center(0.0f, 0.0f, 1.0f);
     QGL::VectorArray edges;
+
+    // if edges has length < 2, exit without doing anything
+    displayList.addTriangleFan(center, edges);
+    QCOMPARE(sec->vertices().count(), 0);
+    QCOMPARE(sec->normals().count(), 0);
+    QCOMPARE(sec->indices().count(), 0);
+
     edges << a << b << c << d;
 
     displayList.addTriangleFan(center, edges);
@@ -507,6 +514,13 @@ void tst_QGLDisplayList::addTriangulatedFace()
     QVector3D n(0.0f, 0.0f, 1.0f);
     QVector3D center(0.0f, 0.0f, 0.0f);
     QGL::VectorArray edges;
+
+    // if edges has length < 2, exit without doing anything
+    displayList.addTriangleFan(center, edges);
+    QCOMPARE(sec->vertices().count(), 0);
+    QCOMPARE(sec->normals().count(), 0);
+    QCOMPARE(sec->indices().count(), 0);
+
     edges << a << b << c << d;
 
     displayList.addTriangulatedFace(center, edges);
@@ -554,7 +568,14 @@ void tst_QGLDisplayList::extrude()
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
     QGL::VectorArray edges;
-    edges << a << b << c << d;
+
+    // if edges has length < 2, exit without doing anything
+    displayList.extrude(edges);
+    QCOMPARE(sec->vertices().count(), 0);
+    QCOMPARE(sec->normals().count(), 0);
+    QCOMPARE(sec->indices().count(), 0);
+
+    edges << a << b << c << d << a;
 
     qreal one_on_root2 = 1.0f / sqrt(2.0f);
     QVector3D n1(-one_on_root2, -one_on_root2, 0.0f);
@@ -565,7 +586,7 @@ void tst_QGLDisplayList::extrude()
     displayList.extrude(edges, -n);
     sec->finalize();
 
-    QCOMPARE(sec->vertices().count(), edges.count() * 2);
+    QCOMPARE(sec->vertices().count(), 8);
     QGL::VectorArray vrts = sec->vertices();
     QGL::VectorArray nrms = sec->normals();
     QGL::IndexArray inxs = sec->indices();
@@ -646,7 +667,7 @@ void tst_QGLDisplayList::finalize()
     QVector3D n10(0.0f, 0.0f, -1.0f);
 
     QGL::VectorArray edges;
-    edges << a << b << c << d;
+    edges << a << b << c << d << a;
 
     qreal one_on_root2 = 1.0f / sqrt(2.0f);
     QVector3D n0(0.0f, 0.0f, 1.0f);
