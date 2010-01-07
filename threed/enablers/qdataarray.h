@@ -78,6 +78,9 @@ public:
     T& operator[](int index);
 
     void append(const T& value);
+    void append(const T& value1, const T& value2);
+    void append(const T& value1, const T& value2, const T& value3);
+    void append(const T& value1, const T& value2, const T& value3, const T& value4);
     void append(const T *values, int count);
     void append(const QDataArray<T, PreallocSize>& other);
     void replace(int index, const T *values, int count);
@@ -386,6 +389,39 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value)
     if (m_end >= m_limit)
         grow(1);
     *m_end++ = value;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2)
+{
+    if ((m_end + 1) >= m_limit)
+        grow(2);
+    m_end[0] = value1;
+    m_end[1] = value2;
+    m_end += 2;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2, const T& value3)
+{
+    if ((m_end + 2) >= m_limit)
+        grow(3);
+    m_end[0] = value1;
+    m_end[1] = value2;
+    m_end[2] = value3;
+    m_end += 3;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2, const T& value3, const T& value4)
+{
+    if ((m_end + 3) >= m_limit)
+        grow(3);
+    m_end[0] = value1;
+    m_end[1] = value2;
+    m_end[2] = value3;
+    m_end[3] = value4;
+    m_end += 4;
 }
 
 template <typename T, int PreallocSize>

@@ -57,6 +57,8 @@ private slots:
     void append();
     void appendSmall_data();
     void appendSmall();
+    void appendFourAtATime_data();
+    void appendFourAtATime();
     void clear_data();
     void clear();
 };
@@ -153,6 +155,57 @@ void tst_QDataArray::appendSmall_data()
 void tst_QDataArray::appendSmall()
 {
     append();
+}
+
+void tst_QDataArray::appendFourAtATime_data()
+{
+    append_data();
+}
+
+void tst_QDataArray::appendFourAtATime()
+{
+    QFETCH(int, size);
+    QFETCH(int, type);
+
+    if (type == Test_DataBuffer) {
+        QDataBuffer<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.add(float(i));
+                buffer.add(float(i + 1));
+                buffer.add(float(i + 2));
+                buffer.add(float(i + 3));
+            }
+        }
+    } else if (type == Test_Vector) {
+        QVector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.append(float(i));
+                buffer.append(float(i + 1));
+                buffer.append(float(i + 2));
+                buffer.append(float(i + 3));
+            }
+        }
+    } else if (type == Test_VarLengthArray) {
+        QVarLengthArray<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.append(float(i));
+                buffer.append(float(i + 1));
+                buffer.append(float(i + 2));
+                buffer.append(float(i + 3));
+            }
+        }
+    } else if (type == Test_DataArray) {
+        QDataArray<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.append(float(i), float(i + 1),
+                              float(i + 2), float(i + 3));
+            }
+        }
+    }
 }
 
 void tst_QDataArray::clear_data()

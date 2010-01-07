@@ -148,22 +148,22 @@ void tst_QDataArray::append2D()
 {
     int index;
 
-    QDataArray<QVector2D> array;
-    array.append(QVector2D(1.0f, 2.0f));
-    array.append(QVector2D(3.0f, 4.0f));
-    QCOMPARE(array[0].x(), qreal(1.0f));
-    QCOMPARE(array[0].y(), qreal(2.0f));
-    QCOMPARE(array[1].x(), qreal(3.0f));
-    QCOMPARE(array[1].y(), qreal(4.0f));
-    QCOMPARE(array.count(), 2);
+    QDataArray<float> array;
+    array.append(1.0f, 2.0f);
+    array.append(3.0f, 4.0f);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+    QCOMPARE(array.count(), 4);
 
-    QDataArray<QVector2D> array2;
+    QDataArray<float> array2;
     for (index = 0; index < 1000; ++index)
-        array2.append(QVector2D(index, index + 1));
-    QCOMPARE(array2.count(), 1000);
+        array2.append(float(index), float(index + 1));
+    QCOMPARE(array2.count(), 2000);
     for (index = 0; index < 1000; ++index) {
-        QCOMPARE(array2[index].x(), qreal(index));
-        QCOMPARE(array2[index].y(), qreal(index + 1));
+        QCOMPARE(array2[index * 2], float(index));
+        QCOMPARE(array2[index * 2 + 1], float(index + 1));
     }
 }
 
@@ -171,25 +171,25 @@ void tst_QDataArray::append3D()
 {
     int index;
 
-    QDataArray<QVector3D> array;
-    array.append(QVector3D(1.0f, 2.0f, 3.0f));
-    array.append(QVector3D(4.0f, 5.0f, 6.0f));
-    QCOMPARE(array[0].x(), qreal(1.0f));
-    QCOMPARE(array[0].y(), qreal(2.0f));
-    QCOMPARE(array[0].z(), qreal(3.0f));
-    QCOMPARE(array[1].x(), qreal(4.0f));
-    QCOMPARE(array[1].y(), qreal(5.0f));
-    QCOMPARE(array[1].z(), qreal(6.0f));
-    QCOMPARE(array.count(), 2);
+    QDataArray<float> array;
+    array.append(1.0f, 2.0f, 3.0f);
+    array.append(4.0f, 5.0f, 6.0f);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+    QCOMPARE(array[4], 5.0f);
+    QCOMPARE(array[5], 6.0f);
+    QCOMPARE(array.count(), 6);
 
-    QDataArray<QVector3D> array2;
+    QDataArray<float> array2;
     for (index = 0; index < 1000; ++index)
-        array2.append(QVector3D(index, index + 1, index + 2));
-    QCOMPARE(array2.count(), 1000);
+        array2.append(float(index), float(index + 1), float(index + 2));
+    QCOMPARE(array2.count(), 3000);
     for (index = 0; index < 1000; ++index) {
-        QCOMPARE(array2[index].x(), qreal(index));
-        QCOMPARE(array2[index].y(), qreal(index + 1));
-        QCOMPARE(array2[index].z(), qreal(index + 2));
+        QCOMPARE(array2[index * 3], float(index));
+        QCOMPARE(array2[index * 3 + 1], float(index + 1));
+        QCOMPARE(array2[index * 3 + 2], float(index + 2));
     }
 }
 
@@ -197,28 +197,28 @@ void tst_QDataArray::append4D()
 {
     int index;
 
-    QDataArray<QVector4D> array;
-    array.append(QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
-    array.append(QVector4D(5.0f, 6.0f, 7.0f, 8.0f));
-    QCOMPARE(array[0].x(), qreal(1.0f));
-    QCOMPARE(array[0].y(), qreal(2.0f));
-    QCOMPARE(array[0].z(), qreal(3.0f));
-    QCOMPARE(array[0].w(), qreal(4.0f));
-    QCOMPARE(array[1].x(), qreal(5.0f));
-    QCOMPARE(array[1].y(), qreal(6.0f));
-    QCOMPARE(array[1].z(), qreal(7.0f));
-    QCOMPARE(array[1].w(), qreal(8.0f));
-    QCOMPARE(array.count(), 2);
+    QDataArray<float> array;
+    array.append(1.0f, 2.0f, 3.0f, 4.0f);
+    array.append(5.0f, 6.0f, 7.0f, 8.0f);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+    QCOMPARE(array[4], 5.0f);
+    QCOMPARE(array[5], 6.0f);
+    QCOMPARE(array[6], 7.0f);
+    QCOMPARE(array[7], 8.0f);
+    QCOMPARE(array.count(), 8);
 
-    QDataArray<QVector4D> array2;
+    QDataArray<float> array2;
     for (index = 0; index < 1000; ++index)
-        array2.append(QVector4D(index, index + 1, index + 2, index + 3));
-    QCOMPARE(array2.count(), 1000);
+        array2.append(float(index), float(index + 1), float(index + 2), float(index + 3));
+    QCOMPARE(array2.count(), 4000);
     for (index = 0; index < 1000; ++index) {
-        QCOMPARE(array2[index].x(), qreal(index));
-        QCOMPARE(array2[index].y(), qreal(index + 1));
-        QCOMPARE(array2[index].z(), qreal(index + 2));
-        QCOMPARE(array2[index].w(), qreal(index + 3));
+        QCOMPARE(array2[index * 4], float(index));
+        QCOMPARE(array2[index * 4 + 1], float(index + 1));
+        QCOMPARE(array2[index * 4 + 2], float(index + 2));
+        QCOMPARE(array2[index * 4 + 3], float(index + 3));
     }
 }
 

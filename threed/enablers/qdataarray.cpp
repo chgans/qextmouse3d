@@ -195,6 +195,30 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn void QDataArray::append(const T& value1, const T& value2)
+
+    \overload
+
+    Appends \a value1 and \a value2 to this data array.
+*/
+
+/*!
+    \fn void QDataArray::append(const T& value1, const T& value2, const T& value3)
+
+    \overload
+
+    Appends \a value1, \a value2, and \a value3 to this data array.
+*/
+
+/*!
+    \fn void QDataArray::append(const T& value1, const T& value2, const T& value3, const T& value4)
+
+    \overload
+
+    Appends \a value1, \a value2, \a value3, and \a value4 to this data array.
+*/
+
+/*!
     \fn void QDataArray::append(const T *values, int count)
 
     Appends the \a count elements of \a values to this data array.
