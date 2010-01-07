@@ -135,7 +135,7 @@ private:
     void grow(int needed);
 };
 
-extern int qAllocMore(int alloc, int extra); // in qbytearray.cpp
+int Q_QT3D_EXPORT qDataArrayAllocMore(int alloc, int extra);
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity)
@@ -152,7 +152,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForWrite(int needed
 {
     // Allocate a new block on the heap and copy the data across.
     int oldSize = m_data->used;
-    int size = needed ? (qAllocMore(oldSize, needed) + needed) : oldSize;
+    int size = qDataArrayAllocMore(oldSize, needed);
     Data *data = reinterpret_cast<Data *>
         (qMalloc(sizeof(Data) + sizeof(T) * (size - 1)));
     Q_CHECK_PTR(data);
@@ -178,7 +178,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForCopy(int needed)
         m_data->used = m_end - m_start;
     } else {
         // Copy preallocated data to the heap.
-        int capacity = qAllocMore(m_limit - m_start, needed) + needed;
+        int capacity = qDataArrayAllocMore(m_limit - m_start, needed);
         Data *data = reinterpret_cast<Data *>
             (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
         Q_CHECK_PTR(data);
@@ -213,7 +213,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::grow(int needed)
     // Reallocate the array if necessary.
     if ((m_data->used + needed) > m_data->capacity) {
         int size = m_data->used;
-        int capacity = qAllocMore(size, needed) + needed;
+        int capacity = qDataArrayAllocMore(size, needed);
         reallocate(capacity);
     }
 
@@ -241,7 +241,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& val
         m_limit = m_start + PreallocSize;
         m_data = 0;
     } else {
-        int capacity = qAllocMore(size, 0);
+        int capacity = qDataArrayAllocMore(size, 0);
         Data *data = reinterpret_cast<Data *>
             (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
         Q_CHECK_PTR(data);

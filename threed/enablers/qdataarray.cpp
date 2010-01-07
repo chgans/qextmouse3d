@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qdataarray.h"
+#include <limits.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -414,5 +415,24 @@ QT_BEGIN_NAMESPACE
 
     \sa operator+=(), append()
 */
+
+int qDataArrayAllocMore(int alloc, int extra)
+{
+    if (alloc == 0 && extra == 0)
+        return 0;
+    const int page = 1 << 12;
+    int nalloc;
+    alloc += extra;
+    // don't do anything if the loop will overflow signed int.
+    if (alloc >= INT_MAX/2)
+        return INT_MAX;
+    nalloc = (alloc < page) ? 64 : page;
+    while (nalloc < alloc) {
+        if (nalloc <= 0)
+            return INT_MAX;
+        nalloc *= 2;
+    }
+    return nalloc;
+}
 
 QT_END_NAMESPACE
