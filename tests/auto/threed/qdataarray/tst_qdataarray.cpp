@@ -102,7 +102,8 @@ void tst_QDataArray::append1D()
     // Append 1 more item and check for realloc.
     array.append(1000.0f);
     QCOMPARE(array.count(), ExpectedMinCapacity + 1);
-    QCOMPARE(array.capacity(), ExpectedMinCapacity * 2);
+    QVERIFY(array.capacity() > ExpectedMinCapacity);
+    QVERIFY(array.capacity() >= array.count());
 
     // Check that the array still contains the values we expected.
     for (index = 0; index < ExpectedMinCapacity; ++index) {
