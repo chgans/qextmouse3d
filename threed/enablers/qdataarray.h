@@ -44,7 +44,6 @@
 
 #include <QtCore/qglobal.h>
 #include <QtCore/qatomic.h>
-#include <QtCore/qalgorithms.h>
 
 #include "qt3dglobal.h"
 
@@ -128,9 +127,8 @@ private:
         double q_for_alignment_2;
     };
 
-    void deleteElements(T *start, T *end);
     void free();
-    void reallocate(int capacity, int size);
+    void reallocate(int capacity);
     void detachForWrite(int needed = 0);
     void detachForCopy(int needed = 0) const;
     void grow(int needed);
@@ -139,60 +137,20 @@ private:
 extern int qAllocMore(int alloc, int extra); // in qbytearray.cpp
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::deleteElements(T *start, T *end)
-{
-    if (QTypeInfo<T>::isComplex) {
-        while (start != end) {
-            start->~T();
-            ++start;
-        }
-    }
-}
-
-template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::free()
 {
-    if (m_start) {
-        deleteElements(m_start, m_end);
-        if (m_data)
-            qFree(m_data);
-    } else if (!m_data->ref.deref()) {
-        deleteElements(m_data->array, m_data->array + m_data->used);
+    if (m_data && !m_data->ref.deref())
         qFree(m_data);
-    }
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity, int size)
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity)
 {
-    if (QTypeInfo<T>::isStatic) {
-        // Reallocate the array to move the data.
-        Data *data = reinterpret_cast<Data *>
-            (qRealloc(m_data, sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        m_data = data;
-        m_data->capacity = capacity;
-    } else {
-        // Allocate a new block on the heap and copy the data across.
-        Data *data = reinterpret_cast<Data *>
-            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        data->ref = 1;
-        data->used = size;
-        data->capacity = capacity;
-        if (size > 0) {
-            T *src = m_data->array;
-            T *dst = data->array;
-            while (size-- > 0) {
-                new (dst) T(*src);
-                src->~T();
-                ++dst;
-                ++src;
-            }
-        }
-        qFree(m_data);
-        m_data = data;
-    }
+    Data *data = reinterpret_cast<Data *>
+        (qRealloc(m_data, sizeof(Data) + sizeof(T) * (capacity - 1)));
+    Q_CHECK_PTR(data);
+    m_data = data;
+    m_data->capacity = capacity;
 }
 
 template <typename T, int PreallocSize>
@@ -207,12 +165,8 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForWrite(int needed
     data->ref = 1;
     data->used = oldSize;
     data->capacity = size;
-    if (oldSize > 0) {
-        if (QTypeInfo<T>::isStatic)
-            qMemCopy(data->array, m_data->array, oldSize * sizeof(T));
-        else
-            qCopy(m_data->array, m_data->array + oldSize, data->array);
-    }
+    if (oldSize > 0)
+        qMemCopy(data->array, m_data->array, oldSize * sizeof(T));
     m_data->ref.deref();
     m_data = data;
 
@@ -238,14 +192,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForCopy(int needed)
         m_data->ref = 1;
         m_data->used = m_end - m_start;
         m_data->capacity = capacity;
-        T *src = m_start;
-        T *dst = m_data->array;
-        while (src < m_end) {
-            new (dst) T(*src);
-            src->~T();
-            ++dst;
-            ++src;
-        }
+        qMemCopy(m_data->array, m_start, m_data->used * sizeof(T));
     }
 
     // Force copy-on-write the next time an append is done.
@@ -273,7 +220,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::grow(int needed)
     if ((m_data->used + needed) > m_data->capacity) {
         int size = m_data->used;
         int capacity = qAllocMore(size, needed) + needed;
-        reallocate(capacity, size);
+        reallocate(capacity);
     }
 
     // Update the append pointers for faster future updates.
@@ -419,10 +366,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(T value)
 {
     if (m_end >= m_limit)
         grow(1);
-    if (QTypeInfo<T>::isComplex)
-        new (m_end++) T(value);
-    else
-        *m_end++ = value;
+    *m_end++ = value;
 }
 
 template <typename T, int PreallocSize>
@@ -432,13 +376,8 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T *values, int 
         return;
     if (!m_start || (m_end + count) > m_limit)
         grow(count);
-    if (QTypeInfo<T>::isComplex) {
-        while (count-- > 0)
-            new (m_end++) T(*values++);
-    } else {
-        qMemCopy(m_end, values, count * sizeof(T));
-        m_end += count;
-    }
+    qMemCopy(m_end, values, count * sizeof(T));
+    m_end += count;
 }
 
 template <typename T, int PreallocSize>
@@ -457,10 +396,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::replace(int index, const 
     int replaceSize = index + count;
     if (replaceSize > size())
         resize(replaceSize);
-    if (QTypeInfo<T>::isStatic)
-        qMemCopy(data() + index, values, count * sizeof(T));
-    else
-        qCopy(values, values + count, data() + index);
+    qMemCopy(data() + index, values, count * sizeof(T));
 }
 
 template <typename T, int PreallocSize>
@@ -489,19 +425,13 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::remove(int index, int cou
         return;
     }
     if (m_start) {
-        if (QTypeInfo<T>::isStatic)
-            qMemMove(m_start + index, m_start + index + count,
-                     (currentSize - (index + count)) * sizeof(T));
-        else
-            qCopy(m_start + index + count, m_end, m_start + index);
+        qMemMove(m_start + index, m_start + index + count,
+                 (currentSize - (index + count)) * sizeof(T));
     } else {
         if (m_data->ref != 1)
             detachForWrite();
-        if (QTypeInfo<T>::isStatic)
-            qMemMove(m_data->array + index, m_data->array + index + count,
-                     (currentSize - (index + count)) * sizeof(T));
-        else
-            qCopy(m_data->array + index + count, m_end, m_data->array + index);
+        qMemMove(m_data->array + index, m_data->array + index + count,
+                 (currentSize - (index + count)) * sizeof(T));
     }
     resize(currentSize - count);
 }
@@ -514,22 +444,17 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::resize(int size)
     int currentSize = count();
     if (size < currentSize) {
         if (m_start) {
-            deleteElements(m_start + size, m_end);
+            //deleteElements(m_start + size, m_end);
             m_end = m_start + size;
         } else {
             if (m_data->ref != 1)
                 detachForWrite();
-            deleteElements(m_data->array + size, m_data->array + m_data->used);
+            //deleteElements(m_data->array + size, m_data->array + m_data->used);
             m_data->used = size;
         }
     } else if (size > currentSize) {
         grow(size - currentSize);
-        if (QTypeInfo<T>::isComplex) {
-            qFill(m_start + currentSize, m_start + size, T());
-        } else {
-            qMemSet(m_start + currentSize, 0,
-                    sizeof(T) * (size - currentSize));
-        }
+        qMemSet(m_start + currentSize, 0, sizeof(T) * (size - currentSize));
         m_end = m_start + size;
     }
 }
@@ -556,17 +481,13 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
 
     // Delete unneeded elements.
     if (m_start) {
-        if (size < (m_end - m_start)) {
-            deleteElements(m_start + size, m_end);
+        if (size < (m_end - m_start))
             m_end = m_start + size;
-        }
     } else {
         if (m_data->ref != 1)
             detachForWrite();
-        if (size < m_data->used) {
-            deleteElements(m_data->array + size, m_data->array + m_data->used);
+        if (size < m_data->used)
             m_data->used = size;
-        }
     }
 
     // If the array is in the preallocated area, then no point shrinking.
@@ -576,7 +497,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
     // Reallocate the array on the heap to the smaller size.
     if (m_start)
         m_data->used = m_end - m_start;
-    reallocate(size, m_data->used);
+    reallocate(size);
 
     // Force copy-on-write the next time an append is done.
     m_start = 0;
