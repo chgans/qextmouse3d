@@ -127,7 +127,6 @@ private:
         double q_for_alignment_2;
     };
 
-    void free();
     void reallocate(int capacity);
     void detachForWrite(int needed = 0);
     void detachForCopy(int needed = 0) const;
@@ -137,14 +136,7 @@ private:
 extern int qAllocMore(int alloc, int extra); // in qbytearray.cpp
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::free()
-{
-    if (m_data && !m_data->ref.deref())
-        qFree(m_data);
-}
-
-template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity)
 {
     Data *data = reinterpret_cast<Data *>
         (qRealloc(m_data, sizeof(Data) + sizeof(T) * (capacity - 1)));
@@ -253,7 +245,8 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const QDataArray<T, Pr
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::~QDataArray()
 {
-    free();
+    if (m_data && !m_data->ref.deref())
+        qFree(m_data);
 }
 
 template <typename T, int PreallocSize>
@@ -269,7 +262,8 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::oper
     } else if (other.m_data == m_data) {
         return *this;
     }
-    free();
+    if (m_data && !m_data->ref.deref())
+        qFree(m_data);
     m_start = 0;
     m_end = 0;
     m_limit = 0;
@@ -317,7 +311,8 @@ Q_INLINE_TEMPLATE bool QDataArray<T, PreallocSize>::isEmpty() const
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::clear()
 {
-    free();
+    if (m_data && !m_data->ref.deref())
+        qFree(m_data);
     m_start = reinterpret_cast<T *>(m_prealloc);
     m_end = m_start;
     m_limit = m_start + PreallocSize;
@@ -444,12 +439,10 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::resize(int size)
     int currentSize = count();
     if (size < currentSize) {
         if (m_start) {
-            //deleteElements(m_start + size, m_end);
             m_end = m_start + size;
         } else {
             if (m_data->ref != 1)
                 detachForWrite();
-            //deleteElements(m_data->array + size, m_data->array + m_data->used);
             m_data->used = size;
         }
     } else if (size > currentSize) {
@@ -514,12 +507,13 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze()
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T *QDataArray<T, PreallocSize>::data()
 {
-    if (m_data && m_data->ref != 1)
-        detachForWrite();
-    if (m_start)
+    if (m_start) {
         return m_start;
-    else
+    } else {
+        if (m_data->ref != 1)
+            detachForWrite();
         return m_data->array;
+    }
 }
 
 template <typename T, int PreallocSize>
