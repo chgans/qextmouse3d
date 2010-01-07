@@ -77,7 +77,7 @@ public:
     const T& operator[](int index) const;
     T& operator[](int index);
 
-    void append(T value);
+    void append(const T& value);
     void append(const T *values, int count);
     void append(const QDataArray<T, PreallocSize>& other);
     void replace(int index, const T *values, int count);
@@ -87,7 +87,6 @@ public:
     void resize(int size);
     void reserve(int size);
     void shrink(int size);
-    void squeeze();
 
     T *data();
     const T *data() const;
@@ -97,9 +96,9 @@ public:
     bool operator!=(const QDataArray<T, PreallocSize> &other) const;
 
     QDataArray<T, PreallocSize>& operator+=(const T& value);
-    QDataArray<T, PreallocSize>& operator+=(const QDataArray<T, PreallocSize>& array);
+    QDataArray<T, PreallocSize>& operator+=(const QDataArray<T, PreallocSize>& other);
     QDataArray<T, PreallocSize>& operator<<(const T& value);
-    QDataArray<T, PreallocSize>& operator<<(const QDataArray<T, PreallocSize>& array);
+    QDataArray<T, PreallocSize>& operator<<(const QDataArray<T, PreallocSize>& other);
 
 private:
     struct Data
@@ -231,6 +230,31 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray()
 }
 
 template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& value)
+{
+    if (size <= PreallocSize) {
+        m_start = reinterpret_cast<T *>(m_prealloc);
+        m_end = m_start;
+        m_limit = m_start + PreallocSize;
+        m_data = 0;
+    } else {
+        int capacity = qAllocMore(size, 0);
+        Data *data = reinterpret_cast<Data *>
+            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
+        Q_CHECK_PTR(data);
+        m_data = data;
+        m_data->ref = 1;
+        m_data->used = size;
+        m_data->capacity = capacity;
+        m_start = m_data->array;
+        m_end = m_start;
+        m_limit = m_start + capacity;
+    }
+    while (size-- > 0)
+        *m_end++ = value;
+}
+
+template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const QDataArray<T, PreallocSize>& other)
 {
     if (other.m_start)
@@ -357,7 +381,7 @@ Q_INLINE_TEMPLATE T& QDataArray<T, PreallocSize>::operator[](int index)
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(T value)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value)
 {
     if (m_end >= m_limit)
         grow(1);
@@ -499,12 +523,6 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze()
-{
-    shrink(size());
-}
-
-template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T *QDataArray<T, PreallocSize>::data()
 {
     if (m_start) {
@@ -571,9 +589,9 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::oper
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator+=(const QDataArray<T, PreallocSize>& array)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator+=(const QDataArray<T, PreallocSize>& other)
 {
-    append(array);
+    append(other);
     return *this;
 }
 
@@ -585,9 +603,9 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::oper
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator<<(const QDataArray<T, PreallocSize>& array)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator<<(const QDataArray<T, PreallocSize>& other)
 {
-    append(array);
+    append(other);
     return *this;
 }
 
