@@ -480,8 +480,8 @@ template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::reserve(int size)
 {
     int cap = capacity();
-    if (size > 0 && size < capacity)
-        grow(size - capacity);
+    if (size > 0 && size < cap)
+        grow(size - cap);
 }
 
 template <typename T, int PreallocSize>
