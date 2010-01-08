@@ -1,7 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     qdataarray \
-    qglarraydata \
     qglblendoptions \
     qglbuffer \
     qglcamera \

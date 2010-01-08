@@ -1,6 +1,6 @@
 INCLUDEPATH += $$PWD
 VPATH += $$PWD
-HEADERS += qglarraydata.h \
+HEADERS += \
     qglattributevalue.h \
     qglbuffer.h \
     qglcontextscope.h \
