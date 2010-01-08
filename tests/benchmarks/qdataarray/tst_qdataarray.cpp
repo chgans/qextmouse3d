@@ -43,8 +43,11 @@
 #include <QtGui/private/qdatabuffer_p.h>
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qvector.h>
+#include <QtCore/qlist.h>
 #include "qdataarray.h"
 #include <vector>
+
+//#define TEST_QLIST 1
 
 class tst_QDataArray : public QObject
 {
@@ -67,6 +70,7 @@ private slots:
 enum {
     Test_DataBuffer,
     Test_Vector,
+    Test_List,
     Test_VarLengthArray,
     Test_DataArray,
     Test_STLVector
@@ -79,23 +83,29 @@ void tst_QDataArray::append_data()
 
     QByteArray name;
     for (int size = 0; size < 1024; size += 12) {
-        name = "databuffer--";
+        name = "QDataBuffer--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataBuffer);
 
-        name = "vector--";
+        name = "QVector--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Vector);
 
-        name = "varlengtharray--";
+#if TEST_QLIST
+        name = "QList--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_List);
+#endif
+
+        name = "QVarLengthArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
-        name = "dataarray--";
+        name = "QDataArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataArray);
 
-        name = "stlvector--";
+        name = "std::vector--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_STLVector);
     }
@@ -114,6 +124,12 @@ void tst_QDataArray::append()
         }
     } else if (type == Test_Vector) {
         QVector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_List) {
+        QList<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
@@ -146,23 +162,29 @@ void tst_QDataArray::appendSmall_data()
 
     QByteArray name;
     for (int size = 0; size < 16; ++size) {
-        name = "databuffer--";
+        name = "QDataBuffer--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataBuffer);
 
-        name = "vector--";
+        name = "QVector--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Vector);
 
-        name = "varlengtharray--";
+#if TEST_QLIST
+        name = "QList--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_List);
+#endif
+
+        name = "QVarLengthArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
-        name = "dataarray--";
+        name = "QDataArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataArray);
 
-        name = "stlvector--";
+        name = "std::vector--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_STLVector);
     }
@@ -195,6 +217,16 @@ void tst_QDataArray::appendFourAtATime()
         }
     } else if (type == Test_Vector) {
         QVector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.append(float(i));
+                buffer.append(float(i + 1));
+                buffer.append(float(i + 2));
+                buffer.append(float(i + 3));
+            }
+        }
+    } else if (type == Test_List) {
+        QList<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; i += 4) {
                 buffer.append(float(i));
@@ -255,6 +287,15 @@ void tst_QDataArray::clear()
         }
     } else if (type == Test_Vector) {
         QVector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+            buffer.clear();
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_List) {
+        QList<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
