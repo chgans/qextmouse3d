@@ -44,6 +44,7 @@
 
 #include <QtCore/qglobal.h>
 #include <QtCore/qatomic.h>
+#include <string.h>
 
 #include "qt3dglobal.h"
 
@@ -485,14 +486,14 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::remove(int index, int cou
         clear();
         return;
     }
+    if (m_data && m_data->ref != 1)
+        detachForWrite();
     if (m_start) {
-        qMemMove(m_start + index, m_start + index + count,
-                 (currentSize - (index + count)) * sizeof(T));
+        ::memmove(m_start + index, m_start + index + count,
+                  (currentSize - (index + count)) * sizeof(T));
     } else {
-        if (m_data->ref != 1)
-            detachForWrite();
-        qMemMove(m_data->array + index, m_data->array + index + count,
-                 (currentSize - (index + count)) * sizeof(T));
+        ::memmove(m_data->array + index, m_data->array + index + count,
+                  (currentSize - (index + count)) * sizeof(T));
     }
     resize(currentSize - count);
 }
@@ -509,7 +510,10 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::resize(int size)
         } else {
             if (m_data->ref != 1)
                 detachForWrite();
-            m_data->used = size;
+            if (m_start)
+                m_end = m_start + size;
+            else
+                m_data->used = size;
         }
     } else if (size > currentSize) {
         grow(size - currentSize);
@@ -543,10 +547,14 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
         if (size < (m_end - m_start))
             m_end = m_start + size;
     } else {
-        if (m_data->ref != 1)
+        if (m_data->ref != 1) {
             detachForWrite();
-        if (size < m_data->used)
-            m_data->used = size;
+            if (size < m_data->used)
+                m_end = m_start + size;
+        } else {
+            if (size < m_data->used)
+                m_data->used = size;
+        }
     }
 
     // If the array is in the preallocated area, then no point shrinking.
