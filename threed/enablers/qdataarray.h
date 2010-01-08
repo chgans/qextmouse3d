@@ -54,6 +54,45 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
+template <typename T, int PreallocSize>
+class QDataArray;
+
+class Q_QT3D_EXPORT QDetachedDataArray
+{
+public:
+    QDetachedDataArray();
+    QDetachedDataArray(const QDetachedDataArray& other);
+    ~QDetachedDataArray();
+
+    QDetachedDataArray& operator=(const QDetachedDataArray& other);
+
+    bool isNull() const { return m_header == 0; }
+    const void *data() const { return m_data; }
+    int size() const { return m_size; }
+    int elementSize() const { return m_elementSize; }
+
+#if !defined(Q_NO_TEMPLATE_FRIENDS)
+private:
+#endif
+
+    struct Header
+    {
+        QBasicAtomicInt ref;
+    };
+
+    QDetachedDataArray(Header *header, const void *data, int size, int elementSize);
+
+    Header *m_header;
+    const void *m_data;
+    int m_size;
+    int m_elementSize;
+
+#if !defined(Q_NO_TEMPLATE_FRIENDS)
+    template <typename T, int PreallocSize>
+    friend class QDataArray;
+#endif
+};
+
 template <typename T, int PreallocSize = 8>
 class QDataArray
 {
@@ -95,6 +134,9 @@ public:
     T *data();
     const T *data() const;
     const T *constData() const;
+
+    QDetachedDataArray toDetachedArray() const;
+    operator QDetachedDataArray() const { return toDetachedArray(); }
 
     QDataArray<T, PreallocSize> extract
         (int index, int size, int stride) const;
@@ -143,6 +185,42 @@ private:
 };
 
 int Q_QT3D_EXPORT qDataArrayAllocMore(int alloc, int extra);
+
+inline QDetachedDataArray::QDetachedDataArray()
+    : m_header(0), m_data(0), m_size(0), m_elementSize(0) {}
+
+inline QDetachedDataArray::QDetachedDataArray(const QDetachedDataArray& other)
+    : m_header(other.m_header), m_data(other.m_data),
+      m_size(other.m_size), m_elementSize(other.m_elementSize)
+{
+    if (m_header)
+        m_header->ref.ref();
+}
+
+inline QDetachedDataArray::QDetachedDataArray(Header *header, const void *data, int size, int elementSize)
+    : m_header(header), m_data(data), m_size(size), m_elementSize(elementSize)
+{
+    if (m_header)
+        m_header->ref.ref();
+}
+
+inline QDetachedDataArray::~QDetachedDataArray()
+{
+    if (m_header && !m_header->ref.deref())
+        qFree(m_header);
+}
+
+inline QDetachedDataArray& QDetachedDataArray::operator=(const QDetachedDataArray& other)
+{
+    if (m_header != other.m_header) {
+        if (m_header && !m_header->ref.deref())
+            qFree(m_header);
+        m_header = other.m_header;
+        if (m_header)
+            m_header->ref.ref();
+    }
+    return *this;
+}
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::reallocate(int capacity)
@@ -600,6 +678,19 @@ Q_INLINE_TEMPLATE const T *QDataArray<T, PreallocSize>::constData() const
         return m_start;
     else
         return m_data->array;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDetachedDataArray QDataArray<T, PreallocSize>::toDetachedArray() const
+{
+    if (m_start)
+        detachForCopy();
+    m_start = 0;
+    m_end = 0;
+    m_limit = 0;
+    return QDetachedDataArray
+        (reinterpret_cast<QDetachedDataArray::Header *>(m_data),
+         m_data->array, m_data->used * sizeof(T), sizeof(T));
 }
 
 template <typename T, int PreallocSize>
