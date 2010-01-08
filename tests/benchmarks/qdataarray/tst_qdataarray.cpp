@@ -44,6 +44,7 @@
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qvector.h>
 #include "qdataarray.h"
+#include <vector>
 
 class tst_QDataArray : public QObject
 {
@@ -67,7 +68,8 @@ enum {
     Test_DataBuffer,
     Test_Vector,
     Test_VarLengthArray,
-    Test_DataArray
+    Test_DataArray,
+    Test_STLVector
 };
 
 void tst_QDataArray::append_data()
@@ -92,6 +94,10 @@ void tst_QDataArray::append_data()
         name = "dataarray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataArray);
+
+        name = "stlvector--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_STLVector);
     }
 }
 
@@ -124,6 +130,12 @@ void tst_QDataArray::append()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
+    } else if (type == Test_STLVector) {
+        std::vector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.push_back(float(i));
+        }
     }
 }
 
@@ -149,6 +161,10 @@ void tst_QDataArray::appendSmall_data()
         name = "dataarray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataArray);
+
+        name = "stlvector--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_STLVector);
     }
 }
 
@@ -205,6 +221,16 @@ void tst_QDataArray::appendFourAtATime()
                               float(i + 2), float(i + 3));
             }
         }
+    } else if (type == Test_STLVector) {
+        std::vector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.push_back(float(i));
+                buffer.push_back(float(i + 1));
+                buffer.push_back(float(i + 2));
+                buffer.push_back(float(i + 3));
+            }
+        }
     }
 }
 
@@ -253,6 +279,15 @@ void tst_QDataArray::clear()
             buffer.resize(0);
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
+        }
+    } else if (type == Test_STLVector) {
+        std::vector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.push_back(float(i));
+            buffer.clear();
+            for (int i = 0; i < size; ++i)
+                buffer.push_back(float(i));
         }
     }
 }
