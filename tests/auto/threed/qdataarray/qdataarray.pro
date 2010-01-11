@@ -3,7 +3,7 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglarraydata.cpp
+SOURCES += tst_qdataarray.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 
