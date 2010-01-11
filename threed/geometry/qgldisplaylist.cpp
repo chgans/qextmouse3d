@@ -45,6 +45,14 @@
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexturemodel.h"
+#include "qglprimitive_p.h"
+#include "qglquad_p.h"
+#include "qglquadstrip_p.h"
+#include "qgltriangle_p.h"
+#include "qgltriangulatedface_p.h"
+#include "qgltrianglestrip_p.h"
+#include "qgltrianglefan_p.h"
+#include "qglextrusion_p.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -236,6 +244,9 @@ QGLDisplayList::~QGLDisplayList()
 */
 
 /*!
+    \bold {Note:} this is an advanced function intended for internal use.
+    For typical situations, use \c{begin(QGLDisplayList::TRIANGLE)} instead.
+
     Add to the current section a triangular face with vertices \a a, \a b,
     and \a c; and lighting normal \a n.
 
@@ -250,8 +261,6 @@ QGLDisplayList::~QGLDisplayList()
     texture-space, with its apex \a c at the high values of the texture and its
     base \a a - \a c at the low values of the texture.
 
-    \bold{Note:} The \a inverted parameter is intended mostly for internal use.
-
     If \a inverted is true, the following texture coordinates
     will be applied:
     \list
@@ -263,10 +272,15 @@ QGLDisplayList::~QGLDisplayList()
     The inverted case is a triangle with the vertex at \a a on the low values
     of the texture and the \a b - \a c edge along the high values of the
     texture.
+
+    If \a colorModel is non-null its values will be applied in the same way as
+    for the textureModel.
 */
 void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
                       const QVector3D &c, const QVector3D &n,
-                      const QGLTextureModel &textureModel, bool inverted)
+                      const QGLTextureModel *textureModel,
+                      const QGLColorModel *colorModel,
+                      bool inverted)
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
@@ -284,11 +298,17 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
     QLogicalVertex va(a, norm);
     QLogicalVertex vb(b, norm);
     QLogicalVertex vc(c, norm);
-    if (!textureModel.isNull())
+    if (textureModel && !textureModel->isNull())
     {
-        va.setTexCoord(textureModel.bottomLeft());
-        vb.setTexCoord(inverted ? textureModel.topRight() : textureModel.bottomRight());
-        vc.setTexCoord(inverted ? textureModel.topLeft() : textureModel.topRight());
+        va.setTexCoord(textureModel->bottomLeft());
+        vb.setTexCoord(inverted ? textureModel->topRight() : textureModel->bottomRight());
+        vc.setTexCoord(inverted ? textureModel->topLeft() : textureModel->topRight());
+    }
+    if (colorModel)
+    {
+        va.setColor(colorModel->bottomLeft());
+        vb.setColor(inverted ? colorModel->topRight() : colorModel->bottomRight());
+        vc.setColor(inverted ? colorModel->topLeft() : colorModel->topRight());
     }
     d->currentSection->append(va);
     d->currentSection->append(vb);
@@ -297,6 +317,9 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
 }
 
 /*!
+    \bold {Note:} this is an advanced function intended for internal use.
+    For typical situations, use \c{begin(QGLDisplayList::QUAD)} instead.
+
     Add to this section a quad face defined by vertices \a a, \a b, \a c and
     \a d.  The face is composed of two triangles having the same normal,
     calculated from the face \a a, \a b and \a c.  The vertices of the face
@@ -310,17 +333,25 @@ void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
         \o \a c - \l{QGLTextureModel::topRight()}{top-right}
         \o \a d - \l{QGLTextureModel::topLeft()}{top-left}
     \endlist
+
+    If \a colorModel is non-null its values will be applied in the same way as
+    for the textureModel.
 */
 void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
                              const QVector3D &c, const QVector3D &d,
-                             const QGLTextureModel &textureModel)
+                             const QGLTextureModel *textureModel,
+                             const QGLColorModel *colorModel)
 {
     QVector3D norm = QVector3D::crossProduct(b - a, c - a);
-    addTriangle(a, b, c, norm, textureModel);
-    addTriangle(a, c, d, norm, textureModel, true);
+    addTriangle(a, b, c, norm, textureModel, colorModel);
+    addTriangle(a, c, d, norm, textureModel, colorModel, true);
 }
 
 /*!
+    \bold {Note:} this is an advanced function intended for internal use.
+    For typical situations, use \c{begin(QGLDisplayList::TRIANGLE_FAN)}
+    instead.
+
     Adds to this section a set of connected triangles defined by \a center
     and \a edges.
 
@@ -338,25 +369,41 @@ void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
     is non-null.  When textures are generated all the points on \a edges
     must lie in the same plane.
 
+    If \a colorModel is non-null its values will be applied in the same way as
+    for the textureModel.
+
     \sa addTriangulatedFace()
 */
 void QGLDisplayList::addTriangleFan(const QVector3D &center,
                                     const QGL::VectorArray &edges,
-                                    const QGLTextureModel &textureModel)
+                                    const QGLTextureModel *textureModel,
+                                    const QGLColorModel *colorModel)
 {
     if (edges.count() < 2)
         return;
-    if (!textureModel.isNull())
+    if (!textureModel->isNull())
         qWarning("NOT IMPLEMENTED YET");
     for (int i = 0; i < edges.count() - 1; ++i)
-        addTriangle(edges[i], edges[(i + 1)], center, QVector3D(), textureModel);
+        addTriangle(edges[i], edges[(i + 1)], center, QVector3D(),
+                    textureModel, colorModel);
 }
 
 /*!
+    \bold {Note:} this is an advanced function intended for internal use.
+    For typical situations, use \c{begin(QGLDisplayList::TRIANGULATED_FACE)}
+    instead.
+
     Adds to this section a face defined by \a center and \a edges.  The face
     is composed of N triangular sub-faces, where N == edges.count(), each
     formed by taking two vertices from the \a edges, eg edges[0] and edges[1]
-    and then \a center.
+    and then \a center.  The \a edges comprise the perimeter of the face and
+    \a center is some point inside the perimeter.
+
+    If \a closePath is true, then a face is generated between the last and
+    first vertices of \a edges - \a closePath is true by default.  Set
+    \a closePath to false when \a edges represent an open path (not a
+    perimeter).  When \a closePath is false, the number of faces generated
+    is \c{N == edges.count() - 1}.
 
     If edges has less than two elements this function exits without doing
     anything.
@@ -372,32 +419,39 @@ void QGLDisplayList::addTriangleFan(const QVector3D &center,
     addTriangleFan() which must calculate a new normal for every sub-face.
 
     This function also differs from addTriangleFan(), in that it adds a closing
-    sub-face \c{(edges[n], edges[0], center)} (ie between the last and first
-    vertex listed in \a edges) to form a closed face.  If the last and first
-    vertex are the same, then the last vertex is ignored.
+    sub-face if \a closePath is true (which it is by default).
 
     Textures are generated according to \a textureModel, if textureModel
     is non-null.
+
+    If \a colorModel is non-null its values will be applied in the same way as
+    for the textureModel.
 */
 void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
                                          const QGL::VectorArray &edges,
-                                         const QGLTextureModel &textureModel)
+                                         const QGLTextureModel *textureModel,
+                                         const QGLColorModel *colorModel,
+                                         bool closePath)
 {
     if (edges.count() < 2)
         return;
-    if (!textureModel.isNull())
+    if (!textureModel->isNull())
         qWarning("NOT IMPLEMENTED YET");
     QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
-    int cnt = edges.first() == edges.last() ? edges.count() - 1 : edges.count();
+    int cnt = closePath ? edges.count() : edges.count() - 1;
     for (int i = 0; i < cnt; ++i)
     {
         int n = (i + 1) % cnt;
-        addTriangle(edges[i], edges[n], center, norm, textureModel);
+        addTriangle(edges[i], edges[n], center, norm, textureModel, colorModel);
     }
 }
 
 /*!
-    Add a series of quads based on the \a edges and \a offset given.
+    \bold {Note:} this is an advanced function intended for internal use.
+    For typical situations, use \c{begin(QGLDisplayList::EXTRUSION)} instead.
+
+    Add a series of quads based on the \a edges and \a offset given.  The number
+    of quads generated is (by default) equal to the number of vertices in \a edges.
 
     The quads and their normals are generated in such a way that if \a edges
     are the perimeter vertices of a polygon F, in counter-clockwise order, and
@@ -408,12 +462,18 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     If \a reverse is true, then \a edges are treated as being in clockwise
     order for the purpose of generating the winding and face normals.
 
-    If edges has less than 2 elements, this functions does nothing and
+    If \a closePath is true, then a face is generated between the last and
+    first vertices of \a edges - \a closePath is true by default.  Set
+    \a closePath to false when \a edges represent an open path (not a
+    perimeter).  When \a closePath is false, the number of faces generated
+    is one less than the number of vertices in \a edges.
+
+    If \a edges has less than 2 elements, this functions does nothing and
     returns an empty array.
 
     If \a offset is null (the default) then offset is set to be the
     negative (inverse) of the normalized cross-product of the first two
-    segments of line: \c{QVector3D::normal(edges[0], edges[1], edges[2])}.
+    segments of line: \c{-QVector3D::normal(edges[0], edges[1], edges[2])}.
     If relying on this default behaviour ensure that the first 3 vertices
     do not lie on a straight line.
 
@@ -445,11 +505,16 @@ void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
     values on the \a edges; low Y values on the extruded result edge;
     low X values at the left of \c{edges[0]} and high X values on the
     right of \c{edges.last()}.
+
+    If \a colorModel is non-null its values will be applied in the same way as
+    for the textureModel.
 */
 QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
                                          const QVector3D &offset,
-                                         const QGLTextureModel &textureModel,
-                                         bool reverse)
+                                         const QGLTextureModel *textureModel,
+                                         const QGLColorModel *colorModel,
+                                         bool reverse,
+                                         bool closePath)
 {
     QGL::VectorArray result;
     if (edges.count() < 2)
@@ -469,38 +534,40 @@ QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
     // calculate extruded version of line as result
     for (int i = 0; i < edges.count(); ++i)
         result.append(edges.at(i) + o);
-    if (!textureModel.isNull())
+    QGLColorModel cx;
+    QGLColorModel *cxip = 0;
+    if (colorModel)
+        cx = *colorModel;
+    QGLTextureModel tx;
+    QGLTextureModel *txip = 0;
+    if (textureModel && !textureModel->isNull())
+        tx = *textureModel;
+    qreal totalExtents = 0.0f;
+    QVarLengthArray<qreal> extents(edges.count());
+    int cnt = closePath ? edges.count() : edges.count() - 1;
+    for (int i = 0; i < cnt; ++i)
     {
-        // calculate texturecoords
-        QGLTextureModel tx(textureModel);
-        qreal totalExtents = 0.0f;
-        QVarLengthArray<qreal> extents(edges.count());
-        for (int i = 0; i < edges.count(); ++i)
-        {
-            int n = (i + 1) % edges.count();
-            extents[i] = (edges[n] - edges[i]).length();
-            totalExtents += extents[i];
-        }
-        tx.startTileRight(totalExtents);
-        for (int i = 0; i < edges.count() - 1; ++i)
-        {
-            if (reverse)
-                addQuad(result[i+1], result[i], edges[i], edges[i+1],
-                        tx.tileRight(extents[i]));
-            else
-                addQuad(result[i], result[i+1], edges[i+1], edges[i],
-                        tx.tileRight(extents[i]));
-        }
+        int n = (i + 1) % edges.count();
+        extents[i] = (edges[n] - edges[i]).length();
+        totalExtents += extents[i];
     }
-    else
+    if (textureModel && !textureModel->isNull())
+        tx.startTileRight(totalExtents);
+    if (colorModel)
+        cx.startGradientRight(totalExtents);
+    for (int i = 0; i < cnt; ++i)
     {
-        for (int i = 0; i < edges.count() - 1; ++i)
-        {
-            if (reverse)
-                addQuad(result[i+1], result[i], edges[i], edges[i+1]);
-            else
-                addQuad(result[i], result[i+1], edges[i+1], edges[i]);
-        }
+        int n = (i + 1) % edges.count();
+        if (textureModel && !textureModel->isNull())
+            txip = tx.tileRight(extents[i]);
+        if (colorModel)
+            cxip = cx.gradientRight(extents[i]);
+        if (reverse)
+            addQuad(result[n], result[i], edges[i], edges[n],
+                    txip, cxip);
+        else
+            addQuad(result[i], result[n], edges[n], edges[i],
+                    txip, cxip);
     }
     QGL::VectorArray temp;
     QGL::VectorArray::const_iterator it = result.constEnd();
@@ -766,3 +833,126 @@ void QGLDisplayList::setDirty(bool dirty)
     Q_D(QGLDisplayList);
     d->finalizeNeeded = dirty;
 }
+
+
+void QGLDisplayList::begin(QGLDisplayList::Operation operation,
+                           const QVector3D &vector)
+{
+    Q_D(QGLDisplayList);
+    end();
+    switch (operation)
+    {
+    case NO_OP:
+        break;
+    case TRIANGLE:
+        d->currentOperation = new QGLTriangle(this); break;
+    case TRIANGLE_STRIP:
+        d->currentOperation = new QGLTriangleStrip(this); break;
+    case QUAD:
+        d->currentOperation = new QGLQuad(this); break;
+    case QUAD_STRIP:
+        d->currentOperation = new QGLQuadStrip(this); break;
+    case TRIANGLE_FAN:
+        d->currentOperation = new QGLTriangleFan(this, vector); break;
+    case TRIANGULATED_FACE:
+        d->currentOperation = new QGLTriangulatedFace(this); break;
+    case EXTRUSION:
+        d->currentOperation = new QGLExtrusion(this); break;
+    }
+}
+
+void QGLDisplayList::end()
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+    {
+        d->currentOperation->finalize();
+        delete d->currentOperation;
+        d->currentOperation = 0;
+    }
+}
+
+void QGLDisplayList::addVertex(const QVector3D &vertex)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addVertex(vertex);
+}
+
+void QGLDisplayList::addNormal(const QVector3D &normal)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addNormal(normal);
+}
+
+void QGLDisplayList::addColor(const QColor4b &color)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addColor(color);
+}
+
+void QGLDisplayList::addTexCoord(const QVector2D &texCoord)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addTexCoord(texCoord);
+}
+
+void QGLDisplayList::addVertexArray(const QGL::VectorArray &vertices)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addVertexArray(vertices);
+}
+
+void QGLDisplayList::addNormalArray(const QGL::VectorArray &normals)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addNormalArray(normals);
+}
+
+void QGLDisplayList::addColorArray(const QGL::ColorArray &colors)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addColorArray(colors);
+}
+
+void QGLDisplayList::addTexCoordArray(const QGL::TexCoordArray &texCoords)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->addTexCoordArray(texCoords);
+}
+
+QGL::VectorArray QGLDisplayList::endResult()
+{
+    Q_D(QGLDisplayList);
+    QGL::VectorArray result;
+    if (d->currentOperation)
+    {
+        d->currentOperation->finalize();
+        result = d->currentOperation->vertices();
+        delete d->currentOperation;
+        d->currentOperation = 0;
+    }
+    return result;
+}
+
+void QGLDisplayList::addTextureModel(const QGLTextureModel &model)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->setTextureModel(model);
+}
+
+void QGLDisplayList::addColorModel(const QGLColorModel &model)
+{
+    Q_D(QGLDisplayList);
+    if (d->currentOperation)
+        d->currentOperation->setColorModel(model);
+}
+

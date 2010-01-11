@@ -297,7 +297,7 @@ void QGL3dsMesh::generateVertices()
                         model.setBottomRight(QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]));
                         model.setTopRight(QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]));
                     }
-                    addTriangle(a, b, c, norm, model);
+                    addTriangle(a, b, c, norm, &model);
                 }
             }
         }

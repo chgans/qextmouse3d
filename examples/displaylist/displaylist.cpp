@@ -152,7 +152,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QGLTextureModel texMap(0, 0, 1, 1);
 
     // do the math for the defining points
-    for (int i = 0; i <= numSlices; ++i)
+    for (int i = 0; i < numSlices; ++i)
     {
         qreal angle = (qreal(i) * 2.0 * M_PI) / numSlices;
         topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle),
@@ -162,17 +162,24 @@ QGLDisplayList *DisplayListView::buildGeometry()
     //! [3]
     // create the flat top lid of the can
     soupCan->newSection();
-    soupCan->addTriangulatedFace(canLidCenter, topCanRim);
+    soupCan->begin(QGLDisplayList::TRIANGULATED_FACE, canLidCenter);
+    soupCan->addVertexArray(topCanRim);
+    soupCan->end();
 
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
     soupCan->currentNode()->setMaterial(canMat);
     soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
-    bottomCanRim = soupCan->extrude(topCanRim, canExtrudeVec, texMap);
+    soupCan->begin(QGLDisplayList::EXTRUSION, canExtrudeVec);
+    soupCan->addVertexArray(topCanRim);
+    soupCan->addTextureModel(texMap);
+    bottomCanRim = soupCan->endResult();
 
     // create the flat bottom lid of the can
     soupCan->newSection();
-    soupCan->addTriangulatedFace(canBottomCenter, bottomCanRim);
+    soupCan->begin(QGLDisplayList::TRIANGULATED_FACE, canBottomCenter);
+    soupCan->addVertexArray(bottomCanRim);
+    soupCan->end();
 
     soupCan->finalize();
     return soupCan;

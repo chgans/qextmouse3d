@@ -183,7 +183,7 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         tex.setTopRight(t2);
 
         // null vector says "work out the normal for me"
-        addTriangle(v0, v1, v2, QVector3D(), tex);
+        addTriangle(v0, v1, v2, QVector3D(), &tex);
     }
 
     QGLMaterialCollection *pal = geometry()->palette();

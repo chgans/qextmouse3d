@@ -73,7 +73,7 @@ public:
     inline void setTopRight(const QVector2D &);
     inline bool isNull() const;
     inline void startTileRight(qreal divisor);
-    QGLTextureModel tileRight(qreal extent) const;
+    QGLTextureModel *tileRight(qreal extent) const;
 private:
     QVector2D m_bl;
     QVector2D m_br;
@@ -161,21 +161,21 @@ inline void QGLTextureModel::startTileRight(qreal divisor)
     m_tile->m_tr = m_tl;
 }
 
-inline QGLTextureModel QGLTextureModel::tileRight(qreal extent) const
+inline QGLTextureModel *QGLTextureModel::tileRight(qreal extent) const
 {
     if (!m_tile)
     {
 #ifndef QT_NO_DEBUG
         qWarning("QGLTextureMODEL::tileRight() - call startTileRight() first!");
 #endif
-        return QGLTextureModel();
+        return 0;
     }
     qreal factor = extent / m_divisor;
     m_tile->m_bl = m_tile->m_br;
     m_tile->m_tl = m_tile->m_tr;
     m_tile->m_br = m_tile->m_bl + ((m_br - m_bl) * factor);
     m_tile->m_tr = m_tile->m_tl + ((m_tr - m_tl) * factor);
-    return *m_tile;
+    return m_tile;
 }
 
 #endif // QGLTEXTUREMODEL_H

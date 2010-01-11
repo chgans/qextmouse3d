@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,54 +39,23 @@
 **
 ****************************************************************************/
 
-#ifndef QGLDISPLAYLIST_P_H
-#define QGLDISPLAYLIST_P_H
+#ifndef QGLEXTRUSION_H
+#define QGLEXTRUSION_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#include "qglprimitive_p.h"
 
-#include "qglgeometry_p.h"
-#include "qglscenenode_p.h"
-#include "qgldisplaylist.h"
-
-#include <QtCore/qmap.h>
-
-QT_BEGIN_NAMESPACE
-
-class QGLDisplayList;
-class QGLSection;
-class QGLPrimitive;
-
-class QGLDisplayListPrivate : public QGLSceneNodePrivate
+class QGLExtrusion : public QGLPrimitive
 {
-    Q_DECLARE_PUBLIC(QGLDisplayList);
 public:
-    QGLDisplayListPrivate(int version = QObjectPrivateVersion);
-    ~QGLDisplayListPrivate();
-    inline void setDirty(bool dirty = true);
-
-    bool finalizeNeeded;
-    QList<QGLSection*> sections;
-    QGLSection *currentSection;
-    QList<QGLSceneNode*> nodeStack;
-    QGLSceneNode *currentNode;
-    QMap<QGLSection *, QGLSceneNode *> sectionNodeMap;
-    QGLPrimitive *currentOperation;
+    explicit QGLExtrusion(QGLDisplayList *list, const QVector3D &control = QVector3D())
+        : QGLPrimitive(list, control) {}
+    void finalize();
+    QString toString() { return QString("QGLExtrusion"); }
+    QGLDisplayList::Operation type() { return QGLDisplayList::EXTRUSION; }
+    bool isReversed() const { return m_reversed; }
+    void enableReversed(bool reversed) { m_reversed = reversed; }
+private:
+    bool m_reversed;
 };
 
-inline void QGLDisplayListPrivate::setDirty(bool dirty)
-{
-    finalizeNeeded = dirty;
-}
-
-QT_END_NAMESPACE
-
-#endif // QGLDISPLAYLIST_P_H
+#endif // QGLEXTRUSION_H

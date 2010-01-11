@@ -48,6 +48,7 @@
 #include <QtOpenGL/qgl.h>
 
 #include "qgltexturemodel.h"
+#include "qglcolormodel.h"
 #include "qglnamespace.h"
 #include "qglscenenode.h"
 #include "qlogicalvertex_p.h"
@@ -86,25 +87,70 @@ public:
     QGLSceneNode *pushNode();
     QGLSceneNode *popNode();
 
-    // geometry building
+    void finalize();
+
+    // geometry building by begin() / end()
+    enum Operation
+    {
+        NO_OP,
+        TRIANGLE,
+        TRIANGLE_STRIP,
+        QUAD,
+        QUAD_STRIP,
+        TRIANGLE_FAN,
+        TRIANGULATED_FACE,
+        EXTRUSION
+    };
+    enum OperationFlag
+    {
+        NO_FLAG               = 0X00,
+        FACE_SENSE_REVERSED   = 0x01,
+        NO_CLOSE_PATH         = 0x02
+    };
+    Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
+    void begin(Operation, const QVector3D &control = QVector3D());
+    void end();
+    QGL::VectorArray endResult();
+    void setControl(const QVector3D &control);
+    QVector3D control() const;
+    void setFlags(OperationFlags flag);
+    OperationFlags flags() const;
+    void addVertex(const QVector3D &);
+    void addNormal(const QVector3D &);
+    void addColor(const QColor4b &);
+    void addTexCoord(const QVector2D &);
+    void addVertexArray(const QGL::VectorArray &);
+    void addNormalArray(const QGL::VectorArray &);
+    void addColorArray(const QGL::ColorArray &);
+    void addTexCoordArray(const QGL::TexCoordArray &);
+    void addTextureModel(const QGLTextureModel &);
+    void addColorModel(const QGLColorModel &);
+
+    // low level geometry building
     void addTriangle(const QVector3D &a, const QVector3D &b,
                      const QVector3D &c, const QVector3D &n = QVector3D(),
-                     const QGLTextureModel &textureModel = QGLTextureModel(),
+                     const QGLTextureModel *textureModel = 0,
+                     const QGLColorModel *colorModel = 0,
                      bool inverted = false);
     void addQuad(const QVector3D &a, const QVector3D &b,
                  const QVector3D &c, const QVector3D &d,
-                 const QGLTextureModel &textureModel = QGLTextureModel());
+                 const QGLTextureModel *textureModel = 0,
+                 const QGLColorModel *colorModel = 0);
     void addTriangleFan(const QVector3D &center,
                         const QGL::VectorArray &edges,
-                        const QGLTextureModel &textureModel = QGLTextureModel());
+                        const QGLTextureModel *textureModel = 0,
+                        const QGLColorModel *colorModel = 0);
     void addTriangulatedFace(const QVector3D &center,
                              const QGL::VectorArray &edges,
-                             const QGLTextureModel &textureModel = QGLTextureModel());
+                             const QGLTextureModel *textureModel = 0,
+                             const QGLColorModel *colorModel = 0,
+                             bool closePath = true);
     QVector<QVector3D> extrude(const QGL::VectorArray &edges,
                                const QVector3D &dir = QVector3D(),
-                               const QGLTextureModel &textureModel = QGLTextureModel(),
-                               bool reverse = false);
-    void finalize();
+                               const QGLTextureModel *textureModel = 0,
+                               const QGLColorModel *colorModel = 0,
+                               bool reverse = false,
+                               bool closePath = true);
 
 protected:
     // internal and test functions
@@ -124,6 +170,8 @@ private:
     friend QDebug operator<<(QDebug, const QGLSection &);
 #endif
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLDisplayList::OperationFlags)
 
 QT_END_NAMESPACE
 

@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,54 +39,22 @@
 **
 ****************************************************************************/
 
-#ifndef QGLDISPLAYLIST_P_H
-#define QGLDISPLAYLIST_P_H
+#include "qgltriangle_p.h"
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
-#include "qglgeometry_p.h"
-#include "qglscenenode_p.h"
 #include "qgldisplaylist.h"
 
-#include <QtCore/qmap.h>
-
-QT_BEGIN_NAMESPACE
-
-class QGLDisplayList;
-class QGLSection;
-class QGLPrimitive;
-
-class QGLDisplayListPrivate : public QGLSceneNodePrivate
+void QGLTriangle::finalize()
 {
-    Q_DECLARE_PUBLIC(QGLDisplayList);
-public:
-    QGLDisplayListPrivate(int version = QObjectPrivateVersion);
-    ~QGLDisplayListPrivate();
-    inline void setDirty(bool dirty = true);
-
-    bool finalizeNeeded;
-    QList<QGLSection*> sections;
-    QGLSection *currentSection;
-    QList<QGLSceneNode*> nodeStack;
-    QGLSceneNode *currentNode;
-    QMap<QGLSection *, QGLSceneNode *> sectionNodeMap;
-    QGLPrimitive *currentOperation;
-};
-
-inline void QGLDisplayListPrivate::setDirty(bool dirty)
-{
-    finalizeNeeded = dirty;
+    if (m_vertices.count() < 3)
+    {
+        clear();
+        return;
+    }
+    for (int i = 0; i < m_vertices.count(); i += 3)
+        m_displayList->addTriangle(m_vertices[i],
+                                   m_vertices[i+1],
+                                   m_vertices[i+2],
+                                   QVector3D(),
+                                   textureModelPointer(), colorModelPointer(), m_inverted);
+    clear();
 }
-
-QT_END_NAMESPACE
-
-#endif // QGLDISPLAYLIST_P_H

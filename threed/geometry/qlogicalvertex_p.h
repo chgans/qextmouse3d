@@ -63,16 +63,6 @@ QT_BEGIN_NAMESPACE
 class QLogicalVertex
 {
 public:
-    enum Type
-    {
-        None         = 0x0,
-        Vertex       = 0x1,
-        Normal       = 0x2,
-        Texture      = 0x4,
-        Color        = 0x8
-    };
-    Q_DECLARE_FLAGS(Types, Type);
-
     static const qreal InvalidTexValue;
     static const QVector2D InvalidTexCoord;
 
@@ -103,9 +93,7 @@ private:
     QVector3D m_normal;
     QVector2D m_texCoord;
     QColor4b m_color;
-    Types m_types;
 };
-Q_DECLARE_OPERATORS_FOR_FLAGS(QLogicalVertex::Types);
 
 QLogicalVertex::QLogicalVertex()
     : m_texCoord(InvalidTexCoord)

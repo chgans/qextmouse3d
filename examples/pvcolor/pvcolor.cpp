@@ -41,6 +41,7 @@
 
 #include "pvcolor.h"
 #include "qgldisplaylist.h"
+#include "qgloperation.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 
@@ -183,6 +184,11 @@ QGLDisplayList *PVColorView::buildGeometry()
     QGL::VectorArray tailFace;     // tail of Q - top face
     QGL::VectorArray eTailFace;    // tail of Q - bottom face
 
+    QGL::ColorArray tailColors;
+    QGL::ColorArray faceColors;
+    QColor4b innerColor(196, 16, 16);
+    QColor4b outerColor(128, 128, 255);
+
     // do the math for the defining points
     qreal t2 = qThickness / 2.0f;
     qreal irad = qRadius - t2;
@@ -190,8 +196,9 @@ QGLDisplayList *PVColorView::buildGeometry()
     qreal itail = irad - qThickness;
     qreal otail = orad + qThickness;
     tailFace << QVector2D(itail, -t2) << QVector2D(otail, -t2)
-            << QVector2D(otail, t2) << QVector2D(itail, t2)
-            << QVector2D(itail, -t2);
+            << QVector2D(otail, t2) << QVector2D(itail, t2);
+    tailColors << Qt::darkBlue << Qt::darkGray <<
+            Qt::darkGreen << Qt::darkMagenta;
     QBox3D tail(tailFace[0], tailFace[2]);
     qreal xi0 = qSqrt((irad * irad) - (t2 * t2));
     qreal xo0 = qSqrt((orad * orad) - (t2 * t2));
@@ -201,12 +208,22 @@ QGLDisplayList *PVColorView::buildGeometry()
         calculateSlice(i, tail, topQORim, topQIRim);
     topQORim << QVector2D(xo0, -t2);
     topQIRim << QVector2D(xi0, -t2);
-
+    for (int i = 0; i < topQORim.count(); ++i)
+    {
+        int hue = 360 * (topQORim[i].x() / (qRadius * 3));
+        int value = 255 * (topQORim[i].y() / (qRadius * 3));
+        faceColors << QColor::fromHsv(hue, 212, value);
+    }
 
     //! [3]
     // create the flat top q
     qList->newSection();
-    qList->addQuad(tailFace[0], tailFace[1], tailFace[2], tailFace[3]);
+    {
+        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        quad << tailFace;
+        quad << tailColors;
+    }
+    // qList->addQuad(tailFace[0], tailFace[1], tailFace[2], tailFace[3]);
     int olap = topQORim.count() - topQIRim.count();
     Q_ASSERT(olap % 2 == 0);
     int lap = olap / 2;
@@ -224,31 +241,98 @@ QGLDisplayList *PVColorView::buildGeometry()
         qDebug() << "    " << topQORim[i];
 
     if (lap)
-        qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(0, lap));
+    {
+        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
+        face.setControl(topQIRim[iptr]);
+        face << topQORim.mid(0, lap);
+        face << faceColors;
+    }
+        //qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(0, lap));
     for ( ; iptr < topQIRim.count() - 1; ++iptr, ++optr)
-        qList->addQuad(topQIRim[iptr], topQORim[optr],
-                       topQORim[optr+1], topQIRim[iptr+1]);
+    {
+        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        quad << topQIRim[iptr] << innerColor;
+        quad << topQORim[optr] << outerColor;
+        quad << topQORim[optr+1] << outerColor;
+        quad << topQIRim[iptr+1] << innerColor;
+        // qList->addQuad(topQIRim[iptr], topQORim[optr],
+        //                topQORim[optr+1], topQIRim[iptr+1]);
+    }
     if (lap)
-        qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(optr, lap));
+    {
+        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
+        face.setControl(topQIRim[iptr]);
+        face << topQORim.mid(optr, lap);
+        face << faceColors;
+    }
+    // qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(optr, lap));
 
     // create the sides of the q, and save the extruded values
     qList->newSection();
-    bottomQORim = qList->extrude(topQORim, qExtrudeVec);
-    bottomQIRim = qList->extrude(topQIRim, qExtrudeVec, QGLTextureModel(), true);
-    eTailFace = qList->extrude(tailFace, qExtrudeVec);
+    {
+        QGLOperation outsides(qList, QGLDisplayList::EXTRUSION);
+        outsides.setControl(qExtrudeVec);
+        outsides << QGLDisplayList::NO_CLOSE_PATH;
+        outsides << topQOrim;
+        outsides << sideColors;
+        outsides >> bottomQORim;
+    }
+    // bottomQORim = qList->extrude(topQORim, qExtrudeVec);
+    {
+        QGLOperation insides(qList, QGLDisplayList::EXTRUSION);
+        insides.setControl(qExtrudeVec);
+        insides << QGLDisplayList::FACE_SENSE_REVERSED;
+        insides << QGLDisplayList::NO_CLOSE_PATH;
+        insides << topQIRim;
+        insides << sideColors;
+        insides >> bottomQIRim;
+    }
+    // bottomQIRim = qList->extrude(topQIRim, qExtrudeVec, QGLTextureModel(), true);
+    {
+        QGLOperation tailSides(qList, QGLDisplayList::EXTRUSION);
+        tailSides.setControl(qExtrudeVec);
+        tailSides << tailFace;
+        tailSides << tailColors;
+        tailSides >> eTailFace;
+    }
+    // eTailFace = qList->extrude(tailFace, qExtrudeVec);
 
     // create the flat bottom lid of the q
     qList->newSection();
     iptr = 0;
     optr = lap;
-    qList->addQuad(eTailFace[0], eTailFace[1], eTailFace[2], eTailFace[3]);
+    {
+        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        quad << eTailFace;
+        quad << tailColors;
+    }
+    // qList->addQuad(eTailFace[0], eTailFace[1], eTailFace[2], eTailFace[3]);
     if (lap)
-        qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(0, lap));
+    {
+        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
+        face.setControl(bottomQIRim[iptr]);
+        face << bottomQORim.mid(0, lap);
+        face << faceColors;
+    }
+    // qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(0, lap));
     for ( ; iptr < topQIRim.count() - 1; ++iptr, ++optr)
-        qList->addQuad(bottomQIRim[iptr], bottomQORim[optr],
-                       bottomQORim[optr+1], bottomQIRim[iptr+1]);
+    {
+        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        quad << bottomQIRim[iptr] << innerColor;
+        quad << bottomQORim[optr] << outerColor;
+        quad << bottomQORim[optr+1] << outerColor;
+        quad << bottomQIRim[iptr+1] << innerColor;
+    }
+    // qList->addQuad(bottomQIRim[iptr], bottomQORim[optr],
+    //                bottomQORim[optr+1], bottomQIRim[iptr+1]);
     if (lap)
-        qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(optr, lap));
+    {
+        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
+        face.setControl(bottomQIRim[iptr]);
+        face << bottomQORim.mid(optr, lap);
+        face << faceColors;
+    }
+    // qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(optr, lap));
 
     qList->finalize();
     return qList;
