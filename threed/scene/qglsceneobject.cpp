@@ -151,4 +151,11 @@ void QGLSceneObject::cleanup(QGLPainter *painter)
     Q_UNUSED(painter);
 }
 
+/*!
+    \fn void QGLSceneObject::changed()
+
+    Signal that is emitted when this object changes in a manner that
+    requires the scene to be repainted.
+*/
+
 QT_END_NAMESPACE
