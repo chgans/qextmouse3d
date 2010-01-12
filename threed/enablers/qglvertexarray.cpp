@@ -818,7 +818,8 @@ QGLVertexArray QGLVertexArray::interleaved(const QGLVertexArray& other) const
 */
 void QGLVertexArray::setRawData(const float *data, int count)
 {
-    m_data.setRawData(data, count);
+    m_data.resize(count);
+    qMemCopy(m_data.data(), data, count * sizeof(float));
 }
 
 /*!
@@ -889,13 +890,15 @@ void QGLVertexArray::typeCheckWrite(int field, int size) const
 
 QGLVertexArray QGLVertexArray::toBufferForm() const
 {
+    // XXX - need to get rid of this - it's ugly!
+
     // Create a simulated raw data version of the array where the
     // raw data pointer is set to zero.  This will cause later calls
     // of "array.constData() + field.offset()" to generate an offset
     // into a vertex buffer rather than a client-side pointer.
     QGLVertexArray result;
-    result.m_data.setRawData(0, m_data.count());
     result.m_fields = m_fields;
+    result.m_isBufferForm = true;
     return result;
 }
 

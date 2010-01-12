@@ -47,7 +47,7 @@
 #include "qvector3d.h"
 #include "qvector4d.h"
 #include "qcolor4b.h"
-#include "qglarraydata.h"
+#include "qdataarray.h"
 #include "qglvertexdescription.h"
 #include "qglattributevalue.h"
 #include "qglreferencedbuffer.h"
@@ -168,11 +168,12 @@ public:
     inline bool isUploaded() const;
 
 private:
-    QGLArrayData<float> m_data;
+    QDataArray<float> m_data;
     QGLVertexDescription m_fields;
     mutable int m_currentField;
     mutable int m_warnings;
     mutable QGLReferencedBuffer *m_buffer;
+    bool m_isBufferForm;
 
     inline void detachBuffer();
 
@@ -195,12 +196,12 @@ inline void QGLVertexArray::detachBuffer()
 }
 
 inline QGLVertexArray::QGLVertexArray()
-    : m_currentField(0), m_warnings(0), m_buffer(0)
+    : m_currentField(0), m_warnings(0), m_buffer(0), m_isBufferForm(false)
 {
 }
 
 inline QGLVertexArray::QGLVertexArray(QGL::VertexAttribute attr, int size)
-    : m_currentField(0), m_warnings(0), m_buffer(0)
+    : m_currentField(0), m_warnings(0), m_buffer(0), m_isBufferForm(false)
 {
     m_fields.addField(attr, size);
 }
@@ -208,7 +209,7 @@ inline QGLVertexArray::QGLVertexArray(QGL::VertexAttribute attr, int size)
 inline QGLVertexArray::QGLVertexArray
         (QGL::VertexAttribute attr1, int size1,
          QGL::VertexAttribute attr2, int size2)
-    : m_currentField(0), m_warnings(0), m_buffer(0)
+    : m_currentField(0), m_warnings(0), m_buffer(0), m_isBufferForm(false)
 {
     m_fields.addField(attr1, size1);
     m_fields.addField(attr2, size2);
@@ -218,7 +219,7 @@ inline QGLVertexArray::QGLVertexArray
         (QGL::VertexAttribute attr1, int size1,
          QGL::VertexAttribute attr2, int size2,
          QGL::VertexAttribute attr3, int size3)
-    : m_currentField(0), m_warnings(0), m_buffer(0)
+    : m_currentField(0), m_warnings(0), m_buffer(0), m_isBufferForm(false)
 {
     m_fields.addField(attr1, size1);
     m_fields.addField(attr2, size2);
@@ -230,7 +231,7 @@ inline QGLVertexArray::QGLVertexArray
          QGL::VertexAttribute attr2, int size2,
          QGL::VertexAttribute attr3, int size3,
          QGL::VertexAttribute attr4, int size4)
-    : m_currentField(0), m_warnings(0), m_buffer(0)
+    : m_currentField(0), m_warnings(0), m_buffer(0), m_isBufferForm(false)
 {
     m_fields.addField(attr1, size1);
     m_fields.addField(attr2, size2);
@@ -242,7 +243,8 @@ inline QGLVertexArray::QGLVertexArray(const QGLVertexArray& other)
     : m_data(other.m_data), m_fields(other.m_fields),
       m_currentField(other.m_currentField),
       m_warnings(other.m_warnings),
-      m_buffer(other.m_buffer)
+      m_buffer(other.m_buffer),
+      m_isBufferForm(other.m_isBufferForm)
 {
     if (m_buffer)
         m_buffer->ref();
@@ -261,6 +263,7 @@ inline QGLVertexArray& QGLVertexArray::operator=(const QGLVertexArray& other)
         m_fields = other.m_fields;
         m_currentField = other.m_currentField;
         m_warnings = other.m_warnings;
+        m_isBufferForm = other.m_isBufferForm;
         if (m_buffer != other.m_buffer) {
             if (m_buffer && !m_buffer->deref())
                 delete m_buffer;
@@ -301,7 +304,9 @@ inline QGLAttributeValue QGLVertexArray::attributeValue(int field) const
             (m_fields.m_fields[field].size,
              QGL::ComponentType(0x1406),    // GL_FLOAT
              m_fields.m_stride * sizeof(float),
-             m_data.constData() + m_fields.m_fields[field].offset);
+             (!m_isBufferForm
+                ? (m_data.constData() + m_fields.m_fields[field].offset)
+                : (((float *)0) + m_fields.m_fields[field].offset)));
     } else {
         return QGLAttributeValue();
     }

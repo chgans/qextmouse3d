@@ -42,7 +42,7 @@
 #ifndef QGLINDEXARRAY_H
 #define QGLINDEXARRAY_H
 
-#include "qglarraydata.h"
+#include "qdataarray.h"
 #include "qglreferencedbuffer.h"
 
 QT_BEGIN_HEADER
@@ -102,7 +102,7 @@ public:
     inline bool isUploaded() const;
 
 private:
-    QGLArrayData<ElementType> m_data;
+    QDataArray<ElementType> m_data;
     mutable QGLReferencedBuffer *m_buffer;
 
     inline void detachBuffer();
