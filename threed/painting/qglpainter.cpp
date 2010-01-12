@@ -313,6 +313,7 @@ QGLPainter::QGLPainter(QPainter *painter)
     : d_ptr(0)
 {
     begin(painter);
+
 }
 
 /*!
@@ -356,6 +357,7 @@ bool QGLPainter::begin(const QGLContext *context)
     const_cast<QGLContext *>(context)->makeCurrent();
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
+
     return true;
 }
 

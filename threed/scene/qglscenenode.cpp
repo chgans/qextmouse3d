@@ -182,34 +182,6 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 }
 
 /*!
-    Returns the transform set by the "user" associated with this node.  If no
-    local transform has been explicitly set, this method returns a
-    QMatrix4x4 set to the identity matrix.
-
-    \sa setUserTransform()
-*/
-
-QMatrix4x4 QGLSceneNode::userTransform() const
-{
-	Q_D(const QGLSceneNode);
-	return d->userTransform;
-}
-
-/*!
-    Returns the transform set by the "user" associated with this node.  If no
-    local transform has been explicitly set, this method returns a
-    QMatrix4x4 set to the identity matrix.
-
-    \sa userTransform()
-*/
-void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
-{
-	Q_D(QGLSceneNode);
-    d->userTransform = transform;
-}
-
-
-/*!
     Returns the local effect associated with this node.  The default value
     is QGL::LitMaterial.  If the value of hasEffect() is false, then this
     the value of effect() is ignored.
@@ -376,11 +348,10 @@ void QGLSceneNode::draw(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
-    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
+    if (!d->localTransform.isIdentity())
     {
          painter->modelViewMatrix().push();
-         if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
-         if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
+         painter->modelViewMatrix() *= d->localTransform;
          wasTransformed = true;
     }
 
@@ -476,7 +447,6 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
     node->setLocalTransform(d->localTransform);
-	node->setUserTransform(d->userTransform);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);

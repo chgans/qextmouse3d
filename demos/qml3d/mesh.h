@@ -73,12 +73,18 @@ public:
     QUrl source() const;
     void setSource(const QUrl& value);
 
-    QString meshName() const;
+    QString meshName() const;    
     void setMeshName(const QString& value);
 
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
+    int splitSceneMesh(QString nodeName, QObject *parent = 0);
 
-    virtual void draw(QGLPainter *painter);
+    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;    
+
+    virtual void draw(QGLPainter *painter, int objectID);
+
+    void setScene(QGLAbstractScene *scene);
+
+    int nextObjectID();
 
     void ref();
     bool deref();
@@ -97,8 +103,12 @@ private Q_SLOTS:
 
 private:
     MeshPrivate *d;
-    void setScene(QGLAbstractScene *scene);
+
 };
+
+
+
+
 
 QML_DECLARE_TYPE(Mesh)
 

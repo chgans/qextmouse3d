@@ -100,7 +100,9 @@ QList<QGLSceneObject *> QGL3dsScene::objects(QGLSceneObject::Type type) const
         objs.append(mRootNode);
         return objs;
     }
+
     QList<QGLSceneObject *> nodes;
+
     nodes.append(mRootNode);
     while (!nodes.isEmpty())
     {

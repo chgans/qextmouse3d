@@ -190,6 +190,7 @@ QGLSceneObject *QGLAbstractScene::object
     return 0;
 }
 
+
 /*!
     Returns the default object with the specified \a type.  This is typically
     used to find objects like the world and camera objects that are usually
