@@ -44,7 +44,6 @@
 
 #include <QtDeclarative/qmlgraphicsitem.h>
 #include "item3d.h"
-#include "genericitem3d.h"
 
 QT_BEGIN_HEADER
 
