@@ -577,6 +577,16 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 */
 
 /*!
+    \fn void QCustomDataArray::setAt(int index, Qt::GlobalColor value)
+    \overload
+
+    Sets the color element at \a index in this custom data array to \a value.
+    The elementType() must be QCustomDataArray::Color.
+
+    \sa at(), elementType(), colorAt()
+*/
+
+/*!
     \fn qreal QCustomDataArray::floatAt(int index) const
 
     Returns the floating-point element at \a index in this custom data array.
@@ -693,6 +703,16 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 
 /*!
     \fn void QCustomDataArray::append(const QColor4b& value)
+    \overload
+
+    Appends the color \a value to this custom data array.
+    The elementType() must be QCustomDataArray::Color.
+
+    \sa setAt(), colorAt()
+*/
+
+/*!
+    \fn void QCustomDataArray::append(Qt::GlobalColor value)
     \overload
 
     Appends the color \a value to this custom data array.

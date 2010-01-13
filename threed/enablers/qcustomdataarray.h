@@ -107,6 +107,7 @@ public:
     void setAt(int index, const QVector3D& value);
     void setAt(int index, const QVector4D& value);
     void setAt(int index, const QColor4b& value);
+    void setAt(int index, Qt::GlobalColor value);
 
     qreal floatAt(int index) const;
     QVector2D vector2DAt(int index) const;
@@ -123,6 +124,7 @@ public:
     void append(const QVector4D& value);
     void append(const QColor4b& value);
     void append(const QVariant& value);
+    void append(Qt::GlobalColor value);
 
     QDataArray<float> toFloatArray() const;
     QDataArray<QVector2D> toVector2DArray() const;
@@ -287,6 +289,13 @@ inline void QCustomDataArray::setAt(int index, const QColor4b& value)
     *(reinterpret_cast<QColor4b *>(m_array.data() + index)) = value;
 }
 
+inline void QCustomDataArray::setAt(int index, Qt::GlobalColor value)
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Color);
+    Q_ASSERT(index >= 0 && index < size());
+    *(reinterpret_cast<QColor4b *>(m_array.data() + index)) = QColor4b(value);
+}
+
 inline qreal QCustomDataArray::floatAt(int index) const
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Float);
@@ -372,6 +381,12 @@ inline void QCustomDataArray::append(const QColor4b& value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     *(reinterpret_cast<QColor4b *>(m_array.extend(1))) = value;
+}
+
+inline void QCustomDataArray::append(Qt::GlobalColor value)
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Color);
+    *(reinterpret_cast<QColor4b *>(m_array.extend(1))) = QColor4b(value);
 }
 
 inline const void *QCustomDataArray::data() const
