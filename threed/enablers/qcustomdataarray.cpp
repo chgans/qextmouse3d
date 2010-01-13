@@ -123,6 +123,110 @@ QCustomDataArray::QCustomDataArray(QCustomDataArray::ElementType type, int size)
 */
 
 /*!
+    Constructs a copy of the floating-point QDataArray \a other.
+
+    The elementType() will be set to QCustomDataArray::Float.
+
+    \sa toFloatArray()
+*/
+QCustomDataArray::QCustomDataArray(const QDataArray<float>& other)
+    : m_array(other),
+      m_elementType(QCustomDataArray::Float),
+      m_elementComponents(1)
+{
+}
+
+/*!
+    Constructs a copy of the 2D vector QDataArray \a other.
+
+    The elementType() will be set to QCustomDataArray::Vector2D.
+
+    This constructor needs to make a complete copy of the data
+    in \a other so it may be expensive performance-wise.
+
+    \sa toVector2DArray()
+*/
+QCustomDataArray::QCustomDataArray(const QDataArray<QVector2D>& other)
+    : m_elementType(QCustomDataArray::Vector2D),
+      m_elementComponents(2)
+{
+    int size = other.size();
+    const QVector2D *data = other.constData();
+    m_array.reserve(size * 2);
+    for (int index = 0; index < size; ++index) {
+        m_array.append(float(data->x()), float(data->y()));
+        ++data;
+    }
+}
+
+/*!
+    Constructs a copy of the 3D vector QDataArray \a other.
+
+    The elementType() will be set to QCustomDataArray::Vector3D.
+
+    This constructor needs to make a complete copy of the data
+    in \a other so it may be expensive performance-wise.
+
+    \sa toVector3DArray()
+*/
+QCustomDataArray::QCustomDataArray(const QDataArray<QVector3D>& other)
+    : m_elementType(QCustomDataArray::Vector3D),
+      m_elementComponents(3)
+{
+    int size = other.size();
+    const QVector3D *data = other.constData();
+    m_array.reserve(size * 3);
+    for (int index = 0; index < size; ++index) {
+        m_array.append(float(data->x()), float(data->y()), float(data->z()));
+        ++data;
+    }
+}
+
+/*!
+    Constructs a copy of the 4D vector QDataArray \a other.
+
+    The elementType() will be set to QCustomDataArray::Vector4D.
+
+    This constructor needs to make a complete copy of the data
+    in \a other so it may be expensive performance-wise.
+
+    \sa toVector3DArray()
+*/
+QCustomDataArray::QCustomDataArray(const QDataArray<QVector4D>& other)
+    : m_elementType(QCustomDataArray::Vector4D),
+      m_elementComponents(4)
+{
+    int size = other.size();
+    const QVector4D *data = other.constData();
+    m_array.reserve(size * 4);
+    for (int index = 0; index < size; ++index) {
+        m_array.append(float(data->x()), float(data->y()),
+                       float(data->z()), float(data->w()));
+        ++data;
+    }
+}
+
+/*!
+    Constructs a copy of the color QDataArray \a other.
+
+    The elementType() will be set to QCustomDataArray::Color.
+
+    This constructor needs to make a complete copy of the data
+    in \a other so it may be expensive performance-wise.
+
+    \sa toColorArray()
+*/
+QCustomDataArray::QCustomDataArray(const QDataArray<QColor4b>& other)
+    : m_elementType(QCustomDataArray::Color),
+      m_elementComponents(1)
+{
+    int size = other.size();
+    const QColor4b *data = other.constData();
+    m_array.resize(size);
+    qMemCopy(m_array.data(), data, sizeof(QColor4b) * size);
+}
+
+/*!
     \fn QCustomDataArray::~QCustomDataArray()
 
     Destroys this custom data array.
@@ -653,6 +757,109 @@ void QCustomDataArray::append(const QVariant& value)
                    "QVariant type not supported for elements");
         break;
     }
+}
+
+/*!
+    Returns the contents of this custom data array as a QDataArray
+    of float values.
+
+    The elementType() must be QCustomDataArray::Float.
+*/
+QDataArray<float> QCustomDataArray::toFloatArray() const
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Float);
+    return m_array;
+}
+
+/*!
+    Returns the contents of this custom data array as a QDataArray
+    of QVector2D values.
+
+    The elementType() must be QCustomDataArray::Vector2D.
+
+    This function needs to make a complete copy of the data
+    in this array so it may be expensive performance-wise.
+*/
+QDataArray<QVector2D> QCustomDataArray::toVector2DArray() const
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Vector2D);
+    int size = m_array.size() / 2;
+    QDataArray<QVector2D> result;
+    result.reserve(size);
+    const float *data = m_array.constData();
+    for (int index = 0; index < size; ++index) {
+        result.append(QVector2D(data[0], data[1]));
+        data += 2;
+    }
+    return result;
+}
+
+/*!
+    Returns the contents of this custom data array as a QDataArray
+    of QVector3D values.
+
+    The elementType() must be QCustomDataArray::Vector3D.
+
+    This function needs to make a complete copy of the data
+    in this array so it may be expensive performance-wise.
+*/
+QDataArray<QVector3D> QCustomDataArray::toVector3DArray() const
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Vector3D);
+    int size = m_array.size() / 3;
+    QDataArray<QVector3D> result;
+    result.reserve(size);
+    const float *data = m_array.constData();
+    for (int index = 0; index < size; ++index) {
+        result.append(QVector3D(data[0], data[1], data[2]));
+        data += 3;
+    }
+    return result;
+}
+
+/*!
+    Returns the contents of this custom data array as a QDataArray
+    of QVector4D values.
+
+    The elementType() must be QCustomDataArray::Vector4D.
+
+    This function needs to make a complete copy of the data
+    in this array so it may be expensive performance-wise.
+*/
+QDataArray<QVector4D> QCustomDataArray::toVector4DArray() const
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Vector4D);
+    int size = m_array.size() / 4;
+    QDataArray<QVector4D> result;
+    result.reserve(size);
+    const float *data = m_array.constData();
+    for (int index = 0; index < size; ++index) {
+        result.append(QVector4D(data[0], data[1], data[2], data[3]));
+        data += 4;
+    }
+    return result;
+}
+
+/*!
+    Returns the contents of this custom data array as a QDataArray
+    of QColor4b values.
+
+    The elementType() must be QCustomDataArray::Color.
+
+    This function needs to make a complete copy of the data
+    in this array so it may be expensive performance-wise.
+*/
+QDataArray<QColor4b> QCustomDataArray::toColorArray() const
+{
+    Q_ASSERT(m_elementType == QCustomDataArray::Color);
+    int size = m_array.size();
+    QDataArray<QColor4b> result;
+    result.reserve(size);
+    const QColor4b *data =
+        reinterpret_cast<const QColor4b *>(m_array.constData());
+    for (int index = 0; index < size; ++index)
+        result.append(*data++);
+    return result;
 }
 
 /*!

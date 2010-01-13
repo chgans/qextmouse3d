@@ -71,6 +71,11 @@ public:
     explicit QCustomDataArray(QCustomDataArray::ElementType type);
     QCustomDataArray(QCustomDataArray::ElementType type, int size);
     QCustomDataArray(const QCustomDataArray& other);
+    QCustomDataArray(const QDataArray<float>& other);
+    QCustomDataArray(const QDataArray<QVector2D>& other);
+    QCustomDataArray(const QDataArray<QVector3D>& other);
+    QCustomDataArray(const QDataArray<QVector4D>& other);
+    QCustomDataArray(const QDataArray<QColor4b>& other);
     ~QCustomDataArray();
 
     QCustomDataArray& operator=(const QCustomDataArray& other);
@@ -118,6 +123,12 @@ public:
     void append(const QVector4D& value);
     void append(const QColor4b& value);
     void append(const QVariant& value);
+
+    QDataArray<float> toFloatArray() const;
+    QDataArray<QVector2D> toVector2DArray() const;
+    QDataArray<QVector3D> toVector3DArray() const;
+    QDataArray<QVector4D> toVector4DArray() const;
+    QDataArray<QColor4b> toColorArray() const;
 
     const void *data() const;
 
