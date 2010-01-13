@@ -1600,6 +1600,11 @@ bool QGLPainter::isTextureUnitActive(int unit) const
 */
 void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 {
+    //If we are using the painter to determine pick IDs we shouldn't use 
+    //texturing: it 'corrupts' the picking colours and results in 
+    //erroneous pick IDs.
+    if (this->isPicking()) return;
+
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     if (unit < 0)
@@ -2447,7 +2452,7 @@ QColor QGLPainter::pickColor() const
     QGLPAINTER_CHECK_PRIVATE_RETURN(QColor());
     if (d->pick) {
         QColor color;
-        color.setRgb(d->pick->pickColor);
+        color.setRgb(d->pick->pickColor);        
         return color;
     } else {
         return Qt::black;
@@ -2469,7 +2474,9 @@ int QGLPainter::pickObject(int x, int y) const
     QGLPAINTER_CHECK_PRIVATE_RETURN(-1);
 
     if (!d->pick)
+    {
         return -1;
+    }
 
     // Fetch the color at the specified pixel.
     unsigned char data[4] = {0, 0, 0, 0};
@@ -2478,7 +2485,7 @@ int QGLPainter::pickObject(int x, int y) const
 
     // Normalize the color to account for floating-point rounding.
     color = qt_qgl_normalize_pick_color(color); // XXX: detect RGB444 screens.
-
+    
     // Map the color back to an object identifier.
     return d->pick->pickColorToObject.value(color, -1);
 }

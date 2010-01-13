@@ -71,7 +71,6 @@ class Item3d : public QObject, public QmlParserStatus
     Q_ENUMS(CullFace)
     Q_FLAGS(CullFaces)
     Q_FLAGS(Mode)
-    Q_FLAGS(ItemMode)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)

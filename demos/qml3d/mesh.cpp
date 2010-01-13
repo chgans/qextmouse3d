@@ -210,7 +210,7 @@ bool Mesh::deref()
 }
 
 QObject *Mesh::material(const QString& name) const
-{
+{    
     if (!d->scene)
         return 0;
     QGLSceneNode *node = qobject_cast<QGLSceneNode *>(d->meshObjects.at(0));
@@ -235,13 +235,11 @@ void Mesh::componentComplete()
 
 int Mesh::splitSceneMesh(QString nodeName, QObject *parent)
 {
-    if (!d->scene)
-    {
+    if (!d->scene) {
         qWarning() << "Unable to split mesh: no scene initialised - attempt to add scene object failed.";
         return -1;
     }
-    else
-    {
+    else {
         int indexValue = d->meshObjects.size();
         QGLSceneObject *sceneObj = d->scene->object(QGLSceneObject::Mesh, nodeName);
         if (sceneObj) {
