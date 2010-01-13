@@ -597,8 +597,16 @@ QGLVertexArray QGLVertexArray::extractField(int field) const
     // Construct a new array with just the selected field.
     int size = m_fields.fieldSize(field);
     QGLVertexArray array(m_fields.fieldAttribute(field), size);
-    array.m_data = m_data.extract
-        (m_fields.fieldOffset(field), size, m_fields.stride());
+    int stride = m_fields.stride();
+    int count = vertexCount();
+    const float *src = m_data.constData() + m_fields.fieldOffset(field);
+    float *dst = array.m_data.extend(count * size);
+    for (int item = 0; item < count; ++item) {
+        for (int component = 0; component < size; ++component)
+            dst[component] = src[component];
+        dst += size;
+        src += stride;
+    }
     return array;
 }
 
@@ -643,8 +651,43 @@ QGLVertexArray QGLVertexArray::interleaved(const QGLVertexArray& other) const
     QGLVertexArray result;
     result.m_fields = m_fields;
     result.m_fields.addFields(other.m_fields);
-    result.m_data =
-        m_data.interleaved(stride(), other.m_data, other.stride());
+
+    // Determine the size of the new array.
+    int thisCount = vertexCount();
+    int otherCount = other.vertexCount();
+    int thisStride = stride();
+    int otherStride = other.stride();
+    int maxCount = qMax(thisCount, otherCount);
+    int size = maxCount * (thisStride + otherStride);
+
+    // Reserve space for the interleaved version, but don't initialize it.
+    float *data = result.m_data.extend(size);
+
+    // Copy across the elements from the source arrays, padding with
+    // zeroes if one of the source arrays is shorter than the other.
+    const float *thisData = m_data.constData();
+    const float *otherData = other.m_data.constData();
+    int component;
+    for (int index = 0; index < maxCount; ++index) {
+        if (index < thisCount) {
+            for (component = 0; component < thisStride; ++component)
+                data[component] = thisData[component];
+        } else {
+            for (component = 0; component < thisStride; ++component)
+                data[component] = 0.0f;
+        }
+        thisData += thisStride;
+        data += thisStride;
+        if (index < otherCount) {
+            for (component = 0; component < otherStride; ++component)
+                data[component] = otherData[component];
+        } else {
+            for (component = 0; component < otherStride; ++component)
+                data[component] = 0.0f;
+        }
+        otherData += otherStride;
+        data += otherStride;
+    }
     return result;
 }
 

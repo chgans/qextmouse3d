@@ -349,50 +349,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize> QDataArray::extract(int index, int size, int stride) const
-
-    Extracts a subset of the elements in this data array, starting
-    at \a index.  At each position, \a size elements are copied.
-    The positions are \a stride elements apart.
-
-    Consider an array of floats that contains vertex values consisting
-    of a 3D position, a 3D normal, and a 2D texture co-ordinate.
-    The stride is 8 and the components are at indices 0, 3, and 6
-    respectively.  The components can be extracted as follows:
-
-    \code
-    QDataArray<float> vertices;
-    ...
-    QDataArray<float> positions = vertices.extract(0, 3, 8);
-    QDataArray<float> normals = vertices.extract(3, 3, 8);
-    QDataArray<float> texCoords = vertices.extract(6, 2, 8);
-    \endcode
-
-    \sa interleaved()
-*/
-
-/*!
-    \fn QDataArray<T, PreallocSize> QDataArray::interleaved(int thisStride, const QDataArray<T, PreallocSize>& other, int otherStride) const
-
-    Interleaves this data array with \a other.  For each vertex in
-    the returned array, \a thisStride elements will be taken from this
-    data array, and \a otherStride elements will be taken from \a other.
-
-    Consider two float arrays, containing 3D positions and 2D texture
-    co-ordinates.  They can be interleaved into a single vertex
-    array as follows:
-
-    \code
-    QDataArray<float> positions;
-    QDataArray<float> texCoords;
-    ...
-    QDataArray<float> vertices = positions.interleaved(3, texCoords, 2);
-    \endcode
-
-    \sa extract()
-*/
-
-/*!
     \fn bool QDataArray::operator==(const QDataArray<T, PreallocSize> &other) const
 
     Returns true if \a other is equal to this data array; otherwise

@@ -98,12 +98,6 @@ public:
     const T *data() const;
     const T *constData() const;
 
-    QDataArray<T, PreallocSize> extract
-        (int index, int size, int stride) const;
-    QDataArray<T, PreallocSize> interleaved
-        (int thisStride, const QDataArray<T, PreallocSize>& other,
-         int otherStride) const;
-
     bool operator==(const QDataArray<T, PreallocSize> &other) const;
     bool operator!=(const QDataArray<T, PreallocSize> &other) const;
 
@@ -613,83 +607,6 @@ Q_INLINE_TEMPLATE const T *QDataArray<T, PreallocSize>::constData() const
         return m_start;
     else
         return m_data->array;
-}
-
-template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE QDataArray<T, PreallocSize> QDataArray<T, PreallocSize>::extract
-    (int index, int size, int stride) const
-{
-    Q_ASSERT((index + size) <= stride);
-    QDataArray<T, PreallocSize> result;
-    int count = this->size() / stride;
-    result.reserve(count * size);
-    if (result.m_start) {
-        result.m_end = result.m_start + count * size;
-    } else {
-        result.m_start = result.m_data->array;
-        result.m_end = result.m_start + count * size;
-        result.m_limit = result.m_start + result.m_data->capacity;
-    }
-    const T *src = constData();
-    T *dst = result.m_start;
-    for (int item = 0; item < count; ++item) {
-        for (int component = 0; component < size; ++component)
-            dst[component] = src[index + component];
-        dst += size;
-        index += stride;
-    }
-    return result;
-}
-
-template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE QDataArray<T, PreallocSize> QDataArray<T, PreallocSize>::interleaved
-    (int thisStride, const QDataArray<T, PreallocSize>& other, int otherStride) const
-{
-    QDataArray<T, PreallocSize> result;
-
-    // Determine the size of the new array.
-    int thisCount = this->size() / thisStride;
-    int otherCount = other.size() / otherStride;
-    int maxCount = qMax(thisCount, otherCount);
-    int size = maxCount * (thisStride + otherStride);
-
-    // Reserve space for the interleaved version.
-    result.reserve(size);
-    if (result.m_start) {
-        result.m_end = result.m_start + size;
-    } else {
-        result.m_start = result.m_data->array;
-        result.m_end = result.m_start + size;
-        result.m_limit = result.m_start + result.m_data->capacity;
-    }
-
-    // Copy across the elements from the source arrays, padding with
-    // zeroes if one of the source arrays is shorter than the other.
-    const T *thisData = constData();
-    const T *otherData = other.constData();
-    T *data = result.m_start;
-    int component;
-    for (int index = 0; index < maxCount; ++index) {
-        if (index < thisCount) {
-            for (component = 0; component < thisStride; ++component)
-                data[component] = thisData[component];
-        } else {
-            for (component = 0; component < thisStride; ++component)
-                data[component] = T();
-        }
-        thisData += thisStride;
-        data += thisStride;
-        if (index < otherCount) {
-            for (component = 0; component < otherStride; ++component)
-                data[component] = otherData[component];
-        } else {
-            for (component = 0; component < otherStride; ++component)
-                data[component] = T();
-        }
-        otherData += otherStride;
-        data += otherStride;
-    }
-    return result;
 }
 
 template <typename T, int PreallocSize>
