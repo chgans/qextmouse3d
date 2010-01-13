@@ -78,6 +78,8 @@ public:
     const T& operator[](int index) const;
     T& operator[](int index);
 
+    T *extend(int size);
+
     void append(const T& value);
     void append(const T& value1, const T& value2);
     void append(const T& value1, const T& value2, const T& value3);
@@ -388,6 +390,17 @@ Q_INLINE_TEMPLATE T& QDataArray<T, PreallocSize>::operator[](int index)
         detachForWrite();
         return m_data->array[index];
     }
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE T *QDataArray<T, PreallocSize>::extend(int size)
+{
+    Q_ASSERT(size > 0);
+    if ((m_end + size) >= m_limit)
+        grow(size);
+    T *end = m_end;
+    m_end += size;
+    return end;
 }
 
 template <typename T, int PreallocSize>

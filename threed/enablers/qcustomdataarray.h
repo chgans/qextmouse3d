@@ -371,9 +371,7 @@ inline void QCustomDataArray::append(const QVector4D& value)
 inline void QCustomDataArray::append(const QColor4b& value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
-    int size = m_array.size();
-    m_array.resize(size + 1);
-    *(reinterpret_cast<QColor4b *>(m_array.data() + size)) = value;
+    *(reinterpret_cast<QColor4b *>(m_array.extend(1))) = value;
 }
 
 inline const void *QCustomDataArray::data() const

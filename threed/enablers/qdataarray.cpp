@@ -190,6 +190,16 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn T *QDataArray::extend(int size)
+
+    Extends this data array by \a size elements and returns a pointer
+    to the storage, which is not initialized.  The pointer is only
+    valid until the array is reallocated or destroyed.
+
+    \sa resize()
+*/
+
+/*!
     \fn void QDataArray::append(const T& value)
 
     Appends \a value to this data array.

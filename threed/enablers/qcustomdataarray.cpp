@@ -221,9 +221,7 @@ QCustomDataArray::QCustomDataArray(const QDataArray<QColor4b>& other)
       m_elementComponents(1)
 {
     int size = other.size();
-    const QColor4b *data = other.constData();
-    m_array.resize(size);
-    qMemCopy(m_array.data(), data, sizeof(QColor4b) * size);
+    qMemCopy(m_array.extend(size), other.constData(), sizeof(QColor4b) * size);
 }
 
 /*!
