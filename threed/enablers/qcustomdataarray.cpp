@@ -151,11 +151,10 @@ QCustomDataArray::QCustomDataArray(const QDataArray<QVector2D>& other)
       m_elementComponents(2)
 {
     int size = other.size();
-    const QVector2D *data = other.constData();
-    m_array.reserve(size * 2);
-    for (int index = 0; index < size; ++index) {
-        m_array.append(float(data->x()), float(data->y()));
-        ++data;
+    if (size > 0) {
+        const QVector2D *src = other.constData();
+        float *dst = m_array.extend(size * 2);
+        qMemCopy(dst, src, size * sizeof(QVector2D));
     }
 }
 
@@ -174,11 +173,10 @@ QCustomDataArray::QCustomDataArray(const QDataArray<QVector3D>& other)
       m_elementComponents(3)
 {
     int size = other.size();
-    const QVector3D *data = other.constData();
-    m_array.reserve(size * 3);
-    for (int index = 0; index < size; ++index) {
-        m_array.append(float(data->x()), float(data->y()), float(data->z()));
-        ++data;
+    if (size > 0) {
+        const QVector3D *src = other.constData();
+        float *dst = m_array.extend(size * 3);
+        qMemCopy(dst, src, size * sizeof(QVector3D));
     }
 }
 
@@ -197,12 +195,10 @@ QCustomDataArray::QCustomDataArray(const QDataArray<QVector4D>& other)
       m_elementComponents(4)
 {
     int size = other.size();
-    const QVector4D *data = other.constData();
-    m_array.reserve(size * 4);
-    for (int index = 0; index < size; ++index) {
-        m_array.append(float(data->x()), float(data->y()),
-                       float(data->z()), float(data->w()));
-        ++data;
+    if (size > 0) {
+        const QVector4D *src = other.constData();
+        float *dst = m_array.extend(size * 4);
+        qMemCopy(dst, src, size * sizeof(QVector4D));
     }
 }
 
@@ -803,11 +799,10 @@ QDataArray<QVector2D> QCustomDataArray::toVector2DArray() const
     Q_ASSERT(m_elementType == QCustomDataArray::Vector2D);
     int size = m_array.size() / 2;
     QDataArray<QVector2D> result;
-    result.reserve(size);
-    const float *data = m_array.constData();
-    for (int index = 0; index < size; ++index) {
-        result.append(QVector2D(data[0], data[1]));
-        data += 2;
+    if (size > 0) {
+        QVector2D *dst = result.extend(size);
+        const float *src = m_array.constData();
+        qMemCopy(dst, src, size * sizeof(QVector2D));
     }
     return result;
 }
@@ -826,11 +821,10 @@ QDataArray<QVector3D> QCustomDataArray::toVector3DArray() const
     Q_ASSERT(m_elementType == QCustomDataArray::Vector3D);
     int size = m_array.size() / 3;
     QDataArray<QVector3D> result;
-    result.reserve(size);
-    const float *data = m_array.constData();
-    for (int index = 0; index < size; ++index) {
-        result.append(QVector3D(data[0], data[1], data[2]));
-        data += 3;
+    if (size > 0) {
+        QVector3D *dst = result.extend(size);
+        const float *src = m_array.constData();
+        qMemCopy(dst, src, size * sizeof(QVector3D));
     }
     return result;
 }
@@ -849,11 +843,10 @@ QDataArray<QVector4D> QCustomDataArray::toVector4DArray() const
     Q_ASSERT(m_elementType == QCustomDataArray::Vector4D);
     int size = m_array.size() / 4;
     QDataArray<QVector4D> result;
-    result.reserve(size);
-    const float *data = m_array.constData();
-    for (int index = 0; index < size; ++index) {
-        result.append(QVector4D(data[0], data[1], data[2], data[3]));
-        data += 4;
+    if (size > 0) {
+        QVector4D *dst = result.extend(size);
+        const float *src = m_array.constData();
+        qMemCopy(dst, src, size * sizeof(QVector4D));
     }
     return result;
 }

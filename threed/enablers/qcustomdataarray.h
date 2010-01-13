@@ -329,7 +329,7 @@ inline QVector4D QCustomDataArray::vector4DAt(int index) const
 
 inline QColor4b QCustomDataArray::colorAt(int index) const
 {
-    Q_ASSERT(m_elementType == QCustomDataArray::Vector4D);
+    Q_ASSERT(m_elementType == QCustomDataArray::Color);
     Q_ASSERT(index >= 0 && index < size());
     return *(reinterpret_cast<const QColor4b *>(m_array.constData() + index));
 }
