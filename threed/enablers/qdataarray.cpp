@@ -75,8 +75,6 @@ QT_BEGIN_NAMESPACE
 
     QDataArray uses implicit sharing and copy-on-write semantics to support
     passing large arrays around an application with little overhead.
-
-    \sa QDetachedDataArray
 */
 
 /*!
@@ -189,6 +187,16 @@ QT_BEGIN_NAMESPACE
     \overload
 
     Same as at(\a index).
+*/
+
+/*!
+    \fn T *QDataArray::extend(int size)
+
+    Extends this data array by \a size elements and returns a pointer
+    to the storage, which is not initialized.  The pointer is only
+    valid until the array is reallocated or destroyed.
+
+    \sa resize()
 */
 
 /*!
@@ -341,22 +349,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDetachedDataArray QDataArray::toDetachedArray() const
-
-    Returns the data in this data array as a QDetachedDataArray.
-
-    \sa QDetachedDataArray
-*/
-
-/*!
-    \fn QDataArray::operator QDetachedDataArray() const
-
-    Returns the data in this data array as a QDetachedDataArray.
-
-    \sa toDetachedArray()
-*/
-
-/*!
     \fn QDataArray<T, PreallocSize> QDataArray::extract(int index, int size, int stride) const
 
     Extracts a subset of the elements in this data array, starting
@@ -496,102 +488,5 @@ int qDataArrayAllocMore(int alloc, int extra)
     }
     return nalloc;
 }
-
-/*!
-    \class QDetachedDataArray
-    \brief The QDetachedDataArray class represents a read-only copy of the generic data within a QDataArray.
-    \since 4.7
-    \ingroup qt3d
-    \ingroup qt3d::enablers
-
-    QDataArray is very convenient for constructing large arrays of
-    points and vertex values.  However, because it is a template class
-    it can be inconvenient use to several different template instantiations
-    with other functions that expect generic data of any type.  For example:
-
-    \code
-    void setVertexAttribute(const QDataArray<float>& array);
-    void setVertexAttribute(const QDataArray<QVector2D>& array);
-    void setVertexAttribute(const QDataArray<QVector3D>& array);
-    ...
-    \endcode
-
-    Providing a comprehensive list is difficult.  To address this problem,
-    QDetachedDataArray allows the raw data within a QDataArray to be
-    referred to without large numbers of overrides:
-
-    \code
-    void setVertexAttribute(const QDetachedDataArray& array);
-    \endcode
-
-    \sa QDataArray
-*/
-
-/*!
-    \fn QDetachedDataArray::QDetachedDataArray()
-
-    Constructs a null detached data array.
-
-    Use QDataArray::toDetachedArray() to construct an actual reference
-    to data within a QDataArray.
-
-    \sa QDataArray::toDetachedArray()
-*/
-
-/*!
-    \fn QDetachedDataArray::QDetachedDataArray(const QDetachedDataArray& other)
-
-    Constructs a copy of \a other.
-
-    \sa operator=()
-*/
-
-/*!
-    \fn QDetachedDataArray::~QDetachedDataArray()
-
-    Destroys this detached data array reference.  If this is the last
-    reference, the data will be deallocated.
-*/
-
-/*!
-    \fn QDetachedDataArray& QDetachedDataArray::operator=(const QDetachedDataArray& other)
-
-    Assigns \a other to this detached data array and returns a reference
-    to this detached data array.
-*/
-
-/*!
-    \fn bool QDetachedDataArray::isNull() const
-
-    Returns true if this detached data array is null; false otherwise.
-
-    \sa data()
-*/
-
-/*!
-    \fn const void *QDetachedDataArray::data() const
-
-    Returns a const pointer to the data within this detached data array.
-
-    \sa isNull(), size()
-*/
-
-/*!
-    \fn int QDetachedDataArray::size() const
-
-    Returns the number of bytes that are present at the memory
-    location referred to by data().
-
-    \sa data(), elementSize()
-*/
-
-/*!
-    \fn int QDetachedDataArray::elementSize() const
-
-    Returns the size of elements in this detached data array.
-    There are size() / elementSize() elements in the array.
-
-    \sa size()
-*/
 
 QT_END_NAMESPACE

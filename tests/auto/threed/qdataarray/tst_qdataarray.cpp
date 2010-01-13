@@ -67,6 +67,7 @@ private slots:
     void shrink();
     void compare();
     void remove();
+    void extend();
 };
 
 // This must match the default for PreallocSize.
@@ -638,6 +639,48 @@ void tst_QDataArray::remove()
     array.remove(0, array.size());
     QCOMPARE(array.count(), 0);
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
+}
+
+void tst_QDataArray::extend()
+{
+    QDataArray<float> array;
+
+    float *ptr = array.extend(4);
+    ptr[0] = 1.0f;
+    ptr[1] = 2.0f;
+    ptr[2] = 3.0f;
+    ptr[3] = 4.0f;
+    QCOMPARE(array.size(), 4);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+
+    array.append(5.0f);
+    ptr = array.extend(1);
+    ptr[0] = 6.0f;
+    QCOMPARE(array.size(), 6);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+    QCOMPARE(array[4], 5.0f);
+    QCOMPARE(array[5], 6.0f);
+
+    QDataArray<float> array2(array);
+
+    ptr = array.extend(1);
+    ptr[0] = 7.0f;
+    QCOMPARE(array.size(), 7);
+    QCOMPARE(array[0], 1.0f);
+    QCOMPARE(array[1], 2.0f);
+    QCOMPARE(array[2], 3.0f);
+    QCOMPARE(array[3], 4.0f);
+    QCOMPARE(array[4], 5.0f);
+    QCOMPARE(array[5], 6.0f);
+    QCOMPARE(array[6], 7.0f);
+
+    QCOMPARE(array2.size(), 6);
 }
 
 QTEST_APPLESS_MAIN(tst_QDataArray)
