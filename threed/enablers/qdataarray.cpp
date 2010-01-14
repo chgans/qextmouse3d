@@ -349,6 +349,32 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QDataArray<T, PreallocSize> QDataArray::fromRawData(const T *data, int size)
+
+    Returns a data array consisting of the \a size elements from \a data.
+
+    This function takes a reference to \a data, but does not copy
+    the elements until the array is modified.  The memory at \a data
+    must remain valid until the returned data array is destroyed
+    or modified.
+
+    Use append() instead of fromRawData() to force a copy to be made
+    of the elements at \a data when the data array is created:
+
+    \code
+    // Makes a copy of the data immediately.
+    QDataArray<float> array;
+    array.append(data, size);
+
+    // Does not make a copy of the data until the array is modified.
+    QDataArray<float> array;
+    array = QDataArray<float>::fromRawData(data, size);
+    \endcode
+
+    \sa append()
+*/
+
+/*!
     \fn bool QDataArray::operator==(const QDataArray<T, PreallocSize> &other) const
 
     Returns true if \a other is equal to this data array; otherwise
