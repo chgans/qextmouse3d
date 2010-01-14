@@ -45,7 +45,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::ComponentType
-    \since 4.6
+    \since 4.7
     This enum defines the type of a vertex attribute component.
 
     \value Byte Signed 8-bit byte.
@@ -60,7 +60,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAttributeValue
     \brief The QGLAttributeValue class encapsulates information about an OpenGL attribute value.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -217,16 +217,6 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 
     Returns the component type for this attribute value.  The default
     value is QGL::Float.
-
-    \sa setType()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setType(QGL::ComponentType value)
-
-    Sets the component type for this attribute value to \a value.
-
-    \sa type()
 */
 
 /*!
@@ -236,16 +226,7 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
     a return value of 3 indicates a vector of 3-dimensional values.
     If size() is zero, then this attribute value is null.
 
-    \sa setSize(), isNull()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setSize(int value)
-
-    Sets the size of this attribute in components to \a value,
-    which must be between 1 and 4.
-
-    \sa size()
+    \sa isNull()
 */
 
 /*!
@@ -254,40 +235,17 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
     Returns the stride in bytes from one vertex element to the
     next for this attribute value.  The default value of 0 indicates
     that the elements are tightly packed within the data() array.
-
-    \sa setStride()
 */
 
 /*!
-    \fn void QGLAttributeValue::setStride(int value)
-
-    Sets the stride in bytes from one vertex element to the
-    next to \a value.  If \a value is 0, then the elements are
-    tightly packed within the data() array.
-
-    \sa stride()
-*/
-
-/*!
-    \fn size_t QGLAttributeValue::offset() const
+    \fn int QGLAttributeValue::offset() const
 
     Returns the vertex buffer offset for this attribute value.
 
     This function is a convenience that returns data() cast
     to an integer offset value.
 
-    \sa setOffset(), data()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setOffset(size_t value)
-
-    Sets the vertex buffer offset for this attribute value to \a value.
-
-    This function is a convenience that casts \a value to a pointer
-    and then calls setData().
-
-    \sa offset(), setData()
+    \sa data()
 */
 
 /*!
@@ -295,20 +253,7 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 
     Returns the data pointer for the elements in this attribute value.
 
-    \sa setData(), offset(), floatData()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setData(const void *value)
-
-    Sets the data pointer for the elements in this attribute value
-    to \a value.
-
-    Because the \a value is a raw pointer to arbitrary memory,
-    care should be taken that the memory remains valid until the
-    QGLAttributeValue is no longer required.
-
-    \sa data(), setOffset()
+    \sa offset(), floatData()
 */
 
 /*!

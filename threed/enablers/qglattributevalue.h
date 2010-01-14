@@ -84,20 +84,10 @@ public:
     bool isNull() const;
 
     QGL::ComponentType type() const;
-    void setType(QGL::ComponentType value);
-
     int size() const;
-    void setSize(int value);
-
     int stride() const;
-    void setStride(int value);
-
-    size_t offset() const;
-    void setOffset(size_t value);
-
+    int offset() const;
     const void *data() const;
-    void setData(const void *value);
-
     const float *floatData() const;
 
 private:
@@ -162,20 +152,9 @@ inline QGL::ComponentType QGLAttributeValue::type() const
     return m_type;
 }
 
-inline void QGLAttributeValue::setType(QGL::ComponentType value)
-{
-    m_type = value;
-}
-
 inline int QGLAttributeValue::size() const
 {
     return m_size;
-}
-
-inline void QGLAttributeValue::setSize(int value)
-{
-    Q_ASSERT(value >= 1 && value <= 4);
-    m_size = value;
 }
 
 inline int QGLAttributeValue::stride() const
@@ -183,29 +162,14 @@ inline int QGLAttributeValue::stride() const
     return m_stride;
 }
 
-inline void QGLAttributeValue::setStride(int value)
+inline int QGLAttributeValue::offset() const
 {
-    m_stride = value;
-}
-
-inline size_t QGLAttributeValue::offset() const
-{
-    return reinterpret_cast<size_t>(m_data);
-}
-
-inline void QGLAttributeValue::setOffset(size_t value)
-{
-    m_data = reinterpret_cast<const void *>(value);
+    return int(reinterpret_cast<size_t>(m_data));
 }
 
 inline const void *QGLAttributeValue::data() const
 {
     return m_data;
-}
-
-inline void QGLAttributeValue::setData(const void *value)
-{
-    m_data = value;
 }
 
 inline const float *QGLAttributeValue::floatData() const
