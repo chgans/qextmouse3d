@@ -43,6 +43,8 @@
 #define QGLATTRIBUTEVALUE_H
 
 #include "qt3dglobal.h"
+#include "qdataarray.h"
+#include "qcustomdataarray.h"
 
 QT_BEGIN_HEADER
 
@@ -68,6 +70,12 @@ class Q_QT3D_EXPORT QGLAttributeValue
 {
 public:
     QGLAttributeValue();
+    QGLAttributeValue(const QDataArray<float>& array);
+    QGLAttributeValue(const QDataArray<QVector2D>& array);
+    QGLAttributeValue(const QDataArray<QVector3D>& array);
+    QGLAttributeValue(const QDataArray<QVector4D>& array);
+    QGLAttributeValue(const QDataArray<QColor4b>& array);
+    QGLAttributeValue(const QCustomDataArray& array);
     QGLAttributeValue(int size, QGL::ComponentType type,
                       int stride, const void *data);
     QGLAttributeValue(int size, QGL::ComponentType type,
@@ -101,6 +109,31 @@ private:
 
 inline QGLAttributeValue::QGLAttributeValue()
     : m_size(0), m_type(QGL::Float), m_stride(0), m_data(0)
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<float>& array)
+    : m_size(1), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector2D>& array)
+    : m_size(2), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector3D>& array)
+    : m_size(3), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector4D>& array)
+    : m_size(4), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QColor4b>& array)
+    : m_size(4), m_type(QGL::UByte), m_stride(0), m_data(array.constData())
 {
 }
 

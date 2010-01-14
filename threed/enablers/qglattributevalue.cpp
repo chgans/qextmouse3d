@@ -74,14 +74,14 @@ QT_BEGIN_NAMESPACE
 
     QGLAttributeValue encapsulates these four values so that they can
     be easily manipulated as a set during OpenGL painting operations.
-    The most common source of QGLAttributeValue instances is as a
-    result of calling QGLVertexArray::attributeValue().
+    Constructors are provided for converting QDataArray and
+    QCustomDataArray objects into an attribute value.
 
     Because the data() value is a raw pointer to arbitrary memory,
     care should be taken that the memory remains valid until the
     QGLAttributeValue is no longer required.
 
-    \sa QGLVertexArray
+    \sa QDataArray, QCustomDataArray
 */
 
 /*!
@@ -93,6 +93,97 @@ QT_BEGIN_NAMESPACE
 
     \sa isNull()
 */
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<float>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 1, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector2D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 2, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector3D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 3, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector4D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 4, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QColor4b>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 4, type() to QGL::UByte, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    Constructs an attribute value that refers to the contents of \a array.
+    The size() and type() of the attribute value will be set according
+    to the QCustomDataArray::elementType() of \a array.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
+    : m_stride(0), m_data(array.data())
+{
+    switch (array.elementType()) {
+    case QCustomDataArray::Float:
+        m_size = 1;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector2D:
+        m_size = 2;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector3D:
+        m_size = 3;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector4D:
+        m_size = 4;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Color:
+        m_size = 4;
+        m_type = QGL::UByte;
+        break;
+    default:
+        // Just in case: set the object to null.
+        m_size = 0;
+        m_type = QGL::Float;
+        m_data = 0;
+        break;
+    }
+}
 
 /*!
     \fn QGLAttributeValue::QGLAttributeValue(int size, QGL::ComponentType type, int stride, const void *data)
