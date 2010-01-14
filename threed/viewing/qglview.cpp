@@ -892,9 +892,9 @@ QObject *QGLView::objectUnderMouse(QMouseEvent *e)
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(x, height() - 1 - y);
+    int objectId = painter.pickObject(x, height() - 1 - y);    
     QObject *object = d->objects.value(objectId, 0);
-
+    
     // Release the framebuffer object and return.
     painter.end();
     if (d->fbo)

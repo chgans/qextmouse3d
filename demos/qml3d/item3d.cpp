@@ -446,16 +446,16 @@ void Item3d::draw(QGLPainter *painter)
         }
     }
 
-	//Culling
+    //Culling
     painter->setCullFaces((QGL::CullFaces)(int)(d->cullFaces));
 
-	//Effects
+    //Effects
     if (d->effect)
         d->effect->enableEffect(painter);
 
-	//Local and Global transforms
+    //Local and Global transforms
 
-	//1) Item Transforms
+    //1) Item Transforms
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
     if (!d->transforms.isEmpty()) {
@@ -469,15 +469,15 @@ void Item3d::draw(QGLPainter *painter)
     if (d->scale != 1.0f)
         painter->modelViewMatrix().scale(d->scale);
 	
-	//Drawing
-	if (d->isVisible) drawItem(painter);
+    //Drawing
+    if (d->isVisible ) drawItem(painter);
     foreach (QObject *child, list) {
         Item3d *item = qobject_cast<Item3d *>(child);
         if (item)
             item->draw(painter);
     }
 
-	//Unset parameters for transforms, effects etc.
+    //Unset parameters for transforms, effects etc.
     painter->modelViewMatrix().pop();
 
     if (d->effect)
@@ -505,7 +505,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     
     if (view) {
         d->objectPickId = view->nextPickId();
-        view->registerObject(d->objectPickId, this);
+        view->registerObject(d->objectPickId, this);        
     }    
 
     if (mesh() && !meshNode().isEmpty()) {

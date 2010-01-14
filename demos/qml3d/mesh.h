@@ -76,15 +76,19 @@ public:
     QString meshName() const;    
     void setMeshName(const QString& value);
 
-    int splitSceneMesh(QString nodeName, QObject *parent = 0);
-
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;    
-
     virtual void draw(QGLPainter *painter, int objectID);
 
     void setScene(QGLAbstractScene *scene);
+    
+    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;    
+    
+    int splitSceneMesh(QString nodeName, QObject *parent = 0);
 
-    int nextObjectID();
+    int nextMeshObjectId() const;
+    int addMeshObject(QGLSceneObject *sceneObject);
+    void deleteMeshObject(int objectId);
+    QGLSceneObject *getMeshObject(int objectId) const;
+    void resetMeshObjects();
 
     void ref();
     bool deref();
