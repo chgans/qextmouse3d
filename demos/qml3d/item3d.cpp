@@ -515,6 +515,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
         }
         else {
             qWarning()<< "3D item initialization failed: unable to find the specified mesh-node. Defaulting to default node.";
+            d->sceneObjectId = 0;
         }
     }
 

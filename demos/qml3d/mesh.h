@@ -85,7 +85,7 @@ public:
     int splitSceneMesh(QString nodeName, QObject *parent = 0);
 
     int nextMeshObjectId() const;
-    int addMeshObject(QGLSceneObject *sceneObject);
+    int addMeshObject(QGLSceneObject *sceneObject, QObject *previousParent=NULL);
     void deleteMeshObject(int objectId);
     QGLSceneObject *getMeshObject(int objectId) const;
     void resetMeshObjects();
