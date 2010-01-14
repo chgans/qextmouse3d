@@ -1,28 +1,30 @@
 #ifndef QGLCOLLADAEFFECT_H
 #define QGLCOLLADAEFFECT_H
-
+#include <QStack>
+#include <QList>
+#include <QGLShaderProgram>
 #include "qglshaderprogrameffect.h"
+
 class QXmlStreamReader;
-class QGLColladaFXEffectPrivate;
 class QGLColladaParam;
+class QGLColladaFxEffectPrivate;
 
-class QGLColladaFXEffect : public QGLShaderProgramEffect
+typedef QStack< QList<QGLColladaParam*> > StateStack;
+
+class QGLColladaFxEffect : public QGLShaderProgramEffect
 {
+    friend class QGLColladaFxEffectFactory;
 public:
-    QGLColladaFXEffect();
+    QGLColladaFxEffect();
+    ~QGLColladaFxEffect();
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    void setSid(QString);
+    QString sid();
 
-    static QList<QGLColladaFXEffect*> loadEffectsFromFile(const QString& fileName );
-//    bool loadColladaFX(const QString& filename );
+    QGLTexture2D* diffuseTexture();
 
-protected:
-    static QList<QGLColladaFXEffect*> processLibraryEffectsElement(QXmlStreamReader& xml);
-    static QList<QGLColladaFXEffect*> processEffectElement(QXmlStreamReader& xml);
-    static QList<QGLColladaFXEffect*> processProfileElement(QXmlStreamReader& xml);
-    static QGLColladaFXEffect* processTechniqueElement(QXmlStreamReader& xml);
-
-    static QGLColladaParam* processNewparamElement(QXmlStreamReader& xml);
 private:
-    QGLColladaFXEffectPrivate* d;
+    QGLColladaFxEffectPrivate* d;
 };
 
 #endif // QGLCOLLADAEFFECT_H

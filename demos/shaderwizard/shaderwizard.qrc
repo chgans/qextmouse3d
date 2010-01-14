@@ -1,15 +1,16 @@
 <RCC>
     <qresource prefix="/">
         <file>qtlogo.png</file>
-        <file>flat_color_shader.fsh</file>
-        <file>flat_color_shader.vsh</file>
-        <file>minimal_texture_shader.fsh</file>
-        <file>minimal_texture_shader.vsh</file>
-        <file>per_pixel_lighting.fsh</file>
-        <file>per_pixel_lighting.vsh</file>
-        <file>per_pixel_texture.fsh</file>
-        <file>per_pixel_texture.vsh</file>
-        <file>toon_shader.fsh</file>
-        <file>toon_shader.vsh</file>
+        <file>shaders/toon_shader.vsh</file>
+        <file>shaders/flat_color_shader.fsh</file>
+        <file>shaders/flat_color_shader.vsh</file>
+        <file>shaders/minimal_texture_shader.fsh</file>
+        <file>shaders/minimal_texture_shader.vsh</file>
+        <file>shaders/multitexture.fsh</file>
+        <file>shaders/per_pixel_lighting.fsh</file>
+        <file>shaders/per_pixel_lighting.vsh</file>
+        <file>shaders/per_pixel_texture.fsh</file>
+        <file>shaders/per_pixel_texture.vsh</file>
+        <file>shaders/toon_shader.fsh</file>
     </qresource>
 </RCC>
