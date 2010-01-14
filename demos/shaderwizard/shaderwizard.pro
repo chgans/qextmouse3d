@@ -12,30 +12,34 @@ SOURCES += main.cpp \
     qglheightmap.cpp \
     qglshaderprogrameffect.cpp \
     qglslsyntaxhighlighter.cpp \
-    materialinspector.cpp
+    materialinspector.cpp \
+    qglcolladafxeffect.cpp \
+    qglcolladafxeffectfactory.cpp
 HEADERS += mainwindow.h \
     shaderwizardglwidget.h \
     qglheightmap.h \
     rippleheightmap.h \
     qglshaderprogrameffect.h \
     qglslsyntaxhighlighter.h \
-    materialinspector.h
+    materialinspector.h \
+    qglcolladafxeffect.h \
+    qglcolladafxeffectfactory.h \
+    qglcolladafxeffect_p.h
 FORMS += mainwindow.ui \
     materialinspector.ui
 RESOURCES = shaderwizard.qrc
 LIBS += -L../../lib \
     -L../../bin
 OTHER_FILES += qtlogo.png \
-    toon_shader.fsh \
-    toon_shader.vsh \
-    per_pixel_lighting.fsh \
-    per_pixel_lighting.vsh \
-    flat_color_shader.fsh \
-    flat_color_shader.vsh \
-    per_pixel_lighting_color.fsh \
-    per_pixel_lighting_color.vsh \
-    minimal_texture_shader.fsh \
-    minimal_texture_shader.vsh \
-    per_pixel_texture.fsh \
-    per_pixel_texture.vsh
+    shaders/toon_shader.vsh \
+    shaders/toon_shader.fsh \
+    shaders/per_pixel_texture.vsh \
+    shaders/per_pixel_texture.fsh \
+    shaders/per_pixel_lighting.vsh \
+    shaders/per_pixel_lighting.fsh \
+    shaders/multitexture.fsh \
+    shaders/minimal_texture_shader.vsh \
+    shaders/minimal_texture_shader.fsh \
+    shaders/flat_color_shader.vsh \
+    shaders/flat_color_shader.fsh
 include(../../threed/threed_dep.pri)

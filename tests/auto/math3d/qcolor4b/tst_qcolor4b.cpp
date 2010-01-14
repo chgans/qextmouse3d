@@ -59,6 +59,8 @@ private slots:
     void checkSize();
 };
 
+#define fuzzyCompare(x,y)   (qAbs((x) - (y)) < 0.0001)
+
 void tst_QColor4b::create()
 {
     QColor4b c1;
@@ -76,20 +78,20 @@ void tst_QColor4b::create()
     QCOMPARE(c2.green(), 54);
     QCOMPARE(c2.blue(), 39);
     QCOMPARE(c2.alpha(), 255);
-    QCOMPARE(c2.redF(), qreal(162 / 255.0));
-    QCOMPARE(c2.greenF(), qreal(54 / 255.0));
-    QCOMPARE(c2.blueF(), qreal(39 / 255.0));
-    QCOMPARE(c2.alphaF(), qreal(1.0));
+    QVERIFY(fuzzyCompare(c2.redF(), qreal(162 / 255.0f)));
+    QVERIFY(fuzzyCompare(c2.greenF(), qreal(54 / 255.0f)));
+    QVERIFY(fuzzyCompare(c2.blueF(), qreal(39 / 255.0f)));
+    QVERIFY(fuzzyCompare(c2.alphaF(), qreal(1.0)));
 
     QColor4b c3(162, 54, 39, 41);
     QCOMPARE(c3.red(), 162);
     QCOMPARE(c3.green(), 54);
     QCOMPARE(c3.blue(), 39);
     QCOMPARE(c3.alpha(), 41);
-    QCOMPARE(c3.redF(), qreal(162 / 255.0));
-    QCOMPARE(c3.greenF(), qreal(54 / 255.0));
-    QCOMPARE(c3.blueF(), qreal(39 / 255.0));
-    QCOMPARE(c3.alphaF(), qreal(41 / 255.0));
+    QVERIFY(fuzzyCompare(c3.redF(), qreal(162 / 255.0f)));
+    QVERIFY(fuzzyCompare(c3.greenF(), qreal(54 / 255.0f)));
+    QVERIFY(fuzzyCompare(c3.blueF(), qreal(39 / 255.0f)));
+    QVERIFY(fuzzyCompare(c3.alphaF(), qreal(41 / 255.0f)));
 
     QColor4b c4(QColor(162, 54, 39, 41));
     QCOMPARE(c4.red(), 162);
@@ -162,10 +164,10 @@ void tst_QColor4b::modify()
     QCOMPARE(c1.green(), 163);
     QCOMPARE(c1.blue(), 2);
     QCOMPARE(c1.alpha(), 200);
-    QCOMPARE(c1.redF(), qreal(34 / 255.0));
-    QCOMPARE(c1.greenF(), qreal(163 / 255.0));
-    QCOMPARE(c1.blueF(), qreal(2 / 255.0));
-    QCOMPARE(c1.alphaF(), qreal(200 / 255.0));
+    QVERIFY(fuzzyCompare(c1.redF(), qreal(34 / 255.0f)));
+    QVERIFY(fuzzyCompare(c1.greenF(), qreal(163 / 255.0f)));
+    QVERIFY(fuzzyCompare(c1.blueF(), qreal(2 / 255.0f)));
+    QVERIFY(fuzzyCompare(c1.alphaF(), qreal(200 / 255.0f)));
 
     QColor4b c2;
     c2.setRedF(1.0f);
@@ -176,10 +178,10 @@ void tst_QColor4b::modify()
     QCOMPARE(c2.green(), 128);
     QCOMPARE(c2.blue(), 64);
     QCOMPARE(c2.alpha(), 191);
-    QCOMPARE(c2.redF(), qreal(1.0));
-    QCOMPARE(c2.greenF(), qreal(128 / 255.0));
-    QCOMPARE(c2.blueF(), qreal(64 / 255.0));
-    QCOMPARE(c2.alphaF(), qreal(191 / 255.0));
+    QVERIFY(fuzzyCompare(c2.redF(), qreal(1.0)));
+    QVERIFY(fuzzyCompare(c2.greenF(), qreal(128 / 255.0f)));
+    QVERIFY(fuzzyCompare(c2.blueF(), qreal(64 / 255.0f)));
+    QVERIFY(fuzzyCompare(c2.alphaF(), qreal(191 / 255.0f)));
 
     QColor4b c3;
     c3.setRgb(162, 54, 39);

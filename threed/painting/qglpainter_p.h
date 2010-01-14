@@ -104,6 +104,8 @@ typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
 typedef void (APIENTRY *_glActiveTextureARB) (GLenum);
 typedef void (APIENTRY *_glClientActiveTextureARB) (GLenum);
 
+typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
+
 // We can call the buffer functions directly in OpenGL/ES 1.1 or higher,
 // but all other platforms need to resolve the extensions.
 #if defined(QT_OPENGL_ES)
@@ -146,9 +148,11 @@ public:
         qt_glActiveTexture = 0;
         qt_glClientActiveTexture = 0;
         multiTextureResolved = false;
-		qt_glActiveTextureARB = 0;
-		qt_glClientActiveTextureARB = 0;
-		multiTextureARBResolved = false;
+        qt_glActiveTextureARB = 0;
+        qt_glClientActiveTextureARB = 0;
+        multiTextureARBResolved = false;
+
+        vertexAttribPointer = 0;
     }
 
 #if !defined(QT_OPENGL_ES)
@@ -177,10 +181,12 @@ public:
     q_PFNGLUNMAPBUFFERPROC unmapBuffer;
     _glActiveTexture qt_glActiveTexture;
     _glClientActiveTexture qt_glClientActiveTexture;
-	_glActiveTextureARB qt_glActiveTextureARB;
-	_glClientActiveTextureARB qt_glClientActiveTextureARB;
-	bool multiTextureARBResolved;
+    _glActiveTextureARB qt_glActiveTextureARB;
+    _glClientActiveTextureARB qt_glClientActiveTextureARB;
+    bool multiTextureARBResolved;
     bool multiTextureResolved;
+
+    q_glVertexAttribPointer vertexAttribPointer;
 };
 
 

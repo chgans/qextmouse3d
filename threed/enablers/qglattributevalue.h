@@ -43,6 +43,8 @@
 #define QGLATTRIBUTEVALUE_H
 
 #include "qt3dglobal.h"
+#include "qdataarray.h"
+#include "qcustomdataarray.h"
 
 QT_BEGIN_HEADER
 
@@ -68,6 +70,12 @@ class Q_QT3D_EXPORT QGLAttributeValue
 {
 public:
     QGLAttributeValue();
+    QGLAttributeValue(const QDataArray<float>& array);
+    QGLAttributeValue(const QDataArray<QVector2D>& array);
+    QGLAttributeValue(const QDataArray<QVector3D>& array);
+    QGLAttributeValue(const QDataArray<QVector4D>& array);
+    QGLAttributeValue(const QDataArray<QColor4b>& array);
+    QGLAttributeValue(const QCustomDataArray& array);
     QGLAttributeValue(int size, QGL::ComponentType type,
                       int stride, const void *data);
     QGLAttributeValue(int size, QGL::ComponentType type,
@@ -76,20 +84,10 @@ public:
     bool isNull() const;
 
     QGL::ComponentType type() const;
-    void setType(QGL::ComponentType value);
-
     int size() const;
-    void setSize(int value);
-
     int stride() const;
-    void setStride(int value);
-
-    size_t offset() const;
-    void setOffset(size_t value);
-
+    int offset() const;
     const void *data() const;
-    void setData(const void *value);
-
     const float *floatData() const;
 
 private:
@@ -101,6 +99,31 @@ private:
 
 inline QGLAttributeValue::QGLAttributeValue()
     : m_size(0), m_type(QGL::Float), m_stride(0), m_data(0)
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<float>& array)
+    : m_size(1), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector2D>& array)
+    : m_size(2), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector3D>& array)
+    : m_size(3), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector4D>& array)
+    : m_size(4), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue(const QDataArray<QColor4b>& array)
+    : m_size(4), m_type(QGL::UByte), m_stride(0), m_data(array.constData())
 {
 }
 
@@ -129,20 +152,9 @@ inline QGL::ComponentType QGLAttributeValue::type() const
     return m_type;
 }
 
-inline void QGLAttributeValue::setType(QGL::ComponentType value)
-{
-    m_type = value;
-}
-
 inline int QGLAttributeValue::size() const
 {
     return m_size;
-}
-
-inline void QGLAttributeValue::setSize(int value)
-{
-    Q_ASSERT(value >= 1 && value <= 4);
-    m_size = value;
 }
 
 inline int QGLAttributeValue::stride() const
@@ -150,29 +162,14 @@ inline int QGLAttributeValue::stride() const
     return m_stride;
 }
 
-inline void QGLAttributeValue::setStride(int value)
+inline int QGLAttributeValue::offset() const
 {
-    m_stride = value;
-}
-
-inline size_t QGLAttributeValue::offset() const
-{
-    return reinterpret_cast<size_t>(m_data);
-}
-
-inline void QGLAttributeValue::setOffset(size_t value)
-{
-    m_data = reinterpret_cast<const void *>(value);
+    return int(reinterpret_cast<size_t>(m_data));
 }
 
 inline const void *QGLAttributeValue::data() const
 {
     return m_data;
-}
-
-inline void QGLAttributeValue::setData(const void *value)
-{
-    m_data = value;
 }
 
 inline const float *QGLAttributeValue::floatData() const

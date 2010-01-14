@@ -433,20 +433,14 @@ void PageFlipGradientEffect::update
 void PageFlipGradientEffect::setVertexArray(const QGLVertexArray& array)
 {
     QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
+    if (!value.isNull())
+        setAttributeArray(program, 0, value);
     value = array.attributeValue(QGL::TextureCoord0);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
+    if (!value.isNull())
+        setAttributeArray(program, 1, value);
     value = array.attributeValue(QGL::CustomVertex0);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (2, value.floatData(), value.size(), value.stride());
-    }
+    if (!value.isNull())
+        setAttributeArray(program, 2, value);
 }
 
 void PageFlipGradientEffect::setAlphaValue(GLfloat value)

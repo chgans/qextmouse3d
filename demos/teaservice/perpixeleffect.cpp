@@ -180,15 +180,11 @@ void PerPixelEffect::update
 void PerPixelEffect::setVertexArray(const QGLVertexArray& array)
 {
     QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        d->program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
+    if (!value.isNull())
+        setAttributeArray(d->program, 0, value);
     value = array.attributeValue(QGL::Normal);
-    if (!value.isNull()) {
-        d->program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
+    if (!value.isNull())
+        setAttributeArray(d->program, 1, value);
 }
 
 QT_END_NAMESPACE

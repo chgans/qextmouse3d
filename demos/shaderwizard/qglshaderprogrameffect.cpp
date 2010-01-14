@@ -409,20 +409,17 @@ void QGLShaderProgramEffect::setVertexArray(const QGLVertexArray& array)
     QGLAttributeValue value = array.attributeValue(QGL::Position);
     if(program && !value.isNull())
     {
-        program->setAttributeArray( 0, value.floatData(), value.size(),
-                                    value.stride());
+        setAttributeArray(program, 0, value);
     }
     value = array.attributeValue(QGL::Normal);
     if(program && !value.isNull())
     {
-        program->setAttributeArray( 1, value.floatData(), value.size(),
-                                    value.stride());
+        setAttributeArray(program, 1, value);
     }
     value = array.attributeValue(QGL::TextureCoord0);
     if(program && !value.isNull())
     {
-        program->setAttributeArray( 2, value.floatData(), value.size(),
-                                    value.stride());
+        setAttributeArray(program, 2, value);
     }
 }
 

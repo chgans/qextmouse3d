@@ -54,6 +54,8 @@ QT_MODULE(Qt3d)
 #define QGL_SHADERS_ONLY 1
 #endif
 
+class QGLShaderProgram;
+
 class Q_QT3D_EXPORT QGLAbstractEffect
 {
 public:
@@ -79,6 +81,9 @@ protected:
     void disableVertexAttribute(QGL::VertexAttribute attribute);
     bool setVertexAttribute(QGL::VertexAttribute attribute, const QGLVertexArray& array);
 #endif
+    void setAttributeArray
+        (QGLShaderProgram *program, int location,
+         const QGLAttributeValue& value);
 };
 
 QT_END_NAMESPACE

@@ -349,47 +349,29 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize> QDataArray::extract(int index, int size, int stride) const
+    \fn QDataArray<T, PreallocSize> QDataArray::fromRawData(const T *data, int size)
 
-    Extracts a subset of the elements in this data array, starting
-    at \a index.  At each position, \a size elements are copied.
-    The positions are \a stride elements apart.
+    Returns a data array consisting of the \a size elements from \a data.
 
-    Consider an array of floats that contains vertex values consisting
-    of a 3D position, a 3D normal, and a 2D texture co-ordinate.
-    The stride is 8 and the components are at indices 0, 3, and 6
-    respectively.  The components can be extracted as follows:
+    This function takes a reference to \a data, but does not copy
+    the elements until the array is modified.  The memory at \a data
+    must remain valid until the returned data array is destroyed
+    or modified.
 
-    \code
-    QDataArray<float> vertices;
-    ...
-    QDataArray<float> positions = vertices.extract(0, 3, 8);
-    QDataArray<float> normals = vertices.extract(3, 3, 8);
-    QDataArray<float> texCoords = vertices.extract(6, 2, 8);
-    \endcode
-
-    \sa interleaved()
-*/
-
-/*!
-    \fn QDataArray<T, PreallocSize> QDataArray::interleaved(int thisStride, const QDataArray<T, PreallocSize>& other, int otherStride) const
-
-    Interleaves this data array with \a other.  For each vertex in
-    the returned array, \a thisStride elements will be taken from this
-    data array, and \a otherStride elements will be taken from \a other.
-
-    Consider two float arrays, containing 3D positions and 2D texture
-    co-ordinates.  They can be interleaved into a single vertex
-    array as follows:
+    Use append() instead of fromRawData() to force a copy to be made
+    of the elements at \a data when the data array is created:
 
     \code
-    QDataArray<float> positions;
-    QDataArray<float> texCoords;
-    ...
-    QDataArray<float> vertices = positions.interleaved(3, texCoords, 2);
+    // Makes a copy of the data immediately.
+    QDataArray<float> array;
+    array.append(data, size);
+
+    // Does not make a copy of the data until the array is modified.
+    QDataArray<float> array;
+    array = QDataArray<float>::fromRawData(data, size);
     \endcode
 
-    \sa extract()
+    \sa append()
 */
 
 /*!
