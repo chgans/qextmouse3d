@@ -140,6 +140,9 @@ public:
     QColor color() const;
     void setColor(const QColor& color);
 
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
     void setVertexArray(const QGLVertexArray& array);
 
     void setCommonNormal(const QVector3D& value);

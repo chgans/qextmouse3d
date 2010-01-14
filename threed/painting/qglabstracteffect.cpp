@@ -70,11 +70,11 @@ QGLAbstractEffect::~QGLAbstractEffect()
     \fn QList<QGL::VertexAttribute> QGLAbstractEffect::requiredFields() const
 
     Returns a list of the vertex array fields that are required
-    to be provided via setVertexArray().  QGLPainter::draw()
+    to be provided via setVertexAttribute().  QGLPainter::draw()
     uses this to warn when the application has not supplied
     sufficient arguments to use the effect.
 
-    \sa setVertexArray(), QGLPainter::draw()
+    \sa setVertexAttribute(), QGLPainter::draw()
 */
 
 /*!
@@ -133,13 +133,13 @@ void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 }
 
 /*!
-    \fn void QGLAbstractEffect::setVertexArray(const QGLVertexArray& array)
+    \fn void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 
-    Sets the vertex attributes on this effect to the fields in \a array.
+    Sets the specified vertex \a attribute to \a value.
 
-    The default implementation sets the attributes on the GL fixed function
-    pipeline.  For example, the attribute QGL::Normal will be set
-    using \c{glNormalPointer()}.
+    The default implementation sets the attribute on the GL fixed
+    function pipeline.  For example, the attribute QGL::Normal will
+    be set using \c{glNormalPointer()}.
 
     OpenGL/ES 2.0 implementations do not have a fixed function
     pipeline, so subclasses must handle all relevant attributes
@@ -415,7 +415,7 @@ void QGLAbstractEffect::updateFog(const QGLPainter *painter)
 
     This function does not exist on OpenGL/ES 2.0 systems.
 
-    \sa setActive(), setVertexArray(), disableVertexAttribute()
+    \sa setActive(), setVertexAttribute(), disableVertexAttribute()
 */
 // Implemented in qglpainter.cpp.
 
@@ -432,24 +432,7 @@ void QGLAbstractEffect::updateFog(const QGLPainter *painter)
 
     This function does not exist on OpenGL/ES 2.0 systems.
 
-    \sa setActive(), setVertexArray(), enableVertexAttribute()
-*/
-// Implemented in qglpainter.cpp.
-
-/*!
-    \fn bool QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLVertexArray& array)
-
-    Sets the specified vertex \a attribute to the corresponding field
-    in \a array.  Returns true if \a attribute is present in \a array;
-    false otherwise.
-
-    This function is provided as a convenience for use by subclasses
-    that want to implement an effect using the fixed-function pipeline.
-    It is called from the subclass setVertexArray() override.
-
-    This function does not exist on OpenGL/ES 2.0 systems.
-
-    \sa setVertexArray()
+    \sa setActive(), setVertexAttribute(), enableVertexAttribute()
 */
 // Implemented in qglpainter.cpp.
 

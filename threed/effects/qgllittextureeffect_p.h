@@ -69,8 +69,6 @@ public:
     void setActive(bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexArray(const QGLVertexArray& array);
-
 private:
     GLenum envMode;
 };

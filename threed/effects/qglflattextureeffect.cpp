@@ -187,13 +187,12 @@ void QGLFlatTextureEffect::update
     }
 }
 
-void QGLFlatTextureEffect::setVertexArray(const QGLVertexArray& array)
+void QGLFlatTextureEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull())
+    if (attribute == QGL::Position)
         setAttributeArray(program, 0, value);
-    value = array.attributeValue(QGL::TextureCoord0);
-    if (!value.isNull())
+    else if (attribute == QGL::TextureCoord0)
         setAttributeArray(program, 1, value);
 }
 

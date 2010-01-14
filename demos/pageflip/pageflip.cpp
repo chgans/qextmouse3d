@@ -110,7 +110,8 @@ public:
     QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
     void setAlphaValue(GLfloat value);
 
@@ -430,16 +431,14 @@ void PageFlipGradientEffect::update
     }
 }
 
-void PageFlipGradientEffect::setVertexArray(const QGLVertexArray& array)
+void PageFlipGradientEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull())
+    if (attribute == QGL::Position)
         setAttributeArray(program, 0, value);
-    value = array.attributeValue(QGL::TextureCoord0);
-    if (!value.isNull())
+    else if (attribute == QGL::TextureCoord0)
         setAttributeArray(program, 1, value);
-    value = array.attributeValue(QGL::CustomVertex0);
-    if (!value.isNull())
+    else if (attribute == QGL::CustomVertex0)
         setAttributeArray(program, 2, value);
 }
 

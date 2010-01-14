@@ -57,7 +57,8 @@ public:
     void setActive(bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
 private:
     PerPixelEffectPrivate *d;
