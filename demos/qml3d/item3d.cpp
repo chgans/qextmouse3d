@@ -72,7 +72,7 @@ public:
         , inheritEvents(false)
         , isVisible(true)
         , isInitialized(false)
-        , sceneObjectId(-1)
+        , mainBranchId(-1)
     {
     }
 
@@ -84,7 +84,7 @@ public:
     Effect *effect;    
     Item3d::CullFaces cullFaces;
     int objectPickId;
-    int sceneObjectId;
+    int mainBranchId;
     bool isVisible;
     bool inheritEvents;
     bool isInitialized;
@@ -323,7 +323,7 @@ void Item3d::setMesh(Mesh *value)
 
     d->mesh = value;
     //always start off pointing to the default scene mesh object.
-    d->sceneObjectId = 0;  
+    d->mainBranchId = 0;  
 
     if (value) {
         d->mesh->ref();
@@ -509,13 +509,13 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     }    
 
     if (mesh() && !meshNode().isEmpty()) {
-        int nodeNumber = mesh()->splitSceneMesh(meshNode());    
-        if (nodeNumber>=0) {
-            d->sceneObjectId = nodeNumber;
+        int branchNumber = mesh()->createSceneBranch(meshNode());    
+        if (branchNumber>=0) {
+            d->mainBranchId = branchNumber;
         }
         else {
             qWarning()<< "3D item initialization failed: unable to find the specified mesh-node. Defaulting to default node.";
-            d->sceneObjectId = 0;
+            d->mainBranchId = 0;
         }
     }
 
@@ -546,14 +546,14 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     d->isInitialized = true;
 }
 
-int Item3d::sceneObjectId() const
+int Item3d::mainBranchId() const
 {
-    return d->sceneObjectId;
+    return d->mainBranchId;
 }
 
-void Item3d::setSceneObjectId(int objectID)
+void Item3d::setMainBranchId(int objectID)
 {
-    d->sceneObjectId = objectID;
+    d->mainBranchId = objectID;
 }
 
 void Item3d::componentComplete()
@@ -564,7 +564,7 @@ void Item3d::componentComplete()
 void Item3d::drawItem(QGLPainter *painter)
 {
     if (d->mesh)
-        d->mesh->draw(painter, d->sceneObjectId);
+        d->mesh->draw(painter, d->mainBranchId);
 }
 
 bool Item3d::event(QEvent *e)

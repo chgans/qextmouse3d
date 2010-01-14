@@ -57,16 +57,16 @@ QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
 class MeshPrivate
 {
 public:
-    MeshPrivate() : dataReply(0), scene(0), refCount(1), nextObjectId(0),
-                    completed(false), loaded(false){}
+    MeshPrivate() : dataReply(0), scene(0), refCount(1), nextSceneBranchId(0),
+                    mainSceneObject(NULL), completed(false), loaded(false){}
     ~MeshPrivate()
     {
         delete scene;
     }
 
-    struct meshObject {
+    struct branchObject {
         QObject *previousParent;
-        QGLSceneObject *sceneObject;
+        QGLSceneObject *rootSceneObject;
     };
 
     QUrl data;
@@ -74,11 +74,12 @@ public:
     Mesh *parentMesh;
     QNetworkReply *dataReply;
     QGLAbstractScene *scene;
-    QMap<int, meshObject> meshObjects;  //These are the objects actually appearing in the mesh.
-    int nextObjectId;
-    QList<QGLSceneObject *>sceneObjects;    //These are all of the possible objects in the scene.
-    int refCount;
+    int nextSceneBranchId;
+    QMap<int, branchObject> sceneBranches;
+    QList<QGLSceneObject *>sceneObjects;
+    QGLSceneObject *mainSceneObject;
     QList<QGLMaterialParameters *> connected;
+    int refCount;
     bool completed;
     bool loaded;
 };
@@ -132,19 +133,18 @@ void Mesh::setMeshName(const QString& value)
     if (d->loaded && d->scene) {
         QGLSceneObject *insertObject;
         if (value.isEmpty())            
-            insertObject = d->scene->defaultObject(QGLSceneObject::Main);
+            insertObject = getSceneObject();
         else
-            insertObject = d->scene->object(QGLSceneObject::Mesh, value);
+            insertObject = getSceneObject(value);
         if (!insertObject && !value.isEmpty()) {
-            qWarning() << "could not find" << value << "available:"
-                       << d->scene->objectNames(QGLSceneObject::Mesh);
+            qWarning() << "could not find" << value << "available:" << getSceneObjectNames();
         } else if (!insertObject) {
             qWarning() << "could not find main object in scene!";
         }
 
         //Add the object: if null it will make the object non-drawable, but still able
         //to run.
-        addMeshObject(insertObject);
+        addSceneBranch(insertObject);
         
         emit dataChanged();
     }
@@ -157,8 +157,67 @@ void Mesh::dataRequestFinished()
     d->dataReply = 0;
 }
 
+void Mesh::initSceneObjectList()
+{
+    //Because the branches of the overall scene are moveable, and the 
+    //standard methods of getting objects/names from a scene rely on
+    //a single tree, the Mesh class supports its own list of mesh objects
+    //in the scene.
+    d->sceneObjects.clear();
+    if (d->scene)
+        d->sceneObjects = d->scene->objects(QGLSceneObject::Mesh);
+
+    d->mainSceneObject = d->scene->defaultObject(QGLSceneObject::Main);
+}
+
+QGLSceneObject *Mesh::getSceneObject()
+{
+    //This variant of the function gets the main scene object for the scene
+    if (!d->mainSceneObject)
+        initSceneObjectList();
+
+    return d->mainSceneObject;
+}
+
+QGLSceneObject *Mesh::getSceneObject(const QString &name)
+{    
+    //This variant of the function gets the mesh scene object for a scene
+    //based on the name of the object.
+    if (d->sceneObjects.empty())
+        initSceneObjectList();
+
+    foreach (QGLSceneObject *object, d->sceneObjects) {
+        if (object && object->objectName()==name)
+        {
+            return object;
+        }
+    }
+
+    return NULL;
+}
+
+QStringList Mesh::getSceneObjectNames()
+{
+    //Get a string list of all mesh object names in the scene.
+    if (d->sceneObjects.empty())
+        initSceneObjectList();
+
+    QStringList names;
+    foreach (QGLSceneObject *object, d->sceneObjects) {
+        if (object) {
+            QString name = object->objectName();
+            if (!name.isEmpty())
+                names += name;
+        }
+    }
+    return names;
+}
+
 QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
 {
+    //Sometimes we want objects other than meshes - this is usually at start-up or similar,
+    //and does not generally need a whole mesh tree, this function, then, is a generic 
+    //mesh tree searcher for a given named scene object of a specific type.
 	if (d->scene)
 		return d->scene->object(type, name);
 	else
@@ -169,7 +228,7 @@ QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& n
 void Mesh::setScene(QGLAbstractScene *scene)
 {
     delete d->scene;
-    resetMeshObjects();
+    resetSceneBranches();
     d->scene = scene;
     if (!d->scene) {
         qWarning("Could not load %s (possibly plugin could not be found)",
@@ -177,21 +236,23 @@ void Mesh::setScene(QGLAbstractScene *scene)
     } 
     else {
         QGLSceneObject *insertObject;
+        initSceneObjectList();
         if (d->meshName.isEmpty())
-            insertObject = d->scene->defaultObject(QGLSceneObject::Main);
+            insertObject = getSceneObject();
         else
-            insertObject = d->scene->object(QGLSceneObject::Mesh, d->meshName);        
+            insertObject = getSceneObject(d->meshName);
         //check if we found a valid/useful object to use based on the node name, 
         //otherwise just output a list of valid names
         if (!insertObject && !d->meshName.isEmpty()) {
             qWarning() << "could not find" << d->meshName << "available:"
-                       << d->scene->objectNames(QGLSceneObject::Mesh);
+                       << getSceneObjectNames();
         } else if (!insertObject) {
             qWarning() << "could not find main object in scene!";
         }
         //in either case we still need to add an object to the scene, so if we fail
         //we simply add a null value to indicate that this object is non-drawable 
-        addMeshObject(insertObject);        
+        addSceneBranch(insertObject);        
+
     }
     emit dataChanged(); 
     d->loaded = true;
@@ -199,70 +260,103 @@ void Mesh::setScene(QGLAbstractScene *scene)
         emit loaded();
 }
 
-int Mesh::nextMeshObjectId() const
+int Mesh::nextSceneBranchId() const
 {
-    return d->nextObjectId;
+    //Retrieve the next unused scene branch ID
+    return d->nextSceneBranchId;
 }
 
-int Mesh::addMeshObject(QGLSceneObject *sceneObject, QObject *previousParent)
+int Mesh::createSceneBranch(QString nodeName, QObject *parent)
+{
+    //This function "prunes" a specific branch away from the main scene-tree/graph and adds it to the
+    //list of independent branches drawn by the mesh.  This facilitates animation & picking of specific
+    //sub-branches of the larger tree.
+    if (!d->scene) {
+        qWarning() << "Unable to split mesh: no scene initialised - attempt to add scene object failed.";
+        return -1;
+    }
+    else {
+        int branchId = nextSceneBranchId();        
+        QGLSceneObject *sceneObj = getSceneObject(nodeName);        
+        if (sceneObj) {
+            QObject *prevParent=sceneObj->parent();
+            parent ? sceneObj->setParent(parent)  : sceneObj->setParent(this);
+            addSceneBranch(sceneObj, prevParent);
+            return branchId;
+        }
+        else {
+            qWarning() << "Warning: Unable to find node " << nodeName << " in given mesh.  Available nodes:"
+                       << getSceneObjectNames();
+            return -1;
+        }
+    }
+}
+
+int Mesh::addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParent)
 {
     //when adding a new object to a mesh we also store the previous parent information
     //in case we wish to 'reattach' it to the parent at a later stage.
-    MeshPrivate::meshObject newObject;
-    newObject.previousParent=previousParent;
-    newObject.sceneObject = sceneObject;
+    MeshPrivate::branchObject newBranch;
+    newBranch.previousParent=previousParent;
+    newBranch.rootSceneObject = rootSceneObject;
 
-    d->meshObjects.insert(d->nextObjectId, newObject);
+    d->sceneBranches.insert(d->nextSceneBranchId, newBranch);
     
-    return ++d->nextObjectId;    
+    return ++d->nextSceneBranchId;    
 }
 
-void Mesh::deleteMeshObject(int objectId)
+void Mesh::restoreSceneBranch(int branchId)
 {
     //When we delete an object we first attempt to reattach the underlying QGLSceneObject
     //to its original parent node.  If the parent node is specified as "NULL" we attempt
     //to attach it to the main scene node of the object (ie. item 0 in the map).
     
-    if (d->meshObjects.contains(objectId)) {
-        qWarning() <<"Mesh does not contain mesh object " << objectId<<".  Ignoring.\n";
+    if (d->sceneBranches.contains(branchId)) {
+        qWarning() <<"Mesh does not contain branch " << branchId<<".  Ignoring.\n";
         return;
     }
         
-    MeshPrivate::meshObject thisObject = d->meshObjects.value(objectId);
+    MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
 
-    if (!thisObject.previousParent) {
-        thisObject.sceneObject->setParent(d->scene->defaultObject(QGLSceneObject::Main));
+    if (!targetBranch.previousParent) {
+        targetBranch.rootSceneObject->setParent(getSceneObject());
     } else {
-        thisObject.sceneObject->setParent(thisObject.previousParent);
+        targetBranch.rootSceneObject->setParent(targetBranch.previousParent);
     }
 
-    if (!d->meshObjects.remove(objectId)) {
-        qWarning() << "Unable to remove mesh object "<<objectId<<" from Mesh... ignoring.";
+    if (!d->sceneBranches.remove(branchId)) {
+        qWarning() << "Unable to remove branch "<<branchId<<" from Mesh. Ignoring.";
     }
 }
 
-QGLSceneObject *Mesh::getMeshObject(int objectId) const
+QGLSceneObject *Mesh::getSceneBranch(int branchId) const
 {
-    if (!d->meshObjects.contains(objectId)) return NULL;    
-    MeshPrivate::meshObject targetObject = d->meshObjects.value(objectId);
-    return targetObject.sceneObject;    
+    if (!d->sceneBranches.contains(branchId)) return NULL;    
+    MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
+    return targetBranch.rootSceneObject;    
 }
 
-void Mesh::resetMeshObjects()
+void Mesh::resetSceneBranches()
 {
-    d->meshObjects.clear();
-    d->nextObjectId = 0;
+    //Delete all "hanging" object entries in the scene branches list and return them
+    //to their rightful place in their parent scene if possible.
+    for (int i=1; i<d->nextSceneBranchId; i++) {
+        restoreSceneBranch(i);
+    }
+
+    d->sceneBranches.clear();
+    d->nextSceneBranchId = 0;
 }
 
-void Mesh::draw(QGLPainter *painter, int objectID)
+void Mesh::draw(QGLPainter *painter, int branchId)
 {
-    if (!d->meshObjects.contains(objectID)) {
-        qWarning() << "Unable to find valid scene object with ID: " << objectID;
+    if (!d->sceneBranches.contains(branchId)) {
+        qWarning() << "Unable to find valid scene object with ID: " << branchId;
     } else {
-        MeshPrivate::meshObject targetObject = d->meshObjects.value(objectID);
-        targetObject.sceneObject->apply(painter);
-        targetObject.sceneObject->draw(painter);
-        targetObject.sceneObject->cleanup(painter);
+        MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
+        targetBranch.rootSceneObject->apply(painter);
+        targetBranch.rootSceneObject->draw(painter);
+        targetBranch.rootSceneObject->cleanup(painter);
     }
 }
 
@@ -277,7 +371,7 @@ bool Mesh::deref()
     return d->refCount > 0;
 }
 
-QObject *Mesh::material(const QString& name) const
+QObject *Mesh::material(const QString& name)
 {    
     if (!d->scene)
         return 0;
@@ -285,9 +379,9 @@ QObject *Mesh::material(const QString& name) const
     QGLSceneObject *sceneObject;
     
     if (name.isEmpty())
-        sceneObject = d->scene->defaultObject(QGLSceneObject::Main);
+        sceneObject = getSceneObject();
     else
-        sceneObject = d->scene->object(QGLSceneObject::Mesh, name);
+        sceneObject = getSceneObject(name);
     
     if(!sceneObject) {
         qWarning()  << "Attempt to get material data from scene node " 
@@ -313,29 +407,6 @@ void Mesh::componentComplete()
     d->completed = true;
     if (d->loaded)
         emit loaded();
-}
-
-int Mesh::splitSceneMesh(QString nodeName, QObject *parent)
-{
-    if (!d->scene) {
-        qWarning() << "Unable to split mesh: no scene initialised - attempt to add scene object failed.";
-        return -1;
-    }
-    else {
-        int indexValue = nextMeshObjectId();
-        QGLSceneObject *sceneObj = d->scene->object(QGLSceneObject::Mesh, nodeName);
-        QObject *prevParent=sceneObj->parent();
-        if (sceneObj) {
-            parent ? sceneObj->setParent(parent)  : sceneObj->setParent(this);
-            addMeshObject(sceneObj, prevParent);
-            return indexValue;
-        }
-        else {
-            qWarning() << "Warning: Unable to find node " << nodeName << " in given mesh.  Available nodes:"
-                       << d->scene->objectNames(QGLSceneObject::Mesh);
-            return -1;
-        }
-    }
 }
 
 QT_END_NAMESPACE

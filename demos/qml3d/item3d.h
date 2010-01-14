@@ -159,8 +159,8 @@ public:
     bool isInitialized() const;
     void setIsInitialized();
 
-    int sceneObjectId() const;
-    void setSceneObjectId(int objectID);
+    int mainBranchId() const;
+    void setMainBranchId(int objectID);
 
     virtual void draw(QGLPainter *painter);
     virtual void initialize(Viewport *viewport, QGLPainter *painter);
