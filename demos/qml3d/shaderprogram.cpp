@@ -180,32 +180,27 @@ void ShaderProgramEffect::setVertexArray(const QGLVertexArray& array)
 {
     QGLAttributeValue value = array.attributeValue(QGL::Position);
     if (!value.isNull() && vertexAttr != -1) {
-        program->setAttributeArray
-            (vertexAttr, value.floatData(), value.size(), value.stride());
+        setAttributeArray(program, vertexAttr, value);
         program->enableAttributeArray(vertexAttr);
     }
     value = array.attributeValue(QGL::Normal);
     if (!value.isNull() && normalAttr != -1) {
-        program->setAttributeArray
-            (normalAttr, value.floatData(), value.size(), value.stride());
+        setAttributeArray(program, normalAttr, value);
         program->enableAttributeArray(normalAttr);
     }
     value = array.attributeValue(QGL::Color);
     if (!value.isNull() && colorAttr != -1) {
-        program->setAttributeArray
-            (colorAttr, value.floatData(), value.size(), value.stride());
+        setAttributeArray(program, colorAttr, value);
         program->enableAttributeArray(colorAttr);
     }
     value = array.attributeValue(QGL::TextureCoord0);
     if (!value.isNull() && texCoord0Attr != -1) {
-        program->setAttributeArray
-            (texCoord0Attr, value.floatData(), value.size(), value.stride());
+        setAttributeArray(program, texCoord0Attr, value);
         program->enableAttributeArray(texCoord0Attr);
     }
     value = array.attributeValue(QGL::TextureCoord1);
     if (!value.isNull() && texCoord1Attr != -1) {
-        program->setAttributeArray
-            (texCoord1Attr, value.floatData(), value.size(), value.stride());
+        setAttributeArray(program, texCoord1Attr, value);
         program->enableAttributeArray(texCoord1Attr);
     }
 }

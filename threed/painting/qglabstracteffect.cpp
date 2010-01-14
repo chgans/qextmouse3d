@@ -40,12 +40,13 @@
 ****************************************************************************/
 
 #include "qglabstracteffect.h"
+#include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLAbstractEffect
-    \since 4.6
+    \since 4.7
     \brief The QGLAbstractEffect class provides a standard interface for rendering surface material effects with GL.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -453,5 +454,49 @@ void QGLAbstractEffect::updateFog(const QGLPainter *painter)
 // Implemented in qglpainter.cpp.
 
 #endif // !QT_OPENGL_ES_2 || Q_QDOC
+
+/*!
+    Sets the vertex attribute at \a location on \a program to \a value.
+    It is assumed that \a program is bound to the current context.
+    Has no effect on systems without shader support.
+
+    This function is provided as a convenience for use by subclasses
+    that want to implement an effect using shaders.
+*/
+void QGLAbstractEffect::setAttributeArray
+        (QGLShaderProgram *program, int location,
+         const QGLAttributeValue& value)
+{
+    // This function is working around a wart in the Qt 4.6 QGLShaderProgram
+    // API that doesn't allow the vertex attribute type (GL_FLOAT, etc) to
+    // be specified via the public API.  XXX - Need to fix this in 4.7.
+#if defined(QT_OPENGL_ES_2)
+    Q_UNUSED(program);
+    glVertexAttribPointer(GLuint(location), value.size(),
+                          GLenum(value.type()), GL_FALSE,
+                          value.stride(), value.data());
+#elif !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+    Q_UNUSED(program);
+    const QGLContext *ctx = QGLContext::currentContext();
+    if (!ctx)
+        return;
+    QGLPainterPrivate *painter =
+        QGLPainterPrivateCache::instance()->fromContext(ctx);
+    QGLPainterExtensions *extensions = painter->extensions();
+    if (!extensions->vertexAttribPointer) {
+        extensions->vertexAttribPointer = (q_glVertexAttribPointer)
+            ctx->getProcAddress(QLatin1String("glVertexAttribPointer"));
+        if (!extensions->vertexAttribPointer)
+            return;
+    }
+    (*extensions->vertexAttribPointer)
+        (GLuint(location), value.size(), GLenum(value.type()), GL_FALSE,
+         value.stride(), value.data());
+#else
+    Q_UNUSED(program);
+    Q_UNUSED(location);
+    Q_UNUSED(value);
+#endif
+}
 
 QT_END_NAMESPACE
