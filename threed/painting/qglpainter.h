@@ -57,6 +57,7 @@
 #include "qglfogparameters.h"
 #include "qglmatrixstack.h"
 #include "qglcamera.h"
+#include "qvectorarray.h"
 
 QT_BEGIN_HEADER
 
