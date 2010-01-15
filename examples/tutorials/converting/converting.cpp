@@ -90,14 +90,14 @@ void TutorialWidget::paintGL()
 //! [set-effect]
 
 //! [create-vertex-array]
-    QGLVertexArray vertices(QGL::Position, 3);
+    QVector3DArray vertices;
     vertices.append(60.0f,  10.0f,  0.0f);
     vertices.append(110.0f, 110.0f, 0.0f);
     vertices.append(10.0f,  110.0f, 0.0f);
 //! [create-vertex-array]
 
 //! [draw]
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
 //! [draw]
 //! [draw-all]

@@ -70,13 +70,13 @@ void PainterWidget::paintGL(QPainter *p)
 
     painter.modelViewMatrix().setToIdentity();
 
-    QGLVertexArray vertices(QGL::Position, 3);
+    QVector3DArray vertices;
     vertices.append(60.0,  10.0,  0.0);
     vertices.append(110.0, 110.0, 0.0);
     vertices.append(10.0,  110.0, 0.0);
 
     painter.setStandardEffect(QGL::FlatColor);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, vertices);
     painter.setColor(QColor(0, 128, 0, 255));
 
     painter.draw(QGL::Triangles, 3);
