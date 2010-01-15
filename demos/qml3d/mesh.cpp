@@ -280,7 +280,8 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
         QGLSceneObject *sceneObj = getSceneObject(nodeName);        
         if (sceneObj) {
             QObject *prevParent=sceneObj->parent();
-            parent ? sceneObj->setParent(parent)  : sceneObj->setParent(this);
+            //If no specific parent is nominated, use the scene specified by the mesh
+            parent ? sceneObj->setParent(parent)  : sceneObj->setParent(d->scene);
             addSceneBranch(sceneObj, prevParent);
             return branchId;
         }
