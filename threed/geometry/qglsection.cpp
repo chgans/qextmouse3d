@@ -41,7 +41,7 @@
 
 #include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
-#include "qgeometrydata_p.h"
+#include "qdataarray.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
@@ -167,41 +167,26 @@ uint qHash(const QVector3D &v)
 class QGLSectionPrivate
 {
 public:
-    typedef QHash<QVector3D, int> VecHash;
-    typedef QHash<int, QVector3D> NormHash;
+    QGLSectionPrivate() : finalized(false)  {}
+    ~QGLSectionPrivate() {}
 
-    QGLSectionPrivate()
-        : data(new QGeometryData)
-        , hash(new VecHash)
-        , norms(new NormHash)
-        , finalized(false)
-    {
-    }
-    ~QGLSectionPrivate()
-    {
-        delete data;
-        delete hash;
-        delete norms;
-    }
     bool normalAccumulated(int index, const QVector3D &norm) const
     {
-        Q_ASSERT(norms);  // dont call this after finalizing
-        NormHash::const_iterator nit = norms->constFind(index);
-        while (nit != norms->constEnd() && nit.key() == index)
+        QHash<int, QVector3D>::const_iterator nit = norms.constFind(index);
+        while (nit != norms.constEnd() && nit.key() == index)
             if (*nit++ == norm)
                 return true;
         return false;
     }
+
     void accumulateNormal(int index, const QVector3D &norm)
     {
-        Q_ASSERT(norms);  // dont call this after finalizing
-        norms->insertMulti(index, norm);
+        norms.insertMulti(index, norm);
     }
 
-
-    QGeometryData *data;
-    VecHash *hash;
-    NormHash *norms;
+    QGLIndexArray indices;
+    QHash<QVector3D, int> hash;
+    QHash<int, QVector3D> norms;
     bool finalized;
 };
 
@@ -242,15 +227,14 @@ QGLSection::~QGLSection()
 
 /*!
     \internal
-    Completes the calculations of normal values for this section.  This
-    function also performs local memory optimizations on the section.
+    Completes the calculations of normal values for this section, determines
+    the bounding box and performs local memory optimizations on the section.
 */
 void QGLSection::finalize()
 {
     if (d->finalized)
         return;
-    d->data->squeeze();
-    d->data->normalizeNormals();
+    normalizeNormals();
     d->finalized = true;
 }
 
@@ -267,16 +251,16 @@ bool QGLSection::isFinalized() const
 
 /*!
     \internal
-    Returns a bounding box for the vertices in this section.
+    Returns the index array associated with this section.
 */
-QBox3D QGLSection::boundingBox() const
+QGLIndexArray QGLSection::indices() const
 {
-    return d->data->boundingBox();
+    return d->indices;
 }
+
 
 /*!
     \internal
-    \fn void QGLSection::append(const QLogicalVertex &vertex)
     Adds the logical \a vertex to this section.
 
     If the \a vertex has no lighting normal component, then the append will
@@ -288,20 +272,88 @@ QBox3D QGLSection::boundingBox() const
     by calling appendSmooth(); or if this section has smoothing QGL::Faceted,
     then the append will be done by calling appendFaceted().
 
-    \sa appendSmooth(), appendFaceted(), appendFlat()
+    If a common normal is set then a lighting normal component is set via
+    that value.
+
+    \sa appendSmooth(), appendFaceted(), appendFlat(), setCommonNormal()
 */
+void QGLSection::append(const QLogicalVertex &vertex)
+{
+    if (!vertex.hasField(QGL::Normal))
+    {
+        appendFlat(vertex);
+    }
+    else
+    {
+        if (m_smoothing == QGL::Smooth)
+            appendSmooth(vertex);
+        else
+            appendFaceted(vertex);
+    }
+}
+
+static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &b)
+{
+    static const quint32 ATTRS_AND_TEXTURES = (0xFFFFFFFF << QGL::TextureCoord0);
+    quint32 af = a.fields() & ATTRS_AND_TEXTURES;
+    quint32 bf = b.fields() & ATTRS_AND_TEXTURES;
+    if (af != bf)
+        return false;
+    quint32 flds = af | bf;
+    const quint32 mask = 0x01;
+    flds >>= QGL::TextureCoord0;
+    for (int i = QGL::TextureCoord0; flds; ++i, flds >>= 1)
+    {
+        if (flds & mask)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(i);
+            if (attr < QGL::CustomVertex0)
+            {
+                if (!qFuzzyCompare(a.texCoord(attr), b.texCoord(attr)))
+                    return false;
+            }
+            else
+            {
+                if (!qFuzzyCompare(a.attribute(attr), b.attribute(attr)))
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+int QGLSection::appendOne(const QLogicalVertex &lv)
+{
+    int index = appendVertex(lv);
+    d->hash.insertMulti(lv.vertex(), index);
+    d->indices.append(index);
+    return index;
+}
 
 /*!
     \internal
     Adds the logical vertex \a lv to this section of a display list.
 
-    The vertex will be drawn as part of a smooth continuous surface, with
-    no distinct edge.  To acheive this, duplicates of vertex \a lv are
-    coalesced into one vertex (within this section).  This one vertex
-    has its normal set to the average of supplied normals.
+    Two QLogicalVertex instances a and b are treated as being duplicates for
+    the purpose of smoothing, if \c{qFuzzyCompare(a.vertex(), b.vertex())} is
+    true
 
-    Vertices are not coalesced if \a lv has a different texture coordinate
-    than its duplicate.  See updateTexCoord() for details.
+    All duplicate occurrences of a vertex are coalesced, that is replaced
+    by a GL index referencing the one copy.
+
+    In order to draw \a lv as part of a smooth continuous surface, with
+    no distinct edge, duplicates of vertex \a lv are coalesced into one
+    (within this section) and the normal for that one set to the average of
+    the incoming unique normals.
+
+    The incoming vertex \a lv is not treated as a duplicate if \a lv has
+    different texture coordinates or attributes.  This occurs for example
+    in the case of a texture seam, where two different texture coordinates
+    are required at the same point on the geometry.
+
+    In that case a new duplicate vertex is added to carry the unique
+    texture coordinates or attributes.  When new vertex copies are added in
+    this way all copies receive the averaged normals.
 
     Call this function to add the vertices of a smooth face to the section
     of a display list, or use:
@@ -319,31 +371,43 @@ QBox3D QGLSection::boundingBox() const
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
-    Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
-    Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecHash::const_iterator it = d->hash->constFind(lv.vertex());
-    if (it == d->hash->constEnd())
+    Q_ASSERT(lv.hasField(QGL::Position));
+    Q_ASSERT(lv.hasField(QGL::Normal));
+    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+    bool coalesce = false;
+    if (it == d->hash.constEnd())
     {
-        int v = d->data->appendVertex(lv);
-        d->hash->insert(lv.vertex(), v);
-        d->accumulateNormal(v, lv.normal());
+        d->accumulateNormal(appendOne(lv), lv.normal());
     }
     else
     {
-        if (updateTexCoord(*it, lv.texCoord()) == -1)
+        while (it != d->hash.constEnd() && it.key() == lv.vertex())
         {
-            d->data->appendIndex(*it);
-            do
+            if (qCompareByAttributes(lv, vertexAt(*it)))
+            {
+                coalesce = true;
+                break;
+            }
+            ++it;
+        }
+        if (!coalesce)  // texture or attributes prevented coalesce
+        {
+            // new vert to carry tex/attrib data
+            d->accumulateNormal(appendOne(lv), lv.normal());
+        }
+        else
+        {
+            d->indices.append(*it);
+            it = d->hash.constFind(lv.vertex());
+            while (it != d->hash.constEnd() && it.key() == lv.vertex())
             {
                 if (!d->normalAccumulated(*it, lv.normal()))
                 {
-                    QVector3D *va = d->data->normalData();
-                    va[*it] += lv.normal();
+                    normalRef(*it) += lv.normal();
                     d->accumulateNormal(*it, lv.normal());
                 }
                 ++it;
-
-            } while (it != d->hash->constEnd() && it.key() == lv.vertex());
+            }
         }
     }
     d->finalized = false;
@@ -356,19 +420,18 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 
     The vertex will be drawn as a distinct edge, instead of just part of a
     continuous smooth surface.  To acheive this the vertex value of \a lv
-    is duplicated for each unique normal in the current section.  However
-    if a vertex is already present with a given normal it is coalesced
-    and simply referenced by index.
+    is duplicated for each unique normal in the current section.
 
-    Vertices are not coalesced if \a lv has a different texture coordinate
-    than its duplicate.  See updateTexCoord() for details.
+    Note that duplication is only for unique normals: if a vertex is already
+    present with a given normal it is coalesced and simply referenced by index.
+    As for appendSmooth() vertices are not coalesced in this way if \a lv
+    has a different texture coordinate or attribute than its duplicate.
 
-    Call this method to add the vertices of a faceted face to the list, or
-    use:
+    This function is used to add the vertices of a faceted face to the list:
 
     \code
     myDisplayList->newSection(QGLDisplayList::Faceted);
-    myDisplayList->addTriangle(a, b, c);
+    myDisplayList->addVertex(lv);
     \endcode
 
     In faceted surfaces, the vertex is sent to the graphics hardware once for
@@ -378,104 +441,23 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
-    Q_ASSERT(lv.hasType(QLogicalVertex::Vertex));
-    Q_ASSERT(lv.hasType(QLogicalVertex::Normal));
-    QGLSectionPrivate::VecHash::const_iterator it = d->hash->constFind(lv.vertex());
-    const QVector3D *vn = d->data->normalConstData();
-    const QVector2D *vt = 0;
-    if (d->data->hasType(QLogicalVertex::Texture))
-        vt = d->data->texCoordConstData();
-    for ( ; it != d->hash->constEnd() && it.key() == lv.vertex(); ++it)
+    Q_ASSERT(lv.hasField(QGL::Position));
+    Q_ASSERT(lv.hasField(QGL::Normal));
+    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+    bool coalesce = false;
+    for ( ;!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex(); ++it)
+        if (vertexAt(*it) == lv)
+            coalesce = true;
+    if (coalesce) // found
     {
-        if (vn && qFuzzyCompare(vn[*it], lv.normal()))
-        {
-            if (vt && lv.hasType(QLogicalVertex::Texture))
-            {
-                if (qFuzzyCompare(vt[*it], lv.texCoord()))
-                    break;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    if (it != d->hash->constEnd() && it.key() == lv.vertex()) // found
-    {
-        if (updateTexCoord(*it, lv.texCoord()) == -1)
-        {
-            d->data->appendIndex(*it);
-        }
+        d->indices.append(*it);
     }
     else
     {
-        int v = d->data->appendVertex(lv);
-        d->hash->insertMulti(lv.vertex(), v);
+        appendOne(lv);
     }
     d->finalized = false;
     m_displayList->setDirty(true);
-}
-
-/*!
-    \internal
-    Updates texture data at \a index to include value \a t.  This function
-    is called by appendSmooth() and appendFaceted() when incoming vertex
-    data is to be coalesced, but has a texture coordinate associated.
-
-    If \a t is QGLTextureSpecifier::InvalidTexCoord this function does
-    nothing and returns -1.
-
-    The texture data at \a index is examined, and therefore this section
-    must have texture data, ie \c{hasData(QLogicalVertex::Texture)} is true; and
-    the \a index must be a valid vertex index.
-
-    If the texture data at \a index is equal to \a t, then this function does
-    nothing and returns -1.
-
-    If no texture has been set at \a index then the effect is the same
-    as setTexCoord().
-
-    If the vertex at \a index already has texture coordinates set, then
-    a duplicate of the vertex is added, to carry the additional texture
-    coordinates.
-
-    Two or more texture coordinates for one logical vertex occurs where a texture
-    is split, or wraps around an object and thus a line of vertices on
-    the object forms a "seam".
-
-    Returns the index of the vertex that received the texture coordinate
-    \a t, which will be either \a index, in the simple case, or a new index
-    in the case of a seam.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-int QGLSection::updateTexCoord(int index, const QVector2D &t)
-{
-    int v = -1;
-    if (t != QLogicalVertex::InvalidTexCoord)
-    {
-        Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
-        Q_ASSERT(index < d->data->vertexCount());
-        QVector2D *vt = d->data->texCoordData();
-        if (t != vt[index])
-        {
-            if (vt[index] == QLogicalVertex::InvalidTexCoord)
-            {
-                v = index;
-                vt[index] = t;
-            }
-            else
-            {
-                QLogicalVertex vx = d->data->vertexAt(index);
-                vx.setTexCoord(t);
-                v = d->data->appendVertex(vx);
-                d->hash->insert(vx.vertex(), v);
-            }
-            d->finalized = false;
-            m_displayList->setDirty(true);
-        }
-    }
-    return v;
 }
 
 /*!
@@ -487,31 +469,9 @@ int QGLSection::updateTexCoord(int index, const QVector2D &t)
 */
 void QGLSection::appendFlat(const QLogicalVertex &lv)
 {
-    d->data->appendVertex(lv);
+    appendVertex(lv);
     d->finalized = false;
     m_displayList->setDirty(true);
-}
-
-/*!
-    \internal
-    Return a copy of the vertex data for this section.  Since the data
-    is implicitly shared this call is inexpensive, unless the copy is
-    modified.
-*/
-QGL::VectorArray QGLSection::vertices() const
-{
-    return d->data->vertices();
-}
-
-/*!
-    \internal
-    Return a copy of the normal data for this section.  Since the data
-    is implicitly shared this call is inexpensive, unless the copy is
-    modified.
-*/
-QGL::VectorArray QGLSection::normals() const
-{
-    return d->data->normals();
 }
 
 /*!
@@ -520,185 +480,9 @@ QGL::VectorArray QGLSection::normals() const
     is implicitly shared this call is inexpensive, unless the copy is
     modified.
 */
-QGL::IndexArray QGLSection::indices() const
+QGLIndexArray QGLSection::indices() const
 {
-    return d->data->indices();
-}
-
-/*!
-    \internal
-    Return a copy of the texture coordinate data for this section.
-    Since the data is implicitly shared this call is inexpensive, unless
-    the copy is modified.
-*/
-QGL::TexCoordArray QGLSection::texCoords() const
-{
-    return d->data->texCoords();
-}
-
-/*!
-    \internal
-    Return a copy of the color data for this section.  Since the data
-    is implicitly shared this call is inexpensive, unless the copy is
-    modified.
-*/
-QGL::ColorArray QGLSection::colors() const
-{
-    return d->data->colors();
-}
-
-/*!
-    \internal
-    Return a copy of the data for this section as a vertex array.  The
-    data is copied element-wise into a QGLVertexArray so this call is
-    expensive.
-*/
-QGLVertexArray QGLSection::toVertexArray() const
-{
-    return d->data->toVertexArray();
-}
-
-/*!
-    \internal
-    Returns the vertex data for the \a index.  The \a index must be valid.
-*/
-QLogicalVertex QGLSection::vertexAt(int index) const
-{
-    return d->data->vertexAt(index);
-}
-
-/*!
-    \internal
-    Sets the vertex at \a position to have coordinates \a v.
-
-    The \a position must be a valid vertex, in other words, one that has
-    already been added by one of the append functions.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-void QGLSection::setVertex(int position, const QVector3D &v)
-{
-    Q_ASSERT(position < d->data->vertexCount());
-    QVector3D *va = d->data->vertexData();
-    va[position] = v;
-    m_displayList->setDirty(true);
-}
-
-/*!
-    \internal
-    Sets the vertex normal at \a position to have value \a n.
-
-    If \a n is a null vector, in other words an invalid normal, then this
-    function does nothing.
-
-    The \a position must be a valid vertex: in other words, one that has
-    already been added by one of the append functions.
-
-    \sa appendSmooth(), appendFaceted()
-*/
-void QGLSection::setNormal(int position, const QVector3D &n)
-{
-    if (!n.isNull())
-    {
-        Q_ASSERT(position < d->data->vertexCount());
-        Q_ASSERT(d->data->hasType(QLogicalVertex::Normal));
-        QVector3D *vn = d->data->normalData();
-        vn[position] = n;
-        m_displayList->setDirty(true);
-    }
-}
-
-/*!
-    \internal
-    Sets the vertex at \a position to have texture coordinate value \a t.
-
-    If \a t is equal to QGLTextureSpecifier::InvalidTexCoord then this
-    function does nothing.
-
-    The \a position must be a valid vertex with texture data, in other words,
-    one that has already been added by one of the append functions.
-
-    \sa updateTexCoord()
-*/
-void QGLSection::setTexCoord(int position, const QVector2D &t)
-{
-    if (t != QLogicalVertex::InvalidTexCoord)
-    {
-        Q_ASSERT(position < d->data->vertexCount());
-        Q_ASSERT(d->data->hasType(QLogicalVertex::Texture));
-        QVector2D *vt = d->data->texCoordData();
-        vt[position] = t;
-        m_displayList->setDirty(true);
-    }
-}
-
-/*!
-    \internal
-    Sets the vertex color at \a position to have value \a c.
-
-    The \a position must be a valid vertex with color data, in other words,
-    one that has already been added by one of the append functions.
-
-    \sa appendFlat()
-*/
-void QGLSection::setColor(int position, const QColor4b &c)
-{
-    Q_ASSERT(position < d->data->vertexCount());
-    Q_ASSERT(d->data->hasType(QLogicalVertex::Color));
-    QColor4b *vc = d->data->colorData();
-    vc[position] = c;
-    m_displayList->setDirty(true);
-}
-
-/*!
-    \internal
-    \fn QGL::Smoothing QGLSection::smoothing() const
-    Returns the smoothing mode for this section.
-
-    \sa QGL::Smoothing
-*/
-
-/*!
-    \internal
-   \fn int QGLSection::count() const
-
-   Returns the current count of vertices referenced for this section.  This is
-   the same as \c{section->indices().count()} (but faster).
-*/
-int QGLSection::count() const
-{
-    return d->data->count();
-}
-
-/*!
-    \internal
-    Returns the types of data that this section contains.
-*/
-QLogicalVertex::Types QGLSection::dataTypes() const
-{
-    return d->data->types();
-}
-
-/*!
-    \internal
-    Returns true if this section has data of \a types.
-*/
-bool QGLSection::hasData(QLogicalVertex::Types types)
-{
-    return d->data->hasType(types);
-}
-
-/*!
-    \internal
-    Forces this section to have \a types of data.
-
-    Normally the append functions will track what types of data are
-    required by examining the data contained in vertex arguments passed
-    to the append functions, and thus this method need not be called.
-*/
-void QGLSection::enableTypes(QLogicalVertex::Types types)
-{
-    d->data->enableTypes(types);
+    return d->data.indices;
 }
 
 /*!
@@ -721,7 +505,7 @@ QDebug operator<<(QDebug dbg, const QGLSection &section)
             << ", count:" << section.count()
             << ", smoothing mode:" << (section.smoothing() == QGL::Smooth ?
                                        "QGL::Smooth" : "QGL::Faceted");
-    QGL::IndexArray indices = section.indices();
+    QGLIndexArray indices = section.indices();
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];

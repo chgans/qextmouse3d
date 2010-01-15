@@ -131,13 +131,6 @@ namespace QGL
         Smooth,
         Faceted
     };
-
-    // useful type definitions
-    typedef QVector<QVector3D> VectorArray;
-    typedef QVector<QVector2D> TexCoordArray;
-    typedef QVector<QColor4b> ColorArray;
-    typedef QVector<int> IndexArray;
-
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)

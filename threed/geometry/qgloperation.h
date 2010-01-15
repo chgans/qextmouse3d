@@ -47,37 +47,40 @@
 class QGLOperation
 {
 public:
-    inline QGLOperation(QGLDisplayList *, QGLDisplayList::Operation);
-    inline QGLOperation(QGLDisplayList *, QGLDisplayList::Operation,
+    inline QGLOperation(QGLDisplayList *, QGL::Operation);
+    inline QGLOperation(QGLDisplayList *, QGL::Operation,
                         const QVector3D &control);
     inline ~QGLOperation();
     inline void setControl(const QVector3D &);
     inline QVector3D control() const;
-    inline void setFlags(QGLDisplayList::OperationFlags);
-    inline QGLDisplayList::OperationFlags flags() const;
+    inline void setFlags(QGL::OperationFlags);
+    inline QGL::OperationFlags flags() const;
+
     inline void addVertex(const QVector3D &);
     inline void addNormal(const QVector3D &);
     inline void addColor(const QColor4b &);
-    inline void addTexCoord(const QVector2D &);
-    inline void addVertexArray(const QGL::VectorArray &);
-    inline void addNormalArray(const QGL::VectorArray &);
-    inline void addColorArray(const QGL::ColorArray &);
-    inline void addTexCoordArray(const QGL::TexCoordArray &);
-    inline void addTextureModel(const QGLTextureModel &);
-    inline void addColorModel(const QGLColorModel &);
+    inline void addTexCoord(const QVector2D &, QGL::VertexAttribute);
+    inline void addAttribute(const QVector3D &, QGL::VertexAttribute);
+
+    inline void addVertexArray(const QDataArray<QVector3D> &);
+    inline void addNormalArray(const QDataArray<QVector3D> &);
+    inline void addColorArray(const QDataArray<QColor4b> &);
+    inline void addTexCoordArray(const QDataArray<QVector2D> &, QGL::VertexAttribute);
+    inline void addAttributeArray(const QDataArray<QVector3D> &, QGL::VertexAttribute);
+
     inline void end();
-    inline QGL::VectorArray endResult();
+    inline QGLPrimitive endResult();
 private:
     QGLDisplayList *m_list;
 };
 
-inline QGLOperation::QGLOperation(QGLDisplayList *list, QGLDisplayList::Operation op)
+inline QGLOperation::QGLOperation(QGLDisplayList *list, QGL::Operation op)
     : m_list(list)
 {
     m_list->begin(op);
 }
 
-inline QGLOperation::QGLOperation(QGLDisplayList *list, QGLDisplayList::Operation op,
+inline QGLOperation::QGLOperation(QGLDisplayList *list, QGL::Operation op,
                                   const QVector3D &control)
     : m_list(list)
 {
@@ -95,6 +98,21 @@ inline void QGLOperation::setControl(const QVector3D &control)
     m_list->setControl(control);
 }
 
+inline QVector3D QGLOperation::control() const
+{
+    return m_list->control();
+}
+
+inline void QGLOperation::setFlags(QGL::OperationFlags flags)
+{
+    m_list->setFlags(flags);
+}
+
+inline QGL::OperationFlags QGLOperation::flags() const
+{
+    return m_list->flags();
+}
+
 inline void QGLOperation::addVertex(const QVector3D &vertex)
 {
     m_list->addVertex(vertex);
@@ -110,29 +128,31 @@ inline void QGLOperation::addColor(const QColor4b &color)
     m_list->addColor(color);
 }
 
-inline void QGLOperation::addTexCoord(const QVector2D &texCoord)
+inline void QGLOperation::addTexCoord(const QVector2D &texCoord,
+                                      QGL::VertexAttribute attr)
 {
-    m_list->addTexCoord(texCoord);
+    m_list->addTexCoord(texCoord, attr);
 }
 
-inline void QGLOperation::addVertexArray(const QGL::VectorArray &vertices)
+inline void QGLOperation::addVertexArray(const QDataArray<QVector3D> &vertices)
 {
     m_list->addVertexArray(vertices);
 }
 
-inline void QGLOperation::addNormalArray(const QGL::VectorArray &normals)
+inline void QGLOperation::addNormalArray(const QDataArray<QVector3D> &normals)
 {
     m_list->addNormalArray(normals);
 }
 
-inline void QGLOperation::addColorArray(const QGL::ColorArray &colors)
+inline void QGLOperation::addColorArray(const QDataArray<QColor4b> &colors)
 {
     m_list->addColorArray(colors);
 }
 
-inline void QGLOperation::addTexCoordArray(const QGL::TexCoordArray &texCoords)
+inline void QGLOperation::addTexCoordArray(const QDataArray<QVector2D> &texCoords,
+                                           QGL::VertexAttribute attr)
 {
-    m_list->addTexCoordArray(texCoords);
+    m_list->addTexCoordArray(texCoords, attr);
 }
 
 inline void QGLOperation::end()
@@ -140,50 +160,25 @@ inline void QGLOperation::end()
     m_list->end();
 }
 
-inline QGL::VectorArray QGLOperation::endResult()
+inline QGLPrimitive QGLOperation::endResult()
 {
     return m_list->endResult();
 }
 
 
-inline QVector3D QGLOperation::control() const
-{
-    return m_list->control();
-}
-
-inline void QGLOperation::setFlags(QGLDisplayList::OperationFlags flags)
-{
-    m_list->setFlags(flags);
-}
-
-inline void QGLOperation::addTextureModel(const QGLTextureModel &model)
-{
-    m_list->addTextureModel(model);
-}
-
-inline void QGLOperation::addColorModel(const QGLColorModel &model)
-{
-    m_list->addColorModel(model);
-}
-
-inline QGLDisplayList::OperationFlags QGLOperation::flags() const
-{
-    return m_list->flags();
-}
-
-inline QGLOperation &operator<<(QGLOperation &op, const QGL::VectorArray &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &ary)
 {
     op.addVertexArray(ary);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QGL::TexCoordArray &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &ary)
 {
-    op.addTexCoordArray(ary);
+    op.addTexCoordArray(ary, QGL::TextureCoord0);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QGL::ColorArray &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &ary)
 {
     op.addColorArray(ary);
     return op;
@@ -197,7 +192,7 @@ inline QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
 
 inline QGLOperation &operator<<(QGLOperation &op, const QVector2D &texCoord)
 {
-    op.addTexCoord(texCoord);
+    op.addTexCoord(texCoord, QGL::TextureCoord0);
     return op;
 }
 
@@ -207,35 +202,23 @@ inline QGLOperation &operator<<(QGLOperation &op, const QColor4b &color)
     return op;
 }
 
-inline QGLOperation &operator>>(QGLOperation &op, QGL::VectorArray &ary)
+inline QGLOperation &operator>>(QGLOperation &op, QGLPrimitive &prim)
 {
-    ary += op.endResult();
+    prim = op.endResult();
     return op;
 }
 
 inline QGLOperation &operator<<(QGLOperation &op,
-                                const QGLDisplayList::OperationFlags &flags)
+                                const QGL::OperationFlags &flags)
 {
     op.setFlags(flags | op.flags());
     return op;
 }
 
 inline QGLOperation &operator>>(QGLOperation &op,
-                                QGLDisplayList::OperationFlags &flags)
+                                QGL::OperationFlags &flags)
 {
     flags = op.flags();
-    return op;
-}
-
-inline QGLOperation &operator<<(QGLOperation &op, const QGLTextureModel &model)
-{
-    op.addTextureModel(model);
-    return op;
-}
-
-inline QGLOperation &operator<<(QGLOperation &op, const QGLColorModel &model)
-{
-    op.addColorModel(model);
     return op;
 }
 

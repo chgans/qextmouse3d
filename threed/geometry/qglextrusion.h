@@ -39,21 +39,23 @@
 **
 ****************************************************************************/
 
-#include "qglquad_p.h"
-#include "qgldisplaylist.h"
+#ifndef QGLEXTRUSION_H
+#define QGLEXTRUSION_H
 
-void QGLQuad::finalize()
+#include "qglprimitive.h"
+
+class QGLExtrusion : public QGLPrimitive
 {
-    if (m_vertices.count() < 4)
-    {
-        clear();
-        return;
-    }
-    for (int i = 0; i < m_vertices.count(); i += 4)
-    m_displayList->addQuad(m_vertices[i],
-                           m_vertices[i+1],
-                           m_vertices[i+2],
-                           m_vertices[i+3],
-                           textureModelPointer(), colorModelPointer());
-    clear();
-}
+public:
+    explicit QGLExtrusion(QGLDisplayList *list, const QVector3D &control = QVector3D())
+        : QGLPrimitive(list, control) {}
+    void finalize();
+    QString toString() { return QString("QGLExtrusion"); }
+    QGLDisplayList::Operation type() { return QGLDisplayList::EXTRUSION; }
+    bool isReversed() const { return m_reversed; }
+    void enableReversed(bool reversed) { m_reversed = reversed; }
+private:
+    bool m_reversed;
+};
+
+#endif // QGLEXTRUSION_H

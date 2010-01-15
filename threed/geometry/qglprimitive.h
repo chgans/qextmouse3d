@@ -39,19 +39,56 @@
 **
 ****************************************************************************/
 
-#ifndef QGLTRIANGULATEDFACE_H
-#define QGLTRIANGULATEDFACE_H
+#ifndef QGLPRIMITIVE_H
+#define QGLPRIMITIVE_H
 
-#include "qglprimitive_p.h"
+#include "qglnamespace.h"
+#include "qgeometrydata.h"
 
-class QGLTriangulatedFace : public QGLPrimitive
+namespace QGL
+{
+    enum Operation
+    {
+        NO_OP,
+        TRIANGLE,
+        TRIANGLE_STRIP,
+        QUAD,
+        QUAD_STRIP,
+        TRIANGLE_FAN,
+        TRIANGULATED_FACE,
+        EXTRUSION
+    };
+
+    enum OperationFlag
+    {
+        NO_FLAG               = 0X00,
+        FACE_SENSE_REVERSED   = 0x01,
+        NO_CLOSE_PATH         = 0x02
+    };
+    Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
+}
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::OperationFlags);
+
+class QGLPrimitive : public QGeometryData
 {
 public:
-    explicit QGLTriangulatedFace(QGLDisplayList *list, const QVector3D &control = QVector3D())
-        : QGLPrimitive(list, control) {}
-    void finalize();
-    QString toString() { return QString("QGLTriangulatedFace"); }
-    QGLDisplayList::Operation type() { return QGLDisplayList::TRIANGULATED_FACE; }
+    QGLPrimitive(const QVector3D &control = QVector3D());
+    virtual ~QGLPrimitive() {}
+    void setControl(const QVector3D &c) { m_control = c; }
+    QVector3D control() const { return m_control; }
+    void setFlags(QGL::OperationFlags flags) { m_flags = flags; }
+    QGL::OperationFlags flags() const { return m_flags; }
+    void setCommonNormal(const QVector3D &n) { m_normal = n; }
+    QVector3D commonNormal() const { return m_normal; }
+    QGL::Operation operation() const { return m_op; }
+    QGLPrimitive reversed() const;
+    QGLPrimitive translated(const QVector3D &) const;
+    void clear();
+protected:
+    QVector3D m_control;
+    QVector3D m_normal;
+    QGL::OperationFlags m_flags;
+    QGL::Operation m_op;
 };
 
-#endif // QGLTRIANGULATEDFACE_H
+#endif // QGLPRIMITIVE_H

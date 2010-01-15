@@ -54,7 +54,7 @@
 //
 
 #include "qglpainter.h"
-#include "qlogicalvertex_p.h"
+#include "qlogicalvertex.h"
 #include "qbox3d.h"
 #include "qglnamespace.h"
 
@@ -68,47 +68,26 @@ class QGLDisplayList;
 class QGLSectionPrivate;
 class QGeometryData;
 
-class QGLSection
+class QGLSection : public QGeometryData
 {
 public:
     QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
     ~QGLSection();
 
-    // data accessors
-    QGL::VectorArray vertices() const;
-    QGL::VectorArray normals() const;
-    QGL::IndexArray indices() const;
-    QGL::TexCoordArray texCoords() const;
-    QGL::ColorArray colors() const;
-    QGLVertexArray toVertexArray() const;
-
-    QLogicalVertex vertexAt(int i) const;
-    void setVertex(int position, const QVector3D &v);
-    void setNormal(int position, const QVector3D &n);
-    void setTexCoord(int position, const QVector2D &t);
-    void setColor(int position, const QColor4b &c);
-
-    // state accessors
-    bool hasData(QLogicalVertex::Types types);
-    QLogicalVertex::Types dataTypes() const;
-    void enableTypes(QLogicalVertex::Types types);
-    inline QGL::Smoothing smoothing() const;
-    int count() const;
-    inline QGLDisplayList *displayList() const;
-    QBox3D boundingBox() const;
-    bool isFinalized() const;
-
-    // data update methods
+    QGLIndexArray indices() const;
     inline void append(const QLogicalVertex &vertex);
+    inline QGL::Smoothing smoothing() const;
+    inline QGLDisplayList *displayList() const;
+    bool isFinalized() const;
     void finalize();
-protected:
-    virtual void appendSmooth(const QLogicalVertex &vertex);
-    virtual void appendFaceted(const QLogicalVertex &vertex);
-    virtual int updateTexCoord(int position, const QVector2D &t);
-    virtual void appendFlat(const QLogicalVertex &vertex);
+    void appendSmooth(const QLogicalVertex &vertex);
+    void appendFaceted(const QLogicalVertex &vertex);
+    void appendFlat(const QLogicalVertex &vertex);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
+
+    int appendOne(const QLogicalVertex &vertex);
 
     QGL::Smoothing m_smoothing;
     QGLDisplayList *m_displayList;
@@ -123,21 +102,6 @@ inline QGL::Smoothing QGLSection::smoothing() const
 inline QGLDisplayList *QGLSection::displayList() const
 {
     return m_displayList;
-}
-
-inline void QGLSection::append(const QLogicalVertex &vertex)
-{
-    if (!vertex.hasType(QLogicalVertex::Normal))
-    {
-        appendFlat(vertex);
-    }
-    else
-    {
-        if (m_smoothing == QGL::Smooth)
-            appendSmooth(vertex);
-        else
-            appendFaceted(vertex);
-    }
 }
 
 #ifndef QT_NO_DEBUG_STREAM

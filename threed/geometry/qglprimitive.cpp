@@ -39,29 +39,30 @@
 **
 ****************************************************************************/
 
-#include "qgltrianglestrip_p.h"
+#include "qglprimitive.h"
+#include "qgldisplaylist.h"
 
-void QGLTriangleStrip::finalize()
+QGLPrimitive::QGLPrimitive(const QVector3D &control)
+    : m_control(control)
 {
-    if (m_vertices.count() < 3)
+}
+
+QGLPrimitive QGLPrimitive::reversed() const
+{
+    QGLPrimitive r;
+    for (int i = count() - 1; i >= 0; --i)
+        r.appendVertex(vertexAt(i));
+    return r;
+}
+
+QGLPrimitive QGLPrimitive::translated(const QVector3D &t) const
+{
+    QGLPrimitive r;
+    QDataArray<QVector3D> v = vertices();
+    for (int i = 0; i < count(); ++i)
     {
-        clear();
-        return;
+        r.appendVertex(vertexAt(i));
+        r.vertexRef(i) = v[i] + t;
     }
-    for (int i = 0; i < m_vertices.count() - 2; ++i)
-    {
-        if (i % 2)
-        {
-            m_displayList->addTriangle(m_vertices[i+1], m_vertices[i+2],
-                                       m_vertices[i], QVector3D(),
-                                       textureModelPointer(), colorModelPointer(), true);
-        }
-        else
-        {
-            m_displayList->addTriangle(m_vertices[i], m_vertices[i+2],
-                                       m_vertices[i+1], QVector3D(),
-                                       textureModelPointer(), colorModelPointer(), false);
-        }
-    }
-    clear();
+    return r;
 }

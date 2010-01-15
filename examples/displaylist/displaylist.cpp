@@ -144,8 +144,8 @@ QGLDisplayList *DisplayListView::buildGeometry()
     const int numSlices = 32;
 
     // defining coordinate data for can
-    QGL::VectorArray topCanRim;
-    QGL::VectorArray bottomCanRim;
+    QDataArray<QVector3D> topCanRim;
+    QDataArray<QVector3D> bottomCanRim;
     QVector3D canLidCenter(0.0f, 0.0f, canHeight / 2.0f);
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
     QVector3D canBottomCenter = canLidCenter + canExtrudeVec;

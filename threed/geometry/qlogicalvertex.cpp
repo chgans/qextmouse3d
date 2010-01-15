@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qlogicalvertex_p.h"
+#include "qlogicalvertex.h"
 
 #include <QtCore/qdebug.h>
 
@@ -61,42 +61,8 @@
 
 /*!
     \internal
-    \variable QLogicalVertex::InvalidTexValue
-
-    A constant qreal value representing an invalid texture coordinate, a
-    large negative floating point number.
-*/
-
-const qreal QLogicalVertex::InvalidTexValue = qreal(-1000000.0f);
-
-
-/*!
-    \internal
-    \variable QLogicalVertex::InvalidTexCoord
-
-    A constant QVector2D value representing invalid texture coordinates,
-    with QLogicalVertex::InvalidTexValue for both X and Y coordinates
-*/
-
-const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::InvalidTexValue,
-                                                            QLogicalVertex::InvalidTexValue);
-
-/*!
-    \internal
-    \enum QLogicalVertex::Type
-    This enumeration specifies which types of OpenGL data is
-    utilized in specifying geometry.
-    \value None No vertex data is utilized.
-    \value Vertex Vertex data is utilized
-    \value Normal Normal vector data is utilized
-    \value Texture Texture coordinate data is utilized
-    \value Color per vertex data is utilized
-*/
-
-/*!
-    \internal
     \fn QLogicalVertex::QLogicalVertex()
-    Constructs a new invalid QLogicalVertex which has no types.
+    Constructs a new invalid QLogicalVertex which has no data.
 */
 
 /*!
@@ -219,6 +185,60 @@ const QVector2D QLogicalVertex::InvalidTexCoord = QVector2D(QLogicalVertex::Inva
     data type is QLogicalVertex::None, and false otherwise
 */
 
+/*!
+    Returns true if \a rhs has exactly the same fields as this logical
+    vertex, and each of those are equal to the corresponding field of the \a rhs.
+
+    If either are null, then false is returned.
+*/
+bool QLogicalVertex::operator==(const QLogicalVertex &rhs) const
+{
+    if (isNull() || rhs.isNull())
+        return false;
+    if (this == &rhs)
+        return true;
+    if (m_data.fields() != rhs.fields())
+        return false;
+    const quint32 mask = 0x01;
+    quint32 fields = m_data.fields();
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (mask & fields)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            if (attr < QGL::TextureCoord0)
+            {
+                if (attr == QGL::Position)
+                {
+                    if (!qFuzzyCompare(vertex(), rhs.vertex()))
+                        return false;
+                }
+                else if (attr == QGL::Normal)
+                {
+                    if (!qFuzzyCompare(normal(), rhs.normal()))
+                        return false;
+                }
+                else
+                {
+                    if (color() != rhs.color())
+                        return false;
+                }
+            }
+            else if (attr < QGL::CustomVertex0)
+            {
+                if (texCoord(attr) != rhs.texCoord(attr))
+                    return false;
+            }
+            else
+            {
+                if (attribute(attr) != rhs.attribute(attr))
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
 {
@@ -230,19 +250,19 @@ QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
     }
     else
     {
-        if (lv.hasType(QLogicalVertex::Vertex))
+        if (lv.hasField(QGL::Position))
             dbg << lv.vertex();
         else
             dbg << " (No Vertex)";
-        if (lv.hasType(QLogicalVertex::Normal))
+        if (lv.hasField(QGL::Normal))
             dbg << lv.normal();
         else
             dbg << " (No Normal)";
-        if (lv.hasType(QLogicalVertex::Texture))
+        if (lv.hasField(QGL::TextureCoord0))
             dbg << lv.texCoord();
         else
             dbg << " (No Texture)";
-        if (lv.hasType(QLogicalVertex::Color))
+        if (lv.hasField(QGL::Color))
             dbg << lv.color();
         else
             dbg << " (No Color)";

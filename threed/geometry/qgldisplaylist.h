@@ -47,11 +47,12 @@
 #include <QtGui/qvector3d.h>
 #include <QtOpenGL/qgl.h>
 
-#include "qgltexturemodel.h"
-#include "qglcolormodel.h"
 #include "qglnamespace.h"
 #include "qglscenenode.h"
-#include "qlogicalvertex_p.h"
+#include "qlogicalvertex.h"
+#include "qglattributevalue.h"
+#include "qglvertexdescription.h"
+#include "qglprimitive.h"
 
 QT_BEGIN_HEADER
 
@@ -90,67 +91,36 @@ public:
     void finalize();
 
     // geometry building by begin() / end()
-    enum Operation
-    {
-        NO_OP,
-        TRIANGLE,
-        TRIANGLE_STRIP,
-        QUAD,
-        QUAD_STRIP,
-        TRIANGLE_FAN,
-        TRIANGULATED_FACE,
-        EXTRUSION
-    };
-    enum OperationFlag
-    {
-        NO_FLAG               = 0X00,
-        FACE_SENSE_REVERSED   = 0x01,
-        NO_CLOSE_PATH         = 0x02
-    };
-    Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
-    void begin(Operation, const QVector3D &control = QVector3D());
+    void begin(QGL::Operation, const QVector3D &control = QVector3D());
     void end();
-    QGL::VectorArray endResult();
+    QGLPrimitive endResult();
     void setControl(const QVector3D &control);
     QVector3D control() const;
-    void setFlags(OperationFlags flag);
-    OperationFlags flags() const;
+    void setFlags(QGL::OperationFlags flag);
+    QGL::OperationFlags flags() const;
     void addVertex(const QVector3D &);
     void addNormal(const QVector3D &);
     void addColor(const QColor4b &);
-    void addTexCoord(const QVector2D &);
-    void addVertexArray(const QGL::VectorArray &);
-    void addNormalArray(const QGL::VectorArray &);
-    void addColorArray(const QGL::ColorArray &);
-    void addTexCoordArray(const QGL::TexCoordArray &);
-    void addTextureModel(const QGLTextureModel &);
-    void addColorModel(const QGLColorModel &);
+    void addTexCoord(const QVector2D &, QGL::VertexAttribute);
+    void addAttribute(const QVector3D &, QGL::VertexAttribute);
 
-    // low level geometry building
-    void addTriangle(const QVector3D &a, const QVector3D &b,
-                     const QVector3D &c, const QVector3D &n = QVector3D(),
-                     const QGLTextureModel *textureModel = 0,
-                     const QGLColorModel *colorModel = 0,
-                     bool inverted = false);
-    void addQuad(const QVector3D &a, const QVector3D &b,
-                 const QVector3D &c, const QVector3D &d,
-                 const QGLTextureModel *textureModel = 0,
-                 const QGLColorModel *colorModel = 0);
-    void addTriangleFan(const QVector3D &center,
-                        const QGL::VectorArray &edges,
-                        const QGLTextureModel *textureModel = 0,
-                        const QGLColorModel *colorModel = 0);
-    void addTriangulatedFace(const QVector3D &center,
-                             const QGL::VectorArray &edges,
-                             const QGLTextureModel *textureModel = 0,
-                             const QGLColorModel *colorModel = 0,
-                             bool closePath = true);
-    QVector<QVector3D> extrude(const QGL::VectorArray &edges,
-                               const QVector3D &dir = QVector3D(),
-                               const QGLTextureModel *textureModel = 0,
-                               const QGLColorModel *colorModel = 0,
-                               bool reverse = false,
-                               bool closePath = true);
+    void addVertexArray(const QDataArray<QVector3D> &);
+    void addNormalArray(const QDataArray<QVector3D> &);
+    void addColorArray(const QDataArray<QColor4b> &);
+    void addTexCoordArray(const QDataArray<QVector2D> &, QGL::VertexAttribute);
+    void addAttributeArray(const QDataArray<QVector3D> &, QGL::VertexAttribute);
+
+    // geometry building by primitive
+    void addTriangle(QLogicalVertex a, QLogicalVertex b,
+                     QLogicalVertex c, const QVector3D &normal = QVector3D());
+    void addTriangle(const QGLPrimitive &triangle);
+    void addQuad(const QGLPrimitive &quad);
+    void addTriangleFan(const QGLPrimitive &fan);
+    void addTriangleStrip(const QGLPrimitive &strip);
+    void addTriangulatedFace(const QGLPrimitive &face);
+    void addQuadStrip(const QGLPrimitive &strip);
+    void addQuadsZipped(const QGLPrimitive &top,
+                        const QGLPrimitive &bottom);
 
 protected:
     // internal and test functions
@@ -170,8 +140,6 @@ private:
     friend QDebug operator<<(QDebug, const QGLSection &);
 #endif
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGLDisplayList::OperationFlags)
 
 QT_END_NAMESPACE
 

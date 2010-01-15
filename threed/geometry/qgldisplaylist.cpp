@@ -44,15 +44,8 @@
 #include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
-#include "qgltexturemodel.h"
-#include "qglprimitive_p.h"
-#include "qglquad_p.h"
-#include "qglquadstrip_p.h"
-#include "qgltriangle_p.h"
-#include "qgltriangulatedface_p.h"
-#include "qgltrianglestrip_p.h"
-#include "qgltrianglefan_p.h"
-#include "qglextrusion_p.h"
+#include "qglprimitive.h"
+#include "qglindexarray.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -83,10 +76,86 @@
     the same paradigm as the OpenGL display list with an initial setup phase
     and subsequent cheap drawing operations.
 
+    QGLDisplayList contains functions which provide similar functionality to
+    OpenGL's GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There is no
+    support for lines or points - only primitives that can be built from
+    triangles.
+
+    It is an important difference that QGLDisplayList builds quads, and all
+    other structures out of triangles, since many systems do not support
+    quads natively.
+
+    Also, with regard to the ordering and winding of vertices, QGLDisplayList
+    always starts at the origin, with (0, 0) being the bottom-left, since it
+    is the bottom-left of the positive quadrant.
+
+    The order follows with (1, 0) bottom-right, (1, 1) top-right and
+    lastly (1, 0) top-left - this gives an anti-clockwise wound face,
+    as required by 3D graphics systems.  See the addQuadStrip() documentation
+    for details on how this makes vertex ordering different from GL_QUAD_STRIP.
+
+    So, while remembering that QGLDisplayList does not attempt to exactly
+    replicate OpenGL, these are QGLDisplayLists geometry functions and the
+    OpenGL mode/function they most resemble:
+
+    \table
+        \header
+            \o QGLDisplayList function
+            \o Similar to OpenGL mode/function
+        \row
+            \o begin()
+            \o glBegin()
+        \row
+            \o end()
+            \o glEnd()
+        \row
+            \o addVertex()
+            \o glVertex()
+        \row
+            \o addNormal()
+            \o glNormal()
+        \row
+            \o addColor()
+            \o glColor()
+        \row
+            \o addTexCoord()
+            \o glTexCoord()
+        \row
+            \o addAttribute()
+            \o glVertexAttrib()
+        \row
+            \o addTriangle()
+            \o GL_TRIANGLES
+        \row
+            \o addQuad()
+            \o GL_QUADS
+        \row
+            \o addTriangleFan()
+            \o GL_TRIANGLE_FAN
+        \row
+            \o addTriangulatedFace()
+            \o GL_POLYGON
+        \row
+            \o addTriangleStrip()
+            \o GL_TRIANGLE_STRIP
+        \row
+            \o addQuadStrip(), extrude()
+            \o GL_QUAD_STRIP
+        \row
+            \o finalize()
+            \o glEndList()
+        \row
+            \o glCallList()
+            \o draw(QGLPainter *)            
+    \endtable
+
+    In addition to this function based API, you can also use the QGLOperation
+    class, which provides an object based API.
+
     \section1 Display Lists and Scene Nodes
 
     QGLSceneNodes are used to manage application of local transformations,
-    materials and effects, in the same way that glRotate() or glMaterial()
+    materials and effects, similar to how glRotate() or glMaterial()
     might be used inside a display list.
 
     Since QGLDisplayList is itself a (sub-class of) QGLSceneNode materials
@@ -244,338 +313,316 @@ QGLDisplayList::~QGLDisplayList()
 */
 
 /*!
-    \bold {Note:} this is an advanced function intended for internal use.
-    For typical situations, use \c{begin(QGLDisplayList::TRIANGLE)} instead.
-
-    Add to the current section a triangular face with vertices \a a, \a b,
-    and \a c; and lighting normal \a n.
-
-    If \a textureModel is non-null then the following texture coordinates will
-    be applied to the vertices:
-    \list
-        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
-        \o \a b - \l{QGLTextureModel::bottomRight()}{bottom-right}
-        \o \a c - \l{QGLTextureModel::topRight()}{top-right}
-    \endlist
-    which is the case for a triangle in an upright orientation with respect to
-    texture-space, with its apex \a c at the high values of the texture and its
-    base \a a - \a c at the low values of the texture.
-
-    If \a inverted is true, the following texture coordinates
-    will be applied:
-    \list
-        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
-        \o \a b - \l{QGLTextureModel::topRight()}{top-right}
-        \o \a c - \l{QGLTextureModel::topLeft()}{top-left}
-    \endlist
-
-    The inverted case is a triangle with the vertex at \a a on the low values
-    of the texture and the \a b - \a c edge along the high values of the
-    texture.
-
-    If \a colorModel is non-null its values will be applied in the same way as
-    for the textureModel.
+    Add a triangle defined by \a a, \a b and \c to this display list.
+    When \a normal is null (the default) normals supplied in \a a, \a b and
+    \a c are used.  If any of those are null they are set to the triangle
+    normal calculated as cross-product \c{(b - a) x (c - a)}.  In the case
+    of a degenerate triangle, where this cross-product is null, \c{(1, 0, 0}
+    is used.
 */
-void QGLDisplayList::addTriangle(const QVector3D &a, const QVector3D &b,
-                      const QVector3D &c, const QVector3D &n,
-                      const QGLTextureModel *textureModel,
-                      const QGLColorModel *colorModel,
-                      bool inverted)
+void QGLDisplayList::addTriangle(QLogicalVertex a, QLogicalVertex b, QLogicalVertex c,
+                                 const QVector3D &normal)
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
     Q_ASSERT(d->currentNode);
-    QVector3D norm = n;
-    if (norm.isNull())
+    QVector3D norm = normal;
+    if (!norm.isNull())
+    {
+        a.setNormal(norm);
+        b.setNormal(norm);
+        c.setNormal(norm);
+    }
+    else if ((!a.hasField(QGL::Normal) || !b.hasField(QGL::Normal) || !c.hasField(QGL::Normal)))
+    {
         norm = QVector3D::crossProduct(b - a, c - a);
-    if (norm.isNull())
-    {
-#ifndef QT_NO_DEBUG
-        qDebug() << "#### Triangle" << a << b << c << "has null normal ####";
-#endif
-        norm = QVector3D(1.0f, 0.0f, 0.0f);
+        if (norm.isNull())
+            norm = QVector3D(1.0f, 0.0f, 0.0f);
+        if (!a.hasField(QGL::Normal) || a.normal().isNull())
+            a.setNormal(norm);
+        if (!b.hasField(QGL::Normal) || b.normal().isNull())
+            b.setNormal(norm);
+        if (!c.hasField(QGL::Normal) || c.normal().isNull())
+            c.setNormal(norm);
     }
-    QLogicalVertex va(a, norm);
-    QLogicalVertex vb(b, norm);
-    QLogicalVertex vc(c, norm);
-    if (textureModel && !textureModel->isNull())
-    {
-        va.setTexCoord(textureModel->bottomLeft());
-        vb.setTexCoord(inverted ? textureModel->topRight() : textureModel->bottomRight());
-        vc.setTexCoord(inverted ? textureModel->topLeft() : textureModel->topRight());
-    }
-    if (colorModel)
-    {
-        va.setColor(colorModel->bottomLeft());
-        vb.setColor(inverted ? colorModel->topRight() : colorModel->bottomRight());
-        vc.setColor(inverted ? colorModel->topLeft() : colorModel->topRight());
-    }
-    d->currentSection->append(va);
-    d->currentSection->append(vb);
-    d->currentSection->append(vc);
+    d->currentSection->append(a);
+    d->currentSection->append(b);
+    d->currentSection->append(c);
     d->currentNode->setCount(d->currentNode->count() + 3);
 }
 
 /*!
-    \bold {Note:} this is an advanced function intended for internal use.
-    For typical situations, use \c{begin(QGLDisplayList::QUAD)} instead.
-
-    Add to this section a quad face defined by vertices \a a, \a b, \a c and
-    \a d.  The face is composed of two triangles having the same normal,
-    calculated from the face \a a, \a b and \a c.  The vertices of the face
-    \a a, \a b, \a c and \a d must all lie in the same plane.
-
-    If \a textureModel is non-null then the following texture coordinates will
-    be applied to the vertices:
-    \list
-        \o \a a - \l{QGLTextureModel::bottomLeft()}{bottom-left}
-        \o \a b - \l{QGLTextureModel::bottomRight()}{bottom-right}
-        \o \a c - \l{QGLTextureModel::topRight()}{top-right}
-        \o \a d - \l{QGLTextureModel::topLeft()}{top-left}
-    \endlist
-
-    If \a colorModel is non-null its values will be applied in the same way as
-    for the textureModel.
+    Add a \a triangle or list of triangles to this display list.  Normals
+    are handled for each group of three vertices as per addTriangle(),
+    except triangle.commonNormal() is passed as the normal argument.
+    Any vertices at the end of the list under a multiple of 3 are
+    ignored.
+    \sa addQuad()
 */
-void QGLDisplayList::addQuad(const QVector3D &a, const QVector3D &b,
-                             const QVector3D &c, const QVector3D &d,
-                             const QGLTextureModel *textureModel,
-                             const QGLColorModel *colorModel)
+void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
-    QVector3D norm = QVector3D::crossProduct(b - a, c - a);
-    addTriangle(a, b, c, norm, textureModel, colorModel);
-    addTriangle(a, c, d, norm, textureModel, colorModel, true);
+    for (int i = 0; i < triangle.count(); i += 3)
+    {
+        addTriangle(triangle.vertexAt(i), triangle.vertexAt(i+1),
+                    triangle.vertexAt(i+2), triangle.commonNormal());
+    }
 }
 
 /*!
-    \bold {Note:} this is an advanced function intended for internal use.
-    For typical situations, use \c{begin(QGLDisplayList::TRIANGLE_FAN)}
-    instead.
+    Add a \a quad or list of quads to this display list.  Each quad
+    is broken up into two triangles, and added via the addTriangle()
+    function.
 
-    Adds to this section a set of connected triangles defined by \a center
-    and \a edges.
+    One normal for each quad is calculated and applied to both triangles,
+    if \a quad does not have normals, either via \c{hasField(QGL::Normal)}
+    or commonNormal().  For this reason this function may be slightly
+    faster than the other addQuad() which must calculate the normal twice.
 
-    N triangular faces are generated, where \c{N == edges.count() -1}, each
-    formed by taking two vertices from the \a edges, eg edges[0] and edges[1]
-    and then \a center.  Other triangles are formed similarly, and all have
-    windings and normals as for \c{addTriangle(edges[0], edges[1], center)}.
+    \sa addTriangle()
+*/
+void QGLDisplayList::addQuad(const QGLPrimitive &quad)
+{
+    for (int i = 0; i < quad.count(); i += 4)
+    {
+        QLogicalVertex a(quad, i);
+        QLogicalVertex b(quad, i+1);
+        QLogicalVertex c(quad, i+2);
+        QLogicalVertex d(quad, i+3);
+        QVector3D norm = quad.commonNormal();
+        if (!quad.hasField(QGL::Normal) && norm.isNull())
+        {
+            norm = QVector3D::crossProduct(b - a, c - a);
+            if (norm.isNull())
+                norm = QVector3D(1.0f, 0.0f, 0.0f);
+        }
+        addTriangle(a, b, c, norm);
+        addTriangle(a, c, d, norm);
+    }
+}
 
-    If edges has less than two elements this function exits without doing
-    anything.
+/*!
+    Adds to this section a set of connected triangles defined by \a fan.
 
-    This function is very similar to the OpenGL mode GL_TRIANGLE_FAN.
+    N triangular faces are generated, where \c{N == fan.count() - 2}. Each
+    face contains the 0th vertex in \a fan, followed by the i'th and i+1'th
+    vertex - where i takes on the values from 1 to fan.count() - 1.
 
-    Textures are generated according to \a textureModel, if textureModel
-    is non-null.  When textures are generated all the points on \a edges
-    must lie in the same plane.
+    If \a fan has less than three vertices this function exits without
+    doing anything.
 
-    If \a colorModel is non-null its values will be applied in the same way as
-    for the textureModel.
+    This function is very similar to the OpenGL mode GL_TRIANGLE_FAN.  It
+    generates a number of triangles all sharing one common vertex, which
+    is the 0'th vertex of the \a fan.
+
+    Note that the control() vector on \a fan is ignored.
 
     \sa addTriangulatedFace()
 */
-void QGLDisplayList::addTriangleFan(const QVector3D &center,
-                                    const QGL::VectorArray &edges,
-                                    const QGLTextureModel *textureModel,
-                                    const QGLColorModel *colorModel)
+void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 {
-    if (edges.count() < 2)
-        return;
-    if (!textureModel->isNull())
-        qWarning("NOT IMPLEMENTED YET");
-    for (int i = 0; i < edges.count() - 1; ++i)
-        addTriangle(edges[i], edges[(i + 1)], center, QVector3D(),
-                    textureModel, colorModel);
+    QLogicalVertex center(fan, 0);
+    for (int i = 1; i < fan.count() - 1; ++i)
+        addTriangle(center, fan.vertexAt(i), fan.vertexAt(i+1));
 }
 
 /*!
-    \bold {Note:} this is an advanced function intended for internal use.
-    For typical situations, use \c{begin(QGLDisplayList::TRIANGULATED_FACE)}
-    instead.
+    Adds to this section a set of connected triangles defined by \a strip.
 
-    Adds to this section a face defined by \a center and \a edges.  The face
-    is composed of N triangular sub-faces, where N == edges.count(), each
-    formed by taking two vertices from the \a edges, eg edges[0] and edges[1]
-    and then \a center.  The \a edges comprise the perimeter of the face and
-    \a center is some point inside the perimeter.
+    N triangular faces are generated, where \c{N == strip.count() - 2}.
+    The triangles are generated from vertices 0, 1, & 2, then 2, 1 & 3,
+    then 2, 3 & 4, and so on.  In other words every second triangle has
+    the first and second vertices switched, as a new triangle is generated
+    from each successive set of three vertices.
 
-    If \a closePath is true, then a face is generated between the last and
-    first vertices of \a edges - \a closePath is true by default.  Set
-    \a closePath to false when \a edges represent an open path (not a
-    perimeter).  When \a closePath is false, the number of faces generated
-    is \c{N == edges.count() - 1}.
+    If \a fan has less than three vertices this function exits without
+    doing anything.
 
-    If edges has less than two elements this function exits without doing
-    anything.
+    Normals are calculated as for addTriangle, given the above ordering.
 
-    One normal is calculated for the face, since a faces vertices lie in
-    the same plane.  The \a center and \a edges must all lie in the same
-    plane, and the center vertex must lie strictly within the region
-    bounded by the \a edges or  or undefined behaviour will result.
+    This function is very similar to the OpenGL mode GL_TRIANGLE_STRIP.  It
+    generates triangles along a strip whose two sides are the even and odd
+    vertices.
 
-    The face will have normals and windings all equal to the triangle formed
-    by \c{addTriangle(edge[0], edge[1], center)}.  Note that since the normal
-    calculation can be expensive this function may be faster than
-    addTriangleFan() which must calculate a new normal for every sub-face.
-
-    This function also differs from addTriangleFan(), in that it adds a closing
-    sub-face if \a closePath is true (which it is by default).
-
-    Textures are generated according to \a textureModel, if textureModel
-    is non-null.
-
-    If \a colorModel is non-null its values will be applied in the same way as
-    for the textureModel.
+    \sa addTriangulatedFace()
 */
-void QGLDisplayList::addTriangulatedFace(const QVector3D &center,
-                                         const QGL::VectorArray &edges,
-                                         const QGLTextureModel *textureModel,
-                                         const QGLColorModel *colorModel,
-                                         bool closePath)
+void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 {
-    if (edges.count() < 2)
-        return;
-    if (!textureModel->isNull())
-        qWarning("NOT IMPLEMENTED YET");
-    QVector3D norm = QVector3D::normal(edges[0], edges[1], center);
-    int cnt = closePath ? edges.count() : edges.count() - 1;
-    for (int i = 0; i < cnt; ++i)
+    for (int i = 0; i < strip.count() - 1; ++i)
     {
-        int n = (i + 1) % cnt;
-        addTriangle(edges[i], edges[n], center, norm, textureModel, colorModel);
+        if (i % 2)
+            addTriangle(strip.vertexAt(i), strip.vertexAt(i+1), strip.vertexAt(i+2));
+        else
+            addTriangle(strip.vertexAt(i+1), strip.vertexAt(i), strip.vertexAt(i+2));
     }
 }
 
 /*!
-    \bold {Note:} this is an advanced function intended for internal use.
-    For typical situations, use \c{begin(QGLDisplayList::EXTRUSION)} instead.
+    Adds to this section a set of quads defined by \a strip.
 
-    Add a series of quads based on the \a edges and \a offset given.  The number
-    of quads generated is (by default) equal to the number of vertices in \a edges.
+    The first quad is formed from the 0'th, 2'nd, 3'rd and 1'st vertices.
+    The second quad is formed from the 2'nd, 4'th, 5'th and 3'rd vertices,
+    and so on, as shown in this diagram:
 
-    The quads and their normals are generated in such a way that if \a edges
-    are the perimeter vertices of a polygon F, in counter-clockwise order, and
-    \a offset is the inverse of the face normal of polygon F then the
-    quads form the sides of a solid rectangular prism with the polygon F
-    as its end-face.
+    \image quads.png
 
-    If \a reverse is true, then \a edges are treated as being in clockwise
-    order for the purpose of generating the winding and face normals.
+    This is consistent with all the other QGLDisplayList functions, as
+    described above, but different from the order used by OpenGL's
+    GL_QUAD_STRIP mode.
+*/
+void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
+{
+    for (int i = 0; i < strip.count(); i += 2)
+    {
+        QLogicalVertex a(strip, i);
+        QLogicalVertex b(strip, i+2);
+        QLogicalVertex c(strip, i+3);
+        QLogicalVertex d(strip, i+1);
+        QVector3D norm = strip.commonNormal();
+        if (!strip.hasField(QGL::Normal) && norm.isNull())
+        {
+            norm = QVector3D::crossProduct(b - a, c - a);
+            if (norm.isNull())
+                norm = QVector3D(1.0f, 0.0f, 0.0f);
+        }
+        addTriangle(a, b, c, norm);
+        addTriangle(a, c, d, norm);
+    }
+}
 
-    If \a closePath is true, then a face is generated between the last and
-    first vertices of \a edges - \a closePath is true by default.  Set
-    \a closePath to false when \a edges represent an open path (not a
-    perimeter).  When \a closePath is false, the number of faces generated
-    is one less than the number of vertices in \a edges.
+/*!
+    Adds to this section a set of triangles defined by \a face.  The
+    vertices in face are treated as first a central vertex, followed by
+    the perimeter vertices of a polygonal face.
 
-    If \a edges has less than 2 elements, this functions does nothing and
-    returns an empty array.
+    In general all vertices in \a face should all lie in the same
+    plane, and the 0'th (center) vertex must lie strictly within the region
+    bounded by other vertices, otherwise unexpected behaviour may result.
 
-    If \a offset is null (the default) then offset is set to be the
-    negative (inverse) of the normalized cross-product of the first two
-    segments of line: \c{-QVector3D::normal(edges[0], edges[1], edges[2])}.
-    If relying on this default behaviour ensure that the first 3 vertices
-    do not lie on a straight line.
+    If \a face has three or fewer vertices this function behaves exactly
+    like addTriangleFan().
 
-    If the line is less than 2 segments in length and \a offset is null,
-    then the offset is set to \c{(0, 0, -1)}.
+    When \a face has four or more vertices, N triangular faces are generated
+    where \c{N == fan.count() - 1}.  Each face contains the 0th vertex in
+    \a face; followed by the \c{i'th} and \c{((i + 1) % N)'th} vertex.
 
-    \image extrude.png
+    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}.
 
-    In the diagram above, the \i{Source line} is extruded to the \i{Extruded line}
-    and one of the generated quads is shown in orange, with its face normal.
+    This function works similarly to the OpenGL mode GL_POLYGON, except it
+    requires an additional center vertex as the 0th vertex, since it breaks
+    the polygonal face into triangles.
 
-    Returns the extruded values of vertices in the line, but in reverse order.
-    These values can be used to construct an obverse face, polygon F':
+    If no normals are supplied in the vertices of \a face, normals are
+    calculated as per addTriangle().
+
+    One normal is calculated, since a faces vertices lie in the same plane.
+
+    The sub-faces will have normals and windings all equal to the triangle
+    \c{(face[0], face[1], face[2])}.  For this reason the vertices of \a face
+    should proceed as a counter-clockwise perimeter of the face.
+
+    Note that since the normal calculation can be expensive this function
+    may be faster than addTriangleFan() which must calculate a new normal
+    for every sub-face.
+*/
+void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
+{
+    if (edges.count() < 4)
+    {
+        addTriangleFan(face);
+    }
+    else
+    {
+        QDataArray<QVector3D> v = face.vertices();
+        QVector3D norm = QVector3D::normal(v[0], v[1], v[2]);
+        QLogicalVertex center(fan, 0);
+        int cnt = (face.flags() & QGL::NO_CLOSE_PATH) ? face.count() - 1 : face.count();
+        for (int i = 1; i < cnt; ++i)
+        {
+            int n = (i + 1) % face.count();
+            addTriangle(face.vertexAt(n), face.vertexAt(n+1), center, norm);
+        }
+    }
+}
+
+/*!
+    Add a series of quads by 'zipping' \a top and \a bottom.
+
+    This function behaves like quadStrip(), where the odd-numbered vertices in
+    the input primitive are from \a top and the even-numbered vertices from
+    \a bottom.  The main difference is that this function adds a closing face.
+
     \code
-    QGL::VectorArray front;
-    front << a << b << c << d;
-    QGL::VectorArray obverse = displayList->extrude(front);
-    // obverse now contains d', c', b' and a' in that order
-    displayList->addQuad(obverse[0], obverse[1], obverse[2], obverse[3]);
+    // addQuadsZipped(top, bottom) is the same as:
+    QGLPrimitive zipped;
+    for (int i = 0; i < qMin(top.count(), bottom.count()); ++i)
+    {
+        zipped.appendVertex(bottom.vertexAt(i));
+        zipped.appendVertex(top.vertexAt(i));
+    }
+    zipped.appendVertex(bottom.vertexAt(0);
+    zipped.appendVertex(top.vertexAt(0);
+    displayList->addQuadStrip(zipped);
     \endcode
-    Note that the vertices in the returned array are reversed in sequence so
-    that the obverse face has the correct winding to face outwards from an
-    extruded solid.
 
-    Textures are generated according to \a textureModel, if \a textureModel
-    is non-null.  When textures are generated all the points on \a edges
-    must lie in the same plane, which is the case anyway if they are the
-    perimeter vertices of a polygon.  Textures are assigned with the high Y
-    values on the \a edges; low Y values on the extruded result edge;
-    low X values at the left of \c{edges[0]} and high X values on the
-    right of \c{edges.last()}.
+    If the vertices in \a top and \a bottom are the perimeter vertices of
+    two polygons then this function can be used to generate quads which form
+    the sides of a \l{http://en.wikipedia.org/wiki/Prism_(geometry)}{prism}
+    with the polygons as the prisms top and bottom end-faces.
 
-    If \a colorModel is non-null its values will be applied in the same way as
-    for the textureModel.
+    N quad faces are generated where \c{N == min(top.count(), bottom.count()}.
+    If \a top or \a bottom has less than 2 elements, this functions does
+    nothing.
+
+    Each face is formed by the \c{i'th} and \c{((i + 1) % N)'th}
+    vertices of \a bottom, followed by the \c{((i + 1) % N)'th} and \c{i'th}
+    vertices of \a top.
+
+    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}.
+    In this case, \c{N == min(top.count(), bottom.count()) - 1}.
+
+    If \a top or \a bottom has the QGL::FACE_SENSE_REVERSED flag set then
+    vertices are treated as being in clockwise order for the purpose of
+    generating the winding and face normals.
+
+    \image quad-extrude.png
+
+    In the diagram above, the \a top is shown in orange, and the \a bottom in
+    dark yellow.  The first generated quad, (a, b, c, d) is generated in
+    the order shown by the blue arrow.
+
+    To create a complete prismatic solid given the top edge do this:
+    \code
+    QGLPrimitive top = generateEdge();
+    QGLPrimitive bottom = top.translated(QVector3D(0, 0, -1));
+    displayList->addQuadsZipped(top, bottom);
+    displayList->addTriangulatedFace(top);
+    displayList->addTriangulatedFace(bottom.reversed());
+    \endcode
+    The \a bottom QGLPrimitive must be \bold{reversed} so that the correct
+    winding for an outward facing polygon is obtained.
 */
-QGL::VectorArray QGLDisplayList::extrude(const QGL::VectorArray &edges,
-                                         const QVector3D &offset,
-                                         const QGLTextureModel *textureModel,
-                                         const QGLColorModel *colorModel,
-                                         bool reverse,
-                                         bool closePath)
+QGLPrimitive QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
+                                            const QGLPrimitive &bottom)
 {
-    QGL::VectorArray result;
-    if (edges.count() < 2)
-        return result;
-    QVector3D o = offset;
-    if (offset.isNull())
+    int cnt = qMin(top.count(), bottom.count());
+    if (cnt >= 3)
     {
-        if (edges.count() > 2)
-            o = -QVector3D::normal(edges[0], edges[1], edges[2]);
-        else
-            o = QVector3D(0.0f, 0.0f, -1.0f);
+        int max = cnt;
+        if ((top.flags() | bottom.flags()) & QGL::NO_CLOSE_PATH)
+            --cnt;
+        bool reverse = ((top.flags() | bottom.flags()) & QGL::FACE_SENSE_REVERSED);
+        for (int i = 0; i < cnt; ++i)
+        {
+            int n = (i + 1) % max;
+            if (reverse)
+                addQuad(result[n], result[i], edges[i], edges[n],
+                        txip, cxip);
+            else
+                addQuad(result[i], result[n], edges[n], edges[i],
+                        txip, cxip);
+        }
     }
-#ifndef QT_NO_DEBUG
-    if (o.isNull())
-        qWarning("Could not determine non-null offset for extrude");
-#endif
-    // calculate extruded version of line as result
-    for (int i = 0; i < edges.count(); ++i)
-        result.append(edges.at(i) + o);
-    QGLColorModel cx;
-    QGLColorModel *cxip = 0;
-    if (colorModel)
-        cx = *colorModel;
-    QGLTextureModel tx;
-    QGLTextureModel *txip = 0;
-    if (textureModel && !textureModel->isNull())
-        tx = *textureModel;
-    qreal totalExtents = 0.0f;
-    QVarLengthArray<qreal> extents(edges.count());
-    int cnt = closePath ? edges.count() : edges.count() - 1;
-    for (int i = 0; i < cnt; ++i)
-    {
-        int n = (i + 1) % edges.count();
-        extents[i] = (edges[n] - edges[i]).length();
-        totalExtents += extents[i];
-    }
-    if (textureModel && !textureModel->isNull())
-        tx.startTileRight(totalExtents);
-    if (colorModel)
-        cx.startGradientRight(totalExtents);
-    for (int i = 0; i < cnt; ++i)
-    {
-        int n = (i + 1) % edges.count();
-        if (textureModel && !textureModel->isNull())
-            txip = tx.tileRight(extents[i]);
-        if (colorModel)
-            cxip = cx.gradientRight(extents[i]);
-        if (reverse)
-            addQuad(result[n], result[i], edges[i], edges[n],
-                    txip, cxip);
-        else
-            addQuad(result[i], result[n], edges[n], edges[i],
-                    txip, cxip);
-    }
-    QGL::VectorArray temp;
-    QGL::VectorArray::const_iterator it = result.constEnd();
-    for ( ; it != result.constBegin(); )
-        temp.append(*--it);
-    return temp;
 }
-
 
 /*!
     Finish the building of this display list and optimize it for
@@ -604,20 +651,19 @@ void QGLDisplayList::finalize()
     if (d->finalizeNeeded)
     {
         QGLGeometry *g = 0;
-        QMap<QLogicalVertex::Types, QGLGeometry *> geos;
+        QMap<quint32, QGLGeometry *> geos;
         while (d->sections.count())
         {
-            // pack sections that have the same types into one geometry
+            // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
             s->finalize();
-
-            QGL::IndexArray indices = s->indices();
+            QGLIndexArray indices = s->indices();
             const int *vi = indices.constData();
             int vcnt = indices.count();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
-            QMap<QLogicalVertex::Types, QGLGeometry *>::const_iterator it =
-                    geos.constFind(s->dataTypes());
+            QMap<quint32, QGLGeometry *>::const_iterator it =
+                    geos.constFind(s->fields());
             if (it != geos.constEnd())
             {
                 g = it.value();
@@ -645,7 +691,7 @@ void QGLDisplayList::finalize()
                 g->setIndexArray(iry);
                 g->setDrawingMode(QGL::Triangles);
                 g->setPalette(geometry()->palette());
-                geos.insert(s->dataTypes(), g);
+                geos.insert(s->fields(), g);
             }
             QMap<QGLSection *, QGLSceneNode *>::const_iterator nit =
                     d->sectionNodeMap.constFind(s);

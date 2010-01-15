@@ -39,86 +39,609 @@
 **
 ****************************************************************************/
 
-#include "qgeometrydata_p.h"
+#include "qgeometrydata.h"
+#include "qlogicalvertex.h"
 
 #include <QtCore/qdebug.h>
 
-QGeometryData::QGeometryData(QLogicalVertex::Types type)
-    : m_normals(0)
-    , m_texCoords(0)
-    , m_colors(0)
-    , m_dataTypes(type)
+/*!
+    \class QGeometryData
+    \brief The QGeometryData class encapsulates QDataArray instances.
+    \since 4.6
+    \ingroup qt3d
+    \ingroup qt3d::geometry
+
+    The QGeometryData class encloses a number of QDataArray template instances
+    that models most typical vertex data needs.  The class provides a
+    QDataArray based store for all of the data types in the
+    QGL::VertexAttribute enumeration.
+
+    \table
+        \header
+            \o QGL::VertexAttribute
+            \o QGeometryData functions
+        \row
+            \o QGL::Position
+            \o appendVertex(), vertexRef(), vertices()
+        \row
+            \o QGL::Normal
+            \o appendNormal(), normalRef(), normals()
+        \row
+            \o QGL::Color
+            \o appendColor(), colorRef(), colors()
+        \row
+            \o QGL::TextureCoord0 - QGL::TextureCoord7
+            \o appendTexCoord(), texCoordRef(), texCoords()
+        \row
+            \o QGL::CustomVertex0 - QGL::CustomVertex7
+            \o appendAttribute(), attributeRef(), attributes()
+     \endtable
+
+     Additionally the class provides the following features:
+     \list
+        \o appendVertex() for adding a QLogicalVertex()
+        \o vertexAt() for return the data at an index as a QLogicalVertex()
+        \o hasField() to find if a particular data type is present
+        \o normalizeNormals() to reduce all normal vectors to unit length
+        \o boundingBox() to find the bounds of the geometry
+     \endlist
+
+     QGeometryData uses implicit sharing with lazy creation of internal
+     data so that code like:
+     \code
+     QGeometryData myData;
+     if (processed)
+        myData = processedData();
+     \endcode
+     is very inexpensive, since the first declaration and initialization
+     does not cause internal data to be created, only to be overwritten by the
+     assignment operation.
+
+     \sa QGLPrimitive, QDataArray
+*/
+
+class QGeometryDataPrivate
 {
+public:
+    QGeometryDataPrivate();
+    ~QGeometryDataPrivate();
+
+    QBasicAtomicInt ref;
+
+    QDataArray<QVector3D> vertices;
+    QDataArray<QVector3D> normals;
+    QDataArray<QColor4b> colors;
+    QList< QDataArray<QVector3D> > attributes;
+    QList< QDataArray<QVector2D> > textures;
+
+    static const int ATTR_CNT = 32;
+    QVector3D commonNormal;
+    quint32 fields;
+    qint8 key[ATTR_CNT];
+    quint8 size[ATTR_CNT];
+    int count;
+};
+
+QGeometryDataPrivate::QGeometryDataPrivate()
+    : fields(0)
+    , count(0)
+{
+    qMemSet(key, -1, ATTR_CNT);
+    qMemSet(size, 0, ATTR_CNT);
 }
 
-QGeometryData::~QGeometryData()
+QGeometryDataPrivate::~QGeometryDataPrivate()
 {
-    delete m_normals;
-    delete m_texCoords;
-    delete m_colors;
 }
-
-void QGeometryData::reserve(int capacity)
-{
-    m_vertices.reserve(capacity);
-    m_indices.reserve(capacity * 3);
-    if (m_normals)
-        m_normals->reserve(capacity);
-    if (m_texCoords)
-        m_texCoords->reserve(capacity);
-    if (m_colors)
-        m_colors->reserve(capacity);
-}
-
-void QGeometryData::squeeze()
-{
-    m_vertices.squeeze();
-    m_indices.squeeze();
-    if (m_normals)
-        m_normals->squeeze();
-    if (m_texCoords)
-        m_texCoords->squeeze();
-    if (m_colors)
-        m_colors->squeeze();
-}
-
 
 /*!
-    \internal
-    Use QGLVertexArray as an intermediary between display list and painter.
+    Construct an empty QGeometryData
+*/
+QGeometryData::QGeometryData()
+    : d(0)
+{
+}
+
+/*!
+    Construct QGeometryData as a copy of other
+*/
+QGeometryData::QGeometryData(const QGeometryData &other)
+    : d(other.d)
+{
+    if (d)
+        d->ref.ref();
+}
+
+/*!
+    Construct an empty QGeometryData with the \a fields enabled.
+*/
+QGeometryData::QGeometryData(quint32 fields)
+    : d(new QGeometryDataPrivate)
+{
+    d->ref.ref();
+    const quint32 mask = 0x01;
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (!(mask & fields)) continue;
+        QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+        enableField(attr);
+    }
+}
+
+/*!
+    Destroys this QGeometryData recovering any resources.
+*/
+QGeometryData::~QGeometryData()
+{
+    if (d && !d->ref.deref())
+        delete d;
+}
+
+/*!
+    Assigns this QGeometryData to be a copy of other.
+*/
+QGeometryData &QGeometryData::operator=(const QGeometryData &other)
+{
+    if (d != other.d)
+    {
+        if (d && !d->ref.deref())
+            delete d;
+        d = other.d;
+        d->ref.ref();
+    }
+    return *this;
+}
+
+/*!
+    Appends all the data fields in QLogicalVertex \a v to this
+    QGeometryData object.
+*/
+int QGeometryData::appendVertex(const QLogicalVertex &v)
+{
+    detach();
+    quint32 fields = v.fields();
+    const quint32 mask = 0x01;
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (mask & fields)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            if (attr < QGL::TextureCoord0)
+            {
+                if (attr == QGL::Position)
+                    appendVertex(v.vertex());
+                else if (attr == QGL::Normal)
+                    appendNormal(v.normal());
+                else
+                    appendColor(v.color());
+            }
+            else if (attr < QGL::CustomVertex0)
+            {
+                appendTexCoord(v.texCoord(attr), attr);
+            }
+            else
+            {
+                appendAttribute(v.attribute(attr), attr);
+            }
+        }
+    }
+    return d->count - 1;
+}
+
+/*!
+    Returns a QLogicalVertex that references the \a i'th logical vertex
+    of this geometry.
+*/
+QLogicalVertex QGeometryData::vertexAt(int i) const
+{
+    return QLogicalVertex(*this, i);
+}
+
+/*!
+    Returns a QGLVertexArray that contains all the data of this geometry.
+
+    NOTE: this is a temporary facility - when QGeometryData can function as
+        QGLVertexArray, uploading to the GPU and setting on QPainter then
+        this function can be removed.  The bounds checking asserts should be
+        moved at that point into what ever code does the upload/setting.
 */
 QGLVertexArray QGeometryData::toVertexArray() const
 {
     QGLVertexArray array;
-    array.addField(QGL::Position, 3);
-    if (hasType(QLogicalVertex::Normal))
-        array.addField(QGL::Normal, 3);
-    if (hasType(QLogicalVertex::Texture))
-        array.addField(QGL::TextureCoord0, 2);
-    if (hasType(QLogicalVertex::Color))
-        array.addField(QGL::Color, 1);
-    for (int i = 0; i < m_vertices.count(); ++i)
+    if (d)
     {
-        array.append(m_vertices.at(i));
-        if (hasType(QLogicalVertex::Normal))
-            array.append(m_normals->at(i));
-        if (hasType(QLogicalVertex::Texture))
-            array.append(m_texCoords->at(i));
-        if (hasType(QLogicalVertex::Color))
-            array.append(m_colors->at(i));
+        const quint32 mask = 0x01;
+        quint32 fields = d->fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
+        {
+            if (mask & fields)
+            {
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                array.addField(attr, d->size[field]);
+#ifndef QT_NO_DEBUG
+                if (attr < QGL::TextureCoord0)
+                {
+                    if (attr == QGL::Position)
+                        Q_ASSERT(d->vertices.count() == d->count);
+                    else if (attr == QGL::Normal)
+                        Q_ASSERT(d->normals.count() == d->count);
+                    else
+                        Q_ASSERT(d->colors.count() == d->count);
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    Q_ASSERT(d->textures.at(field).count() == d->count);
+                }
+                else
+                {
+                    Q_ASSERT(d->attributes.at(field).count() == d->count);
+                }
+#endif
+            }
+        }
+        for (int index = 0; index < d->count; ++index)
+        {
+            fields = d->fields;
+            for (int field = 0; fields; ++field, fields >>= 1)
+            {
+                if (mask & fields)
+                {
+                    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                    if (attr < QGL::TextureCoord0)
+                    {
+                        if (attr == QGL::Position)
+                            array.append(d->vertices.at(index));
+                        else if (attr == QGL::Normal)
+                            array.append(d->normals.at(index));
+                        else
+                            array.append(d->colors.at(index));
+                    }
+                    else if (attr < QGL::CustomVertex0)
+                    {
+                        array.append(d->textures.at(field).at(index));
+                    }
+                    else
+                    {
+                        array.append(d->attributes.at(field).at(index));
+                    }
+                }
+            }
+        }
     }
     return array;
 }
 
 /*!
-    \internal
-    Normalize all the m_normals.
+    Normalize all the normal vectors in this geometry to unit length.
 */
 void QGeometryData::normalizeNormals()
 {
-    if (hasType(QLogicalVertex::Normal))
+    if (d)  // nothng to do if its null
     {
-        for (int i = 0; i < m_normals->count(); ++i)
-            (*m_normals)[i].normalize();
+        detach();
+        if (hasField(QGL::Normal))
+        {
+            for (int i = 0; i < d->normals.count(); ++i)
+                d->normals[i].normalize();
+        }
+    }
+}
+
+/*!
+    Calculate and return a bounding box for the vertex data in this geometry.
+*/
+QBox3D QGeometryData::boundingBox() const
+{
+    QBox3D box;
+    if (d)
+    {
+        for (int i = 0; i < d->count; ++i)
+            box.expand(d->vertices.at(i));
+    }
+    return box;
+}
+
+/*!
+    Clear all data structures.
+*/
+void QGeometryData::clear()
+{
+    if (d)
+    {
+        detach();
+        const quint32 mask = 0x01;
+        quint32 fields = d->fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
+        {
+            if (mask & fields)
+            {
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                if (attr < QGL::TextureCoord0)
+                {
+                    if (attr == QGL::Position)
+                        d->vertices.clear();
+                    else if (attr == QGL::Normal)
+                        d->normals.clear();
+                    else
+                        d->colors.clear();
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    d->textures[d->key[field]].clear();
+                }
+                else
+                {
+                    d->attributes[d->key[field]].clear();
+                }
+            }
+        }
+        d->count = 0;
+    }
+}
+
+/*!
+    Append the point \a v to this geometry data as a position field.
+*/
+void QGeometryData::appendVertex(const QVector3D &v)
+{
+    detach();
+    enableField(QGL::Position);
+    d->vertices.append(v);
+    d->count = qMax(d->count, d->vertices.count());
+}
+
+/*!
+    Append the point \a v to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(v);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the vector \a n to this geometry data, as lighting normal.
+*/
+void QGeometryData::appendNormal(const QVector3D &n)
+{
+    detach();
+    enableField(QGL::Normal);
+    d->normals.append(n);
+    d->count = qMax(d->count, d->normals.count());
+}
+
+/*!
+    Append the point \a t to this geometry data, as an texture \a field.
+*/
+void QGeometryData::appendTexCoord(const QVector2D &t, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->textures[d->key[field]].append(t);
+    d->count = qMax(d->count, d->textures[d->key[field]].count());
+}
+
+/*!
+    Append the color \a c to this geometry data, as an color field.
+*/
+void QGeometryData::appendColor(const QColor4b &c)
+{
+    detach();
+    enableField(QGL::Color);
+    d->colors.append(c);
+    d->count = qMax(d->count, d->colors.count());
+}
+
+/*!
+    Returns a modifiable reference to the vertex data at index \a i.
+*/
+QVector3D &QGeometryData::vertexRef(int i)
+{
+    detach();
+    return d->vertices[i];
+}
+
+/*!
+    Returns a copy of the vertex position data.
+*/
+QDataArray<QVector3D> QGeometryData::vertices() const
+{
+    if (d)
+        return d->vertices;
+    return QDataArray<QVector3D>();
+}
+
+/*!
+    Returns a modifiable reference to the normal data at index \a i.
+*/
+QVector3D &QGeometryData::normalRef(int i)
+{
+    detach();
+    return d->normals[i];
+}
+
+/*!
+    Returns a copy of the lighting normal data.
+*/
+QDataArray<QVector3D> QGeometryData::normals() const
+{
+    if (d)
+        return d->normals;
+    return QDataArray<QVector3D>();
+}
+
+/*!
+    Returns a modifiable reference to the color data at index \a i.
+*/
+QColor4b &QGeometryData::colorRef(int i)
+{
+    detach();
+    return d->colors[i];
+}
+
+/*!
+    Returns a copy of the color data.
+*/
+QDataArray<QColor4b> QGeometryData::colors() const
+{
+    if (d)
+        return d->colors;
+    return QDataArray<QColor4b>();
+}
+
+/*!
+    Returns a modifiable reference to the texture coordinate data at index \a i.
+*/
+QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
+{
+    detach();
+    return d->textures[d->key[field]][i];
+}
+
+/*!
+    Returns a copy of the texture coordinate data.
+*/
+QDataArray<QVector2D> QGeometryData::texCoords(QGL::VertexAttribute field) const
+{
+    return hasField(field) ? d->textures.at(d->key[field]) : QDataArray<QVector2D>();
+}
+
+/*!
+    Returns a modifiable reference to the \a field attribute data at index \a i.
+*/
+QVector3D &QGeometryData::attributeRef(int i, QGL::VertexAttribute field)
+{
+    detach();
+    return d->attributes[d->key[field]][i];
+}
+
+/*!
+    Returns a copy of the \a field attribute data.
+*/
+QDataArray<QVector3D> QGeometryData::attributes(QGL::VertexAttribute field) const
+{
+    return hasField(field) ? d->attributes.at(d->key[field]) : QDataArray<QVector3D>();
+}
+
+/*!
+    Returns true if this geometry has the field corresponding to \a attr.  Note
+    that it is still possible for no data to have been added for that field.
+*/
+bool QGeometryData::hasField(QGL::VertexAttribute attr) const
+{
+    if (d)
+        return d->key[attr] != -1;
+    return false;
+}
+
+/*!
+    Enables this geometry to contain data of type \a field.  Generally it is
+    not necessary to call this function since it is called by all the append
+    functions.
+*/
+void QGeometryData::enableField(QGL::VertexAttribute field)
+{
+    if (d->key[field] != -1)
+        return;
+    detach();
+    Q_ASSERT(field < d->ATTR_CNT); // don't expand that enum too much
+    d->fields |= (1 << field);
+    switch (field)
+    {
+    case QGL::Position:
+        d->key[QGL::Position] = 0;
+        d->size[QGL::Position] = 3;
+        break;
+    case QGL::Normal:
+        d->key[QGL::Normal] = 1;
+        d->size[QGL::Normal] = 3;
+        break;
+    case QGL::Color:
+        d->key[QGL::Color] = 2;
+        d->size[QGL::Color] = 1;
+        break;
+    case QGL::TextureCoord0:
+    case QGL::TextureCoord1:
+    case QGL::TextureCoord2:
+    case QGL::TextureCoord3:
+    case QGL::TextureCoord4:
+    case QGL::TextureCoord5:
+    case QGL::TextureCoord6:
+    case QGL::TextureCoord7:
+        d->textures.append(QDataArray<QVector2D>());
+        d->key[field] = d->textures.count() - 1;
+        d->size[field] = 2;
+        break;
+    case QGL::CustomVertex0:
+    case QGL::CustomVertex1:
+    case QGL::CustomVertex2:
+    case QGL::CustomVertex3:
+    case QGL::CustomVertex4:
+    case QGL::CustomVertex5:
+    case QGL::CustomVertex6:
+    case QGL::CustomVertex7:
+        d->attributes.append(QDataArray<QVector3D>());
+        d->key[field] = d->attributes.count() - 1;
+        d->size[field] = 3;
+        break;
+    }
+}
+
+/*!
+    Return a bit-mask of the supported fields in this geometry.  The
+    QGL::VertexAttribute enum can be recovered from this bit-mask by
+    \code
+    quint32 fields = fields();
+    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(fields);
+    \endcode
+*/
+quint32 QGeometryData::fields() const
+{
+    if (d)
+        return d->fields;
+    return 0;
+}
+
+/*!
+    Returns the count of logical vertices stored.  This is effectively
+    the max() of QDataArray::count() over all of the enabled data types.
+*/
+int QGeometryData::count() const
+{
+    if (d)
+        return d->count;
+    return 0;
+}
+
+/*!
+    \internal
+    You know what this is for.  No user serviceable parts below here.
+*/
+void QGeometryData::detach()
+{
+    if (!d) // lazy creation of data block
+    {
+        d = new QGeometryDataPrivate;
+    }
+    else
+    {
+        if (d->ref > 1)  // being shared, must detach
+        {
+            QGeometryDataPrivate *temp = new QGeometryDataPrivate;
+            temp->vertices = d->vertices;
+            temp->normals = d->normals;
+            temp->colors = d->colors;
+            temp->attributes = d->attributes;
+            temp->textures = d->textures;
+            temp->fields = d->fields;
+            qMemCopy(temp->key, d->key, d->ATTR_CNT);
+            qMemCopy(temp->size, d->size, d->ATTR_CNT);
+            temp->count = d->count;
+            temp->ref.ref();
+            d->ref.deref();
+            d = temp;
+        }
     }
 }
