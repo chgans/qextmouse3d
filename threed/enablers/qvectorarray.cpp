@@ -89,7 +89,7 @@ QT_BEGIN_NAMESPACE
     All elements in the array are initialized to \a value.
 */
 
-/*
+/*!
     \fn QVector2DArray::QVector2DArray(const QDataArray<QVector2D>& other)
 
     Constructs a copy of \a other.
