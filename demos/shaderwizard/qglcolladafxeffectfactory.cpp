@@ -833,7 +833,6 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                 xml.readNextStartElement();
             }
 
-            qDebug() << xml.tokenString() << xml.name();
             if( xml.name() == "transparent" )
             {
                 // TODO: color or texture
@@ -1050,7 +1049,7 @@ QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStream
     xml.readNextStartElement();
     if(xml.name() == "asset")
     {
-        qDebug() << "asset element not supported in image elements ( line" << xml.lineNumber() << ")";
+        qWarning() << "asset element not supported in image elements ( line" << xml.lineNumber() << ")";
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
