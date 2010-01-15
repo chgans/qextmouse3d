@@ -10,6 +10,7 @@ HEADERS += \
     qglvertexdescription.h \
     qgltexture2d.h \
     qgltexturecube.h \
+    qglvertexbuffer.h \
     qcustomdataarray.h \
     qdataarray.h \
     qvectorarray.h
@@ -21,6 +22,7 @@ SOURCES += qglattributevalue.cpp \
     qglvertexdescription.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
+    qglvertexbuffer.cpp \
     qcustomdataarray.cpp \
     qdataarray.cpp \
     qvectorarray.cpp

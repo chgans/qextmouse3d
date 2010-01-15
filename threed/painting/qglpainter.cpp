@@ -1024,6 +1024,13 @@ void QGLPainterPrivate::removeRequiredFields(const QGLVertexArray& array)
         requiredFields.removeAll(array.m_fields.fieldAttribute(index));
 }
 
+void QGLPainterPrivate::removeRequiredFields
+    (const QList<QGL::VertexAttribute>& array)
+{
+    for (int index = 0; index < array.size(); ++index)
+        requiredFields.removeAll(array[index]);
+}
+
 void QGLPainter::checkRequiredFields()
 {
     Q_D(QGLPainter);
@@ -1389,7 +1396,7 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
     on the GL state.  If the effect() does not need \a attribute,
     it will be ignored.
 
-    \sa draw(), setCommonNormal()
+    \sa setVertexBuffer(), draw(), setCommonNormal()
 */
 void QGLPainter::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
@@ -1399,6 +1406,28 @@ void QGLPainter::setVertexAttribute
     d->ensureEffect();
     d->effect->setVertexAttribute(attribute, value);
     d->removeRequiredField(attribute);
+}
+
+/*!
+    Sets the vertex attributes on the current GL context that are
+    stored in \a buffer.
+
+    The effect() is notified via QGLAbstractEffect::setVertexAttribute()
+    about the new attribute values, and is responsible for setting it
+    on the GL state.  If the effect() does not need an attribute
+    that is stored within \a buffer, it will be ignored.
+
+    \sa setVertexAttribute(), draw(), setCommonNormal()
+*/
+void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->ensureEffect();
+    buffer.setOnEffect(d->effect);
+#ifndef QT_NO_DEBUG
+    d->removeRequiredFields(buffer.attributes());
+#endif
 }
 
 /*!

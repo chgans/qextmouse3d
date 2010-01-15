@@ -303,12 +303,15 @@ public:
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { requiredFields = fields; }
     void removeRequiredFields(const QGLVertexArray& array);
+    void removeRequiredFields(const QList<QGL::VertexAttribute>& array);
     void removeRequiredField(QGL::VertexAttribute attribute)
         { requiredFields.removeAll(attribute); }
 #else
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { Q_UNUSED(fields); }
     inline void removeRequiredFields(const QGLVertexArray& array)
+        { Q_UNUSED(array); }
+    inline void removeRequiredFields(const QList<QGL::VertexAttribute>& array)
         { Q_UNUSED(array); }
     inline void removeRequiredField(QGL::VertexAttribute attribute)
         { Q_UNUSED(attribute); }

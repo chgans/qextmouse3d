@@ -66,6 +66,8 @@ namespace QGL
     };
 };
 
+class QGLVertexBuffer;
+
 class Q_QT3D_EXPORT QGLAttributeValue
 {
 public:
@@ -95,6 +97,11 @@ private:
     QGL::ComponentType m_type;
     int m_stride;
     const void *m_data;
+
+    void setOffset(int offset)
+        { m_data = reinterpret_cast<const void *>(offset); }
+
+    friend class QGLVertexBuffer;
 };
 
 inline QGLAttributeValue::QGLAttributeValue()
