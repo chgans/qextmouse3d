@@ -82,7 +82,7 @@ public:
     //respective objects, and acessing these nodes.
     void setScene(QGLAbstractScene *scene);
     void initSceneObjectList();
-    QStringList Mesh::getSceneObjectNames();
+    QStringList getSceneObjectNames();
     QGLSceneObject *getSceneObject();
     QGLSceneObject *getSceneObject(const QString &name);
     QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
