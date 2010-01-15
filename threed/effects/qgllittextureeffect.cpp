@@ -88,13 +88,6 @@ void QGLLitTextureEffect::update
         updateFog(painter);
 }
 
-void QGLLitTextureEffect::setVertexArray(const QGLVertexArray& array)
-{
-    setVertexAttribute(QGL::Position, array);
-    setVertexAttribute(QGL::TextureCoord0, array);
-    setVertexAttribute(QGL::Normal, array);
-}
-
 QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
     : QGLLitTextureEffect(GL_DECAL)
 {

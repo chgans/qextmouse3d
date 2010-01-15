@@ -57,6 +57,7 @@
 #include "qglfogparameters.h"
 #include "qglmatrixstack.h"
 #include "qglcamera.h"
+#include "qvectorarray.h"
 
 QT_BEGIN_HEADER
 
@@ -139,6 +140,9 @@ public:
 
     QColor color() const;
     void setColor(const QColor& color);
+
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
     void setVertexArray(const QGLVertexArray& array);
 

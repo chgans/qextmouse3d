@@ -72,7 +72,7 @@ private:
     void paintTeapot(QGLPainter *painter, const QRect& rect);
     void drawText(QGLPainter *painter, const QRect& posn, const QString& str);
 
-    static QGLVertexArray basicPoints(const QRect& rect);
+    static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
     QGLCube cube;
@@ -136,9 +136,9 @@ void ShapesWidget::paintGL()
     paintTeapot(&painter, QRect(boxw * 2, boxh * 2, boxw, boxh));
 }
 
-QGLVertexArray ShapesWidget::basicPoints(const QRect& rect)
+QVector2DArray ShapesWidget::basicPoints(const QRect& rect)
 {
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     int step = qMin(rect.width() / 6, rect.height() / 6);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -159,7 +159,7 @@ void ShapesWidget::paintPoints(QGLPainter *painter, const QRect& rect)
     painter->setColor(QColor(170, 202, 0));
     painter->setPointSize(1);
 
-    painter->setVertexArray(basicPoints(rect));
+    painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Points, 8);
 
     drawText(painter, rect, tr("Points"));
@@ -169,7 +169,7 @@ void ShapesWidget::paintLines(QGLPainter *painter, const QRect& rect)
 {
     painter->setLineWidth(1);
 
-    painter->setVertexArray(basicPoints(rect));
+    painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Lines, 8);
 
     drawText(painter, rect, tr("Lines"));
@@ -177,7 +177,7 @@ void ShapesWidget::paintLines(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLineStrip(QGLPainter *painter, const QRect& rect)
 {
-    painter->setVertexArray(basicPoints(rect));
+    painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::LineStrip, 8);
 
     drawText(painter, rect, tr("Line strip"));
@@ -185,7 +185,7 @@ void ShapesWidget::paintLineStrip(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLineLoop(QGLPainter *painter, const QRect& rect)
 {
-    painter->setVertexArray(basicPoints(rect));
+    painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::LineLoop, 8);
 
     drawText(painter, rect, tr("Line loop"));
@@ -195,7 +195,7 @@ void ShapesWidget::paintTriangles(QGLPainter *painter, const QRect& rect)
 {
     painter->setStandardEffect(QGL::LitMaterial);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -208,7 +208,7 @@ void ShapesWidget::paintTriangles(QGLPainter *painter, const QRect& rect)
     vertices.append(midx + step / 2, midy + step * 2);
     vertices.append(midx + step * 3, midy - step);
 
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
     painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
     painter->draw(QGL::Triangles, 6);
 
@@ -219,7 +219,7 @@ void ShapesWidget::paintTriangleStrip(QGLPainter *painter, const QRect& rect)
 {
     painter->setStandardEffect(QGL::LitMaterial);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -231,14 +231,14 @@ void ShapesWidget::paintTriangleStrip(QGLPainter *painter, const QRect& rect)
     vertices.append(midx + step, midy - step * 2);
     vertices.append(midx + step * 2, midy + step * 2);
 
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
     painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
     painter->draw(QGL::TriangleStrip, 6);
 
     // Overpaint some lines to show the triangle boundaries.
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(202, 170, 0));
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
     painter->draw(QGL::LineStrip, 4, 1);
 
     drawText(painter, rect, tr("Triangle strip"));
@@ -248,7 +248,7 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
 {
     painter->setStandardEffect(QGL::LitMaterial);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -259,7 +259,7 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     vertices.append(midx + step, midy - step);
     vertices.append(midx - step, midy - step * 2);
 
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
     painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
     painter->draw(QGL::TriangleFan, 5);
 
@@ -271,7 +271,7 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     indices.append(2);
     indices.append(0);
     indices.append(3);
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
     painter->draw(QGL::Lines, indices);
 
     drawText(painter, rect, tr("Triangle fan"));
@@ -348,19 +348,22 @@ void ShapesWidget::drawText
     int y = posn.y() + posn.height() - metrics.ascent() - metrics.descent();
     y -= 10;
 
-    QGLVertexArray vertices(QGL::Position, 2, QGL::TextureCoord0, 2);
+    QVector2DArray vertices;
     vertices.append(x + rect.x(), y + metrics.ascent());
-    vertices.append(0.0f, 0.0f);
     vertices.append(x + rect.x(), y - metrics.descent());
-    vertices.append(0.0f, 1.0f);
     vertices.append(x + rect.x() + rect.width(), y - metrics.descent());
-    vertices.append(1.0f, 1.0f);
     vertices.append(x + rect.x() + rect.width(), y + metrics.ascent());
-    vertices.append(1.0f, 0.0f);
+
+    QVector2DArray texCoord;
+    texCoord.append(0.0f, 0.0f);
+    texCoord.append(0.0f, 1.0f);
+    texCoord.append(1.0f, 1.0f);
+    texCoord.append(1.0f, 0.0f);
 
     painter->setStandardEffect(QGL::FlatReplaceTexture2D);
     painter->setTexture(&texture);
-    painter->setVertexArray(vertices);
+    painter->setVertexAttribute(QGL::Position, vertices);
+    painter->setVertexAttribute(QGL::TextureCoord0, texCoord);
     painter->draw(QGL::TriangleFan, 4);
     painter->setStandardEffect(QGL::FlatColor);
     painter->setTexture((QGLTexture2D *)0);

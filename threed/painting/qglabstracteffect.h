@@ -70,7 +70,9 @@ public:
 
     virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    virtual void setVertexArray(const QGLVertexArray& array);
+    virtual void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
     virtual void setCommonNormal(const QVector3D& value);
 
 protected:
@@ -79,7 +81,6 @@ protected:
     void updateFog(const QGLPainter *painter);
     void enableVertexAttribute(QGL::VertexAttribute attribute);
     void disableVertexAttribute(QGL::VertexAttribute attribute);
-    bool setVertexAttribute(QGL::VertexAttribute attribute, const QGLVertexArray& array);
 #endif
     void setAttributeArray
         (QGLShaderProgram *program, int location,

@@ -142,13 +142,13 @@ void Spotlight::draw(QGLPainter *painter)
 
     painter->modelViewMatrix().push();
     transform(painter);
-    QGLVertexArray verts(QGL::Position, 3);
+    QVector3DArray verts;
     verts.append(light.position());
     // this is a bit dodgy, treating a vector as a point - might work as
     // long as you're sure that light.spatialData() is the origin always
     // also you need to be scaled so that the -1 is long enough...
     verts.append(light.spotDirection());
-    painter->setVertexArray(verts);
+    painter->setVertexAttribute(QGL::Position, verts);
     painter->draw(QGL::Lines, 2);
     painter->update();
     painter->modelViewMatrix().pop();

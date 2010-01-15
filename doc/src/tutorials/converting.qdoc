@@ -154,15 +154,20 @@
     QGLPainter::setStandardEffect() and QGLAbstractEffect for more
     information on how QGLPainter uses effects.
 
-    Next, the code creates a QGLVertexArray instance containing the vertex
-    values.  The vertex array contains a single QGL::Position field,
-    with 3 components per field.  The position values are then added
-    to the array with QGLVertexArray::append().
+    Next, the code creates a QVector3DArray instance containing the vertex
+    position values.  The positions are then added to the array with
+    QVector3DArray::append().
+
+    QVector3DArray is essentially QDataArray<QVector3D>.  QDataArray
+    is a highly efficient data structure for building large arrays
+    of simple vector values.  The array starts by appending to
+    preallocated storage on the stack and then moves the data
+    to the heap as the array grows in size.
 
     There is a slight difference to the raw GL example, which used a
-    static constant array of vertex values.  The QGLVertexArray::setRawData()
+    static constant array of vertex values.  The QDataArray::fromRawData()
     function can be used to load data from static constant arrays.
-    In this example, we are building the QGLVertexArray on the stack
+    In this example, we are building the QVector3DArray on the stack
     every time the scene is painted.
 
     Last, we set the vertex array and draw the triangle defined by

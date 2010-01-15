@@ -61,7 +61,9 @@ public:
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
     void setCommonNormal(const QVector3D& value);
 
 private:
@@ -176,32 +178,41 @@ void ShaderProgramEffect::update
     // TODO: lighting and material parameters.
 }
 
-void ShaderProgramEffect::setVertexArray(const QGLVertexArray& array)
+void ShaderProgramEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull() && vertexAttr != -1) {
-        setAttributeArray(program, vertexAttr, value);
-        program->enableAttributeArray(vertexAttr);
-    }
-    value = array.attributeValue(QGL::Normal);
-    if (!value.isNull() && normalAttr != -1) {
-        setAttributeArray(program, normalAttr, value);
-        program->enableAttributeArray(normalAttr);
-    }
-    value = array.attributeValue(QGL::Color);
-    if (!value.isNull() && colorAttr != -1) {
-        setAttributeArray(program, colorAttr, value);
-        program->enableAttributeArray(colorAttr);
-    }
-    value = array.attributeValue(QGL::TextureCoord0);
-    if (!value.isNull() && texCoord0Attr != -1) {
-        setAttributeArray(program, texCoord0Attr, value);
-        program->enableAttributeArray(texCoord0Attr);
-    }
-    value = array.attributeValue(QGL::TextureCoord1);
-    if (!value.isNull() && texCoord1Attr != -1) {
-        setAttributeArray(program, texCoord1Attr, value);
-        program->enableAttributeArray(texCoord1Attr);
+    switch (attribute) {
+    case QGL::Position:
+        if (vertexAttr != -1) {
+            setAttributeArray(program, vertexAttr, value);
+            program->enableAttributeArray(vertexAttr);
+        }
+        break;
+    case QGL::Normal:
+        if (normalAttr != -1) {
+            setAttributeArray(program, normalAttr, value);
+            program->enableAttributeArray(normalAttr);
+        }
+        break;
+    case QGL::Color:
+        if (colorAttr != -1) {
+            setAttributeArray(program, colorAttr, value);
+            program->enableAttributeArray(colorAttr);
+        }
+        break;
+    case QGL::TextureCoord0:
+        if (texCoord0Attr != -1) {
+            setAttributeArray(program, texCoord0Attr, value);
+            program->enableAttributeArray(texCoord0Attr);
+        }
+        break;
+    case QGL::TextureCoord1:
+        if (texCoord1Attr != -1) {
+            setAttributeArray(program, texCoord1Attr, value);
+            program->enableAttributeArray(texCoord1Attr);
+        }
+        break;
+    default: break;
     }
 }
 
