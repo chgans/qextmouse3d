@@ -783,7 +783,6 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                 xml.readNextStartElement();
             }
 
-            qDebug() << xml.tokenString() << xml.name();
             if( xml.name() == "specular" )
             {
                 // TODO: color or texture
