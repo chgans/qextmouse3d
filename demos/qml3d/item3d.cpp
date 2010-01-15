@@ -72,7 +72,7 @@ public:
         , inheritEvents(false)
         , isVisible(true)
         , isInitialized(false)
-        , sceneObjectId(-1)
+        , mainBranchId(-1)
     {
     }
 
@@ -84,7 +84,7 @@ public:
     Effect *effect;    
     Item3d::CullFaces cullFaces;
     int objectPickId;
-    int sceneObjectId;
+    int mainBranchId;
     bool isVisible;
     bool inheritEvents;
     bool isInitialized;
@@ -323,7 +323,7 @@ void Item3d::setMesh(Mesh *value)
 
     d->mesh = value;
     //always start off pointing to the default scene mesh object.
-    d->sceneObjectId = 0;  
+    d->mainBranchId = 0;  
 
     if (value) {
         d->mesh->ref();
@@ -446,16 +446,16 @@ void Item3d::draw(QGLPainter *painter)
         }
     }
 
-	//Culling
+    //Culling
     painter->setCullFaces((QGL::CullFaces)(int)(d->cullFaces));
 
-	//Effects
+    //Effects
     if (d->effect)
         d->effect->enableEffect(painter);
 
-	//Local and Global transforms
+    //Local and Global transforms
 
-	//1) Item Transforms
+    //1) Item Transforms
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
     if (!d->transforms.isEmpty()) {
@@ -469,15 +469,15 @@ void Item3d::draw(QGLPainter *painter)
     if (d->scale != 1.0f)
         painter->modelViewMatrix().scale(d->scale);
 	
-	//Drawing
-	if (d->isVisible) drawItem(painter);
+    //Drawing
+    if (d->isVisible ) drawItem(painter);
     foreach (QObject *child, list) {
         Item3d *item = qobject_cast<Item3d *>(child);
         if (item)
             item->draw(painter);
     }
 
-	//Unset parameters for transforms, effects etc.
+    //Unset parameters for transforms, effects etc.
     painter->modelViewMatrix().pop();
 
     if (d->effect)
@@ -505,16 +505,17 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     
     if (view) {
         d->objectPickId = view->nextPickId();
-        view->registerObject(d->objectPickId, this);
+        view->registerObject(d->objectPickId, this);        
     }    
 
     if (mesh() && !meshNode().isEmpty()) {
-        int nodeNumber = mesh()->splitSceneMesh(meshNode());    
-        if (nodeNumber>=0) {
-            d->sceneObjectId = nodeNumber;
+        int branchNumber = mesh()->createSceneBranch(meshNode());    
+        if (branchNumber>=0) {
+            d->mainBranchId = branchNumber;
         }
         else {
             qWarning()<< "3D item initialization failed: unable to find the specified mesh-node. Defaulting to default node.";
+            d->mainBranchId = 0;
         }
     }
 
@@ -545,14 +546,14 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     d->isInitialized = true;
 }
 
-int Item3d::sceneObjectId() const
+int Item3d::mainBranchId() const
 {
-    return d->sceneObjectId;
+    return d->mainBranchId;
 }
 
-void Item3d::setSceneObjectId(int objectID)
+void Item3d::setMainBranchId(int objectID)
 {
-    d->sceneObjectId = objectID;
+    d->mainBranchId = objectID;
 }
 
 void Item3d::componentComplete()
@@ -563,7 +564,7 @@ void Item3d::componentComplete()
 void Item3d::drawItem(QGLPainter *painter)
 {
     if (d->mesh)
-        d->mesh->draw(painter, d->sceneObjectId);
+        d->mesh->draw(painter, d->mainBranchId);
 }
 
 bool Item3d::event(QEvent *e)

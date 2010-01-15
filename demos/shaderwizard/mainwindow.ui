@@ -95,6 +95,7 @@
     <addaction name="actionPer_Pixel_Lighting_Shader"/>
     <addaction name="actionMinimal_Texture_Shader"/>
     <addaction name="actionPer_Pixel_Lit_Texture_Shader"/>
+    <addaction name="actionMultiTexture_Shader"/>
    </widget>
    <addaction name="menuShaderWizard"/>
    <addaction name="menuModel"/>
@@ -278,6 +279,11 @@
   <action name="actionPer_Pixel_Lit_Texture_Shader">
    <property name="text">
     <string>Per-Pixel Lit Texture Shader</string>
+   </property>
+  </action>
+  <action name="actionMultiTexture_Shader">
+   <property name="text">
+    <string>MultiTexture Shader</string>
    </property>
   </action>
  </widget>

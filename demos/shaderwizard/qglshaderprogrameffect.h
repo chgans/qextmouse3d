@@ -70,9 +70,9 @@ protected:
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
     virtual void bindProgramUniforms();
+    QGLShaderProgram *program;
 
  private:
-    QGLShaderProgram *program;
     QString vertexShader;
     QString fragmentShader;
     int colorUniform;

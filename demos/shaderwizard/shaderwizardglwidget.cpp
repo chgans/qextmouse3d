@@ -58,6 +58,8 @@
 #include "qglscenenode.h"
 #include "qglmaterialparameters.h"
 #include "qglmaterialcollection.h"
+#include "qglcolladafxeffect.h"
+#include "qglcolladafxeffectfactory.h"
 
 class ShaderWizardGLWidgetPrivate
 {
@@ -91,7 +93,8 @@ public:
 };
 
 ShaderWizardGLWidget::ShaderWizardGLWidget() :
-        bezierModel(0)
+        mGeometry(0)
+        , bezierModel(0)
         , bezierArray(0)
         , bezierRawData(0)
         , mSceneManager(0)
@@ -164,8 +167,8 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setDepthTestingEnabled(true);
     painter->setCullFaces(QGL::CullBackFaces);
 
-    d->setEffect(new QGLShaderProgramEffect());
-    d->effect->setActive(true);
+    if(d->effect)
+        d->effect->setActive(true);
 }
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)

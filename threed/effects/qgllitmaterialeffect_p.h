@@ -64,7 +64,7 @@ class QGLLitMaterialEffect : public QGLAbstractEffect
 public:
     QGLLitMaterialEffect();
     virtual ~QGLLitMaterialEffect();
-
+   
     QList<QGL::VertexAttribute> requiredFields() const;
 
     void setActive(bool flag);
