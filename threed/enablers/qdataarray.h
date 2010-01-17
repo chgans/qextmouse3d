@@ -54,6 +54,9 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
+template <typename T, int PreallocSize>
+class QDataArrayRef;
+
 template <typename T, int PreallocSize = 8>
 class QDataArray
 {
@@ -93,6 +96,10 @@ public:
     void resize(int size);
     void reserve(int size);
     void shrink(int size);
+
+    QDataArrayRef<T, PreallocSize> mid(int index, int length = -1) const;
+    QDataArrayRef<T, PreallocSize> left(int length) const;
+    QDataArrayRef<T, PreallocSize> right(int length) const;
 
     T *data();
     const T *data() const;
@@ -141,6 +148,41 @@ private:
     void detachForWrite(int needed = 0);
     void detachForCopy(int needed = 0) const;
     void grow(int needed);
+};
+
+template <typename T, int PreallocSize = 8>
+class QDataArrayRef
+{
+public:
+    QDataArrayRef();
+    explicit QDataArrayRef(QDataArray<T, PreallocSize> *array);
+    QDataArrayRef(QDataArray<T, PreallocSize> *array, int offset, int size);
+
+    bool isNull() const { return m_array == 0; }
+
+    int size() const { return m_size; }
+    int count() const { return m_size; }
+    bool isEmpty() const { return m_size == 0; }
+
+    const T& at(int index) const;
+    const T& operator[](int index) const;
+    T& operator[](int index);
+
+    T *data();
+    const T *data() const;
+    const T *constData() const;
+
+    QDataArray<T, PreallocSize> *dataArray() const { return m_array; }
+    int offset() const { return m_offset; }
+
+    QDataArray<T, PreallocSize> toDataArray() const;
+
+    bool operator==(const QDataArrayRef<T, PreallocSize> &other) const;
+    bool operator!=(const QDataArrayRef<T, PreallocSize> &other) const;
+
+private:
+    QDataArray<T, PreallocSize> *m_array;
+    int m_offset, m_size;
 };
 
 int Q_QT3D_EXPORT qDataArrayAllocMore(int alloc, int extra);
@@ -626,6 +668,31 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
 }
 
 template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize> QDataArray<T, PreallocSize>::mid(int index, int length) const
+{
+    return QDataArrayRef<T, PreallocSize>
+        (const_cast<QDataArray<T, PreallocSize> *>(this), index, length);
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize> QDataArray<T, PreallocSize>::left(int length) const
+{
+    return QDataArrayRef<T, PreallocSize>
+        (const_cast<QDataArray<T, PreallocSize> *>(this), 0, length);
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize> QDataArray<T, PreallocSize>::right(int length) const
+{
+    int size = count();
+    if (length < 0 || length >= size)
+        length = size;
+    return QDataArrayRef<T, PreallocSize>
+        (const_cast<QDataArray<T, PreallocSize> *>(this),
+         size - length, length);
+}
+
+template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T *QDataArray<T, PreallocSize>::data()
 {
     if (m_start) {
@@ -716,6 +783,117 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::oper
 {
     append(other);
     return *this;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize>::QDataArrayRef()
+    : m_array(0), m_offset(0), m_size(0) {}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize>::QDataArrayRef(QDataArray<T, PreallocSize> *array)
+    : m_array(array), m_offset(0), m_size(array ? array->size() : 0) {}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize>::QDataArrayRef(QDataArray<T, PreallocSize> *array, int offset, int size)
+    : m_array(array), m_offset(offset)
+{
+    Q_ASSERT(array);
+    int count = array->size();
+    Q_ASSERT(offset >= 0 && offset <= count);
+    if (size < 0 || (offset + size) > count)
+        size = count - offset;
+    m_size = size;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE const T& QDataArrayRef<T, PreallocSize>::at(int index) const
+{
+    Q_ASSERT(m_array && index >= 0 && index < m_size);
+    return m_array->at(m_offset + index);
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE const T& QDataArrayRef<T, PreallocSize>::operator[](int index) const
+{
+    Q_ASSERT(m_array && index >= 0 && index < m_size);
+    return m_array->at(m_offset + index);
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE T& QDataArrayRef<T, PreallocSize>::operator[](int index)
+{
+    Q_ASSERT(m_array && index >= 0 && index < m_size);
+    return (*m_array)[m_offset + index];
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE T *QDataArrayRef<T, PreallocSize>::data()
+{
+    if (m_array)
+        return m_array->data() + m_offset;
+    else
+        return 0;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE const T *QDataArrayRef<T, PreallocSize>::data() const
+{
+    if (m_array)
+        return m_array->constData() + m_offset;
+    else
+        return 0;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE const T *QDataArrayRef<T, PreallocSize>::constData() const
+{
+    if (m_array)
+        return m_array->constData() + m_offset;
+    else
+        return 0;
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE QDataArray<T, PreallocSize> QDataArrayRef<T, PreallocSize>::toDataArray() const
+{
+    if (!m_array) {
+        return QDataArray<T, PreallocSize>();
+    } else if (m_offset == 0 && m_size == m_array->size()) {
+        return *m_array;
+    } else {
+        QDataArray<T, PreallocSize> result;
+        if (m_size > 0) {
+            T *dst = result.extend(m_size);
+            qMemCopy(dst, m_array->constData() + m_offset,
+                     sizeof(T) * m_size);
+        }
+        return result;
+    }
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE bool QDataArrayRef<T, PreallocSize>::operator==(const QDataArrayRef<T, PreallocSize> &other) const
+{
+    if (m_size != other.m_size)
+        return false;
+    else if (!m_array)
+        return other.m_size == 0;
+    else if (!other.m_array)
+        return m_size == 0;
+    else if (this == &other)
+        return true;
+    for (int index = 0; index < m_size; ++index) {
+        if (m_array->at(m_offset + index) !=
+                other.m_array->at(other.m_offset + index))
+            return false;
+    }
+    return true;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE bool QDataArrayRef<T, PreallocSize>::operator!=(const QDataArrayRef<T, PreallocSize> &other) const
+{
+    return !(*this == other);
 }
 
 QT_END_NAMESPACE
