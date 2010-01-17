@@ -147,6 +147,17 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn bool QDataArray::isDetached() const
+
+    Returns true if this data array has been detached from all other
+    shared copies of the data; false otherwise.
+
+    This function can be used to determine if functions that
+    write to this data array such as append(), replace(),
+    and data(), will need to make a copy.
+*/
+
+/*!
     \fn void QDataArray::clear()
 
     Clears all elements from this data array and sets the size to zero.

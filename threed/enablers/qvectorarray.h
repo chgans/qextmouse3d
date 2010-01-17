@@ -46,6 +46,8 @@
 #include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector4d.h>
+#include <QtGui/qtransform.h>
+#include <QtGui/qmatrix4x4.h>
 
 QT_BEGIN_HEADER
 
@@ -60,8 +62,42 @@ public:
     QVector2DArray(int size, const QVector2D& value = QVector2D());
     QVector2DArray(const QDataArray<QVector2D>& other);
 
-    void append(const QVector2D& value);
     void append(qreal x, qreal y);
+    void append(const QPointF& point);
+    void append(const QPoint& point);
+
+    void translate(const QVector2D& value);
+    void translate(qreal x, qreal y);
+    void translate(const QPointF& point);
+    void translate(const QPoint& point);
+
+    QDataArray<QVector2D> translated(const QVector2D& value) const;
+    QDataArray<QVector2D> translated(qreal x, qreal y) const;
+    QDataArray<QVector2D> translated(const QPointF& point) const;
+    QDataArray<QVector2D> translated(const QPoint& point) const;
+
+    void transform(const QTransform& matrix);
+    void transform(const QMatrix4x4& matrix);
+
+    QDataArray<QVector2D> transformed(const QTransform& matrix) const;
+    QDataArray<QVector2D> transformed(const QMatrix4x4& matrix) const;
+
+#if !defined(Q_NO_USING_KEYWORD)
+    using QDataArray<QVector2D>::append;
+#else
+    inline void append(const QVector2D& value)
+        { QDataArray<QVector2D>::append(value); }
+    inline void append(const QVector2D& value1, const QVector2D& value2)
+        { QDataArray<QVector2D>::append(value1, value2); }
+    inline void append(const QVector2D& value1, const QVector2D& value2, const QVector2D& value3)
+        { QDataArray<QVector2D>::append(value1, value2, value3); }
+    inline void append(const QVector2D& value1, const QVector2D& value2, const QVector2D& value3, const QVector2D& value4)
+        { QDataArray<QVector2D>::append(value1, value2, value3, value4); }
+    inline void append(const QVector2D *values, int count)
+        { QDataArray<QVector2D>::append(values, count); }
+    inline void append(const QDataArray<QVector2D>& other)
+        { QDataArray<QVector2D>::append(other); }
+#endif
 };
 
 class Q_QT3D_EXPORT QVector3DArray : public QDataArray<QVector3D>
@@ -71,8 +107,33 @@ public:
     QVector3DArray(int size, const QVector3D& value = QVector3D());
     QVector3DArray(const QDataArray<QVector3D>& other);
 
-    void append(const QVector3D& value);
     void append(qreal x, qreal y, qreal z);
+
+    void translate(const QVector3D& value);
+    void translate(qreal x, qreal y, qreal z);
+
+    QDataArray<QVector3D> translated(const QVector3D& value) const;
+    QDataArray<QVector3D> translated(qreal x, qreal y, qreal z) const;
+
+    void transform(const QMatrix4x4& matrix);
+    QDataArray<QVector3D> transformed(const QMatrix4x4& matrix) const;
+
+#if !defined(Q_NO_USING_KEYWORD)
+    using QDataArray<QVector3D>::append;
+#else
+    inline void append(const QVector3D& value)
+        { QDataArray<QVector3D>::append(value); }
+    inline void append(const QVector3D& value1, const QVector3D& value2)
+        { QDataArray<QVector3D>::append(value1, value2); }
+    inline void append(const QVector3D& value1, const QVector3D& value2, const QVector3D& value3)
+        { QDataArray<QVector3D>::append(value1, value2, value3); }
+    inline void append(const QVector3D& value1, const QVector3D& value2, const QVector3D& value3, const QVector3D& value4)
+        { QDataArray<QVector3D>::append(value1, value2, value3, value4); }
+    inline void append(const QVector3D *values, int count)
+        { QDataArray<QVector3D>::append(values, count); }
+    inline void append(const QDataArray<QVector3D>& other)
+        { QDataArray<QVector3D>::append(other); }
+#endif
 };
 
 class Q_QT3D_EXPORT QVector4DArray : public QDataArray<QVector4D>
@@ -82,8 +143,34 @@ public:
     QVector4DArray(int size, const QVector4D& value = QVector4D());
     QVector4DArray(const QDataArray<QVector4D>& other);
 
-    void append(const QVector2D& value);
     void append(qreal x, qreal y, qreal z, qreal w);
+
+    void translate(const QVector4D& value);
+    void translate(qreal x, qreal y, qreal z, qreal w);
+
+    QDataArray<QVector4D> translated(const QVector4D& value) const;
+    QDataArray<QVector4D> translated
+        (qreal x, qreal y, qreal z, qreal w) const;
+
+    void transform(const QMatrix4x4& matrix);
+    QDataArray<QVector4D> transformed(const QMatrix4x4& matrix) const;
+
+#if !defined(Q_NO_USING_KEYWORD)
+    using QDataArray<QVector4D>::append;
+#else
+    inline void append(const QVector4D& value)
+        { QDataArray<QVector4D>::append(value); }
+    inline void append(const QVector4D& value1, const QVector4D& value2)
+        { QDataArray<QVector4D>::append(value1, value2); }
+    inline void append(const QVector4D& value1, const QVector4D& value2, const QVector4D& value3)
+        { QDataArray<QVector4D>::append(value1, value2, value3); }
+    inline void append(const QVector4D& value1, const QVector4D& value2, const QVector4D& value3, const QVector4D& value4)
+        { QDataArray<QVector4D>::append(value1, value2, value3, value4); }
+    inline void append(const QVector4D *values, int count)
+        { QDataArray<QVector4D>::append(values, count); }
+    inline void append(const QDataArray<QVector4D>& other)
+        { QDataArray<QVector4D>::append(other); }
+#endif
 };
 
 inline QVector2DArray::QVector2DArray() {}
@@ -94,11 +181,32 @@ inline QVector2DArray::QVector2DArray(int size, const QVector2D& value)
 inline QVector2DArray::QVector2DArray(const QDataArray<QVector2D>& other)
     : QDataArray<QVector2D>(other) {}
 
-inline void QVector2DArray::append(const QVector2D& value)
-    { QDataArray<QVector2D>::append(value); }
-
 inline void QVector2DArray::append(qreal x, qreal y)
     { QDataArray<QVector2D>::append(QVector2D(x, y)); }
+
+inline void QVector2DArray::append(const QPointF& point)
+    { QDataArray<QVector2D>::append(QVector2D(point)); }
+
+inline void QVector2DArray::append(const QPoint& point)
+    { QDataArray<QVector2D>::append(QVector2D(point)); }
+
+inline void QVector2DArray::translate(qreal x, qreal y)
+    { translate(QVector2D(x, y)); }
+
+inline void QVector2DArray::translate(const QPointF& value)
+    { translate(QVector2D(value)); }
+
+inline void QVector2DArray::translate(const QPoint& value)
+    { translate(QVector2D(value)); }
+
+inline QDataArray<QVector2D> QVector2DArray::translated(qreal x, qreal y) const
+    { return translated(QVector2D(x, y)); }
+
+inline QDataArray<QVector2D> QVector2DArray::translated(const QPointF& point) const
+    { return translated(QVector2D(point)); }
+
+inline QDataArray<QVector2D> QVector2DArray::translated(const QPoint& point) const
+    { return translated(QVector2D(point)); }
 
 inline QVector3DArray::QVector3DArray() {}
 
@@ -108,11 +216,14 @@ inline QVector3DArray::QVector3DArray(int size, const QVector3D& value)
 inline QVector3DArray::QVector3DArray(const QDataArray<QVector3D>& other)
     : QDataArray<QVector3D>(other) {}
 
-inline void QVector3DArray::append(const QVector3D& value)
-    { QDataArray<QVector3D>::append(value); }
-
 inline void QVector3DArray::append(qreal x, qreal y, qreal z)
     { QDataArray<QVector3D>::append(QVector3D(x, y, z)); }
+
+inline void QVector3DArray::translate(qreal x, qreal y, qreal z)
+    { translate(QVector3D(x, y, z)); }
+
+inline QDataArray<QVector3D> QVector3DArray::translated(qreal x, qreal y, qreal z) const
+    { return translated(QVector3D(x, y, z)); }
 
 inline QVector4DArray::QVector4DArray() {}
 
@@ -122,11 +233,15 @@ inline QVector4DArray::QVector4DArray(int size, const QVector4D& value)
 inline QVector4DArray::QVector4DArray(const QDataArray<QVector4D>& other)
     : QDataArray<QVector4D>(other) {}
 
-inline void QVector4DArray::append(const QVector2D& value)
-    { QDataArray<QVector4D>::append(value); }
-
 inline void QVector4DArray::append(qreal x, qreal y, qreal z, qreal w)
     { QDataArray<QVector4D>::append(QVector4D(x, y, z, w)); }
+
+inline void QVector4DArray::translate(qreal x, qreal y, qreal z, qreal w)
+    { translate(QVector4D(x, y, z, w)); }
+
+inline QDataArray<QVector4D> QVector4DArray::translated
+        (qreal x, qreal y, qreal z, qreal w) const
+    { return translated(QVector4D(x, y, z, w)); }
 
 QT_END_NAMESPACE
 

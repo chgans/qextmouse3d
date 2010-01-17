@@ -74,6 +74,7 @@ public:
     int capacity() const;
 
     bool isEmpty() const;
+    bool isDetached() const;
 
     void clear();
 
@@ -448,6 +449,13 @@ Q_INLINE_TEMPLATE bool QDataArray<T, PreallocSize>::isEmpty() const
         return m_start == m_end;
     else
         return m_data->used == 0;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE bool QDataArray<T, PreallocSize>::isDetached() const
+{
+    return m_start != 0 ||
+           (m_data->ref == 1 && m_data->array == m_data->data);
 }
 
 template <typename T, int PreallocSize>
