@@ -98,6 +98,7 @@ private:
     int m_stride;
     const void *m_data;
 
+    void setStride(int stride) { m_stride = stride; }
     void setOffset(int offset)
         { m_data = reinterpret_cast<const void *>(offset); }
 
