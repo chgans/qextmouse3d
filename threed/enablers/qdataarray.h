@@ -115,6 +115,18 @@ public:
     QDataArray<T, PreallocSize>& operator<<(const T& value);
     QDataArray<T, PreallocSize>& operator<<(const QDataArray<T, PreallocSize>& other);
 
+    typedef T *iterator;
+    typedef const T *const_iterator;
+    typedef iterator Iterator;
+    typedef const_iterator ConstIterator;
+
+    inline iterator begin() { return data(); }
+    inline const_iterator begin() const { return constData(); }
+    inline const_iterator constBegin() const { return constData(); }
+    inline iterator end() { return data() + size(); }
+    inline const_iterator end() const { return constData() + size(); }
+    inline const_iterator constEnd() const { return constData() + size(); }
+
 private:
     struct Data
     {
@@ -179,6 +191,18 @@ public:
 
     bool operator==(const QDataArrayRef<T, PreallocSize> &other) const;
     bool operator!=(const QDataArrayRef<T, PreallocSize> &other) const;
+
+    typedef T *iterator;
+    typedef const T *const_iterator;
+    typedef iterator Iterator;
+    typedef const_iterator ConstIterator;
+
+    inline iterator begin() { return data(); }
+    inline const_iterator begin() const { return constData(); }
+    inline const_iterator constBegin() const { return constData(); }
+    inline iterator end() { return data() + size(); }
+    inline const_iterator end() const { return constData() + size(); }
+    inline const_iterator constEnd() const { return constData() + size(); }
 
 private:
     QDataArray<T, PreallocSize> *m_array;

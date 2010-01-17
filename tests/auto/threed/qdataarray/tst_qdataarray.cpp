@@ -71,6 +71,7 @@ private slots:
     void mid();
     void left();
     void right();
+    void iterate();
 };
 
 // This must match the default for PreallocSize.
@@ -880,6 +881,56 @@ void tst_QDataArray::right()
     QCOMPARE(right.offset(), 0);
     QCOMPARE(right.size(), 1024);
     QVERIFY(right.dataArray() == &array);
+}
+
+void tst_QDataArray::iterate()
+{
+    QDataArray<float> array;
+    for (int index = 0; index < 1024; ++index)
+        array.append(float(index));
+
+    QDataArray<float>::Iterator it1;
+    int value = 0;
+    for (it1 = array.begin(); it1 != array.end(); ++it1)
+        QCOMPARE(*it1, float(value++));
+    QCOMPARE(value, array.size());
+
+    QDataArray<float>::ConstIterator it2;
+    value = 0;
+    for (it2 = array.constBegin(); it2 != array.constEnd(); ++it2)
+        QCOMPARE(*it2, float(value++));
+    QCOMPARE(value, array.size());
+
+    value = 0;
+    for (it1 = array.begin(); it1 != array.end(); ++it1)
+        *it1 = float(1024 - value++);
+    value = 0;
+    for (it2 = array.constBegin(); it2 != array.constEnd(); ++it2) {
+        QCOMPARE(*it2, float(1024 - value));
+        QCOMPARE(array[value], float(1024 - value));
+        ++value;
+    }
+
+    for (int index = 0; index < 1024; ++index)
+        array[index] = float(index);
+
+    QDataArrayRef<float> mid = array.mid(512, 256);
+    QDataArrayRef<float>::Iterator it3;
+    value = 512;
+    for (it3 = mid.begin(); it3 != mid.end(); ++it3)
+        QCOMPARE(*it3, float(value++));
+    QCOMPARE(value - 512, mid.size());
+
+    QDataArrayRef<float>::Iterator it4;
+    value = 512;
+    for (it4 = mid.begin(); it4 != mid.end(); ++it4)
+        *it4 = float(1024 - value++);
+
+    QDataArrayRef<float>::ConstIterator it5;
+    value = 512;
+    for (it5 = mid.constBegin(); it5 != mid.constEnd(); ++it5)
+        QCOMPARE(*it5, float(1024 - value++));
+    QCOMPARE(value - 512, mid.size());
 }
 
 QTEST_APPLESS_MAIN(tst_QDataArray)

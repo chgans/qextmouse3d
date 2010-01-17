@@ -488,6 +488,84 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \typedef QDataArray::iterator
+
+    The QDataArray::iterator typedef provides an STL-style non-const
+    iterator for QDataArray.  The iterator is simply a typedef
+    for "T *" (pointer to T).
+
+    \sa QDataArray::begin(), QDataArray::const_iterator
+*/
+
+/*!
+    \typedef QDataArray::const_iterator
+
+    The QDataArray::iterator typedef provides an STL-style const
+    iterator for QDataArray.  The iterator is simply a typedef
+    for "const T *" (pointer to const T).
+
+    \sa QDataArray::constBegin(), QDataArray::iterator
+*/
+
+/*!
+    \typedef QDataArray::Iterator
+
+    Qt-style synonym for QDataArray::iterator.
+*/
+
+/*!
+    \typedef QDataArray::ConstIterator
+
+    Qt-style synonym for QDataArray::const_iterator.
+*/
+
+/*!
+    \fn QDataArray::iterator QDataArray::begin()
+
+    Returns an STL-style iterator pointing to the first item
+    in the data array.
+
+    \sa end(), constBegin(), QDataArray::iterator
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::begin() const
+    \overload
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::constBegin() const
+
+    Returns a const STL-style iterator pointing to the first item
+    in the data array.
+
+    \sa constEnd(), begin(), QDataArray::const_iterator
+*/
+
+/*!
+    \fn QDataArray::iterator QDataArray::end()
+
+    Returns an STL-style iterator pointing to the imaginary item
+    after the last item in the data array.
+
+    \sa begin(), constEnd(), QDataArray::iterator
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::end() const
+    \overload
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::constEnd() const
+
+    Returns a const STL-style iterator pointing to the imaginary item
+    after the last item in the data array.
+
+    \sa constBegin(), end(), QDataArray::const_iterator
+*/
+
+/*!
     \class QDataArrayRef
     \brief The QDataArrayRef class is a template class for referring to a subset of a QDataArray.
     \since 4.7
@@ -698,6 +776,84 @@ QT_BEGIN_NAMESPACE
     as this reference; false otherwise.
 
     \sa operator==()
+*/
+
+/*!
+    \typedef QDataArrayRef::iterator
+
+    The QDataArrayRef::iterator typedef provides an STL-style non-const
+    iterator for QDataArrayRef.  The iterator is simply a typedef
+    for "T *" (pointer to T).
+
+    \sa QDataArrayRef::begin(), QDataArrayRef::const_iterator
+*/
+
+/*!
+    \typedef QDataArrayRef::const_iterator
+
+    The QDataArrayRef::iterator typedef provides an STL-style const
+    iterator for QDataArrayRef.  The iterator is simply a typedef
+    for "const T *" (pointer to const T).
+
+    \sa QDataArrayRef::constBegin(), QDataArrayRef::iterator
+*/
+
+/*!
+    \typedef QDataArrayRef::Iterator
+
+    Qt-style synonym for QDataArrayRef::iterator.
+*/
+
+/*!
+    \typedef QDataArrayRef::ConstIterator
+
+    Qt-style synonym for QDataArrayRef::const_iterator.
+*/
+
+/*!
+    \fn QDataArrayRef::iterator QDataArrayRef::begin()
+
+    Returns an STL-style iterator pointing to the first item
+    in the data array reference.
+
+    \sa end(), constBegin(), QDataArrayRef::iterator
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::begin() const
+    \overload
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::constBegin() const
+
+    Returns a const STL-style iterator pointing to the first item
+    in the data array reference.
+
+    \sa constEnd(), begin(), QDataArrayRef::const_iterator
+*/
+
+/*!
+    \fn QDataArrayRef::iterator QDataArrayRef::end()
+
+    Returns an STL-style iterator pointing to the imaginary item
+    after the last item in the data array reference.
+
+    \sa begin(), constEnd(), QDataArrayRef::iterator
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::end() const
+    \overload
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::constEnd() const
+
+    Returns a const STL-style iterator pointing to the imaginary item
+    after the last item in the data array reference.
+
+    \sa constBegin(), end(), QDataArrayRef::const_iterator
 */
 
 int qDataArrayAllocMore(int alloc, int extra)
