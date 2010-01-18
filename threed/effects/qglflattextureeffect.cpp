@@ -187,18 +187,13 @@ void QGLFlatTextureEffect::update
     }
 }
 
-void QGLFlatTextureEffect::setVertexArray(const QGLVertexArray& array)
+void QGLFlatTextureEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
-    value = array.attributeValue(QGL::TextureCoord0);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
+    if (attribute == QGL::Position)
+        setAttributeArray(program, 0, value);
+    else if (attribute == QGL::TextureCoord0)
+        setAttributeArray(program, 1, value);
 }
 
 QGLFlatDecalTextureEffect::QGLFlatDecalTextureEffect()

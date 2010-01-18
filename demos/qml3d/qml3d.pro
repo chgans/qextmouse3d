@@ -15,8 +15,7 @@ SOURCES = main.cpp \
     cube.cpp \
     shaderprogram.cpp \
     sphere.cpp \
-    rotation3d.cpp \
-    subItem3d.cpp
+    rotation3d.cpp
 HEADERS = item3d.h \
     qml3dview.h \
     mesh.h \
@@ -25,8 +24,7 @@ HEADERS = item3d.h \
     cube.h \
     shaderprogram.h \
     sphere.h \
-    rotation3d.h \
-    subItem3d.h
+    rotation3d.h
 LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin

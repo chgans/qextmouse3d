@@ -207,13 +207,11 @@ void QGLFlatColorEffect::update
     }
 }
 
-void QGLFlatColorEffect::setVertexArray(const QGLVertexArray& array)
+void QGLFlatColorEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
+    if (attribute == QGL::Position)
+        setAttributeArray(program, 0, value);
 }
 
 QGLPerVertexColorEffect::QGLPerVertexColorEffect()
@@ -285,18 +283,13 @@ void QGLPerVertexColorEffect::update
     }
 }
 
-void QGLPerVertexColorEffect::setVertexArray(const QGLVertexArray& array)
+void QGLPerVertexColorEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
-    value = array.attributeValue(QGL::Color);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
+    if (attribute == QGL::Position)
+        setAttributeArray(program, 0, value);
+    else if (attribute == QGL::Color)
+        setAttributeArray(program, 1, value);
 }
 
 #endif // QGL_SHADERS_ONLY

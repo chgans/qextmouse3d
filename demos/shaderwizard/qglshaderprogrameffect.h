@@ -56,7 +56,8 @@ public:
     bool supportsPicking() const;
     virtual void setActive(bool flag);
     virtual bool isActive() { return currentlyActive;}
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexShader(QString const &  shader );
@@ -69,9 +70,9 @@ protected:
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
     virtual void bindProgramUniforms();
+    QGLShaderProgram *program;
 
  private:
-    QGLShaderProgram *program;
     QString vertexShader;
     QString fragmentShader;
     int colorUniform;

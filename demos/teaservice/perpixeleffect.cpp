@@ -177,18 +177,13 @@ void PerPixelEffect::update
     d->program->setUniformValue("viewerAtInfinity", (int)(painter->lightModel()->viewerPosition() == QGLLightModel::ViewerAtInfinity));
 }
 
-void PerPixelEffect::setVertexArray(const QGLVertexArray& array)
+void PerPixelEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        d->program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
-    value = array.attributeValue(QGL::Normal);
-    if (!value.isNull()) {
-        d->program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
+    if (attribute == QGL::Position)
+        setAttributeArray(d->program, 0, value);
+    else if (attribute == QGL::Normal)
+        setAttributeArray(d->program, 1, value);
 }
 
 QT_END_NAMESPACE

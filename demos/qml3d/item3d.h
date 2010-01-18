@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef ITEM3D_H
-#define ITEM3D_H
+#ifndef Item3d_H
+#define Item3d_H
 
 #include <QtCore/qobject.h>
 #include <QtCore/qvariant.h>
@@ -62,6 +62,7 @@ class Item3dPrivate;
 class Effect;
 class Qml3dView;
 class Viewport;
+class QGLSceneNode;
 
 class Item3d : public QObject, public QmlParserStatus
 {
@@ -69,6 +70,7 @@ class Item3d : public QObject, public QmlParserStatus
     Q_INTERFACES(QmlParserStatus)
     Q_ENUMS(CullFace)
     Q_FLAGS(CullFaces)
+    Q_FLAGS(Mode)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
@@ -76,14 +78,17 @@ class Item3d : public QObject, public QmlParserStatus
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
     Q_PROPERTY(QmlList<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
-    Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)
-    Q_PROPERTY(QmlList<Item3d *>* children READ children DESIGNABLE false)
+    Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
     Q_PROPERTY(QmlList<QObject *>* resources READ resources DESIGNABLE false)
     Q_PROPERTY(QmlList<QObject *>* data READ data DESIGNABLE false)
     Q_PROPERTY(QmlList<QmlState *>* states READ states DESIGNABLE false)
     Q_PROPERTY(QmlList<QmlTransition *>* transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
+    Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
+    Q_PROPERTY(bool inheritEvents READ inheritEvents WRITE setInheritEvents NOTIFY inheritEventsChanged)
+    Q_PROPERTY(bool isVisible READ isVisible WRITE setIsVisible NOTIFY isVisibleChanged)
 	
     Q_CLASSINFO("DefaultProperty", "data")
 public:
@@ -118,6 +123,8 @@ public:
     Mesh *mesh() const;
     void setMesh(Mesh* value);
 
+    bool inheritEvents() const;
+    void setInheritEvents(bool inherit);
 
     Effect *effect() const;
     void setEffect(Effect *value);
@@ -137,12 +144,30 @@ public:
     CullFaces cullFaces() const;
     void setCullFaces(CullFaces value);
 
+    QString name() const;
+    void setName(QString nameString);
+
+    QString meshNode() const;					
+    void setMeshNode(const QString &);			
+
+    QGLSceneNode * meshObject();
+    void setMeshObject(QGLSceneNode *object);
+
+    bool isVisible() const;
+    void setIsVisible(bool visibility);
+
+    bool isInitialized() const;
+    void setIsInitialized();
+
+    int mainBranchId() const;
+    void setMainBranchId(int objectID);
+
     virtual void draw(QGLPainter *painter);
     virtual void initialize(Viewport *viewport, QGLPainter *painter);
 
     QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
 
-    void componentComplete();
+    void componentComplete();   
 
 public Q_SLOTS:
     void update();
@@ -156,6 +181,7 @@ Q_SIGNALS:
     void scaleChanged();
     void rotationChanged();
     void meshChanged();
+    void meshNodeChanged();
     void effectChanged();
     void stateChanged(const QString &);
     void clicked();
@@ -164,6 +190,9 @@ Q_SIGNALS:
     void released();
     void hoverEnter();
     void hoverLeave();
+    void nameChanged();
+    void inheritEventsChanged();
+    void isVisibleChanged();
 
 private:
     Item3dPrivate *d;

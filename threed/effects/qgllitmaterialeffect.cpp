@@ -87,19 +87,18 @@ void QGLLitMaterialEffect::update
         updateFog(painter);
 }
 
-void QGLLitMaterialEffect::setVertexArray(const QGLVertexArray& array)
+void QGLLitMaterialEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    if (setVertexAttribute(QGL::Position, array)) {
-        // If we only have positions, then disable the normal array.
-        // If the arrays are specified separately, then the positions
-        // must be specified before the normals.
-        if (setVertexAttribute(QGL::Normal, array))
-            glEnableClientState(GL_NORMAL_ARRAY);
-        else
-            glDisableClientState(GL_NORMAL_ARRAY);
-    } else if (setVertexAttribute(QGL::Normal, array)) {
+    if (attribute == QGL::Position) {
+        // Disable the normal array when the positions are set because
+        // we may need to use the common normal.  Positions always need
+        // to be specified before an array of normals.
+        glDisableClientState(GL_NORMAL_ARRAY);
+    } else if (attribute == QGL::Normal) {
         glEnableClientState(GL_NORMAL_ARRAY);
     }
+    QGLAbstractEffect::setVertexAttribute(attribute, value);
 }
 
 #else // QGL_SHADERS_ONLY
@@ -290,25 +289,17 @@ void QGLLitMaterialEffect::update(QGLPainter *painter, QGLPainter::Updates updat
     }
 }
 
-void QGLLitMaterialEffect::setVertexArray(const QGLVertexArray& array)
+void QGLLitMaterialEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (0, value.floatData(), value.size(), value.stride());
-    }
-    value = array.attributeValue(QGL::Normal);
-    if (!value.isNull()) {
-        program->setAttributeArray
-            (1, value.floatData(), value.size(), value.stride());
-    }
-    if (textureCoordsAttribute != -1) {
-        value = array.attributeValue(QGL::TextureCoord0);
-        if (!value.isNull()) {
-            program->setAttributeArray
-                (textureCoordsAttribute, value.floatData(),
-                 value.size(), value.stride());
-        }
+    if (attribute == QGL::Position) {
+        setAttributeArray(program, 0, value);
+    } else if (attribute == QGL::Normal) {
+        program->enableAttributeArray(1);
+        setAttributeArray(program, 1, value);
+    } else if (attribute == QGL::TextureCoord0 &&
+                textureCoordsAttribute != -1) {
+        setAttributeArray(program, textureCoordsAttribute, value);
     }
 }
 

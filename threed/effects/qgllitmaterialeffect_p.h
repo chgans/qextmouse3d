@@ -64,14 +64,15 @@ class QGLLitMaterialEffect : public QGLAbstractEffect
 public:
     QGLLitMaterialEffect();
     virtual ~QGLLitMaterialEffect();
-
+   
     QList<QGL::VertexAttribute> requiredFields() const;
 
     void setActive(bool flag);
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 };
 
 #else // QGL_SHADERS_ONLY
@@ -91,7 +92,8 @@ public:
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexArray(const QGLVertexArray& array);
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setCommonNormal(const QVector3D& value);
 
 protected:

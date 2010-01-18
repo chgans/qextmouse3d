@@ -82,7 +82,6 @@ public:
 
     QGLGeometry *geometry;
     QMatrix4x4 localTransform;
-	QMatrix4x4 userTransform;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     QList<QGLSceneNode*> childNodes;

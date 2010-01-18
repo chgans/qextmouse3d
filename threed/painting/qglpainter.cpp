@@ -313,6 +313,7 @@ QGLPainter::QGLPainter(QPainter *painter)
     : d_ptr(0)
 {
     begin(painter);
+
 }
 
 /*!
@@ -356,6 +357,7 @@ bool QGLPainter::begin(const QGLContext *context)
     const_cast<QGLContext *>(context)->makeCurrent();
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
+
     return true;
 }
 
@@ -1022,6 +1024,13 @@ void QGLPainterPrivate::removeRequiredFields(const QGLVertexArray& array)
         requiredFields.removeAll(array.m_fields.fieldAttribute(index));
 }
 
+void QGLPainterPrivate::removeRequiredFields
+    (const QList<QGL::VertexAttribute>& array)
+{
+    for (int index = 0; index < array.size(); ++index)
+        requiredFields.removeAll(array[index]);
+}
+
 void QGLPainter::checkRequiredFields()
 {
     Q_D(QGLPainter);
@@ -1132,100 +1141,91 @@ static QGLPainterExtensions *resolveMultiTextureExtensions(QGLPainterPrivate *pd
 
 #endif
 
-void QGLAbstractEffect::setVertexArray(const QGLVertexArray& array)
+void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
 #if !defined(QT_OPENGL_ES_2)
-    for (int field = 0; field < array.m_fields.fieldCount(); ++field) {
-        QGLAttributeValue value = array.attributeValue(field);
-        switch (array.m_fields.fieldAttribute(field)) {
-        case QGL::Position:
-            glVertexPointer(value.size(), GL_FLOAT,
-                            value.stride(), value.data());
-            break;
+    switch (attribute) {
+    case QGL::Position:
+        glVertexPointer(value.size(), value.type(),
+                        value.stride(), value.data());
+        break;
 
-        case QGL::Normal:
-            if (value.size() == 3)
-                glNormalPointer(GL_FLOAT, value.stride(), value.data());
-            break;
+    case QGL::Normal:
+        if (value.size() == 3)
+            glNormalPointer(value.type(), value.stride(), value.data());
+        break;
 
-        case QGL::Color:
-            glColorPointer(value.size(), GL_FLOAT,
-                           value.stride(), value.data());
-            break;
+    case QGL::Color:
+        glColorPointer(value.size(), value.type(),
+                       value.stride(), value.data());
+        break;
 
 #ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
-        {
-            int unit = (int)(array.m_fields.fieldAttribute(field) - QGL::TextureCoord0);
+    case QGL::TextureCoord0:
+    case QGL::TextureCoord1:
+    case QGL::TextureCoord2:
+    case QGL::TextureCoord3:
+    case QGL::TextureCoord4:
+    case QGL::TextureCoord5:
+    case QGL::TextureCoord6:
+    case QGL::TextureCoord7:
+    {
+        int unit = (int)(attribute - QGL::TextureCoord0);
 
 #if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)			
-            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
-            QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
+        // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
+        QGLPainter painter(QGLContext::currentContext());
+        if (!painter.d_ptr->extensions()->multiTextureResolved)
+            painter.d_ptr->resolveMultiTextureExtensions();
 
-			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-				glTexCoordPointer(value.size(), GL_FLOAT,
-								  value.stride(), value.data());
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
-			}
-			else if (unit!=0)
-			{
-				glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
-			}
-#elif defined(QGL_TEXTURE0)
-			glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glTexCoordPointer(value.size(), GL_FLOAT,
-                              value.stride(), value.data());
+        if (painter.d_ptr->extensions()->qt_glClientActiveTexture) {
+            painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
+            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
+                painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
+        } else if (unit!=0) {
+            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
+        }
+#elif defined(QGL_TEXTURE0)
+        glClientActiveTexture(QGL_TEXTURE0 + unit);
+        glTexCoordPointer(value.size(), value.type(),
+                          value.stride(), value.data());
+        if (unit != 0)  // Stay on unit 0 between requests.
+            glClientActiveTexture(QGL_TEXTURE0);
 #elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-           QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
+       QGLPainter painter(QGLContext::currentContext());
+        if (!painter.d_ptr->extensions()->multiTextureARBResolved)
+            painter.d_ptr->resolveMultiTextureExtensionsARB();
 
-			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
-				glTexCoordPointer(value.size(), GL_FLOAT,
-								  value.stride(), value.data());
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
-			}
-			else if (unit!=0)
-			{
-				glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
-			}
+        if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB) {
+            painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
+            if (unit != 0)  // Stay on unit 0 between requests.
+                painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
+        } else if (unit!=0) {
+            glTexCoordPointer(value.size(), value.type(),
+            value.stride(), value.data());
+        }
 #elif defined(GL_TEXTURE0_ARB)
-            glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-            glTexCoordPointer(value.size(), GL_FLOAT,
-                              value.stride(), value.data());
-            if (unit != 0)
-                glClientActiveTextureARB(GL_TEXTURE0_ARB);
+        glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
+        glTexCoordPointer(value.size(), value.type(),
+                          value.stride(), value.data());
+        if (unit != 0)
+            glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            if (unit == 0)
-                glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
+        if (unit == 0)
+            glTexCoordPointer(value.size(), value.type(),
+                              value.stride(), value.data());
 #endif
-        }
-        break;
+    }
+    break;
 #endif
 
-        default: break;
-        }
+    default: break;
     }
 #else
-    Q_UNUSED(array);
+    Q_UNUSED(attribute);
+    Q_UNUSED(value);
 #endif
 }
 
@@ -1386,106 +1386,49 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
     }
 }
 
-bool QGLAbstractEffect::setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLVertexArray& array)
+#endif // !QT_OPENGL_ES_2
+
+/*!
+    Sets a vertex \a attribute on the current GL context to \a value.
+
+    The effect() is notified via QGLAbstractEffect::setVertexAttribute()
+    about the new attribute value, and is responsible for setting it
+    on the GL state.  If the effect() does not need \a attribute,
+    it will be ignored.
+
+    \sa setVertexBuffer(), draw(), setCommonNormal()
+*/
+void QGLPainter::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(attribute);
-    if (!value.isNull()) {
-        switch (attribute) {
-        case QGL::Position:
-            glVertexPointer(value.size(), GL_FLOAT,
-                            value.stride(), value.data());
-            break;
-
-        case QGL::Normal:
-            if (value.size() == 3)
-                glNormalPointer(GL_FLOAT, value.stride(), value.data());
-            break;
-
-        case QGL::Color:
-            glColorPointer(value.size(), GL_FLOAT,
-                           value.stride(), value.data());
-            break;
-
-#ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
-        {
-            int unit = (int)(attribute - QGL::TextureCoord0);
-
-
-#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)			
-            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
-            QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-				glTexCoordPointer(value.size(), GL_FLOAT,
-								  value.stride(), value.data());
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
-			}
-			else if (unit==0)
-			{
-				glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
-			}
-#elif defined(QGL_TEXTURE0)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glTexCoordPointer(value.size(), GL_FLOAT,
-                              value.stride(), value.data());
-            if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
-#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-           QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
-				glTexCoordPointer(value.size(), GL_FLOAT,
-								  value.stride(), value.data());
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
-			}
-			else if (unit==0)
-			{
-				glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
-			}
-#elif defined(GL_TEXTURE0_ARB)
-            glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-            glTexCoordPointer(value.size(), GL_FLOAT,
-                              value.stride(), value.data());
-            if (unit != 0)
-                glClientActiveTextureARB(GL_TEXTURE0_ARB);
-#else
-
-            if (unit == 0)
-                glTexCoordPointer(value.size(), GL_FLOAT,
-                                  value.stride(), value.data());
-#endif
-		}
-        break;
-#endif
-
-        default: break;
-        }
-        return true;
-    } else {
-        return false;
-    }
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->ensureEffect();
+    d->effect->setVertexAttribute(attribute, value);
+    d->removeRequiredField(attribute);
 }
 
-#endif // !QT_OPENGL_ES_2
+/*!
+    Sets the vertex attributes on the current GL context that are
+    stored in \a buffer.
+
+    The effect() is notified via QGLAbstractEffect::setVertexAttribute()
+    about the new attribute values, and is responsible for setting it
+    on the GL state.  If the effect() does not need an attribute
+    that is stored within \a buffer, it will be ignored.
+
+    \sa setVertexAttribute(), draw(), setCommonNormal()
+*/
+void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->ensureEffect();
+    buffer.setOnEffect(d->effect);
+#ifndef QT_NO_DEBUG
+    d->removeRequiredFields(buffer.attributes());
+#endif
+}
 
 /*!
     Sets vertex attributes on the current GL context based on the
@@ -1518,11 +1461,20 @@ void QGLPainter::setVertexArray(const QGLVertexArray& array)
     d->ensureEffect();
     if (array.isUploaded() && array.bind()) {
         QGLVertexArray bufferArray = array.toBufferForm();
-        d->effect->setVertexArray(bufferArray);
+        for (int field = 0;
+                field < bufferArray.m_fields.fieldCount(); ++field) {
+            d->effect->setVertexAttribute
+                (bufferArray.m_fields.fieldAttribute(field),
+                 bufferArray.attributeValue(field));
+        }
         d->removeRequiredFields(bufferArray);
         array.release();
     } else {
-        d->effect->setVertexArray(array);
+        for (int field = 0; field < array.m_fields.fieldCount(); ++field) {
+            d->effect->setVertexAttribute
+                (array.m_fields.fieldAttribute(field),
+                 array.attributeValue(field));
+        }
         d->removeRequiredFields(array);
     }
 }
@@ -1531,7 +1483,7 @@ void QGLPainter::setVertexArray(const QGLVertexArray& array)
     Sets the common normal value on the current effect() for all
     vertices to \a value and disable any active normal arrays.
 
-    \sa setVertexArray()
+    \sa setVertexAttribute()
 */
 void QGLPainter::setCommonNormal(const QVector3D& value)
 {
@@ -1598,6 +1550,11 @@ bool QGLPainter::isTextureUnitActive(int unit) const
 */
 void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 {
+    //If we are using the painter to determine pick IDs we shouldn't use 
+    //texturing: it 'corrupts' the picking colours and results in 
+    //erroneous pick IDs.
+    if (this->isPicking()) return;
+
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     if (unit < 0)
@@ -1779,7 +1736,7 @@ void QGLPainter::update()
 
 /*!
     Draws primitives using \a count vertices from the arrays specified
-    by setVertexArray().  The type of primitive to draw is specified
+    by setVertexAttribute().  The type of primitive to draw is specified
     by \a mode.
 
     This operation will consume \a count values from the
@@ -1802,7 +1759,8 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
     \overload
 
     Draws primitives using vertices from the arrays specified by
-    setVertexArray().  The type of primitive to draw is specified by \a mode.
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
 
     This operation will consume all of the elements of \a indices,
     which are used to index into the enabled arrays.
@@ -1834,7 +1792,8 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
     \overload
 
     Draws primitives using vertices from the arrays specified by
-    setVertexArray().  The type of primitive to draw is specified by \a mode.
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
 
     This operation will consume \a count elements of \a indices,
     starting at \a offset, which are used to index into the enabled arrays.
@@ -2445,7 +2404,7 @@ QColor QGLPainter::pickColor() const
     QGLPAINTER_CHECK_PRIVATE_RETURN(QColor());
     if (d->pick) {
         QColor color;
-        color.setRgb(d->pick->pickColor);
+        color.setRgb(d->pick->pickColor);        
         return color;
     } else {
         return Qt::black;
@@ -2467,7 +2426,9 @@ int QGLPainter::pickObject(int x, int y) const
     QGLPAINTER_CHECK_PRIVATE_RETURN(-1);
 
     if (!d->pick)
+    {
         return -1;
+    }
 
     // Fetch the color at the specified pixel.
     unsigned char data[4] = {0, 0, 0, 0};
@@ -2476,7 +2437,7 @@ int QGLPainter::pickObject(int x, int y) const
 
     // Normalize the color to account for floating-point rounding.
     color = qt_qgl_normalize_pick_color(color); // XXX: detect RGB444 screens.
-
+    
     // Map the color back to an object identifier.
     return d->pick->pickColorToObject.value(color, -1);
 }

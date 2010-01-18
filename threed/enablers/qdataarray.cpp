@@ -76,7 +76,7 @@ QT_BEGIN_NAMESPACE
     QDataArray uses implicit sharing and copy-on-write semantics to support
     passing large arrays around an application with little overhead.
 
-    \sa QDetachedDataArray
+    \sa QDataArrayRef
 */
 
 /*!
@@ -147,6 +147,17 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn bool QDataArray::isDetached() const
+
+    Returns true if this data array has been detached from all other
+    shared copies of the data; false otherwise.
+
+    This function can be used to determine if functions that
+    write to this data array such as append(), replace(),
+    and data(), will need to make a copy.
+*/
+
+/*!
     \fn void QDataArray::clear()
 
     Clears all elements from this data array and sets the size to zero.
@@ -189,6 +200,16 @@ QT_BEGIN_NAMESPACE
     \overload
 
     Same as at(\a index).
+*/
+
+/*!
+    \fn T *QDataArray::extend(int size)
+
+    Extends this data array by \a size elements and returns a pointer
+    to the storage, which is not initialized.  The pointer is only
+    valid until the array is reallocated or destroyed.
+
+    \sa resize()
 */
 
 /*!
@@ -305,6 +326,39 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QDataArrayRef<T, PreallocSize> QDataArray::mid(int index, int length) const
+
+    Returns a QDataArrayRef that refers to the \a length elements of
+    this data array, starting at \a index.  If \a length is less
+    than zero, then all elements extending from \a index to the
+    end of the data array will be included in the returned reference.
+
+    \sa left(), right()
+*/
+
+/*!
+    \fn QDataArrayRef<T, PreallocSize> QDataArray::left(int length) const;
+
+    Returns a QDataArrayRef that refers to the first \a length
+    elements of this data array.  If \a length is less than zero,
+    or greater than size(), then all elements in this data array will
+    be included in the returned reference.
+
+    \sa mid(), right()
+*/
+
+/*!
+    \fn QDataArrayRef<T, PreallocSize> QDataArray::right(int length) const;
+
+    Returns a QDataArrayRef that refers to the last \a length
+    elements of this data array.  If \a length is less than zero,
+    or greater than size(), then all elements in this data array
+    will be included in the returned reference.
+
+    \sa mid(), left()
+*/
+
+/*!
     \fn T *QDataArray::data()
 
     Returns a pointer to the data stored in the data array.  The pointer
@@ -341,63 +395,29 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDetachedDataArray QDataArray::toDetachedArray() const
+    \fn QDataArray<T, PreallocSize> QDataArray::fromRawData(const T *data, int size)
 
-    Returns the data in this data array as a QDetachedDataArray.
+    Returns a data array consisting of the \a size elements from \a data.
 
-    \sa QDetachedDataArray
-*/
+    This function takes a reference to \a data, but does not copy
+    the elements until the array is modified.  The memory at \a data
+    must remain valid until the returned data array is destroyed
+    or modified.
 
-/*!
-    \fn QDataArray::operator QDetachedDataArray() const
-
-    Returns the data in this data array as a QDetachedDataArray.
-
-    \sa toDetachedArray()
-*/
-
-/*!
-    \fn QDataArray<T, PreallocSize> QDataArray::extract(int index, int size, int stride) const
-
-    Extracts a subset of the elements in this data array, starting
-    at \a index.  At each position, \a size elements are copied.
-    The positions are \a stride elements apart.
-
-    Consider an array of floats that contains vertex values consisting
-    of a 3D position, a 3D normal, and a 2D texture co-ordinate.
-    The stride is 8 and the components are at indices 0, 3, and 6
-    respectively.  The components can be extracted as follows:
+    Use append() instead of fromRawData() to force a copy to be made
+    of the elements at \a data when the data array is created:
 
     \code
-    QDataArray<float> vertices;
-    ...
-    QDataArray<float> positions = vertices.extract(0, 3, 8);
-    QDataArray<float> normals = vertices.extract(3, 3, 8);
-    QDataArray<float> texCoords = vertices.extract(6, 2, 8);
+    // Makes a copy of the data immediately.
+    QDataArray<float> array;
+    array.append(data, size);
+
+    // Does not make a copy of the data until the array is modified.
+    QDataArray<float> array;
+    array = QDataArray<float>::fromRawData(data, size);
     \endcode
 
-    \sa interleaved()
-*/
-
-/*!
-    \fn QDataArray<T, PreallocSize> QDataArray::interleaved(int thisStride, const QDataArray<T, PreallocSize>& other, int otherStride) const
-
-    Interleaves this data array with \a other.  For each vertex in
-    the returned array, \a thisStride elements will be taken from this
-    data array, and \a otherStride elements will be taken from \a other.
-
-    Consider two float arrays, containing 3D positions and 2D texture
-    co-ordinates.  They can be interleaved into a single vertex
-    array as follows:
-
-    \code
-    QDataArray<float> positions;
-    QDataArray<float> texCoords;
-    ...
-    QDataArray<float> vertices = positions.interleaved(3, texCoords, 2);
-    \endcode
-
-    \sa extract()
+    \sa append()
 */
 
 /*!
@@ -478,6 +498,375 @@ QT_BEGIN_NAMESPACE
     \sa operator+=(), append()
 */
 
+/*!
+    \typedef QDataArray::iterator
+
+    The QDataArray::iterator typedef provides an STL-style non-const
+    iterator for QDataArray.  The iterator is simply a typedef
+    for "T *" (pointer to T).
+
+    \sa QDataArray::begin(), QDataArray::const_iterator
+*/
+
+/*!
+    \typedef QDataArray::const_iterator
+
+    The QDataArray::iterator typedef provides an STL-style const
+    iterator for QDataArray.  The iterator is simply a typedef
+    for "const T *" (pointer to const T).
+
+    \sa QDataArray::constBegin(), QDataArray::iterator
+*/
+
+/*!
+    \typedef QDataArray::Iterator
+
+    Qt-style synonym for QDataArray::iterator.
+*/
+
+/*!
+    \typedef QDataArray::ConstIterator
+
+    Qt-style synonym for QDataArray::const_iterator.
+*/
+
+/*!
+    \fn QDataArray::iterator QDataArray::begin()
+
+    Returns an STL-style iterator pointing to the first item
+    in the data array.
+
+    \sa end(), constBegin(), QDataArray::iterator
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::begin() const
+    \overload
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::constBegin() const
+
+    Returns a const STL-style iterator pointing to the first item
+    in the data array.
+
+    \sa constEnd(), begin(), QDataArray::const_iterator
+*/
+
+/*!
+    \fn QDataArray::iterator QDataArray::end()
+
+    Returns an STL-style iterator pointing to the imaginary item
+    after the last item in the data array.
+
+    \sa begin(), constEnd(), QDataArray::iterator
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::end() const
+    \overload
+*/
+
+/*!
+    \fn QDataArray::const_iterator QDataArray::constEnd() const
+
+    Returns a const STL-style iterator pointing to the imaginary item
+    after the last item in the data array.
+
+    \sa constBegin(), end(), QDataArray::const_iterator
+*/
+
+/*!
+    \class QDataArrayRef
+    \brief The QDataArrayRef class is a template class for referring to a subset of a QDataArray.
+    \since 4.7
+    \ingroup qt3d
+    \ingroup qt3d::enablers
+
+    \sa QDataArray
+*/
+
+/*!
+    \fn QDataArrayRef::QDataArrayRef()
+
+    Constructs a null data array reference.
+
+    \sa isNull()
+*/
+
+/*!
+    \fn QDataArrayRef::QDataArrayRef(QDataArray<T, PreallocSize> *array)
+
+    Constructs a referenct to all of the elements of \a array.
+
+    If \a array is destroyed before this reference, then this
+    reference will be pointing at invalid memory.  If the size
+    of \a array is decreased by QDataArray::resize(), then
+    elements beyond that point that are within the range
+    of this reference will become undefined.
+*/
+
+/*!
+    \fn QDataArrayRef::QDataArrayRef(QDataArray<T, PreallocSize> *array, int offset, int size)
+
+    Constructs a reference to the \a size elements starting at
+    \a offset in \a array.
+
+    If \a size is less than zero or \a offset + \a size is
+    greater than the size of \a array, then \a size will be
+    adjusted to extend no further than the end of \a array.
+
+    The \a offset must be between 0 and the size of \a array.
+
+    If \a array is destroyed before this reference, then this
+    reference will be pointing at invalid memory.  If the size
+    of \a array is decreased by QDataArray::resize(), then
+    elements beyond that point that are within the range
+    of this reference will become undefined.
+*/
+
+/*!
+    \fn bool QDataArrayRef::isNull() const
+
+    Returns true if dataArray() is null; false otherwise.
+
+    \sa dataArray()
+*/
+
+/*!
+    \fn int QDataArrayRef::size() const
+
+    Returns the number of elements in this reference.
+
+    If dataArray() has been resized since the reference was
+    constructed, it is possible for size() to refer to beyond
+    the end of dataArray().  The extra elements of such a
+    reference are undefined.
+
+    \sa isEmpty(), offset()
+*/
+
+/*!
+    \fn int QDataArrayRef::count() const
+
+    Same as size(), provided for convenience.
+*/
+
+/*!
+    \fn bool QDataArrayRef::isEmpty() const
+
+    Returns true if this reference has a size() of zero;
+    false otherwise.
+
+    \sa size()
+*/
+
+/*!
+    \fn const T& QDataArrayRef::at(int index) const
+
+    Returns the item at position \a index in the data array.
+
+    \a index must be a valid index position in the reference
+    (i.e., 0 <= \a index < size()).  If dataArray() has been
+    resized since the reference was constructed, then
+    \a index + offset() must be a valid index position in
+    dataArray().
+
+    \sa operator[](), constData()
+*/
+
+/*!
+    \fn const T& QDataArrayRef::operator[](int index) const
+
+    Returns the item at position \a index in the data array.
+
+    \a index must be a valid index position in the reference
+    (i.e., 0 <= \a index < size()).  If dataArray() has been
+    resized since the reference was constructed, then
+    \a index + offset() must be a valid index position in
+    dataArray().
+
+    \sa at(), constData()
+*/
+
+/*!
+    \fn T& QDataArrayRef::operator[](int index)
+
+    Returns the item at position \a index in the data array.
+
+    \a index must be a valid index position in the reference
+    (i.e., 0 <= \a index < size()).  If dataArray() has been
+    resized since the reference was constructed, then
+    \a index + offset() must be a valid index position in
+    dataArray().
+
+    Note that using non-const operators can cause dataArray()
+    to do a deep copy.
+
+    \sa at(), data()
+*/
+
+/*!
+    \fn T *QDataArrayRef::data()
+
+    Returns a pointer to the data stored at offset() in dataArray().
+    The pointer can be used to access and modify the items in the
+    data array.
+
+    The pointer remains valid as long as the data array isn't
+    reallocated.
+
+    This function is mostly useful to pass a data array to a function
+    that accepts a plain C++ array.  It may make a deep copy of the
+    data array's elements if the array is implicitly shared.
+
+    \sa constData(), operator[]()
+*/
+
+/*!
+    \fn const T *QDataArrayRef::data() const
+
+    \overload
+*/
+
+/*!
+    \fn const T *QDataArrayRef::constData() const;
+
+    Returns a const pointer to the data stored at offset()
+    in dataArray().  The pointer can be used to access the
+    items in the data array.  The pointer remains valid as
+    long as the data array isn't reallocated.
+
+    This function is mostly useful to pass a data array to a function
+    that accepts a plain C++ array.
+
+    \sa data(), operator[]()
+*/
+
+/*!
+    \fn QDataArray<T, PreallocSize> *QDataArrayRef::dataArray() const
+
+    Returns the QDataArray that this reference was constructed from.
+
+    \sa offset(), size()
+*/
+
+/*!
+    \fn int QDataArrayRef::offset() const
+
+    Returns the offset into dataArray() where the data referred
+    to by this reference is located.
+
+    If dataArray() has been resized since the reference was
+    constructed, it is possible for offset() to refer to beyond
+    the end of dataArray().  The elements of such a reference
+    are undefined.
+
+    \sa dataArray(), size()
+*/
+
+/*!
+    \fn QDataArray<T, PreallocSize> QDataArrayRef::toDataArray() const
+
+    Returns the elements of this reference as a new QDataArray.
+*/
+
+/*!
+    \fn bool QDataArrayRef::operator==(const QDataArrayRef<T, PreallocSize> &other) const
+
+    Returns true if \a other has the same size and elements
+    as this reference; false otherwise.
+
+    \sa operator!=()
+*/
+
+/*!
+    \fn bool QDataArrayRef::operator!=(const QDataArrayRef<T, PreallocSize> &other) const
+
+    Returns true if \a other does not have the same size or elements
+    as this reference; false otherwise.
+
+    \sa operator==()
+*/
+
+/*!
+    \typedef QDataArrayRef::iterator
+
+    The QDataArrayRef::iterator typedef provides an STL-style non-const
+    iterator for QDataArrayRef.  The iterator is simply a typedef
+    for "T *" (pointer to T).
+
+    \sa QDataArrayRef::begin(), QDataArrayRef::const_iterator
+*/
+
+/*!
+    \typedef QDataArrayRef::const_iterator
+
+    The QDataArrayRef::iterator typedef provides an STL-style const
+    iterator for QDataArrayRef.  The iterator is simply a typedef
+    for "const T *" (pointer to const T).
+
+    \sa QDataArrayRef::constBegin(), QDataArrayRef::iterator
+*/
+
+/*!
+    \typedef QDataArrayRef::Iterator
+
+    Qt-style synonym for QDataArrayRef::iterator.
+*/
+
+/*!
+    \typedef QDataArrayRef::ConstIterator
+
+    Qt-style synonym for QDataArrayRef::const_iterator.
+*/
+
+/*!
+    \fn QDataArrayRef::iterator QDataArrayRef::begin()
+
+    Returns an STL-style iterator pointing to the first item
+    in the data array reference.
+
+    \sa end(), constBegin(), QDataArrayRef::iterator
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::begin() const
+    \overload
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::constBegin() const
+
+    Returns a const STL-style iterator pointing to the first item
+    in the data array reference.
+
+    \sa constEnd(), begin(), QDataArrayRef::const_iterator
+*/
+
+/*!
+    \fn QDataArrayRef::iterator QDataArrayRef::end()
+
+    Returns an STL-style iterator pointing to the imaginary item
+    after the last item in the data array reference.
+
+    \sa begin(), constEnd(), QDataArrayRef::iterator
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::end() const
+    \overload
+*/
+
+/*!
+    \fn QDataArrayRef::const_iterator QDataArrayRef::constEnd() const
+
+    Returns a const STL-style iterator pointing to the imaginary item
+    after the last item in the data array reference.
+
+    \sa constBegin(), end(), QDataArrayRef::const_iterator
+*/
+
 int qDataArrayAllocMore(int alloc, int extra)
 {
     if (alloc == 0 && extra == 0)
@@ -496,102 +885,5 @@ int qDataArrayAllocMore(int alloc, int extra)
     }
     return nalloc;
 }
-
-/*!
-    \class QDetachedDataArray
-    \brief The QDetachedDataArray class represents a read-only copy of the generic data within a QDataArray.
-    \since 4.7
-    \ingroup qt3d
-    \ingroup qt3d::enablers
-
-    QDataArray is very convenient for constructing large arrays of
-    points and vertex values.  However, because it is a template class
-    it can be inconvenient use to several different template instantiations
-    with other functions that expect generic data of any type.  For example:
-
-    \code
-    void setVertexAttribute(const QDataArray<float>& array);
-    void setVertexAttribute(const QDataArray<QVector2D>& array);
-    void setVertexAttribute(const QDataArray<QVector3D>& array);
-    ...
-    \endcode
-
-    Providing a comprehensive list is difficult.  To address this problem,
-    QDetachedDataArray allows the raw data within a QDataArray to be
-    referred to without large numbers of overrides:
-
-    \code
-    void setVertexAttribute(const QDetachedDataArray& array);
-    \endcode
-
-    \sa QDataArray
-*/
-
-/*!
-    \fn QDetachedDataArray::QDetachedDataArray()
-
-    Constructs a null detached data array.
-
-    Use QDataArray::toDetachedArray() to construct an actual reference
-    to data within a QDataArray.
-
-    \sa QDataArray::toDetachedArray()
-*/
-
-/*!
-    \fn QDetachedDataArray::QDetachedDataArray(const QDetachedDataArray& other)
-
-    Constructs a copy of \a other.
-
-    \sa operator=()
-*/
-
-/*!
-    \fn QDetachedDataArray::~QDetachedDataArray()
-
-    Destroys this detached data array reference.  If this is the last
-    reference, the data will be deallocated.
-*/
-
-/*!
-    \fn QDetachedDataArray& QDetachedDataArray::operator=(const QDetachedDataArray& other)
-
-    Assigns \a other to this detached data array and returns a reference
-    to this detached data array.
-*/
-
-/*!
-    \fn bool QDetachedDataArray::isNull() const
-
-    Returns true if this detached data array is null; false otherwise.
-
-    \sa data()
-*/
-
-/*!
-    \fn const void *QDetachedDataArray::data() const
-
-    Returns a const pointer to the data within this detached data array.
-
-    \sa isNull(), size()
-*/
-
-/*!
-    \fn int QDetachedDataArray::size() const
-
-    Returns the number of bytes that are present at the memory
-    location referred to by data().
-
-    \sa data(), elementSize()
-*/
-
-/*!
-    \fn int QDetachedDataArray::elementSize() const
-
-    Returns the size of elements in this detached data array.
-    There are size() / elementSize() elements in the array.
-
-    \sa size()
-*/
 
 QT_END_NAMESPACE

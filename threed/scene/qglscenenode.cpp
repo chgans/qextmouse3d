@@ -454,11 +454,10 @@ void QGLSceneNode::draw(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
-    if (!d->localTransform.isIdentity() || !d->userTransform.isIdentity())
+    if (!d->localTransform.isIdentity())
     {
          painter->modelViewMatrix().push();
-         if (!d->localTransform.isIdentity())  painter->modelViewMatrix() *= d->localTransform;
-         if (!d->userTransform.isIdentity()) painter->modelViewMatrix() *= d->userTransform;
+         painter->modelViewMatrix() *= d->localTransform;
          wasTransformed = true;
     }
 
@@ -549,7 +548,6 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
     node->setLocalTransform(d->localTransform);
-	node->setUserTransform(d->userTransform);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);

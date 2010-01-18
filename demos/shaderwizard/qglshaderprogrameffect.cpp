@@ -404,26 +404,15 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
     }
 }
 
-void QGLShaderProgramEffect::setVertexArray(const QGLVertexArray& array)
+void QGLShaderProgramEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    QGLAttributeValue value = array.attributeValue(QGL::Position);
-    if(program && !value.isNull())
-    {
-        program->setAttributeArray( 0, value.floatData(), value.size(),
-                                    value.stride());
-    }
-    value = array.attributeValue(QGL::Normal);
-    if(program && !value.isNull())
-    {
-        program->setAttributeArray( 1, value.floatData(), value.size(),
-                                    value.stride());
-    }
-    value = array.attributeValue(QGL::TextureCoord0);
-    if(program && !value.isNull())
-    {
-        program->setAttributeArray( 2, value.floatData(), value.size(),
-                                    value.stride());
-    }
+    if (attribute == QGL::Position)
+        setAttributeArray(program, 0, value);
+    else if (attribute == QGL::Normal)
+        setAttributeArray(program, 1, value);
+    else if (attribute == QGL::TextureCoord0)
+        setAttributeArray(program, 2, value);
 }
 
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)

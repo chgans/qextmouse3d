@@ -448,16 +448,16 @@ void QGLGraphicsViewportItem::paint
         // that the background color will blend with the underlying
         // screen content if it has an alpha component.
         glDisable(GL_DEPTH_TEST);
-        static const GLfloat vertices[] = {
-            -1, -1, 1, -1, 1, 1, -1, 1
-        };
-        QGLVertexArray array(QGL::Position, 2);
-        array.setRawData(vertices, 8);
+        QVector2DArray array;
+        array.append(-1, -1);
+        array.append(1, -1);
+        array.append(1, 1);
+        array.append(-1, 1);
         glpainter.projectionMatrix().setToIdentity();
         glpainter.modelViewMatrix().setToIdentity();
         glpainter.setStandardEffect(QGL::FlatColor);
         glpainter.setColor(d->backgroundColor);
-        glpainter.setVertexArray(array);
+        glpainter.setVertexAttribute(QGL::Position, array);
         glpainter.draw(QGL::TriangleFan, 4);
     }
     if (d->clearDepthBuffer)

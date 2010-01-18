@@ -45,7 +45,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::ComponentType
-    \since 4.6
+    \since 4.7
     This enum defines the type of a vertex attribute component.
 
     \value Byte Signed 8-bit byte.
@@ -60,7 +60,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAttributeValue
     \brief The QGLAttributeValue class encapsulates information about an OpenGL attribute value.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -74,14 +74,14 @@ QT_BEGIN_NAMESPACE
 
     QGLAttributeValue encapsulates these four values so that they can
     be easily manipulated as a set during OpenGL painting operations.
-    The most common source of QGLAttributeValue instances is as a
-    result of calling QGLVertexArray::attributeValue().
+    Constructors are provided for converting QDataArray and
+    QCustomDataArray objects into an attribute value.
 
     Because the data() value is a raw pointer to arbitrary memory,
     care should be taken that the memory remains valid until the
     QGLAttributeValue is no longer required.
 
-    \sa QGLVertexArray
+    \sa QDataArray, QCustomDataArray
 */
 
 /*!
@@ -93,6 +93,97 @@ QT_BEGIN_NAMESPACE
 
     \sa isNull()
 */
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<float>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 1, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector2D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 2, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector3D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 3, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector4D>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 4, type() to QGL::Float, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QColor4b>& array)
+
+    Constructs an attribute value that refers to the contents of \a array,
+    setting size() to 4, type() to QGL::UByte, and stride() to zero.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+
+/*!
+    Constructs an attribute value that refers to the contents of \a array.
+    The size() and type() of the attribute value will be set according
+    to the QCustomDataArray::elementType() of \a array.
+
+    The \a array must not be destroyed or modified until the attribute
+    value is no longer required.
+*/
+QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
+    : m_stride(0), m_data(array.data())
+{
+    switch (array.elementType()) {
+    case QCustomDataArray::Float:
+        m_size = 1;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector2D:
+        m_size = 2;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector3D:
+        m_size = 3;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Vector4D:
+        m_size = 4;
+        m_type = QGL::Float;
+        break;
+    case QCustomDataArray::Color:
+        m_size = 4;
+        m_type = QGL::UByte;
+        break;
+    default:
+        // Just in case: set the object to null.
+        m_size = 0;
+        m_type = QGL::Float;
+        m_data = 0;
+        break;
+    }
+}
 
 /*!
     \fn QGLAttributeValue::QGLAttributeValue(int size, QGL::ComponentType type, int stride, const void *data)
@@ -126,16 +217,6 @@ QT_BEGIN_NAMESPACE
 
     Returns the component type for this attribute value.  The default
     value is QGL::Float.
-
-    \sa setType()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setType(QGL::ComponentType value)
-
-    Sets the component type for this attribute value to \a value.
-
-    \sa type()
 */
 
 /*!
@@ -145,16 +226,7 @@ QT_BEGIN_NAMESPACE
     a return value of 3 indicates a vector of 3-dimensional values.
     If size() is zero, then this attribute value is null.
 
-    \sa setSize(), isNull()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setSize(int value)
-
-    Sets the size of this attribute in components to \a value,
-    which must be between 1 and 4.
-
-    \sa size()
+    \sa isNull()
 */
 
 /*!
@@ -163,40 +235,17 @@ QT_BEGIN_NAMESPACE
     Returns the stride in bytes from one vertex element to the
     next for this attribute value.  The default value of 0 indicates
     that the elements are tightly packed within the data() array.
-
-    \sa setStride()
 */
 
 /*!
-    \fn void QGLAttributeValue::setStride(int value)
-
-    Sets the stride in bytes from one vertex element to the
-    next to \a value.  If \a value is 0, then the elements are
-    tightly packed within the data() array.
-
-    \sa stride()
-*/
-
-/*!
-    \fn size_t QGLAttributeValue::offset() const
+    \fn int QGLAttributeValue::offset() const
 
     Returns the vertex buffer offset for this attribute value.
 
     This function is a convenience that returns data() cast
     to an integer offset value.
 
-    \sa setOffset(), data()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setOffset(size_t value)
-
-    Sets the vertex buffer offset for this attribute value to \a value.
-
-    This function is a convenience that casts \a value to a pointer
-    and then calls setData().
-
-    \sa offset(), setData()
+    \sa data()
 */
 
 /*!
@@ -204,20 +253,7 @@ QT_BEGIN_NAMESPACE
 
     Returns the data pointer for the elements in this attribute value.
 
-    \sa setData(), offset(), floatData()
-*/
-
-/*!
-    \fn void QGLAttributeValue::setData(const void *value)
-
-    Sets the data pointer for the elements in this attribute value
-    to \a value.
-
-    Because the \a value is a raw pointer to arbitrary memory,
-    care should be taken that the memory remains valid until the
-    QGLAttributeValue is no longer required.
-
-    \sa data(), setOffset()
+    \sa offset(), floatData()
 */
 
 /*!

@@ -289,14 +289,14 @@ void Viewport::earlyDraw(QGLPainter *painter)
 void Viewport::draw(QGLPainter *painter)
 {
     painter->setObjectPickId(-1);
-    QObjectList list = QObject::children();
-    bool haveLights = false;
+    QObjectList list = QObject::children();    
+    int lightNumber = 0;
     foreach (QObject *child, list) {
         QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
         if (light) {
-            painter->setLightParameters(0, light); // XXX - non-zero lights
-            painter->setLightEnabled(0, true);
-            haveLights = true;
+            painter->setLightParameters(lightNumber, light); // XXX - non-zero lights
+            painter->setLightEnabled(lightNumber, true);
+            lightNumber++;
         }
     }
     painter->setLightModel(d->lightModel);
@@ -305,14 +305,11 @@ void Viewport::draw(QGLPainter *painter)
         if (item)
             item->draw(painter);
     }
-    if (haveLights) {
-        foreach (QObject *child, list) {
-            QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
-            if (light) {
-                painter->setLightParameters(0, 0);  // XXX - non-zero lights
-                painter->setLightEnabled(0, false);
-            }
-        }
+    
+    for (int i=0; i<lightNumber; i++)
+    {
+        painter->setLightParameters(i,0);
+        painter->setLightEnabled(i, 0);
     }
 }
 

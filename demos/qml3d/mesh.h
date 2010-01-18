@@ -73,17 +73,32 @@ public:
     QUrl source() const;
     void setSource(const QUrl& value);
 
-    QString meshName() const;
+    QString meshName() const;    
     void setMeshName(const QString& value);
 
+    virtual void draw(QGLPainter *painter, int branchId);
+
+    //The following functions relate to allocating the scene and its
+    //respective objects, and acessing these nodes.
+    void setScene(QGLAbstractScene *scene);
+    void initSceneObjectList();
+    QStringList getSceneObjectNames();
+    QGLSceneObject *getSceneObject();
+    QGLSceneObject *getSceneObject(const QString &name);
     QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
-
-    virtual void draw(QGLPainter *painter);
-
+    
+    //The following functions relate to splitting the main scene into sub-branches
+    int nextSceneBranchId() const;    
+    int createSceneBranch(QString nodeName, QObject *parent = 0);
+    int addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParent=NULL);
+    void restoreSceneBranch(int branchId);
+    void resetSceneBranches();
+    QGLSceneObject *getSceneBranch(int branchId) const;
+    
     void ref();
     bool deref();
 
-    Q_INVOKABLE QObject *material(const QString& name) const;
+    Q_INVOKABLE QObject *material(const QString& name);
 
     void componentComplete();
 
@@ -94,11 +109,15 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void dataRequestFinished();
-
+    
 private:
     MeshPrivate *d;
-    void setScene(QGLAbstractScene *scene);
+
 };
+
+
+
+
 
 QML_DECLARE_TYPE(Mesh)
 
