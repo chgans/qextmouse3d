@@ -251,16 +251,6 @@ bool QGLSection::isFinalized() const
 
 /*!
     \internal
-    Returns the index array associated with this section.
-*/
-QGLIndexArray QGLSection::indices() const
-{
-    return d->indices;
-}
-
-
-/*!
-    \internal
     Adds the logical \a vertex to this section.
 
     If the \a vertex has no lighting normal component, then the append will
@@ -482,7 +472,7 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
 */
 QGLIndexArray QGLSection::indices() const
 {
-    return d->data.indices;
+    return d->indices;
 }
 
 /*!

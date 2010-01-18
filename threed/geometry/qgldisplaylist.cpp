@@ -368,6 +368,21 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     }
 }
 
+void addQuad(QLogicalVertex a, QLogicalVertex b,
+                 QLogicalVertex c, QLogicalVertex d,
+                 const QVector3D &normal = QVector3D())
+{
+    QVector3D norm = normal;
+    if (!quad.hasField(QGL::Normal) && norm.isNull())
+    {
+        norm = QVector3D::crossProduct(b - a, c - a);
+        if (norm.isNull())
+            norm = QVector3D(1.0f, 0.0f, 0.0f);
+    }
+    addTriangle(a, b, c, norm);
+    addTriangle(a, c, d, norm);
+}
+
 /*!
     Add a \a quad or list of quads to this display list.  Each quad
     is broken up into two triangles, and added via the addTriangle()
@@ -526,7 +541,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 {
-    if (edges.count() < 4)
+    if (face.count() < 4)
     {
         addTriangleFan(face);
     }
@@ -534,7 +549,7 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
     {
         QDataArray<QVector3D> v = face.vertices();
         QVector3D norm = QVector3D::normal(v[0], v[1], v[2]);
-        QLogicalVertex center(fan, 0);
+        QLogicalVertex center(face, 0);
         int cnt = (face.flags() & QGL::NO_CLOSE_PATH) ? face.count() - 1 : face.count();
         for (int i = 1; i < cnt; ++i)
         {
@@ -601,8 +616,8 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
     The \a bottom QGLPrimitive must be \bold{reversed} so that the correct
     winding for an outward facing polygon is obtained.
 */
-QGLPrimitive QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
-                                            const QGLPrimitive &bottom)
+void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
+                                    const QGLPrimitive &bottom)
 {
     int cnt = qMin(top.count(), bottom.count());
     if (cnt >= 3)
@@ -615,11 +630,11 @@ QGLPrimitive QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
         {
             int n = (i + 1) % max;
             if (reverse)
-                addQuad(result[n], result[i], edges[i], edges[n],
-                        txip, cxip);
+                addQuad(bottom.vertexAt(n), bottom.vertexAt(i),
+                        top.vertexAt(i), top.vertexAt(n));
             else
-                addQuad(result[i], result[n], edges[n], edges[i],
-                        txip, cxip);
+                addQuad(bottom.vertexAt(i), bottom.vertexAt(n),
+                        top.vertexAt(n), top.vertexAt(i));
         }
     }
 }

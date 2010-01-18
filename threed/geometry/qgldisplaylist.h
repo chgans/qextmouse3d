@@ -114,6 +114,9 @@ public:
     void addTriangle(QLogicalVertex a, QLogicalVertex b,
                      QLogicalVertex c, const QVector3D &normal = QVector3D());
     void addTriangle(const QGLPrimitive &triangle);
+    void addTriangle(QLogicalVertex a, QLogicalVertex b,
+                     QLogicalVertex c, QLogicalVertex d,
+                     const QVector3D &normal = QVector3D());
     void addQuad(const QGLPrimitive &quad);
     void addTriangleFan(const QGLPrimitive &fan);
     void addTriangleStrip(const QGLPrimitive &strip);
