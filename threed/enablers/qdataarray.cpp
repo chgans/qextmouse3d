@@ -291,7 +291,7 @@ QT_BEGIN_NAMESPACE
     are initialized with all-zeroes.  If \a size is less than the current
     size, elements are removed from the end.
 
-    \sa size(), reserve(), shrink()
+    \sa size(), reserve(), squeeze()
 */
 
 /*!
@@ -306,23 +306,32 @@ QT_BEGIN_NAMESPACE
     will be appended ahead of time.  Reserving the space once can avoid
     unnecessary realloc operations later.
 
-    \sa capacity(), resize(), shrink()
+    \sa capacity(), resize(), squeeze()
 */
 
 /*!
-    \fn void QDataArray::shrink(int size)
+    \fn void QDataArray::squeeze()
 
-    Shrinks the capacity of this data array to \a size, removing
-    elements from the end if necessary.  Does nothing if the capacity
+    Releases any memory not required to store the data array's elements
+    by reducing its capacity() to size().
+
+    \sa reserve(), capacity()
+*/
+
+/*!
+    \fn void QDataArray::squeeze(int size)
+
+    Reduces the capacity() of this data array to \a size, removing
+    elements from the end if necessary.  Does nothing if the capacity()
     is already less than \a size.
 
     This function is intended for reclaiming memory in a data
     array that is being used over and over with different contents.
     As elements are added to a data array, it will be constantly
-    expanded in size.  This function will realloc the data array
+    expanded in size.  This function can realloc the data array
     to a smaller size to reclaim unused memory.
 
-    \sa reserve()
+    \sa reserve(), capacity()
 */
 
 /*!

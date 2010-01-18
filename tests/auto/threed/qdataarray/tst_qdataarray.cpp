@@ -64,7 +64,7 @@ private slots:
     void copy();
     void resize();
     void reserve();
-    void shrink();
+    void squeeze();
     void compare();
     void remove();
     void extend();
@@ -530,7 +530,7 @@ void tst_QDataArray::reserve()
     QCOMPARE(array.count(), 1000);
 }
 
-void tst_QDataArray::shrink()
+void tst_QDataArray::squeeze()
 {
     QDataArray<float> array;
     array.reserve(100);
@@ -543,40 +543,40 @@ void tst_QDataArray::shrink()
     array.reserve(400);
     QVERIFY(array.capacity() >= 400);
 
-    // Shrinking sets the capacity to exactly the value that is specified.
-    array.shrink(200);
+    // Squeezing sets the capacity to exactly the value that is specified.
+    array.squeeze(200);
     QCOMPARE(array.capacity(), 200);
     QCOMPARE(array.count(), 100);
 
-    // Can't shrink to something larger.
-    array.shrink(300);
+    // Can't squeeze to something larger.
+    array.squeeze(300);
     QCOMPARE(array.capacity(), 200);
     QCOMPARE(array.count(), 100);
 
     // Drop elements from the end.
-    array.shrink(50);
+    array.squeeze(50);
     QCOMPARE(array.capacity(), 50);
     QCOMPARE(array.count(), 50);
     for (int index = 0; index < 50; ++index)
         QCOMPARE(array[index], float(index));
 
-    // Test shrinking within the preallocated area.
+    // Test squeezing within the preallocated area.
     QDataArray<float> array2;
     array2.append(1.0f);
     array2.append(2.0f);
     array2.append(3.0f);
-    array2.shrink(2);
+    array2.squeeze(2);
     QCOMPARE(array2.capacity(), ExpectedMinCapacity);
     QCOMPARE(array2.count(), 2);
 
-    // Test copy-on-write during shrinking.
+    // Test copy-on-write during squeezing.
     QDataArray<float> array3(array);
-    array3.shrink(20);
+    array3.squeeze(20);
     QCOMPARE(array3.count(), 20);
     QCOMPARE(array.count(), 50);
 
     // Clear and check that the array reverts to preallocation.
-    array.shrink(0);
+    array.squeeze(0);
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
 }
 

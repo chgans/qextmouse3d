@@ -96,7 +96,8 @@ public:
 
     void resize(int size);
     void reserve(int size);
-    void shrink(int size);
+    void squeeze();
+    void squeeze(int size);
 
     QDataArrayRef<T, PreallocSize> mid(int index, int length = -1) const;
     QDataArrayRef<T, PreallocSize> left(int length) const;
@@ -658,14 +659,20 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::reserve(int size)
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze()
+{
+    squeeze(size());
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze(int size)
 {
     if (size <= 0) {
         clear();
         return;
     }
 
-    // Bail out if the capacity is already smaller than the shrink size.
+    // Bail out if the capacity is already smaller than the squeeze size.
     if (size >= capacity())
         return;
 
@@ -684,7 +691,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::shrink(int size)
         }
     }
 
-    // If the array is in the preallocated area, then no point shrinking.
+    // If the array is in the preallocated area, then no point squeezing.
     if (!m_data)
         return;
 
