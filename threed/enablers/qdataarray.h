@@ -135,7 +135,8 @@ private:
         QBasicAtomicInt ref;
         int used;
         int capacity;
-        T *array;   // Usually points to "data" unless a raw data array.
+        int reserved;   // For future use as flag bits.
+        T *array;       // Usually points to "data" unless a raw data array.
         T data[1];
     };
 
@@ -151,7 +152,11 @@ private:
     mutable T *m_limit;
     mutable Data *m_data;
     union {
-        char m_prealloc[sizeof(T) * PreallocSize];
+        char
+#if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
+            Q_DECL_ALIGN(Q_ALIGNOF(T))
+#endif
+            m_prealloc[sizeof(T) * PreallocSize];
         qint64 q_for_alignment_1;
         double q_for_alignment_2;
     };
@@ -249,6 +254,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForWrite(int needed
     data->ref = 1;
     data->used = oldSize;
     data->capacity = size;
+    data->reserved = 0;
     data->array = data->data;
     if (oldSize > 0)
         qMemCopy(data->array, m_data->array, oldSize * sizeof(T));
@@ -278,6 +284,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForCopy(int needed)
         m_data->ref = 1;
         m_data->used = m_end - m_start;
         m_data->capacity = capacity;
+        m_data->reserved = 0;
         m_data->array = m_data->data;
         qMemCopy(m_data->array, m_start, m_data->used * sizeof(T));
     }
@@ -342,6 +349,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& val
         m_data->ref = 1;
         m_data->used = size;
         m_data->capacity = capacity;
+        m_data->reserved = 0;
         m_data->array = m_data->data;
         m_start = m_data->array;
         m_end = m_start;
@@ -373,6 +381,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const T *data, int siz
         newData->ref = 1;
         newData->used = size;
         newData->capacity = size;
+        newData->reserved = 0;
         newData->array = const_cast<T *>(data);
         m_start = 0;
         m_end = 0;
