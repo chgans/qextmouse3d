@@ -42,6 +42,7 @@
 #include <QtTest/QtTest>
 #include "qglcolladafxeffectfactory.h"
 #include <QXmlStreamReader>
+#include <QColor>
 
 class QGLColladaFxEffect;
 
@@ -72,6 +73,7 @@ private slots:
     void processFloatList_data();
     void processFloatList();
     void processLibraryImagesElement();
+    void loadEffectsFromFile();
 };
 
 
@@ -175,6 +177,32 @@ void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
     QCOMPARE(imageParam->name(), QString("Rose"));
     QCOMPARE(imageParam->image().size(), QSize(50,75));
 }
+
+void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
+{
+    QList<QGLColladaFxEffect*> cubeResult =
+            QGLColladaFxEffectFactory::loadEffectsFromFile(":/collada_cube.xml");
+
+    QCOMPARE(cubeResult.count(), 1);
+
+    QGLColladaFxEffect* cubeEffect = cubeResult.at(0);
+
+    QEXPECT_FAIL("", "Missing functionality", Continue);
+    QCOMPARE(cubeEffect->id(), QString("whitePhong"));
+
+    QCOMPARE(cubeEffect->sid(), QString("phong1"));
+    QVERIFY2(cubeEffect->material()->emittedLight() ==
+             QColor::fromRgbF(0, 0, 0.3, 1.0), "Emission color doesn't match");
+    QVERIFY2(cubeEffect->material()->ambientColor() ==
+             QColor::fromRgbF(1.0, 0, 0, 1.0), "Ambient color doesn't match");
+    QVERIFY2(cubeEffect->material()->diffuseColor() == QColor::fromRgbF(0.0, 1.0, 0.0, 1.0),
+             "Diffuse color doesn't match");
+    QVERIFY2(cubeEffect->material()->specularColor() ==
+             QColor::fromRgbF(1.0, 1.0, 1.0, 1.0),
+             "Specular color doesn't match");
+    QVERIFY2(cubeEffect->material()->shininess() == 20, "Shininess doesn't match");
+}
+
 
 QTEST_APPLESS_MAIN(tst_QGLColladaFxEffectFactory)
 
