@@ -165,7 +165,7 @@ private:
 
     void reallocate(int capacity);
     void detachForWrite(int needed = 0);
-    void detachForCopy(int needed = 0) const;
+    void copyFromUnshared(const QDataArray<T, PreallocSize>& other);
     void grow(int needed);
 };
 
@@ -269,30 +269,31 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForWrite(int needed
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForCopy(int needed) const
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::copyFromUnshared(const QDataArray<T, PreallocSize>& other)
 {
-    if (m_data) {
-        // Data is already on the heap: update the used size.
-        m_data->used = m_end - m_start;
+    if (!other.m_data) {
+        // Copy the preallocated data from the other object.
+        int size = other.m_end - other.m_start;
+        m_start = reinterpret_cast<T *>(m_prealloc);
+        m_end = m_start + size;
+        m_limit = m_start + PreallocSize;
+        m_data = 0;
+        if (size > 0)
+            qMemCopy(m_start, other.m_start, size * sizeof(T));
     } else {
-        // Copy preallocated data to the heap.
-        int capacity = qDataArrayAllocMore(m_limit - m_start, needed);
-        Data *data = reinterpret_cast<Data *>
-            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        m_data = data;
-        m_data->ref = 1;
-        m_data->used = m_end - m_start;
-        m_data->capacity = capacity;
-        m_data->reserved = 0;
-        m_data->array = m_data->data;
-        qMemCopy(m_data->array, m_start, m_data->used * sizeof(T));
-    }
+        // Detach the fast-append pointers in the other object.
+        other.m_data->used = other.m_end - other.m_start;
+        other.m_start = 0;
+        other.m_end = 0;
+        other.m_limit = 0;
 
-    // Force copy-on-write the next time an append is done.
-    m_start = 0;
-    m_end = 0;
-    m_limit = 0;
+        // Add a reference to the other object's heap data.
+        m_start = 0;
+        m_end = 0;
+        m_limit = 0;
+        m_data = other.m_data;
+        m_data->ref.ref();
+    }
 }
 
 template <typename T, int PreallocSize>
@@ -302,10 +303,22 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::grow(int needed)
     if (m_start) {
         if (needed <= (m_limit - m_end))
             return; // There is enough capacity already.
-        if (m_data)
+        if (m_data) {
             m_data->used = m_end - m_start;
-        else
-            detachForCopy(needed);
+        } else {
+            // Copy preallocated data to the heap and expand the capacity.
+            int capacity = qDataArrayAllocMore(m_limit - m_start, needed);
+            Data *data = reinterpret_cast<Data *>
+                (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
+            Q_CHECK_PTR(data);
+            m_data = data;
+            m_data->ref = 1;
+            m_data->used = m_end - m_start;
+            m_data->capacity = capacity;
+            m_data->reserved = 0;
+            m_data->array = m_data->data;
+            qMemCopy(m_data->array, m_start, m_data->used * sizeof(T));
+        }
     } else if (m_data->ref != 1 || m_data->array != m_data->data) {
         detachForWrite(needed);
     }
@@ -362,13 +375,15 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& val
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const QDataArray<T, PreallocSize>& other)
 {
-    if (other.m_start)
-        other.detachForCopy();
-    m_start = 0;
-    m_end = 0;
-    m_limit = 0;
-    m_data = other.m_data;
-    m_data->ref.ref();
+    if (other.m_start) {
+        copyFromUnshared(other);
+    } else {
+        m_start = 0;
+        m_end = 0;
+        m_limit = 0;
+        m_data = other.m_data;
+        m_data->ref.ref();
+    }
 }
 
 template <typename T, int PreallocSize>
@@ -407,11 +422,13 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::oper
 {
     if (other.m_start) {
         if (other.m_start != other.m_end) {
-            other.detachForCopy();
+            if (m_data && !m_data->ref.deref())
+                qFree(m_data);
+            copyFromUnshared(other);
         } else {
             clear();
-            return *this;
         }
+        return *this;
     } else if (other.m_data == m_data) {
         return *this;
     }

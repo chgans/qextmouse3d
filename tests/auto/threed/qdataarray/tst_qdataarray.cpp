@@ -72,6 +72,7 @@ private slots:
     void left();
     void right();
     void iterate();
+    void copyPrealloc();
 };
 
 // This must match the default for PreallocSize.
@@ -931,6 +932,37 @@ void tst_QDataArray::iterate()
     for (it5 = mid.constBegin(); it5 != mid.constEnd(); ++it5)
         QCOMPARE(*it5, float(1024 - value++));
     QCOMPARE(value - 512, mid.size());
+}
+
+// Verify that when the data is in the preallocated section, it is
+// copied across and the original constData() pointer remains the same.
+void tst_QDataArray::copyPrealloc()
+{
+    QDataArray<float> array1;
+    array1.append(1.0f);
+    array1.append(2.0f);
+
+    const float *data = array1.constData();
+
+    QDataArray<float> array2(array1);
+
+    QVERIFY(array1.constData() == data);
+    QVERIFY(array2.constData() != data);
+
+    QCOMPARE(array2.size(), 2);
+    QCOMPARE(array2[0], float(1.0f));
+    QCOMPARE(array2[1], float(2.0f));
+
+    QDataArray<float> array3;
+    QCOMPARE(array3.size(), 0);
+    array3 = array1;
+
+    QVERIFY(array1.constData() == data);
+    QVERIFY(array3.constData() != data);
+
+    QCOMPARE(array3.size(), 2);
+    QCOMPARE(array3[0], float(1.0f));
+    QCOMPARE(array3[1], float(2.0f));
 }
 
 QTEST_APPLESS_MAIN(tst_QDataArray)
