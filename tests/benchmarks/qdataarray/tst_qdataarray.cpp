@@ -59,6 +59,8 @@ public:
 private slots:
     void append_data();
     void append();
+    void appendReserved_data();
+    void appendReserved();
     void appendSmall_data();
     void appendSmall();
     void appendFourAtATime_data();
@@ -148,6 +150,60 @@ void tst_QDataArray::append()
         }
     } else if (type == Test_STLVector) {
         std::vector<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.push_back(float(i));
+        }
+    }
+}
+
+void tst_QDataArray::appendReserved_data()
+{
+    append_data();
+}
+
+void tst_QDataArray::appendReserved()
+{
+    QFETCH(int, size);
+    QFETCH(int, type);
+
+    if (type == Test_DataBuffer) {
+        QDataBuffer<float> buffer;
+        buffer.reserve(size);
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.add(float(i));
+        }
+    } else if (type == Test_Vector) {
+        QVector<float> buffer;
+        buffer.reserve(size);
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_List) {
+        QList<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_VarLengthArray) {
+        QVarLengthArray<float> buffer;
+        buffer.reserve(size);
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_DataArray) {
+        QDataArray<float> buffer;
+        buffer.reserve(size);
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_STLVector) {
+        std::vector<float> buffer;
+        buffer.reserve(size);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.push_back(float(i));
