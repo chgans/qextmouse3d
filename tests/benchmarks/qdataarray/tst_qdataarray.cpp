@@ -41,11 +41,15 @@
 
 #include <QtTest/QtTest>
 #include <QtGui/private/qdatabuffer_p.h>
+#include <QtGui/qvector3d.h>
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qvector.h>
 #include <QtCore/qlist.h>
 #include "qdataarray.h"
 #include <vector>
+
+// Needs to be put into qvector3d.h.  Fix in Qt 4.7.
+Q_DECLARE_TYPEINFO(QVector3D, Q_MOVABLE_TYPE);
 
 //#define TEST_QLIST 1
 
@@ -61,6 +65,8 @@ private slots:
     void append();
     void appendReserved_data();
     void appendReserved();
+    void appendVector3D_data();
+    void appendVector3D();
     void appendSmall_data();
     void appendSmall();
     void appendFourAtATime_data();
@@ -207,6 +213,55 @@ void tst_QDataArray::appendReserved()
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.push_back(float(i));
+        }
+    }
+}
+
+void tst_QDataArray::appendVector3D_data()
+{
+    append_data();
+}
+
+void tst_QDataArray::appendVector3D()
+{
+    QFETCH(int, size);
+    QFETCH(int, type);
+
+    if (type == Test_DataBuffer) {
+        QDataBuffer<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.add(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_Vector) {
+        QVector<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_List) {
+        QList<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_VarLengthArray) {
+        QVarLengthArray<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_DataArray) {
+        QDataArray<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_STLVector) {
+        std::vector<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.push_back(QVector3D(i, i + 1, i + 2));
         }
     }
 }
