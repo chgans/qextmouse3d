@@ -540,6 +540,48 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \typedef QDataArray::const_pointer
+
+    Typedef for const T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::const_reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::difference_type
+
+    Typedef for ptrdiff_t. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::pointer
+
+    Typedef for T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::size_type
+
+    Typedef for int. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::value_type
+
+    Typedef for T. Provided for STL compatibility.
+*/
+
+/*!
     \fn QDataArray::iterator QDataArray::begin()
 
     Returns an STL-style iterator pointing to the first item
@@ -828,6 +870,48 @@ QT_BEGIN_NAMESPACE
     \typedef QDataArrayRef::ConstIterator
 
     Qt-style synonym for QDataArrayRef::const_iterator.
+*/
+
+/*!
+    \typedef QDataArrayRef::const_pointer
+
+    Typedef for const T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::const_reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::difference_type
+
+    Typedef for ptrdiff_t. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::pointer
+
+    Typedef for T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::size_type
+
+    Typedef for int. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::value_type
+
+    Typedef for T. Provided for STL compatibility.
 */
 
 /*!

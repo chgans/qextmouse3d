@@ -121,6 +121,13 @@ public:
     typedef const T *const_iterator;
     typedef iterator Iterator;
     typedef const_iterator ConstIterator;
+    typedef T value_type;
+    typedef value_type* pointer;
+    typedef const value_type* const_pointer;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef ptrdiff_t difference_type;
+    typedef int size_type;
 
     inline iterator begin() { return data(); }
     inline const_iterator begin() const { return constData(); }
@@ -203,6 +210,13 @@ public:
     typedef const T *const_iterator;
     typedef iterator Iterator;
     typedef const_iterator ConstIterator;
+    typedef T value_type;
+    typedef value_type* pointer;
+    typedef const value_type* const_pointer;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef ptrdiff_t difference_type;
+    typedef int size_type;
 
     inline iterator begin() { return data(); }
     inline const_iterator begin() const { return constData(); }
