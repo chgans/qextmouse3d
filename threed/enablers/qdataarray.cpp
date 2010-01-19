@@ -209,7 +209,18 @@ QT_BEGIN_NAMESPACE
     to the storage, which is not initialized.  The pointer is only
     valid until the array is reallocated or destroyed.
 
-    \sa resize()
+    The append() or resize() functions are recommended if T is a
+    complex type, with extend() only used for simple types.
+    Because the storage is not initialized, the caller should use
+    the in-place new operator to set elements if T is a complex type:
+
+    \code
+    QDataArray<QRegExp> array;
+    QRegExp *space = array.extend(1);
+    new (space) QRegExp(QLatin1String("exp"));
+    \endcode
+
+    \sa append(), resize()
 */
 
 /*!
