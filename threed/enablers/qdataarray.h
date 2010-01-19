@@ -160,9 +160,9 @@ private:
     mutable Data *m_data;
     union {
         char
-#if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
-            Q_DECL_ALIGN(Q_ALIGNOF(T))
-#endif
+//#if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
+            //Q_DECL_ALIGN(Q_ALIGNOF(T))
+//#endif
             m_prealloc[sizeof(T) * PreallocSize];
         qint64 q_for_alignment_1;
         double q_for_alignment_2;
