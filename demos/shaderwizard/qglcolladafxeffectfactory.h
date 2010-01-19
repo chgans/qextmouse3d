@@ -35,7 +35,6 @@ protected:
     static QColor processColorElement( QXmlStreamReader& xml );
     static float processParamOrFloatElement( QXmlStreamReader& xml );
     static QColor processColorOrTextureElement( QXmlStreamReader& xml );
-private:
     QGLColladaFxEffectFactory();
 };
 

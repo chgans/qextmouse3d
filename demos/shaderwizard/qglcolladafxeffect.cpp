@@ -49,6 +49,17 @@ void QGLColladaFxEffect::update(QGLPainter *painter, QGLPainter::Updates updates
     }
 }
 
+void QGLColladaFxEffect::setId(QString id)
+{
+    d->id = id;
+}
+
+
+
+QString QGLColladaFxEffect::id()
+{
+    return d->id;
+}
 
 
 void QGLColladaFxEffect::setSid(QString sid)
