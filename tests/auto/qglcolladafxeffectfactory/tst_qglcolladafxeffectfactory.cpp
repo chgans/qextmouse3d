@@ -184,13 +184,13 @@ void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
 
     QCOMPARE(cubeEffect->sid(), QString("phong1"));
     QVERIFY2(cubeEffect->material()->emittedLight() ==
-             QColor::fromRgbF(0, 0, 0.3, 1.0), "Emission color doesn't match");
+             QColor::fromRgbF(0.0f, 0.0f, 0.3f, 1.0f), "Emission color doesn't match");
     QVERIFY2(cubeEffect->material()->ambientColor() ==
-             QColor::fromRgbF(1.0, 0, 0, 1.0), "Ambient color doesn't match");
-    QVERIFY2(cubeEffect->material()->diffuseColor() == QColor::fromRgbF(0.0, 1.0, 0.0, 1.0),
+             QColor::fromRgbF(1.0f, 0.0f, 0.0f, 1.0f), "Ambient color doesn't match");
+    QVERIFY2(cubeEffect->material()->diffuseColor() == QColor::fromRgbF(0.0f, 1.0f, 0.0f, 1.0f),
              "Diffuse color doesn't match");
     QVERIFY2(cubeEffect->material()->specularColor() ==
-             QColor::fromRgbF(1.0, 1.0, 1.0, 1.0),
+             QColor::fromRgbF(1.0f, 1.0f, 1.0f, 1.0f),
              "Specular color doesn't match");
     QVERIFY2(cubeEffect->material()->shininess() == 20, "Shininess doesn't match");
 }
