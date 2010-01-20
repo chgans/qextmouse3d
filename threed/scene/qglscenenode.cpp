@@ -218,24 +218,25 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 
     \sa setUserTransform()
 */
-
+/*
 QMatrix4x4 QGLSceneNode::userTransform() const
 {
 	Q_D(const QGLSceneNode);
 	return d->userTransform;
 }
-
+*/
 /*!
     Sets by the "user" associated with this node to \a transform.
 
     \sa userTransform()
 */
+/*
 void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
 {
 	Q_D(QGLSceneNode);
     d->userTransform = transform;
 }
-
+*/
 
 /*!
     Returns the local effect associated with this node.  The default value
@@ -587,7 +588,7 @@ void qDumpScene(QGLSceneNode *node, int indent)
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-
+    /*
     if (node->userTransform().isIdentity())
     {
         fprintf(stderr, "%s user transform: identity\n", qPrintable(ind));
@@ -600,7 +601,7 @@ void qDumpScene(QGLSceneNode *node, int indent)
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-
+    */
     if (node->geometry())
     {
         fprintf(stderr, "%s geometry: %p\n", qPrintable(ind), node->geometry());
@@ -652,11 +653,12 @@ QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
     else
         dbg << "\n    local transform:\n" << node.localTransform();
 
+    /*
     if (node.userTransform().isIdentity())
         dbg << "\n    user transform: identity";
     else
         dbg << "\n    user transform:\n" << node.userTransform();
-
+    */
     if (node.geometry())
     {
         dbg << "\n    geometry:" << node.geometry();

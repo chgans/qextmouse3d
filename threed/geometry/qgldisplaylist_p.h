@@ -80,6 +80,8 @@ public:
     QGLSceneNode *currentNode;
     QMap<QGLSection *, QGLSceneNode *> sectionNodeMap;
     QGLPrimitive *currentOperation;
+    QGL::Operation operation;
+    QList<QGLPrimitive *> primitiveQueue;
 };
 
 inline void QGLDisplayListPrivate::setDirty(bool dirty)

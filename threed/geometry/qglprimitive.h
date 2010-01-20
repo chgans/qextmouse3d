@@ -52,18 +52,21 @@ namespace QGL
         NO_OP,
         TRIANGLE,
         TRIANGLE_STRIP,
-        QUAD,
-        QUAD_STRIP,
         TRIANGLE_FAN,
         TRIANGULATED_FACE,
-        EXTRUSION
+        QUAD,
+        QUAD_STRIP,
+        QUADS_ZIPPED
     };
 
     enum OperationFlag
     {
         NO_FLAG               = 0X00,
         FACE_SENSE_REVERSED   = 0x01,
-        NO_CLOSE_PATH         = 0x02
+        NO_CLOSE_PATH         = 0x02,
+        NEXT_PRIMITIVE        = 0x04,
+        RETAIN_PRIMITIVE      = 0x08,
+        USE_VERTEX_0_AS_CTR   = 0x10
     };
     Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
 }
@@ -72,23 +75,18 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::OperationFlags);
 class QGLPrimitive : public QGeometryData
 {
 public:
-    QGLPrimitive(const QVector3D &control = QVector3D());
+    QGLPrimitive();
     virtual ~QGLPrimitive() {}
-    void setControl(const QVector3D &c) { m_control = c; }
-    QVector3D control() const { return m_control; }
     void setFlags(QGL::OperationFlags flags) { m_flags = flags; }
     QGL::OperationFlags flags() const { return m_flags; }
-    void setCommonNormal(const QVector3D &n) { m_normal = n; }
-    QVector3D commonNormal() const { return m_normal; }
-    QGL::Operation operation() const { return m_op; }
     QGLPrimitive reversed() const;
     QGLPrimitive translated(const QVector3D &) const;
-    void clear();
+    QGLPrimitive zippedWith(const QGLPrimitive &other) const;
+    void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
+                                    QGL::VertexAttribute attribute = QGL::TextureCoord0);
+    QVector3D center() const;
 protected:
-    QVector3D m_control;
-    QVector3D m_normal;
     QGL::OperationFlags m_flags;
-    QGL::Operation m_op;
 };
 
 #endif // QGLPRIMITIVE_H

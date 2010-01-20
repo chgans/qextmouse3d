@@ -41,10 +41,7 @@
 
 #include "quadplane.h"
 
-#include "qglvertexarray.h"
-#include "qglindexarray.h"
-#include "qline3d.h"
-#include "qplane3d.h"
+#include "qgloperation.h"
 
 /*!
     \class QuadPlane
@@ -73,23 +70,22 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
     for ( ; level--; divisions *= 2) {}  // integer 2**n
     QSizeF div = size / float(divisions);
     QSizeF half = size / 2.0f;
-    QGLTextureModel tex;
     newSection();
-    for (int yy = 0; yy < divisions; ++yy)
+    for (int yy = 0; yy <= divisions; ++yy)
     {
-        qreal t0 = half.height() - float(yy) * div.height();
-        qreal t1 = half.height() - float(yy + 1) * div.height();
-        QGLTextureModel tex(-half.width(), t0, size.width(), div.height());
-        tex.startTileRight(size.width());
-        for (int xx = 0; xx < divisions; ++xx)
+        qreal y = half.height() - float(yy) * div.height();
+        qreal texY = float(yy) / divisions;
+        begin(QGL::QUADS_ZIPPED);
+        setFlags(flags() | QGL::RETAIN_PRIMITIVE);
+        for (int xx = 0; xx <= divisions; ++xx)
         {
-            qreal s0 = half.width() - float(xx) * div.width();
-            qreal s1 = half.width() - float(xx + 1) * div.width();
-            QVector3D a(s0, t0, 0.0f);
-            QVector3D b(s1, t0, 0.0f);
-            QVector3D c(s1, t1, 0.0f);
-            QVector3D d(s0, t1, 0.0f);
-            addQuad(a, b, c, d, tex.tileRight(div.width()));
+            qreal x = half.width() - float(xx) * div.width();
+            qreal texX = float(xx) / divisions;
+            addVertex(x, y);
+            addTexCoord(texX, texY);
         }
+        if (flags() & QGL::NEXT_PRIMITIVE)
+            end();
+        setFlags(flags() | QGL::NEXT_PRIMITIVE);
     }
 }

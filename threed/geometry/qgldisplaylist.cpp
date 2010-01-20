@@ -77,9 +77,8 @@
     and subsequent cheap drawing operations.
 
     QGLDisplayList contains functions which provide similar functionality to
-    OpenGL's GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There is no
-    support for lines or points - only primitives that can be built from
-    triangles.
+    OpenGL modes GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There
+    is currently no support for GL_LINES or GL_POINTS.
 
     It is an important difference that QGLDisplayList builds quads, and all
     other structures out of triangles, since many systems do not support
@@ -151,6 +150,37 @@
 
     In addition to this function based API, you can also use the QGLOperation
     class, which provides an object based API.
+
+    \section1 Lighting Normals and Null Triangles
+
+    QGLDisplayList functions calculate lighting normals, when building
+    geometry.  This saves the application programmer from having to write
+    code to calculate them.  Normals for each triangle (a, b, c) are
+    calculated as the QVector3D::crossProduct(b - a, c - a).  Note that
+    the normals are not normalized to unit length until finalize() is
+    called.
+
+    If lighting normals are explicitly supplied when using QGLDisplayList,
+    then this calculation is not done.  This may save on build time.
+
+    As an optimization, QGLDisplayList skips null triangles, that is ones
+    with zero area, where it can.  Such triangles generate no fragments on
+    the GPU, and thus do not display but nonetheless can take up space
+    and processing power.
+
+    Null triangles can easily occur when calculating vertices results
+    in two vertices coinciding, or three vertices lying on the same line.
+
+    This skipping is done using the lighting normals cross-product.  If the
+    cross-product is a null vector then the triangle is null.
+
+    When lighting normals are specified explicitly the skipping
+    optimization is suppressed, so if for some reason null triangles are
+    required to be retained, then specify normals for each logical vertex,
+    or via the QGeometry::setCommonNormal() function.
+
+    See the documentation below of the individual addTriangle() and other
+    functions for more details.
 
     \section1 Display Lists and Scene Nodes
 
@@ -313,105 +343,81 @@ QGLDisplayList::~QGLDisplayList()
 */
 
 /*!
-    Add a triangle defined by \a a, \a b and \c to this display list.
-    When \a normal is null (the default) normals supplied in \a a, \a b and
-    \a c are used.  If any of those are null they are set to the triangle
-    normal calculated as cross-product \c{(b - a) x (c - a)}.  In the case
-    of a degenerate triangle, where this cross-product is null, \c{(1, 0, 0}
-    is used.
+    \internal
+    Helper function to calculate normal if required, and actually
+    add the vertices to geometry.
+
+    Note the modifiable reference p - any normal calculated is
+    stored in here, and needs to be restored.
 */
-void QGLDisplayList::addTriangle(QLogicalVertex a, QLogicalVertex b, QLogicalVertex c,
-                                 const QVector3D &normal)
+void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
     Q_ASSERT(d->currentNode);
-    QVector3D norm = normal;
-    if (!norm.isNull())
-    {
-        a.setNormal(norm);
-        b.setNormal(norm);
-        c.setNormal(norm);
-    }
-    else if ((!a.hasField(QGL::Normal) || !b.hasField(QGL::Normal) || !c.hasField(QGL::Normal)))
-    {
+    bool calcNormal = !p.hasField(QGL::Normal) && p.commonNormal().isNull();
+    QLogicalVertex a(p, i);
+    QLogicalVertex b(p, j);
+    QLogicalVertex c(p, k);
+    QVector3D norm;
+    if (calcNormal)
         norm = QVector3D::crossProduct(b - a, c - a);
-        if (norm.isNull())
-            norm = QVector3D(1.0f, 0.0f, 0.0f);
-        if (!a.hasField(QGL::Normal) || a.normal().isNull())
-            a.setNormal(norm);
-        if (!b.hasField(QGL::Normal) || b.normal().isNull())
-            b.setNormal(norm);
-        if (!c.hasField(QGL::Normal) || c.normal().isNull())
-            c.setNormal(norm);
+    // if the normal was calculated, and it was null, then this is a null
+    // triangle - don't add it, it just wastes space - see class doco
+    if (!calcNormal || !norm.isNull())
+    {
+        if (calcNormal)
+            p.setCommonNormal(norm);
+        d->currentSection->append(a, b, c);
+        d->currentNode->setCount(d->currentNode->count() + 3);
     }
-    d->currentSection->append(a);
-    d->currentSection->append(b);
-    d->currentSection->append(c);
-    d->currentNode->setCount(d->currentNode->count() + 3);
 }
 
 /*!
-    Add a \a triangle or list of triangles to this display list.  Normals
-    are handled for each group of three vertices as per addTriangle(),
-    except triangle.commonNormal() is passed as the normal argument.
+    Add a \a triangle or series of triangles to this display list.
     Any vertices at the end of the list under a multiple of 3 are
     ignored.
+
+    If no normals are supplied in \a triangle, a normal is calculated as
+    the cross-product \c{(b - a) x (c - a)}, for each group of 3
+    logical vertices \c{a(triangle, i), b(triangle, i+1), c(triangle, i+2)}.
+
+    In the case of a degenerate triangle, where this cross-product is null,
+    that triangle is skipped.  Supplying normals suppresses this behaviour
+    and degenerate triangles will be added to the geometry.
     \sa addQuad()
 */
 void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
-    for (int i = 0; i < triangle.count(); i += 3)
+    QGLPrimitive t = triangle;
+    QVector3D save = t.commonNormal();
+    for (int i = 0; i < t.count(); i += 3)
     {
-        addTriangle(triangle.vertexAt(i), triangle.vertexAt(i+1),
-                    triangle.vertexAt(i+2), triangle.commonNormal());
+        addTriangle(i, i+1, i+2, t);
+        t.setCommonNormal(save);
     }
-}
-
-void addQuad(QLogicalVertex a, QLogicalVertex b,
-                 QLogicalVertex c, QLogicalVertex d,
-                 const QVector3D &normal = QVector3D())
-{
-    QVector3D norm = normal;
-    if (!quad.hasField(QGL::Normal) && norm.isNull())
-    {
-        norm = QVector3D::crossProduct(b - a, c - a);
-        if (norm.isNull())
-            norm = QVector3D(1.0f, 0.0f, 0.0f);
-    }
-    addTriangle(a, b, c, norm);
-    addTriangle(a, c, d, norm);
 }
 
 /*!
-    Add a \a quad or list of quads to this display list.  Each quad
-    is broken up into two triangles, and added via the addTriangle()
-    function.
+    Add a \a quad or series of quads to this display list.  Each quad
+    is broken up into two triangles.
 
-    One normal for each quad is calculated and applied to both triangles,
+    One normal per quad is calculated and applied to both triangles,
     if \a quad does not have normals, either via \c{hasField(QGL::Normal)}
-    or commonNormal().  For this reason this function may be slightly
-    faster than the other addQuad() which must calculate the normal twice.
+    or commonNormal().  Degenerate triangles are skipped in the same way
+    as addTriangle().
 
     \sa addTriangle()
 */
 void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 {
-    for (int i = 0; i < quad.count(); i += 4)
+    QGLPrimitive q = quad;
+    QVector3D save = q.commonNormal();
+    for (int i = 0; i < q.count(); i += 3)
     {
-        QLogicalVertex a(quad, i);
-        QLogicalVertex b(quad, i+1);
-        QLogicalVertex c(quad, i+2);
-        QLogicalVertex d(quad, i+3);
-        QVector3D norm = quad.commonNormal();
-        if (!quad.hasField(QGL::Normal) && norm.isNull())
-        {
-            norm = QVector3D::crossProduct(b - a, c - a);
-            if (norm.isNull())
-                norm = QVector3D(1.0f, 0.0f, 0.0f);
-        }
-        addTriangle(a, b, c, norm);
-        addTriangle(a, c, d, norm);
+        addTriangle(i, i+1, i+2, q);
+        addTriangle(i, i+2, i+3, q);
+        q.setCommonNormal(save);
     }
 }
 
@@ -420,7 +426,7 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 
     N triangular faces are generated, where \c{N == fan.count() - 2}. Each
     face contains the 0th vertex in \a fan, followed by the i'th and i+1'th
-    vertex - where i takes on the values from 1 to fan.count() - 1.
+    vertex - where i takes on the values from 1 to \c{fan.count() - 1}.
 
     If \a fan has less than three vertices this function exits without
     doing anything.
@@ -429,15 +435,20 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
     generates a number of triangles all sharing one common vertex, which
     is the 0'th vertex of the \a fan.
 
-    Note that the control() vector on \a fan is ignored.
+    Normals are calculated as for addTriangle(), given the above ordering.
+    Note that the central() vector on \a fan is ignored.
 
     \sa addTriangulatedFace()
 */
 void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 {
-    QLogicalVertex center(fan, 0);
-    for (int i = 1; i < fan.count() - 1; ++i)
-        addTriangle(center, fan.vertexAt(i), fan.vertexAt(i+1));
+    QGLPrimitive f = fan;
+    QVector3D save = f.commonNormal();
+    for (int i = 1; i < f.count() - 1; ++i)
+    {
+        addTriangle(0, i, i+1, f);
+        f.setCommonNormal(save);
+    }
 }
 
 /*!
@@ -449,10 +460,10 @@ void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
     the first and second vertices switched, as a new triangle is generated
     from each successive set of three vertices.
 
-    If \a fan has less than three vertices this function exits without
+    If \a strip has less than three vertices this function exits without
     doing anything.
 
-    Normals are calculated as for addTriangle, given the above ordering.
+    Normals are calculated as for addTriangle(), given the above ordering.
 
     This function is very similar to the OpenGL mode GL_TRIANGLE_STRIP.  It
     generates triangles along a strip whose two sides are the even and odd
@@ -462,12 +473,15 @@ void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 */
 void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 {
-    for (int i = 0; i < strip.count() - 1; ++i)
+    QGLPrimitive s = strip;
+    QVector3D save = s.commonNormal();
+    for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
-            addTriangle(strip.vertexAt(i), strip.vertexAt(i+1), strip.vertexAt(i+2));
+            addTriangle(i+1, i, i+2, s);
         else
-            addTriangle(strip.vertexAt(i+1), strip.vertexAt(i), strip.vertexAt(i+2));
+            addTriangle(i, i+1, i+2, s);
+        s.setCommonNormal(save);
     }
 }
 
@@ -486,75 +500,65 @@ void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 {
-    for (int i = 0; i < strip.count(); i += 2)
+    QGLPrimitive s = strip;
+    QVector3D save = s.commonNormal();
+    for (int i = 0; i < s.count(); i += 2)
     {
-        QLogicalVertex a(strip, i);
-        QLogicalVertex b(strip, i+2);
-        QLogicalVertex c(strip, i+3);
-        QLogicalVertex d(strip, i+1);
-        QVector3D norm = strip.commonNormal();
-        if (!strip.hasField(QGL::Normal) && norm.isNull())
-        {
-            norm = QVector3D::crossProduct(b - a, c - a);
-            if (norm.isNull())
-                norm = QVector3D(1.0f, 0.0f, 0.0f);
-        }
-        addTriangle(a, b, c, norm);
-        addTriangle(a, c, d, norm);
+        addTriangle(i, i+2, i+3, s);
+        addTriangle(i, i+3, i+1, s);
+        s.setCommonNormal(save);
     }
 }
 
 /*!
-    Adds to this section a set of triangles defined by \a face.  The
-    vertices in face are treated as first a central vertex, followed by
-    the perimeter vertices of a polygonal face.
+    Adds to this section a polygonal face, made of triangular sub-faces
+    defined by \a face.  This function provides functionality similar to the
+    OpenGL mode GL_POLYGON, except it divides the face into sub-faces
+    around a \bold{central point}.
 
-    In general all vertices in \a face should all lie in the same
-    plane, and the 0'th (center) vertex must lie strictly within the region
-    bounded by other vertices, otherwise unexpected behaviour may result.
+    As a convenience the central point is by default set to the return
+    value of \l{QGLPrimitve::center()}{face.center()}.  If \a face has texture
+    coordinates or other data, set the QGL::USE_VERTEX_0_AS_CTR flag, in which
+    case the 0'th vertex is used for the center.
 
-    If \a face has three or fewer vertices this function behaves exactly
-    like addTriangleFan().
+    \image triangulated-face.png
 
-    When \a face has four or more vertices, N triangular faces are generated
-    where \c{N == fan.count() - 1}.  Each face contains the 0th vertex in
-    \a face; followed by the \c{i'th} and \c{((i + 1) % N)'th} vertex.
+    Here the sub-faces are shown divided by green lines.  Note how this
+    function handles some re-entrant (non-convex) polygons, whereas
+    addTriangleFan will not support such polygons.
 
-    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}.
+    N sub-faces are generated where \c{N == face.count() - 1}.
+    Each triangular sub-face consists the center; followed by the \c{i'th}
+    and \c{((i + 1) % N)'th} vertex.  The last face generated then is
+    \c{(center, face[N - 1], face[0]}, the closing face.
 
-    This function works similarly to the OpenGL mode GL_POLYGON, except it
-    requires an additional center vertex as the 0th vertex, since it breaks
-    the polygonal face into triangles.
+    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}
+    in which case \c{N == face.count() - 2}.
+
+    If N is 0, this function exits without doing anything.
 
     If no normals are supplied in the vertices of \a face, normals are
-    calculated as per addTriangle().
-
-    One normal is calculated, since a faces vertices lie in the same plane.
-
-    The sub-faces will have normals and windings all equal to the triangle
-    \c{(face[0], face[1], face[2])}.  For this reason the vertices of \a face
-    should proceed as a counter-clockwise perimeter of the face.
-
-    Note that since the normal calculation can be expensive this function
-    may be faster than addTriangleFan() which must calculate a new normal
-    for every sub-face.
+    calculated as per addTriangle().  One normal is calculated, since a
+    faces vertices lie in the same plane.
 */
 void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 {
-    if (face.count() < 4)
+    QGLPrimitive f;
+    if (!(face.flags() & QGL::USE_VERTEX_0_AS_CTR))
     {
-        addTriangleFan(face);
+        f.appendVertex(face.vertexAt(0));
+        f.vertexRef(0) = f.center();
+        f.appendGeometry(face);
     }
-    else
+    int cnt = f.count();
+    if (f.flags() & QGL::NO_CLOSE_PATH)
+        cnt = f.count() - 1;
+    if (cnt > 1)
     {
-        QDataArray<QVector3D> v = face.vertices();
-        QVector3D norm = QVector3D::normal(v[0], v[1], v[2]);
-        QLogicalVertex center(face, 0);
-        int cnt = (face.flags() & QGL::NO_CLOSE_PATH) ? face.count() - 1 : face.count();
         for (int i = 1; i < cnt; ++i)
         {
             int n = (i + 1) % face.count();
-            addTriangle(face.vertexAt(n), face.vertexAt(n+1), center, norm);
+            addTriangle(0, i, n, f);
         }
     }
 }
@@ -564,36 +568,20 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 
     This function behaves like quadStrip(), where the odd-numbered vertices in
     the input primitive are from \a top and the even-numbered vertices from
-    \a bottom.  The main difference is that this function adds a closing face.
-
-    \code
-    // addQuadsZipped(top, bottom) is the same as:
-    QGLPrimitive zipped;
-    for (int i = 0; i < qMin(top.count(), bottom.count()); ++i)
-    {
-        zipped.appendVertex(bottom.vertexAt(i));
-        zipped.appendVertex(top.vertexAt(i));
-    }
-    zipped.appendVertex(bottom.vertexAt(0);
-    zipped.appendVertex(top.vertexAt(0);
-    displayList->addQuadStrip(zipped);
-    \endcode
+    \a bottom.
 
     If the vertices in \a top and \a bottom are the perimeter vertices of
     two polygons then this function can be used to generate quads which form
     the sides of a \l{http://en.wikipedia.org/wiki/Prism_(geometry)}{prism}
     with the polygons as the prisms top and bottom end-faces.
 
-    N quad faces are generated where \c{N == min(top.count(), bottom.count()}.
+    N quad faces are generated where \c{N == min(top.count(), bottom.count() - 1}.
     If \a top or \a bottom has less than 2 elements, this functions does
     nothing.
 
-    Each face is formed by the \c{i'th} and \c{((i + 1) % N)'th}
-    vertices of \a bottom, followed by the \c{((i + 1) % N)'th} and \c{i'th}
+    Each face is formed by the \c{i'th} and \c{(i + 1)'th}
+    vertices of \a bottom, followed by the \c{(i + 1)'th} and \c{i'th}
     vertices of \a top.
-
-    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}.
-    In this case, \c{N == min(top.count(), bottom.count()) - 1}.
 
     If \a top or \a bottom has the QGL::FACE_SENSE_REVERSED flag set then
     vertices are treated as being in clockwise order for the purpose of
@@ -619,23 +607,14 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
                                     const QGLPrimitive &bottom)
 {
-    int cnt = qMin(top.count(), bottom.count());
-    if (cnt >= 3)
+    QGLPrimitive zipped = bottom.zippedWith(top);
+    QVector3D norm = top.commonNormal() + bottom.commonNormal();
+    zipped.setCommonNormal(norm);
+    for (int i = 0; i < zipped.count(); i += 2)
     {
-        int max = cnt;
-        if ((top.flags() | bottom.flags()) & QGL::NO_CLOSE_PATH)
-            --cnt;
-        bool reverse = ((top.flags() | bottom.flags()) & QGL::FACE_SENSE_REVERSED);
-        for (int i = 0; i < cnt; ++i)
-        {
-            int n = (i + 1) % max;
-            if (reverse)
-                addQuad(bottom.vertexAt(n), bottom.vertexAt(i),
-                        top.vertexAt(i), top.vertexAt(n));
-            else
-                addQuad(bottom.vertexAt(i), bottom.vertexAt(n),
-                        top.vertexAt(n), top.vertexAt(i));
-        }
+        addTriangle(i, i+2, i+3, zipped);
+        addTriangle(i, i+3, i+1, zipped);
+        zipped.setCommonNormal(norm);
     }
 }
 
@@ -665,6 +644,7 @@ void QGLDisplayList::finalize()
     Q_D(QGLDisplayList);
     if (d->finalizeNeeded)
     {
+        end();
         QGLGeometry *g = 0;
         QMap<quint32, QGLGeometry *> geos;
         while (d->sections.count())
@@ -674,7 +654,7 @@ void QGLDisplayList::finalize()
             s->finalize();
             QGLIndexArray indices = s->indices();
             const int *vi = indices.constData();
-            int vcnt = indices.count();
+            int vcnt = indices.size();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
             QMap<quint32, QGLGeometry *>::const_iterator it =
@@ -895,125 +875,184 @@ void QGLDisplayList::setDirty(bool dirty)
     d->finalizeNeeded = dirty;
 }
 
+/*!
+    Sets the current \a operation.  After this call all displaylist data
+    add functions, for example addVertex(), will accumulate data for that
+    \a operation.  Any previous operation is ended.
 
-void QGLDisplayList::begin(QGLDisplayList::Operation operation,
-                           const QVector3D &vector)
+    \sa end()
+*/
+void QGLDisplayList::begin(QGL::Operation operation)
 {
     Q_D(QGLDisplayList);
     end();
-    switch (operation)
-    {
-    case NO_OP:
-        break;
-    case TRIANGLE:
-        d->currentOperation = new QGLTriangle(this); break;
-    case TRIANGLE_STRIP:
-        d->currentOperation = new QGLTriangleStrip(this); break;
-    case QUAD:
-        d->currentOperation = new QGLQuad(this); break;
-    case QUAD_STRIP:
-        d->currentOperation = new QGLQuadStrip(this); break;
-    case TRIANGLE_FAN:
-        d->currentOperation = new QGLTriangleFan(this, vector); break;
-    case TRIANGULATED_FACE:
-        d->currentOperation = new QGLTriangulatedFace(this); break;
-    case EXTRUSION:
-        d->currentOperation = new QGLExtrusion(this); break;
-    }
+    d->currentOperation = new QGLPrimitive();
+    d->operation = operation;
 }
 
+/*!
+    Completes the current operation set with begin(), posting the data
+    to the display lists internal store and clearing the operation's
+    data structures.
+*/
 void QGLDisplayList::end()
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
     {
-        d->currentOperation->finalize();
-        delete d->currentOperation;
-        d->currentOperation = 0;
+        switch (d->operation)
+        {
+        case QGL::NO_OP:
+            break;
+        case QGL::TRIANGLE:
+            addTriangle(*d->currentOperation); break;
+        case QGL::TRIANGLE_STRIP:
+            addTriangleStrip(*d->currentOperation); break;
+        case QGL::QUAD:
+            addQuad(*d->currentOperation); break;
+        case QGL::QUAD_STRIP:
+            addQuadStrip(*d->currentOperation); break;
+        case QGL::TRIANGLE_FAN:
+            addTriangleFan(*d->currentOperation); break;
+        case QGL::TRIANGULATED_FACE:
+            addTriangulatedFace(*d->currentOperation); break;
+        case QGL::QUADS_ZIPPED:
+            if (d->primitiveQueue.count() < 1)
+            {
+                qWarning("QUADS_ZIPPED mode - use QGL::NEXT_PRIMITIVE flag"
+                         " to specify bottom array");
+            }
+            else
+            {
+                addQuadsZipped(*d->primitiveQueue.last(), *d->currentOperation);
+            }
+        }
+        if (d->primitiveQueue.count())
+        {
+            qDeleteAll(d->primitiveQueue);
+            d->primitiveQueue.clear();
+        }
+        if (!(d->currentOperation->flags() & QGL::RETAIN_PRIMITIVE))
+        {
+            delete d->currentOperation;
+            d->currentOperation = 0;
+        }
     }
+}
+
+/*!
+    Sets the the current operation's internal QGLPrimitive to have \a flags.
+    Also, if \a flags is QGL::NEXT_PRIMITIVE creates a new internal QGLPrimitive
+    for a multi-primitve operation, such QGL::QUADS_ZIPPED.
+
+    \sa QGLPrimitive::setFlags(), flags()
+*/
+void QGLDisplayList::setFlags(QGL::OperationFlags flags)
+{
+    Q_D(QGLDisplayList);
+    if (flags & QGL::NEXT_PRIMITIVE)
+    {
+        if (d->currentOperation)
+        {
+            QGLPrimitive *next = new QGLPrimitive();
+            next->setFlags(flags);
+            d->primitiveQueue.append(d->currentOperation);
+            d->currentOperation = next;
+        }
+#ifndef QT_NO_DEBUG
+        else
+        {
+            qWarning("Add data to the first primitive before QGL::NEXT_PRIMITIVE");
+        }
+#endif
+    }
+    else
+    {
+        if (d->currentOperation)
+            d->currentOperation->setFlags(flags);
+    }
+}
+
+/*!
+    Returns the current operation primitives flags.
+
+    \sa QGLPrimitive::flags(), setFlags()
+*/
+QGL::OperationFlags QGLDisplayList::flags() const
+{
+    Q_D(const QGLDisplayList);
+    if (d->currentOperation)
+        return d->currentOperation->flags();
+    return 0;
 }
 
 void QGLDisplayList::addVertex(const QVector3D &vertex)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addVertex(vertex);
+        d->currentOperation->appendVertex(vertex);
 }
 
 void QGLDisplayList::addNormal(const QVector3D &normal)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addNormal(normal);
+        d->currentOperation->appendNormal(normal);
 }
 
 void QGLDisplayList::addColor(const QColor4b &color)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addColor(color);
+        d->currentOperation->appendColor(color);
 }
 
-void QGLDisplayList::addTexCoord(const QVector2D &texCoord)
+void QGLDisplayList::addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addTexCoord(texCoord);
+        d->currentOperation->appendTexCoord(texCoord, attr);
 }
 
-void QGLDisplayList::addVertexArray(const QGL::VectorArray &vertices)
+void QGLDisplayList::addAttribute(const QVector3D &value, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addVertexArray(vertices);
+        d->currentOperation->appendAttribute(value, attr);
 }
 
-void QGLDisplayList::addNormalArray(const QGL::VectorArray &normals)
+
+void QGLDisplayList::addVertexArray(const QDataArray<QVector3D> &vertices)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addNormalArray(normals);
+        d->currentOperation->appendVertexArray(vertices);
 }
 
-void QGLDisplayList::addColorArray(const QGL::ColorArray &colors)
+void QGLDisplayList::addNormalArray(const QDataArray<QVector3D> &normals)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addColorArray(colors);
+        d->currentOperation->appendNormalArray(normals);
 }
 
-void QGLDisplayList::addTexCoordArray(const QGL::TexCoordArray &texCoords)
+void QGLDisplayList::addColorArray(const QDataArray<QColor4b> &colors)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->addTexCoordArray(texCoords);
+        d->currentOperation->appendColorArray(colors);
 }
 
-QGL::VectorArray QGLDisplayList::endResult()
-{
-    Q_D(QGLDisplayList);
-    QGL::VectorArray result;
-    if (d->currentOperation)
-    {
-        d->currentOperation->finalize();
-        result = d->currentOperation->vertices();
-        delete d->currentOperation;
-        d->currentOperation = 0;
-    }
-    return result;
-}
-
-void QGLDisplayList::addTextureModel(const QGLTextureModel &model)
+void QGLDisplayList::addTexCoordArray(const QDataArray<QVector2D> &texCoords, QGL::VertexAttribute attribute)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->setTextureModel(model);
+        d->currentOperation->appendTexCoordArray(texCoords, attribute);
 }
 
-void QGLDisplayList::addColorModel(const QGLColorModel &model)
+void QGLDisplayList::addAttributeArray(const QDataArray<QVector3D> &values, QGL::VertexAttribute attribute)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->setColorModel(model);
+        d->currentOperation->appendAttributeArray(values, attribute);
 }
-

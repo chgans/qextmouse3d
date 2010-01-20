@@ -74,8 +74,6 @@
     where texture data forms a \i seam and a copy must be created to carry
     the two texture coordinates of the seam.
 
-    \image texture-seam.png
-
     This is handled automatically by QGLSection, to pack data into the
     smallest space possible thus improving cache coherence and performance.
 
@@ -91,16 +89,6 @@
     to construct new QGLSection instances, or alternatively construct
     a new QGLSection() and pass a non-null QGLDisplayList pointer.
 
-    Accessor functions are provided for getting copies of the data in
-    the section:
-    \list
-        \o vertexArray()
-        \o normalArray()
-        \o texCoordArray()
-        \o colorArray()
-        \o indexArray()
-    \endlist
-
     These functions all return QVector values. QVector instances are
     implicitly shared, thus the copies are inexpensive unless a
     non-const function is called on them, triggering a copy-on-write.
@@ -109,27 +97,6 @@
     calls virtual protected functions appendSmooth() (for smoothed vertices)
     and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
     discussion of smoothing.
-
-    Call a sections finalize() method to calculate normals.  Prior to
-    calling finalize() relying on normal values results in undefined behavior.
-    \code
-    // WRONG
-    displayList->extrude(verts);
-    QGL::VectorArray normals = displayList->currentSection()->normals();
-    doSomething(normals[0]);  // normals undefined at this point
-    \endcode
-
-    \code
-    // RIGHT
-    displayList->extrude(verts);
-    displayList->currentSection()->finalize();
-    // OR...
-    displayList->newSection();  // implicitly finalizes the previous section
-    // OR...
-    displayList->finalize();  // also finalizes that section
-    QGL::VectorArray normals = displayList->currentSection()->normals();
-    doSomething(normals[0]);  // normals now defined
-    \endcode
 
     Note that after initialization of the display list, the QGLSection
     instances are destroyed.  To access the geometry data during the run-time
@@ -251,34 +218,57 @@ bool QGLSection::isFinalized() const
 
 /*!
     \internal
-    Adds the logical \a vertex to this section.
+    Adds the logical vertices \a a, \a b and \c to this section.  All
+    should have the same fields.  This function is exactly equivalent to
+    \code
+        append(a); append(b); append(c);
+    \endcode
 
-    If the \a vertex has no lighting normal component, then the append will
+    \sa appendSmooth(), appendFaceted(), appendFlat()
+*/
+void QGLSection::append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
+{
+    Q_ASSERT(a.fields() == b.fields() && b.fields() == c.fields());
+    if (!a.hasField(QGL::Normal))
+    {
+        appendFlat(a, b, c);
+    }
+    else
+    {
+        if (m_smoothing == QGL::Smooth)
+            appendSmooth(a, b, c);
+        else
+            appendFaceted(a, b, c);
+    }
+}
+
+/*!
+    \internal
+    Adds the logical vertex \a lv to this section.
+
+    If the \a lv has no lighting normal component, then the append will
     be done by calling appendFlat().
 
-    Otherwise, if the \a vertex does have a lighting normal; then the
+    Otherwise, if the \a lv does have a lighting normal; then the
     vertex processing depends on the smoothing property of this section.
     If this section has smoothing QGL::Smooth, then the append will be done
     by calling appendSmooth(); or if this section has smoothing QGL::Faceted,
     then the append will be done by calling appendFaceted().
 
-    If a common normal is set then a lighting normal component is set via
-    that value.
-
-    \sa appendSmooth(), appendFaceted(), appendFlat(), setCommonNormal()
+    \sa appendSmooth(), appendFaceted(), appendFlat()
 */
-void QGLSection::append(const QLogicalVertex &vertex)
+void QGLSection::append(const QLogicalVertex &lv)
 {
-    if (!vertex.hasField(QGL::Normal))
+    if (!lv.hasField(QGL::Normal))
     {
-        appendFlat(vertex);
+        appendFlat(lv);
     }
     else
     {
         if (m_smoothing == QGL::Smooth)
-            appendSmooth(vertex);
+            appendSmooth(lv);
         else
-            appendFaceted(vertex);
+            appendFaceted(lv);
     }
 }
 

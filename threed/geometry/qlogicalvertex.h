@@ -86,6 +86,7 @@ public:
     inline bool hasField(QGL::VertexAttribute type) const;
     inline quint32 fields() const;
     inline int index() const;
+    inline QGeometryData data() const;
     inline bool isNull() const;
 
     bool operator==(const QLogicalVertex &rhs) const;
@@ -173,7 +174,10 @@ inline QVector3D &QLogicalVertex::attributeRef(QGL::VertexAttribute attr)
 
 inline const QVector3D &QLogicalVertex::normal() const
 {
-    return m_data.normals().at(m_index);
+    const QVector3D &norm = m_data.commonNormal();
+    if (norm.isNull())
+        return m_data.normals().at(m_index);
+    return norm;
 }
 
 inline void QLogicalVertex::setNormal(const QVector3D &n)
@@ -247,12 +251,18 @@ inline QColor4b &QLogicalVertex::colorRef()
 
 inline bool QLogicalVertex::hasField(QGL::VertexAttribute attr) const
 {
+    if (attr == QGL::Normal)
+        return (m_data.hasField(attr) || !m_data.commonNormal().isNull());
     return m_data.hasField(attr);
 }
 
 inline quint32 QLogicalVertex::fields() const
 {
-    return m_data.fields();
+    static const quint32 nmask = 0x01 << QGL::Normal;
+    quint32 f = m_data.fields();
+    if (!(f & nmask) && !m_data.commonNormal().isNull())
+        f |= nmask;
+    return f;
 }
 
 inline int QLogicalVertex::index() const

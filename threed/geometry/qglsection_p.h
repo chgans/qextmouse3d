@@ -75,14 +75,33 @@ public:
     ~QGLSection();
 
     QGLIndexArray indices() const;
-    inline void append(const QLogicalVertex &vertex);
+    void append(const QLogicalVertex &lv);
+    void append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c);
+    void appendSmooth(const QLogicalVertex &lv);
+    void appendSmooth(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
+    {
+        appendSmooth(a);
+        appendSmooth(b);
+        appendSmooth(c);
+    }
+    void appendFaceted(const QLogicalVertex &lv);
+    void appendFaceted(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
+    {
+        appendFaceted(a);
+        appendFaceted(b);
+        appendFaceted(c);
+    }
+    void appendFlat(const QLogicalVertex &lv);
+    void appendFlat(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
+    {
+        appendFlat(a);
+        appendFlat(b);
+        appendFlat(c);
+    }
     inline QGL::Smoothing smoothing() const;
     inline QGLDisplayList *displayList() const;
     bool isFinalized() const;
     void finalize();
-    void appendSmooth(const QLogicalVertex &vertex);
-    void appendFaceted(const QLogicalVertex &vertex);
-    void appendFlat(const QLogicalVertex &vertex);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
@@ -103,6 +122,7 @@ inline QGLDisplayList *QGLSection::displayList() const
 {
     return m_displayList;
 }
+
 
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGLSection &section);

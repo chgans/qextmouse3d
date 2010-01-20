@@ -126,7 +126,8 @@ void PVColorView::paintGL(QGLPainter *painter)
 //! [1]
 
 inline static void calculateSlice(int slice, const QBox3D &box,
-                                  QGL::VectorArray &outer, QGL::VectorArray &inner)
+                                  QDataArray<QVector3D> &outer,
+                                  QDataArray<QVector3D> inner)
 {
     qreal t2 = qThickness / 2.0f;
     qreal irad = qRadius - t2;
@@ -177,15 +178,15 @@ QGLDisplayList *PVColorView::buildGeometry()
     const QVector3D qExtrudeVec(0.0f, 0.0f, qHeight);
 
     // defining coordinate data for q
-    QGL::VectorArray topQORim;     // outer rim of Q - top face
-    QGL::VectorArray topQIRim;     // inner rim of Q - top face
-    QGL::VectorArray bottomQORim;  // outer rim of Q - bottom face
-    QGL::VectorArray bottomQIRim;  // inner rim of Q - bottom face
-    QGL::VectorArray tailFace;     // tail of Q - top face
-    QGL::VectorArray eTailFace;    // tail of Q - bottom face
+    QDataArray<QVector3D> topQORim;     // outer rim of Q - top face
+    QDataArray<QVector3D> topQIRim;     // inner rim of Q - top face
+    QDataArray<QVector3D> bottomQORim;  // outer rim of Q - bottom face
+    QDataArray<QVector3D> bottomQIRim;  // inner rim of Q - bottom face
+    QDataArray<QVector3D> tailFace;     // tail of Q - top face
+    QDataArray<QVector3D> eTailFace;    // tail of Q - bottom face
 
-    QGL::ColorArray tailColors;
-    QGL::ColorArray faceColors;
+    QDataArray<QColor4b> tailColors;
+    QDataArray<QColor4b> faceColors;
     QColor4b innerColor(196, 16, 16);
     QColor4b outerColor(128, 128, 255);
 
@@ -219,7 +220,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     // create the flat top q
     qList->newSection();
     {
-        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        QGLOperation quad(qList, QGL::QUAD);
         quad << tailFace;
         quad << tailColors;
     }
@@ -242,15 +243,17 @@ QGLDisplayList *PVColorView::buildGeometry()
 
     if (lap)
     {
-        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
-        face.setControl(topQIRim[iptr]);
-        face << topQORim.mid(0, lap);
+        QGLOperation face(qList, QGL::TRIANGULATED_FACE);
+        face << QGL::OperationFlags(QGL::USE_VERTEX_0_AS_CTR);
+        face << topQIRim[iptr];
+        for (int i = 0; i < lap; ++i)
+            face << topQORim[i];
         face << faceColors;
     }
         //qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(0, lap));
     for ( ; iptr < topQIRim.count() - 1; ++iptr, ++optr)
     {
-        QGLOperation quad(qList, QGLDisplayList::QUAD);
+        QGLOperation quad(qList, QGL::QUAD);
         quad << topQIRim[iptr] << innerColor;
         quad << topQORim[optr] << outerColor;
         quad << topQORim[optr+1] << outerColor;
@@ -260,7 +263,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
     if (lap)
     {
-        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
+        QGLOperation face(qList, QGL::TRIANGULATED_FACE);
         face.setControl(topQIRim[iptr]);
         face << topQORim.mid(optr, lap);
         face << faceColors;
@@ -270,19 +273,19 @@ QGLDisplayList *PVColorView::buildGeometry()
     // create the sides of the q, and save the extruded values
     qList->newSection();
     {
-        QGLOperation outsides(qList, QGLDisplayList::EXTRUSION);
+        QGLOperation outsides(qList, QGL::QUADS_ZIPPED);
+        bottomQORim = topQORim.
         outsides.setControl(qExtrudeVec);
-        outsides << QGLDisplayList::NO_CLOSE_PATH;
         outsides << topQOrim;
         outsides << sideColors;
         outsides >> bottomQORim;
     }
     // bottomQORim = qList->extrude(topQORim, qExtrudeVec);
     {
-        QGLOperation insides(qList, QGLDisplayList::EXTRUSION);
+        QGLOperation insides(qList, QGL::QUADS_ZIPPED);
         insides.setControl(qExtrudeVec);
-        insides << QGLDisplayList::FACE_SENSE_REVERSED;
-        insides << QGLDisplayList::NO_CLOSE_PATH;
+        insides << QGL::FACE_SENSE_REVERSED;
+        insides << QGL::NO_CLOSE_PATH;
         insides << topQIRim;
         insides << sideColors;
         insides >> bottomQIRim;

@@ -44,29 +44,80 @@
 #include <QtCore/qdebug.h>
 
 /*!
-    \internal
     \class QLogicalVertex
-    \brief The QLogicalVertex class encapsulates data for a single vertex.
+    \brief The QLogicalVertex class references QGeometryData at a single vertex.
     \since 4.6
     \ingroup qt3d
     \ingroup qt3d::geometry
 
     QLogicalVertex instances are a convenience class for use with
-    QGLDisplayList.  A QLogicalVertex groups together information
-    about a particular vertex, including its position, texture coordinates
-    and lighting normals.
+    QGLDisplayList.  A QLogicalVertex simply references through to the data
+    in a QGeometryData for a particular vertex, providing accessors to fetch
+    position, texture coordinates, and other values.
 
-    \sa QGLDisplayList
+    Create a QLogicalVertex referring to a particular QGeometryData instance:
+    \code
+    QGeometryData data;
+    data.appendVertex(QVector3D(1, 2, 3));
+
+    // construct a QLogicalVertex referring to the first vertex in data
+    // the QGeometryData is implicitly shared with lv
+    QLogicalVertex lv(data, 0);
+    //  lv.vertex() == QVector3D(1, 2, 3)
+    \endcode
+    This is inexpensive and no new storage is allocated for the actual data,
+    just the reference and index.
+
+    With logical vertices instances referencing large QGeometryData instances,
+    avoid modifying the instance:
+    \code
+    // careful - assigning to a QLogicalVertex which refers to an external
+    // QGeometryData will result in a possibly expensive copy-on-write
+    lv.setVertex(3, 2, 1);
+    \endcode
+
+    Create a QLogicalVertex with its own QGeometryData internally:
+    \code
+    QLogicalVertex lv;
+    // no copy on write here - internal QGeometryData is not shared
+    lv.setVertex(1, 2, 3);
+    \endcode
+
+    Assign an instance of QLogicalVertex:
+    \code
+    QLogicalVertex lv2 = data.vertexAt(0);
+    \endcode
+    Although lv2 gets its own internal QGeometryData which is then immediately
+    thrown away by the assignment, because of lazy initialization in
+    QGeometryData the cost is negligible.
+
+    Use the fields() and hasField() functions to determine if a particular
+    field is present in the vertex.  Accessing non-existent data will cause
+    an assert in debug mode (from the underlying QDataArray), and give
+    undefined behaviour in release mode.
+
+    Common normals are treated specially - if the underlying QGeometryData has
+    a non-null \l{QGeometryData::commonNormal()}{common normal} specified, then
+    the function normal() will return that common normal.
+
+    The hasField() and fields() functions can still be used to determine if
+    normal() can safely be called: hasField(QGL::Normal) will return true in
+    the case of a non-null common normal, even if there is no data present;
+    and fields() likewise will show a normal field present in that case.
+
+    In this way, common normals override the values of any normal data set.
+    If using common normals, generally do not store normal data as well,
+    since it will be ignored.
+
+    \sa QGeometryData, QGLDisplayList
 */
 
 /*!
-    \internal
     \fn QLogicalVertex::QLogicalVertex()
     Constructs a new invalid QLogicalVertex which has no data.
 */
 
 /*!
-    \internal
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, const QVector2D &t)
     Constructs a new QLogicalVertex with its vertex value set to \a a, normal set
     to \a n, and texture set to \a t.  By default \a n is the null QVector3D,
@@ -76,7 +127,6 @@
 */
 
 /*!
-    \internal
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color, const QVector3D &n, const QVector2D &t)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
     color value set to \a color, normal set to \a n, and texture set
@@ -87,102 +137,105 @@
 */
 
 /*!
-    \internal
     \fn const QVector3D &QLogicalVertex::vertex() const
     Returns a const reference to the vertex value for this vertex.
 */
 
 /*!
-    \internal
     \fn void QLogicalVertex::setVertex(const QVector3D &v)
     Sets the vertex value for this vertex to \a v.
 */
 
 /*!
-    \internal
     \fn QVector3D &QLogicalVertex::vertexRef()
     Returns a modifiable reference to the vertex value.
 */
 
 /*!
-    \internal
     \fn QLogicalVertex::operator QVector3D () const
     Returns a copy of the vertex value, by casting as a QVector3D.  This
     allows passing of a QLogicalVertex to functions that expect a QVector3D.
 */
 
 /*!
-    \internal
     \fn const QVector3D &QLogicalVertex::normal() const
     Returns a const reference to the normal value for this vertex.
 */
 
 /*!
-    \internal
     \fn void QLogicalVertex::setNormal(const QVector3D &n)
     Sets the normal value for this vertex to \a n.
 */
 
 /*!
-    \internal
     \fn QVector3D &QLogicalVertex::normalRef()
     Returns a modifiable reference to the normal value for this vertex.
 */
 
 /*!
-    \internal
     \fn const QVector2D &QLogicalVertex::texCoord() const
     Returns a const reference to the normal value for this vertex.
 */
 
 /*!
-    \internal
     \fn void QLogicalVertex::setTexCoord(const QVector2D &t)
     Sets the texture coordinate for this vertex to \a t.
 */
 
 /*!
-    \internal
     \fn QVector2D &QLogicalVertex::texCoordRef()
     Returns a modifiable reference to the texture coordinate for this vertex.
 */
 
 /*!
-    \internal
     \fn const QColor4b &QLogicalVertex::color() const
     Returns a const reference to the color value for this vertex.
 */
 
 /*!
-    \internal
     \fn void QLogicalVertex::setColor(const QColor4b &c)
     Sets the color value for this vertex to \a c.
 */
 
 /*!
-    \internal
     \fn QColor4b &QLogicalVertex::colorRef()
     Returns a modifiable reference to the color value for this vertex.
 */
 
 /*!
-    \internal
-    \fn bool QLogicalVertex::hasType(Type t) const
-    Returns true if this vertex has data type \a t, and false otherwise.
+    \fn bool hasField(QGL::VertexAttribute type) const
+    Returns true if this vertex has data field \a type, and false otherwise.
+
+    In general check to see if a logical vertex has a particular field
+    type before attempting to access it.  In debug mode accessing a
+    non-existent field will cause an assert; but in release mode the
+    behaviour is undefined.
 */
 
 /*!
-    \internal
-    \fn bool QLogicalVertex::operator==(const QLogicalVertex &rhs) const
-    Returns true if all the components of this logical vertex are equal to
-    the corresponding components of \a rhs, and false otherwise.
+    \fn quint32 fields() const
+    Returns a bit-mask of the fields in this logical vertex.
+
+    \sa QGeometryData::fields()
 */
 
 /*!
-    \internal
+    \fn int index() const
+    Returns the index at which this logical vertex's data is located in
+    its associated QGeometryData; or -1 if this vertex is null.
+*/
+
+/*!
+   \fn QGeometryData data() const
+   Returns a copy of the QGeometryData associated with this vertex.  Note
+   that as long as the copy is not modified, this method is not expensive.
+*/
+
+/*!
     \fn bool QLogicalVertex::isNull() const
-    Returns true if this vertex is null, which is the case only if its
-    data type is QLogicalVertex::None, and false otherwise
+    Returns true if this vertex is null.
+
+    \sa QLogicalVertex()
 */
 
 /*!

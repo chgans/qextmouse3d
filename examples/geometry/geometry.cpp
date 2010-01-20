@@ -43,6 +43,7 @@
 #include "qgltexture2d.h"
 #include "qglmaterialcollection.h"
 #include "qtriangle3d.h"
+#include "qgloperation.h"
 
 #include <QImage>
 #include <QPainter>
@@ -177,13 +178,9 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         t1.setY(1.0f - t1.y());
         t2.setY(1.0f - t2.y());
 
-        QGLTextureModel tex;
-        tex.setBottomLeft(t0);
-        tex.setBottomRight(t1);
-        tex.setTopRight(t2);
-
-        // null vector says "work out the normal for me"
-        addTriangle(v0, v1, v2, QVector3D(), &tex);
+        QGLOperation op(this, QGL::TRIANGLE);
+        op << v0 << v1 << v2;
+        op << t0 << t1 << t2;
     }
 
     QGLMaterialCollection *pal = geometry()->palette();

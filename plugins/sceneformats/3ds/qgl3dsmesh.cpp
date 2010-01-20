@@ -41,6 +41,7 @@
 
 #include "qgl3dsmesh.h"
 #include "qglmaterialcollection.h"
+#include "qgloperation.h"
 
 #include <lib3ds/mesh.h>
 #include <lib3ds/material.h>
@@ -281,23 +282,19 @@ void QGL3dsMesh::generateVertices()
                     Lib3dsVector &l3a = m_mesh->pointL[face->points[0]].pos;
                     Lib3dsVector &l3b = m_mesh->pointL[face->points[1]].pos;
                     Lib3dsVector &l3c = m_mesh->pointL[face->points[2]].pos;
-                    QVector3D a(l3a[0], l3a[1], l3a[2]);
-                    QVector3D b(l3b[0], l3b[1], l3b[2]);
-                    QVector3D c(l3c[0], l3c[1], l3c[2]);
-                    QVector3D norm = QVector3D::crossProduct(b - a, c - a);
-                    if (norm.isNull())
-                        continue; // null face
-                    QGLTextureModel model;
+                    QGLOperation op(this, QGL::TRIANGLE);
+                    op << QVector3D(l3a[0], l3a[1], l3a[2]);
+                    op << QVector3D(l3b[0], l3b[1], l3b[2]);
+                    op << QVector3D(l3c[0], l3c[1], l3c[2]);
                     if (m_hasTextures)
                     {
                         Lib3dsTexel &t0 = m_mesh->texelL[face->points[0]];
                         Lib3dsTexel &t1 = m_mesh->texelL[face->points[1]];
                         Lib3dsTexel &t2 = m_mesh->texelL[face->points[2]];
-                        model.setBottomLeft(QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]));
-                        model.setBottomRight(QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]));
-                        model.setTopRight(QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]));
+                        op << QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]);
+                        op << QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]);
+                        op << QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]);
                     }
-                    addTriangle(a, b, c, norm, &model);
                 }
             }
         }

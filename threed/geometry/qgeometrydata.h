@@ -52,6 +52,7 @@
 QT_BEGIN_NAMESPACE
 
 class QGeometryDataPrivate;
+class QVertexRefs;
 class QLogicalVertex;
 
 class QGeometryData
@@ -64,18 +65,30 @@ public:
 
     QGeometryData &operator=(const QGeometryData &);
 
+    void appendGeometry(const QGeometryData &data);
     int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int i) const;
     QGLVertexArray toVertexArray() const;
     void normalizeNormals();
     QBox3D boundingBox() const;
+    void setCommonNormal(const QVector3D &n);
+    QVector3D commonNormal() const;
+    QGeometryData zippedWith(const QGeometryData &other) const;
+    void zipWith(const QGeometryData &other);
     void clear();
+    void clear(QGL::VertexAttribute);
 
     void appendVertex(const QVector3D &v);
     void appendAttribute(const QVector3D &a, QGL::VertexAttribute field);
     void appendNormal(const QVector3D &n);
     void appendTexCoord(const QVector2D &t, QGL::VertexAttribute field);
     void appendColor(const QColor4b &c);
+
+    void appendVertexArray(const QDataArray<QVector3D> &ary);
+    void appendAttributeArray(const QDataArray<QVector3D> &ary, QGL::VertexAttribute field);
+    void appendNormalArray(const QDataArray<QVector3D> &ary);
+    void appendTexCoordArray(const QDataArray<QVector2D> &ary, QGL::VertexAttribute field);
+    void appendColorArray(const QDataArray<QColor4b> &ary);
 
     QVector3D &vertexRef(int i);
     QDataArray<QVector3D> vertices() const;
@@ -86,10 +99,10 @@ public:
     QColor4b &colorRef(int i);
     QDataArray<QColor4b> colors() const;
 
-    QVector2D &texCoordRef(int i, QGL::VertexAttribute field);
+    QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QDataArray<QVector2D> texCoords(QGL::VertexAttribute field) const;
 
-    QVector3D &attributeRef(int i, QGL::VertexAttribute field);
+    QVector3D &attributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QDataArray<QVector3D> attributes(QGL::VertexAttribute field) const;
 
     bool hasField(QGL::VertexAttribute field) const;
@@ -100,6 +113,7 @@ private:
     void detach();
 
     QGeometryDataPrivate *d;
+    QVertexRefs *r;
 };
 
 QT_END_NAMESPACE

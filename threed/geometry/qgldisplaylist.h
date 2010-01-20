@@ -91,32 +91,38 @@ public:
     void finalize();
 
     // geometry building by begin() / end()
-    void begin(QGL::Operation, const QVector3D &control = QVector3D());
+    void begin(QGL::Operation);
     void end();
-    QGLPrimitive endResult();
-    void setControl(const QVector3D &control);
-    QVector3D control() const;
+
     void setFlags(QGL::OperationFlags flag);
     QGL::OperationFlags flags() const;
+
     void addVertex(const QVector3D &);
+    void addVertex(qreal x, qreal y) { addVertex(QVector3D(x, y, 0.0)); }
+    void addVertex(qreal x, qreal y, qreal z) { addVertex(QVector3D(x, y, z)); }
+
     void addNormal(const QVector3D &);
     void addColor(const QColor4b &);
-    void addTexCoord(const QVector2D &, QGL::VertexAttribute);
-    void addAttribute(const QVector3D &, QGL::VertexAttribute);
+
+    void addTexCoord(const QVector2D &, QGL::VertexAttribute attr = QGL::TextureCoord0);
+    void addTexCoord(qreal s, qreal t, QGL::VertexAttribute attr = QGL::TextureCoord0)
+    {
+        addTexCoord(QVector2D(s, t), attr);
+    }
+
+    void addAttribute(const QVector3D &, QGL::VertexAttribute = QGL::CustomVertex0);
 
     void addVertexArray(const QDataArray<QVector3D> &);
     void addNormalArray(const QDataArray<QVector3D> &);
     void addColorArray(const QDataArray<QColor4b> &);
-    void addTexCoordArray(const QDataArray<QVector2D> &, QGL::VertexAttribute);
-    void addAttributeArray(const QDataArray<QVector3D> &, QGL::VertexAttribute);
+    void addTexCoordArray(const QDataArray<QVector2D> &,
+                          QGL::VertexAttribute attr = QGL::TextureCoord0);
+    void addAttributeArray(const QDataArray<QVector3D> &,
+                           QGL::VertexAttribute attr = QGL::CustomVertex0);
 
     // geometry building by primitive
-    void addTriangle(QLogicalVertex a, QLogicalVertex b,
-                     QLogicalVertex c, const QVector3D &normal = QVector3D());
+    QGLPrimitive *currentPrimitive();
     void addTriangle(const QGLPrimitive &triangle);
-    void addTriangle(QLogicalVertex a, QLogicalVertex b,
-                     QLogicalVertex c, QLogicalVertex d,
-                     const QVector3D &normal = QVector3D());
     void addQuad(const QGLPrimitive &quad);
     void addTriangleFan(const QGLPrimitive &fan);
     void addTriangleStrip(const QGLPrimitive &strip);
@@ -133,6 +139,7 @@ protected:
 private:
     Q_DISABLE_COPY(QGLDisplayList);
     void addSection(QGLSection *section);
+    void addTriangle(int a, int b, int c, QGLPrimitive &p);
 
     friend class QGLSection;
 

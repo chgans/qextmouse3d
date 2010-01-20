@@ -143,43 +143,39 @@ QGLDisplayList *DisplayListView::buildGeometry()
     const qreal canHeight = 2.5f;
     const int numSlices = 32;
 
-    // defining coordinate data for can
-    QDataArray<QVector3D> topCanRim;
-    QDataArray<QVector3D> bottomCanRim;
-    QVector3D canLidCenter(0.0f, 0.0f, canHeight / 2.0f);
+    QGLPrimitive canRim;
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
-    QVector3D canBottomCenter = canLidCenter + canExtrudeVec;
-    QGLTextureModel texMap(0, 0, 1, 1);
 
     // do the math for the defining points
     for (int i = 0; i < numSlices; ++i)
     {
         qreal angle = (qreal(i) * 2.0 * M_PI) / numSlices;
-        topCanRim << QVector3D(canRadius * qCos(angle), canRadius * qSin(angle),
-                               canHeight / 2.0f);
+        canRim.appendVertex(QVector3D(canRadius * qCos(angle),
+                                      canRadius * qSin(angle),
+                                      canHeight / 2.0f));
     }
 
     //! [3]
     // create the flat top lid of the can
     soupCan->newSection();
-    soupCan->begin(QGLDisplayList::TRIANGULATED_FACE, canLidCenter);
-    soupCan->addVertexArray(topCanRim);
-    soupCan->end();
+    soupCan->addTriangulatedFace(canRim);
 
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
     soupCan->currentNode()->setMaterial(canMat);
     soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
-    soupCan->begin(QGLDisplayList::EXTRUSION, canExtrudeVec);
-    soupCan->addVertexArray(topCanRim);
-    soupCan->addTextureModel(texMap);
-    bottomCanRim = soupCan->endResult();
+    QGLPrimitive canTop = canRim;
+    canTop.appendVertex(canTop.vertexRef(0));       // doubled vert for texture seam
+    canTop.generateTextureCoordinates();            // generate x texture coords
+    QGLPrimitive canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
+    for (int i = 0; i < canTop.count(); ++i)
+        canTop.texCoordRef(i).setY(1.0);                      // top has tex.y == 1
+    soupCan->addQuadsZipped(canTop, canBase);
 
     // create the flat bottom lid of the can
     soupCan->newSection();
-    soupCan->begin(QGLDisplayList::TRIANGULATED_FACE, canBottomCenter);
-    soupCan->addVertexArray(bottomCanRim);
-    soupCan->end();
+    QGLPrimitive canBottom = canRim.translated(canExtrudeVec).reversed();
+    soupCan->addTriangulatedFace(canBottom);
 
     soupCan->finalize();
     return soupCan;

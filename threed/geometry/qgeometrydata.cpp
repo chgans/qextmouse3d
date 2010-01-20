@@ -84,6 +84,7 @@
         \o hasField() to find if a particular data type is present
         \o normalizeNormals() to reduce all normal vectors to unit length
         \o boundingBox() to find the bounds of the geometry
+        \o setCommonNormal() / commonNormal() for a normal that applies to all vertices
      \endlist
 
      QGeometryData uses implicit sharing with lazy creation of internal
@@ -94,8 +95,8 @@
         myData = processedData();
      \endcode
      is very inexpensive, since the first declaration and initialization
-     does not cause internal data to be created, only to be overwritten by the
-     assignment operation.
+     does not cause internal data to be created (only to be overwritten by the
+     assignment operation).
 
      \sa QGLPrimitive, QDataArray
 */
@@ -190,6 +191,50 @@ QGeometryData &QGeometryData::operator=(const QGeometryData &other)
         d->ref.ref();
     }
     return *this;
+}
+
+/*!
+    Appends the geometry in \a data to this.  If this is empty, then all
+    fields of \a data are appended; otherwise if this has existing fields
+    only those fields that exist in both are appended.
+*/
+void QGeometryData::appendGeometry(const QGeometryData &data)
+{
+    if (data.d && data.count())
+    {
+        detach();
+        int cnt = data.d->count;
+        const quint32 mask = 0x01;
+        // only append fields that are in both, unless we have NO fields, then
+        // append everything that is in data
+        quint32 fields = d->fields ? d->fields & data.d->fields : data.d->fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
+        {
+            if (mask & fields)
+            {
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                enableField(attr);  // might not be enabled if we had NO fields
+                if (attr < QGL::TextureCoord0)
+                {
+                    if (attr == QGL::Position)
+                        d->vertices.append(data.d->vertices);
+                    else if (attr == QGL::Normal)
+                        d->normals.append(data.d->normals);
+                    else  // colors
+                        d->colors.append(data.d->colors);
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    d->textures[d->key[attr]].append(data.texCoords(attr));
+                }
+                else
+                {
+                    d->attributes[d->key[attr]].append(data.attributes(attr));
+                }
+            }
+        }
+        d->count += cnt;
+    }
 }
 
 /*!
@@ -342,6 +387,200 @@ QBox3D QGeometryData::boundingBox() const
 }
 
 /*!
+    Sets \a normal to be a common normal.  This normal vector is used for
+    all vertices in the geometry.
+*/
+void QGeometryData::setCommonNormal(const QVector3D &normal)
+{
+    if (!d && normal.isNull())
+        return
+    detach();
+    d->commonNormal = normal;
+}
+
+/*!
+    Returns the common normal set on this geometry, or a null vector if
+    none was set.  This vector is not affected by normalizeNormals().
+    Also fields() and enableFields() only affect per-vertex normal values
+    stored in the geometry data - these values are unrelated to commonNormal().
+
+    A QLogicalVertex extracted from this geometry will return the commonNormal()
+    value, if it is non-null.  In this way, the common normal overrides any
+    geometry data set.
+*/
+QVector3D QGeometryData::commonNormal() const
+{
+    if (d)
+        return d->commonNormal;
+    return QVector3D();
+}
+
+/*!
+    Returns a QGeometryData instance containing alternating vertices from
+    this geometry and \a other.  The resulting geometry contains N vertices
+    where \c{N == qMin(count(), other.count())}, and has only the fields
+    that are in both geometries.
+*/
+QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
+{
+    QGeometryData res;
+    if (d && other.d)
+    {
+        int cnt = qMax(d->count, other.d->count);
+        const quint32 mask = 0x01;
+        quint32 fields = d->fields & other.d->fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
+        {
+            if (mask & fields)
+            {
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                if (attr < QGL::TextureCoord0)
+                {
+                    if (attr == QGL::Position)
+                    {
+                        QDataArray<QVector3D> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->vertices.at(i));
+                            tmp.append(other.d->vertices.at(i));
+                        }
+                        res.d->vertices = tmp;
+                    }
+                    else if (attr == QGL::Normal)
+                    {
+                        QDataArray<QVector3D> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->normals.at(i));
+                            tmp.append(other.d->normals.at(i));
+                        }
+                        res.d->normals = tmp;
+                    }
+                    else  // colors
+                    {
+                        QDataArray<QColor4b> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->colors.at(i));
+                            tmp.append(other.d->colors.at(i));
+                        }
+                        res.d->colors = tmp;
+                    }
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    QDataArray<QVector2D> tmp;
+                    const QDataArray<QVector2D> txa = d->textures.at(d->key[attr]);
+                    const QDataArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
+                    for (int i = 0; i < cnt; ++i)
+                    {
+                        tmp.append(txa.at(i));
+                        tmp.append(txb.at(i));
+                    }
+                    res.d->textures[d->key[attr]] = tmp;
+                }
+                else
+                {
+                    QDataArray<QVector3D> tmp;
+                    const QDataArray<QVector3D> ata = d->attributes.at(d->key[attr]);
+                    const QDataArray<QVector3D> atb = other.d->attributes.at(other.d->key[attr]);
+                    for (int i = 0; i < cnt; ++i)
+                    {
+                        tmp.append(ata.at(i));
+                        tmp.append(atb.at(i));
+                    }
+                    res.d->attributes[d->key[attr]] = tmp;
+                }
+            }
+        }
+        res.d->count = cnt;
+    }
+    return res;
+}
+
+/*!
+    Sets this QGeometryData to contain alternating vertices from
+    this geometry and \a other.  The resulting geometry contains N vertices
+    where \c{N == qMin(count(), other.count())}, and has only the fields
+    that are in both geometries.
+*/
+void QGeometryData::zipWith(const QGeometryData &other)
+{
+    if (d && other.d)
+    {
+        detach();
+        int cnt = qMax(d->count, other.d->count);
+        const quint32 mask = 0x01;
+        quint32 fields = d->fields & other.d->fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
+        {
+            if (mask & fields)
+            {
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                if (attr < QGL::TextureCoord0)
+                {
+                    if (attr == QGL::Position)
+                    {
+                        QDataArray<QVector3D> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->vertices.at(i));
+                            tmp.append(other.d->vertices.at(i));
+                        }
+                        d->vertices = tmp;
+                    }
+                    else if (attr == QGL::Normal)
+                    {
+                        QDataArray<QVector3D> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->normals.at(i));
+                            tmp.append(other.d->normals.at(i));
+                        }
+                        d->normals = tmp;
+                    }
+                    else  // colors
+                    {
+                        QDataArray<QColor4b> tmp;
+                        for (int i = 0; i < cnt; ++i)
+                        {
+                            tmp.append(d->colors.at(i));
+                            tmp.append(other.d->colors.at(i));
+                        }
+                        d->colors = tmp;
+                    }
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    QDataArray<QVector2D> tmp;
+                    const QDataArray<QVector2D> txa = d->textures.at(d->key[attr]);
+                    const QDataArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
+                    for (int i = 0; i < cnt; ++i)
+                    {
+                        tmp.append(txa.at(i));
+                        tmp.append(txb.at(i));
+                    }
+                    d->textures[d->key[attr]] = tmp;
+                }
+                else
+                {
+                    QDataArray<QVector3D> tmp;
+                    const QDataArray<QVector3D> ata = d->attributes.at(d->key[attr]);
+                    const QDataArray<QVector3D> atb = other.d->attributes.at(other.d->key[attr]);
+                    for (int i = 0; i < cnt; ++i)
+                    {
+                        tmp.append(ata.at(i));
+                        tmp.append(atb.at(i));
+                    }
+                    d->attributes[d->key[attr]] = tmp;
+                }
+            }
+        }
+        d->count = cnt;
+    }
+}
+
+/*!
     Clear all data structures.
 */
 void QGeometryData::clear()
@@ -376,6 +615,33 @@ void QGeometryData::clear()
             }
         }
         d->count = 0;
+    }
+}
+
+void QGeometryData::clear(QGL::VertexAttribute field)
+{
+    if (d && (field & d->fields))
+    {
+        detach();
+        QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+        if (attr < QGL::TextureCoord0)
+        {
+            if (attr == QGL::Position)
+                d->vertices.clear();
+            else if (attr == QGL::Normal)
+                d->normals.clear();
+            else
+                d->colors.clear();
+        }
+        else if (attr < QGL::CustomVertex0)
+        {
+            d->textures[d->key[field]].clear();
+        }
+        else
+        {
+            d->attributes[d->key[field]].clear();
+        }
+        d->key[field] = -1;
     }
 }
 
@@ -432,6 +698,71 @@ void QGeometryData::appendColor(const QColor4b &c)
     enableField(QGL::Color);
     d->colors.append(c);
     d->count = qMax(d->count, d->colors.count());
+}
+
+/*!
+    Append the points in \a ary to this geometry data as position fields.
+*/
+void QGeometryData::appendVertexArray(const QDataArray<QVector3D> &ary)
+{
+    if (ary.count())
+    {
+        detach();
+        enableField(QGL::Position);
+        d->vertices.append(ary);
+    }
+}
+
+/*!
+    Append the points in \a ary to this geometry data, as an attribute \a field entries.
+*/
+void QGeometryData::appendAttributeArray(const QDataArray<QVector3D> &ary, QGL::VertexAttribute field)
+{
+    if (ary.count())
+    {
+        detach();
+        enableField(field);
+        d->attributes[d->key[field]].append(ary);
+    }
+}
+
+/*!
+    Append the vectors in \a ary to this geometry data, as lighting normals.
+*/
+void QGeometryData::appendNormalArray(const QDataArray<QVector3D> &ary)
+{
+    if (ary.count())
+    {
+        detach();
+        enableField(QGL::Normal);
+        d->normals.append(ary);
+    }
+}
+
+/*!
+    Append the 2D points in \a ary to this geometry data, as texture \a field entries.
+*/
+void QGeometryData::appendTexCoordArray(const QDataArray<QVector2D> &ary, QGL::VertexAttribute field)
+{
+    if (ary.count())
+    {
+        detach();
+        enableField(field);
+        d->textures[d->key[field]].append(ary);
+    }
+}
+
+/*!
+    Append the colors in \a ary to this geometry data, as color fields.
+*/
+void QGeometryData::appendColorArray(const QDataArray<QColor4b> &ary)
+{
+    if (ary.count())
+    {
+        detach();
+        enableField(QGL::Position);
+        d->colors.append(ary);
+    }
 }
 
 /*!

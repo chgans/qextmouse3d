@@ -48,8 +48,6 @@ class QGLOperation
 {
 public:
     inline QGLOperation(QGLDisplayList *, QGL::Operation);
-    inline QGLOperation(QGLDisplayList *, QGL::Operation,
-                        const QVector3D &control);
     inline ~QGLOperation();
     inline void setControl(const QVector3D &);
     inline QVector3D control() const;
@@ -69,7 +67,6 @@ public:
     inline void addAttributeArray(const QDataArray<QVector3D> &, QGL::VertexAttribute);
 
     inline void end();
-    inline QGLPrimitive endResult();
 private:
     QGLDisplayList *m_list;
 };
@@ -80,27 +77,9 @@ inline QGLOperation::QGLOperation(QGLDisplayList *list, QGL::Operation op)
     m_list->begin(op);
 }
 
-inline QGLOperation::QGLOperation(QGLDisplayList *list, QGL::Operation op,
-                                  const QVector3D &control)
-    : m_list(list)
-{
-    m_list->begin(op);
-    m_list->setControl(control);
-}
-
 inline QGLOperation::~QGLOperation()
 {
     m_list->end();
-}
-
-inline void QGLOperation::setControl(const QVector3D &control)
-{
-    m_list->setControl(control);
-}
-
-inline QVector3D QGLOperation::control() const
-{
-    return m_list->control();
 }
 
 inline void QGLOperation::setFlags(QGL::OperationFlags flags)
@@ -160,12 +139,6 @@ inline void QGLOperation::end()
     m_list->end();
 }
 
-inline QGLPrimitive QGLOperation::endResult()
-{
-    return m_list->endResult();
-}
-
-
 inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &ary)
 {
     op.addVertexArray(ary);
@@ -199,12 +172,6 @@ inline QGLOperation &operator<<(QGLOperation &op, const QVector2D &texCoord)
 inline QGLOperation &operator<<(QGLOperation &op, const QColor4b &color)
 {
     op.addColor(color);
-    return op;
-}
-
-inline QGLOperation &operator>>(QGLOperation &op, QGLPrimitive &prim)
-{
-    prim = op.endResult();
     return op;
 }
 
