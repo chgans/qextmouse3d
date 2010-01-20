@@ -73,6 +73,8 @@ private slots:
     void appendFourAtATime();
     void clear_data();
     void clear();
+    void randomAccess_data();
+    void randomAccess();
 };
 
 enum {
@@ -440,6 +442,102 @@ void tst_QDataArray::clear()
             buffer.clear();
             for (int i = 0; i < size; ++i)
                 buffer.push_back(float(i));
+        }
+    }
+}
+
+void tst_QDataArray::randomAccess_data()
+{
+    QTest::addColumn<int>("type");
+
+    QTest::newRow("QDataBuffer") << int(Test_DataBuffer);
+    QTest::newRow("QVector") << int(Test_Vector);
+#if TEST_QLIST
+    QTest::newRow("QList") << int(Test_List);
+#endif
+    QTest::newRow("QVarLengthArray") << int(Test_VarLengthArray);
+    QTest::newRow("QDataArray") << int(Test_DataArray);
+    QTest::newRow("std::vector") << int(Test_STLVector);
+}
+
+// To force the values below to be computed and stored.
+static int volatile finalSum;
+
+void tst_QDataArray::randomAccess()
+{
+    QFETCH(int, type);
+
+    if (type == Test_DataBuffer) {
+        QDataBuffer<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.add(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer.at(i) = buffer.at(i - 10) + buffer.at(i - 4) * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer.at(i);
+            finalSum = sum;
+        }
+    } else if (type == Test_Vector) {
+        QVector<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.append(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer.at(i - 10) + buffer.at(i - 4) * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer.at(i);
+            finalSum = sum;
+        }
+    } else if (type == Test_List) {
+        QList<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.append(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer[i - 10] + buffer[i - 4] * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer[i];
+            finalSum = sum;
+        }
+    } else if (type == Test_VarLengthArray) {
+        QVarLengthArray<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.append(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer[i - 10] + buffer[i - 4] * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer[i];
+            finalSum = sum;
+        }
+    } else if (type == Test_DataArray) {
+        QDataArray<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.append(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer.at(i - 10) + buffer.at(i - 4) * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer.at(i);
+            finalSum = sum;
+        }
+    } else if (type == Test_STLVector) {
+        std::vector<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.push_back(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer[i - 10] + buffer[i - 4] * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer[i];
+            finalSum = sum;
         }
     }
 }

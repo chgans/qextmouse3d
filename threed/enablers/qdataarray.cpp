@@ -52,16 +52,9 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::enablers
 
     QDataArray is similar to QVector except that it has less overhead
-    when constructing large arrays of simple types by appending individual
-    elements one by one.  It is intended for building arrays of points
+    when constructing large arrays by appending individual elements
+    one by one.  It is intended for building arrays of points
     and vertex attributes in high-performance graphics applications.
-    For other applications, QVector should be used instead.
-
-    The first template parameter T is restricted to simple primitive
-    and movable types such as int, float, QVector3D, etc.  In particular,
-    constructors and destructors will not be called on elements that are
-    stored in the array.  When an array is extended with resize(),
-    new elements are filled with zeroes.
 
     QDataArray instances have a preallocated data area for quickly
     building small arrays on the stack without malloc overhead.
