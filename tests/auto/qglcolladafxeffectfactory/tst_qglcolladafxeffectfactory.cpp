@@ -98,14 +98,6 @@ void tst_QGLColladaFxEffectFactory::create()
     QList<QGLColladaFxEffect*> effects = QGLColladaFxEffectFactory::loadEffectsFromFile(fileName);
     QCOMPARE(effects.count(), effectCount);
     cleanupEffectList(effects);
-
-    QList<QGLColladaFxEffect*> nonExistentFileEffects = QGLColladaFxEffectFactory::loadEffectsFromFile("nonexistentfile.dae");
-    QCOMPARE(nonExistentFileEffects.count(), 0);
-    cleanupEffectList(nonExistentFileEffects);
-
-    QList<QGLColladaFxEffect*> boxExampleEffects = QGLColladaFxEffectFactory::loadEffectsFromFile(":/collada_cube.xml");
-    QCOMPARE(boxExampleEffects.count(), 1);
-    cleanupEffectList(boxExampleEffects);
 }
 
 
@@ -118,20 +110,20 @@ void tst_QGLColladaFxEffectFactory::processFloatList_data()
     QTest::newRow("null") << "" << QVector<float>();
 
     QVector<float> expectedSingleResult;
-    expectedSingleResult << 0.456;
+    expectedSingleResult << 0.456f;
     QTest::newRow("single_float") << "<floats>0.456</floats>" << expectedSingleResult;
 
     QVector<float> expectedSimpleResult;
-    expectedSimpleResult << 0.0 << 1.1 << 2.2 << 3.3;
+    expectedSimpleResult << 0.0f << 1.1f << 2.2f << 3.3f;
     QTest::newRow("simple_floats") << "<floats>0.0 1.1 2.2 3.3</floats>" << expectedSimpleResult;
 
     QVector<float> expectedColorResult;
-    expectedColorResult << 0.0 << 1.1 << 2.2 << 3.3;
+    expectedColorResult << 0.0f << 1.1f << 2.2f << 3.3f;
     QTest::newRow("color") << "<color>0.0 1.1 2.2 3.3</color>" << expectedColorResult;
 
     QVector<float> expectedSevenDigitResult;
-    expectedSevenDigitResult << 1234567 << 1.234567 << 76.54321 << 1111.111 << 22222.22 << 7645213;
-    QTest::newRow("seven_digits") << "<floats>1234567 1.234567 76.54321 1111.111 22222.22 7645213</floats>" << expectedSevenDigitResult;
+    expectedSevenDigitResult << 1234567.0f << 1.234567f << 76.54321f << 1111.111f << 22222.22f << 7645213.0f;
+    QTest::newRow("seven_digits") << "<floats>1234567.0 1.234567 76.54321 1111.111 22222.22 7645213.0</floats>" << expectedSevenDigitResult;
 }
 
 
