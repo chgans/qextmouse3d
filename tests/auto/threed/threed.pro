@@ -12,6 +12,7 @@ SUBDIRS = \
     qgllightparameters \
     qglmaterialparameters \
     qglvertexarray \
+    qglvertexbuffer \
     qglvertexdescription \
     qglgeometry \
     qglindexarray \

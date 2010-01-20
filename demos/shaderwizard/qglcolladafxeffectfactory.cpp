@@ -533,7 +533,7 @@ void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& x
         xml.readNextStartElement();
     }
 
-    while( xml.name() == "image" )
+    while( xml.name() == "image" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         QGLColladaParam* imageParam = processImageElement( xml , stateStack );
         list.append( imageParam );
@@ -565,7 +565,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsEleme
         xml.readNextStartElement();
     }
 
-    while( xml.name() == "effect" )
+    while( xml.name() == "effect" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         result += processEffectElement( xml , stateStack );
         xml.readNextStartElement();
@@ -606,7 +606,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
     }
 
     QList<QGLColladaParam*> params;
-    while( xml.name() == "newparam" )
+    while( xml.name() == "newparam" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         QGLColladaParam* result = processNewparamElement( xml , stateStack );
         if( result != 0 )
@@ -618,7 +618,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
 
     // find any of the profile_* elements defined in the spec
     QRegExp profileRegExp( "profile_(BRIDGE|CG|GLES2?|GLSL|COMMON)" );
-    while( profileRegExp.indexIn( xml.name().toString() ) == 0 )
+    while( profileRegExp.indexIn( xml.name().toString() ) == 0 && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         result += processProfileElement( xml, stateStack );
         xml.readNextStartElement();
@@ -702,7 +702,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
         xml.readNextStartElement();
     }
 
-    while( xml.name() == "annotate" )
+    while( xml.name() == "annotate" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         qWarning() << "Warning: annotate element not supported ( line" << xml.lineNumber() << ")";
         xml.skipCurrentElement();
@@ -895,7 +895,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
     effect->setMaterial( material );
 
-    while( xml.name() == "pass" )
+    while( xml.name() == "pass" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         qWarning() << "Warning: pass element not supported ( line" << xml.lineNumber() << ")";
         xml.skipCurrentElement();

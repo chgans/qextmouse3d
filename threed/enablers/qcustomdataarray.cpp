@@ -341,7 +341,7 @@ void QCustomDataArray::setElementType(QCustomDataArray::ElementType type)
     are initialized with all-zeroes.  If \a size is less than the current
     size, elements are removed from the end.
 
-    \sa size(), reserve(), shrink()
+    \sa size(), reserve(), squeeze()
 */
 
 /*!
@@ -356,23 +356,32 @@ void QCustomDataArray::setElementType(QCustomDataArray::ElementType type)
     will be appended ahead of time.  Reserving the space once can avoid
     unnecessary realloc operations later.
 
-    \sa capacity(), resize(), shrink()
+    \sa capacity(), resize(), squeeze()
 */
 
 /*!
-    \fn void QCustomDataArray::shrink(int size)
+    \fn void QCustomDataArray::squeeze()
 
-    Shrinks the capacity of this custom data array to \a size, removing
-    elements from the end if necessary.  Does nothing if the capacity
+    Releases any memory not required to store the custom data array's
+    elements by reducing its capacity() to size().
+
+    \sa reserve(), capacity()
+*/
+
+/*!
+    \fn void QCustomDataArray::squeeze(int size)
+
+    Reduces the capacity() of this custom data array to \a size, removing
+    elements from the end if necessary.  Does nothing if the capacity()
     is already less than \a size.
 
-    This function is intended for reclaiming memory in a data
+    This function is intended for reclaiming memory in a custom data
     array that is being used over and over with different contents.
     As elements are added to a custom data array, it will be constantly
-    expanded in size.  This function will realloc the custom data array
+    expanded in size.  This function can realloc the custom data array
     to a smaller size to reclaim unused memory.
 
-    \sa reserve()
+    \sa reserve(), capacity()
 */
 
 /*!

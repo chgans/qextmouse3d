@@ -64,7 +64,7 @@ private slots:
     void copy();
     void resize();
     void reserve();
-    void shrink();
+    void squeeze();
     void compare();
     void remove();
     void extend();
@@ -72,6 +72,7 @@ private slots:
     void left();
     void right();
     void iterate();
+    void copyPrealloc();
 };
 
 // This must match the default for PreallocSize.
@@ -530,7 +531,7 @@ void tst_QDataArray::reserve()
     QCOMPARE(array.count(), 1000);
 }
 
-void tst_QDataArray::shrink()
+void tst_QDataArray::squeeze()
 {
     QDataArray<float> array;
     array.reserve(100);
@@ -543,40 +544,40 @@ void tst_QDataArray::shrink()
     array.reserve(400);
     QVERIFY(array.capacity() >= 400);
 
-    // Shrinking sets the capacity to exactly the value that is specified.
-    array.shrink(200);
+    // Squeezing sets the capacity to exactly the value that is specified.
+    array.squeeze(200);
     QCOMPARE(array.capacity(), 200);
     QCOMPARE(array.count(), 100);
 
-    // Can't shrink to something larger.
-    array.shrink(300);
+    // Can't squeeze to something larger.
+    array.squeeze(300);
     QCOMPARE(array.capacity(), 200);
     QCOMPARE(array.count(), 100);
 
     // Drop elements from the end.
-    array.shrink(50);
+    array.squeeze(50);
     QCOMPARE(array.capacity(), 50);
     QCOMPARE(array.count(), 50);
     for (int index = 0; index < 50; ++index)
         QCOMPARE(array[index], float(index));
 
-    // Test shrinking within the preallocated area.
+    // Test squeezing within the preallocated area.
     QDataArray<float> array2;
     array2.append(1.0f);
     array2.append(2.0f);
     array2.append(3.0f);
-    array2.shrink(2);
+    array2.squeeze(2);
     QCOMPARE(array2.capacity(), ExpectedMinCapacity);
     QCOMPARE(array2.count(), 2);
 
-    // Test copy-on-write during shrinking.
+    // Test copy-on-write during squeezing.
     QDataArray<float> array3(array);
-    array3.shrink(20);
+    array3.squeeze(20);
     QCOMPARE(array3.count(), 20);
     QCOMPARE(array.count(), 50);
 
     // Clear and check that the array reverts to preallocation.
-    array.shrink(0);
+    array.squeeze(0);
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
 }
 
@@ -931,6 +932,37 @@ void tst_QDataArray::iterate()
     for (it5 = mid.constBegin(); it5 != mid.constEnd(); ++it5)
         QCOMPARE(*it5, float(1024 - value++));
     QCOMPARE(value - 512, mid.size());
+}
+
+// Verify that when the data is in the preallocated section, it is
+// copied across and the original constData() pointer remains the same.
+void tst_QDataArray::copyPrealloc()
+{
+    QDataArray<float> array1;
+    array1.append(1.0f);
+    array1.append(2.0f);
+
+    const float *data = array1.constData();
+
+    QDataArray<float> array2(array1);
+
+    QVERIFY(array1.constData() == data);
+    QVERIFY(array2.constData() != data);
+
+    QCOMPARE(array2.size(), 2);
+    QCOMPARE(array2[0], float(1.0f));
+    QCOMPARE(array2[1], float(2.0f));
+
+    QDataArray<float> array3;
+    QCOMPARE(array3.size(), 0);
+    array3 = array1;
+
+    QVERIFY(array1.constData() == data);
+    QVERIFY(array3.constData() != data);
+
+    QCOMPARE(array3.size(), 2);
+    QCOMPARE(array3[0], float(1.0f));
+    QCOMPARE(array3[1], float(2.0f));
 }
 
 QTEST_APPLESS_MAIN(tst_QDataArray)

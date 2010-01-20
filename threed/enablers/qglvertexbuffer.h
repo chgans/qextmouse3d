@@ -45,6 +45,7 @@
 #include "qglbuffer.h"
 #include "qcustomdataarray.h"
 #include "qglvertexdescription.h"
+#include "qglattributevalue.h"
 #include <QtCore/qlist.h>
 
 QT_BEGIN_HEADER
@@ -63,14 +64,14 @@ public:
     QGLVertexBuffer();
     ~QGLVertexBuffer();
 
-    enum PackingPolicy
+    enum PackingHint
     {
         Interleave,
         Append
     };
 
-    QGLVertexBuffer::PackingPolicy packingPolicy() const;
-    void setPackingPolicy(QGLVertexBuffer::PackingPolicy value);
+    QGLVertexBuffer::PackingHint packingHint() const;
+    void setPackingHint(QGLVertexBuffer::PackingHint value);
 
     QGLBuffer::UsagePattern usagePattern() const;
     void setUsagePattern(QGLBuffer::UsagePattern value);
@@ -88,10 +89,17 @@ public:
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
 
+    void replaceAttribute
+        (QGL::VertexAttribute attribute, int index, int count,
+         const QGLAttributeValue& value);
+
     bool upload();
     bool isUploaded() const;
 
     QGLBuffer *buffer() const;
+
+    bool bind() const;
+    void release() const;
 
 private:
     QScopedPointer<QGLVertexBufferPrivate> d_ptr;

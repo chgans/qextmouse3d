@@ -18,7 +18,9 @@ public:
     QGLColladaFxEffect();
     ~QGLColladaFxEffect();
     void update(QGLPainter *painter, QGLPainter::Updates updates);
+    void setId(QString);
     void setSid(QString);
+    QString id();
     QString sid();
 
     QGLTexture2D* diffuseTexture();

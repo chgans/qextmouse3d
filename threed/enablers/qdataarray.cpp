@@ -52,16 +52,9 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::enablers
 
     QDataArray is similar to QVector except that it has less overhead
-    when constructing large arrays of simple types by appending individual
-    elements one by one.  It is intended for building arrays of points
+    when constructing large arrays by appending individual elements
+    one by one.  It is intended for building arrays of points
     and vertex attributes in high-performance graphics applications.
-    For other applications, QVector should be used instead.
-
-    The first template parameter T is restricted to simple primitive
-    and movable types such as int, float, QVector3D, etc.  In particular,
-    constructors and destructors will not be called on elements that are
-    stored in the array.  When an array is extended with resize(),
-    new elements are filled with zeroes.
 
     QDataArray instances have a preallocated data area for quickly
     building small arrays on the stack without malloc overhead.
@@ -209,7 +202,18 @@ QT_BEGIN_NAMESPACE
     to the storage, which is not initialized.  The pointer is only
     valid until the array is reallocated or destroyed.
 
-    \sa resize()
+    The append() or resize() functions are recommended if T is a
+    complex type, with extend() only used for simple types.
+    Because the storage is not initialized, the caller should use
+    the in-place new operator to set elements if T is a complex type:
+
+    \code
+    QDataArray<QRegExp> array;
+    QRegExp *space = array.extend(1);
+    new (space) QRegExp(QLatin1String("exp"));
+    \endcode
+
+    \sa append(), resize()
 */
 
 /*!
@@ -291,7 +295,7 @@ QT_BEGIN_NAMESPACE
     are initialized with all-zeroes.  If \a size is less than the current
     size, elements are removed from the end.
 
-    \sa size(), reserve(), shrink()
+    \sa size(), reserve(), squeeze()
 */
 
 /*!
@@ -306,23 +310,32 @@ QT_BEGIN_NAMESPACE
     will be appended ahead of time.  Reserving the space once can avoid
     unnecessary realloc operations later.
 
-    \sa capacity(), resize(), shrink()
+    \sa capacity(), resize(), squeeze()
 */
 
 /*!
-    \fn void QDataArray::shrink(int size)
+    \fn void QDataArray::squeeze()
 
-    Shrinks the capacity of this data array to \a size, removing
-    elements from the end if necessary.  Does nothing if the capacity
+    Releases any memory not required to store the data array's elements
+    by reducing its capacity() to size().
+
+    \sa reserve(), capacity()
+*/
+
+/*!
+    \fn void QDataArray::squeeze(int size)
+
+    Reduces the capacity() of this data array to \a size, removing
+    elements from the end if necessary.  Does nothing if the capacity()
     is already less than \a size.
 
     This function is intended for reclaiming memory in a data
     array that is being used over and over with different contents.
     As elements are added to a data array, it will be constantly
-    expanded in size.  This function will realloc the data array
+    expanded in size.  This function can realloc the data array
     to a smaller size to reclaim unused memory.
 
-    \sa reserve()
+    \sa reserve(), capacity()
 */
 
 /*!
@@ -528,6 +541,48 @@ QT_BEGIN_NAMESPACE
     \typedef QDataArray::ConstIterator
 
     Qt-style synonym for QDataArray::const_iterator.
+*/
+
+/*!
+    \typedef QDataArray::const_pointer
+
+    Typedef for const T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::const_reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::difference_type
+
+    Typedef for ptrdiff_t. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::pointer
+
+    Typedef for T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::size_type
+
+    Typedef for int. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArray::value_type
+
+    Typedef for T. Provided for STL compatibility.
 */
 
 /*!
@@ -819,6 +874,48 @@ QT_BEGIN_NAMESPACE
     \typedef QDataArrayRef::ConstIterator
 
     Qt-style synonym for QDataArrayRef::const_iterator.
+*/
+
+/*!
+    \typedef QDataArrayRef::const_pointer
+
+    Typedef for const T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::const_reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::difference_type
+
+    Typedef for ptrdiff_t. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::pointer
+
+    Typedef for T *. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::reference
+
+    Typedef for T &. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::size_type
+
+    Typedef for int. Provided for STL compatibility.
+*/
+
+/*!
+    \typedef QDataArrayRef::value_type
+
+    Typedef for T. Provided for STL compatibility.
 */
 
 /*!
