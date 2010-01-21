@@ -48,6 +48,7 @@
 #include "qglindexarray.h"
 #include "qbox3d.h"
 #include "qdataarray.h"
+#include "qvectorarray.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -79,32 +80,38 @@ public:
     void clear(QGL::VertexAttribute);
 
     void appendVertex(const QVector3D &v);
+    void appendAttribute(float a, QGL::VertexAttribute field);
+    void appendAttribute(const QVector2D &a, QGL::VertexAttribute field);
     void appendAttribute(const QVector3D &a, QGL::VertexAttribute field);
+    void appendAttribute(const QVariant &a, QGL::VertexAttribute field);
     void appendNormal(const QVector3D &n);
     void appendTexCoord(const QVector2D &t, QGL::VertexAttribute field);
     void appendColor(const QColor4b &c);
 
-    void appendVertexArray(const QDataArray<QVector3D> &ary);
-    void appendAttributeArray(const QDataArray<QVector3D> &ary, QGL::VertexAttribute field);
-    void appendNormalArray(const QDataArray<QVector3D> &ary);
-    void appendTexCoordArray(const QDataArray<QVector2D> &ary, QGL::VertexAttribute field);
+    void appendVertexArray(const QVector3DArray &ary);
+    void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field);
+    void appendNormalArray(const QVector3DArray &ary);
+    void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field);
     void appendColorArray(const QDataArray<QColor4b> &ary);
 
     QVector3D &vertexRef(int i);
-    QDataArray<QVector3D> vertices() const;
+    QVector3DArray vertices() const;
 
     QVector3D &normalRef(int i);
-    QDataArray<QVector3D> normals() const;
+    QVector3DArray normals() const;
 
     QColor4b &colorRef(int i);
     QDataArray<QColor4b> colors() const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
-    QDataArray<QVector2D> texCoords(QGL::VertexAttribute field) const;
+    QVector2DArray texCoords(QGL::VertexAttribute field) const;
 
-    QVector3D &attributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
-    QDataArray<QVector3D> attributes(QGL::VertexAttribute field) const;
+    float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    QVector3D &vector3DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    QCustomDataArray attributes(QGL::VertexAttribute field) const;
 
+    inline static quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
     quint32 fields() const;
@@ -113,7 +120,6 @@ private:
     void detach();
 
     QGeometryDataPrivate *d;
-    QVertexRefs *r;
 };
 
 QT_END_NAMESPACE

@@ -56,6 +56,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLVertexBufferCustomAttribute;
+class QGeometryData;
 
 class Q_QT3D_EXPORT QCustomDataArray
 {
@@ -128,6 +129,7 @@ public:
     void append(const QColor4b& value);
     void append(const QVariant& value);
     void append(Qt::GlobalColor value);
+    void append(const QCustomDataArray &array);
 
     QDataArray<float> toFloatArray() const;
     QDataArray<QVector2D> toVector2DArray() const;
@@ -143,6 +145,7 @@ private:
     int m_elementComponents;
 
     friend class QGLVertexBufferCustomAttribute;
+    friend class QGeometryData;
 };
 
 inline QCustomDataArray::QCustomDataArray()
@@ -397,6 +400,15 @@ inline void QCustomDataArray::append(Qt::GlobalColor value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     *(reinterpret_cast<QColor4b *>(m_array.extend(1))) = QColor4b(value);
+}
+
+inline void QCustomDataArray::append(const QCustomDataArray &array)
+{
+    Q_ASSERT(isEmpty() || (array.elementType() == elementType()));
+    if (isEmpty())
+        *this = array;
+    else
+        m_array.append(array.m_array);
 }
 
 inline const void *QCustomDataArray::data() const

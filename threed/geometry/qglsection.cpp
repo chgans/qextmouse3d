@@ -294,8 +294,16 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
             }
             else
             {
-                if (!qFuzzyCompare(a.attribute(attr), b.attribute(attr)))
-                    return false;
+                QVariant v1 = a.attribute(attr);
+                QVariant v2 = b.attribute(attr);
+                if (v1.type() == (QVariant::Type)QMetaType::Float)
+                    return qFuzzyCompare(v1.toFloat(), v2.toFloat());
+                else if (v1.type() == QVariant::Vector2D)
+                    return qFuzzyCompare(qVariantValue<QVector2D>(v1), qVariantValue<QVector2D>(v2));
+                else if (v1.type() == QVariant::Vector3D)
+                    return qFuzzyCompare(qVariantValue<QVector3D>(v1), qVariantValue<QVector3D>(v2));
+                else
+                    return v1 == v2;
             }
         }
     }

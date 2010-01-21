@@ -157,6 +157,30 @@ inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &ar
     return op;
 }
 
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &ary)
+{
+    QDataArrayRef<QVector3D>::const_iterator it = ary.constBegin();
+    for ( ; it != ary.constEnd(); ++it)
+        op.addVertex(*it);
+    return op;
+}
+
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &ary)
+{
+    QDataArrayRef<QVector2D>::const_iterator it = ary.constBegin();
+    for ( ; it != ary.constEnd(); ++it)
+        op.addTexCoord(*it, QGL::TextureCoord0);
+    return op;
+}
+
+inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &ary)
+{
+    QDataArrayRef<QColor4b>::const_iterator it = ary.constBegin();
+    for ( ; it != ary.constEnd(); ++it)
+        op.addColor(*it);
+    return op;
+}
+
 inline QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
 {
     op.addVertex(vertex);
@@ -176,16 +200,9 @@ inline QGLOperation &operator<<(QGLOperation &op, const QColor4b &color)
 }
 
 inline QGLOperation &operator<<(QGLOperation &op,
-                                const QGL::OperationFlags &flags)
+                                const QGL::OperationFlag &flag)
 {
-    op.setFlags(flags | op.flags());
-    return op;
-}
-
-inline QGLOperation &operator>>(QGLOperation &op,
-                                QGL::OperationFlags &flags)
-{
-    flags = op.flags();
+    op.setFlags(flag | op.flags());
     return op;
 }
 

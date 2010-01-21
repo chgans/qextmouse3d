@@ -74,7 +74,7 @@
             \o appendTexCoord(), texCoordRef(), texCoords()
         \row
             \o QGL::CustomVertex0 - QGL::CustomVertex7
-            \o appendAttribute(), attributeRef(), attributes()
+            \o appendAttribute(), vector3DAttributeRef(), attributes()
      \endtable
 
      Additionally the class provides the following features:
@@ -109,11 +109,11 @@ public:
 
     QBasicAtomicInt ref;
 
-    QDataArray<QVector3D> vertices;
-    QDataArray<QVector3D> normals;
+    QVector3DArray vertices;
+    QVector3DArray normals;
     QDataArray<QColor4b> colors;
-    QList< QDataArray<QVector3D> > attributes;
-    QList< QDataArray<QVector2D> > textures;
+    QList<QCustomDataArray> attributes;
+    QList<QVector2DArray> textures;
 
     static const int ATTR_CNT = 32;
     QVector3D commonNormal;
@@ -195,7 +195,7 @@ QGeometryData &QGeometryData::operator=(const QGeometryData &other)
 
 /*!
     Appends the geometry in \a data to this.  If this is empty, then all
-    fields of \a data are appended; otherwise if this has existing fields
+    fields of \a data are appended; otherwise (when this has existing fields)
     only those fields that exist in both are appended.
 */
 void QGeometryData::appendGeometry(const QGeometryData &data)
@@ -347,7 +347,8 @@ QGLVertexArray QGeometryData::toVertexArray() const
                     }
                     else
                     {
-                        array.append(d->attributes.at(field).at(index));
+                        // TODO
+                        //array.append(d->attributes.at(field).at(index));
                     }
                 }
             }
@@ -481,9 +482,9 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                 }
                 else
                 {
-                    QDataArray<QVector3D> tmp;
-                    const QDataArray<QVector3D> ata = d->attributes.at(d->key[attr]);
-                    const QDataArray<QVector3D> atb = other.d->attributes.at(other.d->key[attr]);
+                    QCustomDataArray tmp;
+                    const QCustomDataArray ata = d->attributes.at(d->key[attr]);
+                    const QCustomDataArray atb = other.d->attributes.at(other.d->key[attr]);
                     for (int i = 0; i < cnt; ++i)
                     {
                         tmp.append(ata.at(i));
@@ -564,9 +565,9 @@ void QGeometryData::zipWith(const QGeometryData &other)
                 }
                 else
                 {
-                    QDataArray<QVector3D> tmp;
-                    const QDataArray<QVector3D> ata = d->attributes.at(d->key[attr]);
-                    const QDataArray<QVector3D> atb = other.d->attributes.at(other.d->key[attr]);
+                    QCustomDataArray tmp;
+                    const QCustomDataArray ata = d->attributes.at(d->key[attr]);
+                    const QCustomDataArray atb = other.d->attributes.at(other.d->key[attr]);
                     for (int i = 0; i < cnt; ++i)
                     {
                         tmp.append(ata.at(i));
@@ -657,13 +658,46 @@ void QGeometryData::appendVertex(const QVector3D &v)
 }
 
 /*!
-    Append the point \a v to this geometry data, as an attribute \a field.
+    Append the float \a a to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(float a, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the 2D point \a a to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(const QVector2D &a, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the 3D point \a a to this geometry data, as an attribute \a field.
 */
 void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute field)
 {
     detach();
     enableField(field);
     d->attributes[d->key[field]].append(v);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the variant value \a a to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
 }
 
@@ -703,7 +737,7 @@ void QGeometryData::appendColor(const QColor4b &c)
 /*!
     Append the points in \a ary to this geometry data as position fields.
 */
-void QGeometryData::appendVertexArray(const QDataArray<QVector3D> &ary)
+void QGeometryData::appendVertexArray(const QVector3DArray &ary)
 {
     if (ary.count())
     {
@@ -716,7 +750,7 @@ void QGeometryData::appendVertexArray(const QDataArray<QVector3D> &ary)
 /*!
     Append the points in \a ary to this geometry data, as an attribute \a field entries.
 */
-void QGeometryData::appendAttributeArray(const QDataArray<QVector3D> &ary, QGL::VertexAttribute field)
+void QGeometryData::appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field)
 {
     if (ary.count())
     {
@@ -729,7 +763,7 @@ void QGeometryData::appendAttributeArray(const QDataArray<QVector3D> &ary, QGL::
 /*!
     Append the vectors in \a ary to this geometry data, as lighting normals.
 */
-void QGeometryData::appendNormalArray(const QDataArray<QVector3D> &ary)
+void QGeometryData::appendNormalArray(const QVector3DArray &ary)
 {
     if (ary.count())
     {
@@ -742,7 +776,7 @@ void QGeometryData::appendNormalArray(const QDataArray<QVector3D> &ary)
 /*!
     Append the 2D points in \a ary to this geometry data, as texture \a field entries.
 */
-void QGeometryData::appendTexCoordArray(const QDataArray<QVector2D> &ary, QGL::VertexAttribute field)
+void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field)
 {
     if (ary.count())
     {
@@ -777,7 +811,7 @@ QVector3D &QGeometryData::vertexRef(int i)
 /*!
     Returns a copy of the vertex position data.
 */
-QDataArray<QVector3D> QGeometryData::vertices() const
+QVector3DArray QGeometryData::vertices() const
 {
     if (d)
         return d->vertices;
@@ -796,7 +830,7 @@ QVector3D &QGeometryData::normalRef(int i)
 /*!
     Returns a copy of the lighting normal data.
 */
-QDataArray<QVector3D> QGeometryData::normals() const
+QVector3DArray QGeometryData::normals() const
 {
     if (d)
         return d->normals;
@@ -834,26 +868,54 @@ QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
 /*!
     Returns a copy of the texture coordinate data.
 */
-QDataArray<QVector2D> QGeometryData::texCoords(QGL::VertexAttribute field) const
+QVector2DArray QGeometryData::texCoords(QGL::VertexAttribute field) const
 {
-    return hasField(field) ? d->textures.at(d->key[field]) : QDataArray<QVector2D>();
+    return hasField(field) ? d->textures.at(d->key[field]) : QVector2DArray();
 }
 
 /*!
-    Returns a modifiable reference to the \a field attribute data at index \a i.
+    Returns a modifiable reference to the float \a field attribute data at index \a i.
 */
-QVector3D &QGeometryData::attributeRef(int i, QGL::VertexAttribute field)
+float &QGeometryData::floatAttributeRef(int i, QGL::VertexAttribute field)
 {
     detach();
-    return d->attributes[d->key[field]][i];
+    QCustomDataArray &ary = d->attributes[d->key[field]];
+    Q_ASSERT(ary.elementType() == QCustomDataArray::Float);
+    return ary.m_array[i];
+}
+
+/*!
+    Returns a modifiable reference to the 2D vector \a field attribute data at index \a i.
+*/
+QVector2D &QGeometryData::vector2DAttributeRef(int i, QGL::VertexAttribute field)
+{
+    detach();
+    QCustomDataArray &ary = d->attributes[d->key[field]];
+    Q_ASSERT(ary.elementType() == QCustomDataArray::Vector2D);
+    float *data = ary.m_array.data();
+    QVector2D *v = reinterpret_cast<QVector2D*>(data + i*2);
+    return *v;
+}
+
+/*!
+    Returns a modifiable reference to the 3D vector \a field attribute data at index \a i.
+*/
+QVector3D &QGeometryData::vector3DAttributeRef(int i, QGL::VertexAttribute field)
+{
+    detach();
+    QCustomDataArray &ary = d->attributes[d->key[field]];
+    Q_ASSERT(ary.elementType() == QCustomDataArray::Vector3D);
+    float *data = ary.m_array.data();
+    QVector3D *v = reinterpret_cast<QVector3D*>(data + i*2);
+    return *v;
 }
 
 /*!
     Returns a copy of the \a field attribute data.
 */
-QDataArray<QVector3D> QGeometryData::attributes(QGL::VertexAttribute field) const
+QCustomDataArray QGeometryData::attributes(QGL::VertexAttribute field) const
 {
-    return hasField(field) ? d->attributes.at(d->key[field]) : QDataArray<QVector3D>();
+    return hasField(field) ? d->attributes.at(d->key[field]) : QCustomDataArray();
 }
 
 /*!

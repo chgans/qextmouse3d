@@ -126,41 +126,22 @@ void PVColorView::paintGL(QGLPainter *painter)
 //! [1]
 
 inline static void calculateSlice(int slice, const QBox3D &box,
-                                  QDataArray<QVector3D> &outer,
-                                  QDataArray<QVector3D> inner)
+                                  QVector3DArray &outer,
+                                  QVector3DArray &inner)
 {
     qreal t2 = qThickness / 2.0f;
     qreal irad = qRadius - t2;
     qreal orad = qRadius + t2;
     const qreal pi2 = 2.0 * M_PI;
-    qreal oxc, oyc, ixc, iyc;
     qreal angle = (slice * pi2) / qNumSlices;
     qreal cs = qCos(angle);
     qreal sn = qSin(angle);
-    if (qFuzzyIsNull(cs))
-    {
-        oxc = 0.0;
-        ixc = 0.0;
-    }
-    else
-    {
-        oxc = orad * cs;
-        ixc = irad * cs;
-    }
-    if (qFuzzyIsNull(sn))
-    {
-        oyc = 0.0;
-        iyc = 0.0;
-    }
-    else
-    {
-        oyc = orad * sn;
-        iyc = irad * sn;
-    }
-    QVector2D opt(oxc, oyc);
+    QVector2D opt(qFuzzyIsNull(cs) ? 0.0 : orad * cs,
+                  qFuzzyIsNull(sn) ? 0.0 : orad * sn);
+    QVector2D ipt(qFuzzyIsNull(cs) ? 0.0 : irad * cs,
+                  qFuzzyIsNull(sn) ? 0.0 : orad * sn);
     if (!box.contains(opt))
         outer << opt;
-    QVector2D ipt(ixc, iyc);
     if (!box.contains(ipt))
         inner << ipt;
 }
@@ -171,24 +152,23 @@ QGLDisplayList *PVColorView::buildGeometry()
     QGLDisplayList *qList = new QGLDisplayList();
 
     // default effect for q where no other effect set
-    //qList->setEffect(QGL::FlatPerVertexColor);
-    qList->setEffect(QGL::LitMaterial);
+    qList->setEffect(QGL::FlatPerVertexColor);
+    //qList->setEffect(QGL::LitMaterial);
     //! [2]
 
-    const QVector3D qExtrudeVec(0.0f, 0.0f, qHeight);
+    const QVector3D extrudeVec(0.0f, 0.0f, qHeight);
 
     // defining coordinate data for q
-    QDataArray<QVector3D> topQORim;     // outer rim of Q - top face
-    QDataArray<QVector3D> topQIRim;     // inner rim of Q - top face
-    QDataArray<QVector3D> bottomQORim;  // outer rim of Q - bottom face
-    QDataArray<QVector3D> bottomQIRim;  // inner rim of Q - bottom face
-    QDataArray<QVector3D> tailFace;     // tail of Q - top face
-    QDataArray<QVector3D> eTailFace;    // tail of Q - bottom face
+    QVector3DArray topQOEdge;     // outer Edge of Q - top face
+    QVector3DArray topQIEdge;     // inner Edge of Q - top face
+    QVector3DArray bottomQOEdge;  // outer Edge of Q - bottom face
+    QVector3DArray bottomQIEdge;  // inner Edge of Q - bottom face
+    QVector3DArray topTailEdge;     // tail of Q - top face
+    QVector3DArray bottomTailEdge;    // tail of Q - bottom face
 
-    QDataArray<QColor4b> tailColors;
-    QDataArray<QColor4b> faceColors;
-    QColor4b innerColor(196, 16, 16);
-    QColor4b outerColor(128, 128, 255);
+    QColor4b innerColor(Qt::darkGray);
+    QColor4b outerColor(Qt::darkGreen);
+    QColor4b tailColor(Qt::darkYellow);
 
     // do the math for the defining points
     qreal t2 = qThickness / 2.0f;
@@ -196,146 +176,145 @@ QGLDisplayList *PVColorView::buildGeometry()
     qreal orad = qRadius + t2;
     qreal itail = irad - qThickness;
     qreal otail = orad + qThickness;
-    tailFace << QVector2D(itail, -t2) << QVector2D(otail, -t2)
+    topTailEdge << QVector2D(itail, -t2) << QVector2D(otail, -t2)
             << QVector2D(otail, t2) << QVector2D(itail, t2);
-    tailColors << Qt::darkBlue << Qt::darkGray <<
-            Qt::darkGreen << Qt::darkMagenta;
-    QBox3D tail(tailFace[0], tailFace[2]);
+    QBox3D tail(topTailEdge[0], topTailEdge[2]);
     qreal xi0 = qSqrt((irad * irad) - (t2 * t2));
     qreal xo0 = qSqrt((orad * orad) - (t2 * t2));
-    topQORim << QVector2D(xo0, t2);
-    topQIRim << QVector2D(xi0, t2);
+    topQOEdge << QVector2D(xo0, t2);
+    topQIEdge << QVector2D(xi0, t2);
     for (int i = 0; i < qNumSlices; ++i)
-        calculateSlice(i, tail, topQORim, topQIRim);
-    topQORim << QVector2D(xo0, -t2);
-    topQIRim << QVector2D(xi0, -t2);
-    for (int i = 0; i < topQORim.count(); ++i)
-    {
-        int hue = 360 * (topQORim[i].x() / (qRadius * 3));
-        int value = 255 * (topQORim[i].y() / (qRadius * 3));
-        faceColors << QColor::fromHsv(hue, 212, value);
-    }
+        calculateSlice(i, tail, topQOEdge, topQIEdge);
+    topQOEdge << QVector2D(xo0, -t2);
+    topQIEdge << QVector2D(xi0, -t2);
+
+    // We build the geometry in 2 dimensions on the Z = 0 plane, and because
+    // of the QVector3D(QVector2D) constructor these 2D coords can simply be
+    // added to the data arrays as we build them up.  Z = 0 will be the top
+    // of the geometry, and first we build up those top edges: the outside and
+    // inside edge of the toroid of the Q, and then the tail.  Then we create
+    // faces by stitching together the inside and outside edge with quads -
+    // using the QUADS_ZIPPED mode, and add a face for the tail.  This gives a
+    // flat Q in the Z = 0 plane.  Now we extrude down from the Z = 0 plane to
+    // create the sides of the Q (extruding is a translate + QUADS_ZIPPED) and
+    // finally draw the obverse (away facing) back-faces.
 
     //! [3]
-    // create the flat top q
-    qList->newSection();
-    {
-        QGLOperation quad(qList, QGL::QUAD);
-        quad << tailFace;
-        quad << tailColors;
-    }
-    // qList->addQuad(tailFace[0], tailFace[1], tailFace[2], tailFace[3]);
-    int olap = topQORim.count() - topQIRim.count();
+    // Some of the points generated for the inside and outside edges of the Q
+    // fall inside the tail - so they are discarded, meaning the inner has
+    // likely less points than the outer Edge, depending on thickness, number
+    // of slices and so on.  Calculate this overlap of outer over inner.
+    int icnt = topQIEdge.count();
+    int ocnt = topQOEdge.count();
+    int tailCnt = topTailEdge.count();
+    int olap = ocnt - icnt;
     Q_ASSERT(olap % 2 == 0);
     int lap = olap / 2;
-    int iptr = 0;
-    int optr = lap;
-
-    qDebug() << "inner count:" << topQIRim.count();
-    qDebug() << "outer count:" << topQORim.count();
-    qDebug() << "overlap is:" << olap;
-    qDebug() << "\n=== inner rim ===";
-    for (int i = 0; i < topQIRim.count(); ++i)
-        qDebug() << "    " << topQIRim[i];
-    qDebug() << "\n=== outer rim ===";
-    for (int i = 0; i < topQORim.count(); ++i)
-        qDebug() << "    " << topQORim[i];
-
-    if (lap)
-    {
-        QGLOperation face(qList, QGL::TRIANGULATED_FACE);
-        face << QGL::OperationFlags(QGL::USE_VERTEX_0_AS_CTR);
-        face << topQIRim[iptr];
-        for (int i = 0; i < lap; ++i)
-            face << topQORim[i];
-        face << faceColors;
-    }
-        //qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(0, lap));
-    for ( ; iptr < topQIRim.count() - 1; ++iptr, ++optr)
-    {
-        QGLOperation quad(qList, QGL::QUAD);
-        quad << topQIRim[iptr] << innerColor;
-        quad << topQORim[optr] << outerColor;
-        quad << topQORim[optr+1] << outerColor;
-        quad << topQIRim[iptr+1] << innerColor;
-        // qList->addQuad(topQIRim[iptr], topQORim[optr],
-        //                topQORim[optr+1], topQIRim[iptr+1]);
-    }
-    if (lap)
-    {
-        QGLOperation face(qList, QGL::TRIANGULATED_FACE);
-        face.setControl(topQIRim[iptr]);
-        face << topQORim.mid(optr, lap);
-        face << faceColors;
-    }
-    // qList->addTriangulatedFace(topQIRim[iptr], topQORim.mid(optr, lap));
-
-    // create the sides of the q, and save the extruded values
     qList->newSection();
     {
-        QGLOperation outsides(qList, QGL::QUADS_ZIPPED);
-        bottomQORim = topQORim.
-        outsides.setControl(qExtrudeVec);
-        outsides << topQOrim;
-        outsides << sideColors;
-        outsides >> bottomQORim;
+        // create the top face of the tail of the Q - its a quad
+        QGLOperation op(qList, QGL::QUAD);
+        op << topTailEdge;
+        op << QDataArray<QColor4b>(tailCnt, tailColor);
     }
-    // bottomQORim = qList->extrude(topQORim, qExtrudeVec);
+    if (lap)
     {
-        QGLOperation insides(qList, QGL::QUADS_ZIPPED);
-        insides.setControl(qExtrudeVec);
-        insides << QGL::FACE_SENSE_REVERSED;
-        insides << QGL::NO_CLOSE_PATH;
-        insides << topQIRim;
-        insides << sideColors;
-        insides >> bottomQIRim;
+        // if there is an overlap between outer over the inner, draw those
+        // points as a fan from the first inner to the outer overlap points
+        QGLOperation op(qList, QGL::TRIANGLE_FAN);
+        op << topQIEdge.at(0) << innerColor;
+        op << topQOEdge.left(lap);
+        op << QDataArray<QColor4b>(lap, outerColor);
     }
-    // bottomQIRim = qList->extrude(topQIRim, qExtrudeVec, QGLTextureModel(), true);
     {
-        QGLOperation tailSides(qList, QGLDisplayList::EXTRUSION);
-        tailSides.setControl(qExtrudeVec);
-        tailSides << tailFace;
-        tailSides << tailColors;
-        tailSides >> eTailFace;
+        // now draw all the quads making up the rest of the face of the Q
+        QGLOperation op(qList, QGL::QUADS_ZIPPED);
+        op << topQOEdge.mid(lap, icnt);
+        op << QDataArray<QColor4b>(icnt, outerColor);
+        op << QGL::NEXT_PRIMITIVE;
+        op << topQIEdge;
+        op << QDataArray<QColor4b>(icnt, innerColor);
     }
-    // eTailFace = qList->extrude(tailFace, qExtrudeVec);
+    if (lap)
+    {
+        // now draw the overlap points at the other end
+        QGLOperation op(qList, QGL::TRIANGLE_FAN);
+        op << topQIEdge.at(icnt - 1) << innerColor;
+        op << topQOEdge.right(lap);
+        op << QDataArray<QColor4b>(lap, outerColor);
+    }
 
-    // create the flat bottom lid of the q
+    // create the extruded sides of the q, and save the extruded values
     qList->newSection();
-    iptr = 0;
-    optr = lap;
     {
-        QGLOperation quad(qList, QGLDisplayList::QUAD);
-        quad << eTailFace;
-        quad << tailColors;
+        // outside sides
+        QGLOperation op(qList, QGL::QUADS_ZIPPED);
+        bottomQOEdge = topQOEdge.translated(extrudeVec);
+        op << topQOEdge;
+        op << QDataArray<QColor4b>(ocnt, outerColor);
+        op << QGL::NEXT_PRIMITIVE;
+        op << bottomQOEdge;
+        op << QDataArray<QColor4b>(ocnt, outerColor);
     }
-    // qList->addQuad(eTailFace[0], eTailFace[1], eTailFace[2], eTailFace[3]);
+    {
+        // inside sides
+        QGLOperation op(qList, QGL::QUADS_ZIPPED);
+        bottomQIEdge = topQIEdge.translated(extrudeVec);
+        op << QGL::FACE_SENSE_REVERSED;
+        op << topQIEdge;
+        op << QDataArray<QColor4b>(icnt, innerColor);
+        op << QGL::NEXT_PRIMITIVE;
+        op << bottomQIEdge;
+        op << QDataArray<QColor4b>(icnt, innerColor);
+    }
+    {
+        // tail sides
+        QGLOperation op(qList, QGL::QUADS_ZIPPED);
+        bottomTailEdge = topTailEdge.translated(extrudeVec);
+        op << topTailEdge;
+        op << QDataArray<QColor4b>(tailCnt, outerColor);
+        op << QGL::NEXT_PRIMITIVE;
+        op << bottomTailEdge;
+        op << QDataArray<QColor4b>(tailCnt, outerColor);
+    }
+
+    // now create the obverse faces of the Q - need to work
+    // in reverse order to make the windings & normals correct
+    bottomQIEdge.reverse();
+    bottomQOEdge.reverse();
+    bottomTailEdge.reverse();
+    qList->newSection();
+    {
+        // create the bottom face of the tail of the Q
+        QGLOperation op(qList, QGL::QUAD);
+        op << topTailEdge;
+        op << QDataArray<QColor4b>(tailCnt, tailColor);
+    }
     if (lap)
     {
-        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
-        face.setControl(bottomQIRim[iptr]);
-        face << bottomQORim.mid(0, lap);
-        face << faceColors;
+        // draw the outer-over-inner overlap
+        QGLOperation op(qList, QGL::TRIANGLE_FAN);
+        op << bottomQIEdge.at(0) << innerColor;
+        op << bottomQOEdge.left(lap);
+        op << QDataArray<QColor4b>(lap, outerColor);
     }
-    // qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(0, lap));
-    for ( ; iptr < topQIRim.count() - 1; ++iptr, ++optr)
     {
-        QGLOperation quad(qList, QGLDisplayList::QUAD);
-        quad << bottomQIRim[iptr] << innerColor;
-        quad << bottomQORim[optr] << outerColor;
-        quad << bottomQORim[optr+1] << outerColor;
-        quad << bottomQIRim[iptr+1] << innerColor;
+        // now draw all the quads of the bottom of the Q
+        QGLOperation op(qList, QGL::QUADS_ZIPPED);
+        op << bottomQOEdge.mid(lap, icnt);
+        op << QDataArray<QColor4b>(icnt, outerColor);
+        op << QGL::NEXT_PRIMITIVE;
+        op << bottomQIEdge;
+        op << QDataArray<QColor4b>(icnt, innerColor);
     }
-    // qList->addQuad(bottomQIRim[iptr], bottomQORim[optr],
-    //                bottomQORim[optr+1], bottomQIRim[iptr+1]);
     if (lap)
     {
-        QGLOperation face(qList, QGLDisplayList::TRIANGULATED_FACE);
-        face.setControl(bottomQIRim[iptr]);
-        face << bottomQORim.mid(optr, lap);
-        face << faceColors;
+        // now draw the overlap points at the other end
+        QGLOperation op(qList, QGL::TRIANGLE_FAN);
+        op << bottomQIEdge.at(icnt - 1) << innerColor;
+        op << bottomQOEdge.right(lap);
+        op << QDataArray<QColor4b>(lap, outerColor);
     }
-    // qList->addTriangulatedFace(bottomQIRim[iptr], bottomQORim.mid(optr, lap));
 
     qList->finalize();
     return qList;

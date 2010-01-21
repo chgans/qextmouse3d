@@ -80,11 +80,6 @@ public:
         QGLSection::appendFaceted(vertex);
     }
 
-    int updateTexCoord(int position, const QVector2D &t)
-    {
-        return QGLSection::updateTexCoord(position, t);
-    }
-
     void append(const QLogicalVertex &vertex)
     {
         QGLSection::append(vertex);
@@ -104,8 +99,8 @@ void tst_QGLSection::create()
     TestQGLDisplayList list;
     list.newSection();
     QGLSection *section = list.currentSection();
-    QVERIFY(section->hasData(QLogicalVertex::Vertex));
-    QCOMPARE(section->dataTypes(), QLogicalVertex::Vertex);
+    QVERIFY(section->hasField(QGL::Position));
+    QCOMPARE(section->fields(), QGeometryData::fieldMask(QGL::Position));
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
     QCOMPARE(section->displayList(), &list);
@@ -122,11 +117,16 @@ void tst_QGLSection::modify()
     QVector3D vb(1.0f, -1.0f, 0.0f);
     QVector3D vc(1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
-    list.addTriangle(va, vb, vc, n);
+    QGLPrimitive p;
+    p.appendVertex(va);
+    p.appendVertex(vb);
+    p.appendVertex(vc);
+    p.setCommonNormal(n);
+    list.addTriangle(p);
     QCOMPARE(section->count(), 3);
     list.newSection();
     QGLSection *section2 = list.currentSection();
-    list.addTriangle(va, vb, vc, n);
+    list.addTriangle(p);
     QCOMPARE(section2->count(), 3);
 }
 

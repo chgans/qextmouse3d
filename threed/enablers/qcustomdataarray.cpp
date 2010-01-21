@@ -727,6 +727,16 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 */
 
 /*!
+    \fn void QCustomDataArray::append(const QCustomDataArray &array)
+    \overload
+
+    Appends the values in \a array to this custom data array.  This
+    custom data array must have the same element type as \a array,
+    unless this custom data array is empty - in which case the
+    element type and data of \a array will be assigned to this.
+*/
+
+/*!
     Appends \a value to this custom data array.
 
     The type of \a value must be consistent with elementType().

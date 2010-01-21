@@ -43,6 +43,7 @@
 #define QLOGICALVERTEX_H
 
 #include "qgeometrydata.h"
+#include "qcustomdataarray.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -63,9 +64,14 @@ public:
 
     operator QVector3D () { return vertex(); }
 
-    inline const QVector3D &attribute(QGL::VertexAttribute attr) const;
+    inline QVariant attribute(QGL::VertexAttribute attr) const;
+    inline void setAttribute(float, QGL::VertexAttribute attr);
+    inline void setAttribute(const QVector2D &v, QGL::VertexAttribute attr);
     inline void setAttribute(const QVector3D &v, QGL::VertexAttribute attr);
-    inline QVector3D &attributeRef(QGL::VertexAttribute attr);
+    inline float &floatAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    inline QVector2D &vector2DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    inline QVector3D &vector3DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    inline QCustomDataArray::ElementType attributeType(QGL::VertexAttribute field = QGL::CustomVertex0);
 
     inline const QVector3D &normal() const;
     inline void setNormal(const QVector3D &n);
@@ -154,9 +160,25 @@ inline QVector3D &QLogicalVertex::vertexRef()
     return m_data.vertexRef(m_index);
 }
 
-inline const QVector3D &QLogicalVertex::attribute(QGL::VertexAttribute attr) const
+inline QVariant QLogicalVertex::attribute(QGL::VertexAttribute attr) const
 {
     return m_data.attributes(attr).at(m_index);
+}
+
+inline void QLogicalVertex::setAttribute(float v, QGL::VertexAttribute attr)
+{
+    if (m_index == m_data.count())
+        m_data.appendAttribute(v, attr);
+    else
+        m_data.floatAttributeRef(m_index, attr) = v;
+}
+
+inline void QLogicalVertex::setAttribute(const QVector2D &v, QGL::VertexAttribute attr)
+{
+    if (m_index == m_data.count())
+        m_data.appendAttribute(v, attr);
+    else
+        m_data.vector2DAttributeRef(m_index, attr) = v;
 }
 
 inline void QLogicalVertex::setAttribute(const QVector3D &v, QGL::VertexAttribute attr)
@@ -164,12 +186,28 @@ inline void QLogicalVertex::setAttribute(const QVector3D &v, QGL::VertexAttribut
     if (m_index == m_data.count())
         m_data.appendAttribute(v, attr);
     else
-        m_data.attributeRef(m_index, attr) = v;
+        m_data.vector3DAttributeRef(m_index, attr) = v;
 }
 
-inline QVector3D &QLogicalVertex::attributeRef(QGL::VertexAttribute attr)
+inline float &QLogicalVertex::floatAttributeRef(QGL::VertexAttribute field)
 {
-    return m_data.attributeRef(m_index, attr);
+    return m_data.floatAttributeRef(m_index, field);
+}
+
+inline QVector2D &QLogicalVertex::vector2DAttributeRef(QGL::VertexAttribute field)
+{
+    return m_data.vector2DAttributeRef(m_index, field);
+}
+
+inline QVector3D &QLogicalVertex::vector3DAttributeRef(QGL::VertexAttribute field)
+{
+
+    return m_data.vector3DAttributeRef(m_index, field);
+}
+
+inline QCustomDataArray::ElementType QLogicalVertex::attributeType(QGL::VertexAttribute field)
+{
+    return m_data.attributes(field).elementType();
 }
 
 inline const QVector3D &QLogicalVertex::normal() const
