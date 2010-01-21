@@ -42,8 +42,6 @@
 #include <QtTest/QtTest>
 #include "qdataarray.h"
 
-#include "qtest_helpers_p.h"
-
 #include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector4d.h>
