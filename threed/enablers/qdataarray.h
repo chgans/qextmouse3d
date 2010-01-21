@@ -100,6 +100,9 @@ public:
     void squeeze();
     void squeeze(int size);
 
+    void reverse();
+    QDataArray<T, PreallocSize> reversed() const;
+
     QDataArrayRef<T, PreallocSize> mid(int index, int length = -1) const;
     QDataArrayRef<T, PreallocSize> left(int length) const;
     QDataArrayRef<T, PreallocSize> right(int length) const;
@@ -711,6 +714,43 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze(int size)
 
     // Reallocate the array on the heap to the smaller size.
     reallocate(size);
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reverse()
+{
+    if (count() > 0)
+    {
+        iterator src = begin();
+        iterator dst = end();
+        --dst;
+        while (src < dst)
+            qSwap(*(dst--), *(src++));
+    }
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE QDataArray<T, PreallocSize> QDataArray<T, PreallocSize>::reversed() const
+{
+    QDataArray<T, PreallocSize> r;
+    if (count() > 0)
+    {
+        r.extend(count());
+        const_iterator src = constBegin();
+        iterator dst = r.end();
+        --dst;
+        if (!QTypeInfo<T>::isComplex)
+        {
+            while (src != constEnd())
+                *(dst--) = *(src++);
+        }
+        else
+        {
+            while (src != constEnd())
+                new (dst--) T(*src++);
+        }
+    }
+    return r;
 }
 
 template <typename T, int PreallocSize>
