@@ -339,6 +339,18 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn void QDataArray::reverse()
+
+    Reverses the order of this data array in place.
+*/
+
+/*!
+    \fn QDataArray<T, PreallocSize> QDataArray::reversed() const
+
+    Returns a copy of this data array with elements in the reverse order.
+*/
+
+/*!
     \fn QDataArrayRef<T, PreallocSize> QDataArray::mid(int index, int length) const
 
     Returns a QDataArrayRef that refers to the \a length elements of

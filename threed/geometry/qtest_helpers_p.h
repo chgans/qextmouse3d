@@ -57,7 +57,6 @@
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector2d.h>
 #include "qcolor4b.h"
-#include "qlogicalvertex_p.h"
 
 namespace QTest {
     char *toString(const QVector3D &v)
@@ -79,38 +78,6 @@ namespace QTest {
         char *msg = new char[128];
         qt_snprintf(msg, 128, "R: %0.2f, G: %0.2f, B: %0.2f, A: %0.2)",
                     c.redF(), c.greenF(), c.blueF(), c.alphaF());
-        return msg;
-    }
-
-    char *toString(const QLogicalVertex &v)
-    {
-        char *msg = new char[1024];
-        char *p = msg;
-        char *str = toString(v.vertex());
-        qstrncpy(p, "V: ", 3); p += 3;
-        qstrncpy(p, str, 128); p += qstrlen(str);
-        delete[] str;
-        if (v.hasType(QLogicalVertex::Normal))
-        {
-            str = toString(v.normal());
-            qstrncpy(p, ", N: ", 5); p += 5;
-            qstrncpy(p, str, 128); p += qstrlen(str);
-            delete[] str;
-        }
-        if (v.hasType(QLogicalVertex::Texture))
-        {
-            str = toString(v.texCoord());
-            qstrncpy(p, ", T:", 5); p += 5;
-            qstrncpy(p, str, 128); p += qstrlen(str);
-            delete[] str;
-        }
-        if (v.hasType(QLogicalVertex::Color))
-        {
-            str = toString(v.color());
-            qstrncpy(p, ", C:", 5); p += 5;
-            qstrncpy(p, str, 128); p += qstrlen(str);
-            delete[] str;
-        }
         return msg;
     }
 
@@ -155,21 +122,6 @@ namespace QTest {
         else
         {
             return compare_helper(false, "Compared QColor4b values are not the same:",
-                                  toString(t1), toString(t2), actual, expected, file, line);
-        }
-    }
-
-    template<> bool qCompare<QLogicalVertex>(const QLogicalVertex &t1, const QLogicalVertex &t2,
-                                        const char *actual, const char *expected,
-                                        const char *file, int line)
-    {
-        if (t1 == t2)
-        {
-            return compare_helper(true, "COMPARE()", file, line);
-        }
-        else
-        {
-            return compare_helper(false, "Compared QLogicalVertex values are not the same:",
                                   toString(t1), toString(t2), actual, expected, file, line);
         }
     }

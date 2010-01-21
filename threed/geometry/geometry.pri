@@ -28,4 +28,5 @@ PRIVATE_HEADERS += qglteapot_data_p.h \
     qgldisplaylist_p.h \
     qglsection_p.h \
     qgldisplaylist_p.h \
+    qglteapot_data_p.h \
     qtest_helpers_p.h

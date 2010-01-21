@@ -41,9 +41,11 @@
 
 #include <QtTest/QtTest>
 #include "qdataarray.h"
+
 #include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector4d.h>
+#include <QtCore/qstring.h>
 
 class tst_QDataArray : public QObject
 {
@@ -68,6 +70,8 @@ private slots:
     void compare();
     void remove();
     void extend();
+    void reverse();
+    void reversed();
     void mid();
     void left();
     void right();
@@ -686,6 +690,136 @@ void tst_QDataArray::extend()
     QCOMPARE(array[6], 7.0f);
 
     QCOMPARE(array2.size(), 6);
+}
+
+void tst_QDataArray::reverse()
+{
+    QDataArray<float> array0;
+
+    // null case
+    array0.reverse();
+    QCOMPARE(array0.size(), 0);
+
+    // basic case
+    float *ptr = array0.extend(1);
+    ptr[0] = 1.0f;
+    array0.reverse();
+    QCOMPARE(array0.size(), 1);
+    QCOMPARE(array0.at(0), 1.0f);
+
+    // odd numbered size
+    QDataArray<float> array1;
+    ptr = array1.extend(5);
+    ptr[0] = 1.0f;
+    ptr[1] = 2.0f;
+    ptr[2] = 3.0f;
+    ptr[3] = 4.0f;
+    ptr[4] = 5.0f;
+    array1.reverse();
+    QCOMPARE(array1.size(), 5);
+    QCOMPARE(array1.at(0), 5.0f);
+    QCOMPARE(array1.at(2), 3.0f);
+    QCOMPARE(array1.at(4), 1.0f);
+
+    // even numbered size
+    QDataArray<float> array2;
+    ptr = array2.extend(6);
+    ptr[0] = 1.0f;
+    ptr[1] = 2.0f;
+    ptr[2] = 3.0f;
+    ptr[3] = 4.0f;
+    ptr[4] = 5.0f;
+    ptr[5] = 6.0f;
+    array2.reverse();
+    QCOMPARE(array2.size(), 6);
+    QCOMPARE(array2.at(0), 6.0f);
+    QCOMPARE(array2.at(2), 4.0f);
+    QCOMPARE(array2.at(3), 3.0f);
+    QCOMPARE(array2.at(5), 1.0f);
+
+    // complex type
+    QVERIFY(QTypeInfo<QString>::isComplex);
+    QDataArray<QString> array3(6, QString("test"));
+    array3[0] = "zero";
+    array3[1] = "one";
+    array3[2] = "two";
+    array3[3] = "three";
+    array3[4] = "four";
+    array3[5] = "five";
+    array3.reverse();
+    QCOMPARE(array3.size(), 6);
+    QCOMPARE(array3.at(0), QString("five"));
+    QCOMPARE(array3.at(2), QString("three"));
+    QCOMPARE(array3.at(3), QString("two"));
+    QCOMPARE(array3.at(5), QString("zero"));
+}
+
+void tst_QDataArray::reversed()
+{
+    QDataArray<float> array0;
+
+    // null case
+    QDataArray<float> res0 = array0.reversed();
+    QCOMPARE(res0.size(), 0);
+
+    // basic case
+    float *ptr = array0.extend(1);
+    ptr[0] = 1.0f;
+    res0 = array0.reversed();
+    QCOMPARE(res0.size(), 1);
+    QCOMPARE(res0.at(0), 1.0f);
+
+    // odd numbered size
+    QDataArray<float> array1;
+    ptr = array1.extend(5);
+    ptr[0] = 1.0f;
+    ptr[1] = 2.0f;
+    ptr[2] = 3.0f;
+    ptr[3] = 4.0f;
+    ptr[4] = 5.0f;
+    QDataArray<float> res1 = array1.reversed();
+    QCOMPARE(res1.size(), 5);
+    QCOMPARE(res1.at(0), 5.0f);
+    QCOMPARE(res1.at(2), 3.0f);
+    QCOMPARE(res1.at(4), 1.0f);
+
+    // even numbered size
+    QDataArray<float> array2;
+    ptr = array2.extend(6);
+    ptr[0] = 1.0f;
+    ptr[1] = 2.0f;
+    ptr[2] = 3.0f;
+    ptr[3] = 4.0f;
+    ptr[4] = 5.0f;
+    ptr[5] = 6.0f;
+    QDataArray<float> res2 = array2.reversed();
+    QCOMPARE(res2.size(), 6);
+    QCOMPARE(res2.at(0), 6.0f);
+    QCOMPARE(res2.at(2), 4.0f);
+    QCOMPARE(res2.at(3), 3.0f);
+    QCOMPARE(res2.at(5), 1.0f);
+
+    // simple type with larger size
+    QDataArray<QVector3D> array4;
+    array4.extend(6);
+    QVector3D va(1.0f, 2.0f, 3.0f);
+    QVector3D vb(11.0f, 12.0f, 13.0f);
+    QVector3D vc(21.0f, 22.0f, 23.0f);
+    QVector3D vd(31.0f, 32.0f, 33.0f);
+    QVector3D ve(41.0f, 42.0f, 43.0f);
+    QVector3D vf(51.0f, 52.0f, 53.0f);
+    array4[0] = va;
+    array4[1] = vb;
+    array4[2] = vc;
+    array4[3] = vd;
+    array4[4] = ve;
+    array4[5] = vf;
+    QDataArray<QVector3D> res4 = array4.reversed();
+    QCOMPARE(res4.size(), 6);
+    QCOMPARE(res4.at(0), vf);
+    QCOMPARE(res4.at(2), vd);
+    QCOMPARE(res4.at(3), vc);
+    QCOMPARE(res4.at(5), va);
 }
 
 void tst_QDataArray::mid()

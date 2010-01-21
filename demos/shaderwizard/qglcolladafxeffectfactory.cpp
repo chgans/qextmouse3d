@@ -374,6 +374,7 @@ QString QGLColladaImageParam::name()
 */
 QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlStreamReader& xml , StateStack& stateStack, QString passedInSid)
 {
+    Q_UNUSED(stateStack);
     QXmlStreamAttributes attributes = xml.attributes();
     QString surfaceSid = attributes.value("sid").toString();
     // Surfaces are the only children of a newparam, but don't have their own sids.
@@ -423,6 +424,7 @@ QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xm
 */
 inline QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack stateStack, QString passedInSid )
 {
+    Q_UNUSED(stateStack);
     QGLColladaSampler2DParam* result = 0;
     QXmlStreamAttributes attributes = xml.attributes();
     QString sid = attributes.value("sid").toString();
@@ -1031,6 +1033,7 @@ inline QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStrea
 */
 QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, StateStack& stateStack )
 {
+    Q_UNUSED(stateStack);
     // 1.4 has a bunch of optional values in the attributes:
     QString sid = xml.attributes().value("sid").toString();
     QString id = xml.attributes().value("id").toString();
