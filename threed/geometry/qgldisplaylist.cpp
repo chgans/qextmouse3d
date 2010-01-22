@@ -651,7 +651,7 @@ void QGLDisplayList::finalize()
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
-            s->finalize();
+            s->normalizeNormals();
             QGLIndexArray indices = s->indices();
             const int *vi = indices.constData();
             int vcnt = indices.size();
@@ -721,8 +721,6 @@ void QGLDisplayList::addSection(QGLSection *sec)
     Q_D(QGLDisplayList);
     if (d->currentNode && d->currentSection)
         d->currentNode->setCount(d->currentSection->count() - d->currentNode->start());
-    if (d->currentSection)
-        d->currentSection->finalize();
     d->currentSection = sec;
     d->sections.append(sec);
     newNode();

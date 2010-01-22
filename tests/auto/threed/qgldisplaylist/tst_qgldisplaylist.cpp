@@ -113,7 +113,6 @@ void tst_QGLDisplayList::newSection()
     QCOMPARE(s->smoothing(), QGL::Smooth);
     displayList.newSection(QGL::Faceted);
     QGLSection *s2 = displayList.currentSection();
-    QVERIFY(s->isFinalized());
     QCOMPARE(s2, displayList.currentSection());
     QCOMPARE(displayList.sections().count(), 2);
     QVERIFY(displayList.sections().contains(s2));
@@ -489,7 +488,7 @@ void tst_QGLDisplayList::addTriangleFan()
     p.appendVertex(a, b, c, d);
 
     displayList.addTriangleFan(p);
-    sec->finalize();
+    sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 9);
     QCOMPARE(sec->vertices().at(0), a);
     QCOMPARE(sec->vertices().at(1), b);
@@ -552,7 +551,7 @@ void tst_QGLDisplayList::addTriangulatedFace()
     p.setFlags(QGL::USE_VERTEX_0_AS_CTR);
 
     displayList.addTriangulatedFace(p);
-    sec->finalize();
+    sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 5);
     QCOMPARE(sec->vertices().at(0), a);
     QCOMPARE(sec->vertices().at(1), b);
@@ -616,7 +615,7 @@ void tst_QGLDisplayList::extrude()
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
     displayList.addQuadsZipped(p, q);
-    sec->finalize();
+    sec->normalizeNormals();
 
     QCOMPARE(sec->vertices().count(), 8);
     QVector3DArray vrts = sec->vertices();

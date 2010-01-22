@@ -18,4 +18,5 @@ SUBDIRS = \
     qglindexarray \
     qglpainter \
     qgldisplaylist \
-    qglsection
+    qglsection \
+    qgeometrydata

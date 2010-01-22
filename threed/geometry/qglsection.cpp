@@ -194,30 +194,6 @@ QGLSection::~QGLSection()
 
 /*!
     \internal
-    Completes the calculations of normal values for this section, determines
-    the bounding box and performs local memory optimizations on the section.
-*/
-void QGLSection::finalize()
-{
-    if (d->finalized)
-        return;
-    normalizeNormals();
-    d->finalized = true;
-}
-
-/*!
-    \internal
-    Returns true if this section has been finalized, false otherwise.
-
-    \sa finalize()
-*/
-bool QGLSection::isFinalized() const
-{
-    return d->finalized;
-}
-
-/*!
-    \internal
     Adds the logical vertices \a a, \a b and \c to this section.  All
     should have the same fields.  This function is exactly equivalent to
     \code

@@ -100,8 +100,6 @@ public:
     }
     inline QGL::Smoothing smoothing() const;
     inline QGLDisplayList *displayList() const;
-    bool isFinalized() const;
-    void finalize();
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;

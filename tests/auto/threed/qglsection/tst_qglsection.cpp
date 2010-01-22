@@ -60,6 +60,7 @@ private slots:
     void appendFaceted();
     void appendTexCoord();
     void appendColor();
+    void accessors();
 };
 
 class QGLSectionTest : public QGLSection
@@ -97,8 +98,8 @@ void tst_QGLSection::create()
     TestQGLDisplayList list;
     list.newSection();
     QGLSection *section = list.currentSection();
-    QVERIFY(section->hasField(QGL::Position));
-    QCOMPARE(section->fields(), QGL::fieldMask(QGL::Position));
+    QVERIFY(!section->hasField(QGL::Position));
+    QCOMPARE(section->fields(), (quint32)0);
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
     QCOMPARE(section->displayList(), &list);
@@ -138,11 +139,11 @@ void tst_QGLSection::append()
     QVector3D testNormal(1.0f, 0.0f, 0.0f);
     QLogicalVertex vx(testVertex, testNormal);
     section->append(vx);
-    QCOMPARE(section->vertices().at(0), testVertex);
-    QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
+    QCOMPARE(section->normals().at(0), testNormal);
+    QCOMPARE(section->indices().size(), 1);
     QCOMPARE(section->texCoords().count(), 0);
     QCOMPARE(section->colors().count(), 0);
 }
@@ -365,6 +366,18 @@ void tst_QGLSection::appendColor()
     QVERIFY(section->hasField(QGL::Color));
     QVERIFY(section->hasField(QGL::TextureCoord0));
     QVERIFY(!section->hasField(QGL::Normal));
+}
+
+void tst_QGLSection::accessors()
+{
+    TestQGLDisplayList list;
+    QGLSectionTest *section = new QGLSectionTest(&list);
+
+    QCOMPARE(section->smoothing(), QGL::Smooth);
+    QCOMPARE(section->displayList(), &list);
+
+    QGLSectionTest *section2 = new QGLSectionTest(&list, QGL::Faceted);
+    QCOMPARE(section2->smoothing(), QGL::Faceted);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSection)

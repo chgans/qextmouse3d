@@ -127,6 +127,7 @@ QGeometryDataPrivate::QGeometryDataPrivate()
     : fields(0)
     , count(0)
 {
+    ref = 0;
     qMemSet(key, -1, ATTR_CNT);
     qMemSet(size, 0, ATTR_CNT);
 }
@@ -188,7 +189,8 @@ QGeometryData &QGeometryData::operator=(const QGeometryData &other)
         if (d && !d->ref.deref())
             delete d;
         d = other.d;
-        d->ref.ref();
+        if (d)
+            d->ref.ref();
     }
     return *this;
 }
@@ -1109,8 +1111,10 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     switch (field)
     {
     case QGL::Position:
+        // qDebug() << "about to reference" << this << QGL::Position << "at" << d->key;
         d->key[QGL::Position] = 0;
         d->size[QGL::Position] = 3;
+        // qDebug() << "got past";
         break;
     case QGL::Normal:
         d->key[QGL::Normal] = 1;
@@ -1182,6 +1186,7 @@ void QGeometryData::detach()
     if (!d) // lazy creation of data block
     {
         d = new QGeometryDataPrivate;
+        d->ref.ref();
     }
     else
     {

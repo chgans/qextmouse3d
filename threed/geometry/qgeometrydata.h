@@ -133,7 +133,7 @@ public:
     float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector3D &vector3DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
-    QCustomDataArray attributes(QGL::VertexAttribute field) const;
+    QCustomDataArray attributes(QGL::VertexAttribute field = QGL::CustomVertex0) const;
 
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
