@@ -81,14 +81,14 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray::QDataArray(int size, const T& value)
+    \fn QDataArray::QDataArray(int size, const T &value)
 
     Constructs a data array of \a size elements, all initialized
     to \a value.
 */
 
 /*!
-    \fn QDataArray::QDataArray(const QDataArray<T, PreallocSize>& other)
+    \fn QDataArray::QDataArray(const QDataArray<T, PreallocSize> &other)
 
     Constructs a copy of \a other.
 
@@ -102,7 +102,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize>& QDataArray::operator=(const QDataArray<T, PreallocSize>& other)
+    \fn QDataArray<T, PreallocSize> &QDataArray::operator=(const QDataArray<T, PreallocSize> &other)
 
     Assigns \a other to this data array and returns a reference
     to this data array.
@@ -163,7 +163,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn const T& QDataArray::at(int index) const
+    \fn const T &QDataArray::at(int index) const
 
     Returns the item at position \a index in the data array.
 
@@ -174,7 +174,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn T& QDataArray::operator[](int index)
+    \fn T &QDataArray::operator[](int index)
 
     Returns the item at position \a index as a modifiable reference.
 
@@ -188,7 +188,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn const T& QDataArray::operator[](int index) const
+    \fn const T &QDataArray::operator[](int index) const
 
     \overload
 
@@ -217,13 +217,13 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QDataArray::append(const T& value)
+    \fn void QDataArray::append(const T &value)
 
     Appends \a value to this data array.
 */
 
 /*!
-    \fn void QDataArray::append(const T& value1, const T& value2)
+    \fn void QDataArray::append(const T &value1, const T &value2)
 
     \overload
 
@@ -231,7 +231,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QDataArray::append(const T& value1, const T& value2, const T& value3)
+    \fn void QDataArray::append(const T &value1, const T &value2, const T &value3)
 
     \overload
 
@@ -239,7 +239,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QDataArray::append(const T& value1, const T& value2, const T& value3, const T& value4)
+    \fn void QDataArray::append(const T &value1, const T &value2, const T &value3, const T &value4)
 
     \overload
 
@@ -253,7 +253,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QDataArray::append(const QDataArray<T, PreallocSize>& other)
+    \fn void QDataArray::append(const QDataArray<T, PreallocSize> &other)
 
     Appends the elements of \a other to this data array.
 */
@@ -484,7 +484,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize>& QDataArray::operator+=(const T& value)
+    \fn QDataArray<T, PreallocSize> &QDataArray::operator+=(const T &value)
 
     \overload
 
@@ -495,7 +495,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize>& QDataArray::operator+=(const QDataArray<T, PreallocSize>& other)
+    \fn QDataArray<T, PreallocSize> &QDataArray::operator+=(const QDataArray<T, PreallocSize> &other)
 
     Appends the elements of the \a other data array to this data array
     and returns a reference to this data array.
@@ -504,7 +504,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize>& QDataArray::operator<<(const T& value)
+    \fn QDataArray<T, PreallocSize> &QDataArray::operator<<(const T &value)
 
     \overload
 
@@ -515,7 +515,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QDataArray<T, PreallocSize>& QDataArray::operator<<(const QDataArray<T, PreallocSize>& other)
+    \fn QDataArray<T, PreallocSize> &QDataArray::operator<<(const QDataArray<T, PreallocSize> &other)
 
     Appends the elements of the \a other data array to this data array
     and returns a reference to this data array.
@@ -729,7 +729,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn const T& QDataArrayRef::at(int index) const
+    \fn const T &QDataArrayRef::at(int index) const
 
     Returns the item at position \a index in the data array.
 
@@ -743,7 +743,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn const T& QDataArrayRef::operator[](int index) const
+    \fn const T &QDataArrayRef::operator[](int index) const
 
     Returns the item at position \a index in the data array.
 
@@ -757,7 +757,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn T& QDataArrayRef::operator[](int index)
+    \fn T &QDataArrayRef::operator[](int index)
 
     Returns the item at position \a index in the data array.
 

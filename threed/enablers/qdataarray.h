@@ -63,12 +63,12 @@ class QDataArray
 {
 public:
     QDataArray();
-    QDataArray(int size, const T& value);
-    QDataArray(const QDataArray<T, PreallocSize>& other);
+    QDataArray(int size, const T &value);
+    QDataArray(const QDataArray<T, PreallocSize> &other);
     ~QDataArray();
 
-    QDataArray<T, PreallocSize>& operator=
-        (const QDataArray<T, PreallocSize>& other);
+    QDataArray<T, PreallocSize> &operator=
+        (const QDataArray<T, PreallocSize> &other);
 
     int size() const;
     int count() const;
@@ -79,18 +79,18 @@ public:
 
     void clear();
 
-    const T& at(int index) const;
-    const T& operator[](int index) const;
-    T& operator[](int index);
+    const T &at(int index) const;
+    const T &operator[](int index) const;
+    T &operator[](int index);
 
     T *extend(int size);
 
-    void append(const T& value);
-    void append(const T& value1, const T& value2);
-    void append(const T& value1, const T& value2, const T& value3);
-    void append(const T& value1, const T& value2, const T& value3, const T& value4);
+    void append(const T &value);
+    void append(const T &value1, const T &value2);
+    void append(const T &value1, const T &value2, const T &value3);
+    void append(const T &value1, const T &value2, const T &value3, const T &value4);
     void append(const T *values, int count);
-    void append(const QDataArray<T, PreallocSize>& other);
+    void append(const QDataArray<T, PreallocSize> &other);
     void replace(int index, const T *values, int count);
     void remove(int index);
     void remove(int index, int count);
@@ -116,10 +116,10 @@ public:
     bool operator==(const QDataArray<T, PreallocSize> &other) const;
     bool operator!=(const QDataArray<T, PreallocSize> &other) const;
 
-    QDataArray<T, PreallocSize>& operator+=(const T& value);
-    QDataArray<T, PreallocSize>& operator+=(const QDataArray<T, PreallocSize>& other);
-    QDataArray<T, PreallocSize>& operator<<(const T& value);
-    QDataArray<T, PreallocSize>& operator<<(const QDataArray<T, PreallocSize>& other);
+    QDataArray<T, PreallocSize> &operator+=(const T &value);
+    QDataArray<T, PreallocSize> &operator+=(const QDataArray<T, PreallocSize> &other);
+    QDataArray<T, PreallocSize> &operator<<(const T &value);
+    QDataArray<T, PreallocSize> &operator<<(const QDataArray<T, PreallocSize> &other);
 
     typedef T *iterator;
     typedef const T *const_iterator;
@@ -128,8 +128,8 @@ public:
     typedef T value_type;
     typedef value_type* pointer;
     typedef const value_type* const_pointer;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
+    typedef value_type &reference;
+    typedef const value_type &const_reference;
     typedef ptrdiff_t difference_type;
     typedef int size_type;
 
@@ -184,7 +184,7 @@ private:
     void copyReplace(T *dst, const T *src, int count);
     void reallocate(int capacity);
     void detachForWrite(int needed = 0);
-    void assign(const QDataArray<T, PreallocSize>& other);
+    void assign(const QDataArray<T, PreallocSize> &other);
     void grow(int needed);
 };
 
@@ -202,9 +202,9 @@ public:
     int count() const { return m_size; }
     bool isEmpty() const { return m_size == 0; }
 
-    const T& at(int index) const;
-    const T& operator[](int index) const;
-    T& operator[](int index);
+    const T &at(int index) const;
+    const T &operator[](int index) const;
+    T &operator[](int index);
 
     T *data();
     const T *data() const;
@@ -225,8 +225,8 @@ public:
     typedef T value_type;
     typedef value_type* pointer;
     typedef const value_type* const_pointer;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
+    typedef value_type &reference;
+    typedef const value_type &const_reference;
     typedef ptrdiff_t difference_type;
     typedef int size_type;
 
@@ -355,7 +355,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::detachForWrite(int needed
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::assign(const QDataArray<T, PreallocSize>& other)
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::assign(const QDataArray<T, PreallocSize> &other)
 {
     if (other.m_data) {
         m_start = other.m_start;
@@ -430,7 +430,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray()
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& value)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T &value)
 {
     if (size <= PreallocSize) {
         m_start = reinterpret_cast<T *>(m_prealloc);
@@ -454,7 +454,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(int size, const T& val
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const QDataArray<T, PreallocSize>& other)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::QDataArray(const QDataArray<T, PreallocSize> &other)
 {
     assign(other);
 }
@@ -482,7 +482,7 @@ Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>::~QDataArray()
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator=(const QDataArray<T, PreallocSize>& other)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize> &QDataArray<T, PreallocSize>::operator=(const QDataArray<T, PreallocSize> &other)
 {
     if (other.m_data && m_data == other.m_data)
         return *this;
@@ -532,7 +532,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::clear()
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T& QDataArray<T, PreallocSize>::operator[](int index) const
+Q_INLINE_TEMPLATE const T &QDataArray<T, PreallocSize>::operator[](int index) const
 {
     Q_ASSERT_X(index >= 0 && index < size(),
                "QDataArray<T>::at", "index out of range");
@@ -540,7 +540,7 @@ Q_INLINE_TEMPLATE const T& QDataArray<T, PreallocSize>::operator[](int index) co
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T& QDataArray<T, PreallocSize>::at(int index) const
+Q_INLINE_TEMPLATE const T &QDataArray<T, PreallocSize>::at(int index) const
 {
     Q_ASSERT_X(index >= 0 && index < size(),
                "QDataArray<T>::operator[]", "index out of range");
@@ -548,7 +548,7 @@ Q_INLINE_TEMPLATE const T& QDataArray<T, PreallocSize>::at(int index) const
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE T& QDataArray<T, PreallocSize>::operator[](int index)
+Q_INLINE_TEMPLATE T &QDataArray<T, PreallocSize>::operator[](int index)
 {
     Q_ASSERT_X(index >= 0 && index < size(),
                "QDataArray<T>::operator[]", "index out of range");
@@ -567,7 +567,7 @@ Q_INLINE_TEMPLATE T *QDataArray<T, PreallocSize>::extend(int size)
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T &value)
 {
     if (m_end >= m_appendLimit)
         grow(1);
@@ -575,7 +575,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value)
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T &value1, const T &value2)
 {
     if ((m_end + 1) >= m_appendLimit)
         grow(2);
@@ -585,7 +585,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, cons
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2, const T& value3)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T &value1, const T &value2, const T &value3)
 {
     if ((m_end + 2) >= m_appendLimit)
         grow(3);
@@ -596,7 +596,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, cons
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T& value1, const T& value2, const T& value3, const T& value4)
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T &value1, const T &value2, const T &value3, const T &value4)
 {
     if ((m_end + 3) >= m_appendLimit)
         grow(3);
@@ -619,7 +619,7 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const T *values, int 
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const QDataArray<T, PreallocSize>& other)
+Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::append(const QDataArray<T, PreallocSize> &other)
 {
     if (&other == this || (!m_start && other.m_data == m_data))
         grow(size());   // Appending to ourselves: make some room.
@@ -845,28 +845,28 @@ Q_INLINE_TEMPLATE bool QDataArray<T, PreallocSize>::operator!=
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator+=(const T& value)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize> &QDataArray<T, PreallocSize>::operator+=(const T &value)
 {
     append(value);
     return *this;
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator+=(const QDataArray<T, PreallocSize>& other)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize> &QDataArray<T, PreallocSize>::operator+=(const QDataArray<T, PreallocSize> &other)
 {
     append(other);
     return *this;
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator<<(const T& value)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize> &QDataArray<T, PreallocSize>::operator<<(const T &value)
 {
     append(value);
     return *this;
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QDataArray<T, PreallocSize>& QDataArray<T, PreallocSize>::operator<<(const QDataArray<T, PreallocSize>& other)
+Q_INLINE_TEMPLATE QDataArray<T, PreallocSize> &QDataArray<T, PreallocSize>::operator<<(const QDataArray<T, PreallocSize> &other)
 {
     append(other);
     return *this;
@@ -893,21 +893,21 @@ Q_INLINE_TEMPLATE QDataArrayRef<T, PreallocSize>::QDataArrayRef(QDataArray<T, Pr
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T& QDataArrayRef<T, PreallocSize>::at(int index) const
+Q_INLINE_TEMPLATE const T &QDataArrayRef<T, PreallocSize>::at(int index) const
 {
     Q_ASSERT(m_array && index >= 0 && index < m_size);
     return m_array->at(m_offset + index);
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T& QDataArrayRef<T, PreallocSize>::operator[](int index) const
+Q_INLINE_TEMPLATE const T &QDataArrayRef<T, PreallocSize>::operator[](int index) const
 {
     Q_ASSERT(m_array && index >= 0 && index < m_size);
     return m_array->at(m_offset + index);
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE T& QDataArrayRef<T, PreallocSize>::operator[](int index)
+Q_INLINE_TEMPLATE T &QDataArrayRef<T, PreallocSize>::operator[](int index)
 {
     Q_ASSERT(m_array && index >= 0 && index < m_size);
     return (*m_array)[m_offset + index];
