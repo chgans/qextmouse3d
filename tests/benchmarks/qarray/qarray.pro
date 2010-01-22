@@ -2,7 +2,7 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qdataarray.cpp
+SOURCES += tst_qarray.cpp
 
 LIBS += -L../../../lib -L../../../bin
 

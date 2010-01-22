@@ -42,7 +42,7 @@
 #ifndef QCUSTOMDATAARRAY_H
 #define QCUSTOMDATAARRAY_H
 
-#include "qdataarray.h"
+#include "qarray.h"
 #include "qcolor4b.h"
 #include <QtCore/qvariant.h>
 #include <QtGui/qvector2d.h>
@@ -73,11 +73,11 @@ public:
     explicit QCustomDataArray(QCustomDataArray::ElementType type);
     QCustomDataArray(QCustomDataArray::ElementType type, int size);
     QCustomDataArray(const QCustomDataArray& other);
-    QCustomDataArray(const QDataArray<float>& other);
-    QCustomDataArray(const QDataArray<QVector2D>& other);
-    QCustomDataArray(const QDataArray<QVector3D>& other);
-    QCustomDataArray(const QDataArray<QVector4D>& other);
-    QCustomDataArray(const QDataArray<QColor4b>& other);
+    QCustomDataArray(const QArray<float>& other);
+    QCustomDataArray(const QArray<QVector2D>& other);
+    QCustomDataArray(const QArray<QVector3D>& other);
+    QCustomDataArray(const QArray<QVector4D>& other);
+    QCustomDataArray(const QArray<QColor4b>& other);
     ~QCustomDataArray();
 
     QCustomDataArray& operator=(const QCustomDataArray& other);
@@ -129,16 +129,16 @@ public:
     void append(const QVariant& value);
     void append(Qt::GlobalColor value);
 
-    QDataArray<float> toFloatArray() const;
-    QDataArray<QVector2D> toVector2DArray() const;
-    QDataArray<QVector3D> toVector3DArray() const;
-    QDataArray<QVector4D> toVector4DArray() const;
-    QDataArray<QColor4b> toColorArray() const;
+    QArray<float> toFloatArray() const;
+    QArray<QVector2D> toVector2DArray() const;
+    QArray<QVector3D> toVector3DArray() const;
+    QArray<QVector4D> toVector4DArray() const;
+    QArray<QColor4b> toColorArray() const;
 
     const void *data() const;
 
 private:
-    QDataArray<float> m_array;
+    QArray<float> m_array;
     QCustomDataArray::ElementType m_elementType;
     int m_elementComponents;
 

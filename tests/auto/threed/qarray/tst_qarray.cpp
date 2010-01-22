@@ -40,23 +40,23 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
-#include "qdataarray.h"
+#include "qarray.h"
 #include <QtGui/qvector3d.h>
 #include <QtCore/qstring.h>
 
 // We ensure to test the following types to cover all of the
 // relevant QTypeInfo variations:
 //
-// QDataArray<float>        Primitive types
-// QDataArray<QString>      Movable types
-// QDataArray<ComplexValue> Complex types
+// QArray<float>        Primitive types
+// QArray<QString>      Movable types
+// QArray<ComplexValue> Complex types
 
-class tst_QDataArray : public QObject
+class tst_QArray : public QObject
 {
     Q_OBJECT
 public:
-    tst_QDataArray() {}
-    ~tst_QDataArray() {}
+    tst_QArray() {}
+    ~tst_QArray() {}
 
 private slots:
     void create();
@@ -86,7 +86,7 @@ private slots:
 // This must match the default for PreallocSize.
 static const int ExpectedMinCapacity = 8;
 
-// Complex type that helps the tests determine if QDataArray is calling
+// Complex type that helps the tests determine if QArray is calling
 // constructors, destructors, and copy constructors in the right places.
 class ComplexValue
 {
@@ -136,9 +136,9 @@ private:
 
 int ComplexValue::destroyCount = 0;
 
-void tst_QDataArray::create()
+void tst_QArray::create()
 {
-    QDataArray<float> array;
+    QArray<float> array;
 
     // Check the basic properties.
     QVERIFY(array.isEmpty());
@@ -164,7 +164,7 @@ void tst_QDataArray::create()
     QVERIFY(array.data() == array.constData());
 
     // Create another array that is filled with an initial value.
-    QDataArray<QVector3D> array2(100, QVector3D(1.0f, 2.0f, 3.0f));
+    QArray<QVector3D> array2(100, QVector3D(1.0f, 2.0f, 3.0f));
     QVERIFY(!array2.isEmpty());
     QCOMPARE(array2.count(), 100);
     QCOMPARE(array2.size(), 100);
@@ -175,7 +175,7 @@ void tst_QDataArray::create()
         QVERIFY(array2.at(index) == QVector3D(1.0f, 2.0f, 3.0f));
 
     // Create a filled array that is within the prealloc area.
-    QDataArray<float> array3(ExpectedMinCapacity, 42.5f);
+    QArray<float> array3(ExpectedMinCapacity, 42.5f);
     QVERIFY(!array3.isEmpty());
     QCOMPARE(array3.count(), ExpectedMinCapacity);
     QCOMPARE(array3.size(), ExpectedMinCapacity);
@@ -186,7 +186,7 @@ void tst_QDataArray::create()
         QVERIFY(array3.at(index) == 42.5f);
 
     // Create an array of strings.
-    QDataArray<QString> array4;
+    QArray<QString> array4;
     QCOMPARE(array4.size(), 0);
     array4.append(QLatin1String("foo"));
     array4.append(QLatin1String("bar"));
@@ -200,7 +200,7 @@ void tst_QDataArray::create()
     // the destructors are called when the array is destroyed.
     ComplexValue::destroyCount = 0;
     {
-        QDataArray<ComplexValue> array5;
+        QArray<ComplexValue> array5;
         array5.append(ComplexValue(1));
         array5.append(ComplexValue(2));
         array5.append(ComplexValue(3));
@@ -216,9 +216,9 @@ void tst_QDataArray::create()
     QCOMPARE(ComplexValue::destroyCount, 6);
 }
 
-void tst_QDataArray::append()
+void tst_QArray::append()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     int index;
 
     // Appending up to the minimum capacity should not cause a realloc.
@@ -255,12 +255,12 @@ void tst_QDataArray::append()
     QCOMPARE(array.size(), array.count());
 
     // Make two copies of the array.
-    QDataArray<float> array2(array);
+    QArray<float> array2(array);
     QCOMPARE(array2.count(), ExpectedMinCapacity + 1 + 1000);
     QCOMPARE(array2.size(), array2.count());
     QVERIFY(!array2.isEmpty());
     QVERIFY(array2.capacity() >= array2.size());
-    QDataArray<float> array3;
+    QArray<float> array3;
     array3 = array;
     QCOMPARE(array3.count(), ExpectedMinCapacity + 1 + 1000);
     QCOMPARE(array3.size(), array3.count());
@@ -299,7 +299,7 @@ void tst_QDataArray::append()
     QCOMPARE(array[ExpectedMinCapacity + 1000 + 1], 1500.0f);
 
     // Create a large array of strings.
-    QDataArray<QString> array4;
+    QArray<QString> array4;
     for (index = 0; index < 1000; ++index)
         array4.append(QString::number(index));
     QCOMPARE(array4.size(), 1000);
@@ -307,7 +307,7 @@ void tst_QDataArray::append()
         QVERIFY(array4[index] == QString::number(index));
 
     // Make a copy of the array of strings and then force a detach.
-    QDataArray<QString> array5(array4);
+    QArray<QString> array5(array4);
     QCOMPARE(array4.size(), 1000);
     QCOMPARE(array5.size(), 1000);
     for (index = 0; index < 1000; ++index) {
@@ -326,7 +326,7 @@ void tst_QDataArray::append()
     // Create an array of complex values and force one realloc
     // to test that copy constructors and destructors are called
     // when moving data from the prealloc array to the heap.
-    QDataArray<ComplexValue> array6;
+    QArray<ComplexValue> array6;
     ComplexValue::destroyCount = 0;
     for (index = 0; index < ExpectedMinCapacity; ++index)
         array6.append(ComplexValue(index));
@@ -361,7 +361,7 @@ void tst_QDataArray::append()
 
     // Make a copy of array6 and force a detach.
     int size = array6.size();
-    QDataArray<ComplexValue> array7(array6);
+    QArray<ComplexValue> array7(array6);
     QCOMPARE(array6.size(), size);
     QCOMPARE(array7.size(), size);
     for (index = 0; index < size; ++index) {
@@ -378,7 +378,7 @@ void tst_QDataArray::append()
     QVERIFY(array7[size].value() == size);
 
     // Make another copy using operator=.
-    QDataArray<ComplexValue> array8;
+    QArray<ComplexValue> array8;
     QCOMPARE(array8.size(), 0);
     array8 = array6;
     QCOMPARE(array6.size(), size);
@@ -397,11 +397,11 @@ void tst_QDataArray::append()
     QVERIFY(array8[size].value() == size);
 }
 
-void tst_QDataArray::appendTwoAtATime()
+void tst_QArray::appendTwoAtATime()
 {
     int index;
 
-    QDataArray<float> array;
+    QArray<float> array;
     array.append(1.0f, 2.0f);
     array.append(3.0f, 4.0f);
     QCOMPARE(array[0], 1.0f);
@@ -410,7 +410,7 @@ void tst_QDataArray::appendTwoAtATime()
     QCOMPARE(array[3], 4.0f);
     QCOMPARE(array.count(), 4);
 
-    QDataArray<float> array2;
+    QArray<float> array2;
     for (index = 0; index < 1000; ++index)
         array2.append(float(index), float(index + 1));
     QCOMPARE(array2.count(), 2000);
@@ -419,7 +419,7 @@ void tst_QDataArray::appendTwoAtATime()
         QCOMPARE(array2[index * 2 + 1], float(index + 1));
     }
 
-    QDataArray<QString> array3;
+    QArray<QString> array3;
     for (index = 0; index < 1000; ++index)
         array3.append(QString::number(index), QString::number(index + 1));
     QCOMPARE(array3.count(), 2000);
@@ -428,7 +428,7 @@ void tst_QDataArray::appendTwoAtATime()
         QCOMPARE(array3[index * 2 + 1], QString::number(index + 1));
     }
 
-    QDataArray<ComplexValue> array4;
+    QArray<ComplexValue> array4;
     for (index = 0; index < 1000; ++index)
         array4.append(ComplexValue(index), ComplexValue(index + 1));
     QCOMPARE(array4.count(), 2000);
@@ -438,11 +438,11 @@ void tst_QDataArray::appendTwoAtATime()
     }
 }
 
-void tst_QDataArray::appendThreeAtATime()
+void tst_QArray::appendThreeAtATime()
 {
     int index;
 
-    QDataArray<float> array;
+    QArray<float> array;
     array.append(1.0f, 2.0f, 3.0f);
     array.append(4.0f, 5.0f, 6.0f);
     QCOMPARE(array[0], 1.0f);
@@ -453,7 +453,7 @@ void tst_QDataArray::appendThreeAtATime()
     QCOMPARE(array[5], 6.0f);
     QCOMPARE(array.count(), 6);
 
-    QDataArray<float> array2;
+    QArray<float> array2;
     for (index = 0; index < 1000; ++index)
         array2.append(float(index), float(index + 1), float(index + 2));
     QCOMPARE(array2.count(), 3000);
@@ -463,7 +463,7 @@ void tst_QDataArray::appendThreeAtATime()
         QCOMPARE(array2[index * 3 + 2], float(index + 2));
     }
 
-    QDataArray<QString> array3;
+    QArray<QString> array3;
     for (index = 0; index < 1000; ++index)
         array3.append(QString::number(index), QString::number(index + 1),
                       QString::number(index + 2));
@@ -474,7 +474,7 @@ void tst_QDataArray::appendThreeAtATime()
         QCOMPARE(array3[index * 3 + 2], QString::number(index + 2));
     }
 
-    QDataArray<ComplexValue> array4;
+    QArray<ComplexValue> array4;
     for (index = 0; index < 1000; ++index)
         array4.append(ComplexValue(index), ComplexValue(index + 1),
                       ComplexValue(index + 2));
@@ -486,11 +486,11 @@ void tst_QDataArray::appendThreeAtATime()
     }
 }
 
-void tst_QDataArray::appendFourAtATime()
+void tst_QArray::appendFourAtATime()
 {
     int index;
 
-    QDataArray<float> array;
+    QArray<float> array;
     array.append(1.0f, 2.0f, 3.0f, 4.0f);
     array.append(5.0f, 6.0f, 7.0f, 8.0f);
     QCOMPARE(array[0], 1.0f);
@@ -503,7 +503,7 @@ void tst_QDataArray::appendFourAtATime()
     QCOMPARE(array[7], 8.0f);
     QCOMPARE(array.count(), 8);
 
-    QDataArray<float> array2;
+    QArray<float> array2;
     for (index = 0; index < 1000; ++index)
         array2.append(float(index), float(index + 1), float(index + 2), float(index + 3));
     QCOMPARE(array2.count(), 4000);
@@ -514,7 +514,7 @@ void tst_QDataArray::appendFourAtATime()
         QCOMPARE(array2[index * 4 + 3], float(index + 3));
     }
 
-    QDataArray<QString> array3;
+    QArray<QString> array3;
     for (index = 0; index < 1000; ++index)
         array3.append(QString::number(index), QString::number(index + 1),
                       QString::number(index + 2), QString::number(index + 3));
@@ -526,7 +526,7 @@ void tst_QDataArray::appendFourAtATime()
         QCOMPARE(array3[index * 4 + 3], QString::number(index + 3));
     }
 
-    QDataArray<ComplexValue> array4;
+    QArray<ComplexValue> array4;
     for (index = 0; index < 1000; ++index)
         array4.append(ComplexValue(index), ComplexValue(index + 1),
                       ComplexValue(index + 2), ComplexValue(index + 3));
@@ -539,10 +539,10 @@ void tst_QDataArray::appendFourAtATime()
     }
 }
 
-void tst_QDataArray::appendArray()
+void tst_QArray::appendArray()
 {
-    QDataArray<float> array;
-    QDataArray<float> array2;
+    QArray<float> array;
+    QArray<float> array2;
     int index;
 
     for (index = 0; index < 1000; ++index) {
@@ -564,22 +564,22 @@ void tst_QDataArray::appendArray()
         QCOMPARE(array2[index + 1000], float(1000 - index));
     }
 
-    array2 += (QDataArray<float>());
+    array2 += (QArray<float>());
     QCOMPARE(array2.count(), 2000);
 }
 
-void tst_QDataArray::setAt()
+void tst_QArray::setAt()
 {
     int index;
 
-    QDataArray<float> array;
+    QArray<float> array;
     array.append(1.0f);
     QCOMPARE(array[0], 1.0f);
 
     array[0] = 6.0f;
     QCOMPARE(array[0], 6.0f);
 
-    QDataArray<float> array2;
+    QArray<float> array2;
     for(index = 0; index < 1000; ++index)
         array2.append(index);
     for(index = 0; index < 1000; ++index)
@@ -588,10 +588,10 @@ void tst_QDataArray::setAt()
         QCOMPARE(array2[index], float(index + 1000));
 }
 
-void tst_QDataArray::replace()
+void tst_QArray::replace()
 {
-    QDataArray<float> array;
-    QDataArray<float> array2;
+    QArray<float> array;
+    QArray<float> array2;
     int index;
 
     for (index = 0; index < 1000; ++index) {
@@ -650,9 +650,9 @@ void tst_QDataArray::replace()
 }
 
 // Exercise the various conditionals in operator=().
-void tst_QDataArray::copy()
+void tst_QArray::copy()
 {
-    QDataArray<float> array, array2, array3;
+    QArray<float> array, array2, array3;
 
     array2.append(1.0f);
     array2.append(7.0f);
@@ -669,12 +669,12 @@ void tst_QDataArray::copy()
     QCOMPARE(array2.at(0), float(1.0f));
     QCOMPARE(array2.at(1), float(7.0f));
 
-    QDataArray<float> array4(array2);
+    QArray<float> array4(array2);
     QCOMPARE(array2.count(), 2);
     QCOMPARE(array2.at(0), float(1.0f));
     QCOMPARE(array2.at(1), float(7.0f));
 
-    QDataArray<float> array5, array6;
+    QArray<float> array5, array6;
     for (int index = 0; index < 32; ++index)
         array5.append(2.0f);
     QCOMPARE(array5.count(), 32);
@@ -691,9 +691,9 @@ void tst_QDataArray::copy()
     QCOMPARE(array5.count(), 0);
 }
 
-void tst_QDataArray::resize()
+void tst_QArray::resize()
 {
-    QDataArray<int> array;
+    QArray<int> array;
 
     array.resize(-1);
     QCOMPARE(array.count(), 0);
@@ -728,7 +728,7 @@ void tst_QDataArray::resize()
     array.resize(50);
     QCOMPARE(array.count(), 50);
 
-    QDataArray<int> array2(array);
+    QArray<int> array2(array);
     array.resize(40);
     QCOMPARE(array.count(), 40);
     QCOMPARE(array2.count(), 50);
@@ -761,9 +761,9 @@ void tst_QDataArray::resize()
     QVERIFY(array.capacity() == ExpectedMinCapacity);
 }
 
-void tst_QDataArray::reserve()
+void tst_QArray::reserve()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     array.reserve(1000);
     QVERIFY(array.isEmpty());
     QVERIFY(array.capacity() >= 1000);
@@ -781,9 +781,9 @@ void tst_QDataArray::reserve()
     QCOMPARE(array.count(), 1000);
 }
 
-void tst_QDataArray::squeeze()
+void tst_QArray::squeeze()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     array.reserve(100);
     QVERIFY(array.isEmpty());
     QVERIFY(array.capacity() >= 100);
@@ -812,7 +812,7 @@ void tst_QDataArray::squeeze()
         QCOMPARE(array[index], float(index));
 
     // Test squeezing within the preallocated area.
-    QDataArray<float> array2;
+    QArray<float> array2;
     array2.append(1.0f);
     array2.append(2.0f);
     array2.append(3.0f);
@@ -821,7 +821,7 @@ void tst_QDataArray::squeeze()
     QCOMPARE(array2.count(), 2);
 
     // Test copy-on-write during squeezing.
-    QDataArray<float> array3(array);
+    QArray<float> array3(array);
     array3.squeeze(20);
     QCOMPARE(array3.count(), 20);
     QCOMPARE(array.count(), 50);
@@ -831,15 +831,15 @@ void tst_QDataArray::squeeze()
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
 }
 
-void tst_QDataArray::compare()
+void tst_QArray::compare()
 {
-    QDataArray<float> array, array2, array3;
+    QArray<float> array, array2, array3;
 
     QVERIFY(array == array2);
 
     array.append(1.0f);
     array3.append(1.0f);
-    QDataArray<float> array4(array);
+    QArray<float> array4(array);
 
     QVERIFY(array == array);
     QVERIFY(array != array2);
@@ -853,9 +853,9 @@ void tst_QDataArray::compare()
     QVERIFY(array != array2);
 }
 
-void tst_QDataArray::remove()
+void tst_QArray::remove()
 {
-    QDataArray<float> array;
+    QArray<float> array;
 
     array.remove(0, 100);
     QCOMPARE(array.count(), 0);
@@ -876,7 +876,7 @@ void tst_QDataArray::remove()
             QCOMPARE(array[index], float(index + 20));
     }
 
-    QDataArray<float> array2(array);
+    QArray<float> array2(array);
     array2.remove(-10, 20);
     array2.remove(60, 20);
     QCOMPARE(array2.count(), 60);
@@ -896,9 +896,9 @@ void tst_QDataArray::remove()
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
 }
 
-void tst_QDataArray::extend()
+void tst_QArray::extend()
 {
-    QDataArray<float> array;
+    QArray<float> array;
 
     float *ptr = array.extend(4);
     ptr[0] = 1.0f;
@@ -922,7 +922,7 @@ void tst_QDataArray::extend()
     QCOMPARE(array[4], 5.0f);
     QCOMPARE(array[5], 6.0f);
 
-    QDataArray<float> array2(array);
+    QArray<float> array2(array);
 
     ptr = array.extend(1);
     ptr[0] = 7.0f;
@@ -938,9 +938,9 @@ void tst_QDataArray::extend()
     QCOMPARE(array2.size(), 6);
 }
 
-void tst_QDataArray::reverse()
+void tst_QArray::reverse()
 {
-    QDataArray<float> array0;
+    QArray<float> array0;
 
     // null case
     array0.reverse();
@@ -954,7 +954,7 @@ void tst_QDataArray::reverse()
     QCOMPARE(array0.at(0), 1.0f);
 
     // odd numbered size
-    QDataArray<float> array1;
+    QArray<float> array1;
     ptr = array1.extend(5);
     ptr[0] = 1.0f;
     ptr[1] = 2.0f;
@@ -968,7 +968,7 @@ void tst_QDataArray::reverse()
     QCOMPARE(array1.at(4), 1.0f);
 
     // even numbered size
-    QDataArray<float> array2;
+    QArray<float> array2;
     ptr = array2.extend(6);
     ptr[0] = 1.0f;
     ptr[1] = 2.0f;
@@ -985,7 +985,7 @@ void tst_QDataArray::reverse()
 
     // complex type
     QVERIFY(QTypeInfo<QString>::isComplex);
-    QDataArray<QString> array3(6, QString("test"));
+    QArray<QString> array3(6, QString("test"));
     array3[0] = "zero";
     array3[1] = "one";
     array3[2] = "two";
@@ -1000,12 +1000,12 @@ void tst_QDataArray::reverse()
     QCOMPARE(array3.at(5), QString("zero"));
 }
 
-void tst_QDataArray::reversed()
+void tst_QArray::reversed()
 {
-    QDataArray<float> array0;
+    QArray<float> array0;
 
     // null case
-    QDataArray<float> res0 = array0.reversed();
+    QArray<float> res0 = array0.reversed();
     QCOMPARE(res0.size(), 0);
 
     // basic case
@@ -1016,21 +1016,21 @@ void tst_QDataArray::reversed()
     QCOMPARE(res0.at(0), 1.0f);
 
     // odd numbered size
-    QDataArray<float> array1;
+    QArray<float> array1;
     ptr = array1.extend(5);
     ptr[0] = 1.0f;
     ptr[1] = 2.0f;
     ptr[2] = 3.0f;
     ptr[3] = 4.0f;
     ptr[4] = 5.0f;
-    QDataArray<float> res1 = array1.reversed();
+    QArray<float> res1 = array1.reversed();
     QCOMPARE(res1.size(), 5);
     QCOMPARE(res1.at(0), 5.0f);
     QCOMPARE(res1.at(2), 3.0f);
     QCOMPARE(res1.at(4), 1.0f);
 
     // even numbered size
-    QDataArray<float> array2;
+    QArray<float> array2;
     ptr = array2.extend(6);
     ptr[0] = 1.0f;
     ptr[1] = 2.0f;
@@ -1038,7 +1038,7 @@ void tst_QDataArray::reversed()
     ptr[3] = 4.0f;
     ptr[4] = 5.0f;
     ptr[5] = 6.0f;
-    QDataArray<float> res2 = array2.reversed();
+    QArray<float> res2 = array2.reversed();
     QCOMPARE(res2.size(), 6);
     QCOMPARE(res2.at(0), 6.0f);
     QCOMPARE(res2.at(2), 4.0f);
@@ -1046,7 +1046,7 @@ void tst_QDataArray::reversed()
     QCOMPARE(res2.at(5), 1.0f);
 
     // simple type with larger size
-    QDataArray<QVector3D> array4;
+    QArray<QVector3D> array4;
     array4.extend(6);
     QVector3D va(1.0f, 2.0f, 3.0f);
     QVector3D vb(11.0f, 12.0f, 13.0f);
@@ -1060,7 +1060,7 @@ void tst_QDataArray::reversed()
     array4[3] = vd;
     array4[4] = ve;
     array4[5] = vf;
-    QDataArray<QVector3D> res4 = array4.reversed();
+    QArray<QVector3D> res4 = array4.reversed();
     QCOMPARE(res4.size(), 6);
     QCOMPARE(res4.at(0), vf);
     QCOMPARE(res4.at(2), vd);
@@ -1068,14 +1068,14 @@ void tst_QDataArray::reversed()
     QCOMPARE(res4.at(5), va);
 }
 
-void tst_QDataArray::mid()
+void tst_QArray::mid()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
     // Check the null case.
-    QDataArrayRef<float> mid;
+    QArrayRef<float> mid;
     QCOMPARE(mid.size(), 0);
     QCOMPARE(mid.count(), 0);
     QCOMPARE(mid.offset(), 0);
@@ -1084,7 +1084,7 @@ void tst_QDataArray::mid()
     QVERIFY(mid.data() == 0);
     QVERIFY(mid.constData() == 0);
 
-    QDataArray<float> midarray = mid.toDataArray();
+    QArray<float> midarray = mid.toDataArray();
     QVERIFY(midarray.isEmpty());
 
     mid = array.mid(0);
@@ -1094,7 +1094,7 @@ void tst_QDataArray::mid()
     QVERIFY(!mid.isNull());
     QVERIFY(mid.data() == array.data());
     QVERIFY(mid.constData() == array.constData());
-    QVERIFY(mid.dataArray() == &array);
+    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 1024; ++index) {
         QCOMPARE(mid.at(index), float(index));
         QCOMPARE(mid[index], float(index));
@@ -1112,7 +1112,7 @@ void tst_QDataArray::mid()
     QVERIFY(!mid.isNull());
     QVERIFY(mid.data() == (array.data() + 500));
     QVERIFY(mid.constData() == (array.constData() + 500));
-    QVERIFY(mid.dataArray() == &array);
+    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 20; ++index) {
         QCOMPARE(mid.at(index), float(index + 500));
         QCOMPARE(mid[index], float(index + 500));
@@ -1123,20 +1123,20 @@ void tst_QDataArray::mid()
     mid[10] = 510.0f;
     QCOMPARE(array.at(510), float(510.0f));
 
-    QDataArrayRef<float> mid2(&array, 500, 20);
+    QArrayRef<float> mid2(&array, 500, 20);
     QVERIFY(mid == mid2);
     QVERIFY(!(mid != mid2));
 
-    QDataArrayRef<float> mid3(&array, 500, 21);
+    QArrayRef<float> mid3(&array, 500, 21);
     QVERIFY(mid != mid3);
     QVERIFY(!(mid == mid3));
 
-    QDataArrayRef<float> mid4(&array, 400, 20);
+    QArrayRef<float> mid4(&array, 400, 20);
     QVERIFY(mid != mid4);
     QVERIFY(!(mid == mid4));
 
-    QDataArrayRef<float> mid5;
-    QDataArrayRef<float> mid6;
+    QArrayRef<float> mid5;
+    QArrayRef<float> mid6;
     QVERIFY(mid != mid5);
     QVERIFY(!(mid == mid5));
     QVERIFY(mid5 != mid);
@@ -1149,7 +1149,7 @@ void tst_QDataArray::mid()
     for (int index = 0; index < mid.size(); ++index)
         QCOMPARE(midarray[index], mid[index]);
 
-    QDataArray<float> midarray2(mid.toDataArray());
+    QArray<float> midarray2(mid.toDataArray());
     QVERIFY(midarray == midarray2);
 
     mid = array.mid(500, 0);
@@ -1167,116 +1167,116 @@ void tst_QDataArray::mid()
     QVERIFY(!mid.isNull());
     QVERIFY(mid.data() == (array.data() + 1000));
     QVERIFY(mid.constData() == (array.constData() + 1000));
-    QVERIFY(mid.dataArray() == &array);
+    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 24; ++index) {
         QCOMPARE(mid.at(index), float(index + 1000));
         QCOMPARE(mid[index], float(index + 1000));
     }
 
     // Constructor should act like mid().
-    QDataArrayRef<float> mid7(&array, 1000, 30);
+    QArrayRef<float> mid7(&array, 1000, 30);
     QCOMPARE(mid7.offset(), 1000);
     QCOMPARE(mid7.size(), 24);
     QVERIFY(!mid7.isEmpty());
     QVERIFY(!mid7.isNull());
     QVERIFY(mid7.data() == (array.data() + 1000));
     QVERIFY(mid7.constData() == (array.constData() + 1000));
-    QVERIFY(mid7.dataArray() == &array);
+    QVERIFY(mid7.array() == &array);
     for (int index = 0; index < 24; ++index) {
         QCOMPARE(mid7.at(index), float(index + 1000));
         QCOMPARE(mid7[index], float(index + 1000));
     }
 
-    QDataArrayRef<float> mid8(&array);
+    QArrayRef<float> mid8(&array);
     QCOMPARE(mid8.offset(), 0);
     QCOMPARE(mid8.size(), array.size());
     QVERIFY(!mid8.isEmpty());
     QVERIFY(!mid8.isNull());
     QVERIFY(mid8.data() == array.data());
     QVERIFY(mid8.constData() == array.constData());
-    QVERIFY(mid8.dataArray() == &array);
+    QVERIFY(mid8.array() == &array);
     for (int index = 0; index < 1024; ++index) {
         QCOMPARE(mid8.at(index), float(index));
         QCOMPARE(mid8[index], float(index));
     }
 
-    QDataArrayRef<float> mid9(0);
+    QArrayRef<float> mid9(0);
     QCOMPARE(mid9.offset(), 0);
     QCOMPARE(mid9.size(), 0);
     QVERIFY(mid9.isEmpty());
     QVERIFY(mid9.isNull());
     QVERIFY(mid9.data() == 0);
     QVERIFY(mid9.constData() == 0);
-    QVERIFY(mid9.dataArray() == 0);
+    QVERIFY(mid9.array() == 0);
 }
 
-void tst_QDataArray::left()
+void tst_QArray::left()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    QDataArrayRef<float> left = array.left(-1);
+    QArrayRef<float> left = array.left(-1);
     QCOMPARE(left.offset(), 0);
     QCOMPARE(left.size(), 1024);
-    QVERIFY(left.dataArray() == &array);
+    QVERIFY(left.array() == &array);
 
     left = array.left(0);
     QCOMPARE(left.offset(), 0);
     QCOMPARE(left.size(), 0);
-    QVERIFY(left.dataArray() == &array);
+    QVERIFY(left.array() == &array);
 
     left = array.left(500);
     QCOMPARE(left.offset(), 0);
     QCOMPARE(left.size(), 500);
-    QVERIFY(left.dataArray() == &array);
+    QVERIFY(left.array() == &array);
 
     left = array.left(2048);
     QCOMPARE(left.offset(), 0);
     QCOMPARE(left.size(), 1024);
-    QVERIFY(left.dataArray() == &array);
+    QVERIFY(left.array() == &array);
 }
 
-void tst_QDataArray::right()
+void tst_QArray::right()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    QDataArrayRef<float> right = array.right(-1);
+    QArrayRef<float> right = array.right(-1);
     QCOMPARE(right.offset(), 0);
     QCOMPARE(right.size(), 1024);
-    QVERIFY(right.dataArray() == &array);
+    QVERIFY(right.array() == &array);
 
     right = array.right(0);
     QCOMPARE(right.offset(), 1024);
     QCOMPARE(right.size(), 0);
-    QVERIFY(right.dataArray() == &array);
+    QVERIFY(right.array() == &array);
 
     right = array.right(500);
     QCOMPARE(right.offset(), 1024 - 500);
     QCOMPARE(right.size(), 500);
-    QVERIFY(right.dataArray() == &array);
+    QVERIFY(right.array() == &array);
 
     right = array.right(2048);
     QCOMPARE(right.offset(), 0);
     QCOMPARE(right.size(), 1024);
-    QVERIFY(right.dataArray() == &array);
+    QVERIFY(right.array() == &array);
 }
 
-void tst_QDataArray::iterate()
+void tst_QArray::iterate()
 {
-    QDataArray<float> array;
+    QArray<float> array;
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    QDataArray<float>::Iterator it1;
+    QArray<float>::Iterator it1;
     int value = 0;
     for (it1 = array.begin(); it1 != array.end(); ++it1)
         QCOMPARE(*it1, float(value++));
     QCOMPARE(value, array.size());
 
-    QDataArray<float>::ConstIterator it2;
+    QArray<float>::ConstIterator it2;
     value = 0;
     for (it2 = array.constBegin(); it2 != array.constEnd(); ++it2)
         QCOMPARE(*it2, float(value++));
@@ -1295,19 +1295,19 @@ void tst_QDataArray::iterate()
     for (int index = 0; index < 1024; ++index)
         array[index] = float(index);
 
-    QDataArrayRef<float> mid = array.mid(512, 256);
-    QDataArrayRef<float>::Iterator it3;
+    QArrayRef<float> mid = array.mid(512, 256);
+    QArrayRef<float>::Iterator it3;
     value = 512;
     for (it3 = mid.begin(); it3 != mid.end(); ++it3)
         QCOMPARE(*it3, float(value++));
     QCOMPARE(value - 512, mid.size());
 
-    QDataArrayRef<float>::Iterator it4;
+    QArrayRef<float>::Iterator it4;
     value = 512;
     for (it4 = mid.begin(); it4 != mid.end(); ++it4)
         *it4 = float(1024 - value++);
 
-    QDataArrayRef<float>::ConstIterator it5;
+    QArrayRef<float>::ConstIterator it5;
     value = 512;
     for (it5 = mid.constBegin(); it5 != mid.constEnd(); ++it5)
         QCOMPARE(*it5, float(1024 - value++));
@@ -1316,15 +1316,15 @@ void tst_QDataArray::iterate()
 
 // Verify that when the data is in the preallocated section, it is
 // copied across and the original constData() pointer remains the same.
-void tst_QDataArray::copyPrealloc()
+void tst_QArray::copyPrealloc()
 {
-    QDataArray<float> array1;
+    QArray<float> array1;
     array1.append(1.0f);
     array1.append(2.0f);
 
     const float *data = array1.constData();
 
-    QDataArray<float> array2(array1);
+    QArray<float> array2(array1);
 
     QVERIFY(array1.constData() == data);
     QVERIFY(array2.constData() != data);
@@ -1333,7 +1333,7 @@ void tst_QDataArray::copyPrealloc()
     QCOMPARE(array2[0], float(1.0f));
     QCOMPARE(array2[1], float(2.0f));
 
-    QDataArray<float> array3;
+    QArray<float> array3;
     QCOMPARE(array3.size(), 0);
     array3 = array1;
 
@@ -1345,6 +1345,6 @@ void tst_QDataArray::copyPrealloc()
     QCOMPARE(array3[1], float(2.0f));
 }
 
-QTEST_APPLESS_MAIN(tst_QDataArray)
+QTEST_APPLESS_MAIN(tst_QArray)
 
-#include "tst_qdataarray.moc"
+#include "tst_qarray.moc"

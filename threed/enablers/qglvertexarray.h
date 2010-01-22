@@ -168,7 +168,7 @@ public:
     inline bool isUploaded() const;
 
 private:
-    QDataArray<float> m_data;
+    QArray<float> m_data;
     QGLVertexDescription m_fields;
     mutable int m_currentField;
     mutable int m_warnings;

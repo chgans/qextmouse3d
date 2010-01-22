@@ -158,14 +158,14 @@
     position values.  The positions are then added to the array with
     QVector3DArray::append().
 
-    QVector3DArray is essentially QDataArray<QVector3D>.  QDataArray
+    QVector3DArray is essentially QArray<QVector3D>.  QArray
     is a highly efficient data structure for building large arrays
     of simple vector values.  The array starts by appending to
     preallocated storage on the stack and then moves the data
     to the heap as the array grows in size.
 
     There is a slight difference to the raw GL example, which used a
-    static constant array of vertex values.  The QDataArray::fromRawData()
+    static constant array of vertex values.  The QArray::fromRawData()
     function can be used to load data from static constant arrays.
     In this example, we are building the QVector3DArray on the stack
     every time the scene is painted.

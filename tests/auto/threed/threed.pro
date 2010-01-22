@@ -1,7 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = \
+    qarray \
     qcustomdataarray \
-    qdataarray \
     qvectorarray \
     qglblendoptions \
     qglbuffer \

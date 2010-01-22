@@ -45,7 +45,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QVector2DArray
-    \brief The QVector2DArray class is a convenience for wrapping a QDataArray of QVector2D values.
+    \brief The QVector2DArray class is a convenience for wrapping a QArray of QVector2D values.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
@@ -61,10 +61,10 @@ QT_BEGIN_NAMESPACE
     \endcode
 
     This is more convenient and readable than the equivalent with
-    QDataArray:
+    QArray:
 
     \code
-    QDataArray<QVector2D> array;
+    QArray<QVector2D> array;
     array.append(QVector2D(1.0f, 2.0f));
     array.append(QVector2D(-1.0f, 2.0f));
     array.append(QVector2D(1.0f, -2.0f));
@@ -74,7 +74,7 @@ QT_BEGIN_NAMESPACE
     the contents of the array with translate(), translated(),
     transform(), and transformed().
 
-    \sa QDataArray, QVector3DArray, QVector4DArray
+    \sa QArray, QVector3DArray, QVector4DArray
 */
 
 /*!
@@ -91,7 +91,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QVector2DArray::QVector2DArray(const QDataArray<QVector2D>& other)
+    \fn QVector2DArray::QVector2DArray(const QArray<QVector2D>& other)
 
     Constructs a copy of \a other.
 */
@@ -133,7 +133,7 @@ void QVector2DArray::translate(const QVector2D& value)
             *dst++ += value;
     } else {
         // Create a new array, translate the values, and assign.
-        QDataArray<QVector2D> result;
+        QArray<QVector2D> result;
         int size = count();
         const QVector2D *src = constData();
         QVector2D *dst = result.extend(size);
@@ -179,9 +179,9 @@ void QVector2DArray::translate(const QVector2D& value)
 
     \sa translate()
 */
-QDataArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
+QArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
 {
-    QDataArray<QVector2D> result;
+    QArray<QVector2D> result;
     int size = count();
     QVector2D *dst = result.extend(size);
     const QVector2D *src = constData();
@@ -191,7 +191,7 @@ QDataArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
 }
 
 /*!
-    \fn QDataArray<QVector2D> QVector2DArray::translated(qreal x, qreal y) const
+    \fn QArray<QVector2D> QVector2DArray::translated(qreal x, qreal y) const
     \overload
 
     Returns a copy of this array of QVector2D values, translated
@@ -201,7 +201,7 @@ QDataArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
 */
 
 /*!
-    \fn QDataArray<QVector2D> QVector2DArray::translated(const QPointF& point) const
+    \fn QArray<QVector2D> QVector2DArray::translated(const QPointF& point) const
     \overload
 
     Returns a copy of this array of QVector2D values, translated
@@ -211,7 +211,7 @@ QDataArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
 */
 
 /*!
-    \fn QDataArray<QVector2D> QVector2DArray::translated(const QPoint& point) const
+    \fn QArray<QVector2D> QVector2DArray::translated(const QPoint& point) const
     \overload
 
     Returns a copy of this array of QVector2D values, translated
@@ -240,7 +240,7 @@ void QVector2DArray::transform(const QTransform& matrix)
         }
     } else {
         // Create a new array, transform the values, and assign.
-        QDataArray<QVector2D> result;
+        QArray<QVector2D> result;
         int size = count();
         const QVector2D *src = constData();
         QVector2D *dst = result.extend(size);
@@ -268,7 +268,7 @@ void QVector2DArray::transform(const QMatrix4x4& matrix)
         }
     } else {
         // Create a new array, transform the values, and assign.
-        QDataArray<QVector2D> result;
+        QArray<QVector2D> result;
         int size = count();
         const QVector2D *src = constData();
         QVector2D *dst = result.extend(size);
@@ -286,9 +286,9 @@ void QVector2DArray::transform(const QMatrix4x4& matrix)
 
     \sa transformed()
 */
-QDataArray<QVector2D> QVector2DArray::transformed(const QTransform& matrix) const
+QArray<QVector2D> QVector2DArray::transformed(const QTransform& matrix) const
 {
-    QDataArray<QVector2D> result;
+    QArray<QVector2D> result;
     int size = count();
     const QVector2D *src = constData();
     QVector2D *dst = result.extend(size);
@@ -303,9 +303,9 @@ QDataArray<QVector2D> QVector2DArray::transformed(const QTransform& matrix) cons
 
     \sa transform()
 */
-QDataArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) const
+QArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) const
 {
-    QDataArray<QVector2D> result;
+    QArray<QVector2D> result;
     int size = count();
     const QVector2D *src = constData();
     QVector2D *dst = result.extend(size);
@@ -316,7 +316,7 @@ QDataArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) cons
 
 /*!
     \class QVector3DArray
-    \brief The QVector3DArray class is a convenience for wrapping a QDataArray of QVector3D values.
+    \brief The QVector3DArray class is a convenience for wrapping a QArray of QVector3D values.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
@@ -332,10 +332,10 @@ QDataArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) cons
     \endcode
 
     This is more convenient and readable than the equivalent with
-    QDataArray:
+    QArray:
 
     \code
-    QDataArray<QVector3D> array;
+    QArray<QVector3D> array;
     array.append(QVector3D(1.0f, 2.0f, 3.0f));
     array.append(QVector3D(-1.0f, 2.0f, 3.0f));
     array.append(QVector3D(1.0f, -2.0f, 3.0f));
@@ -345,7 +345,7 @@ QDataArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) cons
     the contents of the array with translate(), translated(),
     transform(), and transformed().
 
-    \sa QDataArray, QVector2DArray, QVector4DArray
+    \sa QArray, QVector2DArray, QVector4DArray
 */
 
 /*!
@@ -362,7 +362,7 @@ QDataArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) cons
 */
 
 /*!
-    \fn QVector3DArray::QVector3DArray(const QDataArray<QVector3D>& other)
+    \fn QVector3DArray::QVector3DArray(const QArray<QVector3D>& other)
 
     Constructs a copy of \a other.
 */
@@ -389,7 +389,7 @@ void QVector3DArray::translate(const QVector3D& value)
             *dst++ += value;
     } else {
         // Create a new array, translate the values, and assign.
-        QDataArray<QVector3D> result;
+        QArray<QVector3D> result;
         int size = count();
         const QVector3D *src = constData();
         QVector3D *dst = result.extend(size);
@@ -415,9 +415,9 @@ void QVector3DArray::translate(const QVector3D& value)
 
     \sa translate()
 */
-QDataArray<QVector3D> QVector3DArray::translated(const QVector3D& value) const
+QArray<QVector3D> QVector3DArray::translated(const QVector3D& value) const
 {
-    QDataArray<QVector3D> result;
+    QArray<QVector3D> result;
     int size = count();
     const QVector3D *src = constData();
     QVector3D *dst = result.extend(size);
@@ -427,7 +427,7 @@ QDataArray<QVector3D> QVector3DArray::translated(const QVector3D& value) const
 }
 
 /*!
-    \fn QDataArray<QVector3D> QVector3DArray::translated(qreal x, qreal y, qreal z) const
+    \fn QArray<QVector3D> QVector3DArray::translated(qreal x, qreal y, qreal z) const
     \overload
 
     Returns a copy of this array of QVector3D values, translated
@@ -454,7 +454,7 @@ void QVector3DArray::transform(const QMatrix4x4& matrix)
         }
     } else {
         // Create a new array, transform the values, and assign.
-        QDataArray<QVector3D> result;
+        QArray<QVector3D> result;
         int size = count();
         const QVector3D *src = constData();
         QVector3D *dst = result.extend(size);
@@ -470,9 +470,9 @@ void QVector3DArray::transform(const QMatrix4x4& matrix)
 
     \sa transform()
 */
-QDataArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) const
+QArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) const
 {
-    QDataArray<QVector3D> result;
+    QArray<QVector3D> result;
     int size = count();
     const QVector3D *src = constData();
     QVector3D *dst = result.extend(size);
@@ -483,7 +483,7 @@ QDataArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) cons
 
 /*!
     \class QVector4DArray
-    \brief The QVector4DArray class is a convenience for wrapping a QDataArray of QVector4D values.
+    \brief The QVector4DArray class is a convenience for wrapping a QArray of QVector4D values.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
@@ -499,10 +499,10 @@ QDataArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) cons
     \endcode
 
     This is more convenient and readable than the equivalent with
-    QDataArray:
+    QArray:
 
     \code
-    QDataArray<QVector4D> array;
+    QArray<QVector4D> array;
     array.append(QVector4D(1.0f, 2.0f, 3.0f, -4.0f));
     array.append(QVector4D(-1.0f, 2.0f, 3.0f, -4.0f));
     array.append(QVector4D(1.0f, -2.0f, 3.0f, -4.0f));
@@ -512,7 +512,7 @@ QDataArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) cons
     the contents of the array with translate(), translated(),
     transform(), and transformed().
 
-    \sa QDataArray, QVector2DArray, QVector3DArray
+    \sa QArray, QVector2DArray, QVector3DArray
 */
 
 /*!
@@ -529,7 +529,7 @@ QDataArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) cons
 */
 
 /*!
-    \fn QVector4DArray::QVector4DArray(const QDataArray<QVector4D>& other)
+    \fn QVector4DArray::QVector4DArray(const QArray<QVector4D>& other)
 
     Constructs a copy of \a other.
 */
@@ -556,7 +556,7 @@ void QVector4DArray::translate(const QVector4D& value)
             *dst++ += value;
     } else {
         // Create a new array, translate the values, and assign.
-        QDataArray<QVector4D> result;
+        QArray<QVector4D> result;
         int size = count();
         const QVector4D *src = constData();
         QVector4D *dst = result.extend(size);
@@ -582,9 +582,9 @@ void QVector4DArray::translate(const QVector4D& value)
 
     \sa translate()
 */
-QDataArray<QVector4D> QVector4DArray::translated(const QVector4D& value) const
+QArray<QVector4D> QVector4DArray::translated(const QVector4D& value) const
 {
-    QDataArray<QVector4D> result;
+    QArray<QVector4D> result;
     int size = count();
     const QVector4D *src = constData();
     QVector4D *dst = result.extend(size);
@@ -594,7 +594,7 @@ QDataArray<QVector4D> QVector4DArray::translated(const QVector4D& value) const
 }
 
 /*!
-    \fn QDataArray<QVector4D> QVector4DArray::translated(qreal x, qreal y, qreal z, qreal w) const
+    \fn QArray<QVector4D> QVector4DArray::translated(qreal x, qreal y, qreal z, qreal w) const
     \overload
 
     Returns a copy of this array of QVector4D values, translated
@@ -621,7 +621,7 @@ void QVector4DArray::transform(const QMatrix4x4& matrix)
         }
     } else {
         // Create a new array, transform the values, and assign.
-        QDataArray<QVector4D> result;
+        QArray<QVector4D> result;
         int size = count();
         const QVector4D *src = constData();
         QVector4D *dst = result.extend(size);
@@ -637,9 +637,9 @@ void QVector4DArray::transform(const QMatrix4x4& matrix)
 
     \sa transform()
 */
-QDataArray<QVector4D> QVector4DArray::transformed(const QMatrix4x4& matrix) const
+QArray<QVector4D> QVector4DArray::transformed(const QMatrix4x4& matrix) const
 {
-    QDataArray<QVector4D> result;
+    QArray<QVector4D> result;
     int size = count();
     const QVector4D *src = constData();
     QVector4D *dst = result.extend(size);

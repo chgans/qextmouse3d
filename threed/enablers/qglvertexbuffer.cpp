@@ -73,7 +73,7 @@ class QGLVertexBufferFloatAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferFloatAttribute
-            (QGL::VertexAttribute attr, const QDataArray<float>& array)
+            (QGL::VertexAttribute attr, const QArray<float>& array)
         : QGLVertexBufferAttribute(attr), floatArray(array)
     {
         value = QGLAttributeValue(floatArray);
@@ -86,7 +86,7 @@ public:
     int elementSize() { return sizeof(float); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QDataArray<float> floatArray;
+    QArray<float> floatArray;
 };
 
 void QGLVertexBufferFloatAttribute::replace
@@ -104,7 +104,7 @@ class QGLVertexBufferVector2DAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferVector2DAttribute
-            (QGL::VertexAttribute attr, const QDataArray<QVector2D>& array)
+            (QGL::VertexAttribute attr, const QArray<QVector2D>& array)
         : QGLVertexBufferAttribute(attr), vector2DArray(array)
     {
         value = QGLAttributeValue(vector2DArray);
@@ -117,7 +117,7 @@ public:
     int elementSize() { return sizeof(QVector2D); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QDataArray<QVector2D> vector2DArray;
+    QArray<QVector2D> vector2DArray;
 };
 
 void QGLVertexBufferVector2DAttribute::replace
@@ -136,7 +136,7 @@ class QGLVertexBufferVector3DAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferVector3DAttribute
-            (QGL::VertexAttribute attr, const QDataArray<QVector3D>& array)
+            (QGL::VertexAttribute attr, const QArray<QVector3D>& array)
         : QGLVertexBufferAttribute(attr), vector3DArray(array)
     {
         value = QGLAttributeValue(vector3DArray);
@@ -149,7 +149,7 @@ public:
     int elementSize() { return sizeof(QVector3D); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QDataArray<QVector3D> vector3DArray;
+    QArray<QVector3D> vector3DArray;
 };
 
 void QGLVertexBufferVector3DAttribute::replace
@@ -168,7 +168,7 @@ class QGLVertexBufferVector4DAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferVector4DAttribute
-            (QGL::VertexAttribute attr, const QDataArray<QVector4D>& array)
+            (QGL::VertexAttribute attr, const QArray<QVector4D>& array)
         : QGLVertexBufferAttribute(attr), vector4DArray(array)
     {
         value = QGLAttributeValue(vector4DArray);
@@ -181,7 +181,7 @@ public:
     int elementSize() { return sizeof(QVector4D); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QDataArray<QVector4D> vector4DArray;
+    QArray<QVector4D> vector4DArray;
 };
 
 void QGLVertexBufferVector4DAttribute::replace
@@ -200,7 +200,7 @@ class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferColorAttribute
-            (QGL::VertexAttribute attr, const QDataArray<QColor4b>& array)
+            (QGL::VertexAttribute attr, const QArray<QColor4b>& array)
         : QGLVertexBufferAttribute(attr), colorArray(array)
     {
         value = QGLAttributeValue(colorArray);
@@ -213,7 +213,7 @@ public:
     int elementSize() { return sizeof(QColor4b); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QDataArray<QColor4b> colorArray;
+    QArray<QColor4b> colorArray;
 };
 
 void QGLVertexBufferColorAttribute::replace
@@ -412,7 +412,7 @@ void QGLVertexBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QDataArray<float>& value)
+    (QGL::VertexAttribute attribute, const QArray<float>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {
@@ -429,7 +429,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QDataArray<QVector2D>& value)
+    (QGL::VertexAttribute attribute, const QArray<QVector2D>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {
@@ -446,7 +446,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QDataArray<QVector3D>& value)
+    (QGL::VertexAttribute attribute, const QArray<QVector3D>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {
@@ -463,7 +463,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QDataArray<QVector4D>& value)
+    (QGL::VertexAttribute attribute, const QArray<QVector4D>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {
@@ -480,7 +480,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QDataArray<QColor4b>& value)
+    (QGL::VertexAttribute attribute, const QArray<QColor4b>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {
@@ -698,7 +698,7 @@ bool QGLVertexBuffer::upload()
             (mapped || d->buffer.usagePattern() != QGLBuffer::DynamicDraw)) {
         // Interleave the data into the final buffer.  We do it in
         // sections so as to keep locality problems to a minimum.
-        QDataArray<float> temp;
+        QArray<float> temp;
         float *dst;
         if (mapped)
             dst = reinterpret_cast<float *>(mapped);

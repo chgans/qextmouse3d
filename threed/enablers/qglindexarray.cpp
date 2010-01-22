@@ -271,7 +271,7 @@ QGLIndexArray QGLIndexArray::fromRawData(const ushort *data, int count)
     QGLIndexArray array;
     if (data && count > 0) {
 #if defined(QT_OPENGL_ES)
-        array.m_data = QDataArray<ElementType>::fromRawData(data, count);
+        array.m_data = QArray<ElementType>::fromRawData(data, count);
 #else
         while (count-- > 0)
             array.append(*data++);
@@ -299,7 +299,7 @@ QGLIndexArray QGLIndexArray::fromRawData(const int *data, int count)
         while (count-- > 0)
             array.append(*data++);
 #else
-        array.m_data = QDataArray<ElementType>::fromRawData(data, count);
+        array.m_data = QArray<ElementType>::fromRawData(data, count);
 #endif
     }
     return array;
