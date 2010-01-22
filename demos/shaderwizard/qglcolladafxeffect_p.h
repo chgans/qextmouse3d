@@ -19,6 +19,15 @@ public:
 
     ~QGLColladaFxEffectPrivate()
     {
+        delete emissiveTexture;
+        delete ambientTexture;
+        delete diffuseTexture;
+        delete specularTexture;
+
+        emissiveTexture = 0;
+        ambientTexture = 0;
+        diffuseTexture = 0;
+        specularTexture = 0;
     }
 
     QString id;

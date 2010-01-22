@@ -47,7 +47,7 @@ static inline QGLColladaParam* findParameterGenerous(StateStack& stateStack, QSt
                 static bool warned = false;
                 if( !warned )
                 {
-                    qWarning() << "Warning: null param in stateStack. This may indicate";
+                    qWarning() << "Warning: null param in state stack while parsing collada.";
                     warned = true;
                 }
                 continue;
@@ -281,7 +281,6 @@ QString QGLColladaTextureParam::samplerSid()
 */
 QGLColladaFxEffectFactory::QGLColladaFxEffectFactory()
 {
-    qWarning() << "Warning: QGLColladaFxEffectFactory is not intended to be instantiated";
 }
 
 
@@ -732,13 +731,26 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
             if( xml.name() == "emission" )
             {
-                // TODO: color or texture
                 if( xml.readNextStartElement() )
                 {
-                    material->setEmittedLight( processColorOrTextureElement( xml ));
+                    // handle color or texture element:
+                    if(xml.name() == "color")
+                    {
+                        material->setEmittedLight( processColorElement( xml ));
 #ifdef DEBUG_MATERIALS
-                    qDebug() << "set emitted light to " << material->emittedLight();
+                        qDebug() << "set emitted light to " << material->emittedLight();
 #endif
+                    }
+                    else if( xml.name() == "texture")
+                    {
+                        effect->d->emissiveTexture = processTextureElement( xml, stateStack );
+#ifdef DEBUG_MATERIALS
+                        qDebug() << "set emissive texture to " << effect->d->emittedTexture;
+#endif
+                    } else if( xml.name() == "param")
+                    {
+                        qWarning() << "params not supported in lighting elements ( line" << xml.lineNumber() << ")";
+                    }
                 }
                 xml.skipCurrentElement();
                 xml.readNextStartElement();
@@ -746,17 +758,31 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
             if( xml.name() == "ambient" )
             {
-                // TODO: color or texture
                 if( xml.readNextStartElement() )
                 {
-                    material->setAmbientColor( processColorOrTextureElement( xml ));
+                    // handle color or texture element:
+                    if(xml.name() == "color")
+                    {
+                        material->setAmbientColor( processColorElement( xml ));
 #ifdef DEBUG_MATERIALS
-                    qDebug() << "set ambient color to " << material->ambientColor();
+                        qDebug() << "set ambient color to " << material->ambientColor();
 #endif
+                    }
+                    else if( xml.name() == "texture")
+                    {
+                        effect->d->ambientTexture = processTextureElement( xml, stateStack );
+#ifdef DEBUG_MATERIALS
+                        qDebug() << "set ambient texture to " << effect->d->ambientTexture;
+#endif
+                    } else if( xml.name() == "param")
+                    {
+                        qWarning() << "params not supported in lighting elements ( line" << xml.lineNumber() << ")";
+                    }
                 }
                 xml.skipCurrentElement();
                 xml.readNextStartElement();
             }
+
 
             if( xml.name() == "diffuse" )
             {
@@ -787,15 +813,27 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
             if( xml.name() == "specular" )
             {
-                // TODO: color or texture
                 if( xml.readNextStartElement() )
                 {
-                    material->setSpecularColor( processColorOrTextureElement( xml ));
+                    // handle color or texture element:
+                    if(xml.name() == "color")
+                    {
+                        material->setSpecularColor( processColorElement( xml ));
 #ifdef DEBUG_MATERIALS
-                    qDebug() << "set specular color to " << material->specularColor();
+                        qDebug() << "set specular color to " << material->specularColor();
 #endif
+                    }
+                    else if( xml.name() == "texture")
+                    {
+                        effect->d->specularTexture = processTextureElement( xml, stateStack );
+#ifdef DEBUG_MATERIALS
+                        qDebug() << "set specular texture to " << effect->d->specularTexture;
+#endif
+                    } else if( xml.name() == "param")
+                    {
+                        qWarning() << "params not supported in lighting elements ( line" << xml.lineNumber() << ")";
+                    }
                 }
-
                 xml.skipCurrentElement();
                 xml.readNextStartElement();
             }
