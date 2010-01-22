@@ -149,16 +149,21 @@ private:
     };
 
     // Invariants:
-    // 1. If the data is not shared, then m_appendLimit >= m_end.
-    // 2. If the data is shared, then m_appendLimit == m_end, even if
-    // that is less than the true capacity.  This triggers the range
-    // check in append() to call grow(), which will copy-on-write.
+    // 1. If the data is not shared, then the usual condition is
+    //    for m_appendLimit >= m_end.
+    // 2. If the data is shared, then m_appendLimit == m_start.
+    //    This triggers the range check in append() to call grow(),
+    //    which will copy-on-write.  It also triggers the detach
+    //    check in data() and operator[] to cause a copy-on-write.
     // 3. If the data is not shared, but previously was, then
-    // m_appendLimit == m_end.  This will trigger grow(), which may
-    // then notice that it doesn't have to copy-on-write.  In that
-    // case, m_appendLimit is set back to m_limit.
+    //    m_appendLimit == m_start.  This will trigger grow() or
+    //    detach(), which may then notice that it doesn't have to
+    //    copy-on-write.  In that case, m_appendLimit is set back
+    //    to m_limit.
     // 4. If m_data is null, then m_start is either the same as
-    // m_prealloc, or it points at const raw data.
+    //    m_prealloc, or it points at const raw data.
+    // 5. If the array contains raw data, then m_appendLimit will
+    //    be set to m_start to force copy-on-write.
     T *m_start;
     T *m_end;
     T *m_limit;
@@ -183,7 +188,7 @@ private:
     void move(T *dst, const T *src, int count);
     void copyReplace(T *dst, const T *src, int count);
     void reallocate(int capacity);
-    void detachForWrite(int needed = 0);
+    void detach();
     void assign(const QArray<T, PreallocSize> &other);
     void grow(int needed);
 };
@@ -333,11 +338,18 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::reallocate(int capacity)
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detachForWrite(int needed)
+Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detach()
 {
+    // If the reference count is 1, then the array may have been
+    // copied and then the copy released.  So just reset the limit.
+    if (m_data && m_data->ref == 1) {
+        m_appendLimit = m_limit;
+        return;
+    }
+
     // Allocate a new block on the heap and copy the data across.
     int size = m_end - m_start;
-    int capacity = qArrayAllocMore(size, needed);
+    int capacity = qArrayAllocMore(size, 0);
     Data *data = reinterpret_cast<Data *>
         (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
     Q_CHECK_PTR(data);
@@ -345,7 +357,8 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detachForWrite(int needed)
     data->reserved = 0;
     if (size > 0)
         copy(data->array, m_start, size);
-    m_data->ref.deref();
+    if (m_data)
+        m_data->ref.deref();
     m_data = data;
 
     // Update the start/end/append pointers for faster updates.
@@ -364,9 +377,9 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
         m_data = other.m_data;
         m_data->ref.ref();
 
-        // We set the append limit of both objects to m_end, which forces
-        // the next append() in either object to copy-on-write.
-        other.m_appendLimit = m_appendLimit = m_end;
+        // We set the append limit of both objects to m_start, which forces
+        // the next append() or data() in either object to copy-on-write.
+        other.m_appendLimit = m_appendLimit = m_start;
     } else if (other.m_start == reinterpret_cast<const T *>(other.m_prealloc)) {
         // Copy preallocated data.
         int size = other.m_end - other.m_start;
@@ -464,8 +477,8 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *data, int size)
 {
     // Constructing a raw data array.
     if (size > 0) {
-        m_start = const_cast<T *>(data);
-        m_appendLimit = m_limit = m_end = m_start + size;
+        m_appendLimit = m_start = const_cast<T *>(data);
+        m_limit = m_end = m_start + size;
         m_data = 0;
     } else {
         m_start = reinterpret_cast<T *>(m_prealloc);
@@ -787,13 +800,10 @@ Q_INLINE_TEMPLATE QArrayRef<T, PreallocSize> QArray<T, PreallocSize>::right(int 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T *QArray<T, PreallocSize>::data()
 {
-    if (m_data) {
-        if (m_data->ref != 1)
-            detachForWrite();
-    } else if (m_start != reinterpret_cast<T *>(m_prealloc)) {
-        // Copy the const raw data.
-        detachForWrite();
-    }
+    // If m_appendLimit is the same as m_start, then the array
+    // is either shared or contains raw data.
+    if (m_appendLimit == m_start)
+        detach();
     return m_start;
 }
 
