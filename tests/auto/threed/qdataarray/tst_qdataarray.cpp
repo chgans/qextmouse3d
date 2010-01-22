@@ -41,11 +41,15 @@
 
 #include <QtTest/QtTest>
 #include "qdataarray.h"
-
-#include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
-#include <QtGui/qvector4d.h>
 #include <QtCore/qstring.h>
+
+// We ensure to test the following types to cover all of the
+// relevant QTypeInfo variations:
+//
+// QDataArray<float>        Primitive types
+// QDataArray<QString>      Movable types
+// QDataArray<ComplexValue> Complex types
 
 class tst_QDataArray : public QObject
 {
@@ -81,6 +85,56 @@ private slots:
 
 // This must match the default for PreallocSize.
 static const int ExpectedMinCapacity = 8;
+
+// Complex type that helps the tests determine if QDataArray is calling
+// constructors, destructors, and copy constructors in the right places.
+class ComplexValue
+{
+public:
+    enum Mode
+    {
+        Default,
+        Init,
+        Copy,
+        CopiedAgain,
+        Assign
+    };
+
+    static int destroyCount;
+
+    ComplexValue() : m_value(-1), m_mode(Default) {}
+    ComplexValue(int value) : m_value(value), m_mode(Init) {}
+    ComplexValue(const ComplexValue& other)
+        : m_value(other.m_value)
+    {
+        if (other.m_mode == Copy || other.m_mode == CopiedAgain)
+            m_mode = CopiedAgain;
+        else
+            m_mode = Copy;
+    }
+    ~ComplexValue() { ++destroyCount; }
+
+    ComplexValue& operator=(const ComplexValue& other)
+        { m_value = other.m_value; m_mode = Assign; return *this; }
+
+    int value() const { return m_value; }
+    Mode mode() const { return m_mode; }
+
+    bool operator==(const ComplexValue& other) const
+        { return m_value == other.m_value; }
+    bool operator==(int other) const
+        { return m_value == other; }
+    bool operator!=(const ComplexValue& other) const
+        { return m_value != other.m_value; }
+    bool operator!=(int other) const
+        { return m_value != other; }
+
+private:
+    int m_value;
+    Mode m_mode;
+};
+
+int ComplexValue::destroyCount = 0;
 
 void tst_QDataArray::create()
 {
@@ -130,6 +184,36 @@ void tst_QDataArray::create()
     QVERIFY(array3.data() == array3.constData());
     for (int index = 0; index < ExpectedMinCapacity; ++index)
         QVERIFY(array3.at(index) == 42.5f);
+
+    // Create an array of strings.
+    QDataArray<QString> array4;
+    QCOMPARE(array4.size(), 0);
+    array4.append(QLatin1String("foo"));
+    array4.append(QLatin1String("bar"));
+    array4.append(array4[0]);
+    QCOMPARE(array4[0], QLatin1String("foo"));
+    QCOMPARE(array4[1], QLatin1String("bar"));
+    QCOMPARE(array4[2], QLatin1String("foo"));
+
+    // Create an array of complex values and check that the
+    // copy constructors were called correctly.  Also check that
+    // the destructors are called when the array is destroyed.
+    ComplexValue::destroyCount = 0;
+    {
+        QDataArray<ComplexValue> array5;
+        array5.append(ComplexValue(1));
+        array5.append(ComplexValue(2));
+        array5.append(ComplexValue(3));
+        QCOMPARE(ComplexValue::destroyCount, 3); // Destruction of temporaries.
+        QCOMPARE(array5.size(), 3);
+        QVERIFY(array5[0].value() == 1);
+        QVERIFY(array5[0].mode()  == ComplexValue::Copy);
+        QVERIFY(array5[1].value() == 2);
+        QVERIFY(array5[1].mode()  == ComplexValue::Copy);
+        QVERIFY(array5[2].value() == 3);
+        QVERIFY(array5[2].mode()  == ComplexValue::Copy);
+    }
+    QCOMPARE(ComplexValue::destroyCount, 6);
 }
 
 void tst_QDataArray::append()
@@ -213,6 +297,104 @@ void tst_QDataArray::append()
         QCOMPARE(array[index + ExpectedMinCapacity + 1], float(index));
     }
     QCOMPARE(array[ExpectedMinCapacity + 1000 + 1], 1500.0f);
+
+    // Create a large array of strings.
+    QDataArray<QString> array4;
+    for (index = 0; index < 1000; ++index)
+        array4.append(QString::number(index));
+    QCOMPARE(array4.size(), 1000);
+    for (index = 0; index < 1000; ++index)
+        QVERIFY(array4[index] == QString::number(index));
+
+    // Make a copy of the array of strings and then force a detach.
+    QDataArray<QString> array5(array4);
+    QCOMPARE(array4.size(), 1000);
+    QCOMPARE(array5.size(), 1000);
+    for (index = 0; index < 1000; ++index) {
+        QVERIFY(array4[index] == QString::number(index));
+        QVERIFY(array5[index] == QString::number(index));
+    }
+    array5.append(QString::number(1000));
+    QCOMPARE(array4.size(), 1000);
+    QCOMPARE(array5.size(), 1001);
+    for (index = 0; index < 1000; ++index) {
+        QVERIFY(array4[index] == QString::number(index));
+        QVERIFY(array5[index] == QString::number(index));
+    }
+    QVERIFY(array5[1000] == QString::number(1000));
+
+    // Create an array of complex values and force one realloc
+    // to test that copy constructors and destructors are called
+    // when moving data from the prealloc array to the heap.
+    QDataArray<ComplexValue> array6;
+    ComplexValue::destroyCount = 0;
+    for (index = 0; index < ExpectedMinCapacity; ++index)
+        array6.append(ComplexValue(index));
+    QCOMPARE(ComplexValue::destroyCount, ExpectedMinCapacity);
+    ComplexValue::destroyCount = 0;
+    array6.append(ComplexValue(ExpectedMinCapacity));
+    QCOMPARE(ComplexValue::destroyCount, ExpectedMinCapacity + 1);
+    for (index = 0; index < (ExpectedMinCapacity + 1); ++index) {
+        QCOMPARE(array6[index].value(), index);
+        // The last element should be Copy, but all others are CopiedAgain.
+        if (index == ExpectedMinCapacity)
+            QVERIFY(array6[index].mode() == ComplexValue::Copy);
+        else
+            QVERIFY(array6[index].mode() == ComplexValue::CopiedAgain);
+    }
+
+    // Force another realloc to test heap to heap copies.
+    int capacity = array6.capacity();
+    for (int index = array6.size(); index < capacity; ++index)
+        array6.append(ComplexValue(index));
+    ComplexValue::destroyCount = 0;
+    array6.append(ComplexValue(capacity));
+    QCOMPARE(ComplexValue::destroyCount, capacity + 1);
+    for (index = 0; index < (capacity + 1); ++index) {
+        QCOMPARE(array6[index].value(), index);
+        // The last element should be Copy, but all others are CopiedAgain.
+        if (index == capacity)
+            QVERIFY(array6[index].mode() == ComplexValue::Copy);
+        else
+            QVERIFY(array6[index].mode() == ComplexValue::CopiedAgain);
+    }
+
+    // Make a copy of array6 and force a detach.
+    int size = array6.size();
+    QDataArray<ComplexValue> array7(array6);
+    QCOMPARE(array6.size(), size);
+    QCOMPARE(array7.size(), size);
+    for (index = 0; index < size; ++index) {
+        QVERIFY(array6[index].value() == index);
+        QVERIFY(array7[index].value() == index);
+    }
+    array7.append(ComplexValue(size));
+    QCOMPARE(array6.size(), size);
+    QCOMPARE(array7.size(), size + 1);
+    for (index = 0; index < size; ++index) {
+        QVERIFY(array6[index].value() == index);
+        QVERIFY(array7[index].value() == index);
+    }
+    QVERIFY(array7[size].value() == size);
+
+    // Make another copy using operator=.
+    QDataArray<ComplexValue> array8;
+    QCOMPARE(array8.size(), 0);
+    array8 = array6;
+    QCOMPARE(array6.size(), size);
+    QCOMPARE(array8.size(), size);
+    for (index = 0; index < size; ++index) {
+        QVERIFY(array6[index].value() == index);
+        QVERIFY(array8[index].value() == index);
+    }
+    array8.append(ComplexValue(size));
+    QCOMPARE(array6.size(), size);
+    QCOMPARE(array8.size(), size + 1);
+    for (index = 0; index < size; ++index) {
+        QVERIFY(array6[index].value() == index);
+        QVERIFY(array8[index].value() == index);
+    }
+    QVERIFY(array8[size].value() == size);
 }
 
 void tst_QDataArray::appendTwoAtATime()
@@ -235,6 +417,24 @@ void tst_QDataArray::appendTwoAtATime()
     for (index = 0; index < 1000; ++index) {
         QCOMPARE(array2[index * 2], float(index));
         QCOMPARE(array2[index * 2 + 1], float(index + 1));
+    }
+
+    QDataArray<QString> array3;
+    for (index = 0; index < 1000; ++index)
+        array3.append(QString::number(index), QString::number(index + 1));
+    QCOMPARE(array3.count(), 2000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array3[index * 2], QString::number(index));
+        QCOMPARE(array3[index * 2 + 1], QString::number(index + 1));
+    }
+
+    QDataArray<ComplexValue> array4;
+    for (index = 0; index < 1000; ++index)
+        array4.append(ComplexValue(index), ComplexValue(index + 1));
+    QCOMPARE(array4.count(), 2000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array4[index * 2].value(), index);
+        QCOMPARE(array4[index * 2 + 1].value(), index + 1);
     }
 }
 
@@ -261,6 +461,28 @@ void tst_QDataArray::appendThreeAtATime()
         QCOMPARE(array2[index * 3], float(index));
         QCOMPARE(array2[index * 3 + 1], float(index + 1));
         QCOMPARE(array2[index * 3 + 2], float(index + 2));
+    }
+
+    QDataArray<QString> array3;
+    for (index = 0; index < 1000; ++index)
+        array3.append(QString::number(index), QString::number(index + 1),
+                      QString::number(index + 2));
+    QCOMPARE(array3.count(), 3000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array3[index * 3], QString::number(index));
+        QCOMPARE(array3[index * 3 + 1], QString::number(index + 1));
+        QCOMPARE(array3[index * 3 + 2], QString::number(index + 2));
+    }
+
+    QDataArray<ComplexValue> array4;
+    for (index = 0; index < 1000; ++index)
+        array4.append(ComplexValue(index), ComplexValue(index + 1),
+                      ComplexValue(index + 2));
+    QCOMPARE(array4.count(), 3000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array4[index * 3].value(), index);
+        QCOMPARE(array4[index * 3 + 1].value(), index + 1);
+        QCOMPARE(array4[index * 3 + 2].value(), index + 2);
     }
 }
 
@@ -290,6 +512,30 @@ void tst_QDataArray::appendFourAtATime()
         QCOMPARE(array2[index * 4 + 1], float(index + 1));
         QCOMPARE(array2[index * 4 + 2], float(index + 2));
         QCOMPARE(array2[index * 4 + 3], float(index + 3));
+    }
+
+    QDataArray<QString> array3;
+    for (index = 0; index < 1000; ++index)
+        array3.append(QString::number(index), QString::number(index + 1),
+                      QString::number(index + 2), QString::number(index + 3));
+    QCOMPARE(array3.count(), 4000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array3[index * 4], QString::number(index));
+        QCOMPARE(array3[index * 4 + 1], QString::number(index + 1));
+        QCOMPARE(array3[index * 4 + 2], QString::number(index + 2));
+        QCOMPARE(array3[index * 4 + 3], QString::number(index + 3));
+    }
+
+    QDataArray<ComplexValue> array4;
+    for (index = 0; index < 1000; ++index)
+        array4.append(ComplexValue(index), ComplexValue(index + 1),
+                      ComplexValue(index + 2), ComplexValue(index + 3));
+    QCOMPARE(array4.count(), 4000);
+    for (index = 0; index < 1000; ++index) {
+        QCOMPARE(array4[index * 4].value(), index);
+        QCOMPARE(array4[index * 4 + 1].value(), index + 1);
+        QCOMPARE(array4[index * 4 + 2].value(), index + 2);
+        QCOMPARE(array4[index * 4 + 3].value(), index + 3);
     }
 }
 

@@ -180,6 +180,7 @@ private:
     void free(T *data, int count);
     void release();
     void copy(T *dst, const T *src, int count);
+    void move(T *dst, const T *src, int count);
     void copyReplace(T *dst, const T *src, int count);
     void reallocate(int capacity);
     void detachForWrite(int needed = 0);
@@ -277,6 +278,14 @@ Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::release()
 // Copy values to uninitialized memory.
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::copy(T *dst, const T *src, int count)
+{
+    while (count-- > 0)
+        new (dst++) T(*src++);
+}
+
+// Move values to a new location in memory, optimizing for non-static types.
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE void QDataArray<T, PreallocSize>::move(T *dst, const T *src, int count)
 {
     if (!QTypeInfo<T>::isStatic) {
         qMemCopy(dst, src, count * sizeof(T));
@@ -389,11 +398,11 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::grow(int needed)
         Q_CHECK_PTR(data);
         data->ref = 1;
         data->reserved = 0;
-        copy(data->array, m_start, size);
+        move(data->array, m_start, size);
         if (m_data) {
             m_data->ref.deref();
-        } else if (QTypeInfo<T>::isComplex &&
-                        m_start != reinterpret_cast<T *>(m_prealloc)) {
+        } else if (QTypeInfo<T>::isStatic &&
+                        m_start == reinterpret_cast<T *>(m_prealloc)) {
             free(m_start, size);
         }
         m_data = data;
@@ -719,8 +728,7 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::squeeze(int size)
 template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reverse()
 {
-    if (count() > 0)
-    {
+    if (count() > 0) {
         iterator src = begin();
         iterator dst = end();
         --dst;
@@ -732,25 +740,23 @@ Q_OUTOFLINE_TEMPLATE void QDataArray<T, PreallocSize>::reverse()
 template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE QDataArray<T, PreallocSize> QDataArray<T, PreallocSize>::reversed() const
 {
-    QDataArray<T, PreallocSize> r;
-    if (count() > 0)
-    {
-        r.extend(count());
+    QDataArray<T, PreallocSize> result;
+    int count = size();
+    if (count > 0) {
+        result.extend(count);
         const_iterator src = constBegin();
-        iterator dst = r.end();
+        const_iterator end = constEnd();
+        iterator dst = result.end();
         --dst;
-        if (!QTypeInfo<T>::isComplex)
-        {
-            while (src != constEnd())
+        if (!QTypeInfo<T>::isComplex) {
+            while (src != end)
                 *(dst--) = *(src++);
-        }
-        else
-        {
-            while (src != constEnd())
+        } else {
+            while (src != end)
                 new (dst--) T(*src++);
         }
     }
-    return r;
+    return result;
 }
 
 template <typename T, int PreallocSize>
