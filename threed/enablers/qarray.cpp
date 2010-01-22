@@ -96,6 +96,14 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QArray::QArray(const QUnsharedArray<T, PreallocSize> &other)
+
+    Constructs a copy of the unshared array \a other.
+
+    This constructor makes a deep copy of the contents of \a other.
+*/
+
+/*!
     \fn QArray::~QArray()
 
     Destroys the array.
@@ -106,6 +114,15 @@ QT_BEGIN_NAMESPACE
 
     Assigns \a other to this array and returns a reference
     to this array.
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> &QArray::operator=(const QUnsharedArray<T, PreallocSize> &other)
+
+    Assigns the contents \a other to this array and returns a reference
+    to this array.
+
+    This assignment operator makes a deep copy of the contents of \a other.
 */
 
 /*!
@@ -641,6 +658,100 @@ QT_BEGIN_NAMESPACE
     after the last item in the array.
 
     \sa constBegin(), end(), QArray::const_iterator
+*/
+
+/*!
+    \class QUnsharedArray
+    \brief The QUnsharedArray class is a template class for an unreference counted array.
+    \since 4.7
+    \ingroup qt3d
+    \ingroup qt3d::enablers
+
+    QUnsharedArray differs from QArray in that it does not support
+    implicit sharing.  This results in better performance for random access
+    to the array's contents, at the cost of a reduction in performance for
+    array copying.
+
+    \sa QArray
+*/
+
+/*!
+    \fn QUnsharedArray::QUnsharedArray()
+
+    Constructs and empty unshared array.
+*/
+
+/*!
+    \fn QUnsharedArray::QUnsharedArray(int size, const T &value)
+
+    Constructs an unshared array of \a size elements, all initialized
+    to \a value.
+*/
+
+/*!
+    \fn QUnsharedArray::QUnsharedArray(const QArray<T, PreallocSize> &other)
+
+    Constructs a deep copy of \a other.
+*/
+
+/*!
+    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArray<T, PreallocSize> &other)
+
+    Assigns the contents \a other to this array and returns a reference
+    to this array.
+
+    This assignment operator makes a deep copy of the contents of \a other.
+*/
+
+/*!
+    \fn T &QUnsharedArray::operator[](int index)
+
+    Returns the item at position \a index as a modifiable reference.
+
+    \a index must be a valid index position in the vector (i.e., 0 <= \a index
+    < size()).
+
+    \sa at()
+*/
+
+/*!
+    \fn const T &QUnsharedArray::operator[](int index) const
+
+    \overload
+
+    Same as at(\a index).
+*/
+
+/*!
+    \fn T *QUnsharedArray::data()
+
+    Returns a pointer to the data stored at offset() in array().
+    The pointer can be used to access and modify the items in the
+    array.
+
+    The pointer remains valid as long as the array isn't
+    reallocated.
+
+    This function is mostly useful to pass an array to a function
+    that accepts a plain C++ array.
+
+    \sa constData(), operator[]()
+*/
+
+/*!
+    \fn const T *QUnsharedArray::data() const
+
+    \overload
+*/
+
+/*!
+    \fn QUnsharedArray<T, PreallocSize> QUnsharedArray::fromRawData(const T *data, int size)
+
+    Returns a new unshared array that is initialized to the \a size
+    elements at \a data.
+
+    This function makes a deep copy of the elements at \a data,
+    unlike QArray::fromRawData().
 */
 
 /*!
