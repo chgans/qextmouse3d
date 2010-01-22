@@ -287,11 +287,12 @@ void tst_QGLDisplayList::addTriangle()
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
+    QVector2D ta(0.0, 0.0);
+    QVector2D tb(1.0, 0.0);
+    QVector2D tc(1.0, 1.0);
     QVector3D norm(0.0f, 0.0f, 1.0f);
     QGLPrimitive p;
-    p.appendVertex(a);
-    p.appendVertex(b);
-    p.appendVertex(c);
+    p.appendVertex(a, b, c);
     p.setCommonNormal(norm);
 
     displayList.addTriangle(p);
@@ -304,13 +305,11 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->indices()[0], 0);
     QCOMPARE(sec->indices()[1], 1);
     QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QGLPrimitive q;
-    p.appendVertex(a);
-    p.appendVertex(c);
-    p.appendVertex(d);
+    p.appendVertex(a, c, d);
     q.setCommonNormal(norm);
     displayList.addTriangle(q);
     QCOMPARE(sec->vertices().count(), 4);
@@ -324,7 +323,7 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->indices()[3], 0);
     QCOMPARE(sec->indices()[4], 2);
     QCOMPARE(sec->indices()[5], 3);
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
@@ -333,12 +332,8 @@ void tst_QGLDisplayList::addTriangle()
     sec = displayList.currentSection();
     node = displayList.currentNode();
     QGLPrimitive r;
-    r.appendVertex(a);
-    r.appendVertex(b);
-    r.appendVertex(c);
-    r.appendTexCoord(QVector2D(0.0, 0.0));
-    r.appendTexCoord(QVector2D(1.0, 0.0));
-    r.appendTexCoord(QVector2D(1.0, 1.0));
+    r.appendVertex(a, b, c);
+    r.appendTexCoord(ta, tb, tc);
     displayList.addTriangle(r);
     QCOMPARE(sec->vertices().count(), 3);
     QCOMPARE(sec->vertices().at(0), a);
@@ -349,23 +344,19 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->normals().at(1).normalized(), norm);
     QCOMPARE(sec->normals().at(2).normalized(), norm);
     QCOMPARE(sec->texCoords().count(), 3);
-    QCOMPARE(sec->texCoords().at(0), QVector2D(0.0f, 0.0f));
-    QCOMPARE(sec->texCoords().at(1), QVector2D(1.0f, 0.0f));
-    QCOMPARE(sec->texCoords().at(2), QVector2D(1.0f, 1.0f));
+    QCOMPARE(sec->texCoords().at(0), ta);
+    QCOMPARE(sec->texCoords().at(1), tb);
+    QCOMPARE(sec->texCoords().at(2), tc);
     QCOMPARE(sec->indices().size(), 3);
     QCOMPARE(sec->indices()[0], 0);
     QCOMPARE(sec->indices()[1], 1);
     QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->dataTypes(),
-             QLogicalVertex::Vertex | QLogicalVertex::Normal | QLogicalVertex::Texture);
+    QCOMPARE(sec->fields(),
+             QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
     QGLPrimitive s;
-    s.appendVertex(a);
-    s.appendVertex(b);
-    s.appendVertex(d);
-    s.appendTexCoord(QVector2D(0.0, 0.0));
-    s.appendTexCoord(QVector2D(1.0, 1.0));
-    s.appendTexCoord(QVector2D(0.0, 1.0));
+    s.appendVertex(a, b, d);
+    s.appendTexCoord(ta, tb, tc);
     displayList.addTriangle(s);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertices().at(3), d);
@@ -383,8 +374,8 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->indices()[3], 0);
     QCOMPARE(sec->indices()[4], 2);
     QCOMPARE(sec->indices()[5], 3);
-    QCOMPARE(sec->dataTypes(),
-             QLogicalVertex::Vertex | QLogicalVertex::Normal | QLogicalVertex::Texture);
+    QCOMPARE(sec->fields(),
+             QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
@@ -401,8 +392,11 @@ void tst_QGLDisplayList::addQuad()
     QVector3D c(1.0f, 1.0f, 0.0f);
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D norm(0.0f, 0.0f, 1.0f);
+    QGLPrimitive p;
+    p.appendVertex(a, b, c, d);
+    p.setCommonNormal(norm);
 
-    displayList.addQuad(a, b, c, d);
+    displayList.addQuad(p);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertices().at(0), a);
     QCOMPARE(sec->vertices().at(1), b);
@@ -421,7 +415,7 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(sec->indices()[3], 0);
     QCOMPARE(sec->indices()[4], 2);
     QCOMPARE(sec->indices()[5], 3);
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
@@ -429,8 +423,15 @@ void tst_QGLDisplayList::addQuad()
     displayList.newSection();
     sec = displayList.currentSection();
     node = displayList.currentNode();
-    QGLTextureModel model(0.0f, 0.0f, 1.0f, 1.0f);
-    displayList.addQuad(a, b, c, d, model);
+    QVector2D ta(0.0f, 0.0f);
+    QVector2D tb(1.0f, 0.0f);
+    QVector2D tc(1.0f, 1.0f);
+    QVector2D td(0.0f, 1.0f);
+    QGLPrimitive q;
+    q.appendVertex(a, b, c, d);
+    q.appendTexCoord(ta, tb, tc, td);
+    displayList.addQuad(q);
+
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertices().at(0), a);
     QCOMPARE(sec->vertices().at(1), b);
@@ -442,20 +443,19 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(sec->normals().at(2).normalized(), norm);
     QCOMPARE(sec->normals().at(3).normalized(), norm);
     QCOMPARE(sec->texCoords().count(), 4);
-    QCOMPARE(sec->texCoords().at(0), QVector2D(0.0f, 0.0f));
-    QCOMPARE(sec->texCoords().at(1), QVector2D(1.0f, 0.0f));
-    QCOMPARE(sec->texCoords().at(2), QVector2D(1.0f, 1.0f));
-    QCOMPARE(sec->texCoords().at(3), QVector2D(0.0f, 1.0f));
+    QCOMPARE(sec->texCoords().at(0), ta);
+    QCOMPARE(sec->texCoords().at(1), tb);
+    QCOMPARE(sec->texCoords().at(2), tc);
+    QCOMPARE(sec->texCoords().at(3), td);
     QCOMPARE(sec->indices().size(), 6);
-    QCOMPARE(sec->indices()[3), 0);
-    QCOMPARE(sec->indices()[0), 0);
-    QCOMPARE(sec->indices()[1), 1);
-    QCOMPARE(sec->indices()[2), 2);
-    QCOMPARE(sec->indices()[3), 0);
-    QCOMPARE(sec->indices()[4), 2);
-    QCOMPARE(sec->indices()[5), 3);
-    QCOMPARE(sec->dataTypes(),
-             QLogicalVertex::Vertex | QLogicalVertex::Normal | QLogicalVertex::Texture);
+    QCOMPARE(sec->indices()[0], 0);
+    QCOMPARE(sec->indices()[1], 1);
+    QCOMPARE(sec->indices()[2], 2);
+    QCOMPARE(sec->indices()[3], 0);
+    QCOMPARE(sec->indices()[4], 2);
+    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE(sec->fields(),
+             QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
@@ -476,17 +476,19 @@ void tst_QGLDisplayList::addTriangleFan()
     QVector3D n2(one_on_root2, 0.0f, one_on_root2);
     QVector3D n3(0.0f, one_on_root2, one_on_root2);
     QVector3D center(0.0f, 0.0f, 1.0f);
-    QGL::VectorArray edges;
+    QVector2DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    displayList.addTriangleFan(center, edges);
+    QGLPrimitive p;
+    p.appendVertex(center);
+    displayList.addTriangleFan(p);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
 
-    edges << a << b << c << d;
+    p.appendVertex(a, b, c, d);
 
-    displayList.addTriangleFan(center, edges);
+    displayList.addTriangleFan(p);
     sec->finalize();
     QCOMPARE(sec->vertices().count(), 9);
     QCOMPARE(sec->vertices().at(0), a);
@@ -509,16 +511,16 @@ void tst_QGLDisplayList::addTriangleFan()
     QCOMPARE(sec->normals().at(7), n3);
     QCOMPARE(sec->normals().at(8), n3);
     QCOMPARE(sec->indices().size(), 9);
-    QCOMPARE(sec->indices()[0), 0);
-    QCOMPARE(sec->indices()[1), 1);
-    QCOMPARE(sec->indices()[2), 2);
-    QCOMPARE(sec->indices()[3), 3);
-    QCOMPARE(sec->indices()[4), 4);
-    QCOMPARE(sec->indices()[5), 5);
-    QCOMPARE(sec->indices()[6), 6);
-    QCOMPARE(sec->indices()[7), 7);
-    QCOMPARE(sec->indices()[8), 8);
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->indices()[0], 0);
+    QCOMPARE(sec->indices()[1], 1);
+    QCOMPARE(sec->indices()[2], 2);
+    QCOMPARE(sec->indices()[3], 3);
+    QCOMPARE(sec->indices()[4], 4);
+    QCOMPARE(sec->indices()[5], 5);
+    QCOMPARE(sec->indices()[6], 6);
+    QCOMPARE(sec->indices()[7], 7);
+    QCOMPARE(sec->indices()[8], 8);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 9);
@@ -536,17 +538,20 @@ void tst_QGLDisplayList::addTriangulatedFace()
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
     QVector3D center(0.0f, 0.0f, 0.0f);
-    QGL::VectorArray edges;
+    QVector2DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    displayList.addTriangleFan(center, edges);
+    QGLPrimitive p;
+    displayList.addTriangleFan(p);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
 
-    edges << a << b << c << d;
+    p.appendVertex(center);
+    p.appendVertex(a, b, c, d);
+    p.setFlags(QGL::USE_VERTEX_0_AS_CTR);
 
-    displayList.addTriangulatedFace(center, edges);
+    displayList.addTriangulatedFace(p);
     sec->finalize();
     QCOMPARE(sec->vertices().count(), 5);
     QCOMPARE(sec->vertices().at(0), a);
@@ -561,19 +566,19 @@ void tst_QGLDisplayList::addTriangulatedFace()
     QCOMPARE(sec->normals().at(3), n);
     QCOMPARE(sec->normals().at(4), n);
     QCOMPARE(sec->indices().size(), 12);
-    QCOMPARE(sec->indices()[0), 0);
-    QCOMPARE(sec->indices()[1), 1);
-    QCOMPARE(sec->indices()[2), 2);
-    QCOMPARE(sec->indices()[3), 1);
-    QCOMPARE(sec->indices()[4), 3);
-    QCOMPARE(sec->indices()[5), 2);
-    QCOMPARE(sec->indices()[6), 3);
-    QCOMPARE(sec->indices()[7), 4);
-    QCOMPARE(sec->indices()[8), 2);
-    QCOMPARE(sec->indices()[9), 4);
-    QCOMPARE(sec->indices()[10), 0);
-    QCOMPARE(sec->indices()[11), 2);
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->indices()[0], 0);
+    QCOMPARE(sec->indices()[1], 1);
+    QCOMPARE(sec->indices()[2], 2);
+    QCOMPARE(sec->indices()[3], 1);
+    QCOMPARE(sec->indices()[4], 3);
+    QCOMPARE(sec->indices()[5], 2);
+    QCOMPARE(sec->indices()[6], 3);
+    QCOMPARE(sec->indices()[7], 4);
+    QCOMPARE(sec->indices()[8], 2);
+    QCOMPARE(sec->indices()[9], 4);
+    QCOMPARE(sec->indices()[10], 0);
+    QCOMPARE(sec->indices()[11], 2);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 12);
@@ -590,15 +595,19 @@ void tst_QGLDisplayList::extrude()
     QVector3D c(1.0f, 1.0f, 0.0f);
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
-    QGL::VectorArray edges;
+    QVector3DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    displayList.extrude(edges);
+    QGLPrimitive p;
+    QGLPrimitive q;
+    displayList.addQuadsZipped(p, q);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
 
-    edges << a << b << c << d << a;
+    p.appendVertex(a, b, c, d);
+    p.appendVertex(a);
+    q = p.translated(-n);
 
     qreal one_on_root2 = 1.0f / sqrt(2.0f);
     QVector3D n1(-one_on_root2, -one_on_root2, 0.0f);
@@ -606,13 +615,13 @@ void tst_QGLDisplayList::extrude()
     QVector3D n3(one_on_root2, one_on_root2, 0.0f);
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
-    displayList.extrude(edges, -n);
+    displayList.addQuadsZipped(p, q);
     sec->finalize();
 
     QCOMPARE(sec->vertices().count(), 8);
-    QGL::VectorArray vrts = sec->vertices();
-    QGL::VectorArray nrms = sec->normals();
-    QGL::IndexArray inxs = sec->indices();
+    QVector3DArray vrts = sec->vertices();
+    QVector3DArray nrms = sec->normals();
+    QGLIndexArray inxs = sec->indices();
 
     QCOMPARE(vrts.count(), 8);
     QCOMPARE(vrts.at(0), edges.at(0) - n);
@@ -642,32 +651,32 @@ void tst_QGLDisplayList::extrude()
     };
     QCOMPARE(sec->indices().size(), 24);
 
-    QCOMPARE(inxs.at(0), checkIx[0]);
-    QCOMPARE(inxs.at(1), checkIx[1]);
-    QCOMPARE(inxs.at(2), checkIx[2]);
-    QCOMPARE(inxs.at(3), checkIx[3]);
-    QCOMPARE(inxs.at(4), checkIx[4]);
-    QCOMPARE(inxs.at(5), checkIx[5]);
-    QCOMPARE(inxs.at(6), checkIx[6]);
-    QCOMPARE(inxs.at(7), checkIx[7]);
-    QCOMPARE(inxs.at(8), checkIx[8]);
-    QCOMPARE(inxs.at(9), checkIx[9]);
-    QCOMPARE(inxs.at(10), checkIx[10]);
-    QCOMPARE(inxs.at(11), checkIx[11]);
-    QCOMPARE(inxs.at(12), checkIx[12]);
-    QCOMPARE(inxs.at(13), checkIx[13]);
-    QCOMPARE(inxs.at(14), checkIx[14]);
-    QCOMPARE(inxs.at(15), checkIx[15]);
-    QCOMPARE(inxs.at(16), checkIx[16]);
-    QCOMPARE(inxs.at(17), checkIx[17]);
-    QCOMPARE(inxs.at(18), checkIx[18]);
-    QCOMPARE(inxs.at(19), checkIx[19]);
-    QCOMPARE(inxs.at(20), checkIx[20]);
-    QCOMPARE(inxs.at(21), checkIx[21]);
-    QCOMPARE(inxs.at(22), checkIx[22]);
-    QCOMPARE(inxs.at(23), checkIx[23]);
+    QCOMPARE(inxs[0], checkIx[0]);
+    QCOMPARE(inxs[1], checkIx[1]);
+    QCOMPARE(inxs[2], checkIx[2]);
+    QCOMPARE(inxs[3], checkIx[3]);
+    QCOMPARE(inxs[4], checkIx[4]);
+    QCOMPARE(inxs[5], checkIx[5]);
+    QCOMPARE(inxs[6], checkIx[6]);
+    QCOMPARE(inxs[7], checkIx[7]);
+    QCOMPARE(inxs[8], checkIx[8]);
+    QCOMPARE(inxs[9], checkIx[9]);
+    QCOMPARE(inxs[10], checkIx[10]);
+    QCOMPARE(inxs[11], checkIx[11]);
+    QCOMPARE(inxs[12], checkIx[12]);
+    QCOMPARE(inxs[13], checkIx[13]);
+    QCOMPARE(inxs[14], checkIx[14]);
+    QCOMPARE(inxs[15], checkIx[15]);
+    QCOMPARE(inxs[16], checkIx[16]);
+    QCOMPARE(inxs[17], checkIx[17]);
+    QCOMPARE(inxs[18], checkIx[18]);
+    QCOMPARE(inxs[19], checkIx[19]);
+    QCOMPARE(inxs[20], checkIx[20]);
+    QCOMPARE(inxs[21], checkIx[21]);
+    QCOMPARE(inxs[22], checkIx[22]);
+    QCOMPARE(inxs[23], checkIx[23]);
 
-    QCOMPARE(sec->dataTypes(), QLogicalVertex::Vertex | QLogicalVertex::Normal);
+    QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 24);
@@ -689,8 +698,10 @@ void tst_QGLDisplayList::finalize()
     // normal points back
     QVector3D n10(0.0f, 0.0f, -1.0f);
 
-    QGL::VectorArray edges;
-    edges << a << b << c << d << a;
+    QGLPrimitive p;
+    p.appendVertex(center);
+    p.setFlags(QGL::USE_VERTEX_0_AS_CTR);
+    p.appendVertex(a, b, c, d);
 
     qreal one_on_root2 = 1.0f / sqrt(2.0f);
     QVector3D n0(0.0f, 0.0f, 1.0f);
@@ -703,19 +714,24 @@ void tst_QGLDisplayList::finalize()
     displayList.newSection();
     QGLSceneNode *node = displayList.currentNode();
 
-    displayList.addTriangulatedFace(center, edges);
+    displayList.addTriangulatedFace(p);
 
     displayList.newSection();
     QGLSceneNode *node2 = displayList.currentNode();
 
-    displayList.extrude(edges, -n);
+    displayList.addQuadsZipped(p, p.translated(-n));
 
     displayList.newSection();
     QGLSceneNode *node3 = displayList.currentNode();
 
-    QGLTextureModel model(0.0f, 0.0f, 1.0f, 1.0f);
+    QGLPrimitive q;
+    QVector2D ta(0.0f, 0.0f);
+    QVector2D tb(1.0f, 0.0f);
+    QVector2D tc(1.0f, 1.0f);
+    q.appendVertex(e, f, g);
+    q.appendTexCoord(ta, tb, tc);
     // reverse winding, backwards normal == n10
-    displayList.addTriangle(e, f, g, QVector3D(), model);
+    displayList.addTriangle(q);
 
     displayList.finalize();
     QCOMPARE(displayList.sections().count(), 0);
@@ -768,7 +784,7 @@ void tst_QGLDisplayList::finalize()
     QGLVertexDescription desc = verts2.fields();
     QCOMPARE(verts2.vector3DAt(tri, desc.indexOf(QGL::Position)), e);
     QCOMPARE(verts2.vector3DAt(tri, desc.indexOf(QGL::Normal)), n10);
-    QCOMPARE(verts2.vector2DAt(tri, desc.indexOf(QGL::TextureCoord0)), model.bottomLeft());
+    QCOMPARE(verts2.vector2DAt(tri, desc.indexOf(QGL::TextureCoord0)), ta);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLDisplayList)

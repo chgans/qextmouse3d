@@ -56,12 +56,10 @@ private slots:
     void create();
     void modify();
     void append();
-    void updateTexCoord();
     void appendSmooth();
     void appendFaceted();
     void appendTexCoord();
     void appendColor();
-    void accessors();
 };
 
 class QGLSectionTest : public QGLSection
@@ -100,7 +98,7 @@ void tst_QGLSection::create()
     list.newSection();
     QGLSection *section = list.currentSection();
     QVERIFY(section->hasField(QGL::Position));
-    QCOMPARE(section->fields(), QGeometryData::fieldMask(QGL::Position));
+    QCOMPARE(section->fields(), QGL::fieldMask(QGL::Position));
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
     QCOMPARE(section->displayList(), &list);
@@ -143,62 +141,10 @@ void tst_QGLSection::append()
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->indices().count(), 1);
+    QCOMPARE(section->indices().size(), 1);
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->texCoords().count(), 0);
     QCOMPARE(section->colors().count(), 0);
-}
-
-void tst_QGLSection::updateTexCoord()
-{
-    TestQGLDisplayList list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
-
-    QCOMPARE(section->hasData(QLogicalVertex::Texture), false);
-
-    // if arg is an InvalidTexCoord nothing happens, returns -1 without even
-    // accessing the texture data array, or indexing with the position
-    int result = section->updateTexCoord(1234, QLogicalVertex::InvalidTexCoord);
-    QCOMPARE(section->hasData(QLogicalVertex::Texture), false);
-    QCOMPARE(result, -1);
-
-    QVector3D testVertex(1.234f, 2.345f, 3.456f);
-    QVector3D testNormal(1.0f, 0.0f, 0.0f);
-    QVector2D testTexCoord(0.1f, 0.1f);
-    QLogicalVertex vx(testVertex, testNormal);
-
-    // if the previous texture coordinate was invalid, effect is same as
-    // setTexCoord() - just sets the value, returns that index.
-    section->append(vx);
-    section->enableTypes(QLogicalVertex::Texture);
-    QCOMPARE(section->texCoords().at(0), QLogicalVertex::InvalidTexCoord);
-    QCOMPARE(section->texCoords().count(), 1);
-    QCOMPARE(section->vertices().count(), 1);
-
-    result = section->updateTexCoord(0, testTexCoord);
-    QCOMPARE(result, 0);
-    QCOMPARE(section->texCoords().at(0), testTexCoord);
-    QCOMPARE(section->texCoords().count(), 1);
-    QCOMPARE(section->vertices().count(), 1);
-
-    // if arg is already in that position (must access the texture data array
-    // to confirm this) then return -1 without doing anything else
-    result = section->updateTexCoord(0, testTexCoord);
-    QCOMPARE(result, -1);
-    QCOMPARE(section->texCoords().at(0), testTexCoord);
-    QCOMPARE(section->texCoords().count(), 1);
-    QCOMPARE(section->vertices().count(), 1);
-
-    // if the previous texture coordinate is neither invalide, nor equal to
-    // the new incoming value, then duplicate the vertex to carry the new
-    // texture data - create a "seam".
-    QVector2D testTexCoord2(0.9f, 0.9f);
-    result = section->updateTexCoord(0, testTexCoord2);
-    QCOMPARE(result, 1);
-    QCOMPARE(section->texCoords().at(1), testTexCoord2);
-    QCOMPARE(section->texCoords().count(), 2);
-    QCOMPARE(section->vertices().count(), 2);
-    QCOMPARE(section->vertices().at(1), testVertex);
 }
 
 void tst_QGLSection::appendSmooth()
@@ -214,8 +160,8 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal);
-    QCOMPARE(section->indices().count(), 1);
-    QCOMPARE(section->indices().at(0), 0);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 
     // append a vertex equal to one already appended - check it was coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
@@ -225,8 +171,8 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->vertices().at(0),testVertex);
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), result);
-    QCOMPARE(section->indices().count(), 2);
-    QCOMPARE(section->indices().at(1), 0);
+    QCOMPARE(section->indices().size(), 2);
+    QCOMPARE(section->indices()[1], 0);
 
     // append a new  different vertex - check it is not coalesced
     QVector3D testVertex2(-1.234f, -2.345f, -3.456f);
@@ -236,18 +182,18 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->vertices().at(1), testVertex2);
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal3);
-    QCOMPARE(section->indices().count(), 3);
-    QCOMPARE(section->indices().at(2), 1);
+    QCOMPARE(section->indices().size(), 3);
+    QCOMPARE(section->indices()[2], 1);
 
     // append a vertex equal to one already appended, but inside a new section - check its not coalesced
     section = new QGLSectionTest(&list);
     section->appendSmooth(QLogicalVertex(testVertex2, testNormal3));
     QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->vertices().last(), testVertex2);
+    QCOMPARE(section->vertices().at(0), testVertex2);
     QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().last(), testNormal3);
-    QCOMPARE(section->indices().last(), 0);
-    QCOMPARE(section->indices().count(), 1);
+    QCOMPARE(section->normals().at(0), testNormal3);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 }
 
 void tst_QGLSection::appendFaceted()
@@ -263,8 +209,8 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal);
-    QCOMPARE(section->indices().count(), 1);
-    QCOMPARE(section->indices().at(0), 0);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 
     // append a vertex equal to one already appended, but with different normal - check it was NOT coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
@@ -273,8 +219,8 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->vertices().at(1), testVertex);
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal2);
-    QCOMPARE(section->indices().count(), 2);
-    QCOMPARE(section->indices().at(1), 1);
+    QCOMPARE(section->indices().size(), 2);
+    QCOMPARE(section->indices()[1], 1);
 
     // append a vertex equal to one already appended, but with same normal - check it WAS coalesced
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
@@ -282,8 +228,8 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->vertices().at(1), testVertex);
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal2);
-    QCOMPARE(section->indices().count(), 3);
-    QCOMPARE(section->indices().at(2), 1);
+    QCOMPARE(section->indices().size(), 3);
+    QCOMPARE(section->indices()[2], 1);
 
     // append a vertex equal to one already appended, with same normal, BUT in a new section - check it was NOT coalesced
     section = new QGLSectionTest(&list);
@@ -292,8 +238,8 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal2);
-    QCOMPARE(section->indices().count(), 1);
-    QCOMPARE(section->indices().at(0), 0);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 }
 
 void tst_QGLSection::appendTexCoord()
@@ -314,8 +260,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
-    QCOMPARE(section->indices().count(), 1);
-    QCOMPARE(section->indices().at(0), 0);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 
     // append same texture - will coalesce and index the vert
     section->appendSmooth(QLogicalVertex(testVertex, testNormal, testTexCoord));
@@ -325,8 +271,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
-    QCOMPARE(section->indices().count(), 2);
-    QCOMPARE(section->indices().at(1), 0);
+    QCOMPARE(section->indices().size(), 2);
+    QCOMPARE(section->indices()[1], 0);
 
     // new vertex created to carry the updated texture coord, even though
     // the normal and vertex are the same and thus the logical vert would
@@ -339,8 +285,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(1), testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
-    QCOMPARE(section->indices().count(), 3);
-    QCOMPARE(section->indices().at(2), 1);
+    QCOMPARE(section->indices().size(), 3);
+    QCOMPARE(section->indices()[2], 1);
 
     section = new QGLSectionTest(&list);
 
@@ -353,8 +299,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
-    QCOMPARE(section->indices().count(), 1);
-    QCOMPARE(section->indices().at(0), 0);
+    QCOMPARE(section->indices().size(), 1);
+    QCOMPARE(section->indices()[0], 0);
 
     // append a vertex & normal equal to one already appended, but with different tex coord
     // check it was NOT coalesced, dup vert created
@@ -365,8 +311,8 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(1), testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
-    QCOMPARE(section->indices().count(), 2);
-    QCOMPARE(section->indices().at(1), 1);
+    QCOMPARE(section->indices().size(), 2);
+    QCOMPARE(section->indices()[1], 1);
 
     // append a vertex equal to first one appended above, with same normal, and
     // same texture - check it WAS coalesced to index 0
@@ -377,12 +323,12 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->normals().at(1), testNormal);
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
-    QCOMPARE(section->indices().count(), 3);
-    QCOMPARE(section->indices().at(2), 0);
+    QCOMPARE(section->indices().size(), 3);
+    QCOMPARE(section->indices()[2], 0);
 
-    QVERIFY(section->hasData(QLogicalVertex::Normal));
-    QVERIFY(section->hasData(QLogicalVertex::Texture));
-    QVERIFY(!section->hasData(QLogicalVertex::Color));
+    QVERIFY(section->hasField(QGL::Normal));
+    QVERIFY(section->hasField(QGL::TextureCoord0));
+    QVERIFY(!section->hasField(QGL::Color));
 }
 
 void tst_QGLSection::appendColor()
@@ -398,14 +344,17 @@ void tst_QGLSection::appendColor()
     QCOMPARE(section->colors().count(), 1);
     QCOMPARE(section->colors().at(0), color);
 
-    QVERIFY(section->hasData(QLogicalVertex::Color));
-    QVERIFY(!section->hasData(QLogicalVertex::Texture));
-    QVERIFY(!section->hasData(QLogicalVertex::Normal));
+    QVERIFY(section->hasField(QGL::Color));
+    QVERIFY(!section->hasField(QGL::TextureCoord0));
+    QVERIFY(!section->hasField(QGL::Normal));
 
     section = new QGLSectionTest(&list);
 
     QVector2D testTexCoord(0.0f, 0.0f);
-    section->append(QLogicalVertex(testVertex, color, QVector3D(), testTexCoord));
+    QLogicalVertex lv(testVertex);
+    lv.setColor(color);
+    lv.setTexCoord(testTexCoord);
+    section->append(lv);
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex);
     QCOMPARE(section->colors().count(), 1);
@@ -413,67 +362,9 @@ void tst_QGLSection::appendColor()
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
 
-    QVERIFY(section->hasData(QLogicalVertex::Color));
-    QVERIFY(section->hasData(QLogicalVertex::Texture));
-    QVERIFY(!section->hasData(QLogicalVertex::Normal));
-}
-
-void tst_QGLSection::accessors()
-{
-    TestQGLDisplayList list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
-
-    QVector3D vertex;
-    QVector3D vertex2(1.0f, 1.0f, 1.0f);
-    QVector2D textureCoord;
-    QVector2D textureCoord2(1.0f, 1.0f);
-    QColor4b color;
-    QColor4b color2(16, 32, 64, 128);
-    QVector3D normal(0.0f, 1.0f, 0.0f);
-    QVector3D normal2(1.0f, 0.0f, 0.0f);
-    QLogicalVertex lv(vertex, color, normal, textureCoord);
-    QLogicalVertex lv2(vertex2, color2, normal2, textureCoord2);
-
-    QCOMPARE(section->count(), 0);
-    QVERIFY(!section->hasData(QLogicalVertex::Color));
-    QVERIFY(!section->hasData(QLogicalVertex::Texture));
-    QVERIFY(!section->hasData(QLogicalVertex::Normal));
-
-    section->append(lv);
-    QCOMPARE(section->count(), 1);
-
-    section->setVertex(0, vertex2);
-    QCOMPARE(section->count(), 1);
-
-    section->setNormal(0, normal2);
-    QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), normal2);
-    QVERIFY(section->hasData(QLogicalVertex::Normal));
-
-    section->setTexCoord(0, textureCoord2);
-    QCOMPARE(section->texCoords().count(), 1);
-    QCOMPARE(section->texCoords().at(0), textureCoord2);
-    QVERIFY(section->hasData(QLogicalVertex::Texture));
-
-    section->setColor(0, color2);
-    QCOMPARE(section->colors().count(), 1);
-    QCOMPARE(section->colors().at(0), color2);
-    QVERIFY(section->hasData(QLogicalVertex::Color));
-
-    section->setNormal(0, normal);
-    QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), normal);
-    QVERIFY(section->hasData(QLogicalVertex::Normal));
-
-    section->setTexCoord(0, textureCoord);
-    QCOMPARE(section->texCoords().count(), 1);
-    QCOMPARE(section->texCoords().at(0), textureCoord);
-    QVERIFY(section->hasData(QLogicalVertex::Texture));
-
-    section->setColor(0, color);
-    QCOMPARE(section->colors().count(), 1);
-    QCOMPARE(section->colors().at(0), color);
-    QVERIFY(section->hasData(QLogicalVertex::Color));
+    QVERIFY(section->hasField(QGL::Color));
+    QVERIFY(section->hasField(QGL::TextureCoord0));
+    QVERIFY(!section->hasField(QGL::Normal));
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSection)

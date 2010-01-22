@@ -56,6 +56,11 @@ class QGeometryDataPrivate;
 class QVertexRefs;
 class QLogicalVertex;
 
+namespace QGL
+{
+    inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
+}
+
 class QGeometryData
 {
 public:
@@ -79,19 +84,38 @@ public:
     void clear();
     void clear(QGL::VertexAttribute);
 
-    void appendVertex(const QVector3D &v);
-    void appendAttribute(float a, QGL::VertexAttribute field);
-    void appendAttribute(const QVector2D &a, QGL::VertexAttribute field);
-    void appendAttribute(const QVector3D &a, QGL::VertexAttribute field);
-    void appendAttribute(const QVariant &a, QGL::VertexAttribute field);
-    void appendNormal(const QVector3D &n);
-    void appendTexCoord(const QVector2D &t, QGL::VertexAttribute field);
-    void appendColor(const QColor4b &c);
+    void appendVertex(const QVector3D &v0);
+    void appendVertex(const QVector3D &v0, const QVector3D &v1);
+    void appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2);
+    void appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2, const QVector3D &v3);
+
+    void appendAttribute(float a, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(float a, float b, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(float a, float b, float c, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(float a, float b, float c, float d, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(const QVector2D &a, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(const QVector3D &a, QGL::VertexAttribute field = QGL::CustomVertex0);
+    void appendAttribute(const QVariant &a, QGL::VertexAttribute field = QGL::CustomVertex0);
+
+    void appendNormal(const QVector3D &n0);
+    void appendNormal(const QVector3D &n0, const QVector3D &n1);
+    void appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2);
+    void appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2, const QVector3D &n3);
+
+    void appendTexCoord(const QVector2D &t0, QGL::VertexAttribute field = QGL::TextureCoord0);
+    void appendTexCoord(const QVector2D &t0, const QVector2D &t1, QGL::VertexAttribute field = QGL::TextureCoord0);
+    void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, QGL::VertexAttribute field = QGL::TextureCoord0);
+    void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, const QVector2D &t3, QGL::VertexAttribute field = QGL::TextureCoord0);
+
+    void appendColor(const QColor4b &c0);
+    void appendColor(const QColor4b &c0, const QColor4b &c1);
+    void appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2);
+    void appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2, const QColor4b &c3);
 
     void appendVertexArray(const QVector3DArray &ary);
-    void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field);
+    void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
-    void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field);
+    void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
     void appendColorArray(const QDataArray<QColor4b> &ary);
 
     QVector3D &vertexRef(int i);
@@ -104,14 +128,13 @@ public:
     QDataArray<QColor4b> colors() const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
-    QVector2DArray texCoords(QGL::VertexAttribute field) const;
+    QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
 
     float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector3D &vector3DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QCustomDataArray attributes(QGL::VertexAttribute field) const;
 
-    inline static quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
     quint32 fields() const;

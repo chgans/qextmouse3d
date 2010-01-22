@@ -647,24 +647,90 @@ void QGeometryData::clear(QGL::VertexAttribute field)
 }
 
 /*!
-    Append the point \a v to this geometry data as a position field.
+    Append the point \a v0 to this geometry data as a position field.
 */
-void QGeometryData::appendVertex(const QVector3D &v)
+void QGeometryData::appendVertex(const QVector3D &v0)
 {
     detach();
     enableField(QGL::Position);
-    d->vertices.append(v);
+    d->vertices.append(v0);
     d->count = qMax(d->count, d->vertices.count());
 }
 
 /*!
-    Append the float \a a to this geometry data, as an attribute \a field.
+    Append the points \a v0 and \a v1 to this geometry data as position fields.
 */
-void QGeometryData::appendAttribute(float a, QGL::VertexAttribute field)
+void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1)
+{
+    detach();
+    enableField(QGL::Position);
+    d->vertices.append(v0, v1);
+    d->count = qMax(d->count, d->vertices.count());
+}
+
+/*!
+    Append the points \a v0, \a v1 and \a v2 to this geometry data as position fields.
+*/
+void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2)
+{
+    detach();
+    enableField(QGL::Position);
+    d->vertices.append(v0, v1, v2);
+    d->count = qMax(d->count, d->vertices.count());
+}
+
+/*!
+    Append the points \a v0, \a v1, \a v2 and \a v3 to this geometry data as position fields.
+*/
+void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2, const QVector3D &v3)
+{
+    detach();
+    enableField(QGL::Position);
+    d->vertices.append(v0, v1, v2, v3);
+    d->count = qMax(d->count, d->vertices.count());
+}
+
+/*!
+    Append the float \a a0 to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(float a0, QGL::VertexAttribute field)
 {
     detach();
     enableField(field);
-    d->attributes[d->key[field]].append(a);
+    d->attributes[d->key[field]].append(a0);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the float \a a0 and \a a1 to this geometry data, as an attribute \a field.
+*/
+void QGeometryData::appendAttribute(float a0, float a1, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a0, a1);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the floats \a a0, \a a1 and \a a2 to this geometry data, as attribute \a fields.
+*/
+void QGeometryData::appendAttribute(float a0, float a1, float a2, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a0, a1, a2);
+    d->count = qMax(d->count, d->attributes[d->key[field]].count());
+}
+
+/*!
+    Append the floats \a a0, \a a1, \a a2 and \a a3 to this geometry data, as attribute \a fields.
+*/
+void QGeometryData::appendAttribute(float a0, float a1, float a2, float a3, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->attributes[d->key[field]].append(a0, a1, a2, a3);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
 }
 
@@ -702,35 +768,134 @@ void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute fiel
 }
 
 /*!
-    Append the vector \a n to this geometry data, as lighting normal.
+    Append the vector \a n to this geometry data, as a lighting normal.
 */
-void QGeometryData::appendNormal(const QVector3D &n)
+void QGeometryData::appendNormal(const QVector3D &n0)
 {
     detach();
     enableField(QGL::Normal);
-    d->normals.append(n);
+    d->normals.append(n0);
     d->count = qMax(d->count, d->normals.count());
 }
 
 /*!
-    Append the point \a t to this geometry data, as an texture \a field.
+    Append the vectors \a n0 and \a n1 to this geometry data, as lighting normals.
 */
-void QGeometryData::appendTexCoord(const QVector2D &t, QGL::VertexAttribute field)
+void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1)
+{
+    detach();
+    enableField(QGL::Normal);
+    d->normals.append(n0, n1);
+    d->count = qMax(d->count, d->normals.count());
+}
+
+/*!
+    Append the vectors \a n0, \a n1 and \a n2 to this geometry data, as lighting normals.
+*/
+void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2)
+{
+    detach();
+    enableField(QGL::Normal);
+    d->normals.append(n0, n1, n2);
+    d->count = qMax(d->count, d->normals.count());
+}
+
+/*!
+    Append the vectors \a n0, \a n1, \a n2 and \a n3 to this geometry data, as lighting normals.
+*/
+void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2, const QVector3D &n3)
+{
+    detach();
+    enableField(QGL::Normal);
+    d->normals.append(n0, n1, n2, n3);
+    d->count = qMax(d->count, d->normals.count());
+}
+
+/*!
+    Append the point \a t0 to this geometry data, as an texture \a field.
+*/
+void QGeometryData::appendTexCoord(const QVector2D &t0, QGL::VertexAttribute field)
 {
     detach();
     enableField(field);
-    d->textures[d->key[field]].append(t);
+    d->textures[d->key[field]].append(t0);
     d->count = qMax(d->count, d->textures[d->key[field]].count());
 }
 
 /*!
-    Append the color \a c to this geometry data, as an color field.
+    Append the points \a t0 and \a t1 to this geometry data, as texture \a{field}s.
 */
-void QGeometryData::appendColor(const QColor4b &c)
+void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->textures[d->key[field]].append(t0, t1);
+    d->count = qMax(d->count, d->textures[d->key[field]].count());
+}
+
+/*!
+    Append the points \a t0, \a t1 and \a t2 to this geometry data, as texture \a{field}s.
+*/
+void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->textures[d->key[field]].append(t0, t1, t2);
+    d->count = qMax(d->count, d->textures[d->key[field]].count());
+}
+
+/*!
+    Append the points \a t0, \a t1, \a t2 and \a t3 to this geometry data, as texture \a{field}s.
+*/
+void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, const QVector2D &t3, QGL::VertexAttribute field)
+{
+    detach();
+    enableField(field);
+    d->textures[d->key[field]].append(t0, t1, t2, t3);
+    d->count = qMax(d->count, d->textures[d->key[field]].count());
+}
+
+/*!
+    Append the color \a c0 to this geometry data, as an color field.
+*/
+void QGeometryData::appendColor(const QColor4b &c0)
 {
     detach();
     enableField(QGL::Color);
-    d->colors.append(c);
+    d->colors.append(c0);
+    d->count = qMax(d->count, d->colors.count());
+}
+
+/*!
+    Append the color \a c0 and \a c1 to this geometry data, as color fields.
+*/
+void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1)
+{
+    detach();
+    enableField(QGL::Color);
+    d->colors.append(c0, c1);
+    d->count = qMax(d->count, d->colors.count());
+}
+
+/*!
+    Append the color \a c0, \a c1 and \a c2 to this geometry data, as color fields.
+*/
+void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2)
+{
+    detach();
+    enableField(QGL::Color);
+    d->colors.append(c0, c1, c2);
+    d->count = qMax(d->count, d->colors.count());
+}
+
+/*!
+    Append the color \a c0, \a c1, \a c2  and \a c3 to this geometry data, as color fields.
+*/
+void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2, const QColor4b &c3)
+{
+    detach();
+    enableField(QGL::Color);
+    d->colors.append(c0, c1, c2, c3);
     d->count = qMax(d->count, d->colors.count());
 }
 
