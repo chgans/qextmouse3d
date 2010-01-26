@@ -97,7 +97,6 @@ public:
     void reserve(int size);
     void resize(int size);
     void squeeze();
-    void squeeze(int size);
 
     QVariant at(int index) const;
     void setAt(int index, const QVariant& value);
@@ -217,12 +216,7 @@ inline void QCustomDataArray::resize(int size)
 
 inline void QCustomDataArray::squeeze()
 {
-    m_array.squeeze(m_array.size());
-}
-
-inline void QCustomDataArray::squeeze(int size)
-{
-    m_array.squeeze(size * m_elementComponents);
+    m_array.squeeze();
 }
 
 inline void QCustomDataArray::setAt(int index, qreal x)

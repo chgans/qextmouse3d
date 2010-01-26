@@ -51,10 +51,9 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d
     \ingroup qt3d::enablers
 
-    QArray is similar to QVector except that it has less overhead
+    QArray is similar to QVector except that it has much less overhead
     when constructing large arrays by appending individual elements
-    one by one.  It is intended for building arrays of points
-    and vertex attributes in high-performance graphics applications.
+    one by one.
 
     QArray instances have a preallocated data area for quickly
     building small arrays on the stack without malloc overhead.
@@ -69,7 +68,14 @@ QT_BEGIN_NAMESPACE
     QArray uses implicit sharing and copy-on-write semantics to support
     passing large arrays around an application with little overhead.
 
-    \sa QArrayRef
+    QArray is heavily optimized for copy-on-write and the case of
+    constructing an array by calling append().  It has a slight
+    performance penalty for random access using the non-const
+    version of operator[]().  QUnsharedArray provides an alternative
+    that has both fast append() and fast operator[](), but which
+    does not support implicit sharing.
+
+    \sa QArrayRef, QUnsharedArray
 */
 
 /*!
@@ -85,6 +91,22 @@ QT_BEGIN_NAMESPACE
 
     Constructs an array of \a size elements, all initialized
     to \a value.
+
+    \sa fill()
+*/
+
+/*!
+    \fn QArray::QArray(int size)
+
+    Constructs an array of \a size elements, all initialized
+    to their default-constructed values.
+*/
+
+/*!
+    \fn QArray::QArray(const T *values, int size)
+
+    Constructs an array of \a size elements, initialized
+    from \a values.
 */
 
 /*!
@@ -93,14 +115,6 @@ QT_BEGIN_NAMESPACE
     Constructs a copy of \a other.
 
     \sa operator=()
-*/
-
-/*!
-    \fn QArray::QArray(const QUnsharedArray<T, PreallocSize> &other)
-
-    Constructs a copy of the unshared array \a other.
-
-    This constructor makes a deep copy of the contents of \a other.
 */
 
 /*!
@@ -117,15 +131,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArray<T, PreallocSize> &QArray::operator=(const QUnsharedArray<T, PreallocSize> &other)
-
-    Assigns the contents \a other to this array and returns a reference
-    to this array.
-
-    This assignment operator makes a deep copy of the contents of \a other.
-*/
-
-/*!
     \fn int QArray::size() const
 
     Returns the number of elements in this array.
@@ -135,6 +140,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn int QArray::count() const
+    \overload
 
     Same as size(), provided for convenience.
 */
@@ -165,6 +171,29 @@ QT_BEGIN_NAMESPACE
     This function can be used to determine if functions that
     write to this array such as append(), replace(),
     and data(), will need to make a copy.
+
+    Raw data arrays that are created with fromRawData() are
+    never detached.
+
+    \sa detach(), setSharable()
+*/
+
+/*!
+    \fn void QArray::detach()
+
+    Detaches this array from all other shared copies of the data.
+
+    \sa isDetached(), setSharable()
+*/
+
+/*!
+    \fn void QArray::setSharable(bool sharable)
+
+    Sets this array to be sharable or not according to \a sharable.
+
+    QUnsharedArray instances set this flag at construction time.
+
+    \sa detach(), isDetached(), QUnsharedArray
 */
 
 /*!
@@ -187,7 +216,7 @@ QT_BEGIN_NAMESPACE
     \a index must be a valid index position in the array (i.e., 0 <= \a
     index < size()).
 
-    \sa operator[](), constData()
+    \sa operator[](), constData(), value()
 */
 
 /*!
@@ -201,7 +230,7 @@ QT_BEGIN_NAMESPACE
     Note that using non-const operators can cause QArray
     to do a deep copy.
 
-    \sa at()
+    \sa at(), value()
 */
 
 /*!
@@ -210,6 +239,27 @@ QT_BEGIN_NAMESPACE
     \overload
 
     Same as at(\a index).
+*/
+
+/*!
+    \fn T QArray::value(int index) const
+
+    Returns the value at position \a index in the vector.
+
+    If the \a index is out of bounds, the function returns
+    a default-constructed value.  If you are certain that
+    \a index is within bounds, you can use at() instead,
+    which is slightly faster.
+
+    \sa at(), operator[]()
+*/
+
+/*!
+    \fn T QArray::value(int index, const T &defaultValue) const
+    \overload
+
+    If the \a index is out of bounds, the function returns
+    \a defaultValue.
 */
 
 /*!
@@ -237,6 +287,8 @@ QT_BEGIN_NAMESPACE
     \fn void QArray::append(const T &value)
 
     Appends \a value to this array.
+
+    \sa prepend(), insert()
 */
 
 /*!
@@ -276,7 +328,59 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn void QArray::prepend(const T &value)
+
+    Prepends \a value to this array.
+
+    \sa append(), insert()
+*/
+
+/*!
+    \fn void QArray::insert(int index, const T &value)
+
+    Inserts \a value at position \a index in this array.
+    If \a index is 0, then \a value is prepended to the array.
+    If \a index is size(), then \a value is appended to the array.
+
+    \sa append(), prepend()
+*/
+
+/*!
+    \fn void QArray::insert(int index, int count, const T &value)
+    \overload
+
+    Inserts \a count copies of \a value at position \a index
+    in this array.
+*/
+
+/*!
+    \fn QArray::iterator QArray::insert(iterator before, int count, const T &value)
+
+    Inserts \a count copies of \a value in front of the item
+    pointed to by the iterator \a before.  Returns an iterator
+    pointing at the first of the inserted item.
+*/
+
+/*!
+    \fn QArray::iterator QArray::insert(iterator before, const T &value)
+    \overload
+
+    Inserts \a value in front of the item pointed to by the
+    iterator \a before.  Returns an iterator pointing at the
+    inserted items.
+*/
+
+/*!
+    \fn void QArray::replace(int index, const T &value)
+
+    Replaces the element at \a index with \a value.
+
+    \sa operator[](), remove()
+*/
+
+/*!
     \fn void QArray::replace(int index, const T *values, int count)
+    \overload
 
     Replaces the \a count elements of this array with the
     contents of \a values, starting at \a index.
@@ -302,6 +406,97 @@ QT_BEGIN_NAMESPACE
     in this array.  If \a index or \a count is out of range,
     the set of removed elements will be truncated to those that
     are in range.
+*/
+
+/*!
+    \fn QArray::iterator QArray::erase(iterator begin, iterator end)
+    \overload
+
+    Removes all the items from \a begin up to (but not including) \a
+    end. Returns an iterator to the same item that \a end referred to
+    before the call.
+*/
+
+/*!
+    \fn QArray::iterator QArray::erase(iterator pos)
+
+    Removes the item pointed to by the iterator \a pos from the
+    vector, and returns an iterator to the next item in the vector
+    (which may be end()).
+
+    \sa insert(), remove()
+*/
+
+/*!
+    \fn void QArray::removeFirst()
+
+    Removes the first element from this array.  Does nothing if
+    the array is empty.
+
+    \sa remove(), removeLast()
+*/
+
+/*!
+    \fn void QArray::removeLast()
+
+    Removes the last element from this array.  Does nothing if
+    the array is empty.
+
+    \sa remove(), removeFirst()
+*/
+
+/*!
+    \fn int QArray::indexOf(const T &value, int from) const
+
+    Returns the index position of the first occurrence of
+    \a value in the array, searching forward from index
+    position \a from.  Returns -1 if no item matched.
+
+    If \a from is negative, then it indicates an index position
+    relative to the end of the array, -1 being the last index
+    position.
+
+    This function requires the value type T to have an implementation
+    of \c operator==().
+
+    \sa lastIndexOf(), contains()
+*/
+
+/*!
+    \fn int QArray::lastIndexOf(const T &value, int from) const
+
+    Returns the index position of the last occurrence of
+    \a value in the array, searching backward from index
+    position \a from.  Returns -1 if no item matched.
+
+    If \a from is negative, then it indicates an index position
+    relative to the end of the array, -1 being the last index
+    position.  The default for \a from is -1.
+
+    This function requires the value type T to have an implementation
+    of \c operator==().
+
+    \sa indexOf(), contains()
+*/
+
+/*!
+    \fn bool QArray::contains(const T &value) const
+
+    Returns true if the array contains an occurrence of \a value;
+    false otherwise.
+
+    This function requires the value type T to have an implementation
+    of \c operator==().
+
+    \sa indexOf(), count()
+*/
+
+/*!
+    \fn int QArray::count(const T &value) const
+
+    Returns the number of occurrences of \a value in the array.
+
+    \sa contains(), indexOf()
 */
 
 /*!
@@ -336,16 +531,6 @@ QT_BEGIN_NAMESPACE
     Releases any memory not required to store the array's elements
     by reducing its capacity() to size().
 
-    \sa reserve(), capacity()
-*/
-
-/*!
-    \fn void QArray::squeeze(int size)
-
-    Reduces the capacity() of this array to \a size, removing
-    elements from the end if necessary.  Does nothing if the capacity()
-    is already less than \a size.
-
     This function is intended for reclaiming memory in an
     array that is being used over and over with different contents.
     As elements are added to an array, it will be constantly
@@ -353,6 +538,16 @@ QT_BEGIN_NAMESPACE
     to a smaller size to reclaim unused memory.
 
     \sa reserve(), capacity()
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> &QArray::fill(const T &value, int size)
+
+    Assigns \a value to all items in the array. If \a size is
+    different from -1 (the default), the array is resized to size
+    \a size beforehand.  Returns a reference to the array.
+
+    \sa resize()
 */
 
 /*!
@@ -459,7 +654,33 @@ QT_BEGIN_NAMESPACE
     array = QArray<float>::fromRawData(data, size);
     \endcode
 
-    \sa append()
+    \sa fromWritableRawData(), append()
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> QArray::fromWritableRawData(T *data, int size)
+
+    Returns an array consisting of the \a size elements from \a data.
+
+    This function takes a reference to \a data, but does not copy
+    the elements until the array is reallocated to a larger size.
+    The memory at \a data must remain valid until the returned
+    array is destroyed or reallocated.
+
+    The elements of \a data will be modified in-place.  This differs
+    from fromRawData() which will make a copy of the elements
+    of \a data when the array is modified.
+
+    If the returned array is resized to less than \a size,
+    then a copy will not be made, and append() can be used to
+    append new items up to \a size.  Further calls to append()
+    after \a size will force the array to be reallocated.
+
+    If the returned array is resized to more than \a size,
+    then a copy of the data will be made and further modifications
+    will not affect the elements at \a data.
+
+    \sa fromRawData()
 */
 
 /*!
@@ -661,16 +882,134 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn T &QArray::first()
+
+    Returns a reference to the first item in the array. This
+    function assumes that the array isn't empty.
+
+    \sa last(), isEmpty()
+*/
+
+/*!
+    \fn const T &QArray::first() const
+    \overload
+*/
+
+/*!
+    \fn T &QArray::last()
+
+    Returns a reference to the last item in the array. This function
+    assumes that the array isn't empty.
+
+    \sa first(), isEmpty()
+*/
+
+/*!
+    \fn const T &QArray::last() const
+    \overload
+*/
+
+/*!
+    \fn bool QArray::startsWith(const T &value) const
+
+    Returns true if this array is not empty and its first
+    item is equal to \a value; otherwise returns false.
+
+    \sa isEmpty(), first()
+*/
+
+/*!
+    \fn bool QArray::endsWith(const T &value) const
+
+    Returns true if this array is not empty and its last
+    item is equal to \a value; otherwise returns false.
+
+    \sa isEmpty(), last()
+*/
+
+/*!
+    \fn void QArray::push_back(const T &value)
+
+    This function is provided for STL compatibility. It is equivalent
+    to append(\a value).
+*/
+
+/*!
+    \fn void QArray::push_front(const T &value)
+
+    This function is provided for STL compatibility. It is equivalent
+    to prepend(\a value).
+*/
+
+/*!
+    \fn void QArray::pop_front()
+
+    This function is provided for STL compatibility. It is equivalent
+    to removeFirst().
+*/
+
+/*!
+    \fn void QArray::pop_back()
+
+    This function is provided for STL compatibility. It is equivalent
+    to removeLast().
+*/
+
+/*!
+    \fn QArray::reference QArray::front()
+
+    This function is provided for STL compatibility. It is equivalent
+    to first().
+*/
+
+/*!
+    \fn QArray::const_reference QArray::front() const
+    \overload
+*/
+
+/*!
+    \fn QArray::reference QArray::back()
+
+    This function is provided for STL compatibility. It is equivalent
+    to last().
+*/
+
+/*!
+    \fn QArray::const_reference QArray::back() const
+    \overload
+*/
+
+/*!
+    \fn bool QArray::empty() const
+
+    This function is provided for STL compatibility. It is equivalent
+    to isEmpty(), returning true if the array is empty; otherwise
+    returns false.
+*/
+
+/*!
     \class QUnsharedArray
-    \brief The QUnsharedArray class is a template class for an unreference counted array.
+    \brief The QUnsharedArray class is a template class for an unshared array.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 
-    QUnsharedArray differs from QArray in that it does not support
-    implicit sharing.  This results in better performance for random access
-    to the array's contents, at the cost of a reduction in performance for
-    array copying.
+    QUnsharedArray inherits from QArray and sets the sharable
+    flag to false by default.  The following are equivalent:
+
+    \code
+    QUnsharedArray<T> uarray;
+
+    QArray<T> array;
+    array.setSharable(false);
+    \endcode
+
+    The difference between QUnsharedArray and QArray is that
+    operator[]() and data() are more efficient in QUnsharedArray
+    because they do not need to check for sharing before
+    accessing the array's contents.  This makes QUnsharedArray
+    more suitable for algorithms that require fast random
+    access to the array.
 
     \sa QArray
 */
@@ -689,18 +1028,23 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QUnsharedArray::QUnsharedArray(const QArray<T, PreallocSize> &other)
+    \fn QUnsharedArray::QUnsharedArray(int size)
 
-    Constructs a deep copy of \a other.
+    Constructs an unshared array of \a size elements, all initialized
+    to their default-constructed values.
 */
 
 /*!
-    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArray<T, PreallocSize> &other)
+    \fn QUnsharedArray::QUnsharedArray(const T *values, int size)
 
-    Assigns the contents \a other to this array and returns a reference
-    to this array.
+    Constructs an unshared array of \a size elements, initialized
+    from \a values.
+*/
 
-    This assignment operator makes a deep copy of the contents of \a other.
+/*!
+    \fn QUnsharedArray::QUnsharedArray(const QArray<T, PreallocSize> &other)
+
+    Constructs a deep copy of \a other.
 */
 
 /*!
@@ -742,16 +1086,6 @@ QT_BEGIN_NAMESPACE
     \fn const T *QUnsharedArray::data() const
 
     \overload
-*/
-
-/*!
-    \fn QUnsharedArray<T, PreallocSize> QUnsharedArray::fromRawData(const T *data, int size)
-
-    Returns a new unshared array that is initialized to the \a size
-    elements at \a data.
-
-    This function makes a deep copy of the elements at \a data,
-    unlike QArray::fromRawData().
 */
 
 /*!
