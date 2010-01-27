@@ -770,7 +770,7 @@ template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T &value1, const T &value2, const T &value3, const T &value4)
 {
     if ((m_end + 3) >= m_limit)
-        grow(3);
+        grow(4);
     new (m_end) T(value1);
     new (m_end + 1) T(value2);
     new (m_end + 2) T(value3);
