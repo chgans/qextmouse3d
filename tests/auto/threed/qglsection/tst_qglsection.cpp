@@ -41,7 +41,7 @@
 
 #include <QtTest/QtTest>
 #include "qglsection_p.h"
-#include "QGLDisplayList.h"
+#include "qgldisplaylist.h"
 
 #include "qtest_helpers_p.h"
 
@@ -352,7 +352,8 @@ void tst_QGLSection::appendColor()
     section = new QGLSectionTest(&list);
 
     QVector2D testTexCoord(0.0f, 0.0f);
-    QLogicalVertex lv(testVertex);
+    QLogicalVertex lv;
+    lv.setVertex(testVertex);
     lv.setColor(color);
     lv.setTexCoord(testTexCoord);
     section->append(lv);

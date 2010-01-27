@@ -87,6 +87,17 @@
         \o setCommonNormal() / commonNormal() for a normal that applies to all vertices
      \endlist
 
+     It is up to the user of a QGeometryData instance to ensure that the
+     data has an equal number of items in each field.  For example, if five
+     vertices are added and only two normals are added, the logical vertex at
+     position 3 will be corrupt, since it does not have a normal.
+
+     While data is being accumulated the counts of different fields will vary,
+     since it may be convenient to add several vertices, then several normals,
+     colors or attributes at a time.  However when a logical vertex is
+     constructed or when the data is sent to the GPU, counts of all fields
+     must be equal.
+
      QGeometryData uses implicit sharing with lazy creation of internal
      data so that code like:
      \code
@@ -317,11 +328,11 @@ QGLVertexArray QGeometryData::toVertexArray() const
                 }
                 else if (attr < QGL::CustomVertex0)
                 {
-                    Q_ASSERT(d->textures.at(field).count() == d->count);
+                    Q_ASSERT(d->textures.at(d->key[field]).count() == d->count);
                 }
                 else
                 {
-                    Q_ASSERT(d->attributes.at(field).count() == d->count);
+                    Q_ASSERT(d->attributes.at(d->key[field]).count() == d->count);
                 }
 #endif
             }
@@ -345,7 +356,7 @@ QGLVertexArray QGeometryData::toVertexArray() const
                     }
                     else if (attr < QGL::CustomVertex0)
                     {
-                        array.append(d->textures.at(field).at(index));
+                        array.append(d->textures.at(d->key[field]).at(index));
                     }
                     else
                     {
@@ -503,7 +514,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
 
 /*!
     Sets this QGeometryData to contain alternating vertices from
-    this geometry and \a other.  The resulting geometry contains N vertices
+    this geometry and \a other.  The resulting geometry contains \c{N * 2} vertices
     where \c{N == qMin(count(), other.count())}, and has only the fields
     that are in both geometries.
 */
@@ -512,7 +523,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
     if (d && other.d)
     {
         detach();
-        int cnt = qMax(d->count, other.d->count);
+        int cnt = qMin(d->count, other.d->count);
         const quint32 mask = 0x01;
         quint32 fields = d->fields & other.d->fields;
         for (int field = 0; fields; ++field, fields >>= 1)
@@ -579,7 +590,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                 }
             }
         }
-        d->count = cnt;
+        d->count = cnt * 2;
     }
 }
 
@@ -623,7 +634,7 @@ void QGeometryData::clear()
 
 void QGeometryData::clear(QGL::VertexAttribute field)
 {
-    if (d && (field & d->fields))
+    if (d && (QGL::fieldMask(field) & d->fields))
     {
         detach();
         QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
@@ -986,12 +997,30 @@ QVector3DArray QGeometryData::vertices() const
 }
 
 /*!
+    Returns a copy of the vertex position data at index \a i.
+*/
+QVector3D QGeometryData::vertex(int i) const
+{
+    Q_ASSERT(hasField(QGL::Position));
+    return d->vertices.at(i);
+}
+
+/*!
     Returns a modifiable reference to the normal data at index \a i.
 */
 QVector3D &QGeometryData::normalRef(int i)
 {
     detach();
     return d->normals[i];
+}
+
+/*!
+    Returns a copy of the normal data at index \a i.
+*/
+QVector3D QGeometryData::normal(int i) const
+{
+    Q_ASSERT(hasField(QGL::Normal));
+    return d->normals.at(i);
 }
 
 /*!
@@ -1011,6 +1040,15 @@ QColor4b &QGeometryData::colorRef(int i)
 {
     detach();
     return d->colors[i];
+}
+
+/*!
+    Returns a modifiable reference to the color data at index \a i.
+*/
+QColor4b QGeometryData::color(int i) const
+{
+    Q_ASSERT(hasField(QGL::Color));
+    return d->colors.at(i);
 }
 
 /*!
@@ -1038,6 +1076,15 @@ QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
 QVector2DArray QGeometryData::texCoords(QGL::VertexAttribute field) const
 {
     return hasField(field) ? d->textures.at(d->key[field]) : QVector2DArray();
+}
+
+/*!
+    Returns a copy of the texture coordinate data at index \a i for \a field.
+*/
+QVector2D QGeometryData::texCoord(int i, QGL::VertexAttribute field) const
+{
+    Q_ASSERT(hasField(field));
+    return d->textures.at(d->key[field]).at(i);
 }
 
 /*!
@@ -1086,6 +1133,34 @@ QCustomDataArray QGeometryData::attributes(QGL::VertexAttribute field) const
 }
 
 /*!
+    Returns a copy of the float \a field attribute data at index \a i.
+*/
+float QGeometryData::floatAttribute(int i, QGL::VertexAttribute field) const
+{
+    Q_ASSERT(hasField(field));
+    return d->attributes.at(d->key[field]).floatAt(i);
+}
+
+/*!
+    Returns a copy of the 2D vector \a field attribute data at index \a i.
+*/
+QVector2D QGeometryData::vector2DAttribute(int i, QGL::VertexAttribute field) const
+{
+    Q_ASSERT(hasField(field));
+    return d->attributes.at(d->key[field]).vector2DAt(i);
+}
+
+/*!
+    Returns a copy of the 3D vector \a field attribute data at index \a i.
+*/
+QVector3D QGeometryData::vector3DAttribute(int i, QGL::VertexAttribute field) const
+{
+    Q_ASSERT(hasField(field));
+    return d->attributes.at(d->key[field]).vector3DAt(i);
+}
+
+
+/*!
     Returns true if this geometry has the field corresponding to \a attr.  Note
     that it is still possible for no data to have been added for that field.
 */
@@ -1103,7 +1178,7 @@ bool QGeometryData::hasField(QGL::VertexAttribute attr) const
 */
 void QGeometryData::enableField(QGL::VertexAttribute field)
 {
-    if (d->key[field] != -1)
+    if (d && d->key[field] != -1)
         return;
     detach();
     Q_ASSERT(field < d->ATTR_CNT); // don't expand that enum too much
@@ -1111,10 +1186,8 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     switch (field)
     {
     case QGL::Position:
-        // qDebug() << "about to reference" << this << QGL::Position << "at" << d->key;
         d->key[QGL::Position] = 0;
         d->size[QGL::Position] = 3;
-        // qDebug() << "got past";
         break;
     case QGL::Normal:
         d->key[QGL::Normal] = 1;
@@ -1132,7 +1205,7 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::TextureCoord5:
     case QGL::TextureCoord6:
     case QGL::TextureCoord7:
-        d->textures.append(QDataArray<QVector2D>());
+        d->textures.append(QVector2DArray());
         d->key[field] = d->textures.count() - 1;
         d->size[field] = 2;
         break;
@@ -1144,9 +1217,8 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::CustomVertex5:
     case QGL::CustomVertex6:
     case QGL::CustomVertex7:
-        d->attributes.append(QDataArray<QVector3D>());
         d->key[field] = d->attributes.count() - 1;
-        d->size[field] = 3;
+        d->size[field] = d->attributes.at(d->key[field]).elementSize();
         break;
     }
 }
@@ -1175,6 +1247,36 @@ int QGeometryData::count() const
     if (d)
         return d->count;
     return 0;
+}
+
+/*!
+    Returns the count of data stored in \a field.  This will always be at
+    most count(), but could be less.
+*/
+int QGeometryData::count(QGL::VertexAttribute field) const
+{
+    int result = 0;
+    if (d && (QGL::fieldMask(field) & d->fields))
+    {
+        if (field < QGL::TextureCoord0)
+        {
+            if (field == QGL::Position)
+                result = d->vertices.count();
+            else if (field == QGL::Normal)
+                result = d->normals.count();
+            else
+                result = d->colors.count();
+        }
+        else if (field < QGL::CustomVertex0)
+        {
+            result = d->textures[d->key[field]].count();
+        }
+        else
+        {
+            result = d->attributes[d->key[field]].count();
+        }
+    }
+    return result;
 }
 
 /*!

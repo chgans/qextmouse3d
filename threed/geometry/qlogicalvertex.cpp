@@ -304,19 +304,19 @@ QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
     else
     {
         if (lv.hasField(QGL::Position))
-            dbg << lv.vertex();
+            dbg << "V:" << lv.vertex();
         else
             dbg << " (No Vertex)";
         if (lv.hasField(QGL::Normal))
-            dbg << lv.normal();
+            dbg << "N:" << lv.normal();
         else
             dbg << " (No Normal)";
         if (lv.hasField(QGL::TextureCoord0))
-            dbg << lv.texCoord();
+            dbg << "T:" << lv.texCoord();
         else
             dbg << " (No Texture)";
         if (lv.hasField(QGL::Color))
-            dbg << lv.color();
+            dbg << "C:" << lv.color();
         else
             dbg << " (No Color)";
     }

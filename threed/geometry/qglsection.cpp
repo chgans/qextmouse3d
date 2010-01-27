@@ -341,19 +341,16 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     bool coalesce = false;
     if (it == d->hash.constEnd())
     {
-        d->accumulateNormal(appendOne(lv), lv.normal());
+        int newIndex = appendOne(lv);
+        d->accumulateNormal(newIndex, lv.normal());
     }
     else
     {
-        while (it != d->hash.constEnd() && it.key() == lv.vertex())
-        {
+        while (!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex())
             if (qCompareByAttributes(lv, vertexAt(*it)))
-            {
                 coalesce = true;
-                break;
-            }
-            ++it;
-        }
+            else
+                ++it;
         if (!coalesce)  // texture or attributes prevented coalesce
         {
             // new vert to carry tex/attrib data
@@ -409,17 +406,15 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     Q_ASSERT(lv.hasField(QGL::Normal));
     QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
     bool coalesce = false;
-    for ( ;!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex(); ++it)
+    while (!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex())
         if (vertexAt(*it) == lv)
             coalesce = true;
+        else
+            ++it;
     if (coalesce) // found
-    {
         d->indices.append(*it);
-    }
     else
-    {
         appendOne(lv);
-    }
     d->finalized = false;
     m_displayList->setDirty(true);
 }
@@ -448,6 +443,16 @@ QGLIndexArray QGLSection::indices() const
 {
     return d->indices;
 }
+
+/*!
+    \internal
+    Returns the count of indices.  This is the same as indices().size().
+*/
+int QGLSection::indexCount() const
+{
+    return d->indices.size();
+}
+
 
 /*!
     \internal

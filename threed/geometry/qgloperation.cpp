@@ -224,3 +224,55 @@
     Completes this operation by calling QGLDisplayList::end().  This function is
     called automatically by ~QGLOperation.
 */
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &ary)
+    \relates QGLOperation
+    Calls QGLOperation::addVertexArray() on \a op with argument \a ary.
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &ary)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &ary)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &ary)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &ary)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &ary)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QVector2D &texCoord)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QColor4b &color)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op,
+                                const QGL::OperationFlag &flag)
+    \relates QGLOperation
+*/

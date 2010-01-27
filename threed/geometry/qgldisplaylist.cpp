@@ -348,7 +348,8 @@ QGLDisplayList::~QGLDisplayList()
     add the vertices to geometry.
 
     Note the modifiable reference p - any normal calculated is
-    stored in here, and needs to be restored.
+    stored in here, and needs to be restored unless persisting it
+    to the next iteration.
 */
 void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
 {
@@ -413,7 +414,7 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 {
     QGLPrimitive q = quad;
     QVector3D save = q.commonNormal();
-    for (int i = 0; i < q.count(); i += 3)
+    for (int i = 0; i < q.count(); i += 4)
     {
         addTriangle(i, i+1, i+2, q);
         addTriangle(i, i+2, i+3, q);
@@ -548,8 +549,8 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
     {
         f.appendVertex(face.vertexAt(0));
         f.vertexRef(0) = f.center();
-        f.appendGeometry(face);
     }
+    f.appendGeometry(face);
     int cnt = f.count();
     if (f.flags() & QGL::NO_CLOSE_PATH)
         cnt = f.count() - 1;
@@ -557,7 +558,9 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
     {
         for (int i = 1; i < cnt; ++i)
         {
-            int n = (i + 1) % face.count();
+            int n = i + 1;
+            if (n == cnt)
+                n = 1;
             addTriangle(0, i, n, f);
         }
     }
@@ -610,7 +613,7 @@ void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
     QGLPrimitive zipped = bottom.zippedWith(top);
     QVector3D norm = top.commonNormal() + bottom.commonNormal();
     zipped.setCommonNormal(norm);
-    for (int i = 0; i < zipped.count(); i += 2)
+    for (int i = 0; i < zipped.count() - 2; i += 2)
     {
         addTriangle(i, i+2, i+3, zipped);
         addTriangle(i, i+3, i+1, zipped);
@@ -719,8 +722,6 @@ void QGLDisplayList::newSection(QGL::Smoothing smooth)
 void QGLDisplayList::addSection(QGLSection *sec)
 {
     Q_D(QGLDisplayList);
-    if (d->currentNode && d->currentSection)
-        d->currentNode->setCount(d->currentSection->count() - d->currentNode->start());
     d->currentSection = sec;
     d->sections.append(sec);
     newNode();
@@ -769,11 +770,9 @@ QGLSceneNode *QGLDisplayList::newNode()
         parentNode = d->nodeStack.last();
     int sectionCount = 0;
     if (d->currentSection)
-        sectionCount = d->currentSection->count();
+        sectionCount = d->currentSection->indexCount();
     if (d->currentNode)
     {
-        if (sectionCount)
-            d->currentNode->setCount(sectionCount - d->currentNode->start());
         if (d->currentNode->count() == 0)
         {
             QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.begin();
@@ -823,9 +822,8 @@ QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
     d->nodeStack.append(d->currentNode);
-    d->currentNode->setCount(d->currentSection->count() - d->currentNode->start());
     d->currentNode = new QGLSceneNode(d->currentNode);
-    d->currentNode->setStart(d->currentSection->count());
+    d->currentNode->setStart(d->currentSection->indexCount());
     d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
@@ -850,8 +848,7 @@ QGLSceneNode *QGLDisplayList::pushNode()
 QGLSceneNode *QGLDisplayList::popNode()
 {
     Q_D(QGLDisplayList);
-    int cnt = d->currentSection->count();
-    d->currentNode->setCount(cnt - d->currentNode->start());
+    int cnt = d->currentSection->indexCount();
     QGLSceneNode *s = d->nodeStack.takeLast();
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)

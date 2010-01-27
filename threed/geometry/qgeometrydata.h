@@ -53,7 +53,6 @@
 QT_BEGIN_NAMESPACE
 
 class QGeometryDataPrivate;
-class QVertexRefs;
 class QLogicalVertex;
 
 namespace QGL
@@ -120,25 +119,33 @@ public:
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
+    QVector3D vertex(int i) const;
 
     QVector3D &normalRef(int i);
     QVector3DArray normals() const;
+    QVector3D normal(int i) const;
 
     QColor4b &colorRef(int i);
     QDataArray<QColor4b> colors() const;
+    QColor4b color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
+    QVector2D texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
 
     float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector3D &vector3DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QCustomDataArray attributes(QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    float floatAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    QVector2D vector2DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    QVector3D vector3DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
 
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
     quint32 fields() const;
     int count() const;
+    int count(QGL::VertexAttribute field) const;
 private:
     void detach();
 

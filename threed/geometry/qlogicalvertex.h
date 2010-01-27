@@ -71,6 +71,9 @@ public:
     inline float &floatAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
     inline QVector2D &vector2DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
     inline QVector3D &vector3DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    inline float floatAttribute(QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    inline QVector2D vector2DAttribute(QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    inline QVector3D vector3DAttribute(QGL::VertexAttribute field = QGL::CustomVertex0) const;
     inline QCustomDataArray::ElementType attributeType(QGL::VertexAttribute field = QGL::CustomVertex0);
 
     inline QVector3D normal() const;
@@ -128,7 +131,7 @@ inline QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, co
 {
     m_data.appendVertex(a);
     m_data.appendNormal(n);
-    m_data.appendNormal(t);
+    m_data.appendTexCoord(t);
 }
 
 inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
@@ -140,12 +143,14 @@ inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
 
 inline QVector3D QLogicalVertex::vertex() const
 {
-    return m_data.vertices().at(m_index);
+    return m_data.vertex(m_index);
 }
 
 inline void QLogicalVertex::setVertex(const QVector3D &v)
 {
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(QGL::Position))
         m_data.appendVertex(v);
     else
         m_data.vertexRef(m_index) = v;
@@ -163,7 +168,9 @@ inline QVariant QLogicalVertex::attribute(QGL::VertexAttribute attr) const
 
 inline void QLogicalVertex::setAttribute(float v, QGL::VertexAttribute attr)
 {
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(attr))
         m_data.appendAttribute(v, attr);
     else
         m_data.floatAttributeRef(m_index, attr) = v;
@@ -171,7 +178,9 @@ inline void QLogicalVertex::setAttribute(float v, QGL::VertexAttribute attr)
 
 inline void QLogicalVertex::setAttribute(const QVector2D &v, QGL::VertexAttribute attr)
 {
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(attr))
         m_data.appendAttribute(v, attr);
     else
         m_data.vector2DAttributeRef(m_index, attr) = v;
@@ -179,7 +188,9 @@ inline void QLogicalVertex::setAttribute(const QVector2D &v, QGL::VertexAttribut
 
 inline void QLogicalVertex::setAttribute(const QVector3D &v, QGL::VertexAttribute attr)
 {
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(attr))
         m_data.appendAttribute(v, attr);
     else
         m_data.vector3DAttributeRef(m_index, attr) = v;
@@ -201,6 +212,21 @@ inline QVector3D &QLogicalVertex::vector3DAttributeRef(QGL::VertexAttribute fiel
     return m_data.vector3DAttributeRef(m_index, field);
 }
 
+inline float QLogicalVertex::floatAttribute(QGL::VertexAttribute field) const
+{
+    return m_data.floatAttribute(m_index, field);
+}
+
+inline QVector2D QLogicalVertex::vector2DAttribute(QGL::VertexAttribute field) const
+{
+    return m_data.vector2DAttribute(m_index, field);
+}
+
+inline QVector3D QLogicalVertex::vector3DAttribute(QGL::VertexAttribute field) const
+{
+    return m_data.vector3DAttribute(m_index, field);
+}
+
 inline QCustomDataArray::ElementType QLogicalVertex::attributeType(QGL::VertexAttribute field)
 {
     return m_data.attributes(field).elementType();
@@ -216,7 +242,9 @@ inline QVector3D QLogicalVertex::normal() const
 
 inline void QLogicalVertex::setNormal(const QVector3D &n)
 {
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(QGL::Normal))
         m_data.appendNormal(n);
     else
         m_data.normalRef(m_index) = n;
@@ -229,13 +257,15 @@ inline QVector3D &QLogicalVertex::normalRef()
 
 inline QVector2D QLogicalVertex::texCoord(QGL::VertexAttribute attr) const
 {
-    return m_data.texCoords(attr).at(m_index);
+    return m_data.texCoord(m_index, attr);
 }
 
 inline void QLogicalVertex::setTexCoord(const QVector2D &t, QGL::VertexAttribute attr)
 {
-    Q_ASSERT(m_index <= m_data.count());
-    if (m_index == m_data.count())
+    Q_ASSERT(attr >= QGL::TextureCoord0 && attr <= QGL::TextureCoord7);
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(attr))
         m_data.appendTexCoord(t, attr);
     else
         m_data.texCoordRef(m_index, attr) = t;
@@ -248,13 +278,14 @@ inline QVector2D &QLogicalVertex::texCoordRef(QGL::VertexAttribute attr)
 
 inline QColor4b QLogicalVertex::color() const
 {
-    return m_data.colors().at(m_index);
+    return m_data.color(m_index);
 }
 
 inline void QLogicalVertex::setColor(const QColor4b &c)
 {
-    Q_ASSERT(m_index <= m_data.count());
-    if (m_index == m_data.count())
+    if (m_index == -1)
+        m_index = 0;
+    if (m_index == m_data.count(QGL::Color))
         m_data.appendColor(c);
     else
         m_data.colorRef(m_index) = c;

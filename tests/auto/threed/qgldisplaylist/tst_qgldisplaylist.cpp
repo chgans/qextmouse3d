@@ -137,7 +137,6 @@ void tst_QGLDisplayList::newNode()
 {
     TestQGLDisplayList displayList;
     displayList.newSection();  // calls new node
-    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
 
     // newly created node works and has all defaults
@@ -153,9 +152,9 @@ void tst_QGLDisplayList::newNode()
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
     node->setMaterial(5);
-    sec->append(QLogicalVertex(QVector3D()));
-    sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));
-    sec->append(QLogicalVertex(QVector3D(4.0f, 5.0f, 6.0f)));
+    QGLPrimitive p;
+    p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+    displayList.addTriangle(p);
 
     // now create a new node
     QGLSceneNode *node2 = displayList.newNode();
@@ -172,9 +171,7 @@ void tst_QGLDisplayList::newNode()
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node2->material(), -1);
 
-    sec->append(QLogicalVertex(QVector3D()));
-    sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));
-    sec->append(QLogicalVertex(QVector3D(4.0f, 5.0f, 6.0f)));
+    displayList.addTriangle(p);
     displayList.newNode();
 
     // confirm that 2nd and last node in chain was also finished properly
@@ -220,15 +217,14 @@ void tst_QGLDisplayList::pushNode()
 {
     TestQGLDisplayList displayList;
     displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
     node->setMaterial(5);
-    sec->append(QLogicalVertex(QVector3D()));
-    sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));
-    sec->append(QLogicalVertex(QVector3D(4.0f, 5.0f, 6.0f)));
+    QGLPrimitive p;
+    p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+    displayList.addTriangle(p);
 
     QGLSceneNode *node2 = displayList.pushNode();
     QCOMPARE(node->start(), 0);
@@ -246,7 +242,6 @@ void tst_QGLDisplayList::popNode()
 {
     TestQGLDisplayList displayList;
     displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
@@ -255,15 +250,13 @@ void tst_QGLDisplayList::popNode()
     node->setLocalTransform(mat);
     node->setUserEffect(eff);
     node->setMaterial(5);
-    sec->append(QLogicalVertex(QVector3D()));
-    sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));
-    sec->append(QLogicalVertex(QVector3D(4.0f, 5.0f, 6.0f)));
+    QGLPrimitive p;
+    p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+    displayList.addTriangle(p);
 
     QGLSceneNode *node2 = displayList.pushNode();
 
-    sec->append(QLogicalVertex(QVector3D()));
-    sec->append(QLogicalVertex(QVector3D(1.0f, 2.0f, 3.0f)));
-    sec->append(QLogicalVertex(QVector3D(4.0f, 5.0f, 6.0f)));
+    displayList.addTriangle(p);
 
     QGLSceneNode *node3 = displayList.popNode();
     QCOMPARE(node2->start(), 3);
@@ -296,9 +289,9 @@ void tst_QGLDisplayList::addTriangle()
 
     displayList.addTriangle(p);
     QCOMPARE(sec->vertices().count(), 3);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), c);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
     QCOMPARE(sec->normals().count(), 3);
     QCOMPARE(sec->indices().size(), 3);
     QCOMPARE(sec->indices()[0], 0);
@@ -307,17 +300,18 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QVector3D d(-1.0f, 1.0f, 0.0f);
+    QVector2D td(0.0f, 1.0f);
     QGLPrimitive q;
-    p.appendVertex(a, c, d);
+    q.appendVertex(a, c, d);
     q.setCommonNormal(norm);
     displayList.addTriangle(q);
     QCOMPARE(sec->vertices().count(), 4);
-    QCOMPARE(sec->vertices().at(3), d);
+    QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
-    QCOMPARE(sec->normals().at(0).normalized(), norm);
-    QCOMPARE(sec->normals().at(1).normalized(), norm);
-    QCOMPARE(sec->normals().at(2).normalized(), norm);
-    QCOMPARE(sec->normals().at(3).normalized(), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
+    QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->indices().size(), 6);
     QCOMPARE(sec->indices()[3], 0);
     QCOMPARE(sec->indices()[4], 2);
@@ -335,13 +329,13 @@ void tst_QGLDisplayList::addTriangle()
     r.appendTexCoord(ta, tb, tc);
     displayList.addTriangle(r);
     QCOMPARE(sec->vertices().count(), 3);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), c);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
     QCOMPARE(sec->normals().count(), 3);
-    QCOMPARE(sec->normals().at(0).normalized(), norm);
-    QCOMPARE(sec->normals().at(1).normalized(), norm);
-    QCOMPARE(sec->normals().at(2).normalized(), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
     QCOMPARE(sec->texCoords().count(), 3);
     QCOMPARE(sec->texCoords().at(0), ta);
     QCOMPARE(sec->texCoords().at(1), tb);
@@ -355,15 +349,15 @@ void tst_QGLDisplayList::addTriangle()
 
     QGLPrimitive s;
     s.appendVertex(a, b, d);
-    s.appendTexCoord(ta, tb, tc);
+    s.appendTexCoord(ta, tb, td);
     displayList.addTriangle(s);
     QCOMPARE(sec->vertices().count(), 4);
-    QCOMPARE(sec->vertices().at(3), d);
+    QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
-    QCOMPARE(sec->normals().at(0).normalized(), norm);
-    QCOMPARE(sec->normals().at(1).normalized(), norm);
-    QCOMPARE(sec->normals().at(2).normalized(), norm);
-    QCOMPARE(sec->normals().at(3).normalized(), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
+    QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->texCoords().count(), 4);
     QCOMPARE(sec->texCoords().at(0), QVector2D(0.0f, 0.0f));
     QCOMPARE(sec->texCoords().at(1), QVector2D(1.0f, 0.0f));
@@ -371,7 +365,7 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->texCoords().at(3), QVector2D(0.0f, 1.0f));
     QCOMPARE(sec->indices().size(), 6);
     QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 2);
+    QCOMPARE(sec->indices()[4], 1);
     QCOMPARE(sec->indices()[5], 3);
     QCOMPARE(sec->fields(),
              QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
@@ -397,15 +391,15 @@ void tst_QGLDisplayList::addQuad()
 
     displayList.addQuad(p);
     QCOMPARE(sec->vertices().count(), 4);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), c);
-    QCOMPARE(sec->vertices().at(3), d);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
+    QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
-    QCOMPARE(sec->normals().at(0).normalized(), norm);
-    QCOMPARE(sec->normals().at(1).normalized(), norm);
-    QCOMPARE(sec->normals().at(2).normalized(), norm);
-    QCOMPARE(sec->normals().at(3).normalized(), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
+    QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->indices().size(), 6);
     QCOMPARE(sec->indices()[3], 0);
     QCOMPARE(sec->indices()[0], 0);
@@ -432,15 +426,15 @@ void tst_QGLDisplayList::addQuad()
     displayList.addQuad(q);
 
     QCOMPARE(sec->vertices().count(), 4);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), c);
-    QCOMPARE(sec->vertices().at(3), d);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
+    QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
-    QCOMPARE(sec->normals().at(0).normalized(), norm);
-    QCOMPARE(sec->normals().at(1).normalized(), norm);
-    QCOMPARE(sec->normals().at(2).normalized(), norm);
-    QCOMPARE(sec->normals().at(3).normalized(), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
+    QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->texCoords().count(), 4);
     QCOMPARE(sec->texCoords().at(0), ta);
     QCOMPARE(sec->texCoords().at(1), tb);
@@ -490,25 +484,25 @@ void tst_QGLDisplayList::addTriangleFan()
     displayList.addTriangleFan(p);
     sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 9);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), center);
-    QCOMPARE(sec->vertices().at(3), b);
-    QCOMPARE(sec->vertices().at(4), c);
-    QCOMPARE(sec->vertices().at(5), center);
-    QCOMPARE(sec->vertices().at(6), c);
-    QCOMPARE(sec->vertices().at(7), d);
-    QCOMPARE(sec->vertices().at(8), center);
+    QCOMPARE(sec->vertex(0), center);
+    QCOMPARE(sec->vertex(1), a);
+    QCOMPARE(sec->vertex(2), b);
+    QCOMPARE(sec->vertex(3), center);
+    QCOMPARE(sec->vertex(4), b);
+    QCOMPARE(sec->vertex(5), c);
+    QCOMPARE(sec->vertex(6), center);
+    QCOMPARE(sec->vertex(7), c);
+    QCOMPARE(sec->vertex(8), d);
     QCOMPARE(sec->normals().count(), 9);
-    QCOMPARE(sec->normals().at(0), n1);
-    QCOMPARE(sec->normals().at(1), n1);
-    QCOMPARE(sec->normals().at(2), n1);
-    QCOMPARE(sec->normals().at(3), n2);
-    QCOMPARE(sec->normals().at(4), n2);
-    QCOMPARE(sec->normals().at(5), n2);
-    QCOMPARE(sec->normals().at(6), n3);
-    QCOMPARE(sec->normals().at(7), n3);
-    QCOMPARE(sec->normals().at(8), n3);
+    QCOMPARE(sec->normal(0), n1);
+    QCOMPARE(sec->normal(1), n1);
+    QCOMPARE(sec->normal(2), n1);
+    QCOMPARE(sec->normal(3), n2);
+    QCOMPARE(sec->normal(4), n2);
+    QCOMPARE(sec->normal(5), n2);
+    QCOMPARE(sec->normal(6), n3);
+    QCOMPARE(sec->normal(7), n3);
+    QCOMPARE(sec->normal(8), n3);
     QCOMPARE(sec->indices().size(), 9);
     QCOMPARE(sec->indices()[0], 0);
     QCOMPARE(sec->indices()[1], 1);
@@ -553,30 +547,30 @@ void tst_QGLDisplayList::addTriangulatedFace()
     displayList.addTriangulatedFace(p);
     sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 5);
-    QCOMPARE(sec->vertices().at(0), a);
-    QCOMPARE(sec->vertices().at(1), b);
-    QCOMPARE(sec->vertices().at(2), center);
-    QCOMPARE(sec->vertices().at(3), c);
-    QCOMPARE(sec->vertices().at(4), d);
+    QCOMPARE(sec->vertex(0), center);
+    QCOMPARE(sec->vertex(1), a);
+    QCOMPARE(sec->vertex(2), b);
+    QCOMPARE(sec->vertex(3), c);
+    QCOMPARE(sec->vertex(4), d);
     QCOMPARE(sec->normals().count(), 5);
-    QCOMPARE(sec->normals().at(0), n);
-    QCOMPARE(sec->normals().at(1), n);
-    QCOMPARE(sec->normals().at(2), n);
-    QCOMPARE(sec->normals().at(3), n);
-    QCOMPARE(sec->normals().at(4), n);
+    QCOMPARE(sec->normal(0), n);
+    QCOMPARE(sec->normal(1), n);
+    QCOMPARE(sec->normal(2), n);
+    QCOMPARE(sec->normal(3), n);
+    QCOMPARE(sec->normal(4), n);
     QCOMPARE(sec->indices().size(), 12);
     QCOMPARE(sec->indices()[0], 0);
     QCOMPARE(sec->indices()[1], 1);
     QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->indices()[3], 1);
-    QCOMPARE(sec->indices()[4], 3);
-    QCOMPARE(sec->indices()[5], 2);
-    QCOMPARE(sec->indices()[6], 3);
-    QCOMPARE(sec->indices()[7], 4);
-    QCOMPARE(sec->indices()[8], 2);
-    QCOMPARE(sec->indices()[9], 4);
-    QCOMPARE(sec->indices()[10], 0);
-    QCOMPARE(sec->indices()[11], 2);
+    QCOMPARE(sec->indices()[3], 0);
+    QCOMPARE(sec->indices()[4], 2);
+    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE(sec->indices()[6], 0);
+    QCOMPARE(sec->indices()[7], 3);
+    QCOMPARE(sec->indices()[8], 4);
+    QCOMPARE(sec->indices()[9], 0);
+    QCOMPARE(sec->indices()[10], 4);
+    QCOMPARE(sec->indices()[11], 1);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
@@ -605,6 +599,7 @@ void tst_QGLDisplayList::extrude()
     QCOMPARE(sec->indices().size(), 0);
 
     p.appendVertex(a, b, c, d);
+    edges = p.vertices();
     p.appendVertex(a);
     q = p.translated(-n);
 
@@ -617,7 +612,7 @@ void tst_QGLDisplayList::extrude()
     displayList.addQuadsZipped(p, q);
     sec->normalizeNormals();
 
-    QCOMPARE(sec->vertices().count(), 8);
+    QCOMPARE(sec->count(), 8);
     QVector3DArray vrts = sec->vertices();
     QVector3DArray nrms = sec->normals();
     QGLIndexArray inxs = sec->indices();
@@ -718,7 +713,10 @@ void tst_QGLDisplayList::finalize()
     displayList.newSection();
     QGLSceneNode *node2 = displayList.currentNode();
 
-    displayList.addQuadsZipped(p, p.translated(-n));
+    QGLPrimitive s;
+    s.appendVertex(a, b, c, d);
+    s.appendVertex(a);
+    displayList.addQuadsZipped(s, s.translated(-n));
 
     displayList.newSection();
     QGLSceneNode *node3 = displayList.currentNode();
@@ -746,8 +744,8 @@ void tst_QGLDisplayList::finalize()
     // triangulated face
     int tf = ids[node->start()]; // beginning of triangulated face
     QCOMPARE(node->count(), 12);
-    QCOMPARE(verts.vector3DAt(tf, QGL::Position), a);
-    QCOMPARE(verts.vector3DAt(tf + 2, QGL::Position), center);
+    QCOMPARE(verts.vector3DAt(tf, QGL::Position), center);
+    QCOMPARE(verts.vector3DAt(tf + 2, QGL::Position), b);
     QCOMPARE(verts.vector3DAt(tf, QGL::Normal), n0);
     QCOMPARE(verts.vector3DAt(tf + 2, QGL::Normal), n0);
 
