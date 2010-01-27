@@ -77,7 +77,7 @@ QGLPrimitive::QGLPrimitive()
 }
 
 /*!
-    \fn ~QGLPrimitive()
+    \fn QGLPrimitive::~QGLPrimitive()
     Destroys this QGLPrimitive reclaiming any resources.
 */
 
@@ -97,23 +97,13 @@ QVector3D QGLPrimitive::center() const
 }
 
 /*!
-    \fn void setFlags(QGL::OperationFlags flags)
+    \fn void QGLPrimitive::setFlags(QGL::OperationFlags flags)
     Sets the primitive's operation flags to \a flags.
 */
 
 /*!
-    \fn QGL::OperationFlags flags() const
+    \fn QGL::OperationFlags QGLPrimitive::flags() const
     Returns the primitive's operation flags, or QGL::NO_FLAG if none has been set.
-*/
-
-/*!
-    \fn void setCommonNormal(const QVector3D &n)
-    Sets the primitive's common normal to \a n.
-*/
-
-/*!
-    \fn QVector3D commonNormal() const
-    Returns the primitive's common normal, or a null QVector3D if none has been set.
 */
 
 /*!

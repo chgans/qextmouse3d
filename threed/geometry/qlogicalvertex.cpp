@@ -127,13 +127,9 @@
 */
 
 /*!
-    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color, const QVector3D &n, const QVector2D &t)
+    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
-    color value set to \a color, normal set to \a n, and texture set
-    to \a t.  By default \a n is the null QVector3D, and \a t is the
-    InvalidTexCoord.  If \a n is null then hasType(QLogicalVertex::Normal)
-    will return false.  Likewise if \a t is the InvalidTexCoord then
-    hasType(QLogicalVertex::Texture) will return false.
+    color value set to \a color.
 */
 
 /*!
@@ -152,7 +148,6 @@
 */
 
 /*!
-    \fn QLogicalVertex::operator QVector3D () const
     Returns a copy of the vertex value, by casting as a QVector3D.  This
     allows passing of a QLogicalVertex to functions that expect a QVector3D.
 */

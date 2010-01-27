@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2009 Nokia Corporation and/or its subsidiarray(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -131,128 +131,126 @@
 */
 
 /*!
-    \fn QGLOperation(QGLDisplayList *displayList, QGL::Operation operation)
+    \fn QGLOperation::QGLOperation(QGLDisplayList *displayList, QGL::Operation operation)
     Construct a new QGLOperation that will call functions on \a displayList
     to perform \a operation.
 */
 
 /*!
-    \fn QGLOperation(QGLDisplayList *displayList, QGL::Operation operation)
-    Construct a new QGLOperation that will call functions on \a displayList
-    to perform \a operation.
-*/
-
-/*!
-    \fn ~QGLOperation()
+    \fn QGLOperation::~QGLOperation()
     Destroy this QGLOperation, recovering any resources.  This function also
     takes care of calling QGLDisplayList::end() by calling the end() function.
 */
 
 /*!
-    \fn void setFlags(QGL::OperationFlags flags)
+    \fn void QGLOperation::setFlags(QGL::OperationFlags flags)
     Sets the \a flags for this operation by calling
     QGLDisplayList::setFlags()
 */
 
 /*!
-    \fn QGL::OperationFlags flags() const
+    \fn QGL::OperationFlags QGLOperation::flags() const
     Returns the currently set flags by calling QGLDisplayList::flags()
 */
 
 /*!
-    \fn void addVertex(const QVector3D &vertex)
+    \fn void QGLOperation::addVertex(const QVector3D &vertex)
     Adds a \a vertex to this operation by calling
     QGLDisplayList::addVertex()
 */
 
 /*!
-    \fn void addNormal(const QVector3D &normal)
+    \fn void QGLOperation::addNormal(const QVector3D &normal)
     Adds a \a normal to this operation by calling
     QGLDisplayList::addNormal()
 */
 
 /*!
-    \fn void addColor(const QColor4b &color)
+    \fn void QGLOperation::addColor(const QColor4b &color)
     Adds a \a color to this operation by calling
     QGLDisplayList::addColor()
 */
 
 /*!
-    \fn void addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute attribute)
+    \fn void QGLOperation::addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute attribute)
     Adds a texture coordinate \a texCoord \a attribute to this operation by calling
     QGLDisplayList::addTexCoord(texCoord, attribute)
 */
 
 /*!
-    \fn void addAttribute(const QVector3D &value, QGL::VertexAttribute attribute)
+    \fn void QGLOperation::addAttribute(const QVector3D &value, QGL::VertexAttribute attribute)
     Adds a custom attribute \a value \a attribute to this operation by calling
     QGLDisplayList::addAttribute(value, attribute)
 */
 
 /*!
-    \fn void addVertexArray(const QDataArray<QVector3D> &vertexArray)
-    Adds \a vertexArray to this operation by calling
-    QGLDisplayList::addVertexArray(vertexArray)
+    \fn void QGLOperation::addVertexArray(const QVector3DArray &array)
+    Adds \a array to this operation by calling QGLDisplayList::addVertexArray()
 */
 
 /*!
-    \fn void addNormalArray(const QDataArray<QVector3D> &normalArray)
-    Adds \a normalArray to this operation by calling
+    \fn void QGLOperation::addNormalArray(const QVector3DArray &array)
+    Adds \a array to this operation by calling
     QGLDisplayList::addNormalArray(normalArray)
 */
 
 /*!
-    \fn void addColorArray(const QDataArray<QColor4b> &colorArray)
+    \fn void QGLOperation::addColorArray(const QDataArray<QColor4b> &colorArray)
     Adds \a colorArray to this operation by calling
     QGLDisplayList::addColorArray(colorArray)
 */
 
 /*!
-    \fn void addTexCoordArray(const QDataArray<QVector2D> &texCoordArray, QGL::VertexAttribute attribute)
-    Adds \a texCoordArray at \a attribute to this operation by calling
-    QGLDisplayList::addTexCoordArray(texCoordArray, attribute)
+    \fn void QGLOperation::addTexCoordArray(const QVector2DArray &array, QGL::VertexAttribute attribute)
+    Adds \a array at \a attribute to this operation by calling
+    QGLDisplayList::addTexCoordArray(texCoordArray, attribute).  By
+    default, \a attribute is QGL::TextureCoord0.
 */
 
 /*!
-    \fn void addAttributeArray(const QDataArray<QVector3D> &attributeArray, QGL::VertexAttribute attribute)
-    Adds a \a attributeArray at \a attribute to this operation by calling
-    QGLDisplayList::addAttributeArray(attributeArray, attribute)
+    \fn void QGLOperation::addAttributeArray(const QCustomDataArray &array, QGL::VertexAttribute attribute)
+    Adds a \a array at \a attribute to this operation by calling
+    QGLDisplayList::addAttributeArray(attributeArray, attribute).  By
+    default \a attribute is QGL::CustomVertex0.
 */
 
 /*!
-    \fn void end()
+    \fn void QGLOperation::end()
     Completes this operation by calling QGLDisplayList::end().  This function is
     called automatically by ~QGLOperation.
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &ary)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &array)
     \relates QGLOperation
-    Calls QGLOperation::addVertexArray() on \a op with argument \a ary.
+    Calls QGLOperation::addVertexArray() on \a op with argument \a array.
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &ary)
-    \relates QGLOperation
-*/
-
-/*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &ary)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &array)
+    Calls QGLOperation::addTexCoordArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &ary)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &array)
+    Calls QGLOperation::addColorArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &ary)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &array)
+    Calls QGLOperation::addColorArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &ary)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &array)
+    \relates QGLOperation
+*/
+
+/*!
+    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &array)
     \relates QGLOperation
 */
 

@@ -60,11 +60,11 @@ public:
     inline void addTexCoord(const QVector2D &, QGL::VertexAttribute);
     inline void addAttribute(const QVector3D &, QGL::VertexAttribute);
 
-    inline void addVertexArray(const QDataArray<QVector3D> &);
-    inline void addNormalArray(const QDataArray<QVector3D> &);
+    inline void addVertexArray(const QVector3DArray &);
+    inline void addNormalArray(const QVector3DArray &);
     inline void addColorArray(const QDataArray<QColor4b> &);
-    inline void addTexCoordArray(const QDataArray<QVector2D> &, QGL::VertexAttribute);
-    inline void addAttributeArray(const QDataArray<QVector3D> &, QGL::VertexAttribute);
+    inline void addTexCoordArray(const QVector2DArray &, QGL::VertexAttribute = QGL::TextureCoord0);
+    inline void addAttributeArray(const QCustomDataArray &, QGL::VertexAttribute = QGL::CustomVertex0);
 
     inline void end();
 private:
@@ -113,12 +113,12 @@ inline void QGLOperation::addTexCoord(const QVector2D &texCoord,
     m_list->addTexCoord(texCoord, attr);
 }
 
-inline void QGLOperation::addVertexArray(const QDataArray<QVector3D> &vertices)
+inline void QGLOperation::addVertexArray(const QVector3DArray &vertices)
 {
     m_list->addVertexArray(vertices);
 }
 
-inline void QGLOperation::addNormalArray(const QDataArray<QVector3D> &normals)
+inline void QGLOperation::addNormalArray(const QVector3DArray &normals)
 {
     m_list->addNormalArray(normals);
 }
@@ -128,7 +128,7 @@ inline void QGLOperation::addColorArray(const QDataArray<QColor4b> &colors)
     m_list->addColorArray(colors);
 }
 
-inline void QGLOperation::addTexCoordArray(const QDataArray<QVector2D> &texCoords,
+inline void QGLOperation::addTexCoordArray(const QVector2DArray &texCoords,
                                            QGL::VertexAttribute attr)
 {
     m_list->addTexCoordArray(texCoords, attr);

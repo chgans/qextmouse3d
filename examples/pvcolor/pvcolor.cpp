@@ -62,6 +62,7 @@ PVColorView::PVColorView(QWidget *parent)
     //! [0]
     QGLDisplayList *displayList = buildGeometry();
     displayList->setParent(pvScene);
+    //! [0]
     {
         // rotate the q around so its label shows; and down
         // so the base is facing down
@@ -71,9 +72,7 @@ PVColorView::PVColorView(QWidget *parent)
         mat.rotate(q2 * q1);
         displayList->setLocalTransform(mat);
     }
-    return;
-
-    /*
+    return;  // remove me
 
     // display a copy of the q to the left
     QGLSceneNode *node = new QGLSceneNode(pvScene);
@@ -92,9 +91,6 @@ PVColorView::PVColorView(QWidget *parent)
         mat.translate(2.0f, 0.0f, -2.0f);
         node->setLocalTransform(mat);
     }
-    //! [0]
-
-    */
 
     // rotate the whole scene about x-axis so that
     // q tops are visible when scene is first displayed
@@ -153,7 +149,6 @@ QGLDisplayList *PVColorView::buildGeometry()
 
     // default effect for q where no other effect set
     qList->setEffect(QGL::FlatPerVertexColor);
-    //qList->setEffect(QGL::LitMaterial);
     //! [2]
 
     const QVector3D extrudeVec(0.0f, 0.0f, qHeight);
@@ -199,7 +194,6 @@ QGLDisplayList *PVColorView::buildGeometry()
     // create the sides of the Q (extruding is a translate + QUADS_ZIPPED) and
     // finally draw the obverse (away facing) back-faces.
 
-    //! [3]
     // Some of the points generated for the inside and outside edges of the Q
     // fall inside the tail - so they are discarded, meaning the inner has
     // likely less points than the outer Edge, depending on thickness, number
@@ -283,6 +277,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     bottomQIEdge.reverse();
     bottomQOEdge.reverse();
     bottomTailEdge.reverse();
+    //! [3]
     qList->newSection();
     {
         // create the bottom face of the tail of the Q

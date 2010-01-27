@@ -205,32 +205,4 @@ QT_BEGIN_NAMESPACE
     \value Faceted The vertices have lighting normals seperate for each face.
 */
 
-/*!
-    \typedef QGL::VectorArray
-    \relates QGLDisplayList
-
-    Synonym for QVector<QVector3D>
-*/
-
-/*!
-    \typedef QGL::TexCoordArray
-    \relates QGLDisplayList
-
-    Synonym for QVector<QVector2D>
-*/
-
-/*!
-    \typedef QGL::ColorArray
-    \relates QGLDisplayList
-
-    Synonym for QVector<QColor4b>
-*/
-
-/*!
-    \typedef QGL::IndexArray
-    \relates QGLDisplayList
-
-    Synonym for QVector<int>
-*/
-
 QT_END_NAMESPACE

@@ -310,6 +310,8 @@ QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
     , finalizeNeeded(true)
     , currentSection(0)
     , currentNode(0)
+    , currentOperation(0)
+    , operation(QGL::NO_OP)
 {
 }
 
