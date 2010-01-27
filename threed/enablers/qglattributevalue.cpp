@@ -74,14 +74,14 @@ QT_BEGIN_NAMESPACE
 
     QGLAttributeValue encapsulates these four values so that they can
     be easily manipulated as a set during OpenGL painting operations.
-    Constructors are provided for converting QDataArray and
+    Constructors are provided for converting QArray and
     QCustomDataArray objects into an attribute value.
 
     Because the data() value is a raw pointer to arbitrary memory,
     care should be taken that the memory remains valid until the
     QGLAttributeValue is no longer required.
 
-    \sa QDataArray, QCustomDataArray
+    \sa QArray, QCustomDataArray
 */
 
 /*!
@@ -95,7 +95,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<float>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<float>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting size() to 1, type() to QGL::Float, and stride() to zero.
@@ -105,7 +105,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector2D>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QVector2D>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting size() to 2, type() to QGL::Float, and stride() to zero.
@@ -115,7 +115,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector3D>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QVector3D>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting size() to 3, type() to QGL::Float, and stride() to zero.
@@ -125,7 +125,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QVector4D>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting size() to 4, type() to QGL::Float, and stride() to zero.
@@ -135,7 +135,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QDataArray<QColor4b>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QColor4b>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting size() to 4, type() to QGL::UByte, and stride() to zero.

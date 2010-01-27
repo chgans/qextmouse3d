@@ -77,15 +77,15 @@ public:
     void setUsagePattern(QGLBuffer::UsagePattern value);
 
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QDataArray<float>& value);
+                      const QArray<float>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QDataArray<QVector2D>& value);
+                      const QArray<QVector2D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QDataArray<QVector3D>& value);
+                      const QArray<QVector3D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QDataArray<QVector4D>& value);
+                      const QArray<QVector4D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QDataArray<QColor4b>& value);
+                      const QArray<QColor4b>& value);
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
 

@@ -861,7 +861,7 @@ QGLVertexArray QGLVertexArray::interleaved(const QGLVertexArray& other) const
 */
 void QGLVertexArray::setRawData(const float *data, int count)
 {
-    m_data = QDataArray<float>::fromRawData(data, count);
+    m_data = QArray<float>::fromRawData(data, count);
 }
 
 /*!
@@ -937,7 +937,7 @@ QGLVertexArray QGLVertexArray::toBufferForm() const
     // of "array.constData() + field.offset()" to generate an offset
     // into a vertex buffer rather than a client-side pointer.
     QGLVertexArray result;
-    result.m_data = QDataArray<float>::fromRawData(0, m_data.count());
+    result.m_data = QArray<float>::fromRawData(0, m_data.count());
     result.m_fields = m_fields;
     return result;
 }

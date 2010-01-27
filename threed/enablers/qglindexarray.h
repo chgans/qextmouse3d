@@ -102,7 +102,7 @@ public:
     inline bool isUploaded() const;
 
 private:
-    QDataArray<ElementType> m_data;
+    QArray<ElementType> m_data;
     mutable QGLReferencedBuffer *m_buffer;
 
     inline void detachBuffer();

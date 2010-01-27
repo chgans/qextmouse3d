@@ -11,6 +11,7 @@ HEADERS += \
     qgltexture2d.h \
     qgltexturecube.h \
     qglvertexbuffer.h \
+    qarray.h \
     qcustomdataarray.h \
     qdataarray.h \
     qvectorarray.h
@@ -23,7 +24,7 @@ SOURCES += qglattributevalue.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
     qglvertexbuffer.cpp \
+    qarray.cpp \
     qcustomdataarray.cpp \
-    qdataarray.cpp \
     qvectorarray.cpp
 PRIVATE_HEADERS += qgltexture2d_p.h

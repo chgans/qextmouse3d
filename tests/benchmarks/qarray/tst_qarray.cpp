@@ -45,7 +45,7 @@
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qvector.h>
 #include <QtCore/qlist.h>
-#include "qdataarray.h"
+#include "qarray.h"
 #include <vector>
 
 // Needs to be put into qvector3d.h.  Fix in Qt 4.7.
@@ -53,12 +53,12 @@ Q_DECLARE_TYPEINFO(QVector3D, Q_MOVABLE_TYPE);
 
 //#define TEST_QLIST 1
 
-class tst_QDataArray : public QObject
+class tst_QArray : public QObject
 {
     Q_OBJECT
 public:
-    tst_QDataArray() {}
-    virtual ~tst_QDataArray() {}
+    tst_QArray() {}
+    virtual ~tst_QArray() {}
 
 private slots:
     void append_data();
@@ -82,11 +82,12 @@ enum {
     Test_Vector,
     Test_List,
     Test_VarLengthArray,
-    Test_DataArray,
+    Test_Array,
+    Test_UnsharedArray,
     Test_STLVector
 };
 
-void tst_QDataArray::append_data()
+void tst_QArray::append_data()
 {
     QTest::addColumn<int>("size");
     QTest::addColumn<int>("type");
@@ -111,9 +112,13 @@ void tst_QDataArray::append_data()
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
-        name = "QDataArray--";
+        name = "QArray--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_DataArray);
+        QTest::newRow(name.constData()) << size << int(Test_Array);
+
+        name = "QUnsharedArray--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_UnsharedArray);
 
         name = "std::vector--";
         name += QString::number(size);
@@ -121,7 +126,7 @@ void tst_QDataArray::append_data()
     }
 }
 
-void tst_QDataArray::append()
+void tst_QArray::append()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -150,8 +155,14 @@ void tst_QDataArray::append()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<float> buffer;
+    } else if (type == Test_Array) {
+        QArray<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
@@ -165,12 +176,12 @@ void tst_QDataArray::append()
     }
 }
 
-void tst_QDataArray::appendReserved_data()
+void tst_QArray::appendReserved_data()
 {
     append_data();
 }
 
-void tst_QDataArray::appendReserved()
+void tst_QArray::appendReserved()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -202,8 +213,15 @@ void tst_QDataArray::appendReserved()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<float> buffer;
+    } else if (type == Test_Array) {
+        QArray<float> buffer;
+        buffer.reserve(size);
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<float> buffer;
         buffer.reserve(size);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
@@ -219,12 +237,12 @@ void tst_QDataArray::appendReserved()
     }
 }
 
-void tst_QDataArray::appendVector3D_data()
+void tst_QArray::appendVector3D_data()
 {
     append_data();
 }
 
-void tst_QDataArray::appendVector3D()
+void tst_QArray::appendVector3D()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -253,8 +271,14 @@ void tst_QDataArray::appendVector3D()
             for (int i = 0; i < size; ++i)
                 buffer.append(QVector3D(i, i + 1, i + 2));
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<QVector3D> buffer;
+    } else if (type == Test_Array) {
+        QArray<QVector3D> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(QVector3D(i, i + 1, i + 2));
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<QVector3D> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(QVector3D(i, i + 1, i + 2));
@@ -268,7 +292,7 @@ void tst_QDataArray::appendVector3D()
     }
 }
 
-void tst_QDataArray::appendSmall_data()
+void tst_QArray::appendSmall_data()
 {
     QTest::addColumn<int>("size");
     QTest::addColumn<int>("type");
@@ -293,9 +317,13 @@ void tst_QDataArray::appendSmall_data()
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
-        name = "QDataArray--";
+        name = "QArray--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_DataArray);
+        QTest::newRow(name.constData()) << size << int(Test_Array);
+
+        name = "QUnsharedArray--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_UnsharedArray);
 
         name = "std::vector--";
         name += QString::number(size);
@@ -303,17 +331,17 @@ void tst_QDataArray::appendSmall_data()
     }
 }
 
-void tst_QDataArray::appendSmall()
+void tst_QArray::appendSmall()
 {
     append();
 }
 
-void tst_QDataArray::appendFourAtATime_data()
+void tst_QArray::appendFourAtATime_data()
 {
     append_data();
 }
 
-void tst_QDataArray::appendFourAtATime()
+void tst_QArray::appendFourAtATime()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -358,8 +386,16 @@ void tst_QDataArray::appendFourAtATime()
                 buffer.append(float(i + 3));
             }
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<float> buffer;
+    } else if (type == Test_Array) {
+        QArray<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; i += 4) {
+                buffer.append(float(i), float(i + 1),
+                              float(i + 2), float(i + 3));
+            }
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; i += 4) {
                 buffer.append(float(i), float(i + 1),
@@ -379,12 +415,12 @@ void tst_QDataArray::appendFourAtATime()
     }
 }
 
-void tst_QDataArray::clear_data()
+void tst_QArray::clear_data()
 {
     append_data();
 }
 
-void tst_QDataArray::clear()
+void tst_QArray::clear()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -425,8 +461,17 @@ void tst_QDataArray::clear()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<float> buffer;
+    } else if (type == Test_Array) {
+        QArray<float> buffer;
+        QBENCHMARK {
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+            buffer.resize(0);
+            for (int i = 0; i < size; ++i)
+                buffer.append(float(i));
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
@@ -446,7 +491,7 @@ void tst_QDataArray::clear()
     }
 }
 
-void tst_QDataArray::randomAccess_data()
+void tst_QArray::randomAccess_data()
 {
     QTest::addColumn<int>("type");
 
@@ -456,14 +501,15 @@ void tst_QDataArray::randomAccess_data()
     QTest::newRow("QList") << int(Test_List);
 #endif
     QTest::newRow("QVarLengthArray") << int(Test_VarLengthArray);
-    QTest::newRow("QDataArray") << int(Test_DataArray);
+    QTest::newRow("QArray") << int(Test_Array);
+    QTest::newRow("QUnsharedArray") << int(Test_UnsharedArray);
     QTest::newRow("std::vector") << int(Test_STLVector);
 }
 
 // To force the values below to be computed and stored.
 static int volatile finalSum;
 
-void tst_QDataArray::randomAccess()
+void tst_QArray::randomAccess()
 {
     QFETCH(int, type);
 
@@ -515,8 +561,8 @@ void tst_QDataArray::randomAccess()
                 sum += buffer[i];
             finalSum = sum;
         }
-    } else if (type == Test_DataArray) {
-        QDataArray<int> buffer;
+    } else if (type == Test_Array) {
+        QArray<int> buffer;
         for (int i = 0; i < 10000; ++i)
             buffer.append(i);
         QBENCHMARK {
@@ -525,6 +571,18 @@ void tst_QDataArray::randomAccess()
             int sum = 0;
             for (int i = 0; i < 10000; ++i)
                 sum += buffer.at(i);
+            finalSum = sum;
+        }
+    } else if (type == Test_UnsharedArray) {
+        QUnsharedArray<int> buffer;
+        for (int i = 0; i < 10000; ++i)
+            buffer.append(i);
+        QBENCHMARK {
+            for (int i = 10; i < 10000; ++i)
+                buffer[i] = buffer[i - 10] + buffer[i - 4] * 2;
+            int sum = 0;
+            for (int i = 0; i < 10000; ++i)
+                sum += buffer[i];
             finalSum = sum;
         }
     } else if (type == Test_STLVector) {
@@ -542,6 +600,6 @@ void tst_QDataArray::randomAccess()
     }
 }
 
-QTEST_MAIN(tst_QDataArray)
+QTEST_MAIN(tst_QArray)
 
-#include "tst_qdataarray.moc"
+#include "tst_qarray.moc"

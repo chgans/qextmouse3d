@@ -3,6 +3,7 @@
 #include <QStack>
 #include <QList>
 #include <QGLShaderProgram>
+#include "qglcolladafxeffect_p.h"
 #include "qglshaderprogrameffect.h"
 
 class QXmlStreamReader;
