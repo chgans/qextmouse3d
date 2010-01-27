@@ -170,6 +170,7 @@ void tst_QArray::create()
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
     QVERIFY(array.constData() != 0);
     QVERIFY(array.data() == array.constData());
+    QVERIFY(((const QArray<float> *)&array)->data() == array.constData());
 
     // The current constData() pointer should be pointing into
     // the middle of "array" at the m_prealloc structure.
@@ -185,6 +186,7 @@ void tst_QArray::create()
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
     QVERIFY(array.constData() != 0);
     QVERIFY(array.data() == array.constData());
+    QVERIFY(((const QArray<float> *)&array)->data() == array.constData());
 
     // Create another array that is filled with an initial value.
     QArray<QVector3D> array2(100, QVector3D(1.0f, 2.0f, 3.0f));
@@ -194,6 +196,7 @@ void tst_QArray::create()
     QVERIFY(array2.capacity() >= 100);
     QVERIFY(array2.constData() != 0);
     QVERIFY(array2.data() == array2.constData());
+    QVERIFY(((const QArray<QVector3D> *)&array2)->data() == array2.constData());
     for (int index = 0; index < 100; ++index)
         QVERIFY(array2.at(index) == QVector3D(1.0f, 2.0f, 3.0f));
 
@@ -278,7 +281,10 @@ void tst_QArray::append()
     QCOMPARE(array.size(), array.count());
 
     // Make two copies of the array.
+    QVERIFY(array.isDetached());
     QArray<float> array2(array);
+    QVERIFY(!array.isDetached());
+    QVERIFY(!array2.isDetached());
     QCOMPARE(array2.count(), ExpectedMinCapacity + 1 + 1000);
     QCOMPARE(array2.size(), array2.count());
     QVERIFY(!array2.isEmpty());
@@ -297,6 +303,7 @@ void tst_QArray::append()
 
     // Add another item to the original and check that the copy is unchanged.
     array << float(1500.0f);
+    QVERIFY(array.isDetached());
     QCOMPARE(array.count(), ExpectedMinCapacity + 1 + 1000 + 1);
     QCOMPARE(array2.count(), ExpectedMinCapacity + 1 + 1000);
     QCOMPARE(array3.count(), ExpectedMinCapacity + 1 + 1000);
@@ -309,17 +316,26 @@ void tst_QArray::append()
 
     // Check that the original and the copy contain the right values.
     for (index = 0; index < ExpectedMinCapacity; ++index) {
-        QCOMPARE(array[index], float(index));
-        QCOMPARE(array2[index], float(index));
-        QCOMPARE(array3[index], float(index));
+        QCOMPARE(array.at(index), float(index));
+        QCOMPARE(array2.at(index), float(index));
+        QCOMPARE(array3.at(index), float(index));
     }
-    QCOMPARE(array[ExpectedMinCapacity], 1000.0f);
-    QCOMPARE(array2[ExpectedMinCapacity], 1000.0f);
-    QCOMPARE(array3[ExpectedMinCapacity], 1000.0f);
+    QCOMPARE(array.at(ExpectedMinCapacity), 1000.0f);
+    QCOMPARE(array2.at(ExpectedMinCapacity), 1000.0f);
+    QCOMPARE(array3.at(ExpectedMinCapacity), 1000.0f);
     for (index = 0; index < 1000; ++index) {
-        QCOMPARE(array[index + ExpectedMinCapacity + 1], float(index));
+        QCOMPARE(array.at(index + ExpectedMinCapacity + 1), float(index));
     }
     QCOMPARE(array[ExpectedMinCapacity + 1000 + 1], 1500.0f);
+
+    // Check the detach conditions.
+    QVERIFY(!array2.isDetached());
+    QVERIFY(!array3.isDetached());
+    array3.append(1.0f);
+    QVERIFY(array3.isDetached());
+    QVERIFY(!array2.isDetached()); // Still thinks it is shared.
+    array2.data();
+    QVERIFY(array2.isDetached());  // Now knows that it isn't.
 
     // Create a large array of strings.
     QArray<QString> array4;
@@ -418,6 +434,17 @@ void tst_QArray::append()
         QVERIFY(array8[index].value() == index);
     }
     QVERIFY(array8[size].value() == size);
+
+    // Copy the same object over itself.
+    QArray<ComplexValue> array9(array8);
+    QVERIFY(array9.constData() == array8.constData());
+    for (index = 0; index < array8.size(); ++index)
+        QCOMPARE((*((const QArray<ComplexValue> *)&array9))[index],
+                 array8.at(index));
+    array9 = array8;
+    QVERIFY(array9.constData() == array8.constData());
+    for (index = 0; index < array8.size(); ++index)
+        QCOMPARE(array9.at(index), array8.at(index));
 }
 
 void tst_QArray::appendTwoAtATime()
@@ -697,6 +724,16 @@ void tst_QArray::replace()
         else
             QCOMPARE(array[index], extras[index - 1400]);
     }
+
+    QArray<ComplexValue> array3;
+    QArray<ComplexValue> array4;
+    for (index = 0; index < 1000; ++index) {
+        array3.append(ComplexValue(index));
+        array4.append(ComplexValue(1000 - index));
+    }
+    array3.replace(0, array4.constData(), array4.size());
+    for (index = 0; index < 1000; ++index)
+        QVERIFY(array3[index] == array4[index]);
 }
 
 // Exercise the various conditionals in operator=().
@@ -890,6 +927,12 @@ void tst_QArray::compare()
 
     array2.append(1.0f);
     QVERIFY(array != array2);
+
+    for (int index = 0; index < 100; ++index)
+        array.append(index);
+    array2 = array;
+    QVERIFY(array2 == array);
+    QVERIFY(!(array2 != array));
 }
 
 void tst_QArray::remove()
@@ -933,6 +976,13 @@ void tst_QArray::remove()
     array.remove(0, array.size());
     QCOMPARE(array.count(), 0);
     QCOMPARE(array.capacity(), ExpectedMinCapacity);
+
+    for (int index = 0; index < 100; ++index)
+        array.append(float(index));
+    array.erase(array.end() - 1);
+    QCOMPARE(array.size(), 99);
+    array.erase(array.begin(), array.end());
+    QCOMPARE(array.count(), 0);
 }
 
 void tst_QArray::removeFirstLast()
@@ -1146,7 +1196,7 @@ void tst_QArray::mid()
     QVERIFY(mid.data() == 0);
     QVERIFY(mid.constData() == 0);
 
-    QArray<float> midarray = mid.toDataArray();
+    QArray<float> midarray = mid.toArray();
     QVERIFY(midarray.isEmpty());
 
     mid = array.mid(0);
@@ -1162,7 +1212,7 @@ void tst_QArray::mid()
         QCOMPARE(mid[index], float(index));
     }
 
-    midarray = mid.toDataArray();
+    midarray = mid.toArray();
     QCOMPARE(midarray.size(), mid.size());
     for (int index = 0; index < mid.size(); ++index)
         QCOMPARE(midarray[index], mid[index]);
@@ -1206,12 +1256,12 @@ void tst_QArray::mid()
     QVERIFY(mid5 == mid6);
     QVERIFY(!(mid5 != mid6));
 
-    midarray = mid.toDataArray();
+    midarray = mid.toArray();
     QCOMPARE(midarray.size(), mid.size());
     for (int index = 0; index < mid.size(); ++index)
         QCOMPARE(midarray[index], mid[index]);
 
-    QArray<float> midarray2(mid.toDataArray());
+    QArray<float> midarray2(mid.toArray());
     QVERIFY(midarray == midarray2);
 
     mid = array.mid(500, 0);
@@ -1219,7 +1269,7 @@ void tst_QArray::mid()
     QCOMPARE(mid.size(), 0);
     QVERIFY(mid.isEmpty());
 
-    midarray = mid.toDataArray();
+    midarray = mid.toArray();
     QVERIFY(midarray.isEmpty());
 
     mid = array.mid(1000, 30);
@@ -1430,6 +1480,7 @@ void tst_QArray::insert()
     QCOMPARE(array[2], 0.0f);
     QCOMPARE(array[12], 10.0f);
 
+    array.insert(10, 0, 7.5f);
     array.insert(10, 4, 7.5f);
     QCOMPARE(array.size(), 17);
     QCOMPARE(array[9], 7.0f);
@@ -1521,10 +1572,12 @@ void tst_QArray::fromRawData()
     array = QArray<float>::fromRawData(contents, 0);
     QCOMPARE(array.size(), 0);
     QCOMPARE(array.capacity(), 0);
+    QVERIFY(!array.isDetached());
     array.append(1.0f);
     QCOMPARE(array.size(), 1);
     QVERIFY(array.capacity() > 0);
     QCOMPARE(array.at(0), 1.0f);
+    QVERIFY(array.isDetached());
 
     array = QArray<float>::fromRawData(contents, 6);
     QCOMPARE(array.size(), 6);
@@ -1532,9 +1585,11 @@ void tst_QArray::fromRawData()
     for (int index = 0; index < 6; ++index)
         QCOMPARE(array.at(index), contents[index]);
     QVERIFY(array.constData() == contents);
+    QVERIFY(!array.isDetached());
 
     // Force a copy-on-write.
     array[3] = 42.0f;
+    QVERIFY(array.isDetached());
     QCOMPARE(contents[3], 4.0f);
     QCOMPARE(array.size(), 6);
     QVERIFY(array.capacity() > 6);
@@ -1741,6 +1796,16 @@ void tst_QArray::unsharedArray()
     float contents[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
     array = QArray<float>::fromRawData(contents, 6);
     QVERIFY(array.constData() != contents);
+
+    QUnsharedArray<float> array3;
+    for (int index = 0; index < 100; ++index)
+        array3.append(float(index));
+    QArray<float> array4(array3);
+    QVERIFY(array3.constData() != array4.constData());
+
+    array3.setSharable(true);
+    QArray<float> array5(array3);
+    QVERIFY(array3.constData() == array5.constData());
 }
 
 // The following tests check that if QVarLengthArray was typedef'ed

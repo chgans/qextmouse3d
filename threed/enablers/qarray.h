@@ -293,7 +293,7 @@ public:
     QArray<T, PreallocSize> *array() const { return m_array; }
     int offset() const { return m_offset; }
 
-    QArray<T, PreallocSize> toDataArray() const;
+    QArray<T, PreallocSize> toArray() const;
 
     bool operator==(const QArrayRef<T, PreallocSize> &other) const;
     bool operator!=(const QArrayRef<T, PreallocSize> &other) const;
@@ -528,6 +528,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::setSize(int size)
         m_limit = m_start + PreallocSize;
         m_data = 0;
         m_flags = 0;
+        m_padding = 0;
     } else {
         int capacity = qArrayAllocMore(size, 0);
         Data *data = reinterpret_cast<Data *>
@@ -540,6 +541,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::setSize(int size)
         m_end = m_start;
         m_limit = m_start + capacity;
         m_flags = 0;
+        m_padding = 0;
     }
 }
 
@@ -551,6 +553,7 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray()
     m_limit = m_start + PreallocSize;
     m_data = 0;
     m_flags = 0;
+    m_padding = 0;
 }
 
 template <typename T, int PreallocSize>
@@ -581,6 +584,7 @@ template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArray<T, PreallocSize> &other)
 {
     m_flags = 0;
+    m_padding = 0;
     assign(other);
 }
 
@@ -596,6 +600,7 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *data, int size, bool 
         m_limit = m_start;
     m_data = 0;
     m_flags = 0;
+    m_padding = 0;
 }
 
 template <typename T, int PreallocSize>
@@ -1042,9 +1047,8 @@ template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::reverse()
 {
     if (count() > 0) {
-        iterator src = begin();
-        iterator dst = end();
-        --dst;
+        T *src = m_start;
+        T *dst = m_end - 1;
         while (src < dst)
             qSwap(*(dst--), *(src++));
     }
@@ -1057,15 +1061,13 @@ Q_OUTOFLINE_TEMPLATE QArray<T, PreallocSize> QArray<T, PreallocSize>::reversed()
     int count = size();
     if (count > 0) {
         result.extend(count);
-        const_iterator src = constBegin();
-        const_iterator end = constEnd();
-        iterator dst = result.end();
-        --dst;
+        const T *src = m_start;
+        T *dst = result.m_end - 1;
         if (!QTypeInfo<T>::isComplex) {
-            while (src != end)
+            while (src != m_end)
                 *(dst--) = *(src++);
         } else {
-            while (src != end)
+            while (src != m_end)
                 new (dst--) T(*src++);
         }
     }
@@ -1256,7 +1258,7 @@ Q_INLINE_TEMPLATE const T *QArrayRef<T, PreallocSize>::constData() const
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE QArray<T, PreallocSize> QArrayRef<T, PreallocSize>::toDataArray() const
+Q_OUTOFLINE_TEMPLATE QArray<T, PreallocSize> QArrayRef<T, PreallocSize>::toArray() const
 {
     if (!m_array) {
         return QArray<T, PreallocSize>();

@@ -164,9 +164,14 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn bool QArray::isDetached() const
+    \internal
 
-    Returns true if this array has been detached from all other
-    shared copies of the data; false otherwise.
+    Returns true if this array has definitely been detached from all
+    other shared copies of the data; false otherwise.
+
+    It is possible for this function to return false if the
+    array was previously shared but no longer is.  It is thus
+    an indication that a detach() will probably be required.
 
     This function can be used to determine if functions that
     write to this array such as append(), replace(),
@@ -180,6 +185,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::detach()
+    \internal
 
     Detaches this array from all other shared copies of the data.
 
@@ -188,6 +194,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::setSharable(bool sharable)
+    \internal
 
     Sets this array to be sharable or not according to \a sharable.
 
@@ -1278,7 +1285,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArray<T, PreallocSize> QArrayRef::toDataArray() const
+    \fn QArray<T, PreallocSize> QArrayRef::toArray() const
 
     Returns the elements of this reference as a new QArray.
 */
