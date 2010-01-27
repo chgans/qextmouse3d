@@ -70,6 +70,7 @@ public:
     QArray(int size, const T &value);
     QArray(const T *values, int size);
     QArray(const QArray<T, PreallocSize> &other);
+    QArray(const QArrayRef<T, PreallocSize> &other);
     ~QArray();
 
     typedef T *iterator;
@@ -77,6 +78,8 @@ public:
 
     QArray<T, PreallocSize> &operator=
         (const QArray<T, PreallocSize> &other);
+    QArray<T, PreallocSize> &operator=
+        (const QArrayRef<T, PreallocSize> &other);
 
     int size() const;
     int count() const;
@@ -105,6 +108,7 @@ public:
     void append(const T &value1, const T &value2, const T &value3, const T &value4);
     void append(const T *values, int count);
     void append(const QArray<T, PreallocSize> &other);
+    void append(const QArrayRef<T, PreallocSize> &other);
 
     void prepend(const T &value);
 
@@ -154,8 +158,10 @@ public:
 
     QArray<T, PreallocSize> &operator+=(const T &value);
     QArray<T, PreallocSize> &operator+=(const QArray<T, PreallocSize> &other);
+    QArray<T, PreallocSize> &operator+=(const QArrayRef<T, PreallocSize> &other);
     QArray<T, PreallocSize> &operator<<(const T &value);
     QArray<T, PreallocSize> &operator<<(const QArray<T, PreallocSize> &other);
+    QArray<T, PreallocSize> &operator<<(const QArrayRef<T, PreallocSize> &other);
 
     typedef iterator Iterator;
     typedef const_iterator ConstIterator;
@@ -589,6 +595,16 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArray<T, PreallocSize> 
 }
 
 template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArrayRef<T, PreallocSize> &other)
+{
+    int size = other.size();
+    const T *ptr = other.constData();
+    setSize(size);
+    while (size-- > 0)
+        new (m_end++) T(*ptr++);
+}
+
+template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *data, int size, bool isWritable)
 {
     // Constructing a raw data array.
@@ -616,6 +632,18 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(co
         return *this;
     release();
     assign(other);
+    return *this;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(const QArrayRef<T, PreallocSize> &other)
+{
+    if (other.array() == this) {
+        *this = other.toArray();
+    } else {
+        clear();
+        append(other.constData(), other.size());
+    }
     return *this;
 }
 
@@ -792,8 +820,16 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T *values, int coun
 template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QArray<T, PreallocSize> &other)
 {
-    if (&other == this || (!m_start && other.m_data == m_data))
+    if (&other == this || (m_data && other.m_data == m_data))
         grow(size());   // Appending to ourselves: make some room.
+    append(other.constData(), other.size());
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QArrayRef<T, PreallocSize> &other)
+{
+    if (other.array() == this || (m_data && other.array()->m_data == m_data))
+        grow(other.size()); // Appending to ourselves: make some room first.
     append(other.constData(), other.size());
 }
 
@@ -1176,6 +1212,13 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator+=(c
 }
 
 template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator+=(const QArrayRef<T, PreallocSize> &other)
+{
+    append(other);
+    return *this;
+}
+
+template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator<<(const T &value)
 {
     append(value);
@@ -1184,6 +1227,13 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator<<(c
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator<<(const QArray<T, PreallocSize> &other)
+{
+    append(other);
+    return *this;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator<<(const QArrayRef<T, PreallocSize> &other)
 {
     append(other);
     return *this;

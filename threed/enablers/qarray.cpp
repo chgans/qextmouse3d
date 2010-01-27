@@ -118,6 +118,14 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QArray::QArray(const QArrayRef<T, PreallocSize> &other)
+
+    Constructs a copy of \a other.
+
+    \sa operator=()
+*/
+
+/*!
     \fn QArray::~QArray()
 
     Destroys the array.
@@ -125,6 +133,13 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn QArray<T, PreallocSize> &QArray::operator=(const QArray<T, PreallocSize> &other)
+
+    Assigns \a other to this array and returns a reference
+    to this array.
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> &QArray::operator=(const QArrayRef<T, PreallocSize> &other)
 
     Assigns \a other to this array and returns a reference
     to this array.
@@ -331,6 +346,12 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::append(const QArray<T, PreallocSize> &other)
+
+    Appends the elements of \a other to this array.
+*/
+
+/*!
+    \fn void QArray::append(const QArrayRef<T, PreallocSize> &other)
 
     Appends the elements of \a other to this array.
 */
@@ -750,6 +771,16 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QArray<T, PreallocSize> &QArray::operator+=(const QArrayRef<T, PreallocSize> &other)
+    \overload
+
+    Appends the elements of the \a other array to this array
+    and returns a reference to this array.
+
+    \sa operator<<(), append()
+*/
+
+/*!
     \fn QArray<T, PreallocSize> &QArray::operator<<(const T &value)
 
     \overload
@@ -762,6 +793,16 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn QArray<T, PreallocSize> &QArray::operator<<(const QArray<T, PreallocSize> &other)
+
+    Appends the elements of the \a other array to this array
+    and returns a reference to this array.
+
+    \sa operator+=(), append()
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> &QArray::operator<<(const QArrayRef<T, PreallocSize> &other)
+    \overload
 
     Appends the elements of the \a other array to this array
     and returns a reference to this array.

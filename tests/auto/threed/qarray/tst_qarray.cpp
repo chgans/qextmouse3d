@@ -81,6 +81,7 @@ private slots:
     void mid();
     void left();
     void right();
+    void arrayRef();
     void iterate();
     void copyPrealloc();
     void insert();
@@ -1383,6 +1384,53 @@ void tst_QArray::right()
     QCOMPARE(right.offset(), 0);
     QCOMPARE(right.size(), 1024);
     QVERIFY(right.array() == &array);
+}
+
+void tst_QArray::arrayRef()
+{
+    QArray<float> array;
+    QArray<float> array3;
+    for (int index = 0; index < 1024; ++index) {
+        array.append(float(index));
+        array3.append(float(index));
+    }
+
+    QArrayRef<float> ref = array.mid(100, 50);
+    QVERIFY(ref.array() == &array);
+    QCOMPARE(ref.offset(), 100);
+    QCOMPARE(ref.size(), 50);
+
+    QArray<float> array2(ref);
+    QCOMPARE(array2.size(), 50);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], array[index + 100]);
+
+    array2 = array.mid(50, 100);
+    QCOMPARE(array2.size(), 100);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], array[index + 50]);
+
+    array2 += array.mid(150, 20);
+    QCOMPARE(array2.size(), 120);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], array[index + 50]);
+
+    array2 << array3.mid(170, 30);
+    QCOMPARE(array2.size(), 150);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], array[index + 50]);
+
+    array2 = array2.mid(10);
+    QCOMPARE(array2.size(), 140);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], array[index + 60]);
+
+    array2.append(array2.mid(0));
+    QCOMPARE(array2.size(), 280);
+    for (int index = 0; index < 140; ++index) {
+        QCOMPARE(array2[index], array[index + 60]);
+        QCOMPARE(array2[index + 140], array[index + 60]);
+    }
 }
 
 void tst_QArray::iterate()
