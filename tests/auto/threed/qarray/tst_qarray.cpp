@@ -240,6 +240,15 @@ void tst_QArray::create()
         QVERIFY(array5[2].mode()  == ComplexValue::Copy);
     }
     QCOMPARE(ComplexValue::destroyCount, 6);
+
+    // Check the zero-prealloc case.
+    QArray<float, 0> array6;
+    QCOMPARE(array6.size(), 0);
+    array6.append(1.0f);
+    QCOMPARE(array6.size(), 1);
+    QCOMPARE(array6[0], 1.0f);
+    QArray<float, 0> array7(array6);
+    QVERIFY(array6.constData() == array7.constData());
 }
 
 void tst_QArray::append()
