@@ -198,7 +198,8 @@ QT_BEGIN_NAMESPACE
 
     Sets this array to be sharable or not according to \a sharable.
 
-    QUnsharedArray instances set this flag at construction time.
+    QArray instances are sharable by default.  QUnsharedArray instances set
+    this flag to false at construction time.
 
     \sa detach(), isDetached(), QUnsharedArray
 */
@@ -279,7 +280,7 @@ QT_BEGIN_NAMESPACE
     The append() or resize() functions are recommended if T is a
     complex type, with extend() only used for simple types.
     Because the storage is not initialized, the caller should use
-    the in-place new operator to set elements if T is a complex type:
+    the in-place new operator to set elements:
 
     \code
     QArray<QRegExp> array;
@@ -365,7 +366,7 @@ QT_BEGIN_NAMESPACE
 
     Inserts \a count copies of \a value in front of the item
     pointed to by the iterator \a before.  Returns an iterator
-    pointing at the first of the inserted item.
+    pointing at the first of the inserted items.
 */
 
 /*!
@@ -374,7 +375,7 @@ QT_BEGIN_NAMESPACE
 
     Inserts \a value in front of the item pointed to by the
     iterator \a before.  Returns an iterator pointing at the
-    inserted items.
+    inserted item.
 */
 
 /*!
@@ -503,6 +504,9 @@ QT_BEGIN_NAMESPACE
 
     Returns the number of occurrences of \a value in the array.
 
+    This function requires the value type T to have an implementation
+    of \c operator==().
+
     \sa contains(), indexOf()
 */
 
@@ -510,9 +514,9 @@ QT_BEGIN_NAMESPACE
     \fn void QArray::resize(int size)
 
     Sets the size of the array to \a size.  If \a size is greater
-    than the current size, elements are added to the end; the new elements
-    are initialized with all-zeroes.  If \a size is less than the current
-    size, elements are removed from the end.
+    than the current size, elements are added to the end and are
+    initialized to a default-constructed value.  If \a size is less
+    than the current size, elements are removed from the end.
 
     \sa size(), reserve(), squeeze()
 */
@@ -551,7 +555,7 @@ QT_BEGIN_NAMESPACE
     \fn QArray<T, PreallocSize> &QArray::fill(const T &value, int size)
 
     Assigns \a value to all items in the array. If \a size is
-    different from -1 (the default), the array is resized to size
+    different from -1 (the default), the array is resized to
     \a size beforehand.  Returns a reference to the array.
 
     \sa resize()
@@ -561,12 +565,16 @@ QT_BEGIN_NAMESPACE
     \fn void QArray::reverse()
 
     Reverses the order of this array in place.
+
+    \sa reversed()
 */
 
 /*!
     \fn QArray<T, PreallocSize> QArray::reversed() const
 
     Returns a copy of this array with elements in the reverse order.
+
+    \sa reverse()
 */
 
 /*!
@@ -574,8 +582,9 @@ QT_BEGIN_NAMESPACE
 
     Returns a QArrayRef that refers to the \a length elements of
     this array, starting at \a index.  If \a length is less
-    than zero, then all elements extending from \a index to the
-    end of the array will be included in the returned reference.
+    than zero, or extends further than the end of the array, then all
+    elements extending from \a index to the end of the array will be
+    included in the returned reference.
 
     \sa left(), right()
 */
@@ -698,19 +707,11 @@ QT_BEGIN_NAMESPACE
 
     Two arrays are considered equal if they contain the same values
     in the same order.
+
     This function requires the value type to have an implementation
     of \c operator==().
 
-    This can be very expensive time-wise.  Consider using the constData()
-    instead to quickly determine if two arrays are identical because
-    they occupy the same memory location:
-
-    \code
-    if (array1.constData() == array2.constData())
-        ...
-    \endcode
-
-    \sa operator!=(), constData()
+    \sa operator!=()
 */
 
 /*!
@@ -1024,7 +1025,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \fn QUnsharedArray::QUnsharedArray()
 
-    Constructs and empty unshared array.
+    Constructs an empty unshared array.
 */
 
 /*!
