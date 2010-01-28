@@ -161,9 +161,9 @@ QGLDisplayList *PVColorView::buildGeometry()
     QVector3DArray topTailEdge;     // tail of Q - top face
     QVector3DArray bottomTailEdge;    // tail of Q - bottom face
 
-    QColor4b innerColor(Qt::darkGray);
-    QColor4b outerColor(Qt::darkGreen);
-    QColor4b tailColor(Qt::darkYellow);
+    QColor4B innerColor(Qt::darkGray);
+    QColor4B outerColor(Qt::darkGreen);
+    QColor4B tailColor(Qt::darkYellow);
 
     // do the math for the defining points
     qreal t2 = qThickness / 2.0f;
@@ -209,7 +209,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         // create the top face of the tail of the Q - its a quad
         QGLOperation op(qList, QGL::QUAD);
         op << topTailEdge;
-        op << QArray<QColor4b>(tailCnt, tailColor);
+        op << QArray<QColor4B>(tailCnt, tailColor);
     }
     if (lap)
     {
@@ -218,16 +218,16 @@ QGLDisplayList *PVColorView::buildGeometry()
         QGLOperation op(qList, QGL::TRIANGLE_FAN);
         op << topQIEdge.at(0) << innerColor;
         op << topQOEdge.left(lap);
-        op << QArray<QColor4b>(lap, outerColor);
+        op << QArray<QColor4B>(lap, outerColor);
     }
     {
         // now draw all the quads making up the rest of the face of the Q
         QGLOperation op(qList, QGL::QUADS_ZIPPED);
         op << topQOEdge.mid(lap, icnt);
-        op << QArray<QColor4b>(icnt, outerColor);
+        op << QArray<QColor4B>(icnt, outerColor);
         op << QGL::NEXT_PRIMITIVE;
         op << topQIEdge;
-        op << QArray<QColor4b>(icnt, innerColor);
+        op << QArray<QColor4B>(icnt, innerColor);
     }
     if (lap)
     {
@@ -235,7 +235,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         QGLOperation op(qList, QGL::TRIANGLE_FAN);
         op << topQIEdge.at(icnt - 1) << innerColor;
         op << topQOEdge.right(lap);
-        op << QArray<QColor4b>(lap, outerColor);
+        op << QArray<QColor4B>(lap, outerColor);
     }
 
     // create the extruded sides of the q, and save the extruded values
@@ -245,10 +245,10 @@ QGLDisplayList *PVColorView::buildGeometry()
         QGLOperation op(qList, QGL::QUADS_ZIPPED);
         bottomQOEdge = topQOEdge.translated(extrudeVec);
         op << topQOEdge;
-        op << QArray<QColor4b>(ocnt, outerColor);
+        op << QArray<QColor4B>(ocnt, outerColor);
         op << QGL::NEXT_PRIMITIVE;
         op << bottomQOEdge;
-        op << QArray<QColor4b>(ocnt, outerColor);
+        op << QArray<QColor4B>(ocnt, outerColor);
     }
     {
         // inside sides
@@ -256,20 +256,20 @@ QGLDisplayList *PVColorView::buildGeometry()
         bottomQIEdge = topQIEdge.translated(extrudeVec);
         op << QGL::FACE_SENSE_REVERSED;
         op << topQIEdge;
-        op << QArray<QColor4b>(icnt, innerColor);
+        op << QArray<QColor4B>(icnt, innerColor);
         op << QGL::NEXT_PRIMITIVE;
         op << bottomQIEdge;
-        op << QArray<QColor4b>(icnt, innerColor);
+        op << QArray<QColor4B>(icnt, innerColor);
     }
     {
         // tail sides
         QGLOperation op(qList, QGL::QUADS_ZIPPED);
         bottomTailEdge = topTailEdge.translated(extrudeVec);
         op << topTailEdge;
-        op << QArray<QColor4b>(tailCnt, outerColor);
+        op << QArray<QColor4B>(tailCnt, outerColor);
         op << QGL::NEXT_PRIMITIVE;
         op << bottomTailEdge;
-        op << QArray<QColor4b>(tailCnt, outerColor);
+        op << QArray<QColor4B>(tailCnt, outerColor);
     }
 
     // now create the obverse faces of the Q - need to work
@@ -283,7 +283,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         // create the bottom face of the tail of the Q
         QGLOperation op(qList, QGL::QUAD);
         op << topTailEdge;
-        op << QArray<QColor4b>(tailCnt, tailColor);
+        op << QArray<QColor4B>(tailCnt, tailColor);
     }
     if (lap)
     {
@@ -291,16 +291,16 @@ QGLDisplayList *PVColorView::buildGeometry()
         QGLOperation op(qList, QGL::TRIANGLE_FAN);
         op << bottomQIEdge.at(0) << innerColor;
         op << bottomQOEdge.left(lap);
-        op << QArray<QColor4b>(lap, outerColor);
+        op << QArray<QColor4B>(lap, outerColor);
     }
     {
         // now draw all the quads of the bottom of the Q
         QGLOperation op(qList, QGL::QUADS_ZIPPED);
         op << bottomQOEdge.mid(lap, icnt);
-        op << QArray<QColor4b>(icnt, outerColor);
+        op << QArray<QColor4B>(icnt, outerColor);
         op << QGL::NEXT_PRIMITIVE;
         op << bottomQIEdge;
-        op << QArray<QColor4b>(icnt, innerColor);
+        op << QArray<QColor4B>(icnt, innerColor);
     }
     if (lap)
     {
@@ -308,7 +308,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         QGLOperation op(qList, QGL::TRIANGLE_FAN);
         op << bottomQIEdge.at(icnt - 1) << innerColor;
         op << bottomQOEdge.right(lap);
-        op << QArray<QColor4b>(lap, outerColor);
+        op << QArray<QColor4B>(lap, outerColor);
     }
 
     qList->finalize();

@@ -429,7 +429,7 @@ void QGLVertexArray::reserve(int size)
 */
 
 /*!
-    \fn void QGLVertexArray::append(const QColor4b& value)
+    \fn void QGLVertexArray::append(const QColor4B& value)
 
     Appends a four byte color \a value to this vertex array.
     The field should have a size of 1.
@@ -568,7 +568,7 @@ void QGLVertexArray::append(const QGLVertexArray& other)
 */
 
 /*!
-    \fn void QGLVertexArray::setAt(int vertex, int field, const QColor4b& value)
+    \fn void QGLVertexArray::setAt(int vertex, int field, const QColor4B& value)
 
     Sets the specified \a field of \a vertex to a four byte color \a value.
     The \a vertex should be between 0 and vertexCount() - 1,
@@ -777,7 +777,7 @@ QGLVertexArray QGLVertexArray::interleaved(const QGLVertexArray& other) const
 */
 
 /*!
-    \fn QGLVertexArray& QGLVertexArray::operator+=(const QColor4b& value)
+    \fn QGLVertexArray& QGLVertexArray::operator+=(const QColor4B& value)
 
     Appends \a value to this vertex array.
 
@@ -841,7 +841,7 @@ QGLVertexArray QGLVertexArray::interleaved(const QGLVertexArray& other) const
 */
 
 /*!
-    \fn QGLVertexArray& QGLVertexArray::operator<<(const QColor4b& value)
+    \fn QGLVertexArray& QGLVertexArray::operator<<(const QColor4B& value)
 
     Appends \a value to this vertex array.
 

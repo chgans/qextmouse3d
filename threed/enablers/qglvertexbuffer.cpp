@@ -200,7 +200,7 @@ class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferColorAttribute
-            (QGL::VertexAttribute attr, const QArray<QColor4b>& array)
+            (QGL::VertexAttribute attr, const QArray<QColor4B>& array)
         : QGLVertexBufferAttribute(attr), colorArray(array)
     {
         value = QGLAttributeValue(colorArray);
@@ -210,10 +210,10 @@ public:
     QGLAttributeValue uploadValue()
         { return QGLAttributeValue(colorArray); }
     int count() { return colorArray.count(); }
-    int elementSize() { return sizeof(QColor4b); }
+    int elementSize() { return sizeof(QColor4B); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QArray<QColor4b> colorArray;
+    QArray<QColor4B> colorArray;
 };
 
 void QGLVertexBufferColorAttribute::replace
@@ -221,11 +221,11 @@ void QGLVertexBufferColorAttribute::replace
 {
     Q_ASSERT(value.type() == QGL::UByte);
     Q_ASSERT(value.size() == 4);
-    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4b));
+    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= colorArray.size());
     colorArray.replace
-        (index, reinterpret_cast<const QColor4b *>(value.data()), count);
+        (index, reinterpret_cast<const QColor4B *>(value.data()), count);
 }
 
 class QGLVertexBufferCustomAttribute : public QGLVertexBufferAttribute
@@ -289,7 +289,7 @@ void QGLVertexBufferCustomAttribute::replace
     case QCustomDataArray::Color: {
         Q_ASSERT(value.type() == QGL::UByte);
         Q_ASSERT(value.size() == 4);
-        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4b));
+        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
         customArray.m_array.replace(index, value.floatData(), count);
     }
     break;
@@ -480,7 +480,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QArray<QColor4b>& value)
+    (QGL::VertexAttribute attribute, const QArray<QColor4B>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->isUploaded) {

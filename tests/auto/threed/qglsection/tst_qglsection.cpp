@@ -337,7 +337,7 @@ void tst_QGLSection::appendColor()
     TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
-    QColor4b color(32, 64, 128, 255);
+    QColor4B color(32, 64, 128, 255);
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     section->append(QLogicalVertex(testVertex, color));
     QCOMPARE(section->vertices().count(), 1);

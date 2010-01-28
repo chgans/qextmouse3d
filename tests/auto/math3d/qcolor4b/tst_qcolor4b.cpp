@@ -42,12 +42,12 @@
 #include <QtTest/QtTest>
 #include "qcolor4b.h"
 
-class tst_QColor4b : public QObject
+class tst_QColor4B : public QObject
 {
     Q_OBJECT
 public:
-    tst_QColor4b() {}
-    ~tst_QColor4b() {}
+    tst_QColor4B() {}
+    ~tst_QColor4B() {}
 
 private slots:
     void create();
@@ -61,9 +61,9 @@ private slots:
 
 #define fuzzyCompare(x,y)   (qAbs((x) - (y)) < 0.0001)
 
-void tst_QColor4b::create()
+void tst_QColor4B::create()
 {
-    QColor4b c1;
+    QColor4B c1;
     QCOMPARE(c1.red(), 0);
     QCOMPARE(c1.green(), 0);
     QCOMPARE(c1.blue(), 0);
@@ -73,7 +73,7 @@ void tst_QColor4b::create()
     QCOMPARE(c1.blueF(), qreal(0.0));
     QCOMPARE(c1.alphaF(), qreal(1.0));
 
-    QColor4b c2(162, 54, 39);
+    QColor4B c2(162, 54, 39);
     QCOMPARE(c2.red(), 162);
     QCOMPARE(c2.green(), 54);
     QCOMPARE(c2.blue(), 39);
@@ -83,7 +83,7 @@ void tst_QColor4b::create()
     QVERIFY(fuzzyCompare(c2.blueF(), qreal(39 / 255.0f)));
     QVERIFY(fuzzyCompare(c2.alphaF(), qreal(1.0)));
 
-    QColor4b c3(162, 54, 39, 41);
+    QColor4B c3(162, 54, 39, 41);
     QCOMPARE(c3.red(), 162);
     QCOMPARE(c3.green(), 54);
     QCOMPARE(c3.blue(), 39);
@@ -93,69 +93,69 @@ void tst_QColor4b::create()
     QVERIFY(fuzzyCompare(c3.blueF(), qreal(39 / 255.0f)));
     QVERIFY(fuzzyCompare(c3.alphaF(), qreal(41 / 255.0f)));
 
-    QColor4b c4(QColor(162, 54, 39, 41));
+    QColor4B c4(QColor(162, 54, 39, 41));
     QCOMPARE(c4.red(), 162);
     QCOMPARE(c4.green(), 54);
     QCOMPARE(c4.blue(), 39);
     QCOMPARE(c4.alpha(), 41);
 
-    QColor4b c5(Qt::red);
+    QColor4B c5(Qt::red);
     QCOMPARE(c5.red(), 255);
     QCOMPARE(c5.green(), 0);
     QCOMPARE(c5.blue(), 0);
     QCOMPARE(c5.alpha(), 255);
 
-    QColor4b c6(qRgb(162, 54, 39));
+    QColor4B c6(qRgb(162, 54, 39));
     QCOMPARE(c6.red(), 162);
     QCOMPARE(c6.green(), 54);
     QCOMPARE(c6.blue(), 39);
     QCOMPARE(c6.alpha(), 255);
 
-    QColor4b c7(qRgba(162, 54, 39, 41));
+    QColor4B c7(qRgba(162, 54, 39, 41));
     QCOMPARE(c7.red(), 162);
     QCOMPARE(c7.green(), 54);
     QCOMPARE(c7.blue(), 39);
     QCOMPARE(c7.alpha(), 41);
 
-    QColor4b c8(256, -3, 1);    // truncates from int to uchar
+    QColor4B c8(256, -3, 1);    // truncates from int to uchar
     QCOMPARE(c8.red(), 0);
     QCOMPARE(c8.green(), 253);
     QCOMPARE(c8.blue(), 1);
     QCOMPARE(c8.alpha(), 255);
 
-    QColor4b c9 = QColor4b::fromRgb(162, 54, 39);
+    QColor4B c9 = QColor4B::fromRgb(162, 54, 39);
     QCOMPARE(c9.red(), 162);
     QCOMPARE(c9.green(), 54);
     QCOMPARE(c9.blue(), 39);
     QCOMPARE(c9.alpha(), 255);
-    c9 = QColor4b::fromRgb(162, 54, 39, 41);
+    c9 = QColor4B::fromRgb(162, 54, 39, 41);
     QCOMPARE(c9.red(), 162);
     QCOMPARE(c9.green(), 54);
     QCOMPARE(c9.blue(), 39);
     QCOMPARE(c9.alpha(), 41);
 
-    QColor4b c10 = QColor4b::fromRgbF(1.0f, 0.5f, 0.25f);
+    QColor4B c10 = QColor4B::fromRgbF(1.0f, 0.5f, 0.25f);
     QCOMPARE(c10.red(), 255);
     QCOMPARE(c10.green(), 128);
     QCOMPARE(c10.blue(), 64);
     QCOMPARE(c10.alpha(), 255);
-    c10 = QColor4b::fromRgbF(1.0f, 0.5f, 0.25f, 0.75f);
+    c10 = QColor4B::fromRgbF(1.0f, 0.5f, 0.25f, 0.75f);
     QCOMPARE(c10.red(), 255);
     QCOMPARE(c10.green(), 128);
     QCOMPARE(c10.blue(), 64);
     QCOMPARE(c10.alpha(), 191);
 
     static uchar const data[4] = {uchar(162), uchar(54), uchar(39), uchar(255)};
-    QColor4b c11 = QColor4b::fromRaw(data);
+    QColor4B c11 = QColor4B::fromRaw(data);
     QCOMPARE(c11.red(), 162);
     QCOMPARE(c11.green(), 54);
     QCOMPARE(c11.blue(), 39);
     QCOMPARE(c11.alpha(), 255);
 }
 
-void tst_QColor4b::modify()
+void tst_QColor4B::modify()
 {
-    QColor4b c1(162, 54, 39, 41);
+    QColor4B c1(162, 54, 39, 41);
     c1.setRed(34);
     c1.setGreen(163);
     c1.setBlue(2);
@@ -169,7 +169,7 @@ void tst_QColor4b::modify()
     QVERIFY(fuzzyCompare(c1.blueF(), qreal(2 / 255.0f)));
     QVERIFY(fuzzyCompare(c1.alphaF(), qreal(200 / 255.0f)));
 
-    QColor4b c2;
+    QColor4B c2;
     c2.setRedF(1.0f);
     c2.setGreenF(0.5f);
     c2.setBlueF(0.25f);
@@ -183,7 +183,7 @@ void tst_QColor4b::modify()
     QVERIFY(fuzzyCompare(c2.blueF(), qreal(64 / 255.0f)));
     QVERIFY(fuzzyCompare(c2.alphaF(), qreal(191 / 255.0f)));
 
-    QColor4b c3;
+    QColor4B c3;
     c3.setRgb(162, 54, 39);
     QCOMPARE(c3.red(), 162);
     QCOMPARE(c3.green(), 54);
@@ -195,7 +195,7 @@ void tst_QColor4b::modify()
     QCOMPARE(c3.blue(), 39);
     QCOMPARE(c3.alpha(), 41);
 
-    QColor4b c4;
+    QColor4B c4;
     c4.setRgbF(1.0f, 0.5f, 0.25f);
     QCOMPARE(c4.red(), 255);
     QCOMPARE(c4.green(), 128);
@@ -208,16 +208,16 @@ void tst_QColor4b::modify()
     QCOMPARE(c4.alpha(), 191);
 }
 
-void tst_QColor4b::copy()
+void tst_QColor4B::copy()
 {
-    QColor4b c1(162, 54, 39, 41);
-    QColor4b c2(c1);
+    QColor4B c1(162, 54, 39, 41);
+    QColor4B c2(c1);
     QCOMPARE(c2.red(), 162);
     QCOMPARE(c2.green(), 54);
     QCOMPARE(c2.blue(), 39);
     QCOMPARE(c2.alpha(), 41);
 
-    QColor4b c3;
+    QColor4B c3;
     c3 = c2;
     QCOMPARE(c3.red(), 162);
     QCOMPARE(c3.green(), 54);
@@ -225,7 +225,7 @@ void tst_QColor4b::copy()
     QCOMPARE(c3.alpha(), 41);
 }
 
-void tst_QColor4b::compare_data()
+void tst_QColor4B::compare_data()
 {
     QTest::addColumn<int>("red1");
     QTest::addColumn<int>("green1");
@@ -278,7 +278,7 @@ void tst_QColor4b::compare_data()
         << false;
 }
 
-void tst_QColor4b::compare()
+void tst_QColor4B::compare()
 {
     QFETCH(int, red1);
     QFETCH(int, green1);
@@ -290,8 +290,8 @@ void tst_QColor4b::compare()
     QFETCH(int, alpha2);
     QFETCH(bool, isEqual);
 
-    QColor4b c1(red1, green1, blue1, alpha1);
-    QColor4b c2(red2, green2, blue2, alpha2);
+    QColor4B c1(red1, green1, blue1, alpha1);
+    QColor4B c2(red2, green2, blue2, alpha2);
 
     if (isEqual) {
         QVERIFY(c1 == c2);
@@ -302,9 +302,9 @@ void tst_QColor4b::compare()
     }
 }
 
-void tst_QColor4b::toColor()
+void tst_QColor4B::toColor()
 {
-    QColor4b c1(162, 54, 39, 41);
+    QColor4B c1(162, 54, 39, 41);
     QColor c2 = c1.toColor();
     QCOMPARE(c2.red(), 162);
     QCOMPARE(c2.green(), 54);
@@ -312,12 +312,12 @@ void tst_QColor4b::toColor()
     QCOMPARE(c2.alpha(), 41);
 }
 
-void tst_QColor4b::checkSize()
+void tst_QColor4B::checkSize()
 {
-    // We need QColor4b to be precisely packed as four single-byte values.
-    QCOMPARE(sizeof(QColor4b), sizeof(uchar) * 4);
+    // We need QColor4B to be precisely packed as four single-byte values.
+    QCOMPARE(sizeof(QColor4B), sizeof(uchar) * 4);
 }
 
-QTEST_APPLESS_MAIN(tst_QColor4b)
+QTEST_APPLESS_MAIN(tst_QColor4B)
 
 #include "tst_qcolor4b.moc"

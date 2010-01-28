@@ -121,7 +121,7 @@ public:
 
     QVector3DArray vertices;
     QVector3DArray normals;
-    QArray<QColor4b> colors;
+    QArray<QColor4B> colors;
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
 
@@ -479,7 +479,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                     }
                     else  // colors
                     {
-                        QArray<QColor4b> tmp;
+                        QArray<QColor4B> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -562,7 +562,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                     }
                     else  // colors
                     {
-                        QArray<QColor4b> tmp;
+                        QArray<QColor4B> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -903,7 +903,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, con
 /*!
     Append the color \a c0 to this geometry data, as an color field.
 */
-void QGeometryData::appendColor(const QColor4b &c0)
+void QGeometryData::appendColor(const QColor4B &c0)
 {
     detach();
     enableField(QGL::Color);
@@ -914,7 +914,7 @@ void QGeometryData::appendColor(const QColor4b &c0)
 /*!
     Append the color \a c0 and \a c1 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1)
+void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1)
 {
     detach();
     enableField(QGL::Color);
@@ -925,7 +925,7 @@ void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1)
 /*!
     Append the color \a c0, \a c1 and \a c2 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2)
+void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2)
 {
     detach();
     enableField(QGL::Color);
@@ -936,7 +936,7 @@ void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1, const QC
 /*!
     Append the color \a c0, \a c1, \a c2  and \a c3 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4b &c0, const QColor4b &c1, const QColor4b &c2, const QColor4b &c3)
+void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2, const QColor4B &c3)
 {
     detach();
     enableField(QGL::Color);
@@ -999,7 +999,7 @@ void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAt
 /*!
     Append the colors in \a ary to this geometry data, as color fields.
 */
-void QGeometryData::appendColorArray(const QArray<QColor4b> &ary)
+void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
 {
     if (ary.count())
     {
@@ -1068,7 +1068,7 @@ QVector3DArray QGeometryData::normals() const
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-QColor4b &QGeometryData::colorRef(int i)
+QColor4B &QGeometryData::colorRef(int i)
 {
     detach();
     return d->colors[i];
@@ -1077,7 +1077,7 @@ QColor4b &QGeometryData::colorRef(int i)
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-QColor4b QGeometryData::color(int i) const
+QColor4B QGeometryData::color(int i) const
 {
     Q_ASSERT(hasField(QGL::Color));
     return d->colors.at(i);
@@ -1086,11 +1086,11 @@ QColor4b QGeometryData::color(int i) const
 /*!
     Returns a copy of the color data.
 */
-QArray<QColor4b> QGeometryData::colors() const
+QArray<QColor4B> QGeometryData::colors() const
 {
     if (d)
         return d->colors;
-    return QArray<QColor4b>();
+    return QArray<QColor4B>();
 }
 
 /*!

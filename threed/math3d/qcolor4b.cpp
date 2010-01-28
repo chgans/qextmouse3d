@@ -45,14 +45,14 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QColor4b
-    \brief The QColor4b class represents a color by four byte components.
+    \class QColor4B
+    \brief The QColor4B class represents a color by four byte components.
     \since 4.6
     \ingroup qt3d
     \ingroup qt3d::math
 
     OpenGL applications commonly use four byte values to compactly
-    represent a color value.  QColor4b provides a convenience
+    represent a color value.  QColor4B provides a convenience
     class for manipulating such compact color values.
 
     The alternative is to represent a color value as four floating-point
@@ -61,52 +61,52 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QColor4b::QColor4b()
+    \fn QColor4B::QColor4B()
 
     Constructs a four-byte default color value of (0, 0, 0, 255).
 */
 
 /*!
-    \fn QColor4b::QColor4b(int red, int green, int blue, int alpha)
+    \fn QColor4B::QColor4B(int red, int green, int blue, int alpha)
 
     Constructs a four-byte color value with the components \a red,
     \a green, \a blue, and \a alpha.
 */
 
 /*!
-    \fn QColor4b::QColor4b(const QColor& color)
+    \fn QColor4B::QColor4B(const QColor& color)
 
     Constructs a four-byte color value from \a color.
 */
 
 /*!
-    \fn QColor4b::QColor4b(Qt::GlobalColor color)
+    \fn QColor4B::QColor4B(Qt::GlobalColor color)
 
     Constructs a four-byte color value from \a color.
 */
 
 /*!
-    \fn QColor4b::QColor4b(QRgb rgb)
+    \fn QColor4B::QColor4B(QRgb rgb)
 
     Constructs a four-byte color value from \a rgb.
 */
 
 /*!
-    \fn QColor4b& QColor4b::operator=(const QColor& color)
+    \fn QColor4B& QColor4B::operator=(const QColor& color)
 
     Copies the red, green, blue, and alpha components of \a color
     into this object.
 */
 
 /*!
-    \fn QColor4b& QColor4b::operator=(Qt::GlobalColor color)
+    \fn QColor4B& QColor4B::operator=(Qt::GlobalColor color)
 
     Copies the red, green, blue, and alpha components of the
     specified global \a color name into this object.
 */
 
 /*!
-    \fn int QColor4b::red() const
+    \fn int QColor4B::red() const
 
     Returns the red component of this color, between 0 and 255.
 
@@ -114,7 +114,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn int QColor4b::green() const
+    \fn int QColor4B::green() const
 
     Returns the green component of this color, between 0 and 255.
 
@@ -122,7 +122,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn int QColor4b::blue() const
+    \fn int QColor4B::blue() const
 
     Returns the blue component of this color, between 0 and 255.
 
@@ -130,7 +130,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn int QColor4b::alpha() const
+    \fn int QColor4B::alpha() const
 
     Returns the alpha component of this color, between 0 and 255.
 
@@ -138,7 +138,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setRed(int value)
+    \fn void QColor4B::setRed(int value)
 
     Sets the red component of this color to \a value, between 0 and 255.
 
@@ -146,7 +146,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setGreen(int value)
+    \fn void QColor4B::setGreen(int value)
 
     Sets the green component of this color to \a value, between 0 and 255.
 
@@ -154,7 +154,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setBlue(int value)
+    \fn void QColor4B::setBlue(int value)
 
     Sets the blue component of this color to \a value, between 0 and 255.
 
@@ -162,7 +162,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setAlpha(int value)
+    \fn void QColor4B::setAlpha(int value)
 
     Sets the alpha component of this color to \a value, between 0 and 255.
 
@@ -170,7 +170,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn qreal QColor4b::redF() const { return m_red / 255.0f; }
+    \fn qreal QColor4B::redF() const { return m_red / 255.0f; }
 
     Returns the red component of this color as a floating-point
     value between 0 and 1.
@@ -179,7 +179,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn qreal QColor4b::greenF() const { return m_green / 255.0f; }
+    \fn qreal QColor4B::greenF() const { return m_green / 255.0f; }
 
     Returns the green component of this color as a floating-point
     value between 0 and 1.
@@ -188,7 +188,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn qreal QColor4b::blueF() const { return m_blue / 255.0f; }
+    \fn qreal QColor4B::blueF() const { return m_blue / 255.0f; }
 
     Returns the blue component of this color as a floating-point
     value between 0 and 1.
@@ -197,7 +197,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn qreal QColor4b::alphaF() const { return m_alpha / 255.0f; }
+    \fn qreal QColor4B::alphaF() const { return m_alpha / 255.0f; }
 
     Returns the alpha component of this color as a floating-point
     value between 0 and 1.
@@ -206,7 +206,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setRedF(qreal value)
+    \fn void QColor4B::setRedF(qreal value)
 
     Sets the red component of this color to a floating-point \a value,
     between 0 and 1.
@@ -215,7 +215,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setGreenF(qreal value)
+    \fn void QColor4B::setGreenF(qreal value)
 
     Sets the green component of this color to a floating-point \a value,
     between 0 and 1.
@@ -224,7 +224,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setBlueF(qreal value)
+    \fn void QColor4B::setBlueF(qreal value)
 
     Sets the blue component of this color to a floating-point \a value,
     between 0 and 1.
@@ -233,7 +233,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setAlphaF(qreal value)
+    \fn void QColor4B::setAlphaF(qreal value)
 
     Sets the alpha component of this color to a floating-point \a value,
     between 0 and 1.
@@ -242,7 +242,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setRgb(int red, int green, int blue, int alpha)
+    \fn void QColor4B::setRgb(int red, int green, int blue, int alpha)
 
     Sets the components of this color to \a red, \a green, \a blue,
     and \a alpha.  Each component is between 0 and 255.
@@ -251,7 +251,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn void QColor4b::setRgbF(qreal red, qreal green, qreal blue, qreal alpha)
+    \fn void QColor4B::setRgbF(qreal red, qreal green, qreal blue, qreal alpha)
 
     Sets the components of this color to \a red, \a green, \a blue,
     and \a alpha.  Each component is a floating-point value between 0 and 1.
@@ -260,54 +260,54 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QColor4b QColor4b::fromRgb(int red, int green, int blue, int alpha)
+    \fn QColor4B QColor4B::fromRgb(int red, int green, int blue, int alpha)
 
-    Returns a QColor4b with the components \a red, \a green, \a blue,
+    Returns a QColor4B with the components \a red, \a green, \a blue,
     and \a alpha.  Each component is between 0 and 255.
 
     \sa fromRgbF(), setRgb()
 */
 
 /*!
-    \fn QColor4b QColor4b::fromRgbF(qreal red, qreal green, qreal blue, qreal alpha)
+    \fn QColor4B QColor4B::fromRgbF(qreal red, qreal green, qreal blue, qreal alpha)
 
-    Returns a QColor4b with the components \a red, \a green, \a blue,
+    Returns a QColor4B with the components \a red, \a green, \a blue,
     and \a alpha.  Each component is a floating-point value between 0 and 1.
 
     \sa fromRgb(), setRgbF()
 */
 
 /*!
-    \fn QColor4b QColor4b::fromRaw(const uchar *data)
+    \fn QColor4B QColor4B::fromRaw(const uchar *data)
 
-    Returns a QColor4b with components from the first four elements
+    Returns a QColor4B with components from the first four elements
     in \a data.  The \a data parameter must contain at least four
     elements and not be null.
 */
 
 /*!
-    \fn QColor QColor4b::toColor() const
+    \fn QColor QColor4B::toColor() const
 
     Returns this color as a QColor.
 */
 
 /*!
-    \fn bool QColor4b::operator==(const QColor4b& other) const
+    \fn bool QColor4B::operator==(const QColor4B& other) const
 
     Returns true if this color is the same as \a other; false otherwise.
 */
 
 /*!
-    \fn bool QColor4b::operator!=(const QColor4b& other) const
+    \fn bool QColor4B::operator!=(const QColor4B& other) const
 
     Returns true if this color is not the same as \a other; false otherwise.
 */
 
 #ifndef QT_NO_DEBUG_STREAM
 
-QDebug operator<<(QDebug dbg, const QColor4b &color)
+QDebug operator<<(QDebug dbg, const QColor4B &color)
 {
-    dbg.nospace() << "QColor4b("
+    dbg.nospace() << "QColor4B("
         << color.redF() << ", " << color.greenF() << ", "
         << color.blueF() << ", " << color.alphaF() << ')';
     return dbg.space();

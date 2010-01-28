@@ -146,7 +146,7 @@
 */
 
 /*!
-    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
+    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4B color)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
     color value set to \a color.
 */
@@ -276,17 +276,17 @@
 */
 
 /*!
-    \fn QColor4b QLogicalVertex::color() const
+    \fn QColor4B QLogicalVertex::color() const
     Returns a const reference to the color value for this vertex.
 */
 
 /*!
-    \fn void QLogicalVertex::setColor(const QColor4b &c)
+    \fn void QLogicalVertex::setColor(const QColor4B &c)
     Sets the color value for this vertex to \a c.
 */
 
 /*!
-    \fn QColor4b &QLogicalVertex::colorRef()
+    \fn QColor4B &QLogicalVertex::colorRef()
     Returns a modifiable reference to the color value for this vertex.
 */
 

@@ -58,7 +58,7 @@ QT_BEGIN_NAMESPACE
 
     The elements that may be stored in a QCustomDataArray are limited
     to a few types: float, QVector2D, QVector3D, QVector4D, and
-    QColor4b.  This provides a reasonable range of efficient use
+    QColor4B.  This provides a reasonable range of efficient use
     cases without overloading the API.  QArray can be used on
     any type, but is restricted to types that are known at compile time.
 
@@ -77,7 +77,7 @@ QT_BEGIN_NAMESPACE
     \value Vector2D The elements are of type QVector2D.
     \value Vector3D The elements are of type QVector3D.
     \value Vector4D The elements are of type QVector4D.
-    \value Color The elements are of type QColor4b, which consists of
+    \value Color The elements are of type QColor4B, which consists of
         four unsigned bytes.  To represent colors as four floating-point
         values, use Vector4D as the element type.
 */
@@ -212,12 +212,12 @@ QCustomDataArray::QCustomDataArray(const QArray<QVector4D>& other)
 
     \sa toColorArray()
 */
-QCustomDataArray::QCustomDataArray(const QArray<QColor4b>& other)
+QCustomDataArray::QCustomDataArray(const QArray<QColor4B>& other)
     : m_elementType(QCustomDataArray::Color),
       m_elementComponents(1)
 {
     int size = other.size();
-    qMemCopy(m_array.extend(size), other.constData(), sizeof(QColor4b) * size);
+    qMemCopy(m_array.extend(size), other.constData(), sizeof(QColor4B) * size);
 }
 
 /*!
@@ -379,7 +379,7 @@ void QCustomDataArray::setElementType(QCustomDataArray::ElementType type)
     data array as a QVariant.
 
     Color elements are returned as a QVariant containing a
-    QColor4b, not a QColor.
+    QColor4B, not a QColor.
 
     \sa setAt(), append(), floatAt(), vector2DAt(), vector3DAt()
     \sa vector4DAt(), colorAt()
@@ -410,7 +410,7 @@ QVariant QCustomDataArray::at(int index) const
     case QCustomDataArray::Color:
         data = m_array.constData() + index;
         return qVariantFromValue
-            (QColor4b::fromRaw(reinterpret_cast<const uchar *>(data)));
+            (QColor4B::fromRaw(reinterpret_cast<const uchar *>(data)));
 
     default: break;
     }
@@ -423,7 +423,7 @@ QVariant QCustomDataArray::at(int index) const
     The type of \a value must be consistent with elementType().
     The two exceptions to this are that a Float value can be
     specified by either a float or double QVariant, and a Color
-    value can be specified as either a QColor4b or QColor QVariant.
+    value can be specified as either a QColor4B or QColor QVariant.
 
     \sa at(), elementType()
 */
@@ -463,17 +463,17 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
         break;
 
     case QVariant::Color:
-        // Convert QColor into QColor4b.
+        // Convert QColor into QColor4B.
         Q_ASSERT(m_elementType == QCustomDataArray::Color);
-        *(reinterpret_cast<QColor4b *>(m_array.data() + index))
-            = QColor4b(qVariantValue<QColor>(value));
+        *(reinterpret_cast<QColor4B *>(m_array.data() + index))
+            = QColor4B(qVariantValue<QColor>(value));
         break;
 
     case QVariant::UserType:
-        if (value.userType() == qMetaTypeId<QColor4b>()) {
+        if (value.userType() == qMetaTypeId<QColor4B>()) {
             Q_ASSERT(m_elementType == QCustomDataArray::Color);
-            *(reinterpret_cast<QColor4b *>(m_array.data() + index))
-                = qVariantValue<QColor4b>(value);
+            *(reinterpret_cast<QColor4B *>(m_array.data() + index))
+                = qVariantValue<QColor4B>(value);
             break;
         }
         // Fall through.
@@ -562,7 +562,7 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 */
 
 /*!
-    \fn void QCustomDataArray::setAt(int index, const QColor4b& value)
+    \fn void QCustomDataArray::setAt(int index, const QColor4B& value)
     \overload
 
     Sets the color element at \a index in this custom data array to \a value.
@@ -618,7 +618,7 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 */
 
 /*!
-    \fn QColor4b QCustomDataArray::colorAt(int index) const
+    \fn QColor4B QCustomDataArray::colorAt(int index) const
 
     Returns the color element at \a index in this custom data array.
     The elementType() must be QCustomDataArray::Color.
@@ -697,7 +697,7 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
 */
 
 /*!
-    \fn void QCustomDataArray::append(const QColor4b& value)
+    \fn void QCustomDataArray::append(const QColor4B& value)
     \overload
 
     Appends the color \a value to this custom data array.
@@ -732,7 +732,7 @@ void QCustomDataArray::setAt(int index, const QVariant& value)
     The type of \a value must be consistent with elementType().
     The two exceptions to this are that a Float value can be
     specified by either a float or double QVariant, and a Color
-    value can be specified as either a QColor4b or QColor QVariant.
+    value can be specified as either a QColor4B or QColor QVariant.
 
     \sa at(), setAt(), elementType()
 */
@@ -764,13 +764,13 @@ void QCustomDataArray::append(const QVariant& value)
         break;
 
     case QVariant::Color:
-        // Convert QColor into QColor4b.
-        append(QColor4b(qVariantValue<QColor>(value)));
+        // Convert QColor into QColor4B.
+        append(QColor4B(qVariantValue<QColor>(value)));
         break;
 
     case QVariant::UserType:
-        if (value.userType() == qMetaTypeId<QColor4b>()) {
-            append(qVariantValue<QColor4b>(value));
+        if (value.userType() == qMetaTypeId<QColor4B>()) {
+            append(qVariantValue<QColor4B>(value));
             break;
         }
         // Fall through.
@@ -862,21 +862,21 @@ QArray<QVector4D> QCustomDataArray::toVector4DArray() const
 
 /*!
     Returns the contents of this custom data array as a QArray
-    of QColor4b values.
+    of QColor4B values.
 
     The elementType() must be QCustomDataArray::Color.
 
     This function needs to make a complete copy of the data
     in this array so it may be expensive performance-wise.
 */
-QArray<QColor4b> QCustomDataArray::toColorArray() const
+QArray<QColor4B> QCustomDataArray::toColorArray() const
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     int size = m_array.size();
-    QArray<QColor4b> result;
+    QArray<QColor4B> result;
     result.reserve(size);
-    const QColor4b *data =
-        reinterpret_cast<const QColor4b *>(m_array.constData());
+    const QColor4B *data =
+        reinterpret_cast<const QColor4B *>(m_array.constData());
     for (int index = 0; index < size; ++index)
         result.append(*data++);
     return result;

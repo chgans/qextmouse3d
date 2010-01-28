@@ -55,7 +55,7 @@ public:
     inline QLogicalVertex(const QVector3D &a);
     inline QLogicalVertex(const QVector3D &a, const QVector3D &n);
     inline QLogicalVertex(const QVector3D &a,  const QVector3D &n, const QVector2D &t);
-    inline QLogicalVertex(const QVector3D &a, QColor4b color);
+    inline QLogicalVertex(const QVector3D &a, QColor4B color);
     ~QLogicalVertex() {}
 
     inline QVector3D vertex() const;
@@ -80,9 +80,9 @@ public:
     inline void setNormal(const QVector3D &n);
     inline QVector3D &normalRef();
 
-    inline QColor4b color() const;
-    inline void setColor(const QColor4b &c);
-    inline QColor4b &colorRef();
+    inline QColor4B color() const;
+    inline void setColor(const QColor4B &c);
+    inline QColor4B &colorRef();
 
     inline QVector2D texCoord(QGL::VertexAttribute attr = QGL::TextureCoord0) const;
     inline void setTexCoord(const QVector2D &t, QGL::VertexAttribute attr = QGL::TextureCoord0);
@@ -134,7 +134,7 @@ inline QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, co
     m_data.appendTexCoord(t);
 }
 
-inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
+inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4B color)
     : m_index(0)
 {
     m_data.appendVertex(a);
@@ -276,12 +276,12 @@ inline QVector2D &QLogicalVertex::texCoordRef(QGL::VertexAttribute attr)
     return m_data.texCoordRef(m_index, attr);
 }
 
-inline QColor4b QLogicalVertex::color() const
+inline QColor4B QLogicalVertex::color() const
 {
     return m_data.color(m_index);
 }
 
-inline void QLogicalVertex::setColor(const QColor4b &c)
+inline void QLogicalVertex::setColor(const QColor4B &c)
 {
     if (m_index == -1)
         m_index = 0;
@@ -291,7 +291,7 @@ inline void QLogicalVertex::setColor(const QColor4b &c)
         m_data.colorRef(m_index) = c;
 }
 
-inline QColor4b &QLogicalVertex::colorRef()
+inline QColor4B &QLogicalVertex::colorRef()
 {
     return m_data.colorRef(m_index);
 }

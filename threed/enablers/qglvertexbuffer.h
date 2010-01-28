@@ -85,7 +85,7 @@ public:
     void addAttribute(QGL::VertexAttribute attribute,
                       const QArray<QVector4D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QArray<QColor4b>& value);
+                      const QArray<QColor4B>& value);
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
 

@@ -76,7 +76,7 @@ public:
     QGLAttributeValue(const QArray<QVector2D>& array);
     QGLAttributeValue(const QArray<QVector3D>& array);
     QGLAttributeValue(const QArray<QVector4D>& array);
-    QGLAttributeValue(const QArray<QColor4b>& array);
+    QGLAttributeValue(const QArray<QColor4B>& array);
     QGLAttributeValue(const QCustomDataArray& array);
     QGLAttributeValue(int size, QGL::ComponentType type,
                       int stride, const void *data);
@@ -130,7 +130,7 @@ inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
 {
 }
 
-inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4b>& array)
+inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4B>& array)
     : m_size(4), m_type(QGL::UByte), m_stride(0), m_data(array.constData())
 {
 }

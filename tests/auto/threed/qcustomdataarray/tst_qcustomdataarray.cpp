@@ -94,7 +94,7 @@ void tst_QCustomDataArray::create()
 
     QCustomDataArray array5(QCustomDataArray::Color, 10);
     QVERIFY(array5.elementType() == QCustomDataArray::Color);
-    QVERIFY(array5.elementSize() == sizeof(QColor4b));
+    QVERIFY(array5.elementSize() == sizeof(QColor4B));
     QCOMPARE(array5.size(), 10);
     QCOMPARE(array5.count(), 10);
     QVERIFY(!array5.isEmpty());
@@ -104,7 +104,7 @@ void tst_QCustomDataArray::create()
 
     QCustomDataArray array6(array5);
     QVERIFY(array6.elementType() == QCustomDataArray::Color);
-    QVERIFY(array6.elementSize() == sizeof(QColor4b));
+    QVERIFY(array6.elementSize() == sizeof(QColor4B));
     QCOMPARE(array6.size(), 11);
     QCOMPARE(array6.count(), 11);
     QVERIFY(!array6.isEmpty());

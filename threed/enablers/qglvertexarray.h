@@ -107,14 +107,14 @@ public:
     inline void append(const QVector4D& value);
     inline void append(const QPoint& value);
     inline void append(const QPointF& value);
-    inline void append(const QColor4b& value);
+    inline void append(const QColor4B& value);
     void append(const QGLVertexArray& array);
 
     inline qreal floatAt(int vertex, int field) const;
     inline QVector2D vector2DAt(int vertex, int field) const;
     inline QVector3D vector3DAt(int vertex, int field) const;
     inline QVector4D vector4DAt(int vertex, int field) const;
-    inline QColor4b color4bAt(int vertex, int field) const;
+    inline QColor4B color4bAt(int vertex, int field) const;
 
     inline void setAt(int vertex, int field, qreal x);
     inline void setAt(int vertex, int field, qreal x, qreal y);
@@ -123,7 +123,7 @@ public:
     inline void setAt(int vertex, int field, const QVector2D& value);
     inline void setAt(int vertex, int field, const QVector3D& value);
     inline void setAt(int vertex, int field, const QVector4D& value);
-    inline void setAt(int vertex, int field, const QColor4b& value);
+    inline void setAt(int vertex, int field, const QColor4B& value);
 
     QGLVertexArray extractField(int field) const;
     QGLVertexArray extractField(QGL::VertexAttribute attr) const;
@@ -141,7 +141,7 @@ public:
     inline QGLVertexArray& operator+=(const QGLVertexArray& other);
     inline QGLVertexArray& operator+=(const QPoint& value);
     inline QGLVertexArray& operator+=(const QPointF& value);
-    inline QGLVertexArray& operator+=(const QColor4b& value);
+    inline QGLVertexArray& operator+=(const QColor4B& value);
 
     inline QGLVertexArray& operator<<(qreal value);
     inline QGLVertexArray& operator<<(const QVector2D& value);
@@ -150,7 +150,7 @@ public:
     inline QGLVertexArray& operator<<(const QGLVertexArray& other);
     inline QGLVertexArray& operator<<(const QPoint& value);
     inline QGLVertexArray& operator<<(const QPointF& value);
-    inline QGLVertexArray& operator<<(const QColor4b& value);
+    inline QGLVertexArray& operator<<(const QColor4B& value);
 
     void setRawData(const float *data, int count);
 
@@ -422,7 +422,7 @@ inline void QGLVertexArray::append(const QPointF& value)
     m_data.append(value.x(), value.y());
 }
 
-inline void QGLVertexArray::append(const QColor4b& value)
+inline void QGLVertexArray::append(const QColor4B& value)
 {
 #ifndef QT_NO_DEBUG
     typeCheckAppend(1); // 1 float component == 4 byte components.
@@ -430,7 +430,7 @@ inline void QGLVertexArray::append(const QColor4b& value)
     detachBuffer();
     int count = m_data.count();
     m_data.resize(count + 1);
-    *reinterpret_cast<QColor4b *>(m_data.data() + count) = value;
+    *reinterpret_cast<QColor4B *>(m_data.data() + count) = value;
 }
 
 inline qreal QGLVertexArray::floatAt(int vertex, int field) const
@@ -487,16 +487,16 @@ inline QVector4D QGLVertexArray::vector4DAt(int vertex, int field) const
     }
 }
 
-inline QColor4b QGLVertexArray::color4bAt(int vertex, int field) const
+inline QColor4B QGLVertexArray::color4bAt(int vertex, int field) const
 {
 #ifndef QT_NO_DEBUG
     typeCheckRead(field, 1); // 1 float component == 4 byte components.
 #endif
     int offset = vertex * m_fields.stride() + m_fields.fieldOffset(field);
     if (offset >= 0 && offset < m_data.count())
-        return *reinterpret_cast<const QColor4b *>(&(m_data[offset]));
+        return *reinterpret_cast<const QColor4B *>(&(m_data[offset]));
     else
-        return QColor4b();
+        return QColor4B();
 }
 
 inline void QGLVertexArray::setAt(int vertex, int field, qreal x)
@@ -594,7 +594,7 @@ inline void QGLVertexArray::setAt(int vertex, int field, const QVector4D& value)
     }
 }
 
-inline void QGLVertexArray::setAt(int vertex, int field, const QColor4b& value)
+inline void QGLVertexArray::setAt(int vertex, int field, const QColor4B& value)
 {
 #ifndef QT_NO_DEBUG
     typeCheckWrite(field, 1); // 1 float component == 4 byte components.
@@ -602,7 +602,7 @@ inline void QGLVertexArray::setAt(int vertex, int field, const QColor4b& value)
     detachBuffer();
     int offset = vertex * m_fields.stride() + m_fields.fieldOffset(field);
     if (offset >= 0 && offset < m_data.count())
-        *reinterpret_cast<QColor4b *>(&(m_data[offset])) = value;
+        *reinterpret_cast<QColor4B *>(&(m_data[offset])) = value;
 }
 
 inline float *QGLVertexArray::data()
@@ -671,7 +671,7 @@ inline QGLVertexArray& QGLVertexArray::operator+=(const QPointF& value)
     return *this;
 }
 
-inline QGLVertexArray& QGLVertexArray::operator+=(const QColor4b& value)
+inline QGLVertexArray& QGLVertexArray::operator+=(const QColor4B& value)
 {
     append(value);
     return *this;
@@ -719,7 +719,7 @@ inline QGLVertexArray& QGLVertexArray::operator<<(const QPointF& value)
     return *this;
 }
 
-inline QGLVertexArray& QGLVertexArray::operator<<(const QColor4b& value)
+inline QGLVertexArray& QGLVertexArray::operator<<(const QColor4B& value)
 {
     append(value);
     return *this;
