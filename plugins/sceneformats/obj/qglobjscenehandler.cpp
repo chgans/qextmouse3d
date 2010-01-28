@@ -41,7 +41,9 @@
 
 #include "qglobjscenehandler.h"
 #include "qglobjscene.h"
-#include "qglobjgeometry.h"
+#include "qvectorarray.h"
+#include "qgldisplaylist.h"
+#include "qgloperation.h"
 #include <QtCore/qiodevice.h>
 #include <QtCore/qfile.h>
 #include <QtGui/qimage.h>
@@ -124,33 +126,31 @@ static QColor objReadColor(const QByteArray& line, int posn)
 
 QGLAbstractScene *QGLObjSceneHandler::read()
 {
-    QGLObjGeometry *geometry = new QGLObjGeometry();
     QByteArray line;
     QByteArray keyword;
     int posn, index, count;
     int tindex, nindex;
-    QGLVertexArray positions(QGL::Position, 3);
-    QGLVertexArray texCoords(QGL::TextureCoord0, 2);
-    QGLVertexArray normals(QGL::Normal, 3);
-    QGLVertexArray finalPositions(QGL::Position, 3);
-    QGLVertexArray finalTexCoords(QGL::TextureCoord0, 2);
-    QGLVertexArray finalNormals(QGL::Normal, 3);
+    QVector3DArray positions;
+    QVector2DArray texCoords;
+    QVector3DArray normals;
+    QVector3DArray facePositions;
+    QVector2DArray faceTexCoords;
+    QVector3DArray faceNormals;
     QGLIndexArray indices;
     qreal x, y, z;
-    bool smooth = false;
     QGLIndexArray materialIndices;
     QGLMaterialParameters *material = 0;
-    QGLObjGroup group;
-    bool needNormals = false;
+    QGL::Smoothing smoothing = QGL::Faceted;
+    QGLSceneNode *defaultNode;
+    QList<QGLSceneObject *> groups;
 
-    // Create the default group properties.
-    group.name = QString();
-    group.firstVertex = 0;
-    group.vertexCount = 0;
-
-    // Create the material palette for the geometry object.
-    palette = new QGLMaterialCollection();
-    geometry->setPalette(palette);
+    // Create the display list and start an initial Faceted section.
+    QGLDisplayList *dlist = new QGLDisplayList();
+    dlist->newSection(smoothing);
+    palette = dlist->geometry()->palette();
+    defaultNode = dlist;
+    defaultNode->setObjectName(QLatin1String("__main"));
+    dlist->pushNode();
 
     while (!device()->atEnd()) {
         // Read the next line, including any backslash continuations.
@@ -187,9 +187,11 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             z = objReadFloat(line, &posn);
             normals.append(x, y, z);
         } else if (keyword == "f") {
+            facePositions.resize(0);
+            faceTexCoords.resize(0);
+            faceNormals.resize(0);
             posn = objSkipWS(line, posn);
             count = 0;
-            QList<int> extras;
             while (posn < line.size()) {
                 // Note: we currently only read the initial vertex
                 // index and also use it for texture co-ordinates
@@ -199,53 +201,55 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 tindex = objReadSlashInteger(line, &posn);
                 nindex = objReadSlashInteger(line, &posn);
                 if (index < 0)
-                    index = positions.vertexCount() + index;
+                    index = positions.count() + index;
                 else if (index > 0)
                     --index;        // Indices in obj are 1-based.
-                if (index >= 0 && index < positions.vertexCount()) {
-                    finalPositions.append(positions.vector3DAt(index, 0));
-                    index = finalPositions.vertexCount() - 1;
-                }
+                if (index >= 0 && index < positions.count())
+                    facePositions.append(positions[index]);
                 if (tindex < 0)
-                    tindex = texCoords.vertexCount() + tindex;
+                    tindex = texCoords.count() + tindex;
                 else if (tindex > 0)
                     --tindex;        // Indices in obj are 1-based.
                 else
                     tindex = -1;
-                if (tindex >= 0 && tindex < texCoords.vertexCount())
-                    finalTexCoords.append(texCoords.vector2DAt(tindex, 0));
-                else if (!texCoords.isEmpty())
-                    finalTexCoords.append(0.0f, 0.0f);
+                if (tindex >= 0 && tindex < texCoords.count())
+                    faceTexCoords.append(texCoords[tindex]);
                 if (nindex < 0)
-                    nindex = normals.vertexCount() + nindex;
+                    nindex = normals.count() + nindex;
                 else if (nindex > 0)
                     --nindex;        // Indices in obj are 1-based.
                 else
                     nindex = -1;
-                if (nindex >= 0 && nindex < normals.vertexCount())
-                    finalNormals.append(normals.vector3DAt(nindex, 0));
-                else if (!normals.isEmpty()) {
-                    finalNormals.append(0.0f, 0.0f, 0.0f);
-                    needNormals = true;
-                }
-                if (count < 3)
-                    indices.append(index);
-                else
-                    extras.append(index);
+                if (nindex >= 0 && nindex < normals.count())
+                    faceNormals.append(normals[nindex]);
                 ++count;
                 posn = objSkipNonWS(line, posn, 0);
                 posn = objSkipWS(line, posn);
             }
-            if (count >= 4) {
+            if (0) { //count <= 3) {
+                QGLOperation op(dlist, QGL::TRIANGLE);
+                op.addVertexArray(facePositions);
+                if (!faceTexCoords.isEmpty())
+                    op.addTexCoordArray(faceTexCoords);
+                if (!faceNormals.isEmpty())
+                    op.addNormalArray(faceNormals);
+            } else {
                 // Subdivide quads and polygons into triangles for simplicity.
-                int first = indices[indices.size() - 3];
-                int last = indices[indices.size() - 1];
-                for (index = 0; index < extras.size(); ++index) {
-                    int next = extras[index];
-                    indices.append(first);
-                    indices.append(last);
-                    indices.append(next);
-                    last = next;
+                QGLOperation op(dlist, QGL::TRIANGLE);
+                for (index = 2; index < facePositions.size(); ++index) {
+                    op.addVertex(facePositions[0]);
+                    op.addVertex(facePositions[index - 1]);
+                    op.addVertex(facePositions[index]);
+                    if (!faceTexCoords.isEmpty()) {
+                        op.addTexCoord(faceTexCoords.value(0));
+                        op.addTexCoord(faceTexCoords.value(index - 1));
+                        op.addTexCoord(faceTexCoords.value(index));
+                    }
+                    if (!faceNormals.isEmpty()) {
+                        op.addNormal(faceNormals.value(0));
+                        op.addNormal(faceNormals.value(index - 1));
+                        op.addNormal(faceNormals.value(index));
+                    }
                 }
             }
         } else if (keyword == "usemtl") {
@@ -256,9 +260,12 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 materialName != QLatin1String("(null)")) {
                 index = palette->materialIndexByName(materialName);
                 if (index != -1) {
-                    material = palette->materialByIndex(index);
-                    materialIndices.append(indices.size());
-                    materialIndices.append(index);
+                    QGLSceneNode *node = dlist->newNode();
+                    node->setMaterial(index);
+                    if (palette->texture(index))
+                        node->setEffect(QGL::LitDecalTexture2D);
+                    else
+                        node->setEffect(QGL::LitMaterial);
                 } else {
                     qWarning() << "obj material" << materialName << "not found";
                     material = 0;
@@ -274,122 +281,32 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             posn = objSkipWS(line, posn);
             index = objSkipNonWS(line, posn, 0);
             QByteArray arg = line.mid(posn, index - posn);
-            smooth = (arg == "on" || arg == "1");
+            QGL::Smoothing smooth;
+            if (arg == "on" || arg == "1")
+                smooth = QGL::Smooth;
+            else
+                smooth = QGL::Faceted;
+            if (smoothing != smooth) {
+                smoothing = smooth;
+                dlist->newSection(smooth);
+            }
         } else if (keyword == "g" || keyword == "o") {
             // Label the faces that follow as part of a named group or object.
             posn = objSkipWS(line, posn);
             QString objectName = QString::fromLocal8Bit(line.mid(posn));
-            if (group.firstVertex < indices.size() &&
-                    !group.name.isEmpty()) {
-                group.vertexCount = indices.size() - group.firstVertex;
-                geometry->groups.append(group);
-            }
-            group.name = objectName;
-            group.firstVertex = indices.size();
-            group.vertexCount = 0;
+            dlist->popNode();
+            QGLSceneNode *node = dlist->pushNode();
+            node->setObjectName(objectName);
+            groups.append(node);
         } else {
             qWarning() << "unsupported obj command: " << keyword.constData();
         }
     }
 
-    // Add the last named group.
-    if (group.firstVertex < indices.size() && !group.name.isEmpty()) {
-        group.vertexCount = indices.size() - group.firstVertex;
-        geometry->groups.append(group);
-    }
-
-    // Replace the vertex temporary arrays with the final arrangement.
-    positions = finalPositions;
-    texCoords = finalTexCoords;
-    normals = finalNormals;
-
-    // Calculate normals if they aren't present.
-    if (normals.isEmpty() || needNormals) {
-        // Reserve space and clear all of the normals.
-        if (normals.isEmpty()) {
-            normals.reserve(positions.vertexCount());
-            for (index = 0; index < positions.vertexCount(); ++index)
-                normals.append(0.0f, 0.0f, 0.0f);
-        }
-
-        // Calculate face-specific normals and apply them to the vertices.
-        // If a vertex is shared between multiple faces, it will accumulate
-        // the sum to be normalized below.
-        for (index = 0; index <= (indices.size() - 3); index += 3) {
-            int index1 = indices[index];
-            int index2 = indices[index + 1];
-            int index3 = indices[index + 2];
-            QVector3D pt1 = positions.vector3DAt(index1, 0);
-            QVector3D pt2 = positions.vector3DAt(index2, 0);
-            QVector3D pt3 = positions.vector3DAt(index3, 0);
-            QVector3D normal = QVector3D::crossProduct(pt2 - pt1, pt3 - pt1);
-            QVector3D norm1 = normals.vector3DAt(index1, 0);
-            QVector3D norm2 = normals.vector3DAt(index2, 0);
-            QVector3D norm3 = normals.vector3DAt(index3, 0);
-            if (smooth) {
-                normals.setAt(index1, 0, norm1 + normal);
-                normals.setAt(index2, 0, norm2 + normal);
-                normals.setAt(index3, 0, norm3 + normal);
-            } else {
-                // When smoothing is off, then shared vertices need
-                // to be split into several different vertices so
-                // that they can have separate normals for each face.
-                if (norm1.isNull()) {
-                    normals.setAt(index1, 0, normal);
-                } else {
-                    indices[index] = positions.vertexCount();
-                    positions.append(pt1);
-                    if (!texCoords.isEmpty())
-                        texCoords.append(texCoords.vector2DAt(index1, 0));
-                    normals.append(normal);
-                }
-                if (norm2.isNull()) {
-                    normals.setAt(index2, 0, normal);
-                } else {
-                    indices[index + 1] = positions.vertexCount();
-                    positions.append(pt2);
-                    if (!texCoords.isEmpty())
-                        texCoords.append(texCoords.vector2DAt(index2, 0));
-                    normals.append(normal);
-                }
-                if (norm3.isNull()) {
-                    normals.setAt(index3, 0, normal);
-                } else {
-                    indices[index + 2] = positions.vertexCount();
-                    positions.append(pt3);
-                    if (!texCoords.isEmpty())
-                        texCoords.append(texCoords.vector2DAt(index3, 0));
-                    normals.append(normal);
-                }
-            }
-        }
-
-        // If any normals are still zero, set them to (0, 0, 1).
-        // Otherwise normalize the cross-product sums.
-        for (index = 0; index < normals.vertexCount(); ++index) {
-            QVector3D current = normals.vector3DAt(index, 0);
-            if (current.isNull())
-                normals.setAt(index, 0, QVector3D(0.0f, 0.0f, 1.0f));
-            else
-                normals.setAt(index, 0, current.normalized());
-        }
-    }
-
-    // Create the combined vertex array.
-    QGLVertexArray combined = positions;
-    if (!texCoords.isEmpty())
-        combined = combined.interleaved(texCoords);
-    if (!normals.isEmpty())
-        combined = combined.interleaved(normals);
-
-    geometry->setVertexArray(combined);
-    geometry->setIndexArray(indices);
-    geometry->setMaterialIndexArray(materialIndices);
-    geometry->setDrawingMode(QGL::Triangles);
-
     // Create a scene from the geometry, which will split it out
     // into several mesh objects for each of the group names.
-    return new QGLObjScene(geometry);
+    dlist->finalize();
+    return new QGLObjScene(dlist, defaultNode, groups);
 }
 
 void QGLObjSceneHandler::loadMaterialLibrary(const QString& name)

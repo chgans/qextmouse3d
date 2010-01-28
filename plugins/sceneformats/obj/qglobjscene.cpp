@@ -40,50 +40,21 @@
 ****************************************************************************/
 
 #include "qglobjscene.h"
+#include "qgldisplaylist.h"
+#include "qglsceneobject.h"
 
 QT_BEGIN_NAMESPACE
 
-QGLObjObject::QGLObjObject(QGLObjGeometry *geometry, QObject *parent)
-    : QGLSceneObject(QGLSceneObject::Mesh, parent)
+QGLObjScene::QGLObjScene(QGLDisplayList *list,
+                         QGLSceneObject *defaultNode,
+                         const QList<QGLSceneObject *>& otherNodes,
+                         QObject *parent)
+    : QGLAbstractScene(parent),
+      displayList(list),
+      mainObject(defaultNode),
+      meshes(otherNodes)
 {
-    setObjectName(QLatin1String("__main"));     // No tr
-    this->geometry = geometry;
-    this->first = -1;
-    this->count = -1;
-}
-
-QGLObjObject::QGLObjObject(QGLObjGeometry *geometry, const QString& name,
-                           int first, int count, QObject *parent)
-    : QGLSceneObject(QGLSceneObject::Mesh, parent)
-{
-    setObjectName(name);
-    this->geometry = geometry;
-    this->first = first;
-    this->count = count;
-}
-
-QGLObjObject::~QGLObjObject()
-{
-    if (first == -1)
-        delete geometry;
-}
-
-void QGLObjObject::draw(QGLPainter *painter)
-{
-    if (first == -1)
-        geometry->draw(painter);
-    else
-        geometry->drawRange(painter, first, count);
-}
-
-QGLObjScene::QGLObjScene(QGLObjGeometry *geometry, QObject *parent)
-    : QGLAbstractScene(parent)
-{
-    mainObject = new QGLObjObject(geometry, this);
-    foreach (QGLObjGroup group, geometry->groups) {
-        meshes.append(new QGLObjObject
-            (geometry, group.name, group.firstVertex, group.vertexCount));
-    }
+    displayList->setParent(this);
 }
 
 QGLObjScene::~QGLObjScene()

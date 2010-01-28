@@ -43,37 +43,27 @@
 #define QGLOBJSCENE_H
 
 #include "qglabstractscene.h"
-#include "qglobjgeometry.h"
 
 QT_BEGIN_NAMESPACE
 
-class QGLObjObject : public QGLSceneObject
-{
-    Q_OBJECT
-public:
-    explicit QGLObjObject(QGLObjGeometry *geometry, QObject *parent = 0);
-    QGLObjObject(QGLObjGeometry *geometry, const QString& name,
-                 int first, int count, QObject *parent = 0);
-    ~QGLObjObject();
-
-    void draw(QGLPainter *painter);
-
-private:
-    QGLObjGeometry *geometry;
-    int first, count;
-};
+class QGLDisplayList;
+class QGLSceneNode;
 
 class QGLObjScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit QGLObjScene(QGLObjGeometry *geometry, QObject *parent = 0);
+    explicit QGLObjScene(QGLDisplayList *list,
+                         QGLSceneObject *defaultNode,
+                         const QList<QGLSceneObject *>& otherNodes,
+                         QObject *parent = 0);
     virtual ~QGLObjScene();
 
     QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
 
 private:
-    QGLObjObject *mainObject;
+    QGLDisplayList *displayList;
+    QGLSceneObject *mainObject;
     QList<QGLSceneObject *> meshes;
 };
 

@@ -2,12 +2,10 @@ TARGET  = qsceneobj
 include(../../qpluginbase.pri)
 
 HEADERS += qglobjscene.h \
-           qglobjscenehandler.h \
-           qglobjgeometry.h
+           qglobjscenehandler.h
 SOURCES += main.cpp \
            qglobjscene.cpp \
-           qglobjscenehandler.cpp \
-           qglobjgeometry.cpp
+           qglobjscenehandler.cpp
 
 QTDIR_build:DESTDIR = $$QT_BUILD_TREE/plugins/sceneformats
 target.path += $$[QT_INSTALL_PLUGINS]/sceneformats

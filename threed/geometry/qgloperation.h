@@ -55,7 +55,7 @@ public:
     inline void addVertex(const QVector3D &);
     inline void addNormal(const QVector3D &);
     inline void addColor(const QColor4b &);
-    inline void addTexCoord(const QVector2D &, QGL::VertexAttribute);
+    inline void addTexCoord(const QVector2D &, QGL::VertexAttribute = QGL::TextureCoord0);
     inline void addAttribute(const QVector3D &, QGL::VertexAttribute);
 
     inline void addVertexArray(const QVector3DArray &);
