@@ -60,7 +60,7 @@ public:
 
     inline void addVertexArray(const QVector3DArray &);
     inline void addNormalArray(const QVector3DArray &);
-    inline void addColorArray(const QDataArray<QColor4b> &);
+    inline void addColorArray(const QArray<QColor4b> &);
     inline void addTexCoordArray(const QVector2DArray &, QGL::VertexAttribute = QGL::TextureCoord0);
     inline void addAttributeArray(const QCustomDataArray &, QGL::VertexAttribute = QGL::CustomVertex0);
 
@@ -121,7 +121,7 @@ inline void QGLOperation::addNormalArray(const QVector3DArray &normals)
     m_list->addNormalArray(normals);
 }
 
-inline void QGLOperation::addColorArray(const QDataArray<QColor4b> &colors)
+inline void QGLOperation::addColorArray(const QArray<QColor4b> &colors)
 {
     m_list->addColorArray(colors);
 }
@@ -137,43 +137,43 @@ inline void QGLOperation::end()
     m_list->end();
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArray<QVector3D> &ary)
 {
     op.addVertexArray(ary);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArray<QVector2D> &ary)
 {
     op.addTexCoordArray(ary, QGL::TextureCoord0);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArray<QColor4b> &ary)
 {
     op.addColorArray(ary);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector3D> &ary)
 {
-    QDataArrayRef<QVector3D>::const_iterator it = ary.constBegin();
+    QArrayRef<QVector3D>::const_iterator it = ary.constBegin();
     for ( ; it != ary.constEnd(); ++it)
         op.addVertex(*it);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector2D> &ary)
 {
-    QDataArrayRef<QVector2D>::const_iterator it = ary.constBegin();
+    QArrayRef<QVector2D>::const_iterator it = ary.constBegin();
     for ( ; it != ary.constEnd(); ++it)
         op.addTexCoord(*it, QGL::TextureCoord0);
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &ary)
+inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QColor4b> &ary)
 {
-    QDataArrayRef<QColor4b>::const_iterator it = ary.constBegin();
+    QArrayRef<QColor4b>::const_iterator it = ary.constBegin();
     for ( ; it != ary.constEnd(); ++it)
         op.addColor(*it);
     return op;

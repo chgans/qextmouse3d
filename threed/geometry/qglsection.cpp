@@ -41,7 +41,7 @@
 
 #include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
-#include "qdataarray.h"
+#include "qarray.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>

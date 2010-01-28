@@ -47,7 +47,7 @@
 #include "qvector3d.h"
 #include "qvector4d.h"
 #include "qcolor4b.h"
-#include "qdataarray.h"
+#include "qarray.h"
 #include "qglvertexdescription.h"
 #include "qglattributevalue.h"
 #include "qglreferencedbuffer.h"

@@ -114,7 +114,7 @@ public:
 
     void addVertexArray(const QVector3DArray &);
     void addNormalArray(const QVector3DArray &);
-    void addColorArray(const QDataArray<QColor4b> &);
+    void addColorArray(const QArray<QColor4b> &);
     void addTexCoordArray(const QVector2DArray &,
                           QGL::VertexAttribute attr = QGL::TextureCoord0);
     void addAttributeArray(const QCustomDataArray &,

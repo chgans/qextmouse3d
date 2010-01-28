@@ -94,7 +94,7 @@
 
     Use the fields() and hasField() functions to determine if a particular
     field is present in the vertex.  Accessing non-existent data will cause
-    an assert in debug mode (from the underlying QDataArray), and give
+    an assert in debug mode (from the underlying QArray), and give
     undefined behaviour in release mode.
 
     Common normals are treated specially - if the underlying QGeometryData has

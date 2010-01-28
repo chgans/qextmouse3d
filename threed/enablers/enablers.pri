@@ -13,7 +13,6 @@ HEADERS += \
     qglvertexbuffer.h \
     qarray.h \
     qcustomdataarray.h \
-    qdataarray.h \
     qvectorarray.h
 SOURCES += qglattributevalue.cpp \
     qglbuffer.cpp \

@@ -47,7 +47,7 @@
 #include "qglvertexarray.h"
 #include "qglindexarray.h"
 #include "qbox3d.h"
-#include "qdataarray.h"
+#include "qarray.h"
 #include "qvectorarray.h"
 
 QT_BEGIN_NAMESPACE
@@ -115,7 +115,7 @@ public:
     void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
-    void appendColorArray(const QDataArray<QColor4b> &ary);
+    void appendColorArray(const QArray<QColor4b> &ary);
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
@@ -126,7 +126,7 @@ public:
     QVector3D normal(int i) const;
 
     QColor4b &colorRef(int i);
-    QDataArray<QColor4b> colors() const;
+    QArray<QColor4b> colors() const;
     QColor4b color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);

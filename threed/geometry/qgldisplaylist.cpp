@@ -1090,7 +1090,7 @@ void QGLDisplayList::addNormalArray(const QVector3DArray &normals)
 /*!
     Adds all the \a colors to the current operation.
 */
-void QGLDisplayList::addColorArray(const QDataArray<QColor4b> &colors)
+void QGLDisplayList::addColorArray(const QArray<QColor4b> &colors)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)

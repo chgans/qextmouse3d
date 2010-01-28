@@ -105,13 +105,13 @@
             \o \c{const QColor4b &d}
             \o \c{op.addColor(d)}
         \row
-            \o \c{const QDataArray<QVector3D> &d}
+            \o \c{const QArray<QVector3D> &d}
             \o \c{op.addVertexArray(d)}
         \row
-            \o \c{const QDataArray<QVector2D> &d}
+            \o \c{const QArray<QVector2D> &d}
             \o \c{op.addTexCoordArray(d, QGL::TextureCoord0)}
         \row
-            \o \c{const QDataArray<QColor4b> &d}
+            \o \c{const QArray<QColor4b> &d}
             \o \c{op.addColorArray(d)}
         \row
             \o \c{const QGL::OperationFlags &d}
@@ -195,7 +195,7 @@
 */
 
 /*!
-    \fn void QGLOperation::addColorArray(const QDataArray<QColor4b> &colorArray)
+    \fn void QGLOperation::addColorArray(const QArray<QColor4b> &colorArray)
     Adds \a colorArray to this operation by calling
     QGLDisplayList::addColorArray(colorArray)
 */
@@ -221,37 +221,37 @@
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector3D> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArray<QVector3D> &array)
     \relates QGLOperation
     Calls QGLOperation::addVertexArray() on \a op with argument \a array.
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QVector2D> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArray<QVector2D> &array)
     Calls QGLOperation::addTexCoordArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArray<QColor4b> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArray<QColor4b> &array)
     Calls QGLOperation::addColorArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector3D> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector3D> &array)
     Calls QGLOperation::addColorArray() on \a op with argument \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector2D> &array)
     Calls QGLOperation::addTexCoord() on \a op for all items in \a array.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QColor4b> &array)
     Calls QGLOperation::addColor() on \a op for all items in \a array.
     \relates QGLOperation
 */

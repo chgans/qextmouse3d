@@ -121,7 +121,7 @@ public:
 
     QVector3DArray vertices;
     QVector3DArray normals;
-    QDataArray<QColor4b> colors;
+    QArray<QColor4b> colors;
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
 
@@ -459,7 +459,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                 {
                     if (attr == QGL::Position)
                     {
-                        QDataArray<QVector3D> tmp;
+                        QArray<QVector3D> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->vertices.at(i));
@@ -469,7 +469,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                     }
                     else if (attr == QGL::Normal)
                     {
-                        QDataArray<QVector3D> tmp;
+                        QArray<QVector3D> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->normals.at(i));
@@ -479,7 +479,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                     }
                     else  // colors
                     {
-                        QDataArray<QColor4b> tmp;
+                        QArray<QColor4b> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -490,9 +490,9 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                 }
                 else if (attr < QGL::CustomVertex0)
                 {
-                    QDataArray<QVector2D> tmp;
-                    const QDataArray<QVector2D> txa = d->textures.at(d->key[attr]);
-                    const QDataArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
+                    QArray<QVector2D> tmp;
+                    const QArray<QVector2D> txa = d->textures.at(d->key[attr]);
+                    const QArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
                     for (int i = 0; i < cnt; ++i)
                     {
                         tmp.append(txa.at(i));
@@ -542,7 +542,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                 {
                     if (attr == QGL::Position)
                     {
-                        QDataArray<QVector3D> tmp;
+                        QArray<QVector3D> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->vertices.at(i));
@@ -552,7 +552,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                     }
                     else if (attr == QGL::Normal)
                     {
-                        QDataArray<QVector3D> tmp;
+                        QArray<QVector3D> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->normals.at(i));
@@ -562,7 +562,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                     }
                     else  // colors
                     {
-                        QDataArray<QColor4b> tmp;
+                        QArray<QColor4b> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -573,9 +573,9 @@ void QGeometryData::zipWith(const QGeometryData &other)
                 }
                 else if (attr < QGL::CustomVertex0)
                 {
-                    QDataArray<QVector2D> tmp;
-                    const QDataArray<QVector2D> txa = d->textures.at(d->key[attr]);
-                    const QDataArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
+                    QArray<QVector2D> tmp;
+                    const QArray<QVector2D> txa = d->textures.at(d->key[attr]);
+                    const QArray<QVector2D> txb = other.d->textures.at(other.d->key[attr]);
                     for (int i = 0; i < cnt; ++i)
                     {
                         tmp.append(txa.at(i));
@@ -999,7 +999,7 @@ void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAt
 /*!
     Append the colors in \a ary to this geometry data, as color fields.
 */
-void QGeometryData::appendColorArray(const QDataArray<QColor4b> &ary)
+void QGeometryData::appendColorArray(const QArray<QColor4b> &ary)
 {
     if (ary.count())
     {
@@ -1025,7 +1025,7 @@ QVector3DArray QGeometryData::vertices() const
 {
     if (d)
         return d->vertices;
-    return QDataArray<QVector3D>();
+    return QArray<QVector3D>();
 }
 
 /*!
@@ -1062,7 +1062,7 @@ QVector3DArray QGeometryData::normals() const
 {
     if (d)
         return d->normals;
-    return QDataArray<QVector3D>();
+    return QArray<QVector3D>();
 }
 
 /*!
@@ -1086,11 +1086,11 @@ QColor4b QGeometryData::color(int i) const
 /*!
     Returns a copy of the color data.
 */
-QDataArray<QColor4b> QGeometryData::colors() const
+QArray<QColor4b> QGeometryData::colors() const
 {
     if (d)
         return d->colors;
-    return QDataArray<QColor4b>();
+    return QArray<QColor4b>();
 }
 
 /*!
@@ -1272,7 +1272,7 @@ quint32 QGeometryData::fields() const
 
 /*!
     Returns the count of logical vertices stored.  This is effectively
-    the max() of QDataArray::count() over all of the enabled data types.
+    the max() of QArray::count() over all of the enabled data types.
 */
 int QGeometryData::count() const
 {

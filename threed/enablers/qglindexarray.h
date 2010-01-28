@@ -42,7 +42,7 @@
 #ifndef QGLINDEXARRAY_H
 #define QGLINDEXARRAY_H
 
-#include "qdataarray.h"
+#include "qarray.h"
 #include "qglreferencedbuffer.h"
 
 QT_BEGIN_HEADER

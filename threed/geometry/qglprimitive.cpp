@@ -112,7 +112,7 @@ QGLPrimitive::QGLPrimitive()
 QVector3D QGLPrimitive::center() const
 {
     QVector3D center;
-    QDataArray<QVector3D> v = vertices();
+    QArray<QVector3D> v = vertices();
     for (int i = 0; i < v.count(); ++i)
         center += v[i];
     return center / (float)v.count();
@@ -146,7 +146,7 @@ QGLPrimitive QGLPrimitive::reversed() const
 QGLPrimitive QGLPrimitive::translated(const QVector3D &t) const
 {
     QGLPrimitive r;
-    QDataArray<QVector3D> v = vertices();
+    QArray<QVector3D> v = vertices();
     for (int i = 0; i < count(); ++i)
     {
         r.appendVertex(vertexAt(i));
@@ -214,10 +214,10 @@ QGLPrimitive QGLPrimitive::zippedWith(const QGLPrimitive &other) const
 */
 void QGLPrimitive::generateTextureCoordinates(Qt::Orientation orientation, QGL::VertexAttribute field)
 {
-    QDataArray<qreal> extents;
+    QArray<qreal> extents;
     extents.append(0.0);
     qreal totalExtents = 0.0;
-    QDataArray<QVector3D> v = vertices();
+    QArray<QVector3D> v = vertices();
     for (int i = 0; i < v.count() - 1; ++i)
     {
         int n = (i + 1) % v.count();
