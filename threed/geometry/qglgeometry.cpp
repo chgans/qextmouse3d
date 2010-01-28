@@ -68,7 +68,7 @@ QT_BEGIN_NAMESPACE
     \code
     QGLGeometry geom;
     geom.setDrawingMode(QGL::Triangles);
-    geom.setVertexArray(vertices);
+    geom.setVertexBuffer(vertices);
 
     QGLPainter painter(this);
     geom.draw(&painter);
@@ -76,7 +76,7 @@ QT_BEGIN_NAMESPACE
 
     Subclasses of QGLGeometry can specialize for certain kinds of
     objects: cubes, spheres, teapots, etc.  The constructors for
-    the subclasses populate the vertexArray() of QGLGeometry
+    the subclasses populate the vertexBuffer() of QGLGeometry
     with the actual geometry.  For example, the following draws a
     unit cube at the origin:
 
@@ -178,14 +178,42 @@ void QGLGeometry::setVertexArray(const QGLVertexArray& array)
 }
 
 /*!
+    Returns the vertex buffer for this geometry object.
+
+    \sa setVertexBuffer(), indexArray()
+*/
+QGLVertexBuffer *QGLGeometry::vertexBuffer() const
+{
+    Q_D(const QGLGeometry);
+    return d->vertexBuffer;
+}
+
+/*!
+    Sets the vertex \a buffer for this geometry object.  The previous
+    vertex buffer is destroyed and ownership of \a buffer transfers
+    to this geometry object.
+
+    \sa vertexBuffer(), setIndexArray(), isModified()
+*/
+void QGLGeometry::setVertexBuffer(QGLVertexBuffer *buffer)
+{
+    Q_D(QGLGeometry);
+    if (d->vertexBuffer != buffer) {
+        delete d->vertexBuffer;
+        d->vertexBuffer = buffer;
+        d->modified = true;
+    }
+}
+
+/*!
     Returns the index array that is used when drawing.  Its
     elements correspond to offsets within the vertex arrays of
     the vertices to use.
 
     The default value is an empty array, which indicates that all
-    of the vertices in vertexArray() should be used for drawing.
+    of the vertices in vertexBuffer() should be used for drawing.
     
-    \sa setIndexArray(), vertexArray()
+    \sa setIndexArray(), vertexBuffer()
 */
 QGLIndexArray QGLGeometry::indexArray() const
 {
@@ -199,9 +227,9 @@ QGLIndexArray QGLGeometry::indexArray() const
     the vertices to use.
 
     If \a array is an empty array, then all of the vertices in
-    vertexArray() will be used for drawing.
+    vertexBuffer() will be used for drawing.
 
-    \sa indexArray(), setVertexArray(), isModified()
+    \sa indexArray(), setVertexBuffer(), isModified()
 */
 void QGLGeometry::setIndexArray(const QGLIndexArray& array)
 {
@@ -304,7 +332,7 @@ void QGLGeometry::draw(QGLPainter *painter)
 
     Subclasses may implement their own caching or geometry
     subdivision policy by overriding draw().  The isModified() function
-    can be used from the subclass to determine if the vertexArray()
+    can be used from the subclass to determine if the vertexBuffer()
     or indexArray() values have changed since the last call to draw().
 
     If a material has been set for this geometry with setMaterial(), then
@@ -334,20 +362,36 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     // Determine if we need to recreate the vertex buffers in the GL server.
     // If the last upload attempt failed, then don't try again.
     if (d->uploadState) {
-        if (!d->vertexArray.isUploaded()) {
-            if (d->vertexArray.vertexCount() >= d->bufferThreshold)
+        if (d->vertexBuffer) {
+            if (!d->vertexBuffer->isUploaded()) {
+                if (d->vertexBuffer->vertexCount() >= d->bufferThreshold)
+                    d->uploadState = upload();
+            } else if (d->modified) {
                 d->uploadState = upload();
-        } else if (d->modified) {
-            d->uploadState = upload();
+            }
+        } else {
+            if (!d->vertexArray.isUploaded()) {
+                if (d->vertexArray.vertexCount() >= d->bufferThreshold)
+                    d->uploadState = upload();
+            } else if (d->modified) {
+                d->uploadState = upload();
+            }
         }
     }
     d->modified = false;
 
     // Draw the geometry.
-    painter->setVertexArray(d->vertexArray);
+    if (d->vertexBuffer)
+        painter->setVertexBuffer(*d->vertexBuffer);
+    else
+        painter->setVertexArray(d->vertexArray);
     if (d->indexArray.isEmpty()) {
-        if (count == 0)
-            count = d->vertexArray.vertexCount();
+        if (count == 0) {
+            if (d->vertexBuffer)
+                count = d->vertexBuffer->vertexCount();
+            else
+                count = d->vertexArray.vertexCount();
+        }
         painter->draw(d->drawingMode, count, start);
     } else {
         if (count == 0)
@@ -379,7 +423,7 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     The same QGLContext must be used later with draw().
 
     This function will be called automatically by the default implementation
-    of draw() if the number of vertices in vertexArray() is greater than
+    of draw() if the number of vertices in vertexBuffer() is greater than
     or equal to bufferThreshold().  Calling upload() explicitly allows
     the geometry to be uploaded ahead of time before the first draw(),
     regardless of the setting of bufferThreshold().
@@ -393,21 +437,37 @@ bool QGLGeometry::upload()
     Q_D(QGLGeometry);
 
     // If we already have buffers, then bail out if the geometry is unchanged.
-    if (d->vertexArray.isUploaded() && !d->modified)
-        return true;
+    if (d->vertexBuffer) {
+        if (d->vertexBuffer->isUploaded() && !d->modified)
+            return true;
+    } else {
+        if (d->vertexArray.isUploaded() && !d->modified)
+            return true;
+    }
 
     // If we know that vertex buffers are not supported, then stop now.
     if (!haveVBOs)
         return false;
 
-    // Try to create the vertex buffer.
-    if (!d->vertexArray.upload()) {
-        if (haveVBOs) {
-            qWarning() << "QGLGeometry: vertex buffer objects are not "
-                          "supported by the GL server";
+    // Try to create the vertex buffer in the GL server.
+    if (d->vertexBuffer) {
+        if (!d->vertexBuffer->upload()) {
+            if (haveVBOs) {
+                qWarning() << "QGLGeometry: vertex buffer objects are not "
+                              "supported by the GL server";
+            }
+            haveVBOs = false;
+            return false;
         }
-        haveVBOs = false;
-        return false;
+    } else {
+        if (!d->vertexArray.upload()) {
+            if (haveVBOs) {
+                qWarning() << "QGLGeometry: vertex buffer objects are not "
+                              "supported by the GL server";
+            }
+            haveVBOs = false;
+            return false;
+        }
     }
 
     // Create the index buffer if necessary.
@@ -425,14 +485,14 @@ bool QGLGeometry::upload()
 }
 
 /*!
-    Returns true if setVertexArray() or setIndexArray() was called
+    Returns true if setVertexBuffer() or setIndexArray() was called
     since the last call to draw() or isModified(); false otherwise.
     
     This function is intended for use in subclasses that override
     draw() to determine if the geometry has changed since the last
     time it was drawn.
 
-    \sa setVertexArray(), setIndexArray()
+    \sa setVertexBuffer(), setIndexArray()
 */
 bool QGLGeometry::isModified() const
 {

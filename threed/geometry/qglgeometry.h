@@ -45,6 +45,7 @@
 #include "qglnamespace.h"
 #include "qglindexarray.h"
 #include "qglvertexarray.h"
+#include "qglvertexbuffer.h"
 #include "qbox3d.h"
 
 QT_BEGIN_HEADER
@@ -70,6 +71,9 @@ public:
 
     QGLVertexArray vertexArray() const;
     void setVertexArray(const QGLVertexArray& array);
+
+    QGLVertexBuffer *vertexBuffer() const;
+    void setVertexBuffer(QGLVertexBuffer *buffer);
 
     QGLIndexArray indexArray() const;
     void setIndexArray(const QGLIndexArray& array);

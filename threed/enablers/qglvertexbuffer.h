@@ -93,6 +93,8 @@ public:
         (QGL::VertexAttribute attribute, int index, int count,
          const QGLAttributeValue& value);
 
+    int vertexCount() const;
+
     bool upload();
     bool isUploaded() const;
 

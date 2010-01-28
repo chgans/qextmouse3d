@@ -305,7 +305,8 @@ public:
         : buffer(QGLBuffer::VertexBuffer),
           isUploaded(false),
           packingHint(QGLVertexBuffer::Interleave),
-          actualPackingHint(QGLVertexBuffer::Interleave)
+          actualPackingHint(QGLVertexBuffer::Interleave),
+          vertexCount(0)
     {
     }
     ~QGLVertexBufferPrivate()
@@ -319,6 +320,7 @@ public:
     QGLVertexBuffer::PackingHint actualPackingHint;
     QList<QGLVertexBufferAttribute *> attributes;
     QList<QGL::VertexAttribute> attributeNames;
+    int vertexCount;
 };
 
 /*!
@@ -419,6 +421,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferFloatAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -436,6 +439,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferVector2DAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -453,6 +457,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferVector3DAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -470,6 +475,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferVector4DAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -487,6 +493,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferColorAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -504,6 +511,7 @@ void QGLVertexBuffer::addAttribute
         d->attributes +=
             new QGLVertexBufferCustomAttribute(attribute, value);
         d->attributeNames += attribute;
+        d->vertexCount = qMax(d->vertexCount, value.count());
     }
 }
 
@@ -625,6 +633,18 @@ void QGLVertexBuffer::replaceAttribute
     } else {
         attr->replace(index, count, value);
     }
+}
+
+/*!
+    Returns the number of vertices that were defined by previous
+    called to addAttribute().
+
+    \sa addAttribute()
+*/
+int QGLVertexBuffer::vertexCount() const
+{
+    Q_D(const QGLVertexBuffer);
+    return d->vertexCount;
 }
 
 /*!
