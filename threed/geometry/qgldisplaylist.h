@@ -112,12 +112,12 @@ public:
 
     void addAttribute(const QVector3D &, QGL::VertexAttribute = QGL::CustomVertex0);
 
-    void addVertexArray(const QDataArray<QVector3D> &);
-    void addNormalArray(const QDataArray<QVector3D> &);
+    void addVertexArray(const QVector3DArray &);
+    void addNormalArray(const QVector3DArray &);
     void addColorArray(const QDataArray<QColor4b> &);
-    void addTexCoordArray(const QDataArray<QVector2D> &,
+    void addTexCoordArray(const QVector2DArray &,
                           QGL::VertexAttribute attr = QGL::TextureCoord0);
-    void addAttributeArray(const QDataArray<QVector3D> &,
+    void addAttributeArray(const QCustomDataArray &,
                            QGL::VertexAttribute attr = QGL::CustomVertex0);
 
     // geometry building by primitive

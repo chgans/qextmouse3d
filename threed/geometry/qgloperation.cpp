@@ -246,31 +246,36 @@
 
 /*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QVector2D> &array)
+    Calls QGLOperation::addTexCoord() on \a op for all items in \a array.
     \relates QGLOperation
 */
 
 /*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QDataArrayRef<QColor4b> &array)
+    Calls QGLOperation::addColor() on \a op for all items in \a array.
     \relates QGLOperation
 */
 
 /*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
+    Calls QGLOperation::addVertex() on \a op with \a vertex as an argument.
     \relates QGLOperation
 */
 
 /*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QVector2D &texCoord)
+    Calls QGLOperation::addTexCoord() on \a op with \a texCoord as an argument.
     \relates QGLOperation
 */
 
 /*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QColor4b &color)
+    Calls QGLOperation::addColor() on \a op with \a color as an argument.
     \relates QGLOperation
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op,
-                                const QGL::OperationFlag &flag)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QGL::OperationFlag &flag)
+    Calls QGLOperation::setFlag() on \a op with \c{op.flags() |} \a flag as an argument.
     \relates QGLOperation
 */

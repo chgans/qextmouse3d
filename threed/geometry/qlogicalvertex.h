@@ -64,10 +64,10 @@ public:
 
     operator QVector3D () { return vertex(); }
 
-    inline QVariant attribute(QGL::VertexAttribute attr) const;
-    inline void setAttribute(float, QGL::VertexAttribute attr);
-    inline void setAttribute(const QVector2D &v, QGL::VertexAttribute attr);
-    inline void setAttribute(const QVector3D &v, QGL::VertexAttribute attr);
+    inline QVariant attribute(QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    inline void setAttribute(float value, QGL::VertexAttribute attr);
+    inline void setAttribute(const QVector2D &v, QGL::VertexAttribute field = QGL::CustomVertex0);
+    inline void setAttribute(const QVector3D &v, QGL::VertexAttribute field = QGL::CustomVertex0);
     inline float &floatAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
     inline QVector2D &vector2DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
     inline QVector3D &vector3DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);

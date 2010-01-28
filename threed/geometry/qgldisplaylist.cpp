@@ -61,6 +61,8 @@
     \ingroup qt3d
     \ingroup qt3d::geometry
 
+    \tableofcontents
+
     Use a QGLDisplayList to build up vertex, index, texture and other data
     when an application starts up, then it can be efficiently and flexibly
     displayed during frames of rendering.
@@ -75,6 +77,8 @@
     provides convenience and improved performance, and can be utilized in
     the same paradigm as the OpenGL display list with an initial setup phase
     and subsequent cheap drawing operations.
+
+    \section1 Comparison with OpenGL fixed-functions
 
     QGLDisplayList contains functions which provide similar functionality to
     OpenGL modes GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There
@@ -138,7 +142,7 @@
             \o addTriangleStrip()
             \o GL_TRIANGLE_STRIP
         \row
-            \o addQuadStrip(), extrude()
+            \o addQuadStrip(), addQuadsZipped()
             \o GL_QUAD_STRIP
         \row
             \o finalize()
@@ -186,9 +190,9 @@
 
     QGLSceneNodes are used to manage application of local transformations,
     materials and effects, similar to how glRotate() or glMaterial()
-    might be used inside a display list.
+    might be used.
 
-    Since QGLDisplayList is itself a (sub-class of) QGLSceneNode materials
+    Since QGLDisplayList is itself a (sub-class of) QGLSceneNode, materials
     and effects may be applied to the whole list, or to parts of it.  This
     is demonstrated in the displaylist example application.
 
@@ -211,8 +215,11 @@
 
     Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
     geometry to get the QGLMaterialCollection for the node, and record textures
-    and materials into it.  (Typically a display lists nodes, and usually the
-    whole application will share the one palette).
+    and materials into it.  Typically a display lists nodes, and usually the
+    whole application will share the one palette, so if you have a top-level
+    palette, you can pass it to the \l{QGLDisplayList::QGLDisplayList()}{constructor}.
+    Normally, pass no arguments to the constructor and the QGLDisplayList
+    will create its own internal palette:
 
     \snippet displaylist/displaylist.cpp 2
 
@@ -343,6 +350,17 @@ QGLDisplayList::~QGLDisplayList()
     \fn void QGLDisplayList::draw(QGLPainter *painter)
     Draws the display list on the given \a painter.
 */
+
+/*!
+    Returns the QGLPrimitive for the current operation.  All add functions
+    such as addVertex() and addNormal() accumulate data into this instance.
+    Note that the pointer is only valid during the current operation.
+*/
+QGLPrimitive *QGLDisplayList::currentPrimitive()
+{
+    Q_D(QGLDisplayList);
+    return d->currentOperation;
+}
 
 /*!
     \internal
@@ -520,7 +538,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     around a \bold{central point}.
 
     As a convenience the central point is by default set to the return
-    value of \l{QGLPrimitve::center()}{face.center()}.  If \a face has texture
+    value of \l{QGLPrimitive::center()}{face.center()}.  If \a face has texture
     coordinates or other data, set the QGL::USE_VERTEX_0_AS_CTR flag, in which
     case the 0'th vertex is used for the center.
 
@@ -983,6 +1001,9 @@ QGL::OperationFlags QGLDisplayList::flags() const
     return 0;
 }
 
+/*!
+    Adds the \a vertex to the current operation.
+*/
 void QGLDisplayList::addVertex(const QVector3D &vertex)
 {
     Q_D(QGLDisplayList);
@@ -990,6 +1011,19 @@ void QGLDisplayList::addVertex(const QVector3D &vertex)
         d->currentOperation->appendVertex(vertex);
 }
 
+/*!
+    \fn void QGLDisplayList::addVertex(qreal x, qreal y)
+    Adds the vertex (\a x, \a y, 0) to the current operation.
+*/
+
+/*!
+    \fn void QGLDisplayList::addVertex(qreal x, qreal y, qreal z)
+    Adds the vertex (\a x, \a y, \a z) to the current operation.
+*/
+
+/*!
+    Adds the \a normal to the current operation.
+*/
 void QGLDisplayList::addNormal(const QVector3D &normal)
 {
     Q_D(QGLDisplayList);
@@ -997,6 +1031,9 @@ void QGLDisplayList::addNormal(const QVector3D &normal)
         d->currentOperation->appendNormal(normal);
 }
 
+/*!
+    Adds the \a color to the current operation.
+*/
 void QGLDisplayList::addColor(const QColor4b &color)
 {
     Q_D(QGLDisplayList);
@@ -1004,6 +1041,9 @@ void QGLDisplayList::addColor(const QColor4b &color)
         d->currentOperation->appendColor(color);
 }
 
+/*!
+    Adds the texture coordinate \a texCoord into the field \a attr for the current operation.
+*/
 void QGLDisplayList::addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
@@ -1011,6 +1051,15 @@ void QGLDisplayList::addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute
         d->currentOperation->appendTexCoord(texCoord, attr);
 }
 
+/*!
+    \fn void QGLDisplayList::addTexCoord(qreal s, qreal t, QGL::VertexAttribute attr)
+    \overload
+    Adds the texture coordinate \a s, \a t into the field \a attr for the current operation.
+*/
+
+/*!
+    Adds the attribute \a value into the field \a attr for the current operation.
+*/
 void QGLDisplayList::addAttribute(const QVector3D &value, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
@@ -1018,21 +1067,29 @@ void QGLDisplayList::addAttribute(const QVector3D &value, QGL::VertexAttribute a
         d->currentOperation->appendAttribute(value, attr);
 }
 
-
-void QGLDisplayList::addVertexArray(const QDataArray<QVector3D> &vertices)
+/*!
+    Adds all the \a vertices to the current operation.
+*/
+void QGLDisplayList::addVertexArray(const QVector3DArray &vertices)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
         d->currentOperation->appendVertexArray(vertices);
 }
 
-void QGLDisplayList::addNormalArray(const QDataArray<QVector3D> &normals)
+/*!
+    Adds all the \a normals to the current operation.
+*/
+void QGLDisplayList::addNormalArray(const QVector3DArray &normals)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
         d->currentOperation->appendNormalArray(normals);
 }
 
+/*!
+    Adds all the \a colors to the current operation.
+*/
 void QGLDisplayList::addColorArray(const QDataArray<QColor4b> &colors)
 {
     Q_D(QGLDisplayList);
@@ -1040,16 +1097,23 @@ void QGLDisplayList::addColorArray(const QDataArray<QColor4b> &colors)
         d->currentOperation->appendColorArray(colors);
 }
 
-void QGLDisplayList::addTexCoordArray(const QDataArray<QVector2D> &texCoords, QGL::VertexAttribute attribute)
+/*!
+    Adds all the texture coordinates in \a texCoords to the field \a attr for the current operation.
+*/
+void QGLDisplayList::addTexCoordArray(const QVector2DArray &texCoords, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->appendTexCoordArray(texCoords, attribute);
+        d->currentOperation->appendTexCoordArray(texCoords, attr);
 }
 
-void QGLDisplayList::addAttributeArray(const QDataArray<QVector3D> &values, QGL::VertexAttribute attribute)
+/*!
+    Adds all the attribute \a values to the field \a attr for the current operation.
+
+*/
+void QGLDisplayList::addAttributeArray(const QCustomDataArray &values, QGL::VertexAttribute attr)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
-        d->currentOperation->appendAttributeArray(values, attribute);
+        d->currentOperation->appendAttributeArray(values, attr);
 }

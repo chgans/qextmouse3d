@@ -85,7 +85,8 @@
 
     Assign an instance of QLogicalVertex:
     \code
-    QLogicalVertex lv2 = data.vertexAt(0);
+    QLogicalVertex lv2;
+    lv2 = data.vertexAt(0);
     \endcode
     Although lv2 gets its own internal QGeometryData which is then immediately
     thrown away by the assignment, because of lazy initialization in
@@ -118,6 +119,24 @@
 */
 
 /*!
+    \fn QLogicalVertex::QLogicalVertex(QGeometryData data, int index)
+    Constructs a new QLogicalVertex referencing the \a data at \a index.
+    Note that if this QLogicalVertex is modified, by calling vertexRef() or
+    setNormal() for example, then a copy-on-write for \a data will be
+    triggered.
+*/
+
+/*!
+    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a)
+    Constructs a new QLogicalVertex with a vertex set to \a a.
+*/
+
+/*!
+    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n);
+    Constructs a new QLogicalVertex with a vertex set to \a a, and normal set to \a n.
+*/
+
+/*!
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, const QVector2D &t)
     Constructs a new QLogicalVertex with its vertex value set to \a a, normal set
     to \a n, and texture set to \a t.  By default \a n is the null QVector3D,
@@ -130,6 +149,11 @@
     \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4b color)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
     color value set to \a color.
+*/
+
+/*!
+    \fn QLogicalVertex::~QLogicalVertex()
+    Destroys this QLogicalVertex reclaiming any resources.
 */
 
 /*!
@@ -148,8 +172,74 @@
 */
 
 /*!
+    \fn QLogicalVertex::operator QVector3D ()
     Returns a copy of the vertex value, by casting as a QVector3D.  This
     allows passing of a QLogicalVertex to functions that expect a QVector3D.
+*/
+
+/*!
+    \fn QVariant QLogicalVertex::attribute(QGL::VertexAttribute field) const
+    Returns the attribute value for \a field.  The \a field defaults
+    to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn void QLogicalVertex::setAttribute(float value, QGL::VertexAttribute field)
+    Sets the float attribute \a value at \a field.  The \a field
+    defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn void QLogicalVertex::setAttribute(const QVector2D &v, QGL::VertexAttribute field)
+    Sets the QVector2D attribute \a v at \a field.  The \a field
+    defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn void QLogicalVertex::setAttribute(const QVector3D &v, QGL::VertexAttribute field)
+    Sets the QVector3D attribute \a v at \a field.  The \a field
+    defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn float &QLogicalVertex::floatAttributeRef(QGL::VertexAttribute field)
+    Returns a modifiable reference to the attribute at \a field, which
+    must be a float.  The \a field defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn QVector2D &QLogicalVertex::vector2DAttributeRef(QGL::VertexAttribute field)
+    Returns a modifiable reference to the attribute at \a field, which
+    must be a QVector2D.  The \a field defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn QVector3D &QLogicalVertex::vector3DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    Returns a modifiable reference to the attribute at \a field, which
+    must be a QVector3D.  The \a field defaults to QGL::CustomVertex0.
+*/
+
+/*!
+    \fn float QLogicalVertex::floatAttribute(QGL::VertexAttribute field) const
+    Returns the attribute at \a field.  The \a field defaults to QGL::CustomVertex0.
+    The attribute must be a float value.
+*/
+
+/*!
+    \fn QVector2D QLogicalVertex::vector2DAttribute(QGL::VertexAttribute field) const
+    Returns the attribute at \a field.  The \a field defaults to QGL::CustomVertex0.
+    The attribute must be a QVector2D value.
+*/
+
+/*!
+    \fn QVector3D QLogicalVertex::vector3DAttribute(QGL::VertexAttribute field) const
+    Returns the attribute at \a field.  The \a field defaults to QGL::CustomVertex0.
+    The attribute must be a QVector3D value.
+*/
+
+/*!
+    \fn QCustomDataArray::ElementType QLogicalVertex::attributeType(QGL::VertexAttribute field)
+    Returns the element type for the attribute \a field.
 */
 
 /*!
@@ -168,22 +258,25 @@
 */
 
 /*!
-    \fn const QVector2D &QLogicalVertex::texCoord() const
-    Returns a const reference to the normal value for this vertex.
+    \fn QVector2D QLogicalVertex::texCoord(QGL::VertexAttribute field) const
+    Returns a copy of the texture coordinate value at \a field for this vertex.
+    The \a field defaults to QGL::TextureCoord0.
 */
 
 /*!
-    \fn void QLogicalVertex::setTexCoord(const QVector2D &t)
-    Sets the texture coordinate for this vertex to \a t.
+    \fn void QLogicalVertex::setTexCoord(const QVector2D &t, QGL::VertexAttribute field)
+    Sets the texture coordinate at \a field for this vertex to \a t.
+    The \a field defaults to QGL::TextureCoord0.
 */
 
 /*!
-    \fn QVector2D &QLogicalVertex::texCoordRef()
+    \fn QVector2D &QLogicalVertex::texCoordRef(QGL::VertexAttribute field)
     Returns a modifiable reference to the texture coordinate for this vertex.
+    The \a field defaults to QGL::TextureCoord0.
 */
 
 /*!
-    \fn const QColor4b &QLogicalVertex::color() const
+    \fn QColor4b QLogicalVertex::color() const
     Returns a const reference to the color value for this vertex.
 */
 
@@ -198,7 +291,7 @@
 */
 
 /*!
-    \fn bool hasField(QGL::VertexAttribute type) const
+    \fn bool QLogicalVertex::hasField(QGL::VertexAttribute type) const
     Returns true if this vertex has data field \a type, and false otherwise.
 
     In general check to see if a logical vertex has a particular field
@@ -208,16 +301,30 @@
 */
 
 /*!
-    \fn quint32 fields() const
-    Returns a bit-mask of the fields in this logical vertex.
+    \fn quint32 QLogicalVertex::fields() const
+    Returns a bit-mask of the fields in this logical vertex.  Test the
+    fields like this:
+    \code
+    if (vertex.fields() & QGL::fieldMask(QGL::TextureCoord0))
+        tex = vertex.texCoord();
+    \endcode
 
     \sa QGeometryData::fields()
 */
 
 /*!
-    \fn int index() const
+    \fn int QLogicalVertex::index() const
     Returns the index at which this logical vertex's data is located in
     its associated QGeometryData; or -1 if this vertex is null.
+*/
+
+/*!
+    \fn QGeometryData QLogicalVertex::data() const
+    Returns a copy of the QGeometryData underlying this vertex.  Note that
+    the copy is not expensive in terms of performance due to implicit sharing
+    unless the copy is modified (causing a copy-on-write).
+
+    \sa QLogicalVertex::index()
 */
 
 /*!

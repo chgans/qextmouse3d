@@ -49,8 +49,6 @@ class QGLOperation
 public:
     inline QGLOperation(QGLDisplayList *, QGL::Operation);
     inline ~QGLOperation();
-    inline void setControl(const QVector3D &);
-    inline QVector3D control() const;
     inline void setFlags(QGL::OperationFlags);
     inline QGL::OperationFlags flags() const;
 

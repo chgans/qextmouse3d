@@ -52,21 +52,43 @@
     Use QGLPrimitive instances to pass defining geometry information into
     QGLGeometry calls.  As a subclass of QGLGeometry, QGLPrimitive inherits
     all the low-level vertex and other data definition functions.  QGLPrimitive
-    adds a range of higher-level functions for defining how QGLDisplayList
-    will treat that data when definining primitives:
-    \list
-        \o Use setFlags() for example to change QGL::QUADS_ZIPPED face winding
-        \o Set a normal to apply to all vertices with setCommonNormal()
-        \o Create an out-of-band control vector with setControl()
-    \endlist
+    adds the setFlags() functions for defining how QGLDisplayList
+    will treat that data when definining primitives.
 
     QGLPrimitive also defines a few useful functions for processing data in
-    common ways in geometry definition:
+    common ways during geometry building:
     \list
         \o reversed() returns a copy of this primitve with data in reverse order
         \o translated() returns a copy of this primitive translated by a vector
         \o generateTextureCoordinates() automatically calculates texture coordinates
     \endlist
+*/
+
+/*!
+    \enum QGL::Operation
+    This enum defines the available operations on a QGLDisplayList
+
+    \value NO_OP An unknown or undefined operation
+    \value TRIANGLE Build a \l{QGLDisplayList::addTriangle()}{triangle or set of triangles}
+    \value TRIANGLE_STRIP Build a \l{QGLDisplayList::addTriangleStrip()}{strip of triangles}
+    \value TRIANGLE_FAN Build a \l{QGLDisplayList::addTriangleFan()}{fan of triangles}
+    \value TRIANGULATED_FACE Build a \l{QGLDisplayList::addTriangulatedFace()}{triangulated face}
+    \value QUAD Build a \l{QGLDisplayList::addQuad()}{quad or set of quads}.
+    \value QUAD_STRIP Build a \l{QGLDisplayList::addQuadStrip()}{strip of quads}.
+    \value QUADS_ZIPPED Join two primitives into a \l{QGLDisplayList::addQuadsZipped()}{zipped quad strip}.
+*/
+
+/*!
+    \enum QGL::OperationFlag
+    This enum defines different treatments for primitives during QGLDisplayList building.
+    Check the documentation for individual functions in QGLDisplayList for more details.
+
+    \value NO_FLAG No special treatment is defined
+    \value FACE_SENSE_REVERSED Process points in reverse so that faces point the opposite way
+    \value NO_CLOSE_PATH Do not add a face to join the last to the first.
+    \value NEXT_PRIMITIVE Set the current operation to accumulate geometry to a new primitive
+    \value RETAIN_PRIMITIVE Do not destroy the existing primitive at operation end
+    \value USE_VERTEX_0_AS_CTR Use the first vertex in a primitve as the center instead of calculating it
 */
 
 /*!
