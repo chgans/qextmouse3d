@@ -46,15 +46,14 @@
 
 /*!
     \class QGeometryData
-    \brief The QGeometryData class encapsulates QDataArray instances.
+    \brief The QGeometryData class encapsulates sets of geometry data.
     \since 4.6
     \ingroup qt3d
     \ingroup qt3d::geometry
 
-    The QGeometryData class encloses a number of QDataArray template instances
-    that models most typical vertex data needs.  The class provides a
-    QDataArray based store for all of the data types in the
-    QGL::VertexAttribute enumeration.
+    The QGeometryData class encloses a number of data arrays
+    that model most typical vertex data needs.  The class provides a
+    store for all of the data types in the QGL::VertexAttribute enumeration.
 
     \table
         \header
@@ -109,7 +108,7 @@
      does not cause internal data to be created (only to be overwritten by the
      assignment operation).
 
-     \sa QGLPrimitive, QDataArray
+     \sa QGLPrimitive
 */
 
 class QGeometryDataPrivate
@@ -148,6 +147,14 @@ QGeometryDataPrivate::~QGeometryDataPrivate()
 }
 
 /*!
+    \fn quint32 QGL::fieldMask(QGL::VertexAttribute attribute)
+    \relates QGeometryData
+    Returns an unsigned integer mask from the \a attribute.
+
+    \sa QGeometryData::fields()
+*/
+
+/*!
     Construct an empty QGeometryData
 */
 QGeometryData::QGeometryData()
@@ -156,7 +163,7 @@ QGeometryData::QGeometryData()
 }
 
 /*!
-    Construct QGeometryData as a copy of other
+    Construct QGeometryData as a copy of \a other
 */
 QGeometryData::QGeometryData(const QGeometryData &other)
     : d(other.d)
@@ -191,7 +198,7 @@ QGeometryData::~QGeometryData()
 }
 
 /*!
-    Assigns this QGeometryData to be a copy of other.
+    Assigns this QGeometryData to be a copy of \a other.
 */
 QGeometryData &QGeometryData::operator=(const QGeometryData &other)
 {
@@ -287,7 +294,7 @@ int QGeometryData::appendVertex(const QLogicalVertex &v)
 }
 
 /*!
-    Returns a QLogicalVertex that references the \a i'th logical vertex
+    Returns a QLogicalVertex that references the \a{i}'th logical vertex
     of this geometry.
 */
 QLogicalVertex QGeometryData::vertexAt(int i) const
@@ -595,7 +602,28 @@ void QGeometryData::zipWith(const QGeometryData &other)
 }
 
 /*!
-    Clear all data structures.
+    Clear all data structures.  The actual fields are retained, but they
+    have no contents.
+    \code
+    QGeometryData data;
+    data.appendVertex(a);
+    data.appendTexCoord(t);
+
+    // prints "1"
+    qDebug() << data.count();
+
+    // x == a
+    QVector3D x = data.vertex(0);
+
+    quint32 flds = QGL::fieldMask(QGL::Position)
+                    | QGL::fieldMask(QGL::TextureCoord0);
+    qDebug() << (flds == data.fields());  // prints "true"
+
+    data.clear();
+    qDebug() << data.count();             // prints "0"
+    QVector3D x = data.vertex(0);         // asserts - no data in vertices
+    qDebug() << (flds == data.fields());  // still prints "true"
+    \endcode
 */
 void QGeometryData::clear()
 {
@@ -632,6 +660,10 @@ void QGeometryData::clear()
     }
 }
 
+/*!
+    Clears the data from \a field.
+    \overload
+*/
 void QGeometryData::clear(QGL::VertexAttribute field)
 {
     if (d && (QGL::fieldMask(field) & d->fields))
@@ -726,7 +758,7 @@ void QGeometryData::appendAttribute(float a0, float a1, QGL::VertexAttribute fie
 }
 
 /*!
-    Append the floats \a a0, \a a1 and \a a2 to this geometry data, as attribute \a fields.
+    Append the floats \a a0, \a a1 and \a a2 to this geometry data, as attribute \a field.
 */
 void QGeometryData::appendAttribute(float a0, float a1, float a2, QGL::VertexAttribute field)
 {
@@ -737,7 +769,7 @@ void QGeometryData::appendAttribute(float a0, float a1, float a2, QGL::VertexAtt
 }
 
 /*!
-    Append the floats \a a0, \a a1, \a a2 and \a a3 to this geometry data, as attribute \a fields.
+    Append the floats \a a0, \a a1, \a a2 and \a a3 to this geometry data, as attribute \a field.
 */
 void QGeometryData::appendAttribute(float a0, float a1, float a2, float a3, QGL::VertexAttribute field)
 {
@@ -759,7 +791,7 @@ void QGeometryData::appendAttribute(const QVector2D &a, QGL::VertexAttribute fie
 }
 
 /*!
-    Append the 3D point \a a to this geometry data, as an attribute \a field.
+    Append the 3D point \a v to this geometry data, as an attribute \a field.
 */
 void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute field)
 {
@@ -781,7 +813,7 @@ void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute fiel
 }
 
 /*!
-    Append the vector \a n to this geometry data, as a lighting normal.
+    Append the vector \a n0 to this geometry data, as a lighting normal.
 */
 void QGeometryData::appendNormal(const QVector3D &n0)
 {
@@ -1062,7 +1094,7 @@ QDataArray<QColor4b> QGeometryData::colors() const
 }
 
 /*!
-    Returns a modifiable reference to the texture coordinate data at index \a i.
+    Returns a modifiable reference to the \a field texture coordinate data at index \a i.
 */
 QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
 {
@@ -1071,7 +1103,7 @@ QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
 }
 
 /*!
-    Returns a copy of the texture coordinate data.
+    Returns a copy of the \a field texture coordinate data.
 */
 QVector2DArray QGeometryData::texCoords(QGL::VertexAttribute field) const
 {

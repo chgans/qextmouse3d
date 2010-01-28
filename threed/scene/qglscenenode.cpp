@@ -212,33 +212,6 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 }
 
 /*!
-    Returns the transform set by the "user" associated with this node.  If no
-    local transform has been explicitly set, this method returns a
-    QMatrix4x4 set to the identity matrix.
-
-    \sa setUserTransform()
-*/
-/*
-QMatrix4x4 QGLSceneNode::userTransform() const
-{
-	Q_D(const QGLSceneNode);
-	return d->userTransform;
-}
-*/
-/*!
-    Sets by the "user" associated with this node to \a transform.
-
-    \sa userTransform()
-*/
-/*
-void QGLSceneNode::setUserTransform(const QMatrix4x4 &transform)
-{
-	Q_D(QGLSceneNode);
-    d->userTransform = transform;
-}
-*/
-
-/*!
     Returns the local effect associated with this node.  The default value
     is QGL::LitMaterial.  If the value of hasEffect() is false, then this
     the value of effect() is ignored.
