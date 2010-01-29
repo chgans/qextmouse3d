@@ -106,7 +106,7 @@ void tst_QGLVertexArray::create()
     QVERIFY(!array.attributeValue(0).isNull());
     QVERIFY(array.attributeValue(-1).isNull());
     QVERIFY(array.vector3DAt(0, 0) == QVector3D(1.0f, 2.0f, 3.0f));
-    QVERIFY(array.attributeValue(QGL::Normal).size() == 3);
+    QVERIFY(array.attributeValue(QGL::Normal).tupleSize() == 3);
     QVERIFY(array.attributeValue(QGL::Position).isNull());
 }
 

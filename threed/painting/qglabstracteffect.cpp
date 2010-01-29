@@ -455,7 +455,7 @@ void QGLAbstractEffect::setAttributeArray
     // be specified via the public API.  XXX - Need to fix this in 4.7.
 #if defined(QT_OPENGL_ES_2)
     Q_UNUSED(program);
-    glVertexAttribPointer(GLuint(location), value.size(),
+    glVertexAttribPointer(GLuint(location), value.tupleSize(),
                           GLenum(value.type()), GL_FALSE,
                           value.stride(), value.data());
 #elif !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
@@ -473,7 +473,7 @@ void QGLAbstractEffect::setAttributeArray
             return;
     }
     (*extensions->vertexAttribPointer)
-        (GLuint(location), value.size(), GLenum(value.type()), GL_FALSE,
+        (GLuint(location), value.tupleSize(), GLenum(value.type()), GL_FALSE,
          value.stride(), value.data());
 #else
     Q_UNUSED(program);

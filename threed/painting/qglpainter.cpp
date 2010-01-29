@@ -1146,17 +1146,17 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 #if !defined(QT_OPENGL_ES_2)
     switch (attribute) {
     case QGL::Position:
-        glVertexPointer(value.size(), value.type(),
+        glVertexPointer(value.tupleSize(), value.type(),
                         value.stride(), value.data());
         break;
 
     case QGL::Normal:
-        if (value.size() == 3)
+        if (value.tupleSize() == 3)
             glNormalPointer(value.type(), value.stride(), value.data());
         break;
 
     case QGL::Color:
-        glColorPointer(value.size(), value.type(),
+        glColorPointer(value.tupleSize(), value.type(),
                        value.stride(), value.data());
         break;
 
@@ -1180,15 +1180,15 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 
         if (painter.d_ptr->extensions()->qt_glClientActiveTexture) {
             painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
+            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
                 painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
         } else if (unit!=0) {
-            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
+            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
         }
 #elif defined(QGL_TEXTURE0)
         glClientActiveTexture(QGL_TEXTURE0 + unit);
-        glTexCoordPointer(value.size(), value.type(),
+        glTexCoordPointer(value.tupleSize(), value.type(),
                           value.stride(), value.data());
         if (unit != 0)  // Stay on unit 0 between requests.
             glClientActiveTexture(QGL_TEXTURE0);
@@ -1199,22 +1199,22 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 
         if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB) {
             painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
-            glTexCoordPointer(value.size(), value.type(), value.stride(), value.data());
+            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
                 painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
         } else if (unit!=0) {
-            glTexCoordPointer(value.size(), value.type(),
+            glTexCoordPointer(value.tupleSize(), value.type(),
             value.stride(), value.data());
         }
 #elif defined(GL_TEXTURE0_ARB)
         glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-        glTexCoordPointer(value.size(), value.type(),
+        glTexCoordPointer(value.tupleSize(), value.type(),
                           value.stride(), value.data());
         if (unit != 0)
             glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
         if (unit == 0)
-            glTexCoordPointer(value.size(), value.type(),
+            glTexCoordPointer(value.tupleSize(), value.type(),
                               value.stride(), value.data());
 #endif
     }

@@ -92,8 +92,8 @@ public:
 void QGLVertexBufferFloatAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
-    Q_ASSERT(value.type() == QGL::Float);
-    Q_ASSERT(value.size() == 1);
+    Q_ASSERT(value.type() == GL_FLOAT);
+    Q_ASSERT(value.tupleSize() == 1);
     Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(float));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= floatArray.size());
@@ -123,8 +123,8 @@ public:
 void QGLVertexBufferVector2DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
-    Q_ASSERT(value.type() == QGL::Float);
-    Q_ASSERT(value.size() == 2);
+    Q_ASSERT(value.type() == GL_FLOAT);
+    Q_ASSERT(value.tupleSize() == 2);
     Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 2));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= vector2DArray.size());
@@ -155,8 +155,8 @@ public:
 void QGLVertexBufferVector3DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
-    Q_ASSERT(value.type() == QGL::Float);
-    Q_ASSERT(value.size() == 3);
+    Q_ASSERT(value.type() == GL_FLOAT);
+    Q_ASSERT(value.tupleSize() == 3);
     Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 3));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= vector3DArray.size());
@@ -187,8 +187,8 @@ public:
 void QGLVertexBufferVector4DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
-    Q_ASSERT(value.type() == QGL::Float);
-    Q_ASSERT(value.size() == 4);
+    Q_ASSERT(value.type() == GL_FLOAT);
+    Q_ASSERT(value.tupleSize() == 4);
     Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 4));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= vector4DArray.size());
@@ -219,8 +219,8 @@ public:
 void QGLVertexBufferColorAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
-    Q_ASSERT(value.type() == QGL::UByte);
-    Q_ASSERT(value.size() == 4);
+    Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
+    Q_ASSERT(value.tupleSize() == 4);
     Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= colorArray.size());
@@ -255,40 +255,40 @@ void QGLVertexBufferCustomAttribute::replace
              (index + count) <= customArray.size());
     switch (customArray.elementType()) {
     case QCustomDataArray::Float: {
-        Q_ASSERT(value.type() == QGL::Float);
-        Q_ASSERT(value.size() == 1);
+        Q_ASSERT(value.type() == GL_FLOAT);
+        Q_ASSERT(value.tupleSize() == 1);
         Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(float));
         customArray.m_array.replace(index, value.floatData(), count);
     }
     break;
 
     case QCustomDataArray::Vector2D: {
-        Q_ASSERT(value.type() == QGL::Float);
-        Q_ASSERT(value.size() == 2);
+        Q_ASSERT(value.type() == GL_FLOAT);
+        Q_ASSERT(value.tupleSize() == 2);
         Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 2));
         customArray.m_array.replace(index * 2, value.floatData(), count * 2);
     }
     break;
 
     case QCustomDataArray::Vector3D: {
-        Q_ASSERT(value.type() == QGL::Float);
-        Q_ASSERT(value.size() == 3);
+        Q_ASSERT(value.type() == GL_FLOAT);
+        Q_ASSERT(value.tupleSize() == 3);
         Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 3));
         customArray.m_array.replace(index * 3, value.floatData(), count * 3);
     }
     break;
 
     case QCustomDataArray::Vector4D: {
-        Q_ASSERT(value.type() == QGL::Float);
-        Q_ASSERT(value.size() == 4);
+        Q_ASSERT(value.type() == GL_FLOAT);
+        Q_ASSERT(value.tupleSize() == 4);
         Q_ASSERT(value.stride() == 0 || value.stride() == (sizeof(float) * 4));
         customArray.m_array.replace(index * 4, value.floatData(), count * 4);
     }
     break;
 
     case QCustomDataArray::Color: {
-        Q_ASSERT(value.type() == QGL::UByte);
-        Q_ASSERT(value.size() == 4);
+        Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
+        Q_ASSERT(value.tupleSize() == 4);
         Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
         customArray.m_array.replace(index, value.floatData(), count);
     }
@@ -621,7 +621,7 @@ void QGLVertexBuffer::replaceAttribute
             vertexBufferInterleave
                 (reinterpret_cast<float *>(dst), stride / sizeof(float),
                  value.floatData(), attr->elementSize() / sizeof(float),
-                 count * value.size());
+                 count * value.tupleSize());
             d->buffer.unmap();
         } else {
             Q_ASSERT(value.stride() == 0 || value.stride() == stride);
