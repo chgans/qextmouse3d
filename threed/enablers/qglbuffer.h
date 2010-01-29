@@ -104,9 +104,9 @@ public:
 
     bool read(int offset, void *data, int size);
     void write(int offset, const void *data, int size);
-    void write(const void *data, int size);
 
-    void resize(int size);
+    void allocate(const void *data, int size);
+    inline void allocate(int size) { allocate(0, size); }
 
     void *map(QGLBuffer::Access access);
     bool unmap();

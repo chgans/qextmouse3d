@@ -682,8 +682,8 @@ bool QGLVertexBuffer::upload()
     // If there is only one attribute, then realloc and write in one step.
     if (d->attributes.size() == 1) {
         attr = d->attributes[0];
-        d->buffer.write(attr->value.data(),
-                        attr->count() * attr->elementSize());
+        d->buffer.allocate(attr->value.data(),
+                           attr->count() * attr->elementSize());
         attr->value.setOffset(0);
         attr->clear();
         d->actualPackingHint = QGLVertexBuffer::Append;
@@ -706,7 +706,7 @@ bool QGLVertexBuffer::upload()
         size += count * elemSize;
         stride += elemSize;
     }
-    d->buffer.resize(size);
+    d->buffer.allocate(size);
     stride /= sizeof(float);
 
     // Determine how to upload the data, using a map if possible.

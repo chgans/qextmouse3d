@@ -118,7 +118,7 @@ void tst_QGLBuffer::testBuffer(QGLBuffer::Type type)
     // Bind the buffer and upload some data.
     QVERIFY(buffer.bind());
     static GLfloat const data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    buffer.write(data, sizeof(data));
+    buffer.allocate(data, sizeof(data));
 
     // Check the buffer size.
     QCOMPARE(buffer.size(), int(sizeof(data)));
@@ -191,9 +191,9 @@ void tst_QGLBuffer::testBuffer(QGLBuffer::Type type)
     }
 
     // Resize the buffer.
-    buffer.resize(sizeof(GLfloat) * 20);
+    buffer.allocate(sizeof(GLfloat) * 20);
     QCOMPARE(buffer.size(), int(sizeof(GLfloat) * 20));
-    buffer.write(0, sizeof(GLfloat) * 32);
+    buffer.allocate(0, sizeof(GLfloat) * 32);
     QCOMPARE(buffer.size(), int(sizeof(GLfloat) * 32));
 
     // Release the buffer.
@@ -214,11 +214,12 @@ void tst_QGLBuffer::bufferSharing()
 
     // Bind the buffer in the first context and write some data to it.
     QGLBuffer buffer(QGLBuffer::VertexBuffer);
-    QVERIFY(buffer.create());
+    if (!buffer.create())
+        QSKIP("Buffers are not supported on this platform", SkipSingle);
     QVERIFY(buffer.isCreated());
     QVERIFY(buffer.bind());
     static GLfloat const data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    buffer.write(data, sizeof(data));
+    buffer.allocate(data, sizeof(data));
     QCOMPARE(buffer.size(), int(sizeof(data)));
     buffer.release();
 

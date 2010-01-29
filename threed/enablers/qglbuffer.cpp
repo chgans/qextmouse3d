@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLBuffer
     \brief The QGLBuffer class provides functions for creating and managing GL buffer objects.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -264,9 +264,9 @@ QGLBuffer::UsagePattern QGLBuffer::usagePattern() const
 
 /*!
     Sets the usage pattern for this buffer object to \a value.
-    This function must be called before write().
+    This function must be called before allocate() or write().
 
-    \sa usagePattern(), write()
+    \sa usagePattern(), allocate(), write()
 */
 void QGLBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
 {
@@ -295,7 +295,7 @@ void QGLBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
     This function will return false if the GL implementation
     does not support buffers, or there is no current QGLContext.
 
-    \sa isCreated(), write()
+    \sa isCreated(), allocate(), write()
 */
 bool QGLBuffer::create()
 {
@@ -375,7 +375,7 @@ bool QGLBuffer::read(int offset, void *data, int size)
     It is assumed that create() has been called on this buffer and that
     it has been bound to the current context.
 
-    \sa create(), read()
+    \sa create(), read(), allocate()
 */
 void QGLBuffer::write(int offset, const void *data, int size)
 {
@@ -394,19 +394,15 @@ void QGLBuffer::write(int offset, const void *data, int size)
 }
 
 /*!
-    Writes the \a size bytes from \a data to this buffer, replacing
-    its current contents.
-
-    If \a data is null, then the buffer will be resized to \a size
-    bytes in length but no data will be copied into it.  Any previous
-    contents will be undefined.  This is the same as resize().
+    Allocates \a size bytes of space to the buffer, initialized to
+    the contents of \a data.  Any previous contents will be removed.
 
     It is assumed that create() has been called on this buffer and that
     it has been bound to the current context.
 
-    \sa create(), read(), resize()
+    \sa create(), read(), write()
 */
-void QGLBuffer::write(const void *data, int size)
+void QGLBuffer::allocate(const void *data, int size)
 {
     Q_D(QGLBuffer);
     if (d->guard.id()) {
@@ -422,18 +418,17 @@ void QGLBuffer::write(const void *data, int size)
 }
 
 /*!
-    Resizes this buffer to \a size bytes in length.  Any previous
-    contents will be undefined.
+    \fn void QGLBuffer::allocate(int size)
+    \overload
+
+    Allocates \a size bytes of space to the buffer.  Any previous
+    contents will be removed.
 
     It is assumed that create() has been called on this buffer and that
     it has been bound to the current context.
 
     \sa create(), write()
 */
-void QGLBuffer::resize(int size)
-{
-    write(0, size);
-}
 
 /*!
     Binds the buffer associated with this object to the current

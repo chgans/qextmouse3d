@@ -381,7 +381,7 @@ bool QGLIndexArray::upload() const
             return false;
         }
         if (m_buffer->bind()) {
-            m_buffer->write(constData(), size() * sizeof(ElementType));
+            m_buffer->allocate(constData(), size() * sizeof(ElementType));
             m_buffer->release();
         } else {
             delete m_buffer;

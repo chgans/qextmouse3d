@@ -1028,7 +1028,7 @@ bool QGLVertexArray::upload() const
             return false;
         }
         if (m_buffer->bind()) {
-            m_buffer->write(constData(), componentCount() * sizeof(float));
+            m_buffer->allocate(constData(), componentCount() * sizeof(float));
             m_buffer->release();
         } else {
             delete m_buffer;
