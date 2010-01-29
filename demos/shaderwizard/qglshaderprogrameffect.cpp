@@ -129,7 +129,7 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     \class QGLShaderProgramEffect
     \brief The QGLShaderProgram is a convenience class for managing and displaying GLSL shader based
     effects.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
 
     The QGLShaderProgramEffect's primary role is to bundle a QGLShaderProgram

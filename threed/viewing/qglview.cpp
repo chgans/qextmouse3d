@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLView
     \brief The QGLView class extends QGLWidget with support for 3D viewing.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::viewing
 

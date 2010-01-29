@@ -47,7 +47,7 @@
 /*!
   \class QLine3D
   \brief The QLine3D class models the mathematics of lines in 3D space.
-  \since 4.6
+  \since 4.7
   \ingroup qt3d
   \ingroup qt3d::math
 

@@ -52,6 +52,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAbstractScene
     \brief The QGLAbstractScene class represents a 3D scene consisting of zero or more QGLSceneObject instances.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
 

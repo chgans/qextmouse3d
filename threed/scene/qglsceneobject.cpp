@@ -47,6 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSceneObject
     \brief The QGLSceneObject class represents a 3D object within a scene.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
 

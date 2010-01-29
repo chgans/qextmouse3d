@@ -51,6 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLTexture2D
     \brief The QGLTexture2D class represents a 2D texture object for GL painting operations.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 

@@ -47,6 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLFogParameters
     \brief The QGLFogParameters class controls the fog parameters for a scene.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::painting
 

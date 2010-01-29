@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLGeometry
     \brief The QGLGeometry class provides storage for geometry meshes.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 

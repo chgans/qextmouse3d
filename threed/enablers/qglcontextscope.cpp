@@ -47,6 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLContextScope
     \brief The QGLContextScope class temporarily switches to another QGLContext within a program scope.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 

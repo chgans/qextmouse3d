@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLMaterialParameters
     \brief The QGLMaterialParameters class describes material properties for OpenGL drawing.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::painting
 */

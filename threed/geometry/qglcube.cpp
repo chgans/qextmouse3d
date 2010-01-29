@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLCube
     \brief The QGLCube class represents the geometry of simple six-sided cube or prism in 3D space.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 

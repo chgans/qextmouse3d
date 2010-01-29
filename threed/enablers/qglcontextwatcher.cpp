@@ -48,6 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLContextWatcher
     \brief The QGLContextWatcher class tracks context destruction and shared resource transfers.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 */

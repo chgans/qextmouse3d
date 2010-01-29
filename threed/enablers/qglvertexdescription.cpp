@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLVertexDescription
     \brief The QGLVertexDescription class describes the layout of a vertex within a QGLVertexArray.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 

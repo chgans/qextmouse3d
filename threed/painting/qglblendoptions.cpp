@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLBlendOptions
-    \since 4.6
+    \since 4.7
     \brief The QGLBlendOptions class stores values that describe the blending modes.
     \ingroup qt3d
     \ingroup qt3d::painting

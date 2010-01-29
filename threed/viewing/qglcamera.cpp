@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLCamera
     \brief The QGLCamera class defines the projection to apply to simulate a camera's position, orientation, and optics.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::viewing
 

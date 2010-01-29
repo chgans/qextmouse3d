@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLBezierGeometry
     \brief The QGLBezierGeometry class represents 3D geometry as a set of Bezier bicubic patches.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 

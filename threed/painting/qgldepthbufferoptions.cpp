@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLDepthBufferOptions
-    \since 4.6
+    \since 4.7
     \brief The QGLDepthBufferOptions class stores values that describe the configuration of a GL depth buffer.
     \ingroup qt3d
     \ingroup qt3d::painting

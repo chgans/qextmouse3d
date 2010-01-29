@@ -46,6 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSceneFormatHandler
     \brief The QGLSceneFormatHandler class defines the common format I/O interface for loading 3D scene formats.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
 

@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSphere
     \brief The QGLSphere class represents the geometry of a simple sphere in 3D space.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -101,7 +101,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGLSphere::Mode
-    \since 4.6
+    \since 4.7
     This enum defines the method used to generate a sphere.
     \value UVSphere Faces have their vertices align along longitudinal and latitudinal divisions of the sphere.
     \value CubeSphere The initial shape is a cube, which then has each face repeatedly divided in to four new faces with new vertices projected onto the sphere.

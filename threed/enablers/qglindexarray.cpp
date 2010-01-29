@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLIndexArray
     \brief The QGLIndexArray class manages arrays of vertex indices.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 

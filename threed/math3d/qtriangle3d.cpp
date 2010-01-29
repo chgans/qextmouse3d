@@ -44,7 +44,7 @@
 /*!
   \class QTriangle3D
   \brief The QTriangle3D class models 3 points in 3D space.
-  \since 4.6
+  \since 4.7
   \ingroup qt3d
   \ingroup qt3d::math
 

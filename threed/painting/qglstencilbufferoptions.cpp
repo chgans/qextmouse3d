@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLStencilBufferOptions
-    \since 4.6
+    \since 4.7
     \brief The QGLStencilBufferOptions class stores values that describe the configuration of a GL stencil buffer.
     \ingroup qt3d
     \ingroup qt3d::painting

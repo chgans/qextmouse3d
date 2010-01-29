@@ -74,7 +74,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLPainter
     \brief The QGLPainter class provides portable API's for rendering into a GL context.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::painting
 

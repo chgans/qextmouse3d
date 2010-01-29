@@ -52,7 +52,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::Face
-    \since 4.6
+    \since 4.7
     This enum defines the faces to apply an operation to.
 
     \value FrontFaces Apply the operation to front faces only.
@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::CullFace
-    \since 4.6
+    \since 4.7
     This enum defines the face culling mode to use with QGLPainter::setCullFaces().
 
     \value CullDisabled Face culling is disabled.
@@ -76,7 +76,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::DrawingMode
-    \since 4.6
+    \since 4.7
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
     \value NoDrawingMode The drawing mode is not specified.
@@ -101,7 +101,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::StandardEffect
-    \since 4.6
+    \since 4.7
     This enum defines a standard drawing effect for use with QGLPainter.
 
     \value FlatColor Single flat color specified by QGLPainter::setColor()
@@ -134,7 +134,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::TextureFilter
-    \since 4.6
+    \since 4.7
     This enum defines the minifying or magnifying filter to use for a texture.
 
     \value Nearest Use the value that is nearest the pixel being textured.
@@ -155,7 +155,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::TextureWrap
-    \since 4.6
+    \since 4.7
     This enum defines the wrapping mode for texture co-ordinates.
 
     \value Repeat Ignore the integer part of the texture co-ordinate and
@@ -185,7 +185,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::ClearBuffer
-    \since 4.6
+    \since 4.7
     This enum defines a buffer to be cleared with glClear().
 
     \value NoClearBuffers No buffers should be cleared.
@@ -196,7 +196,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::Smoothing
-    \since 4.6
+    \since 4.7
     \relates QGLDisplayList
 
     This enum defines vertex smoothing treatments.

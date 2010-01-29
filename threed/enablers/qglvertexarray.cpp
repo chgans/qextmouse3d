@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLVertexArray
     \brief The QGLVertexArray class manages arrays of vertex attributes.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -89,7 +89,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::VertexAttribute
-    \since 4.6
+    \since 4.7
     This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexArray()
 
     \value Position The primary position of the vertex.

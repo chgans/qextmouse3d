@@ -59,7 +59,7 @@ class QGLHeightMapPrivate
 /*!
     \class QGLHeightMap
     \brief The QGLHeightMap class is a convenience class designed to make it easy to create a simple 2D surface in 3D space.
-    \since 4.6
+    \since 4.7
     \ingroup painting-3D
 
     Many 3D objects can be conviently thought of as a 2D object in a 3D space,

@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLLightModel
     \brief The QGLLightModel class defines the lighting model to use for the scene.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::painting
 */
