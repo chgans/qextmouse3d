@@ -40,9 +40,13 @@
 ****************************************************************************/
 
 #include "stereoview.h"
+#include "qglcube.h"
 
 void StereoView::initializeGL(QGLPainter *painter)
 {
+    cube = list.newNode();
+    list << QGLCube(1.f);
+
     painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
     teapot.upload();
@@ -56,5 +60,5 @@ void StereoView::paintGL(QGLPainter *painter)
     teapot.draw(painter);
 
     painter->modelViewMatrix().translate(-1.0f, 0.0f, 2.0f);
-    cube.draw(painter);
+    cube->draw(painter);
 }

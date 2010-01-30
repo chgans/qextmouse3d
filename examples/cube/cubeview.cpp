@@ -42,15 +42,10 @@
 #include "cubeview.h"
 #include "qglcube.h"
 
-CubeView::CubeView(QWidget *parent)
-    : QGLView(parent)
-{
-    cubeList << QGLCube(1.5f);
-    cubeList.finalize();
-}
-
 void CubeView::initializeGL(QGLPainter *painter)
 {
+    cube << QGLCube(1.5f);
+
     painter->setLightEnabled(0, true);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
@@ -64,5 +59,5 @@ void CubeView::initializeGL(QGLPainter *painter)
 void CubeView::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
-    cubeList.draw(painter);
+    cube.draw(painter);
 }

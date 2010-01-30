@@ -43,6 +43,12 @@
 #include "qglcube.h"
 #include <QPainter>
 
+PainterWidget::PainterWidget(QWidget *parent)
+    : QWidget(parent)
+{
+    cube << QGLCube(1.5f);
+}
+
 void PainterWidget::paintGL(QPainter *p)
 {
     QGLPainter painter;
@@ -93,7 +99,6 @@ void PainterWidget::paintGL(QPainter *p)
 
     painter.setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
-    QGLCube cube(1.5f);
     cube.draw(&painter);
 }
 

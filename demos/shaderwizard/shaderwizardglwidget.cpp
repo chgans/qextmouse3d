@@ -443,8 +443,12 @@ void ShaderWizardGLWidget::setBezierGeometry()
 
 void ShaderWizardGLWidget::setCubeGeometry()
 {
-    static QGLCube *cube = new QGLCube;
-    setGeometry(cube);
+    static bool inited = false;
+    if (!inited) {
+        cube << QGLCube();
+        cube.finalize();
+    }
+    setGeometry(cube.geometry());
 }
 
 void ShaderWizardGLWidget::setSphereGeometry()

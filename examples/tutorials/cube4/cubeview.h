@@ -43,7 +43,7 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 
 class CubeView : public QGLView
@@ -59,7 +59,7 @@ protected:
 
 private:
     QGLTexture2D texture;
-    QGLCube cube;
+    QGLDisplayList cube;
 };
 
 #endif

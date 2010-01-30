@@ -43,8 +43,8 @@
 #define STEREOVIEW_H
 
 #include "qglview.h"
+#include "qgldisplaylist.h"
 #include "qglteapot.h"
-#include "qglcube.h"
 
 class StereoView : public QGLView
 {
@@ -59,7 +59,8 @@ protected:
 
 private:
     QGLTeapot teapot;
-    QGLCube cube;
+    QGLDisplayList list;
+    QGLSceneNode *cube;
 };
 
 #endif

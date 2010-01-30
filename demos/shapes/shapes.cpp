@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglpainter.h"
+#include "qgldisplaylist.h"
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglcamera.h"
@@ -75,7 +76,7 @@ private:
     static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
-    QGLCube cube;
+    QGLDisplayList cube;
     QGLTeapot teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
@@ -103,6 +104,8 @@ void ShapesWidget::initializeGL()
     painter.setLightModel(&twoSidedModel);
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
+
+    cube << QGLCube();
 }
 
 void ShapesWidget::paintGL()

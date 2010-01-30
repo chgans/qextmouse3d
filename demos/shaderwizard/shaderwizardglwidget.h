@@ -46,7 +46,8 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qglgeometry.h"
+#include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 class QGLBezierGeometry;
 class ShaderWizardGLWidgetPrivate;
@@ -130,6 +131,7 @@ private:
     QGLLightModel *mLightModel;
     QGLMaterialParameters *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
+    QGLDisplayList cube;
 
     QGLTexture2D *mTexture;
 };

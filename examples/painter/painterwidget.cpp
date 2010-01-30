@@ -51,6 +51,9 @@ void PainterWidget::initializeGL()
 
     // Turn on a light for LitMaterial effects.
     painter.setLightEnabled(0, true);
+
+    // Create the cube object for later.
+    cube << QGLCube(1.5f);
 }
 
 void PainterWidget::resizeGL(int width, int height)
@@ -96,6 +99,5 @@ void PainterWidget::paintGL()
 
     painter.setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
-    QGLCube cube(1.5f);
     cube.draw(&painter);
 }

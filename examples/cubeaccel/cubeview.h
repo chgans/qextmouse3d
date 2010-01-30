@@ -43,7 +43,7 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 
 class CubeView : public QGLView
@@ -62,7 +62,7 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLCube cube;
+    QGLDisplayList cube;
     qreal sensitivity;
 
     QVector3D gravity() const;

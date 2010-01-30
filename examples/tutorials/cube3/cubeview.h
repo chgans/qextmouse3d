@@ -43,7 +43,7 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qgldisplaylist.h"
 
 class CubeView : public QGLView
 {
@@ -57,7 +57,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLCube cube;
+    QGLDisplayList cube;
 };
 
 #endif

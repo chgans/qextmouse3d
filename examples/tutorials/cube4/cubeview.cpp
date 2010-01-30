@@ -40,9 +40,12 @@
 ****************************************************************************/
 
 #include "cubeview.h"
+#include "qglcube.h"
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
+    cube << QGLCube();
+
     painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));

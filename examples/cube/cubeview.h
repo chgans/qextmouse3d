@@ -50,7 +50,7 @@ class CubeView : public QGLView
 {
     Q_OBJECT
 public:
-    CubeView(QWidget *parent = 0);
+    CubeView(QWidget *parent = 0) : QGLView(parent) {}
     ~CubeView() {}
 
 protected:
@@ -59,7 +59,7 @@ protected:
 
 private:
     QGLTexture2D texture;
-    QGLDisplayList cubeList;
+    QGLDisplayList cube;
 };
 
 #endif
