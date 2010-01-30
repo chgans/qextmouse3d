@@ -43,14 +43,14 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 
 class CubeView : public QGLView
 {
     Q_OBJECT
 public:
-    CubeView(QWidget *parent = 0) : QGLView(parent) {}
+    CubeView(QWidget *parent = 0);
     ~CubeView() {}
 
 protected:
@@ -59,7 +59,7 @@ protected:
 
 private:
     QGLTexture2D texture;
-    QGLCube cube;
+    QGLDisplayList cubeList;
 };
 
 #endif
