@@ -43,27 +43,12 @@
 
 QT_BEGIN_NAMESPACE
 
-QGLBezierObject::QGLBezierObject(QGLBezierGeometry *geometry, QObject *parent)
-    : QGLSceneObject(QGLSceneObject::Mesh, parent)
-{
-    setObjectName(QLatin1String("mesh"));     // No tr
-    this->geometry = geometry;
-}
-
-QGLBezierObject::~QGLBezierObject()
-{
-    delete geometry;
-}
-
-void QGLBezierObject::draw(QGLPainter *painter)
-{
-    geometry->draw(painter);
-}
-
-QGLBezierScene::QGLBezierScene(QGLBezierGeometry *geometry, QObject *parent)
+QGLBezierScene::QGLBezierScene(QGLDisplayList *geometry, QObject *parent)
     : QGLAbstractScene(parent)
 {
-    mainObject = new QGLBezierObject(geometry, this);
+    mainObject = geometry;
+    mainObject->setObjectName(QLatin1String("mesh"));   // No tr
+    mainObject->setParent(this);
 }
 
 QGLBezierScene::~QGLBezierScene()

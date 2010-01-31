@@ -43,7 +43,7 @@
 #define TEAPOTITEM_H
 
 #include "qglgraphicsviewportitem.h"
-#include "qglteapot.h"
+#include "qgldisplaylist.h"
 
 class TeapotItem : public QGLGraphicsViewportItem
 {
@@ -55,7 +55,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLTeapot teapot;
+    QGLDisplayList teapot;
 };
 
 #endif

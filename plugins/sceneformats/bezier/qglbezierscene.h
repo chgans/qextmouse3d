@@ -43,34 +43,21 @@
 #define QGLBEZIERSCENE_H
 
 #include "qglabstractscene.h"
-#include "qglbeziergeometry.h"
+#include "qgldisplaylist.h"
 
 QT_BEGIN_NAMESPACE
-
-class QGLBezierObject : public QGLSceneObject
-{
-    Q_OBJECT
-public:
-    explicit QGLBezierObject(QGLBezierGeometry *geometry, QObject *parent = 0);
-    ~QGLBezierObject();
-
-    void draw(QGLPainter *painter);
-
-private:
-    QGLBezierGeometry *geometry;
-};
 
 class QGLBezierScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit QGLBezierScene(QGLBezierGeometry *geometry, QObject *parent = 0);
+    explicit QGLBezierScene(QGLDisplayList *geometry, QObject *parent = 0);
     virtual ~QGLBezierScene();
 
     QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
 
 private:
-    QGLBezierObject *mainObject;
+    QGLDisplayList *mainObject;
 };
 
 QT_END_NAMESPACE

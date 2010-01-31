@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "cube.h"
+#include "qgldisplaylist.h"
 #include "qglcube.h"
 
 QT_BEGIN_NAMESPACE
@@ -49,13 +50,11 @@ QML_DEFINE_TYPE(Qt,4,6,Cube,Cube)
 class CubePrivate
 {
 public:
-    CubePrivate() : width(1.0f), height(1.0f), depth(1.0f), cube(0) {}
+    CubePrivate() : size(1.0f) {}
     ~CubePrivate() { delete cube; }
 
-    qreal width;
-    qreal height;
-    qreal depth;
-    QGLCube *cube;
+    qreal size;
+    QGLDisplayList *cube;
 };
 
 Cube::Cube(QObject *parent)
@@ -69,58 +68,14 @@ Cube::~Cube()
     delete d;
 }
 
-qreal Cube::width() const
-{
-    return d->width;
-}
-
-void Cube::setWidth(qreal value)
-{
-    d->width = value;
-    delete d->cube;
-    d->cube = 0;
-    emit sizeChanged();
-    update();
-}
-
-qreal Cube::height() const
-{
-    return d->height;
-}
-
-void Cube::setHeight(qreal value)
-{
-    d->height = value;
-    delete d->cube;
-    d->cube = 0;
-    emit sizeChanged();
-    update();
-}
-
-qreal Cube::depth() const
-{
-    return d->depth;
-}
-
-void Cube::setDepth(qreal value)
-{
-    d->depth = value;
-    delete d->cube;
-    d->cube = 0;
-    emit sizeChanged();
-    update();
-}
-
 qreal Cube::size() const
 {
-    return qMax(d->width, qMax(d->height, d->depth));
+    return d->size;
 }
 
 void Cube::setSize(qreal value)
 {
-    d->width = value;
-    d->height = value;
-    d->depth = value;
+    d->size = value;
     delete d->cube;
     d->cube = 0;
     emit sizeChanged();
@@ -129,8 +84,10 @@ void Cube::setSize(qreal value)
 
 void Cube::drawItem(QGLPainter *painter)
 {
-    if (!d->cube)
-        d->cube = new QGLCube(d->width, d->height, d->depth);
+    if (!d->cube) {
+        d->cube = new QGLDisplayList();
+        (*d->cube) << QGLCube(d->size);
+    }
     d->cube->draw(painter);
 }
 

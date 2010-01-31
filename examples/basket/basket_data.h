@@ -42,13 +42,14 @@
 #ifndef BASKET_DATA_H
 #define BASKET_DATA_H
 
+#include "qglbezierpatches.h"
+
 // Generated from basket_data.txt by meshcvt, depth = 4
 
-#define basketBezierVertexCount 306
-#define basketBezierVertexStride 3
-#define basketPatchCount 24
-#define basketDepth 4
-static float const basketBezierVertexData[] = {
+#define BasketBezierVertexCount 306
+#define BasketPatchCount 24
+#define BasketDepth 4
+static float const BasketBezierVertexData[] = {
     0.700000, 0.450000, -0.000000,
     0.700000, 0.450000, 0.392000,
     0.392000, 0.450000, 0.700000,
@@ -357,7 +358,7 @@ static float const basketBezierVertexData[] = {
     0.712500, -0.750000, 0.399000
 };
 
-static ushort const basketPatchData[] = {
+static ushort const BasketPatchData[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     3, 16, 17, 18, 7, 19, 20, 21, 11, 22, 23, 24, 15, 25, 26, 27,
     18, 28, 29, 30, 21, 31, 32, 33, 24, 34, 35, 36, 27, 37, 38, 39,
@@ -384,24 +385,17 @@ static ushort const basketPatchData[] = {
     269, 269, 269, 269, 299, 304, 305, 278, 296, 302, 303, 274, 293, 300, 301, 270
 };
 
-static void basketLoadBezier(QGLBezierGeometry& geometry)
+class BasketPatches : public QGLBezierPatches
 {
-    QGLVertexArray varray(QGL::Position, 3);
-    varray.setRawData(basketBezierVertexData, basketBezierVertexCount * basketBezierVertexStride);
-    geometry.setVertexArray(varray);
-
-    geometry.setIndexArray(QGLIndexArray::fromRawData(basketPatchData, basketPatchCount * 16));
-
-    geometry.setSubdivisionDepth(basketDepth);
-    geometry.setNormal(210, QVector3D(0.000000f, 0.000000f, 1.000000f));
-    geometry.setNormal(269, QVector3D(0.000000f, 0.000000f, -1.000000f));
-}
-
-static QGLBezierGeometry *basketCreateBezier()
-{
-    QGLBezierGeometry *geometry = new QGLBezierGeometry();
-    basketLoadBezier(*geometry);
-    return geometry;
-}
+public:
+    BasketPatches()
+        : QGLBezierPatches(QArray<QVector3D>::fromRawData(reinterpret_cast<const QVector3D *>(BasketBezierVertexData), BasketBezierVertexCount),
+                           QArray<ushort>::fromRawData(BasketPatchData, BasketPatchCount * 16))
+    {
+        setSubdivisionDepth(BasketDepth);
+        setNormal(210, QVector3D(0.000000f, 0.000000f, 1.000000f));
+        setNormal(269, QVector3D(0.000000f, 0.000000f, -1.000000f));
+    }
+};
 
 #endif

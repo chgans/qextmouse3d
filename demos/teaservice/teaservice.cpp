@@ -50,6 +50,7 @@
 #include "meshobject.h"
 #include "sceneobject.h"
 #include "qglteapot.h"
+#include "qgldisplaylist.h"
 #if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
 #include "perpixeleffect.h"
 #endif
@@ -70,8 +71,15 @@ public:
     ~Teapot() {}
 };
 
+static QGLSceneObject *createTeapot()
+{
+    QGLDisplayList *list = new QGLDisplayList();
+    (*list) << QGLTeapot();
+    return list;
+}
+
 Teapot::Teapot(QObject *parent)
-    : MeshObject(new QGLTeapot(), parent)
+    : MeshObject(createTeapot(), parent)
 {
 }
 

@@ -83,6 +83,10 @@ public:
     void clear();
     void clear(QGL::VertexAttribute);
 
+    void appendIndex(int index);
+    void appendIndices(int index1, int index2, int index3);
+    QGLIndexArray indices() const;
+
     void appendVertex(const QVector3D &v0);
     void appendVertex(const QVector3D &v0, const QVector3D &v1);
     void appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2);

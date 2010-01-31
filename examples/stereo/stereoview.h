@@ -44,7 +44,6 @@
 
 #include "qglview.h"
 #include "qgldisplaylist.h"
-#include "qglteapot.h"
 
 class StereoView : public QGLView
 {
@@ -58,8 +57,8 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLTeapot teapot;
     QGLDisplayList list;
+    QGLSceneNode *teapot;
     QGLSceneNode *cube;
 };
 

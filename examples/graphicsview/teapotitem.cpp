@@ -41,11 +41,14 @@
 
 #include "teapotitem.h"
 #include "qglpainter.h"
+#include "qglteapot.h"
 
 TeapotItem::TeapotItem(QGraphicsItem *parent)
     : QGLGraphicsViewportItem(parent)
 {
     setFlag(ItemIsFocusable, true);
+
+    teapot << QGLTeapot();
 }
 
 TeapotItem::~TeapotItem()

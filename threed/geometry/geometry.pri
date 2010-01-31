@@ -7,7 +7,7 @@ HEADERS += qglcube.h \
     qlogicalvertex.h \
     qgldisplaylist.h \
     qglprimitive.h \
-    qglbeziergeometry.h \
+    qglbezierpatches.h \
     qglmaterialcollection.h \
     qglteapot.h \
     qgloperation.h
@@ -17,7 +17,7 @@ SOURCES += qglcube.cpp \
     qgeometrydata.cpp \
     qgldisplaylist.cpp \
     qglsection.cpp \
-    qglbeziergeometry.cpp \
+    qglbezierpatches.cpp \
     qglmaterialcollection.cpp \
     qglteapot.cpp \
     qlogicalvertex.cpp \

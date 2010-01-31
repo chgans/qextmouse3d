@@ -39,10 +39,13 @@
 **
 ****************************************************************************/
 
-#ifndef QGLBEZIERGEOMETRY_H
-#define QGLBEZIERGEOMETRY_H
+#ifndef QGLBEZIERPATCHES_H
+#define QGLBEZIERPATCHES_H
 
-#include "qglgeometry.h"
+#include "qarray.h"
+#include <QtGui/qvector2d.h>
+#include <QtGui/qvector3d.h>
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_HEADER
 
@@ -50,20 +53,32 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLBezierGeometryPrivate;
+class QGLBezierPatchesPrivate;
+class QGLDisplayList;
 
-class Q_QT3D_EXPORT QGLBezierGeometry : public QGLGeometry
+class Q_QT3D_EXPORT QGLBezierPatches
 {
-    Q_OBJECT
 public:
-    explicit QGLBezierGeometry(QObject *parent = 0);
-    ~QGLBezierGeometry();
+    QGLBezierPatches();
+    explicit QGLBezierPatches(const QArray<QVector3D>& positions);
+    QGLBezierPatches(const QArray<QVector3D>& positions,
+                     const QArray<ushort>& indices);
+    QGLBezierPatches(const QGLBezierPatches& other);
+    virtual ~QGLBezierPatches();
+
+    QGLBezierPatches& operator=(const QGLBezierPatches& other);
+
+    QArray<QVector3D> positions() const;
+    void setPositions(const QArray<QVector3D>& positions);
+
+    QArray<QVector2D> textureCoords() const;
+    void setTextureCoords(const QArray<QVector2D>& textureCoords);
+
+    QArray<ushort> indices() const;
+    void setIndices(const QArray<ushort>& indices);
 
     QVector3D normal(int index) const;
     void setNormal(int index, const QVector3D& value);
-
-    void draw(QGLPainter *painter);
-    bool upload();
 
     int subdivisionDepth() const;
     void setSubdivisionDepth(int value);
@@ -71,13 +86,15 @@ public:
     bool compactSubdivision() const;
     void setCompactSubdivision(bool value);
 
-    QGLGeometry *subdivide() const;
-
 private:
-    Q_DISABLE_COPY(QGLBezierGeometry);
+    QScopedPointer<QGLBezierPatchesPrivate> d_ptr;
 
-    QGLBezierGeometryPrivate *d;
+    Q_DECLARE_PRIVATE(QGLBezierPatches)
+
+    friend QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
 };
+
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
 
 QT_END_NAMESPACE
 

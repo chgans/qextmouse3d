@@ -77,7 +77,7 @@ private:
 
     QGLCamera camera;
     QGLDisplayList cube;
-    QGLTeapot teapot;
+    QGLDisplayList teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
 };
@@ -106,6 +106,7 @@ void ShapesWidget::initializeGL()
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
 
     cube << QGLCube();
+    teapot << QGLTeapot();
 }
 
 void ShapesWidget::paintGL()

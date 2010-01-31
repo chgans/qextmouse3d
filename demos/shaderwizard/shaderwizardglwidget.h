@@ -132,6 +132,7 @@ private:
     QGLMaterialParameters *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLDisplayList cube;
+    QGLDisplayList teapot;
 
     QGLTexture2D *mTexture;
 };
