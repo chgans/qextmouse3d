@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglpainter.h"
+#include "qgldisplaylist.h"
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglcamera.h"
@@ -75,8 +76,8 @@ private:
     static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
-    QGLCube cube;
-    QGLTeapot teapot;
+    QGLDisplayList cube;
+    QGLDisplayList teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
 };
@@ -103,6 +104,9 @@ void ShapesWidget::initializeGL()
     painter.setLightModel(&twoSidedModel);
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
+
+    cube << QGLCube();
+    teapot << QGLTeapot();
 }
 
 void ShapesWidget::paintGL()

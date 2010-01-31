@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -298,8 +298,7 @@ inline QGLAttributeValue QGLVertexArray::attributeValue(int field) const
 {
     if (field >= 0 && field < m_fields.m_fields.count()) {
         return QGLAttributeValue
-            (m_fields.m_fields[field].size,
-             QGL::ComponentType(0x1406),    // GL_FLOAT
+            (m_fields.m_fields[field].size, GL_FLOAT,
              m_fields.m_stride * sizeof(float),
              m_data.constData() + m_fields.m_fields[field].offset);
     } else {

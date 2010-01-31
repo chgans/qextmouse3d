@@ -1,10 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -41,13 +41,13 @@
 
 #include "qgeometrydata.h"
 #include "qlogicalvertex.h"
-
+#include "qglindexarray.h"
 #include <QtCore/qdebug.h>
 
 /*!
     \class QGeometryData
     \brief The QGeometryData class encapsulates sets of geometry data.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -124,6 +124,7 @@ public:
     QArray<QColor4B> colors;
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
+    QGLIndexArray indices;
 
     static const int ATTR_CNT = 32;
     QVector3D commonNormal;
@@ -689,6 +690,42 @@ void QGeometryData::clear(QGL::VertexAttribute field)
         }
         d->key[field] = -1;
     }
+}
+
+/*!
+    Appends \a index to the vertex index array.
+
+    \sa appendIndices(), indices()
+*/
+void QGeometryData::appendIndex(int index)
+{
+    detach();
+    d->indices.append(index);
+}
+
+/*!
+    Appends \a index1, \a index2, and \a index3 to the vertex
+    index array.
+
+    \sa appendIndex(), indices()
+*/
+void QGeometryData::appendIndices(int index1, int index2, int index3)
+{
+    detach();
+    d->indices.append(index1, index2, index3);
+}
+
+/*!
+    Returns the index array that was created by appendIndex().
+
+    \sa appendIndex(), appendIndices()
+*/
+QGLIndexArray QGeometryData::indices() const
+{
+    if (d)
+        return d->indices;
+    else
+        return QGLIndexArray();
 }
 
 /*!
@@ -1331,6 +1368,7 @@ void QGeometryData::detach()
             temp->normals = d->normals;
             temp->colors = d->colors;
             temp->attributes = d->attributes;
+            temp->indices = d->indices;
             temp->textures = d->textures;
             temp->fields = d->fields;
             qMemCopy(temp->key, d->key, d->ATTR_CNT);

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -44,7 +44,7 @@
 /*!
   \class QResult
   \brief The QResult class represents a return value that includes a solution and a validity.
-  \since 4.6
+  \since 4.7
   \ingroup qt3d
   \ingroup qt3d::math
   A QResult instance is returned by mathematical and other operations where

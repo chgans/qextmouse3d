@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLTeapot
     \brief The QGLTeapot class represents a 3D teapot object.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -62,31 +62,36 @@ QT_BEGIN_NAMESPACE
     0.5 at the origin:
 
     \code
-    QGLTeapot teapot;
+    QGLDisplayList teapot;
+    teapot << QGLTeapot();
+
     painter.modelViewMatrix().scale(0.5f);
     teapot.draw(painter);
     \endcode
 
     The QGLTeapot object contains a lot of vertex data once it has
     been subdivided into triangles.  It is recommended that instances
-    of this class be created at startup and then be reused over and over,
-    rather than creating and destroying the object every frame.
+    of this class be created at startup, added to a display list,
+    and then be reused over and over, rather than creating and
+    destroying the object every frame.
 
-    The teapot geometry will be uploaded to the GL server as a vertex
-    buffer the first time the object is drawn, which also improves
-    performance.
-
-    \sa QGLBezierGeometry
+    \sa QGLBezierPatches
 */
 
 /*!
-    Constructs a new 3D teapot geometry object, populates it,
-    and attaches it to \a parent.
+    Constructs a new 3D teapot geometry object.
 */
-QGLTeapot::QGLTeapot(QObject *parent)
-    : QGLBezierGeometry(parent)
+QGLTeapot::QGLTeapot()
+    : QGLBezierPatches
+        (QArray<QVector3D>::fromRawData
+            (reinterpret_cast<const QVector3D *>(teapotBezierVertexData),
+             teapotBezierVertexCount),
+         QArray<ushort>::fromRawData
+            (teapotPatchData, teapotPatchCount * 16))
 {
-    teapotLoadBezier(*this);
+    setSubdivisionDepth(teapotDepth);
+    setNormal(210, QVector3D(0.000000f, 0.000000f, 1.000000f));
+    setNormal(269, QVector3D(0.000000f, 0.000000f, -1.000000f));
 }
 
 /*!

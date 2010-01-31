@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QBox3D
     \brief The QBox3D class represents an axis-aligned box in 3D space.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::math
 

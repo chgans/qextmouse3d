@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -52,6 +52,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAbstractScene
     \brief The QGLAbstractScene class represents a 3D scene consisting of zero or more QGLSceneObject instances.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
 

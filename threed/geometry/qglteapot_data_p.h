@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -53,7 +53,7 @@
 // We mean it.
 //
 
-#include "qglbeziergeometry.h"
+#include "qglbezierpatches.h"
 
 // Generated from teapot.txt by meshcvt, depth = 4
 
@@ -404,18 +404,5 @@ static ushort const teapotPatchData[] = {
     269, 269, 269, 269, 290, 297, 298, 299, 287, 294, 295, 296, 284, 291, 292, 293,
     269, 269, 269, 269, 299, 304, 305, 278, 296, 302, 303, 274, 293, 300, 301, 270
 };
-
-static void teapotLoadBezier(QGLBezierGeometry& geometry)
-{
-    QGLVertexArray varray(QGL::Position, 3);
-    varray.setRawData(teapotBezierVertexData, teapotBezierVertexCount * teapotBezierVertexStride);
-    geometry.setVertexArray(varray);
-
-    geometry.setIndexArray(QGLIndexArray::fromRawData(teapotPatchData, teapotPatchCount * 16));
-
-    geometry.setSubdivisionDepth(teapotDepth);
-    geometry.setNormal(210, QVector3D(0.000000f, 0.000000f, 1.000000f));
-    geometry.setNormal(269, QVector3D(0.000000f, 0.000000f, -1.000000f));
-}
 
 #endif

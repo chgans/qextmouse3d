@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -57,7 +57,7 @@
 /*!
     \class QGLDisplayList
     \brief The QGLDisplayList class accumulates geometry for efficient display.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -412,10 +412,22 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
     QGLPrimitive t = triangle;
     QVector3D save = t.commonNormal();
-    for (int i = 0; i < t.count(); i += 3)
+    const QGLIndexArray indices = t.indices();
+    if (indices.isEmpty())
     {
-        addTriangle(i, i+1, i+2, t);
-        t.setCommonNormal(save);
+        for (int i = 0; i < t.count(); i += 3)
+        {
+            addTriangle(i, i+1, i+2, t);
+            t.setCommonNormal(save);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < indices.size(); i += 3)
+        {
+            addTriangle(indices[i], indices[i+1], indices[i+2], t);
+            t.setCommonNormal(save);
+        }
     }
 }
 

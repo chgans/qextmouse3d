@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -42,7 +42,7 @@
 #ifndef QGLTEAPOT_H
 #define QGLTEAPOT_H
 
-#include "qglbeziergeometry.h"
+#include "qglbezierpatches.h"
 
 QT_BEGIN_HEADER
 
@@ -50,11 +50,10 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QGLTeapot : public QGLBezierGeometry
+class Q_QT3D_EXPORT QGLTeapot : public QGLBezierPatches
 {
-    Q_OBJECT
 public:
-    explicit QGLTeapot(QObject *parent = 0);
+    QGLTeapot();
     ~QGLTeapot();
 };
 

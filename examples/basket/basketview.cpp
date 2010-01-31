@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -41,15 +41,12 @@
 
 #include <QTimer>
 #include "basketview.h"
-#include "qglbeziergeometry.h"
 #include "basket_data.h"
 
 BasketView::BasketView(QWidget *parent)
     : QGLView(parent)
 {
     setWindowTitle(tr("Basket"));
-
-    basket = basketCreateBezier();
 
     angle = 0;
 
@@ -60,11 +57,13 @@ BasketView::BasketView(QWidget *parent)
 
 BasketView::~BasketView()
 {
-    delete basket;
 }
 
 void BasketView::initializeGL(QGLPainter *painter)
 {
+    basket << BasketPatches();
+    basket.finalize();
+
     QImage textureImage(QLatin1String(":/basket.jpg"));
     texture.setImage(textureImage);
 
@@ -76,7 +75,7 @@ void BasketView::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().scale(1.5f);
     painter->modelViewMatrix().rotate(angle, 0, 1, 0);
-    basket->draw(painter);
+    basket.draw(painter);
 }
 
 void BasketView::rotate()

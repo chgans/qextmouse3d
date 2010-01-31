@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiarray(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -44,7 +44,7 @@
 /*!
     \class QGLOperation
     \brief The QGLOperation class provides an OO interface to QGLDisplayList
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 

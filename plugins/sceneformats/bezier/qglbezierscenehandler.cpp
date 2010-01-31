@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -41,6 +41,8 @@
 
 #include "qglbezierscenehandler.h"
 #include "qglbezierscene.h"
+#include "qglbezierpatches.h"
+#include "qvectorarray.h"
 #include <QtCore/qtextstream.h>
 
 QT_BEGIN_NAMESPACE
@@ -48,26 +50,24 @@ QT_BEGIN_NAMESPACE
 QGLAbstractScene *QGLBezierSceneHandler::read()
 {
     QTextStream stream(device());
-    QGLBezierGeometry *geometry = new QGLBezierGeometry();
+    QGLBezierPatches patches;
 
     // Read the number of patches from the first line.
     int patchCount;
     stream >> patchCount;
     stream.skipWhiteSpace();
-    if (patchCount <= 0) {
-        delete geometry;
+    if (patchCount <= 0)
         return 0;
-    }
 
     // Read the patch indices.
     int depth = 0;
-    QGLIndexArray indices;
+    QArray<ushort> indices;
     for (int patch = 0; patch < patchCount; ++patch) {
         bool eoln = false;
         for (int index = 0; index < 16; ++index) {
             int value;
             stream >> value;
-            indices.append(value - 1);
+            indices.append(ushort(value - 1));
 
             QChar sep;
             stream >> sep;
@@ -75,10 +75,8 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                 eoln = true;
                 break;
             }
-            if (sep != ',') {
-                delete geometry;
+            if (sep != ',')
                 return 0;
-            }
         }
         if (!eoln) {
             // Optional sub-division depth on the end.
@@ -89,21 +87,16 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
         }
         stream.skipWhiteSpace();
     }
-    geometry->setIndexArray(indices);
-    if (depth != 0)
-        geometry->setSubdivisionDepth(depth);
 
     // Read the number of vertices.
     int vertexCount;
     stream >> vertexCount;
     stream.skipWhiteSpace();
-    if (vertexCount <= 0) {
-        delete geometry;
+    if (vertexCount <= 0)
         return 0;
-    }
 
     // Read the vertex values.
-    QGLVertexArray vertices(QGL::Position, 3);
+    QVector3DArray vertices;
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
         bool eoln = false;
         qreal coords[3] = {0.0f, 0.0f, 0.0f};
@@ -116,10 +109,8 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                 eoln = true;
                 break;
             }
-            if (sep != ',') {
-                delete geometry;
+            if (sep != ',')
                 return 0;
-            }
         }
         vertices.append(coords[0], coords[1], coords[2]);
         if (!eoln) {
@@ -131,17 +122,14 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                 stream >> sep;
                 if (sep == '\n' || sep == '\r')
                     break;
-                if (sep != ',') {
-                    delete geometry;
+                if (sep != ',')
                     return 0;
-                }
             }
-            geometry->setNormal
+            patches.setNormal
                 (vertex, QVector3D(coords[0], coords[1], coords[2]));
         }
         stream.skipWhiteSpace();
     }
-    geometry->setVertexArray(vertices);
 
     // Check for options at the end of the stream.
     if (!stream.atEnd()) {
@@ -157,7 +145,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                 //     matrix.scale(0.5f, 0.5f, 0.5f);
                 //     matrix.translate(0.0f, 0.0f, -1.5f);
                 for (int vertex = 0; vertex < vertexCount; ++vertex) {
-                    QVector3D vec = vertices.vector3DAt(vertex, 0);
+                    QVector3D vec = vertices[vertex];
                     qreal x = vec.x();
                     qreal y = vec.y();
                     qreal z = vec.z();
@@ -169,31 +157,39 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                     qreal z2 = -y;
                     y = y2;
                     z = z2;
-                    vertices.setAt(vertex, 0, QVector3D(x, y, z));
+                    vertices[vertex] = QVector3D(x, y, z);
                 }
             }
             if (options.contains(QLatin1String("reverse-patches"))) {
                 // Reverse the patch order to convert clockwise
                 // patches into standard anti-clockwise patches.
-                QGLIndexArray newIndices;
+                QArray<ushort> newIndices;
                 for (int patch = 0; patch < patchCount; ++patch) {
                     int temp[16];
                     for (int index = 0; index < 16; ++index)
                         temp[index] = indices[patch * 16 + index];
                     for (int i = 0; i < 16; ++i)
-                        newIndices.append(temp[(i & 0x0C) + (3 - (i % 4))]);
+                        newIndices.append(ushort(temp[(i & 0x0C) + (3 - (i % 4))]));
                 }
-                geometry->setIndexArray(newIndices);
+                indices = newIndices;
             }
             if (options.contains(QLatin1String("no-compact-subdivision")))
-                geometry->setCompactSubdivision(false);
+                patches.setCompactSubdivision(false);
             else if (options.contains(QLatin1String("compact-subdivision")))
-                geometry->setCompactSubdivision(true);
+                patches.setCompactSubdivision(true);
         }
     }
 
+    // Create the display list from the Bezier patch data.
+    if (depth != 0)
+        patches.setSubdivisionDepth(depth);
+    patches.setPositions(vertices);
+    patches.setIndices(indices);
+    QGLDisplayList *geometry = new QGLDisplayList();
+    (*geometry) << patches;
+
     // Create a scene with a single object containing the geometry.
-    return new QGLBezierScene(geometry);;
+    return new QGLBezierScene(geometry);
 }
 
 QT_END_NAMESPACE

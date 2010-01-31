@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -46,7 +46,8 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qglcube.h"
+#include "qglgeometry.h"
+#include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 class QGLBezierGeometry;
 class ShaderWizardGLWidgetPrivate;
@@ -130,6 +131,8 @@ private:
     QGLLightModel *mLightModel;
     QGLMaterialParameters *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
+    QGLDisplayList cube;
+    QGLDisplayList teapot;
 
     QGLTexture2D *mTexture;
 };

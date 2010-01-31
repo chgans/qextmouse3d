@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -44,7 +44,7 @@
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglsphere.h"
-#include "qglbeziergeometry.h"
+#include "qglbezierpatches.h"
 #include "qglvertexarray.h"
 #include <math.h>
 #include <QVector3D>
@@ -410,6 +410,7 @@ void ShaderWizardGLWidget::setSquareGeometry()
 void ShaderWizardGLWidget::setBezierGeometry()
 {
     qWarning() << "ShaderWizardGLWidget::setBezierGeometry() - bezier geometry is not working yet";
+#if 0   // FIXME
     if(!bezierRawData)
     {
         bezierRawData = (float*)malloc(sizeof(float) * SURFACE_SIZE);
@@ -439,12 +440,17 @@ void ShaderWizardGLWidget::setBezierGeometry()
 
     setGeometry(geom);
     return;
+#endif
 }
 
 void ShaderWizardGLWidget::setCubeGeometry()
 {
-    static QGLCube *cube = new QGLCube;
-    setGeometry(cube);
+    static bool inited = false;
+    if (!inited) {
+        cube << QGLCube();
+        cube.finalize();
+    }
+    setGeometry(cube.geometry());
 }
 
 void ShaderWizardGLWidget::setSphereGeometry()
@@ -455,8 +461,12 @@ void ShaderWizardGLWidget::setSphereGeometry()
 
 void ShaderWizardGLWidget::setTeapotGeometry()
 {
-    static QGLTeapot* teapot = new QGLTeapot;
-    setGeometry(teapot);
+    static bool inited = false;
+    if (!inited) {
+        teapot << QGLTeapot();
+        teapot.finalize();
+    }
+    setGeometry(teapot.geometry());
 }
 
 void ShaderWizardGLWidget::setHeightMapGeometry()

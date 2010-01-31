@@ -1,10 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -82,6 +82,10 @@ public:
     void zipWith(const QGeometryData &other);
     void clear();
     void clear(QGL::VertexAttribute);
+
+    void appendIndex(int index);
+    void appendIndices(int index1, int index2, int index3);
+    QGLIndexArray indices() const;
 
     void appendVertex(const QVector3D &v0);
     void appendVertex(const QVector3D &v0, const QVector3D &v1);

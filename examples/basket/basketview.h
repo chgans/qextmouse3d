@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -44,6 +44,7 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
+#include "qgldisplaylist.h"
 
 class QGLGeometry;
 class QTimer;
@@ -64,7 +65,7 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLGeometry *basket;
+    QGLDisplayList basket;
     int angle;
     QTimer *timer;
 };

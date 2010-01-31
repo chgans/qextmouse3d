@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -42,6 +42,7 @@
 #ifndef QGLATTRIBUTEVALUE_H
 #define QGLATTRIBUTEVALUE_H
 
+#include <QtOpenGL/qgl.h>
 #include "qt3dglobal.h"
 #include "qarray.h"
 #include "qcustomdataarray.h"
@@ -51,20 +52,6 @@ QT_BEGIN_HEADER
 QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
-
-namespace QGL
-{
-    enum ComponentType
-    {
-        Byte    = 0x1400,       // GL_BYTE
-        UByte   = 0x1401,       // GL_UNSIGNED_BYTE
-        Short   = 0x1402,       // GL_SHORT
-        UShort  = 0x1403,       // GL_UNSIGNED_SHORT
-        Int     = 0x1404,       // GL_INT
-        UInt    = 0x1405,       // GL_UNSIGNED_INT
-        Float   = 0x1406        // GL_FLOAT
-    };
-};
 
 class QGLVertexBuffer;
 
@@ -78,23 +65,21 @@ public:
     QGLAttributeValue(const QArray<QVector4D>& array);
     QGLAttributeValue(const QArray<QColor4B>& array);
     QGLAttributeValue(const QCustomDataArray& array);
-    QGLAttributeValue(int size, QGL::ComponentType type,
-                      int stride, const void *data);
-    QGLAttributeValue(int size, QGL::ComponentType type,
-                      int stride, int offset);
+    QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data);
+    QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset);
 
     bool isNull() const;
 
-    QGL::ComponentType type() const;
-    int size() const;
+    GLenum type() const;
+    int tupleSize() const;
     int stride() const;
     int offset() const;
     const void *data() const;
     const float *floatData() const;
 
 private:
-    int m_size;
-    QGL::ComponentType m_type;
+    int m_tupleSize;
+    GLenum m_type;
     int m_stride;
     const void *m_data;
 
@@ -106,63 +91,63 @@ private:
 };
 
 inline QGLAttributeValue::QGLAttributeValue()
-    : m_size(0), m_type(QGL::Float), m_stride(0), m_data(0)
+    : m_tupleSize(0), m_type(GL_FLOAT), m_stride(0), m_data(0)
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<float>& array)
-    : m_size(1), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+    : m_tupleSize(1), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector2D>& array)
-    : m_size(2), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+    : m_tupleSize(2), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector3D>& array)
-    : m_size(3), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+    : m_tupleSize(3), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
-    : m_size(4), m_type(QGL::Float), m_stride(0), m_data(array.constData())
+    : m_tupleSize(4), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4B>& array)
-    : m_size(4), m_type(QGL::UByte), m_stride(0), m_data(array.constData())
+    : m_tupleSize(4), m_type(GL_UNSIGNED_BYTE), m_stride(0), m_data(array.constData())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue
-        (int size, QGL::ComponentType type, int stride, const void *data)
-    : m_size(size), m_type(type), m_stride(stride), m_data(data)
+        (int tupleSize, GLenum type, int stride, const void *data)
+    : m_tupleSize(tupleSize), m_type(type), m_stride(stride), m_data(data)
 {
-    Q_ASSERT(size >= 1 && size <= 4);
+    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
 }
 
 inline QGLAttributeValue::QGLAttributeValue
-        (int size, QGL::ComponentType type, int stride, int offset)
-    : m_size(size), m_type(type), m_stride(stride),
+        (int tupleSize, GLenum type, int stride, int offset)
+    : m_tupleSize(tupleSize), m_type(type), m_stride(stride),
       m_data(reinterpret_cast<const void *>(offset))
 {
-    Q_ASSERT(size >= 1 && size <= 4);
+    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
 }
 
 inline bool QGLAttributeValue::isNull() const
 {
-    return m_size == 0;
+    return m_tupleSize == 0;
 }
 
-inline QGL::ComponentType QGLAttributeValue::type() const
+inline GLenum QGLAttributeValue::type() const
 {
     return m_type;
 }
 
-inline int QGLAttributeValue::size() const
+inline int QGLAttributeValue::tupleSize() const
 {
-    return m_size;
+    return m_tupleSize;
 }
 
 inline int QGLAttributeValue::stride() const

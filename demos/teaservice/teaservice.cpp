@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -50,6 +50,7 @@
 #include "meshobject.h"
 #include "sceneobject.h"
 #include "qglteapot.h"
+#include "qgldisplaylist.h"
 #if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
 #include "perpixeleffect.h"
 #endif
@@ -70,8 +71,15 @@ public:
     ~Teapot() {}
 };
 
+static QGLSceneObject *createTeapot()
+{
+    QGLDisplayList *list = new QGLDisplayList();
+    (*list) << QGLTeapot();
+    return list;
+}
+
 Teapot::Teapot(QObject *parent)
-    : MeshObject(new QGLTeapot(), parent)
+    : MeshObject(createTeapot(), parent)
 {
 }
 

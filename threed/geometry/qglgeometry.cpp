@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLGeometry
     \brief The QGLGeometry class provides storage for geometry meshes.
-    \since 4.6
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -349,14 +349,17 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
         return;
 
     const QGLMaterialParameters *save = 0;
+    bool changedTex = false;
     if (mPalette && mMaterial != -1)
     {
         save = painter->faceMaterial(QGL::FrontFaces);
         painter->setFaceMaterial(QGL::FrontFaces,
                                  mPalette->materialByIndex(mMaterial));
         QGLTexture2D *tex = mPalette->texture(mMaterial);
-        if (tex)
+        if (tex) {
             painter->setTexture(tex);
+            changedTex = true;
+        }
     }
 
     // Determine if we need to recreate the vertex buffers in the GL server.
@@ -410,7 +413,8 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     // that is already bound.  This setting texture to null is needed in
     // the case where textured geometry is mixed with geometry that is
     // lit materials (for example) otherwise texture bleeding occurs.
-    painter->setTexture((QGLTexture2D*)0);
+    if (changedTex)
+        painter->setTexture((QGLTexture2D*)0);
 }
 
 /*!

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -85,7 +85,7 @@ struct Tga32Reader : public TgaReader
 
 /*!
     \class QTgaFile
-    \since 4.6
+    \since 4.7
     \internal
 
     File data container for a TrueVision Graphics format file.

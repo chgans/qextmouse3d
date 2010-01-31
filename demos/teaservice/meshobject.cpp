@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -42,7 +42,7 @@
 #include "meshobject.h"
 #include "qglview.h"
 
-MeshObject::MeshObject(QGLGeometry *mesh, QObject *parent)
+MeshObject::MeshObject(QGLDisplayList *mesh, QObject *parent)
     : QObject(parent)
 {
     m_mesh = mesh;
@@ -96,7 +96,7 @@ void MeshObject::initialize(QGLView *view, QGLPainter *painter)
     if (m_objectId != -1)
         view->registerObject(m_objectId, this);
     if (m_mesh)
-        m_mesh->upload();
+        m_mesh->finalize();
 }
 
 void MeshObject::draw(QGLPainter *painter)

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -39,78 +39,102 @@
 **
 ****************************************************************************/
 
-#include "qglbeziergeometry.h"
-#include <QDebug>
+#include "qglbezierpatches.h"
+#include "qgldisplaylist.h"
 #include <QtCore/qmap.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QGLBezierGeometry
-    \brief The QGLBezierGeometry class represents 3D geometry as a set of Bezier bicubic patches.
-    \since 4.6
+    \class QGLBezierPatches
+    \brief The QGLBezierPatches class represents 3D geometry as a set of Bezier bicubic patches.
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
 
     Bezier bicubic patches represent a curved 3D surface by four fixed
     control points at indices 0, 3, 12, and 15, together with twelve
-    additional floating control points that define the surface curvature.
-    Bezier geometry objects are made up of one or more such patches to
-    define the surface of an object.
+    additional floating control points that define the surface
+    curvature.  Bezier geometry objects are made up of one or more
+    such patches to define the surface of an object.
 
-    The application specifies the vertex data by calling setVertexArray().
-    Indices to the vertices can be provided by calling setIndexArray().
-    The QGLBezierGeometry class interprets groups of 16 vertices as the
-    control points for successive patches.
+    The application specifies the vertex position data to the
+    constructor, and can optionally provide an index array.
+    The class interprets groups of 16 vertices as the control
+    points for successive patches.
 
-    A mesh defined by QGLBezierGeometry is subdivided into flat
-    triangles for rendering when draw() or upload() is called.
+    A mesh defined by QGLBezierPatches is subdivided into flat
+    triangles for rendering when the \c{<<} operator is used
+    to add the patches to a display list.
 
     Many curved 3D objects can be defined as being made up of Bezier
-    bicubic patches, stitched together into a mesh.  The most famous Bezier
-    bicubic object is probably the classic 3D "Utah Teapot", first rendered
-    in 1975.  The QGLTeapot class provides a built-in implementation
-    of this object for testing purposes.
+    bicubic patches, stitched together into a mesh.  The most famous
+    Bezier bicubic object is probably the classic 3D "Utah Teapot",
+    first rendered in 1975.  The QGLTeapot class provides a built-in
+    implementation of this object for testing purposes.
 
     Vertex normals are computed automatically when the Bezier mesh is
-    converted into a triangle mesh by toTriangleMesh().  However, if a
-    patch side is zero length because the patch is triangular in shape
-    rather than rectangular, then the normals for vertices along that
-    patch side will have to be guessed based on the slope of the
-    triangle rather than the true slope of the curve.  The setNormal()
-    function can be used to specify explict normals for vertices that
+    converted into a triangle mesh.  However, if a patch side is zero
+    length because the patch is triangular in shape rather than
+    rectangular, then the normals for vertices along that patch
+    side will have to be guessed based on the slope of the triangle
+    rather than the true slope of the curve.  The setNormal() function
+    can be used to specify explicit normals for vertices that
     occur along a zero-length patch side.
 
-    If vertexArray() contains QGL::TextureCoord0 values for the corners
-    of the patches, then new texture co-ordinates will be derived
-    from the specified values as the patch is subdivided.  Otherwise,
-    QGLBezierGeometry will generate texture co-ordinates for each patch
-    based on the default square from (0, 0) to (1, 1).  The first vertex
-    in the patch corresponds to (0, 0), and the opposite vertex in the
-    patch corresponds to (1, 1).
+    If texture co-ordinates are supplied via setTextureCoords(),
+    then patch texture co-ordinates will be derived from the
+    specified values as the patches are subdivided.  Otherwise,
+    QGLBezierPatches will generate texture co-ordinates for each
+    patch based on the default square from (0, 0) to (1, 1).
+    The first vertex in the patch corresponds to (0, 0),
+    and the opposite vertex in the patch corresponds to (1, 1).
 
     \sa QGLGeometry, QGLTeapot
 */
 
-class QGLBezierGeometryPrivate
+class QGLBezierPatchesPrivate
 {
 public:
-    QGLBezierGeometryPrivate()
+    QGLBezierPatchesPrivate()
+        : compactSubdivision(false)
+        , subdivisionDepth(4) {}
+    QGLBezierPatchesPrivate(const QArray<QVector3D>& pos)
+        : positions(pos)
+        , compactSubdivision(false)
+        , subdivisionDepth(4) {}
+    QGLBezierPatchesPrivate(const QArray<QVector3D>& pos,
+                            const QArray<ushort>& ind)
+        : positions(pos)
+        , indices(ind)
+        , compactSubdivision(false)
+        , subdivisionDepth(4) {}
+    QGLBezierPatchesPrivate(const QGLBezierPatchesPrivate *other)
+        : positions(other->positions)
+        , textureCoords(other->textureCoords)
+        , indices(other->indices)
+        , normals(other->normals)
+        , compactSubdivision(other->compactSubdivision)
+        , subdivisionDepth(other->subdivisionDepth) {}
+
+    void copy(const QGLBezierPatchesPrivate *other)
     {
-        triangleMesh.setDrawingMode(QGL::Triangles);
-        subdivided = false;
-        compactSubdivision = true;
-        depth = 4;
+        positions = other->positions;
+        textureCoords = other->textureCoords;
+        indices = other->indices;
+        normals = other->normals;
+        compactSubdivision = other->compactSubdivision;
+        subdivisionDepth = other->subdivisionDepth;
     }
 
-    void subdivide(QGLGeometry& mesh, const QGLVertexArray& vertices,
-                   const QGLIndexArray& indices);
+    void subdivide(QGLDisplayList *list) const;
 
-    QGLGeometry triangleMesh;
-    bool subdivided;
-    bool compactSubdivision;
+    QArray<QVector3D> positions;
+    QArray<QVector2D> textureCoords;
+    QArray<ushort> indices;
     QMap<int, QVector3D> normals;
-    int depth;
+    bool compactSubdivision;
+    int subdivisionDepth;
 };
 
 // Temporary patch data for performing sub-divisions.
@@ -125,17 +149,17 @@ public:
 
     QVector3D normal(qreal s, qreal t) const;
     void convertToTriangles
-        (QGLVertexArray& vertices, QGLIndexArray& indexArray,
+        (QGLPrimitive *prim,
          qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision);
     void subDivide(QGLBezierPatch& patch1, QGLBezierPatch& patch2,
                    QGLBezierPatch& patch3, QGLBezierPatch& patch4);
     void createNewCorners(QGLBezierPatch& patch1, QGLBezierPatch& patch2,
                           QGLBezierPatch& patch3, QGLBezierPatch& patch4,
-                          QGLVertexArray& vertices,
+                          QGLPrimitive *prim,
                           qreal xtex, qreal ytex, qreal wtex, qreal htex);
     void recursiveSubDivide
-        (QGLVertexArray& vertices, QGLIndexArray& indexArray,
+        (QGLPrimitive *prim,
          int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision);
 };
@@ -258,7 +282,7 @@ QVector3D QGLBezierPatch::normal(qreal s, qreal t) const
 
 // Convert this patch into flat triangles.
 void QGLBezierPatch::convertToTriangles
-    (QGLVertexArray& vertices, QGLIndexArray& indexArray,
+    (QGLPrimitive *prim,
      qreal xtex, qreal ytex, qreal wtex, qreal htex,
      bool compactSubdivision)
 {
@@ -273,28 +297,29 @@ void QGLBezierPatch::convertToTriangles
     if (compactSubdivision) {
         // Divide the patch into 2 triangles along the diagonal.
         if (edge1ok && edge2ok)
-            indexArray.append(indices[0], indices[1], indices[2]);
+            prim->appendIndices(indices[0], indices[1], indices[2]);
         if (edge3ok && edge4ok)
-            indexArray.append(indices[1], indices[3], indices[2]);
+            prim->appendIndices(indices[1], indices[3], indices[2]);
     } else {
         // Find the mid-point on the patch by averaging the corners.
         QVector3D mid = (points[0] + points[3] + points[12] + points[15]) / 4.0f;
 
         // Allocate a triangle mesh vertex for the mid-point.
-        int midIndex = vertices.vertexCount();
-        vertices.append(mid);
-        vertices.append(normal(0.5f, 0.5f));
-        vertices.append(xtex + wtex / 2.0f, ytex + htex / 2.0f);
+        int midIndex = prim->count();
+        prim->appendVertex(mid);
+        prim->appendNormal(normal(0.5f, 0.5f));
+        prim->appendTexCoord
+            (QVector2D(xtex + wtex / 2.0f, ytex + htex / 2.0f));
 
         // Divide the patch into 4 triangles pointing at the center.
         if (edge1ok)
-            indexArray.append(indices[0], indices[1], midIndex);
+            prim->appendIndices(indices[0], indices[1], midIndex);
         if (edge2ok)
-            indexArray.append(indices[2], indices[0], midIndex);
+            prim->appendIndices(indices[2], indices[0], midIndex);
         if (edge3ok)
-            indexArray.append(indices[3], indices[2], midIndex);
+            prim->appendIndices(indices[3], indices[2], midIndex);
         if (edge4ok)
-            indexArray.append(indices[1], indices[3], midIndex);
+            prim->appendIndices(indices[1], indices[3], midIndex);
     }
 }
 
@@ -380,36 +405,37 @@ void QGLBezierPatch::subDivide
 void QGLBezierPatch::createNewCorners
         (QGLBezierPatch& patch1, QGLBezierPatch& patch2,
          QGLBezierPatch& patch3, QGLBezierPatch& patch4,
-         QGLVertexArray& vertices,
+         QGLPrimitive *prim,
          qreal xtex, qreal ytex, qreal wtex, qreal htex)
 {
     // Add vertices for the new patch corners we have created.
     qreal hwtex = wtex / 2.0f;
     qreal hhtex = htex / 2.0f;
-    int topPointIndex = vertices.vertexCount();
+    int topPointIndex = prim->count();
     int leftPointIndex = topPointIndex + 1;
     int midPointIndex = topPointIndex + 2;
     int rightPointIndex = topPointIndex + 3;
     int bottomPointIndex = topPointIndex + 4;
-    vertices.append(patch1.points[3]);
-    vertices.append(normal(0.5f, 0.0f));
-    vertices.append(xtex + hwtex, ytex);
 
-    vertices.append(patch1.points[12]);
-    vertices.append(normal(0.0f, 0.5f));
-    vertices.append(xtex, ytex + hhtex);
+    prim->appendVertex(patch1.points[3]);
+    prim->appendNormal(normal(0.5f, 0.0f));
+    prim->appendTexCoord(QVector2D(xtex + hwtex, ytex));
 
-    vertices.append(patch1.points[15]);
-    vertices.append(normal(0.5f, 0.5f));
-    vertices.append(xtex + hwtex, ytex + hhtex);
+    prim->appendVertex(patch1.points[12]);
+    prim->appendNormal(normal(0.0f, 0.5f));
+    prim->appendTexCoord(QVector2D(xtex, ytex + hhtex));
 
-    vertices.append(patch2.points[15]);
-    vertices.append(normal(1.0f, 0.5f));
-    vertices.append(xtex + wtex, ytex + hhtex);
+    prim->appendVertex(patch1.points[15]);
+    prim->appendNormal(normal(0.5f, 0.5f));
+    prim->appendTexCoord(QVector2D(xtex + hwtex, ytex + hhtex));
 
-    vertices.append(patch3.points[15]);
-    vertices.append(normal(0.5f, 1.0f));
-    vertices.append(xtex + hwtex, ytex + htex);
+    prim->appendVertex(patch2.points[15]);
+    prim->appendNormal(normal(1.0f, 0.5f));
+    prim->appendTexCoord(QVector2D(xtex + wtex, ytex + hhtex));
+
+    prim->appendVertex(patch3.points[15]);
+    prim->appendNormal(normal(0.5f, 1.0f));
+    prim->appendTexCoord(QVector2D(xtex + hwtex, ytex + htex));
 
     // Copy the indices for the corners of the new patches.
     patch1.indices[0] = indices[0];
@@ -432,53 +458,38 @@ void QGLBezierPatch::createNewCorners
 
 // Recursively sub-divide a patch into triangles.
 void QGLBezierPatch::recursiveSubDivide
-        (QGLVertexArray& vertices, QGLIndexArray& indexArray,
+        (QGLPrimitive *prim,
          int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision)
 {
     if (depth <= 1) {
-        convertToTriangles(vertices, indexArray, xtex, ytex, wtex, htex, compactSubdivision);
+        convertToTriangles(prim, xtex, ytex, wtex, htex, compactSubdivision);
     } else {
         QGLBezierPatch patch1, patch2, patch3, patch4;
         subDivide(patch1, patch2, patch3, patch4);
-        createNewCorners(patch1, patch2, patch3, patch4, vertices, xtex, ytex, wtex, htex);
+        createNewCorners(patch1, patch2, patch3, patch4, prim, xtex, ytex, wtex, htex);
         --depth;
         qreal hwtex = wtex / 2.0f;
         qreal hhtex = htex / 2.0f;
-        patch1.recursiveSubDivide(vertices, indexArray, depth, xtex, ytex, hwtex, hhtex, compactSubdivision);
-        patch2.recursiveSubDivide(vertices, indexArray, depth, xtex + hwtex, ytex, hwtex, hhtex, compactSubdivision);
-        patch3.recursiveSubDivide(vertices, indexArray, depth, xtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
-        patch4.recursiveSubDivide(vertices, indexArray, depth, xtex + hwtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
+        patch1.recursiveSubDivide(prim, depth, xtex, ytex, hwtex, hhtex, compactSubdivision);
+        patch2.recursiveSubDivide(prim, depth, xtex + hwtex, ytex, hwtex, hhtex, compactSubdivision);
+        patch3.recursiveSubDivide(prim, depth, xtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
+        patch4.recursiveSubDivide(prim, depth, xtex + hwtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
     }
 }
 
-void QGLBezierGeometryPrivate::subdivide
-    (QGLGeometry& mesh, const QGLVertexArray& vertices,
-     const QGLIndexArray& indices)
+void QGLBezierPatchesPrivate::subdivide(QGLDisplayList *list) const
 {
-    QGLVertexArray newVertices
-        (QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-    QGLIndexArray newIndices;
-
-    // Free up some memory from last time.
-    mesh.setVertexArray(QGLVertexArray());
-    mesh.setIndexArray(QGLIndexArray());
-
-    subdivided = true;
+    list->newSection();
+    list->begin(QGL::TRIANGLE);
+    QGLPrimitive *prim = list->currentPrimitive();
 
     bool indexBased = !indices.isEmpty();
     int count;
     if (indexBased)
         count = indices.size();
     else
-        count = vertices.vertexCount();
-
-    int positionField = vertices.fieldIndex(QGL::Position);
-    int texCoordField = vertices.fieldIndex(QGL::TextureCoord0);
-    if (positionField == -1) {
-        // If there are no positions, then subdividing is pointless.
-        return;
-    }
+        count = positions.size();
 
     for (int posn = 0; (posn + 15) < count; posn += 16) {
         // Construct a QGLBezierPatch object from the next high-level patch.
@@ -486,28 +497,18 @@ void QGLBezierGeometryPrivate::subdivide
         int vertex;
         if (indexBased) {
             for (vertex = 0; vertex < 16; ++vertex) {
-                patch.points[vertex] = vertices.vector3DAt
-                    (indices[posn + vertex], positionField);
+                patch.points[vertex] =
+                    positions[indices[posn + vertex]];
             }
         } else {
             for (int vertex = 0; vertex < 16; ++vertex) {
-                patch.points[vertex] = vertices.vector3DAt
-                    (posn + vertex, positionField);
+                patch.points[vertex] = positions[posn + vertex];
             }
         }
         QVector2D tex1, tex2;
-        if (texCoordField != -1) {
-            if (indexBased) {
-                vertex = indices[posn + cornerOffsets[0]];
-                tex1 = vertices.vector2DAt(vertex, texCoordField);
-                vertex = indices[posn + cornerOffsets[3]];
-                tex2 = vertices.vector2DAt(vertex, texCoordField);
-            } else {
-                vertex = posn + cornerOffsets[0];
-                tex1 = vertices.vector2DAt(vertex, texCoordField);
-                vertex = posn + cornerOffsets[3];
-                tex2 = vertices.vector2DAt(vertex, texCoordField);
-            }
+        if (!textureCoords.isEmpty()) {
+            tex1 = textureCoords[(posn / 16) * 2];
+            tex2 = textureCoords[(posn / 16) * 2 + 1];
         } else {
             tex1 = QVector2D(0.0f, 0.0f);
             tex2 = QVector2D(1.0f, 1.0f);
@@ -526,49 +527,181 @@ void QGLBezierGeometryPrivate::subdivide
                 n = patch.normal(cornerS[corner], cornerT[corner]);
             //else
                 //n = n.normalized();
-            patch.indices[corner] = newVertices.vertexCount();
-            newVertices.append(patch.points[cornerOffsets[corner]]);
-            newVertices.append(n);
-            newVertices.append(xtex + wtex * cornerS[corner],
-                               ytex + htex * cornerT[corner]);
+            patch.indices[corner] = prim->count();
+            prim->appendVertex(patch.points[cornerOffsets[corner]]);
+            prim->appendNormal(n);
+            prim->appendTexCoord
+                (QVector2D(xtex + wtex * cornerS[corner],
+                           ytex + htex * cornerT[corner]));
         }
 
         // Subdivide the patch and generate the final triangles.
-        patch.recursiveSubDivide(newVertices, newIndices,
-                                 depth, xtex, ytex, wtex, htex,
+        patch.recursiveSubDivide(prim, subdivisionDepth,
+                                 xtex, ytex, wtex, htex,
                                  compactSubdivision);
     }
 
-    mesh.setVertexArray(newVertices);
-    mesh.setIndexArray(newIndices);
+    list->end();
 }
 
 /*!
-    Constructs a new Bezier geometry object and attaches it to \a parent.
+    Constructs an empty Bezier patch list.
+
+    \sa setPositions()
 */
-QGLBezierGeometry::QGLBezierGeometry(QObject *parent)
-    : QGLGeometry(parent)
+QGLBezierPatches::QGLBezierPatches()
+    : d_ptr(new QGLBezierPatchesPrivate())
 {
-    d = new QGLBezierGeometryPrivate();
 }
 
 /*!
-    Destroys this Bezier geometry object.
+    Constructs a Bezier patch list with the data from \a positions.
+    Each patch consumes 16 elements of \a positions.
 */
-QGLBezierGeometry::~QGLBezierGeometry()
+QGLBezierPatches::QGLBezierPatches(const QArray<QVector3D>& positions)
+    : d_ptr(new QGLBezierPatchesPrivate(positions))
 {
-    delete d;
 }
 
 /*!
-    Returns the explicit normal associated with the vertex at \a index
-    in vertexArray().  Returns a null QVector3D value if there is
-    no explicit normal for \a index.
+    Constructs a Bezier patch list with the data from \a positions.
+    Each patch consumes 16 elements of \a indices to index into
+    \a positions.
+*/
+QGLBezierPatches::QGLBezierPatches
+        (const QArray<QVector3D>& positions,
+         const QArray<ushort>& indices)
+    : d_ptr(new QGLBezierPatchesPrivate(positions, indices))
+{
+}
+
+/*!
+    Constructs a copy of \a other.
+
+    \sa operator=()
+*/
+QGLBezierPatches::QGLBezierPatches(const QGLBezierPatches& other)
+    : d_ptr(new QGLBezierPatchesPrivate(other.d_ptr.data()))
+{
+}
+
+/*!
+    Destroys this Bezier patch list.
+*/
+QGLBezierPatches::~QGLBezierPatches()
+{
+}
+
+/*!
+    Assigns \a other to this Bezier patch list.
+*/
+QGLBezierPatches& QGLBezierPatches::operator=
+    (const QGLBezierPatches& other)
+{
+    if (this != &other)
+        d_ptr->copy(other.d_ptr.data());
+    return *this;
+}
+
+/*!
+    Returns the positions of the vertices in the Bezier patches.
+
+    \set setPositions(), indices(), textureCoords()
+*/
+QArray<QVector3D> QGLBezierPatches::positions() const
+{
+    Q_D(const QGLBezierPatches);
+    return d->positions;
+}
+
+/*!
+    Sets the \a positions of the vertices in the Bezier patches.
+
+    \sa positions(), setIndices(), setTextureCoords()
+*/
+void QGLBezierPatches::setPositions(const QArray<QVector3D>& positions)
+{
+    Q_D(QGLBezierPatches);
+    d->positions = positions;
+}
+
+/*!
+    Returns the texture co-ordinates for the Bezier patches.
+    Each patch consumes two elements from the texture
+    co-ordinate array, defining the opposite corners.
+
+    The default is an empty array, which indicates that each
+    patch will generate texture co-ordinates in the range
+    (0, 0) to (1, 1).
+
+    \set setTextureCoords(), positions(), indices()
+*/
+QArray<QVector2D> QGLBezierPatches::textureCoords() const
+{
+    Q_D(const QGLBezierPatches);
+    return d->textureCoords;
+}
+
+/*!
+    Sets the texture co-ordinates for the Bezier patches to
+    the elements of \a textureCoords.  Each patch consumes
+    two elements from \a textureCoords, defining the opposite
+    corners.
+
+    If \a textureCoords is empty, then each patch will generate
+    texture co-ordinates in the range (0, 0) to (1, 1).
+
+    \sa textureCoords(), setPositions(), setIndices()
+*/
+void QGLBezierPatches::setTextureCoords
+        (const QArray<QVector2D>& textureCoords)
+{
+    Q_D(QGLBezierPatches);
+    d->textureCoords = textureCoords;
+}
+
+/*!
+    Returns the indices to the vertices that define the Bezier patches.
+
+    If indices() is an empty array, then the patch vertices
+    are listed in order within positions(), 16 elements for
+    each patch.  If indices() is not empty, then it is used
+    to index into positions() to define the patches.
+
+    \set setIndices(), positions(), textureCoords()
+*/
+QArray<ushort> QGLBezierPatches::indices() const
+{
+    Q_D(const QGLBezierPatches);
+    return d->indices;
+}
+
+/*!
+    Sets the \a indices of the vertices that define the Bezier patches.
+
+    If \a indices is an empty array, then the patch vertices
+    are listed in order within positions(), 16 elements for
+    each patch.  If \a indices is not empty, then it is used
+    to index into positions() to define the patches.
+
+    \sa indices(), setPositions(), setTextureCoords()
+*/
+void QGLBezierPatches::setIndices(const QArray<ushort>& indices)
+{
+    Q_D(QGLBezierPatches);
+    d->indices = indices;
+}
+
+/*!
+    Returns the explicit normal associated with the vertex at \a index.
+    Returns a null QVector3D value if there is no explicit normal
+    for \a index.
 
     \sa setNormal()
 */
-QVector3D QGLBezierGeometry::normal(int index) const
+QVector3D QGLBezierPatches::normal(int index) const
 {
+    Q_D(const QGLBezierPatches);
     return d->normals.value(index, QVector3D());
 }
 
@@ -579,36 +712,13 @@ QVector3D QGLBezierGeometry::normal(int index) const
 
     \sa normal()
 */
-void QGLBezierGeometry::setNormal(int index, const QVector3D& value)
+void QGLBezierPatches::setNormal(int index, const QVector3D& value)
 {
+    Q_D(QGLBezierPatches);
     if (value.isNull())
         d->normals.remove(index);
     else
         d->normals[index] = value;
-}
-
-/*!
-    \reimp
-*/
-void QGLBezierGeometry::draw(QGLPainter *painter)
-{
-    if (isModified() || !d->subdivided) {
-        d->triangleMesh.setBufferThreshold(bufferThreshold());
-        d->subdivide(d->triangleMesh, vertexArray(), indexArray());
-    }
-    d->triangleMesh.draw(painter);
-}
-
-/*!
-    \reimp
-*/
-bool QGLBezierGeometry::upload()
-{
-    if (isModified() || !d->subdivided) {
-        d->triangleMesh.setBufferThreshold(bufferThreshold());
-        d->subdivide(d->triangleMesh, vertexArray(), indexArray());
-    }
-    return d->triangleMesh.upload();
 }
 
 /*!
@@ -617,9 +727,10 @@ bool QGLBezierGeometry::upload()
 
     \sa setSubdivisionDepth(), subdivide()
 */
-int QGLBezierGeometry::subdivisionDepth() const
+int QGLBezierPatches::subdivisionDepth() const
 {
-    return d->depth;
+    Q_D(const QGLBezierPatches);
+    return d->subdivisionDepth;
 }
 
 /*!
@@ -628,9 +739,10 @@ int QGLBezierGeometry::subdivisionDepth() const
 
     \sa subdivisionDepth(), subdivide()
 */
-void QGLBezierGeometry::setSubdivisionDepth(int value)
+void QGLBezierPatches::setSubdivisionDepth(int value)
 {
-    d->depth = value;
+    Q_D(QGLBezierPatches);
+    d->subdivisionDepth = value;
 }
 
 /*!
@@ -646,8 +758,9 @@ void QGLBezierGeometry::setSubdivisionDepth(int value)
 
     \sa setCompactSubdivision()
 */
-bool QGLBezierGeometry::compactSubdivision() const
+bool QGLBezierPatches::compactSubdivision() const
 {
+    Q_D(const QGLBezierPatches);
     return d->compactSubdivision;
 }
 
@@ -662,26 +775,22 @@ bool QGLBezierGeometry::compactSubdivision() const
 
     \sa compactSubdivision()
 */
-void QGLBezierGeometry::setCompactSubdivision(bool value)
+void QGLBezierPatches::setCompactSubdivision(bool value)
 {
+    Q_D(QGLBezierPatches);
     d->compactSubdivision = value;
 }
 
 /*!
-    Subdivides this Bezier geometry object into a set of flat
-    triangles and returns the QGLGeometry object containing the
-    triangles.  It is the caller's responsibility to destroy
-    the returned object when it is no longer required.
+    \relates QGLBezierPatches
 
-    \sa subdivisionDepth()
+    Subdivides the Bezier patch data in \a patches into triangles
+    and adds them to the specified display \a list.
 */
-QGLGeometry *QGLBezierGeometry::subdivide() const
+QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches)
 {
-    QGLGeometry *geom = new QGLGeometry();
-    geom->setDrawingMode(QGL::Triangles);
-    geom->setBufferThreshold(bufferThreshold());
-    d->subdivide(*geom, vertexArray(), indexArray());
-    return geom;
+    patches.d_ptr->subdivide(&list);
+    return list;
 }
 
 QT_END_NAMESPACE

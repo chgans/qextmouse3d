@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -40,9 +40,12 @@
 ****************************************************************************/
 
 #include "cubeview.h"
+#include "qglcube.h"
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
+    cube << QGLCube();
+
     painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));

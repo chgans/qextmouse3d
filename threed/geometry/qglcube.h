@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -42,7 +42,8 @@
 #ifndef QGLCUBE_H
 #define QGLCUBE_H
 
-#include "qglgeometry.h"
+#include "qt3dglobal.h"
+#include <QtGui/qvector2d.h>
 
 QT_BEGIN_HEADER
 
@@ -50,26 +51,67 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QGLCube : public QGLGeometry
+class QGLDisplayList;
+
+class Q_QT3D_EXPORT QGLCube
 {
-    Q_OBJECT
 public:
-    explicit QGLCube(QObject *parent = 0);
-    explicit QGLCube(qreal size, QObject *parent = 0);
-    QGLCube(qreal width, qreal height, qreal depth, QObject *parent = 0);
-    virtual ~QGLCube();
+    explicit QGLCube(qreal size = 1.0f) : m_size(size) {}
 
-    void setTextureCoords(const QVector2D& c1,
-                          const QVector2D& c2,
-                          const QVector2D& c3,
-                          const QVector2D& c4,
-                          int face = -1);
-
-    void drawFace(QGLPainter *painter, int face);
+    qreal size() const { return m_size; }
+    void setSize(qreal size) { m_size = size; }
 
 private:
-    void init(qreal width, qreal height, qreal depth);
+    qreal m_size;
 };
+
+class Q_QT3D_EXPORT QGLCubeFace
+{
+public:
+    enum Face
+    {
+        Left,
+        Top,
+        Right,
+        Bottom,
+        Front,
+        Back
+    };
+
+    explicit QGLCubeFace(QGLCubeFace::Face face, qreal size = 1.0f)
+        : m_size(size), m_face(face),
+          m_bottomLeftTextureCoord(0.0f, 0.0f),
+          m_topRightTextureCoord(1.0f, 1.0f) {}
+
+    qreal size() const { return m_size; }
+    void setSize(qreal size) { m_size = size; }
+
+    QGLCubeFace::Face face() const { return m_face; }
+    void setFace(QGLCubeFace::Face face) { m_face = face; }
+
+    QVector2D bottomLeftTextureCoord() const
+        { return m_bottomLeftTextureCoord; }
+    void setBottomLeftTextureCoord(const QVector2D& value)
+        { m_bottomLeftTextureCoord = value; }
+    void setBottomLeftTextureCoord(qreal x, qreal y)
+        { m_bottomLeftTextureCoord = QVector2D(x, y); }
+
+    QVector2D topRightTextureCoord() const
+        { return m_topRightTextureCoord; }
+    void setTopRightTextureCoord(const QVector2D& value)
+        { m_topRightTextureCoord = value; }
+    void setTopRightTextureCoord(qreal x, qreal y)
+        { m_topRightTextureCoord = QVector2D(x, y); }
+
+private:
+    qreal m_size;
+    QGLCubeFace::Face m_face;
+    QVector2D m_bottomLeftTextureCoord;
+    QVector2D m_topRightTextureCoord;
+};
+
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube);
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face);
 
 QT_END_NAMESPACE
 
