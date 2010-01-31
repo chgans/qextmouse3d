@@ -135,6 +135,28 @@ QString MainWindow::populateModelMenu()
                              mView, SLOT(load()));
         }
     }
+    QString cmdlineModel;
+    QStringList args = qApp->arguments();
+    int ix = args.indexOf(QLatin1String("--model"));
+    if (ix == -1)
+        ix = args.indexOf(QLatin1String("-model"));
+    if (ix == -1)
+        ix = args.indexOf(QLatin1String("-m"));
+    if (ix != -1)
+    {
+        int mdlIx = ix + 1;
+        if (args.count() == mdlIx)
+            qWarning("%s requires a string with the model file path", qPrintable(args[ix]));
+        else
+            cmdlineModel = args[mdlIx];
+    }
+    if (!cmdlineModel.isEmpty())
+    {
+        if (QFile::exists(cmdlineModel))
+            return cmdlineModel;
+        else
+            qWarning("%s model file could not be found", qPrintable(cmdlineModel));
+    }
     return first;
 }
 
