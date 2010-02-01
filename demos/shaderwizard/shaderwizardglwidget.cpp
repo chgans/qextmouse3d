@@ -326,9 +326,11 @@ void ShaderWizardGLWidget::setCubeGeometry()
 void ShaderWizardGLWidget::setSphereGeometry()
 {
     if (sphere == 0) {
-        sphere = new QGLSphere(2.0, QGLSphere::UVSphere, 150);
+        sphere = new QGLDisplayList(this);
+        *sphere << QGLSphere(2.0, 3);
+        sphere->finalize();
     }
-    setGeometry(sphere);
+    setGeometry(sphere->geometry());
 }
 
 void ShaderWizardGLWidget::setTeapotGeometry()

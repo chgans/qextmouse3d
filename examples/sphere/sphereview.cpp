@@ -56,18 +56,34 @@ SphereView::SphereView(QWidget *parent)
     : QGLView(parent), pointsImage(1, 1, QImage::Format_ARGB32),
     textured(true), timer(new QTimer(this))
 {
-    spheres.append(new QGLSphere(QGLSphere::CubeSphere, 20));
-    spheres.append(new QGLSphere(QGLSphere::CubeSphere, 200));
-    spheres.append(new QGLSphere(QGLSphere::CubeSphere, 2000));
-    spheres.append(new QGLSphere(QGLSphere::CubeSphere, 20000));
-    spheres.append(new QGLSphere(QGLSphere::UVSphere, 20));
-    spheres.append(new QGLSphere(QGLSphere::UVSphere, 200));
-    spheres.append(new QGLSphere(QGLSphere::UVSphere, 2000));
-    spheres.append(new QGLSphere(QGLSphere::UVSphere, 20000));
-    spheres.append(new QGLSphere(QGLSphere::IcoSphere, 20));
-    spheres.append(new QGLSphere(QGLSphere::IcoSphere, 200));
-    spheres.append(new QGLSphere(QGLSphere::IcoSphere, 2000));
-    spheres.append(new QGLSphere(QGLSphere::IcoSphere, 20000));
+    spheres.append(list.newNode());
+    list << QGLCubeSphere(1, 1);
+    spheres.append(list.newNode());
+    list << QGLCubeSphere(1, 2);
+    spheres.append(list.newNode());
+    list << QGLCubeSphere(1, 3);
+    spheres.append(list.newNode());
+    list << QGLCubeSphere(1, 5);
+
+    spheres.append(list.newNode());
+    list << QGLSphere(1, 1);
+    spheres.append(list.newNode());
+    list << QGLSphere(1, 2);
+    spheres.append(list.newNode());
+    list << QGLSphere(1, 3);
+    spheres.append(list.newNode());
+    list << QGLSphere(1, 5);
+
+    spheres.append(list.newNode());
+    list << QGLIcoSphere(1, 1);
+    spheres.append(list.newNode());
+    list << QGLIcoSphere(1, 2);
+    spheres.append(list.newNode());
+    list << QGLIcoSphere(1, 3);
+    spheres.append(list.newNode());
+    list << QGLIcoSphere(1, 5);
+
+    list.finalize();
 
     lp = new QGLLightParameters(this);
     lp->setDirection(QVector3D(1.0, 0.0, 0.0));
@@ -78,7 +94,17 @@ SphereView::SphereView(QWidget *parent)
     mdl = new QGLLightModel(this);
     mdl->setAmbientSceneColor(QColor(196,196,196));
 
-    showFaces();
+    QImage image;
+    if (!image.load(":faceUV.jpg"))
+        qDebug("Failed to load cylinder wrap grid texture");
+    uvTexture.setImage(image);
+    if (!image.load(":faceIco.png"))
+        qDebug("Failed to load icosphere grid texture");
+    icoTexture.setImage(image);
+    if (!image.load(":faceCube.jpg"))
+        qDebug("Failed to load cube texture");
+    cubeTexture.setImage(image);
+
     QPainter painter(&pointsImage);
     painter.setPen(Qt::NoPen);
     painter.setBrush(Qt::green);
@@ -87,8 +113,6 @@ SphereView::SphereView(QWidget *parent)
 
 SphereView::~SphereView()
 {
-    foreach(QGLSphere *sphere, spheres)
-        delete sphere;
     delete timer;
 }
 
@@ -116,7 +140,7 @@ void SphereView::paintGL(QGLPainter *painter)
 
     painter->setFaceMaterial(QGL::FrontFaces, mat);
 
-    for (int i = 0; i < 12; ++i)  {
+    for (int i = 0; i < spheres.size(); ++i)  {
         if (i == 0)
             painter->setTexture(&cubeTexture);
         else if (i == 4)
@@ -148,57 +172,4 @@ void SphereView::rotate()
 {
     angle = (angle + 2) % 360;
     updateGL();
-}
-
-void SphereView::showGrid()
-{
-    QImage image;
-    if (!image.load(":gridUV.jpg"))
-        qDebug("Failed to load cylinder wrap grid texture");
-    uvTexture.setImage(image);
-    if (!image.load(":gridIco.jpg"))
-        qDebug("Failed to load icosphere grid texture");
-    icoTexture.setImage(image);
-    if (!image.load(":gridCube.jpg"))
-        qDebug("Failed to load cube texture");
-    cubeTexture.setImage(image);
-
-    int i;
-    for (i = 0; i < 8; ++i)
-        spheres[i]->setDrawingMode(QGL::Triangles);
-    for (i = 8; i < 12; ++i)
-        spheres[i]->setDrawingMode(QGL::Triangles);
-    textured = true;
-}
-
-void SphereView::showFaces()
-{
-    QImage image;
-    if (!image.load(":faceUV.jpg"))
-        qDebug("Failed to load cylinder wrap grid texture");
-    uvTexture.setImage(image);
-    if (!image.load(":faceIco.png"))
-        qDebug("Failed to load icosphere grid texture");
-    icoTexture.setImage(image);
-    if (!image.load(":faceCube.jpg"))
-        qDebug("Failed to load cube texture");
-    cubeTexture.setImage(image);
-
-    int i;
-    for (i = 0; i < 8; ++i)
-        spheres[i]->setDrawingMode(QGL::Triangles);
-    for (i = 8; i < 12; ++i)
-        spheres[i]->setDrawingMode(QGL::Triangles);
-    textured = true;
-}
-
-void SphereView::showPoints()
-{
-    uvTexture.setImage(pointsImage);
-    icoTexture.setImage(pointsImage);
-    cubeTexture.setImage(pointsImage);
-
-    for (int i = 0; i < 12; ++i)
-        spheres[i]->setDrawingMode(QGL::Points);
-    textured = false;
 }

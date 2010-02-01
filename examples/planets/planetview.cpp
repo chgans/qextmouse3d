@@ -40,10 +40,10 @@
 ****************************************************************************/
 
 #include "planetview.h"
+#include "qglsphere.h"
 
 PlanetView::PlanetView(QWidget *parent)
-    : QGLView(parent), sun(2.0f, QGLSphere::UVSphere, 1000),
-      planet1(0.5f, QGLSphere::UVSphere, 500),
+    : QGLView(parent),
       planet1Posn(3.0f, 0.0f, 0.0f)
 {
     qreal radius = 3.0f;
@@ -65,15 +65,20 @@ void PlanetView::initializeGL(QGLPainter *painter)
 {
     painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
-    sun.upload();
-    planet1.upload();
+
+    sun = list.newNode();
+    list << QGLSphere(2.0f, 4);
+    planet1 = list.newNode();
+    list << QGLSphere(0.5f, 3);
+
+    list.finalize();
 }
 
 void PlanetView::paintGL(QGLPainter *painter)
 {
     painter->setFaceColor(QGL::AllFaces, Qt::yellow);
-    sun.draw(painter);
+    sun->draw(painter);
     painter->modelViewMatrix().translate(planet1Posn);
     painter->setFaceColor(QGL::AllFaces, QColor(0, 192, 192));
-    planet1.draw(painter);
+    planet1->draw(painter);
 }

@@ -44,6 +44,7 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
+#include "qgldisplaylist.h"
 
 class QTimer;
 class QGLSphere;
@@ -63,11 +64,6 @@ protected:
 
     void keyPressEvent(QKeyEvent *);
 
-public slots:
-    void showGrid();
-    void showFaces();
-    void showPoints();
-
 private slots:
     void rotate();
 
@@ -75,7 +71,8 @@ private:
     QImage pointsImage;
     bool textured;
     QGLTexture2D cubeTexture, icoTexture, uvTexture;
-    QVector<QGLSphere *> spheres;
+    QGLDisplayList list;
+    QVector<QGLSceneNode *> spheres;
     QTimer *timer;
     int angle;
     QGLLightParameters *lp;

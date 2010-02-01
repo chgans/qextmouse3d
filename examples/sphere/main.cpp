@@ -40,27 +40,13 @@
 ****************************************************************************/
 
 #include <QApplication>
-#include <QAction>
-#include <QMainWindow>
-#include <QMenu>
-#include <QMenuBar>
 #include "sphereview.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
-    QMainWindow window;
-    SphereView *view = new SphereView(&window);
-    window.setCentralWidget(view);
-
-    QMenu *modeMenu = window.menuBar()->addMenu("Mode");
-    modeMenu->addAction("Faces", view, SLOT(showFaces()));
-    modeMenu->addAction("Grid", view, SLOT(showGrid()));
-    modeMenu->addAction("Points", view, SLOT(showPoints()));
-
+    SphereView window;
     window.resize(480,320);
-    view->setFocus();
     if (QApplication::arguments().contains("-maximize"))
         window.showMaximized();
     else if (QApplication::arguments().contains("-fullscreen"))

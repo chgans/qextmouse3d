@@ -991,6 +991,7 @@ void QGeometryData::appendVertexArray(const QVector3DArray &ary)
         detach();
         enableField(QGL::Position);
         d->vertices.append(ary);
+        d->count = qMax(d->count, d->vertices.count());
     }
 }
 
@@ -1004,6 +1005,7 @@ void QGeometryData::appendAttributeArray(const QCustomDataArray &ary, QGL::Verte
         detach();
         enableField(field);
         d->attributes[d->key[field]].append(ary);
+        d->count = qMax(d->count, d->attributes[d->key[field]].count());
     }
 }
 
@@ -1017,6 +1019,7 @@ void QGeometryData::appendNormalArray(const QVector3DArray &ary)
         detach();
         enableField(QGL::Normal);
         d->normals.append(ary);
+        d->count = qMax(d->count, d->normals.count());
     }
 }
 
@@ -1030,6 +1033,7 @@ void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAt
         detach();
         enableField(field);
         d->textures[d->key[field]].append(ary);
+        d->count = qMax(d->count, d->textures[d->key[field]].count());
     }
 }
 
@@ -1043,6 +1047,7 @@ void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
         detach();
         enableField(QGL::Position);
         d->colors.append(ary);
+        d->count = qMax(d->count, d->colors.count());
     }
 }
 

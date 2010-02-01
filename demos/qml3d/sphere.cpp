@@ -62,7 +62,7 @@ public:
     Sphere::Type type;
     qreal size;
     qreal faces;
-    QGLSphere *geometry;
+    QGLDisplayList *geometry;
     bool valid;
 };
 
@@ -122,12 +122,30 @@ void Sphere::setFaces(qreal value)
     }
 }
 
+static int depthFromFaceCount(int faces)
+{
+    int maxFaces = 20;
+    int depth = 1;
+    while (maxFaces < faces) {
+        ++depth;
+        maxFaces *= 4;
+    }
+    return depth;
+}
+
 void Sphere::drawItem(QGLPainter *painter)
 {
     if (!d->geometry || !d->valid) {
         delete d->geometry;
-        d->geometry = new QGLSphere
-            (d->size, QGLSphere::Mode(d->type), qRound(d->faces));
+        d->geometry = new QGLDisplayList();
+        int depth = depthFromFaceCount(qRound(d->faces));
+        if (d->type == Ico)
+            (*d->geometry) << QGLIcoSphere(d->size, depth);
+        else if (d->type == Cube)
+            (*d->geometry) << QGLCubeSphere(d->size, depth);
+        else
+            (*d->geometry) << QGLSphere(d->size, depth);
+        d->geometry->finalize();
         d->valid = true;
     }
     d->geometry->draw(painter);

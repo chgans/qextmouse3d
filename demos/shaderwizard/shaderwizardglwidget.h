@@ -134,7 +134,7 @@ private:
     QGLDisplayList* teapot;
     QGLHeightMap* square;
     QGLHeightMap* ripple;
-    QGLSphere* sphere;
+    QGLDisplayList* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H
