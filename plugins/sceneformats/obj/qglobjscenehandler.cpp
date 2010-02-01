@@ -133,12 +133,8 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QVector3DArray positions;
     QVector2DArray texCoords;
     QVector3DArray normals;
-    QVector3DArray facePositions;
-    QVector2DArray faceTexCoords;
-    QVector3DArray faceNormals;
-    QGLIndexArray indices;
     qreal x, y, z;
-    QGLIndexArray materialIndices;
+    quint32 fields = 0;
     QGLMaterialParameters *material = 0;
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
@@ -187,11 +183,9 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             z = objReadFloat(line, &posn);
             normals.append(x, y, z);
         } else if (keyword == "f") {
-            facePositions.resize(0);
-            faceTexCoords.resize(0);
-            faceNormals.resize(0);
             posn = objSkipWS(line, posn);
             count = 0;
+            QGLOperation op(dlist, QGL::TRIANGLE_FAN);
             while (posn < line.size()) {
                 // Note: we currently only read the initial vertex
                 // index and also use it for texture co-ordinates
@@ -205,7 +199,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else if (index > 0)
                     --index;        // Indices in obj are 1-based.
                 if (index >= 0 && index < positions.count())
-                    facePositions.append(positions[index]);
+                    op << positions[index];
                 if (tindex < 0)
                     tindex = texCoords.count() + tindex;
                 else if (tindex > 0)
@@ -213,7 +207,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else
                     tindex = -1;
                 if (tindex >= 0 && tindex < texCoords.count())
-                    faceTexCoords.append(texCoords[tindex]);
+                    op << texCoords[tindex];
                 if (nindex < 0)
                     nindex = normals.count() + nindex;
                 else if (nindex > 0)
@@ -221,37 +215,20 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else
                     nindex = -1;
                 if (nindex >= 0 && nindex < normals.count())
-                    faceNormals.append(normals[nindex]);
+                    op.addNormal(normals[nindex]);
                 ++count;
                 posn = objSkipNonWS(line, posn, 0);
                 posn = objSkipWS(line, posn);
             }
-            if (0) { //count <= 3) {
-                QGLOperation op(dlist, QGL::TRIANGLE);
-                op.addVertexArray(facePositions);
-                if (!faceTexCoords.isEmpty())
-                    op.addTexCoordArray(faceTexCoords);
-                if (!faceNormals.isEmpty())
-                    op.addNormalArray(faceNormals);
-            } else {
-                // Subdivide quads and polygons into triangles for simplicity.
-                QGLOperation op(dlist, QGL::TRIANGLE);
-                for (index = 2; index < facePositions.size(); ++index) {
-                    op.addVertex(facePositions[0]);
-                    op.addVertex(facePositions[index - 1]);
-                    op.addVertex(facePositions[index]);
-                    if (!faceTexCoords.isEmpty()) {
-                        op.addTexCoord(faceTexCoords.value(0));
-                        op.addTexCoord(faceTexCoords.value(index - 1));
-                        op.addTexCoord(faceTexCoords.value(index));
-                    }
-                    if (!faceNormals.isEmpty()) {
-                        op.addNormal(faceNormals.value(0));
-                        op.addNormal(faceNormals.value(index - 1));
-                        op.addNormal(faceNormals.value(index));
-                    }
-                }
+            // if a different combination of fields start a new section
+            // the primitive doesn't get posted to the section until op.end()
+            if (dlist->currentPrimitive()->fields() != fields)
+            {
+                if (fields)
+                    dlist->newSection(smoothing);
+                fields = dlist->currentPrimitive()->fields();
             }
+            op.end();
         } else if (keyword == "usemtl") {
             // Specify a material for the faces that follow.
             posn = objSkipWS(line, posn);
