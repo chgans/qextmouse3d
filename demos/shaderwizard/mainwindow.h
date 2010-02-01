@@ -85,7 +85,6 @@ private slots:
     void on_pushButtonApplyFragmentShader_clicked();
     void on_pushButtonApplyVertexShader_clicked();
 
-    void setBezierGeometry(bool ignored);
     void setCubeGeometry(bool ignored);
     void setSphereGeometry(bool ignored);
     void setSquareGeometry(bool ignored);

@@ -49,11 +49,13 @@ class QGLPainter;
 #include "qglgeometry.h"
 #include "qgldisplaylist.h"
 #include "qgltexture2d.h"
-class QGLBezierGeometry;
+
 class ShaderWizardGLWidgetPrivate;
 class QGLAbstractScene;
 class QGLSceneNode;
 class QGLSceneObject;
+class QGLHeightMap;
+class QGLSphere;
 
 class ShaderWizardGLWidget : public QGLView
 {
@@ -85,7 +87,6 @@ public:
 public slots:
     void setGeometry(QGLGeometry *geom);
 
-    void setBezierGeometry();
     void setCubeGeometry();
     void setSphereGeometry();
     void setTeapotGeometry();
@@ -115,15 +116,10 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    void populateBezierData(float* dataArray, int width, int depth, float height);
     void setDefaultCamera(QGLGeometry* geometry);
 
-    QGLGeometry *mGeometry;
-
-    QGLBezierGeometry *bezierModel;
-    QGLVertexArray *bezierArray;
-    float *bezierRawData;
     ShaderWizardGLWidgetPrivate* d;
+    QGLGeometry *mGeometry;
     QGLAbstractScene *mSceneManager;
     QGLSceneObject *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;
@@ -131,10 +127,14 @@ private:
     QGLLightModel *mLightModel;
     QGLMaterialParameters *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
-    QGLDisplayList cube;
-    QGLDisplayList teapot;
-
     QGLTexture2D *mTexture;
+
+    // Models
+    QGLDisplayList* cube;
+    QGLDisplayList* teapot;
+    QGLHeightMap* square;
+    QGLHeightMap* ripple;
+    QGLSphere* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H
