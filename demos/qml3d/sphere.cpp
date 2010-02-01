@@ -41,6 +41,7 @@
 
 #include "sphere.h"
 #include "qglsphere.h"
+#include "qgldisplaylist.h"
 
 QT_BEGIN_NAMESPACE
 
