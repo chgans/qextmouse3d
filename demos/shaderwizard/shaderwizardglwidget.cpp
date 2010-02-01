@@ -100,12 +100,12 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mLightModel(new QGLLightModel(this))
         , mMaterial(new QGLMaterialParameters(this))
         , mMaterialCollection(new QGLMaterialCollection(this))
+        , mTexture(new QGLTexture2D())
         , cube(0)
         , teapot(0)
         , square(0)
         , ripple(0)
         , sphere(0)
-        , mTexture(new QGLTexture2D())
 {
     d = new ShaderWizardGLWidgetPrivate;
 

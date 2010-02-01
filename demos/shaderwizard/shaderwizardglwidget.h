@@ -111,11 +111,10 @@ public slots:
 
     void clearScene();
 
-protected:
+private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
-private:
     void setDefaultCamera(QGLGeometry* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
