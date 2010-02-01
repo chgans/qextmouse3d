@@ -53,22 +53,10 @@ class CubePrivate;
 class Cube : public Item3d
 {
     Q_OBJECT
-    Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY sizeChanged)
-    Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY sizeChanged)
-    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY sizeChanged)
     Q_PROPERTY(qreal size READ size WRITE setSize NOTIFY sizeChanged)
 public:
     Cube(QObject *parent = 0);
     ~Cube();
-
-    qreal width() const;
-    void setWidth(qreal value);
-
-    qreal height() const;
-    void setHeight(qreal value);
-
-    qreal depth() const;
-    void setDepth(qreal value);
 
     qreal size() const;
     void setSize(qreal value);

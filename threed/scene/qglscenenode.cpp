@@ -397,6 +397,7 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
     d->childNodes.append(node);
+    connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
 }
 
 /*!
@@ -406,6 +407,13 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
     d->childNodes.removeOne(node);
+}
+
+void QGLSceneNode::deleteChild(QObject *object)
+{
+    QGLSceneNode *node = qobject_cast<QGLSceneNode*>(object);
+    if (node)
+        removeNode(node);
 }
 
 /*!
@@ -471,7 +479,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         d->geometry->setMaterial(d->material);
 	}
 		
-
     QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
     for ( ; cit != d->childNodes.end(); ++cit)
         (*cit)->draw(painter);
@@ -499,14 +506,10 @@ void QGLSceneNode::apply(QGLPainter *painter)
     Q_D(QGLSceneNode);
     if (d->hasEffect && painter->standardEffect() != d->localEffect)
         painter->setStandardEffect(d->localEffect);
-    QObjectList subNodes = children();
-    QObjectList::iterator cit(subNodes.begin());
-    for ( ; cit != subNodes.end(); ++cit)
-    {
-        QGLSceneNode *n = qobject_cast<QGLSceneNode *>(*cit);
-        if (n)
-            n->apply(painter);
-    }
+
+    QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
+    for ( ; cit != d->childNodes.end(); ++cit)
+        (*cit)->apply(painter);
 }
 
 /*!
@@ -540,16 +543,24 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     \relates QGLSceneNode
     Print a description of \a node, and all its descendants, to stderr.  Only
     available when compiled in debug mode (without QT_NO_DEBUG defined).
-    The \a indent parameter is used internally.
+    The \a indent and \a loop parameters are used internally.
 */
-void qDumpScene(QGLSceneNode *node, int indent)
+void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop)
 {
+    QSet<QGLSceneNode *> lp = loop;
+    lp.insert(node);
     QString ind;
     ind.fill(' ', indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
-    fprintf(stderr, "%s start: %d   count: %d\n", qPrintable(ind), node->start(), node->count());
-
+    fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
+    {
+        QList<QGLSceneNode*> children = node->childNodes();
+        QList<QGLSceneNode*>::const_iterator it = children.constBegin();
+        for (int i = 0; it != children.constEnd(); ++it, ++i)
+            fprintf(stderr, "%d: %p  ", i, *it);
+    }
+    fprintf(stderr, "\n");
     if (node->localTransform().isIdentity())
     {
         fprintf(stderr, "%s local transform: identity\n", qPrintable(ind));
@@ -562,20 +573,6 @@ void qDumpScene(QGLSceneNode *node, int indent)
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-    /*
-    if (node->userTransform().isIdentity())
-    {
-        fprintf(stderr, "%s user transform: identity\n", qPrintable(ind));
-    }
-    else
-    {
-        fprintf(stderr, "%s user transform:\n", qPrintable(ind));
-        QMatrix4x4 m = node->userTransform();
-        for (int i = 0; i < 4; ++i)
-            fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
-                    qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
-    }
-    */
     if (node->geometry())
     {
         fprintf(stderr, "%s geometry: %p\n", qPrintable(ind), node->geometry());
@@ -612,27 +609,26 @@ void qDumpScene(QGLSceneNode *node, int indent)
     {
         fprintf(stderr, "%s no effect set\n", qPrintable(ind));
     }
-    QList<QGLSceneNode *> children = node->childNodes();
-    QList<QGLSceneNode *>::const_iterator it = children.constBegin();
+    QList<QGLSceneNode*> children = node->childNodes();
+    QList<QGLSceneNode*>::const_iterator it = children.constBegin();
     for ( ; it != children.constEnd(); ++it)
-        qDumpScene(*it, indent + 1);
+        if (!lp.contains(*it))
+            qDumpScene(*it, indent + 1);
 }
 
 QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
 {
     dbg << &node << "\n    start:" << node.start() << " count:" << node.count();
+    QList<QGLSceneNode*> children = node.childNodes();
+    QList<QGLSceneNode*>::const_iterator it = children.constBegin();
+    for ( ; it != children.constEnd(); ++it)
+        dbg << "\n        child:" << *it;
 
     if (node.localTransform().isIdentity())
         dbg << "\n    local transform: identity";
     else
         dbg << "\n    local transform:\n" << node.localTransform();
 
-    /*
-    if (node.userTransform().isIdentity())
-        dbg << "\n    user transform: identity";
-    else
-        dbg << "\n    user transform:\n" << node.userTransform();
-    */
     if (node.geometry())
     {
         dbg << "\n    geometry:" << node.geometry();

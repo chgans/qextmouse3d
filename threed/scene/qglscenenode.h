@@ -100,12 +100,15 @@ public:
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
 
+private Q_SLOTS:
+    void deleteChild(QObject *object);
+
 private:
     Q_DISABLE_COPY(QGLSceneNode)
 };
 
 #ifndef QT_NO_DEBUG_STREAM
-Q_QT3D_EXPORT void qDumpScene(QGLSceneNode *, int indent = 0);
+Q_QT3D_EXPORT void qDumpScene(QGLSceneNode *, int indent = 0, const QSet<QGLSceneNode*> &loop = QSet<QGLSceneNode*>());
 
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLSceneNode &node);
 #endif
