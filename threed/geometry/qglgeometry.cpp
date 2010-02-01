@@ -98,7 +98,7 @@ QT_BEGIN_NAMESPACE
     buffer will be created automatically the first time draw()
     is called.
 
-    \sa QGLCube, QGLBezierGeometry
+    \sa QGLCube, QGLBezierPatches
 */
 
 /*!

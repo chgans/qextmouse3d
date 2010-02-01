@@ -606,7 +606,7 @@ QGLBezierPatches& QGLBezierPatches::operator=
 /*!
     Returns the positions of the vertices in the Bezier patches.
 
-    \set setPositions(), indices(), textureCoords()
+    \sa setPositions(), indices(), textureCoords()
 */
 QArray<QVector3D> QGLBezierPatches::positions() const
 {
@@ -634,7 +634,7 @@ void QGLBezierPatches::setPositions(const QArray<QVector3D>& positions)
     patch will generate texture co-ordinates in the range
     (0, 0) to (1, 1).
 
-    \set setTextureCoords(), positions(), indices()
+    \sa setTextureCoords(), positions(), indices()
 */
 QArray<QVector2D> QGLBezierPatches::textureCoords() const
 {
@@ -668,7 +668,7 @@ void QGLBezierPatches::setTextureCoords
     each patch.  If indices() is not empty, then it is used
     to index into positions() to define the patches.
 
-    \set setIndices(), positions(), textureCoords()
+    \sa setIndices(), positions(), textureCoords()
 */
 QArray<ushort> QGLBezierPatches::indices() const
 {
@@ -725,7 +725,7 @@ void QGLBezierPatches::setNormal(int index, const QVector3D& value)
     Returns the depth of subdivision to use when converting the
     Bezier geometry into triangles.  The default value is 4.
 
-    \sa setSubdivisionDepth(), subdivide()
+    \sa setSubdivisionDepth()
 */
 int QGLBezierPatches::subdivisionDepth() const
 {
@@ -737,7 +737,7 @@ int QGLBezierPatches::subdivisionDepth() const
     Sets the depth of subdivision to use when converting the
     Bezier geometry into triangles to \a value.
 
-    \sa subdivisionDepth(), subdivide()
+    \sa subdivisionDepth()
 */
 void QGLBezierPatches::setSubdivisionDepth(int value)
 {

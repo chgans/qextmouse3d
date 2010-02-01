@@ -77,7 +77,7 @@ QT_BEGIN_NAMESPACE
 
     Returns the size of this cube.
 
-    \s setSize()
+    \sa setSize()
 */
 
 /*!
@@ -85,7 +85,7 @@ QT_BEGIN_NAMESPACE
 
     Sets the \a size of this cube.
 
-    \s size()
+    \sa size()
 */
 
 /*!
@@ -211,7 +211,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    void QGLCubeFace::setTopRightTextureCoord(const QVector2D& value)
+    \fn void QGLCubeFace::setTopRightTextureCoord(const QVector2D& value)
 
     Sets the texture co-ordinate of the top-right corner of
     the cube face to \a value.
