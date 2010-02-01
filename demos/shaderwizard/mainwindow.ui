@@ -226,11 +226,6 @@
     <string>Sphere</string>
    </property>
   </action>
-  <action name="actionBezier">
-   <property name="text">
-    <string>Bezier</string>
-   </property>
-  </action>
   <action name="actionTeapot">
    <property name="text">
     <string>Teapot</string>

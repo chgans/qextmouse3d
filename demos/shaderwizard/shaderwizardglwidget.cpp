@@ -44,7 +44,6 @@
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglsphere.h"
-#include "qglbezierpatches.h"
 #include "qglvertexarray.h"
 #include <math.h>
 #include <QVector3D>
@@ -94,9 +93,6 @@ public:
 
 ShaderWizardGLWidget::ShaderWizardGLWidget() :
         mGeometry(0)
-        , bezierModel(0)
-        , bezierArray(0)
-        , bezierRawData(0)
         , mSceneManager(0)
         , mDefaultSceneObject(0)
         , mSceneRoot(0)
@@ -104,6 +100,11 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mLightModel(new QGLLightModel(this))
         , mMaterial(new QGLMaterialParameters(this))
         , mMaterialCollection(new QGLMaterialCollection(this))
+        , cube(0)
+        , teapot(0)
+        , square(0)
+        , ripple(0)
+        , sphere(0)
         , mTexture(new QGLTexture2D())
 {
     d = new ShaderWizardGLWidgetPrivate;
@@ -119,23 +120,22 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
 {
-
-    if(bezierModel)
+    if( square )
     {
-        delete bezierModel;
-        bezierModel = 0;
+        delete square;
+        square = 0;
     }
 
-    if(bezierArray)
+    if( ripple )
     {
-        delete bezierArray;
-        bezierArray = 0;
+        delete ripple;
+        ripple = 0;
     }
 
-    if(bezierRawData)
+    if( sphere )
     {
-        free(bezierRawData);
-        bezierRawData = 0;
+        delete sphere;
+        sphere = 0;
     }
 
     if( mMaterial && mMaterialCollection)
@@ -267,100 +267,7 @@ void calculateNormal(float *xNormal, float *yNormal, float *zNormal, float xCoor
     *zNormal = cumulativeNormal.z();
 }
 
-void ShaderWizardGLWidget::populateBezierData(float* dataArray, int width, int height, float depth)
-{
-    Q_UNUSED(depth);
-    qWarning() << "ShaderWizardGLWidget::populateBezierData() is not working yet";
-    float *pointer= dataArray;
 
-    if(width <= 1 || height <= 1)
-    {
-        return;
-    }
-
-    float xCoord, yCoord, zCoord;
-    float xNormal, yNormal, zNormal;
-
-    for(int y = 0; y < height - 1; y ++)
-    {
-        for(int x = 0; x < width - 1; x++)
-        {
-            // Calculate normal
-
-            // Top left
-            // pos
-            xCoord = float(x) / float(width - 1) - 0.5;
-            yCoord = float(y) / float(height - 1) - 0.5;
-            zCoord = zFunc(xCoord, yCoord);
-            *pointer++ = xCoord;
-            *pointer++ = yCoord;
-            *pointer++ = zCoord;
-
-            // normal:
-            calculateNormal(&xNormal, &yNormal, &zNormal, xCoord, yCoord, zCoord, 1.0/(width - 1.0));
-            *pointer++ = xNormal;
-            *pointer++ = yNormal;
-            *pointer++ = zNormal;
-            // texture coord:
-            *pointer ++ = float(x) / float(width - 1);
-            *pointer ++ = float(y) / float(height - 1);
-
-            // Bottom left
-            // pos
-            xCoord = float(x) / float(width - 1) - 0.5;
-            yCoord = float(y + 1) / float(height - 1) - 0.5;
-            zCoord = zFunc(xCoord, yCoord);
-            *pointer++ = xCoord;
-            *pointer++ = yCoord;
-            *pointer++ = zCoord;
-
-            // normal:
-            calculateNormal(&xNormal, &yNormal, &zNormal, xCoord, yCoord, zCoord, 1.0/(width - 1.0));
-            *pointer++ = xNormal;
-            *pointer++ = yNormal;
-            *pointer++ = zNormal;
-            // texture coord:
-            *pointer ++ = float(x) / float(width - 1);
-            *pointer ++ = float(y + 1) / float(height - 1);
-
-            // Bottom Right
-            // pos
-            xCoord = float(x + 1) / float(width - 1) - 0.5;
-            yCoord = float(y + 1) / float(height - 1) - 0.5;
-            zCoord = zFunc(xCoord, yCoord);
-            *pointer++ = xCoord;
-            *pointer++ = yCoord;
-            *pointer++ = zCoord;
-
-            // normal:
-            calculateNormal(&xNormal, &yNormal, &zNormal, xCoord, yCoord, zCoord, 1.0/(width - 1.0));
-            *pointer++ = xNormal;
-            *pointer++ = yNormal;
-            *pointer++ = zNormal;
-            // texture coord:
-            *pointer ++ = float(x + 1) / float(width - 1);
-            *pointer ++ = float(y + 1) / float(height - 1);
-
-            // Top Right
-            // pos
-            xCoord = float(x + 1) / float(width - 1) - 0.5;
-            yCoord = float(y) / float(height - 1) - 0.5;
-            zCoord = zFunc(xCoord, yCoord);
-            *pointer++ = xCoord;
-            *pointer++ = yCoord;
-            *pointer++ = zCoord;
-
-            // normal:
-            calculateNormal(&xNormal, &yNormal, &zNormal, xCoord, yCoord, zCoord, 1.0/(width - 1.0));
-            *pointer++ = xNormal;
-            *pointer++ = yNormal;
-            *pointer++ = zNormal;
-            // texture coord:
-            *pointer ++ = float(x + 1) / float(width - 1);
-            *pointer ++ = float(y) / float(height - 1);
-        }
-    }
-}
 
 #define QGL_CUBE_SIZE (6 * 4 * (3 + 3 + 2))
 static float const cubeVertices[QGL_CUBE_SIZE] = {
@@ -397,81 +304,48 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 #define SURFACE_WIDTH 100
 #define SURFACE_HEIGHT 100
 #define SURFACE_SIZE ((SURFACE_WIDTH * SURFACE_HEIGHT) * (4 * (3 + 3 + 2)))
-//static float rawData[SURFACE_SIZE];
 
 void ShaderWizardGLWidget::setSquareGeometry()
 {
-    static QGLHeightMap *square = new QGLHeightMap(101,101);
+    if (square == 0) {
+        square = new QGLHeightMap(101,101);
+    }
     setGeometry(square);
-    d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
-}
-
-// Todo: actually use bezier geometry
-void ShaderWizardGLWidget::setBezierGeometry()
-{
-    qWarning() << "ShaderWizardGLWidget::setBezierGeometry() - bezier geometry is not working yet";
-#if 0   // FIXME
-    if(!bezierRawData)
-    {
-        bezierRawData = (float*)malloc(sizeof(float) * SURFACE_SIZE);
-        populateBezierData(bezierRawData, SURFACE_WIDTH, SURFACE_HEIGHT, 1.0f);
-    }
-
-    static QGLGeometry *geom = new QGLGeometry();
-    QGLVertexArray array
-        (QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-//    array.setRawData(cubeVertices, 4 * (3 + 3 + 2));
-    array.setRawData(bezierRawData, SURFACE_WIDTH * SURFACE_HEIGHT * 4 * (3 + 3 + 2));
-    geom->setDrawingMode(QGL::Triangles);
-    geom->setVertexArray(array);
-
-    QGLIndexArray indices;
-    int count = array.vertexCount();
-    for (int index = 0; index < count; index += 4) {
-        indices.append(index);
-        indices.append(index + 1);
-        indices.append(index + 2);
-
-        indices.append(index);
-        indices.append(index + 2);
-        indices.append(index + 3);
-    }
-    geom->setIndexArray(indices);
-
-    setGeometry(geom);
-    return;
-#endif
 }
 
 void ShaderWizardGLWidget::setCubeGeometry()
 {
-    static bool inited = false;
-    if (!inited) {
-        cube << QGLCube();
-        cube.finalize();
+    if (cube == 0) {
+        cube = new QGLDisplayList(this);
+        *cube << QGLCube();
+        cube->finalize();
     }
-    setGeometry(cube.geometry());
+    setGeometry(cube->geometry());
 }
 
 void ShaderWizardGLWidget::setSphereGeometry()
 {
-    static QGLSphere *sphere = new QGLSphere(2.0, QGLSphere::UVSphere, 150);
+    if (sphere == 0) {
+        sphere = new QGLSphere(2.0, QGLSphere::UVSphere, 150);
+    }
     setGeometry(sphere);
 }
 
 void ShaderWizardGLWidget::setTeapotGeometry()
 {
-    static bool inited = false;
-    if (!inited) {
-        teapot << QGLTeapot();
-        teapot.finalize();
+    if (teapot == 0) {
+        teapot = new QGLDisplayList(this);
+        *teapot << QGLTeapot();
+        teapot->finalize();
     }
-    setGeometry(teapot.geometry());
+    setGeometry(teapot->geometry());
 }
 
 void ShaderWizardGLWidget::setHeightMapGeometry()
 {
-    static RippleHeightMap *ripple = new RippleHeightMap(101,101);
+    if (ripple == 0) {
+        ripple = new RippleHeightMap(101,101);
+    }
     setGeometry(ripple);
 }
 

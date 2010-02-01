@@ -78,7 +78,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionCube, SIGNAL(triggered(bool)), this, SLOT(setCubeGeometry(bool)));
     connect(ui->actionSphere, SIGNAL(triggered(bool)), this, SLOT(setSphereGeometry(bool)));
-    connect(ui->actionBezier, SIGNAL(triggered(bool)), this, SLOT(setBezierGeometry(bool)));
     connect(ui->actionTeapot, SIGNAL(triggered(bool)), this, SLOT(setTeapotGeometry(bool)));
     connect(ui->actionSquare, SIGNAL(triggered(bool)), this, SLOT(setSquareGeometry(bool)));
     connect(ui->actionHeightMap, SIGNAL(triggered(bool)), this, SLOT(setHeightMapGeometry(bool)));
@@ -116,11 +115,6 @@ MainWindow::MainWindow(QWidget *parent)
     delete ui;
     delete sceneModel;
     delete mScene;
-}
-
-void MainWindow::setBezierGeometry(bool)
-{
-    glDisplayWidget->setBezierGeometry();
 }
 
 void MainWindow::setSquareGeometry(bool)
