@@ -53,6 +53,7 @@ void PainterWidget::initializeGL()
     painter.setLightEnabled(0, true);
 
     // Create the cube object for later.
+    cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
 }
 

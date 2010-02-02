@@ -105,6 +105,7 @@ void ShapesWidget::initializeGL()
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
 
+    cube.newSection(QGL::Faceted);
     cube << QGLCube();
     teapot << QGLTeapot();
 }

@@ -46,6 +46,7 @@
 PainterWidget::PainterWidget(QWidget *parent)
     : QWidget(parent)
 {
+    cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
 }
 

@@ -65,14 +65,14 @@ public:
         , scale(1.0f)
         , mesh(0)
         , effect(0)
-        , objectPickId(-1)
         , cullFaces(Item3d::CullDisabled)
-        , _stateGroup(0)
-        , targetNode(0)
-        , inheritEvents(false)
-        , isVisible(true)
-        , isInitialized(false)
+        , objectPickId(-1)
         , mainBranchId(-1)
+        , isVisible(true)
+        , inheritEvents(false)
+        , isInitialized(false)
+        , targetNode(0)
+        , _stateGroup(0)
     {
     }
 
