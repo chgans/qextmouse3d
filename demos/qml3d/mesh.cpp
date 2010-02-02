@@ -57,8 +57,8 @@ QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
 class MeshPrivate
 {
 public:
-    MeshPrivate() : dataReply(0), scene(0), refCount(1), nextSceneBranchId(0),
-                    mainSceneObject(NULL), completed(false), loaded(false){}
+    MeshPrivate() : dataReply(0), scene(0), nextSceneBranchId(0),
+                    mainSceneObject(NULL), refCount(1), completed(false), loaded(false){}
     ~MeshPrivate()
     {
         delete scene;
