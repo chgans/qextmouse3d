@@ -55,6 +55,8 @@ public:
 
 private slots:
     void create();
+    void size();
+    void face();
 };
 
 #define QGL_CUBE_SIZE (6 * 6 * (3 + 3 + 2))
@@ -131,13 +133,121 @@ void tst_QGLCube::create()
     QVERIFY(verts != -1);
     QVERIFY(texx != -1);
     QVERIFY(norms != -1);
-    for (int i = 0, v = 0; i < QGL_CUBE_SIZE; ++v, i += 8)
+    for (int i = 0; i < QGL_CUBE_SIZE; i += 8)
     {
         const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
         const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
         int i = findVertex(ary, vdata[0], vdata[1]);
         QVERIFY(i != -1);
         QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+    }
+}
+
+void tst_QGLCube::size()
+{
+    qreal size0 = 3.2f;
+    qreal size1 = 5.2f;
+    QGLCube cube(size0);
+    QCOMPARE(cube.size(), size0);
+    {
+        QGLDisplayList list;
+        list.newSection(QGL::Faceted);
+        list << cube;
+        list.finalize();
+        QGLVertexArray ary = list.geometry()->vertexArray();
+        int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        for (int i = 0, v = 0; i < QGL_CUBE_SIZE; ++v, i += 8)
+        {
+            const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
+            const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
+            int i = findVertex(ary, vdata[0] * size0, vdata[1]);
+            QVERIFY(i != -1);
+            QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+        }
+    }
+    cube.setSize(size1);
+    {
+        QGLDisplayList list;
+        list.newSection(QGL::Faceted);
+        list << cube;
+        list.finalize();
+        QGLVertexArray ary = list.geometry()->vertexArray();
+        int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        for (int i = 0, v = 0; i < QGL_CUBE_SIZE; ++v, i += 8)
+        {
+            const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
+            const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
+            int i = findVertex(ary, vdata[0] * size1, vdata[1]);
+            QVERIFY(i != -1);
+            QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+        }
+    }
+}
+
+void tst_QGLCube::face()
+{
+    QGLCubeFace cfL(QGLCubeFace::Left);
+    QGLCubeFace cfT(QGLCubeFace::Top);
+    QGLCubeFace cfR(QGLCubeFace::Right);
+    QGLCubeFace cfBt(QGLCubeFace::Bottom);
+    QGLCubeFace cfF(QGLCubeFace::Front);
+    QGLCubeFace cfBk(QGLCubeFace::Back);
+    {
+        QGLDisplayList list;
+        list.newSection(QGL::Faceted);
+        list << cfL << cfT << cfR << cfBt << cfF << cfBk;
+        list.finalize();
+        QGLVertexArray ary = list.geometry()->vertexArray();
+        int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        for (int i = 0; i < QGL_CUBE_SIZE; i += 8)
+        {
+            const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
+            const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
+            int i = findVertex(ary, vdata[0], vdata[1]);
+            QVERIFY(i != -1);
+            QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+        }
+    }
+    qreal size0 = 3.2f;
+    qreal size1 = 5.6f;
+    QGLCubeFace::Face f = QGLCubeFace::Bottom;
+    QGLCubeFace cubeFace(f, size0);
+    int begin = f * 8 * 6;
+    int end = (f + 1) * 8 * 6;
+    QCOMPARE(cubeFace.size(), size0);
+    {
+        QGLDisplayList list;
+        list.newSection(QGL::Faceted);
+        list << cubeFace;
+        list.finalize();
+        QGLVertexArray ary = list.geometry()->vertexArray();
+        int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        for (int i = begin; i < end; i += 8)
+        {
+            const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
+            const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
+            int i = findVertex(ary, vdata[0] * size0, vdata[1]);
+            QVERIFY(i != -1);
+            QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+        }
+    }
+    cubeFace.setSize(size1);
+    QCOMPARE(cubeFace.size(), size1);
+    {
+        QGLDisplayList list;
+        list.newSection(QGL::Faceted);
+        list << cubeFace;
+        list.finalize();
+        QGLVertexArray ary = list.geometry()->vertexArray();
+        int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        for (int i = begin; i < end; i += 8)
+        {
+            const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
+            const QVector2D *tdata = reinterpret_cast<const QVector2D*>(cubeVertices + i + 6);
+            int i = findVertex(ary, vdata[0] * size1, vdata[1]);
+            QVERIFY(i != -1);
+            QCOMPARE(ary.vector2DAt(i, texx), tdata[0]);
+        }
     }
 }
 

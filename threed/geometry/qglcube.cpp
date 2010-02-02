@@ -314,7 +314,7 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
 QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
 {
     QGLOperation op(&list, QGL::TRIANGLE);
-    int offset = int(face.face()) * 8;
+    int offset = int(face.face()) * 8 * 6;
     qreal size = face.size();
     QVector2D bottomLeft = face.bottomLeftTextureCoord();
     QVector2D topRight = face.topRightTextureCoord();
