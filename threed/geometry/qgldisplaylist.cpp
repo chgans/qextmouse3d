@@ -688,7 +688,7 @@ void QGLDisplayList::finalize()
             QGLSection *s = d->sections.takeFirst();
             s->normalizeNormals();
             QGLIndexArray indices = s->indices();
-            const int *vi = indices.constData();
+            const QGLIndexArray::ElementType *vi = indices.constData();
             int vcnt = indices.size();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
