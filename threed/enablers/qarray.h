@@ -61,6 +61,69 @@ class QArrayRef;
 template <typename T, int PreallocSize>
 class QUnsharedArray;
 
+#if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
+
+#if defined(Q_CC_GNU) && (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3))
+    typedef char __attribute__((__may_alias__)) QArrayAlignedChar;
+#else
+    typedef char QArrayAlignedChar;
+#endif
+
+template <typename T, int PreallocSize, size_t AlignT>
+struct QArrayAlignedPrealloc;
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 1>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(1) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 2>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(2) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 4>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(4) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 8>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(8) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 16>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(16) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 32>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(32) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 64>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(64) data[sizeof(T) * PreallocSize];
+};
+template <typename T, int PreallocSize>
+struct QArrayAlignedPrealloc<T, PreallocSize, 128>
+{
+    QArrayAlignedChar Q_DECL_ALIGN(128) data[sizeof(T) * PreallocSize];
+};
+
+#else
+
+template <typename T, int PreallocSize, size_t AlignT>
+union QArrayAlignedPrealloc
+{
+    char data[sizeof(T) * PreallocSize];
+    qint64 q_for_alignment_1;
+    double q_for_alignment_2;
+};
+
+#endif
+
 template <typename T, int PreallocSize>
 class QArrayData
 {
@@ -86,25 +149,21 @@ public:
     mutable T *m_limit;
     int m_flags;
     int m_padding;
-#if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
-    char Q_DECL_ALIGN(Q_ALIGNOF(T)) m_prealloc[sizeof(T) * PreallocSize];
+#if defined(Q_ALIGNOF)
+    QArrayAlignedPrealloc<T, PreallocSize, Q_ALIGNOF(T)> m_prealloc;
 #else
-    union {
-        char m_prealloc[sizeof(T) * PreallocSize];
-        qint64 q_for_alignment_1;
-        double q_for_alignment_2;
-    };
+    QArrayAlignedPrealloc<T, PreallocSize, sizeof(T)> m_prealloc;
 #endif
 
     inline void initPrealloc()
     {
-        m_end = m_start = reinterpret_cast<T *>(m_prealloc);
+        m_end = m_start = reinterpret_cast<T *>(m_prealloc.data);
         m_limit = m_start + PreallocSize;
     }
 
     inline bool isPrealloc() const
     {
-        return m_start == reinterpret_cast<const T *>(m_prealloc);
+        return m_start == reinterpret_cast<const T *>(m_prealloc.data);
     }
 };
 
