@@ -19,4 +19,5 @@ SUBDIRS = \
     qglpainter \
     qgldisplaylist \
     qglsection \
-    qgeometrydata
+    qgeometrydata \
+    qglcube
