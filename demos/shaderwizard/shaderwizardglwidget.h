@@ -111,11 +111,10 @@ public slots:
 
     void clearScene();
 
-protected:
+private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
-private:
     void setDefaultCamera(QGLGeometry* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
@@ -134,7 +133,7 @@ private:
     QGLDisplayList* teapot;
     QGLHeightMap* square;
     QGLHeightMap* ripple;
-    QGLSphere* sphere;
+    QGLDisplayList* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

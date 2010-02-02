@@ -57,37 +57,35 @@
     \skipuntil [main-args-end]
     \printto [main]
 
-    The \c{teapot} member variable is an instance of QGLTeapot.
-    This will load the standard geometry into main memory in
-    preparation for later drawing operations.
-
     When the application starts up, we set up some scene parameters
     in the \c{initializeGL()} function:
 
     \quotefromfile teapot/teapotview.cpp
     \skipuntil [initialize]
-    \printto [upload]
-    \skipuntil [upload-end]
-    \printto [initialize]
+    \printto [create-display-list]
 
     The first line turns on light 0 using the default settings from
     QGLLightParameters.  The second line selects a standard rendering
     effect that lights material colors with the default OpenGL
     two-sided lighting algorithm.
 
+    The \c{teapot} member variable is an instance of QGLDisplayList.
+    We load the standard geometry for the teapot into this display list
+    during \c{initializeGL()}:
+
+    \quotefromfile teapot/teapotview.cpp
+    \skipuntil [create-display-list]
+    \printto [initialize]
+
+    The QGLTeapot class represents the geometry for the teapot,
+    which is added to the display list with the \c{<<} operator.
+    We then call QGLDisplayList::finalize() to finalize the display
+    list and prepare it to be uploaded to the GL server as a
+    vertex buffer.
+
     Finally, we paint the teapot every time the window is refreshed:
 
     \snippet teapot/teapotview.cpp paint
-
-    The teapot is a very complex object with thousands of triangles
-    along its surface.  The QGLTeapot class will optimize drawing
-    by uploading the geometry to the GL server as a vertex buffer the
-    first time it is drawn.  In some applications, you may want to
-    upload the geometry ahead of time so that the performance of
-    the first paint is not affected.  The geometry can be uploaded
-    ahead of time by calling QGLGeometry::upload() in \c{initializeGL()}:
-
-    \snippet teapot/teapotview.cpp initialize
 
     The QGLView class has in-built support for camera navigation
     using the mouse and keyboard.  By clicking and dragging the mouse,

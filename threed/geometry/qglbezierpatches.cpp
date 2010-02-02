@@ -90,7 +90,7 @@ QT_BEGIN_NAMESPACE
     The first vertex in the patch corresponds to (0, 0),
     and the opposite vertex in the patch corresponds to (1, 1).
 
-    \sa QGLGeometry, QGLTeapot
+    \sa QGLDisplayList, QGLTeapot
 */
 
 class QGLBezierPatchesPrivate

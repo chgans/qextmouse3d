@@ -42,7 +42,7 @@
 #ifndef QGLSPHERE_H
 #define QGLSPHERE_H
 
-#include "qglgeometry.h"
+#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
@@ -50,27 +50,43 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QGLSphere : public QGLGeometry
+class QGLDisplayList;
+
+class Q_QT3D_EXPORT QGLSphere
 {
-    Q_OBJECT
 public:
-    enum Mode {
-        IcoSphere,
-        CubeSphere,
-        UVSphere,
-    };
-    explicit QGLSphere(qreal size, Mode = UVSphere, int divisions = 3, QObject *parent = 0);
-    explicit QGLSphere(Mode = UVSphere, int divisions = 3, QObject *parent = 0);
+    explicit QGLSphere(qreal diameter = 1.0f, int depth = 3)
+        : m_diameter(diameter), m_subdivisionDepth(depth) {}
     virtual ~QGLSphere();
 
-private:
-    void initIco(qreal, int);
-    void initCube(qreal, int);
-    void initUV(qreal, int);
+    qreal diameter() const { return m_diameter; }
+    void setDiameter(qreal diameter) { m_diameter = diameter; }
 
-    static QGLVertexArray subdivideTriangles(qreal, const QGLVertexArray &);
-    static QGLVertexArray subdivideQuads(qreal, const QGLVertexArray &);
+    int subdivisionDepth() const { return m_subdivisionDepth; }
+    void setSubdivisionDepth(int depth) { m_subdivisionDepth = depth; }
+
+private:
+    qreal m_diameter;
+    int m_subdivisionDepth;
 };
+
+class Q_QT3D_EXPORT QGLIcoSphere : public QGLSphere
+{
+public:
+    explicit QGLIcoSphere(qreal diameter = 1.0f, int depth = 3)
+        : QGLSphere(diameter, depth) {}
+};
+
+class Q_QT3D_EXPORT QGLCubeSphere : public QGLSphere
+{
+public:
+    explicit QGLCubeSphere(qreal diameter = 1.0f, int depth = 3)
+        : QGLSphere(diameter, depth) {}
+};
+
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere);
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere);
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere);
 
 QT_END_NAMESPACE
 

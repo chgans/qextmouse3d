@@ -40,13 +40,8 @@
 ****************************************************************************/
 
 #include "qglsphere.h"
-#include "qglvertexarray.h"
-#include "qglindexarray.h"
-#include "qtriangle3d.h"
-
-#include <QQuaternion>
-#include <QImage>
-#include <QPainter>
+#include "qgldisplaylist.h"
+#include "qvectorarray.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -61,118 +56,219 @@ QT_BEGIN_NAMESPACE
     draws it at (10, 25, 0) in a QGLPainter:
 
     \code
-    QGLSphere sphere(2);
+    QGLDisplayList list;
+    list << QGLSphere(2);
     painter.translate(10, 25, 0);
-    painter.draw(&sphere);
+    list.draw(&painter);
     \endcode;
 
     The QGLSphere class specifies positions, normals and 2d texture
     co-ordinates for all of the vertices that make up the sphere.
 
-    Unlike QGLCube, the texture co-ordinates are fixed at constructions.  This
+    The texture co-ordinates are fixed at construction time.  This
     is because constructing the sphere can involve generating additional
     vertices which need to interpolate the texture co-ordinates of their
     neighboring vertices.
 
-    The default mode is a UVSphere.  Other choices include IcoSphere
-    and CubeSphere.  UVSphere divides the sphere up into longitudinal and 
-    latitudinal sections.  The longitudinal slices meet at the poles, which
-    in a single unit sphere are defined to be at (0, 0, +0.5) and (0, 0, -0.5).
-    This choice is the simplest to texture map as the texture will only distort
-    along the x-axis of the 2D texture.  However the density of vertices is
-    significantly higher at the poles than it is elsewhere on the sphere and
-    is a poor choice if a uniform density of pixels from the texture map
-    is required.
+    The default mode of QGLSphere is a "UV sphere", which divides the
+    sphere up into longitudinal and latitudinal sections.  The longitudinal
+    slices meet at the poles, which in a single unit sphere are defined to
+    be at (0, 0, +0.5) and (0, 0, -0.5).  This choice is the simplest to
+    texture map as the texture will only distort along the x-axis of the
+    2D texture.  However the density of vertices is significantly higher at
+    the poles than it is elsewhere on the sphere and is a poor choice if a
+    uniform density of pixels from the texture map is required.
 
-    The CubeSphere involves starting with a cube with its centroid at
-    the origin and subdividing its faces such that new vectors are projected
-    onto the sphere.  The cube sphere has a more even distributions of
-    vertices while still being relatively simple to provide a texture map for.
+    The companion QGLIcoSphere and QGLCubeSphere classes provide
+    alternative division algorithms that can give better results
+    for texture mapping.
 
-    The IcoSphere starts with a 20 sided regular shape which then has each
-    triangle divided and projected onto the sphere.  The IcoSphere has the
-    most even distributions of vertices however also has the most complex
-    mapping of texture points onto the sphere.  It is best used when its
-    the pixel distribution of the texture should be as even as possible over
-    the sphere.
-
-    \sa QGLGeometry, QGLPainter
+    \sa QGLIcoSphere, QGLCubeSphere, QGLDisplayList
 */
 
 /*!
-    \enum QGLSphere::Mode
+    \fn QGLSphere::QGLSphere(qreal diameter, int depth)
+
+    Creates a sphere of \a diameter across (default is 1).  When the sphere
+    is subdivided into triangles, it will be subdivided no more than
+    \a depth times (default is 3).
+*/
+
+/*!
+    Destroys this sphere object.
+*/
+QGLSphere::~QGLSphere()
+{
+}
+
+/*!
+    \fn qreal QGLSphere::diameter() const
+
+    Returns the diameter of this sphere.  The default is 1.
+
+    \sa setDiameter()
+*/
+
+/*!
+    \fn void QGLSphere::setDiameter(qreal diameter)
+
+    Sets the diameter of this sphere to \a diameter.
+
+    \sa diameter()
+*/
+
+/*!
+    \fn int QGLSphere::subdivisionDepth() const
+
+    Returns the maximum depth when this sphere is subdivided into triangles.
+    The default is 3.
+
+    \sa setSubdivisionDepth()
+*/
+
+/*!
+    \fn void QGLSphere::setSubdivisionDepth(int depth)
+
+    Sets the maximum \a depth when this sphere is subdivided into triangles.
+
+    \sa subdivisionDepth()
+*/
+
+/*!
+    \class QGLIcoSphere
+    \brief The QGLIcoSphere class represents the geometry of a simple sphere in 3D space derived from an icosahedron.
     \since 4.7
-    This enum defines the method used to generate a sphere.
-    \value UVSphere Faces have their vertices align along longitudinal and latitudinal divisions of the sphere.
-    \value CubeSphere The initial shape is a cube, which then has each face repeatedly divided in to four new faces with new vertices projected onto the sphere.
-    \value IcoSphere  The initial shape is an Icosahedron, which then has each
-    face repeatedly divided into four new faces with new vertices projected onto the sphere.
+    \ingroup qt3d
+    \ingroup qt3d::geometry
+
+    QGLIcoSphere starts with a 20 sided regular shape which then has each
+    triangle divided and projected onto the sphere.  The QGLIcoSphere has a
+    more even distribution of vertices than QGLSphere and QGLCubeSphere.
+    However it also has the most complex mapping of texture points onto the
+    sphere.  It is best used when its the pixel distribution of the
+    texture should be as even as possible over the sphere.
+
+    \sa QGLSphere, QGLCubeSphere, QGLDisplayList
 */
 
 /*!
-    Constructs the geometry for a sphere with a diameter of the given \a size
-    and attaches it to \a parent.
-    The method of generating the sphere is given by mode.
+    \fn QGLIcoSphere::QGLIcoSphere(qreal diameter, int depth)
 
-    Depending on the \a mode used, the sphere must have at least 6, 8, or 20 faces
-    for the CubeSphere, UVSphere and IcoShere respectively.  The sphere
-    will then be subdivided until the sphere can no longer be subdivided without exceeding
-    the given \a maxFaces.
+    Creates a sphere of \a diameter across (default is 1).  When the sphere
+    is subdivided into triangles, it will be derived from an icosahedron
+    and subdivided no more than \a depth times (default is 3).
 */
 
-QGLSphere::QGLSphere(qreal size, Mode mode, int maxFaces, QObject *parent)
-    : QGLGeometry(parent)
+/*!
+    \class QGLCubeSphere
+    \brief The QGLCubeSphere class represents the geometry of a simple sphere in 3D space derived by subdividing a cube.
+    \since 4.7
+    \ingroup qt3d
+    \ingroup qt3d::geometry
+
+    QGLCubeSphere starts with a cube with its centroid at the origin and
+    subdivides its faces such that new vectors are projected onto the sphere.
+    The cube sphere has a more even distributions of vertices than
+    QGLSphere while still being relatively simple to provide a texture map for.
+
+    \sa QGLSphere, QGLIcoSphere, QGLDisplayList
+*/
+
+/*!
+    \fn QGLCubeSphere::QGLCubeSphere(qreal diameter, int depth)
+
+    Creates a sphere of \a diameter across (default is 1).  When the sphere
+    is subdivided into triangles, it will be derived from a cube
+    and subdivided no more than \a depth times (default is 3).
+*/
+
+/*!
+    \relates QGLSphere
+
+    Builds the geometry for \a sphere within the specified
+    display \a list.
+*/
+QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere)
 {
-    switch(mode) {
-    case IcoSphere:
-        initIco(size, maxFaces);
-        break;
-    case CubeSphere:
-        initCube(size, maxFaces);
-        break;
-    case UVSphere:
-        initUV(size, maxFaces);
-        break;
+    qreal scale = sphere.diameter();
+    int divisions = qMax(sphere.subdivisionDepth() - 1, 0);
+
+    // define a 0 division sphere as 4 points around the equator, 4 points around the bisection at poles.
+    // each division doubles the number of points.
+    // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
+    int total = 2*(1 << divisions);
+
+    list.newSection();
+    list.begin(QGL::TRIANGLE);
+    QGLPrimitive *prim = list.currentPrimitive();
+
+    const QVector3D initialVector(0, 0, 1);
+    const QVector3D zAxis(0, 0, 1);
+    const QVector3D yAxis(0, 1, 0);
+    for(int vindex = 0; vindex < total; vindex++) {
+        qreal vFrom = qreal(vindex) / qreal(total);
+        qreal vTo = qreal(vindex+1) / qreal(total);
+        QQuaternion ryFrom = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vFrom);
+        QQuaternion ryTo = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vTo);
+        for (int uindex = 0; uindex < 2*total; uindex++) {
+            qreal uFrom = qreal(uindex) / qreal(total);
+            qreal uTo = qreal(uindex+1) / qreal(total);
+            QQuaternion rzFrom = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uFrom);
+            QQuaternion rzTo = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uTo);
+            // four points
+            QVector3D na, nb, nc, nd;
+            QVector3D va, vb, vc, vd;
+
+            na = ryFrom.rotatedVector(initialVector);
+            na = rzFrom.rotatedVector(na);
+            
+            nb = ryTo.rotatedVector(initialVector);
+            nb = rzFrom.rotatedVector(nb);
+
+            nc = ryTo.rotatedVector(initialVector);
+            nc = rzTo.rotatedVector(nc);
+
+            nd = ryFrom.rotatedVector(initialVector);
+            nd = rzTo.rotatedVector(nd);
+
+            QVector2D ta(uFrom/2.0f, 1.0-vFrom);
+            QVector2D tb(uFrom/2.0f, 1.0-vTo);
+            QVector2D tc(uTo/2.0f, 1.0-vTo);
+            QVector2D td(uTo/2.0f, 1.0-vFrom);
+
+            va = na * scale / 2.0f;
+            vb = nb * scale / 2.0f;
+            vc = nc * scale / 2.0f;
+            vd = nd * scale / 2.0f;
+
+            prim->appendVertex(va, vb, vc);
+            prim->appendNormal(na, nb, nc);
+            prim->appendTexCoord(ta, tb, tc);
+
+            prim->appendVertex(va, vc, vd);
+            prim->appendNormal(na, nc, nd);
+            prim->appendTexCoord(ta, tc, td);
+        }
     }
+
+    list.end();
+    return list;
 }
-
-/*!
-    Constructs the geometry for a sphere with a diameter of 1.0
-    and attaches it to \a parent.
-    The method of generating the sphere is given by mode.
-
-    Depending on the mode used, the sphere must have at least 6, 8, or 20 faces
-    for the CubeSphere, UVSphere and IcoShere respectively.  The sphere
-    will then be subdivided until the sphere can no longer be subdivided without exceeding
-    the given \a maxFaces.
-*/
-QGLSphere::QGLSphere(Mode mode, int maxFaces, QObject *parent)
-    : QGLGeometry(parent)
-{
-    switch(mode) {
-    case IcoSphere:
-        initIco(1.0f, maxFaces);
-        break;
-    case CubeSphere:
-        initCube(1.0f, maxFaces);
-        break;
-    case UVSphere:
-        initUV(1.0f, maxFaces);
-        break;
-    }
-}
-
-/*!
-    Destroys this sphere geometry object.
-*/
-QGLSphere::~QGLSphere() {}
 
 // icosahedron is defined by phi, derived from the golden section
 // http://en.wikipedia.org/wiki/Icosahedron#Cartesian_coordinates
 const qreal phi = 1.618033988749894848f;
 
-void QGLSphere::initIco(qreal scale, int maxFaces)
+/*!
+    \relates QGLIcoSphere
+
+    Builds the geometry for \a sphere within the specified
+    display \a list.
+*/
+QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
 {
+    qreal scale = sphere.diameter();
+    int depth = sphere.subdivisionDepth();
     qreal small = 1.0f;
     qreal large = phi*small;
 
@@ -254,11 +350,11 @@ void QGLSphere::initIco(qreal scale, int maxFaces)
         { { u4, v9 }, { u5, v8 }, { u4, v7 } }  // L-G-B
     };
 
-    setDrawingMode(QGL::Triangles);
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-
-    for (int ix = 0; ix < 20; ++ix)
-    {
+    // Generate the initial vertex list from a plain icosahedron.
+    QVector3DArray vertices;
+    QVector3DArray normals;
+    QVector2DArray texCoords;
+    for (int ix = 0; ix < 20; ++ix) {
         QVector3D n0(ico[face[ix][0]][0], ico[face[ix][0]][1], ico[face[ix][0]][2]);
         QVector3D n1(ico[face[ix][1]][0], ico[face[ix][1]][1], ico[face[ix][1]][2]);
         QVector3D n2(ico[face[ix][2]][0], ico[face[ix][2]][1], ico[face[ix][2]][2]);
@@ -275,25 +371,81 @@ void QGLSphere::initIco(qreal scale, int maxFaces)
         QVector3D v1 = n1 * scale / 2.0f;
         QVector3D v2 = n2 * scale / 2.0f;
 
-        vertices.append(v0);
-        vertices.append(n0);
-        vertices.append(t0);
-        vertices.append(v1);
-        vertices.append(n1);
-        vertices.append(t1);
-        vertices.append(v2);
-        vertices.append(n2);
-        vertices.append(t2);
+        vertices.append(v0, v1, v2);
+        normals.append(n0, n1, n2);
+        texCoords.append(t0, t1, t2);
     }
-    int faces = 20;
-    while (faces < maxFaces/4) {
-        vertices = subdivideTriangles(scale, vertices);
-        faces *= 4;
+
+    // Subdivide the icosahedron.
+    while (depth-- > 1) {
+        QVector3DArray newVertices;
+        QVector3DArray newNormals;
+        QVector2DArray newTexCoords;
+
+        int count = vertices.count();
+        for (int i = 0; i < count; i+= 3) {
+            QVector3D v0 = vertices.at(i);
+            QVector3D v1 = vertices.at(i+1);
+            QVector3D v2 = vertices.at(i+2);
+
+            QVector3D n0 = normals.at(i);
+            QVector3D n1 = normals.at(i+1);
+            QVector3D n2 = normals.at(i+2);
+
+            QVector2D t0 = texCoords.at(i);
+            QVector2D t1 = texCoords.at(i+1);
+            QVector2D t2 = texCoords.at(i+2);
+
+            QVector3D n01 = (v0 + v1).normalized();
+            QVector3D n12 = (v1 + v2).normalized();
+            QVector3D n20 = (v2 + v0).normalized();
+            QVector3D v01 = n01 * scale / 2.0f;
+            QVector3D v12 = n12 * scale / 2.0f;
+            QVector3D v20 = n20 * scale / 2.0f;
+
+            QVector2D t01 = (t0 + t1) / 2;
+            QVector2D t12 = (t1 + t2) / 2;
+            QVector2D t20 = (t2 + t0) / 2;
+
+            newVertices.append(v0, v01, v20);
+            newNormals.append(n0, n01, n20);
+            newTexCoords.append(t0, t01, t20);
+
+            newVertices.append(v01, v1, v12);
+            newNormals.append(n01, n1, n12);
+            newTexCoords.append(t01, t1, t12);
+
+            newVertices.append(v01, v12, v20);
+            newNormals.append(n01, n12, n20);
+            newTexCoords.append(t01, t12, t20);
+
+            newVertices.append(v20, v12, v2);
+            newNormals.append(n20, n12, n2);
+            newTexCoords.append(t20, t12, t2);
+        }
+
+        vertices = newVertices;
+        normals = newNormals;
+        texCoords = newTexCoords;
     }
-    setVertexArray(vertices);
+
+    // Add the final vertices to the display list.
+    list.newSection();
+    list.begin(QGL::TRIANGLE);
+    list.addVertexArray(vertices);
+    list.addNormalArray(normals);
+    list.addTexCoordArray(texCoords);
+    list.end();
+    return list;
 }
 
-void QGLSphere::initCube(qreal scale, int maxFaces)
+/*!
+    \relates QGLCubeSphere
+
+    Builds the geometry for \a sphere within the specified
+    display \a list.
+*/
+QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere)
 {
     /*
               A-----H
@@ -312,6 +464,9 @@ void QGLSphere::initCube(qreal scale, int maxFaces)
        y  
         x-->
     */
+
+    qreal scale = sphere.diameter();
+    int depth = sphere.subdivisionDepth();
 
     const qreal offset = 1.0f;
     float cube[8][3] = {
@@ -354,11 +509,11 @@ void QGLSphere::initCube(qreal scale, int maxFaces)
         { {u1, v2}, {u1, v3}, {u2, v3}, {u2, v2} }, // C-B-G-F
     };
 
-    setDrawingMode(QGL::Triangles);
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-
-    for (int ix = 0; ix < 6; ++ix)
-    {
+    // Generate the initial vertex list from a plain cube.
+    QVector3DArray vertices;
+    QVector3DArray normals;
+    QVector2DArray texCoords;
+    for (int ix = 0; ix < 6; ++ix) {
         QVector3D n0(cube[face[ix][0]][0], cube[face[ix][0]][1], cube[face[ix][0]][2]);
         QVector3D n1(cube[face[ix][1]][0], cube[face[ix][1]][1], cube[face[ix][1]][2]);
         QVector3D n2(cube[face[ix][2]][0], cube[face[ix][2]][1], cube[face[ix][2]][2]);
@@ -379,281 +534,81 @@ void QGLSphere::initCube(qreal scale, int maxFaces)
         QVector3D v2 = n2 * scale / 2.0f;
         QVector3D v3 = n3 * scale / 2.0f;
 
-        vertices.append(v0);
-        vertices.append(n0);
-        vertices.append(t0);
-        vertices.append(v1);
-        vertices.append(n1);
-        vertices.append(t1);
-        vertices.append(v2);
-        vertices.append(n2);
-        vertices.append(t2);
-        vertices.append(v3);
-        vertices.append(n3);
-        vertices.append(t3);
-    }
-    int faces = 6;
-    while (faces < maxFaces/4) {
-        vertices = subdivideQuads(scale, vertices);
-        faces *= 4;
-    }
-    setVertexArray(vertices);
-
-    // Create an index array for converting the quad vertices into triangles.
-    QGLIndexArray indices;
-    int count = vertices.vertexCount();
-    for (int index = 0; index < count; index += 4) {
-        indices.append(index);
-        indices.append(index + 1);
-        indices.append(index + 2);
-
-        indices.append(index);
-        indices.append(index + 2);
-        indices.append(index + 3);
-    }
-    setIndexArray(indices);
-}
-
-void QGLSphere::initUV(qreal scale, int maxFaces)
-{
-    // determine division by reversing max faces.
-    int faces = 8;
-    int divisions = 0;
-    while (faces < maxFaces/4) {
-        faces*= 4;
-        divisions++;
+        vertices.append(v0, v1, v2, v3);
+        normals.append(n0, n1, n2, n3);
+        texCoords.append(t0, t1, t2, t3);
     }
 
-    // define a 0 division sphere as 4 points around the equator, 4 points around the bisection at poles.
-    // each division doubles the number of points.
-    // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
-    int total = 2*(1 << divisions);
+    // Subdivide the cube.
+    while (depth-- > 1) {
+        QVector3DArray newVertices;
+        QVector3DArray newNormals;
+        QVector2DArray newTexCoords;
 
-    setDrawingMode(QGL::Triangles);
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
+        int count = vertices.count();
+        for (int i = 0; i < count; i+= 4) {
+            QVector3D v0 = vertices.at(i);
+            QVector3D v1 = vertices.at(i+1);
+            QVector3D v2 = vertices.at(i+2);
+            QVector3D v3 = vertices.at(i+3);
 
-    const QVector3D initialVector(0, 0, 1);
-    const QVector3D zAxis(0, 0, 1);
-    const QVector3D yAxis(0, 1, 0);
-    for(int vindex = 0; vindex < total; vindex++) {
-        qreal vFrom = qreal(vindex) / qreal(total);
-        qreal vTo = qreal(vindex+1) / qreal(total);
-        QQuaternion ryFrom = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vFrom);
-        QQuaternion ryTo = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vTo);
-        for (int uindex = 0; uindex < 2*total; uindex++) {
-            qreal uFrom = qreal(uindex) / qreal(total);
-            qreal uTo = qreal(uindex+1) / qreal(total);
-            QQuaternion rzFrom = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uFrom);
-            QQuaternion rzTo = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uTo);
-            // four points
-            QVector3D na, nb, nc, nd;
-            QVector3D va, vb, vc, vd;
+            QVector3D n0 = normals.at(i);
+            QVector3D n1 = normals.at(i+1);
+            QVector3D n2 = normals.at(i+2);
+            QVector3D n3 = normals.at(i+3);
 
-            na = ryFrom.rotatedVector(initialVector);
-            na = rzFrom.rotatedVector(na);
-            
-            nb = ryTo.rotatedVector(initialVector);
-            nb = rzFrom.rotatedVector(nb);
+            QVector2D t0 = texCoords.at(i);
+            QVector2D t1 = texCoords.at(i+1);
+            QVector2D t2 = texCoords.at(i+2);
+            QVector2D t3 = texCoords.at(i+3);
 
-            nc = ryTo.rotatedVector(initialVector);
-            nc = rzTo.rotatedVector(nc);
+            QVector3D n01 = (v0 + v1).normalized();
+            QVector3D n12 = (v1 + v2).normalized();
+            QVector3D n23 = (v2 + v3).normalized();
+            QVector3D n30 = (v3 + v0).normalized();
+            QVector3D nc = (v0 + v1 + v2 + v3).normalized();
+            QVector3D v01 = n01 * scale / 2.0f;
+            QVector3D v12 = n12 * scale / 2.0f;
+            QVector3D v23 = n23 * scale / 2.0f;
+            QVector3D v30 = n30 * scale / 2.0f;
+            QVector3D vc = nc * scale / 2.0f;
 
-            nd = ryFrom.rotatedVector(initialVector);
-            nd = rzTo.rotatedVector(nd);
+            QVector2D t01 = (t0 + t1) / 2;
+            QVector2D t12 = (t1 + t2) / 2;
+            QVector2D t23 = (t2 + t3) / 2;
+            QVector2D t30 = (t3 + t0) / 2;
+            QVector2D tc = (t2 + t0) / 2;
 
-            QVector2D ta(uFrom/2.0f, 1.0-vFrom);
-            QVector2D tb(uFrom/2.0f, 1.0-vTo);
-            QVector2D tc(uTo/2.0f, 1.0-vTo);
-            QVector2D td(uTo/2.0f, 1.0-vFrom);
+            newVertices.append(v0, v01, vc, v30);
+            newNormals.append(n0, n01, nc, n30);
+            newTexCoords.append(t0, t01, tc, t30);
 
-            va = na * scale / 2.0f;
-            vb = nb * scale / 2.0f;
-            vc = nc * scale / 2.0f;
-            vd = nd * scale / 2.0f;
+            newVertices.append(v01, v1, v12, vc);
+            newNormals.append(n01, n1, n12, nc);
+            newTexCoords.append(t01, t1, t12, tc);
 
-            vertices.append(va);
-            vertices.append(na);
-            vertices.append(ta);
-            vertices.append(vb);
-            vertices.append(nb);
-            vertices.append(tb);
-            vertices.append(vc);
-            vertices.append(nc);
-            vertices.append(tc);
+            newVertices.append(vc, v12, v2, v23);
+            newNormals.append(nc, n12, n2, n23);
+            newTexCoords.append(tc, t12, t2, t23);
 
-            vertices.append(va);
-            vertices.append(na);
-            vertices.append(ta);
-            vertices.append(vc);
-            vertices.append(nc);
-            vertices.append(tc);
-            vertices.append(vd);
-            vertices.append(nd);
-            vertices.append(td);
+            newVertices.append(v30, vc, v23, v3);
+            newNormals.append(n30, nc, n23, n3);
+            newTexCoords.append(t30, tc, t23, t3);
         }
+
+        vertices = newVertices;
+        normals = newNormals;
+        texCoords = newTexCoords;
     }
-    setVertexArray(vertices);
-}
 
-QGLVertexArray QGLSphere::subdivideTriangles(qreal scale, const QGLVertexArray &array)
-{
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-
-    for (int i = 0; i < array.vertexCount(); i+= 3) {
-        QVector3D v0 = array.vector3DAt(i  , 0);
-        QVector3D n0 = array.vector3DAt(i  , 1);
-        QVector3D v1 = array.vector3DAt(i+1, 0);
-        QVector3D n1 = array.vector3DAt(i+1, 1);
-        QVector3D v2 = array.vector3DAt(i+2, 0);
-        QVector3D n2 = array.vector3DAt(i+2, 1);
-
-        QVector2D t0 = array.vector2DAt(i, 2);
-        QVector2D t1 = array.vector2DAt(i+1, 2);
-        QVector2D t2 = array.vector2DAt(i+2, 2);
-
-        QVector3D n01 = (v0 + v1).normalized();
-        QVector3D n12 = (v1 + v2).normalized();
-        QVector3D n20 = (v2 + v0).normalized();
-        QVector3D v01 = n01 * scale / 2.0f;
-        QVector3D v12 = n12 * scale / 2.0f;
-        QVector3D v20 = n20 * scale / 2.0f;
-
-        QVector2D t01 = (t0 + t1) / 2;
-        QVector2D t12 = (t1 + t2) / 2;
-        QVector2D t20 = (t2 + t0) / 2;
-
-        vertices.append(v0);
-        vertices.append(n0);
-        vertices.append(t0);
-        vertices.append(v01);
-        vertices.append(n01);
-        vertices.append(t01);
-        vertices.append(v20);
-        vertices.append(n20);
-        vertices.append(t20);
-
-        vertices.append(v01);
-        vertices.append(n01);
-        vertices.append(t01);
-        vertices.append(v1);
-        vertices.append(n1);
-        vertices.append(t1);
-        vertices.append(v12);
-        vertices.append(n12);
-        vertices.append(t12);
-
-        vertices.append(v01);
-        vertices.append(n01);
-        vertices.append(t01);
-        vertices.append(v12);
-        vertices.append(n12);
-        vertices.append(t12);
-        vertices.append(v20);
-        vertices.append(n20);
-        vertices.append(t20);
-
-        vertices.append(v20);
-        vertices.append(n20);
-        vertices.append(t20);
-        vertices.append(v12);
-        vertices.append(n12);
-        vertices.append(t12);
-        vertices.append(v2);
-        vertices.append(n2);
-        vertices.append(t2);
-    }
-    return vertices;
-}
-
-QGLVertexArray QGLSphere::subdivideQuads(qreal scale, const QGLVertexArray &array)
-{
-    QGLVertexArray vertices(QGL::Position, 3, QGL::Normal, 3, QGL::TextureCoord0, 2);
-
-    for (int i = 0; i < array.vertexCount(); i+= 4) {
-        QVector3D v0 = array.vector3DAt(i  , 0);
-        QVector3D n0 = array.vector3DAt(i  , 1);
-        QVector3D v1 = array.vector3DAt(i+1, 0);
-        QVector3D n1 = array.vector3DAt(i+1, 1);
-        QVector3D v2 = array.vector3DAt(i+2, 0);
-        QVector3D n2 = array.vector3DAt(i+2, 1);
-        QVector3D v3 = array.vector3DAt(i+3, 0);
-        QVector3D n3 = array.vector3DAt(i+3, 1);
-
-        QVector2D t0 = array.vector2DAt(i, 2);
-        QVector2D t1 = array.vector2DAt(i+1, 2);
-        QVector2D t2 = array.vector2DAt(i+2, 2);
-        QVector2D t3 = array.vector2DAt(i+3, 2);
-
-        QVector3D n01 = (v0 + v1).normalized();
-        QVector3D n12 = (v1 + v2).normalized();
-        QVector3D n23 = (v2 + v3).normalized();
-        QVector3D n30 = (v3 + v0).normalized();
-        QVector3D nc = (v0 + v1 + v2 + v3).normalized();
-        QVector3D v01 = n01 * scale / 2.0f;
-        QVector3D v12 = n12 * scale / 2.0f;
-        QVector3D v23 = n23 * scale / 2.0f;
-        QVector3D v30 = n30 * scale / 2.0f;
-        QVector3D vc = nc * scale / 2.0f;
-
-        QVector2D t01 = (t0 + t1) / 2;
-        QVector2D t12 = (t1 + t2) / 2;
-        QVector2D t23 = (t2 + t3) / 2;
-        QVector2D t30 = (t3 + t0) / 2;
-        QVector2D tc = (t2 + t0) / 2;
-
-        vertices.append(v0);
-        vertices.append(n0);
-        vertices.append(t0);
-        vertices.append(v01);
-        vertices.append(n01);
-        vertices.append(t01);
-        vertices.append(vc);
-        vertices.append(nc);
-        vertices.append(tc);
-        vertices.append(v30);
-        vertices.append(n30);
-        vertices.append(t30);
-
-        vertices.append(v01);
-        vertices.append(n01);
-        vertices.append(t01);
-        vertices.append(v1);
-        vertices.append(n1);
-        vertices.append(t1);
-        vertices.append(v12);
-        vertices.append(n12);
-        vertices.append(t12);
-        vertices.append(vc);
-        vertices.append(nc);
-        vertices.append(tc);
-
-        vertices.append(vc);
-        vertices.append(nc);
-        vertices.append(tc);
-        vertices.append(v12);
-        vertices.append(n12);
-        vertices.append(t12);
-        vertices.append(v2);
-        vertices.append(n2);
-        vertices.append(t2);
-        vertices.append(v23);
-        vertices.append(n23);
-        vertices.append(t23);
-
-        vertices.append(v30);
-        vertices.append(n30);
-        vertices.append(t30);
-        vertices.append(vc);
-        vertices.append(nc);
-        vertices.append(tc);
-        vertices.append(v23);
-        vertices.append(n23);
-        vertices.append(t23);
-        vertices.append(v3);
-        vertices.append(n3);
-        vertices.append(t3);
-    }
-    return vertices;
+    // Add the final vertices to the display list.
+    list.newSection();
+    list.begin(QGL::QUAD);
+    list.addVertexArray(vertices);
+    list.addNormalArray(normals);
+    list.addTexCoordArray(texCoords);
+    list.end();
+    return list;
 }
 
 QT_END_NAMESPACE
