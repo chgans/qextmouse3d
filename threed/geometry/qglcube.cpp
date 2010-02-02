@@ -57,10 +57,22 @@ QT_BEGIN_NAMESPACE
 
     \code
     QGLDisplayList list;
+    list.newSection(QGL::Faceted);
     list << QGLCube(2);
     painter->translate(10, 25, 0);
     list.draw(painter);
     \endcode
+
+    QGLCube will automatically create a default set of texture coordinates
+    on the displaylist.  See QGLCubeFace to gain greater control of these
+    coordinates.
+
+    \image cube.png
+
+    This image shows the cube example program running, with the
+    \l{QGLCubeFace::Front}{front face} showing foremost.  The default orientation of
+    the \l{QGLCubeFace::Top}{top face} and \l{QGLCubeFace::Left}{left face}
+    can also be seen.
 
     \sa QGLCubeFace
 */
@@ -96,17 +108,27 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::geometry
 
     The following example adds a cube of 2 units on a side to a
-    display list, one face at a time:
+    display list, one face at a time.
+
+    The orientation of the faces are shown in these labelled screenshots
+    from the cube example program.
 
     \code
     QGLDisplayList list;
-    list << QGLCubeFace(QGLCubeFace::Left, 2);
     list << QGLCubeFace(QGLCubeFace::Top, 2);
-    list << QGLCubeFace(QGLCubeFace::Right, 2);
-    list << QGLCubeFace(QGLCubeFace::Bottom, 2);
     list << QGLCubeFace(QGLCubeFace::Front, 2);
-    list << QGLCubeFace(QGLCubeFace::Back, 2);
+    list << QGLCubeFace(QGLCubeFace::Right, 2);
     \endcode
+
+    \image cube-front.png
+
+    \code
+    list << QGLCubeFace(QGLCubeFace::Back, 2);
+    list << QGLCubeFace(QGLCubeFace::Left, 2);
+    list << QGLCubeFace(QGLCubeFace::Bottom, 2);
+    \endcode
+
+    \image cube-rear.png
 
     QGLCubeFace allows greater control over the texture co-ordinates
     of a cube face than is possible with QGLCube.  The following
