@@ -287,7 +287,6 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 */
 QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
 {
-    list.newSection(QGL::Faceted);
     QGLOperation op(&list, QGL::TRIANGLE);
     qreal size = cube.size();
     for (int vertex = 0; vertex < QGL_CUBE_SIZE; vertex += 8) {
@@ -314,9 +313,8 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
 */
 QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
 {
-    list.newSection(QGL::Faceted);
     QGLOperation op(&list, QGL::TRIANGLE);
-    int offset = int(face.face()) * 8;
+    int offset = int(face.face()) * 8 * 6;
     qreal size = face.size();
     QVector2D bottomLeft = face.bottomLeftTextureCoord();
     QVector2D topRight = face.topRightTextureCoord();
