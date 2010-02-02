@@ -44,6 +44,7 @@
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
+    cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
 
     painter->setLightEnabled(0, true);

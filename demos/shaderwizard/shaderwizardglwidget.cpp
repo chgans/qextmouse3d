@@ -317,6 +317,7 @@ void ShaderWizardGLWidget::setCubeGeometry()
 {
     if (cube == 0) {
         cube = new QGLDisplayList(this);
+        cube->newSection(QGL::Faceted);
         *cube << QGLCube();
         cube->finalize();
     }

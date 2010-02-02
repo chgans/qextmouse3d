@@ -86,6 +86,7 @@ void Cube::drawItem(QGLPainter *painter)
 {
     if (!d->cube) {
         d->cube = new QGLDisplayList();
+        d->cube->newSection(QGL::Faceted);
         (*d->cube) << QGLCube(d->size);
     }
     d->cube->draw(painter);
