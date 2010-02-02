@@ -71,6 +71,10 @@ private slots:
     void finalize();
 };
 
+// Indices in a QGLIndexArray are int on desktop, ushort on OpenGL/ES.
+// This macro works around the discrepancy to avoid confusing QCOMPARE.
+#define QCOMPARE_INDEX(x,y)     QCOMPARE(int(x), int(y))
+
 class TestQGLDisplayList : public QGLDisplayList
 {
 public:
@@ -294,9 +298,9 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->vertex(2), c);
     QCOMPARE(sec->normals().count(), 3);
     QCOMPARE(sec->indices().size(), 3);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QVector3D d(-1.0f, 1.0f, 0.0f);
@@ -313,9 +317,9 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->normal(2).normalized(), norm);
     QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->indices().size(), 6);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 2);
-    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[4], 2);
+    QCOMPARE_INDEX(sec->indices()[5], 3);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
@@ -341,9 +345,9 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->texCoords().at(1), tb);
     QCOMPARE(sec->texCoords().at(2), tc);
     QCOMPARE(sec->indices().size(), 3);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
     QCOMPARE(sec->fields(),
              QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
@@ -364,9 +368,9 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->texCoords().at(2), QVector2D(1.0f, 1.0f));
     QCOMPARE(sec->texCoords().at(3), QVector2D(0.0f, 1.0f));
     QCOMPARE(sec->indices().size(), 6);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 1);
-    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[4], 1);
+    QCOMPARE_INDEX(sec->indices()[5], 3);
     QCOMPARE(sec->fields(),
              QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
@@ -401,13 +405,13 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(sec->normal(2).normalized(), norm);
     QCOMPARE(sec->normal(3).normalized(), norm);
     QCOMPARE(sec->indices().size(), 6);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 2);
-    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[4], 2);
+    QCOMPARE_INDEX(sec->indices()[5], 3);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
@@ -441,12 +445,12 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(sec->texCoords().at(2), tc);
     QCOMPARE(sec->texCoords().at(3), td);
     QCOMPARE(sec->indices().size(), 6);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 2);
-    QCOMPARE(sec->indices()[5], 3);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[4], 2);
+    QCOMPARE_INDEX(sec->indices()[5], 3);
     QCOMPARE(sec->fields(),
              QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
@@ -504,15 +508,15 @@ void tst_QGLDisplayList::addTriangleFan()
     QCOMPARE(sec->normal(7), n3);
     QCOMPARE(sec->normal(8), n3);
     QCOMPARE(sec->indices().size(), 9);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->indices()[3], 3);
-    QCOMPARE(sec->indices()[4], 4);
-    QCOMPARE(sec->indices()[5], 5);
-    QCOMPARE(sec->indices()[6], 6);
-    QCOMPARE(sec->indices()[7], 7);
-    QCOMPARE(sec->indices()[8], 8);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[3], 3);
+    QCOMPARE_INDEX(sec->indices()[4], 4);
+    QCOMPARE_INDEX(sec->indices()[5], 5);
+    QCOMPARE_INDEX(sec->indices()[6], 6);
+    QCOMPARE_INDEX(sec->indices()[7], 7);
+    QCOMPARE_INDEX(sec->indices()[8], 8);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
@@ -559,18 +563,18 @@ void tst_QGLDisplayList::addTriangulatedFace()
     QCOMPARE(sec->normal(3), n);
     QCOMPARE(sec->normal(4), n);
     QCOMPARE(sec->indices().size(), 12);
-    QCOMPARE(sec->indices()[0], 0);
-    QCOMPARE(sec->indices()[1], 1);
-    QCOMPARE(sec->indices()[2], 2);
-    QCOMPARE(sec->indices()[3], 0);
-    QCOMPARE(sec->indices()[4], 2);
-    QCOMPARE(sec->indices()[5], 3);
-    QCOMPARE(sec->indices()[6], 0);
-    QCOMPARE(sec->indices()[7], 3);
-    QCOMPARE(sec->indices()[8], 4);
-    QCOMPARE(sec->indices()[9], 0);
-    QCOMPARE(sec->indices()[10], 4);
-    QCOMPARE(sec->indices()[11], 1);
+    QCOMPARE_INDEX(sec->indices()[0], 0);
+    QCOMPARE_INDEX(sec->indices()[1], 1);
+    QCOMPARE_INDEX(sec->indices()[2], 2);
+    QCOMPARE_INDEX(sec->indices()[3], 0);
+    QCOMPARE_INDEX(sec->indices()[4], 2);
+    QCOMPARE_INDEX(sec->indices()[5], 3);
+    QCOMPARE_INDEX(sec->indices()[6], 0);
+    QCOMPARE_INDEX(sec->indices()[7], 3);
+    QCOMPARE_INDEX(sec->indices()[8], 4);
+    QCOMPARE_INDEX(sec->indices()[9], 0);
+    QCOMPARE_INDEX(sec->indices()[10], 4);
+    QCOMPARE_INDEX(sec->indices()[11], 1);
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 
     QCOMPARE(node->start(), 0);
@@ -645,30 +649,30 @@ void tst_QGLDisplayList::extrude()
     };
     QCOMPARE(sec->indices().size(), 24);
 
-    QCOMPARE(inxs[0], checkIx[0]);
-    QCOMPARE(inxs[1], checkIx[1]);
-    QCOMPARE(inxs[2], checkIx[2]);
-    QCOMPARE(inxs[3], checkIx[3]);
-    QCOMPARE(inxs[4], checkIx[4]);
-    QCOMPARE(inxs[5], checkIx[5]);
-    QCOMPARE(inxs[6], checkIx[6]);
-    QCOMPARE(inxs[7], checkIx[7]);
-    QCOMPARE(inxs[8], checkIx[8]);
-    QCOMPARE(inxs[9], checkIx[9]);
-    QCOMPARE(inxs[10], checkIx[10]);
-    QCOMPARE(inxs[11], checkIx[11]);
-    QCOMPARE(inxs[12], checkIx[12]);
-    QCOMPARE(inxs[13], checkIx[13]);
-    QCOMPARE(inxs[14], checkIx[14]);
-    QCOMPARE(inxs[15], checkIx[15]);
-    QCOMPARE(inxs[16], checkIx[16]);
-    QCOMPARE(inxs[17], checkIx[17]);
-    QCOMPARE(inxs[18], checkIx[18]);
-    QCOMPARE(inxs[19], checkIx[19]);
-    QCOMPARE(inxs[20], checkIx[20]);
-    QCOMPARE(inxs[21], checkIx[21]);
-    QCOMPARE(inxs[22], checkIx[22]);
-    QCOMPARE(inxs[23], checkIx[23]);
+    QCOMPARE_INDEX(inxs[0], checkIx[0]);
+    QCOMPARE_INDEX(inxs[1], checkIx[1]);
+    QCOMPARE_INDEX(inxs[2], checkIx[2]);
+    QCOMPARE_INDEX(inxs[3], checkIx[3]);
+    QCOMPARE_INDEX(inxs[4], checkIx[4]);
+    QCOMPARE_INDEX(inxs[5], checkIx[5]);
+    QCOMPARE_INDEX(inxs[6], checkIx[6]);
+    QCOMPARE_INDEX(inxs[7], checkIx[7]);
+    QCOMPARE_INDEX(inxs[8], checkIx[8]);
+    QCOMPARE_INDEX(inxs[9], checkIx[9]);
+    QCOMPARE_INDEX(inxs[10], checkIx[10]);
+    QCOMPARE_INDEX(inxs[11], checkIx[11]);
+    QCOMPARE_INDEX(inxs[12], checkIx[12]);
+    QCOMPARE_INDEX(inxs[13], checkIx[13]);
+    QCOMPARE_INDEX(inxs[14], checkIx[14]);
+    QCOMPARE_INDEX(inxs[15], checkIx[15]);
+    QCOMPARE_INDEX(inxs[16], checkIx[16]);
+    QCOMPARE_INDEX(inxs[17], checkIx[17]);
+    QCOMPARE_INDEX(inxs[18], checkIx[18]);
+    QCOMPARE_INDEX(inxs[19], checkIx[19]);
+    QCOMPARE_INDEX(inxs[20], checkIx[20]);
+    QCOMPARE_INDEX(inxs[21], checkIx[21]);
+    QCOMPARE_INDEX(inxs[22], checkIx[22]);
+    QCOMPARE_INDEX(inxs[23], checkIx[23]);
 
     QCOMPARE(sec->fields(), QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal));
 

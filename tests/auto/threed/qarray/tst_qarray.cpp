@@ -1852,9 +1852,8 @@ void tst_QArray::unsharedArray()
     QArray<float> array4(array3);
     QVERIFY(array3.constData() != array4.constData());
 
-    array3.setSharable(true);
-    QArray<float> array5(array3);
-    QVERIFY(array3.constData() == array5.constData());
+    array3.clear();
+    QVERIFY(array3.isEmpty());
 }
 
 void tst_QArray::zeroPrealloc()

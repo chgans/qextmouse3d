@@ -118,6 +118,15 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QArray::QArray(const QUnsharedArray<T, PreallocSize> &other)
+    \overload
+
+    Constructs a deep copy of \a other.
+
+    \sa operator=()
+*/
+
+/*!
     \fn QArray::QArray(const QArrayRef<T, PreallocSize> &other)
 
     Constructs a copy of \a other.
@@ -135,6 +144,14 @@ QT_BEGIN_NAMESPACE
     \fn QArray<T, PreallocSize> &QArray::operator=(const QArray<T, PreallocSize> &other)
 
     Assigns \a other to this array and returns a reference
+    to this array.
+*/
+
+/*!
+    \fn QArray<T, PreallocSize> &QArray::operator=(const QUnsharedArray<T, PreallocSize> &other)
+    \overload
+
+    Assigns a deep copy of \a other to this array and returns a reference
     to this array.
 */
 
@@ -195,7 +212,7 @@ QT_BEGIN_NAMESPACE
     Raw data arrays that are created with fromRawData() are
     never detached.
 
-    \sa detach(), setSharable()
+    \sa detach()
 */
 
 /*!
@@ -204,19 +221,7 @@ QT_BEGIN_NAMESPACE
 
     Detaches this array from all other shared copies of the data.
 
-    \sa isDetached(), setSharable()
-*/
-
-/*!
-    \fn void QArray::setSharable(bool sharable)
-    \internal
-
-    Sets this array to be sharable or not according to \a sharable.
-
-    QArray instances are sharable by default.  QUnsharedArray instances set
-    this flag to false at construction time.
-
-    \sa detach(), isDetached(), QUnsharedArray
+    \sa isDetached()
 */
 
 /*!
@@ -346,6 +351,13 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::append(const QArray<T, PreallocSize> &other)
+
+    Appends the elements of \a other to this array.
+*/
+
+/*!
+    \fn void QArray::append(const QUnsharedArray<T, PreallocSize> &other)
+    \overload
 
     Appends the elements of \a other to this array.
 */
@@ -1043,16 +1055,6 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d
     \ingroup qt3d::enablers
 
-    QUnsharedArray inherits from QArray and sets the sharable
-    flag to false by default.  The following are equivalent:
-
-    \code
-    QUnsharedArray<T> uarray;
-
-    QArray<T> array;
-    array.setSharable(false);
-    \endcode
-
     The difference between QUnsharedArray and QArray is that
     operator[]() and data() are more efficient in QUnsharedArray
     because they do not need to check for sharing before
@@ -1094,6 +1096,20 @@ QT_BEGIN_NAMESPACE
     \fn QUnsharedArray::QUnsharedArray(const QArray<T, PreallocSize> &other)
 
     Constructs a deep copy of \a other.
+*/
+
+/*!
+    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArray<T, PreallocSize> &other)
+
+    Assigns a deep copy of \a other to this array and returns a reference
+    to this array.
+*/
+
+/*!
+    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArrayRef<T, PreallocSize> &other)
+
+    Assigns a deep copy of \a other to this array and returns a reference
+    to this array.
 */
 
 /*!

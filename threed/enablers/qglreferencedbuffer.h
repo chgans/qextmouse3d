@@ -42,7 +42,7 @@
 #ifndef QGLREFERENCEDBUFFER_H
 #define QGLREFERENCEDBUFFER_H
 
-#include "qglbuffer.h"
+#include <QtOpenGL/qglbuffer.h>
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_HEADER

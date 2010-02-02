@@ -63,6 +63,10 @@ private slots:
     void accessors();
 };
 
+// Indices in a QGLIndexArray are int on desktop, ushort on OpenGL/ES.
+// This macro works around the discrepancy to avoid confusing QCOMPARE.
+#define QCOMPARE_INDEX(x,y)     QCOMPARE(int(x), int(y))
+
 class QGLSectionTest : public QGLSection
 {
 public:
@@ -162,7 +166,7 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 
     // append a vertex equal to one already appended - check it was coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
@@ -173,7 +177,7 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), result);
     QCOMPARE(section->indices().size(), 2);
-    QCOMPARE(section->indices()[1], 0);
+    QCOMPARE_INDEX(section->indices()[1], 0);
 
     // append a new  different vertex - check it is not coalesced
     QVector3D testVertex2(-1.234f, -2.345f, -3.456f);
@@ -184,7 +188,7 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal3);
     QCOMPARE(section->indices().size(), 3);
-    QCOMPARE(section->indices()[2], 1);
+    QCOMPARE_INDEX(section->indices()[2], 1);
 
     // append a vertex equal to one already appended, but inside a new section - check its not coalesced
     section = new QGLSectionTest(&list);
@@ -194,7 +198,7 @@ void tst_QGLSection::appendSmooth()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal3);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 }
 
 void tst_QGLSection::appendFaceted()
@@ -211,7 +215,7 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 
     // append a vertex equal to one already appended, but with different normal - check it was NOT coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
@@ -221,7 +225,7 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal2);
     QCOMPARE(section->indices().size(), 2);
-    QCOMPARE(section->indices()[1], 1);
+    QCOMPARE_INDEX(section->indices()[1], 1);
 
     // append a vertex equal to one already appended, but with same normal - check it WAS coalesced
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
@@ -230,7 +234,7 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->normals().count(), 2);
     QCOMPARE(section->normals().at(1), testNormal2);
     QCOMPARE(section->indices().size(), 3);
-    QCOMPARE(section->indices()[2], 1);
+    QCOMPARE_INDEX(section->indices()[2], 1);
 
     // append a vertex equal to one already appended, with same normal, BUT in a new section - check it was NOT coalesced
     section = new QGLSectionTest(&list);
@@ -240,7 +244,7 @@ void tst_QGLSection::appendFaceted()
     QCOMPARE(section->normals().count(), 1);
     QCOMPARE(section->normals().at(0), testNormal2);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 }
 
 void tst_QGLSection::appendTexCoord()
@@ -262,7 +266,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 
     // append same texture - will coalesce and index the vert
     section->appendSmooth(QLogicalVertex(testVertex, testNormal, testTexCoord));
@@ -273,7 +277,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
     QCOMPARE(section->indices().size(), 2);
-    QCOMPARE(section->indices()[1], 0);
+    QCOMPARE_INDEX(section->indices()[1], 0);
 
     // new vertex created to carry the updated texture coord, even though
     // the normal and vertex are the same and thus the logical vert would
@@ -287,7 +291,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().size(), 3);
-    QCOMPARE(section->indices()[2], 1);
+    QCOMPARE_INDEX(section->indices()[2], 1);
 
     section = new QGLSectionTest(&list);
 
@@ -301,7 +305,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 1);
     QCOMPARE(section->texCoords().at(0), testTexCoord);
     QCOMPARE(section->indices().size(), 1);
-    QCOMPARE(section->indices()[0], 0);
+    QCOMPARE_INDEX(section->indices()[0], 0);
 
     // append a vertex & normal equal to one already appended, but with different tex coord
     // check it was NOT coalesced, dup vert created
@@ -313,7 +317,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().size(), 2);
-    QCOMPARE(section->indices()[1], 1);
+    QCOMPARE_INDEX(section->indices()[1], 1);
 
     // append a vertex equal to first one appended above, with same normal, and
     // same texture - check it WAS coalesced to index 0
@@ -325,7 +329,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->texCoords().count(), 2);
     QCOMPARE(section->texCoords().at(1), testTexCoord2);
     QCOMPARE(section->indices().size(), 3);
-    QCOMPARE(section->indices()[2], 0);
+    QCOMPARE_INDEX(section->indices()[2], 0);
 
     QVERIFY(section->hasField(QGL::Normal));
     QVERIFY(section->hasField(QGL::TextureCoord0));

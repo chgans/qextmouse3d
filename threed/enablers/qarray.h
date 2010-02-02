@@ -128,42 +128,20 @@ template <typename T, int PreallocSize>
 class QArrayData
 {
 public:
-    // Invariants:
-    // 1. If the data is not shared, then the usual condition is
-    //    for m_limit >= m_end.
-    // 2. If the data is shared, then m_limit == m_start.
-    //    This triggers the range check in append() to call grow(),
-    //    which will copy-on-write.  It also triggers the detach
-    //    check in data() and operator[] to cause a copy-on-write.
-    // 3. If the data is not shared, but previously was, then
-    //    m_limit == m_start.  This will trigger grow() or
-    //    detach(), which may then notice that it doesn't have to
-    //    copy-on-write.  In that case, m_limit is set back
-    //    to m_start + m_data->capacity.
-    // 4. If m_data is null, then m_start is either the same as
-    //    m_prealloc, or it points at raw data (const or non-const).
-    // 5. If the array contains const raw data, then m_limit will
-    //    be set to m_start to force copy-on-write.
-    T *m_start;
-    T *m_end;
-    mutable T *m_limit;
-    int m_flags;
-    int m_padding;
 #if defined(Q_ALIGNOF)
     QArrayAlignedPrealloc<T, PreallocSize, Q_ALIGNOF(T)> m_prealloc;
 #else
     QArrayAlignedPrealloc<T, PreallocSize, sizeof(T)> m_prealloc;
 #endif
 
-    inline void initPrealloc()
+    inline T *prealloc()
     {
-        m_end = m_start = reinterpret_cast<T *>(m_prealloc.data);
-        m_limit = m_start + PreallocSize;
+        return reinterpret_cast<T *>(m_prealloc.data);
     }
 
-    inline bool isPrealloc() const
+    inline bool isPrealloc(const T *start) const
     {
-        return m_start == reinterpret_cast<const T *>(m_prealloc.data);
+        return start == reinterpret_cast<const T *>(m_prealloc.data);
     }
 };
 
@@ -171,36 +149,26 @@ template <typename T>
 class QArrayData<T, 0>
 {
 public:
-    T *m_start;
-    T *m_end;
-    mutable T *m_limit;
-    int m_flags;
-    int m_padding;
 
-    inline void initPrealloc()
+    inline T *prealloc() { return 0; }
+
+    inline bool isPrealloc(const T *start) const
     {
-        m_start = m_end = m_limit = 0;
+        Q_UNUSED(start);
+        return false;
     }
-
-    inline bool isPrealloc() const { return false; }
 };
 
 template <typename T, int PreallocSize = 8>
 class QArray : private QArrayData<T, PreallocSize>
 {
-    using QArrayData<T, PreallocSize>::m_start;
-    using QArrayData<T, PreallocSize>::m_end;
-    using QArrayData<T, PreallocSize>::m_limit;
-    using QArrayData<T, PreallocSize>::m_flags;
-    using QArrayData<T, PreallocSize>::m_padding;
-    using QArrayData<T, PreallocSize>::initPrealloc;
-    using QArrayData<T, PreallocSize>::isPrealloc;
 public:
     QArray();
     explicit QArray(int size);
     QArray(int size, const T &value);
     QArray(const T *values, int size);
     QArray(const QArray<T, PreallocSize> &other);
+    QArray(const QUnsharedArray<T, PreallocSize> &other);
     QArray(const QArrayRef<T, PreallocSize> &other);
     ~QArray();
 
@@ -209,6 +177,8 @@ public:
 
     QArray<T, PreallocSize> &operator=
         (const QArray<T, PreallocSize> &other);
+    QArray<T, PreallocSize> &operator=
+        (const QUnsharedArray<T, PreallocSize> &other);
     QArray<T, PreallocSize> &operator=
         (const QArrayRef<T, PreallocSize> &other);
 
@@ -220,7 +190,6 @@ public:
 
     bool isDetached() const;
     void detach();
-    void setSharable(bool sharable);
 
     void clear();
 
@@ -239,6 +208,7 @@ public:
     void append(const T &value1, const T &value2, const T &value3, const T &value4);
     void append(const T *values, int count);
     void append(const QArray<T, PreallocSize> &other);
+    void append(const QUnsharedArray<T, PreallocSize> &other);
     void append(const QArrayRef<T, PreallocSize> &other);
 
     void prepend(const T &value);
@@ -336,10 +306,32 @@ private:
         T array[1];
     };
 
+    // Invariants:
+    // 1. If the data is not shared, then the usual condition is
+    //    for m_limit >= m_end.
+    // 2. If the data is shared, then m_limit == m_start.
+    //    This triggers the range check in append() to call grow(),
+    //    which will copy-on-write.  It also triggers the detach
+    //    check in data() and operator[] to cause a copy-on-write.
+    // 3. If the data is not shared, but previously was, then
+    //    m_limit == m_start.  This will trigger grow() or
+    //    detach(), which may then notice that it doesn't have to
+    //    copy-on-write.  In that case, m_limit is set back
+    //    to m_start + m_data->capacity.
+    // 4. If m_data is null, then m_start is either the same as
+    //    m_prealloc, or it points at raw data (const or non-const).
+    // 5. If the array contains const raw data, then m_limit will
+    //    be set to m_start to force copy-on-write.
+    T *m_start;
+    T *m_end;
+    mutable T *m_limit;
     Data *m_data;
 
-    // Bits in m_flags.
-    static const int IsUnshared = 0x0001;
+    inline void initPrealloc()
+    {
+        m_end = m_start = QArrayData<T, PreallocSize>::prealloc();
+        m_limit = m_start + PreallocSize;
+    }
 
     QArray(const T *data, int size, bool isWritable);
 
@@ -351,7 +343,7 @@ private:
     void copyReplace(T *dst, const T *src, int count);
     void reallocate(int capacity);
     void detach_helper();
-    void assign(const QArray<T, PreallocSize> &other);
+    void assign(const QArray<T, PreallocSize> &other, bool isUnshared);
     void grow(int needed);
     void setSize(int size);
 
@@ -361,15 +353,17 @@ private:
 template <typename T, int PreallocSize = 8>
 class QUnsharedArray : public QArray<T, PreallocSize>
 {
-    using QArray<T, PreallocSize>::m_start;
-    using QArray<T, PreallocSize>::setSharable;
-    using QArray<T, PreallocSize>::size;
 public:
     QUnsharedArray();
     explicit QUnsharedArray(int size);
     QUnsharedArray(int size, const T &value);
     QUnsharedArray(const T *values, int size);
     QUnsharedArray(const QArray<T, PreallocSize> &other);
+
+    QUnsharedArray<T, PreallocSize> &operator=
+        (const QArray<T, PreallocSize> &other);
+    QUnsharedArray<T, PreallocSize> &operator=
+        (const QArrayRef<T, PreallocSize> &other);
 
     const T &operator[](int index) const;
     T &operator[](int index);
@@ -459,7 +453,7 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::release()
                 free(m_start, m_end - m_start);
             qFree(m_data);
         }
-    } else if (isPrealloc()) {
+    } else if (isPrealloc(m_start)) {
         if (QTypeInfo<T>::isComplex)
             free(m_start, m_end - m_start);
     }
@@ -554,7 +548,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detach_helper()
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, PreallocSize> &other)
+Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, PreallocSize> &other, bool isUnshared)
 {
     if (other.m_data) {
         m_start = other.m_start;
@@ -562,7 +556,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
         m_data = other.m_data;
         m_data->ref.ref();
 
-        if ((m_flags | other.m_flags) & IsUnshared) {
+        if (isUnshared) {
             // One of the objects cannot be shared, so force a copy.
             detach_helper();
         } else {
@@ -570,7 +564,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
             // the next append() or data() in either object to copy-on-write.
             other.m_limit = m_limit = m_start;
         }
-    } else if (other.isPrealloc()) {
+    } else if (other.isPrealloc(other.m_start)) {
         // Copy preallocated data.
         int size = other.m_end - other.m_start;
         initPrealloc();
@@ -578,7 +572,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
         m_data = 0;
         if (size > 0)
             copy(m_start, other.m_start, size);
-    } else if ((m_flags | other.m_flags) & IsUnshared) {
+    } else if (isUnshared) {
         // Make a deep copy of raw data.
         initPrealloc();
         m_data = 0;
@@ -607,7 +601,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
         move(data->array, m_start, size);
         if (m_data) {
             m_data->ref.deref();
-        } else if (QTypeInfo<T>::isStatic && isPrealloc()) {
+        } else if (QTypeInfo<T>::isStatic && isPrealloc(m_start)) {
             free(m_start, size);
         }
         m_data = data;
@@ -631,8 +625,6 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::setSize(int size)
     if (size <= PreallocSize) {
         initPrealloc();
         m_data = 0;
-        m_flags = 0;
-        m_padding = 0;
     } else {
         int capacity = qArrayAllocMore(size, 0);
         Data *data = reinterpret_cast<Data *>
@@ -644,8 +636,6 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::setSize(int size)
         m_start = m_data->array;
         m_end = m_start;
         m_limit = m_start + capacity;
-        m_flags = 0;
-        m_padding = 0;
     }
 }
 
@@ -654,8 +644,6 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray()
 {
     initPrealloc();
     m_data = 0;
-    m_flags = 0;
-    m_padding = 0;
 }
 
 template <typename T, int PreallocSize>
@@ -685,9 +673,13 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *values, int size)
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArray<T, PreallocSize> &other)
 {
-    m_flags = 0;
-    m_padding = 0;
-    assign(other);
+    assign(other, false);
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QUnsharedArray<T, PreallocSize> &other)
+{
+    assign(other, true);
 }
 
 template <typename T, int PreallocSize>
@@ -711,8 +703,6 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *data, int size, bool 
     else
         m_limit = m_start;
     m_data = 0;
-    m_flags = 0;
-    m_padding = 0;
 }
 
 template <typename T, int PreallocSize>
@@ -727,7 +717,15 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(co
     if (other.m_data && m_data == other.m_data)
         return *this;
     release();
-    assign(other);
+    assign(other, false);
+    return *this;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(const QUnsharedArray<T, PreallocSize> &other)
+{
+    release();
+    assign(other, true);
     return *this;
 }
 
@@ -760,7 +758,7 @@ Q_INLINE_TEMPLATE int QArray<T, PreallocSize>::capacity() const
 {
     if (m_data)
         return m_data->capacity;
-    else if (isPrealloc())
+    else if (isPrealloc(m_start))
         return PreallocSize;
     else
         return m_end - m_start; // raw data, m_limit == m_start
@@ -785,17 +783,6 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::detach()
 {
     if (m_limit == m_start)
         detach_helper();
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::setSharable(bool sharable)
-{
-    if (sharable) {
-        m_flags &= ~IsUnshared;
-    } else {
-        detach();
-        m_flags |= IsUnshared;
-    }
 }
 
 template <typename T, int PreallocSize>
@@ -913,6 +900,18 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T *values, int coun
 
 template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QArray<T, PreallocSize> &other)
+{
+    if (isEmpty()) {
+        *this = other;
+    } else {
+        if (&other == this || (m_data && other.m_data == m_data))
+            grow(size());   // Appending to ourselves: make some room.
+        append(other.constData(), other.size());
+    }
+}
+
+template <typename T, int PreallocSize>
+Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QUnsharedArray<T, PreallocSize> &other)
 {
     if (&other == this || (m_data && other.m_data == m_data))
         grow(size());   // Appending to ourselves: make some room.
@@ -1455,63 +1454,80 @@ template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray()
     : QArray<T, PreallocSize>()
 {
-    setSharable(false);
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(int size)
     : QArray<T, PreallocSize>(size)
 {
-    setSharable(false);
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(int size, const T &value)
     : QArray<T, PreallocSize>(size, value)
 {
-    setSharable(false);
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(const T *values, int size)
     : QArray<T, PreallocSize>(values, size)
 {
-    setSharable(false);
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(const QArray<T, PreallocSize> &other)
 {
-    setSharable(false);
     append(other.constData(), other.size());
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize> &QUnsharedArray<T, PreallocSize>::operator=(const QArray<T, PreallocSize> &other)
+{
+    if (this == &other)
+        return *this;
+    QArray<T, PreallocSize>::release();
+    assign(other, true);
+    return *this;
+}
+
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize> &QUnsharedArray<T, PreallocSize>::operator=(const QArrayRef<T, PreallocSize> &other)
+{
+    if (other.array() == this) {
+        *this = other.toArray();
+    } else {
+        QArray<T, PreallocSize>::clear();
+        append(other.constData(), other.size());
+    }
+    return *this;
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T &QUnsharedArray<T, PreallocSize>::operator[](int index)
 {
-    Q_ASSERT_X(index >= 0 && index < size(),
+    Q_ASSERT_X(index >= 0 && index < (QArray<T, PreallocSize>::size()),
                "QUnsharedArray<T>::operator[]", "index out of range");
-    return m_start[index];
+    return QArray<T, PreallocSize>::m_start[index];
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE const T &QUnsharedArray<T, PreallocSize>::operator[](int index) const
 {
-    Q_ASSERT_X(index >= 0 && index < size(),
+    Q_ASSERT_X(index >= 0 && index < (QArray<T, PreallocSize>::size()),
                "QUnsharedArray<T>::operator[]", "index out of range");
-    return m_start[index];
+    return QArray<T, PreallocSize>::m_start[index];
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE T *QUnsharedArray<T, PreallocSize>::data()
 {
-    return m_start;
+    return QArray<T, PreallocSize>::m_start;
 }
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE const T *QUnsharedArray<T, PreallocSize>::data() const
 {
-    return m_start;
+    return QArray<T, PreallocSize>::m_start;
 }
 
 QT_END_NAMESPACE
