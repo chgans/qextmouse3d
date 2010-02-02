@@ -90,6 +90,7 @@ private slots:
     void search();
     void fill();
     void unsharedArray();
+    void zeroPrealloc();
 
     // QVarLengthArray simulation tests.
     void QVarLengthArray_append();
@@ -241,15 +242,6 @@ void tst_QArray::create()
         QVERIFY(array5[2].mode()  == ComplexValue::Copy);
     }
     QCOMPARE(ComplexValue::destroyCount, 6);
-
-    // Check the zero-prealloc case.
-    QArray<float, 0> array6;
-    QCOMPARE(array6.size(), 0);
-    array6.append(1.0f);
-    QCOMPARE(array6.size(), 1);
-    QCOMPARE(array6[0], 1.0f);
-    QArray<float, 0> array7(array6);
-    QVERIFY(array6.constData() == array7.constData());
 }
 
 void tst_QArray::append()
@@ -1863,6 +1855,34 @@ void tst_QArray::unsharedArray()
     array3.setSharable(true);
     QArray<float> array5(array3);
     QVERIFY(array3.constData() == array5.constData());
+}
+
+void tst_QArray::zeroPrealloc()
+{
+    // Check that the zero-prealloc case actually uses less memory
+    // by optimizing away the m_prealloc structure.
+    QArray<float, 0> array;
+    QArray<float, 1> array2;
+    QVERIFY(sizeof(array) < sizeof(array2));
+
+    // Check that zero-prealloc arrays act properly by expanding the
+    // template on functions that involve preallocation operations.
+    QVERIFY(array.isEmpty());
+    QCOMPARE(array.size(), 0);
+    QCOMPARE(array.capacity(), 0);
+    QVERIFY(!array.constData()); // Will be null for PreallocSize == 0.
+    array.append(1.0f);
+    QCOMPARE(array.size(), 1);
+    QCOMPARE(array[0], 1.0f);
+    QArray<float, 0> array3(array);
+    QVERIFY(array.constData() == array3.constData());
+
+    QArray<float, 0> array4(100, 3.0f);
+    QCOMPARE(array4.size(), 100);
+    for (int index = 0; index < 100; ++index)
+        QCOMPARE(array4[index], 3.0f);
+    array4.clear();
+    QCOMPARE(array4.size(), 0);
 }
 
 // The following tests check that if QVarLengthArray was typedef'ed
