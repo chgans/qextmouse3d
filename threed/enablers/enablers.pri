@@ -2,7 +2,6 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += \
     qglattributevalue.h \
-    qglbuffer.h \
     qglcontextscope.h \
     qglindexarray.h \
     qglreferencedbuffer.h \
@@ -15,7 +14,6 @@ HEADERS += \
     qcustomdataarray.h \
     qvectorarray.h
 SOURCES += qglattributevalue.cpp \
-    qglbuffer.cpp \
     qglcontextscope.cpp \
     qglindexarray.cpp \
     qglvertexarray.cpp \

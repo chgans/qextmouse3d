@@ -41,7 +41,7 @@
 
 #include <QtTest/QtTest>
 #include <QtOpenGL/qgl.h>
-#include "qglbuffer.h"
+#include <QtOpenGL/qglbuffer.h>
 
 class tst_QGLBuffer : public QObject
 {

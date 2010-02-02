@@ -42,7 +42,7 @@
 #ifndef QGLVERTEXBUFFER_H
 #define QGLVERTEXBUFFER_H
 
-#include "qglbuffer.h"
+#include <QtOpenGL/qglbuffer.h>
 #include "qcustomdataarray.h"
 #include "qglvertexdescription.h"
 #include "qglattributevalue.h"
