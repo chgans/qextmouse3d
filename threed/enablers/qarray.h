@@ -568,10 +568,10 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
         // Copy preallocated data.
         int size = other.m_end - other.m_start;
         initPrealloc();
-        m_end += size;
         m_data = 0;
-        if (size > 0)
-            copy(m_start, other.m_start, size);
+        const T *src = other.m_start;
+        while (size-- > 0)
+            new (m_end++) T(*src++);
     } else if (isUnshared) {
         // Make a deep copy of raw data.
         initPrealloc();
