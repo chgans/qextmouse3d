@@ -894,4 +894,15 @@ QArray<QColor4B> QCustomDataArray::toColorArray() const
     that accepts a plain C++ array.
 */
 
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QCustomDataArray &array)
+{
+    dbg << "QCustomDataArray" << &array << " -- count:" << array.count();
+    for (int i = 0; i < array.count(); ++i)
+        dbg << array.at(i);
+    return dbg;
+}
+#endif
+
+
 QT_END_NAMESPACE
