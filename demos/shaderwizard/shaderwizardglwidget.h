@@ -131,8 +131,8 @@ private:
     // Models
     QGLDisplayList* cube;
     QGLDisplayList* teapot;
-    QGLHeightMap* square;
-    QGLHeightMap* ripple;
+    QGLDisplayList* square;
+    QGLDisplayList* ripple;
     QGLDisplayList* sphere;
 };
 
