@@ -118,6 +118,57 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    Multiplies the elements in this array of QVector2D values by
+    the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function does nothing.
+
+    \sa scaled()
+*/
+void QVector2DArray::scale(qreal scale)
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return;
+    if (isDetached()) {
+        // Modify the array in-place.
+        int size = count();
+        QVector2D *dst = data();
+        for (int index = 0; index < size; ++index)
+            *dst++ *= scale;
+    } else {
+        // Create a new array, translate the values, and assign.
+        QArray<QVector2D> result;
+        int size = count();
+        const QVector2D *src = constData();
+        QVector2D *dst = result.extend(size);
+        for (int index = 0; index < size; ++index)
+            *dst++ = *src++ * scale;
+        *this = result;
+    }
+}
+
+/*!
+    Returns a copy of this array of QVector2D values, multiplied
+    by the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function simply returns a copy of this array.
+
+    \sa scale()
+*/
+QVector2DArray QVector2DArray::scaled(qreal scale) const
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return *this;
+    QArray<QVector2D> result;
+    int size = count();
+    const QVector2D *src = constData();
+    QVector2D *dst = result.extend(size);
+    for (int index = 0; index < size; ++index)
+        *dst++ = *src++ * scale;
+    return result;
+}
+
+/*!
     Translates the elements in this array of QVector2D values
     by the components of \a value.
 
@@ -374,6 +425,57 @@ QArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) const
 */
 
 /*!
+    Multiplies the elements in this array of QVector3D values by
+    the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function does nothing.
+
+    \sa scaled()
+*/
+void QVector3DArray::scale(qreal scale)
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return;
+    if (isDetached()) {
+        // Modify the array in-place.
+        int size = count();
+        QVector3D *dst = data();
+        for (int index = 0; index < size; ++index)
+            *dst++ *= scale;
+    } else {
+        // Create a new array, translate the values, and assign.
+        QArray<QVector3D> result;
+        int size = count();
+        const QVector3D *src = constData();
+        QVector3D *dst = result.extend(size);
+        for (int index = 0; index < size; ++index)
+            *dst++ = *src++ * scale;
+        *this = result;
+    }
+}
+
+/*!
+    Returns a copy of this array of QVector3D values, multiplied
+    by the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function simply returns a copy of this array.
+
+    \sa scale()
+*/
+QVector3DArray QVector3DArray::scaled(qreal scale) const
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return *this;
+    QArray<QVector3D> result;
+    int size = count();
+    const QVector3D *src = constData();
+    QVector3D *dst = result.extend(size);
+    for (int index = 0; index < size; ++index)
+        *dst++ = *src++ * scale;
+    return result;
+}
+
+/*!
     Translates the elements in this array of QVector3D values
     by the components of \a value.
 
@@ -541,6 +643,57 @@ QArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) const
 */
 
 /*!
+    Multiplies the elements in this array of QVector4D values by
+    the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function does nothing.
+
+    \sa scaled()
+*/
+void QVector4DArray::scale(qreal scale)
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return;
+    if (isDetached()) {
+        // Modify the array in-place.
+        int size = count();
+        QVector4D *dst = data();
+        for (int index = 0; index < size; ++index)
+            *dst++ *= scale;
+    } else {
+        // Create a new array, translate the values, and assign.
+        QArray<QVector4D> result;
+        int size = count();
+        const QVector4D *src = constData();
+        QVector4D *dst = result.extend(size);
+        for (int index = 0; index < size; ++index)
+            *dst++ = *src++ * scale;
+        *this = result;
+    }
+}
+
+/*!
+    Returns a copy of this array of QVector4D values, multiplied
+    by the \a scale.  If scale is 1.0 (or very close to 1.0) then
+    this function simply returns a copy of this array.
+
+    \sa scale()
+*/
+QVector4DArray QVector4DArray::scaled(qreal scale) const
+{
+    const qreal identity = 1.0;
+    if (qFuzzyCompare(scale, identity))
+        return *this;
+    QArray<QVector4D> result;
+    int size = count();
+    const QVector4D *src = constData();
+    QVector4D *dst = result.extend(size);
+    for (int index = 0; index < size; ++index)
+        *dst++ = *src++ * scale;
+    return result;
+}
+
+/*!
     Translates the elements in this array of QVector4D values
     by the components of \a value.
 
@@ -647,5 +800,24 @@ QArray<QVector4D> QVector4DArray::transformed(const QMatrix4x4& matrix) const
         *dst++ = matrix * *src++;
     return result;
 }
+
+#ifndef QT_NO_DEBUG_STREAM
+QDebug operator<<(QDebug dbg, const QVector2DArray &ary)
+{
+    dbg << "QVector2DArray" << &ary << " -- count:" << ary.count();
+    for (int i = 0; i < ary.count(); ++i)
+        dbg << "    " << ary.at(i);
+    return dbg;
+}
+
+QDebug operator<<(QDebug dbg, const QVector3DArray &ary)
+{
+    dbg << "QVector3DArray" << &ary << " -- count:" << ary.count();
+    for (int i = 0; i < ary.count(); ++i)
+        dbg << "    " << ary.at(i);
+    return dbg;
+}
+#endif
+
 
 QT_END_NAMESPACE

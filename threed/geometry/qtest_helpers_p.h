@@ -54,11 +54,20 @@
 //
 
 #include <QtTest/QtTest>
+#include <QtGui/qvector4d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector2d.h>
 #include "qcolor4b.h"
 
 namespace QTest {
+    char *toString(const QVector4D &v)
+    {
+        char *msg = new char[128];
+        qt_snprintf(msg, 128, "(%0.4f, %0.4f, %0.4f, %0.4f)",
+                    v.x(), v.y(), v.z(), v.w());
+        return msg;
+    }
+
     char *toString(const QVector3D &v)
     {
         char *msg = new char[128];
@@ -79,6 +88,21 @@ namespace QTest {
         qt_snprintf(msg, 128, "R: %0.2f, G: %0.2f, B: %0.2f, A: %0.2)",
                     c.redF(), c.greenF(), c.blueF(), c.alphaF());
         return msg;
+    }
+
+    template<> bool qCompare<QVector4D>(const QVector4D &t1, const QVector4D &t2,
+                                        const char *actual, const char *expected,
+                                        const char *file, int line)
+    {
+        if (t1 == t2)
+        {
+            return compare_helper(true, "COMPARE()", file, line);
+        }
+        else
+        {
+            return compare_helper(false, "Compared QVector4D values are not the same:",
+                                  toString(t1), toString(t2), actual, expected, file, line);
+        }
     }
 
     template<> bool qCompare<QVector3D>(const QVector3D &t1, const QVector3D &t2,

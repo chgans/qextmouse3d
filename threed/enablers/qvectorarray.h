@@ -66,6 +66,9 @@ public:
     void append(const QPointF& point);
     void append(const QPoint& point);
 
+    void scale(qreal s);
+    QVector2DArray scaled(qreal s) const;
+
     void translate(const QVector2D& value);
     void translate(qreal x, qreal y);
     void translate(const QPointF& point);
@@ -109,6 +112,9 @@ public:
 
     void append(qreal x, qreal y, qreal z);
 
+    void scale(qreal s);
+    QVector3DArray scaled(qreal s) const;
+
     void translate(const QVector3D& value);
     void translate(qreal x, qreal y, qreal z);
 
@@ -144,6 +150,9 @@ public:
     QVector4DArray(const QArray<QVector4D>& other);
 
     void append(qreal x, qreal y, qreal z, qreal w);
+
+    void scale(qreal s);
+    QVector4DArray scaled(qreal s) const;
 
     void translate(const QVector4D& value);
     void translate(qreal x, qreal y, qreal z, qreal w);
@@ -242,6 +251,11 @@ inline void QVector4DArray::translate(qreal x, qreal y, qreal z, qreal w)
 inline QArray<QVector4D> QVector4DArray::translated
         (qreal x, qreal y, qreal z, qreal w) const
     { return translated(QVector4D(x, y, z, w)); }
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QVector2DArray &ary);
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QVector3DArray &ary);
+#endif
 
 QT_END_NAMESPACE
 

@@ -42,6 +42,8 @@
 #include <QtTest/QtTest>
 #include "qvectorarray.h"
 
+#include "qtest_helpers_p.h"
+
 class tst_QVectorArray : public QObject
 {
     Q_OBJECT
@@ -81,6 +83,40 @@ void tst_QVectorArray::vector2DArray()
 
     for (int index = 0; index < array.size(); ++index)
         QVERIFY(array[index] == QVector2D(index * 2 + 1, index * 2 + 2));
+
+    int size = array.size();
+    QVector2DArray result = array.scaled(1.0);
+    // check did not change the original
+    QCOMPARE(array.size(), size);
+    QVERIFY(array[0] == QVector2D(1.0f, 2.0f));
+    QVERIFY(array[4] == QVector2D(9.0f, 10.0f));
+    // result should be copy - mult by 1.0 costs nothing
+    QVERIFY(!result.isDetached());
+    QCOMPARE(result.size(), size);
+    QCOMPARE(result[0], QVector2D(1.0f, 2.0f));
+    QCOMPARE(result[4], QVector2D(9.0f, 10.0f));
+    QCOMPARE(result[12], QVector2D(25.0f, 26.0f));
+    // now actually do a scale
+    result = array.scaled(2.0);
+    QCOMPARE(result.size(), size);
+    QCOMPARE(array.size(), size);
+    QCOMPARE(array[0], QVector2D(1.0f, 2.0f));
+    QCOMPARE(array[4], QVector2D(9.0f, 10.0f));
+    QCOMPARE(result[0], QVector2D(2.0f, 4.0f));
+    QCOMPARE(result[4], QVector2D(18.0f, 20.0f));
+    QCOMPARE(result[12], QVector2D(50.0f, 52.0f));
+
+    array.scale(1.0);
+    QCOMPARE(array.size(), size);  // should all be the same
+    QCOMPARE(array[0], QVector2D(1.0f, 2.0f));
+    QCOMPARE(array[4], QVector2D(9.0f, 10.0f));
+    QCOMPARE(array[12], QVector2D(25.0f, 26.0f));
+
+    array.scale(2.0);
+    QCOMPARE(array.size(), size);  // size should be the same
+    QCOMPARE(array[0], QVector2D(2.0f, 4.0f));
+    QCOMPARE(array[4], QVector2D(18.0f, 20.0f));
+    QCOMPARE(array[12], QVector2D(50.0f, 52.0f));
 }
 
 void tst_QVectorArray::vector3DArray()
@@ -111,6 +147,38 @@ void tst_QVectorArray::vector3DArray()
                                           index * 2 + 2,
                                           index * 2 + 3));
     }
+
+    int size = array.size();
+    QVector3DArray result = array.scaled(1.0);
+    // check did not change the original
+    QCOMPARE(array.size(), size);
+    QCOMPARE(array[0], QVector3D(1.0f, 2.0f, 3.0));
+    QCOMPARE(array[4], QVector3D(9.0f, 10.0f, 11.0f));
+    // result should be copy - mult by 1.0 costs nothing
+    QVERIFY(!result.isDetached());
+    QCOMPARE(result.size(), size);
+    QCOMPARE(result[0], QVector3D(1.0f, 2.0f, 3.0f));
+    QCOMPARE(result[4], QVector3D(9.0f, 10.0f, 11.0f));
+    QCOMPARE(result[10], QVector3D(21.0f, 22.0f, 23.0f));
+    // now actually do a scale
+    result = array.scaled(2.0);
+    QCOMPARE(result.size(), size);
+    QCOMPARE(array.size(), size);
+    QCOMPARE(result[0], QVector3D(2.0f, 4.0f, 6.0f));
+    QCOMPARE(result[4], QVector3D(18.0f, 20.0f, 22.0f));
+    QCOMPARE(result[10], QVector3D(42.0f, 44.0f, 46.0f));
+
+    array.scale(1.0);
+    QCOMPARE(array.size(), size);  // should all be the same
+    QCOMPARE(array[0], QVector3D(1.0f, 2.0f, 3.0f));
+    QCOMPARE(array[4], QVector3D(9.0f, 10.0f, 11.0f));
+    QCOMPARE(array[10], QVector3D(21.0f, 22.0f, 23.0f));
+
+    array.scale(2.0);
+    QCOMPARE(array.size(), size);  // size should be the same
+    QCOMPARE(array[0], QVector3D(2.0f, 4.0f, 6.0f));
+    QCOMPARE(array[4], QVector3D(18.0f, 20.0f, 22.0f));
+    QCOMPARE(array[10], QVector3D(42.0f, 44.0f, 46.0f));
 }
 
 void tst_QVectorArray::vector4DArray()
@@ -142,6 +210,34 @@ void tst_QVectorArray::vector4DArray()
                                           index * 2 + 3,
                                           index * 2 + 4));
     }
+
+    int size = array.size();
+    QVector4DArray result = array.scaled(1.0);
+    // check did not change the original
+    QCOMPARE(array.size(), size);
+    QCOMPARE(array[0], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
+    QCOMPARE(array[4], QVector4D(9.0f, 10.0f, 11.0f, 12.0));
+    // result should be copy - mult by 1.0 costs nothing
+    QVERIFY(!result.isDetached());
+    QCOMPARE(result.size(), size);
+    QCOMPARE(result[0], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
+    QCOMPARE(result[4], QVector4D(9.0f, 10.0f, 11.0f, 12.0));
+    // now actually do a scale
+    result = array.scaled(2.0);
+    QCOMPARE(result.size(), size);
+    QCOMPARE(array.size(), size);
+    QCOMPARE(result[0], QVector4D(2.0f, 4.0f, 6.0f, 8.0f));
+    QCOMPARE(result[4], QVector4D(18.0f, 20.0f, 22.0f, 24.0f));
+
+    array.scale(1.0);
+    QCOMPARE(array.size(), size);  // should all be the same
+    QCOMPARE(array[0], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
+    QCOMPARE(array[4], QVector4D(9.0f, 10.0f, 11.0f, 12.0));
+
+    array.scale(2.0);
+    QCOMPARE(array.size(), size);  // size should be the same
+    QCOMPARE(array[0], QVector4D(2.0f, 4.0f, 6.0f, 8.0f));
+    QCOMPARE(array[4], QVector4D(18.0f, 20.0f, 22.0f, 24.0f));
 }
 
 QTEST_APPLESS_MAIN(tst_QVectorArray)
