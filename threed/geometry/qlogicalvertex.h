@@ -111,6 +111,7 @@ inline QLogicalVertex::QLogicalVertex(QGeometryData data, int index)
     , m_index(index)
 {
     Q_ASSERT(index < data.count());
+    data.check();
 }
 
 inline QLogicalVertex::QLogicalVertex(const QVector3D &a)
