@@ -194,6 +194,18 @@ QGLSection::~QGLSection()
 
 /*!
     \internal
+    Reserve capacity for \a amount items.  This may avoid realloc
+    overhead when a large number of items will be appended.
+*/
+void QGLSection::reserve(int amount)
+{
+    QGeometryData::reserve(amount);
+    d->hash.reserve(amount);
+    d->norms.reserve(amount);
+}
+
+/*!
+    \internal
     Adds the logical vertices \a a, \a b and \c to this section.  All
     should have the same fields.  This function is exactly equivalent to
     \code

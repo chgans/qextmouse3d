@@ -82,6 +82,7 @@ public:
     void zipWith(const QGeometryData &other);
     void clear();
     void clear(QGL::VertexAttribute);
+    void reserve(int amount);
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);

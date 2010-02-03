@@ -81,6 +81,7 @@ public:
 
     // section management
     void newSection(QGL::Smoothing = QGL::Smooth);
+    void reserve(int amount);
 
     // scene management
     QGLSceneNode *currentNode();

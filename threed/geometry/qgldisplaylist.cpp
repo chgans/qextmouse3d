@@ -346,6 +346,13 @@ QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials
 QGLDisplayList::~QGLDisplayList()
 {
 }
+
+void QGLDisplayList::reserve(int amount)
+{
+    Q_D(QGLDisplayList);
+    d->currentSection->reserve(amount);
+}
+
 /*!
     \fn void QGLDisplayList::draw(QGLPainter *painter)
     Draws the display list on the given \a painter.

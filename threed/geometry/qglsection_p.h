@@ -74,6 +74,8 @@ public:
     QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
     ~QGLSection();
 
+    void reserve(int amount);
+
     QGLIndexArray indices() const;
     int indexCount() const;
     void append(const QLogicalVertex &lv);

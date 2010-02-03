@@ -132,11 +132,13 @@ public:
     qint8 key[ATTR_CNT];
     quint8 size[ATTR_CNT];
     int count;
+    int reserved;
 };
 
 QGeometryDataPrivate::QGeometryDataPrivate()
     : fields(0)
     , count(0)
+    , reserved(-1)
 {
     ref = 0;
     qMemSet(key, -1, ATTR_CNT);
@@ -689,6 +691,48 @@ void QGeometryData::clear(QGL::VertexAttribute field)
             d->attributes[d->key[field]].clear();
         }
         d->key[field] = -1;
+    }
+}
+
+/*!
+    Sets the geometry data to handle an \a amount of data.  This is generally
+    not required unless its anticipated that a large amount of data will be
+    appended and realloc overhead is desired to be avoided.  If \a amount is
+    less than the amount already reserved, or if this object has
+    more than the \a amount of data items, then this function exits without
+    doing anything.  This function will never delete data.
+*/
+void QGeometryData::reserve(int amount)
+{
+    if (d && (d->reserved > amount || d->reserved < d->count))
+        return;
+    detach();
+    d->reserved = amount;
+    const quint32 mask = 0x01;
+    quint32 fields = d->fields;
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (mask & fields)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            if (attr < QGL::TextureCoord0)
+            {
+                if (attr == QGL::Position)
+                    d->vertices.reserve(amount);
+                else if (attr == QGL::Normal)
+                    d->normals.reserve(amount);
+                else
+                    d->colors.reserve(amount);
+            }
+            else if (attr < QGL::CustomVertex0)
+            {
+                d->textures[d->key[field]].reserve(amount);
+            }
+            else
+            {
+                d->attributes[d->key[field]].reserve(amount);
+            }
+        }
     }
 }
 
@@ -1262,14 +1306,20 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::Position:
         d->key[QGL::Position] = 0;
         d->size[QGL::Position] = 3;
+        if (d->reserved > 0)
+            d->vertices.reserve(d->reserved);
         break;
     case QGL::Normal:
         d->key[QGL::Normal] = 1;
         d->size[QGL::Normal] = 3;
+        if (d->reserved > 0)
+            d->normals.reserve(d->reserved);
         break;
     case QGL::Color:
         d->key[QGL::Color] = 2;
         d->size[QGL::Color] = 1;
+        if (d->reserved > 0)
+            d->colors.reserve(d->reserved);
         break;
     case QGL::TextureCoord0:
     case QGL::TextureCoord1:
@@ -1282,6 +1332,8 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
         d->textures.append(QVector2DArray());
         d->key[field] = d->textures.count() - 1;
         d->size[field] = 2;
+        if (d->reserved > 0)
+            d->textures[d->key[field]].reserve(d->reserved);
         break;
     case QGL::CustomVertex0:
     case QGL::CustomVertex1:
@@ -1293,6 +1345,8 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::CustomVertex7:
         d->key[field] = d->attributes.count() - 1;
         d->size[field] = d->attributes.at(d->key[field]).elementSize();
+        if (d->reserved > 0)
+            d->attributes[d->key[field]].reserve(d->reserved);
         break;
     }
 }
