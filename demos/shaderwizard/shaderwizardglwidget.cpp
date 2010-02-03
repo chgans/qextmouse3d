@@ -116,6 +116,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     mMaterial->setObjectName("ShaderWizardGLWidgetMaterial");
 
     setTeapotGeometry();
+    d->effect = new QGLShaderProgramEffect;
 }
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
