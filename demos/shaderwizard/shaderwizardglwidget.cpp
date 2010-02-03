@@ -116,6 +116,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     mMaterial->setObjectName("ShaderWizardGLWidgetMaterial");
 
     setTeapotGeometry();
+    d->effect = new QGLShaderProgramEffect;
 }
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
@@ -308,9 +309,11 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 void ShaderWizardGLWidget::setSquareGeometry()
 {
     if (square == 0) {
-        square = new QGLHeightMap(101,101);
+        square = new QGLDisplayList(this);
+        *square << QGLHeightMap(101, 101);
+        square->finalize();
     }
-    setGeometry(square);
+    setGeometry(square->geometry());
 }
 
 void ShaderWizardGLWidget::setCubeGeometry()
@@ -347,9 +350,11 @@ void ShaderWizardGLWidget::setTeapotGeometry()
 void ShaderWizardGLWidget::setHeightMapGeometry()
 {
     if (ripple == 0) {
-        ripple = new RippleHeightMap(101,101);
+        ripple = new QGLDisplayList(this);
+        *ripple << RippleHeightMap(101,101);
+        ripple->finalize();
     }
-    setGeometry(ripple);
+    setGeometry(ripple->geometry());
 }
 
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)

@@ -42,27 +42,30 @@
 #ifndef QGLHEIGHTMAP_H
 #define QGLHEIGHTMAP_H
 
-#include "qglgeometry.h"
-#include <QPointF>
+#include "qgldisplaylist.h"
 
-class QGLHeightMapPrivate;
-
-class QGLHeightMap : public QGLGeometry
+class QGLHeightMap
 {
-    Q_OBJECT
 public:
-    QGLHeightMap(int xPoints, int yPoints);
+    explicit QGLHeightMap(int xPoints, int yPoints, float xSize = 1.0f, float ySize = 1.0f, QGL::Smoothing smoothing = QGL::Smooth);
     virtual ~QGLHeightMap();
-    virtual void init();
-    virtual void draw(QGLPainter *painter);
+    QGL::Smoothing smoothing() const;
+    int xPoints() const;
+    int yPoints() const;
+    int xSize() const;
+    int ySize() const;
 
-protected:
-    virtual void calculateVertexes();
-    virtual QPointF calculateTexCoords(float s, float t);
-    virtual float height(float s, float t);
+    virtual float height(float s, float t) const;
+    virtual QVector2D texCoords(float s, float t) const;
 
 private:
-    QGLHeightMapPrivate* d;
+    float m_xPoints;
+    float m_yPoints;
+    float m_xSize;
+    float m_ySize;
+    QGL::Smoothing m_Smoothing;
 };
+
+Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& cube);
 
 #endif // QGLHEIGHTMAP_H

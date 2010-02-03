@@ -50,17 +50,20 @@ class RippleHeightMap : public QGLHeightMap
 public:
     RippleHeightMap(int xPoints, int yPoints) : QGLHeightMap(xPoints,yPoints) {}
 
-    
-    float height(float s, float t)
+    float height(float s, float t) const
     {
+        const float numberOfCrests = 3.0f;
+        const float scalingFactor = 0.1f;
+
         float distance_from_center = sqrt((s - 0.5) * (s - 0.5)
                                             + (t - 0.5) * (t - 0.5));
-        return sin( 6.0 * 2.0 * M_PI * distance_from_center ) // radial ripple
-                * 0.25 // scaling factor
+        return sin( numberOfCrests * 2.0
+                    * 2.0 * M_PI * distance_from_center ) // radial ripple
+                * scalingFactor
                 * (1.0 - distance_from_center) // it takes a power of 4 to
                 * (1.0 - distance_from_center) // make a nice drop off that
                 * (1.0 - distance_from_center) // looks right in the small
-                * (1.0 - distance_from_center); // space.
+                * (1.0 - distance_from_center);// space.
     }
 };
 
