@@ -67,6 +67,7 @@ class QGLPainter;
 class QGLDisplayList;
 class QGLSectionPrivate;
 class QGeometryData;
+class QGLSceneNode;
 
 class QGLSection : public QGeometryData
 {
@@ -103,6 +104,9 @@ public:
     }
     inline QGL::Smoothing smoothing() const;
     inline QGLDisplayList *displayList() const;
+    QList<QGLSceneNode*> nodes() const;
+    void addNode(QGLSceneNode *node);
+    bool deleteNode(QGLSceneNode *node);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;

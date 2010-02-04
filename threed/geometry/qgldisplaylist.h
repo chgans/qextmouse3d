@@ -81,7 +81,6 @@ public:
 
     // section management
     void newSection(QGL::Smoothing = QGL::Smooth);
-    void reserve(int amount);
 
     // scene management
     QGLSceneNode *currentNode();
@@ -137,10 +136,15 @@ protected:
     QGLSection *currentSection() const;
     QList<QGLSection*> sections() const;
 
+private slots:
+    void deleteNode(QObject *);
+
 private:
     Q_DISABLE_COPY(QGLDisplayList);
     void addSection(QGLSection *section);
     void addTriangle(int a, int b, int c, QGLPrimitive &p);
+    void adjustSectionNodes(QGLSection *sec, int offset, QGLGeometry *geom);
+    int adjustNodeTree(QGLSceneNode *top, int offset, QGLGeometry *geom);
 
     friend class QGLSection;
 

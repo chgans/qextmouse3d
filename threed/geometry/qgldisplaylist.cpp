@@ -347,12 +347,6 @@ QGLDisplayList::~QGLDisplayList()
 {
 }
 
-void QGLDisplayList::reserve(int amount)
-{
-    Q_D(QGLDisplayList);
-    d->currentSection->reserve(amount);
-}
-
 /*!
     \fn void QGLDisplayList::draw(QGLPainter *painter)
     Draws the display list on the given \a painter.
@@ -661,6 +655,88 @@ void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
 }
 
 /*!
+    \internal
+    Adjust the nodes in \a sec by shifting their start by \a offset,
+    and setting their  geometry to \a geom.  D  If \a top is null, this
+    function does nothing. Returns the total number of indexes for this
+    node, and all its children.  If the node has total number of indexes
+    equal to zero, then delete it.  If the node has children do the same
+    recursively to all of them.
+*/
+void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
+                                       int offset, QGLGeometry *geom)
+{
+    QList<QGLSceneNode*> children = sec->nodes();
+    QList<QGLSceneNode*>::iterator it = children.begin();
+    for ( ; it != children.end(); ++it)
+        adjustNodeTree(*it, offset, geom);
+}
+
+int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
+                                   int offset, QGLGeometry *geom)
+{
+    int totalItems = 0;
+    if (top)
+    {
+        Q_ASSERT(geom);
+        top->setStart(top->start() + offset);
+        top->setGeometry(geom);
+        totalItems = top->count();
+        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*>::iterator it = children.begin();
+        for ( ; it != children.end(); ++it)
+        {
+            totalItems += adjustNodeTree(*it, offset, geom);
+        }
+        if (totalItems == 0)
+        {
+            top->disconnect(this, SLOT(deleteNode(QObject*)));
+            delete top;
+        }
+        // when nodes are destroyed they call on their parents to
+        // remove them from the childNodes() list.  fetch the list
+        // again to see if there's any items left
+        children = top->childNodes();
+    }
+    return totalItems;
+}
+
+/*!
+    \internal
+    Returns a count of all the items referenced by this node
+    and all its children.
+*/
+static int recursiveCount(QGLSceneNode *top)
+{
+    int totalItems = 0;
+    if (top)
+    {
+        totalItems = top->count();
+        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*>::const_iterator it = children.constBegin();
+        for ( ; it != children.constEnd(); ++it)
+            totalItems += recursiveCount(*it);
+    }
+    return totalItems;
+}
+
+static int nodeCount(const QList<QGLSceneNode*> &list)
+{
+    int total = 0;
+    QList<QGLSceneNode*>::const_iterator it = list.constBegin();
+    for  ( ; it != list.constEnd(); ++it)
+        total += recursiveCount(*it);
+    return total;
+}
+
+static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
+                              const char *msg)
+{
+    qWarning("Ignoring section %d with %d vertices and"
+             " %d indexes - %s", secCount, vertCount, nodeCount, msg);
+}
+
+/*!
     Finish the building of this display list and optimize it for
     rendering.  This method must be called once after building the
     scene, or after modifying the geometry.
@@ -689,14 +765,31 @@ void QGLDisplayList::finalize()
         end();
         QGLGeometry *g = 0;
         QMap<quint32, QGLGeometry *> geos;
+        int secNum = 0;
         while (d->sections.count())
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
-            s->normalizeNormals();
             QGLIndexArray indices = s->indices();
             const QGLIndexArray::ElementType *vi = indices.constData();
-            int vcnt = indices.size();
+            int icnt = indices.size();
+            qDebug() << "before nodeCount";
+            int ncnt = nodeCount(s->nodes());
+            qDebug() << "after nodeCount";
+            int scnt = s->count();
+            if (scnt == 0 || icnt == 0 || ncnt == 0)
+            {
+#ifndef QT_NO_DEBUG
+                    if (ncnt == 0)
+                        warnIgnore(scnt, icnt, ncnt, "nodes empty");
+                    else if (scnt == 0)
+                        warnIgnore(scnt, icnt, ncnt, "geometry count zero");
+                    else
+                        warnIgnore(scnt, icnt, ncnt, "index count zero");
+#endif
+                continue;
+            }
+            s->normalizeNormals();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
             QMap<quint32, QGLGeometry *>::const_iterator it =
@@ -709,7 +802,7 @@ void QGLDisplayList::finalize()
                 va.append(s->toVertexArray());
                 QGLIndexArray ia = g->indexArray();
                 sectionIndexOffset = ia.size();
-                for (int i = 0; i < vcnt; ++i)
+                for (int i = 0; i < icnt; ++i)
                     ia.append(vi[i] + sectionOffset);
                 g->setVertexArray(va);
                 g->setIndexArray(ia);
@@ -722,24 +815,18 @@ void QGLDisplayList::finalize()
                     g = new QGLGeometry(this);
                 g->setVertexArray(s->toVertexArray());
                 QGLIndexArray iry;
-                iry.reserve(vcnt);
-                for (int i = 0; i < vcnt; ++i)
+                iry.reserve(icnt);
+                for (int i = 0; i < icnt; ++i)
                     iry.append(vi[i]);
                 g->setIndexArray(iry);
                 g->setDrawingMode(QGL::Triangles);
                 g->setPalette(geometry()->palette());
                 geos.insert(s->fields(), g);
             }
-            QMap<QGLSection *, QGLSceneNode *>::const_iterator nit =
-                    d->sectionNodeMap.constFind(s);
-            for ( ; nit != d->sectionNodeMap.constEnd() && nit.key() == s; ++nit)
-            {
-                QGLSceneNode *node = nit.value();
-                node->setStart(node->start() + sectionIndexOffset);
-                node->setGeometry(g);
-            }
+            adjustSectionNodes(s, sectionIndexOffset, g);
             g->setBoundingBox(g->boundingBox().expanded(s->boundingBox()));
             delete s;
+            ++secNum;
         }
         d->finalizeNeeded = false;
     }
@@ -747,11 +834,13 @@ void QGLDisplayList::finalize()
 
 /*!
     Creates a new section with smoothing mode set to \a smooth and makes
-    it current on this QGLDisplayList.
+    it current on this QGLDisplayList.  A section must be created before
+    any geometry or new nodes can be added to the displaylist.
 
-    Also a new QGLSceneNode is created and made current.  The new node is a
-    copy of the previously current node, so any materials or effects set
-    will apply to this new section.
+    The internal node stack is cleared, a section-level QGLSceneNode is
+    created for this section by calling newNode().
+
+    \sa newNode() pushNode()
 */
 void QGLDisplayList::newSection(QGL::Smoothing smooth)
 {
@@ -763,7 +852,9 @@ void QGLDisplayList::addSection(QGLSection *sec)
     Q_D(QGLDisplayList);
     d->currentSection = sec;
     d->sections.append(sec);
-    newNode();
+    d->nodeStack.clear();
+    sec->addNode(newNode());
+    qDebug() << "##############  addSection" << d->sections.count() << "#################";
 }
 
 /*!
@@ -787,50 +878,61 @@ QList<QGLSection*> QGLDisplayList::sections() const
 }
 
 /*!
-    Creates a new QGLSceneNode within the current section of this
-    display list, and makes it current.  A pointer to the new node is
-    returned.
+    Creates a new QGLSceneNode and makes it current.  A pointer to the new
+    node is returned.  The node is added into the scene at the same level
+    as the currentNode().
 
     The node is set to reference the geometry starting from the next
-    vertex created, such that QGLSceneNode::start() will return the
-    index of this next vertex.  QGLSceneNode::count() will return 0.
+    vertex created, such that currentNode()->start() will return the
+    index of this next vertex.
 
-    Any previous node that was current is finalized at the last vertex added
-    and QGLSceneNode::count() will correctly return the index of this last
-    vertex.
+    Note: the display list is designed to handle deletion of the resulting
+    QGLSceneNode instances by client code as gracefully as possible.
+
+    Nonetheless the deletion of nodes in this way will have a performance
+    impact and generally should be avoided.
+
+    It is not necessary to clean up empty or unused nodes since these
+    will be removed from the final scene during the finalize() function.
 
     newSection()
 */
 QGLSceneNode *QGLDisplayList::newNode()
 {
     Q_D(QGLDisplayList);
+    Q_ASSERT(d->currentSection);
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
-    int sectionCount = 0;
-    if (d->currentSection)
-        sectionCount = d->currentSection->indexCount();
-    if (d->currentNode)
+    d->currentNode = new QGLSceneNode(parentNode);
+    d->currentNode->setStart(d->currentSection->indexCount());
+    connect(d->currentNode, SIGNAL(destroyed(QObject*)),
+            this, SLOT(deleteNode(QObject*)));
+    return d->currentNode;
+}
+
+/*!
+    \internal
+    Private slot for handling nodes deleted externally.  This is done
+    in a fairly naive inefficient way, but the assumption is that this
+    is a very rare thing to happen, and this is really here just to
+    make sure nothing crashes if nodes are deleted.
+*/
+void QGLDisplayList::deleteNode(QObject *object)
+{
+    QGLSceneNode *node = qobject_cast<QGLSceneNode*>(object);
+    if (node)
     {
-        if (d->currentNode->count() == 0)
+        Q_D(QGLDisplayList);
+        d->nodeStack.removeOne(node);
+        QList<QGLSection*>::iterator sx = d->sections.begin();
+        for ( ; sx != d->sections.end(); ++sx)
         {
-            QMap<QGLSection*, QGLSceneNode*>::iterator it = d->sectionNodeMap.begin();
-            for ( ; it != d->sectionNodeMap.end(); ++it)
-            {
-                if (it.value() == d->currentNode)
-                {
-                    d->sectionNodeMap.erase(it);
-                    break;
-                }
-            }
-            Q_ASSERT(it != d->sectionNodeMap.end());  // must be here somewhere
-            delete d->currentNode;
+            QGLSection *s = *sx;
+            if (s->deleteNode(node))
+                break;
         }
     }
-    d->currentNode = new QGLSceneNode(parentNode);
-    d->currentNode->setStart(sectionCount);
-    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
-    return d->currentNode;
 }
 
 /*!
@@ -860,16 +962,16 @@ QGLSceneNode *QGLDisplayList::currentNode()
 QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
+    Q_ASSERT(d->currentSection);
     d->nodeStack.append(d->currentNode);
     d->currentNode = new QGLSceneNode(d->currentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
-    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
 
 /*!
-    Removes the node from the top of the stack, makes a copy of it, and makes the
-    copy current.
+    Removes the node from the top of the stack, makes a copy of it, and
+    makes the copy current.
 
     If the stack is empty, behaviour is undefined.  In debug mode, calling
     this function when the stack is empty will cause an assert.
@@ -878,11 +980,9 @@ QGLSceneNode *QGLDisplayList::pushNode()
 
     The node is set to reference the geometry starting from the next
     vertex created, such that QGLSceneNode::start() will return the
-    index of this next vertex.  QGLSceneNode::count() will return 0.
+    index of this next vertex.
 
-    Any previous node that was current is finalized at the last vertex added
-    such that QGLSceneNode::count() on that node will correctly return the
-    index of the last vertex added.
+    \sa pushNode(), newNode()
 */
 QGLSceneNode *QGLDisplayList::popNode()
 {
@@ -895,7 +995,6 @@ QGLSceneNode *QGLDisplayList::popNode()
     d->currentNode = s->clone(parentNode);
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
-    d->sectionNodeMap.insertMulti(d->currentSection, d->currentNode);
     return d->currentNode;
 }
 

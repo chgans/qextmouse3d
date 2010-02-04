@@ -46,6 +46,7 @@
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"
 #include "qglabstracteffect.h"
+#include "qgloperation.h"
 #include "qtest_helpers_p.h"
 
 class tst_QGLDisplayList : public QObject
@@ -192,6 +193,7 @@ void tst_QGLDisplayList::newNode()
 void tst_QGLDisplayList::newNodeEmptyPrev()
 {
     TestQGLDisplayList displayList;
+    displayList.newSection();
     QPointer<QGLSceneNode> node = displayList.newNode();
 
     node->setEffect(QGL::LitDecalTexture2D);
@@ -199,17 +201,25 @@ void tst_QGLDisplayList::newNodeEmptyPrev()
     node->setUserEffect(eff);
     node->setMaterial(5);
 
-    // causes any empty nodes to be deleted whilst creating new
+    // empty nodes will be deleted during finalize
     QGLSceneNode *node2 = displayList.newNode();
+
+    {
+        QGLOperation op(&displayList, QGL::TRIANGLE);
+        op << QVector3D(-1.0f, -1.0f, 1.0f);
+        op << QVector3D(1.0f, -1.0f, 1.0f);
+        op << QVector3D(1.0f, -1.0f, 1.0f);
+    }
+
+    qDebug() << displayList.currentSection();
+    displayList.finalize();
 
     // has been deleted because its empty
     QVERIFY(node.isNull());
 
-#ifndef QT_NO_MEMBER_TEMPLATES
-    QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
+    QList<QGLSceneNode*> nodes = displayList.childNodes();
     QVERIFY(!nodes.contains(node.data()));
     QVERIFY(nodes.contains(node2));
-#endif
 
     // even tho node was deleted, node2 still works and is default
     QCOMPARE(node2->effect(), QGL::LitMaterial); // cloned from previous

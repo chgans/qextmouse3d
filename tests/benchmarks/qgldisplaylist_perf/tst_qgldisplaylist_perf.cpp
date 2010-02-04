@@ -66,7 +66,7 @@ void tst_QGLDisplayList::addQuad_data()
     QTest::addColumn<int>("type");
 
     QByteArray name;
-    for (int size = 0; size < 10000; size += 200)
+    for (int size = 5000; size < 10000; size += 200)
     {
         name = "Naive--";
         name += QString::number(size);
@@ -104,10 +104,9 @@ void tst_QGLDisplayList::addQuad()
     } else if (type == Test_Reserve) {
         QBENCHMARK {
             QGLDisplayList list;
-            list.newSection();
-            list.reserve(size * 2);
             for (int i = 0; i < n; ++i)
             {
+                list.newSection();
                 for (int j = 0; j < n; ++j)
                 {
                     QGLOperation op(&list, QGL::QUAD);
