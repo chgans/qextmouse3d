@@ -50,6 +50,51 @@
 #include <QtDeclarative/qmlengine.h>
 #include <QtCore/qlist.h>
 
+/*!
+    \class Mesh
+    \brief The Mesh class provides a means of abstracting 3d mesh mesh/geometry representations in
+    a way that can be used in QML.  The Mesh class contains necessary properties and methods for
+    display and manipulation of 3d objects of this type.
+    \since 4.6.?
+    \ingroup qt3d
+    \ingroup qt3d::qml3d
+
+    \section1 Underlying Architecture
+
+    QML/3d Mesh objects are a QML enabled means of representing any scene class based
+    on the \l QGLAbstractScene class.
+
+    In cases where the scene is composed of multiple nodes (for example, in a \i .3ds file)
+    the mesh allows users to split away branches of the tree and manipulate them in
+    isolation from the original scene graph.
+
+    In order to achieve this the mesh object contains a map correlating numeric identifiers
+    for individual branches with specific \l QGLSceneObject objects which are taken from
+    the original scene.
+
+    More details on achieving this can be found in the \l Item3d class.
+
+    \section1 Specifying Simple Mesh Objects
+
+    Like other objects in QML/3d, Mesh objects are created by the standard QML syntax for
+    objects.  Meshes should always specify an appropriate file containing the data for
+    the Mesh,
+
+    \code
+    Effect {}
+    \endcode
+
+    More complex effects use the usual QML syntax for accessing and updating properties.  In order to specify
+    a texture, for example, the following could be used:
+
+    \code
+    Effect {
+        id: myTextureEffect
+        texture: "C:\textures\texture.png"
+    }
+    \endcode
+*/
+
 QT_BEGIN_NAMESPACE
 
 QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
@@ -84,16 +129,33 @@ public:
     bool loaded;
 };
 
+/*!
+    Construct a \l Mesh object with \a parent as its parent.
+*/
 Mesh::Mesh(QObject *parent)
     : QObject(parent)
 {
     d = new MeshPrivate();
 }
 
+/*!
+    Destroy the \l Mesh object and free any unneeded memory.
+*/
 Mesh::~Mesh()
 {
     delete d;
 }
+
+/*!
+    \property Mesh::source
+    \brief Each mesh requires a set of data that describes (among other things) vertices
+    transformations, textures, and so on.  This data is generally stored in files and
+    specified via the \c source property.
+
+    Source files can be of any type supported by Qt/3d.  The types of file currently
+    supported can be found in the \c sceneFormat plugins, with \i .3ds, \i .bez, \i. obj
+    files currently being supported.
+*/
 
 QUrl Mesh::source() const
 {
@@ -122,6 +184,11 @@ void Mesh::setSource(const QUrl& value)
     }
 }
 
+/*!
+    \property Mesh::meshName
+    \brief Users can associate a \l QString name with a mesh to facilitate easy finding or
+    description of a mesh.
+*/
 QString Mesh::meshName() const
 {
     return d->meshName;
@@ -150,6 +217,11 @@ void Mesh::setMeshName(const QString& value)
     }
 }
 
+
+/*!
+  Once the request for data has been finished the \l Mesh class is now free to load
+  the scene.
+*/
 void Mesh::dataRequestFinished()
 {
     setScene(QGLAbstractScene::loadScene(d->dataReply, d->data));
@@ -157,12 +229,23 @@ void Mesh::dataRequestFinished()
     d->dataReply = 0;
 }
 
+/*!
+    Because the branches of the overall scene are essentially /i moveable, and the
+    standard methods of getting objects/names from a scene rely on a single tree,
+    the \l Mesh class supports its own list of mesh objects in the scene which is
+    taken on startup from the normal \l QGLAbstractScene based class for the current
+    mesh.
+
+    This means that object lookup can be performed at any time without having to
+    reconstitute the original scene or maintain logical links between split branches.
+
+    As an added advantage it also eliminates the (minor) additional cost of having
+    to traverse the scene-graph/tree in order to locate objects.
+
+    \sa QGLAbstractScene
+*/
 void Mesh::initSceneObjectList()
 {
-    //Because the branches of the overall scene are moveable, and the 
-    //standard methods of getting objects/names from a scene rely on
-    //a single tree, the Mesh class supports its own list of mesh objects
-    //in the scene.
     d->sceneObjects.clear();
     if (d->scene)
         d->sceneObjects = d->scene->objects(QGLSceneObject::Mesh);
@@ -170,6 +253,9 @@ void Mesh::initSceneObjectList()
     d->mainSceneObject = d->scene->defaultObject(QGLSceneObject::Main);
 }
 
+/*!
+    Get the main scene object for the \l QGLAbstractScene associated with this mesh.
+*/
 QGLSceneObject *Mesh::getSceneObject()
 {
     //This variant of the function gets the main scene object for the scene
@@ -179,6 +265,10 @@ QGLSceneObject *Mesh::getSceneObject()
     return d->mainSceneObject;
 }
 
+/*!
+    Get the scene object called \a name, specified as a QString, and retrieve the
+    scene object in this mesh which corresponds to it.
+*/
 QGLSceneObject *Mesh::getSceneObject(const QString &name)
 {    
     //This variant of the function gets the mesh scene object for a scene
@@ -196,6 +286,10 @@ QGLSceneObject *Mesh::getSceneObject(const QString &name)
     return NULL;
 }
 
+/*!
+    Used mainly for diagnostic purposes this function returns a QStringList containing
+    all of the object names for the given mesh.
+*/
 QStringList Mesh::getSceneObjectNames()
 {
     //Get a string list of all mesh object names in the scene.
@@ -213,11 +307,19 @@ QStringList Mesh::getSceneObjectNames()
     return names;
 }
 
+/*!
+    Sometimes we want objects in a scene other than meshes - this is usually at start-up or
+    similar and does not generally need a whole mesh tree, this function, then, is a generic
+    mesh tree searcher for a given scene object \a name of a specific \a type.
+
+    This works by traversing the main trunk of the scene object, and so should generally be
+    applied before the splitting of a mesh into sub-branches.  Failure to adhere to this
+    will result in only those sections of the scene graph being checked which had not been
+    previously split away.
+*/
+
 QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
-{
-    //Sometimes we want objects other than meshes - this is usually at start-up or similar,
-    //and does not generally need a whole mesh tree, this function, then, is a generic 
-    //mesh tree searcher for a given named scene object of a specific type.
+{    
 	if (d->scene)
 		return d->scene->object(type, name);
 	else
@@ -225,6 +327,20 @@ QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& n
 	return NULL;
 }
 
+/*!
+    Set the \a scene associated with this mesh.
+
+    The function attempts to load a meaningful scene if one exists, and will attempt to
+    locate the section of the scene to which this mesh applies based on mesh-name.
+
+    Failure to find an appropriate scene will generate the warning messages.
+
+    It should be noted that for successful operation of this function, the appropriate plugin
+    file reader should be built and installed.  Failure to do so will result in a warning and
+    failure to display the scene.
+
+    \sa QGLAbstractScene
+*/
 void Mesh::setScene(QGLAbstractScene *scene)
 {
     delete d->scene;
@@ -260,17 +376,30 @@ void Mesh::setScene(QGLAbstractScene *scene)
         emit loaded();
 }
 
+/*!
+    When a scene has been deconstructed into several branches, each one being a separately
+    manipulated sub-branch of the whole, the branches taken are identified numerically.  This
+    function returns the next scene branch ID number
+*/
 int Mesh::nextSceneBranchId() const
 {
     //Retrieve the next unused scene branch ID
     return d->nextSceneBranchId;
 }
 
+/*!
+    This function "prunes" a specific branch away from the main scene-tree/graph and adds it to the
+    list of independent branches drawn by the mesh.  This facilitates animation & picking of specific
+    sub-branches of the larger tree.
+
+    The user specifies a sceneobject/node \a nodeName, which will form the "root" of the new branch,
+    as well as a \a parent to which this branch shall be attached.  Normally the branch will simply
+    be given the original scene as its parent, so that all standard object hierarchy manipulation/
+    destruction rules apply, however this \a parent parameter gives the user extra flexibility if
+    required.
+*/
 int Mesh::createSceneBranch(QString nodeName, QObject *parent)
-{
-    //This function "prunes" a specific branch away from the main scene-tree/graph and adds it to the
-    //list of independent branches drawn by the mesh.  This facilitates animation & picking of specific
-    //sub-branches of the larger tree.
+{    
     if (!d->scene) {
         qWarning() << "Unable to split mesh: no scene initialised - attempt to add scene object failed.";
         return -1;
@@ -293,6 +422,13 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
     }
 }
 
+/*!
+     Given a scene object \a rootSceneObject, this function adds a pointer to the object to an internally
+     maintained map of scene branches.
+
+     The \a previousParent of \a rootSceneObject is also stored so that the object can be restored to its
+     previous parent if necessary.
+*/
 int Mesh::addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParent)
 {
     //when adding a new object to a mesh we also store the previous parent information
@@ -306,11 +442,17 @@ int Mesh::addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParen
     return ++d->nextSceneBranchId;    
 }
 
+/*!
+    When an object is deleted or the user otherwise calls this function, the scene branch identified by
+    \a branchId is reattached to the parent node from which it was originally pruned.
+
+    If a problem occurs or the parent node is undefined (eg. null), an attempt is made to reattach it instead
+    to the primary/default scene object/node, which corresponds to item 0 in the map.
+
+    If the item selected is already the default item, and no parent can be found, it is deleted.
+*/
 void Mesh::restoreSceneBranch(int branchId)
 {
-    //When we delete an object we first attempt to reattach the underlying QGLSceneObject
-    //to its original parent node.  If the parent node is specified as "NULL" we attempt
-    //to attach it to the main scene node of the object (ie. item 0 in the map).
     
     if (d->sceneBranches.contains(branchId)) {
         qWarning() <<"Mesh does not contain branch " << branchId<<".  Ignoring.\n";
@@ -319,8 +461,12 @@ void Mesh::restoreSceneBranch(int branchId)
         
     MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
 
-    if (!targetBranch.previousParent) {
+    if (!targetBranch.previousParent && branchId!=0) {
         targetBranch.rootSceneObject->setParent(getSceneObject());
+    }
+    else if (!targetBranch.previousParent){
+        qWarning() << "Unable to find a parent to reattach default scene object to, deleting.";
+        delete targetBranch;
     } else {
         targetBranch.rootSceneObject->setParent(targetBranch.previousParent);
     }
@@ -330,6 +476,9 @@ void Mesh::restoreSceneBranch(int branchId)
     }
 }
 
+/*!
+    Return a pointer to the scene branch identified by \a branchId.
+*/
 QGLSceneObject *Mesh::getSceneBranch(int branchId) const
 {
     if (!d->sceneBranches.contains(branchId)) return NULL;    
@@ -337,6 +486,12 @@ QGLSceneObject *Mesh::getSceneBranch(int branchId) const
     return targetBranch.rootSceneObject;    
 }
 
+
+/*!
+    This function iterates through the list of scene branches in the internal map and attempts to
+    restore them to their original position in the object hierarchy of the scene.  It then clears the
+    map ready for reuse.
+*/
 void Mesh::resetSceneBranches()
 {
     //Delete all "hanging" object entries in the scene branches list and return them
@@ -349,6 +504,9 @@ void Mesh::resetSceneBranches()
     d->nextSceneBranchId = 0;
 }
 
+/*!
+    Core "draw" function for the mesh draws scene branch \a branchId using \a painter.
+*/
 void Mesh::draw(QGLPainter *painter, int branchId)
 {
     if (!d->sceneBranches.contains(branchId)) {
@@ -361,17 +519,28 @@ void Mesh::draw(QGLPainter *painter, int branchId)
     }
 }
 
+/*!
+    Reference counting increment.
+*/
 void Mesh::ref()
 {
     ++(d->refCount);
 }
 
+/*!
+    Reference counting decrement; returns true if there are still outstanding references
+    to the class.
+*/
 bool Mesh::deref()
 {
     --(d->refCount);
     return d->refCount > 0;
 }
 
+
+/*!
+    Assign the mesh the material \a name from the \l QGLMaterialCollection class.
+*/
 QObject *Mesh::material(const QString& name)
 {    
     if (!d->scene)
@@ -403,11 +572,30 @@ QObject *Mesh::material(const QString& name)
     return params;
 }
 
+/*!
+    Checks that all loading and initialisation has been finished, and emits the  loaded() signal if
+    the component is complete.
+
+    \sa loaded()
+*/
 void Mesh::componentComplete()
 {
     d->completed = true;
     if (d->loaded)
         emit loaded();
 }
+
+/*!
+  \fn void Mesh::dataChanged();
+
+  Signals a change to one of the properties of the class, or the scene represented  by the class.
+
+*/
+
+/*!
+  \fn void Mesh::loaded()
+
+  Signals that loading of the mesh is complete.
+*/
 
 QT_END_NAMESPACE

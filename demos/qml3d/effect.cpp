@@ -47,6 +47,34 @@
 #include <QNetworkReply>
 #include <QtDeclarative/qmlengine.h>
 
+/*!
+    \class Effect
+    \brief The Effect class defines simple effects within the QML/3d environment.  Examples 
+    of such effects include fog effects, simple material and lighting effects, and so on.
+    \since 4.6.?
+    \ingroup qt3d
+    \ingroup qt3d::qml3d
+
+    \section1 Defining an Effect
+
+    Effects can be defined within QML using the normal syntax for creating any QML/3d object.  To create a
+    default effect with no extra information, for example, we can simply using the following:
+
+    \code
+    Effect {}
+    \endcode
+
+    More complex effects use the usual QML syntax for accessing and updating properties.  In order to specify
+    a texture, for example, the following could be used:
+
+    \code
+    Effect {
+        id: myTextureEffect
+        texture: "C:\textures\texture.png"
+    }
+    \endcode
+*/
+
 QT_BEGIN_NAMESPACE
 
 QML_DEFINE_TYPE(Qt,4,6,Effect,Effect)
@@ -78,17 +106,29 @@ public:
     QNetworkReply *textureReply;
 };
 
+/*!
+    Constructs the Effect object with \a parent as its parent.
+*/
 Effect::Effect(QObject *parent)
     : QObject(parent)
 {
     d = new EffectPrivate;
 }
 
+/*!
+    Destroy the \l Effect object and delete any unneeded data.
+*/
 Effect::~Effect()
 {
     delete d;
 }
 
+/*!
+    \property Effect::color
+    \brief The color of the object defined by a QColor object.
+
+    The default value for this property is \c 255,255,255,255
+*/
 QColor Effect::color() const
 {
     return d->color;
@@ -100,6 +140,16 @@ void Effect::setColor(const QColor& value)
     emit effectChanged();
 }
 
+/*!
+    \property Effect::texture
+    \brief Texture effects are defined by this property.  A texture is 
+    provided by means of a \l QUrl which is then used for texturing.
+
+    Textures can also be defined directly as images using the \l textureImage
+    property.
+
+    \sa textureImage()
+*/
 QUrl Effect::texture() const
 {
     return d->textureUrl;
@@ -137,6 +187,11 @@ void Effect::setTexture(const QUrl& value)
     }
 }
 
+/*!
+    This function is used to emit the appropriate signal when the texture request has finished.
+
+    \sa effectChanged()
+*/
 void Effect::textureRequestFinished()
 {
     d->texture.load(d->textureReply,0);
@@ -146,6 +201,14 @@ void Effect::textureRequestFinished()
     emit effectChanged();
 }
 
+/*!
+    \property Effect::textureImage
+    \brief This property directly defines a texture using an existing \l QImage.
+
+    Textures can also be defined based on a URL using the \l texture property.
+
+    \sa texture()
+*/
 QImage Effect::textureImage() const
 {
     return d->texture;
@@ -158,6 +221,12 @@ void Effect::setTextureImage(const QImage& value)
     emit effectChanged();
 }
 
+/*!
+    \property Effect::material
+    \brief Material parameters are defined in an \l Effect in QML/3d via the
+    \c material property.  This specifies a set of \l QGLMaterialParameters which
+    are then used when creating the effect.
+*/
 QGLMaterialParameters *Effect::material() const
 {
     return d->material;
@@ -179,6 +248,12 @@ void Effect::setMaterial(QGLMaterialParameters *value)
     }
 }
 
+/*!
+    \property Effect::fog
+    \brief fog effects can be achieved using the \c fog property of the \l Effect class.
+
+    They are specified using the standard \l QGLFogParameters class.
+*/
 QGLFogParameters *Effect::fog() const
 {
     return d->fog;
@@ -200,6 +275,9 @@ void Effect::setFog(QGLFogParameters *value)
     }
 }
 
+/*!
+    Enable the effect on for a given \a painter.
+*/
 void Effect::enableEffect(QGLPainter *painter)
 {
     QGLTexture2D *tex = texture2D();
@@ -227,6 +305,9 @@ void Effect::enableEffect(QGLPainter *painter)
     painter->setFogParameters(d->fog);
 }
 
+/*!
+    Disable the effect for a given \a painter.
+*/
 void Effect::disableEffect(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::FlatColor);
@@ -235,6 +316,15 @@ void Effect::disableEffect(QGLPainter *painter)
     painter->setFogParameters(0);
 }
 
+/*! \fn void Effect::effectChanged();
+
+  Signals that a preoperty of the Effect has changed in some way, this may be a texture, material,
+  fog, or other parameter.
+*/
+
+/*!
+    This function returns a \l QGLTexture2D based on the \c texture property of the \l Effect.
+*/
 QGLTexture2D *Effect::texture2D()
 {
     if (d->textureChanged) {

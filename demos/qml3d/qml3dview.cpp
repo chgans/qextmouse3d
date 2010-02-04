@@ -48,6 +48,58 @@
 
 QT_BEGIN_NAMESPACE
 
+/*!
+    \class Qml3dView
+    \brief The Qml3dView class is based on the QMLView class, and is intended to allow for the
+    display of 3d imagery specified in QML/3d.  The Qml3dView takes the place of its parent class
+    and contains provisions for display and management of \l Item3d objects, as well as \l Effect
+    objects and related classes.
+    \since 4.6.?
+    \ingroup qt3d
+    \ingroup qt3d::qml3d
+
+    \section1 Defining an Qml3dView
+
+    In standard QML the QMLView provides a means of displaying QML items and their supporting
+    effects and animations.  For the purposes of 3d display of QML defined items, a more specific
+    class is needed which caters to the needs of a Qt3d environment.
+
+    Using the Qml3dView is extremely simple. Consider the code below:
+
+    \code
+    int main(int argc, char *argv[])
+    {
+        QApplication app(argc, argv);
+
+        QString source = argv[index];
+
+        QUrl url(source);
+        QFileInfo fi(source);
+        if (fi.exists())
+            url = QUrl::fromLocalFile(fi.absoluteFilePath());
+
+        Qml3dView view;
+        view.setUrl(url);
+        view.show();
+
+        return app.exec();
+    }
+    \endcode
+
+    This is a relatively simple example which shows how easy it can be to use the Qml3dView class.
+
+    The user need only define a source URL, then call the setURL() and the show() functions.
+
+    Internally the class sets the necessary parameters and functions for OpenGL activities, as
+    well as user interaction through picking and mouse actions.  Initialisation of scene elements
+    and other 3d components is also carried out within the Qml3dView.
+
+    /sa QmlView
+*/
+
+/*!
+    Construction of the QMl3dView class and assignment of the object parent as \a parent
+*/
 Qml3dView::Qml3dView(QWidget *parent)
     : QGLView(parent)
 {
@@ -57,15 +109,24 @@ Qml3dView::Qml3dView(QWidget *parent)
     setOption(QGLView::ObjectPicking, true);
 }
 
+/*!
+    Destruction of the Qml3dView class.
+*/
 Qml3dView::~Qml3dView()
 {
 }
 
+/*!
+    This function initiates an openGL redraw.
+*/
 void Qml3dView::updateGL()
 {
     QGLView::updateGL();
 }
 
+/*!
+    Initialise the openGL environment/viewport.
+*/
 void Qml3dView::initializeGL(QGLPainter *painter)
 {
     if (m_viewport)
@@ -73,6 +134,10 @@ void Qml3dView::initializeGL(QGLPainter *painter)
     initGLCalled = true;
 }
 
+/*!
+    Perform early painting/drawing in openGL using \a painter.  This includes such activies as
+    clearing, and drawing the backdrop for the viewport.
+*/
 void Qml3dView::earlyPaintGL(QGLPainter *painter)
 {
     if (m_viewport)
@@ -81,12 +146,18 @@ void Qml3dView::earlyPaintGL(QGLPainter *painter)
         QGLView::earlyPaintGL(painter);
 }
 
+/*!
+    Repaint the contents of the viewport using the \a painter.
+*/
 void Qml3dView::paintGL(QGLPainter *painter)
 {
     if (m_viewport)
         m_viewport->draw(painter);
 }
 
+/*!
+    Sets the url which contains the QML source for this environment to \a url.
+*/
 void Qml3dView::setUrl(const QUrl& url)
 {
     // Load the .qml file into a sub-context.
@@ -99,6 +170,14 @@ void Qml3dView::setUrl(const QUrl& url)
     }
 }
 
+/*!
+    Once loaded the parameters and items within the viewport need to be initialised.  This
+    function checks for any warnings or errors in loading, and sets up the viewport and its
+    encapsulated objects.
+
+    This function will only be called once for a change of status, then it will be disconnected
+    from its initiating signal.
+*/
 void Qml3dView::loaded()
 {
     disconnect(component, SIGNAL(statusChanged(QmlComponent::Status)), this, SLOT(loaded()));
@@ -143,5 +222,19 @@ void Qml3dView::loaded()
 
     QGLView::initializeGL();
 }
+
+/*!
+    \fn Viewport *Qml3dView::viewport() const;
+
+    Returns the viewport associated with this view.
+*/
+
+/*!
+    \fn void Qml3dView::setViewport(Viewport *value);
+
+    Sets the viewport associated with this view to \a value.
+*/
+
+
 
 QT_END_NAMESPACE

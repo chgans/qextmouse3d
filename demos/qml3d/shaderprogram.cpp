@@ -43,10 +43,32 @@
 #include "qglabstracteffect.h"
 #include <QtOpenGL/qglshaderprogram.h>
 
+/*!
+    \class ShaderProgram
+    \brief The ShaderProgram class is derivative class of the more general \l Effect class in Qml/3d.
+    Whereas the Effect class provides support for standard effects under OpenGL, the ShaderProgramEffect class
+    provides a more specific effects capability based on custom shader programs for the GPU.
+    \since 4.6
+    \ingroup qt3d
+    \ingroup qt3d::qml3d
+
+    The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
+    logical context of the normal \l Effect class provided by Qml/3d.
+
+    \sa QGLGraphicsViewportItem
+*/
+
 QT_BEGIN_NAMESPACE
 
 QML_DEFINE_TYPE(Qt,4,6,ShaderProgram,ShaderProgram)
 
+/*
+  The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.  It contains the actual
+  QGLShaderProgram along with all of the necessary parameters to use that program.
+
+  An instance of the ShaderProgramEffect class can be found in the private part of the ShaderProgram
+  class, thus abstracting much of the complexity away from the user.
+*/
 class ShaderProgramEffect : public QGLAbstractEffect
 {
 public:
@@ -81,6 +103,11 @@ private:
     int colorUniform;
 };
 
+/*
+  Construction for the ShaderProgramEffect class consists of setting the key parameter values of the
+  class to undefined.  As such, a shader program effect with no further initialisation will do nothing at all
+  until further creation of shader programs for it has been carried out.
+*/
 ShaderProgramEffect::ShaderProgramEffect()
 {
     program = 0;
@@ -97,11 +124,23 @@ ShaderProgramEffect::ShaderProgramEffect()
     colorUniform = -1;
 }
 
+/*
+  Destruction entails deletion of the underlying \l QGLShaderProgram which forms the functional core of the
+  class.
+*/
 ShaderProgramEffect::~ShaderProgramEffect()
 {
     delete program;
 }
 
+/*
+  The act of shader programe creation can be undertakn in the manner defined for the QGLShaderProgram class.
+  Failure to successfully carry out creation will result in a warning message.  Success will auto-populate the
+  parameter fields of the ShaderProgramEffect with the necessary values based on the shader program.
+
+  The vertex shader source is defined as a QString in the \a vertexShader parameter, while the fragment shader
+  is provided in the \a fragmentShader parameter.
+*/
 void ShaderProgramEffect::create
     (const QString& vertexShader, const QString& fragmentShader)
 {
@@ -126,6 +165,11 @@ void ShaderProgramEffect::create
     colorUniform = program->uniformLocation("qgl_Color");
 }
 
+/*
+  This function returns a list of the requisite parameter fields for the shader program currently defined.
+  This assists by clearly identifying the items which need to be specified for correct funcitoning of the
+  program.
+*/
 QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
 {
     QList<QGL::VertexAttribute> fields;
@@ -142,6 +186,10 @@ QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
     return fields;
 }
 
+/*
+    This activates or deactivates the shader based on the \a flag paramter.  This effectively binds
+    or releases the QGLShaderProgram.
+*/
 void ShaderProgramEffect::setActive(bool flag)
 {
     if (flag) {
@@ -155,6 +203,10 @@ void ShaderProgramEffect::setActive(bool flag)
     }
 }
 
+/*
+  This performs all updates for the shader program given a QGLPainter \a painter, and the type of update
+  being carried out based on the \a updates field, which is an enumeration of the possible painter updates.
+*/
 void ShaderProgramEffect::update
     (QGLPainter *painter, QGLPainter::Updates updates)
 {
@@ -178,6 +230,10 @@ void ShaderProgramEffect::update
     // TODO: lighting and material parameters.
 }
 
+/*
+  The function facilitates setting of a given vertex attribute \attribute with the value defined by
+  \a value.
+*/
 void ShaderProgramEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
@@ -216,6 +272,9 @@ void ShaderProgramEffect::setVertexAttribute
     }
 }
 
+/*
+  Sets the common normal (a QVector3d) for the ShaderProgramEffect to \a value.
+*/
 void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
 {
     if (normalAttr != -1) {
@@ -235,18 +294,32 @@ public:
     ShaderProgramEffect *effect;
 };
 
+/*!
+  Construction of the shader program and assignment of its \a parent object.
+*/
 ShaderProgram::ShaderProgram(QObject *parent)
     : Effect(parent)
 {
     d = new ShaderProgramPrivate();
 }
 
+/*!
+  Destruction of the ShaderProgram entails deletion of private data, and explicit deletion of the
+  underlying ShaderProgramEffect defined by the class.
+*/
 ShaderProgram::~ShaderProgram()
 {
     delete d->effect;
     delete d;
 }
 
+/*!
+  \property ShaderProgram::vertexShader
+  \brief The vertexShader property defines the source for the vertex shader to be implemented by this
+  instance of the ShaderProgram.  It is a QString which, by default, is undefined.
+
+  \sa fragmentShader()
+*/
 QString ShaderProgram::vertexShader() const
 {
     return d->vertexShader;
@@ -259,6 +332,14 @@ void ShaderProgram::setVertexShader(const QString& value)
     emit effectChanged();
 }
 
+
+/*!
+  \property ShaderProgram::fragmentShader
+  \brief The fragmentShader property defines the source for the fragment shader (ie. pixel shader) to be
+  implemented by this instance of the ShaderProgram.  It is a QString which, by default, is undefined.
+
+  \sa vertexShader()
+*/
 QString ShaderProgram::fragmentShader() const
 {
     return d->fragmentShader;
@@ -271,6 +352,10 @@ void ShaderProgram::setFragmentShader(const QString& value)
     emit effectChanged();
 }
 
+/*!
+  Enables the effect for a given \a painter.  If the effect has not been created yet, this function will
+  attempt to do so.
+*/
 void ShaderProgram::enableEffect(QGLPainter *painter)
 {
     if (!d->effect) {

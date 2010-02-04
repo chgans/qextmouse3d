@@ -103,6 +103,7 @@
         <li><a href="qt3d-viewing.html">Viewing Classes</a></li>
         <li><a href="qt3d-scene.html">Scene Management Classes</a></li>
         <li><a href="qt3d-graphicsview.html">Graphics View Integration Classes</a></li>
+		<li><a href="qt3d-qml3d.html">Qt/3d QML Support</a></li>
         <li><a href="qgl.html">QGL Namespace</a></li>
         </ul>
         </td>
