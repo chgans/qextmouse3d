@@ -45,6 +45,7 @@
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
+#include <QtCore/qpointer.h>
 
 /*!
     \internal
@@ -126,9 +127,13 @@ uint qHash(double data)
     return u.f;
 }
 
+#define ROTL10(x) (((x) << 10) | (((x) >> 22) & 0x000000ff))
+
+#define ROTL20(x) (((x) << 20) | (((x) >> 12) & 0x0000ffff))
+
 uint qHash(const QVector3D &v)
 {
-    return qHash(v.x()) ^ qHash(v.y()) ^ qHash(v.z());
+    return qHash(v.x()) ^ ROTL10(qHash(v.y())) ^ ROTL20(qHash(v.z()));
 }
 
 class QGLSectionPrivate
@@ -155,6 +160,7 @@ public:
     QHash<QVector3D, int> hash;
     QHash<int, QVector3D> norms;
     bool finalized;
+    QList<QGLSceneNode*> nodes;
 };
 
 /*!
@@ -190,6 +196,18 @@ QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
 QGLSection::~QGLSection()
 {
     delete d;
+}
+
+/*!
+    \internal
+    Reserve capacity for \a amount items.  This may avoid realloc
+    overhead when a large number of items will be appended.
+*/
+void QGLSection::reserve(int amount)
+{
+    QGeometryData::reserve(amount);
+    d->hash.reserve(amount);
+    d->norms.reserve(amount);
 }
 
 /*!
@@ -460,6 +478,42 @@ int QGLSection::indexCount() const
 
     Returns the display list associated with this section.
 */
+
+/*!
+    \internal
+    Returns a list of the QGLSceneNode instances associated with this section.
+*/
+QList<QGLSceneNode*> QGLSection::nodes() const
+{
+    return d->nodes;
+}
+
+/*!
+    \internal
+    Adds the \a node to the list of QGLSceneNode instances associated with
+    this section.
+*/
+void QGLSection::addNode(QGLSceneNode *node)
+{
+    d->nodes.append(node);
+}
+
+/*!
+    \internal
+    Deletes the \a node from the list of QGLSceneNode instances associated
+    with this section.  Returns true if the \a node was found, false
+    otherwise.
+*/
+bool QGLSection::deleteNode(QGLSceneNode *node)
+{
+    int ix = d->nodes.indexOf(node);
+    if (ix != -1)
+    {
+        d->nodes.removeAt(ix);
+        return true;
+    }
+    return false;
+}
 
 #ifndef QT_NO_DEBUG_STREAM
 /*!

@@ -411,9 +411,7 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
 
 void QGLSceneNode::deleteChild(QObject *object)
 {
-    QGLSceneNode *node = qobject_cast<QGLSceneNode*>(object);
-    if (node)
-        removeNode(node);
+    removeNode(reinterpret_cast<QGLSceneNode*>(object));
 }
 
 /*!

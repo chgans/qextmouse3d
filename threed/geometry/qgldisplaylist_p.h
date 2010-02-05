@@ -77,8 +77,7 @@ public:
     QList<QGLSection*> sections;
     QGLSection *currentSection;
     QList<QGLSceneNode*> nodeStack;
-    QGLSceneNode *currentNode;
-    QMap<QGLSection *, QGLSceneNode *> sectionNodeMap;
+    QPointer<QGLSceneNode> currentNode;
     QGLPrimitive *currentOperation;
     QGL::Operation operation;
     QList<QGLPrimitive *> primitiveQueue;

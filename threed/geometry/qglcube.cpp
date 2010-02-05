@@ -42,6 +42,7 @@
 #include "qglcube.h"
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
+#include "qvectorarray.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -133,14 +134,28 @@ QT_BEGIN_NAMESPACE
     QGLCubeFace allows greater control over the texture co-ordinates
     of a cube face than is possible with QGLCube.  The following
     example adds the left face of a cube with texture co-ordinates
-    extending from (0, 0.5) to (0.5, 1.0):
+    extending from (0, 0.5) to (0.5, 1.0) so that the just top-left
+    quadrant of the texture is addressed:
 
     \code
     QGLDisplayList list;
     QGLCubeFace left(QGLCubeFace::Left, 2);
-    left.setBottomLeftTextureCoord(0.0f, 0.5f);
-    left.setTopRightTextureCoord(0.5f, 1.0f);
+    left.setTextureCoord(QGLCubeFace::BottomLeft, 0.0f, 0.5f);
+    left.setTextureCoord(QGLCubeFace::BottomRight, 0.5f, 0.5f);
+    left.setTextureCoord(QGLCubeFace::TopRight, 0.5f, 1.0f);
     list << left;
+    \endcode
+
+    This code has the effect of rotating the texture into a
+    an orientation at 90 degrees to the default:
+
+    \code
+    QGLCubeFace right(QGLCubeFace::Right, 2);
+    right.setTextureCoord(QGLCubeFace::BottomLeft, 1.0f, 0.0f);
+    right.setTextureCoord(QGLCubeFace::BottomRight, 1.0f, 1.0f);
+    right.setTextureCoord(QGLCubeFace::TopRight, 0.0f, 1.0f);
+    right.setTextureCoord(QGLCubeFace::TopLeft, 0.0f, 0.0f);
+    cube << right;
     \endcode
 
     \sa QGLCube
@@ -159,11 +174,68 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLCubeFace::QGLCubeFace(QGLCubeFace::Face face, qreal size)
+    \enum QGLCubeFace::Corner
+    This enum specifies the corner of the QGLCubeFace to apply texture coordinates.
 
+    \value BottomRight The bottom-right corner: default texture coords \c{(1.0, 0.0)}.
+    \value TopRight  The top-right corner of the face: default texture coords \c{(1.0, 1.0)}.
+    \value TopLeft  The top-left corner of the face: default texture coords \c{(0.0, 1.0)}.
+    \value BottomLeft  The bottom-left corner of the face: default texture coords \c{(0.0, 0.0)}.
+*/
+static const int vertexDataLen = 6 * 4 * 3;
+
+static const float vertexData[vertexDataLen] = {
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, 0.5f,
+    -0.5f, 0.5f, 0.5f,
+    -0.5f, 0.5f, -0.5f,
+
+    -0.5f, 0.5f, -0.5f,
+    -0.5f, 0.5f, 0.5f,
+    0.5f, 0.5f, 0.5f,
+    0.5f, 0.5f, -0.5f,
+
+    0.5f, 0.5f, -0.5f,
+    0.5f, 0.5f, 0.5f,
+    0.5f, -0.5f, 0.5f,
+    0.5f, -0.5f, -0.5f,
+
+    0.5f, -0.5f, -0.5f,
+    0.5f, -0.5f, 0.5f,
+    -0.5f, -0.5f, 0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    0.5f, -0.5f, 0.5f,
+    0.5f, 0.5f, 0.5f,
+    -0.5f, 0.5f, 0.5f,
+    -0.5f, -0.5f, 0.5f,
+
+    0.5f, 0.5f, -0.5f,
+    0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, 0.5f, -0.5f
+};
+
+static const int texCoordDataLen = 4 * 2;
+
+static const float texCoordData[texCoordDataLen] = {
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f
+};
+
+/*!
     Constructs a specific \a face of a regular cube of
     \a size units on a side.
 */
+QGLCubeFace::QGLCubeFace(QGLCubeFace::Face face, qreal size)
+    : m_size(size)
+    , m_face(face)
+    , m_texCoords(QVector2DArray::fromRawData(
+            reinterpret_cast<const QVector2D *>(texCoordData), 4))
+{
+}
 
 /*!
     \fn qreal QGLCubeFace::size() const
@@ -198,101 +270,49 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QVector2D QGLCubeFace::bottomLeftTextureCoord() const
+    \fn QVector2D QGLCubeFace::textureCoord(QGLCubeFace::Corner corner) const
 
-    Returns the texture co-ordinate of the bottom-left corner
-    of the cube face.  The default value is (0, 0).
+    Returns the texture co-ordinate of the \a corner
+    of the cube face.  See the \l{QGLCubeFace::Corner}{corner enum} for
+    default values for each corner.
 
-    \sa setBottomLeftTextureCoord(), topRightTextureCoord()
+    \sa setTextureCoord()
 */
 
 /*!
-    \fn void QGLCubeFace::setBottomLeftTextureCoord(const QVector2D& value)
+    \fn void QGLCubeFace::setTextureCoord(QGLCubeFace::Corner corner, const QVector2D& value)
 
-    Sets the texture co-ordinate of the bottom-left corner of
+    Sets the texture co-ordinate of the \a corner of
     the cube face to \a value.
 
-    \sa bottomLeftTextureCoord(), setTopRightTextureCoord()
+    \sa textureCoord()
 */
 
 /*!
-    \fn void QGLCubeFace::setBottomLeftTextureCoord(qreal x, qreal y)
+    \fn void QGLCubeFace::setTextureCoord(QGLCubeFace::Corner corner, qreal x, qreal y)
     \overload
 
-    Sets the texture co-ordinate of the bottom-left corner of
+    Sets the texture co-ordinate of the \a corner of
     the cube face to (\a x, \a y).
 */
 
 /*!
-    \fn QVector2D QGLCubeFace::topRightTextureCoord() const
+    \fn QVector2DArray QGLCubeFace::textureCoords() const
 
-    Returns the texture co-ordinate of the top-right corner
-    of the cube face.  The default value is (1, 1).
+    Returns all the four texture coordinates of the corners of the face,
+    as a QVector2DArray.  The individual corners can be indexed with the
+    QGLCubeFace::Corner enum to find each corner.
 
-    \sa setTopRightTextureCoord(), bottomLeftTextureCoord()
+    \sa setTextureCoords()
 */
 
 /*!
-    \fn void QGLCubeFace::setTopRightTextureCoord(const QVector2D& value)
+    \fn void QGLCubeFace::setTextureCoords(const QVector2DArray &array)
 
-    Sets the texture co-ordinate of the top-right corner of
-    the cube face to \a value.
-
-    \sa topRightTextureCoord(), setBottomLeftTextureCoord()
+    Sets all the four texture coordinates of the corners of the face
+    to the values in \a array.  The \a array is expected to be in the
+    same order as specified by the QGLCubeFace::Corner enum.
 */
-
-/*!
-    \fn void QGLCubeFace::setTopRightTextureCoord(qreal x, qreal y)
-    \overload
-
-    Sets the texture co-ordinate of the top-right corner of
-    the cube face to (\a x, \a y).
-*/
-
-#define QGL_CUBE_SIZE (6 * 6 * (3 + 3 + 2))
-static float const cubeVertices[QGL_CUBE_SIZE] = {
-    -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-    -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-    0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-
-    0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-    0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-    0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-
-    0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-    0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-
-    0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-
-    0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-    0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f
-};
 
 /*!
     \relates QGLCube
@@ -300,27 +320,30 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
     Builds the geometry for \a cube within the specified
     display \a list.
 
-    This operator specifies the positions, normals, and 2D texture
+    This operator specifies the positions, and 2D texture
     co-ordinates for all of the vertices that make up the cube.
+    Normals will be calculated by the \a list, depending on its
+    current section's smoothing setting.
 
-    For each face, the texture co-ordinate (0, 0) corresponds to
-    the bottom-left corner of each side and the texture co-ordinate
-    (1, 1) corresponds to the upper-right corner of each side.
+    See the documentation for QGLCubeFace to determine the orientation
+    of the faces with respect to texture coordinates.
 */
 QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
 {
-    QGLOperation op(&list, QGL::TRIANGLE);
-    qreal size = cube.size();
-    for (int vertex = 0; vertex < QGL_CUBE_SIZE; vertex += 8) {
-        op.addVertex(QVector3D(cubeVertices[vertex] * size,
-                               cubeVertices[vertex + 1] * size,
-                               cubeVertices[vertex + 2] * size));
-        op.addNormal(QVector3D(cubeVertices[vertex + 3],
-                               cubeVertices[vertex + 4],
-                               cubeVertices[vertex + 5]));
-        op.addTexCoord(QVector2D(cubeVertices[vertex + 6],
-                                 cubeVertices[vertex + 7]));
-    }
+    QGLOperation op(&list, QGL::QUAD);
+
+    QVector3DArray vrts = QVector3DArray::fromRawData(
+            reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
+    vrts.scale(cube.size());
+
+    op << vrts;
+
+    QVector2DArray texx = QVector2DArray::fromRawData(
+            reinterpret_cast<const QVector2D *>(texCoordData), texCoordDataLen / 2);
+
+    for (int i = 0; i < 6; ++i)
+        op << texx;
+
     return list;
 }
 
@@ -335,24 +358,16 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
 */
 QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
 {
-    QGLOperation op(&list, QGL::TRIANGLE);
-    int offset = int(face.face()) * 8 * 6;
-    qreal size = face.size();
-    QVector2D bottomLeft = face.bottomLeftTextureCoord();
-    QVector2D topRight = face.topRightTextureCoord();
-    for (int vertex = 0; vertex < 6; ++vertex, offset += 8) {
-        op.addVertex(QVector3D(cubeVertices[offset] * size,
-                               cubeVertices[offset + 1] * size,
-                               cubeVertices[offset + 2] * size));
-        op.addNormal(QVector3D(cubeVertices[offset + 3],
-                               cubeVertices[offset + 4],
-                               cubeVertices[offset + 5]));
-        qreal tx = (cubeVertices[offset + 6] == 0.0f
-                        ? bottomLeft.x() : topRight.x());
-        qreal ty = (cubeVertices[offset + 7] == 0.0f
-                        ? bottomLeft.y() : topRight.y());
-        op.addTexCoord(QVector2D(tx, ty));
-    }
+    QGLOperation op(&list, QGL::QUAD);
+
+    QVector3DArray vrts = QVector3DArray::fromRawData(
+            reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
+    vrts.scale(face.size());
+
+    op << vrts.mid(face.face() * 4, 4);
+
+    op << face.textureCoords();
+
     return list;
 }
 

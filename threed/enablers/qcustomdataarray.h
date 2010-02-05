@@ -410,6 +410,11 @@ inline const void *QCustomDataArray::data() const
     return m_array.constData();
 }
 
+#ifndef QT_NO_DEBUG_STREAM
+#include <QtCore/qdebug.h>
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QCustomDataArray &array);
+#endif
+
 QT_END_NAMESPACE
 
 QT_END_HEADER

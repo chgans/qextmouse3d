@@ -67,12 +67,15 @@ class QGLPainter;
 class QGLDisplayList;
 class QGLSectionPrivate;
 class QGeometryData;
+class QGLSceneNode;
 
 class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
     QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
     ~QGLSection();
+
+    void reserve(int amount);
 
     QGLIndexArray indices() const;
     int indexCount() const;
@@ -101,6 +104,9 @@ public:
     }
     inline QGL::Smoothing smoothing() const;
     inline QGLDisplayList *displayList() const;
+    QList<QGLSceneNode*> nodes() const;
+    void addNode(QGLSceneNode *node);
+    bool deleteNode(QGLSceneNode *node);
 private:
     Q_DISABLE_COPY(QGLSection);
     friend class QGLDisplayList;
