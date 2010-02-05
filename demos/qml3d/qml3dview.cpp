@@ -125,7 +125,7 @@ void Qml3dView::updateGL()
 }
 
 /*!
-    Initialise the openGL environment/viewport.
+    Initialise the openGL environment/viewport with \a painter.
 */
 void Qml3dView::initializeGL(QGLPainter *painter)
 {
@@ -235,6 +235,11 @@ void Qml3dView::loaded()
     Sets the viewport associated with this view to \a value.
 */
 
+/*!
+  \fn int Qml3dView::nextPickId();
+
+  Increments the pick ID number and returns this new value.
+*/
 
 
 QT_END_NAMESPACE

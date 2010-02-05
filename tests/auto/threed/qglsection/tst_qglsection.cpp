@@ -42,7 +42,7 @@
 #include <QtTest/QtTest>
 #include "qglsection_p.h"
 #include "qgldisplaylist.h"
-
+#include "qgeometrydata.h"
 #include "qtest_helpers_p.h"
 
 class tst_QGLSection : public QObject

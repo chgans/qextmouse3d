@@ -68,7 +68,7 @@ class QGLDisplayList;
 class QGLSectionPrivate;
 class QGeometryData;
 
-class QGLSection : public QGeometryData
+class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
     QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);

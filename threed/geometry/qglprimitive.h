@@ -72,7 +72,7 @@ namespace QGL
 }
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::OperationFlags);
 
-class QGLPrimitive : public QGeometryData
+class Q_QT3D_EXPORT QGLPrimitive : public QGeometryData
 {
 public:
     QGLPrimitive();
