@@ -693,10 +693,6 @@ int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
             top->disconnect(this, SLOT(deleteNode(QObject*)));
             delete top;
         }
-        // when nodes are destroyed they call on their parents to
-        // remove them from the childNodes() list.  fetch the list
-        // again to see if there's any items left
-        children = top->childNodes();
     }
     return totalItems;
 }
@@ -773,9 +769,7 @@ void QGLDisplayList::finalize()
             QGLIndexArray indices = s->indices();
             const QGLIndexArray::ElementType *vi = indices.constData();
             int icnt = indices.size();
-            qDebug() << "before nodeCount";
             int ncnt = nodeCount(s->nodes());
-            qDebug() << "after nodeCount";
             int scnt = s->count();
             if (scnt == 0 || icnt == 0 || ncnt == 0)
             {
@@ -853,8 +847,7 @@ void QGLDisplayList::addSection(QGLSection *sec)
     d->currentSection = sec;
     d->sections.append(sec);
     d->nodeStack.clear();
-    sec->addNode(newNode());
-    qDebug() << "##############  addSection" << d->sections.count() << "#################";
+    newNode();
 }
 
 /*!
@@ -908,6 +901,8 @@ QGLSceneNode *QGLDisplayList::newNode()
     d->currentNode->setStart(d->currentSection->indexCount());
     connect(d->currentNode, SIGNAL(destroyed(QObject*)),
             this, SLOT(deleteNode(QObject*)));
+    if (d->nodeStack.count() == 0)
+        d->currentSection->addNode(d->currentNode);
     return d->currentNode;
 }
 
@@ -995,6 +990,8 @@ QGLSceneNode *QGLDisplayList::popNode()
     d->currentNode = s->clone(parentNode);
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
+    if (d->nodeStack.count() == 0)
+        d->currentSection->addNode(d->currentNode);
     return d->currentNode;
 }
 

@@ -61,7 +61,6 @@ private slots:
     void newSection();
     void currentNode();
     void newNode();
-    void newNodeEmptyPrev();
     void pushNode();
     void popNode();
     void addTriangle();
@@ -188,43 +187,6 @@ void tst_QGLDisplayList::newNode()
     QVERIFY(nodes.contains(node));
     QVERIFY(nodes.contains(node2));
 #endif
-}
-
-void tst_QGLDisplayList::newNodeEmptyPrev()
-{
-    TestQGLDisplayList displayList;
-    displayList.newSection();
-    QPointer<QGLSceneNode> node = displayList.newNode();
-
-    node->setEffect(QGL::LitDecalTexture2D);
-    QGLAbstractEffect *eff = new TestEffect;
-    node->setUserEffect(eff);
-    node->setMaterial(5);
-
-    // empty nodes will be deleted during finalize
-    QGLSceneNode *node2 = displayList.newNode();
-
-    {
-        QGLOperation op(&displayList, QGL::TRIANGLE);
-        op << QVector3D(-1.0f, -1.0f, 1.0f);
-        op << QVector3D(1.0f, -1.0f, 1.0f);
-        op << QVector3D(1.0f, -1.0f, 1.0f);
-    }
-
-    qDebug() << displayList.currentSection();
-    displayList.finalize();
-
-    // has been deleted because its empty
-    QVERIFY(node.isNull());
-
-    QList<QGLSceneNode*> nodes = displayList.childNodes();
-    QVERIFY(!nodes.contains(node.data()));
-    QVERIFY(nodes.contains(node2));
-
-    // even tho node was deleted, node2 still works and is default
-    QCOMPARE(node2->effect(), QGL::LitMaterial); // cloned from previous
-    QCOMPARE(node2->userEffect(), (QGLAbstractEffect*)0);
-    QCOMPARE(node2->material(), -1);
 }
 
 void tst_QGLDisplayList::pushNode()
@@ -726,11 +688,15 @@ void tst_QGLDisplayList::finalize()
 
     displayList.newSection();
     QGLSceneNode *node2 = displayList.currentNode();
+    qDebug() << "node2" << node2;
 
     QGLPrimitive s;
     s.appendVertex(a, b, c, d);
     s.appendVertex(a);
     displayList.addQuadsZipped(s, s.translated(-n));
+
+    QPointer<QGLSceneNode> nodeEmpty0 = displayList.newNode();
+    qDebug() << "nodeEmpty0" << nodeEmpty0.data();
 
     displayList.newSection();
     QGLSceneNode *node3 = displayList.currentNode();
@@ -744,7 +710,13 @@ void tst_QGLDisplayList::finalize()
     // reverse winding, backwards normal == n10
     displayList.addTriangle(q);
 
+    QPointer<QGLSceneNode> nodeEmpty1 = displayList.pushNode();
+
     displayList.finalize();
+
+    QCOMPARE(nodeEmpty0.data(), (QGLSceneNode*)0);
+    QCOMPARE(nodeEmpty1.data(), (QGLSceneNode*)0);
+
     QCOMPARE(displayList.sections().count(), 0);
 
     QGLGeometry *geom = displayList.geometry();
