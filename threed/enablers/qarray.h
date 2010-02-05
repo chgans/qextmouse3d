@@ -590,7 +590,7 @@ template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
 {
     int size = m_end - m_start;
-    int capacity = qArrayAllocMore(this->capacity(), needed);
+    int capacity = qArrayAllocMore(size, needed);
     if (!m_data || m_data->ref != 1) {
         // Copy preallocated, raw, or shared data and expand the capacity.
         Data *data = reinterpret_cast<Data *>

@@ -43,7 +43,9 @@
 #define QGLCUBE_H
 
 #include "qt3dglobal.h"
+
 #include <QtGui/qvector2d.h>
+#include "qvectorarray.h"
 
 QT_BEGIN_HEADER
 
@@ -78,37 +80,78 @@ public:
         Back
     };
 
-    explicit QGLCubeFace(QGLCubeFace::Face face, qreal size = 1.0f)
-        : m_size(size), m_face(face),
-          m_bottomLeftTextureCoord(0.0f, 0.0f),
-          m_topRightTextureCoord(1.0f, 1.0f) {}
+    enum Corner
+    {
+        BottomRight,
+        TopRight,
+        TopLeft,
+        BottomLeft
+    };
 
-    qreal size() const { return m_size; }
-    void setSize(qreal size) { m_size = size; }
+    explicit QGLCubeFace(QGLCubeFace::Face face, qreal size = 1.0f);
 
-    QGLCubeFace::Face face() const { return m_face; }
-    void setFace(QGLCubeFace::Face face) { m_face = face; }
+    inline qreal size() const;
+    inline void setSize(qreal size);
 
-    QVector2D bottomLeftTextureCoord() const
-        { return m_bottomLeftTextureCoord; }
-    void setBottomLeftTextureCoord(const QVector2D& value)
-        { m_bottomLeftTextureCoord = value; }
-    void setBottomLeftTextureCoord(qreal x, qreal y)
-        { m_bottomLeftTextureCoord = QVector2D(x, y); }
+    inline QGLCubeFace::Face face() const;
+    inline void setFace(QGLCubeFace::Face face);
 
-    QVector2D topRightTextureCoord() const
-        { return m_topRightTextureCoord; }
-    void setTopRightTextureCoord(const QVector2D& value)
-        { m_topRightTextureCoord = value; }
-    void setTopRightTextureCoord(qreal x, qreal y)
-        { m_topRightTextureCoord = QVector2D(x, y); }
+    inline QVector2D textureCoord(Corner corner) const;
+    inline void setTextureCoord(Corner corner, const QVector2D& value);
+    inline void setTextureCoord(Corner corner, qreal x, qreal y);
 
+    inline QVector2DArray textureCoords() const;
+    inline void setTextureCoords(const QVector2DArray &array);
 private:
     qreal m_size;
     QGLCubeFace::Face m_face;
-    QVector2D m_bottomLeftTextureCoord;
-    QVector2D m_topRightTextureCoord;
+    QVector2DArray m_texCoords;
 };
+
+inline qreal QGLCubeFace::size() const
+{
+    return m_size;
+}
+
+inline void QGLCubeFace::setSize(qreal size)
+{
+    m_size = size;
+}
+
+inline QGLCubeFace::Face QGLCubeFace::face() const
+{
+    return m_face;
+}
+
+inline void QGLCubeFace::setFace(QGLCubeFace::Face face)
+{
+    m_face = face;
+}
+
+inline QVector2D QGLCubeFace::textureCoord(QGLCubeFace::Corner coord) const
+{
+    return m_texCoords[coord];
+}
+
+inline void QGLCubeFace::setTextureCoord(QGLCubeFace::Corner coord, const QVector2D& value)
+{
+    m_texCoords[coord] = value;
+}
+
+inline void QGLCubeFace::setTextureCoord(QGLCubeFace::Corner coord, qreal x, qreal y)
+{
+    m_texCoords[coord] = QVector2D(x, y);
+}
+
+inline QVector2DArray QGLCubeFace::textureCoords() const
+{
+    return m_texCoords;
+}
+
+inline void QGLCubeFace::setTextureCoords(const QVector2DArray &array)
+{
+    m_texCoords = array;
+}
 
 Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube);
 Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face);

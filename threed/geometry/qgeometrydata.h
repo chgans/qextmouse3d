@@ -153,9 +153,19 @@ public:
     int count(QGL::VertexAttribute field) const;
 private:
     void detach();
+#ifndef QT_NO_DEBUG
+    void check() const;
+#else
+    void check() const {}
+#endif
+    friend class QLogicalVertex;
 
     QGeometryDataPrivate *d;
 };
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGeometryData &vertices);
+#endif
 
 QT_END_NAMESPACE
 

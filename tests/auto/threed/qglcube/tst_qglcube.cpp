@@ -116,6 +116,52 @@ static int findVertex(const QGLVertexArray &ary, const QVector3D &v, const QVect
         if (qFuzzyCompare(v, ary.vector3DAt(i, verts)) && qFuzzyCompare(n, ary.vector3DAt(i, norms)))
             result = i;
     }
+    if (result == -1)
+    {
+        qDebug() << "Could not find expected vertex" << v << "with normal" << n;
+    }
+    return result;
+}
+
+static int findFace(const QVector3DArray &face, const QGLIndexArray &indx, const QGLVertexArray &vrts)
+{
+    Q_ASSERT(face.count() == 3);
+    QGLVertexDescription desc = vrts.fields();
+    int v = desc.indexOf(QGL::Position);
+    Q_ASSERT(v != -1);
+    int result = -1;
+    int t[3] = { 0 };
+    int cnt = 0;
+    for (int i = 0; i < indx.size(); ++i)
+    {
+        if (cnt < 3)
+        {
+            // accumulate triangle indexes into t
+            t[cnt++] = indx[i];
+        }
+        else
+        {
+            // for each set of 3 indexes try all three orderings to see if it matches face
+            for (int j = 0; j < 3; ++j)
+            {
+                QVector3D a = vrts.vector3DAt(t[j], v);
+                QVector3D b = vrts.vector3DAt(t[(j + 1) % 3], v);
+                QVector3D c = vrts.vector3DAt(t[(j + 2) % 3], v);
+                if (qFuzzyCompare(a, face[0]) &&
+                    qFuzzyCompare(b, face[1]) &&
+                    qFuzzyCompare(c, face[2]))
+                {
+                    result = i;
+                    break;
+                }
+            }
+            cnt = 0;
+        }
+    }
+    if (result == -1)
+    {
+        qDebug() << "Could not find expected face" << face;
+    }
     return result;
 }
 
@@ -199,7 +245,9 @@ void tst_QGLCube::face()
         list << cfL << cfT << cfR << cfBt << cfF << cfBk;
         list.finalize();
         QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLIndexArray indx = list.geometry()->indexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
+        QVector3DArray fm;
         for (int i = 0; i < QGL_CUBE_SIZE; i += 8)
         {
             const QVector3D *vdata = reinterpret_cast<const QVector3D*>(cubeVertices + i);
@@ -207,6 +255,16 @@ void tst_QGLCube::face()
             int ix = findVertex(ary, vdata[0], vdata[1]);
             QVERIFY(ix != -1);
             QCOMPARE(ary.vector2DAt(ix, texx), tdata[0]);
+            if (fm.count() == 3)
+            {
+                int ifx = findFace(fm, indx, ary);
+                QVERIFY(ifx != -1);
+                fm.clear();
+            }
+            else
+            {
+                fm.append(vdata[0]);
+            }
         }
     }
     qreal size0 = 3.2f;
@@ -254,31 +312,24 @@ void tst_QGLCube::face()
 
 void tst_QGLCube::texCoords()
 {
+    QGLCubeFace cfR(QGLCubeFace::Right);
+    QCOMPARE(cfR.textureCoord(QGLCubeFace::TopRight), QVector2D(1.0f, 1.0f));
+    QCOMPARE(cfR.textureCoord(QGLCubeFace::BottomLeft), QVector2D());
+
+    QGLCubeFace::Face f = QGLCubeFace::Left;
     QGLCubeFace cfL(QGLCubeFace::Left);
     QVector2D leftFaceBL(0.2f, 0.2f);
     QVector2D leftFaceTR(0.8f, 0.8f);
     QVector2D leftFaceBR(0.8f, 0.2f);
     QVector2D leftFaceTL(0.2f, 0.8f);
-    cfL.setBottomLeftTextureCoord(leftFaceBL.x(), leftFaceBL.y());
-    cfL.setTopRightTextureCoord(leftFaceTR.x(), leftFaceTR.y());
-    QCOMPARE(cfL.topRightTextureCoord(), leftFaceTR);
-    QCOMPARE(cfL.bottomLeftTextureCoord(), leftFaceBL);
-
-    QGLCubeFace cfT(QGLCubeFace::Top);
-    QVector2D topFaceBL(1.0f, 0.0f);
-    QVector2D topFaceTR(0.0f, 1.0f);
-    QVector2D topFaceBR(0.0, 0.0f);
-    QVector2D topFaceTL(1.0f, 1.0f);
-    cfT.setBottomLeftTextureCoord(topFaceBL);
-    cfT.setTopRightTextureCoord(topFaceTR);
-    QCOMPARE(cfT.topRightTextureCoord(), topFaceTR);
-    QCOMPARE(cfT.bottomLeftTextureCoord(), topFaceBL);
-
-    QGLCubeFace cfR(QGLCubeFace::Right);
-    QCOMPARE(cfR.topRightTextureCoord(), QVector2D(1.0f, 1.0f));
-    QCOMPARE(cfR.bottomLeftTextureCoord(), QVector2D());
-
-    QGLCubeFace::Face f = QGLCubeFace::Left;
+    cfL.setTextureCoord(QGLCubeFace::BottomLeft, leftFaceBL.x(), leftFaceBL.y());
+    cfL.setTextureCoord(QGLCubeFace::BottomRight, leftFaceBR.x(), leftFaceBR.y());
+    cfL.setTextureCoord(QGLCubeFace::TopRight, leftFaceTR.x(), leftFaceTR.y());
+    cfL.setTextureCoord(QGLCubeFace::TopLeft, leftFaceTL.x(), leftFaceTL.y());
+    QCOMPARE(cfL.textureCoord(QGLCubeFace::BottomLeft), leftFaceBL);
+    QCOMPARE(cfL.textureCoord(QGLCubeFace::BottomRight), leftFaceBR);
+    QCOMPARE(cfL.textureCoord(QGLCubeFace::TopRight), leftFaceTR);
+    QCOMPARE(cfL.textureCoord(QGLCubeFace::TopLeft), leftFaceTL);
     {
         int begin = f * 8 * 6;
         QGLDisplayList list;
@@ -314,6 +365,19 @@ void tst_QGLCube::texCoords()
     }
 
     f = QGLCubeFace::Top;
+    QGLCubeFace cfT(QGLCubeFace::Top);
+    QVector2D topFaceBL(1.0f, 0.0f);
+    QVector2D topFaceTR(0.0f, 1.0f);
+    QVector2D topFaceBR(0.0, 0.0f);
+    QVector2D topFaceTL(1.0f, 1.0f);
+    cfT.setTextureCoord(QGLCubeFace::BottomLeft, topFaceBL);
+    cfT.setTextureCoord(QGLCubeFace::BottomRight, topFaceBR);
+    cfT.setTextureCoord(QGLCubeFace::TopRight, topFaceTR);
+    cfT.setTextureCoord(QGLCubeFace::TopLeft, topFaceTL);
+    QCOMPARE(cfT.textureCoord(QGLCubeFace::BottomLeft), topFaceBL);
+    QCOMPARE(cfT.textureCoord(QGLCubeFace::BottomRight), topFaceBR);
+    QCOMPARE(cfT.textureCoord(QGLCubeFace::TopRight), topFaceTR);
+    QCOMPARE(cfT.textureCoord(QGLCubeFace::TopLeft), topFaceTL);
     {
         int begin = f * 8 * 6;
         QGLDisplayList list;

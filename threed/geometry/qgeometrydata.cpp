@@ -316,6 +316,7 @@ QLogicalVertex QGeometryData::vertexAt(int i) const
 QGLVertexArray QGeometryData::toVertexArray() const
 {
     QGLVertexArray array;
+    check();
     if (d)
     {
         const quint32 mask = 0x01;
@@ -326,25 +327,6 @@ QGLVertexArray QGeometryData::toVertexArray() const
             {
                 QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
                 array.addField(attr, d->size[field]);
-#ifndef QT_NO_DEBUG
-                if (attr < QGL::TextureCoord0)
-                {
-                    if (attr == QGL::Position)
-                        Q_ASSERT(d->vertices.count() == d->count);
-                    else if (attr == QGL::Normal)
-                        Q_ASSERT(d->normals.count() == d->count);
-                    else
-                        Q_ASSERT(d->colors.count() == d->count);
-                }
-                else if (attr < QGL::CustomVertex0)
-                {
-                    Q_ASSERT(d->textures.at(d->key[field]).count() == d->count);
-                }
-                else
-                {
-                    Q_ASSERT(d->attributes.at(d->key[field]).count() == d->count);
-                }
-#endif
             }
         }
         for (int index = 0; index < d->count; ++index)
@@ -385,6 +367,7 @@ QGLVertexArray QGeometryData::toVertexArray() const
 */
 void QGeometryData::normalizeNormals()
 {
+    check();
     if (d)  // nothng to do if its null
     {
         detach();
@@ -448,6 +431,8 @@ QVector3D QGeometryData::commonNormal() const
 QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
 {
     QGeometryData res;
+    check();
+    other.check();
     if (d && other.d)
     {
         int cnt = qMax(d->count, other.d->count);
@@ -530,6 +515,8 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
 */
 void QGeometryData::zipWith(const QGeometryData &other)
 {
+    check();
+    other.check();
     if (d && other.d)
     {
         detach();
@@ -1439,3 +1426,100 @@ void QGeometryData::detach()
         }
     }
 }
+
+#ifndef QT_NO_DEBUG
+void QGeometryData::check() const
+{
+    if (!d)
+        return;
+    const quint32 mask = 0x01;
+    quint32 fields = d->fields;
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (mask & fields)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            if (attr < QGL::TextureCoord0)
+            {
+                if (attr == QGL::Position)
+                {
+                    if (d->vertices.count() < d->count)
+                        qWarning("QGeometryData - expected %d vertices, only %d found!",
+                                 d->count, d->vertices.count());
+                }
+                else if (attr == QGL::Normal)
+                {
+                    if (d->normals.count() < d->count)
+                        qWarning("QGeometryData - expected %d normals, only %d found!",
+                                 d->count, d->normals.count());
+                }
+                else
+                {
+                    if (d->colors.count() < d->count)
+                        qWarning("QGeometryData - expected %d colors, only %d found!",
+                                 d->count, d->colors.count());
+                }
+            }
+            else if (attr < QGL::CustomVertex0)
+            {
+                if (d->textures.at(d->key[field]).count() < d->count)
+                    qWarning("QGeometryData - expected %d texture coordinates for"
+                             "QGL::TextureCoord%d, only %d found!",
+                             d->count, field - QGL::TextureCoord0, d->textures.at(d->key[field]).count());
+            }
+            else
+            {
+                if (d->attributes.at(d->key[field]).count() < d->count)
+                    qWarning("QGeometryData - expected %d attributes for"
+                             "QGL::CustomVertex%d, only %d found!",
+                             d->count, field - QGL::CustomVertex0, d->attributes.at(d->key[field]).count());
+            }
+        }
+    }
+}
+#endif
+
+#ifndef QT_NO_DEBUG_STREAM
+QDebug operator<<(QDebug dbg, const QGeometryData &vertices)
+{
+    dbg << "QGeometryData" << &vertices << " size:" << vertices.count();
+    quint32 fields = vertices.fields();
+    const quint32 mask = 0x01;
+    for (int field = 0; fields; ++field, fields >>= 1)
+    {
+        if (mask & fields)
+        {
+            QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            if (attr < QGL::TextureCoord0)
+            {
+                if (attr == QGL::Position)
+                {
+                    dbg << "    vertices:" << vertices.count(attr);
+                    dbg << vertices.vertices();
+                }
+                else if (attr == QGL::Normal)
+                {
+                    dbg << "    normals:" << vertices.count(attr);
+                    dbg << vertices.normals();
+                }
+                else
+                {
+                    dbg << "    colors:" << vertices.count(attr);
+                    dbg << vertices.colors();
+                }
+            }
+            else if (attr < QGL::CustomVertex0)
+            {
+                dbg << "    textures:" << (attr - QGL::TextureCoord0) << vertices.count(attr);
+                dbg << vertices.texCoords(attr);
+            }
+            else
+            {
+                dbg << "    custom:" << (attr - QGL::CustomVertex0) << vertices.count(attr);
+                dbg << vertices.texCoords(attr);
+            }
+        }
+    }
+    return dbg;
+}
+#endif
