@@ -91,6 +91,7 @@ private slots:
     void fill();
     void unsharedArray();
     void zeroPrealloc();
+    void exceptions();
 
     // QVarLengthArray simulation tests.
     void QVarLengthArray_append();
@@ -111,6 +112,21 @@ private slots:
 // This must match the default for PreallocSize.
 static const int ExpectedMinCapacity = 8;
 
+// Exception type that is thrown by ComplexValue.
+class ComplexValueException
+{
+public:
+    ComplexValueException(int value, bool inCtor)
+        : m_value(value), m_inCtor(inCtor) {}
+
+    int value() const { return m_value; }
+    bool inConstructor() const { return m_inCtor; }
+
+private:
+    int m_value;
+    bool m_inCtor;
+};
+
 // Complex type that helps the tests determine if QArray is calling
 // constructors, destructors, and copy constructors in the right places.
 class ComplexValue
@@ -122,25 +138,46 @@ public:
         Init,
         Copy,
         CopiedAgain,
-        Assign
+        Assign,
+        ThrowInCtor,
+        ThrowOnCopy
     };
 
     static int destroyCount;
 
     ComplexValue() : m_value(-1), m_mode(Default) {}
     ComplexValue(int value) : m_value(value), m_mode(Init) {}
+#ifndef QT_NO_EXCEPTIONS
+    ComplexValue(int value, Mode mode) : m_value(value), m_mode(mode)
+    {
+        if (mode == ThrowInCtor)
+            throw new ComplexValueException(value, true);
+    }
+#endif
     ComplexValue(const ComplexValue& other)
         : m_value(other.m_value)
     {
         if (other.m_mode == Copy || other.m_mode == CopiedAgain)
             m_mode = CopiedAgain;
+#ifndef QT_NO_EXCEPTIONS
+        else if (other.m_mode == ThrowOnCopy)
+            throw new ComplexValueException(other.m_value, false);
+#endif
         else
             m_mode = Copy;
     }
     ~ComplexValue() { ++destroyCount; }
 
     ComplexValue& operator=(const ComplexValue& other)
-        { m_value = other.m_value; m_mode = Assign; return *this; }
+    {
+#ifndef QT_NO_EXCEPTIONS
+        if (other.m_mode == ThrowOnCopy)
+            throw new ComplexValueException(other.m_value, false);
+#endif
+        m_value = other.m_value;
+        m_mode = Assign;
+        return *this;
+    }
 
     int value() const { return m_value; }
     Mode mode() const { return m_mode; }
@@ -1882,6 +1919,135 @@ void tst_QArray::zeroPrealloc()
         QCOMPARE(array4[index], 3.0f);
     array4.clear();
     QCOMPARE(array4.size(), 0);
+}
+
+void tst_QArray::exceptions()
+{
+#ifndef QT_NO_EXCEPTIONS
+
+    // Check that an exception thrown during append() will leave
+    // the array in the pre-append state.
+    QArray<ComplexValue> array;
+    try {
+        array.append(ComplexValue(42, ComplexValue::ThrowOnCopy));
+        QFAIL("should not be able to append - A");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 0);
+    }
+    try {
+        array.append(ComplexValue(42, ComplexValue::ThrowOnCopy), ComplexValue(24));
+        QFAIL("should not be able to append - B");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 0);
+    }
+    try {
+        array.append(ComplexValue(24), ComplexValue(42, ComplexValue::ThrowOnCopy));
+        QFAIL("should not be able to append - C");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 1);
+        QCOMPARE(array.at(0).value(), 24);
+    }
+    array.clear();
+    try {
+        array.append(ComplexValue(42, ComplexValue::ThrowOnCopy),
+                     ComplexValue(24),
+                     ComplexValue(16));
+        QFAIL("should not be able to append - D");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 0);
+    }
+    try {
+        array.append(ComplexValue(24),
+                     ComplexValue(42, ComplexValue::ThrowOnCopy),
+                     ComplexValue(16));
+        QFAIL("should not be able to append - E");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 1);
+        QCOMPARE(array.at(0).value(), 24);
+    }
+    array.clear();
+    try {
+        array.append(ComplexValue(24),
+                     ComplexValue(16),
+                     ComplexValue(42, ComplexValue::ThrowOnCopy));
+        QFAIL("should not be able to append - F");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 2);
+        QCOMPARE(array.at(0).value(), 24);
+        QCOMPARE(array.at(1).value(), 16);
+    }
+    array.clear();
+    try {
+        array.append(ComplexValue(42, ComplexValue::ThrowOnCopy),
+                     ComplexValue(24),
+                     ComplexValue(82),
+                     ComplexValue(16));
+        QFAIL("should not be able to append - G");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 0);
+    }
+    try {
+        array.append(ComplexValue(24),
+                     ComplexValue(42, ComplexValue::ThrowOnCopy),
+                     ComplexValue(82),
+                     ComplexValue(16));
+        QFAIL("should not be able to append - H");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 1);
+        QCOMPARE(array.at(0).value(), 24);
+    }
+    array.clear();
+    try {
+        array.append(ComplexValue(24),
+                     ComplexValue(16),
+                     ComplexValue(42, ComplexValue::ThrowOnCopy),
+                     ComplexValue(82));
+        QFAIL("should not be able to append - I");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 2);
+        QCOMPARE(array.at(0).value(), 24);
+        QCOMPARE(array.at(1).value(), 16);
+    }
+    array.clear();
+    try {
+        array.append(ComplexValue(24),
+                     ComplexValue(16),
+                     ComplexValue(82),
+                     ComplexValue(42, ComplexValue::ThrowOnCopy));
+        QFAIL("should not be able to append - J");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 3);
+        QCOMPARE(array.at(0).value(), 24);
+        QCOMPARE(array.at(1).value(), 16);
+        QCOMPARE(array.at(2).value(), 82);
+    }
+    array.clear();
+    ComplexValue values[] = {
+        ComplexValue(1),
+        ComplexValue(2),
+        ComplexValue(3, ComplexValue::ThrowOnCopy)
+    };
+    try {
+        array.append(values, 3);
+        QFAIL("should not be able to append - K");
+    } catch (ComplexValueException *e) {
+        delete e;
+        QCOMPARE(array.size(), 2);
+        QCOMPARE(array.at(0).value(), 1);
+        QCOMPARE(array.at(1).value(), 2);
+    }
+
+#endif
 }
 
 // The following tests check that if QVarLengthArray was typedef'ed
