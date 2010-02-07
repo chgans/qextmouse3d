@@ -337,7 +337,6 @@ private:
 
     void free(T *data, int count);
     void release();
-    void move(T *dst, const T *src, int count);
     void copyReplace(T *dst, const T *src, int count);
     Data *copyData(const T *src, int size, int capacity);
     void reallocate(int capacity);
@@ -451,18 +450,6 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::release()
     }
 }
 
-// Move values to a new location in memory, optimizing for non-static types.
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::move(T *dst, const T *src, int count)
-{
-    if (!QTypeInfo<T>::isStatic) {
-        qMemCopy(dst, src, count * sizeof(T));
-    } else {
-        while (count-- > 0)
-            new (dst++) T(*src++);
-    }
-}
-
 // Copy values to initialized memory, replacing previous values.
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::copyReplace(T *dst, const T *src, int count)
@@ -488,7 +475,8 @@ Q_INLINE_TEMPLATE Q_TYPENAME QArray<T, PreallocSize>::Data *QArray<T, PreallocSi
     int copied = 0;
     QT_TRY {
         while (copied < size) {
-            new (dst++) T(*src++);
+            new (dst) T(*src++);
+            ++dst;
             ++copied;
         }
     } QT_CATCH(...) {
@@ -580,17 +568,11 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
     int capacity = qArrayAllocMore(size, needed);
     if (!m_data || m_data->ref != 1) {
         // Copy preallocated, raw, or shared data and expand the capacity.
-        Data *data = reinterpret_cast<Data *>
-            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        data->ref = 1;
-        data->capacity = capacity;
-        move(data->array, m_start, size);
-        if (m_data) {
-            m_data->ref.deref();
-        } else if (QTypeInfo<T>::isStatic && isPrealloc(m_start)) {
+        Data *data = copyData(m_start, size, capacity);
+        if (isPrealloc(m_start))
             free(m_start, size);
-        }
+        if (m_data)
+            m_data->ref.deref();
         m_data = data;
         m_start = data->array;
         m_end = m_start + size;
