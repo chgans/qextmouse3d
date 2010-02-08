@@ -5,6 +5,9 @@ SUBDIRS += pvcolor
 3ds {
     SUBDIRS += 3dscube
 }
+opencl {
+    SUBDIRS += opencl
+}
 
 
 #contains(QT_CONFIG, multimedia): for(p, QMAKE_INCDIR_QT) {
