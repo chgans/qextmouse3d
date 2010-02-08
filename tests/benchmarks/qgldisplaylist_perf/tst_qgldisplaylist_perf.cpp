@@ -57,7 +57,7 @@ private slots:
 
 enum {
     Test_Naive,
-    Test_Reserve
+    Test_Sections
 };
 
 void tst_QGLDisplayList::addQuad_data()
@@ -72,9 +72,9 @@ void tst_QGLDisplayList::addQuad_data()
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Naive);
 
-        name = "Reserve--";
+        name = "Sections--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Reserve);
+        QTest::newRow(name.constData()) << size << int(Test_Sections);
     }
 }
 
@@ -101,7 +101,7 @@ void tst_QGLDisplayList::addQuad()
             }
             list.finalize();
         }
-    } else if (type == Test_Reserve) {
+    } else if (type == Test_Sections) {
         QBENCHMARK {
             QGLDisplayList list;
             for (int i = 0; i < n; ++i)
