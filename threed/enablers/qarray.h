@@ -335,12 +335,10 @@ private:
 
     QArray(const T *data, int size, bool isWritable);
 
-    void initialize(T *data, int count);
     void free(T *data, int count);
     void release();
-    void copy(T *dst, const T *src, int count);
-    void move(T *dst, const T *src, int count);
     void copyReplace(T *dst, const T *src, int count);
+    Data *copyData(const T *src, int size, int capacity);
     void reallocate(int capacity);
     void detach_helper();
     void assign(const QArray<T, PreallocSize> &other, bool isUnshared);
@@ -429,13 +427,6 @@ private:
 int Q_QT3D_EXPORT qArrayAllocMore(int alloc, int extra);
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::initialize(T *data, int count)
-{
-    while (count-- > 0)
-        new (data++) T();
-}
-
-template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::free(T *data, int count)
 {
     while (count-- > 0) {
@@ -459,26 +450,6 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::release()
     }
 }
 
-// Copy values to uninitialized memory.
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::copy(T *dst, const T *src, int count)
-{
-    while (count-- > 0)
-        new (dst++) T(*src++);
-}
-
-// Move values to a new location in memory, optimizing for non-static types.
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::move(T *dst, const T *src, int count)
-{
-    if (!QTypeInfo<T>::isStatic) {
-        qMemCopy(dst, src, count * sizeof(T));
-    } else {
-        while (count-- > 0)
-            new (dst++) T(*src++);
-    }
-}
-
 // Copy values to initialized memory, replacing previous values.
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::copyReplace(T *dst, const T *src, int count)
@@ -489,6 +460,32 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::copyReplace(T *dst, const T *src
         while (count-- > 0)
             *dst++ = *src++;
     }
+}
+
+// Make a copy of m_data, while remaining exception-safe.
+template <typename T, int PreallocSize>
+Q_INLINE_TEMPLATE Q_TYPENAME QArray<T, PreallocSize>::Data *QArray<T, PreallocSize>::copyData(const T *src, int size, int capacity)
+{
+    Data *data = reinterpret_cast<Data *>
+        (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
+    Q_CHECK_PTR(data);
+    data->ref = 1;
+    data->capacity = capacity;
+    T *dst = data->array;
+    int copied = 0;
+    QT_TRY {
+        while (copied < size) {
+            new (dst) T(*src++);
+            ++dst;
+            ++copied;
+        }
+    } QT_CATCH(...) {
+        while (copied-- > 0)
+            (--dst)->~T();
+        qFree(data);
+        QT_RETHROW;
+    }
+    return data;
 }
 
 template <typename T, int PreallocSize>
@@ -502,12 +499,7 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::reallocate(int capacity)
         data->capacity = capacity;
         m_data = data;
     } else {
-        Data *data = reinterpret_cast<Data *>
-            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        data->ref = 1;
-        data->capacity = capacity;
-        copy(data->array, m_data->array, size);
+        Data *data = copyData(m_data->array, size, capacity);
         free(m_data->array, size);
         qFree(m_data);
         m_data = data;
@@ -530,16 +522,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detach_helper()
     // Allocate a new block on the heap and copy the data across.
     int size = m_end - m_start;
     int capacity = qArrayAllocMore(size, 0);
-    Data *data = reinterpret_cast<Data *>
-        (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-    Q_CHECK_PTR(data);
-    data->ref = 1;
-    data->capacity = capacity;
-    if (size > 0)
-        copy(data->array, m_start, size);
-    if (m_data)
-        m_data->ref.deref();
-    m_data = data;
+    m_data = copyData(m_start, size, capacity);
 
     // Update the start/end/append pointers for faster updates.
     m_start = m_data->array;
@@ -564,16 +547,8 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
             // the next append() or data() in either object to copy-on-write.
             other.m_limit = m_limit = m_start;
         }
-    } else if (other.isPrealloc(other.m_start)) {
-        // Copy preallocated data.
-        int size = other.m_end - other.m_start;
-        initPrealloc();
-        m_data = 0;
-        const T *src = other.m_start;
-        while (size-- > 0)
-            new (m_end++) T(*src++);
-    } else if (isUnshared) {
-        // Make a deep copy of raw data.
+    } else if (other.isPrealloc(other.m_start) || isUnshared) {
+        // Make a deep copy of preallocated or unsharable raw data.
         initPrealloc();
         m_data = 0;
         append(other.constData(), other.size());
@@ -593,17 +568,11 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
     int capacity = qArrayAllocMore(size, needed);
     if (!m_data || m_data->ref != 1) {
         // Copy preallocated, raw, or shared data and expand the capacity.
-        Data *data = reinterpret_cast<Data *>
-            (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
-        Q_CHECK_PTR(data);
-        data->ref = 1;
-        data->capacity = capacity;
-        move(data->array, m_start, size);
-        if (m_data) {
-            m_data->ref.deref();
-        } else if (QTypeInfo<T>::isStatic && isPrealloc(m_start)) {
+        Data *data = copyData(m_start, size, capacity);
+        if (isPrealloc(m_start))
             free(m_start, size);
-        }
+        if (m_data)
+            m_data->ref.deref();
         m_data = data;
         m_start = data->array;
         m_end = m_start + size;
@@ -714,6 +683,8 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::~QArray()
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(const QArray<T, PreallocSize> &other)
 {
+    if (this == &other)
+        return *this;
     if (other.m_data && m_data == other.m_data)
         return *this;
     release();
@@ -724,6 +695,8 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(co
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(const QUnsharedArray<T, PreallocSize> &other)
 {
+    if (this == &other)
+        return *this;
     release();
     assign(other, true);
     return *this;
@@ -851,7 +824,8 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T &value)
 {
     if (m_end >= m_limit)
         grow(1);
-    new (m_end++) T(value);
+    new (m_end) T(value);
+    ++m_end;
 }
 
 template <typename T, int PreallocSize>
@@ -860,8 +834,9 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T &value1, const T 
     if ((m_end + 1) >= m_limit)
         grow(2);
     new (m_end) T(value1);
-    new (m_end + 1) T(value2);
-    m_end += 2;
+    ++m_end; // Increment one at a time in case an exception is thrown.
+    new (m_end) T(value2);
+    ++m_end;
 }
 
 template <typename T, int PreallocSize>
@@ -870,9 +845,11 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T &value1, const T 
     if ((m_end + 2) >= m_limit)
         grow(3);
     new (m_end) T(value1);
-    new (m_end + 1) T(value2);
-    new (m_end + 2) T(value3);
-    m_end += 3;
+    ++m_end;
+    new (m_end) T(value2);
+    ++m_end;
+    new (m_end) T(value3);
+    ++m_end;
 }
 
 template <typename T, int PreallocSize>
@@ -881,10 +858,13 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T &value1, const T 
     if ((m_end + 3) >= m_limit)
         grow(4);
     new (m_end) T(value1);
-    new (m_end + 1) T(value2);
-    new (m_end + 2) T(value3);
-    new (m_end + 3) T(value4);
-    m_end += 4;
+    ++m_end;
+    new (m_end) T(value2);
+    ++m_end;
+    new (m_end) T(value3);
+    ++m_end;
+    new (m_end) T(value4);
+    ++m_end;
 }
 
 template <typename T, int PreallocSize>
@@ -894,8 +874,10 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::append(const T *values, int coun
         return;
     if (!m_start || (m_end + count) > m_limit)
         grow(count);
-    copy(m_end, values, count);
-    m_end += count;
+    while (count-- > 0) {
+        new (m_end) T(*values++);
+        ++m_end;
+    }
 }
 
 template <typename T, int PreallocSize>
@@ -1137,8 +1119,10 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::resize(int size)
         m_end = start + size;
     } else if (size > currentSize) {
         grow(size - currentSize);
-        initialize(m_start + currentSize, size - currentSize);
-        m_end = m_start + size;
+        while (currentSize++ < size) {
+            new (m_end) T();
+            ++m_end;
+        }
     }
 }
 
