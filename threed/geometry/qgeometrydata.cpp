@@ -1102,6 +1102,18 @@ QVector3DArray QGeometryData::vertices() const
 }
 
 /*!
+    \internal
+    Returns a pointer to the vertex data.
+*/
+const QVector3DArray *QGeometryData::vertexData() const
+{
+    if (d)
+        return &d->vertices;
+    return 0;
+}
+
+
+/*!
     Returns a copy of the vertex position data at index \a i.
 */
 QVector3D QGeometryData::vertex(int i) const

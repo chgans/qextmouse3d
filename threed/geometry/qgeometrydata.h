@@ -151,6 +151,8 @@ public:
     quint32 fields() const;
     int count() const;
     int count(QGL::VertexAttribute field) const;
+protected:
+    const QVector3DArray *vertexData() const;
 private:
     void detach();
 #ifndef QT_NO_DEBUG

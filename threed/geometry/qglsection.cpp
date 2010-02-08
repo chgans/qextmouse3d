@@ -42,10 +42,13 @@
 #include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
 #include "qarray.h"
+#include "qbsptree.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
 #include <QtCore/qpointer.h>
+
+#include <limits.h>
 
 /*!
     \internal
@@ -105,41 +108,13 @@
     display list and its child nodes.
 */
 
-uint qHash(float data)
-{
-    union U {
-        quint32 n;
-        float f;
-    };
-    U u;
-    u.f = data;
-    return u.f;
-}
 
-uint qHash(double data)
-{
-    union U {
-        quint64 n;
-        double f;
-    };
-    U u;
-    u.f = data;
-    return u.f;
-}
 
-#define ROTL10(x) (((x) << 10) | (((x) >> 22) & 0x000000ff))
-
-#define ROTL20(x) (((x) << 20) | (((x) >> 12) & 0x0000ffff))
-
-uint qHash(const QVector3D &v)
-{
-    return qHash(v.x()) ^ ROTL10(qHash(v.y())) ^ ROTL20(qHash(v.z()));
-}
 
 class QGLSectionPrivate
 {
 public:
-    QGLSectionPrivate() : finalized(false)  {}
+    QGLSectionPrivate(const QVector3DArray *v) : hash(v), finalized(false)  {}
     ~QGLSectionPrivate() {}
 
     bool normalAccumulated(int index, const QVector3D &norm) const
@@ -157,7 +132,7 @@ public:
     }
 
     QGLIndexArray indices;
-    QHash<QVector3D, int> hash;
+    QBSPTree hash;
     QHash<int, QVector3D> norms;
     bool finalized;
     QList<QGLSceneNode*> nodes;
@@ -165,14 +140,13 @@ public:
 
 /*!
     \internal
-    \fn QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
-    Construct a new QGLSection on the display list \a d, and with smoothing \a s.
+    Construct a new QGLSection on the display list \a list, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
     See QGLDisplayList for a discussion of smoothing.
 
-    The pointer \a d must be non-null, and in debug mode, unless QT_NO_DEBUG is
-    defined, this function will assert if \a d is null.
+    The pointer \a list must be non-null, and in debug mode, unless QT_NO_DEBUG is
+    defined, this function will assert if \a list is null.
 
     The following lines of code have identical effect:
     \code
@@ -180,13 +154,14 @@ public:
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
 */
-QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
+QGLSection::QGLSection(QGLDisplayList *list,  QGL::Smoothing s)
     : m_smoothing(s)
-    , m_displayList(d)
-    , d(new QGLSectionPrivate)
+    , m_displayList(list)
+    , d(0)
 {
     Q_ASSERT(m_displayList);
     m_displayList->addSection(this);
+    d = new QGLSectionPrivate(vertexData());
 }
 
 /*!
@@ -355,7 +330,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
-    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+    QBSPTree::const_iterator it = d->hash.constFind(lv.vertex());
     bool coalesce = false;
     if (it == d->hash.constEnd())
     {
@@ -422,7 +397,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
-    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+    QBSPTree::const_iterator it = d->hash.constFind(lv.vertex());
     bool coalesce = false;
     while (!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex())
         if (vertexAt(*it) == lv)
