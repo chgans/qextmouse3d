@@ -10,7 +10,8 @@ HEADERS += qglcube.h \
     qglbezierpatches.h \
     qglmaterialcollection.h \
     qglteapot.h \
-    qgloperation.h
+    qgloperation.h \
+    qbsptree.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
     qglgeometry.cpp \
@@ -22,7 +23,8 @@ SOURCES += qglcube.cpp \
     qglteapot.cpp \
     qlogicalvertex.cpp \
     qgloperation.cpp \
-    qglprimitive.cpp
+    qglprimitive.cpp \
+    qbsptree.cpp
 PRIVATE_HEADERS += qglteapot_data_p.h \
     qglgeometry_p.h \
     qgldisplaylist_p.h \
