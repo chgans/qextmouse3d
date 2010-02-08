@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = qarray qgldisplaylist_perf
+SUBDIRS = qarray qgldisplaylist_perf qbsptree_perf
