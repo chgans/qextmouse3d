@@ -234,11 +234,9 @@ public:
         , effect(0)
         , objectPickId(-1)
         , cullFaces(Item3d::CullDisabled)
-        , objectPickId(-1)
        // , targetNode(0)
         , inheritEvents(false)
         , isVisible(true)
-        , inheritEvents(false)
         , isInitialized(false)
         , _stateGroup(0)
     {

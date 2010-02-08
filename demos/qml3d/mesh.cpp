@@ -465,8 +465,8 @@ void Mesh::restoreSceneBranch(int branchId)
         targetBranch.rootSceneObject->setParent(getSceneObject());
     }
     else if (!targetBranch.previousParent){
-        qWarning() << "Unable to find a parent to reattach default scene object to, deleting.";
-        delete targetBranch;
+        qWarning() << "Unable to find a parent to reattach default scene object to. Skipping.";        
+        targetBranch.rootSceneObject->setParent(d->scene);                
     } else {
         targetBranch.rootSceneObject->setParent(targetBranch.previousParent);
     }
