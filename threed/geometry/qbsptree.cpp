@@ -41,5 +41,70 @@
 
 #include "qbsptree.h"
 
-const QBSPTree::BSPIndex QBSPTree::blank[Stride] = { MaxIndex };
+const QBSPTree::BSPIndex QBSPTree::blank[Stride] = {
+    MaxIndex,
+    MaxIndex,
+    MaxIndex,
+    MaxIndex,
+    MaxIndex,
+    MaxIndex,
+    MaxIndex
+};
 
+const QBSPTree::BSPIndex QBSPTree::MaxIndex = UINT16_MAX;
+
+
+#ifndef QT_NO_DEBUG
+
+#include <stdlib.h>
+
+void QBSPTree::dump()
+{
+    const QArray<BSPIndex> *ptrs = pointerData();
+    const QArray<QVector3D> *vec = vectorData();
+    fprintf(stderr, "======================== QBSPTree - %p ========================\n", this);
+    for (int i = 0; i < ptrs->size(); i += QBSPTree::Stride)
+    {
+        int ix = i / QBSPTree::Stride;
+        fprintf(stderr, "Node: %d - QVector3D(%0.3f, %0.3f, %0.3f)\n",
+                ix, vec->at(ix).x(), vec->at(ix).y(), vec->at(ix).z());
+
+        if (ptrs->at(i + QBSPTree::EqualTo) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    EqualTo:      <null>\n");
+        else
+            fprintf(stderr, "    EqualTo:      %d\n", ptrs->at(i + QBSPTree::EqualTo));
+
+        if (ptrs->at(i + QBSPTree::LessThanX) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    LessThanX:    <null>\n");
+        else
+            fprintf(stderr, "    LessThanX:    %d\n", ptrs->at(i + QBSPTree::LessThanX));
+
+        if (ptrs->at(i + QBSPTree::GreaterThanX) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    GreaterThanX: <null>\n");
+        else
+            fprintf(stderr, "    GreaterThanX: %d\n", ptrs->at(i + QBSPTree::GreaterThanX));
+
+        if (ptrs->at(i + QBSPTree::LessThanY) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    LessThanY:    <null>\n");
+        else
+            fprintf(stderr, "    LessThanY:    %d\n", ptrs->at(i + QBSPTree::LessThanY));
+
+        if (ptrs->at(i + QBSPTree::GreaterThanY) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    GreaterThanY: <null>\n");
+        else
+            fprintf(stderr, "    GreaterThanY: %d\n", ptrs->at(i + QBSPTree::GreaterThanY));
+
+        if (ptrs->at(i + QBSPTree::LessThanZ) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    LessThanZ:    <null>\n");
+        else
+            fprintf(stderr, "    LessThanZ:    %d\n", ptrs->at(i + QBSPTree::LessThanZ));
+
+        if (ptrs->at(i + QBSPTree::GreaterThanZ) == QBSPTree::MaxIndex)
+            fprintf(stderr, "    GreaterThanZ: <null>\n");
+        else
+            fprintf(stderr, "    GreaterThanZ: %d\n", ptrs->at(i + QBSPTree::GreaterThanZ));
+
+    }
+}
+
+#endif

@@ -45,15 +45,22 @@
 #include "qarray.h"
 
 #include <QtGui/qvector3d.h>
+#include <QtCore/qdebug.h>
 
-class QBSPTree
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class Q_QT3D_EXPORT QBSPTree
 {
 public:
     explicit QBSPTree(const QArray<QVector3D> *v) : vec(v) {}
     ~QBSPTree() {}
 
     typedef quint32 BSPIndex;
-    static const BSPIndex MaxIndex = UINT16_MAX;
+    static const BSPIndex MaxIndex;
 
     enum Partition {
         EqualTo,
@@ -98,16 +105,16 @@ public:
         else
         {
             if (v.x() < w.x())
-                return LessThanZ;
+                return LessThanX;
             else
-                return GreaterThanZ;
+                return GreaterThanX;
         }
     }
 
     class const_iterator
     {
     public:
-        const_iterator(const QBSPTree *d, int p, bool fi = false)
+        const_iterator(const QBSPTree *d, BSPIndex p, bool fi = false)
             : tree(d)
             , ptr(p)
             , isFindIterator(fi) { }
@@ -131,7 +138,7 @@ public:
         }
         bool operator==(const const_iterator &other) const
         {
-            return (ptr == other.ptr && &tree == &other.tree);
+            return (ptr == other.ptr && tree == other.tree);
         }
         QVector3D key() const
         {
@@ -149,7 +156,7 @@ public:
 
     const_iterator constBegin() const
     {
-        return const_iterator(this, 0);
+        return const_iterator(this, ptrs.isEmpty() ? MaxIndex : 0);
     }
 
     const_iterator constEnd() const
@@ -181,6 +188,12 @@ public:
         Q_ASSERT(ptr != new_ix);
         Partition part = cmp(v, vec->at(ptr));
         BSPIndex next = ptrs[ptr * Stride + part];
+        /*
+        qDebug() << "    recurseAndInsert(" << v << ", " << i << ", " << ptr
+                << ", " << new_ix << ")"
+                << "     part:" << part << "next:" << next;
+        dump();
+        */
         if (next != MaxIndex)
         {
             recurseAndInsert(v, i, next, new_ix);
@@ -190,6 +203,7 @@ public:
             ptrs.append(blank, Stride);
             ptrs[ptr * Stride + part] = new_ix;
         }
+        //dump();
     }
 
     void insertMulti(const QVector3D &v, int i)
@@ -215,16 +229,25 @@ public:
             }
         }
 #ifndef QT_NO_DEBUG
+        else
         {
             qWarning("Overflowed QBSPTree");
         }
 #endif
     }
 
+#ifndef QT_NO_DEBUG
+    void dump();
+#endif
+
 private:
     static const BSPIndex blank[Stride];
     QArray<quint32> ptrs;
     const QArray<QVector3D> *vec;
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif // QQBSPTree_H
