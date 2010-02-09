@@ -44,6 +44,8 @@
 
 #include <QtCore/qglobal.h>
 #include <QtCore/qatomic.h>
+#include <QtCore/qdatastream.h>
+#include <QtCore/qdebug.h>
 #include <string.h>
 #include <new>
 
@@ -1513,6 +1515,55 @@ Q_INLINE_TEMPLATE const T *QUnsharedArray<T, PreallocSize>::data() const
 {
     return QArray<T, PreallocSize>::m_start;
 }
+
+#ifndef QT_NO_DATASTREAM
+
+template <typename T, int PreallocSize>
+QDataStream& operator<<(QDataStream& stream, const QArray<T, PreallocSize>& array)
+{
+    int size = array.size();
+    stream << quint32(size);
+    for (int index = 0; index < size; ++index)
+        stream << array.at(index);
+    return stream;
+}
+
+template <typename T, int PreallocSize>
+QDataStream& operator>>(QDataStream& stream, QArray<T, PreallocSize>& array)
+{
+    array.clear();
+    quint32 size;
+    stream >> size;
+    array.reserve(size);
+    for (int index = 0; index < int(size); ++index) {
+        T t;
+        stream >> t;
+        array.append(t);
+        if (stream.atEnd())
+            break;
+    }
+    return stream;
+}
+
+#endif
+
+#ifndef QT_NO_DEBUG_STREAM
+
+template <typename T, int PreallocSize>
+QDebug operator<<(QDebug dbg, const QArray<T, PreallocSize>& array)
+{
+    dbg.nospace() << "QArray(";
+    int size = array.size();
+    for (int index = 0; index < size; ++index) {
+        if (index)
+            dbg << ", ";
+        dbg << array.at(index);
+    }
+    dbg << ')';
+    return dbg.space();
+}
+
+#endif
 
 QT_END_NAMESPACE
 

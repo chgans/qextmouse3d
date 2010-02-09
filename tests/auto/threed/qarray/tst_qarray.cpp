@@ -92,6 +92,7 @@ private slots:
     void unsharedArray();
     void zeroPrealloc();
     void exceptions();
+    void dataStream();
 
     // QVarLengthArray simulation tests.
     void QVarLengthArray_append();
@@ -2048,6 +2049,27 @@ void tst_QArray::exceptions()
     }
 
 #endif
+}
+
+void tst_QArray::dataStream()
+{
+    QArray<float> array;
+    for (int index = 0; index < 1024; ++index)
+        array.append(float(index));
+
+    QByteArray data;
+    {
+        QDataStream stream(&data, QIODevice::WriteOnly);
+        stream << array;
+    }
+
+    QArray<float> array2;
+    {
+        QDataStream stream2(data);
+        stream2 >> array2;
+    }
+
+    QVERIFY(array == array2);
 }
 
 // The following tests check that if QVarLengthArray was typedef'ed

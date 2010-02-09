@@ -801,23 +801,4 @@ QArray<QVector4D> QVector4DArray::transformed(const QMatrix4x4& matrix) const
     return result;
 }
 
-#ifndef QT_NO_DEBUG_STREAM
-QDebug operator<<(QDebug dbg, const QVector2DArray &ary)
-{
-    dbg << "QVector2DArray" << &ary << " -- count:" << ary.count();
-    for (int i = 0; i < ary.count(); ++i)
-        dbg << "    " << ary.at(i);
-    return dbg;
-}
-
-QDebug operator<<(QDebug dbg, const QVector3DArray &ary)
-{
-    dbg << "QVector3DArray" << &ary << " -- count:" << ary.count();
-    for (int i = 0; i < ary.count(); ++i)
-        dbg << "    " << ary.at(i);
-    return dbg;
-}
-#endif
-
-
 QT_END_NAMESPACE

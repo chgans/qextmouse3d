@@ -252,11 +252,6 @@ inline QArray<QVector4D> QVector4DArray::translated
         (qreal x, qreal y, qreal z, qreal w) const
     { return translated(QVector4D(x, y, z, w)); }
 
-#ifndef QT_NO_DEBUG_STREAM
-Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QVector2DArray &ary);
-Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QVector3DArray &ary);
-#endif
-
 QT_END_NAMESPACE
 
 QT_END_HEADER
