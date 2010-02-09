@@ -122,9 +122,18 @@ public:
         {
             if (ptr != MaxIndex)
             {
-                ptr = isFindIterator ? tree->pointerData()->at(ptr * Stride + EqualTo) : ++ptr;
-                if (ptr * Stride == static_cast<BSPIndex>(tree->pointerData()->size()))
-                    ptr = MaxIndex;
+                if (isFindIterator)
+                {
+                    ptr = tree->pointerData()->at(ptr * Stride + EqualTo);
+                }
+                else
+                {
+                    if ((ptr+1) * Stride != static_cast<BSPIndex>(
+                            tree->pointerData()->size()))
+                        ++ptr;
+                    else
+                        ptr = MaxIndex;
+                }
             }
             return *this;
         }
@@ -134,7 +143,7 @@ public:
         }
         bool operator!=(const const_iterator &other) const
         {
-            return (ptr != other.ptr || &tree != &other.tree);
+            return (ptr != other.ptr || tree != other.tree);
         }
         bool operator==(const const_iterator &other) const
         {
