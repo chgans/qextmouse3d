@@ -363,14 +363,17 @@ void ShaderWizardGLWidget::setVertexShader(QString const &shader)
         d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
     d->effect->setVertexShader(shader);
     update();
+    emit vertexShaderChanged(shader);
 }
 
 void ShaderWizardGLWidget::setFragmentShader(QString const & shader )
 {
     if(!d->effect)
         d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
+
     d->effect->setFragmentShader(shader);
     update();
+    emit fragmentShaderChanged(shader);
 }
 
 void ShaderWizardGLWidget::setSceneManager(QObject* object)

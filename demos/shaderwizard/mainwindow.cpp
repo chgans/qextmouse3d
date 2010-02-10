@@ -84,6 +84,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, SIGNAL(sceneCreated(QObject*)), glDisplayWidget, SLOT(setSceneManager(QObject*)));
     connect(this, SIGNAL(sceneSelected(QObject*)), glDisplayWidget, SLOT(setSceneObject(QObject*)));
+    connect(glDisplayWidget, SIGNAL(vertexShaderChanged(QString)), ui->textEditVertexShader, SLOT(setPlainText(QString)));
+    connect(glDisplayWidget, SIGNAL(fragmentShaderChanged(QString)), ui->textEditFragmentShader, SLOT(setPlainText(QString)));
 
     new QGLSLSyntaxHighlighter(ui->textEditVertexShader->document());
     new QGLSLSyntaxHighlighter(ui->textEditFragmentShader->document());

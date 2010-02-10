@@ -111,6 +111,10 @@ public slots:
 
     void clearScene();
 
+signals:
+    void vertexShaderChanged(const QString);
+    void fragmentShaderChanged(const QString);
+
 private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
