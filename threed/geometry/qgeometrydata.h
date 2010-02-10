@@ -60,7 +60,7 @@ namespace QGL
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
 }
 
-class QGeometryData
+class Q_QT3D_EXPORT QGeometryData
 {
 public:
     QGeometryData();

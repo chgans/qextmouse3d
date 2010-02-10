@@ -91,7 +91,7 @@ private:
 
     Q_DECLARE_PRIVATE(QGLBezierPatches)
 
-    friend QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
+    friend Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
 };
 
 Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);

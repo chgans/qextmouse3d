@@ -49,6 +49,24 @@
 #include "qglcamera.h"
 #include <QtGui/qpainter.h>
 
+/*!
+    \class Viewport
+    \brief The Viewport class defines the logical viewport for the 3d scene.  It includes all necessary
+    references and parameters for the contents of the scene, as well as drawing and painting functions
+    \since 4.6.q
+    \ingroup qt3d
+    \ingroup qt3d::qml3d
+
+    \section1 Properties
+
+
+    \section1 Usage in QML/3d
+
+    \code
+    \endcode
+*/
+
+
 QT_BEGIN_NAMESPACE
 
 QML_DEFINE_TYPE(Qt,4,6,Viewport,Viewport)
@@ -107,6 +125,9 @@ ViewportPrivate::ViewportPrivate()
     backdropVertices.append(1.0f, 0.0f);
 }
 
+/*!
+    Construct the class and assign it a \a parent QmlGraphicsItem.
+*/
 Viewport::Viewport(QmlGraphicsItem *parent)
     : QmlGraphicsItem(parent)
 {
@@ -114,11 +135,27 @@ Viewport::Viewport(QmlGraphicsItem *parent)
     setFlag(QGraphicsItem::ItemHasNoContents, false);
 }
 
+/*!
+    Class destruction and cleanup.
+*/
 Viewport::~Viewport()
 {
     delete d;
 }
 
+/*!
+    \property Viewport::picking
+    \brief User interaction in QML/3d is handled through the concept of object picking.  Each
+    item has a unique picking id which s queried for a given screen click position when the
+    mouse is clicked.
+
+    If the \a picking property is set to \c true, picking will be supported for this viewport,
+    while if the property is \c false, no picking will b applied.
+
+    The default value for this property is \c false.
+
+    \sa showPicking()
+*/
 bool Viewport::picking() const
 {
     return d->picking;
@@ -129,6 +166,19 @@ void Viewport::setPicking(bool value)
     d->picking = value;
     update3d();
 }
+
+/*!
+    \property Viewport::showPicking
+    \brief The underlying mechanism for picking is based on painting an off-screen buffer with a flat
+    coloured image containing all of the objects with a unique color value.
+
+    Setting the \a showPicking value to true will display this flat-colour picking representation
+    in the viewport.
+
+    The default value for this property is \c false.
+
+    \sa picking()
+*/
 
 bool Viewport::showPicking() const
 {
@@ -141,6 +191,13 @@ void Viewport::setShowPicking(bool value)
     update3d();
 }
 
+/*!
+    \property Viewport::navigation
+    \brief The navigation property is used to set or unset camera navigation in for the viewport.
+    Camera navigation allows the user to move the camera position around using the moose.
+
+    By default, camera navigation is set to \c true.
+*/
 bool Viewport::navigation() const
 {
     return d->navigation;
@@ -152,6 +209,16 @@ void Viewport::setNavigation(bool value)
     update3d();
 }
 
+/*!
+    \property Viewport::camera
+    \brief The camera property of the Viewport class sets the camera parameters which will be used
+    for the appropriate viewing transforms in OpenGL.  The camera is specified as a \l QGLCamera,
+    and like all properties in QML/3d it can be updated or changed at any time.
+
+    By default the camera is undefined.
+
+    \sa QGLCamera
+*/
 QGLCamera *Viewport::camera() const
 {
     return d->camera;
@@ -177,6 +244,15 @@ void Viewport::setCamera(QGLCamera *value)
     }
 }
 
+/*!
+    \property Viewport::lightModel
+    \brief The user is able to set a lighting model for the 3d environment through the use of the
+    lightModel property.  This is defined using a \l QGLLightModel.
+
+    By default the light model is undefined.
+
+    \sa QGLLightModel
+*/
 QGLLightModel *Viewport::lightModel() const
 {
     return d->lightModel;
@@ -198,6 +274,16 @@ void Viewport::setLightModel(QGLLightModel *value)
     }
 }
 
+/*!
+    \property Viewport::backdrop
+    \brief The user can set the backdrop property of the Viewport class to define a backdrop effect
+    for the 3d environment.  This backdrop is defined as an \l Effect class, and can take on any of
+    the effects supported (eg. fog effects, etc).
+
+    By default no backdrop effect is defined.
+
+    \sa Effect
+*/
 Effect *Viewport::backdrop() const
 {
     return d->backdrop;
@@ -219,7 +305,16 @@ void Viewport::setBackdrop(Effect *value)
     }
 }
 
-void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
+/*!
+    The main paint function for the Viewport class.  It takes a  QPainter \a p, which performs the
+    painting of objects in the 3d environment.
+
+    The paint function is responsible for setting up the viewing transform, as well as other display
+    options, before calling the draw function to perform the actual drawing of the scene.
+
+    Note, currently \a style and \a widget are unused, but are reserved for later development.
+*/
+void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidget *widget)
 {
     QGLPainter painter;
     if (!painter.begin(p)) {
@@ -254,6 +349,10 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
     draw(&painter);
 }
 
+/*!
+  Some elements of the image are drawn as an "early" draw activity.  Essentially it performs clearing
+  and drawing of backdrop effects in preparation for primary drawing activities using \a painter.
+*/
 void Viewport::earlyDraw(QGLPainter *painter)
 {
     // If we have a QmlGraphicsItem parent, then assume that it has cleared
@@ -286,6 +385,13 @@ void Viewport::earlyDraw(QGLPainter *painter)
 #endif
 }
 
+/*!
+  The draw function for the viewport sets up all of the lighting parameters for the scene before
+  iterating through the top level items in the scene and drawing them using \a painter.
+
+  As a matter of course each item will draw its child items, and so on, until the entire image has
+  been populated.
+*/
 void Viewport::draw(QGLPainter *painter)
 {
     painter->setObjectPickId(-1);
@@ -313,9 +419,18 @@ void Viewport::draw(QGLPainter *painter)
     }
 }
 
-// If "view" is null, then we are running on a standard QFxView
-// canvas widget.  If "view" is not null, then we are running
-// on a Qml3dView canvas widget.
+/*!
+  The initialize function, as its name suggests, peforms all top level initialisation for the viewport and
+  sets the \a painter for the viewport.
+
+  This includes setting up the camera, as well as initialising all of the
+
+  If \a view is null, then we are running on a standard QFxView canvas widget.  If \a view is not null,
+  then we are running on a \l Qml3dView canvas widget.
+
+  \sa Qml3dView
+*/
+
 void Viewport::initialize(Qml3dView *view, QGLPainter *painter)
 {
     // Remember which view we are associate with, if any.
@@ -335,11 +450,23 @@ void Viewport::initialize(Qml3dView *view, QGLPainter *painter)
     d->itemsInitialized = true;
 }
 
+/*!
+  Return the \l Qml3dView being used by the viewport.
+
+  \sa Qml3dView, initialize()
+*/
 Qml3dView *Viewport::view() const
 {
     return d->view;
 }
 
+/*!
+  If a Qml3dView is defined for this viewport then this function queues an update for that Qml3dView.
+
+  If this is not defined then a normal update is called.
+
+  \sa Qml3dView
+*/
 void Viewport::update3d()
 {
     if (d->view)
@@ -348,6 +475,12 @@ void Viewport::update3d()
         update();
 }
 
+/*!
+    The cameraChanged slot updates the camera in the Qml3dView if one exists, or simply calls the
+    \l update() function otherwise.
+
+    \sa update()
+*/
 void Viewport::cameraChanged()
 {
     if (d->view)

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
@@ -39,54 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QGLPRIMITIVE_H
-#define QGLPRIMITIVE_H
+/*!
+\group qt3d::qml3d
+\title QML Support in Qt/3D 
+\keyword Qt/3D QML
 
-#include "qglnamespace.h"
-#include "qgeometrydata.h"
-
-namespace QGL
-{
-    enum Operation
-    {
-        NO_OP,
-        TRIANGLE,
-        TRIANGLE_STRIP,
-        TRIANGLE_FAN,
-        TRIANGULATED_FACE,
-        QUAD,
-        QUAD_STRIP,
-        QUADS_ZIPPED
-    };
-
-    enum OperationFlag
-    {
-        NO_FLAG               = 0X00,
-        FACE_SENSE_REVERSED   = 0x01,
-        NO_CLOSE_PATH         = 0x02,
-        NEXT_PRIMITIVE        = 0x04,
-        RETAIN_PRIMITIVE      = 0x08,
-        USE_VERTEX_0_AS_CTR   = 0x10
-    };
-    Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
-}
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::OperationFlags);
-
-class Q_QT3D_EXPORT QGLPrimitive : public QGeometryData
-{
-public:
-    QGLPrimitive();
-    virtual ~QGLPrimitive() {}
-    void setFlags(QGL::OperationFlags flags) { m_flags = flags; }
-    QGL::OperationFlags flags() const { return m_flags; }
-    QGLPrimitive reversed() const;
-    QGLPrimitive translated(const QVector3D &) const;
-    QGLPrimitive zippedWith(const QGLPrimitive &other) const;
-    void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
-                                    QGL::VertexAttribute attribute = QGL::TextureCoord0);
-    QVector3D center() const;
-protected:
-    QGL::OperationFlags m_flags;
-};
-
-#endif // QGLPRIMITIVE_H
+\generatelist{related}
+*/

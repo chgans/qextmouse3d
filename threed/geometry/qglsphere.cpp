@@ -269,22 +269,22 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
 {
     qreal scale = sphere.diameter();
     int depth = sphere.subdivisionDepth();
-    qreal small = 1.0f;
-    qreal large = phi*small;
+    qreal tiny= 1.0f;
+    qreal large = phi*tiny;
 
     float ico[12][3] = {
-        { 0.0f, small, large },    // A - 0
-        { 0.0f, small, -large },   // B - 1
-        { 0.0f, -small, large },   // C - 2
-        { 0.0f, -small, -large },  // D - 3
-        { small, large, 0.0f },    // E - 4
-        { small, -large, 0.0f },   // F - 5
-        { -small, large, 0.0f },   // G - 6
-        { -small, -large, 0.0f },  // H - 7
-        { large, 0.0f, small },    // I - 8
-        { large, 0.0f, -small },   // J - 9
-        { -large, 0.0f, small },   // K - 10
-        { -large, 0.0f, -small }   // L - 11
+        { 0.0f, tiny, large },    // A - 0
+        { 0.0f, tiny, -large },   // B - 1
+        { 0.0f, -tiny, large },   // C - 2
+        { 0.0f, -tiny, -large },  // D - 3
+        { tiny, large, 0.0f },    // E - 4
+        { tiny, -large, 0.0f },   // F - 5
+        { -tiny, large, 0.0f },   // G - 6
+        { -tiny, -large, 0.0f },  // H - 7
+        { large, 0.0f, tiny},    // I - 8
+        { large, 0.0f, -tiny},   // J - 9
+        { -large, 0.0f, tiny},   // K - 10
+        { -large, 0.0f, -tiny}   // L - 11
     };
 
     int face[20][3] = {

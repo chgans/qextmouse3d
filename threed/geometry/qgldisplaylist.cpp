@@ -930,7 +930,7 @@ void QGLDisplayList::finalize()
     The internal node stack is cleared, a section-level QGLSceneNode is
     created for this section by calling newNode().
 
-    \sa newNode() pushNode()
+    \sa newNode(), pushNode()
 */
 void QGLDisplayList::newSection(QGL::Smoothing smooth)
 {

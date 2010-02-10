@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
             source = arg;
     }
     if (source.isEmpty()) {
-        qWarning() << "Usage: qml3d file.qml";
+        qWarning() << "Usage: qml3d file.qml [-graphicssystem opengl]";
         return 1;
     }
     QUrl url(source);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
         Qml3dView view;
         view.setUrl(url);
         view.show();
-
+        
         return app.exec();
     }
 }
