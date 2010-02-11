@@ -187,7 +187,7 @@ inline QBSPTree::const_iterator QBSPTree::constFind(const QVector3D &v) const
     return const_iterator(this, ptr, true);
 }
 
-inline QBSPTree::insertMulti(const QVector3D &v, int i)
+inline void QBSPTree::insertMulti(const QVector3D &v, int i)
 {
     insert(v, i);
 }
