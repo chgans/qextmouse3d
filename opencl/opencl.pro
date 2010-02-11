@@ -8,6 +8,9 @@ win32 {
 }
 else:DESTDIR = ../lib
 
+macx {
+    LIBS += -framework OpenCL
+}
 HEADERS += \
     qclbuffer.h \
     qclcommandqueue.h \
