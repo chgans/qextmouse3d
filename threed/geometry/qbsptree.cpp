@@ -483,43 +483,56 @@ void QBSPTree::recurseAndDump(QBSPTree::BSPIndex ix, int indent) const
     char ind[1024];
     qMemSet(ind, '\0', 1024);
     qMemSet(ind, ' ', indent < 341 ? indent * 3 : 1023);
-    fprintf(stderr, "%sNode: %d - QVector3D(%0.3f, %0.3f, %0.3f)\n", ind,
-            ix, m_vec->at(ix).x(), m_vec->at(ix).y(), m_vec->at(ix).z());
+    fprintf(stderr, "%sNode: %d - QVector3D(%0.3f, %0.3f, %0.3f) - max height: %d\n",
+            ind, ix, m_vec->at(ix).x(), m_vec->at(ix).y(), m_vec->at(ix).z(),
+            m_maxHeight);
+    fprintf(stderr, "%s      Children", ind);
     int i = ix * Stride;
-    if (m_ptrs.at(i + EqualTo) == MaxIndex)
-        fprintf(stderr, "%s    EqualTo:      <null>\n", ind);
-    else
-        fprintf(stderr, "%s    EqualTo:      %d\n", ind, m_ptrs.at(i + EqualTo));
+    QArray<BSPIndex> children;
+    if (m_ptrs.at(i + EqualTo) != MaxIndex)
+    {
+        fprintf(stderr, " -- EqualTo: %d", m_ptrs.at(i + EqualTo));
+        children << m_ptrs.at(i + EqualTo);
+    }
 
-    if (m_ptrs.at(i + LessThanX) == MaxIndex)
-        fprintf(stderr, "%s    LessThanX:    <null>\n", ind);
-    else
-        fprintf(stderr, "%s    LessThanX:    %d\n", ind, m_ptrs.at(i + LessThanX));
+    if (m_ptrs.at(i + LessThanX) != MaxIndex)
+    {
+        fprintf(stderr, " -- LessThanX: %d", m_ptrs.at(i + LessThanX));
+        children << m_ptrs.at(i + LessThanX);
+    }
 
-    if (m_ptrs.at(i + GreaterThanX) == MaxIndex)
-        fprintf(stderr, "%s    GreaterThanX: <null>\n", ind);
-    else
-        fprintf(stderr, "%s    GreaterThanX: %d\n", ind, m_ptrs.at(i + GreaterThanX));
+    if (m_ptrs.at(i + GreaterThanX) != MaxIndex)
+    {
+        fprintf(stderr, " -- GreaterThanX: %d", m_ptrs.at(i + GreaterThanX));
+        children << m_ptrs.at(i + GreaterThanX);
+    }
 
-    if (m_ptrs.at(i + LessThanY) == MaxIndex)
-        fprintf(stderr, "%s    LessThanY:    <null>\n", ind);
-    else
-        fprintf(stderr, "%s    LessThanY:    %d\n", ind, m_ptrs.at(i + LessThanY));
+    if (m_ptrs.at(i + LessThanY) != MaxIndex)
+    {
+        fprintf(stderr, " -- LessThanY: %d", m_ptrs.at(i + LessThanY));
+        children << m_ptrs.at(i + LessThanY);
+    }
 
-    if (m_ptrs.at(i + GreaterThanY) == MaxIndex)
-        fprintf(stderr, "%s    GreaterThanY: <null>\n", ind);
-    else
-        fprintf(stderr, "%s    GreaterThanY: %d\n", ind, m_ptrs.at(i + GreaterThanY));
+    if (m_ptrs.at(i + GreaterThanY) != MaxIndex)
+    {
+        fprintf(stderr, " -- GreaterThanY: %d", m_ptrs.at(i + GreaterThanY));
+        children << m_ptrs.at(i + GreaterThanY);
+    }
 
-    if (m_ptrs.at(i + LessThanZ) == MaxIndex)
-        fprintf(stderr, "%s    LessThanZ:    <null>\n", ind);
-    else
-        fprintf(stderr, "%s    LessThanZ:    %d\n", ind, m_ptrs.at(i + LessThanZ));
+    if (m_ptrs.at(i + LessThanZ) != MaxIndex)
+    {
+        fprintf(stderr, " -- LessThanZ: %d", m_ptrs.at(i + LessThanZ));
+        children << m_ptrs.at(i + LessThanZ);
+    }
 
-    if (m_ptrs.at(i + GreaterThanZ) == MaxIndex)
-        fprintf(stderr, "%s    GreaterThanZ: <null>\n", ind);
-    else
-        fprintf(stderr, "%s    GreaterThanZ: %d\n", ind, m_ptrs.at(i + GreaterThanZ));
+    if (m_ptrs.at(i + GreaterThanZ) != MaxIndex)
+    {
+        fprintf(stderr, " -- GreaterThanZ: %d", m_ptrs.at(i + GreaterThanZ));
+        children << m_ptrs.at(i + GreaterThanZ);
+    }
+    fprintf(stderr, "\n");
+    for (int i = 0; i < children.count(); ++i)
+        recurseAndDump(children[i], indent + 1);
 }
 
 /*!
