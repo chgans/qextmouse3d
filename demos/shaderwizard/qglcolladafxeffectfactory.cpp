@@ -714,8 +714,20 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
     // If the effect is malformed, default QGLMaterialParameters will be used.
     QGLMaterialParameters* material = new QGLMaterialParameters;
 
-    if( xml.name() == "blinn" || xml.name() == "phong" || xml.name() == "constant"|| xml.name() == "lambert")
+
+    if( xml.name() == "blinn" || xml.name() == "phong" || xml.name() == "constant"|| xml.name() == "lambert" )
     {
+        if( xml.name() == "blinn" )
+        {
+            effect->setLighting( QGLColladaFxEffect::BlinnLighting );
+        } else if ( xml.name() == "phong" ) {
+            effect->setLighting( QGLColladaFxEffect::PhongLighting );
+        } else if ( xml.name() == "constant" ) {
+            effect->setLighting( QGLColladaFxEffect::ConstantLighting );
+        } else if ( xml.name() == "lambert" ) {
+            effect->setLighting( QGLColladaFxEffect::LambertLighting );
+        }
+
         // TODO: get appropriate shader fragments for the specified lighting models
         if(  xml.readNextStartElement() )
         {
@@ -934,6 +946,19 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
     }
 
     effect->setMaterial( material );
+
+    switch(effect->lighting())
+    {
+    case QGLColladaFxEffect::PhongLighting:
+    case QGLColladaFxEffect::LambertLighting:
+        qWarning() << "Warning: requested lighting not supported, using Blinn-Phong instead";
+    case QGLColladaFxEffect::BlinnLighting:
+        effect->addBlinnPhongLighting();
+    case QGLColladaFxEffect::ConstantLighting:
+    case QGLColladaFxEffect::NoLighting:
+    default:
+        break;
+    }
 
     while( xml.name() == "pass" && xml.tokenType() == QXmlStreamReader::StartElement )
     {

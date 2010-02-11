@@ -151,8 +151,9 @@ static char const FallbackPerPixelLightingFragmentShader[] =
 class QGLShaderProgramEffectPrivate
 {
 public:
-    QGLShaderProgramEffectPrivate()
-        : material(0)
+    QGLShaderProgramEffectPrivate() : material(0),
+        program(0)
+
     {
     }
 
@@ -160,8 +161,11 @@ public:
     {
         delete material;
         material = 0;
+        delete program;
+        program = 0;
     }
     QGLMaterialParameters* material;
+    QGLShaderProgram *program;
 };
 
 /*!
@@ -171,7 +175,6 @@ public:
 
 */
 QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
-    , program(0)
     , colorUniform(-1)
     , matrixUniform(-1)
     , lightDirectionUniform(-1)
@@ -185,11 +188,6 @@ QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
 */
 QGLShaderProgramEffect::~QGLShaderProgramEffect()
 {
-    if(program)
-    {
-        delete program;
-        program = 0;
-    }
     delete d;
     d = 0;
 }
@@ -220,36 +218,35 @@ bool QGLShaderProgramEffect::supportsPicking() const
 */
 void QGLShaderProgramEffect::setActive(bool flag)
 {
-    if (!program) {
+    if (program() == 0) {
         if(!flag)
             return;
-        program = new QGLShaderProgram();
+        setProgram(new QGLShaderProgram());
     }
 
     if(flag)
     {
         reloadShaders();
         bindProgramAttributes();
-        if(!program->link())
+        if(!program()->link())
         {
             qWarning("QGLShaderProgramEffect::setActive(): could not link shader program");
-            delete program;
-            program = 0;
+            setProgram(0); // deletes current program
             currentlyActive = false;
             return;
         }
 
         bindProgramUniforms();
-        program->bind();
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
-        program->enableAttributeArray(2);
+        program()->bind();
+        program()->enableAttributeArray(0);
+        program()->enableAttributeArray(1);
+        program()->enableAttributeArray(2);
         currentlyActive = true;
     } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
-        program->disableAttributeArray(2);
-        program->release();
+        program()->disableAttributeArray(0);
+        program()->disableAttributeArray(1);
+        program()->disableAttributeArray(2);
+        program()->release();
         currentlyActive = false;
     }
 }
@@ -262,27 +259,29 @@ void QGLShaderProgramEffect::setActive(bool flag)
 */
 void QGLShaderProgramEffect::reloadShaders()
 {
-    if(!program)
+    if(program() == 0)
+    {
         return;
+    }
 
-    program->removeAllShaders();
+    program()->removeAllShaders();
 
     if(vertexShader.length() > 0)
     {
-        program->addShaderFromSourceCode(QGLShader::Vertex, vertexShader);
+        program()->addShaderFromSourceCode(QGLShader::Vertex, vertexShader);
     }
     else
     {
-        program->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
+        program()->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
     }
 
     if(fragmentShader.length() > 0)
     {
-        program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
+        program()->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
     }
     else
     {
-        program->addShaderFromSourceCode(QGLShader::Fragment, FallbackPerPixelLightingFragmentShader);
+        program()->addShaderFromSourceCode(QGLShader::Fragment, FallbackPerPixelLightingFragmentShader);
     }
 }
 
@@ -297,11 +296,11 @@ void QGLShaderProgramEffect::reloadShaders()
 */
 void QGLShaderProgramEffect::bindProgramAttributes()
 {
-    if(!program)
+    if(program() == 0)
         return;
-    program->bindAttributeLocation("vertex", 0);
-    program->bindAttributeLocation("normal", 1);
-    program->bindAttributeLocation("texCoords", 2);
+    program()->bindAttributeLocation("vertex", 0);
+    program()->bindAttributeLocation("normal", 1);
+    program()->bindAttributeLocation("texCoords", 2);
 }
 
 /*!
@@ -309,12 +308,12 @@ void QGLShaderProgramEffect::bindProgramAttributes()
 */
 void QGLShaderProgramEffect::bindProgramUniforms()
 {
-    if(!program)
+    if(program() == 0)
         return;
-    colorUniform = program->uniformLocation("color");
-    matrixUniform = program->uniformLocation("matrix");
-    lightDirectionUniform = program->uniformLocation("lightDir");
-    timeUniform = program->uniformLocation("time");
+    colorUniform = program()->uniformLocation("color");
+    matrixUniform = program()->uniformLocation("matrix");
+    lightDirectionUniform = program()->uniformLocation("lightDir");
+    timeUniform = program()->uniformLocation("time");
 }
 
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
@@ -323,22 +322,22 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
     // as appropriate
     static float time = 0.0f;
     time += 3.14159 / 120; // TODO: use a clock instead of a frame counter
-    if(!program)
+    if(program() == 0)
         return;
 
-    program->setUniformValue(timeUniform, time);
+    program()->setUniformValue(timeUniform, time);
 
     if ((updates & QGLPainter::UpdateColor) != 0) {
         if (painter->isPicking())
-            program->setUniformValue(colorUniform, painter->pickColor());
+            program()->setUniformValue(colorUniform, painter->pickColor());
         else
-            program->setUniformValue(colorUniform, painter->color());
+            program()->setUniformValue(colorUniform, painter->color());
     }
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
-        program->setUniformValue(matrixUniform, proj * mv);
+        program()->setUniformValue(matrixUniform, proj * mv);
     }
 
     if ((updates & QGLPainter::UpdateLights) != 0 )
@@ -364,27 +363,27 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
             lparams = painter->lightParameters(0);
 
         // Set the uniform variables for the light.
-        program->setUniformValue("acli", lparams->ambientColor());
-        program->setUniformValue("dcli", lparams->diffuseColor());
-        program->setUniformValue("scli", lparams->specularColor());
-        program->setUniformValue
+        program()->setUniformValue("acli", lparams->ambientColor());
+        program()->setUniformValue("dcli", lparams->diffuseColor());
+        program()->setUniformValue("scli", lparams->specularColor());
+        program()->setUniformValue
                 ("sdli",lparams->eyeSpotDirection(ltransform));
         QVector4D pli = lparams->eyePosition(ltransform);
-        program->setUniformValue("pli", QVector3D(pli.x(), pli.y(), pli.z()));
-        program->setUniformValue("pliw", GLfloat(pli.w()));
-        program->setUniformValue("srli", GLfloat(lparams->spotExponent()));
-        program->setUniformValue("crli", GLfloat(lparams->spotAngle()));
-        program->setUniformValue("ccrli", GLfloat(lparams->spotCosAngle()));
-        program->setUniformValue("k0", GLfloat(lparams->constantAttenuation()));
-        program->setUniformValue("k1", GLfloat(lparams->linearAttenuation()));
-        program->setUniformValue("k2", GLfloat(lparams->quadraticAttenuation()));
+        program()->setUniformValue("pli", QVector3D(pli.x(), pli.y(), pli.z()));
+        program()->setUniformValue("pliw", GLfloat(pli.w()));
+        program()->setUniformValue("srli", GLfloat(lparams->spotExponent()));
+        program()->setUniformValue("crli", GLfloat(lparams->spotAngle()));
+        program()->setUniformValue("ccrli", GLfloat(lparams->spotCosAngle()));
+        program()->setUniformValue("k0", GLfloat(lparams->constantAttenuation()));
+        program()->setUniformValue("k1", GLfloat(lparams->linearAttenuation()));
+        program()->setUniformValue("k2", GLfloat(lparams->quadraticAttenuation()));
 
         // Set the uniform variables for the light model.
         const QGLLightModel *model = painter->lightModel();
-        program->setUniformValue("twoSided", (int)(model->model() == QGLLightModel::TwoSided));
-        program->setUniformValue("viewerAtInfinity", (int)(model->viewerPosition() == QGLLightModel::ViewerAtInfinity));
-        program->setUniformValue("separateSpecular", (int)(model->colorControl() == QGLLightModel::SeparateSpecularColor));
-        program->setUniformValue("acs", model->ambientSceneColor());
+        program()->setUniformValue("twoSided", (int)(model->model() == QGLLightModel::TwoSided));
+        program()->setUniformValue("viewerAtInfinity", (int)(model->viewerPosition() == QGLLightModel::ViewerAtInfinity));
+        program()->setUniformValue("separateSpecular", (int)(model->colorControl() == QGLLightModel::SeparateSpecularColor));
+        program()->setUniformValue("acs", model->ambientSceneColor());
 
         // Set the uniform variables for the material
         const QGLMaterialParameters *material;
@@ -395,12 +394,12 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         else
             material = painter->faceMaterial(QGL::FrontFaces);
 
-        program->setUniformValue("acm", material->ambientColor());
-        program->setUniformValue("dcm", material->diffuseColor());
-        program->setUniformValue("scm", material->specularColor());
-        program->setUniformValue("ecm", material->emittedLight());
-        program->setUniformValue("shininess", float(material->shininess()));
-        program->setUniformValue("texture", textureId);
+        program()->setUniformValue("acm", material->ambientColor());
+        program()->setUniformValue("dcm", material->diffuseColor());
+        program()->setUniformValue("scm", material->specularColor());
+        program()->setUniformValue("ecm", material->emittedLight());
+        program()->setUniformValue("shininess", float(material->shininess()));
+        program()->setUniformValue("texture", textureId);
     }
 }
 
@@ -408,11 +407,11 @@ void QGLShaderProgramEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
     if (attribute == QGL::Position)
-        setAttributeArray(program, 0, value);
+        setAttributeArray(program(), 0, value);
     else if (attribute == QGL::Normal)
-        setAttributeArray(program, 1, value);
+        setAttributeArray(program(), 1, value);
     else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(program, 2, value);
+        setAttributeArray(program(), 2, value);
 }
 
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)
@@ -456,4 +455,30 @@ void QGLShaderProgramEffect::setMaterial(QGLMaterialParameters* newMaterial)
 QGLMaterialParameters* QGLShaderProgramEffect::material()
 {
     return d->material;
+}
+
+/*!
+    Returns a pointer to the program of this effect.  If the effect has no
+    material, this function returns 0;
+*/
+inline QGLShaderProgram* QGLShaderProgramEffect::program()
+{
+    Q_ASSERT(d);
+    return d->program;
+}
+
+/*!
+    Set the \a program for this effect.  The QGLShaderProgramEffect takes
+    ownership of the program, and will delete it when a new program is set or
+    the QGLShaderProgramEffect is destroyed.
+*/
+void QGLShaderProgramEffect::setProgram(QGLShaderProgram* program)
+{
+    if (program == d->program)
+        return;
+
+    if(d->program)
+        delete d->program;
+
+    d->program = program;
 }
