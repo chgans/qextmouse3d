@@ -317,6 +317,8 @@ void tst_QBSPTree::rotate()
     for (int i = 0; i < data.count(); ++i)
         tree.insert(data[i], i);
     tree.dump();
+    // with rotations tree height should now be less log base 2 of 10, ie 3-4
+    QVERIFY(tree.height() < 5);
     QBSPTree::const_iterator it = tree.constFind(QVector3D(4.0f, 2.0f, 3.0f));
     QVERIFY(it != tree.constEnd());
     it = tree.constFind(QVector3D(9.0f, 2.0f, 3.0f));
