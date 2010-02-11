@@ -84,6 +84,7 @@ public:
     void setArg(int index, cl_uint value);
     void setArg(int index, cl_long value);
     void setArg(int index, cl_ulong value);
+    void setArg(int index, float value);
     void setArg(int index, const QCLBuffer& value);
     void setArg(int index, const void *data, size_t size);
 
