@@ -1,2 +1,5 @@
 INCLUDEPATH += $$PWD
-LIBS += -lQtOpenCL -lOpenCL
+macx: {
+    LIBS += -lQtOpenCL -framework OpenCL
+}
+else: LIBS += -lQtOpenCL -lOpenCL
