@@ -56,35 +56,34 @@ public:
     bool supportsPicking() const;
     virtual void setActive(bool flag);
     virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+    void setVertexAttribute(QGL::VertexAttribute attribute,
+                            const QGLAttributeValue& value);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexShader(QString const &  shader );
-    void setFragmentShader(QString const & shader );
-
+    void setVertexShader(QString const &  shader);
+    QString vertexShader;
+    void setFragmentShader(QString const & shader);
+    QString fragmentShader;
     void setMaterial(QGLMaterialParameters* newMaterial);
     QGLMaterialParameters* material();
+    void setProgram(QGLShaderProgram* program);
 
 protected:
+    QGLShaderProgram* program();
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
     virtual void bindProgramUniforms();
-    QGLShaderProgram *program;
 
- private:
-    QString vertexShader;
-    QString fragmentShader;
+private:
     int colorUniform;
     int colorAttribute;
     int matrixUniform;
     int timeUniform;
-    int lightDirectionUniform ;
+    int lightDirectionUniform;
     bool currentlyActive;
     bool textureAttributeSet;
     int textureId;
     QGLShaderProgramEffectPrivate *d;
-
 };
 
 #endif // QGLSHADERPROGRAMEFFECT_H
