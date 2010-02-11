@@ -40,8 +40,7 @@
 ****************************************************************************/
 
 #include "qclcommandqueue.h"
-#include "qclerrors.h"
-#include <QtCore/qdebug.h>
+#include "qclcontext.h"
 #include <QtCore/qvarlengtharray.h>
 
 QT_BEGIN_NAMESPACE
@@ -189,11 +188,11 @@ QCLEvent QCLCommandQueue::marker()
     if (!m_id)
         return QCLEvent();
     cl_int error = clEnqueueMarker(m_id, &evid);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLCommandQueue::marker:" << QCL::errorName(error);
+    context()->reportError("QCLCommandQueue::marker:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    }
-    return QCLEvent(evid);
+    else
+        return QCLEvent(evid);
 }
 
 /*!
@@ -208,8 +207,7 @@ void QCLCommandQueue::barrier()
     if (!m_id)
         return;
     cl_int error = clEnqueueBarrier(m_id);
-    if (error != CL_SUCCESS)
-        qWarning() << "QCLCommandQueue::barrier:" << QCL::errorName(error);
+    context()->reportError("QCLCommandQueue::barrier:", error);
 }
 
 /*!
@@ -224,10 +222,7 @@ void QCLCommandQueue::barrier(const QCLEvent& event)
     if (!m_id || !evtid)
         return;
     cl_int error = clEnqueueWaitForEvents(m_id, 1, &evtid);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLCommandQueue::barrier(QCLEvent):"
-                   << QCL::errorName(error);
-    }
+    context()->reportError("QCLCommandQueue::barrier(QCLEvent):", error);
 }
 
 /*!
@@ -244,10 +239,7 @@ void QCLCommandQueue::barrier(const QVector<QCLEvent>& events)
     cl_int error = clEnqueueWaitForEvents
         (m_id, events.size(),
          reinterpret_cast<const cl_event *>(events.constData()));
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLCommandQueue::barrier(QVector<QCLEvent>):"
-                   << QCL::errorName(error);
-    }
+    context()->reportError("QCLCommandQueue::barrier(QVector<QCLEvent>):", error);
 }
 
 QT_END_NAMESPACE

@@ -41,7 +41,7 @@
 
 #include "qclevent.h"
 #include "qclcommandqueue.h"
-#include "qclerrors.h"
+#include "qclcontext.h"
 #include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
@@ -186,7 +186,7 @@ void QCLEvent::wait()
     if (m_id) {
         cl_int error = clWaitForEvents(1, &m_id);
         if (error != CL_SUCCESS)
-            qWarning() << "QCLEvent::wait:" << QCL::errorName(error);
+            qWarning() << "QCLEvent::wait:" << QCLContext::errorName(error);
     }
 }
 
@@ -206,7 +206,7 @@ void QCLEvent::waitForEvents(const QVector<QCLEvent>& events)
         (events.size(),
          reinterpret_cast<const cl_event *>(events.constData()));
     if (error != CL_SUCCESS)
-        qWarning() << "QCLEvent::waitForEvents:" << QCL::errorName(error);
+        qWarning() << "QCLEvent::waitForEvents:" << QCLContext::errorName(error);
 }
 
 QT_END_NAMESPACE

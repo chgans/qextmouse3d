@@ -79,12 +79,13 @@ public:
     cl_context id() const;
     void setId(cl_context id);
 
-    int createStatus() const;
-
     QList<QCLDevice> devices() const;
     QCLDevice defaultDevice() const;
 
-    int lastError() const;
+    cl_int lastError() const;
+    void setLastError(cl_int error);
+
+    static QString errorName(cl_int code);
 
     QCLCommandQueue commandQueue();
     void setCommandQueue(const QCLCommandQueue& queue);
@@ -117,6 +118,10 @@ private:
 
     friend class QCLBuffer;
     friend class QCLKernel;
+    friend class QCLCommandQueue;
+    friend class QCLProgram;
+
+    void reportError(const char *name, cl_int error);
 };
 
 QT_END_NAMESPACE

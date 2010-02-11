@@ -41,8 +41,6 @@
 
 #include "qclbuffer.h"
 #include "qclcontext.h"
-#include "qclerrors.h"
-#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -96,8 +94,7 @@ bool QCLBuffer::read(size_t offset, void *data, size_t size)
     cl_int error = clEnqueueReadBuffer
         (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, 0, 0, 0);
-    if (error != CL_SUCCESS)
-        qWarning() << "QCLBuffer::read:" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::read:", error);
     return error == CL_SUCCESS;
 }
 
@@ -122,8 +119,7 @@ bool QCLBuffer::read(size_t offset, void *data, size_t size,
         (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), 0);
-    if (error != CL_SUCCESS)
-        qWarning() << "QCLBuffer::read(after):" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::read(after):", error);
     return error == CL_SUCCESS;
 }
 
@@ -144,12 +140,11 @@ QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size)
     cl_int error = clEnqueueReadBuffer
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, 0, 0, &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::readAsync:" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::readAsync:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -176,12 +171,11 @@ QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size,
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::readAsync(after):" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::readAsync(after):", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -199,8 +193,7 @@ bool QCLBuffer::write(size_t offset, const void *data, size_t size)
     cl_int error = clEnqueueWriteBuffer
         (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, 0, 0, 0);
-    if (error != CL_SUCCESS)
-        qWarning() << "QCLBuffer::write:" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::write:", error);
     return error == CL_SUCCESS;
 }
 
@@ -225,8 +218,7 @@ bool QCLBuffer::write(size_t offset, const void *data, size_t size,
         (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), 0);
-    if (error != CL_SUCCESS)
-        qWarning() << "QCLBuffer::write(after):" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::write(after):", error);
     return error == CL_SUCCESS;
 }
 
@@ -247,12 +239,11 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size)
     cl_int error = clEnqueueWriteBuffer
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, 0, 0, &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::writeAsync:" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::writeAsync:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -279,12 +270,11 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size,
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::writeAsync(after):" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::writeAsync(after):", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -300,12 +290,11 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
     cl_int error = clEnqueueCopyBuffer
         (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, 0, 0, &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::copyTo:" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::copyTo:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -328,12 +317,11 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
         (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLBuffer::copyTo(after):" << QCL::errorName(error);
+    context()->reportError("QCLBuffer::copyTo(after):", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 QT_END_NAMESPACE

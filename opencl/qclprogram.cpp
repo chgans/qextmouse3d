@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qclprogram.h"
-#include "qclerrors.h"
+#include "qclcontext.h"
 #include <QtCore/qdebug.h>
 #include <QtCore/qvarlengtharray.h>
 
@@ -166,9 +166,10 @@ bool QCLProgram::build(const QList<QCLDevice>& devices, const QString& options)
             (m_id, devs.size(), devs.constData(),
              options.isEmpty() ? 0 : options.toLatin1().constData(), 0, 0);
     }
+    context()->setLastError(error);
     if (error == CL_SUCCESS)
         return true;
-    qWarning() << "QCLProgram::build:" << QCL::errorName(error);
+    qWarning() << "QCLProgram::build:" << QCLContext::errorName(error);
     qWarning() << log();
     return false;
 }

@@ -43,9 +43,7 @@
 #include "qclprogram.h"
 #include "qclbuffer.h"
 #include "qclcontext.h"
-#include "qclerrors.h"
 #include <QtCore/qvarlengtharray.h>
-#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -282,12 +280,11 @@ QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
     cl_int error = clEnqueueNDRangeKernel
         (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), 0, 0, 0, &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
+    context()->reportError("QCLKernel::execute:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -308,12 +305,11 @@ QCLEvent QCLKernel::execute
     cl_int error = clEnqueueNDRangeKernel
         (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), localWorkSize.sizes(), 0, 0, &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
+    context()->reportError("QCLKernel::execute:", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -335,12 +331,11 @@ QCLEvent QCLKernel::execute
         (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), 0, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLKernel::execute(after):" << QCL::errorName(error);
+    context()->reportError("QCLKernel::execute(after):", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 /*!
@@ -368,12 +363,11 @@ QCLEvent QCLKernel::execute
         (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), localWorkSize.sizes(), after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    if (error != CL_SUCCESS) {
-        qWarning() << "QCLKernel::execute(after):" << QCL::errorName(error);
+    context()->reportError("QCLKernel::execute(after):", error);
+    if (error != CL_SUCCESS)
         return QCLEvent();
-    } else {
+    else
         return QCLEvent(event);
-    }
 }
 
 QT_END_NAMESPACE

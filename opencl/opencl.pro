@@ -16,7 +16,6 @@ HEADERS += \
     qclcommandqueue.h \
     qclcontext.h \
     qcldevice.h \
-    qclerrors.h \
     qclevent.h \
     qclglobal.h \
     qclimage.h \
@@ -31,7 +30,6 @@ SOURCES += \
     qclcommandqueue.cpp \
     qclcontext.cpp \
     qcldevice.cpp \
-    qclerrors.cpp \
     qclevent.cpp \
     qclimage.cpp \
     qclimageformat.cpp \

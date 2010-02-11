@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qclcontext.h"
-#include "qclerrors.h"
 #include <QtCore/qdebug.h>
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qfile.h>
@@ -60,7 +59,7 @@ class QCLContextPrivate
 public:
     QCLContextPrivate()
         : id(0)
-        , createStatus(CL_INVALID_CONTEXT)
+        , isCreated(false)
         , lastError(CL_SUCCESS)
     {
     }
@@ -71,26 +70,17 @@ public:
         defaultCommandQueue = QCLCommandQueue();
 
         // Release the context.
-        if (createStatus == CL_SUCCESS)
+        if (isCreated)
             clReleaseContext(id);
     }
 
     cl_context id;
+    bool isCreated;
     QCLPlatform platform;
     QCLCommandQueue commandQueue;
     QCLCommandQueue defaultCommandQueue;
-    cl_int createStatus;
     cl_int lastError;
-
-    void setLastError(const char *name, cl_int error);
 };
-
-void QCLContextPrivate::setLastError(const char *name, cl_int error)
-{
-    lastError = error;
-    if (error != CL_SUCCESS)
-        qWarning() << name << QCL::errorName(error);
-}
 
 /*!
     Constructs a new OpenCL context object.  This constructor is
@@ -118,7 +108,7 @@ QCLContext::~QCLContext()
 bool QCLContext::isCreated() const
 {
     Q_D(const QCLContext);
-    return d->createStatus == CL_SUCCESS;
+    return d->isCreated;
 }
 
 /*!
@@ -170,16 +160,15 @@ static void qt_cl_context_notify(const char *errinfo,
     \a type.  Does nothing if the context has already been created.
 
     Returns true if the context was created; false otherwise.
-    On error, the status can be retrieved by calling createStatus().
+    On error, the status can be retrieved by calling lastError().
 
     \sa isCreated(), setId(), release()
 */
 bool QCLContext::create(QCLDevice::DeviceTypes type)
 {
     Q_D(QCLContext);
-    if (d->createStatus == CL_SUCCESS)
+    if (d->isCreated)
         return true;
-    d->createStatus = CL_INVALID_CONTEXT;
     if (!d->platform.isNull()) {
         cl_context_properties props[] = {
             CL_CONTEXT_PLATFORM,
@@ -188,18 +177,18 @@ bool QCLContext::create(QCLDevice::DeviceTypes type)
         };
         d->id = clCreateContextFromType
             (props, cl_device_type(type),
-             qt_cl_context_notify, 0, &(d->createStatus));
+             qt_cl_context_notify, 0, &(d->lastError));
     } else {
         d->id = clCreateContextFromType
             (0, cl_device_type(type),
-             qt_cl_context_notify, 0, &(d->createStatus));
+             qt_cl_context_notify, 0, &(d->lastError));
     }
-    bool isCreated = (d->createStatus == CL_SUCCESS);
-    if (!isCreated) {
+    d->isCreated = (d->id != 0);
+    if (!d->isCreated) {
         qWarning() << "QCLContext::create(type:" << int(type) << "):"
-                   << QCL::errorName(d->createStatus);
+                   << errorName(d->lastError);
     }
-    return isCreated;
+    return d->isCreated;
 }
 
 /*!
@@ -207,16 +196,15 @@ bool QCLContext::create(QCLDevice::DeviceTypes type)
     \a devices.  Does nothing if the context has already been created.
 
     Returns true if the context was created; false otherwise.
-    On error, the status can be retrieved by calling createStatus().
+    On error, the status can be retrieved by calling lastError().
 
     \sa isCreated(), setId(), release()
 */
 bool QCLContext::create(const QList<QCLDevice>& devices)
 {
     Q_D(QCLContext);
-    if (d->createStatus == CL_SUCCESS)
+    if (d->isCreated)
         return true;
-    d->createStatus = CL_INVALID_CONTEXT;
     QVector<cl_device_id> devs;
     foreach (QCLDevice dev, devices)
         devs.append(dev.id());
@@ -228,16 +216,16 @@ bool QCLContext::create(const QList<QCLDevice>& devices)
         };
         d->id = clCreateContext
             (props, devs.size(), devs.constData(),
-             qt_cl_context_notify, 0, &(d->createStatus));
+             qt_cl_context_notify, 0, &(d->lastError));
     } else {
         d->id = clCreateContext
             (0, devs.size(), devs.constData(),
-             qt_cl_context_notify, 0, &(d->createStatus));
+             qt_cl_context_notify, 0, &(d->lastError));
     }
-    bool isCreated = (d->createStatus == CL_SUCCESS);
-    if (!isCreated)
-        qWarning() << "QCLContext::create:" << QCL::errorName(d->createStatus);
-    return isCreated;
+    d->isCreated = (d->id != 0);
+    if (!d->isCreated)
+        qWarning() << "QCLContext::create:" << errorName(d->lastError);
+    return d->isCreated;
 }
 
 /*!
@@ -249,12 +237,12 @@ bool QCLContext::create(const QList<QCLDevice>& devices)
 void QCLContext::release()
 {
     Q_D(QCLContext);
-    if (d->createStatus == CL_SUCCESS) {
+    if (d->isCreated) {
         d->commandQueue = QCLCommandQueue();
         d->defaultCommandQueue = QCLCommandQueue();
         clReleaseContext(d->id);
         d->id = 0;
-        d->createStatus = CL_INVALID_CONTEXT;
+        d->isCreated = false;
     }
 }
 
@@ -284,28 +272,12 @@ cl_context QCLContext::id() const
 void QCLContext::setId(cl_context id)
 {
     Q_D(QCLContext);
-    if (d->id == id)
+    if (d->id == id || !id)
         return;
     release();
     clRetainContext(id);
     d->id = id;
-    d->createStatus = CL_SUCCESS;
-}
-
-/*!
-    Returns the status of the last create() call, which will be
-    \c{CL_SUCCESS} if the context was created, or an error code
-    otherwise.
-
-    If the context has not yet been created, or release() has been
-    called, then createStatus() will return \c{CL_INVALID_CONTEXT}.
-
-    \sa create(), release()
-*/
-int QCLContext::createStatus() const
-{
-    Q_D(const QCLContext);
-    return d->createStatus;
+    d->isCreated = false;
 }
 
 /*!
@@ -318,7 +290,7 @@ QList<QCLDevice> QCLContext::devices() const
 {
     Q_D(const QCLContext);
     QList<QCLDevice> devs;
-    if (d->createStatus == CL_SUCCESS) {
+    if (d->isCreated) {
         size_t size = 0;
         if (clGetContextInfo(d->id, CL_CONTEXT_DEVICES, 0, 0, &size)
                 == CL_SUCCESS && size > 0) {
@@ -343,7 +315,7 @@ QList<QCLDevice> QCLContext::devices() const
 QCLDevice QCLContext::defaultDevice() const
 {
     Q_D(const QCLContext);
-    if (d->createStatus == CL_SUCCESS) {
+    if (d->isCreated) {
         size_t size = 0;
         if (clGetContextInfo(d->id, CL_CONTEXT_DEVICES, 0, 0, &size)
                 == CL_SUCCESS && size > 0) {
@@ -358,14 +330,182 @@ QCLDevice QCLContext::defaultDevice() const
 }
 
 /*!
-    Returns the last error that occurred while creating a command
-    queue, buffer, image, or program.  Returns CL_SUCCESS if the
-    last operation succeeded.
+    Returns the last OpenCL error that occurred while executing an
+    operation on this context or any of the objects created by
+    the context.  Returns CL_SUCCESS if the last operation succeeded.
+
+    \sa setLastError(), errorName()
 */
-int QCLContext::lastError() const
+cl_int QCLContext::lastError() const
 {
     Q_D(const QCLContext);
     return d->lastError;
+}
+
+/*!
+    Sets the last error code to \a error.
+
+    \sa lastError(), errorName()
+*/
+void QCLContext::setLastError(cl_int error)
+{
+    Q_D(QCLContext);
+    d->lastError = error;
+}
+
+/*!
+    Returns the name of the supplied OpenCL error \a code.  For example,
+    \c{CL_SUCCESS}, \c{CL_INVALID_CONTEXT}, etc.
+
+    \sa lastError()
+*/
+QString QCLContext::errorName(int code)
+{
+    switch (code) {
+#ifdef CL_SUCCESS
+    case CL_SUCCESS: return QLatin1String("CL_SUCCESS");
+#endif
+#ifdef CL_DEVICE_NOT_FOUND
+    case CL_DEVICE_NOT_FOUND: return QLatin1String("CL_DEVICE_NOT_FOUND");
+#endif
+#ifdef CL_DEVICE_NOT_AVAILABLE
+    case CL_DEVICE_NOT_AVAILABLE: return QLatin1String("CL_DEVICE_NOT_AVAILABLE");
+#endif
+#ifdef CL_COMPILER_NOT_AVAILABLE
+    case CL_COMPILER_NOT_AVAILABLE: return QLatin1String("CL_COMPILER_NOT_AVAILABLE");
+#endif
+#ifdef CL_MEM_OBJECT_ALLOCATION_FAILURE
+    case CL_MEM_OBJECT_ALLOCATION_FAILURE: return QLatin1String("CL_MEM_OBJECT_ALLOCATION_FAILURE");
+#endif
+#ifdef CL_OUT_OF_RESOURCES
+    case CL_OUT_OF_RESOURCES: return QLatin1String("CL_OUT_OF_RESOURCES");
+#endif
+#ifdef CL_OUT_OF_HOST_MEMORY
+    case CL_OUT_OF_HOST_MEMORY: return QLatin1String("CL_OUT_OF_HOST_MEMORY");
+#endif
+#ifdef CL_PROFILING_INFO_NOT_AVAILABLE
+    case CL_PROFILING_INFO_NOT_AVAILABLE: return QLatin1String("CL_PROFILING_INFO_NOT_AVAILABLE");
+#endif
+#ifdef CL_MEM_COPY_OVERLAP
+    case CL_MEM_COPY_OVERLAP: return QLatin1String("CL_MEM_COPY_OVERLAP");
+#endif
+#ifdef CL_IMAGE_FORMAT_MISMATCH
+    case CL_IMAGE_FORMAT_MISMATCH: return QLatin1String("CL_IMAGE_FORMAT_MISMATCH");
+#endif
+#ifdef CL_IMAGE_FORMAT_NOT_SUPPORTED
+    case CL_IMAGE_FORMAT_NOT_SUPPORTED: return QLatin1String("CL_IMAGE_FORMAT_NOT_SUPPORTED");
+#endif
+#ifdef CL_BUILD_PROGRAM_FAILURE
+    case CL_BUILD_PROGRAM_FAILURE: return QLatin1String("CL_BUILD_PROGRAM_FAILURE");
+#endif
+#ifdef CL_MAP_FAILURE
+    case CL_MAP_FAILURE: return QLatin1String("CL_MAP_FAILURE");
+#endif
+#ifdef CL_INVALID_VALUE
+    case CL_INVALID_VALUE: return QLatin1String("CL_INVALID_VALUE");
+#endif
+#ifdef CL_INVALID_DEVICE_TYPE
+    case CL_INVALID_DEVICE_TYPE: return QLatin1String("CL_INVALID_DEVICE_TYPE");
+#endif
+#ifdef CL_INVALID_PLATFORM
+    case CL_INVALID_PLATFORM: return QLatin1String("CL_INVALID_PLATFORM");
+#endif
+#ifdef CL_INVALID_DEVICE
+    case CL_INVALID_DEVICE: return QLatin1String("CL_INVALID_DEVICE");
+#endif
+#ifdef CL_INVALID_CONTEXT
+    case CL_INVALID_CONTEXT: return QLatin1String("CL_INVALID_CONTEXT");
+#endif
+#ifdef CL_INVALID_QUEUE_PROPERTIES
+    case CL_INVALID_QUEUE_PROPERTIES: return QLatin1String("CL_INVALID_QUEUE_PROPERTIES");
+#endif
+#ifdef CL_INVALID_COMMAND_QUEUE
+    case CL_INVALID_COMMAND_QUEUE: return QLatin1String("CL_INVALID_COMMAND_QUEUE");
+#endif
+#ifdef CL_INVALID_HOST_PTR
+    case CL_INVALID_HOST_PTR: return QLatin1String("CL_INVALID_HOST_PTR");
+#endif
+#ifdef CL_INVALID_MEM_OBJECT
+    case CL_INVALID_MEM_OBJECT: return QLatin1String("CL_INVALID_MEM_OBJECT");
+#endif
+#ifdef CL_INVALID_IMAGE_FORMAT_DESCRIPTOR
+    case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR: return QLatin1String("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR");
+#endif
+#ifdef CL_INVALID_IMAGE_SIZE
+    case CL_INVALID_IMAGE_SIZE: return QLatin1String("CL_INVALID_IMAGE_SIZE");
+#endif
+#ifdef CL_INVALID_SAMPLER
+    case CL_INVALID_SAMPLER: return QLatin1String("CL_INVALID_SAMPLER");
+#endif
+#ifdef CL_INVALID_BINARY
+    case CL_INVALID_BINARY: return QLatin1String("CL_INVALID_BINARY");
+#endif
+#ifdef CL_INVALID_BUILD_OPTIONS
+    case CL_INVALID_BUILD_OPTIONS: return QLatin1String("CL_INVALID_BUILD_OPTIONS");
+#endif
+#ifdef CL_INVALID_PROGRAM
+    case CL_INVALID_PROGRAM: return QLatin1String("CL_INVALID_PROGRAM");
+#endif
+#ifdef CL_INVALID_PROGRAM_EXECUTABLE
+    case CL_INVALID_PROGRAM_EXECUTABLE: return QLatin1String("CL_INVALID_PROGRAM_EXECUTABLE");
+#endif
+#ifdef CL_INVALID_KERNEL_NAME
+    case CL_INVALID_KERNEL_NAME: return QLatin1String("CL_INVALID_KERNEL_NAME");
+#endif
+#ifdef CL_INVALID_KERNEL_DEFINITION
+    case CL_INVALID_KERNEL_DEFINITION: return QLatin1String("CL_INVALID_KERNEL_DEFINITION");
+#endif
+#ifdef CL_INVALID_KERNEL
+    case CL_INVALID_KERNEL: return QLatin1String("CL_INVALID_KERNEL");
+#endif
+#ifdef CL_INVALID_ARG_INDEX
+    case CL_INVALID_ARG_INDEX: return QLatin1String("CL_INVALID_ARG_INDEX");
+#endif
+#ifdef CL_INVALID_ARG_VALUE
+    case CL_INVALID_ARG_VALUE: return QLatin1String("CL_INVALID_ARG_VALUE");
+#endif
+#ifdef CL_INVALID_ARG_SIZE
+    case CL_INVALID_ARG_SIZE: return QLatin1String("CL_INVALID_ARG_SIZE");
+#endif
+#ifdef CL_INVALID_KERNEL_ARGS
+    case CL_INVALID_KERNEL_ARGS: return QLatin1String("CL_INVALID_KERNEL_ARGS");
+#endif
+#ifdef CL_INVALID_WORK_DIMENSION
+    case CL_INVALID_WORK_DIMENSION: return QLatin1String("CL_INVALID_WORK_DIMENSION");
+#endif
+#ifdef CL_INVALID_WORK_GROUP_SIZE
+    case CL_INVALID_WORK_GROUP_SIZE: return QLatin1String("CL_INVALID_WORK_GROUP_SIZE");
+#endif
+#ifdef CL_INVALID_WORK_ITEM_SIZE
+    case CL_INVALID_WORK_ITEM_SIZE: return QLatin1String("CL_INVALID_WORK_ITEM_SIZE");
+#endif
+#ifdef CL_INVALID_GLOBAL_OFFSET
+    case CL_INVALID_GLOBAL_OFFSET: return QLatin1String("CL_INVALID_GLOBAL_OFFSET");
+#endif
+#ifdef CL_INVALID_EVENT_WAIT_LIST
+    case CL_INVALID_EVENT_WAIT_LIST: return QLatin1String("CL_INVALID_EVENT_WAIT_LIST");
+#endif
+#ifdef CL_INVALID_EVENT
+    case CL_INVALID_EVENT: return QLatin1String("CL_INVALID_EVENT");
+#endif
+#ifdef CL_INVALID_OPERATION
+    case CL_INVALID_OPERATION: return QLatin1String("CL_INVALID_OPERATION");
+#endif
+#ifdef CL_INVALID_GL_OBJECT
+    case CL_INVALID_GL_OBJECT: return QLatin1String("CL_INVALID_GL_OBJECT");
+#endif
+#ifdef CL_INVALID_BUFFER_SIZE
+    case CL_INVALID_BUFFER_SIZE: return QLatin1String("CL_INVALID_BUFFER_SIZE");
+#endif
+#ifdef CL_INVALID_MIP_LEVEL
+    case CL_INVALID_MIP_LEVEL: return QLatin1String("CL_INVALID_MIP_LEVEL");
+#endif
+#ifdef CL_INVALID_GLOBAL_WORK_SIZE
+    case CL_INVALID_GLOBAL_WORK_SIZE: return QLatin1String("CL_INVALID_GLOBAL_WORK_SIZE");
+#endif
+    default: break;
+    }
+    return QLatin1String("Error ") + QString::number(code);
 }
 
 /*!
@@ -409,7 +549,7 @@ QCLCommandQueue QCLContext::defaultCommandQueue()
 {
     Q_D(QCLContext);
     if (d->defaultCommandQueue.isNull()) {
-        if (d->createStatus != CL_SUCCESS)
+        if (!d->isCreated)
             return QCLCommandQueue();
         QCLDevice dev = defaultDevice();
         if (dev.isNull())
@@ -420,7 +560,7 @@ QCLCommandQueue QCLContext::defaultCommandQueue()
         d->lastError = error;
         if (!queue) {
             qWarning() << "QCLContext::defaultCommandQueue:"
-                       << QCL::errorName(error);
+                       << errorName(error);
             return QCLCommandQueue();
         }
         d->defaultCommandQueue = QCLCommandQueue(this, queue);
@@ -458,8 +598,7 @@ QCLCommandQueue QCLContext::createCommandQueue
     cl_command_queue queue;
     cl_int error = CL_INVALID_VALUE;
     queue = clCreateCommandQueue(d->id, device.id(), properties, &error);
-    d->setLastError("QCLContext::createCommandQueue:", error);
-    d->lastError = error;
+    reportError("QCLContext::createCommandQueue:", error);
     if (queue)
         return QCLCommandQueue(this, queue);
     else
@@ -482,7 +621,7 @@ QCLBuffer QCLContext::createBuffer
     cl_int error = CL_INVALID_CONTEXT;
     cl_mem mem = clCreateBuffer
         (d->id, cl_mem_flags(flags), size, 0, &error);
-    d->setLastError("QCLContext::createBuffer(alloc):", error);
+    reportError("QCLContext::createBuffer(alloc):", error);
     if (mem)
         return QCLBuffer(this, mem);
     else
@@ -505,7 +644,7 @@ QCLBuffer QCLContext::createBuffer
     cl_int error = CL_INVALID_CONTEXT;
     cl_mem mem = clCreateBuffer
         (d->id, cl_mem_flags(flags), size, hostPointer, &error);
-    d->setLastError("QCLContext::createBuffer(hostptr):", error);
+    reportError("QCLContext::createBuffer(hostptr):", error);
     if (mem)
         return QCLBuffer(this, mem);
     else
@@ -524,7 +663,7 @@ QCLProgram QCLContext::createProgramFromSourceCode(const char *sourceCode)
     cl_int error = CL_INVALID_CONTEXT;
     cl_program prog = clCreateProgramWithSource
         (d->id, 1, &sourceCode, 0, &error);
-    d->setLastError("QCLContext::createProgramFromSourceCode:", error);
+    reportError("QCLContext::createProgramFromSourceCode:", error);
     if (prog)
         return QCLProgram(this, prog);
     else
@@ -547,7 +686,7 @@ QCLProgram QCLContext::createProgramFromSourceCode(const QByteArray& sourceCode)
     size_t length = sourceCode.size();
     cl_program prog = clCreateProgramWithSource
         (d->id, 1, &code, &length, &error);
-    d->setLastError("QCLContext::createProgramFromSourceCode(QByteArray):", error);
+    reportError("QCLContext::createProgramFromSourceCode(QByteArray):", error);
     if (prog)
         return QCLProgram(this, prog);
     else
@@ -665,6 +804,17 @@ QList<QCLImageFormat> QCLContext::supportedImage3DFormats
 {
     Q_D(const QCLContext);
     return qt_cl_supportedImageFormats(d->id, flags, CL_MEM_OBJECT_IMAGE3D);
+}
+
+/*!
+    \internal
+*/
+void QCLContext::reportError(const char *name, cl_int error)
+{
+    Q_D(QCLContext);
+    d->lastError = error;
+    if (error != CL_SUCCESS)
+        qWarning() << name << errorName(error);
 }
 
 QT_END_NAMESPACE
