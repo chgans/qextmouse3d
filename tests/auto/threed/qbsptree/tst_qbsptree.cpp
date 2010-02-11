@@ -94,6 +94,7 @@ private slots:
     void insert();
     void iterators();
     void find();
+    void rotate();
 };
 
 void tst_QBSPTree::create()
@@ -296,6 +297,30 @@ void tst_QBSPTree::find()
         QCOMPARE(it.value(), 7U);
         QCOMPARE(it.key(), QVector3D(-1.0f, 2.0f, 3.0f));
     }
+}
+
+void tst_QBSPTree::rotate()
+{
+    QVector3DArray data;
+    data.extend(10);
+    data[0] = QVector3D();
+    data[1] = QVector3D(1.0f, 2.0f, 3.0f);
+    data[2] = QVector3D(2.0f, 2.0f, 3.0f);
+    data[3] = QVector3D(3.0f, 2.0f, 3.0f);
+    data[4] = QVector3D(4.0f, 2.0f, 3.0f);
+    data[5] = QVector3D(5.0f, 2.0f, 3.0f);
+    data[6] = QVector3D(6.0f, 2.0f, 3.0f);
+    data[7] = QVector3D(7.0f, 2.0f, 3.0f);
+    data[8] = QVector3D(8.0f, 2.0f, 3.0f);
+    data[9] = QVector3D(9.0f, 2.0f, 3.0f);
+    QBSPTree tree(&data);
+    for (int i = 0; i < data.count(); ++i)
+        tree.insert(data[i], i);
+    tree.dump();
+    QBSPTree::const_iterator it = tree.constFind(QVector3D(4.0f, 2.0f, 3.0f));
+    QVERIFY(it != tree.constEnd());
+    it = tree.constFind(QVector3D(9.0f, 2.0f, 3.0f));
+    QVERIFY(it != tree.constEnd());
 }
 
 QTEST_APPLESS_MAIN(tst_QBSPTree)
