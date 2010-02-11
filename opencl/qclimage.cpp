@@ -62,6 +62,8 @@ QT_BEGIN_NAMESPACE
 
     Constructs an OpenCL image object that is initialized with the
     native OpenCL identifier \a id, and associates it with \a context.
+    This class will take over ownership of \a id and will release
+    it in the destructor.
 */
 
 /*!

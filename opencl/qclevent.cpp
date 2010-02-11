@@ -64,10 +64,8 @@ QT_BEGIN_NAMESPACE
     \fn QCLEvent::QCLEvent(cl_event id)
 
     Constructs an OpenCL event object from the native identifier \a id.
-
-    This constructor does not call \c{clRetainEvent()}, which makes it
-    suitable for wrapping a native identifier that was returned from a
-    native OpenCL function.
+    This class takes over ownership of \a id and will release it in
+    the destructor.
 */
 
 /*!

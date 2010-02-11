@@ -86,6 +86,9 @@ public:
 
     int lastError() const;
 
+    QCLCommandQueue commandQueue();
+    void setCommandQueue(const QCLCommandQueue& queue);
+
     QCLCommandQueue defaultCommandQueue();
     QCLCommandQueue createCommandQueue
         (const QCLDevice& device, cl_command_queue_properties properties);
@@ -110,7 +113,7 @@ private:
     Q_DISABLE_COPY(QCLContext)
     Q_DECLARE_PRIVATE(QCLContext)
 
-    cl_command_queue defaultQueue(); // For quicker access from friends.
+    cl_command_queue activeQueue(); // For quicker access from friends.
 
     friend class QCLBuffer;
     friend class QCLKernel;

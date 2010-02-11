@@ -61,15 +61,12 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QCLProgram::QCLProgram(QCLContext *context, cl_program id)
+
     Constructs an OpenCL program object from the native identifier \a id,
-    and associates it with \a context.
+    and associates it with \a context.  This class will take over ownership
+    of \a id and will release it in the destructor.
 */
-QCLProgram::QCLProgram(QCLContext *context, cl_program id)
-    : m_context(context), m_id(id)
-{
-    if (m_id)
-        clRetainProgram(m_id);
-}
 
 /*!
     Constructs a copy of \a other.
@@ -223,10 +220,11 @@ QString QCLProgram::log() const
 */
 QCLKernel QCLProgram::createKernel(const char *name) const
 {
-    QCLKernel entry;
-    entry.m_context = m_context;
-    entry.m_id = clCreateKernel(m_id, name, 0);
-    return entry;
+    cl_kernel kernel = clCreateKernel(m_id, name, 0);
+    if (kernel)
+        return QCLKernel(m_context, kernel);
+    else
+        return QCLKernel();
 }
 
 /*!
@@ -258,12 +256,8 @@ QList<QCLKernel> QCLProgram::createKernels() const
     if (clCreateKernelsInProgram
             (m_id, numKernels, kerns.data(), 0) != CL_SUCCESS)
         return list;
-    for (cl_uint index = 0; index < numKernels; ++index) {
-        QCLKernel entry;
-        entry.m_context = m_context;
-        entry.m_id = kerns[index];
-        list.append(entry);
-    }
+    for (cl_uint index = 0; index < numKernels; ++index)
+        list.append(QCLKernel(m_context, kerns[index]));
     return list;
 }
 

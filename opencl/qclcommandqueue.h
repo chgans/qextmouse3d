@@ -52,15 +52,13 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(CL)
 
 class QCLContext;
-class QCLBuffer;
-class QCLKernel;
-class QCLWorkSize;
 
 class Q_CL_EXPORT QCLCommandQueue
 {
 public:
     QCLCommandQueue() : m_id(0) {}
-    QCLCommandQueue(cl_command_queue id);
+    QCLCommandQueue(QCLContext *context, cl_command_queue id)
+        : m_context(context), m_id(id) {}
     QCLCommandQueue(const QCLCommandQueue& other);
     ~QCLCommandQueue();
 
@@ -72,6 +70,7 @@ public:
     void setOutOfOrder(bool enable);
 
     cl_command_queue id() const { return m_id; }
+    QCLContext *context() const { return m_context; }
 
     void flush();
     void finish();
@@ -82,54 +81,9 @@ public:
     void barrier(const QCLEvent& event);
     void barrier(const QVector<QCLEvent>& events);
 
-    bool readBuffer
-        (const QCLBuffer& buffer, size_t offset, void *data, size_t size);
-    bool readBuffer
-        (const QCLBuffer& buffer, size_t offset, void *data,
-         size_t size, const QVector<QCLEvent>& after);
-
-    QCLEvent readBufferAsync
-        (const QCLBuffer& buffer, size_t offset, void *data, size_t size);
-    QCLEvent readBufferAsync
-        (const QCLBuffer& buffer, size_t offset, void *data,
-         size_t size, const QVector<QCLEvent>& after);
-
-    bool writeBuffer
-        (const QCLBuffer& buffer, size_t offset, const void *data, size_t size);
-    bool writeBuffer
-        (const QCLBuffer& buffer, size_t offset, const void *data,
-         size_t size, const QVector<QCLEvent>& after);
-
-    QCLEvent writeBufferAsync
-        (const QCLBuffer& buffer, size_t offset, const void *data, size_t size);
-    QCLEvent writeBufferAsync
-        (const QCLBuffer& buffer, size_t offset, const void *data,
-         size_t size, const QVector<QCLEvent>& after);
-
-    QCLEvent copyBufferToBuffer
-        (const QCLBuffer& src, size_t offset, size_t size,
-         const QCLBuffer& dest, size_t destOffset);
-    QCLEvent copyBufferToBuffer
-        (const QCLBuffer& src, size_t offset, size_t size,
-         const QCLBuffer& dest, size_t destOffset,
-         const QVector<QCLEvent>& after);
-
-    QCLEvent executeKernel
-        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize);
-    QCLEvent executeKernel
-        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
-         const QCLWorkSize& localWorkSize);
-    QCLEvent executeKernel
-        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
-         const QVector<QCLEvent>& after);
-    QCLEvent executeKernel
-        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
-         const QCLWorkSize& localWorkSize, const QVector<QCLEvent>& after);
-
 private:
+    QCLContext *m_context;
     cl_command_queue m_id;
-
-    friend class QCLContext;
 };
 
 QT_END_NAMESPACE

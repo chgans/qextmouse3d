@@ -66,7 +66,8 @@ public:
     }
     ~QCLContextPrivate()
     {
-        // Release the default command queue for the context.
+        // Release the command queues for the context.
+        commandQueue = QCLCommandQueue();
         defaultCommandQueue = QCLCommandQueue();
 
         // Release the context.
@@ -76,6 +77,7 @@ public:
 
     cl_context id;
     QCLPlatform platform;
+    QCLCommandQueue commandQueue;
     QCLCommandQueue defaultCommandQueue;
     cl_int createStatus;
     cl_int lastError;
@@ -248,6 +250,7 @@ void QCLContext::release()
 {
     Q_D(QCLContext);
     if (d->createStatus == CL_SUCCESS) {
+        d->commandQueue = QCLCommandQueue();
         d->defaultCommandQueue = QCLCommandQueue();
         clReleaseContext(d->id);
         d->id = 0;
@@ -366,6 +369,33 @@ int QCLContext::lastError() const
 }
 
 /*!
+    Returns the context's active command queue, which will be
+    defaultCommandQueue() if the queue has not yet been set.
+
+    \sa setCommandQueue(), defaultCommandQueue()
+*/
+QCLCommandQueue QCLContext::commandQueue()
+{
+    Q_D(QCLContext);
+    if (!d->commandQueue.isNull())
+        return d->commandQueue;
+    else
+        return defaultCommandQueue();
+}
+
+/*!
+    Sets the context's active command \a queue.  If \a queue is
+    null, then defaultCommandQueue() will be used.
+
+    \sa commandQueue(), defaultCommandQueue()
+*/
+void QCLContext::setCommandQueue(const QCLCommandQueue& queue)
+{
+    Q_D(QCLContext);
+    d->commandQueue = queue;
+}
+
+/*!
     Returns the default command queue for defaultDevice().  If the queue
     has not been created, it will be created with the default properties
     of in-order execution of commands.
@@ -373,25 +403,17 @@ int QCLContext::lastError() const
     Out of order execution can be set on the default command queue with
     QCLCommandQueue::setOutOfOrder().
 
-    \sa createCommandQueue(), lastError()
+    \sa commandQueue(), createCommandQueue(), lastError()
 */
 QCLCommandQueue QCLContext::defaultCommandQueue()
 {
     Q_D(QCLContext);
-    defaultQueue();
-    return d->defaultCommandQueue;
-}
-
-// Returns the default queue handle without incurring retain/release overhead.
-cl_command_queue QCLContext::defaultQueue()
-{
-    Q_D(QCLContext);
     if (d->defaultCommandQueue.isNull()) {
         if (d->createStatus != CL_SUCCESS)
-            return 0;
+            return QCLCommandQueue();
         QCLDevice dev = defaultDevice();
         if (dev.isNull())
-            return 0;
+            return QCLCommandQueue();
         cl_command_queue queue;
         cl_int error = CL_INVALID_VALUE;
         queue = clCreateCommandQueue(d->id, dev.id(), 0, &error);
@@ -399,11 +421,24 @@ cl_command_queue QCLContext::defaultQueue()
         if (!queue) {
             qWarning() << "QCLContext::defaultCommandQueue:"
                        << QCL::errorName(error);
-            return 0;
+            return QCLCommandQueue();
         }
-        d->defaultCommandQueue.m_id = queue;
+        d->defaultCommandQueue = QCLCommandQueue(this, queue);
     }
-    return d->defaultCommandQueue.id();
+    return d->defaultCommandQueue;
+}
+
+// Returns the active queue handle without incurring retain/release overhead.
+cl_command_queue QCLContext::activeQueue()
+{
+    Q_D(QCLContext);
+    cl_command_queue queue = d->commandQueue.id();
+    if (queue)
+        return queue;
+    queue = d->defaultCommandQueue.id();
+    if (queue)
+        return queue;
+    return defaultCommandQueue().id();
 }
 
 /*!
@@ -420,15 +455,15 @@ QCLCommandQueue QCLContext::createCommandQueue
     (const QCLDevice& device, cl_command_queue_properties properties)
 {
     Q_D(QCLContext);
-    QCLCommandQueue result;
     cl_command_queue queue;
     cl_int error = CL_INVALID_VALUE;
     queue = clCreateCommandQueue(d->id, device.id(), properties, &error);
     d->setLastError("QCLContext::createCommandQueue:", error);
     d->lastError = error;
     if (queue)
-        result.m_id = queue;
-    return result;
+        return QCLCommandQueue(this, queue);
+    else
+        return QCLCommandQueue();
 }
 
 /*!
@@ -444,16 +479,14 @@ QCLBuffer QCLContext::createBuffer
     (size_t size, QCLMemoryObject::MemoryFlags flags)
 {
     Q_D(QCLContext);
-    QCLBuffer buffer;
     cl_int error = CL_INVALID_CONTEXT;
     cl_mem mem = clCreateBuffer
         (d->id, cl_mem_flags(flags), size, 0, &error);
     d->setLastError("QCLContext::createBuffer(alloc):", error);
-    if (mem) {
-        buffer.m_context = this;
-        buffer.m_id = mem;
-    }
-    return buffer;
+    if (mem)
+        return QCLBuffer(this, mem);
+    else
+        return QCLBuffer();
 }
 
 /*!
@@ -469,16 +502,14 @@ QCLBuffer QCLContext::createBuffer
     (void *hostPointer, size_t size, QCLMemoryObject::MemoryFlags flags)
 {
     Q_D(QCLContext);
-    QCLBuffer buffer;
     cl_int error = CL_INVALID_CONTEXT;
     cl_mem mem = clCreateBuffer
         (d->id, cl_mem_flags(flags), size, hostPointer, &error);
     d->setLastError("QCLContext::createBuffer(hostptr):", error);
-    if (mem) {
-        buffer.m_context = this;
-        buffer.m_id = mem;
-    }
-    return buffer;
+    if (mem)
+        return QCLBuffer(this, mem);
+    else
+        return QCLBuffer();
 }
 
 /*!
@@ -490,16 +521,14 @@ QCLProgram QCLContext::createProgramFromSourceCode(const char *sourceCode)
 {
     Q_D(QCLContext);
     Q_ASSERT(sourceCode);
-    QCLProgram program;
     cl_int error = CL_INVALID_CONTEXT;
     cl_program prog = clCreateProgramWithSource
         (d->id, 1, &sourceCode, 0, &error);
     d->setLastError("QCLContext::createProgramFromSourceCode:", error);
-    if (prog) {
-        program.m_context = this;
-        program.m_id = prog;
-    }
-    return program;
+    if (prog)
+        return QCLProgram(this, prog);
+    else
+        return QCLProgram();
 }
 
 /*!
@@ -513,18 +542,16 @@ QCLProgram QCLContext::createProgramFromSourceCode(const QByteArray& sourceCode)
 {
     Q_D(QCLContext);
     Q_ASSERT(!sourceCode.isEmpty());
-    QCLProgram program;
     cl_int error = CL_INVALID_CONTEXT;
     const char *code = sourceCode.constData();
     size_t length = sourceCode.size();
     cl_program prog = clCreateProgramWithSource
         (d->id, 1, &code, &length, &error);
     d->setLastError("QCLContext::createProgramFromSourceCode(QByteArray):", error);
-    if (prog) {
-        program.m_context = this;
-        program.m_id = prog;
-    }
-    return program;
+    if (prog)
+        return QCLProgram(this, prog);
+    else
+        return QCLProgram();
 }
 
 /*!

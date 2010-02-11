@@ -62,7 +62,8 @@ class Q_CL_EXPORT QCLKernel
 {
 public:
     QCLKernel() : m_context(0), m_id(0) {}
-    QCLKernel(QCLContext *context, cl_kernel id);
+    QCLKernel(QCLContext *context, cl_kernel id)
+        : m_context(context), m_id(id) {}
     QCLKernel(const QCLKernel& other);
     ~QCLKernel();
 
@@ -101,8 +102,6 @@ public:
 private:
     QCLContext *m_context;
     cl_kernel m_id;
-
-    friend class QCLProgram;
 };
 
 QT_END_NAMESPACE

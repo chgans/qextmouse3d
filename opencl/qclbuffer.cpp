@@ -65,6 +65,8 @@ QT_BEGIN_NAMESPACE
 
     Constructs an OpenCL buffer object that is initialized with the
     native OpenCL identifier \a id, and associates it with \a context.
+    This class will take over ownership of \a id and will release
+    it in the destructor.
 */
 
 /*!
@@ -85,17 +87,14 @@ QT_BEGIN_NAMESPACE
     was successful; false otherwise.
 
     This function will block until the request completes.
+    The request is executed on the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::readBuffer() to execute the request on a
-    different command queue.
-
-    \sa readAsync(), QCLCommandQueue::readBuffer(), write()
+    \sa readAsync(), write()
 */
 bool QCLBuffer::read(size_t offset, void *data, size_t size)
 {
     cl_int error = clEnqueueReadBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, 0, 0, 0);
     if (error != CL_SUCCESS)
         qWarning() << "QCLBuffer::read:" << QCL::errorName(error);
@@ -111,19 +110,16 @@ bool QCLBuffer::read(size_t offset, void *data, size_t size)
 
     The request will not start until all of the events in \a after
     have been signalled as completed, and then this function will
-    block until the request completes.
+    block until the request completes.  The request is executed on
+    the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::readBuffer() to execute the request on a
-    different command queue.
-
-    \sa readAsync(), QCLCommandQueue::readBuffer(), write()
+    \sa readAsync(), write()
 */
 bool QCLBuffer::read(size_t offset, void *data, size_t size,
                      const QVector<QCLEvent>& after)
 {
     cl_int error = clEnqueueReadBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), 0);
     if (error != CL_SUCCESS)
@@ -137,19 +133,16 @@ bool QCLBuffer::read(size_t offset, void *data, size_t size,
 
     This function will queue the request and return immediately.
     Returns an event object that can be used to wait for the
-    request to complete.
+    request to complete.  The request is executed on the active
+    command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::readBufferAsync() to execute the request on a
-    different command queue.
-
-    \sa read(), QCLCommandQueue::readBufferAsync(), writeAsync()
+    \sa read(), writeAsync()
 */
 QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size)
 {
     cl_event event;
     cl_int error = clEnqueueReadBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLBuffer::readAsync:" << QCL::errorName(error);
@@ -170,20 +163,17 @@ QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size)
     request to complete.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::readBufferAsync() to execute the request on a
-    different command queue.
-
-    \sa read(), QCLCommandQueue::readBufferAsync(), writeAsync()
+    \sa read(), writeAsync()
 */
 QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size,
                               const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueReadBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {
@@ -200,17 +190,14 @@ QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size,
     was successful; false otherwise.
 
     This function will block until the request completes.
+    The request is executed on the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::writeBuffer() to execute the request on a
-    different command queue.
-
-    \sa writeAsync(), QCLCommandQueue::writeBuffer(), read()
+    \sa writeAsync(), read()
 */
 bool QCLBuffer::write(size_t offset, const void *data, size_t size)
 {
     cl_int error = clEnqueueWriteBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, 0, 0, 0);
     if (error != CL_SUCCESS)
         qWarning() << "QCLBuffer::write:" << QCL::errorName(error);
@@ -226,19 +213,16 @@ bool QCLBuffer::write(size_t offset, const void *data, size_t size)
 
     The request will not start until all of the events in \a after
     have been signalled as completed, and then this function will
-    block until the request completes.
+    block until the request completes.  The request is executed on
+    the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::writeBuffer() to execute the request on a
-    different command queue.
-
-    \sa writeAsync(), QCLCommandQueue::writeBuffer(), read()
+    \sa writeAsync(), read()
 */
 bool QCLBuffer::write(size_t offset, const void *data, size_t size,
                       const QVector<QCLEvent>& after)
 {
     cl_int error = clEnqueueWriteBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_TRUE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), 0);
     if (error != CL_SUCCESS)
@@ -252,19 +236,16 @@ bool QCLBuffer::write(size_t offset, const void *data, size_t size,
 
     This function will queue the request and return immediately.
     Returns an event object that can be used to wait for the
-    request to complete.
+    request to complete.  The request is executed on the active
+    command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::writeBufferAsync() to execute the request on a
-    different command queue.
-
-    \sa write(), QCLCommandQueue::writeBufferAsync(), readAsync()
+    \sa write(), readAsync()
 */
 QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size)
 {
     cl_event event;
     cl_int error = clEnqueueWriteBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLBuffer::writeAsync:" << QCL::errorName(error);
@@ -285,20 +266,17 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size)
     request to complete.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
 
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::writeBufferAsync() to execute the request on a
-    different command queue.
-
-    \sa write(), QCLCommandQueue::writeBufferAsync(), readAsync()
+    \sa write(), readAsync()
 */
 QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size,
                                const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueWriteBuffer
-        (context()->defaultQueue(), id(),
+        (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {
@@ -313,19 +291,14 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size,
     Requests that the \a size bytes at \a offset in this buffer
     be copied to \a destOffset in the buffer \a dest.  Returns an
     event object that can be used to wait for the request to complete.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::copyBufferToBuffer() to execute the request on a
-    different command queue.
-
-    \sa QCLCommandQueue::copyBufferToBuffer()
+    The request is executed on the active command queue for context().
 */
 QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
                            const QCLBuffer& dest, size_t destOffset)
 {
     cl_event event;
     cl_int error = clEnqueueCopyBuffer
-        (context()->defaultQueue(), id(), dest.id(),
+        (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLBuffer::copyTo:" << QCL::errorName(error);
@@ -343,13 +316,8 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
     event object that can be used to wait for the request to complete.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::copyBufferToBuffer() to execute the request on a
-    different command queue.
-
-    \sa QCLCommandQueue::copyBufferToBuffer()
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
 */
 QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
                            const QCLBuffer& dest, size_t destOffset,
@@ -357,7 +325,7 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
 {
     cl_event event;
     cl_int error = clEnqueueCopyBuffer
-        (context()->defaultQueue(), id(), dest.id(),
+        (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {

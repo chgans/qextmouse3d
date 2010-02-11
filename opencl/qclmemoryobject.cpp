@@ -76,15 +76,12 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QCLMemoryObject::QCLMemoryObject(QCLContext *context, cl_mem id)
+
     Constructs an OpenCL memory object from the native identifier \a id,
-    and associates it with \a context.
+    and associates it with \a context.  This class takes over ownership
+    of \a id and will release it in the destructor.
 */
-QCLMemoryObject::QCLMemoryObject(QCLContext *context, cl_mem id)
-    : m_context(context), m_id(id)
-{
-    if (m_id)
-        clRetainMemObject(m_id);
-}
 
 /*!
     Releases this OpenCL memory object.  If this is the last reference

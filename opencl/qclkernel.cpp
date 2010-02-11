@@ -66,15 +66,12 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QCLKernel::QCLKernel(QCLContext *context, cl_kernel id)
+
     Constructs an OpenCL kernel object from the native identifier \a id,
-    and associates it with \a context.
+    and associates it with \a context.  This class will take over
+    ownership of \a id and release it in the destructor.
 */
-QCLKernel::QCLKernel(QCLContext *context, cl_kernel id)
-    : m_context(context), m_id(id)
-{
-    if (m_id)
-        clRetainKernel(m_id);
-}
 
 /*!
     Constructs a copy of \a other.
@@ -276,19 +273,14 @@ void QCLKernel::setArg(int index, const void *data, size_t size)
 /*!
     Requests that this kernel be executed on \a globalWorkSize items.
     Returns an event object that can be use to wait for the kernel
-    to finish execution.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::executeKernel() to execute the request on a
-    different command queue.
-
-    \sa QCLCommandQueue::executeKernel()
+    to finish execution.  The request is executed on the active
+    command queue for context().
 */
 QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
 {
     cl_event event;
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), 0, 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
@@ -302,16 +294,11 @@ QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
     Requests that this kernel be executed on \a globalWorkSize items,
     which are subdivided into local work items of \a localWorkSize in size.
     Returns an event object that can be use to wait for the kernel
-    to finish execution.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::executeKernel() to execute the request on a
-    different command queue.
+    to finish execution.  The request is executed on the active
+    command queue for context().
 
     The \a globalWorkSize must have the same number of dimensions as
     \a localWorkSize, and be evenly divisible by \a localWorkSize.
-
-    \sa QCLCommandQueue::executeKernel()
 */
 QCLEvent QCLKernel::execute
     (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize)
@@ -319,7 +306,7 @@ QCLEvent QCLKernel::execute
     Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
     cl_event event;
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), localWorkSize.sizes(), 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
@@ -337,20 +324,15 @@ QCLEvent QCLKernel::execute
     to finish execution.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::executeKernel() to execute the request on a
-    different command queue.
-
-    \sa QCLCommandQueue::executeKernel()
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
 */
 QCLEvent QCLKernel::execute
     (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), 0, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {
@@ -370,16 +352,11 @@ QCLEvent QCLKernel::execute
     to finish execution.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.
-
-    The request is executed on the default command queue for context();
-    use QCLCommandQueue::executeKernel() to execute the request on a
-    different command queue.
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
 
     The \a globalWorkSize must have the same number of dimensions as
     \a localWorkSize, and be evenly divisible by \a localWorkSize.
-
-    \sa QCLCommandQueue::executeKernel()
 */
 QCLEvent QCLKernel::execute
     (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
@@ -388,7 +365,7 @@ QCLEvent QCLKernel::execute
     Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
     cl_event event;
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
          0, globalWorkSize.sizes(), localWorkSize.sizes(), after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {

@@ -56,7 +56,8 @@ class Q_CL_EXPORT QCLMemoryObject
 {
 protected:
     QCLMemoryObject(QCLContext *context = 0) : m_context(context), m_id(0) {}
-    QCLMemoryObject(QCLContext *context, cl_mem id);
+    QCLMemoryObject(QCLContext *context, cl_mem id)
+        : m_context(context), m_id(id) {}
 
 public:
     virtual ~QCLMemoryObject();
@@ -85,8 +86,6 @@ private:
     cl_mem m_id;
 
     Q_DISABLE_COPY(QCLMemoryObject)
-
-    friend class QCLContext;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QCLMemoryObject::MemoryFlags)

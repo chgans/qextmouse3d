@@ -59,7 +59,8 @@ class Q_CL_EXPORT QCLProgram
 {
 public:
     QCLProgram() : m_context(0), m_id(0) {}
-    QCLProgram(QCLContext *context, cl_program id);
+    QCLProgram(QCLContext *context, cl_program id)
+        : m_context(context), m_id(id) {}
     QCLProgram(const QCLProgram& other);
     ~QCLProgram();
 
@@ -86,8 +87,6 @@ public:
 private:
     QCLContext *m_context;
     cl_program m_id;
-
-    friend class QCLContext;
 };
 
 QT_END_NAMESPACE
