@@ -121,7 +121,7 @@ int QCLImage::height() const
 }
 
 /*!
-    Returns the depth of this 2D OpenCL image; 0 if the image is 2D.
+    Returns the depth of this 3D OpenCL image; 0 if the image is 2D.
 
     \sa width(), height(), bytesPerSlice()
 */
