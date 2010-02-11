@@ -17,6 +17,7 @@ HEADERS += \
     qclevent.h \
     qclglobal.h \
     qclimage.h \
+    qclimageformat.h \
     qclkernel.h \
     qclmemoryobject.h \
     qclplatform.h \
@@ -30,6 +31,7 @@ SOURCES += \
     qclerrors.cpp \
     qclevent.cpp \
     qclimage.cpp \
+    qclimageformat.cpp \
     qclkernel.cpp \
     qclmemoryobject.cpp \
     qclplatform.cpp \

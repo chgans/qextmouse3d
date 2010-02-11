@@ -76,4 +76,89 @@ QT_BEGIN_NAMESPACE
     Assigns \a other to this object.
 */
 
+/*!
+    Returns the format descriptor for this OpenCL image.
+*/
+QCLImageFormat QCLImage::format() const
+{
+    cl_image_format iformat;
+    if (clGetImageInfo(id(), CL_IMAGE_FORMAT, sizeof(iformat), &iformat, 0)
+            != CL_SUCCESS)
+        return QCLImageFormat();
+    else
+        return QCLImageFormat
+            (QCLImageFormat::ChannelOrder(iformat.image_channel_order),
+             QCLImageFormat::ChannelType(iformat.image_channel_data_type));
+}
+
+static int qt_cl_imageParam(cl_mem id, cl_image_info name)
+{
+    size_t value = 0;
+    if (clGetImageInfo(id, name, sizeof(value), &value, 0) != CL_SUCCESS)
+        return 0;
+    else
+        return int(value);
+}
+
+/*!
+    Returns the width of this OpenCL image.
+
+    \sa height(), depth(), bytesPerLine()
+*/
+int QCLImage::width() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_WIDTH);
+}
+
+/*!
+    Returns the height of this OpenCL image.
+
+    \sa width(), depth()
+*/
+int QCLImage::height() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_HEIGHT);
+}
+
+/*!
+    Returns the depth of this 2D OpenCL image; 0 if the image is 2D.
+
+    \sa width(), height(), bytesPerSlice()
+*/
+int QCLImage::depth() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_DEPTH);
+}
+
+/*!
+    Returns the number of bytes per element in this OpenCL image.
+
+    \sa bytesPerLine(), bytesPerSlice()
+*/
+int QCLImage::bytesPerElement() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_ELEMENT_SIZE);
+}
+
+/*!
+    Returns the number of bytes per line in this OpenCL image.
+
+    \sa bytesPerElement(), bytesPerSlice()
+*/
+int QCLImage::bytesPerLine() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_ROW_PITCH);
+}
+
+/*!
+    Returns the number of bytes per 2D slice in this 3D OpenCL image;
+    0 if the image is 2D.
+
+    \sa bytesPerElement(), bytesPerLine()
+*/
+int QCLImage::bytesPerSlice() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_SLICE_PITCH);
+}
+
 QT_END_NAMESPACE

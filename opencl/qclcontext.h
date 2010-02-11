@@ -101,6 +101,9 @@ public:
     QCLProgram buildProgramFromSourceCode(const QByteArray& sourceCode);
     QCLProgram buildProgramFromSourceFile(const QString& fileName);
 
+    QList<QCLImageFormat> supportedImage2DFormats(QCLMemoryObject::MemoryFlags flags) const;
+    QList<QCLImageFormat> supportedImage3DFormats(QCLMemoryObject::MemoryFlags flags) const;
+
 private:
     QScopedPointer<QCLContextPrivate> d_ptr;
 

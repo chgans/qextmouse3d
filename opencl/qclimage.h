@@ -43,6 +43,7 @@
 #define QCLIMAGE_H
 
 #include "qclmemoryobject.h"
+#include "qclimageformat.h"
 
 QT_BEGIN_HEADER
 
@@ -64,6 +65,16 @@ public:
         setId(other.context(), other.id());
         return *this;
     }
+
+    QCLImageFormat format() const;
+
+    int width() const;
+    int height() const;
+    int depth() const;
+
+    int bytesPerElement() const;
+    int bytesPerLine() const;
+    int bytesPerSlice() const;
 };
 
 QT_END_NAMESPACE
