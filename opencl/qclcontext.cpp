@@ -359,7 +359,7 @@ void QCLContext::setLastError(cl_int error)
 
     \sa lastError()
 */
-QString QCLContext::errorName(int code)
+QString QCLContext::errorName(cl_int code)
 {
     switch (code) {
 #ifdef CL_SUCCESS
