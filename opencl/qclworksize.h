@@ -39,13 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QCLKERNEL_H
-#define QCLKERNEL_H
+#ifndef QCLWORKSIZE_H
+#define QCLWORKSIZE_H
 
 #include "qclglobal.h"
-#include "qclevent.h"
-#include "qclworksize.h"
-#include <QtCore/qstring.h>
 
 QT_BEGIN_HEADER
 
@@ -53,55 +50,29 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
 
-class QCLContext;
-class QCLProgram;
-class QCLBuffer;
-class QCLDevice;
-
-class Q_CL_EXPORT QCLKernel
+class Q_CL_EXPORT QCLWorkSize
 {
 public:
-    QCLKernel() : m_context(0), m_id(0) {}
-    QCLKernel(QCLContext *context, cl_kernel id);
-    QCLKernel(const QCLKernel& other);
-    ~QCLKernel();
+    QCLWorkSize()
+        : m_dim(1) { m_sizes[0] = 1; m_sizes[1] = 0; m_sizes[2] = 0; }
+    QCLWorkSize(size_t size)
+        : m_dim(1) { m_sizes[0] = size; m_sizes[1] = 0; m_sizes[2] = 0; }
+    QCLWorkSize(size_t width, size_t height)
+        : m_dim(2) { m_sizes[0] = width; m_sizes[1] = height; m_sizes[2] = 0; }
+    QCLWorkSize(size_t width, size_t height, size_t depth)
+        : m_dim(3)
+        { m_sizes[0] = width; m_sizes[1] = height; m_sizes[2] = depth; }
 
-    QCLKernel& operator=(const QCLKernel& other);
+    size_t dimensions() const { return m_dim; }
+    size_t width() const { return m_sizes[0]; }
+    size_t height() const { return m_sizes[1]; }
+    size_t depth() const { return m_sizes[2]; }
 
-    bool isNull() const { return m_id == 0; }
-
-    cl_kernel id() const { return m_id; }
-    QCLContext *context() const { return m_context; }
-
-    QCLProgram program() const;
-    QString name() const;
-    int argCount() const;
-
-    QCLWorkSize declaredWorkGroupSize() const;
-    QCLWorkSize declaredWorkGroupSize(const QCLDevice& device) const;
-
-    void setArg(int index, cl_int value);
-    void setArg(int index, cl_uint value);
-    void setArg(int index, cl_long value);
-    void setArg(int index, cl_ulong value);
-    void setArg(int index, const QCLBuffer& value);
-    void setArg(int index, const void *data, size_t size);
-
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
-         const QVector<QCLEvent>& after);
+    const size_t *sizes() const { return m_sizes; }
 
 private:
-    QCLContext *m_context;
-    cl_kernel m_id;
-
-    friend class QCLProgram;
+    size_t m_dim;
+    size_t m_sizes[3];
 };
 
 QT_END_NAMESPACE

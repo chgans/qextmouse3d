@@ -54,6 +54,7 @@ QT_MODULE(CL)
 class QCLContext;
 class QCLBuffer;
 class QCLKernel;
+class QCLWorkSize;
 
 class Q_CL_EXPORT QCLCommandQueue
 {
@@ -114,10 +115,16 @@ public:
          const QVector<QCLEvent>& after);
 
     QCLEvent executeKernel
-        (const QCLKernel& kernel, size_t workSize);
+        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize);
     QCLEvent executeKernel
-        (const QCLKernel& kernel, size_t workSize,
+        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
+         const QCLWorkSize& localWorkSize);
+    QCLEvent executeKernel
+        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
          const QVector<QCLEvent>& after);
+    QCLEvent executeKernel
+        (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
+         const QCLWorkSize& localWorkSize, const QVector<QCLEvent>& after);
 
 private:
     cl_command_queue m_id;

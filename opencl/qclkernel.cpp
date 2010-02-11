@@ -176,6 +176,47 @@ int QCLKernel::argCount() const
 }
 
 /*!
+    Returns the work group size that was declared in the kernel's
+    source code using a \c{reqd_work_group_size} qualifier.
+    Returns (0, 0, 0) if the size is not declared.
+
+    The default device for context() is used to retrieve the
+    work group size.
+*/
+QCLWorkSize QCLKernel::declaredWorkGroupSize() const
+{
+    size_t sizes[3];
+    if (clGetKernelWorkGroupInfo
+            (m_id, context()->defaultDevice().id(),
+             CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
+             sizeof(sizes), sizes, 0) != CL_SUCCESS)
+        return QCLWorkSize(0, 0, 0);
+    else
+        return QCLWorkSize(sizes[0], sizes[1], sizes[2]);
+}
+
+/*!
+    \overload
+
+    Returns the work group size that was declared in the kernel's
+    source code using a \c{reqd_work_group_size} qualifier.
+    Returns (0, 0, 0) if the size is not declared.
+
+    The specified \a device is used to retrieve the work group size.
+*/
+QCLWorkSize QCLKernel::declaredWorkGroupSize(const QCLDevice& device) const
+{
+    size_t sizes[3];
+    if (clGetKernelWorkGroupInfo
+            (m_id, device.id(),
+             CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
+             sizeof(sizes), sizes, 0) != CL_SUCCESS)
+        return QCLWorkSize(0, 0, 0);
+    else
+        return QCLWorkSize(sizes[0], sizes[1], sizes[2]);
+}
+
+/*!
     Sets argument \a index for this kernel to \a value.
 */
 void QCLKernel::setArg(int index, cl_int value)
@@ -225,7 +266,7 @@ void QCLKernel::setArg(int index, const void *data, size_t size)
 }
 
 /*!
-    Requests that this kernel be executed on \a workSize items.
+    Requests that this kernel be executed on \a globalWorkSize items.
     Returns an event object that can be use to wait for the kernel
     to finish execution.
 
@@ -235,12 +276,43 @@ void QCLKernel::setArg(int index, const void *data, size_t size)
 
     \sa QCLCommandQueue::executeKernel()
 */
-QCLEvent QCLKernel::execute(size_t workSize)
+QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
 {
     cl_event event;
-    size_t sizes[1] = {workSize};
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, 1, 0, sizes, 0, 0, 0, &event);
+        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), 0, 0, 0, &event);
+    if (error != CL_SUCCESS) {
+        qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
+        return QCLEvent();
+    } else {
+        return QCLEvent(event);
+    }
+}
+
+/*!
+    Requests that this kernel be executed on \a globalWorkSize items,
+    which are subdivided into local work items of \a localWorkSize in size.
+    Returns an event object that can be use to wait for the kernel
+    to finish execution.
+
+    The request is executed on the default command queue for context();
+    use QCLCommandQueue::executeKernel() to execute the request on a
+    different command queue.
+
+    The \a globalWorkSize must have the same number of dimensions as
+    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+
+    \sa QCLCommandQueue::executeKernel()
+*/
+QCLEvent QCLKernel::execute
+    (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize)
+{
+    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
+    cl_event event;
+    cl_int error = clEnqueueNDRangeKernel
+        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), localWorkSize.sizes(), 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLKernel::execute:" << QCL::errorName(error);
         return QCLEvent();
@@ -252,7 +324,7 @@ QCLEvent QCLKernel::execute(size_t workSize)
 /*!
     \overload
 
-    Requests that this kernel be executed on \a workSize items.
+    Requests that this kernel be executed on \a globalWorkSize items.
     Returns an event object that can be use to wait for the kernel
     to finish execution.
 
@@ -265,12 +337,51 @@ QCLEvent QCLKernel::execute(size_t workSize)
 
     \sa QCLCommandQueue::executeKernel()
 */
-QCLEvent QCLKernel::execute(size_t workSize, const QVector<QCLEvent>& after)
+QCLEvent QCLKernel::execute
+    (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after)
 {
     cl_event event;
-    size_t sizes[1] = {workSize};
     cl_int error = clEnqueueNDRangeKernel
-        (context()->defaultQueue(), m_id, 1, 0, sizes, 0, after.size(),
+        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), 0, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()), &event);
+    if (error != CL_SUCCESS) {
+        qWarning() << "QCLKernel::execute(after):" << QCL::errorName(error);
+        return QCLEvent();
+    } else {
+        return QCLEvent(event);
+    }
+}
+
+/*!
+    \overload
+
+    Requests that this kernel be executed on \a globalWorkSize items,
+    which are subdivided into local work items of \a localWorkSize in size.
+    Returns an event object that can be use to wait for the kernel
+    to finish execution.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.
+
+    The request is executed on the default command queue for context();
+    use QCLCommandQueue::executeKernel() to execute the request on a
+    different command queue.
+
+    The \a globalWorkSize must have the same number of dimensions as
+    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+
+    \sa QCLCommandQueue::executeKernel()
+*/
+QCLEvent QCLKernel::execute
+    (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
+     const QVector<QCLEvent>& after)
+{
+    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
+    cl_event event;
+    cl_int error = clEnqueueNDRangeKernel
+        (context()->defaultQueue(), m_id, globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), localWorkSize.sizes(), after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLKernel::execute(after):" << QCL::errorName(error);

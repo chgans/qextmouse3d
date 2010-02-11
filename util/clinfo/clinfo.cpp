@@ -83,6 +83,11 @@ int main(int argc, char *argv[])
         printf("    Name           : %s\n", dev.name().toLatin1().constData());
         printf("    Vendor         : %s\n", dev.vendor().toLatin1().constData());
         printf("    Compute Units  : %u\n", dev.paramUInt(CL_DEVICE_MAX_COMPUTE_UNITS));
+        QCLWorkSize size = dev.maximumWorkItemSize();
+        printf("    Max Work Size  : %ux%ux%u\n",
+               uint(size.width()), uint(size.height()),
+               uint(size.depth()));
+        printf("    Max Items/Group: %u\n", uint(dev.maximumWorkItemsPerGroup()));
         printf("    Available      : %s\n",
                dev.isAvailable() ? "true" : "false");
         printf("    Image Support  : %s\n",
