@@ -1,3 +1,6 @@
 TEMPLATE = subdirs
-SUBDIRS = threed plugins util examples demos tests
+opencl {
+    SUBDIRS += opencl
+}
+SUBDIRS += threed plugins util examples demos tests
 CONFIG += ordered

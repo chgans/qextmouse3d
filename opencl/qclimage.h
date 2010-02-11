@@ -39,51 +39,46 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLIMAGE_H
+#define QCLIMAGE_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclmemoryobject.h"
+#include "qclimageformat.h"
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class Q_CL_EXPORT QCLImage : public QCLMemoryObject
 {
 public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QCLImage() {}
+    QCLImage(QCLContext *context, cl_mem id)
+        : QCLMemoryObject(context, id) {}
+    QCLImage(const QCLImage& other)
+        : QCLMemoryObject(other.context(), other.id()) {}
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    QCLImage& operator=(const QCLImage& other)
+    {
+        setId(other.context(), other.id());
+        return *this;
+    }
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    QCLImageFormat format() const;
 
-private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    int width() const;
+    int height() const;
+    int depth() const;
+
+    int bytesPerElement() const;
+    int bytesPerLine() const;
+    int bytesPerSlice() const;
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

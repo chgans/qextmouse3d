@@ -39,51 +39,44 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLWORKSIZE_H
+#define QCLWORKSIZE_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclglobal.h"
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class Q_CL_EXPORT QCLWorkSize
 {
 public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QCLWorkSize()
+        : m_dim(1) { m_sizes[0] = 1; m_sizes[1] = 0; m_sizes[2] = 0; }
+    QCLWorkSize(size_t size)
+        : m_dim(1) { m_sizes[0] = size; m_sizes[1] = 0; m_sizes[2] = 0; }
+    QCLWorkSize(size_t width, size_t height)
+        : m_dim(2) { m_sizes[0] = width; m_sizes[1] = height; m_sizes[2] = 0; }
+    QCLWorkSize(size_t width, size_t height, size_t depth)
+        : m_dim(3)
+        { m_sizes[0] = width; m_sizes[1] = height; m_sizes[2] = depth; }
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    size_t dimensions() const { return m_dim; }
+    size_t width() const { return m_sizes[0]; }
+    size_t height() const { return m_sizes[1]; }
+    size_t depth() const { return m_sizes[2]; }
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    const size_t *sizes() const { return m_sizes; }
 
 private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    size_t m_dim;
+    size_t m_sizes[3];
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

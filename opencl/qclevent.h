@@ -39,51 +39,48 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLEVENT_H
+#define QCLEVENT_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclglobal.h"
+#include <QtCore/qvector.h>
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class Q_CL_EXPORT QCLEvent
 {
 public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QCLEvent() : m_id(0) {}
+    QCLEvent(cl_event id) : m_id(id) {}
+    QCLEvent(const QCLEvent& other);
+    ~QCLEvent();
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    QCLEvent& operator=(const QCLEvent& other);
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    bool isNull() const { return m_id == 0; }
+
+    cl_event id() const { return m_id; }
+
+    int status() const;
+
+    bool isQueued() const { return status() == CL_QUEUED; }
+    bool isSubmitted() const { return status() == CL_SUBMITTED; }
+    bool isRunning() const { return status() == CL_RUNNING; }
+    bool isComplete() const { return status() == CL_COMPLETE; }
+
+    void wait();
+    static void waitForEvents(const QVector<QCLEvent>& events);
 
 private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    cl_event m_id;
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

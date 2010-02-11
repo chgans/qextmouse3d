@@ -39,51 +39,44 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLPLATFORM_H
+#define QCLPLATFORM_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclglobal.h"
+#include <QtCore/qlist.h>
+#include <QtCore/qstring.h>
+#include <QtCore/qstringlist.h>
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class Q_CL_EXPORT QCLPlatform
 {
 public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QCLPlatform() : m_id(0) {}
+    QCLPlatform(cl_platform_id id) : m_id(id) {}
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    bool isNull() const { return m_id == 0; }
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    QString profile() const;
+    QString version() const;
+    QString name() const;
+    QString vendor() const;
+    QStringList extensions() const;
+
+    cl_platform_id id() const { return m_id; }
+
+    static QList<QCLPlatform> platforms();
 
 private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    cl_platform_id m_id;
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

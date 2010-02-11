@@ -39,51 +39,25 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLERRORS_H
+#define QCLERRORS_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclglobal.h"
+#include <QtCore/qstring.h>
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+namespace QCL
 {
-public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
-
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
-
-private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    QString errorName(int code);
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

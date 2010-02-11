@@ -39,51 +39,59 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLPROGRAM_H
+#define QCLPROGRAM_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qcldevice.h"
+#include "qclkernel.h"
+#include <QtCore/qstring.h>
+#include <QtCore/qbytearray.h>
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class QCLContext;
+
+class Q_CL_EXPORT QCLProgram
 {
 public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    QCLProgram() : m_context(0), m_id(0) {}
+    QCLProgram(QCLContext *context, cl_program id);
+    QCLProgram(const QCLProgram& other);
+    ~QCLProgram();
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    QCLProgram& operator=(const QCLProgram& other);
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    bool isNull() const { return m_id == 0; }
+
+    cl_program id() const { return m_id; }
+    QCLContext *context() const { return m_context; }
+
+    bool build(const QString& options = QString());
+    bool build(const QList<QCLDevice>& devices, const QString& options = QString());
+
+    QString log() const;
+
+    QCLKernel createKernel(const char *name) const;
+    QCLKernel createKernel(const QByteArray& name) const;
+    QCLKernel createKernel(const QString& name) const;
+
+    QList<QCLKernel> createKernels() const;
+
+    static void unloadCompiler();
 
 private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    QCLContext *m_context;
+    cl_program m_id;
+
+    friend class QCLContext;
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

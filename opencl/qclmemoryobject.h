@@ -39,51 +39,60 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLMEMORYOBJECT_H
+#define QCLMEMORYOBJECT_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include "qclglobal.h"
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(CL)
+
+class QCLContext;
+
+class Q_CL_EXPORT QCLMemoryObject
 {
-public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+protected:
+    QCLMemoryObject(QCLContext *context = 0) : m_context(context), m_id(0) {}
+    QCLMemoryObject(QCLContext *context, cl_mem id);
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+public:
+    virtual ~QCLMemoryObject();
+
+    enum MemoryFlag
+    {
+        ReadWrite           = 0x0001,
+        WriteOnly           = 0x0002,
+        ReadOnly            = 0x0004,
+        UseHostPointer      = 0x0008,
+        AllocateHostPointer = 0x0010,
+        CopyHostPointer     = 0x0020
+    };
+    Q_DECLARE_FLAGS(MemoryFlags, MemoryFlag)
+
+    bool isNull() const { return m_id == 0; }
+
+    cl_mem id() const { return m_id; }
+    QCLContext *context() const { return m_context; }
 
 protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+    void setId(QCLContext *context, cl_mem id);
 
 private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    QCLContext *m_context;
+    cl_mem m_id;
+
+    Q_DISABLE_COPY(QCLMemoryObject)
+
+    friend class QCLContext;
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCLMemoryObject::MemoryFlags)
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

@@ -39,51 +39,34 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#ifndef QCLGLOBAL_H
+#define QCLGLOBAL_H
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+#include <QtCore/qglobal.h>
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
-{
-public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+// XXX: Move to qglobal.h eventually.
+QT_LICENSED_MODULE(CL)
+#if defined(Q_OS_WIN) && defined(QT_MAKEDLL)
+#   if defined(QT_BUILD_CL_LIB)
+#       define Q_CL_EXPORT Q_DECL_EXPORT
+#   else
+#       define Q_CL_EXPORT Q_DECL_IMPORT
+#   endif
+#elif defined(Q_OS_WIN) && defined(QT_DLL)
+#   define Q_CL_EXPORT Q_DECL_IMPORT
+#endif
+#if !defined(Q_CL_EXPORT)
+#   if defined(QT_SHARED)
+#       define Q_CL_EXPORT Q_DECL_EXPORT
+#   else
+#       define Q_CL_EXPORT
+#   endif
+#endif
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
-
-private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
-};
-
-#endif // QGLSHADERPROGRAMEFFECT_H
+#endif

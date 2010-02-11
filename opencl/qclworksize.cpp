@@ -39,51 +39,74 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSHADERPROGRAMEFFECT_H
-#define QGLSHADERPROGRAMEFFECT_H
+#include "qclworksize.h"
 
-#include <QList>
-#include "qglabstracteffect.h"
-class QGLShaderProgramEffectPrivate;
-class QGLShaderProgram;
+QT_BEGIN_NAMESPACE
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
-{
-public:
-    QGLShaderProgramEffect();
-    virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
-    virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+/*!
+    \class QCLWorkSize
+    \brief The QCLWorkSize class defines the size of an item of work for an OpenCL kernel.
+    \since 4.7
+    \ingroup qt3d
+    \ingroup qt3d::opencl
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    \sa QCLKernel
+*/
 
-protected:
-    QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
+/*!
+    \fn QCLWorkSize::QCLWorkSize()
 
-private:
-    int colorUniform;
-    int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
-};
+    Constructs a default work size consisting of a single dimension
+    with width() set to 1.
+*/
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+/*!
+    \fn QCLWorkSize::QCLWorkSize(size_t size)
+
+    Constructs a single-dimensional work size with width() set to \a size.
+*/
+
+/*!
+    \fn QCLWorkSize::QCLWorkSize(size_t width, size_t height)
+
+    Constructs a two-dimensional work size of \a width x \a height.
+*/
+
+/*!
+    \fn QCLWorkSize::QCLWorkSize(size_t width, size_t height, size_t depth)
+
+    Constructs a three-dimensional work size of \a width x \a height x
+    \a depth.
+*/
+
+/*!
+    \fn size_t QCLWorkSize::dimensions() const
+
+    Returns the number of dimensions for this work size, 1, 2, or 3.
+*/
+
+/*!
+    \fn size_t QCLWorkSize::width() const
+
+    Returns the width of this work size specification.
+*/
+
+/*!
+    \fn size_t QCLWorkSize::height() const
+
+    Returns the height of this work size specification.
+*/
+
+/*!
+    \fn size_t QCLWorkSize::depth() const
+
+    Returns the depth of this work size specification.
+*/
+
+/*!
+    \fn const size_t *QCLWorkSize::sizes() const
+
+    Returns a const pointer to the size array within this object.
+*/
+
+QT_END_NAMESPACE
