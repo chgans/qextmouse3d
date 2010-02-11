@@ -43,6 +43,7 @@
 #define QCLDEVICE_H
 
 #include "qclplatform.h"
+#include "qclworksize.h"
 
 QT_BEGIN_HEADER
 
@@ -70,6 +71,9 @@ public:
     QCLDevice::DeviceTypes deviceType() const;
     QCLPlatform platform() const;
     bool isAvailable() const;
+
+    QCLWorkSize maximumWorkItemSize() const;
+    size_t maximumWorkItemsPerGroup() const;
 
     uint paramUInt(cl_device_info name, uint defaultValue = 0) const;
     quint64 paramULong(cl_device_info name, quint64 defaultValue = 0) const;

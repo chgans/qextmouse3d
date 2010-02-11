@@ -121,6 +121,40 @@ bool QCLDevice::isAvailable() const
 }
 
 /*!
+    Returns the maximum work size for this device.
+
+    \sa maximumWorkItemsPerGroup()
+*/
+QCLWorkSize QCLDevice::maximumWorkItemSize() const
+{
+    size_t dims = 0;
+    if (clGetDeviceInfo(m_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                        sizeof(dims), &dims, 0) != CL_SUCCESS || !dims)
+        return QCLWorkSize(1, 1, 1);
+    QVarLengthArray<size_t> buf(dims);
+    if (clGetDeviceInfo(m_id, CL_DEVICE_MAX_WORK_ITEM_SIZES,
+                        sizeof(size_t) * dims, buf.data(), 0) != CL_SUCCESS)
+        return QCLWorkSize(1, 1, 1);
+    if (dims == 1)
+        return QCLWorkSize(buf[0]);
+    else if (dims == 2)
+        return QCLWorkSize(buf[0], buf[1]);
+    else
+        return QCLWorkSize(buf[0], buf[1], buf[2]);
+}
+
+/*!
+    Returns the maximum number of work items in a work group executing a
+    kernel using data parallel execution.
+
+    \sa maximumWorkItemSize()
+*/
+size_t QCLDevice::maximumWorkItemsPerGroup() const
+{
+    return paramSize(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+}
+
+/*!
     Returns the unsigned integer parameter \a name on this device.
     If the parameter is not present, \a defaultValue will be returned.
 */

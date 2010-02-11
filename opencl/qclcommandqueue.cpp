@@ -514,19 +514,48 @@ QCLEvent QCLCommandQueue::copyBufferToBuffer
 }
 
 /*!
-    Requests that \a kernel be executed on \a workSize items.
+    Requests that \a kernel be executed on \a globalWorkSize items.
     Returns an event object that can be use to wait for the kernel
     to finish execution.
 
     \sa QCLKernel::execute()
 */
 QCLEvent QCLCommandQueue::executeKernel
-    (const QCLKernel& kernel, size_t workSize)
+    (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize)
 {
     cl_event event;
-    size_t sizes[1] = {workSize};
     cl_int error = clEnqueueNDRangeKernel
-        (m_id, kernel.id(), 1, 0, sizes, 0, 0, 0, &event);
+        (m_id, kernel.id(), globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), 0, 0, 0, &event);
+    if (error != CL_SUCCESS) {
+        qWarning() << "QCLCommandQueue::executeKernel:"
+                   << QCL::errorName(error);
+        return QCLEvent();
+    } else {
+        return QCLEvent(event);
+    }
+}
+
+/*!
+    Requests that \a kernel be executed on \a globalWorkSize items,
+    which are subdivided into local work items of \a localWorkSize in size.
+    Returns an event object that can be use to wait for the kernel
+    to finish execution.
+
+    The \a globalWorkSize must have the same number of dimensions as
+    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+
+    \sa QCLKernel::execute()
+*/
+QCLEvent QCLCommandQueue::executeKernel
+    (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
+     const QCLWorkSize& localWorkSize)
+{
+    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
+    cl_event event;
+    cl_int error = clEnqueueNDRangeKernel
+        (m_id, kernel.id(), globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), localWorkSize.sizes(), 0, 0, &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLCommandQueue::executeKernel:"
                    << QCL::errorName(error);
@@ -539,7 +568,7 @@ QCLEvent QCLCommandQueue::executeKernel
 /*!
     \overload
 
-    Requests that \a kernel be executed on \a workSize items.
+    Requests that \a kernel be executed on \a globalWorkSize items.
     Returns an event object that can be use to wait for the kernel
     to finish execution.
 
@@ -549,12 +578,48 @@ QCLEvent QCLCommandQueue::executeKernel
     \sa QCLKernel::execute()
 */
 QCLEvent QCLCommandQueue::executeKernel
-    (const QCLKernel& kernel, size_t workSize, const QVector<QCLEvent>& after)
+    (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
+     const QVector<QCLEvent>& after)
 {
     cl_event event;
-    size_t sizes[1] = {workSize};
     cl_int error = clEnqueueNDRangeKernel
-        (m_id, kernel.id(), 1, 0, sizes, 0, after.size(),
+        (m_id, kernel.id(), globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), 0, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()), &event);
+    if (error != CL_SUCCESS) {
+        qWarning() << "QCLCommandQueue::execute(after):"
+                   << QCL::errorName(error);
+        return QCLEvent();
+    } else {
+        return QCLEvent(event);
+    }
+}
+
+/*!
+    \overload
+
+    Requests that \a kernel be executed on \a globalWorkSize items,
+    which are subdivided into local work items of \a localWorkSize in size.
+    Returns an event object that can be use to wait for the kernel
+    to finish execution.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.
+
+    The \a globalWorkSize must have the same number of dimensions as
+    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+
+    \sa QCLKernel::execute()
+*/
+QCLEvent QCLCommandQueue::executeKernel
+    (const QCLKernel& kernel, const QCLWorkSize& globalWorkSize,
+     const QCLWorkSize& localWorkSize, const QVector<QCLEvent>& after)
+{
+    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
+    cl_event event;
+    cl_int error = clEnqueueNDRangeKernel
+        (m_id, kernel.id(), globalWorkSize.dimensions(),
+         0, globalWorkSize.sizes(), localWorkSize.sizes(), after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
     if (error != CL_SUCCESS) {
         qWarning() << "QCLCommandQueue::execute(after):"
