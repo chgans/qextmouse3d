@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qclimage.h"
+#include "qclbuffer.h"
 #include "qclcontext.h"
 
 QT_BEGIN_NAMESPACE
@@ -152,7 +153,7 @@ int QCLImage2D::bytesPerLine() const
     This function will block until the request completes.
     The request is executed on the active command queue for context().
 
-    \sa readAsync(), write()
+    \sa readAsync(), write(), toQImage()
 */
 bool QCLImage2D::read(void *data, const QRect& rect, int bytesPerLine)
 {
@@ -255,6 +256,274 @@ QCLEvent QCLImage2D::writeAsync
         return QCLEvent(event);
     else
         return QCLEvent();
+}
+
+/*!
+    Copies the contents of \a rect from this image to \a destOffset
+    in \a dest.  Returns true if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage2D::copyTo
+    (const QRect& rect, const QCLImage2D& dest, const QPoint& destOffset)
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t dst_origin[3] = {destOffset.x(), destOffset.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, dst_origin, region, 0, 0, &event);
+    context()->reportError("QCLImage2D::copyTo(QCLImage2D):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of \a rect from this image to \a destOffset
+    in \a dest.  Returns true if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage2D::copyTo
+    (const QRect& rect, const QCLImage3D& dest, const size_t destOffset[3])
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, destOffset, region, 0, 0, &event);
+    context()->reportError("QCLImage2D::copyTo(QCLImage3D):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of \a rect from this image to \a destOffset
+    in \a dest.  Returns true if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage2D::copyTo
+    (const QRect& rect, const QCLBuffer& dest, size_t destOffset)
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImageToBuffer
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, region, destOffset, 0, 0, &event);
+    context()->reportError("QCLImage2D::copyTo(QCLBuffer):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Requests that the contents of \a rect from this image be copied
+    to \a destOffset in \a dest.  Returns an event object that can be
+    used to wait for the request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage2D::copyToAsync
+    (const QRect& rect, const QCLImage2D& dest, const QPoint& destOffset,
+     const QVector<QCLEvent>& after)
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t dst_origin[3] = {destOffset.x(), destOffset.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, dst_origin, region, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage2D::copyToAsync(QCLImage2D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Requests that the contents of \a rect from this image be copied
+    to \a destOffset in \a dest.  Returns an event object that can be
+    used to wait for the request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage2D::copyToAsync
+    (const QRect& rect, const QCLImage3D& dest, const size_t destOffset[3],
+     const QVector<QCLEvent>& after)
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, destOffset, region, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage2D::copyToAsync(QCLImage3D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Requests that the contents of \a rect from this image be copied
+    to \a destOffset in \a dest.  Returns an event object that can be
+    used to wait for the request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage2D::copyToAsync
+    (const QRect& rect, const QCLBuffer& dest, size_t destOffset,
+     const QVector<QCLEvent>& after)
+{
+    size_t src_origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImageToBuffer
+        (context()->activeQueue(), id(), dest.id(),
+         src_origin, region, destOffset, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage2D::copyToAsync(QCLBuffer):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Maps the image region \a rect into host memory for the
+    specified \a access mode.  Returns a pointer to the mapped region.
+
+    If \a bytesPerLine is not null, it will return the number of
+    bytes per line in the mapped image.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa mapAsync(), unmap()
+*/
+void *QCLImage2D::map
+    (const QRect& rect, QCLMemoryObject::MapAccess access, int *bytesPerLine)
+{
+    size_t origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_int error;
+    size_t rowPitch;
+    void *data = clEnqueueMapImage
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), origin, region,
+         &rowPitch, 0, 0, 0, 0, &error);
+    context()->reportError("QCLImage2D::map:", error);
+    if (bytesPerLine)
+        *bytesPerLine = int(rowPitch);
+    return data;
+}
+
+/*!
+    Maps the image region \a rect into host memory for the specified
+    \a access mode.  Returns a pointer to the mapped region in \a ptr,
+    which will be valid only after the request completes.
+
+    If \a bytesPerLine is not null, it will return the number of
+    bytes per line in the mapped image.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa map(), unmapAsync()
+*/
+QCLEvent QCLImage2D::mapAsync
+    (void **ptr, const QRect& rect, QCLMemoryObject::MapAccess access,
+     const QVector<QCLEvent>& after, int *bytesPerLine)
+{
+    size_t origin[3] = {rect.x(), rect.y(), 0};
+    size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_int error;
+    size_t rowPitch;
+    cl_event event;
+    *ptr = clEnqueueMapImage
+        (context()->activeQueue(), id(), CL_FALSE,
+         cl_map_flags(access), origin, region, &rowPitch, 0, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())),
+         &event, &error);
+    context()->reportError("QCLImage2D::mapAsync:", error);
+    if (bytesPerLine)
+        *bytesPerLine = int(rowPitch);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Reads the contents of this 2D OpenCL image and returns it
+    as a QImage.  Returns a null QImage if the OpenCL image's
+    format cannot be converted into a QImage format.
+
+    \sa read()
+*/
+QImage QCLImage2D::toQImage()
+{
+    if (!id())
+        return QImage();
+    QImage::Format qformat = format().toQImageFormat();
+    if (qformat == QImage::Format_Invalid)
+        return QImage();
+    QImage image(width(), height(), qformat);
+    if (!read(image.bits(), QRect(0, 0, image.width(), image.height()),
+              image.bytesPerLine()))
+        return QImage();
+    return image;
 }
 
 /*!
@@ -366,6 +635,390 @@ int QCLImage3D::bytesPerLine() const
 int QCLImage3D::bytesPerSlice() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_SLICE_PITCH);
+}
+
+/*!
+    Reads the contents of this 3D image, starting at \a origin,
+    and extending for \a size, into \a data.  Returns true if the read
+    was successful; false otherwise.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+    If \a bytesPerSlice is not zero, it indicates the number of bytes
+    between slices in \a data.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa readAsync(), write()
+*/
+bool QCLImage3D::read
+    (void *data, const size_t origin[3], const size_t size[3],
+     int bytesPerLine, int bytesPerSlice)
+{
+    cl_int error = clEnqueueReadImage
+        (context()->activeQueue(), id(), CL_TRUE,
+         origin, size, bytesPerLine, bytesPerSlice, data, 0, 0, 0);
+    context()->reportError("QCLImage3D::read:", error);
+    return error == CL_SUCCESS;
+}
+
+/*!
+    Reads the contents of this 3D image, starting at \a origin,
+    and extending for \a size, into \a data.  Returns true if the read
+    was successful; false otherwise.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+    If \a bytesPerSlice is not zero, it indicates the number of bytes
+    between slices in \a data.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa read(), writeAsync()
+*/
+QCLEvent QCLImage3D::readAsync
+    (void *data, const size_t origin[3], const size_t size[3],
+     const QVector<QCLEvent> after, int bytesPerLine, int bytesPerSlice)
+{
+    cl_event event;
+    cl_int error = clEnqueueReadImage
+        (context()->activeQueue(), id(), CL_FALSE,
+         origin, size, bytesPerLine, bytesPerSlice, data, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage3D::readAsync:", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Writes the contents of this 3D image, starting at \a origin,
+    and extending for \a size, to \a data.  Returns true if the write
+    was successful; false otherwise.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+    If \a bytesPerSlice is not zero, it indicates the number of bytes
+    between slices in \a data.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa read(), writeAsync()
+*/
+bool QCLImage3D::write
+    (const void *data, const size_t origin[3], const size_t size[3],
+     int bytesPerLine, int bytesPerSlice)
+{
+    cl_int error = clEnqueueWriteImage
+        (context()->activeQueue(), id(), CL_TRUE,
+         origin, size, bytesPerLine, bytesPerSlice, data, 0, 0, 0);
+    context()->reportError("QCLImage3D::write:", error);
+    return error == CL_SUCCESS;
+}
+
+/*!
+    Writes the contents of this 3D image, starting at \a origin,
+    and extending for \a size, to \a data.  Returns true if the write
+    was successful; false otherwise.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+    If \a bytesPerSlice is not zero, it indicates the number of bytes
+    between slices in \a data.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa readAsync(), write()
+*/
+QCLEvent QCLImage3D::writeAsync
+    (const void *data, const size_t origin[3], const size_t size[3],
+     const QVector<QCLEvent> after, int bytesPerLine, int bytesPerSlice)
+{
+    cl_event event;
+    cl_int error = clEnqueueWriteImage
+        (context()->activeQueue(), id(), CL_FALSE,
+         origin, size, bytesPerLine, bytesPerSlice, data, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage3D::writeAsync:", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Copies the contents of this 3D image, starting at \a origin, and
+    extending for \a size, to \a destOffset in \a dest.  Returns true
+    if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage3D::copyTo
+    (const size_t origin[3], const size_t size[3],
+     const QCLImage3D& dest, const size_t destOffset[3])
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         origin, destOffset, size, 0, 0, &event);
+    context()->reportError("QCLImage3D::copyTo(QCLImage3D):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of a single slice within this 3D image,
+    starting at \a origin, and extending for \a size,
+    to \a destOffset in \a dest.  Returns true if the copy was
+    successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage3D::copyTo
+    (const size_t origin[3], const QSize& size, const QCLImage2D& dest,
+     const QPoint& destOffset)
+{
+    size_t dst_origin[3] = {destOffset.x(), destOffset.y(), 0};
+    size_t region[3] = {size.width(), size.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         origin, dst_origin, region, 0, 0, &event);
+    context()->reportError("QCLImage3D::copyTo(QCLImage2D):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of this 3D image, starting at \a origin, and
+    extending for \a size, to \a destOffset in \a dest.  Returns true
+    if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLImage3D::copyTo
+    (const size_t origin[3], const size_t size[3],
+     const QCLBuffer& dest, size_t destOffset)
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyImageToBuffer
+        (context()->activeQueue(), id(), dest.id(),
+         origin, size, destOffset, 0, 0, &event);
+    context()->reportError("QCLImage3D::copyTo(QCLBuffer):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of this 3D image, starting at \a origin, and
+    extending for \a size, to \a destOffset in \a dest.  Returns true
+    if the copy was successful; false otherwise.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage3D::copyToAsync
+    (const size_t origin[3], const size_t size[3],
+     const QCLImage3D& dest, const size_t destOffset[3],
+     const QVector<QCLEvent>& after)
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         origin, destOffset, size, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage3D::copyToAsync(QCLImage3D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Copies the contents of a single slice within this 3D image,
+    starting at \a origin, and extending for \a size,
+    to \a destOffset in \a dest.  Returns true if the copy was
+    successful; false otherwise.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage3D::copyToAsync
+    (const size_t origin[3], const QSize& size,
+     const QCLImage2D& dest, const QPoint& destOffset,
+     const QVector<QCLEvent>& after)
+{
+    size_t dst_origin[3] = {destOffset.x(), destOffset.y(), 0};
+    size_t region[3] = {size.width(), size.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyImage
+        (context()->activeQueue(), id(), dest.id(),
+         origin, dst_origin, region, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage3D::copyToAsync(QCLImage2D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Copies the contents of this 3D image, starting at \a origin, and
+    extending for \a size, to \a destOffset in \a dest.  Returns true
+    if the copy was successful; false otherwise.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLImage3D::copyToAsync
+    (const size_t origin[3], const size_t size[3],
+     const QCLBuffer& dest, size_t destOffset,
+     const QVector<QCLEvent>& after)
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyImageToBuffer
+        (context()->activeQueue(), id(), dest.id(),
+         origin, size, destOffset, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLImage3D::copyToAsync(QCLBuffer):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Maps the image region starting at \a origin and extending for
+    \a size into host memory for the specified \a access mode.
+    Returns a pointer to the mapped region.
+
+    If \a bytesPerLine is not null, it will return the number of
+    bytes per line in the mapped image.  If \a bytesPerSlice is not null,
+    it will return the number of bytes per slice in the mapped image.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa mapAsync(), unmap()
+*/
+void *QCLImage3D::map
+    (const size_t origin[3], const size_t size[3],
+     QCLMemoryObject::MapAccess access, int *bytesPerLine, int *bytesPerSlice)
+{
+    cl_int error;
+    size_t rowPitch, slicePitch;
+    void *data = clEnqueueMapImage
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), origin, size,
+         &rowPitch, &slicePitch, 0, 0, 0, &error);
+    context()->reportError("QCLImage3D::map:", error);
+    if (bytesPerLine)
+        *bytesPerLine = int(rowPitch);
+    if (bytesPerSlice)
+        *bytesPerSlice = int(slicePitch);
+    return data;
+}
+
+/*!
+    Maps the image region starting at \a origin and extending for
+    \a size into host memory for the specified \a access mode.
+    Returns a pointer to the mapped region in \a ptr, which will be
+    valid only after the request completes.
+
+    If \a bytesPerLine is not null, it will return the number of
+    bytes per line in the mapped image.  If \a bytesPerSlice is not null,
+    it will return the number of bytes per slice in the mapped image.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa map(), unmap()
+*/
+QCLEvent QCLImage3D::mapAsync
+    (void **ptr, const size_t origin[3], const size_t size[3],
+     QCLMemoryObject::MapAccess access, const QVector<QCLEvent>& after,
+     int *bytesPerLine, int *bytesPerSlice)
+{
+    cl_int error;
+    size_t rowPitch, slicePitch;
+    cl_event event;
+    *ptr = clEnqueueMapImage
+        (context()->activeQueue(), id(), CL_FALSE, cl_map_flags(access),
+         origin, size, &rowPitch, &slicePitch, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())),
+         &event, &error);
+    context()->reportError("QCLImage3D::mapAsync:", error);
+    if (bytesPerLine)
+        *bytesPerLine = int(rowPitch);
+    if (bytesPerSlice)
+        *bytesPerSlice = int(slicePitch);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
 }
 
 QT_END_NAMESPACE

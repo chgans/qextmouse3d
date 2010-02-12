@@ -44,12 +44,16 @@
 
 #include "qclmemoryobject.h"
 #include "qclevent.h"
+#include <QtCore/qrect.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
+
+class QCLImage2D;
+class QCLImage3D;
 
 class Q_CL_EXPORT QCLBuffer : public QCLMemoryObject
 {
@@ -76,18 +80,25 @@ public:
 
     bool copyTo(size_t offset, size_t size,
                 const QCLBuffer& dest, size_t destOffset);
-    QCLEvent copyToAsync(size_t offset, size_t size,
-                         const QCLBuffer& dest, size_t destOffset,
-                         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    bool copyTo(size_t offset, const QCLImage2D& dest, const QRect& rect);
+    bool copyTo(size_t offset, const QCLImage3D& dest,
+                const size_t origin[3], const size_t size[3]);
+    QCLEvent copyToAsync
+        (size_t offset, size_t size,
+         const QCLBuffer& dest, size_t destOffset,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (size_t offset, const QCLImage2D& dest, const QRect& rect,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (size_t offset, const QCLImage3D& dest,
+         const size_t origin[3], const size_t size[3],
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
     void *map(size_t offset, size_t size, QCLMemoryObject::MapAccess access);
     QCLEvent mapAsync(void **ptr, size_t offset, size_t size,
                       QCLMemoryObject::MapAccess access,
                       const QVector<QCLEvent>& after = QVector<QCLEvent>());
-
-    void unmap(void *ptr);
-    QCLEvent unmapAsync
-        (void *ptr, const QVector<QCLEvent>& after = QVector<QCLEvent>());
 };
 
 QT_END_NAMESPACE

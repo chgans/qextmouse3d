@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qclmemoryobject.h"
+#include "qclcontext.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -165,6 +166,54 @@ size_t QCLMemoryObject::size() const
         return 0;
     else
         return size;
+}
+
+/*!
+    Requests that the region at \a ptr that was previously mapped from an
+    OpenCL buffer or image be unmapped.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa unmapAsync(), QCLBuffer::map()
+*/
+void QCLMemoryObject::unmap(void *ptr)
+{
+    cl_event event = 0;
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, 0, 0, &event);
+    context()->reportError("QCLMemoryObject::unmap:", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+    }
+}
+
+/*!
+    Requests that the region at \a ptr that was previously mapped from
+    an OpenCL buffer or image be unmapped.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.
+
+    Returns an event object that can be used to wait for the
+    request to complete.  The request is executed on the active
+    command queue for context().
+
+    \sa unmap(), QCLBuffer::mapAsync()
+*/
+QCLEvent QCLMemoryObject::unmapAsync(void *ptr, const QVector<QCLEvent>& after)
+{
+    cl_event event;
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLMemoryObject::unmapAsync:", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
 }
 
 /*!

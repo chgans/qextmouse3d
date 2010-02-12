@@ -53,6 +53,9 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
 
+class QCLImage3D;
+class QCLBuffer;
+
 class Q_CL_EXPORT QCLImage2D : public QCLMemoryObject
 {
 public:
@@ -86,6 +89,31 @@ public:
         (const void *data, const QRect& rect,
          const QVector<QCLEvent>& after = QVector<QCLEvent>(),
          int bytesPerLine = 0);
+
+    bool copyTo(const QRect& rect, const QCLImage2D& dest,
+                const QPoint& destOffset);
+    bool copyTo(const QRect& rect, const QCLImage3D& dest,
+                const size_t destOffset[3]);
+    bool copyTo(const QRect& rect, const QCLBuffer& dest,
+                size_t destOffset);
+    QCLEvent copyToAsync
+        (const QRect& rect, const QCLImage2D& dest, const QPoint& destOffset,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (const QRect& rect, const QCLImage3D& dest, const size_t destOffset[3],
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (const QRect& rect, const QCLBuffer& dest, size_t destOffset,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+
+    void *map(const QRect& rect, QCLMemoryObject::MapAccess access,
+              int *bytesPerLine = 0);
+    QCLEvent mapAsync(void **ptr, const QRect& rect,
+                      QCLMemoryObject::MapAccess access,
+                      const QVector<QCLEvent>& after = QVector<QCLEvent>(),
+                      int *bytesPerLine = 0);
+
+    QImage toQImage();
 };
 
 class Q_CL_EXPORT QCLImage3D : public QCLMemoryObject
@@ -112,6 +140,48 @@ public:
     int bytesPerElement() const;
     int bytesPerLine() const;
     int bytesPerSlice() const;
+
+    bool read(void *data, const size_t origin[3], const size_t size[3],
+              int bytesPerLine = 0, int bytesPerSlice = 0);
+    QCLEvent readAsync
+        (void *data, const size_t origin[3], const size_t size[3],
+         const QVector<QCLEvent> after = QVector<QCLEvent>(),
+         int bytesPerLine = 0, int bytesPerSlice = 0);
+
+    bool write(const void *data, const size_t origin[3], const size_t size[3],
+               int bytesPerLine = 0, int bytesPerSlice = 0);
+    QCLEvent writeAsync
+        (const void *data, const size_t origin[3], const size_t size[3],
+         const QVector<QCLEvent> after = QVector<QCLEvent>(),
+         int bytesPerLine = 0, int bytesPerSlice = 0);
+
+    bool copyTo(const size_t origin[3], const size_t size[3],
+                const QCLImage3D& dest, const size_t destOffset[3]);
+    bool copyTo(const size_t origin[3], const QSize& size,
+                const QCLImage2D& dest, const QPoint& destOffset);
+    bool copyTo(const size_t origin[3], const size_t size[3],
+                const QCLBuffer& dest, size_t destOffset);
+    QCLEvent copyToAsync
+        (const size_t origin[3], const size_t size[3],
+         const QCLImage3D& dest, const size_t destOffset[3],
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (const size_t origin[3], const QSize& size,
+         const QCLImage2D& dest, const QPoint& destOffset,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+    QCLEvent copyToAsync
+        (const size_t origin[3], const size_t size[3],
+         const QCLBuffer& dest, size_t destOffset,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>());
+
+    void *map(const size_t origin[3], const size_t size[3],
+              QCLMemoryObject::MapAccess access,
+              int *bytesPerLine = 0, int *bytesPerSlice = 0);
+    QCLEvent mapAsync
+        (void **ptr, const size_t origin[3], const size_t size[3],
+         QCLMemoryObject::MapAccess access,
+         const QVector<QCLEvent>& after = QVector<QCLEvent>(),
+         int *bytesPerLine = 0, int *bytesPerSlice = 0);
 };
 
 QT_END_NAMESPACE

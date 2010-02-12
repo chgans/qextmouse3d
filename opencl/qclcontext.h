@@ -148,6 +148,7 @@ private:
 
     cl_command_queue activeQueue(); // For quicker access from friends.
 
+    friend class QCLMemoryObject;
     friend class QCLBuffer;
     friend class QCLImage2D;
     friend class QCLImage3D;

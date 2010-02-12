@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qclbuffer.h"
+#include "qclimage.h"
 #include "qclcontext.h"
 
 QT_BEGIN_NAMESPACE
@@ -194,7 +195,64 @@ bool QCLBuffer::copyTo
     cl_int error = clEnqueueCopyBuffer
         (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, 0, 0, &event);
-    context()->reportError("QCLBuffer::copyTo:", error);
+    context()->reportError("QCLBuffer::copyTo(QCLBuffer):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of this buffer, starting at \a offset to
+    \a rect within \a dest.  Returns true if the copy was successful;
+    false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLBuffer::copyTo
+    (size_t offset, const QCLImage2D& dest, const QRect& rect)
+{
+    const size_t dst_origin[3] = {rect.x(), rect.y(), 0};
+    const size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyBufferToImage
+        (context()->activeQueue(), id(), dest.id(),
+         offset, dst_origin, region, 0, 0, &event);
+    context()->reportError("QCLBuffer::copyTo(QCLImage2D):", error);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*!
+    Copies the contents of this buffer, starting at \a offset to
+    \a origin within \a dest, extending for \a size.  Returns true if
+    the copy was successful; false otherwise.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
+*/
+bool QCLBuffer::copyTo
+    (size_t offset, const QCLImage3D& dest,
+     const size_t origin[3], const size_t size[3])
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyBufferToImage
+        (context()->activeQueue(), id(), dest.id(),
+         offset, origin, size, 0, 0, &event);
+    context()->reportError("QCLBuffer::copyTo(QCLImage3D):", error);
     if (error == CL_SUCCESS) {
         clWaitForEvents(1, &event);
         clReleaseEvent(event);
@@ -230,6 +288,65 @@ QCLEvent QCLBuffer::copyToAsync
         return QCLEvent();
     else
         return QCLEvent(event);
+}
+
+/*!
+    Copies the contents of this buffer, starting at \a offset to
+    \a rect within \a dest.  Returns an event object that can be used
+    to wait for the request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLBuffer::copyToAsync
+    (size_t offset, const QCLImage2D& dest, const QRect& rect,
+     const QVector<QCLEvent>& after)
+{
+    const size_t dst_origin[3] = {rect.x(), rect.y(), 0};
+    const size_t region[3] = {rect.width(), rect.height(), 1};
+    cl_event event;
+    cl_int error = clEnqueueCopyBufferToImage
+        (context()->activeQueue(), id(), dest.id(),
+         offset, dst_origin, region, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::copyToAsync(QCLImage2D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Copies the contents of this buffer, starting at \a offset to
+    \a origin within \a dest, extending for \a size.  Returns an event
+    object that can be used to wait for the request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa copyTo()
+*/
+QCLEvent QCLBuffer::copyToAsync
+    (size_t offset, const QCLImage3D& dest,
+     const size_t origin[3], const size_t size[3],
+     const QVector<QCLEvent>& after)
+{
+    cl_event event;
+    cl_int error = clEnqueueCopyBufferToImage
+        (context()->activeQueue(), id(), dest.id(),
+         offset, origin, size, after.size(),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::copyToAsync(QCLImage3D):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
 }
 
 /*!
@@ -282,54 +399,6 @@ QCLEvent QCLBuffer::mapAsync
             reinterpret_cast<const cl_event *>(after.constData())),
          &event, &error);
     context()->reportError("QCLBuffer::mapAsync:", error);
-    if (error == CL_SUCCESS)
-        return QCLEvent(event);
-    else
-        return QCLEvent();
-}
-
-/*!
-    Requests that the region at \a ptr that was previously returned from
-    a call to map() or mapAsync() be unmapped.
-
-    This function will block until the request completes.
-    The request is executed on the active command queue for context().
-
-    \sa unmapAsync(), map()
-*/
-void QCLBuffer::unmap(void *ptr)
-{
-    cl_event event = 0;
-    cl_int error = clEnqueueUnmapMemObject
-        (context()->activeQueue(), id(), ptr, 0, 0, &event);
-    context()->reportError("QCLBuffer::unmap:", error);
-    if (error == CL_SUCCESS) {
-        clWaitForEvents(1, &event);
-        clReleaseEvent(event);
-    }
-}
-
-/*!
-    Requests that the region at \a ptr that was previously returned from
-    a call to map() or mapAsync() be unmapped.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed.
-
-    Returns an event object that can be used to wait for the
-    request to complete.  The request is executed on the active
-    command queue for context().
-
-    \sa unmap(), mapAsync()
-*/
-QCLEvent QCLBuffer::unmapAsync(void *ptr, const QVector<QCLEvent>& after)
-{
-    cl_event event;
-    cl_int error = clEnqueueUnmapMemObject
-        (context()->activeQueue(), id(), ptr, after.size(),
-         (after.isEmpty() ? 0 :
-            reinterpret_cast<const cl_event *>(after.constData())), &event);
-    context()->reportError("QCLBuffer::unmapAsync:", error);
     if (error == CL_SUCCESS)
         return QCLEvent(event);
     else

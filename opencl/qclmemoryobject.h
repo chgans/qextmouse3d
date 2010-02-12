@@ -42,7 +42,7 @@
 #ifndef QCLMEMORYOBJECT_H
 #define QCLMEMORYOBJECT_H
 
-#include "qclglobal.h"
+#include "qclevent.h"
 
 QT_BEGIN_HEADER
 
@@ -88,6 +88,10 @@ public:
     QCLMemoryObject::MemoryFlags flags() const;
     void *hostPointer() const;
     size_t size() const;
+
+    void unmap(void *ptr);
+    QCLEvent unmapAsync
+        (void *ptr, const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
 protected:
     void setId(QCLContext *context, cl_mem id);
