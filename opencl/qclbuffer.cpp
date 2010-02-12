@@ -381,7 +381,7 @@ void *QCLBuffer::map
     request to complete.  The request is executed on the active
     command queue for context().
 
-    \sa map(), unmapAsync()
+    \sa map(), unmap()
 */
 QCLEvent QCLBuffer::mapAsync
     (void **ptr, size_t offset, size_t size,
@@ -390,7 +390,7 @@ QCLEvent QCLBuffer::mapAsync
     cl_int error;
     cl_event event;
     *ptr = clEnqueueMapBuffer
-        (context()->activeQueue(), id(), CL_TRUE,
+        (context()->activeQueue(), id(), CL_FALSE,
          cl_map_flags(access), offset, size, 0, 0, &event, &error);
     context()->reportError("QCLBuffer::mapAsync:", error);
     if (error == CL_SUCCESS)
@@ -413,7 +413,7 @@ QCLEvent QCLBuffer::mapAsync
     have been signalled as completed.  The request is executed on
     the active command queue for context().
 
-    \sa map(), unmapAsync()
+    \sa map(), unmap()
 */
 QCLEvent QCLBuffer::mapAsync
     (void **ptr, size_t offset, size_t size,
@@ -422,7 +422,7 @@ QCLEvent QCLBuffer::mapAsync
     cl_int error;
     cl_event event;
     *ptr = clEnqueueMapBuffer
-        (context()->activeQueue(), id(), CL_TRUE,
+        (context()->activeQueue(), id(), CL_FALSE,
          cl_map_flags(access), offset, size, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()),
          &event, &error);
@@ -434,57 +434,21 @@ QCLEvent QCLBuffer::mapAsync
 }
 
 /*!
-    Unmaps the region at \a ptr that was previously returned from
-    a call to map() or mapAsync().
+    Requests that the region at \a ptr that was previously returned from
+    a call to map() or mapAsync() be unmapped.
 
-    This function will block until the request completes.
-    The request is executed on the active command queue for context().
-
-    \sa unmapAsync(), map()
-*/
-void QCLBuffer::unmap(void *ptr)
-{
-    cl_int error = clEnqueueUnmapMemObject
-        (context()->activeQueue(), id(), ptr, 0, 0, 0);
-    context()->reportError("QCLBuffer::unmap:", error);
-}
-
-/*!
-    Unmaps the region at \a ptr that was previously returned from
-    a call to map() or mapAsync().
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed, and then this function will
-    block until the request completes.  The request is executed on
-    the active command queue for context().
-
-    \sa unmapAsync(), map()
-*/
-void QCLBuffer::unmap(void *ptr, const QVector<QCLEvent>& after)
-{
-    cl_int error = clEnqueueUnmapMemObject
-        (context()->activeQueue(), id(), ptr, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), 0);
-    context()->reportError("QCLBuffer::unmap(after):", error);
-}
-
-/*!
-    Unmaps the region at \a ptr that was previously returned from
-    a call to map() or mapAsync().
-
-    This function will queue the request and return immediately.
     Returns an event object that can be used to wait for the
     request to complete.  The request is executed on the active
     command queue for context().
 
-    \sa unmap(), mapAsync()
+    \sa map(), mapAsync()
 */
-QCLEvent QCLBuffer::unmapAsync(void *ptr)
+QCLEvent QCLBuffer::unmap(void *ptr)
 {
     cl_event event;
     cl_int error = clEnqueueUnmapMemObject
         (context()->activeQueue(), id(), ptr, 0, 0, &event);
-    context()->reportError("QCLBuffer::unmapAsync:", error);
+    context()->reportError("QCLBuffer::unmap:", error);
     if (error == CL_SUCCESS)
         return QCLEvent(event);
     else
@@ -492,26 +456,27 @@ QCLEvent QCLBuffer::unmapAsync(void *ptr)
 }
 
 /*!
-    Unmaps the region at \a ptr that was previously returned from
-    a call to map() or mapAsync().
+    \overload
 
-    This function will queue the request and return immediately.
-    Returns an event object that can be used to wait for the
-    request to complete.
+    Requests that the region at \a ptr that was previously returned from
+    a call to map() or mapAsync() be unmapped.
 
     The request will not start until all of the events in \a after
-    have been signalled as completed.  The request is executed on
-    the active command queue for context().
+    have been signalled as completed.
 
-    \sa unmap(), mapAsync()
+    Returns an event object that can be used to wait for the
+    request to complete.  The request is executed on the active
+    command queue for context().
+
+    \sa map(), mapAsync()
 */
-QCLEvent QCLBuffer::unmapAsync(void *ptr, const QVector<QCLEvent>& after)
+QCLEvent QCLBuffer::unmap(void *ptr, const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueUnmapMemObject
         (context()->activeQueue(), id(), ptr, after.size(),
          reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLBuffer::unmapAsync(after):", error);
+    context()->reportError("QCLBuffer::unmap(after):", error);
     if (error == CL_SUCCESS)
         return QCLEvent(event);
     else

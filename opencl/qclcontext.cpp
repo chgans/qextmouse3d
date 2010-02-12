@@ -609,7 +609,7 @@ QCLCommandQueue QCLContext::createCommandQueue
     Creates an OpenCL memory buffer of \a size bytes in length,
     with the specified \a access mode.
 
-    The memory is created in the device and will not be accessible
+    The memory is created on the device and will not be accessible
     to the host via a direct pointer.  Use createBufferHost() to
     create a host-accessible buffer.
 
@@ -677,19 +677,310 @@ QCLBuffer QCLContext::createBufferHost
     \sa createBufferDevice(), createBufferHost()
 */
 QCLBuffer QCLContext::createBufferCopy
-    (void *data, size_t size, QCLMemoryObject::MemoryFlags access)
+    (const void *data, size_t size, QCLMemoryObject::MemoryFlags access)
 {
     Q_ASSERT(data);
     Q_D(QCLContext);
     cl_int error = CL_INVALID_CONTEXT;
     cl_mem_flags flags = cl_mem_flags(access);
     flags |= CL_MEM_COPY_HOST_PTR;
-    cl_mem mem = clCreateBuffer(d->id, flags, size, data, &error);
+    cl_mem mem = clCreateBuffer
+        (d->id, flags, size, const_cast<void *>(data), &error);
     reportError("QCLContext::createBufferCopy:", error);
     if (mem)
         return QCLBuffer(this, mem);
     else
         return QCLBuffer();
+}
+
+/*!
+    Creates a 2D OpenCL image object with the specified \a format,
+    \a size, and \a access mode.
+
+    The image memory is created on the device and will not be accessible
+    to the host via a direct pointer.  Use createImage2DHost() to
+    create a host-accessible image.
+
+    Returns the new 2D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage2DHost(), createImage2DCopy()
+*/
+QCLImage2D QCLContext::createImage2DDevice
+    (const QCLImageFormat& format, const QSize& size,
+     QCLMemoryObject::MemoryFlags access)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access);
+    cl_mem mem = clCreateImage2D
+        (d->id, flags, &(format.m_format), size.width(), size.height(), 0,
+         0, &error);
+    reportError("QCLContext::createImage2DDevice:", error);
+    if (mem)
+        return QCLImage2D(this, mem);
+    else
+        return QCLImage2D();
+}
+
+/*!
+    Creates a 2D OpenCL image object with the specified \a format,
+    \a size, and \a access mode.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+
+    If \a data is not null, then it will be used as the storage
+    for the image.  If \a data is null, then a new block of
+    host-accessible memory will be allocated.
+
+    Returns the new 2D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage2DDevice(), createImage2DCopy()
+*/
+QCLImage2D QCLContext::createImage2DHost
+    (const QCLImageFormat& format, void *data, const QSize& size,
+     QCLMemoryObject::MemoryFlags access, int bytesPerLine)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access);
+    if (data)
+        flags |= CL_MEM_USE_HOST_PTR;
+    else
+        flags |= CL_MEM_ALLOC_HOST_PTR;
+    cl_mem mem = clCreateImage2D
+        (d->id, flags, &(format.m_format),
+         size.width(), size.height(), bytesPerLine,
+         data, &error);
+    reportError("QCLContext::createImage2DHost:", error);
+    if (mem)
+        return QCLImage2D(this, mem);
+    else
+        return QCLImage2D();
+}
+
+/*!
+    Creates a 2D OpenCL image object from \a image with the
+    specified \a access mode.
+
+    OpenCL kernels that access the image will read and write
+    the QImage contents directly.
+
+    Returns the new 2D OpenCL image object, or a null object
+    if the image could not be created.  If \a image is null or
+    has a zero size, this function will return a null
+    QCLImage2D object.
+
+    \sa createImage2DDevice(), createImage2DCopy()
+*/
+QCLImage2D QCLContext::createImage2DHost
+    (QImage *image, QCLMemoryObject::MemoryFlags access)
+{
+    Q_D(QCLContext);
+
+    // Validate the image.
+    if (!image || image->width() < 1 || image->height() < 1)
+        return QCLImage2D();
+    QCLImageFormat format(image->format());
+    if (format.isNull()) {
+        qWarning("QCLContext::createImage2DHost: QImage format %d "
+                 "does not have an OpenCL equivalent", int(image->format()));
+        return QCLImage2D();
+    }
+
+    // Create the image object.
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access) | CL_MEM_USE_HOST_PTR;
+    cl_mem mem = clCreateImage2D
+        (d->id, flags, &(format.m_format),
+         image->width(), image->height(), image->bytesPerLine(),
+         image->bits(), &error);
+    reportError("QCLContext::createImage2DHost:", error);
+    if (mem)
+        return QCLImage2D(this, mem);
+    else
+        return QCLImage2D();
+}
+
+/*!
+    Creates a 2D OpenCL image object with the specified \a format,
+    \a size, and \a access mode.  If \a bytesPerLine is not zero,
+    it indicates the number of bytes between lines in \a data.
+
+    The image is initialized with a copy of the contents of \a data.
+    The application's \a data can be discarded after the image
+    is created.
+
+    Returns the new 2D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage2DDevice(), createImage2DHost()
+*/
+QCLImage2D QCLContext::createImage2DCopy
+    (const QCLImageFormat& format, const void *data, const QSize& size,
+     QCLMemoryObject::MemoryFlags access, int bytesPerLine)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access) | CL_MEM_COPY_HOST_PTR;
+    cl_mem mem = clCreateImage2D
+        (d->id, flags, &(format.m_format),
+         size.width(), size.height(), bytesPerLine,
+         const_cast<void *>(data), &error);
+    reportError("QCLContext::createImage2DCopy:", error);
+    if (mem)
+        return QCLImage2D(this, mem);
+    else
+        return QCLImage2D();
+}
+
+/*!
+    Creates a 2D OpenCL image object from \a image with the
+    specified \a access mode.
+
+    The OpenCL image is initialized with a copy of the contents of
+    \a image.  The application's \a image can be discarded after the
+    OpenCL image is created.
+
+    Returns the new 2D OpenCL image object, or a null object
+    if the image could not be created.  If \a image has a zero size,
+    this function will return a null QCLImage2D object.
+
+    \sa createImage2DDevice(), createImage2DHost()
+*/
+QCLImage2D QCLContext::createImage2DCopy
+    (const QImage& image, QCLMemoryObject::MemoryFlags access)
+{
+    Q_D(QCLContext);
+
+    // Validate the image.
+    if (image.width() < 1 || image.height() < 1)
+        return QCLImage2D();
+    QCLImageFormat format(image.format());
+    if (format.isNull()) {
+        qWarning("QCLContext::createImage2DCopy: QImage format %d "
+                 "does not have an OpenCL equivalent", int(image.format()));
+        return QCLImage2D();
+    }
+
+    // Create the image object.
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access) | CL_MEM_COPY_HOST_PTR;
+    cl_mem mem = clCreateImage2D
+        (d->id, flags, &(format.m_format),
+         image.width(), image.height(), image.bytesPerLine(),
+         const_cast<uchar *>(image.bits()), &error);
+    reportError("QCLContext::createImage2DCopy:", error);
+    if (mem)
+        return QCLImage2D(this, mem);
+    else
+        return QCLImage2D();
+}
+
+/*!
+    Creates a 3D OpenCL image object with the specified \a format,
+    \a width, \a height, \a depth, and \a access mode.
+
+    The image memory is created on the device and will not be accessible
+    to the host via a direct pointer.  Use createImage3DHost() to
+    create a host-accessible image.
+
+    Returns the new 3D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage3DHost(), createImage3DCopy()
+*/
+QCLImage3D QCLContext::createImage3DDevice
+    (const QCLImageFormat& format, int width, int height, int depth,
+     QCLMemoryObject::MemoryFlags access)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access);
+    cl_mem mem = clCreateImage3D
+        (d->id, flags, &(format.m_format), width, height, depth, 0, 0,
+         0, &error);
+    reportError("QCLContext::createImage3DDevice:", error);
+    if (mem)
+        return QCLImage3D(this, mem);
+    else
+        return QCLImage3D();
+}
+
+/*!
+    Creates a 3D OpenCL image object with the specified \a format,
+    \a width, \a height, \a depth, and \a access mode.
+    If \a bytesPerLine is not zero, it indicates the number of
+    bytes between lines in \a data.  If \a bytesPerSlice is not zero,
+    it indicates the number of bytes between slices in \a data.
+
+    If \a data is not null, then it will be used as the storage
+    for the image.  If \a data is null, then a new block of
+    host-accessible memory will be allocated.
+
+    Returns the new 3D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage3DDevice(), createImage3DCopy()
+*/
+QCLImage3D QCLContext::createImage3DHost
+    (const QCLImageFormat& format, void *data,
+     int width, int height, int depth,
+     QCLMemoryObject::MemoryFlags access,
+     int bytesPerLine, int bytesPerSlice)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access);
+    if (data)
+        flags |= CL_MEM_USE_HOST_PTR;
+    else
+        flags |= CL_MEM_ALLOC_HOST_PTR;
+    cl_mem mem = clCreateImage3D
+        (d->id, flags, &(format.m_format),
+         width, height, depth, bytesPerLine, bytesPerSlice,
+         data, &error);
+    reportError("QCLContext::createImage3DHost:", error);
+    if (mem)
+        return QCLImage3D(this, mem);
+    else
+        return QCLImage3D();
+}
+
+/*!
+    Creates a 3D OpenCL image object with the specified \a format,
+    \a width, \a height, \a depth, and \a access mode.
+    If \a bytesPerLine is not zero, it indicates the number of bytes
+    between lines in \a data.  If \a bytesPerSlice is not zero,
+    it indicates the number of bytes between slices in \a data.
+
+    The image is initialized with a copy of the contents of \a data.
+    The application's \a data can be discarded after the image
+    is created.
+
+    Returns the new 3D OpenCL image object, or a null object
+    if the image could not be created.
+
+    \sa createImage3DDevice(), createImage3DHost()
+*/
+QCLImage3D QCLContext::createImage3DCopy
+    (const QCLImageFormat& format, const void *data,
+     int width, int height, int depth,
+     QCLMemoryObject::MemoryFlags access,
+     int bytesPerLine, int bytesPerSlice)
+{
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access) | CL_MEM_COPY_HOST_PTR;
+    cl_mem mem = clCreateImage3D
+        (d->id, flags, &(format.m_format),
+         width, height, depth, bytesPerLine, bytesPerSlice,
+         const_cast<void *>(data), &error);
+    reportError("QCLContext::createImage3DCopy:", error);
+    if (mem)
+        return QCLImage3D(this, mem);
+    else
+        return QCLImage3D();
 }
 
 /*!

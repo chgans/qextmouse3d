@@ -51,6 +51,8 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
 
+class QCLContext;
+
 class Q_CL_EXPORT QCLImageFormat
 {
 public:
@@ -104,6 +106,8 @@ public:
 
 private:
     cl_image_format m_format;
+
+    friend class QCLContext;
 };
 
 inline QCLImageFormat::QCLImageFormat()

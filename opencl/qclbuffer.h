@@ -98,11 +98,8 @@ public:
                       QCLMemoryObject::MapAccess access,
                       const QVector<QCLEvent>& after);
 
-    void unmap(void *ptr);
-    void unmap(void *ptr, const QVector<QCLEvent>& after);
-
-    QCLEvent unmapAsync(void *ptr);
-    QCLEvent unmapAsync(void *ptr, const QVector<QCLEvent>& after);
+    QCLEvent unmap(void *ptr);
+    QCLEvent unmap(void *ptr, const QVector<QCLEvent>& after);
 };
 
 QT_END_NAMESPACE

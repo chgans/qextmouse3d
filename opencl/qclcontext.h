@@ -94,9 +94,40 @@ public:
     QCLCommandQueue createCommandQueue
         (const QCLDevice& device, cl_command_queue_properties properties);
 
-    QCLBuffer createBufferDevice(size_t size, QCLMemoryObject::MemoryFlags access);
-    QCLBuffer createBufferHost(void *data, size_t size, QCLMemoryObject::MemoryFlags access);
-    QCLBuffer createBufferCopy(void *data, size_t size, QCLMemoryObject::MemoryFlags access);
+    QCLBuffer createBufferDevice
+        (size_t size, QCLMemoryObject::MemoryFlags access);
+    QCLBuffer createBufferHost
+        (void *data, size_t size, QCLMemoryObject::MemoryFlags access);
+    QCLBuffer createBufferCopy
+        (const void *data, size_t size, QCLMemoryObject::MemoryFlags access);
+
+    QCLImage2D createImage2DDevice
+        (const QCLImageFormat& format, const QSize& size,
+         QCLMemoryObject::MemoryFlags access);
+    QCLImage2D createImage2DHost
+        (const QCLImageFormat& format, void *data, const QSize& size,
+         QCLMemoryObject::MemoryFlags access, int bytesPerLine = 0);
+    QCLImage2D createImage2DHost
+        (QImage *image, QCLMemoryObject::MemoryFlags access);
+    QCLImage2D createImage2DCopy
+        (const QCLImageFormat& format, const void *data, const QSize& size,
+         QCLMemoryObject::MemoryFlags access, int bytesPerLine = 0);
+    QCLImage2D createImage2DCopy
+        (const QImage& image, QCLMemoryObject::MemoryFlags access);
+
+    QCLImage3D createImage3DDevice
+        (const QCLImageFormat& format, int width, int height, int depth,
+         QCLMemoryObject::MemoryFlags access);
+    QCLImage3D createImage3DHost
+        (const QCLImageFormat& format, void *data,
+         int width, int height, int depth,
+         QCLMemoryObject::MemoryFlags access,
+         int bytesPerLine = 0, int bytesPerSlice = 0);
+    QCLImage3D createImage3DCopy
+        (const QCLImageFormat& format, const void *data,
+         int width, int height, int depth,
+         QCLMemoryObject::MemoryFlags access,
+         int bytesPerLine = 0, int bytesPerSlice = 0);
 
     QCLProgram createProgramFromSourceCode(const char *sourceCode);
     QCLProgram createProgramFromSourceCode(const QByteArray& sourceCode);
@@ -118,6 +149,8 @@ private:
     cl_command_queue activeQueue(); // For quicker access from friends.
 
     friend class QCLBuffer;
+    friend class QCLImage2D;
+    friend class QCLImage3D;
     friend class QCLKernel;
     friend class QCLCommandQueue;
     friend class QCLProgram;
