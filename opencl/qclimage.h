@@ -77,22 +77,15 @@ public:
     int bytesPerLine() const;
 
     bool read(void *data, const QRect& rect, int bytesPerLine = 0);
-    bool read(void *data, const QRect& rect,
-              const QVector<QCLEvent>& after, int bytesPerLine = 0);
-
-    QCLEvent readAsync(void *data, const QRect& rect, int bytesPerLine = 0);
     QCLEvent readAsync(void *data, const QRect& rect,
-                       const QVector<QCLEvent>& after, int bytesPerLine = 0);
+                       const QVector<QCLEvent>& after = QVector<QCLEvent>(),
+                       int bytesPerLine = 0);
 
     bool write(const void *data, const QRect& rect, int bytesPerLine = 0);
-    bool write(const void *data, const QRect& rect,
-               const QVector<QCLEvent>& after, int bytesPerLine = 0);
-
-    QCLEvent writeAsync
-        (const void *data, const QRect& rect, int bytesPerLine = 0);
     QCLEvent writeAsync
         (const void *data, const QRect& rect,
-         const QVector<QCLEvent>& after, int bytesPerLine = 0);
+         const QVector<QCLEvent>& after = QVector<QCLEvent>(),
+         int bytesPerLine = 0);
 };
 
 class Q_CL_EXPORT QCLImage3D : public QCLMemoryObject

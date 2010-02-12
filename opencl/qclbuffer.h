@@ -67,39 +67,27 @@ public:
     }
 
     bool read(size_t offset, void *data, size_t size);
-    bool read(size_t offset, void *data, size_t size,
-              const QVector<QCLEvent>& after);
-
-    QCLEvent readAsync(size_t offset, void *data, size_t size);
     QCLEvent readAsync(size_t offset, void *data, size_t size,
-                       const QVector<QCLEvent>& after);
+                       const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
     bool write(size_t offset, const void *data, size_t size);
-    bool write(size_t offset, const void *data, size_t size,
-               const QVector<QCLEvent>& after);
-
-    QCLEvent writeAsync(size_t offset, const void *data, size_t size);
     QCLEvent writeAsync(size_t offset, const void *data, size_t size,
-                        const QVector<QCLEvent>& after);
+                        const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
-    QCLEvent copyTo(size_t offset, size_t size,
-                    const QCLBuffer& dest, size_t destOffset);
-    QCLEvent copyTo(size_t offset, size_t size,
-                    const QCLBuffer& dest, size_t destOffset,
-                    const QVector<QCLEvent>& after);
+    bool copyTo(size_t offset, size_t size,
+                const QCLBuffer& dest, size_t destOffset);
+    QCLEvent copyToAsync(size_t offset, size_t size,
+                         const QCLBuffer& dest, size_t destOffset,
+                         const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
     void *map(size_t offset, size_t size, QCLMemoryObject::MapAccess access);
-    void *map(size_t offset, size_t size, QCLMemoryObject::MapAccess access,
-              const QVector<QCLEvent>& after);
-
-    QCLEvent mapAsync(void **ptr, size_t offset, size_t size,
-                      QCLMemoryObject::MapAccess access);
     QCLEvent mapAsync(void **ptr, size_t offset, size_t size,
                       QCLMemoryObject::MapAccess access,
-                      const QVector<QCLEvent>& after);
+                      const QVector<QCLEvent>& after = QVector<QCLEvent>());
 
-    QCLEvent unmap(void *ptr);
-    QCLEvent unmap(void *ptr, const QVector<QCLEvent>& after);
+    void unmap(void *ptr);
+    QCLEvent unmapAsync
+        (void *ptr, const QVector<QCLEvent>& after = QVector<QCLEvent>());
 };
 
 QT_END_NAMESPACE

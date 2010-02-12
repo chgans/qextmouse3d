@@ -99,57 +99,6 @@ bool QCLBuffer::read(size_t offset, void *data, size_t size)
 }
 
 /*!
-    \overload
-
-    Reads \a size bytes from this buffer, starting at \a offset,
-    into the supplied \a data array.  Returns true if the read
-    was successful; false otherwise.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed, and then this function will
-    block until the request completes.  The request is executed on
-    the active command queue for context().
-
-    \sa readAsync(), write()
-*/
-bool QCLBuffer::read(size_t offset, void *data, size_t size,
-                     const QVector<QCLEvent>& after)
-{
-    cl_int error = clEnqueueReadBuffer
-        (context()->activeQueue(), id(),
-         CL_TRUE, offset, size, data, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), 0);
-    context()->reportError("QCLBuffer::read(after):", error);
-    return error == CL_SUCCESS;
-}
-
-/*!
-    Reads \a size bytes from this buffer, starting at \a offset,
-    into the supplied \a data array.
-
-    This function will queue the request and return immediately.
-    Returns an event object that can be used to wait for the
-    request to complete.  The request is executed on the active
-    command queue for context().
-
-    \sa read(), writeAsync()
-*/
-QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size)
-{
-    cl_event event;
-    cl_int error = clEnqueueReadBuffer
-        (context()->activeQueue(), id(),
-         CL_FALSE, offset, size, data, 0, 0, &event);
-    context()->reportError("QCLBuffer::readAsync:", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
-}
-
-/*!
-    \overload
-
     Reads \a size bytes from this buffer, starting at \a offset,
     into the supplied \a data array.
 
@@ -170,8 +119,9 @@ QCLEvent QCLBuffer::readAsync(size_t offset, void *data, size_t size,
     cl_int error = clEnqueueReadBuffer
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLBuffer::readAsync(after):", error);
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::readAsync:", error);
     if (error != CL_SUCCESS)
         return QCLEvent();
     else
@@ -198,57 +148,6 @@ bool QCLBuffer::write(size_t offset, const void *data, size_t size)
 }
 
 /*!
-    \overload
-
-    Writes \a size bytes to this buffer, starting at \a offset,
-    from the supplied \a data array.  Returns true if the write
-    was successful; false otherwise.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed, and then this function will
-    block until the request completes.  The request is executed on
-    the active command queue for context().
-
-    \sa writeAsync(), read()
-*/
-bool QCLBuffer::write(size_t offset, const void *data, size_t size,
-                      const QVector<QCLEvent>& after)
-{
-    cl_int error = clEnqueueWriteBuffer
-        (context()->activeQueue(), id(),
-         CL_TRUE, offset, size, data, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), 0);
-    context()->reportError("QCLBuffer::write(after):", error);
-    return error == CL_SUCCESS;
-}
-
-/*!
-    Writes \a size bytes to this buffer, starting at \a offset,
-    from the supplied \a data array.
-
-    This function will queue the request and return immediately.
-    Returns an event object that can be used to wait for the
-    request to complete.  The request is executed on the active
-    command queue for context().
-
-    \sa write(), readAsync()
-*/
-QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size)
-{
-    cl_event event;
-    cl_int error = clEnqueueWriteBuffer
-        (context()->activeQueue(), id(),
-         CL_FALSE, offset, size, data, 0, 0, &event);
-    context()->reportError("QCLBuffer::writeAsync:", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
-}
-
-/*!
-    \overload
-
     Writes \a size bytes to this buffer, starting at \a offset,
     from the supplied \a data array.
 
@@ -269,8 +168,9 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size,
     cl_int error = clEnqueueWriteBuffer
         (context()->activeQueue(), id(),
          CL_FALSE, offset, size, data, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLBuffer::writeAsync(after):", error);
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::writeAsync:", error);
     if (error != CL_SUCCESS)
         return QCLEvent();
     else
@@ -278,28 +178,33 @@ QCLEvent QCLBuffer::writeAsync(size_t offset, const void *data, size_t size,
 }
 
 /*!
-    Requests that the \a size bytes at \a offset in this buffer
-    be copied to \a destOffset in the buffer \a dest.  Returns an
-    event object that can be used to wait for the request to complete.
+    Copies the \a size bytes at \a offset in this buffer
+    be copied to \a destOffset in the buffer \a dest.  Returns true
+    if the copy was successful; false otherwise.
+
+    This function will block until the request completes.
     The request is executed on the active command queue for context().
+
+    \sa copyToAsync()
 */
-QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
-                           const QCLBuffer& dest, size_t destOffset)
+bool QCLBuffer::copyTo
+    (size_t offset, size_t size, const QCLBuffer& dest, size_t destOffset)
 {
     cl_event event;
     cl_int error = clEnqueueCopyBuffer
         (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, 0, 0, &event);
     context()->reportError("QCLBuffer::copyTo:", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*!
-    \overload
-
     Requests that the \a size bytes at \a offset in this buffer
     be copied to \a destOffset in the buffer \a dest.  Returns an
     event object that can be used to wait for the request to complete.
@@ -307,17 +212,20 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
     The request will not start until all of the events in \a after
     have been signalled as completed.  The request is executed on
     the active command queue for context().
+
+    \sa copyTo()
 */
-QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
-                           const QCLBuffer& dest, size_t destOffset,
-                           const QVector<QCLEvent>& after)
+QCLEvent QCLBuffer::copyToAsync
+    (size_t offset, size_t size, const QCLBuffer& dest, size_t destOffset,
+     const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueCopyBuffer
         (context()->activeQueue(), id(), dest.id(),
          offset, destOffset, size, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLBuffer::copyTo(after):", error);
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::copyToAsync:", error);
     if (error != CL_SUCCESS)
         return QCLEvent();
     else
@@ -348,60 +256,6 @@ void *QCLBuffer::map
 /*!
     Maps the \a size bytes starting at \a offset in this buffer
     into host memory for the specified \a access mode.  Returns a
-    pointer to the mapped region.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed, and then this function will
-    block until the request completes.  The request is executed on
-    the active command queue for context().
-
-    \sa mapAsync(), unmap()
-*/
-void *QCLBuffer::map
-    (size_t offset, size_t size, QCLMemoryObject::MapAccess access,
-     const QVector<QCLEvent>& after)
-{
-    cl_int error;
-    void *data = clEnqueueMapBuffer
-        (context()->activeQueue(), id(), CL_TRUE,
-         cl_map_flags(access), offset, size, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), 0, &error);
-    context()->reportError("QCLBuffer::map(after):", error);
-    return data;
-}
-
-/*!
-    Maps the \a size bytes starting at \a offset in this buffer
-    into host memory for the specified \a access mode.  Returns a
-    pointer to the mapped region in \a ptr, which will be valid
-    only after the request completes.
-
-    This function will queue the request and return immediately.
-    Returns an event object that can be used to wait for the
-    request to complete.  The request is executed on the active
-    command queue for context().
-
-    \sa map(), unmap()
-*/
-QCLEvent QCLBuffer::mapAsync
-    (void **ptr, size_t offset, size_t size,
-     QCLMemoryObject::MapAccess access)
-{
-    cl_int error;
-    cl_event event;
-    *ptr = clEnqueueMapBuffer
-        (context()->activeQueue(), id(), CL_FALSE,
-         cl_map_flags(access), offset, size, 0, 0, &event, &error);
-    context()->reportError("QCLBuffer::mapAsync:", error);
-    if (error == CL_SUCCESS)
-        return QCLEvent(event);
-    else
-        return QCLEvent();
-}
-
-/*!
-    Maps the \a size bytes starting at \a offset in this buffer
-    into host memory for the specified \a access mode.  Returns a
     pointer to the mapped region in \a ptr, which will be valid
     only after the request completes.
 
@@ -413,7 +267,7 @@ QCLEvent QCLBuffer::mapAsync
     have been signalled as completed.  The request is executed on
     the active command queue for context().
 
-    \sa map(), unmap()
+    \sa map(), unmapAsync()
 */
 QCLEvent QCLBuffer::mapAsync
     (void **ptr, size_t offset, size_t size,
@@ -424,9 +278,10 @@ QCLEvent QCLBuffer::mapAsync
     *ptr = clEnqueueMapBuffer
         (context()->activeQueue(), id(), CL_FALSE,
          cl_map_flags(access), offset, size, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()),
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())),
          &event, &error);
-    context()->reportError("QCLBuffer::mapAsync(after):", error);
+    context()->reportError("QCLBuffer::mapAsync:", error);
     if (error == CL_SUCCESS)
         return QCLEvent(event);
     else
@@ -437,27 +292,24 @@ QCLEvent QCLBuffer::mapAsync
     Requests that the region at \a ptr that was previously returned from
     a call to map() or mapAsync() be unmapped.
 
-    Returns an event object that can be used to wait for the
-    request to complete.  The request is executed on the active
-    command queue for context().
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
 
-    \sa map(), mapAsync()
+    \sa unmapAsync(), map()
 */
-QCLEvent QCLBuffer::unmap(void *ptr)
+void QCLBuffer::unmap(void *ptr)
 {
-    cl_event event;
+    cl_event event = 0;
     cl_int error = clEnqueueUnmapMemObject
         (context()->activeQueue(), id(), ptr, 0, 0, &event);
     context()->reportError("QCLBuffer::unmap:", error);
-    if (error == CL_SUCCESS)
-        return QCLEvent(event);
-    else
-        return QCLEvent();
+    if (error == CL_SUCCESS) {
+        clWaitForEvents(1, &event);
+        clReleaseEvent(event);
+    }
 }
 
 /*!
-    \overload
-
     Requests that the region at \a ptr that was previously returned from
     a call to map() or mapAsync() be unmapped.
 
@@ -468,15 +320,16 @@ QCLEvent QCLBuffer::unmap(void *ptr)
     request to complete.  The request is executed on the active
     command queue for context().
 
-    \sa map(), mapAsync()
+    \sa unmap(), mapAsync()
 */
-QCLEvent QCLBuffer::unmap(void *ptr, const QVector<QCLEvent>& after)
+QCLEvent QCLBuffer::unmapAsync(void *ptr, const QVector<QCLEvent>& after)
 {
     cl_event event;
     cl_int error = clEnqueueUnmapMemObject
         (context()->activeQueue(), id(), ptr, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLBuffer::unmap(after):", error);
+         (after.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(after.constData())), &event);
+    context()->reportError("QCLBuffer::unmapAsync:", error);
     if (error == CL_SUCCESS)
         return QCLEvent(event);
     else
