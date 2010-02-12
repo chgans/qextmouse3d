@@ -72,13 +72,11 @@ int main(int, char **)
     }
 
     // Create OpenCL buffer objects for the input and output vectors.
-    QCLBuffer buffer1 = context.createBuffer
-        (input1, sizeof(input1),
-         QCLMemoryObject::ReadOnly | QCLMemoryObject::CopyHostPointer);
-    QCLBuffer buffer2 = context.createBuffer
-        (input2, sizeof(input2),
-         QCLMemoryObject::ReadOnly | QCLMemoryObject::CopyHostPointer);
-    QCLBuffer buffer3 = context.createBuffer
+    QCLBuffer buffer1 = context.createBufferCopy
+        (input1, sizeof(input1), QCLMemoryObject::ReadOnly);
+    QCLBuffer buffer2 = context.createBufferCopy
+        (input2, sizeof(input2), QCLMemoryObject::ReadOnly);
+    QCLBuffer buffer3 = context.createBufferDevice
         (sizeof(output), QCLMemoryObject::WriteOnly);
 
     // Build the program and initialize the kernel arguments.

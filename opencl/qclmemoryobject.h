@@ -78,6 +78,10 @@ public:
     cl_mem id() const { return m_id; }
     QCLContext *context() const { return m_context; }
 
+    QCLMemoryObject::MemoryFlags flags() const;
+    void *hostPointer() const;
+    size_t size() const;
+
 protected:
     void setId(QCLContext *context, cl_mem id);
 

@@ -607,21 +607,25 @@ QCLCommandQueue QCLContext::createCommandQueue
 
 /*!
     Creates an OpenCL memory buffer of \a size bytes in length,
-    with the specified \a flags.  The default \a flags creates a
-    read-write memory object that allocates space from host memory.
+    with the specified \a access mode.
 
-    Returns the new OpenCL memory buffer object.
+    The memory is created in the device and will not be accessible
+    to the host via a direct pointer.  Use createBufferHost() to
+    create a host-accessible buffer.
 
-    \sa lastError()
+    Returns the new OpenCL memory buffer object, or a null object
+    if the buffer could not be created.
+
+    \sa createBufferHost(), createBufferCopy()
 */
-QCLBuffer QCLContext::createBuffer
-    (size_t size, QCLMemoryObject::MemoryFlags flags)
+QCLBuffer QCLContext::createBufferDevice
+    (size_t size, QCLMemoryObject::MemoryFlags access)
 {
     Q_D(QCLContext);
     cl_int error = CL_INVALID_CONTEXT;
-    cl_mem mem = clCreateBuffer
-        (d->id, cl_mem_flags(flags), size, 0, &error);
-    reportError("QCLContext::createBuffer(alloc):", error);
+    cl_mem_flags flags = cl_mem_flags(access);
+    cl_mem mem = clCreateBuffer(d->id, flags, size, 0, &error);
+    reportError("QCLContext::createBufferDevice:", error);
     if (mem)
         return QCLBuffer(this, mem);
     else
@@ -630,21 +634,58 @@ QCLBuffer QCLContext::createBuffer
 
 /*!
     Creates an OpenCL memory buffer of \a size bytes in length,
-    with the specified \a flags.  The default \a flags creates a
-    read-write memory object that uses \a hostPointer as its storage.
+    with the specified \a access mode.
 
-    Returns the new OpenCL memory buffer object.
+    If \a data is not null, then it will be used as the storage
+    for the buffer.  If \a data is null, then a new block of
+    host-accessible memory will be allocated.
 
-    \sa lastError()
+    Returns the new OpenCL memory buffer object, or a null object
+    if the buffer could not be created.
+
+    \sa createBufferDevice(), createBufferCopy()
 */
-QCLBuffer QCLContext::createBuffer
-    (void *hostPointer, size_t size, QCLMemoryObject::MemoryFlags flags)
+QCLBuffer QCLContext::createBufferHost
+    (void *data, size_t size, QCLMemoryObject::MemoryFlags access)
 {
     Q_D(QCLContext);
     cl_int error = CL_INVALID_CONTEXT;
-    cl_mem mem = clCreateBuffer
-        (d->id, cl_mem_flags(flags), size, hostPointer, &error);
-    reportError("QCLContext::createBuffer(hostptr):", error);
+    cl_mem_flags flags = cl_mem_flags(access);
+    if (data)
+        flags |= CL_MEM_USE_HOST_PTR;
+    else
+        flags |= CL_MEM_ALLOC_HOST_PTR;
+    cl_mem mem = clCreateBuffer(d->id, flags, size, data, &error);
+    reportError("QCLContext::createBufferHost:", error);
+    if (mem)
+        return QCLBuffer(this, mem);
+    else
+        return QCLBuffer();
+}
+
+/*!
+    Creates an OpenCL memory buffer of \a size bytes in length,
+    with the specified \a access mode.
+
+    The buffer is initialized with a copy of the contents of \a data.
+    The application's \a data can be discarded after the buffer
+    is created.
+
+    Returns the new OpenCL memory buffer object, or a null object
+    if the buffer could not be created.
+
+    \sa createBufferDevice(), createBufferHost()
+*/
+QCLBuffer QCLContext::createBufferCopy
+    (void *data, size_t size, QCLMemoryObject::MemoryFlags access)
+{
+    Q_ASSERT(data);
+    Q_D(QCLContext);
+    cl_int error = CL_INVALID_CONTEXT;
+    cl_mem_flags flags = cl_mem_flags(access);
+    flags |= CL_MEM_COPY_HOST_PTR;
+    cl_mem mem = clCreateBuffer(d->id, flags, size, data, &error);
+    reportError("QCLContext::createBufferCopy:", error);
     if (mem)
         return QCLBuffer(this, mem);
     else

@@ -94,8 +94,9 @@ public:
     QCLCommandQueue createCommandQueue
         (const QCLDevice& device, cl_command_queue_properties properties);
 
-    QCLBuffer createBuffer(size_t size, QCLMemoryObject::MemoryFlags flags = QCLMemoryObject::ReadWrite | QCLMemoryObject::AllocateHostPointer);
-    QCLBuffer createBuffer(void *hostPointer, size_t size, QCLMemoryObject::MemoryFlags flags = QCLMemoryObject::ReadWrite | QCLMemoryObject::UseHostPointer);
+    QCLBuffer createBufferDevice(size_t size, QCLMemoryObject::MemoryFlags access);
+    QCLBuffer createBufferHost(void *data, size_t size, QCLMemoryObject::MemoryFlags access);
+    QCLBuffer createBufferCopy(void *data, size_t size, QCLMemoryObject::MemoryFlags access);
 
     QCLProgram createProgramFromSourceCode(const char *sourceCode);
     QCLProgram createProgramFromSourceCode(const QByteArray& sourceCode);

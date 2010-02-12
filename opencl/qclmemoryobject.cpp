@@ -112,6 +112,52 @@ QCLMemoryObject::~QCLMemoryObject()
 */
 
 /*!
+    Returns the flags that were used to create this memory object.
+*/
+QCLMemoryObject::MemoryFlags QCLMemoryObject::flags() const
+{
+    cl_mem_flags flags;
+    if (clGetMemObjectInfo(m_id, CL_MEM_FLAGS,
+                           sizeof(flags), &flags, 0) != CL_SUCCESS)
+        return 0;
+    else
+        return QCLMemoryObject::MemoryFlags(flags);
+}
+
+/*!
+    Returns the host data pointer that was used to create this memory
+    object, or null if the memory object is not directly accessible
+    to the host.
+
+    \sa size()
+*/
+void *QCLMemoryObject::hostPointer() const
+{
+    void *ptr;
+    if (clGetMemObjectInfo(m_id, CL_MEM_HOST_PTR,
+                           sizeof(ptr), &ptr, 0) != CL_SUCCESS)
+        return 0;
+    else
+        return ptr;
+}
+
+/*!
+    Returns the actual size of the data storage associated with
+    this memory object.
+
+    \sa hostPointer()
+*/
+size_t QCLMemoryObject::size() const
+{
+    size_t size;
+    if (clGetMemObjectInfo(m_id, CL_MEM_SIZE,
+                           sizeof(size), &size, 0) != CL_SUCCESS)
+        return 0;
+    else
+        return size;
+}
+
+/*!
     \internal
 */
 void QCLMemoryObject::setId(QCLContext *context, cl_mem id)
