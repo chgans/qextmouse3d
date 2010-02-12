@@ -57,28 +57,77 @@ QT_BEGIN_NAMESPACE
     \sa QCLProgram
 */
 
-/*!
-    \fn QCLKernel::QCLKernel()
+class QCLKernelPrivate
+{
+public:
+    QCLKernelPrivate(QCLContext *ctx, cl_kernel kid)
+        : context(ctx)
+        , id(kid)
+        , globalWorkSize(1, 0, 0)
+        , localWorkSize(0, 0, 0)
+    {}
+    QCLKernelPrivate(const QCLKernelPrivate *other)
+        : context(other->context)
+        , id(other->id)
+        , globalWorkSize(other->globalWorkSize)
+        , localWorkSize(other->localWorkSize)
+        , dependentEvents(other->dependentEvents)
+    {
+        if (id)
+            clRetainKernel(id);
+    }
+    ~QCLKernelPrivate()
+    {
+        if (id)
+            clReleaseKernel(id);
+    }
 
+    void copy(const QCLKernelPrivate *other)
+    {
+        context = other->context;
+        globalWorkSize = other->globalWorkSize;
+        localWorkSize = other->localWorkSize;
+        dependentEvents = other->dependentEvents;
+        if (id != other->id) {
+            if (id)
+                clReleaseKernel(id);
+            id = other->id;
+            if (id)
+                clRetainKernel(id);
+        }
+    }
+
+    QCLContext *context;
+    cl_kernel id;
+    QCLWorkSize globalWorkSize;
+    QCLWorkSize localWorkSize;
+    QVector<QCLEvent> dependentEvents;
+};
+
+/*!
     Constructs a null OpenCL kernel object.
 */
+QCLKernel::QCLKernel()
+    : d_ptr(new QCLKernelPrivate(0, 0))
+{
+}
 
 /*!
-    \fn QCLKernel::QCLKernel(QCLContext *context, cl_kernel id)
-
     Constructs an OpenCL kernel object from the native identifier \a id,
     and associates it with \a context.  This class will take over
     ownership of \a id and release it in the destructor.
 */
+QCLKernel::QCLKernel(QCLContext *context, cl_kernel id)
+    : d_ptr(new QCLKernelPrivate(context, id))
+{
+}
 
 /*!
     Constructs a copy of \a other.
 */
 QCLKernel::QCLKernel(const QCLKernel& other)
-    : m_context(other.m_context), m_id(other.m_id)
+    : d_ptr(new QCLKernelPrivate(other.d_ptr.data()))
 {
-    if (m_id)
-        clRetainKernel(m_id);
 }
 
 /*!
@@ -87,8 +136,6 @@ QCLKernel::QCLKernel(const QCLKernel& other)
 */
 QCLKernel::~QCLKernel()
 {
-    if (m_id)
-        clReleaseKernel(m_id);
 }
 
 /*!
@@ -96,47 +143,50 @@ QCLKernel::~QCLKernel()
 */
 QCLKernel& QCLKernel::operator=(const QCLKernel& other)
 {
-    m_context = other.m_context;
-    if (m_id == other.m_id)
-        return *this;
-    if (m_id)
-        clReleaseKernel(m_id);
-    m_id = other.m_id;
-    if (m_id)
-        clRetainKernel(m_id);
+    d_ptr->copy(other.d_ptr.data());
     return *this;
 }
 
 /*!
-    \fn bool QCLKernel::isNull() const
-
     Returns true if this OpenCL kernel object is null; false otherwise.
 */
+bool QCLKernel::isNull() const
+{
+    Q_D(const QCLKernel);
+    return d->id == 0;
+}
 
 /*!
-    \fn cl_kernel QCLKernel::id() const
-
     Returns the native OpenCL identifier for this kernel.
 */
+cl_kernel QCLKernel::id() const
+{
+    Q_D(const QCLKernel);
+    return d->id;
+}
 
 /*!
-    \fn QCLContext *QCLKernel::context() const
-
     Returns the OpenCL context that this kernel was created within.
 */
+QCLContext *QCLKernel::context() const
+{
+    Q_D(const QCLKernel);
+    return d->context;
+}
 
 /*!
     Returns the OpenCL program that this kernel is associated with.
 */
 QCLProgram QCLKernel::program() const
 {
-    if (!m_id)
+    Q_D(const QCLKernel);
+    if (!d->id)
         return QCLProgram();
     cl_program prog = 0;
-    if (clGetKernelInfo(m_id, CL_KERNEL_PROGRAM,
+    if (clGetKernelInfo(d->id, CL_KERNEL_PROGRAM,
                         sizeof(prog), &prog, 0) != CL_SUCCESS)
         return QCLProgram();
-    return QCLProgram(m_context, prog);
+    return QCLProgram(d->context, prog);
 }
 
 /*!
@@ -144,12 +194,13 @@ QCLProgram QCLKernel::program() const
 */
 QString QCLKernel::name() const
 {
+    Q_D(const QCLKernel);
     size_t size = 0;
-    if (clGetKernelInfo(m_id, CL_KERNEL_FUNCTION_NAME,
+    if (clGetKernelInfo(d->id, CL_KERNEL_FUNCTION_NAME,
                         0, 0, &size) != CL_SUCCESS || !size)
         return QString();
     QVarLengthArray<char> buf(size);
-    if (clGetKernelInfo(m_id, CL_KERNEL_FUNCTION_NAME,
+    if (clGetKernelInfo(d->id, CL_KERNEL_FUNCTION_NAME,
                         size, buf.data(), 0) != CL_SUCCESS)
         return QString();
     return QString::fromLatin1(buf.constData(), size);
@@ -163,8 +214,9 @@ QString QCLKernel::name() const
 */
 int QCLKernel::argCount() const
 {
+    Q_D(const QCLKernel);
     cl_uint count = 0;
-    if (clGetKernelInfo(m_id, CL_KERNEL_NUM_ARGS, sizeof(count), &count, 0)
+    if (clGetKernelInfo(d->id, CL_KERNEL_NUM_ARGS, sizeof(count), &count, 0)
             != CL_SUCCESS)
         return 0;
     return int(count);
@@ -180,9 +232,10 @@ int QCLKernel::argCount() const
 */
 QCLWorkSize QCLKernel::declaredWorkGroupSize() const
 {
+    Q_D(const QCLKernel);
     size_t sizes[3];
     if (clGetKernelWorkGroupInfo
-            (m_id, context()->defaultDevice().id(),
+            (d->id, d->context->defaultDevice().id(),
              CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
              sizeof(sizes), sizes, 0) != CL_SUCCESS)
         return QCLWorkSize(0, 0, 0);
@@ -201,9 +254,10 @@ QCLWorkSize QCLKernel::declaredWorkGroupSize() const
 */
 QCLWorkSize QCLKernel::declaredWorkGroupSize(const QCLDevice& device) const
 {
+    Q_D(const QCLKernel);
     size_t sizes[3];
     if (clGetKernelWorkGroupInfo
-            (m_id, device.id(),
+            (d->id, device.id(),
              CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
              sizeof(sizes), sizes, 0) != CL_SUCCESS)
         return QCLWorkSize(0, 0, 0);
@@ -212,11 +266,84 @@ QCLWorkSize QCLKernel::declaredWorkGroupSize(const QCLDevice& device) const
 }
 
 /*!
+    Returns the global work size for this instance of the kernel.
+    The default value is (1, 0, 0).
+
+    \sa setGlobalWorkSize(), localWorkSize()
+*/
+QCLWorkSize QCLKernel::globalWorkSize() const
+{
+    Q_D(const QCLKernel);
+    return d->globalWorkSize;
+}
+
+/*!
+    Sets the global work size for this instance of the kernel to \a size.
+
+    \sa globalWorkSize(), setLocalWorkSize()
+*/
+void QCLKernel::setGlobalWorkSize(const QCLWorkSize& size)
+{
+    Q_D(QCLKernel);
+    d->globalWorkSize = size;
+}
+
+/*!
+    Returns the local work size for this instance of the kernel.
+    The default value is (0, 0, 0), which indicates that the local
+    work size is not used.
+
+    \sa setLocalWorkSize(), globalWorkSize()
+*/
+QCLWorkSize QCLKernel::localWorkSize() const
+{
+    Q_D(const QCLKernel);
+    return d->localWorkSize;
+}
+
+/*!
+    Sets the local work size for this instance of the kernel to \a size.
+
+    \sa localWorkSize(), setGlobalWorkSize()
+*/
+void QCLKernel::setLocalWorkSize(const QCLWorkSize& size)
+{
+    Q_D(QCLKernel);
+    d->localWorkSize = size;
+}
+
+/*!
+    Returns the list of events that must be completed before this
+    instance of the kernel can be executed.  The default is an
+    empty list.
+
+    \sa setDependentEvents()
+*/
+QVector<QCLEvent> QCLKernel::dependentEvents() const
+{
+    Q_D(const QCLKernel);
+    return d->dependentEvents;
+}
+
+/*!
+    Sets the list of events that must be completed before this
+    instance of the kernel can be executed to \a events.
+
+    \sa dependentEvents()
+*/
+void QCLKernel::setDependentEvents(const QVector<QCLEvent>& events)
+{
+    Q_D(QCLKernel);
+    d->dependentEvents = events;
+}
+
+/*!
     Sets argument \a index for this kernel to \a value.
 */
 void QCLKernel::setArg(int index, cl_int value)
 {
-    clSetKernelArg(m_id, index, sizeof(value), &value);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, sizeof(value), &value);
 }
 
 /*!
@@ -224,7 +351,8 @@ void QCLKernel::setArg(int index, cl_int value)
 */
 void QCLKernel::setArg(int index, cl_uint value)
 {
-    clSetKernelArg(m_id, index, sizeof(value), &value);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, sizeof(value), &value);
 }
 
 /*!
@@ -232,7 +360,8 @@ void QCLKernel::setArg(int index, cl_uint value)
 */
 void QCLKernel::setArg(int index, cl_long value)
 {
-    clSetKernelArg(m_id, index, sizeof(value), &value);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, sizeof(value), &value);
 }
 
 /*!
@@ -240,7 +369,8 @@ void QCLKernel::setArg(int index, cl_long value)
 */
 void QCLKernel::setArg(int index, cl_ulong value)
 {
-    clSetKernelArg(m_id, index, sizeof(value), &value);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, sizeof(value), &value);
 }
 
 /*!
@@ -248,7 +378,8 @@ void QCLKernel::setArg(int index, cl_ulong value)
 */
 void QCLKernel::setArg(int index, float value)
 {
-    clSetKernelArg(m_id, index, sizeof(value), &value);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, sizeof(value), &value);
 }
 
 /*!
@@ -256,8 +387,9 @@ void QCLKernel::setArg(int index, float value)
 */
 void QCLKernel::setArg(int index, const QCLMemoryObject& value)
 {
+    Q_D(const QCLKernel);
     cl_mem id = value.id();
-    clSetKernelArg(m_id, index, sizeof(id), &id);
+    clSetKernelArg(d->id, index, sizeof(id), &id);
 }
 
 /*!
@@ -265,8 +397,9 @@ void QCLKernel::setArg(int index, const QCLMemoryObject& value)
 */
 void QCLKernel::setArg(int index, const QCLSampler& value)
 {
+    Q_D(const QCLKernel);
     cl_sampler id = value.id();
-    clSetKernelArg(m_id, index, sizeof(id), &id);
+    clSetKernelArg(d->id, index, sizeof(id), &id);
 }
 
 /*!
@@ -274,21 +407,34 @@ void QCLKernel::setArg(int index, const QCLSampler& value)
 */
 void QCLKernel::setArg(int index, const void *data, size_t size)
 {
-    clSetKernelArg(m_id, index, size, data);
+    Q_D(const QCLKernel);
+    clSetKernelArg(d->id, index, size, data);
 }
 
 /*!
-    Requests that this kernel be executed on \a globalWorkSize items.
+    Requests that this kernel instance be executed on globalWorkSize() items,
+    optionally subdivided into work groups of localWorkSize() items.
+
+    If dependentEvents() is not an empty list, it indicates the
+    events that must be signalled as complete before this kernel
+    instance can begin executing.
+
     Returns an event object that can be use to wait for the kernel
     to finish execution.  The request is executed on the active
     command queue for context().
 */
-QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
+QCLEvent QCLKernel::execute()
 {
+    Q_D(const QCLKernel);
     cl_event event;
     cl_int error = clEnqueueNDRangeKernel
-        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
-         0, globalWorkSize.sizes(), 0, 0, 0, &event);
+        (d->context->activeQueue(), d->id, d->globalWorkSize.dimensions(),
+         0, d->globalWorkSize.sizes(),
+         (d->localWorkSize.width() ? d->localWorkSize.sizes() : 0),
+         d->dependentEvents.size(),
+         (d->dependentEvents.isEmpty() ? 0 :
+            reinterpret_cast<const cl_event *>(d->dependentEvents.constData())),
+         &event);
     context()->reportError("QCLKernel::execute:", error);
     if (error != CL_SUCCESS)
         return QCLEvent();
@@ -297,86 +443,94 @@ QCLEvent QCLKernel::execute(const QCLWorkSize& globalWorkSize)
 }
 
 /*!
-    Requests that this kernel be executed on \a globalWorkSize items,
-    which are subdivided into local work items of \a localWorkSize in size.
-    Returns an event object that can be use to wait for the kernel
-    to finish execution.  The request is executed on the active
-    command queue for context().
+    \fn QCLEvent QCLKernel::operator()()
 
-    The \a globalWorkSize must have the same number of dimensions as
-    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+    Executes this kernel instance with zero arguments.
+    Returns an event object that can be used to wait for the
+    kernel to complete execution.
 */
-QCLEvent QCLKernel::execute
-    (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize)
-{
-    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
-    cl_event event;
-    cl_int error = clEnqueueNDRangeKernel
-        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
-         0, globalWorkSize.sizes(), localWorkSize.sizes(), 0, 0, &event);
-    context()->reportError("QCLKernel::execute:", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
-}
 
 /*!
-    \overload
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1)
 
-    Requests that this kernel be executed on \a globalWorkSize items.
-    Returns an event object that can be use to wait for the kernel
-    to finish execution.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed.  The request is executed on
-    the active command queue for context().
+    Executes this kernel instance with the argument \a arg1.
+    Returns an event object that can be used to wait for the
+    kernel to complete execution.
 */
-QCLEvent QCLKernel::execute
-    (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after)
-{
-    cl_event event;
-    cl_int error = clEnqueueNDRangeKernel
-        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
-         0, globalWorkSize.sizes(), 0, after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLKernel::execute(after):", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
-}
 
 /*!
-    \overload
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2)
 
-    Requests that this kernel be executed on \a globalWorkSize items,
-    which are subdivided into local work items of \a localWorkSize in size.
-    Returns an event object that can be use to wait for the kernel
-    to finish execution.
-
-    The request will not start until all of the events in \a after
-    have been signalled as completed.  The request is executed on
-    the active command queue for context().
-
-    The \a globalWorkSize must have the same number of dimensions as
-    \a localWorkSize, and be evenly divisible by \a localWorkSize.
+    Executes this kernel instance with the arguments \a arg1 and \a arg2.
+    Returns an event object that can be used to wait for the
+    kernel to complete execution.
 */
-QCLEvent QCLKernel::execute
-    (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
-     const QVector<QCLEvent>& after)
-{
-    Q_ASSERT(globalWorkSize.dimensions() == localWorkSize.dimensions());
-    cl_event event;
-    cl_int error = clEnqueueNDRangeKernel
-        (context()->activeQueue(), m_id, globalWorkSize.dimensions(),
-         0, globalWorkSize.sizes(), localWorkSize.sizes(), after.size(),
-         reinterpret_cast<const cl_event *>(after.constData()), &event);
-    context()->reportError("QCLKernel::execute(after):", error);
-    if (error != CL_SUCCESS)
-        return QCLEvent();
-    else
-        return QCLEvent(event);
-}
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    and \a arg3.  Returns an event object that can be used to wait for the
+    kernel to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, and \a arg4.  Returns an event object that can be used to
+    wait for the kernel to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, and \a arg5.  Returns an event object that can be
+    used to wait for the kernel to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5, const T6& arg6)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, \a arg5, and \a arg6.  Returns an event object that
+    can be used to wait for the kernel to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5, const T6& arg6, const T7& arg7)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, \a arg5, \a arg6, and \a arg7.  Returns an event
+    object that can be used to wait for the kernel to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, \a arg5, \a arg6, \a arg7, and \a arg8.  Returns
+    an event object that can be used to wait for the kernel to complete
+    execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8, const T9& arg9)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, \a arg5, \a arg6, \a arg7, \a arg8, and \a arg9.
+    Returns an event object that can be used to wait for the kernel
+    to complete execution.
+*/
+
+/*!
+    \fn QCLEvent QCLKernel::operator()(const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4, const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8, const T9& arg9, const T10& arg10)
+
+    Executes this kernel instance with the arguments \a arg1, \a arg2,
+    \a arg3, \a arg4, \a arg5, \a arg6, \a arg7, \a arg8, \a arg9,
+    and \a arg10.  Returns an event object that can be used to wait
+    for the kernel to complete execution.
+*/
 
 QT_END_NAMESPACE

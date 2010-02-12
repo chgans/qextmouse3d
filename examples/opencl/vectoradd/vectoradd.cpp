@@ -79,15 +79,13 @@ int main(int, char **)
     QCLBuffer buffer3 = context.createBufferDevice
         (sizeof(output), QCLMemoryObject::WriteOnly);
 
-    // Build the program and initialize the kernel arguments.
+    // Build the program and locate the entry point kernel.
     QCLProgram program = context.buildProgramFromSourceCode(vectorAddSource);
     QCLKernel kernel = program.createKernel("vectorAdd");
-    kernel.setArg(0, buffer1);
-    kernel.setArg(1, buffer2);
-    kernel.setArg(2, buffer3);
+    kernel.setGlobalWorkSize(VECTOR_SIZE);
 
     // Execute the kernel and then read back the results.
-    kernel.execute(VECTOR_SIZE);
+    kernel(buffer1, buffer2, buffer3);
     buffer3.read(0, output, sizeof(output));
 
     // Check the answer.

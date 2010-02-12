@@ -46,6 +46,7 @@
 #include "qclevent.h"
 #include "qclworksize.h"
 #include <QtCore/qstring.h>
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_HEADER
 
@@ -59,21 +60,22 @@ class QCLMemoryObject;
 class QCLSampler;
 class QCLDevice;
 
+class QCLKernelPrivate;
+
 class Q_CL_EXPORT QCLKernel
 {
 public:
-    QCLKernel() : m_context(0), m_id(0) {}
-    QCLKernel(QCLContext *context, cl_kernel id)
-        : m_context(context), m_id(id) {}
+    QCLKernel();
+    QCLKernel(QCLContext *context, cl_kernel id);
     QCLKernel(const QCLKernel& other);
     ~QCLKernel();
 
     QCLKernel& operator=(const QCLKernel& other);
 
-    bool isNull() const { return m_id == 0; }
+    bool isNull() const;
 
-    cl_kernel id() const { return m_id; }
-    QCLContext *context() const { return m_context; }
+    cl_kernel id() const;
+    QCLContext *context() const;
 
     QCLProgram program() const;
     QString name() const;
@@ -81,6 +83,15 @@ public:
 
     QCLWorkSize declaredWorkGroupSize() const;
     QCLWorkSize declaredWorkGroupSize(const QCLDevice& device) const;
+
+    QCLWorkSize globalWorkSize() const;
+    void setGlobalWorkSize(const QCLWorkSize& size);
+
+    QCLWorkSize localWorkSize() const;
+    void setLocalWorkSize(const QCLWorkSize& size);
+
+    QVector<QCLEvent> dependentEvents() const;
+    void setDependentEvents(const QVector<QCLEvent>& events);
 
     void setArg(int index, cl_int value);
     void setArg(int index, cl_uint value);
@@ -91,19 +102,153 @@ public:
     void setArg(int index, const QCLSampler& value);
     void setArg(int index, const void *data, size_t size);
 
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
-         const QVector<QCLEvent>& after);
+    QCLEvent execute();
+
+    inline QCLEvent operator()() { return execute(); }
+
+    template <typename T1>
+    inline QCLEvent operator()(const T1& arg1)
+    {
+        setArg(0, arg1);
+        return execute();
+    }
+
+    template <typename T1, typename T2>
+    inline QCLEvent operator()(const T1& arg1, const T2& arg2)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5, typename T6>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5, const T6& arg6)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        setArg(5, arg6);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5, typename T6, typename T7>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5, const T6& arg6, const T7& arg7)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        setArg(5, arg6);
+        setArg(6, arg7);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5, typename T6, typename T7, typename T8>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        setArg(5, arg6);
+        setArg(6, arg7);
+        setArg(7, arg8);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5, typename T6, typename T7, typename T8,
+              typename T9>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8,
+         const T9& arg9)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        setArg(5, arg6);
+        setArg(6, arg7);
+        setArg(7, arg8);
+        setArg(8, arg9);
+        return execute();
+    }
+
+    template <typename T1, typename T2, typename T3, typename T4,
+              typename T5, typename T6, typename T7, typename T8,
+              typename T9, typename T10>
+    inline QCLEvent operator()
+        (const T1& arg1, const T2& arg2, const T3& arg3, const T4& arg4,
+         const T5& arg5, const T6& arg6, const T7& arg7, const T8& arg8,
+         const T9& arg9, const T10& arg10)
+    {
+        setArg(0, arg1);
+        setArg(1, arg2);
+        setArg(2, arg3);
+        setArg(3, arg4);
+        setArg(4, arg5);
+        setArg(5, arg6);
+        setArg(6, arg7);
+        setArg(7, arg8);
+        setArg(8, arg9);
+        setArg(9, arg10);
+        return execute();
+    }
 
 private:
-    QCLContext *m_context;
-    cl_kernel m_id;
+    QScopedPointer<QCLKernelPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QCLKernel)
 };
 
 QT_END_NAMESPACE
