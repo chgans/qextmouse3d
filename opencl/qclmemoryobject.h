@@ -73,6 +73,13 @@ public:
     };
     Q_DECLARE_FLAGS(MemoryFlags, MemoryFlag)
 
+    enum MapAccess
+    {
+        MapReadOnly         = 0x0001,
+        MapWriteOnly        = 0x0002,
+        MapReadWrite        = 0x0003
+    };
+
     bool isNull() const { return m_id == 0; }
 
     cl_mem id() const { return m_id; }

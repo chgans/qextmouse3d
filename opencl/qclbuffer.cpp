@@ -324,4 +324,198 @@ QCLEvent QCLBuffer::copyTo(size_t offset, size_t size,
         return QCLEvent(event);
 }
 
+/*!
+    Maps the \a size bytes starting at \a offset in this buffer
+    into host memory for the specified \a access mode.  Returns a
+    pointer to the mapped region.
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa mapAsync(), unmap()
+*/
+void *QCLBuffer::map
+    (size_t offset, size_t size, QCLMemoryObject::MapAccess access)
+{
+    cl_int error;
+    void *data = clEnqueueMapBuffer
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), offset, size, 0, 0, 0, &error);
+    context()->reportError("QCLBuffer::map:", error);
+    return data;
+}
+
+/*!
+    Maps the \a size bytes starting at \a offset in this buffer
+    into host memory for the specified \a access mode.  Returns a
+    pointer to the mapped region.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed, and then this function will
+    block until the request completes.  The request is executed on
+    the active command queue for context().
+
+    \sa mapAsync(), unmap()
+*/
+void *QCLBuffer::map
+    (size_t offset, size_t size, QCLMemoryObject::MapAccess access,
+     const QVector<QCLEvent>& after)
+{
+    cl_int error;
+    void *data = clEnqueueMapBuffer
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), offset, size, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()), 0, &error);
+    context()->reportError("QCLBuffer::map(after):", error);
+    return data;
+}
+
+/*!
+    Maps the \a size bytes starting at \a offset in this buffer
+    into host memory for the specified \a access mode.  Returns a
+    pointer to the mapped region in \a ptr, which will be valid
+    only after the request completes.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.  The request is executed on the active
+    command queue for context().
+
+    \sa map(), unmapAsync()
+*/
+QCLEvent QCLBuffer::mapAsync
+    (void **ptr, size_t offset, size_t size,
+     QCLMemoryObject::MapAccess access)
+{
+    cl_int error;
+    cl_event event;
+    *ptr = clEnqueueMapBuffer
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), offset, size, 0, 0, &event, &error);
+    context()->reportError("QCLBuffer::mapAsync:", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Maps the \a size bytes starting at \a offset in this buffer
+    into host memory for the specified \a access mode.  Returns a
+    pointer to the mapped region in \a ptr, which will be valid
+    only after the request completes.
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa map(), unmapAsync()
+*/
+QCLEvent QCLBuffer::mapAsync
+    (void **ptr, size_t offset, size_t size,
+     QCLMemoryObject::MapAccess access, const QVector<QCLEvent>& after)
+{
+    cl_int error;
+    cl_event event;
+    *ptr = clEnqueueMapBuffer
+        (context()->activeQueue(), id(), CL_TRUE,
+         cl_map_flags(access), offset, size, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()),
+         &event, &error);
+    context()->reportError("QCLBuffer::mapAsync(after):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Unmaps the region at \a ptr that was previously returned from
+    a call to map() or mapAsync().
+
+    This function will block until the request completes.
+    The request is executed on the active command queue for context().
+
+    \sa unmapAsync(), map()
+*/
+void QCLBuffer::unmap(void *ptr)
+{
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, 0, 0, 0);
+    context()->reportError("QCLBuffer::unmap:", error);
+}
+
+/*!
+    Unmaps the region at \a ptr that was previously returned from
+    a call to map() or mapAsync().
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed, and then this function will
+    block until the request completes.  The request is executed on
+    the active command queue for context().
+
+    \sa unmapAsync(), map()
+*/
+void QCLBuffer::unmap(void *ptr, const QVector<QCLEvent>& after)
+{
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()), 0);
+    context()->reportError("QCLBuffer::unmap(after):", error);
+}
+
+/*!
+    Unmaps the region at \a ptr that was previously returned from
+    a call to map() or mapAsync().
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.  The request is executed on the active
+    command queue for context().
+
+    \sa unmap(), mapAsync()
+*/
+QCLEvent QCLBuffer::unmapAsync(void *ptr)
+{
+    cl_event event;
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, 0, 0, &event);
+    context()->reportError("QCLBuffer::unmapAsync:", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
+/*!
+    Unmaps the region at \a ptr that was previously returned from
+    a call to map() or mapAsync().
+
+    This function will queue the request and return immediately.
+    Returns an event object that can be used to wait for the
+    request to complete.
+
+    The request will not start until all of the events in \a after
+    have been signalled as completed.  The request is executed on
+    the active command queue for context().
+
+    \sa unmap(), mapAsync()
+*/
+QCLEvent QCLBuffer::unmapAsync(void *ptr, const QVector<QCLEvent>& after)
+{
+    cl_event event;
+    cl_int error = clEnqueueUnmapMemObject
+        (context()->activeQueue(), id(), ptr, after.size(),
+         reinterpret_cast<const cl_event *>(after.constData()), &event);
+    context()->reportError("QCLBuffer::unmapAsync(after):", error);
+    if (error == CL_SUCCESS)
+        return QCLEvent(event);
+    else
+        return QCLEvent();
+}
+
 QT_END_NAMESPACE

@@ -70,6 +70,16 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QCLMemoryObject::MapAccess
+    This enum defines the access mode to use when mapping an OpenCL memory
+    object into host memory.
+
+    \value MapReadOnly Maps the memory read-only.
+    \value MapWriteOnly Maps the memory write-only.
+    \value MapReadWrite Maps the memory for both reading and writing.
+*/
+
+/*!
     \fn QCLMemoryObject::QCLMemoryObject(QCLContext *context)
 
     Constructs a null OpenCL memory object and associates it with \a context.

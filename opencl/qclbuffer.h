@@ -87,6 +87,22 @@ public:
     QCLEvent copyTo(size_t offset, size_t size,
                     const QCLBuffer& dest, size_t destOffset,
                     const QVector<QCLEvent>& after);
+
+    void *map(size_t offset, size_t size, QCLMemoryObject::MapAccess access);
+    void *map(size_t offset, size_t size, QCLMemoryObject::MapAccess access,
+              const QVector<QCLEvent>& after);
+
+    QCLEvent mapAsync(void **ptr, size_t offset, size_t size,
+                      QCLMemoryObject::MapAccess access);
+    QCLEvent mapAsync(void **ptr, size_t offset, size_t size,
+                      QCLMemoryObject::MapAccess access,
+                      const QVector<QCLEvent>& after);
+
+    void unmap(void *ptr);
+    void unmap(void *ptr, const QVector<QCLEvent>& after);
+
+    QCLEvent unmapAsync(void *ptr);
+    QCLEvent unmapAsync(void *ptr, const QVector<QCLEvent>& after);
 };
 
 QT_END_NAMESPACE
