@@ -254,9 +254,18 @@ void QCLKernel::setArg(int index, float value)
 /*!
     Sets argument \a index for this kernel to \a value.
 */
-void QCLKernel::setArg(int index, const QCLBuffer& value)
+void QCLKernel::setArg(int index, const QCLMemoryObject& value)
 {
     cl_mem id = value.id();
+    clSetKernelArg(m_id, index, sizeof(id), &id);
+}
+
+/*!
+    Sets argument \a index for this kernel to \a value.
+*/
+void QCLKernel::setArg(int index, const QCLSampler& value)
+{
+    cl_sampler id = value.id();
     clSetKernelArg(m_id, index, sizeof(id), &id);
 }
 

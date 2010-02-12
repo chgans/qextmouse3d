@@ -23,7 +23,9 @@ HEADERS += \
     qclkernel.h \
     qclmemoryobject.h \
     qclplatform.h \
-    qclprogram.h
+    qclprogram.h \
+    qclsampler.h \
+    qclworksize.h
 
 SOURCES += \
     qclbuffer.cpp \
@@ -36,7 +38,9 @@ SOURCES += \
     qclkernel.cpp \
     qclmemoryobject.cpp \
     qclplatform.cpp \
-    qclprogram.cpp
+    qclprogram.cpp \
+    qclsampler.cpp \
+    qclworksize.cpp
 
 HEADERS += $$PRIVATE_HEADERS
 DEFINES += QT_BUILD_OPENCL_LIB

@@ -39,13 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QCLKERNEL_H
-#define QCLKERNEL_H
+#ifndef QCLSAMPLER_H
+#define QCLSAMPLER_H
 
 #include "qclglobal.h"
-#include "qclevent.h"
-#include "qclworksize.h"
-#include <QtCore/qstring.h>
 
 QT_BEGIN_HEADER
 
@@ -53,57 +50,22 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
 
-class QCLContext;
-class QCLProgram;
-class QCLMemoryObject;
-class QCLSampler;
-class QCLDevice;
-
-class Q_CL_EXPORT QCLKernel
+class Q_CL_EXPORT QCLSampler
 {
 public:
-    QCLKernel() : m_context(0), m_id(0) {}
-    QCLKernel(QCLContext *context, cl_kernel id)
-        : m_context(context), m_id(id) {}
-    QCLKernel(const QCLKernel& other);
-    ~QCLKernel();
+    QCLSampler() : m_id(0) {}
+    QCLSampler(cl_sampler id) : m_id(id) {}
+    QCLSampler(const QCLSampler& other);
+    ~QCLSampler();
 
-    QCLKernel& operator=(const QCLKernel& other);
+    QCLSampler& operator=(const QCLSampler& other);
 
     bool isNull() const { return m_id == 0; }
 
-    cl_kernel id() const { return m_id; }
-    QCLContext *context() const { return m_context; }
-
-    QCLProgram program() const;
-    QString name() const;
-    int argCount() const;
-
-    QCLWorkSize declaredWorkGroupSize() const;
-    QCLWorkSize declaredWorkGroupSize(const QCLDevice& device) const;
-
-    void setArg(int index, cl_int value);
-    void setArg(int index, cl_uint value);
-    void setArg(int index, cl_long value);
-    void setArg(int index, cl_ulong value);
-    void setArg(int index, float value);
-    void setArg(int index, const QCLMemoryObject& value);
-    void setArg(int index, const QCLSampler& value);
-    void setArg(int index, const void *data, size_t size);
-
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QVector<QCLEvent>& after);
-    QCLEvent execute
-        (const QCLWorkSize& globalWorkSize, const QCLWorkSize& localWorkSize,
-         const QVector<QCLEvent>& after);
+    cl_sampler id() const { return m_id; }
 
 private:
-    QCLContext *m_context;
-    cl_kernel m_id;
+    cl_sampler m_id;
 };
 
 QT_END_NAMESPACE

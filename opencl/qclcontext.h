@@ -46,6 +46,7 @@
 #include "qclcommandqueue.h"
 #include "qclbuffer.h"
 #include "qclimage.h"
+#include "qclsampler.h"
 #include "qclprogram.h"
 #include <QtCore/qscopedpointer.h>
 #include <QtCore/qsize.h>
@@ -128,6 +129,10 @@ public:
          int width, int height, int depth,
          QCLMemoryObject::MemoryFlags access,
          int bytesPerLine = 0, int bytesPerSlice = 0);
+
+    QCLSampler createSampler
+        (bool normalizedCoords, cl_addressing_mode addressingMode,
+         cl_filter_mode filterMode);
 
     QCLProgram createProgramFromSourceCode(const char *sourceCode);
     QCLProgram createProgramFromSourceCode(const QByteArray& sourceCode);
