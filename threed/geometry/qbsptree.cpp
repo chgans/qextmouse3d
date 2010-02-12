@@ -69,7 +69,7 @@
     tree according to the x, y and z values in the coordinate quickly locates
     the resulting entry.
 
-    The tree can store up to QBSPTree::MaxIndex - 1 values - currently this
+    The tree can store up to QBSP::MaxIndex - 1 values - currently this
     limit is 65534 entries.
 
     At present many typical data-structure functions are not supported in
@@ -79,112 +79,25 @@
     \sa QBSPTree::const_iterator
 */
 
-/*!
-    \internal
+/*
     A blank QBSPTree entry, used for quickly creating new entries.
 */
-const QBSPTree::BSPIndex QBSPTree::blank[Stride] = {
-    MaxIndex,
-    MaxIndex,
-    MaxIndex,
-    MaxIndex,
-    MaxIndex,
-    MaxIndex,
-    MaxIndex
-};
+const QBSP::Node QBSP::Data::Blank = {{
+    QBSP::MaxIndex,
+    QBSP::MaxIndex,
+    QBSP::MaxIndex,
+    QBSP::MaxIndex,
+    QBSP::MaxIndex,
+    QBSP::MaxIndex,
+    QBSP::MaxIndex
+}};
 
-/*!
-    \typedef QBSPTree::BSPIndex
-    Synonym for the type of indexes used by QBSPTree.  Currently this is
-    a 16-bit unsigned integer, which has a maximum value of 65535.
-*/
-
-/*!
-    Constant representing the theoretical maximum index value, used as
-    a flag value to indicate null indices.  This value is dictated by
-    the size of the data type QBSPTree::BSPIndex.  The actual highest
-    possible index in a QBSPTree is one less than this number.
-*/
-const QBSPTree::BSPIndex QBSPTree::MaxIndex = UINT16_MAX;
-
-/*!
-    \enum Partition
-
-    This enum manages the offsets for the partitions within the
-    QBSPTree's index data.  Use of this enum is for advanced
-    low-level applications only.  For example to find the value
-    for the entry with a y-coord less than the 5th entry:
-    \code
-    QVector3D result;
-    BSPIndex ix = tree.pointerData()[5 * QBSPTree::Stride + LessThanY];
-    if (ix != QBSPTree::MaxIndex)
-        result = tree.vectorData()[ix];
-    \endcode
-
-    \value EqualTo Points to another tree entry equal to this one
-    \value LessThanX Points to another tree entry equal to this one
-    \value GreaterThanX Points to another tree entry equal to this one
-    \value LessThanY Points to another tree entry equal to this one
-    \value GreaterThanY Points to another tree entry equal to this one
-    \value LessThanZ Points to another tree entry equal to this one
-    \value GreaterThanZ Points to another tree entry equal to this one
-    \value Stride The increment to the next tree entry
-*/
-
-/*!
-    \fn const QArray<QVector3D> *QBSPTree::vectorData() const
-    Returns a pointer to the underlying vector data.  This is the
-    same as the value passed to the QBSPTree constructor.
-
-    This function is intended for testing and advanced low-level
-    applications.
-
-    See the QBSPTree::Partition enum for an example of use.
-
-    \sa pointerData()
-*/
-
-/*!
-    \fn const QArray<BSPIndex> *QBSPTree::pointerData() const
-    Returns a pointer to the underlying pointer data.  This is the
-    data used to actually form the tree, and contains indexs into the
-    QBSPTree's vector data.
-
-    This function is intended for testing and advanced low-level
-    applications.
-
-    See the QBSPTree::Partition enum for an example of use.
-
-    \sa vectorData()
-*/
-
-/*!
-    \fn Partition QBSPTree::cmp(const QVector3D &v, const QVector3D &w)
-    Compares the two QVector3D coordinate values \a v and \a w, and
-    returns the appropriate partitioning.
-
-    Note that this partition test is done in order down through the
-    QBSPTree::Partition enum, so (for example) if both the x-coordinate
-    and y-coordinate are less QBSPTree::LessThanX will be returned:
-
-    \code
-    QVector3D a(1.0f, 2.0f, 3.0f);
-    QVector3D b(-1.0f, -2.0f, 3.0f);
-
-    // p == QBSPTree::LessThanX - not LessThanY
-    QBSPTree::Partition p = QBSPTree::cmp(a, b);
-    \endcode
-
-    This function is used by QBSPTree for constructing its indices.
-*/
-
-/*!
-    \internal
+/*
     Mapping of partitions to their complements; for example the entry
     at 1 - that is QBSPTree::LessThanX - is QBSPTree::GreaterThanX.
     This is used in tree balancing.
 */
-const QBSPTree::Partition QBSPTree::complement[Stride] = {
+const QBSP::Partition QBSP::Data::complement[QBSP::Stride] = {
     EqualTo,
     GreaterThanX,
     LessThanX,
@@ -196,7 +109,7 @@ const QBSPTree::Partition QBSPTree::complement[Stride] = {
 
 /*!
     \class QBSPTree::const_iterator
-    \brief The QBSPTree::const_iterator class is an iterator over a const QBSPTree.
+    \brief The const_iterator class is an iterator over a const QBSPTree.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::geometry
@@ -205,14 +118,15 @@ const QBSPTree::Partition QBSPTree::complement[Stride] = {
     which can be used to retrieve all relevant values.
 
     Use the \c{*} operator or value() function to return the current entry
-    pointed to by this iterator - a QBSPTree::BSPIndex value.  Use the key()
+    pointed to by this iterator - a QBSP::Index value.  Use the key()
     function to return the key for the current entry - a QVector3D value.
 
     \sa QBSPTree
 */
 
 /*!
-    \fn QBSPTree::const_iterator::const_iterator(const QBSPTree *d, BSPIndex p, bool fi)
+    \internal
+    \fn QBSPTree::const_iterator::const_iterator(const QBSP::Data *d, QBSP::Index p, bool fi)
     Constructs a new iterator at \a p over a const QBPTree \a d.  If \a fi is true
     (the default) then this is a find iterator (which will return all entries which
     are equal to the one at \a p), otherwise it is a sequential iterator (which will
@@ -225,14 +139,14 @@ const QBSPTree::Partition QBSPTree::complement[Stride] = {
 /*!
     \fn QBSPTree::const_iterator::const_iterator &QBSPTree::const_iterator::operator++()
     Increment this iterator to point at the next entry.  In the case of a find
-    iterator the next entry will be the one \l{QBSPTree::EqualTo}{equal to} the
-    current one.  In the case of a sequence iterator it will be next in-order
-    in the tree.  If there is no such entry, this iterator will point at
-    QBSPTree::constEnd().  Returns a reference to this iterator.
+    iterator the next entry will be one equal to the current one.  In the case
+    of a sequence iterator it will be next in-order in the tree.  If there is
+    no such entry, this iterator will point at QBSPTree::constEnd().  Returns a
+    reference to this iterator.
 */
 
 /*!
-    \fn QBSPTree::BSPIndex QBSPTree::const_iterator::operator*() const
+    \fn QBSP::Index QBSPTree::const_iterator::operator*() const
     Dereference this iterator to find its value.
 
     \sa value()
@@ -256,18 +170,34 @@ const QBSPTree::Partition QBSPTree::complement[Stride] = {
 */
 
 /*!
-    \fn BSPIndex QBSPTree::const_iterator::value() const
+    \fn QBSP::Index QBSPTree::const_iterator::value() const
     Returns the value associated with this iterator.
+*/
+/*!
+    \enum QBSPTree::Strategy
+
+    This enum allows for tuning of the strategy used during insertions into
+    the QBSPTree.  Balancing the tree during insertions costs more time when
+    the tree is being built, but can reduce time for find operations.  If a
+    tree is being created in key order, that is with vertices generated from
+    high to low X, Y and Z values, the tree can degenerate to approximate a
+    linked list structure and thus perform poorly - select Balanced in this
+    case.  Generally however data can be presumed to be random, or nearly
+    random and the default QBSPTree constructor setting of AdHoc is best.
+
+    \value Balanced Optimize during insertion with tree balancing operations.
+    \value AdHoc Allow the tree to grow as dictated by key order of the data.
 */
 
 /*!
-    Constructs a new QBSPTree instance based on the QVector3DArray \a data.
+    Constructs a new QBSPTree instance based on the QVector3DArray \a v,
+    and with the specified insertion \a strategy (which defaults to
+    QBSPTree::AdHoc).
 */
-QBSPTree::QBSPTree(const QArray<QVector3D> *v)
-    : m_vec(v)
-    , m_maxHeight(0)
-    , m_root(0)
+QBSPTree::QBSPTree(const QArray<QVector3D> *v, QBSPTree::Strategy strategy)
+    : d(v)
 {
+    d.setBalanced(strategy == Balanced);
 }
 
 /*!
@@ -276,6 +206,27 @@ QBSPTree::QBSPTree(const QArray<QVector3D> *v)
 QBSPTree::~QBSPTree()
 {
 }
+
+/*!
+    This debugging aid prints out an indented representation of the
+    QBSPTree and its QVector3D data.
+*/
+void QBSPTree::dump() const
+{
+    fprintf(stderr, "================== QBSPTree - %p ==================\n", this);
+    d.recurseAndDump(d.root(), 0);
+}
+
+/*!
+    \fn QBSP::Data *QBSPTree::data()
+    This advanced function is mainly intended for testing use.
+*/
+
+/*!
+    \fn const QBSP::Data *QBSPTree::data() const
+    \overload
+    This advanced function is mainly intended for testing use.
+*/
 
 /*!
     \fn QBSPTree::const_iterator QBSPTree::constBegin() const
@@ -311,95 +262,68 @@ QBSPTree::~QBSPTree()
     \endcode
 */
 
-struct insert_record
+QBSP::Data::Data(const QArray<QVector3D> *v)
+    : m_vec(v)
+    , m_maxHeight(0)
+    , m_root(0)
 {
-    int height;
-    QVector3D vec;
-    QBSPTree::BSPIndex vec_ix;
-    QBSPTree::BSPIndex child;
-    QBSPTree::BSPIndex parent;
-    QBSPTree::Partition parent_part;
-    QBSPTree::BSPIndex grandparent;
-    QBSPTree::Partition grandparent_part;
-    QBSPTree::BSPIndex greatgrandparent;
-    QBSPTree::Partition greatgrandparent_part;
+}
 
-    insert_record(const QVector3D &v, QBSPTree::BSPIndex vi,
-                  QBSPTree::BSPIndex pointer, QBSPTree::BSPIndex new_index)
-        : height(0)
-        , vec(v)
-        , vec_ix(vi)
-        , child(new_index)
-        , parent(pointer)
-    {}
-
-    void shift_down(QBSPTree::BSPIndex ix, QBSPTree::Partition part)
-    {
-        ++height;
-        greatgrandparent = grandparent;
-        greatgrandparent_part = grandparent_part;
-        grandparent = parent;
-        grandparent_part = parent_part;
-        parent = ix;
-        parent_part = part;
-    }
-};
-
-inline static bool isLeft(QBSPTree::Partition part)
+inline static bool isLeft(QBSP::Partition part)
 {
     return part % 2;
 }
 
-void QBSPTree::rotateLLorRR(const insert_record *bal)
+void QBSP::Data::rotateLLorRR(const QBSP::InsertRecord *bal)
 {
     // because of the use of complement the two symmetric cases
     // can be treated as one
-    BSPIndex i = bal->grandparent;
-    Partition p = bal->grandparent_part;
-    m_ptrs[i * Stride + p] = MaxIndex;
-    i = bal->parent;
-    p = complement[bal->grandparent_part];
-    m_ptrs[i * Stride + p] = bal->grandparent;
+    QBSP::Index i = bal->grand->ix;
+    Partition p = bal->grand->part;
+    m_ptrs[i].next[p] = QBSP::MaxIndex;
+    i = bal->parent->ix;
+    p = complement[bal->grand->part];
+    m_ptrs[i].next[p] = bal->grand->ix;
     if (bal->height == 2)
     {
-        m_root = bal->parent;
+        m_root = bal->parent->ix;
     }
     else
     {
-        i = bal->greatgrandparent;
-        p = bal->greatgrandparent_part;
-        m_ptrs[i * Stride + p] = bal->parent;
+        i = bal->great->ix;
+        p = bal->great->part;
+        m_ptrs[i].next[p] = bal->parent->ix;
     }
 }
 
-void QBSPTree::rotateLRorRL(const insert_record *bal)
+void QBSP::Data::rotateLRorRL(const QBSP::InsertRecord *bal)
 {
     // because of the use of complement the two symmetric cases
     // can be treated as one
-    BSPIndex i = bal->grandparent;
-    Partition p = bal->grandparent_part;
-    m_ptrs[i * Stride + p] = MaxIndex;
-    i = bal->parent;
-    p = bal->parent_part;
-    m_ptrs[i * Stride + p] = MaxIndex;
+    QBSP::Index i = bal->grand->ix;
+    Partition p = bal->grand->part;
+    m_ptrs[i].next[p] = QBSP::MaxIndex;
+    i = bal->parent->ix;
+    p = bal->parent->part;
+    m_ptrs[i].next[p] = QBSP::MaxIndex;
     i = bal->child;
-    p = complement[bal->parent_part];
-    m_ptrs[i * Stride + p] = bal->parent;
-    p = complement[bal->grandparent_part];
-    m_ptrs[i * Stride + p] = bal->grandparent;
+    p = complement[bal->parent->part];
+    m_ptrs[i].next[p] = bal->parent->ix;
+    p = complement[bal->grand->part];
+    m_ptrs[i].next[p] = bal->grand->ix;
     if (bal->height == 2)
     {
         m_root = bal->child;
     }
     else
     {
-        i = bal->greatgrandparent;
-        p = bal->greatgrandparent_part;
-        m_ptrs[i * Stride + p] = bal->child;
+        i = bal->great->ix;
+        p = bal->great->part;
+        m_ptrs[i].next[p] = bal->child;
     }
 }
 
-void QBSPTree::maybe_rebalance(const insert_record *bal)
+void QBSP::Data::maybe_rebalance(const QBSP::InsertRecord *bal)
 {
     int h = bal->height - m_maxHeight;
     if (h > 0)
@@ -407,16 +331,16 @@ void QBSPTree::maybe_rebalance(const insert_record *bal)
         m_maxHeight = bal->height;
         if (h > 1)
         {
-            if (isLeft(bal->grandparent_part))
+            if (isLeft(bal->grand->part))
             {
-                if (isLeft(bal->parent_part))
+                if (isLeft(bal->parent->part))
                     rotateLLorRR(bal);   // LL case
                 else
                     rotateLRorRL(bal);   // LR case
             }
             else
             {
-                if (isLeft(bal->parent_part))
+                if (isLeft(bal->parent->part))
                     rotateLRorRL(bal);   // RL case
                 else
                     rotateLLorRR(bal);   // RR case
@@ -425,20 +349,21 @@ void QBSPTree::maybe_rebalance(const insert_record *bal)
     }
 }
 
-void QBSPTree::recurseAndInsert(insert_record *bal)
+void QBSP::Data::recurseAndInsert(QBSP::InsertRecord *bal)
 {
-    Partition part = cmp(bal->vec, m_vec->at(bal->parent));
-    BSPIndex next = m_ptrs[bal->parent * Stride + part];
-    if (next != MaxIndex)
+    Partition part = cmp(bal->vec, m_vec->at(bal->parent->ix));
+    QBSP::Index next = m_ptrs[bal->parent->ix].next[part];
+    if (next != QBSP::MaxIndex)
     {
         bal->shift_down(next, part);
         recurseAndInsert(bal);
     }
     else
     {
-        m_ptrs.append(blank, Stride);
-        m_ptrs[bal->parent * Stride + part] = bal->child;
-        maybe_rebalance(bal);
+        m_ptrs.append(Blank);
+        m_ptrs[bal->parent->ix].next[part] = bal->child;
+        if (m_balanced)
+            maybe_rebalance(bal);
     }
 }
 
@@ -450,24 +375,26 @@ void QBSPTree::recurseAndInsert(insert_record *bal)
 */
 
 /*!
+    \fn void QBSPTree::insert(const QVector3D &v, int i)
     Inserts into the tree the QVector3D \a v as a key mapping to
     the value \a i.  The value \a i must be the index of \a v in
     the underlying QVector3DArray passed to the QBSPTree's constructor.
 */
-void QBSPTree::insert(const QVector3D &v, int i)
+
+void QBSP::Data::insert(const QVector3D &v, int i)
 {
     Q_ASSERT(m_vec->at(i) == v);
-    if (static_cast<BSPIndex>(m_ptrs.size()) < (MaxIndex - 1) * Stride)
+    if (m_ptrs.size() < (QBSP::MaxIndex - 1))
     {
         if (m_ptrs.size() > 0)
         {
-            BSPIndex new_ix = m_ptrs.size() / Stride;
-            insert_record bal(v, i, m_root, new_ix);
+            QBSP::Index new_ix = m_ptrs.size();
+            InsertRecord bal(v, i, m_root, new_ix);
             recurseAndInsert(&bal);
         }
         else
         {
-            m_ptrs.append(blank, Stride);
+            m_ptrs.append(Blank);
         }
     }
 #ifndef QT_NO_DEBUG
@@ -478,7 +405,7 @@ void QBSPTree::insert(const QVector3D &v, int i)
 #endif
 }
 
-void QBSPTree::recurseAndDump(QBSPTree::BSPIndex ix, int indent) const
+void QBSP::Data::recurseAndDump(QBSP::Index ix, int indent) const
 {
     char ind[1024];
     qMemSet(ind, '\0', 1024);
@@ -487,60 +414,50 @@ void QBSPTree::recurseAndDump(QBSPTree::BSPIndex ix, int indent) const
             ind, ix, m_vec->at(ix).x(), m_vec->at(ix).y(), m_vec->at(ix).z(),
             m_maxHeight);
     fprintf(stderr, "%s      Children", ind);
-    int i = ix * Stride;
-    QArray<BSPIndex> children;
-    if (m_ptrs.at(i + EqualTo) != MaxIndex)
+    int i = ix * QBSP::Stride;
+    QArray<QBSP::Index> children;
+    if (m_ptrs.at(i).next[EqualTo] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- EqualTo: %d", m_ptrs.at(i + EqualTo));
-        children << m_ptrs.at(i + EqualTo);
+        fprintf(stderr, " -- EqualTo: %d", m_ptrs.at(i).next[EqualTo]);
+        children << m_ptrs.at(i).next[EqualTo];
     }
 
-    if (m_ptrs.at(i + LessThanX) != MaxIndex)
+    if (m_ptrs.at(i).next[LessThanX] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanX: %d", m_ptrs.at(i + LessThanX));
-        children << m_ptrs.at(i + LessThanX);
+        fprintf(stderr, " -- LessThanX: %d", m_ptrs.at(i).next[LessThanX]);
+        children << m_ptrs.at(i).next[LessThanX];
     }
 
-    if (m_ptrs.at(i + GreaterThanX) != MaxIndex)
+    if (m_ptrs.at(i).next[GreaterThanX] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanX: %d", m_ptrs.at(i + GreaterThanX));
-        children << m_ptrs.at(i + GreaterThanX);
+        fprintf(stderr, " -- GreaterThanX: %d", m_ptrs.at(i).next[GreaterThanX]);
+        children << m_ptrs.at(i).next[GreaterThanX];
     }
 
-    if (m_ptrs.at(i + LessThanY) != MaxIndex)
+    if (m_ptrs.at(i).next[LessThanY] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanY: %d", m_ptrs.at(i + LessThanY));
-        children << m_ptrs.at(i + LessThanY);
+        fprintf(stderr, " -- LessThanY: %d", m_ptrs.at(i).next[LessThanY]);
+        children << m_ptrs.at(i).next[LessThanY];
     }
 
-    if (m_ptrs.at(i + GreaterThanY) != MaxIndex)
+    if (m_ptrs.at(i).next[GreaterThanY] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanY: %d", m_ptrs.at(i + GreaterThanY));
-        children << m_ptrs.at(i + GreaterThanY);
+        fprintf(stderr, " -- GreaterThanY: %d", m_ptrs.at(i).next[GreaterThanY]);
+        children << m_ptrs.at(i).next[GreaterThanY];
     }
 
-    if (m_ptrs.at(i + LessThanZ) != MaxIndex)
+    if (m_ptrs.at(i).next[LessThanZ] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanZ: %d", m_ptrs.at(i + LessThanZ));
-        children << m_ptrs.at(i + LessThanZ);
+        fprintf(stderr, " -- LessThanZ: %d", m_ptrs.at(i).next[LessThanZ]);
+        children << m_ptrs.at(i).next[LessThanZ];
     }
 
-    if (m_ptrs.at(i + GreaterThanZ) != MaxIndex)
+    if (m_ptrs.at(i).next[GreaterThanZ] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanZ: %d", m_ptrs.at(i + GreaterThanZ));
-        children << m_ptrs.at(i + GreaterThanZ);
+        fprintf(stderr, " -- GreaterThanZ: %d", m_ptrs.at(i).next[GreaterThanZ]);
+        children << m_ptrs.at(i).next[GreaterThanZ];
     }
     fprintf(stderr, "\n");
     for (int i = 0; i < children.count(); ++i)
         recurseAndDump(children[i], indent + 1);
-}
-
-/*!
-    This debugging aid prints out an indented representation of the
-    QBSPTree and its QVector3D data.
-*/
-void QBSPTree::dump() const
-{
-    fprintf(stderr, "======================== QBSPTree - %p ========================\n", this);
-    recurseAndDump(m_root, 0);
 }

@@ -39,10 +39,11 @@
 **
 ****************************************************************************/
 
-#ifndef QQBSPTree_H
-#define QQBSPTree_H
+#ifndef QQBSPTREE_H
+#define QQBSPTREE_H
 
 #include "qarray.h"
+#include "qbsptree_p.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
@@ -53,146 +54,99 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class insert_record;
+class tst_QBSPTree;
 
 class Q_QT3D_EXPORT QBSPTree
 {
 public:
-    explicit QBSPTree(const QArray<QVector3D> *v);
-    ~QBSPTree();
-
-    typedef quint32 BSPIndex;
-    static const BSPIndex MaxIndex;
-
-    enum Partition {
-        EqualTo,
-        LessThanX,
-        GreaterThanX,
-        LessThanY,
-        GreaterThanY,
-        LessThanZ,
-        GreaterThanZ,
-        Stride
+    enum Strategy {
+        Balanced,
+        AdHoc
     };
 
-    const QArray<QVector3D> *vectorData() const { return m_vec; }
-    const QArray<BSPIndex> *pointerData() const { return &m_ptrs; }
-    BSPIndex root() const { return m_root; }
-
-    static Partition cmp(const QVector3D &v, const QVector3D &w);
+    explicit QBSPTree(const QArray<QVector3D> *v, Strategy strategy = AdHoc);
+    ~QBSPTree();
 
     class const_iterator
     {
     public:
-        const_iterator(const QBSPTree *d, BSPIndex p, bool fi = false);
         const_iterator &operator++();
-        BSPIndex operator*() const;
+        int operator*() const;
         bool operator!=(const const_iterator &other) const;
         bool operator==(const const_iterator &other) const;
         QVector3D key() const;
-        BSPIndex value() const;
+        int value() const;
     private:
-        const QBSPTree *tree;
-        BSPIndex ptr;
+        const_iterator(const QBSP::Data *d, QBSP::Index p, bool fi = false);
+        friend class QBSPTree;
+        friend class tst_QBSPTree;
+
+        const QBSP::Data *tree;
+        QBSP::Index ptr;
         bool isFindIterator;
     };
 
     const_iterator constBegin() const;
     const_iterator constEnd() const;
-    void reserve(int amount);
     const_iterator constFind(const QVector3D &v) const;
+
     void insertMulti(const QVector3D &v, int i);
     void insert(const QVector3D &v, int i);
 
+    void reserve(int amount);
     void dump() const;
 
+protected:
+    QBSP::Data *data() { return &d; }
+    const QBSP::Data *data() const { return &d; }
+
 private:
-    void rotateLLorRR(const insert_record *);
-    void rotateLRorRL(const insert_record *);
-    void maybe_rebalance(const insert_record *);
-    void recurseAndInsert(insert_record *);
-    void recurseAndDump(BSPIndex index, int indent) const;
 
-    static const BSPIndex blank[Stride];
-    static const Partition complement[Stride];
-
-    QArray<quint32> m_ptrs;
-    const QArray<QVector3D> *m_vec;
-    int m_maxHeight;
-    BSPIndex m_root;
+    QBSP::Data d;
 };
 
 
-inline QBSPTree::Partition QBSPTree::cmp(const QVector3D &v, const QVector3D &w)
-{
-    if (qFuzzyCompare(v.x(), w.x()))
-    {
-        if (qFuzzyCompare(v.y(), w.y()))
-        {
-            if (qFuzzyCompare(v.z(), w.z()))
-            {
-                return EqualTo;
-            }
-            else
-            {
-                if (v.z() < w.z())
-                    return LessThanZ;
-                else
-                    return GreaterThanZ;
-            }
-        }
-        else
-        {
-            if (v.y() < w.y())
-                return LessThanY;
-            else
-                return GreaterThanY;
-        }
-    }
-    else
-    {
-        if (v.x() < w.x())
-            return LessThanX;
-        else
-            return GreaterThanX;
-    }
-}
 
 inline QBSPTree::const_iterator QBSPTree::constBegin() const
 {
-    return const_iterator(this, m_ptrs.isEmpty() ? MaxIndex : m_root);
+    return const_iterator(&d, d.isEmpty() ? QBSP::MaxIndex : d.root());
 }
 
 inline QBSPTree::const_iterator QBSPTree::constEnd() const
 {
-    return const_iterator(this, MaxIndex);
+    return const_iterator(&d, QBSP::MaxIndex);
 }
 
 inline void QBSPTree::reserve(int amount)
 {
-    m_ptrs.reserve(amount * Stride);
+    d.reserve(amount);
 }
 
 inline QBSPTree::const_iterator QBSPTree::constFind(const QVector3D &v) const
 {
-    BSPIndex ptr = 0;
-    Partition part = EqualTo;
-    while (ptr != MaxIndex)
+    QBSP::Index ptr = 0;
+    QBSP::Partition part = QBSP::EqualTo;
+    while (ptr != QBSP::MaxIndex)
     {
-        part = cmp(v, m_vec->at(ptr));
-        if (part == EqualTo)
+        part = QBSP::cmp(v, d.vectorData()->at(ptr));
+        if (part == QBSP::EqualTo)
             break;
-        ptr = m_ptrs[ptr * Stride + part];
+        ptr = d.pointerData()->at(ptr).next[part];
     }
-    return const_iterator(this, ptr, true);
+    return const_iterator(&d, ptr, true);
+}
+
+inline void QBSPTree::insert(const QVector3D &v, int i)
+{
+    d.insert(v, i);
 }
 
 inline void QBSPTree::insertMulti(const QVector3D &v, int i)
 {
-    insert(v, i);
+    d.insert(v, i);
 }
 
-inline QBSPTree::const_iterator::const_iterator(const QBSPTree *d, BSPIndex p, bool fi)
+inline QBSPTree::const_iterator::const_iterator(const QBSP::Data *d, QBSP::Index p, bool fi)
     : tree(d)
     , ptr(p)
     , isFindIterator(fi)
@@ -201,25 +155,24 @@ inline QBSPTree::const_iterator::const_iterator(const QBSPTree *d, BSPIndex p, b
 
 inline QBSPTree::const_iterator::const_iterator &QBSPTree::const_iterator::operator++()
 {
-    if (ptr != MaxIndex)
+    if (ptr != QBSP::MaxIndex)
     {
         if (isFindIterator)
         {
-            ptr = tree->pointerData()->at(ptr * Stride + EqualTo);
+            ptr = tree->pointerData()->at(ptr).next[QBSP::EqualTo];
         }
         else
         {
-            if ((ptr+1) * Stride != static_cast<BSPIndex>(
-                    tree->pointerData()->size()))
+            if ((int)ptr < tree->pointerData()->size())
                 ++ptr;
             else
-                ptr = MaxIndex;
+                ptr = QBSP::MaxIndex;
         }
     }
     return *this;
 }
 
-inline QBSPTree::BSPIndex QBSPTree::const_iterator::operator*() const
+inline int QBSPTree::const_iterator::operator*() const
 {
     return ptr;
 }
@@ -239,12 +192,10 @@ inline QVector3D QBSPTree::const_iterator::key() const
     return tree->vectorData()->at(ptr);
 }
 
-inline QBSPTree::BSPIndex QBSPTree::const_iterator::value() const
+inline int QBSPTree::const_iterator::value() const
 {
     return ptr;
 }
-
-
 
 QT_END_NAMESPACE
 

@@ -47,7 +47,7 @@
 #include "stdlib.h"
 
 namespace QTest {
-    const char *index_names[] = {
+    const char *qbsp_index_names[] = {
         "EqualTo",
         "LessThanX",
         "GreaterThanX",
@@ -57,15 +57,15 @@ namespace QTest {
         "GreaterThanZ",
         "Stride"
     };
-    char *toString(QBSPTree::Partition ix)
+    char *toString(QBSP::Partition ix)
     {
         char *msg = new char[128];
         qt_snprintf(msg, 128, "%s",
-                    index_names[ix]);
+                    qbsp_index_names[ix]);
         return msg;
     }
-    template<> bool qCompare<QBSPTree::Partition>(const QBSPTree::Partition &t1,
-                                                  const QBSPTree::Partition &t2,
+    template<> bool qCompare<QBSP::Partition>(const QBSP::Partition &t1,
+                                                  const QBSP::Partition &t2,
                                         const char *actual, const char *expected,
                                         const char *file, int line)
     {
@@ -75,7 +75,7 @@ namespace QTest {
         }
         else
         {
-            return compare_helper(false, "Compared QBSPTree::BSPIndex values are not the same:",
+            return compare_helper(false, "Compared QBSP::Index values are not the same:",
                                   toString(t1), toString(t2), actual, expected, file, line);
         }
     }
@@ -94,13 +94,36 @@ private slots:
     void insert();
     void iterators();
     void find();
+    void rotateLLorRR();
+    void rotateLRorRL();
+    void maybe_rebalance();
     void rotate();
+};
+
+class TestQBSPTree : public QBSPTree
+{
+public:
+    TestQBSPTree(const QArray<QVector3D> *v) : QBSPTree(v) {}
+    const QArray<QVector3D> *vectorData() const { return data()->vectorData(); }
+    const QArray<QBSP::Node> *pointerData() const { return data()->pointerData(); }
+    QBSP::Index root() const { return data()->root(); }
+    int height() const { return data()->height(); }
+    bool isEmpty() const { return data()->isEmpty(); }
+    void reserve(int amount) { data()->reserve(amount); }
+
+    void rotateLLorRR(const QBSP::InsertRecord *rec) { data()->rotateLLorRR(rec); }
+    void rotateLRorRL(const QBSP::InsertRecord *rec) { data()->rotateLRorRL(rec); }
+    void maybe_rebalance(const QBSP::InsertRecord *rec) { data()->maybe_rebalance(rec); }
+    void recurseAndInsert(QBSP::InsertRecord *rec) { data()->recurseAndInsert(rec); }
+
+    QBSP::Data *data() { return QBSPTree::data(); }
+    const QBSP::Data *data() const { return QBSPTree::data(); }
 };
 
 void tst_QBSPTree::create()
 {
     QVector3DArray data;
-    QBSPTree tree(&data);
+    TestQBSPTree tree(&data);
     QCOMPARE(tree.vectorData(), &data);
     QVERIFY(tree.pointerData() != NULL);
 }
@@ -120,25 +143,25 @@ void tst_QBSPTree::cmp()
     data[8] = QVector3D(-1.0f, -2.0f, -3.0f);
     data[9] = QVector3D(-1.0f, 2.0f, 3.0f);
 
-    QCOMPARE(QBSPTree::cmp(data.at(0), data.at(0)), QBSPTree::EqualTo);
-    QCOMPARE(QBSPTree::cmp(data.at(0), data.at(1)), QBSPTree::LessThanX);
-    QCOMPARE(QBSPTree::cmp(data.at(0), data.at(2)), QBSPTree::GreaterThanX);
-    QCOMPARE(QBSPTree::cmp(data.at(1), data.at(1)), QBSPTree::EqualTo);
-    QCOMPARE(QBSPTree::cmp(data.at(1), data.at(2)), QBSPTree::GreaterThanX);
-    QCOMPARE(QBSPTree::cmp(data.at(1), data.at(3)), QBSPTree::GreaterThanY);
-    QCOMPARE(QBSPTree::cmp(data.at(1), data.at(4)), QBSPTree::GreaterThanZ);
-    QCOMPARE(QBSPTree::cmp(data.at(1), data.at(5)), QBSPTree::GreaterThanY);
-    QCOMPARE(QBSPTree::cmp(data.at(2), data.at(6)), QBSPTree::GreaterThanY);
-    QCOMPARE(QBSPTree::cmp(data.at(2), data.at(7)), QBSPTree::GreaterThanZ);
-    QCOMPARE(QBSPTree::cmp(data.at(2), data.at(8)), QBSPTree::GreaterThanY);
-    QCOMPARE(QBSPTree::cmp(data.at(2), data.at(9)), QBSPTree::LessThanZ);
-    QCOMPARE(QBSPTree::cmp(data.at(3), data.at(4)), QBSPTree::LessThanY);
+    QCOMPARE(QBSP::cmp(data.at(0), data.at(0)), QBSP::EqualTo);
+    QCOMPARE(QBSP::cmp(data.at(0), data.at(1)), QBSP::LessThanX);
+    QCOMPARE(QBSP::cmp(data.at(0), data.at(2)), QBSP::GreaterThanX);
+    QCOMPARE(QBSP::cmp(data.at(1), data.at(1)), QBSP::EqualTo);
+    QCOMPARE(QBSP::cmp(data.at(1), data.at(2)), QBSP::GreaterThanX);
+    QCOMPARE(QBSP::cmp(data.at(1), data.at(3)), QBSP::GreaterThanY);
+    QCOMPARE(QBSP::cmp(data.at(1), data.at(4)), QBSP::GreaterThanZ);
+    QCOMPARE(QBSP::cmp(data.at(1), data.at(5)), QBSP::GreaterThanY);
+    QCOMPARE(QBSP::cmp(data.at(2), data.at(6)), QBSP::GreaterThanY);
+    QCOMPARE(QBSP::cmp(data.at(2), data.at(7)), QBSP::GreaterThanZ);
+    QCOMPARE(QBSP::cmp(data.at(2), data.at(8)), QBSP::GreaterThanY);
+    QCOMPARE(QBSP::cmp(data.at(2), data.at(9)), QBSP::LessThanZ);
+    QCOMPARE(QBSP::cmp(data.at(3), data.at(4)), QBSP::LessThanY);
 }
 
 void tst_QBSPTree::insert()
 {
     QVector3DArray data;
-    QBSPTree tree(&data);
+    TestQBSPTree tree(&data);
     data << QVector3D();
     data << QVector3D(1.0f, 2.0f, 3.0f);
     data << QVector3D(-1.0f, 2.0f, 3.0f);
@@ -153,45 +176,44 @@ void tst_QBSPTree::insert()
     {
         tree.insert(data[i], i);
     }
-    const QArray<QBSPTree::BSPIndex> *ptrs = tree.pointerData();
-    for (int i = 0; i < ptrs->size(); i += QBSPTree::Stride)
+    const QArray<QBSP::Node> *ptrs = tree.pointerData();
+    for (int i = 0; i < ptrs->size(); i += QBSP::Stride)
     {
-        int ix = i / QBSPTree::Stride;
-        if (ptrs->at(i + QBSPTree::EqualTo) != QBSPTree::MaxIndex)
-            QCOMPARE(data.at(ix), data.at(ptrs->at(i + QBSPTree::EqualTo)));
+        if (ptrs->at(i).next[QBSP::EqualTo] != QBSP::MaxIndex)
+            QCOMPARE(data.at(i), data.at(ptrs->at(i).next[QBSP::EqualTo]));
 
-        if (ptrs->at(i + QBSPTree::LessThanX) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::LessThanX)).x() < data.at(ix).x());
+        if (ptrs->at(i).next[QBSP::LessThanX] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::LessThanX]).x() < data.at(i).x());
 
-        if (ptrs->at(i + QBSPTree::GreaterThanX) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::GreaterThanX)).x() > data.at(ix).x());
+        if (ptrs->at(i).next[QBSP::GreaterThanX] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::GreaterThanX]).x() > data.at(i).x());
 
-        if (ptrs->at(i + QBSPTree::LessThanY) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::LessThanY)).y() < data.at(ix).y());
+        if (ptrs->at(i).next[QBSP::LessThanY] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::LessThanY]).y() < data.at(i).y());
 
-        if (ptrs->at(i + QBSPTree::GreaterThanY) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::GreaterThanY)).y() > data.at(ix).y());
+        if (ptrs->at(i).next[QBSP::GreaterThanY] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::GreaterThanY]).y() > data.at(i).y());
 
-        if (ptrs->at(i + QBSPTree::LessThanZ) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::LessThanZ)).z() < data.at(ix).z());
+        if (ptrs->at(i).next[QBSP::LessThanZ] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::LessThanZ]).z() < data.at(i).z());
 
-        if (ptrs->at(i + QBSPTree::GreaterThanZ) != QBSPTree::MaxIndex)
-            QVERIFY(data.at(ptrs->at(i + QBSPTree::GreaterThanZ)).z() > data.at(ix).z());
+        if (ptrs->at(i).next[QBSP::GreaterThanZ] != QBSP::MaxIndex)
+            QVERIFY(data.at(ptrs->at(i).next[QBSP::GreaterThanZ]).z() > data.at(i).z());
     }
 }
 
 void tst_QBSPTree::iterators()
 {
     QVector3DArray data;
-    QBSPTree tree(&data);
+    TestQBSPTree tree(&data);
     QBSPTree::const_iterator it = tree.constBegin();
     QBSPTree::const_iterator et = tree.constEnd();
-    QBSPTree::const_iterator ot(&tree, QBSPTree::MaxIndex);
+    QBSPTree::const_iterator ot(tree.data(), QBSP::MaxIndex);
     QVERIFY(it == ot);
     QVERIFY(it == et);
-    QCOMPARE(it.value(), QBSPTree::MaxIndex);
+    QCOMPARE(it.value(), (int)QBSP::MaxIndex);
     ++it;
-    QCOMPARE(it.value(), QBSPTree::MaxIndex);
+    QCOMPARE(it.value(), (int)QBSP::MaxIndex);
     data.extend(10);
     data[0] = QVector3D();
     data[1] = QVector3D(1.0f, 2.0f, 3.0f);
@@ -209,31 +231,31 @@ void tst_QBSPTree::iterators()
     }
     it = tree.constBegin();
     et = tree.constEnd();
-    QBSPTree::const_iterator ot2(&tree, 0);
-    QBSPTree::const_iterator ot3(&tree, QBSPTree::MaxIndex);
+    QBSPTree::const_iterator ot2(tree.data(), 0);
+    QBSPTree::const_iterator ot3(tree.data(), QBSP::MaxIndex);
     QVERIFY(it == ot2);
     QVERIFY(et == ot3);
-    QCOMPARE(it.value(), (QBSPTree::BSPIndex)0);
+    QCOMPARE(it.value(), 0);
     QCOMPARE(it.key(), data.at(0));
     ++it;
-    QCOMPARE(it.value(), (QBSPTree::BSPIndex)1);
+    QCOMPARE(it.value(), 1);
     QCOMPARE(it.key(), data.at(1));
     ++it;
-    QCOMPARE(it.value(), (QBSPTree::BSPIndex)2);
+    QCOMPARE(it.value(), 2);
     QCOMPARE(it.key(), data.at(2));
     for (int i = 2; i < 9; ++i)
         ++it;
-    QCOMPARE(it.value(), (QBSPTree::BSPIndex)9);
+    QCOMPARE(it.value(), 9);
     QCOMPARE(it.key(), data.at(9));
     ++it;
-    QCOMPARE(it, et);
-    QCOMPARE(it.value(), QBSPTree::MaxIndex);
+    QVERIFY(it == et);
+    QCOMPARE(it.value(), (int)QBSP::MaxIndex);
 }
 
 void tst_QBSPTree::find()
 {
     QVector3DArray data;
-    QBSPTree tree(&data);
+    TestQBSPTree tree(&data);
     data.extend(10);
     data[0] = QVector3D();
     data[1] = QVector3D(1.0f, 2.0f, 3.0f);
@@ -252,7 +274,7 @@ void tst_QBSPTree::find()
     {
         // find at beginning
         QBSPTree::const_iterator it = tree.constFind(QVector3D());
-        QCOMPARE(it.value(), 0U);
+        QCOMPARE(it.value(), 0);
         QCOMPARE(it.key(), QVector3D());
         QVERIFY(it != tree.constEnd());
         QVERIFY(it == tree.constBegin());
@@ -262,7 +284,7 @@ void tst_QBSPTree::find()
     {
         // find at beginning + 1
         QBSPTree::const_iterator it = tree.constFind(QVector3D(1.0f, 2.0f, 3.0f));
-        QCOMPARE(it.value(), 1U);
+        QCOMPARE(it.value(), 1);
         QCOMPARE(it.key(), QVector3D(1.0f, 2.0f, 3.0f));
         QVERIFY(it != tree.constEnd());
         ++it;
@@ -271,7 +293,7 @@ void tst_QBSPTree::find()
     {
         // find at end - 1
         QBSPTree::const_iterator it = tree.constFind(QVector3D(-1.0f, 2.0f, -3.0f));
-        QCOMPARE(it.value(), 8U);
+        QCOMPARE(it.value(), 8);
         QCOMPARE(it.key(), QVector3D(-1.0f, 2.0f, -3.0f));
         QVERIFY(it != tree.constEnd());
         ++it;
@@ -280,7 +302,7 @@ void tst_QBSPTree::find()
     {
         // find at end
         QBSPTree::const_iterator it = tree.constFind(QVector3D(-1.0f, 2.0f, 4.0f));
-        QCOMPARE(it.value(), 9U);
+        QCOMPARE(it.value(), 9);
         QCOMPARE(it.key(), QVector3D(-1.0f, 2.0f, 4.0f));
         QVERIFY(it != tree.constEnd());
         ++it;
@@ -289,14 +311,76 @@ void tst_QBSPTree::find()
     {
         // find both instances
         QBSPTree::const_iterator it = tree.constFind(QVector3D(-1.0f, 2.0f, 3.0f));
-        QCOMPARE(it.value(), 2U);
+        QCOMPARE(it.value(), 2);
         QCOMPARE(it.key(), QVector3D(-1.0f, 2.0f, 3.0f));
         QVERIFY(it != tree.constEnd());
         ++it;
         QVERIFY(it != tree.constEnd());
-        QCOMPARE(it.value(), 7U);
+        QCOMPARE(it.value(), 7);
         QCOMPARE(it.key(), QVector3D(-1.0f, 2.0f, 3.0f));
     }
+}
+
+void tst_QBSPTree::rotateLLorRR()
+{
+    QVector3DArray data;
+    data.extend(10);
+    data[0] = QVector3D();
+    data[1] = QVector3D(1.0f, 2.0f, 3.0f);
+    data[2] = QVector3D(2.0f, 2.0f, 3.0f);
+    data[3] = QVector3D(3.0f, 2.0f, 3.0f);
+    data[4] = QVector3D(4.0f, 2.0f, 3.0f);
+    data[5] = QVector3D(5.0f, 2.0f, 3.0f);
+    // this data should create an RR case
+    TestQBSPTree tree(&data);
+    for (int i = 0; i < data.count(); ++i)
+        tree.insert(data[i], i);
+
+    QBSP::InsertRecord rec(data[5], 5, 2, 5);
+    rec.shift_down(3, QBSP::GreaterThanX);
+    rec.shift_down(4, QBSP::GreaterThanX);
+    QCOMPARE(rec.parent->ix, (QBSP::Index)4);
+    QCOMPARE(rec.parent->part, QBSP::GreaterThanX);
+    QCOMPARE(rec.grand->ix, (QBSP::Index)3);
+    QCOMPARE(rec.grand->part, QBSP::GreaterThanX);
+    QCOMPARE(rec.great->ix, (QBSP::Index)2);
+    QCOMPARE(rec.great->part, QBSP::GreaterThanX);
+    tree.data()->rotateLLorRR(&rec);
+    const QArray<QBSP::Node> *ptrs = tree.data()->pointerData();
+    // what was grandparent is now a leaf node
+    for (QBSP::Index i = 0; i < QBSP::Stride; ++i)
+        QCOMPARE(ptrs->at(3).next[i], QBSP::MaxIndex);
+    // child is still a leaf node
+    for (QBSP::Index i = 0; i < QBSP::Stride; ++i)
+        QCOMPARE(ptrs->at(5).next[i], QBSP::MaxIndex);
+    // parent should have rotated up and have 3 & 5 as children
+    for (QBSP::Index i = 0; i < QBSP::Stride; ++i)
+    {
+        if (i == QBSP::LessThanX)
+            QCOMPARE(ptrs->at(4).next[i], (QBSP::Index)3);
+        else if (i == QBSP::GreaterThanX)
+            QCOMPARE(ptrs->at(4).next[i], (QBSP::Index)5);
+        else
+            QCOMPARE(ptrs->at(4).next[i], QBSP::MaxIndex);
+    }
+    // great-grandparent should now point to rotated up parent
+    for (QBSP::Index i = 0; i < QBSP::Stride; ++i)
+    {
+        if (i == QBSP::GreaterThanX)
+            QCOMPARE(ptrs->at(2).next[i], (QBSP::Index)4);
+        else
+            QCOMPARE(ptrs->at(2).next[i], QBSP::MaxIndex);
+    }
+}
+
+void tst_QBSPTree::rotateLRorRL()
+{
+
+}
+
+void tst_QBSPTree::maybe_rebalance()
+{
+
 }
 
 void tst_QBSPTree::rotate()
@@ -313,7 +397,7 @@ void tst_QBSPTree::rotate()
     data[7] = QVector3D(7.0f, 2.0f, 3.0f);
     data[8] = QVector3D(8.0f, 2.0f, 3.0f);
     data[9] = QVector3D(9.0f, 2.0f, 3.0f);
-    QBSPTree tree(&data);
+    TestQBSPTree tree(&data);
     for (int i = 0; i < data.count(); ++i)
         tree.insert(data[i], i);
     tree.dump();
