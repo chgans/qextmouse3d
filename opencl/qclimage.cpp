@@ -44,36 +44,36 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QCLImage
-    \brief The QCLImage class represents an OpenCL image object.
+    \class QCLImage2D
+    \brief The QCLImage2D class represents a 2D OpenCL image object.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::opencl
 */
 
 /*!
-    \fn QCLImage::QCLImage()
+    \fn QCLImage2D::QCLImage2D()
 
-    Constructs a null OpenCL buffer object.
+    Constructs a null 2D OpenCL image object.
 */
 
 /*!
-    \fn QCLImage::QCLImage(QCLContext *context, cl_mem id)
+    \fn QCLImage2D::QCLImage2D(QCLContext *context, cl_mem id)
 
-    Constructs an OpenCL image object that is initialized with the
+    Constructs a 2D OpenCL image object that is initialized with the
     native OpenCL identifier \a id, and associates it with \a context.
     This class will take over ownership of \a id and will release
     it in the destructor.
 */
 
 /*!
-    \fn QCLImage::QCLImage(const QCLImage& other)
+    \fn QCLImage2D::QCLImage2D(const QCLImage2D& other)
 
     Constructs a copy of \a other.
 */
 
 /*!
-    \fn QCLImage& QCLImage::operator=(const QCLImage& other)
+    \fn QCLImage2D& QCLImage2D::operator=(const QCLImage2D& other)
 
     Assigns \a other to this object.
 */
@@ -81,7 +81,7 @@ QT_BEGIN_NAMESPACE
 /*!
     Returns the format descriptor for this OpenCL image.
 */
-QCLImageFormat QCLImage::format() const
+QCLImageFormat QCLImage2D::format() const
 {
     cl_image_format iformat;
     if (clGetImageInfo(id(), CL_IMAGE_FORMAT, sizeof(iformat), &iformat, 0)
@@ -105,9 +105,99 @@ static int qt_cl_imageParam(cl_mem id, cl_image_info name)
 /*!
     Returns the width of this OpenCL image.
 
+    \sa height(), bytesPerLine()
+*/
+int QCLImage2D::width() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_WIDTH);
+}
+
+/*!
+    Returns the height of this OpenCL image.
+
+    \sa width()
+*/
+int QCLImage2D::height() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_HEIGHT);
+}
+
+/*!
+    Returns the number of bytes per element in this OpenCL image.
+
+    \sa bytesPerLine()
+*/
+int QCLImage2D::bytesPerElement() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_ELEMENT_SIZE);
+}
+
+/*!
+    Returns the number of bytes per line in this OpenCL image.
+
+    \sa bytesPerElement()
+*/
+int QCLImage2D::bytesPerLine() const
+{
+    return qt_cl_imageParam(id(), CL_IMAGE_ROW_PITCH);
+}
+
+/*!
+    \class QCLImage3D
+    \brief The QCLImage3D class represents a 3D OpenCL image object.
+    \since 4.7
+    \ingroup qt3d
+    \ingroup qt3d::opencl
+*/
+
+/*!
+    \fn QCLImage3D::QCLImage3D()
+
+    Constructs a null 3D OpenCL image object.
+*/
+
+/*!
+    \fn QCLImage3D::QCLImage3D(QCLContext *context, cl_mem id)
+
+    Constructs a 3D OpenCL image object that is initialized with the
+    native OpenCL identifier \a id, and associates it with \a context.
+    This class will take over ownership of \a id and will release
+    it in the destructor.
+*/
+
+/*!
+    \fn QCLImage3D::QCLImage3D(const QCLImage3D& other)
+
+    Constructs a copy of \a other.
+*/
+
+/*!
+    \fn QCLImage3D& QCLImage3D::operator=(const QCLImage3D& other)
+
+    Assigns \a other to this object.
+*/
+
+/*!
+    Returns the format descriptor for this OpenCL image.
+*/
+QCLImageFormat QCLImage3D::format() const
+{
+    cl_image_format iformat;
+    if (clGetImageInfo(id(), CL_IMAGE_FORMAT, sizeof(iformat), &iformat, 0)
+            != CL_SUCCESS)
+        return QCLImageFormat();
+    else
+        return QCLImageFormat
+            (QCLImageFormat::ChannelOrder(iformat.image_channel_order),
+             QCLImageFormat::ChannelType(iformat.image_channel_data_type));
+}
+
+/*!
+    Returns the width of this OpenCL image.
+
     \sa height(), depth(), bytesPerLine()
 */
-int QCLImage::width() const
+int QCLImage3D::width() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_WIDTH);
 }
@@ -117,7 +207,7 @@ int QCLImage::width() const
 
     \sa width(), depth()
 */
-int QCLImage::height() const
+int QCLImage3D::height() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_HEIGHT);
 }
@@ -127,7 +217,7 @@ int QCLImage::height() const
 
     \sa width(), height(), bytesPerSlice()
 */
-int QCLImage::depth() const
+int QCLImage3D::depth() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_DEPTH);
 }
@@ -137,7 +227,7 @@ int QCLImage::depth() const
 
     \sa bytesPerLine(), bytesPerSlice()
 */
-int QCLImage::bytesPerElement() const
+int QCLImage3D::bytesPerElement() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_ELEMENT_SIZE);
 }
@@ -147,7 +237,7 @@ int QCLImage::bytesPerElement() const
 
     \sa bytesPerElement(), bytesPerSlice()
 */
-int QCLImage::bytesPerLine() const
+int QCLImage3D::bytesPerLine() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_ROW_PITCH);
 }
@@ -158,7 +248,7 @@ int QCLImage::bytesPerLine() const
 
     \sa bytesPerElement(), bytesPerLine()
 */
-int QCLImage::bytesPerSlice() const
+int QCLImage3D::bytesPerSlice() const
 {
     return qt_cl_imageParam(id(), CL_IMAGE_SLICE_PITCH);
 }

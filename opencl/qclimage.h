@@ -44,6 +44,7 @@
 
 #include "qclmemoryobject.h"
 #include "qclimageformat.h"
+#include <QtCore/qrect.h>
 
 QT_BEGIN_HEADER
 
@@ -51,16 +52,40 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(CL)
 
-class Q_CL_EXPORT QCLImage : public QCLMemoryObject
+class Q_CL_EXPORT QCLImage2D : public QCLMemoryObject
 {
 public:
-    QCLImage() {}
-    QCLImage(QCLContext *context, cl_mem id)
+    QCLImage2D() {}
+    QCLImage2D(QCLContext *context, cl_mem id)
         : QCLMemoryObject(context, id) {}
-    QCLImage(const QCLImage& other)
+    QCLImage2D(const QCLImage2D& other)
         : QCLMemoryObject(other.context(), other.id()) {}
 
-    QCLImage& operator=(const QCLImage& other)
+    QCLImage2D& operator=(const QCLImage2D& other)
+    {
+        setId(other.context(), other.id());
+        return *this;
+    }
+
+    QCLImageFormat format() const;
+
+    int width() const;
+    int height() const;
+
+    int bytesPerElement() const;
+    int bytesPerLine() const;
+};
+
+class Q_CL_EXPORT QCLImage3D : public QCLMemoryObject
+{
+public:
+    QCLImage3D() {}
+    QCLImage3D(QCLContext *context, cl_mem id)
+        : QCLMemoryObject(context, id) {}
+    QCLImage3D(const QCLImage3D& other)
+        : QCLMemoryObject(other.context(), other.id()) {}
+
+    QCLImage3D& operator=(const QCLImage3D& other)
     {
         setId(other.context(), other.id());
         return *this;
