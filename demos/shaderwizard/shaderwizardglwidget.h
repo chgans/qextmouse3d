@@ -56,6 +56,7 @@ class QGLSceneNode;
 class QGLSceneObject;
 class QGLHeightMap;
 class QGLSphere;
+class QGLShaderProgramEffect;
 
 class ShaderWizardGLWidget : public QGLView
 {
@@ -110,6 +111,7 @@ public slots:
     void setTextureImage(const QImage &image);
 
     void clearScene();
+    void setEffect(QGLShaderProgramEffect* effect);
 
 signals:
     void vertexShaderChanged(const QString);
