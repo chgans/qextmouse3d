@@ -79,6 +79,7 @@ namespace QBSP
     {
         Index ix;
         Partition part;
+        NodeRef() : ix(MaxIndex), part(EqualTo) {}
     };
 
     struct InsertRecord
@@ -86,21 +87,21 @@ namespace QBSP
         int height;
         QVector3D vec;
         QBSP::Index vec_ix;
-        QBSP::Index child;
-        NodeRef chain[3];
-        NodeRef *parent, *grand, *great;
+        NodeRef chain[4];
+        NodeRef *child, *parent, *grand, *great;
 
         InsertRecord(const QVector3D &v, QBSP::Index vi,
                       QBSP::Index pointer, QBSP::Index new_index)
-            : height(0)
+            : height(1)
             , vec(v)
             , vec_ix(vi)
-            , child(new_index)
-            , parent(&chain[0])
-            , grand(&chain[1])
-            , great(&chain[2])
+            , child(&chain[0])
+            , parent(&chain[1])
+            , grand(&chain[2])
+            , great(&chain[3])
         {
             parent->ix = pointer;
+            child->ix = new_index;
         }
 
         void shift_down(QBSP::Index ix, QBSP::Partition part)
@@ -113,11 +114,36 @@ namespace QBSP
             parent->ix = ix;
             parent->part = part;
         }
+#ifndef QT_NO_DEBUG
+        static const char *partition_names[];
+
+        void dump() const
+        {
+            fprintf(stderr, "InsertRecord - height: %d - vec: (%0.3f, %0.3f, %0.3f)\n",
+                    height, vec.x(), vec.y(), vec.z());
+            fprintf(stderr, "       Child - index: %d - partition: %s\n",
+                    child->ix, partition_names[child->part]);
+            fprintf(stderr, "      Parent - index: %d - partition: %s\n",
+                    parent->ix, partition_names[parent->part]);
+            fprintf(stderr, "    Grandp't - index: %d - partition: %s\n",
+                    grand->ix, partition_names[grand->part]);
+            fprintf(stderr, "   Great'pnt - index: %d - partition: %s\n",
+                    great->ix, partition_names[great->part]);
+        }
+#endif
     };
 
     struct Node
     {
         Index next[Stride];
+        int branchingFactor() const
+        {
+            int factor = 0;
+            for (int i = LessThanX; i < Stride; ++i)
+                if (next[i] != QBSP::MaxIndex)
+                    ++factor;
+            return factor;
+        }
     };
 
     class Data
@@ -136,7 +162,7 @@ namespace QBSP
         void insert(const QVector3D &v, int i);
         void rotateLLorRR(const InsertRecord *);
         void rotateLRorRL(const InsertRecord *);
-        void maybe_rebalance(const InsertRecord *);
+        bool maybe_rebalance(const InsertRecord *);
         void recurseAndInsert(InsertRecord *);
         void recurseAndDump(Index index, int indent) const;
 

@@ -124,7 +124,7 @@ inline void QBSPTree::reserve(int amount)
 
 inline QBSPTree::const_iterator QBSPTree::constFind(const QVector3D &v) const
 {
-    QBSP::Index ptr = 0;
+    QBSP::Index ptr = d.root();
     QBSP::Partition part = QBSP::EqualTo;
     while (ptr != QBSP::MaxIndex)
     {
@@ -163,7 +163,7 @@ inline QBSPTree::const_iterator::const_iterator &QBSPTree::const_iterator::opera
         }
         else
         {
-            if ((int)ptr < tree->pointerData()->size())
+            if ((int)ptr < tree->pointerData()->size() - 1)
                 ++ptr;
             else
                 ptr = QBSP::MaxIndex;

@@ -124,6 +124,16 @@ const QBSP::Partition QBSP::Data::complement[QBSP::Stride] = {
     \sa QBSPTree
 */
 
+const char *QBSP::InsertRecord::partition_names[] = {
+    "EqualTo",
+    "LessThanX",
+    "GreaterThanX",
+    "LessThanY",
+    "GreaterThanY",
+    "LessThanZ",
+    "GreaterThanZ"
+};
+
 /*!
     \internal
     \fn QBSPTree::const_iterator::const_iterator(const QBSP::Data *d, QBSP::Index p, bool fi)
@@ -213,7 +223,8 @@ QBSPTree::~QBSPTree()
 */
 void QBSPTree::dump() const
 {
-    fprintf(stderr, "================== QBSPTree - %p ==================\n", this);
+    fprintf(stderr, "===== QBSPTree - %p - count: %d - height: %d ====\n",
+            this, d.pointerData()->size(), d.height());
     d.recurseAndDump(d.root(), 0);
 }
 
@@ -278,20 +289,24 @@ void QBSP::Data::rotateLLorRR(const QBSP::InsertRecord *bal)
 {
     // because of the use of complement the two symmetric cases
     // can be treated as one
+    //qDebug() << ">>>>>>>>>>>> rotateLLorRR";
+    bal->dump();
     QBSP::Index i = bal->grand->ix;
-    Partition p = bal->grand->part;
+    Partition p = bal->parent->part;
+    Q_ASSERT(p != QBSP::EqualTo);
     m_ptrs[i].next[p] = QBSP::MaxIndex;
     i = bal->parent->ix;
-    p = complement[bal->grand->part];
+    p = complement[bal->parent->part];
     m_ptrs[i].next[p] = bal->grand->ix;
-    if (bal->height == 2)
+    if (bal->height == 3)
     {
         m_root = bal->parent->ix;
     }
     else
     {
         i = bal->great->ix;
-        p = bal->great->part;
+        p = bal->grand->part;
+        Q_ASSERT(p != QBSP::EqualTo);
         m_ptrs[i].next[p] = bal->parent->ix;
     }
 }
@@ -300,37 +315,44 @@ void QBSP::Data::rotateLRorRL(const QBSP::InsertRecord *bal)
 {
     // because of the use of complement the two symmetric cases
     // can be treated as one
+    //qDebug() << ">>>>>>>>>>>> rotateLRorRL";
     QBSP::Index i = bal->grand->ix;
-    Partition p = bal->grand->part;
+    Partition p = bal->parent->part;
+    Q_ASSERT(p != QBSP::EqualTo);
     m_ptrs[i].next[p] = QBSP::MaxIndex;
     i = bal->parent->ix;
-    p = bal->parent->part;
+    p = bal->child->part;
+    Q_ASSERT(p != QBSP::EqualTo);
     m_ptrs[i].next[p] = QBSP::MaxIndex;
-    i = bal->child;
-    p = complement[bal->parent->part];
+    i = bal->child->ix;
+    p = complement[bal->child->part];
     m_ptrs[i].next[p] = bal->parent->ix;
-    p = complement[bal->grand->part];
+    p = complement[bal->parent->part];
     m_ptrs[i].next[p] = bal->grand->ix;
-    if (bal->height == 2)
+    if (bal->height == 3)
     {
-        m_root = bal->child;
+        m_root = bal->child->ix;
     }
     else
     {
         i = bal->great->ix;
-        p = bal->great->part;
-        m_ptrs[i].next[p] = bal->child;
+        p = bal->grand->part;
+        Q_ASSERT(p != QBSP::EqualTo);
+        m_ptrs[i].next[p] = bal->child->ix;
     }
 }
 
-void QBSP::Data::maybe_rebalance(const QBSP::InsertRecord *bal)
+bool QBSP::Data::maybe_rebalance(const QBSP::InsertRecord *bal)
 {
-    int h = bal->height - m_maxHeight;
-    if (h > 0)
+    //qDebug() << "maybe_rebalance - balanced:" << m_balanced
+    //        << "height:" << bal->height;
+    bool doBalance = false;
+    if (m_balanced && bal->height > 2)
     {
-        m_maxHeight = bal->height;
-        if (h > 1)
+        if (m_ptrs[bal->parent->ix].branchingFactor() < 2 &&
+            m_ptrs[bal->grand->ix].branchingFactor() < 2)
         {
+            doBalance = true;
             if (isLeft(bal->grand->part))
             {
                 if (isLeft(bal->parent->part))
@@ -347,6 +369,7 @@ void QBSP::Data::maybe_rebalance(const QBSP::InsertRecord *bal)
             }
         }
     }
+    return doBalance;
 }
 
 void QBSP::Data::recurseAndInsert(QBSP::InsertRecord *bal)
@@ -360,10 +383,12 @@ void QBSP::Data::recurseAndInsert(QBSP::InsertRecord *bal)
     }
     else
     {
+        ++bal->height;
         m_ptrs.append(Blank);
-        m_ptrs[bal->parent->ix].next[part] = bal->child;
-        if (m_balanced)
-            maybe_rebalance(bal);
+        m_ptrs[bal->parent->ix].next[part] = bal->child->ix;
+        bal->child->part = part;
+        if (maybe_rebalance(bal))
+            --bal->height;
     }
 }
 
@@ -388,13 +413,16 @@ void QBSP::Data::insert(const QVector3D &v, int i)
     {
         if (m_ptrs.size() > 0)
         {
-            QBSP::Index new_ix = m_ptrs.size();
+            Index new_ix = m_ptrs.size();
             InsertRecord bal(v, i, m_root, new_ix);
             recurseAndInsert(&bal);
+            if (m_maxHeight < bal.height)
+                m_maxHeight = bal.height;
         }
         else
         {
             m_ptrs.append(Blank);
+            m_maxHeight = 1;
         }
     }
 #ifndef QT_NO_DEBUG
@@ -410,52 +438,50 @@ void QBSP::Data::recurseAndDump(QBSP::Index ix, int indent) const
     char ind[1024];
     qMemSet(ind, '\0', 1024);
     qMemSet(ind, ' ', indent < 341 ? indent * 3 : 1023);
-    fprintf(stderr, "%sNode: %d - QVector3D(%0.3f, %0.3f, %0.3f) - max height: %d\n",
-            ind, ix, m_vec->at(ix).x(), m_vec->at(ix).y(), m_vec->at(ix).z(),
-            m_maxHeight);
+    fprintf(stderr, "%sNode: %d - QVector3D(%0.3f, %0.3f, %0.3f)\n",
+            ind, ix, m_vec->at(ix).x(), m_vec->at(ix).y(), m_vec->at(ix).z());
     fprintf(stderr, "%s      Children", ind);
-    int i = ix * QBSP::Stride;
     QArray<QBSP::Index> children;
-    if (m_ptrs.at(i).next[EqualTo] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[EqualTo] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- EqualTo: %d", m_ptrs.at(i).next[EqualTo]);
-        children << m_ptrs.at(i).next[EqualTo];
+        fprintf(stderr, " -- EqualTo: %d", m_ptrs.at(ix).next[EqualTo]);
+        children << m_ptrs.at(ix).next[EqualTo];
     }
 
-    if (m_ptrs.at(i).next[LessThanX] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[LessThanX] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanX: %d", m_ptrs.at(i).next[LessThanX]);
-        children << m_ptrs.at(i).next[LessThanX];
+        fprintf(stderr, " -- LessThanX: %d", m_ptrs.at(ix).next[LessThanX]);
+        children << m_ptrs.at(ix).next[LessThanX];
     }
 
-    if (m_ptrs.at(i).next[GreaterThanX] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[GreaterThanX] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanX: %d", m_ptrs.at(i).next[GreaterThanX]);
-        children << m_ptrs.at(i).next[GreaterThanX];
+        fprintf(stderr, " -- GreaterThanX: %d", m_ptrs.at(ix).next[GreaterThanX]);
+        children << m_ptrs.at(ix).next[GreaterThanX];
     }
 
-    if (m_ptrs.at(i).next[LessThanY] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[LessThanY] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanY: %d", m_ptrs.at(i).next[LessThanY]);
-        children << m_ptrs.at(i).next[LessThanY];
+        fprintf(stderr, " -- LessThanY: %d", m_ptrs.at(ix).next[LessThanY]);
+        children << m_ptrs.at(ix).next[LessThanY];
     }
 
-    if (m_ptrs.at(i).next[GreaterThanY] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[GreaterThanY] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanY: %d", m_ptrs.at(i).next[GreaterThanY]);
-        children << m_ptrs.at(i).next[GreaterThanY];
+        fprintf(stderr, " -- GreaterThanY: %d", m_ptrs.at(ix).next[GreaterThanY]);
+        children << m_ptrs.at(ix).next[GreaterThanY];
     }
 
-    if (m_ptrs.at(i).next[LessThanZ] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[LessThanZ] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- LessThanZ: %d", m_ptrs.at(i).next[LessThanZ]);
-        children << m_ptrs.at(i).next[LessThanZ];
+        fprintf(stderr, " -- LessThanZ: %d", m_ptrs.at(ix).next[LessThanZ]);
+        children << m_ptrs.at(ix).next[LessThanZ];
     }
 
-    if (m_ptrs.at(i).next[GreaterThanZ] != QBSP::MaxIndex)
+    if (m_ptrs.at(ix).next[GreaterThanZ] != QBSP::MaxIndex)
     {
-        fprintf(stderr, " -- GreaterThanZ: %d", m_ptrs.at(i).next[GreaterThanZ]);
-        children << m_ptrs.at(i).next[GreaterThanZ];
+        fprintf(stderr, " -- GreaterThanZ: %d", m_ptrs.at(ix).next[GreaterThanZ]);
+        children << m_ptrs.at(ix).next[GreaterThanZ];
     }
     fprintf(stderr, "\n");
     for (int i = 0; i < children.count(); ++i)
