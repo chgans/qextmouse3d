@@ -72,7 +72,7 @@ class QGLSceneNode;
 class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
-    QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
+    QGLSection(QGLDisplayList *d, QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::HashLookup);
     ~QGLSection();
 
     void reserve(int amount);

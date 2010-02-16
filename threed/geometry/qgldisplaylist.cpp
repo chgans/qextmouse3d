@@ -923,18 +923,31 @@ void QGLDisplayList::finalize()
 }
 
 /*!
-    Creates a new section with smoothing mode set to \a smooth and makes
-    it current on this QGLDisplayList.  A section must be created before
+    Creates a new section with smoothing mode set to \a smooth and using
+    the given vertex processing \a strategy.  By default \a smooth is
+    QGL::Smooth, and \a strategy is QGL::HashLookup.  The new section is made
+    current on this QGLDisplayList.  A section must be created before
     any geometry or new nodes can be added to the displaylist.
 
     The internal node stack is cleared, a section-level QGLSceneNode is
     created for this section by calling newNode().
 
+    The \a strategy allows for performance tuning for particular types of
+    scenes.  When there is a large amount of data, and it is known
+    apriori that the data is correct, choose QGL::NullStrategy to turn off
+    all vertex processing.  This setting will also set the smoothing mode
+    to QGL::NoSmoothing and disable duplicates indexing.
+
+    Otherwise leave the default setting of QGL::HashLookup to have vertices
+    processed via a hash structure for smoothing and duplicate indexing.
+
     \sa newNode(), pushNode()
 */
-void QGLDisplayList::newSection(QGL::Smoothing smooth)
+void QGLDisplayList::newSection(QGL::Smoothing smooth, QGL::Strategy strategy)
 {
-    new QGLSection(this, smooth);  // calls addSection
+    if (strategy == QGL::NullStrategy)
+        smooth = QGL::NoSmoothing;
+    new QGLSection(this, smooth, strategy);  // calls addSection
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)

@@ -688,7 +688,6 @@ void tst_QGLDisplayList::finalize()
 
     displayList.newSection();
     QGLSceneNode *node2 = displayList.currentNode();
-    qDebug() << "node2" << node2;
 
     QGLPrimitive s;
     s.appendVertex(a, b, c, d);
@@ -696,7 +695,6 @@ void tst_QGLDisplayList::finalize()
     displayList.addQuadsZipped(s, s.translated(-n));
 
     QPointer<QGLSceneNode> nodeEmpty0 = displayList.newNode();
-    qDebug() << "nodeEmpty0" << nodeEmpty0.data();
 
     displayList.newSection();
     QGLSceneNode *node3 = displayList.currentNode();

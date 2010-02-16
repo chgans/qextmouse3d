@@ -80,7 +80,7 @@ public:
     }
 
     // section management
-    void newSection(QGL::Smoothing = QGL::Smooth);
+    void newSection(QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::HashLookup);
 
     // scene management
     QGLSceneNode *currentNode();

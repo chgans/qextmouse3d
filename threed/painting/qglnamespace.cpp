@@ -200,9 +200,19 @@ QT_BEGIN_NAMESPACE
     \relates QGLDisplayList
 
     This enum defines vertex smoothing treatments.
-    \value Unspecified The vertex smoothing is not specified
-    \value Smooth The vertices have lighting normals averaged for each face.
-    \value Faceted The vertices have lighting normals seperate for each face.
+    \value NoSmoothing No smoothing processing is performed.
+    \value Smooth Lighting normals averaged for each face for a smooth appearance.
+    \value Faceted Lighting normals seperate for each face for a faceted appearance.
+*/
+
+/*!
+    \enum QGL::Strategy
+    \since 4.7
+    \relates QGLDisplayList
+
+    This enum defines vertex processing strategies for performance tuning.
+    \value NullStrategy No vertex processing is done.
+    \value HashLookup The vertices are processed using a QHash.
 */
 
 QT_END_NAMESPACE
