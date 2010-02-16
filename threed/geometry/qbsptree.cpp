@@ -287,10 +287,6 @@ inline static bool isLeft(QBSP::Partition part)
 
 void QBSP::Data::rotateLLorRR(const QBSP::InsertRecord *bal)
 {
-    // because of the use of complement the two symmetric cases
-    // can be treated as one
-    //qDebug() << ">>>>>>>>>>>> rotateLLorRR";
-    bal->dump();
     QBSP::Index i = bal->grand->ix;
     Partition p = bal->parent->part;
     Q_ASSERT(p != QBSP::EqualTo);
@@ -313,9 +309,6 @@ void QBSP::Data::rotateLLorRR(const QBSP::InsertRecord *bal)
 
 void QBSP::Data::rotateLRorRL(const QBSP::InsertRecord *bal)
 {
-    // because of the use of complement the two symmetric cases
-    // can be treated as one
-    //qDebug() << ">>>>>>>>>>>> rotateLRorRL";
     QBSP::Index i = bal->grand->ix;
     Partition p = bal->parent->part;
     Q_ASSERT(p != QBSP::EqualTo);
@@ -344,8 +337,6 @@ void QBSP::Data::rotateLRorRL(const QBSP::InsertRecord *bal)
 
 bool QBSP::Data::maybe_rebalance(const QBSP::InsertRecord *bal)
 {
-    //qDebug() << "maybe_rebalance - balanced:" << m_balanced
-    //        << "height:" << bal->height;
     bool doBalance = false;
     if (m_balanced && bal->height > 2)
     {
