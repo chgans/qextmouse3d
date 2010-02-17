@@ -1076,7 +1076,7 @@ void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
     if (ary.count())
     {
         detach();
-        enableField(QGL::Position);
+        enableField(QGL::Color);
         d->colors.append(ary);
         d->count = qMax(d->count, d->colors.count());
     }
