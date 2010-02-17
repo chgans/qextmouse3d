@@ -297,6 +297,13 @@ inline void QGLVertexArray::setFields(const QGLVertexDescription& value)
 inline QGLAttributeValue QGLVertexArray::attributeValue(int field) const
 {
     if (field >= 0 && field < m_fields.m_fields.count()) {
+        if (m_fields.m_fields[field].size == 1 &&
+            m_fields.m_fields[field].attr == QGL::Color)
+        {
+            // special case for QColor4B
+            return QGLAttributeValue(4, GL_UNSIGNED_BYTE, m_fields.m_stride * sizeof(float),
+                                     m_data.constData() + m_fields.m_fields[field].offset);
+        }
         return QGLAttributeValue
             (m_fields.m_fields[field].size, GL_FLOAT,
              m_fields.m_stride * sizeof(float),
