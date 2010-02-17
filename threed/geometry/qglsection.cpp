@@ -632,15 +632,15 @@ bool QGLSection::deleteNode(QGLSceneNode *node)
 QDebug operator<<(QDebug dbg, const QGLSection &section)
 {
     dbg.space()
-            << "QGLSection("
-            << ", count:" << section.count()
-            << ", smoothing mode:" << (section.smoothing() == QGL::Smooth ?
-                                       "QGL::Smooth" : "QGL::Faceted");
+            << "QGLSection(" << &section
+            << "- count:" << section.count()
+            << "- smoothing mode:" << (section.smoothing() == QGL::Smooth ?
+                                       "QGL::Smooth" : "QGL::Faceted") << "\n";
     QGLIndexArray indices = section.indices();
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];
-        dbg << section.vertexAt(ix);
+        dbg << section.vertexAt(ix) << "\n";
     }
     dbg << ")\n";
     return dbg.space();
