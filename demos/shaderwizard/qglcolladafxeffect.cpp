@@ -180,7 +180,7 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
             "    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );\n"\
             "    if(intensity > 0.0)\n"\
             "   {\n"\
-            "       float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );\n"\
+            "       float specularIntensity = max( dot(perPixelNormal, qHalfVector), 0.0 );\n"\
             "       if(specularIntensity > 0.0)\n"\
             "           specularComponent = qSpecular  * pow(specularIntensity, shininess);\n"\
             "   }\n");
@@ -230,7 +230,7 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "attribute highp vec4 texCoords;\n"\
             "uniform highp mat4 matrix;\n"\
             "varying mediump vec3 qNormal;\n"\
-            "varying mediump vec3 qLightDirection;\n"
+            "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
             "uniform mediump vec3 pli;       // Position of the light\n"\
             "varying highp vec4 qTexCoord0; // TEMP\n" /* Got to get rid of this*/\
@@ -262,15 +262,16 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
 
     fragmentShaderMainGlueSnippet = QString(
             "varying mediump vec3 qNormal;\n"\
-            "varying mediump vec3 qLightDirection; "\
+            "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
             "uniform float shininess;\n"\
             "uniform vec4 color;\n"\
+            "vec3 perPixelNormal;"
             "\n"\
             "void main()\n"\
             "{\n"\
-            "    qNormal = normalize(qNormal);\n"\
-            "    float intensity =  max(dot(qNormal, qLightDirection), 0.0);\n"
+            "    perPixelNormal = normalize(qNormal);\n"\
+            "    float intensity =  max(dot(perPixelNormal, qLightDirection), 0.0);\n"
             );
 }
 

@@ -46,12 +46,10 @@
 
 static char const FallbackPerPixelLightingVertexShader[] =
     "// Per-pixel lighting - vertex shader side.\n"
-
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 normal;\n"
     "uniform highp mat4 matrix;\n"
     "uniform mediump mat3 gl_NormalMatrix;\n"
-
     "uniform mediump vec4 acli;      // Ambient intensity of the light\n"
     "uniform mediump vec4 dcli;      // Diffuse intensity of the light\n"
     "uniform mediump vec4 scli;      // Specular intensity of the light\n"
@@ -62,9 +60,7 @@ static char const FallbackPerPixelLightingVertexShader[] =
     "uniform mediump vec4 scm;       // specular color of the material\n"
     "uniform mediump vec4 acs;       // Light model's ambient color of the scene\n"
     "uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity\n"
-
     "uniform float time;\n"
-
     "varying mediump vec4 qAmbient;\n"
     "varying mediump vec4 qDiffuse;\n"
     "varying mediump vec3 qNormal;\n"
@@ -111,15 +107,15 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     "varying mediump vec3 qVertexToLight;\n"
     "varying highp vec4 qTexCoord0;\n"
     "varying highp vec4 qTexCoord1;\n"
-
+    "vec3 mediump perPixelNormal;\n"
     "void main(void)\n"
     "{\n"
     "    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
-    "    qNormal = normalize(qNormal);\n"
-    "    float intensity =  max(dot(qNormal, qLightDirection), 0.0);\n"
+    "    perPixelNormal = normalize(qNormal);\n"
+    "    float intensity =  max(dot(perPixelNormal, qLightDirection), 0.0);\n"
     "    if(intensity > 0.0)\n"
     "    {\n"
-    "        float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );\n"
+    "        float specularIntensity = max( dot(perPixelNormal, qHalfVector), 0.0 );\n"
     "        if(specularIntensity > 0.0)\n"
     "            specularComponent = scm * scli * pow(specularIntensity, shininess);\n"
     "    }\n"
