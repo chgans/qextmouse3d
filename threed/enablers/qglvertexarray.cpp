@@ -1075,6 +1075,12 @@ QDebug operator<<(QDebug dbg, const QGLVertexArray &vertices)
                 QVector2D v = vertices.vector2DAt(i, j);
                 dbg << '\t' << '(' << v.x() << ", " << v.y() << ')' << '\n';
             }
+            else if (flds.fieldAttribute(j) == QGL::Color)
+            {
+                QColor4B c = vertices.color4bAt(i, j);
+                dbg << "\t( R:" << c.red() << ",  G:" << c.green() << ",  B:"
+                        << c.blue() << ",  A:" << c.alpha() << ")\n";
+            }
             else
             {
                 QVector3D v = vertices.vector3DAt(i, j);
