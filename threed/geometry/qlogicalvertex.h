@@ -47,6 +47,9 @@
 
 QT_BEGIN_NAMESPACE
 
+// uncomment this to perform heavy checking of QLogicalVertex
+// #define QT3D_DEBUG_QLOGICALVERTEX 1
+
 class QLogicalVertex
 {
 public:
@@ -111,7 +114,9 @@ inline QLogicalVertex::QLogicalVertex(QGeometryData data, int index)
     , m_index(index)
 {
     Q_ASSERT(index < data.count());
+#ifdef QT3D_DEBUG_QLOGICALVERTEX
     data.check();
+#endif
 }
 
 inline QLogicalVertex::QLogicalVertex(const QVector3D &a)
