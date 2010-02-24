@@ -59,7 +59,7 @@ public:
     Qml3dView(QWidget *parent = 0);
     ~Qml3dView();
 
-    void setUrl(const QUrl& url);
+    void setSource(const QUrl& url);
 
     Viewport *viewport() const { return m_viewport; }
     void setViewport(Viewport *value) { m_viewport = value; }

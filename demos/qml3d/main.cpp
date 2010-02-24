@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
 
     if (mixed) {
         QmlView view;
-        view.setUrl(url);
+        view.setSource(url);
         view.execute();
         view.show();
 
         return app.exec();
     } else {
         Qml3dView view;
-        view.setUrl(url);
+        view.setSource(url);
         view.show();
         
         return app.exec();
