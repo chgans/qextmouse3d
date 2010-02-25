@@ -57,6 +57,7 @@
 
 #include "shaderwizardglwidget.h"
 #include "qglslsyntaxhighlighter.h"
+#include "qglcolladafxeffectfactory.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -244,6 +245,24 @@ void MainWindow::loadScene(const QString& fileName)
     doRecentFileMenu(fileName);
 }
 
+void MainWindow::loadEffect(const QString& fileName)
+{
+    QList<QGLColladaFxEffect*> loadedEffects = QGLColladaFxEffectFactory::loadEffectsFromFile(fileName);
+    if(loadedEffects.count() == 0)
+        qWarning() << "Warning: Failed to load effects from file " << fileName;
+    else
+    {
+        loadedEffects[0]->generateShaders();
+        glDisplayWidget->setEffect(loadedEffects[0]);
+        //d->effect = duckeffects[0];
+
+        // Is this stuff necessary?
+        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->vertexShader);
+        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->fragmentShader);
+        update();
+    }
+}
+
 static void addSceneNodeToDataModel(QStandardItem *parent, QGLSceneNode *node)
 {
     if(!node)
@@ -424,4 +443,15 @@ void MainWindow::recentFileActionTriggered()
 void MainWindow::on_actionMultiTexture_Shader_triggered()
 {    
     setShadersFromFiles(":/shaders/per_pixel_texture.vsh",":/shaders/multitexture.fsh");
+}
+
+void MainWindow::on_actionLoad_Collada_Effect_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                 QDir::homePath(),
+                                                 tr("Collada Effects (*.dae *.xml)"));
+    if (fileName.isEmpty())
+        return;
+    emit openEffect(fileName);
+    loadEffect(fileName);
 }

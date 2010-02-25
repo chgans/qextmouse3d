@@ -13,8 +13,8 @@ uniform mediump vec4 color;
 uniform mediump sampler2D texture0;
 uniform mediump sampler2D texture1;
 uniform float shininess;
-varying float intensity;
 
+varying float intensity;
 varying mediump vec4 qAmbient;
 varying mediump vec4 qDiffuse;
 varying mediump vec3 qNormal;
@@ -24,16 +24,17 @@ varying mediump vec3 qVertexToLight;
 varying highp vec4 qTexCoord0;
 varying highp vec4 qTexCoord1;
 
+mediump vec3 perPixelNormal;
 
 void main(void)
 {
     vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );
-    qNormal = normalize(qNormal);
-    float intensity =  max(dot(qNormal, qLightDirection), 0.0);
+    perPixelNormal = normalize(qNormal);
+    float intensity =  max(dot(perPixelNormal, qLightDirection), 0.0);
 
     if(intensity > 0.0)
     {
-        float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );
+        float specularIntensity = max( dot(perPixelNormal, qHalfVector), 0.0 );
         if(specularIntensity > 0.0)
             specularComponent = scm * scli * pow(specularIntensity, shininess);
     }

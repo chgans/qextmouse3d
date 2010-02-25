@@ -96,6 +96,8 @@
     <addaction name="actionMinimal_Texture_Shader"/>
     <addaction name="actionPer_Pixel_Lit_Texture_Shader"/>
     <addaction name="actionMultiTexture_Shader"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_Collada_Effect"/>
    </widget>
    <addaction name="menuShaderWizard"/>
    <addaction name="menuModel"/>
@@ -279,6 +281,11 @@
   <action name="actionMultiTexture_Shader">
    <property name="text">
     <string>MultiTexture Shader</string>
+   </property>
+  </action>
+  <action name="actionLoad_Collada_Effect">
+   <property name="text">
+    <string>Load Collada Effect</string>
    </property>
   </action>
  </widget>

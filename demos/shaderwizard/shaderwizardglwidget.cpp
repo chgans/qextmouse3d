@@ -73,10 +73,6 @@ public:
     {
     }
 
-    void setEffect(QGLShaderProgramEffect *effect)
-    {
-        this->effect = effect;
-    }
     QGLShaderProgramEffect *effect;
     QString fragmentShader;
     QString vertexShader;
@@ -232,6 +228,11 @@ void ShaderWizardGLWidget::clearScene()
     mSceneRoot = 0;
     mDefaultSceneObject = 0;
     update();
+}
+
+void ShaderWizardGLWidget::setEffect(QGLShaderProgramEffect *effect)
+{
+    d->effect = effect;
 }
 
 static float zFunc(float x, float y)

@@ -104,7 +104,6 @@
         <li><a href="qt3d-scene.html">Scene Management Classes</a></li>
         <li><a href="qt3d-graphicsview.html">Graphics View Integration Classes</a></li>
         <li><a href="qt3d-qml3d.html">QML/3D Support</a></li>
-        <li><a href="qt3d-opencl.html">OpenCL Classes</a></li>
         <li><a href="qgl.html">QGL Namespace</a></li>
         </ul>
         </td>

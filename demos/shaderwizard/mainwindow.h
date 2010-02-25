@@ -75,6 +75,7 @@ public:
                       };
 
 private slots:
+    void on_actionLoad_Collada_Effect_triggered();
     void on_actionMultiTexture_Shader_triggered();
     void on_actionPer_Pixel_Lit_Texture_Shader_triggered();
     void on_actionMinimal_Texture_Shader_triggered();
@@ -94,6 +95,7 @@ private slots:
     void recentFileActionTriggered();
 signals:
     void openFile(const QString &);
+    void openEffect(const QString &);
     void sceneCreated(QObject* object);
     void sceneSelected(QObject* object);
     void materialSelected(QGLMaterialParameters*);
@@ -102,6 +104,7 @@ protected:
     void setupSceneModel();
     void setupSceneView();
     void loadScene(const QString &fileName);
+    void loadEffect(const QString &fileName);
     void handleScene(QGLAbstractScene *scene);
     void handleScene(QGLSceneNode *scene);
     void writeSettings();

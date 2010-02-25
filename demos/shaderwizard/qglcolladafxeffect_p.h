@@ -34,11 +34,13 @@ public:
     QGLTexture2D* specularTexture;
     int lighting;
 
-    QMap<QString, QString> vertexShaderCodeSnippets;
-    QMap<QString, QString> vertexShaderDeclarationSnippets;
+    QStringList vertexShaderCodeSnippets;
+    QStringList vertexShaderDeclarationSnippets;
+    QStringList vertexShaderVariableNames;
 
-    QMap<QString, QString> fragmentShaderCodeSnippets;
-    QMap<QString, QString> fragmentShaderDeclarationSnippets;
+    QStringList fragmentShaderCodeSnippets;
+    QStringList fragmentShaderDeclarationSnippets;
+    QStringList fragmentShaderVariableNames;
 
     QString vertexShaderEndGlueSnippet;
     QString vertexShaderMainGlueSnippet;

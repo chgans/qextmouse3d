@@ -59,21 +59,29 @@ inline void QGLColladaFxEffectPrivate::updateMaterialChannelSnippets(QString cha
         QString texVariableName = QString("texCoord%1").arg(*textureUnit);
         // Take care of texture coordinates
         QString varyingSnippet = QString("varying vec4 %1;").arg(texVariableName);
-        vertexShaderDeclarationSnippets[texVariableName] = varyingSnippet;
-        fragmentShaderDeclarationSnippets[texVariableName] = varyingSnippet;
+        vertexShaderDeclarationSnippets.append(varyingSnippet);
+        vertexShaderVariableNames.append(texVariableName);
+        fragmentShaderDeclarationSnippets.append(varyingSnippet);
+        fragmentShaderVariableNames.append(texVariableName);
 
-        vertexShaderCodeSnippets[texVariableName] = QString("%1 = texCoords; // TODO: dynamically add tex attributes\n").arg(texVariableName);
+        vertexShaderCodeSnippets.append(QString("%1 = texCoords; // TODO: dynamically add tex attributes\n").arg(texVariableName));
+        vertexShaderVariableNames.append(texVariableName);
 
         // Declare the color variable in the fragment shader
-        fragmentShaderDeclarationSnippets[qVariableName] = QString("lowp vec4 %1;").arg(qVariableName);
-        fragmentShaderDeclarationSnippets[sourceVariableName] = QString("uniform sampler2D %1;").arg(sourceVariableName);
+        fragmentShaderDeclarationSnippets.append(QString("lowp vec4 %1;").arg(qVariableName));
+        fragmentShaderVariableNames.append(qVariableName);
+        fragmentShaderDeclarationSnippets.append(QString("uniform sampler2D %1;").arg(sourceVariableName));
+        fragmentShaderVariableNames.append(sourceVariableName);
 
         // Assign a colour to the variable out of the appropriate sampler
-        fragmentShaderCodeSnippets[qVariableName] = "    mediump vec4 " + qVariableName + " = texture2D(" + sourceVariableName + ", " + texVariableName + ".st);"; // mediump? lowp?
+        fragmentShaderCodeSnippets.append("    mediump vec4 " + qVariableName + " = texture2D(" + sourceVariableName + ", " + texVariableName + ".st);");
+        fragmentShaderVariableNames.append(qVariableName);
+        // mediump? lowp?
 
         *textureUnit++;
     } else {
-        fragmentShaderDeclarationSnippets[qVariableName] = QString ("const vec4 %1 = vec4(%2, %3, %4, %5);").arg( qVariableName).arg(fallbackColor.redF(), 0, 'f', 6).arg(fallbackColor.greenF(), 0, 'f', 6).arg(fallbackColor.blueF(), 0, 'f', 6).arg(fallbackColor.alphaF(), 0, 'f', 6 );
+        fragmentShaderDeclarationSnippets.append(QString ("const vec4 %1 = vec4(%2, %3, %4, %5);").arg( qVariableName).arg(fallbackColor.redF(), 0, 'f', 6).arg(fallbackColor.greenF(), 0, 'f', 6).arg(fallbackColor.blueF(), 0, 'f', 6).arg(fallbackColor.alphaF(), 0, 'f', 6 ));
+        fragmentShaderVariableNames.append(qVariableName);
     }
 }
 
@@ -162,18 +170,22 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
     d->addMaterialChannelsToShaderSnippets(material());
 
     // Fragment shader declarations:
-    d->fragmentShaderDeclarationSnippets["texture0"] = "uniform mediump sampler2D texture0;";
-    d->fragmentShaderDeclarationSnippets["qTexCoord0"] = "varying highp vec4 qTexCoord0;";
+    d->fragmentShaderDeclarationSnippets.append("uniform mediump sampler2D texture0;");
+    d->fragmentShaderVariableNames.append("texture0");
+    d->fragmentShaderDeclarationSnippets.append("varying highp vec4 qTexCoord0;");
+    d->fragmentShaderVariableNames.append("qTexCoord0");
 
     // Fragment Shader code
-    d->fragmentShaderCodeSnippets["lighting"] =
+    d->fragmentShaderCodeSnippets.append(
             "    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );\n"\
             "    if(intensity > 0.0)\n"\
             "   {\n"\
-            "       float specularIntensity = max( dot(qNormal, qHalfVector), 0.0 );\n"\
+            "       float specularIntensity = max( dot(perPixelNormal, qHalfVector), 0.0 );\n"\
             "       if(specularIntensity > 0.0)\n"\
             "           specularComponent = qSpecular  * pow(specularIntensity, shininess);\n"\
-            "   }\n";
+            "   }\n");
+    d->fragmentShaderVariableNames.append("lighting");
+
 
     // Replace the "end glue" to set colour from lighting
     d->fragmentShaderEndGlueSnippet =
@@ -192,15 +204,15 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
 void QGLColladaFxEffect::generateShaders()
 {
     setVertexShader(
-            QStringList(d->vertexShaderDeclarationSnippets.values()).join("\n")
+            d->vertexShaderDeclarationSnippets.join("\n")
             + "\n" + d->vertexShaderMainGlueSnippet
-            + QStringList(d->vertexShaderCodeSnippets.values()).join("\n")
+            + d->vertexShaderCodeSnippets.join("\n")
             + "\n" + d->vertexShaderEndGlueSnippet);
 
     setFragmentShader(
-            QStringList(d->fragmentShaderDeclarationSnippets.values()).join("\n")
+            d->fragmentShaderDeclarationSnippets.join("\n")
             + "\n" + d->fragmentShaderMainGlueSnippet
-            +  QStringList(d->fragmentShaderCodeSnippets.values()).join("\n")
+            +  d->fragmentShaderCodeSnippets.join("\n")
             + "\n" + d->fragmentShaderEndGlueSnippet);
 
     // Relink attributes if active
@@ -218,7 +230,7 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "attribute highp vec4 texCoords;\n"\
             "uniform highp mat4 matrix;\n"\
             "varying mediump vec3 qNormal;\n"\
-            "varying mediump vec3 qLightDirection;\n"
+            "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
             "uniform mediump vec3 pli;       // Position of the light\n"\
             "varying highp vec4 qTexCoord0; // TEMP\n" /* Got to get rid of this*/\
@@ -250,15 +262,16 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
 
     fragmentShaderMainGlueSnippet = QString(
             "varying mediump vec3 qNormal;\n"\
-            "varying mediump vec3 qLightDirection; "\
+            "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
             "uniform float shininess;\n"\
             "uniform vec4 color;\n"\
+            "vec3 perPixelNormal;"
             "\n"\
             "void main()\n"\
             "{\n"\
-            "    qNormal = normalize(qNormal);\n"\
-            "    float intensity =  max(dot(qNormal, qLightDirection), 0.0);\n"
+            "    perPixelNormal = normalize(qNormal);\n"\
+            "    float intensity =  max(dot(perPixelNormal, qLightDirection), 0.0);\n"
             );
 }
 
