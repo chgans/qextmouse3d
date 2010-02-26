@@ -94,6 +94,61 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QBox3D::QBox3D(const QArray<QVector3D>& points)
+
+    Constructs a finite box that encloses all of the specified \a points.
+*/
+
+/*!
+    \fn QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
+
+    Constructs a finite box that encloses all of the specified \a points.
+*/
+
+void QBox3D::expand(const QVector3D *points, int count)
+{
+    if (count <= 0 || boxtype == Infinite)
+        return;
+    qreal minx, miny, minz;
+    qreal maxx, maxy, maxz;
+    if (boxtype == Null) {
+        boxtype = Finite;
+        minx = maxx = points[0].x();
+        miny = maxy = points[0].y();
+        minz = maxz = points[0].z();
+        ++points;
+        --count;
+    } else {
+        minx = mincorner.x();
+        miny = mincorner.y();
+        minz = mincorner.z();
+        maxx = maxcorner.x();
+        maxy = maxcorner.y();
+        maxz = maxcorner.z();
+    }
+    while (count-- > 0) {
+        qreal x = points[0].x();
+        qreal y = points[0].y();
+        qreal z = points[0].z();
+        if (x < minx)
+            minx = x;
+        if (x > maxx)
+            maxx = x;
+        if (y < miny)
+            miny = y;
+        if (y > maxy)
+            maxy = y;
+        if (z < minz)
+            minz = z;
+        if (z > maxz)
+            maxz = z;
+        ++points;
+    }
+    mincorner = QVector3D(minx, miny, minz);
+    maxcorner = QVector3D(maxx, maxy, maxz);
+}
+
+/*!
     \fn bool QBox3D::isNull() const
 
     Returns true if this box is null; false otherwise.
@@ -457,6 +512,24 @@ void QBox3D::expand(const QBox3D& box)
 }
 
 /*!
+    \fn void QBox3D::expand(const QArray<QVector3D>& points)
+
+    Expands this box so that it also includes all of the
+    elements of \a points.
+
+    \sa expanded(), intersect()
+*/
+
+/*!
+    \fn void QBox3D::expand(const QArrayRef<QVector3D>& points)
+
+    Expands this box so that it also includes all of the
+    elements of \a points.
+
+    \sa expanded(), intersect()
+*/
+
+/*!
     Returns a new box which expands this box so that it also includes
     \a point.  The returned value will be the smallest box that contains
     both this box and \a point.
@@ -495,6 +568,26 @@ QBox3D QBox3D::expanded(const QBox3D& box) const
         return *this;
     }
 }
+
+/*!
+    \fn QBox3D QBox3D::expanded(const QArray<QVector3D>& points) const
+
+    Returns a new box which expands this box so that it also includes
+    all of the elements of \a points.  The returned value will be the
+    smallest box that contains both this box and all of the \a points.
+
+    \sa expand(), intersected()
+*/
+
+/*!
+    \fn QBox3D QBox3D::expanded(const QArrayRef<QVector3D>& points) const
+
+    Returns a new box which expands this box so that it also includes
+    all of the elements of \a points.  The returned value will be the
+    smallest box that contains both this box and all of the \a points.
+
+    \sa expand(), intersected()
+*/
 
 /*!
     Translates this box by \a vector.
