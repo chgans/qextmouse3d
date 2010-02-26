@@ -120,7 +120,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
 {
     //! [2]
     QGLDisplayList *soupCan = new QGLDisplayList();
-    QGLMaterialCollection *mats = soupCan->geometry()->palette();
+    QGLMaterialCollection *mats = soupCan->palette();
 
     QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
     parms->setAmbientColor(QColor(32, 32, 64));

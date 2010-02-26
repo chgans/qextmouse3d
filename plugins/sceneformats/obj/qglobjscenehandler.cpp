@@ -143,7 +143,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     // Create the display list and start an initial Faceted section.
     QGLDisplayList *dlist = new QGLDisplayList();
     dlist->newSection(smoothing);
-    palette = dlist->geometry()->palette();
+    palette = dlist->palette();
     defaultNode = dlist;
     defaultNode->setObjectName(QLatin1String("__main"));
     dlist->pushNode();

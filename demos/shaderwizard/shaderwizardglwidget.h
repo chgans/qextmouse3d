@@ -86,7 +86,7 @@ public:
     int materialShininess();
 
 public slots:
-    void setGeometry(QGLGeometry *geom);
+    void setGeometry(QGLSceneNode *geom);
 
     void setCubeGeometry();
     void setSphereGeometry();
@@ -121,10 +121,10 @@ private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
-    void setDefaultCamera(QGLGeometry* geometry);
+    void setDefaultCamera(QGLSceneNode* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
-    QGLGeometry *mGeometry;
+    QGLSceneNode *mGeometry;
     QGLAbstractScene *mSceneManager;
     QGLSceneObject *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;

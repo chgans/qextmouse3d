@@ -61,6 +61,7 @@
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
+#include "qgeometrydata.h"
 
 QT_BEGIN_NAMESPACE
 

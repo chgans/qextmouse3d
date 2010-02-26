@@ -60,7 +60,6 @@
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
 
-class QGLGeometry;
 class QGLAbstractEffect;
 
 class QGLSceneNodePrivate : public QGLSceneObjectPrivate
@@ -80,7 +79,8 @@ public:
     {
     }
 
-    QGLGeometry *geometry;
+    QGeometryData *geometry;
+    QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;

@@ -54,10 +54,22 @@ QT_BEGIN_NAMESPACE
 
 class QGeometryDataPrivate;
 class QLogicalVertex;
+class QGLPainter;
 
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
+
+    enum BufferStrategy
+    {
+        InvalidStrategy     = 0x00,
+        KeepClientData      = 0x01,
+        SaveGPUMemory       = KeepClientData,
+        BufferIfPossible    = 0x02,
+        SaveClientMemory    = BufferIfPossible,
+        StaticStrategy      = BufferIfPossible,
+        DynamicStrategy     = BufferIfPossible | KeepClientData,
+    };
 }
 
 class Q_QT3D_EXPORT QGeometryData
@@ -83,9 +95,15 @@ public:
     void clear();
     void clear(QGL::VertexAttribute);
     void reserve(int amount);
+    void draw(QGLPainter *painter, int start, int count);
+    bool upload();
+    void setBufferStrategy(QGL::BufferStrategy strategy);
+    QGL::BufferStrategy bufferStrategy() const;
+    const QGLVertexBuffer *vertexBuffer() const;
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);
+    void appendIndices(const QGLIndexArray &indices);
     QGLIndexArray indices() const;
 
     void appendVertex(const QVector3D &v0);
@@ -146,11 +164,13 @@ public:
     QVector2D vector2DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
     QVector3D vector3DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
 
+    QGLAttributeValue attributeValue(QGL::VertexAttribute field) const;
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
     quint32 fields() const;
     int count() const;
     int count(QGL::VertexAttribute field) const;
+    int indexCount() const;
 protected:
     const QVector3DArray *vertexData() const;
 private:

@@ -183,15 +183,14 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         op << t0 << t1 << t2;
     }
 
-    QGLMaterialCollection *pal = geometry()->palette();
     QGLMaterialParameters *mat = new QGLMaterialParameters;
     mat->setAmbientColor(QColor(32, 64, 196));
     mat->setDiffuseColor(QColor(32, 32, 32));
-    int m = pal->addMaterial(mat);
+    int m = palette()->addMaterial(mat);
 
     QGLTexture2D *texture = new QGLTexture2D;
     texture->setImage(uv);
-    pal->setTexture(m, texture);
+    palette()->setTexture(m, texture);
 
     setMaterial(m);
 

@@ -72,6 +72,7 @@ class QGLStencilBufferOptions;
 class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
+class QGeometryData;
 
 class Q_QT3D_EXPORT QGLPainter
 {

@@ -263,7 +263,6 @@ public:
         norms.insertMulti(index, norm);
     }
 
-    QGLIndexArray indices;
     QVector3DMapper *map;
     QHash<int, QVector3D> norms;
     bool finalized;
@@ -415,7 +414,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
 {
     int index = appendVertex(lv);
     d->map->insert(lv.vertex(), index);
-    d->indices.append(index);
+    appendIndex(index);
     return index;
 }
 
@@ -484,7 +483,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
         }
         else
         {
-            d->indices.append(it->value());
+            appendIndex(it->value());
             it = d->map->find(lv.vertex());
             while (!d->map->atEnd(it) && it->key() == lv.vertex())
             {
@@ -538,7 +537,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
         else
             ++*it;
     if (coalesce) // found
-        d->indices.append(it->value());
+        appendIndex(it->value());
     else
         appendOne(lv);
     d->finalized = false;
@@ -558,27 +557,6 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
     d->finalized = false;
     m_displayList->setDirty(true);
 }
-
-/*!
-    \internal
-    Return a copy of the index data for this section.  Since the data
-    is implicitly shared this call is inexpensive, unless the copy is
-    modified.
-*/
-QGLIndexArray QGLSection::indices() const
-{
-    return d->indices;
-}
-
-/*!
-    \internal
-    Returns the count of indices.  This is the same as indices().size().
-*/
-int QGLSection::indexCount() const
-{
-    return d->indices.size();
-}
-
 
 /*!
     \internal

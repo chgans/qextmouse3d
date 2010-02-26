@@ -430,10 +430,9 @@ QGLDisplayListPrivate::~QGLDisplayListPrivate()
 QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials)
     : QGLSceneNode(*new QGLDisplayListPrivate, parent)
 {
-    setGeometry(new QGLGeometry(this));
     if (!materials)
         materials = new QGLMaterialCollection(this);
-    geometry()->setPalette(materials);
+    setPalette(materials);
 }
 
 /*!
@@ -752,15 +751,9 @@ void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
 
 /*!
     \internal
-    Adjust the nodes in \a sec by shifting their start by \a offset,
-    and setting their  geometry to \a geom.  D  If \a top is null, this
-    function does nothing. Returns the total number of indexes for this
-    node, and all its children.  If the node has total number of indexes
-    equal to zero, then delete it.  If the node has children do the same
-    recursively to all of them.
 */
 void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
-                                       int offset, QGLGeometry *geom)
+                                       int offset, QGeometryData *geom)
 {
     QList<QGLSceneNode*> children = sec->nodes();
     QList<QGLSceneNode*>::iterator it = children.begin();
@@ -768,8 +761,15 @@ void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
         adjustNodeTree(*it, offset, geom);
 }
 
+/*!
+    \internal
+    Adjust \a top by incrementing its start by \a offset, and setting its
+    geometry to \a geom.  Find the cumulative total of indexes -
+    QGLSceneNode::count() - for \a top and all its children.  If this total is
+    equal to zero, then delete that node.
+*/
 int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
-                                   int offset, QGLGeometry *geom)
+                                   int offset, QGeometryData *geom)
 {
     int totalItems = 0;
     if (top)
@@ -855,15 +855,13 @@ void QGLDisplayList::finalize()
     if (d->finalizeNeeded)
     {
         end();
-        QGLGeometry *g = 0;
-        QMap<quint32, QGLGeometry *> geos;
-        int secNum = 0;
+        QGeometryData *g = 0;
+        QMap<quint32, QGeometryData *> geos;
         while (d->sections.count())
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
             QGLIndexArray indices = s->indices();
-            const QGLIndexArray::ElementType *vi = indices.constData();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
             int scnt = s->count();
@@ -882,41 +880,24 @@ void QGLDisplayList::finalize()
             s->normalizeNormals();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
-            QMap<quint32, QGLGeometry *>::const_iterator it =
+            QMap<quint32, QGeometryData *>::const_iterator it =
                     geos.constFind(s->fields());
             if (it != geos.constEnd())
             {
                 g = it.value();
-                QGLVertexArray va = g->vertexArray();
-                sectionOffset = va.vertexCount();
-                va.append(s->toVertexArray());
-                QGLIndexArray ia = g->indexArray();
-                sectionIndexOffset = ia.size();
+                sectionOffset = g->count();
+                sectionIndexOffset = g->indexCount();
+                g->appendGeometry(*s);
                 for (int i = 0; i < icnt; ++i)
-                    ia.append(vi[i] + sectionOffset);
-                g->setVertexArray(va);
-                g->setIndexArray(ia);
+                    indices[i] += sectionOffset;
+                g->appendIndices(indices);
             }
             else
             {
-                if (g == 0)
-                    g = geometry();
-                else
-                    g = new QGLGeometry(this);
-                g->setVertexArray(s->toVertexArray());
-                QGLIndexArray iry;
-                iry.reserve(icnt);
-                for (int i = 0; i < icnt; ++i)
-                    iry.append(vi[i]);
-                g->setIndexArray(iry);
-                g->setDrawingMode(QGL::Triangles);
-                g->setPalette(geometry()->palette());
+                g = new QGeometryData(*s);
                 geos.insert(s->fields(), g);
             }
             adjustSectionNodes(s, sectionIndexOffset, g);
-            g->setBoundingBox(g->boundingBox().expanded(s->boundingBox()));
-            delete s;
-            ++secNum;
         }
         d->finalizeNeeded = false;
     }
@@ -1006,7 +987,7 @@ QGLSceneNode *QGLDisplayList::newNode()
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
-    d->currentNode = new QGLSceneNode(parentNode);
+    d->currentNode = new QGLSceneNode(geometry(), parentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
     connect(d->currentNode, SIGNAL(destroyed(QObject*)),
             this, SLOT(deleteNode(QObject*)));
@@ -1068,7 +1049,7 @@ QGLSceneNode *QGLDisplayList::pushNode()
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
     d->nodeStack.append(d->currentNode);
-    d->currentNode = new QGLSceneNode(d->currentNode);
+    d->currentNode = new QGLSceneNode(geometry(), d->currentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
     return d->currentNode;
 }
@@ -1099,6 +1080,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     d->currentNode = s->clone(parentNode);
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
+    d->currentNode->setGeometry(geometry());
     if (d->nodeStack.count() == 0)
         d->currentSection->addNode(d->currentNode);
     return d->currentNode;

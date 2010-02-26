@@ -77,8 +77,6 @@ public:
 
     void reserve(int amount);
 
-    QGLIndexArray indices() const;
-    int indexCount() const;
     void append(const QLogicalVertex &lv);
     void append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c);
     void appendSmooth(const QLogicalVertex &lv);

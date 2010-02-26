@@ -200,7 +200,7 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     }
 }
 
-void ShaderWizardGLWidget::setGeometry(QGLGeometry *newGeometry)
+void ShaderWizardGLWidget::setGeometry(QGLSceneNode *newGeometry)
 {
     mGeometry = newGeometry;
 
@@ -214,8 +214,10 @@ void ShaderWizardGLWidget::setGeometry(QGLGeometry *newGeometry)
             materialIndex = mGeometry->palette()->addMaterial(mMaterial);
         mGeometry->setMaterial(materialIndex);
     }
-
-    setDefaultCamera(newGeometry);
+    else
+    {
+        setDefaultCamera(newGeometry);
+    }
 
     clearScene();
     update();
@@ -314,7 +316,7 @@ void ShaderWizardGLWidget::setSquareGeometry()
         *square << QGLHeightMap(101, 101);
         square->finalize();
     }
-    setGeometry(square->geometry());
+    setGeometry(square);
 }
 
 void ShaderWizardGLWidget::setCubeGeometry()
@@ -325,7 +327,7 @@ void ShaderWizardGLWidget::setCubeGeometry()
         *cube << QGLCube();
         cube->finalize();
     }
-    setGeometry(cube->geometry());
+    setGeometry(cube);
 }
 
 void ShaderWizardGLWidget::setSphereGeometry()
@@ -335,7 +337,7 @@ void ShaderWizardGLWidget::setSphereGeometry()
         *sphere << QGLSphere(2.0, 3);
         sphere->finalize();
     }
-    setGeometry(sphere->geometry());
+    setGeometry(sphere);
 }
 
 void ShaderWizardGLWidget::setTeapotGeometry()
@@ -345,7 +347,7 @@ void ShaderWizardGLWidget::setTeapotGeometry()
         *teapot << QGLTeapot();
         teapot->finalize();
     }
-    setGeometry(teapot->geometry());
+    setGeometry(teapot);
 }
 
 void ShaderWizardGLWidget::setHeightMapGeometry()
@@ -355,7 +357,7 @@ void ShaderWizardGLWidget::setHeightMapGeometry()
         *ripple << RippleHeightMap(101,101);
         ripple->finalize();
     }
-    setGeometry(ripple->geometry());
+    setGeometry(ripple);
 }
 
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)
@@ -395,7 +397,7 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     // Point camera at the new model
     if (mSceneRoot && mSceneRoot->geometry())
     {
-        setDefaultCamera(mSceneRoot->geometry());
+        setDefaultCamera(mSceneRoot);
     }
     update();
 }
@@ -407,7 +409,7 @@ void ShaderWizardGLWidget::setSceneObject(QObject* object)
     update();
 }
 
-void ShaderWizardGLWidget::setDefaultCamera(QGLGeometry* geometry)
+void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* geometry)
 {
     QVector3D boxOrigin(0.0f, 0.0f, 0.0f);
     qreal viewDistance = 15.0; // default zoom if there's no reasonable box;
@@ -415,7 +417,7 @@ void ShaderWizardGLWidget::setDefaultCamera(QGLGeometry* geometry)
 
     QBox3D box;
     if(geometry)
-        box = geometry->boundingBox();
+        box = geometry->geometry()->boundingBox();
 
     if (!box.isNull())
     {

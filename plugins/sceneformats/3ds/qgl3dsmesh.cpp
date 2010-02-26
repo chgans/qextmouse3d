@@ -66,16 +66,15 @@ QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
 
 void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
 {
-    QGLMaterialCollection *palette = geometry()->palette();
     QString baseName = objectName();
-
     node->setMaterial(matIx);
     node->setObjectName(baseName + QLatin1String("::") +
-                        ((matIx == -1) ? QString("No_Material") : palette->materialName(matIx)));
-
+                        ((matIx == -1)
+                         ? QString("No_Material")
+                             : palette()->materialName(matIx)));
     checkTextures(matIx);
     generateVertices();
-    palette->markMaterialAsUsed(matIx);
+    palette()->markMaterialAsUsed(matIx);
 }
 
 void QGL3dsMesh::initialize()
@@ -149,7 +148,7 @@ void QGL3dsMesh::initialize()
 */
 void QGL3dsMesh::analyzeMesh()
 {
-    QGLMaterialCollection *pal = geometry()->palette();
+    QGLMaterialCollection *pal = palette();
     Lib3dsFace *face;
     Lib3dsDword allKeys = 0;
     m_smoothingGroupCount = 0;
@@ -206,7 +205,7 @@ void QGL3dsMesh::analyzeMesh()
 */
 void QGL3dsMesh::checkTextures(int material)
 {
-    QGLTexture2D *tex = geometry()->palette()->texture(material);
+    QGLTexture2D *tex = palette()->texture(material);
     m_hasTextures = false;
     if (tex)
     {
@@ -264,7 +263,6 @@ void QGL3dsMesh::generateVertices()
 {
     int matIx = currentNode()->material();
     int keyCount = m_smoothingGroupCount;
-    QGLMaterialCollection *palette = geometry()->palette();
     QString baseName = currentNode()->objectName();
     for (Lib3dsDword key = 1; key; key <<= 1)
     {
@@ -276,7 +274,7 @@ void QGL3dsMesh::generateVertices()
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             {
                 Lib3dsFace *face = &m_mesh->faceL[f];
-                if (palette->materialIndexByName(face->material) == matIx &&
+                if (palette()->materialIndexByName(face->material) == matIx &&
                     ((key & face->smoothing) || (key == 1 && face->smoothing == 0)))
                 {
                     Lib3dsVector &l3a = m_mesh->pointL[face->points[0]].pos;
