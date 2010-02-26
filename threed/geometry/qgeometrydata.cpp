@@ -118,6 +118,7 @@ class QGeometryDataPrivate
 public:
     QGeometryDataPrivate();
     ~QGeometryDataPrivate();
+    QGeometryDataPrivate *clone() const;
 
     QBasicAtomicInt ref;
 
@@ -160,6 +161,30 @@ QGeometryDataPrivate::QGeometryDataPrivate()
 QGeometryDataPrivate::~QGeometryDataPrivate()
 {
     delete vertexBuffer;
+}
+
+QGeometryDataPrivate *QGeometryDataPrivate::clone() const
+{
+    QGeometryDataPrivate *temp = new QGeometryDataPrivate;
+    temp->vertices = vertices;
+    temp->normals = normals;
+    temp->colors = colors;
+    temp->attributes = attributes;
+    temp->textures = textures;
+    temp->indices = indices;
+    temp->vertexBuffer = vertexBuffer;
+    temp->uploadsViable = uploadsViable;
+    temp->modified = modified;
+    temp->bb = bb;
+    temp->commonNormal = commonNormal;
+    temp->fields = fields;
+    qMemCopy(temp->key, key, ATTR_CNT);
+    qMemCopy(temp->size, size, ATTR_CNT);
+    temp->count = count;
+    temp->reserved = reserved;
+    temp->boxValid = boxValid;
+    temp->bufferStrategy = bufferStrategy;
+    return temp;
 }
 
 /*!
@@ -268,6 +293,7 @@ void QGeometryData::appendGeometry(const QGeometryData &data)
     if (data.d && data.count())
     {
         detach();
+        d->modified = true;
         d->boxValid = false;
         int cnt = data.d->count;
         const quint32 mask = 0x01;
@@ -310,6 +336,7 @@ void QGeometryData::appendGeometry(const QGeometryData &data)
 int QGeometryData::appendVertex(const QLogicalVertex &v)
 {
     detach();
+    d->modified = true;
     if (d->boxValid)
         d->bb.expand(v.vertex());
     quint32 fields = v.fields();
@@ -416,6 +443,7 @@ void QGeometryData::normalizeNormals()
     if (d)  // nothng to do if its null
     {
         detach();
+        d->modified = true;
         if (hasField(QGL::Normal))
         {
             for (int i = 0; i < d->normals.count(); ++i)
@@ -455,6 +483,7 @@ void QGeometryData::setCommonNormal(const QVector3D &normal)
     if (!d && normal.isNull())
         return
     detach();
+    d->modified = true;
     d->commonNormal = normal;
 }
 
@@ -573,6 +602,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
     if (d && other.d)
     {
         detach();
+        d->modified = true;
         d->boxValid = false;
         int cnt = qMin(d->count, other.d->count);
         const quint32 mask = 0x01;
@@ -674,6 +704,7 @@ void QGeometryData::clear()
     if (d)
     {
         detach();
+        d->modified = true;
         d->bb = QBox3D();
         d->boxValid = true;
         const quint32 mask = 0x01;
@@ -715,6 +746,7 @@ void QGeometryData::clear(QGL::VertexAttribute field)
     if (d && (QGL::fieldMask(field) & d->fields))
     {
         detach();
+        d->modified = true;
         if (field == QGL::Position)
         {
             d->bb = QBox3D();
@@ -888,7 +920,12 @@ bool QGeometryData::upload()
 */
 void QGeometryData::setBufferStrategy(QGL::BufferStrategy strategy)
 {
-    d->bufferStrategy = strategy;
+    if (!d || d->bufferStrategy != strategy)
+    {
+        detach();
+        d->modified = true;
+        d->bufferStrategy = strategy;
+    }
 }
 
 /*!
@@ -896,16 +933,20 @@ void QGeometryData::setBufferStrategy(QGL::BufferStrategy strategy)
 */
 QGL::BufferStrategy QGeometryData::bufferStrategy() const
 {
-    return d->bufferStrategy;
+    if (d)
+        return d->bufferStrategy;
+    return QGL::InvalidStrategy;
 }
 
 /*!
-    Returns a pointer tothe vertex buffer for this geometry, or null if
+    Returns a pointer to the vertex buffer for this geometry, or null if
     no vertex buffer exists.
 */
 const QGLVertexBuffer *QGeometryData::vertexBuffer() const
 {
-    return d->vertexBuffer;
+    if (d)
+        return d->vertexBuffer;
+    return 0;
 }
 
 /*!
@@ -916,6 +957,7 @@ const QGLVertexBuffer *QGeometryData::vertexBuffer() const
 void QGeometryData::appendIndex(int index)
 {
     detach();
+    d->modified = true;
     d->indices.append(index);
 }
 
@@ -928,6 +970,7 @@ void QGeometryData::appendIndex(int index)
 void QGeometryData::appendIndices(int index1, int index2, int index3)
 {
     detach();
+    d->modified = true;
     d->indices.append(index1, index2, index3);
 }
 
@@ -950,6 +993,7 @@ QGLIndexArray QGeometryData::indices() const
 void QGeometryData::appendIndices(const QGLIndexArray &indices)
 {
     detach();
+    d->modified = true;
     d->indices.append(indices);
 }
 
@@ -959,6 +1003,7 @@ void QGeometryData::appendIndices(const QGLIndexArray &indices)
 void QGeometryData::appendVertex(const QVector3D &v0)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Position);
     d->vertices.append(v0);
     if (d->boxValid)
@@ -972,6 +1017,7 @@ void QGeometryData::appendVertex(const QVector3D &v0)
 void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Position);
     d->vertices.append(v0, v1);
     if (d->boxValid)
@@ -988,6 +1034,7 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1)
 void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Position);
     d->vertices.append(v0, v1, v2);
     if (d->boxValid)
@@ -1005,6 +1052,7 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const
 void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const QVector3D &v2, const QVector3D &v3)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Position);
     d->vertices.append(v0, v1, v2, v3);
     if (d->boxValid)
@@ -1023,6 +1071,7 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const
 void QGeometryData::appendAttribute(float a0, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a0);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1034,6 +1083,7 @@ void QGeometryData::appendAttribute(float a0, QGL::VertexAttribute field)
 void QGeometryData::appendAttribute(float a0, float a1, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a0, a1);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1045,6 +1095,7 @@ void QGeometryData::appendAttribute(float a0, float a1, QGL::VertexAttribute fie
 void QGeometryData::appendAttribute(float a0, float a1, float a2, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a0, a1, a2);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1056,6 +1107,7 @@ void QGeometryData::appendAttribute(float a0, float a1, float a2, QGL::VertexAtt
 void QGeometryData::appendAttribute(float a0, float a1, float a2, float a3, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a0, a1, a2, a3);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1067,6 +1119,7 @@ void QGeometryData::appendAttribute(float a0, float a1, float a2, float a3, QGL:
 void QGeometryData::appendAttribute(const QVector2D &a, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1078,6 +1131,7 @@ void QGeometryData::appendAttribute(const QVector2D &a, QGL::VertexAttribute fie
 void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(v);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1089,6 +1143,7 @@ void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute fie
 void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->attributes[d->key[field]].append(a);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1100,6 +1155,7 @@ void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute fiel
 void QGeometryData::appendNormal(const QVector3D &n0)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Normal);
     d->normals.append(n0);
     d->count = qMax(d->count, d->normals.count());
@@ -1111,6 +1167,7 @@ void QGeometryData::appendNormal(const QVector3D &n0)
 void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Normal);
     d->normals.append(n0, n1);
     d->count = qMax(d->count, d->normals.count());
@@ -1122,6 +1179,7 @@ void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1)
 void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Normal);
     d->normals.append(n0, n1, n2);
     d->count = qMax(d->count, d->normals.count());
@@ -1133,6 +1191,7 @@ void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const
 void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const QVector3D &n2, const QVector3D &n3)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Normal);
     d->normals.append(n0, n1, n2, n3);
     d->count = qMax(d->count, d->normals.count());
@@ -1144,6 +1203,7 @@ void QGeometryData::appendNormal(const QVector3D &n0, const QVector3D &n1, const
 void QGeometryData::appendTexCoord(const QVector2D &t0, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->textures[d->key[field]].append(t0);
     d->count = qMax(d->count, d->textures[d->key[field]].count());
@@ -1155,6 +1215,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, QGL::VertexAttribute fie
 void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->textures[d->key[field]].append(t0, t1);
     d->count = qMax(d->count, d->textures[d->key[field]].count());
@@ -1166,6 +1227,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, QGL
 void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->textures[d->key[field]].append(t0, t1, t2);
     d->count = qMax(d->count, d->textures[d->key[field]].count());
@@ -1177,6 +1239,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, con
 void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, const QVector2D &t3, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     enableField(field);
     d->textures[d->key[field]].append(t0, t1, t2, t3);
     d->count = qMax(d->count, d->textures[d->key[field]].count());
@@ -1188,6 +1251,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, con
 void QGeometryData::appendColor(const QColor4B &c0)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Color);
     d->colors.append(c0);
     d->count = qMax(d->count, d->colors.count());
@@ -1199,6 +1263,7 @@ void QGeometryData::appendColor(const QColor4B &c0)
 void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Color);
     d->colors.append(c0, c1);
     d->count = qMax(d->count, d->colors.count());
@@ -1210,6 +1275,7 @@ void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1)
 void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Color);
     d->colors.append(c0, c1, c2);
     d->count = qMax(d->count, d->colors.count());
@@ -1221,6 +1287,7 @@ void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QC
 void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2, const QColor4B &c3)
 {
     detach();
+    d->modified = true;
     enableField(QGL::Color);
     d->colors.append(c0, c1, c2, c3);
     d->count = qMax(d->count, d->colors.count());
@@ -1234,6 +1301,7 @@ void QGeometryData::appendVertexArray(const QVector3DArray &ary)
     if (ary.count())
     {
         detach();
+        d->modified = true;
         d->boxValid = false;
         enableField(QGL::Position);
         d->vertices.append(ary);
@@ -1249,6 +1317,7 @@ void QGeometryData::appendAttributeArray(const QCustomDataArray &ary, QGL::Verte
     if (ary.count())
     {
         detach();
+        d->modified = true;
         enableField(field);
         d->attributes[d->key[field]].append(ary);
         d->count = qMax(d->count, d->attributes[d->key[field]].count());
@@ -1263,6 +1332,7 @@ void QGeometryData::appendNormalArray(const QVector3DArray &ary)
     if (ary.count())
     {
         detach();
+        d->modified = true;
         enableField(QGL::Normal);
         d->normals.append(ary);
         d->count = qMax(d->count, d->normals.count());
@@ -1277,6 +1347,7 @@ void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAt
     if (ary.count())
     {
         detach();
+        d->modified = true;
         enableField(field);
         d->textures[d->key[field]].append(ary);
         d->count = qMax(d->count, d->textures[d->key[field]].count());
@@ -1291,6 +1362,7 @@ void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
     if (ary.count())
     {
         detach();
+        d->modified = true;
         enableField(QGL::Color);
         d->colors.append(ary);
         d->count = qMax(d->count, d->colors.count());
@@ -1303,6 +1375,7 @@ void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
 QVector3D &QGeometryData::vertexRef(int i)
 {
     detach();
+    d->modified = true;
     d->boxValid = false;
     return d->vertices[i];
 }
@@ -1344,6 +1417,7 @@ QVector3D QGeometryData::vertex(int i) const
 QVector3D &QGeometryData::normalRef(int i)
 {
     detach();
+    d->modified = true;
     return d->normals[i];
 }
 
@@ -1372,6 +1446,7 @@ QVector3DArray QGeometryData::normals() const
 QColor4B &QGeometryData::colorRef(int i)
 {
     detach();
+    d->modified = true;
     return d->colors[i];
 }
 
@@ -1400,6 +1475,7 @@ QArray<QColor4B> QGeometryData::colors() const
 QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     return d->textures[d->key[field]][i];
 }
 
@@ -1426,6 +1502,7 @@ QVector2D QGeometryData::texCoord(int i, QGL::VertexAttribute field) const
 float &QGeometryData::floatAttributeRef(int i, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     QCustomDataArray &ary = d->attributes[d->key[field]];
     Q_ASSERT(ary.elementType() == QCustomDataArray::Float);
     return ary.m_array[i];
@@ -1437,6 +1514,7 @@ float &QGeometryData::floatAttributeRef(int i, QGL::VertexAttribute field)
 QVector2D &QGeometryData::vector2DAttributeRef(int i, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     QCustomDataArray &ary = d->attributes[d->key[field]];
     Q_ASSERT(ary.elementType() == QCustomDataArray::Vector2D);
     float *data = ary.m_array.data();
@@ -1450,6 +1528,7 @@ QVector2D &QGeometryData::vector2DAttributeRef(int i, QGL::VertexAttribute field
 QVector3D &QGeometryData::vector3DAttributeRef(int i, QGL::VertexAttribute field)
 {
     detach();
+    d->modified = true;
     QCustomDataArray &ary = d->attributes[d->key[field]];
     Q_ASSERT(ary.elementType() == QCustomDataArray::Vector3D);
     float *data = ary.m_array.data();
@@ -1537,6 +1616,7 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     if (d && d->key[field] != -1)
         return;
     detach();
+    d->modified = true;
     Q_ASSERT(field < d->ATTR_CNT); // don't expand that enum too much
     d->fields |= (1 << field);
     switch (field)
@@ -1673,20 +1753,10 @@ void QGeometryData::detach()
     {
         if (d->ref > 1)  // being shared, must detach
         {
-            QGeometryDataPrivate *temp = new QGeometryDataPrivate;
-            temp->vertices = d->vertices;
-            temp->normals = d->normals;
-            temp->colors = d->colors;
-            temp->attributes = d->attributes;
-            temp->indices = d->indices;
-            temp->textures = d->textures;
-            temp->fields = d->fields;
-            qMemCopy(temp->key, d->key, d->ATTR_CNT);
-            qMemCopy(temp->size, d->size, d->ATTR_CNT);
-            temp->count = d->count;
-            temp->ref.ref();
+            QGeometryDataPrivate *temp = d->clone();
             d->ref.deref();
             d = temp;
+            d->ref.ref();
         }
     }
 }
