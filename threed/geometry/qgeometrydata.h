@@ -59,17 +59,6 @@ class QGLPainter;
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
-
-    enum BufferStrategy
-    {
-        InvalidStrategy     = 0x00,
-        KeepClientData      = 0x01,
-        SaveGPUMemory       = KeepClientData,
-        BufferIfPossible    = 0x02,
-        SaveClientMemory    = BufferIfPossible,
-        StaticStrategy      = BufferIfPossible,
-        DynamicStrategy     = BufferIfPossible | KeepClientData,
-    };
 }
 
 class Q_QT3D_EXPORT QGeometryData
@@ -97,8 +86,15 @@ public:
     void reserve(int amount);
     void draw(QGLPainter *painter, int start, int count);
     bool upload();
-    void setBufferStrategy(QGL::BufferStrategy strategy);
-    QGL::BufferStrategy bufferStrategy() const;
+    enum BufferStrategyFlags
+    {
+        InvalidStrategy     = 0x00,
+        KeepClientData      = 0x01,
+        BufferIfPossible    = 0x02,
+    };
+    Q_DECLARE_FLAGS(BufferStrategy, BufferStrategyFlags)
+    void setBufferStrategy(BufferStrategy strategy);
+    BufferStrategy bufferStrategy() const;
     const QGLVertexBuffer *vertexBuffer() const;
 
     void appendIndex(int index);
@@ -184,6 +180,8 @@ private:
 
     QGeometryDataPrivate *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGeometryData::BufferStrategy);
 
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGeometryData &vertices);

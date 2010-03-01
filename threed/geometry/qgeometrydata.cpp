@@ -140,7 +140,7 @@ public:
     int count;
     int reserved;
     bool boxValid;
-    QGL::BufferStrategy bufferStrategy;
+    QGeometryData::BufferStrategy bufferStrategy;
 };
 
 QGeometryDataPrivate::QGeometryDataPrivate()
@@ -151,7 +151,7 @@ QGeometryDataPrivate::QGeometryDataPrivate()
     , count(0)
     , reserved(-1)
     , boxValid(true)
-    , bufferStrategy(QGL::DynamicStrategy)
+    , bufferStrategy(QGeometryData::BufferIfPossible | QGeometryData::KeepClientData)
 {
     ref = 0;
     qMemSet(key, -1, ATTR_CNT);
@@ -216,12 +216,6 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
     \value InvalidStrategy No valid strategy has been specified.
     \value KeepClientData Keep the client data, even after successful upload to the GPU.
     \value BufferIfPossible Try to upload the data to the GPU.
-
-    \value SaveGPUMemory An alias for KeepClientData (but do not buffer ever).
-    \value SaveClientMemory An alias for BufferIfPossible (but do not keep client data after upload).
-
-    \value StaticStrategy An alias for BufferIfPossible (but do not keep client data), suitable for unchangnging data
-    \value DynamicStrategy An alias for KeepClientData | BufferIfPossible, suitable for data which changes during runtime
 */
 
 /*!
@@ -842,8 +836,11 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
                 painter->setVertexAttribute(attr, attributeValue(attr));
             }
         }
+        qDebug() << "drawing" << this << "count:" << count;
         if (count == 0)
             count = d->indices.size();
+        qDebug() << "-------" << this << "count:" << count << "(indices.count()"
+                << d->indices.size() << ") starting:" << start;
         painter->draw(QGL::Triangles, d->indices, start, count);
     }
 }
@@ -866,7 +863,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
 bool QGeometryData::upload()
 {
     bool vboUploaded = false;
-    if (d && d->uploadsViable && (d->bufferStrategy & QGL::BufferIfPossible))
+    if (d && d->uploadsViable && (d->bufferStrategy & BufferIfPossible))
     {
         vboUploaded = true;
         if (d->modified)
@@ -895,7 +892,7 @@ bool QGeometryData::upload()
                 }
                 if (d->vertexBuffer->upload())
                 {
-                    if (!(d->bufferStrategy & QGL::KeepClientData))
+                    if (!(d->bufferStrategy & KeepClientData))
                         clear();
                 }
                 else
@@ -917,8 +914,10 @@ bool QGeometryData::upload()
 
 /*!
     Sets the buffer \a strategy for this geometry.
+
+    \sa bufferStrategy()
 */
-void QGeometryData::setBufferStrategy(QGL::BufferStrategy strategy)
+void QGeometryData::setBufferStrategy(QGeometryData::BufferStrategy strategy)
 {
     if (!d || d->bufferStrategy != strategy)
     {
@@ -929,13 +928,16 @@ void QGeometryData::setBufferStrategy(QGL::BufferStrategy strategy)
 }
 
 /*!
-    Returns the buffer strategy for this geometry.
+    Returns the buffer strategy for this geometry.  The default is
+    \c{QGL::BufferIfPossible | QGL::KeepClientData}.
+
+    \sa setBufferStrategy()
 */
-QGL::BufferStrategy QGeometryData::bufferStrategy() const
+QGeometryData::BufferStrategy QGeometryData::bufferStrategy() const
 {
     if (d)
         return d->bufferStrategy;
-    return QGL::InvalidStrategy;
+    return InvalidStrategy;
 }
 
 /*!
