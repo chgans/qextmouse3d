@@ -491,11 +491,12 @@ void QGeometryData::setCommonNormal(const QVector3D &normal)
     value, if it is non-null.  In this way, the common normal overrides any
     geometry data set.
 */
-QVector3D QGeometryData::commonNormal() const
+const QVector3D &QGeometryData::commonNormal() const
 {
+    static QVector3D def;
     if (d)
         return d->commonNormal;
-    return QVector3D();
+    return def;
 }
 
 /*!
@@ -819,7 +820,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
 {
     if (d && d->indices.size() && d->count)
     {
-        if (upload())
+        if (false) // upload())
         {
             Q_ASSERT(d->vertexBuffer);
             painter->setVertexBuffer(*d->vertexBuffer);
@@ -836,11 +837,15 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
                 painter->setVertexAttribute(attr, attributeValue(attr));
             }
         }
-        qDebug() << "drawing" << this << "count:" << count;
+        static bool debugged = false;
+        if (!debugged)
+            qDebug() << "drawing" << this << "count:" << count;
         if (count == 0)
             count = d->indices.size();
-        qDebug() << "-------" << this << "count:" << count << "(indices.count()"
-                << d->indices.size() << ") starting:" << start;
+        if (!debugged)
+            qDebug() << "-------" << this << "count:" << count << "(indices.count()"
+                    << d->indices.size() << ") starting:" << start;
+        debugged = true;
         painter->draw(QGL::Triangles, d->indices, start, count);
     }
 }
@@ -1405,9 +1410,9 @@ const QVector3DArray *QGeometryData::vertexData() const
 
 
 /*!
-    Returns a copy of the vertex position data at index \a i.
+    Returns the vertex position data at index \a i.
 */
-QVector3D QGeometryData::vertex(int i) const
+const QVector3D &QGeometryData::vertex(int i) const
 {
     Q_ASSERT(hasField(QGL::Position));
     return d->vertices.at(i);
@@ -1424,9 +1429,9 @@ QVector3D &QGeometryData::normalRef(int i)
 }
 
 /*!
-    Returns a copy of the normal data at index \a i.
+    Returns the normal data at index \a i.
 */
-QVector3D QGeometryData::normal(int i) const
+const QVector3D &QGeometryData::normal(int i) const
 {
     Q_ASSERT(hasField(QGL::Normal));
     return d->normals.at(i);
@@ -1455,7 +1460,7 @@ QColor4B &QGeometryData::colorRef(int i)
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-QColor4B QGeometryData::color(int i) const
+const QColor4B &QGeometryData::color(int i) const
 {
     Q_ASSERT(hasField(QGL::Color));
     return d->colors.at(i);
@@ -1490,9 +1495,9 @@ QVector2DArray QGeometryData::texCoords(QGL::VertexAttribute field) const
 }
 
 /*!
-    Returns a copy of the texture coordinate data at index \a i for \a field.
+    Returns the texture coordinate data at index \a i for \a field.
 */
-QVector2D QGeometryData::texCoord(int i, QGL::VertexAttribute field) const
+const QVector2D &QGeometryData::texCoord(int i, QGL::VertexAttribute field) const
 {
     Q_ASSERT(hasField(field));
     return d->textures.at(d->key[field]).at(i);
@@ -1775,6 +1780,7 @@ void QGeometryData::check() const
         if (mask & fields)
         {
             QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+            qDebug() << "checking attr:" << attr;
             if (attr < QGL::TextureCoord0)
             {
                 if (attr == QGL::Position)

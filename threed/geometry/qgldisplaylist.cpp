@@ -256,9 +256,7 @@
     QGLDisplayList functions calculate lighting normals, when building
     geometry.  This saves the application programmer from having to write
     code to calculate them.  Normals for each triangle (a, b, c) are
-    calculated as the QVector3D::crossProduct(b - a, c - a).  Note that
-    the normals are not normalized to unit length until finalize() is
-    called.
+    calculated as the QVector3D::normal(a, b, c).
 
     If lighting normals are explicitly supplied when using QGLDisplayList,
     then this calculation is not done.  This may save on build time.
@@ -478,7 +476,7 @@ void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
     QLogicalVertex c(p, k);
     QVector3D norm;
     if (calcNormal)
-        norm = QVector3D::crossProduct(b - a, c - a);
+        norm = QVector3D::normal(a, b, c);
     // if the normal was calculated, and it was null, then this is a null
     // triangle - don't add it, it just wastes space - see class doco
     if (!calcNormal || !norm.isNull())

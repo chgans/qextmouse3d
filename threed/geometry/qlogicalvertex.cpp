@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qlogicalvertex.h"
+#include "qvector_utils_p.h"
 
 #include <QtCore/qdebug.h>
 
@@ -365,12 +366,12 @@ bool QLogicalVertex::operator==(const QLogicalVertex &rhs) const
             {
                 if (attr == QGL::Position)
                 {
-                    if (!qFuzzyCompare(vertex(), rhs.vertex()))
+                    if (!qFskCompare(vertex(), rhs.vertex()))
                         return false;
                 }
                 else if (attr == QGL::Normal)
                 {
-                    if (!qFuzzyCompare(normal(), rhs.normal()))
+                    if (!qFskCompare(normal(), rhs.normal()))
                         return false;
                 }
                 else
@@ -381,7 +382,7 @@ bool QLogicalVertex::operator==(const QLogicalVertex &rhs) const
             }
             else if (attr < QGL::CustomVertex0)
             {
-                if (texCoord(attr) != rhs.texCoord(attr))
+                if (!qFskCompare(texCoord(attr), rhs.texCoord(attr)))
                     return false;
             }
             else
@@ -406,19 +407,19 @@ QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
     else
     {
         if (lv.hasField(QGL::Position))
-            dbg << "V:" << lv.vertex();
+            dbg << "V:" << QVector3D(lv.vertex());
         else
             dbg << " (No Vertex)";
         if (lv.hasField(QGL::Normal))
-            dbg << "N:" << lv.normal();
+            dbg << "N:" << QVector3D(lv.normal());
         else
             dbg << " (No Normal)";
         if (lv.hasField(QGL::TextureCoord0))
-            dbg << "T:" << lv.texCoord();
+            dbg << "T:" << QVector2D(lv.texCoord());
         else
             dbg << " (No Texture)";
         if (lv.hasField(QGL::Color))
-            dbg << "C:" << lv.color();
+            dbg << "C:" << QColor4B(lv.color());
         else
             dbg << " (No Color)";
     }

@@ -78,7 +78,7 @@ public:
     void normalizeNormals();
     QBox3D boundingBox() const;
     void setCommonNormal(const QVector3D &n);
-    QVector3D commonNormal() const;
+    const QVector3D &commonNormal() const;
     QGeometryData zippedWith(const QGeometryData &other) const;
     void zipWith(const QGeometryData &other);
     void clear();
@@ -138,19 +138,19 @@ public:
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
-    QVector3D vertex(int i) const;
+    const QVector3D &vertex(int i) const;
 
     QVector3D &normalRef(int i);
     QVector3DArray normals() const;
-    QVector3D normal(int i) const;
+    const QVector3D &normal(int i) const;
 
     QColor4B &colorRef(int i);
     QArray<QColor4B> colors() const;
-    QColor4B color(int i) const;
+    const QColor4B &color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
-    QVector2D texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
+    const QVector2D &texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
 
     float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);

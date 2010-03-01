@@ -381,7 +381,8 @@ void QGLSceneNode::setMaterial(int material)
 }
 
 /*!
-    Returns the palette of materials for this scene node.
+    Returns the palette of materials used by this scene node, or NULL
+    if no palette has been set.
 
     \sa setPalette()
 */
@@ -463,8 +464,11 @@ void QGLSceneNode::setParent(QObject *parent)
 */
 void QGLSceneNode::draw(QGLPainter *painter)
 {
+    static bool debugged = false;
+
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
+
     if (!d->localTransform.isIdentity())
     {
          painter->modelViewMatrix().push();
@@ -517,8 +521,41 @@ void QGLSceneNode::draw(QGLPainter *painter)
     for ( ; cit != d->childNodes.end(); ++cit)
         (*cit)->draw(painter);
 
-    if (d->geometry && d->geometry->count() > 0)
+    if (!debugged && d->geometry)
+    {
+        qDebug() << this;
+        QGLIndexArray indices = d->geometry->indices();
+        for (int i = d->start; i < (d->start + d->count); i += 3)
+            qDebug() << "      " << i << ":" << indices[i] << indices[i+1] << indices[i+2];
+        debugged = true;
+    }
+
+
+    if (d->count && d->geometry && d->geometry->count() > 0)
+    {
+        //d->start = 60;
+        //d->count = 60;
         d->geometry->draw(painter, d->start, d->count);
+
+#ifdef Q_DEBUG_NORMALS
+        QVector3DArray verts;
+        QArray<QColor4B> colors;
+        QGLIndexArray indices = d->geometry->indices();
+        for (int i = d->start; i < d->start + d->count; ++i)
+        {
+            int ix = indices[i];
+            QVector3D a = d->geometry->vertex(ix);
+            QVector3D b = a + d->geometry->normal(ix);
+            verts.append(a, b);
+            colors.append(QColor4B(Qt::red), QColor4B(Qt::red));
+        }
+        painter->setVertexAttribute(QGL::Color, QGLAttributeValue(colors));
+        painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
+        glLineWidth(2.0f);
+        painter->draw(QGL::Lines, verts.size());
+        glFlush();
+#endif
+    }
 
     if (saveMat)
     {

@@ -42,6 +42,7 @@
 #include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
 #include "qarray.h"
+#include "qvector_utils_p.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
@@ -389,7 +390,7 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
             QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(i);
             if (attr < QGL::CustomVertex0)
             {
-                if (!qFuzzyCompare(a.texCoord(attr), b.texCoord(attr)))
+                if (!qFskCompare(a.texCoord(attr), b.texCoord(attr)))
                     return false;
             }
             else
@@ -397,11 +398,11 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
                 QVariant v1 = a.attribute(attr);
                 QVariant v2 = b.attribute(attr);
                 if (v1.type() == (QVariant::Type)QMetaType::Float)
-                    return qFuzzyCompare(v1.toFloat(), v2.toFloat());
+                    return qFskCompare(v1.toFloat(), v2.toFloat());
                 else if (v1.type() == QVariant::Vector2D)
-                    return qFuzzyCompare(qVariantValue<QVector2D>(v1), qVariantValue<QVector2D>(v2));
+                    return qFskCompare(qVariantValue<QVector2D>(v1), qVariantValue<QVector2D>(v2));
                 else if (v1.type() == QVariant::Vector3D)
-                    return qFuzzyCompare(qVariantValue<QVector3D>(v1), qVariantValue<QVector3D>(v2));
+                    return qFskCompare(qVariantValue<QVector3D>(v1), qVariantValue<QVector3D>(v2));
                 else
                     return v1 == v2;
             }
@@ -532,14 +533,23 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     QVector3DMapperIterator *it = d->map->find(lv.vertex());
     bool coalesce = false;
     while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
+    {
         if (vertexAt(it->value()) == lv)
             coalesce = true;
         else
             ++*it;
+    }
     if (coalesce) // found
+    {
         appendIndex(it->value());
+        qDebug() << "||||||||||| appendFaceted()" << lv << "found at:" << it->value();
+    }
     else
-        appendOne(lv);
+    {
+        int index = appendOne(lv);
+        qDebug() << "----------- appendFaceted()" << lv << "not found - added at index:"
+                << index;
+    }
     d->finalized = false;
     m_displayList->setDirty(true);
 }
