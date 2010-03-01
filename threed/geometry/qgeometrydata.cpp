@@ -820,7 +820,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
 {
     if (d && d->indices.size() && d->count)
     {
-        if (false) // upload())
+        if (upload())
         {
             Q_ASSERT(d->vertexBuffer);
             painter->setVertexBuffer(*d->vertexBuffer);
@@ -837,15 +837,8 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
                 painter->setVertexAttribute(attr, attributeValue(attr));
             }
         }
-        static bool debugged = false;
-        if (!debugged)
-            qDebug() << "drawing" << this << "count:" << count;
         if (count == 0)
             count = d->indices.size();
-        if (!debugged)
-            qDebug() << "-------" << this << "count:" << count << "(indices.count()"
-                    << d->indices.size() << ") starting:" << start;
-        debugged = true;
         painter->draw(QGL::Triangles, d->indices, start, count);
     }
 }
@@ -877,6 +870,7 @@ bool QGeometryData::upload()
             if (!d->vertexBuffer)
             {
                 d->vertexBuffer = new QGLVertexBuffer;
+                d->vertexBuffer->setPackingHint(QGLVertexBuffer::Append);
                 const quint32 mask = 0x01;
                 quint32 fields = d->fields;
                 for (int field = 0; fields; ++field, fields >>= 1)
@@ -1780,7 +1774,6 @@ void QGeometryData::check() const
         if (mask & fields)
         {
             QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-            qDebug() << "checking attr:" << attr;
             if (attr < QGL::TextureCoord0)
             {
                 if (attr == QGL::Position)

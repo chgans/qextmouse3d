@@ -542,13 +542,10 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     if (coalesce) // found
     {
         appendIndex(it->value());
-        qDebug() << "||||||||||| appendFaceted()" << lv << "found at:" << it->value();
     }
     else
     {
-        int index = appendOne(lv);
-        qDebug() << "----------- appendFaceted()" << lv << "not found - added at index:"
-                << index;
+        appendOne(lv);
     }
     d->finalized = false;
     m_displayList->setDirty(true);

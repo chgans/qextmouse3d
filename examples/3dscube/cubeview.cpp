@@ -128,7 +128,6 @@ void CubeView::importModel(const QString &name)
     QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
-    //qDumpScene(mSceneRoot);
 }
 
 void CubeView::loadColors()

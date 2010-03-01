@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLSceneNode
-    \brief The QGLSceneNode class defines a geometry node in a QGLAbstractScene.
+    \brief The QGLSceneNode class defines a node in a 3D scene.
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
@@ -99,11 +99,10 @@ QT_BEGIN_NAMESPACE
     passing the scene node to the childs constructor), and the child is itself
     a QGLSceneNode, then addNode() will be called on it.
 
-    A child may be a child multiple times, that is multiple copies of the
-    node may exist; a child may be under more than one parent, and several
-    parents may reference the same child.  There is however no protection
-    against cycles, so a child must not be a parent of itself, even if
-    indirectly.
+    A child may be a child multiple times, a child may be under more than one
+    parent, and several parents may reference the same child.  There is however
+    no protection against cycles, so a child must not be a parent of itself,
+    even if indirectly.
 
     A child node for the purposes of rendering means a child added via the
     addNode() method.  The default QGLSceneNode constructor will check to
@@ -114,6 +113,12 @@ QT_BEGIN_NAMESPACE
     step above results in a change to the current QGL::Standard effect then it
     will remain set to that effect.  In general any painting method should
     ensure the effect it requires is current.
+
+    \bold{Advanced feature:} if there are suspected problems with lighting
+    normals, recompile Qt3D with \c{config+=Q_DEBUG_NORMALS}.  This will cause
+    QGLSceneNode to display the lighting normals as short lines protruding
+    from each vertex, pointing in the direction of the lighting normal.
+    This can be very helpful when a few normals are incorrect for some reason.
 
     \sa QGLAbstractScene
 */
@@ -464,8 +469,6 @@ void QGLSceneNode::setParent(QObject *parent)
 */
 void QGLSceneNode::draw(QGLPainter *painter)
 {
-    static bool debugged = false;
-
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
 
@@ -521,20 +524,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
     for ( ; cit != d->childNodes.end(); ++cit)
         (*cit)->draw(painter);
 
-    if (!debugged && d->geometry)
-    {
-        qDebug() << this;
-        QGLIndexArray indices = d->geometry->indices();
-        for (int i = d->start; i < (d->start + d->count); i += 3)
-            qDebug() << "      " << i << ":" << indices[i] << indices[i+1] << indices[i+2];
-        debugged = true;
-    }
-
-
     if (d->count && d->geometry && d->geometry->count() > 0)
     {
-        //d->start = 60;
-        //d->count = 60;
         d->geometry->draw(painter, d->start, d->count);
 
 #ifdef Q_DEBUG_NORMALS
