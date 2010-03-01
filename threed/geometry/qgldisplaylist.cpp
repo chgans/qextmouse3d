@@ -988,6 +988,7 @@ QGLSceneNode *QGLDisplayList::newNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = new QGLSceneNode(geometry(), parentNode);
+    d->currentNode->setPalette(parentNode->palette());
     d->currentNode->setStart(d->currentSection->indexCount());
     connect(d->currentNode, SIGNAL(destroyed(QObject*)),
             this, SLOT(deleteNode(QObject*)));
@@ -1048,9 +1049,11 @@ QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
-    d->nodeStack.append(d->currentNode);
-    d->currentNode = new QGLSceneNode(geometry(), d->currentNode);
+    QGLSceneNode *parentNode = d->currentNode;
+    d->nodeStack.append(parentNode);
+    d->currentNode = new QGLSceneNode(geometry(), parentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
+    d->currentNode->setPalette(parentNode->palette());
     return d->currentNode;
 }
 
@@ -1080,7 +1083,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     d->currentNode = s->clone(parentNode);
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
-    d->currentNode->setGeometry(geometry());
+    d->currentNode->setPalette(parentNode->palette());
     if (d->nodeStack.count() == 0)
         d->currentSection->addNode(d->currentNode);
     return d->currentNode;

@@ -156,6 +156,7 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
             else
             {
                 QGLSceneNode *sceneNode = new QGLSceneNode(parentNode);
+                sceneNode->setPalette(parentNode->palette());
                 sceneNode->setLocalTransform(getNodeMatrix(node));
                 //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
                 QString nodeName(node->name);
