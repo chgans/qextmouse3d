@@ -215,9 +215,9 @@ void QGLColladaFxEffect::generateShaders()
             +  d->fragmentShaderCodeSnippets.join("\n")
             + "\n" + d->fragmentShaderEndGlueSnippet);
 
-    // Relink attributes if active
+    // Set inactive to trigger relinking later
     if(isActive())
-        setActive(true);
+        setActive(false);
 }
 
 
