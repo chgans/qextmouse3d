@@ -457,7 +457,7 @@ QGLMaterialParameters* QGLShaderProgramEffect::material()
     Returns a pointer to the program of this effect.  If the effect has no
     material, this function returns 0;
 */
-inline QGLShaderProgram* QGLShaderProgramEffect::program()
+QGLShaderProgram* QGLShaderProgramEffect::program()
 {
     Q_ASSERT(d);
     return d->program;
