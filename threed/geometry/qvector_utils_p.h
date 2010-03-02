@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSCENENODE_P_H
-#define QGLSCENENODE_P_H
+#ifndef QVECTOR_UTILS_P_H
+#define QVECTOR_UTILS_P_H
 
 //
 //  W A R N I N G
@@ -53,43 +53,58 @@
 // We mean it.
 //
 
-#include "qglnamespace.h"
-#include "qglsceneobject_p.h"
-#include "qglscenenode.h"
+#include <QtGui/qvector3d.h>
+#include <QtGui/qvector2d.h>
 
-#include <QtGui/qmatrix4x4.h>
-#include <QtCore/qlist.h>
+// Replacement for qFuzzyCompare(QVector3D, QVector3D) and friends,
+// for a specific case where the results are going to be rendered
+// by the GPU onto a display.
+//
+// The accuracy of this comparison should not change.  Especially it
+// should not change when you go from doubles to floats or when
+// you get close to zero.  If two verts or lighting normals are
+// the same to within 5 places of floating point accuracy then they
+// will dislay as being on top of each other.
+//
+// Also this avoids doing 3 floating point multiplications every time
+// since the normal qFuzzyIsNull does a mul to scale the epsilon when
+// close to zero.
 
-class QGLAbstractEffect;
-
-class QGLSceneNodePrivate : public QGLSceneObjectPrivate
+inline bool qFskIsNull(double d)
 {
-    Q_DECLARE_PUBLIC(QGLSceneNode)
-public:
-    QGLSceneNodePrivate(QGLSceneObject::Type type, int version = QObjectPrivateVersion)
-        : QGLSceneObjectPrivate(type, version)
-        , geometry(0)
-        , localEffect(QGL::LitMaterial)
-        , customEffect(0)
-        , hasEffect(false)
-        , material(-1)
-        , start(0)
-        , count(0)
-		, isVisible(true)
-    {
-    }
+    return qAbs(d) <= 0.00001;
+}
 
-    QGeometryData *geometry;
-    QGLMaterialCollection *palette;
-    QMatrix4x4 localTransform;
-    QGL::StandardEffect localEffect;
-    QGLAbstractEffect *customEffect;
-    QList<QGLSceneNode*> childNodes;
-    bool hasEffect;
-    int material;
-    int start;
-    int count;
-	bool isVisible;
-};
+inline bool qFskIsNull(float f)
+{
+    return qAbs(f) <= 0.00001f;
+}
 
-#endif // QGLSCENENODE_P_H
+inline bool qFskCompare(float a, float b)
+{
+    return qFskIsNull(a - b);
+}
+
+inline bool qFskCompare(double a, double b)
+{
+    return qFskIsNull(a - b);
+}
+
+inline bool qFskCompare(const QVector3D &a, const QVector3D &b)
+{
+    return (
+            qFskIsNull(a.x() - b.x()) &&
+            qFskIsNull(a.y() - b.y()) &&
+            qFskIsNull(a.z() - b.z())
+            );
+}
+
+inline bool qFskCompare(const QVector2D &a, const QVector2D &b)
+{
+    return (
+            qFskIsNull(a.x() - b.x()) &&
+            qFskIsNull(a.y() - b.y())
+            );
+}
+
+#endif // QVECTOR_UTILS_P_H

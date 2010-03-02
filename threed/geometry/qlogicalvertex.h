@@ -47,6 +47,9 @@
 
 QT_BEGIN_NAMESPACE
 
+// uncomment this to perform heavy checking of QLogicalVertex
+// #define QT3D_DEBUG_QLOGICALVERTEX 1
+
 class QLogicalVertex
 {
 public:
@@ -58,7 +61,7 @@ public:
     inline QLogicalVertex(const QVector3D &a, QColor4B color);
     ~QLogicalVertex() {}
 
-    inline QVector3D vertex() const;
+    inline const QVector3D &vertex() const;
     inline void setVertex(const QVector3D &v);
     inline QVector3D &vertexRef();
 
@@ -76,15 +79,15 @@ public:
     inline QVector3D vector3DAttribute(QGL::VertexAttribute field = QGL::CustomVertex0) const;
     inline QCustomDataArray::ElementType attributeType(QGL::VertexAttribute field = QGL::CustomVertex0);
 
-    inline QVector3D normal() const;
+    inline const QVector3D &normal() const;
     inline void setNormal(const QVector3D &n);
     inline QVector3D &normalRef();
 
-    inline QColor4B color() const;
+    inline const QColor4B &color() const;
     inline void setColor(const QColor4B &c);
     inline QColor4B &colorRef();
 
-    inline QVector2D texCoord(QGL::VertexAttribute attr = QGL::TextureCoord0) const;
+    inline const QVector2D &texCoord(QGL::VertexAttribute attr = QGL::TextureCoord0) const;
     inline void setTexCoord(const QVector2D &t, QGL::VertexAttribute attr = QGL::TextureCoord0);
     inline QVector2D &texCoordRef(QGL::VertexAttribute attr = QGL::TextureCoord0);
 
@@ -111,7 +114,9 @@ inline QLogicalVertex::QLogicalVertex(QGeometryData data, int index)
     , m_index(index)
 {
     Q_ASSERT(index < data.count());
+#ifdef QT3D_DEBUG_QLOGICALVERTEX
     data.check();
+#endif
 }
 
 inline QLogicalVertex::QLogicalVertex(const QVector3D &a)
@@ -142,7 +147,7 @@ inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4B color)
     m_data.appendColor(color);
 }
 
-inline QVector3D QLogicalVertex::vertex() const
+inline const QVector3D &QLogicalVertex::vertex() const
 {
     return m_data.vertex(m_index);
 }
@@ -233,11 +238,11 @@ inline QCustomDataArray::ElementType QLogicalVertex::attributeType(QGL::VertexAt
     return m_data.attributes(field).elementType();
 }
 
-inline QVector3D QLogicalVertex::normal() const
+inline const QVector3D &QLogicalVertex::normal() const
 {
     const QVector3D &norm = m_data.commonNormal();
     if (norm.isNull())
-        return m_data.normals().at(m_index);
+        return m_data.normal(m_index);
     return norm;
 }
 
@@ -256,7 +261,7 @@ inline QVector3D &QLogicalVertex::normalRef()
     return m_data.normalRef(m_index);
 }
 
-inline QVector2D QLogicalVertex::texCoord(QGL::VertexAttribute attr) const
+inline const QVector2D &QLogicalVertex::texCoord(QGL::VertexAttribute attr) const
 {
     return m_data.texCoord(m_index, attr);
 }
@@ -277,7 +282,7 @@ inline QVector2D &QLogicalVertex::texCoordRef(QGL::VertexAttribute attr)
     return m_data.texCoordRef(m_index, attr);
 }
 
-inline QColor4B QLogicalVertex::color() const
+inline const QColor4B &QLogicalVertex::color() const
 {
     return m_data.color(m_index);
 }

@@ -349,9 +349,9 @@ void MainWindow::modelItemActivated(QModelIndex index)
     {
         emit sceneSelected(object);
         QGLSceneNode *scene = qobject_cast<QGLSceneNode *>(object);
-        if(scene && scene->geometry() && scene->geometry()->material() != -1)
+        if(scene && scene->material() != -1)
         {
-            emit materialSelected( scene->geometry()->palette()->materialByIndex( scene->geometry()->material() ));
+            emit materialSelected( scene->palette()->materialByIndex( scene->material() ));
         }
     }
 }

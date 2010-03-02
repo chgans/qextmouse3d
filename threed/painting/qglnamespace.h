@@ -127,9 +127,16 @@ namespace QGL
 
     enum Smoothing
     {
-        Unspecified,
+        NoSmoothing,
         Smooth,
         Faceted
+    };
+
+    enum Strategy
+    {
+        NullStrategy,
+        HashLookup,
+        MapLookup
     };
 };
 

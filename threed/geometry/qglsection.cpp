@@ -42,10 +42,14 @@
 #include "qglsection_p.h"
 #include "qgldisplaylist_p.h"
 #include "qarray.h"
+#include "qvector_utils_p.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
 #include <QtCore/qpointer.h>
+#include <QtCore/qhash.h>
+
+#include <limits.h>
 
 /*!
     \internal
@@ -105,6 +109,9 @@
     display list and its child nodes.
 */
 
+
+/**** goop to QHash a QVector3d ************************************/
+
 uint qHash(float data)
 {
     union U {
@@ -113,7 +120,7 @@ uint qHash(float data)
     };
     U u;
     u.f = data;
-    return u.f;
+    return u.n;
 }
 
 uint qHash(double data)
@@ -124,22 +131,205 @@ uint qHash(double data)
     };
     U u;
     u.f = data;
-    return u.f;
+    return u.n ^ (u.n << 32);
 }
 
-#define ROTL10(x) (((x) << 10) | (((x) >> 22) & 0x000000ff))
+static inline uint ROTLY(uint x)
+{
+    return (x << 10) | (x >> 22);
+}
 
-#define ROTL20(x) (((x) << 20) | (((x) >> 12) & 0x0000ffff))
+static inline uint ROTLZ(uint x)
+{
+    return (x << 20) | (x >> 12);
+ }
 
 uint qHash(const QVector3D &v)
 {
-    return qHash(v.x()) ^ ROTL10(qHash(v.y())) ^ ROTL20(qHash(v.z()));
+    return qHash(v.x()) ^ ROTLY(qHash(v.y())) ^ ROTLZ(qHash(v.z()));
 }
+
+
+/****  interface for QVector3D maps ****************************************/
+
+class QVector3DMapperIterator;
+
+class QVector3DMapper
+{
+public:
+    QVector3DMapper() {}
+    virtual ~QVector3DMapper() {}
+    virtual void insert(const QVector3D &, int) {};
+    virtual QVector3DMapperIterator *find(const QVector3D &) const { return 0; }
+    virtual bool atEnd(QVector3DMapperIterator *) const { return true; }
+    virtual void reserve(int) {};
+};
+
+class QVector3DMapperIterator
+{
+public:
+    QVector3DMapperIterator() {}
+    virtual ~QVector3DMapperIterator() {}
+    virtual QVector3D key() const { return QVector3D(); }
+    virtual int value() const { return -1; }
+    virtual void next() {}
+    operator int () { return value(); }
+    QVector3DMapperIterator &operator++() { next(); return *this; }
+};
+
+
+/**** qhash based implementation ****************************************/
+
+class QHashMapper;
+
+class QHashMapperIterator : public QVector3DMapperIterator
+{
+public:
+    QHashMapperIterator(QHash<QVector3D,int>::const_iterator i, const QHashMapper *m)
+        : it(i), map(m) {}
+    ~QHashMapperIterator() {}
+    QVector3D key() const { return it.key(); }
+    int value() const { return it.value(); }
+    void next() { ++it; }
+private:
+    friend class QHashMapper;
+    QHash<QVector3D,int>::const_iterator it;
+    const QHashMapper *map;
+};
+
+class QHashMapper : public QVector3DMapper
+{
+public:
+    QHashMapper() {}
+    ~QHashMapper() {}
+    inline void insert(const QVector3D &vec, int i);
+    inline QVector3DMapperIterator *find(const QVector3D &vec) const;
+    inline bool atEnd(QVector3DMapperIterator *it) const;
+private:
+    QHash<QVector3D, int> hash;
+};
+
+inline void QHashMapper::insert(const QVector3D &vec, int i)
+{
+    hash.insertMulti(vec, i);
+}
+
+inline QVector3DMapperIterator *QHashMapper::find(const QVector3D &vec) const
+{
+    return new QHashMapperIterator(hash.find(vec), this);
+}
+
+inline bool QHashMapper::atEnd(QVector3DMapperIterator *it) const
+{
+    if (it != NULL)
+    {
+        QHashMapperIterator *mit = static_cast<QHashMapperIterator*>(it);
+        return mit->it == hash.constEnd();
+    }
+    return true;
+}
+
+/**** qmap based implementation *******************************************/
+
+bool operator<(const QVector3D &a, const QVector3D &b)
+{
+    if (qFskCompare(a.x(), b.x()))
+    {
+        if (qFskCompare(a.y(), b.y()))
+        {
+            if (qFskCompare(a.z(), b.z()))
+            {
+                return false;  // equal so not less-than
+            }
+            else
+            {
+                return a.z() < b.z();
+            }
+        }
+        else
+        {
+            return a.y() < b.y();
+        }
+    }
+    else
+    {
+        return a.x() < b.x();
+    }
+}
+
+class QMapMapper;
+
+class QMapMapperIterator : public QVector3DMapperIterator
+{
+public:
+    QMapMapperIterator(QMap<QVector3D,int>::const_iterator i, const QMapMapper *m)
+        : it(i), map(m) {}
+    ~QMapMapperIterator() {}
+    QVector3D key() const { return it.key(); }
+    int value() const { return it.value(); }
+    void next() { ++it; }
+private:
+    friend class QMapMapper;
+    QMap<QVector3D,int>::const_iterator it;
+    const QMapMapper *map;
+};
+
+class QMapMapper : public QVector3DMapper
+{
+public:
+    QMapMapper() {}
+    ~QMapMapper() {}
+    inline void insert(const QVector3D &vec, int i);
+    inline QVector3DMapperIterator *find(const QVector3D &vec) const;
+    inline bool atEnd(QVector3DMapperIterator *it) const;
+private:
+    QMap<QVector3D, int> map;
+};
+
+inline void QMapMapper::insert(const QVector3D &vec, int i)
+{
+    map.insertMulti(vec, i);
+}
+
+inline QVector3DMapperIterator *QMapMapper::find(const QVector3D &vec) const
+{
+    return new QMapMapperIterator(map.find(vec), this);
+}
+
+inline bool QMapMapper::atEnd(QVector3DMapperIterator *it) const
+{
+    if (it != NULL)
+    {
+        QMapMapperIterator *mit = static_cast<QMapMapperIterator*>(it);
+        return mit->it == map.constEnd();
+    }
+    return true;
+}
+
+/************************************************************************/
 
 class QGLSectionPrivate
 {
 public:
-    QGLSectionPrivate() : finalized(false)  {}
+    QGLSectionPrivate(const QVector3DArray *, QGL::Strategy st)
+        : finalized(false)
+    {
+        if (st == QGL::HashLookup)
+        {
+            //  QHash based implmentation
+            map = new QHashMapper;
+        }
+        else if (st == QGL::MapLookup)
+        {
+            //  QMap based implmentation
+            map = new QMapMapper;
+        }
+        else
+        {
+            //  "do nothing" implementation
+            map = new QVector3DMapper;
+        }
+    }
     ~QGLSectionPrivate() {}
 
     bool normalAccumulated(int index, const QVector3D &norm) const
@@ -156,8 +346,7 @@ public:
         norms.insertMulti(index, norm);
     }
 
-    QGLIndexArray indices;
-    QHash<QVector3D, int> hash;
+    QVector3DMapper *map;
     QHash<int, QVector3D> norms;
     bool finalized;
     QList<QGLSceneNode*> nodes;
@@ -165,14 +354,13 @@ public:
 
 /*!
     \internal
-    \fn QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
-    Construct a new QGLSection on the display list \a d, and with smoothing \a s.
+    Construct a new QGLSection on the display list \a list, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
     See QGLDisplayList for a discussion of smoothing.
 
-    The pointer \a d must be non-null, and in debug mode, unless QT_NO_DEBUG is
-    defined, this function will assert if \a d is null.
+    The pointer \a list must be non-null, and in debug mode, unless QT_NO_DEBUG is
+    defined, this function will assert if \a list is null.
 
     The following lines of code have identical effect:
     \code
@@ -180,12 +368,13 @@ public:
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
 */
-QGLSection::QGLSection(QGLDisplayList *d,  QGL::Smoothing s)
+QGLSection::QGLSection(QGLDisplayList *list, QGL::Smoothing s, QGL::Strategy st)
     : m_smoothing(s)
-    , m_displayList(d)
-    , d(new QGLSectionPrivate)
+    , m_displayList(list)
+    , d(0)
 {
     Q_ASSERT(m_displayList);
+    d = new QGLSectionPrivate(vertexData(), st);
     m_displayList->addSection(this);
 }
 
@@ -206,7 +395,7 @@ QGLSection::~QGLSection()
 void QGLSection::reserve(int amount)
 {
     QGeometryData::reserve(amount);
-    d->hash.reserve(amount);
+    d->map->reserve(amount);
     d->norms.reserve(amount);
 }
 
@@ -283,7 +472,7 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
             QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(i);
             if (attr < QGL::CustomVertex0)
             {
-                if (!qFuzzyCompare(a.texCoord(attr), b.texCoord(attr)))
+                if (!qFskCompare(a.texCoord(attr), b.texCoord(attr)))
                     return false;
             }
             else
@@ -291,11 +480,11 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
                 QVariant v1 = a.attribute(attr);
                 QVariant v2 = b.attribute(attr);
                 if (v1.type() == (QVariant::Type)QMetaType::Float)
-                    return qFuzzyCompare(v1.toFloat(), v2.toFloat());
+                    return qFskCompare(v1.toFloat(), v2.toFloat());
                 else if (v1.type() == QVariant::Vector2D)
-                    return qFuzzyCompare(qVariantValue<QVector2D>(v1), qVariantValue<QVector2D>(v2));
+                    return qFskCompare(qVariantValue<QVector2D>(v1), qVariantValue<QVector2D>(v2));
                 else if (v1.type() == QVariant::Vector3D)
-                    return qFuzzyCompare(qVariantValue<QVector3D>(v1), qVariantValue<QVector3D>(v2));
+                    return qFskCompare(qVariantValue<QVector3D>(v1), qVariantValue<QVector3D>(v2));
                 else
                     return v1 == v2;
             }
@@ -307,8 +496,8 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
 int QGLSection::appendOne(const QLogicalVertex &lv)
 {
     int index = appendVertex(lv);
-    d->hash.insertMulti(lv.vertex(), index);
-    d->indices.append(index);
+    d->map->insert(lv.vertex(), index);
+    appendIndex(index);
     return index;
 }
 
@@ -355,20 +544,21 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
-    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+
+    QVector3DMapperIterator  *it = d->map->find(lv.vertex());
     bool coalesce = false;
-    if (it == d->hash.constEnd())
+    if (d->map->atEnd(it))
     {
         int newIndex = appendOne(lv);
         d->accumulateNormal(newIndex, lv.normal());
     }
     else
     {
-        while (!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex())
+        while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
             if (qCompareByAttributes(lv, vertexAt(*it)))
                 coalesce = true;
             else
-                ++it;
+                ++*it;
         if (!coalesce)  // texture or attributes prevented coalesce
         {
             // new vert to carry tex/attrib data
@@ -376,16 +566,16 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
         }
         else
         {
-            d->indices.append(*it);
-            it = d->hash.constFind(lv.vertex());
-            while (it != d->hash.constEnd() && it.key() == lv.vertex())
+            appendIndex(it->value());
+            it = d->map->find(lv.vertex());
+            while (!d->map->atEnd(it) && it->key() == lv.vertex())
             {
-                if (!d->normalAccumulated(*it, lv.normal()))
+                if (!d->normalAccumulated(it->value(), lv.normal()))
                 {
-                    normalRef(*it) += lv.normal();
-                    d->accumulateNormal(*it, lv.normal());
+                    normalRef(it->value()) += lv.normal();
+                    d->accumulateNormal(it->value(), lv.normal());
                 }
-                ++it;
+                ++*it;
             }
         }
     }
@@ -422,17 +612,23 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
-    QHash<QVector3D, int>::const_iterator it = d->hash.constFind(lv.vertex());
+    QVector3DMapperIterator *it = d->map->find(lv.vertex());
     bool coalesce = false;
-    while (!coalesce && it != d->hash.constEnd() && it.key() == lv.vertex())
-        if (vertexAt(*it) == lv)
+    while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
+    {
+        if (vertexAt(it->value()) == lv)
             coalesce = true;
         else
-            ++it;
+            ++*it;
+    }
     if (coalesce) // found
-        d->indices.append(*it);
+    {
+        appendIndex(it->value());
+    }
     else
+    {
         appendOne(lv);
+    }
     d->finalized = false;
     m_displayList->setDirty(true);
 }
@@ -450,27 +646,6 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
     d->finalized = false;
     m_displayList->setDirty(true);
 }
-
-/*!
-    \internal
-    Return a copy of the index data for this section.  Since the data
-    is implicitly shared this call is inexpensive, unless the copy is
-    modified.
-*/
-QGLIndexArray QGLSection::indices() const
-{
-    return d->indices;
-}
-
-/*!
-    \internal
-    Returns the count of indices.  This is the same as indices().size().
-*/
-int QGLSection::indexCount() const
-{
-    return d->indices.size();
-}
-
 
 /*!
     \internal
@@ -524,15 +699,15 @@ bool QGLSection::deleteNode(QGLSceneNode *node)
 QDebug operator<<(QDebug dbg, const QGLSection &section)
 {
     dbg.space()
-            << "QGLSection("
-            << ", count:" << section.count()
-            << ", smoothing mode:" << (section.smoothing() == QGL::Smooth ?
-                                       "QGL::Smooth" : "QGL::Faceted");
+            << "QGLSection(" << &section
+            << "- count:" << section.count()
+            << "- smoothing mode:" << (section.smoothing() == QGL::Smooth ?
+                                       "QGL::Smooth" : "QGL::Faceted") << "\n";
     QGLIndexArray indices = section.indices();
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];
-        dbg << section.vertexAt(ix);
+        dbg << section.vertexAt(ix) << "\n";
     }
     dbg << ")\n";
     return dbg.space();

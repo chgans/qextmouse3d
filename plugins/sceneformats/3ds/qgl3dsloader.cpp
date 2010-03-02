@@ -64,10 +64,7 @@ QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file)
      , mFile(file)
      , mHasTextures(false)
 {
-    QGLGeometry *topGeometry = new QGLGeometry(mRootNode);
-    mRootNode->setGeometry(topGeometry);
-    topGeometry->setObjectName(mRootNode->objectName() + "_Geometry");
-    topGeometry->setPalette(new QGLMaterialCollection(topGeometry));
+    mRootNode->setPalette(new QGLMaterialCollection(mRootNode));
     mRootNode->setObjectName(file->name);
 }
 
@@ -100,8 +97,7 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
     else if (mesh->faces == 0)
         qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
-    QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode,
-                                    mRootNode->geometry()->palette());
+    QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode, mRootNode->palette());
     mMeshes.insert(mesh->name, m);
     if (mesh->faces == 0 || mesh->points == 0)
         return;
@@ -110,9 +106,6 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
         mHasTextures = m->hasTexture();
     if (!mHasLitMaterials)
         mHasLitMaterials = !m->hasTexture();
-    QBox3D bounds = m->geometry()->boundingBox();
-    QBox3D currentBounds = mRootNode->geometry()->boundingBox();
-    mRootNode->geometry()->setBoundingBox(currentBounds.expanded(bounds));
 }
 
 #ifndef QT_NO_DEBUG_STREAM
@@ -163,6 +156,7 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
             else
             {
                 QGLSceneNode *sceneNode = new QGLSceneNode(parentNode);
+                sceneNode->setPalette(parentNode->palette());
                 sceneNode->setLocalTransform(getNodeMatrix(node));
                 //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
                 QString nodeName(node->name);
@@ -201,7 +195,7 @@ QGLSceneNode *QGL3dsLoader::loadMeshes()
     Lib3dsMesh * mesh;
     for (mesh = mFile->meshes; mesh != NULL; mesh = mesh->next)
         loadMesh(mesh);
-    mRootNode->geometry()->palette()->removeUnusedMaterials();
+    mRootNode->palette()->removeUnusedMaterials();
     loadNodes(mFile->nodes, mRootNode);
     mRootNode->setEffect(mHasTextures ? QGL::LitModulateTexture2D : QGL::LitMaterial);
     return mRootNode;
@@ -261,7 +255,7 @@ QString QGL3dsLoader::ensureResourceFile(const QString &fileName)
 */
 void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
 {
-    QGLMaterialCollection *palette = mRootNode->geometry()->palette();
+    QGLMaterialCollection *palette = mRootNode->palette();
     QGLMaterialParameters *mat = new QGLMaterialParameters();
     Lib3dsRgba &amb = mat3ds->ambient;
     Lib3dsRgba &dif = mat3ds->diffuse;

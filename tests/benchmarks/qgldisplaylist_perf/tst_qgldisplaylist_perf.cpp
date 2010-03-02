@@ -53,11 +53,17 @@ public:
 private slots:
     void addQuad_data();
     void addQuad();
+    void teapot_data();
+    void teapot();
 };
 
 enum {
-    Test_Naive,
-    Test_Reserve
+    Test_Baseline,
+    Test_Random,
+    Test_Sections,
+    Test_None,
+    Test_Hash,
+    Test_Map
 };
 
 void tst_QGLDisplayList::addQuad_data()
@@ -68,14 +74,34 @@ void tst_QGLDisplayList::addQuad_data()
     QByteArray name;
     for (int size = 5000; size < 10000; size += 200)
     {
-        name = "Naive--";
+        name = "Baseline--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Naive);
+        QTest::newRow(name.constData()) << size << int(Test_Baseline);
 
-        name = "Reserve--";
+        name = "Random--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Reserve);
+        QTest::newRow(name.constData()) << size << int(Test_Random);
+
+        name = "Sections--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_Sections);
     }
+}
+
+static inline qreal randCoord()
+{
+    return (200.0f * ((qreal)qrand() / (qreal)RAND_MAX)) - 100.0f;
+}
+
+QVector3D randVector()
+{
+    static bool seeded = false;
+    if (!seeded)
+    {
+        qsrand(time(0));
+        seeded = true;
+    }
+    return QVector3D(randCoord(), randCoord(), randCoord());
 }
 
 void tst_QGLDisplayList::addQuad()
@@ -84,10 +110,11 @@ void tst_QGLDisplayList::addQuad()
     QFETCH(int, type);
 
     int n = qSqrt(size);
-    if (type == Test_Naive) {
+    if (type == Test_Baseline)
+    {
         QBENCHMARK {
             QGLDisplayList list;
-            list.newSection();
+            list.newSection(QGL::Smooth, QGL::MapLookup);
             for (int i = 0; i < n; ++i)
             {
                 for (int j = 0; j < n; ++j)
@@ -101,12 +128,40 @@ void tst_QGLDisplayList::addQuad()
             }
             list.finalize();
         }
-    } else if (type == Test_Reserve) {
+    }
+    else if (type == Test_Random)
+    {
         QBENCHMARK {
             QGLDisplayList list;
             for (int i = 0; i < n; ++i)
             {
-                list.newSection();
+                list.newSection(QGL::Smooth, QGL::MapLookup);
+                for (int j = 0; j < n; ++j)
+                {
+                    QGLOperation op(&list, QGL::QUAD);
+                    QVector3D origin = randVector();
+                    QVector3D a;
+                    while (a.isNull())
+                        a = randVector();
+                    QVector3D b;
+                    while (b.isNull())
+                        b = randVector();
+                    op << origin;
+                    op << (origin + a);
+                    op << (origin + a + b);
+                    op << (origin + b);
+                }
+            }
+            list.finalize();
+        }
+    }
+    else if (type == Test_Sections)
+    {
+        QBENCHMARK {
+            QGLDisplayList list;
+            for (int i = 0; i < n; ++i)
+            {
+                list.newSection(QGL::Smooth, QGL::MapLookup);
                 for (int j = 0; j < n; ++j)
                 {
                     QGLOperation op(&list, QGL::QUAD);
@@ -120,6 +175,28 @@ void tst_QGLDisplayList::addQuad()
         }
     }
 }
+
+void tst_QGLDisplayList::teapot_data()
+{
+    QTest::addColumn<int>("type");
+
+    QByteArray name;
+    name = "None--";
+    QTest::newRow(name.constData()) << int(Test_None);
+
+    name = "QHash--";
+    QTest::newRow(name.constData()) << int(Test_Hash);
+
+    name = "QMap--";
+    QTest::newRow(name.constData()) << int(Test_Map);
+}
+
+void tst_QGLDisplayList::teapot()
+{
+    QFETCH(int, type);
+
+}
+
 
 QTEST_MAIN(tst_QGLDisplayList)
 

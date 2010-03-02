@@ -480,7 +480,7 @@ void QGLBezierPatch::recursiveSubDivide
 
 void QGLBezierPatchesPrivate::subdivide(QGLDisplayList *list) const
 {
-    list->newSection();
+    list->newSection(QGL::Smooth, QGL::NullStrategy);
     list->begin(QGL::TRIANGLE);
     QGLPrimitive *prim = list->currentPrimitive();
 

@@ -89,16 +89,16 @@ void tst_QGLDisplayList::createDefault()
     QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
     QCOMPARE(displayList0.sections().size(), 0);
     QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
-    QVERIFY(displayList0.geometry() != (QGLGeometry*)0);
-    QVERIFY(displayList0.geometry()->palette() != 0);
+    QVERIFY(displayList0.geometry() != (QGeometryData*)0);
+    QVERIFY(displayList0.palette() != 0);
 
     QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
     QGLDisplayList displayList1(0, palette);
-    QCOMPARE(displayList1.geometry()->palette(), palette.data());
+    QCOMPARE(displayList1.palette(), palette.data());
 
     QObject *obj = new QObject();
     QPointer<QGLDisplayList> displayList2 = new QGLDisplayList(obj, palette);
-    QCOMPARE(displayList2->geometry()->palette(), palette.data());
+    QCOMPARE(displayList2->palette(), palette.data());
     QCOMPARE(displayList2->parent(), obj);
     QCOMPARE(obj->children().at(0), displayList2.data());
     delete obj;
@@ -688,7 +688,6 @@ void tst_QGLDisplayList::finalize()
 
     displayList.newSection();
     QGLSceneNode *node2 = displayList.currentNode();
-    qDebug() << "node2" << node2;
 
     QGLPrimitive s;
     s.appendVertex(a, b, c, d);
@@ -696,7 +695,6 @@ void tst_QGLDisplayList::finalize()
     displayList.addQuadsZipped(s, s.translated(-n));
 
     QPointer<QGLSceneNode> nodeEmpty0 = displayList.newNode();
-    qDebug() << "nodeEmpty0" << nodeEmpty0.data();
 
     displayList.newSection();
     QGLSceneNode *node3 = displayList.currentNode();
@@ -719,10 +717,10 @@ void tst_QGLDisplayList::finalize()
 
     QCOMPARE(displayList.sections().count(), 0);
 
-    QGLGeometry *geom = displayList.geometry();
+    QGeometryData *geom = node->geometry();
 
-    QGLVertexArray verts = geom->vertexArray();
-    QGLIndexArray ids = geom->indexArray();
+    QGLVertexArray verts = geom->toVertexArray();
+    QGLIndexArray ids = geom->indices();
 
     QCOMPARE(verts.vertexCount(), 13);
     QCOMPARE(ids.size(), 36);
@@ -760,8 +758,8 @@ void tst_QGLDisplayList::finalize()
     QVERIFY(node3->geometry() != geom);
 
     geom = node3->geometry();
-    QGLVertexArray verts2 = geom->vertexArray();
-    QGLIndexArray ids2 = geom->indexArray();
+    QGLVertexArray verts2 = geom->toVertexArray();
+    QGLIndexArray ids2 = geom->indices();
 
     int tri = ids2[node->start()];
     QGLVertexDescription desc = verts2.fields();
