@@ -182,7 +182,7 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 
     painter->setLightEnabled(0, true);
 
-    if( d->effect && d->effect->isActive() )
+    if( d->effect )
     {
         painter->setUserEffect(d->effect);
     }
