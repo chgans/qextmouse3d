@@ -171,9 +171,6 @@ public:
 
 */
 QGLShaderProgramEffect::QGLShaderProgramEffect() : QGLAbstractEffect()
-    , colorUniform(-1)
-    , matrixUniform(-1)
-    , lightDirectionUniform(-1)
     , textureAttributeSet(false)
     , textureId(0)
     , d(new QGLShaderProgramEffectPrivate)
@@ -232,7 +229,6 @@ void QGLShaderProgramEffect::setActive(bool flag)
             return;
         }
 
-        bindProgramUniforms();
         program()->bind();
         program()->enableAttributeArray(0);
         program()->enableAttributeArray(1);
@@ -299,19 +295,6 @@ void QGLShaderProgramEffect::bindProgramAttributes()
     program()->bindAttributeLocation("texCoords", 2);
 }
 
-/*!
-    Updates the positions for the uniforms from the program.
-*/
-void QGLShaderProgramEffect::bindProgramUniforms()
-{
-    if(program() == 0)
-        return;
-    colorUniform = program()->uniformLocation("color");
-    matrixUniform = program()->uniformLocation("matrix");
-    lightDirectionUniform = program()->uniformLocation("lightDir");
-    timeUniform = program()->uniformLocation("time");
-}
-
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     // update the projection, modelview, texture matrices and lighting conditions
@@ -321,19 +304,27 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
     if(program() == 0)
         return;
 
-    program()->setUniformValue(timeUniform, time);
+    if(!program()->isLinked())
+    {
+        if(!program()->link())
+        {
+            qWarning("QGLShaderProgramEffect::update(): could not link shader program");
+        }
+    }
+
+    program()->setUniformValue("time", time);
 
     if ((updates & QGLPainter::UpdateColor) != 0) {
         if (painter->isPicking())
-            program()->setUniformValue(colorUniform, painter->pickColor());
+            program()->setUniformValue("color", painter->pickColor());
         else
-            program()->setUniformValue(colorUniform, painter->color());
+            program()->setUniformValue("color", painter->color());
     }
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
-        program()->setUniformValue(matrixUniform, proj * mv);
+        program()->setUniformValue("matrix", proj * mv);
     }
 
     if ((updates & QGLPainter::UpdateLights) != 0 )
@@ -413,23 +404,13 @@ void QGLShaderProgramEffect::setVertexAttribute
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
     vertexShader = shader;
-    if(shader.length() > 0)
-    {
-        setActive(true);
-    } else {
-        setActive(false);
-    }
+    reloadShaders();
 }
 
 void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
 {
     fragmentShader = shader;
-    if(shader.length() > 0)
-    {
-        setActive(true);
-    } else {
-        setActive(false);
-    }
+    reloadShaders();
 }
 
 /*!
@@ -457,7 +438,7 @@ QGLMaterialParameters* QGLShaderProgramEffect::material()
     Returns a pointer to the program of this effect.  If the effect has no
     material, this function returns 0;
 */
-inline QGLShaderProgram* QGLShaderProgramEffect::program()
+QGLShaderProgram* QGLShaderProgramEffect::program()
 {
     Q_ASSERT(d);
     return d->program;

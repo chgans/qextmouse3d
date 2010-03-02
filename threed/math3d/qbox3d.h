@@ -45,6 +45,7 @@
 #include "qt3dglobal.h"
 #include <QtGui/qvector3d.h>
 
+#include "qarray.h"
 #include "qresult.h"
 #include "qline3d.h"
 
@@ -61,6 +62,8 @@ class Q_QT3D_EXPORT QBox3D
 public:
     QBox3D();
     QBox3D(const QVector3D& corner1, const QVector3D& corner2);
+    explicit QBox3D(const QArray<QVector3D>& points);
+    explicit QBox3D(const QArrayRef<QVector3D>& points);
 
     bool isNull() const;
     bool isFinite() const;
@@ -90,8 +93,13 @@ public:
 
     void expand(const QVector3D& point);
     void expand(const QBox3D& box);
+    void expand(const QArray<QVector3D>& points);
+    void expand(const QArrayRef<QVector3D>& points);
+
     QBox3D expanded(const QVector3D& point) const;
     QBox3D expanded(const QBox3D& box) const;
+    QBox3D expanded(const QArray<QVector3D>& points) const;
+    QBox3D expanded(const QArrayRef<QVector3D>& points) const;
 
     void translate(const QVector3D& vector);
     QBox3D translated(const QVector3D& vector) const;
@@ -130,6 +138,8 @@ private:
 
     QBox3D::Type boxtype;
     QVector3D mincorner, maxcorner;
+
+    void expand(const QVector3D *points, int count);
 };
 
 inline QBox3D::QBox3D() : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0) {}
@@ -142,6 +152,18 @@ inline QBox3D::QBox3D(const QVector3D& corner1, const QVector3D& corner2)
       maxcorner(qMax(corner1.x(), corner2.x()),
                 qMax(corner1.y(), corner2.y()),
                 qMax(corner1.z(), corner2.z())) {}
+
+inline QBox3D::QBox3D(const QArray<QVector3D>& points)
+    : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
+{
+    expand(points.constData(), points.size());
+}
+
+inline QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
+    : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
+{
+    expand(points.constData(), points.size());
+}
 
 inline bool QBox3D::isNull() const { return (boxtype == Null); }
 inline bool QBox3D::isFinite() const { return (boxtype == Finite); }
@@ -226,6 +248,30 @@ inline bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2)
     return box1.boxtype == box2.boxtype &&
            qFuzzyCompare(box1.mincorner, box2.mincorner) &&
            qFuzzyCompare(box1.maxcorner, box2.maxcorner);
+}
+
+inline void QBox3D::expand(const QArray<QVector3D>& points)
+{
+    expand(points.constData(), points.size());
+}
+
+inline void QBox3D::expand(const QArrayRef<QVector3D>& points)
+{
+    expand(points.constData(), points.size());
+}
+
+inline QBox3D QBox3D::expanded(const QArray<QVector3D>& points) const
+{
+    QBox3D box(*this);
+    box.expand(points.constData(), points.size());
+    return box;
+}
+
+inline QBox3D QBox3D::expanded(const QArrayRef<QVector3D>& points) const
+{
+    QBox3D box(*this);
+    box.expand(points.constData(), points.size());
+    return box;
 }
 
 #ifndef QT_NO_DEBUG_STREAM

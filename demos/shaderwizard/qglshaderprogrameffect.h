@@ -72,14 +72,9 @@ protected:
     QGLShaderProgram* program();
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
 
 private:
-    int colorUniform;
     int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform;
     bool currentlyActive;
     bool textureAttributeSet;
     int textureId;
