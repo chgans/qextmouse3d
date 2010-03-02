@@ -135,7 +135,8 @@ namespace QGL
     enum Strategy
     {
         NullStrategy,
-        HashLookup
+        HashLookup,
+        MapLookup
     };
 };
 

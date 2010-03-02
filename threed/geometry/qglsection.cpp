@@ -229,6 +229,83 @@ inline bool QHashMapper::atEnd(QVector3DMapperIterator *it) const
     return true;
 }
 
+/**** qmap based implementation *******************************************/
+
+bool operator<(const QVector3D &a, const QVector3D &b)
+{
+    if (qFskCompare(a.x(), b.x()))
+    {
+        if (qFskCompare(a.y(), b.y()))
+        {
+            if (qFskCompare(a.z(), b.z()))
+            {
+                return false;  // equal so not less-than
+            }
+            else
+            {
+                return a.z() < b.z();
+            }
+        }
+        else
+        {
+            return a.y() < b.y();
+        }
+    }
+    else
+    {
+        return a.x() < b.x();
+    }
+}
+
+class QMapMapper;
+
+class QMapMapperIterator : public QVector3DMapperIterator
+{
+public:
+    QMapMapperIterator(QMap<QVector3D,int>::const_iterator i, const QMapMapper *m)
+        : it(i), map(m) {}
+    ~QMapMapperIterator() {}
+    QVector3D key() const { return it.key(); }
+    int value() const { return it.value(); }
+    void next() { ++it; }
+private:
+    friend class QMapMapper;
+    QMap<QVector3D,int>::const_iterator it;
+    const QMapMapper *map;
+};
+
+class QMapMapper : public QVector3DMapper
+{
+public:
+    QMapMapper() {}
+    ~QMapMapper() {}
+    inline void insert(const QVector3D &vec, int i);
+    inline QVector3DMapperIterator *find(const QVector3D &vec) const;
+    inline bool atEnd(QVector3DMapperIterator *it) const;
+private:
+    QMap<QVector3D, int> map;
+};
+
+inline void QMapMapper::insert(const QVector3D &vec, int i)
+{
+    map.insertMulti(vec, i);
+}
+
+inline QVector3DMapperIterator *QMapMapper::find(const QVector3D &vec) const
+{
+    return new QMapMapperIterator(map.find(vec), this);
+}
+
+inline bool QMapMapper::atEnd(QVector3DMapperIterator *it) const
+{
+    if (it != NULL)
+    {
+        QMapMapperIterator *mit = static_cast<QMapMapperIterator*>(it);
+        return mit->it == map.constEnd();
+    }
+    return true;
+}
+
 /************************************************************************/
 
 class QGLSectionPrivate
@@ -241,6 +318,11 @@ public:
         {
             //  QHash based implmentation
             map = new QHashMapper;
+        }
+        else if (st == QGL::MapLookup)
+        {
+            //  QMap based implmentation
+            map = new QMapMapper;
         }
         else
         {

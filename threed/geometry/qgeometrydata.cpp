@@ -196,7 +196,7 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
 */
 
 /*!
-    \enum QGL::BufferStrategy
+    \enum QGeometryData::BufferStrategyFlags
 
     This enum serves to describe how management of the data is handled
     with respect to vertex buffer objects.  The strategies are essentially a
@@ -1572,6 +1572,12 @@ QVector3D QGeometryData::vector3DAttribute(int i, QGL::VertexAttribute field) co
     return d->attributes.at(d->key[field]).vector3DAt(i);
 }
 
+/*!
+    Returns the attribute value for the \a field, suitable for passing
+    to QGLPainter.
+
+    \sa QGLPainter::setVertexAttribute()
+*/
 QGLAttributeValue QGeometryData::attributeValue(QGL::VertexAttribute field) const
 {
     if (hasField(field))

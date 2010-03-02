@@ -398,9 +398,9 @@ QGLMaterialCollection *QGLSceneNode::palette() const
 }
 
 /*!
-    Returns the palette of materials for this scene node.
+    Sets the palette of materials for this scene node to \a palette.
 
-    \sa setPalette()
+    \sa palette()
 */
 void QGLSceneNode::setPalette(QGLMaterialCollection *palette)
 {

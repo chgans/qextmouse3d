@@ -211,8 +211,9 @@ QT_BEGIN_NAMESPACE
     \relates QGLDisplayList
 
     This enum defines vertex processing strategies for performance tuning.
-    \value NullStrategy No vertex processing is done.
-    \value HashLookup The vertices are processed using a QHash.
+    \value NullStrategy No vertex processing is done - use this for raw data.
+    \value HashLookup The vertices are processed using a QHash - use for random data.
+    \value MapLookup The vertices are processed using a QMap - use for spatially ordered data.
 */
 
 QT_END_NAMESPACE
