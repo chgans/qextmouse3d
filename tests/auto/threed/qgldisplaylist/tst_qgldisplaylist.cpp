@@ -89,7 +89,7 @@ void tst_QGLDisplayList::createDefault()
     QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
     QCOMPARE(displayList0.sections().size(), 0);
     QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
-    QVERIFY(displayList0.geometry() != (QGeometryData*)0);
+    QCOMPARE(displayList0.geometry(), (QGeometryData*)0);
     QVERIFY(displayList0.palette() != 0);
 
     QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
