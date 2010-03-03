@@ -409,12 +409,44 @@ void QGLSceneNode::setPalette(QGLMaterialCollection *palette)
 }
 
 /*!
-    Returns a list of the child nodes for this node.
+    Returns a list of the child nodes for this node.  This list is not
+    recursively generated, it includes only the nodes which are
+    immediate children of this node.
+
+    \sa allChildren()
 */
 QList<QGLSceneNode*> QGLSceneNode::childNodes() const
 {
     Q_D(const QGLSceneNode);
     return d->childNodes;
+}
+
+/*!
+    Returns a list including recursively all child nodes under
+    this node.  Each child node only appears once, even if it is included
+    multiple times in the scene graph.
+
+    \sa childNodes()
+*/
+QList<QGLSceneNode*> QGLSceneNode::allChildren() const
+{
+    Q_D(const QGLSceneNode);
+    QList<QGLSceneNode*> allSceneNodes;
+    QList<QGLSceneNode*> gather;
+    QList<QGLSceneNode*>::const_iterator it = d->childNodes.constBegin();
+    for ( ; it != d->childNodes.constEnd(); ++it)
+        if (!gather.contains(*it))
+            gather.append(*it);
+    while (gather.count() > 0)
+    {
+        QGLSceneNode *node = gather.takeFirst();
+        if (!allSceneNodes.contains(node))
+        {
+            allSceneNodes.append(node);
+            gather.append(node->childNodes());
+        }
+    }
+    return allSceneNodes;
 }
 
 /*!
@@ -528,24 +560,25 @@ void QGLSceneNode::draw(QGLPainter *painter)
     {
         d->geometry->draw(painter, d->start, d->count);
 
-#ifdef Q_DEBUG_NORMALS
-        QVector3DArray verts;
-        QArray<QColor4B> colors;
-        QGLIndexArray indices = d->geometry->indices();
-        for (int i = d->start; i < d->start + d->count; ++i)
+        if (d->viewNormals)
         {
-            int ix = indices[i];
-            QVector3D a = d->geometry->vertex(ix);
-            QVector3D b = a + d->geometry->normal(ix);
-            verts.append(a, b);
-            colors.append(QColor4B(Qt::red), QColor4B(Qt::red));
+            QVector3DArray verts;
+            QArray<QColor4B> colors;
+            QGLIndexArray indices = d->geometry->indices();
+            for (int i = d->start; i < d->start + d->count; ++i)
+            {
+                int ix = indices[i];
+                QVector3D a = d->geometry->vertex(ix);
+                QVector3D b = a + d->geometry->normal(ix);
+                verts.append(a, b);
+                colors.append(QColor4B(Qt::red), QColor4B(Qt::red));
+            }
+            painter->setVertexAttribute(QGL::Color, QGLAttributeValue(colors));
+            painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
+            glLineWidth(2.0f);
+            painter->draw(QGL::Lines, verts.size());
+            glFlush();
         }
-        painter->setVertexAttribute(QGL::Color, QGLAttributeValue(colors));
-        painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
-        glLineWidth(2.0f);
-        painter->draw(QGL::Lines, verts.size());
-        glFlush();
-#endif
     }
 
     if (saveMat)
@@ -596,6 +629,50 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     node->setChildNodes(d->childNodes);
     return node;
 }
+
+/*!
+    If \a enabled is true, the viewing of normals on this scene
+    nodes geometry is turned on; otherwise it is turned off.  The
+    normal view is an advanced feature for use when inspecting and
+    debugging models or geometry in a scene.  The lighting normals
+    are displayed as a straight line from the vertex pointing in
+    the direction of the lighting normal.  This is useful for
+    example to show where normals are inverted or wrongly
+    calculated.
+
+    The setting of this flag is not propagated to child nodes,
+    instead set the flag to true for the node or nodes where its
+    needed.
+
+    To set the flag on all child nodes use code like:
+    \code
+    foreach(QGLSceneNode *node, scene.allChildren())
+        node->setNormalViewEnabled(true);
+    \endcode
+
+    \image spiky-teapot.png
+
+    \sa normalViewEnabled()
+*/
+void QGLSceneNode::setNormalViewEnabled(bool enabled)
+{
+    Q_D(QGLSceneNode);
+    d->viewNormals = enabled;
+}
+
+/*!
+    Returns true if the viewing of normals on this scene nodes geometry
+    is turned on; false otherwise.  See setNormalViewEnabled() for more
+    details.
+
+    \sa setNormalViewEnabled()
+*/
+bool QGLSceneNode::normalViewEnabled() const
+{
+    Q_D(const QGLSceneNode);
+    return d->viewNormals;
+}
+
 
 #ifndef QT_NO_DEBUG_STREAM
 #include "qglmaterialcollection.h"

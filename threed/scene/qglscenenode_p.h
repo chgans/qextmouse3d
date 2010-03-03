@@ -75,7 +75,8 @@ public:
         , material(-1)
         , start(0)
         , count(0)
-		, isVisible(true)
+        , isVisible(true)
+        , viewNormals(false)
     {
     }
 
@@ -89,7 +90,8 @@ public:
     int material;
     int start;
     int count;
-	bool isVisible;
+    bool isVisible;
+    bool viewNormals;
 };
 
 #endif // QGLSCENENODE_P_H

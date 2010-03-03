@@ -92,6 +92,7 @@ public:
     void setPalette(QGLMaterialCollection *palette);
 
     QList<QGLSceneNode*> childNodes() const;
+    QList<QGLSceneNode*> allChildren() const;
     void setChildNodes(const QList<QGLSceneNode*> &children);
     void addNode(QGLSceneNode *node);
     void removeNode(QGLSceneNode *node);
@@ -100,6 +101,10 @@ public:
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
     virtual QGLSceneNode *clone(QObject *parent = 0) const;
+
+    void setNormalViewEnabled(bool enabled);
+    bool normalViewEnabled() const;
+
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
 
