@@ -40,20 +40,23 @@
 ****************************************************************************/
 
 #include <QApplication>
+#include <QtDeclarative/qdeclarativeview.h>
 #include <QtGui/private/qapplication_p.h>
-#include <QtDeclarative/qmlengine.h>
-#include <QtDeclarative/qmlcontext.h>
-#include <QtDeclarative/qmlcomponent.h>
-#include <QtDeclarative/qmlerror.h>
-#include <QtDeclarative/qmlview.h>
+#include <QtDeclarative/qdeclarativeengine.h>
+#include <QtDeclarative/qdeclarativecontext.h>
+#include <QtDeclarative/qdeclarativecomponent.h>
+#include <QtDeclarative/qdeclarativeerror.h>
+//#include <QtDeclarative/qdeclarativecomponentview.h>
 #include "qglview.h"
 #include "qml3dview.h"
 #include "item3d.h"
-#include <QtDeclarative/qmlmetatype.h>
+//#include <QtDeclarative/qdeclarativemetatype.h>
 #include <QtGui/qvector3d.h>
 #include <QtCore/qfile.h>
 #include <QtCore/qvariantanimation.h>
 #include <QFileInfo>
+#include "viewport.h"
+#include "Effect.h"
 
 static QVariant interpolateVector3D
     (const QVector3D &f, const QVector3D &t, qreal progress)
@@ -64,6 +67,14 @@ static QVariant interpolateVector3D
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+//
+    QML_REGISTER_TYPE(Qt,4,6,Effect,Effect);
+    QML_REGISTER_TYPE(Qt,4,6,Mesh,Mesh);
+    QML_REGISTER_TYPE(Qt,4,6,Item3d,Item3d);
+    QML_REGISTER_TYPE(Qt,4,6,Viewport,Viewport);
+    QML_REGISTER_TYPE(Qt,4,6,LightModel,QGLLightModel);
+    QML_REGISTER_TYPE(Qt,4,6,Light,QGLLightParameters);
+    QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
@@ -92,9 +103,8 @@ int main(int argc, char *argv[])
     qRegisterAnimationInterpolator<QVector3D>(interpolateVector3D);
 
     if (mixed) {
-        QmlView view;
-        view.setUrl(url);
-        view.execute();
+        QDeclarativeView view;
+        view.setSource(url);        
         view.show();
 
         return app.exec();

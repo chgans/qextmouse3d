@@ -47,7 +47,7 @@
 #include "qglmaterialcollection.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QtDeclarative/qmlengine.h>
+#include <QtDeclarative/qdeclarativeengine.h>
 #include <QtCore/qlist.h>
 
 /*!
@@ -97,7 +97,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
+//QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
 
 class MeshPrivate
 {

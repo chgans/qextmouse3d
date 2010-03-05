@@ -43,8 +43,8 @@
 #include "item3d.h"
 #include "viewport.h"
 #include <QtCore/qtimer.h>
-#include <QtDeclarative/qmlcomponent.h>
-#include <QtDeclarative/qmlcontext.h>
+#include <QtDeclarative/qdeclarativecomponent.h>
+#include <QtDeclarative/qdeclarativecontext.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -161,12 +161,12 @@ void Qml3dView::paintGL(QGLPainter *painter)
 void Qml3dView::setUrl(const QUrl& url)
 {
     // Load the .qml file into a sub-context.
-    component = new QmlComponent(&engine, url, this);
+    component = new QDeclarativeComponent(&engine, url, this);
 
     if (!component->isLoading()) {
         loaded();
     } else {
-        connect(component, SIGNAL(statusChanged(QmlComponent::Status)), this, SLOT(loaded()));
+        connect(component, SIGNAL(statusChanged(QDeclarativeComponent::Status)), this, SLOT(loaded()));
     }
 }
 
@@ -180,16 +180,16 @@ void Qml3dView::setUrl(const QUrl& url)
 */
 void Qml3dView::loaded()
 {
-    disconnect(component, SIGNAL(statusChanged(QmlComponent::Status)), this, SLOT(loaded()));
+    disconnect(component, SIGNAL(statusChanged(QDeclarativeComponent::Status)), this, SLOT(loaded()));
 
     if (component->isError()) {
-        QList<QmlError> errors = component->errors();
-        foreach (const QmlError &error, errors) {
+        QList<QDeclarativeError> errors = component->errors();
+        foreach (const QDeclarativeError &error, errors) {
             qWarning() << error;
         }
     }
 
-    QmlContext *ctx = new QmlContext(&engine);
+    QDeclarativeContext *ctx = new QDeclarativeContext(&engine);
     QObject *mainObject = component->create(ctx);
 
     Viewport *viewport = qobject_cast<Viewport *>(mainObject);
@@ -213,8 +213,8 @@ void Qml3dView::loaded()
         QTimer::singleShot(0, this, SLOT(updateGL()));
     } else if (item) {
         qWarning() << "qml3d: Item3d object without an enclosing Scene";
-    } else if (qobject_cast<QmlGraphicsItem *>(mainObject)) {
-        qWarning() << "qml3d: Ordinary QmlGraphicsItem node found; may be "
+    } else if (qobject_cast<QDeclarativeItem *>(mainObject)) {
+        qWarning() << "qml3d: Ordinary QDeclarativeItem node found; may be "
                       "missing '-graphicssystem OpenGL'";
     } else {
         qWarning() << "qml3d: No Scene or Item3d node found";

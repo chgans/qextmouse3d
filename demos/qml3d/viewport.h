@@ -42,7 +42,7 @@
 #ifndef VIEWPORT_H
 #define VIEWPORT_H
 
-#include <QtDeclarative/qmlgraphicsitem.h>
+#include <QtDeclarative/qdeclarativeItem.h>
 #include "item3d.h"
 
 QT_BEGIN_HEADER
@@ -55,7 +55,7 @@ class QGLLightModel;
 class QGLLightParameters;
 class Effect;
 
-class Viewport : public QmlGraphicsItem
+class Viewport : public QDeclarativeItem
 {
     Q_OBJECT
     Q_PROPERTY(bool picking READ picking WRITE setPicking)
@@ -65,7 +65,7 @@ class Viewport : public QmlGraphicsItem
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel)
     Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop)
 public:
-    Viewport(QmlGraphicsItem *parent = 0);
+    Viewport(QDeclarativeItem *parent = 0);
     ~Viewport();
 
     bool picking() const;

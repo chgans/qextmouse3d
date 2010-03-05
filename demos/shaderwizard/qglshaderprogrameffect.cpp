@@ -419,7 +419,9 @@ void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
     vertexShader = shader;
     if(shader.length() > 0)
-    {
+    {\
+
+
         setActive(true);
     } else {
         setActive(false);
