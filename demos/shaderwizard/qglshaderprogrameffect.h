@@ -52,24 +52,24 @@ class QGLShaderProgramEffect : public QGLAbstractEffect
 public:
     QGLShaderProgramEffect();
     virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
+    virtual QList<QGL::VertexAttribute> requiredFields() const;
+    virtual bool supportsPicking() const;
     virtual void setActive(bool flag);
     virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute(QGL::VertexAttribute attribute,
+    virtual void setVertexAttribute(QGL::VertexAttribute attribute,
                             const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexShader(QString const &  shader);
-    QString vertexShader;
-    void setFragmentShader(QString const & shader);
-    QString fragmentShader;
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
-    void setProgram(QGLShaderProgram* program);
+    virtual void setVertexShader(QString const &  shader);
+    virtual void setFragmentShader(QString const & shader);
+    virtual void setMaterial(QGLMaterialParameters* newMaterial);
+    virtual QGLMaterialParameters* material();
+    virtual void setProgram(QGLShaderProgram* program);
+    virtual QString vertexShader();
+    virtual QString fragmentShader();
 
 protected:
-    QGLShaderProgram* program();
+    virtual QGLShaderProgram* program();
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
 
