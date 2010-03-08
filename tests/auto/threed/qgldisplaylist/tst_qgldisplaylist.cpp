@@ -42,6 +42,7 @@
 #include <QtTest/QtTest>
 #include <QtCore/qpointer.h>
 #include "qgldisplaylist.h"
+#include "qvectorarray.h"
 #include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"
@@ -59,10 +60,10 @@ public:
 private slots:
     void createDefault();
     void newSection();
-    void currentNode();
     void newNode();
     void pushNode();
     void popNode();
+    void geometryBuild();
     void addTriangle();
     void addQuad();
     void addTriangleFan();
@@ -120,10 +121,6 @@ void tst_QGLDisplayList::newSection()
     QCOMPARE(s2, displayList.currentSection());
     QCOMPARE(displayList.sections().count(), 2);
     QVERIFY(displayList.sections().contains(s2));
-}
-
-void tst_QGLDisplayList::currentNode()
-{
 }
 
 class TestEffect : public QGLAbstractEffect
@@ -246,6 +243,151 @@ void tst_QGLDisplayList::popNode()
     QCOMPARE(node3->count(), 0);
 }
 
+void tst_QGLDisplayList::geometryBuild()
+{
+    // here we really just test that the right values get added
+    // to the underlying QGLPrimitive - the function of the actual
+    // building that takes place when end() is called is tested by
+    // the addTriangle() and other tests below
+    TestQGLDisplayList displayList;
+    displayList.newSection();
+    QGLSection *sec = displayList.currentSection();
+    QGLSceneNode *node = displayList.currentNode();
+
+    QCOMPARE(sec->count(), 0);  // empty to start off with
+    QCOMPARE(node->count(), 0);
+
+    QVector3D a(-1.0f, -1.0f, 0.0f);
+    QVector3D b(1.0f, -1.0f, 0.0f);
+    QVector3D c(1.0f, 1.0f, 0.0f);
+    QVector3D d(-1.0f, 1.0f, 0.0f);
+    QVector3D e(1.0f, 2.0f, 0.0f);
+    QVector3D f(-1.0f, 2.0f, 0.0f);
+    QVector3D origin;
+    QVector3D norm(0.0f, 0.0f, 1.0f);
+
+    displayList.begin(QGL::TRIANGLE);
+    QGLPrimitive *p = displayList.currentPrimitive();
+    QVERIFY(p != (QGLPrimitive*)0);
+    displayList.addVertex(a);
+    displayList.addVertex(b.x(), b.y());
+    displayList.addVertex(c.x(), c.y(), c.z());
+    QCOMPARE(p->count(), 3);
+    QCOMPARE(p->vertex(0), a);
+    QCOMPARE(p->vertex(1), b);
+    QCOMPARE(p->vertex(2), c);
+    displayList.end();
+    QCOMPARE(displayList.currentPrimitive(), (QGLPrimitive*)0);
+    QCOMPARE(sec->count(), 3);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
+    QCOMPARE(sec->normal(0), norm);
+    QCOMPARE(sec->normal(1), norm);
+    QCOMPARE(sec->normal(2), norm);
+    QCOMPARE(node->count(), 3);
+
+    displayList.newSection();
+    displayList.begin(QGL::TRIANGLE_STRIP);
+    QVERIFY(displayList.currentPrimitive() != p);
+    p = displayList.currentPrimitive();
+    QVERIFY(p != (QGLPrimitive*)0);  // should get a whole new primitive here
+    sec = displayList.currentSection();
+    node = displayList.currentNode();
+    QCOMPARE(sec->count(), 0);  // empty to start off with
+    QCOMPARE(node->count(), 0);
+    QVector3DArray data;
+    data << a << b << d << c << f << e;
+    displayList.addVertexArray(data);
+    QCOMPARE(p->count(), 6);
+    QCOMPARE(p->vertex(0), a);
+    QCOMPARE(p->vertex(1), b);
+    QCOMPARE(p->vertex(2), d);
+    QCOMPARE(p->vertex(3), c);
+    QCOMPARE(p->vertex(4), f);
+    QCOMPARE(p->vertex(5), e);
+
+    // this will implicitly call displayList.end() -  test the end of TRIANGLE_STRIP
+    displayList.begin(QGL::TRIANGLE_FAN);
+    p = displayList.currentPrimitive();
+    QVERIFY(p != (QGLPrimitive*)0);  // should get a whole new primitive here
+    // but the section will contain the data from posting the last primitive
+    QCOMPARE(sec->count(), 6);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), d);
+    QCOMPARE(sec->vertex(3), c);
+    QCOMPARE(sec->vertex(4), f);
+    QCOMPARE(sec->vertex(5), e);
+    QCOMPARE(sec->normal(0), norm);
+    QCOMPARE(sec->normal(3), norm);
+    QCOMPARE(sec->normal(5), norm);
+    QCOMPARE(node->count(), 12); // TRIANGLE_STRIP will here draw 4 triangles = 12 indices
+
+    // now go on and test TRIANGLE_FAN
+    displayList.newSection();
+    sec = displayList.currentSection();
+    node = displayList.currentNode();
+    displayList.addVertex(a);
+    displayList.addNormal(norm);
+    displayList.addVertex(b);
+    displayList.addNormal(norm);
+    displayList.addVertex(c);
+    displayList.addNormal(norm);
+    displayList.addVertex(d);
+    displayList.addNormal(norm);
+    displayList.addVertex(e);
+    displayList.addNormal(norm);
+    QCOMPARE(p->count(), 5);
+    QCOMPARE(p->vertex(0), a);
+    QCOMPARE(p->vertex(4), e);
+    QCOMPARE(p->normal(0), norm);
+    QCOMPARE(p->normal(4), norm);
+    displayList.end();
+    QCOMPARE(sec->count(), 5);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(2), c);
+    QCOMPARE(sec->vertex(4), e);
+    QCOMPARE(sec->normal(0), norm);
+    QCOMPARE(sec->normal(4), norm);
+    QCOMPARE(node->count(), 9); // TRIANGLE_FAN will here draw 3 triangles = 9 indices
+
+    displayList.begin(QGL::TRIANGULATED_FACE);
+    displayList.newSection();
+    sec = displayList.currentSection();
+    node = displayList.currentNode();
+    displayList.addVertex(a);
+    displayList.addColor(Qt::red);
+    displayList.addVertex(b);
+    displayList.addColor(QColor4B(Qt::green));
+    displayList.addVertex(c);
+    displayList.addVertex(d);
+    displayList.addVertex(e);
+    QArray<QColor4B> cdata;
+    cdata.append(Qt::blue, Qt::yellow, Qt::black);
+    displayList.addColorArray(cdata);
+    QCOMPARE(p->count(), 5);
+    QCOMPARE(p->vertex(0), a);
+    QCOMPARE(p->vertex(4), e);
+    QCOMPARE(p->color(0), QColor4B(Qt::red));
+    QCOMPARE(p->color(1), QColor4B(Qt::green));
+    QCOMPARE(p->color(2), QColor4B(Qt::blue));
+    QCOMPARE(p->color(3), QColor4B(Qt::yellow));
+    QCOMPARE(p->color(4), QColor4B(Qt::black));
+    displayList.setFlags(QGL::USE_VERTEX_0_AS_CTR);
+    QVERIFY(p->flags() == QGL::USE_VERTEX_0_AS_CTR);
+    displayList.end();
+    QCOMPARE(sec->count(), 5);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(4), e);
+    QCOMPARE(p->color(0), QColor4B(Qt::red));
+    QCOMPARE(p->color(1), QColor4B(Qt::green));
+    QCOMPARE(p->color(2), QColor4B(Qt::blue));
+    QCOMPARE(p->color(3), QColor4B(Qt::yellow));
+    QCOMPARE(p->color(4), QColor4B(Qt::black));
+    QCOMPARE(node->count(), 12); // TRIANGLE_FAN will here draw 4 triangles = 12 indices
+}
+
 void tst_QGLDisplayList::addTriangle()
 {
     TestQGLDisplayList displayList;
@@ -348,6 +490,17 @@ void tst_QGLDisplayList::addTriangle()
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
+
+    // correctly handle not being a multiple of 3 - discard spare ones
+    displayList.newSection();
+    sec = displayList.currentSection();
+    QGLPrimitive t;
+    t.appendVertex(a, b, c, d);
+    displayList.addTriangle(t);
+    QCOMPARE(sec->count(), 3);
+    QCOMPARE(sec->vertex(0), a);
+    QCOMPARE(sec->vertex(1), b);
+    QCOMPARE(sec->vertex(2), c);
 }
 
 void tst_QGLDisplayList::addQuad()

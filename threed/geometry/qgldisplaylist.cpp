@@ -509,7 +509,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     const QGLIndexArray indices = t.indices();
     if (indices.isEmpty())
     {
-        for (int i = 0; i < t.count(); i += 3)
+        for (int i = 0; i < t.count() - 2; i += 3)
         {
             addTriangle(i, i+1, i+2, t);
             t.setCommonNormal(save);
@@ -517,7 +517,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     }
     else
     {
-        for (int i = 0; i < indices.size(); i += 3)
+        for (int i = 0; i < indices.size() - 2; i += 3)
         {
             addTriangle(indices[i], indices[i+1], indices[i+2], t);
             t.setCommonNormal(save);
@@ -1098,6 +1098,17 @@ void QGLDisplayList::setDirty(bool dirty)
 }
 
 /*!
+    Returns the current operation, as set by begin().  Data added
+    for example by addVertex() will be accumulated for use in this
+    operation.
+*/
+QGL::Operation QGLDisplayList::currentOperation() const
+{
+    Q_D(const QGLDisplayList);
+    return d->operation;
+}
+
+/*!
     Sets the current \a operation.  After this call all displaylist data
     add functions, for example addVertex(), will accumulate data for that
     \a operation.  Any previous operation is ended.
@@ -1158,6 +1169,7 @@ void QGLDisplayList::end()
         {
             delete d->currentOperation;
             d->currentOperation = 0;
+            d->operation = QGL::NO_OP;
         }
     }
 }

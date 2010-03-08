@@ -1122,6 +1122,8 @@ void QGeometryData::appendAttribute(const QVector2D &a, QGL::VertexAttribute fie
     detach();
     d->modified = true;
     enableField(field);
+    if (d->attributes.at(d->key[field]).isEmpty())
+        d->attributes[d->key[field]].setElementType(QCustomDataArray::Vector2D);
     d->attributes[d->key[field]].append(a);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
 }
@@ -1134,6 +1136,8 @@ void QGeometryData::appendAttribute(const QVector3D &v, QGL::VertexAttribute fie
     detach();
     d->modified = true;
     enableField(field);
+    if (d->attributes.at(d->key[field]).isEmpty())
+        d->attributes[d->key[field]].setElementType(QCustomDataArray::Vector3D);
     d->attributes[d->key[field]].append(v);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
 }
@@ -1146,6 +1150,20 @@ void QGeometryData::appendAttribute(const QVariant &a, QGL::VertexAttribute fiel
     detach();
     d->modified = true;
     enableField(field);
+    if (d->attributes.at(d->key[field]).isEmpty())
+    {
+        // floats and doubles get handled "automatically" - float is default
+        if (a.type() == QVariant::Vector2D)
+            d->attributes[d->key[field]].setElementType(QCustomDataArray::Vector2D);
+        else if (a.type() == QVariant::Vector3D)
+            d->attributes[d->key[field]].setElementType(QCustomDataArray::Vector3D);
+        else if (a.type() == QVariant::Vector4D)
+            d->attributes[d->key[field]].setElementType(QCustomDataArray::Vector4D);
+        else if (a.type() == QVariant::Color)
+            d->attributes[d->key[field]].setElementType(QCustomDataArray::Color);
+        else
+            Q_ASSERT_X(false, "QGeometryData::appendAttribute", "bad type");
+    }
     d->attributes[d->key[field]].append(a);
     d->count = qMax(d->count, d->attributes[d->key[field]].count());
 }
@@ -1668,6 +1686,7 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::CustomVertex5:
     case QGL::CustomVertex6:
     case QGL::CustomVertex7:
+        d->attributes.append(QCustomDataArray());
         d->key[field] = d->attributes.count() - 1;
         d->size[field] = d->attributes.at(d->key[field]).elementSize();
         if (d->reserved > 0)

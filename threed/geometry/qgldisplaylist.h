@@ -93,6 +93,7 @@ public:
     // geometry building by begin() / end()
     void begin(QGL::Operation);
     void end();
+    QGL::Operation currentOperation() const;
 
     void setFlags(QGL::OperationFlags flag);
     QGL::OperationFlags flags() const;

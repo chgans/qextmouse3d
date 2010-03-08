@@ -495,6 +495,13 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
 
 int QGLSection::appendOne(const QLogicalVertex &lv)
 {
+#ifndef QT_NO_DEBUG_STREAM
+    if (fields() && lv.fields() != fields())
+    {
+        qDebug() << "Adding" << lv << "fields do not match!"
+                << "create new section first?";
+    }
+#endif
     int index = appendVertex(lv);
     d->map->insert(lv.vertex(), index);
     appendIndex(index);
@@ -555,10 +562,12 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     else
     {
         while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
+        {
             if (qCompareByAttributes(lv, vertexAt(*it)))
                 coalesce = true;
             else
                 ++*it;
+        }
         if (!coalesce)  // texture or attributes prevented coalesce
         {
             // new vert to carry tex/attrib data

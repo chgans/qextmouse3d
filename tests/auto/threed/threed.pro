@@ -20,4 +20,5 @@ SUBDIRS = \
     qgldisplaylist \
     qglsection \
     qgeometrydata \
-    qglcube
+    qglcube \
+    qgloperation
