@@ -465,11 +465,10 @@ QGLPrimitive *QGLDisplayList::currentPrimitive()
     stored in here, and needs to be restored unless persisting it
     to the next iteration.
 */
-void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
+void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
 {
-    Q_D(QGLDisplayList);
-    Q_ASSERT(d->currentSection);
-    Q_ASSERT(d->currentNode);
+    Q_ASSERT(currentSection);
+    Q_ASSERT(currentNode);
     bool calcNormal = !p.hasField(QGL::Normal) && p.commonNormal().isNull();
     QLogicalVertex a(p, i);
     QLogicalVertex b(p, j);
@@ -483,8 +482,8 @@ void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
     {
         if (calcNormal)
             p.setCommonNormal(norm);
-        d->currentSection->append(a, b, c);
-        d->currentNode->setCount(d->currentNode->count() + 3);
+        currentSection->append(a, b, c);
+        currentNode->setCount(currentNode->count() + 3);
     }
 }
 
@@ -504,6 +503,7 @@ void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
 */
 void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive t = triangle;
     QVector3D save = t.commonNormal();
     const QGLIndexArray indices = t.indices();
@@ -511,7 +511,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     {
         for (int i = 0; i < t.count() - 2; i += 3)
         {
-            addTriangle(i, i+1, i+2, t);
+            d->addTriangle(i, i+1, i+2, t);
             t.setCommonNormal(save);
         }
     }
@@ -519,7 +519,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     {
         for (int i = 0; i < indices.size() - 2; i += 3)
         {
-            addTriangle(indices[i], indices[i+1], indices[i+2], t);
+            d->addTriangle(indices[i], indices[i+1], indices[i+2], t);
             t.setCommonNormal(save);
         }
     }
@@ -538,12 +538,13 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 */
 void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive q = quad;
     QVector3D save = q.commonNormal();
     for (int i = 0; i < q.count(); i += 4)
     {
-        addTriangle(i, i+1, i+2, q);
-        addTriangle(i, i+2, i+3, q);
+        d->addTriangle(i, i+1, i+2, q);
+        d->addTriangle(i, i+2, i+3, q);
         q.setCommonNormal(save);
     }
 }
@@ -569,11 +570,12 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 */
 void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive f = fan;
     QVector3D save = f.commonNormal();
     for (int i = 1; i < f.count() - 1; ++i)
     {
-        addTriangle(0, i, i+1, f);
+        d->addTriangle(0, i, i+1, f);
         f.setCommonNormal(save);
     }
 }
@@ -600,14 +602,15 @@ void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 */
 void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
-            addTriangle(i+1, i, i+2, s);
+            d->addTriangle(i+1, i, i+2, s);
         else
-            addTriangle(i, i+1, i+2, s);
+            d->addTriangle(i, i+1, i+2, s);
         s.setCommonNormal(save);
     }
 }
@@ -627,12 +630,13 @@ void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count(); i += 2)
     {
-        addTriangle(i, i+2, i+3, s);
-        addTriangle(i, i+3, i+1, s);
+        d->addTriangle(i, i+2, i+3, s);
+        d->addTriangle(i, i+3, i+1, s);
         s.setCommonNormal(save);
     }
 }
@@ -670,6 +674,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive f;
     if (!(face.flags() & QGL::USE_VERTEX_0_AS_CTR))
     {
@@ -687,7 +692,7 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
             int n = i + 1;
             if (n == cnt)
                 n = 1;
-            addTriangle(0, i, n, f);
+            d->addTriangle(0, i, n, f);
         }
     }
 }
@@ -736,13 +741,14 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
                                     const QGLPrimitive &bottom)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive zipped = bottom.zippedWith(top);
     QVector3D norm = top.commonNormal() + bottom.commonNormal();
     zipped.setCommonNormal(norm);
     for (int i = 0; i < zipped.count() - 2; i += 2)
     {
-        addTriangle(i, i+2, i+3, zipped);
-        addTriangle(i, i+3, i+1, zipped);
+        d->addTriangle(i, i+2, i+3, zipped);
+        d->addTriangle(i, i+3, i+1, zipped);
         zipped.setCommonNormal(norm);
     }
 }
@@ -750,13 +756,14 @@ void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
 /*!
     \internal
 */
-void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
+void QGLDisplayListPrivate::adjustSectionNodes(QGLSection *sec,
                                        int offset, QGeometryData *geom)
 {
     QList<QGLSceneNode*> children = sec->nodes();
     QList<QGLSceneNode*>::iterator it = children.begin();
+    QList<QGLSceneNode*> deleted;
     for ( ; it != children.end(); ++it)
-        adjustNodeTree(*it, offset, geom);
+        adjustNodeTree(*it, offset, geom, deleted);
 }
 
 /*!
@@ -766,11 +773,13 @@ void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
     QGLSceneNode::count() - for \a top and all its children.  If this total is
     equal to zero, then delete that node.
 */
-int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
-                                   int offset, QGeometryData *geom)
+int QGLDisplayListPrivate::adjustNodeTree(QGLSceneNode *top,
+                                   int offset, QGeometryData *geom,
+                                   QList<QGLSceneNode*> &deleted)
 {
+    Q_Q(QGLDisplayList);
     int totalItems = 0;
-    if (top)
+    if (top && !deleted.contains(top))
     {
         Q_ASSERT(geom);
         top->setStart(top->start() + offset);
@@ -780,12 +789,13 @@ int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
         QList<QGLSceneNode*>::iterator it = children.begin();
         for ( ; it != children.end(); ++it)
         {
-            totalItems += adjustNodeTree(*it, offset, geom);
+            totalItems += adjustNodeTree(*it, offset, geom, deleted);
         }
-        if (totalItems == 0)
+        if (totalItems == 0 && top->objectName().isEmpty())
         {
-            top->disconnect(this, SLOT(deleteNode(QObject*)));
+            top->disconnect(q, SLOT(deleteNode(QObject*)));
             delete top;
+            deleted.append(top);
         }
     }
     return totalItems;
@@ -895,7 +905,7 @@ void QGLDisplayList::finalize()
                 g = new QGeometryData(*s);
                 geos.insert(s->fields(), g);
             }
-            adjustSectionNodes(s, sectionIndexOffset, g);
+            d->adjustSectionNodes(s, sectionIndexOffset, g);
         }
         d->finalizeNeeded = false;
     }
@@ -1079,6 +1089,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = s->clone(parentNode);
+    d->currentNode->setChildNodes(QList<QGLSceneNode*>());
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
     d->currentNode->setPalette(parentNode->palette());
