@@ -67,12 +67,14 @@ public:
     inline void end();
 private:
     QGLDisplayList *m_list;
+    QGLPrimitive *m_prim;
 };
 
 inline QGLOperation::QGLOperation(QGLDisplayList *list, QGL::Operation op)
     : m_list(list)
 {
     m_list->begin(op);
+    m_prim = m_list->currentPrimitive();
 }
 
 inline QGLOperation::~QGLOperation()
@@ -82,64 +84,64 @@ inline QGLOperation::~QGLOperation()
 
 inline void QGLOperation::setFlags(QGL::OperationFlags flags)
 {
-    m_list->setFlags(flags);
+    m_prim->setFlags(flags);
 }
 
 inline QGL::OperationFlags QGLOperation::flags() const
 {
-    return m_list->flags();
+    return m_prim->flags();
 }
 
 inline void QGLOperation::addVertex(const QVector3D &vertex)
 {
-    m_list->addVertex(vertex);
+    m_prim->appendVertex(vertex);
 }
 
 inline void QGLOperation::addNormal(const QVector3D &normal)
 {
-    m_list->addNormal(normal);
+    m_prim->appendNormal(normal);
 }
 
 inline void QGLOperation::addColor(const QColor4B &color)
 {
-    m_list->addColor(color);
+    m_prim->appendColor(color);
 }
 
 inline void QGLOperation::addTexCoord(const QVector2D &texCoord,
                                       QGL::VertexAttribute attr)
 {
-    m_list->addTexCoord(texCoord, attr);
+    m_prim->appendTexCoord(texCoord, attr);
 }
 
 inline void QGLOperation::addAttribute(const QVector3D &a, QGL::VertexAttribute attr)
 {
-    m_list->addAttribute(a, attr);
+    m_prim->appendAttribute(a, attr);
 }
 
 inline void QGLOperation::addVertexArray(const QVector3DArray &vertices)
 {
-    m_list->addVertexArray(vertices);
+    m_prim->appendVertexArray(vertices);
 }
 
 inline void QGLOperation::addNormalArray(const QVector3DArray &normals)
 {
-    m_list->addNormalArray(normals);
+    m_prim->appendNormalArray(normals);
 }
 
 inline void QGLOperation::addColorArray(const QArray<QColor4B> &colors)
 {
-    m_list->addColorArray(colors);
+    m_prim->appendColorArray(colors);
 }
 
 inline void QGLOperation::addTexCoordArray(const QVector2DArray &texCoords,
                                            QGL::VertexAttribute attr)
 {
-    m_list->addTexCoordArray(texCoords, attr);
+    m_prim->appendTexCoordArray(texCoords, attr);
 }
 
 inline void QGLOperation::addAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute attr)
 {
-    m_list->addAttributeArray(ary, attr);
+    m_prim->appendAttributeArray(ary, attr);
 }
 
 inline void QGLOperation::end()
