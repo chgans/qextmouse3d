@@ -1532,18 +1532,15 @@ QStringList QGLColladaFxEffectFactory::generateCodeElements( QGLShaderProgramEff
     QStringList result;
     // 0 or more <bind_uniform> elements
     Indent indent;
-    result += indent + "<code sid=\"" + baseSid + "VertexShader" + "\">";
 
-    // add line by line indenting
-    result += indent + effect->vertexShader().replace("\n", '\n' + indent);
+    // put all this on one line to avoid adding carriage returns to the
+    // shader programs
+    result += indent + "<code sid=\"" + baseSid + "VertexShader" + "\">"
+              + effect->vertexShader() + "</code>";
 
-    result += indent + "</code>";
-    result += indent + "<code sid=\"" + baseSid + "FragmentShader" + "\">";
+    result += indent + "<code sid=\"" + baseSid + "FragmentShader" + "\">"
+              + effect->fragmentShader() + "</code>";
 
-    // add line by line indenting
-    result += indent + effect->fragmentShader().replace("\n", '\n' + indent);
-
-    result += indent + "</code>";
     return result;
 }
 
