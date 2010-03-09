@@ -93,7 +93,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mSceneRoot(0)
         , mLightParameters(new QGLLightParameters(this))
         , mLightModel(new QGLLightModel(this))
-        , mMaterial(new QGLMaterialParameters(this))
+        , mMaterial(new QGLMaterialParameters())
         , mMaterialCollection(new QGLMaterialCollection(this))
         , mTexture(new QGLTexture2D())
         , cube(0)
@@ -134,11 +134,8 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
         sphere = 0;
     }
 
-    if( mMaterial && mMaterialCollection)
+    if( mMaterialCollection)
     {
-        mMaterialCollection->removeMaterial(mMaterial);
-        delete mMaterial;
-        mMaterial = 0;
         delete mMaterialCollection;
         mMaterialCollection = 0;
     }
@@ -209,6 +206,7 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
     {
         if(!mSceneNode->palette())
             mSceneNode->setPalette(mMaterialCollection);
+        mMaterialCollection->setParent(mSceneNode);
         int materialIndex = mSceneNode->palette()->materialIndexByName("ShaderWizardGLWidgetMaterial");
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
