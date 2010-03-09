@@ -57,6 +57,7 @@
 #include <QFileInfo>
 #include "viewport.h"
 #include "Effect.h"
+#include "rotation3d.h"
 
 static QVariant interpolateVector3D
     (const QVector3D &f, const QVector3D &t, qreal progress)
@@ -67,7 +68,8 @@ static QVariant interpolateVector3D
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-//
+
+    //We now have to register types at runtime rather than globally in the .cpp file.
     QML_REGISTER_TYPE(Qt,4,6,Effect,Effect);
     QML_REGISTER_TYPE(Qt,4,6,Mesh,Mesh);
     QML_REGISTER_TYPE(Qt,4,6,Item3d,Item3d);
@@ -75,6 +77,8 @@ int main(int argc, char *argv[])
     QML_REGISTER_TYPE(Qt,4,6,LightModel,QGLLightModel);
     QML_REGISTER_TYPE(Qt,4,6,Light,QGLLightParameters);
     QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
+    QML_REGISTER_TYPE(Qt,4,6,Rotation3D,Rotation3D);
+    QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterialParameters);
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;

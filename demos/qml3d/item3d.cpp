@@ -260,55 +260,52 @@ public:
     QString meshNode;
 
     //START NEW QML STUFF
-    //// data property
-    //static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
-    //
-    //// resources property
-    //static QObject *resources_at(QDeclarativeListProperty<QObject> *, int);
-    //static void resources_append(QDeclarativeListProperty<QObject> *, QObject *);
-    //static int resources_count(QDeclarativeListProperty<QObject> *);
+    // data property
+    static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
+    
+    // resources property
+    static QObject *resources_at(QDeclarativeListProperty<QObject> *, int);
+    static void resources_append(QDeclarativeListProperty<QObject> *, QObject *);
+    static int resources_count(QDeclarativeListProperty<QObject> *);
 
     //// children property
-    //static Item3d *children_at(QDeclarativeListProperty<Item3d> *, int);
-    //static void children_append(QDeclarativeListProperty<Item3d> *, Item3d *);
-    //static int children_count(QDeclarativeListProperty<Item3d> *);
+    static Item3d *children_at(QDeclarativeListProperty<Item3d> *, int);
+    static void children_append(QDeclarativeListProperty<Item3d> *, Item3d *);
+    static int children_count(QDeclarativeListProperty<Item3d> *);
 
-    //// transform property
-    //static int transform_count(QDeclarativeListProperty<QGraphicsTransform> *list);
-    //static void transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
-    //static QGraphicsTransform *transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
-    //static void transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
+   
     //END NEW QML STUFF
     
     // data property
-    void data_removeAt(QDeclarativeListProperty<QObject>*, int);
+    /*void data_removeAt(QDeclarativeListProperty<QObject>*, int);
     int data_count(QDeclarativeListProperty<QObject>*) const;
     static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
     void data_insert(QDeclarativeListProperty<QObject>*, int, QObject *);
     QObject *data_at(QDeclarativeListProperty<QObject>*, int) const;
-    void data_clear(QDeclarativeListProperty<QObject>*);
+    void data_clear(QDeclarativeListProperty<QObject>*);*/
+    //static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
 //   QML_DECLARE_LIST_PROXY(Item3dPrivate, QObject *, data)
 
     // resources property
-    void resources_removeAt(QDeclarativeListProperty<QObject>*,int);
+    /*void resources_removeAt(QDeclarativeListProperty<QObject>*,int);
     int resources_count(QDeclarativeListProperty<QObject>*) const;
     void resources_append(QDeclarativeListProperty<QObject>*,QObject *);
     void resources_insert(QDeclarativeListProperty<QObject>*,int, QObject *);
     QObject *resources_at(QDeclarativeListProperty<QObject>*,int) const;
-    void resources_clear(QDeclarativeListProperty<QObject>*);
+    void resources_clear(QDeclarativeListProperty<QObject>*);*/
   //  QML_DECLARE_LIST_PROXY(Item3dPrivate, QObject *, resources)
 
     // children property
-    void children_removeAt(QDeclarativeListProperty<QObject>*,int);
-    int children_count(QDeclarativeListProperty<QObject>*) const;
-    void children_append(QDeclarativeListProperty<QObject>*,Item3d *);
-    void children_insert(QDeclarativeListProperty<QObject>*,int, Item3d *);
-    Item3d *children_at(QDeclarativeListProperty<QObject>*,int) const;
-    void children_clear(QDeclarativeListProperty<QObject>*);
-  //  QML_DECLARE_LIST_PROXY(Item3dPrivate, Item3d *, children)
-    QList<Item3d *> childrenList;
+  //  void children_removeAt(QDeclarativeListProperty<QObject>*,int);
+  //  int children_count(QDeclarativeListProperty<QObject>*) const;
+  //  void children_append(QDeclarativeListProperty<QObject>*,Item3d *);
+  //  void children_insert(QDeclarativeListProperty<QObject>*,int, Item3d *);
+  //  Item3d *children_at(QDeclarativeListProperty<QObject>*,int) const;
+  //  void children_clear(QDeclarativeListProperty<QObject>*);
+  ////  QML_DECLARE_LIST_PROXY(Item3dPrivate, Item3d *, children)
+  //  QList<Item3d *> childrenList;
 
-    // transform property
+  //  // transform property
     void transform_removeAt(QDeclarativeListProperty<QObject>*,int);
     int transform_count(QDeclarativeListProperty<QObject>*) const;
     void transform_append(QDeclarativeListProperty<QObject>*,QGraphicsTransform *);
@@ -321,92 +318,6 @@ public:
 
 };
 
-//BEGINNING OF FUCKING RETARDED QML CHANGES
-//
-//QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, int index)
-//{
-//    QObjectList children = prop->object->children();
-//    if (index < children.count())
-//        return children.at(index);
-//    else
-//        return 0;
-//}
-//
-//void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
-//{
-//    o->setParent(prop->object);
-//}
-//
-//int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject> *prop)
-//{
-//    return prop->object->children().count();
-//}
-//
-//Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<Item3d> *prop, int index)
-//{
-//    QList<QObject*> childrenList = static_cast<Item3d*>(prop->object)->children();
-//
-//    if (children && index < childrenList.count())
-//        return qobject_cast<Item3d *>(childrenList.at(index));
-//    else
-//        return 0;
-//}
-//
-//void Item3dPrivate::children_append(QDeclarativeListProperty<Item3d> *prop, Item3d *i)
-//{
-//    
-//    if (i)
-//        i->setParent(static_cast<Item3d*>(prop->object));
-//}
-//
-//int Item3dPrivate::children_count(QDeclarativeListProperty<Item3d> *prop)
-//{
-//    return static_cast<Item3d*>(prop->object)->children().count();
-//}
-//
-//int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
-//{
-//    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-//    if (object) {
-//        QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-//        return d->transformData ? d->transformData->graphicsTransforms.size() : 0;
-//    } else {
-//        return 0;
-//    }
-//}
-//
-//void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
-//{
-//    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-//    if (object)
-//        QGraphicsItemPrivate::get(object)->appendGraphicsTransform(item);
-//}
-//
-//QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
-//{
-//    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-//    if (object) {
-//        QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-//        if (!d->transformData)
-//            return 0;
-//        return d->transformData->graphicsTransforms.at(idx);
-//    } else {
-//        return 0;
-//    }
-//}
-//
-//void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
-//{
-//    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-//    if (object) {
-//        QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-//        if (!d->transformData)
-//            return;
-//        object->setTransformations(QList<QGraphicsTransform *>());
-//    }
-//}
-
-//END OF FUCKING RETARDED QML CHANGES
 //
 void Item3dPrivate::transform_removeAt(QDeclarativeListProperty<QObject>* ql, int i)
 {
@@ -419,8 +330,6 @@ int Item3dPrivate::transform_count(QDeclarativeListProperty<QObject>*ql) const
 //    return transforms.count();
     return 0;
 }
-
-
 
 
 void Item3dPrivate::transform_append(QDeclarativeListProperty<QObject>* ql,QGraphicsTransform *item)
@@ -465,116 +374,168 @@ void Item3dPrivate::transform_clear(QDeclarativeListProperty<QObject>* ql)
 }
 
 
-void Item3dPrivate::data_removeAt(QDeclarativeListProperty<QObject>*, int)
-{
-    // ###
-}
-
-int Item3dPrivate::data_count(QDeclarativeListProperty<QObject>*) const
-{
-    // ###
-    return 0;
-}
+//void Item3dPrivate::data_removeAt(QDeclarativeListProperty<QObject>*, int)
+//{
+//    // ###
+//}
+//
+//int Item3dPrivate::data_count(QDeclarativeListProperty<QObject>*) const
+//{
+//    // ###
+//    return 0;
+//}
+//void Item3dPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
+//{
+//  ///Item3d *i = qobject_cast<Item3d *>(o);
+//  //if (i) 
+//    //  i->setParent(static_cast<QObject *>(prop->object));
+//  //else
+//  //o->setParent(static_cast<QObject *>(prop->object));
+//}
 
 void Item3dPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
-    /*Item3d *i = qobject_cast<Item3d *>(o);
+    Item3d *i = qobject_cast<Item3d *>(o);
     if (i) 
         i-(static_cast<Item3d *>(prop->object));
     else
-        o->setParent(static_cast<Item3d *>(prop->object));*/
+        o->setParent(static_cast<Item3d *>(prop->object));
 }
 
-void Item3dPrivate::resources_removeAt(QDeclarativeListProperty<QObject>*,int)
+//void Item3dPrivate::resources_removeAt(QDeclarativeListProperty<QObject>*,int)
+//{
+//    // ###
+//}
+//
+//int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject>*) const
+//{
+//    // ###
+//    return 0;
+//}
+//
+//void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject>*, QObject *o)
+//{
+//    o->setParent(item);
+//}
+//
+//void Item3dPrivate::resources_insert(QDeclarativeListProperty<QObject>*,int, QObject *)
+//{
+//    // ###
+//}
+//
+//QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject>*, int) const
+//{
+//    // ###
+//    return 0;
+//}
+//
+//void Item3dPrivate::resources_clear(QDeclarativeListProperty<QObject>*)
+//{
+//    // ###
+//}
+
+QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, int index)
 {
-    // ###
-}
-
-int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject>*) const
-{
-    // ###
-    return 0;
-}
-
-void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject>*, QObject *o)
-{
-    o->setParent(item);
-}
-
-void Item3dPrivate::resources_insert(QDeclarativeListProperty<QObject>*,int, QObject *)
-{
-    // ###
-}
-
-QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject>*, int) const
-{
-    // ###
-    return 0;
-}
-
-void Item3dPrivate::resources_clear(QDeclarativeListProperty<QObject>*)
-{
-    // ###
-}
-
-void Item3dPrivate::children_removeAt(QDeclarativeListProperty<QObject>* ql,int idx)
-{
-    //childrenList.removeAt(idx);
-}
-
-int Item3dPrivate::children_count(QDeclarativeListProperty<QObject>* ql) const
-{
-    //return childrenList.count();
-    return 0;
-}
-
-void Item3dPrivate::children_append(QDeclarativeListProperty<QObject>* ql,Item3d *newItem)
-{
-    //if (newItem)
-    //{
-    //    QList<Item3d *> children = static_cast<Item3d*>(ql->object)->
-    //    newItem->setParentItem(item);
-    //}
-
-    ////childrenList.append(newItem);
-    ////newItem->setParent(item);
-
-    //if (inheritEvents) {
-    //    QObject::connect(newItem, SIGNAL(clicked()), item, SIGNAL(clicked()));
-    //    QObject::connect(newItem, SIGNAL(doubleClicked()), item, SIGNAL(doubleClicked()));
-    //    QObject::connect(newItem, SIGNAL(pressed()), item, SIGNAL(pressed()));
-    //    QObject::connect(newItem, SIGNAL(released()), item, SIGNAL(released()));
-    //    QObject::connect(newItem, SIGNAL(hoverEnter()), item, SIGNAL(hoverEnter()));
-    //    QObject::connect(newItem, SIGNAL(hoverLeave()), item, SIGNAL(hoverLeave()));
-    //}
-}
-
-void Item3dPrivate::children_insert(QDeclarativeListProperty<QObject>* ql,int idx, Item3d *newItem)
-{
-    //if (newItem) {
-    //    QList<Item3d *> children = static_cast<Item3d*>(ql->object)->childItems();
-    //    children.insert(idx, newItem);
-    //}
-    //    
-
- //   childrenList.insert(idx, newItem);
-}
-
-Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<QObject>* ql,int idx) const
-{
-    //QList<Item3d *> children = static_cast<Item3d*>(ql->object)->childItems();
-    //if (children && idx<children.count())
-    //    return qobject_cast<Item3d *>(children.at(index));
-    //else
+    QObjectList children = prop->object->children();
+    if (index < children.count())
+        return children.at(index);
+    else
         return 0;
-
-    //return childrenList.at(idx);
 }
 
-void Item3dPrivate::children_clear(QDeclarativeListProperty<QObject>* ql)
+void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
- //   childrenList.clear();
+    o->setParent(prop->object);
 }
+
+int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject> *prop)
+{
+    return prop->object->children().count();
+}
+
+
+//void Item3dPrivate::children_removeAt(QDeclarativeListProperty<QObject>* ql,int idx)
+//{
+//    //childrenList.removeAt(idx);
+//}
+//
+//int Item3dPrivate::children_count(QDeclarativeListProperty<QObject>* ql) const
+//{
+//    //return childrenList.count();
+//    return 0;
+//}
+//
+//void Item3dPrivate::children_append(QDeclarativeListProperty<QObject>* ql,Item3d *newItem)
+//{
+//    //if (newItem)
+//    //{
+//    //    QList<Item3d *> children = static_cast<Item3d*>(ql->object)->
+//    //    newItem->setParentItem(item);
+//    //}
+//
+//    ////childrenList.append(newItem);
+//    ////newItem->setParent(item);
+//
+//    //if (inheritEvents) {
+//    //    QObject::connect(newItem, SIGNAL(clicked()), item, SIGNAL(clicked()));
+//    //    QObject::connect(newItem, SIGNAL(doubleClicked()), item, SIGNAL(doubleClicked()));
+//    //    QObject::connect(newItem, SIGNAL(pressed()), item, SIGNAL(pressed()));
+//    //    QObject::connect(newItem, SIGNAL(released()), item, SIGNAL(released()));
+//    //    QObject::connect(newItem, SIGNAL(hoverEnter()), item, SIGNAL(hoverEnter()));
+//    //    QObject::connect(newItem, SIGNAL(hoverLeave()), item, SIGNAL(hoverLeave()));
+//    //}
+//}
+//
+//void Item3dPrivate::children_insert(QDeclarativeListProperty<QObject>* ql,int idx, Item3d *newItem)
+//{
+//    //if (newItem) {
+//    //    QList<Item3d *> children = static_cast<Item3d*>(ql->object)->childItems();
+//    //    children.insert(idx, newItem);
+//    //}
+//    //    
+//
+// //   childrenList.insert(idx, newItem);
+//}
+//
+//Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<QObject>* ql,int idx) const
+//{
+//    //QList<Item3d *> children = static_cast<Item3d*>(ql->object)->childItems();
+//    //if (children && idx<children.count())
+//    //    return qobject_cast<Item3d *>(children.at(index));
+//    //else
+//        return 0;
+//
+//    //return childrenList.at(idx);
+//}
+//
+//void Item3dPrivate::children_clear(QDeclarativeListProperty<QObject>* ql)
+//{
+// //   childrenList.clear();
+//}
+
+Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<Item3d> *prop, int index)
+{
+    QObjectList thechildren = static_cast<Item3d*>(prop->object)->children();
+
+    if (index < thechildren.count())
+        return qobject_cast<Item3d *>(thechildren.at(index));
+    else
+        return 0;
+}
+
+void Item3dPrivate::children_append(QDeclarativeListProperty<Item3d> *prop, Item3d *i)
+{
+    if (i)
+        i->setParent(static_cast<QObject*>(prop->object));
+}
+
+int Item3dPrivate::children_count(QDeclarativeListProperty<Item3d> *prop)
+{
+    return static_cast<Item3d*>(prop->object)->children().count();
+}
+
+
+
 
 QDeclarativeStateGroup *Item3dPrivate::states()
 {
@@ -741,12 +702,12 @@ void Item3d::setScale(qreal value)
     By default this list of transformations is empty.
 */
 QDeclarativeListProperty<QGraphicsTransform *>* Item3d::transform()
+
 {
 
  //   return &(d->transform);
     return 0;
 }
-
 
 /*!
     \property Item3d::inheritEvents
@@ -884,15 +845,21 @@ void Item3d::setEffect(Effect *value)
 }
 
 
-//START OF RETARDED QML CHANGES
+//START OF POTENTIAL QML CHANGES
 //
 ///*!
 //    
 //*/
-QDeclarativeListProperty<Item3d *> *Item3d::children()
+//QDeclarativeListProperty<Item3d *> *Item3d::children()
+//{
+// //   return &(d->children);
+//    return 0;
+//}
+QDeclarativeListProperty<Item3d> Item3d::fxChildren()
 {
- //   return &(d->children);
-    return 0;
+    return QDeclarativeListProperty<Item3d>(this, 0, Item3dPrivate::children_append,
+                                                     Item3dPrivate::children_count, 
+                                                     Item3dPrivate::children_at); 
 }
 
 /*!
@@ -900,102 +867,29 @@ QDeclarativeListProperty<Item3d *> *Item3d::children()
     \brief This property exists to allow future expansion of the \i Item3d class to include
     additional data and resources.  Currently there is no underlying implementation for this.
 */
-QDeclarativeListProperty<QObject *> *Item3d::resources()
+//QDeclarativeListProperty<QObject *> *Item3d::resources()
+//{
+//    //return &(d->resources);
+//    return 0;
+//}
+QDeclarativeListProperty<QObject> Item3d::resources()
 {
-    //return &(d->resources);
-    return 0;
+    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::resources_append, 
+                                             Item3dPrivate::resources_count, 
+                                             Item3dPrivate::resources_at); 
 }
 
-///*!
-//    \property Item3d::data
-//    \brief This property exists to allow future expansion of the \l Item3d class to include
-//    additional data and resources.  Currently there is no underlying implementation for this.
-//*/
-//QDeclarativeListProperty<QObject> Item3d::data() 
-//{
-//    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::data_append);
-//}
-//
-///*! \internal */
-//QDeclarativeListProperty<QDeclarativeItem> Item3d::fxChildren()
-//{
-//    return QDeclarativeListProperty<QDeclarativeItem>(this, 0, Item3dPrivate::children_append,
-//                                                     Item3dPrivate::children_count, 
-//                                                     Item3dPrivate::children_at); 
-//}
-//
-///*! \internal */
-//QDeclarativeListProperty<QObject> Item3d::resources()
-//{
-//    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::resources_append, 
-//                                             Item3dPrivate::resources_count, 
-//                                             Item3dPrivate::resources_at); 
-//}
-//
-///*!
-//  \qmlproperty list<State> Item::states
-//  This property holds a list of states defined by the item.
-//
-//  \qml
-//  Item {
-//    states: [
-//      State { ... },
-//      State { ... }
-//      ...
-//    ]
-//  }
-//  \endqml
-//
-//  \sa {qmlstate}{States}
-//*/
-//
-///*!
-//  \property QDeclarativeItem::states
-//  \internal
-//*/
-///*! \internal */
-//QDeclarativeListProperty<QDeclarativeState> Item3d::states()
-//{    
-//    return d->states()->statesProperty();
-//}
-//
-///*!
-//  \qmlproperty list<Transition> Item::transitions
-//  This property holds a list of transitions defined by the item.
-//
-//  \qml
-//  Item {
-//    transitions: [
-//      Transition { ... },
-//      Transition { ... }
-//      ...
-//    ]
-//  }
-//  \endqml
-//
-//  \sa {state-transitions}{Transitions}
-//*/
-//
-///*!
-//  \property QDeclarativeItem::transitions
-//  \internal
-//*/
-//
-///*! \internal */
-//QDeclarativeListProperty<QDeclarativeTransition> Item3d::transitions()
-//{
-//    return d->states()->transitionsProperty();
-//}
-//
-
-//END OF RETARDED QML CHANGES
 
 
-
-QDeclarativeListProperty<QObject *> *Item3d::data()
+//QMLified below_
+//QDeclarativeListProperty<QObject *> *Item3d::data()
+//{
+//    //return &(d->data);
+//    return 0;
+//}
+QDeclarativeListProperty<QObject> Item3d::data() 
 {
-    //return &(d->data);
-    return 0;
+    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::data_append);
 }
 
 /*!
@@ -1342,7 +1236,7 @@ void Item3d::drawItem(QGLPainter *painter)
 /*!
     This function handles the standard mouse events for the item as contained in \a e.
 
-    Returns the boolean value of the regular QObject::event() function.
+    Returns the boolean value of the regular QObject::event() function.oo
 */
 bool Item3d::event(QEvent *e)
 {
