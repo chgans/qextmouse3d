@@ -636,6 +636,31 @@ void QGLVertexBuffer::replaceAttribute
 }
 
 /*!
+    Returns the raw attribute value associated with \a attribute in
+    this vertex buffer; null if \a attribute does not exist in the
+    vertex buffer.
+
+    If isUploaded() is true, then the returned value will contain a
+    buffer offset to the attribute.  If isUploaded() is false,
+    then the returned value will contain a client-side data pointer
+    to the attribute.
+
+    \sa addAttribute()
+*/
+QGLAttributeValue QGLVertexBuffer::attributeValue(QGL::VertexAttribute attribute) const
+{
+    Q_D(const QGLVertexBuffer);
+    QGLVertexBufferAttribute *attr = 0;
+    int attrIndex;
+    for (attrIndex = 0; attrIndex < d->attributes.size(); ++attrIndex) {
+        attr = d->attributes[attrIndex];
+        if (attr->attribute == attribute)
+            return attr->value;
+    }
+    return QGLAttributeValue();
+}
+
+/*!
     Returns the number of vertices that were defined by previous
     called to addAttribute().
 
