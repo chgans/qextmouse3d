@@ -391,12 +391,11 @@
     The finalize method also destroys all the internal vertex management
     data structures, with the result that no more geometry may be added to
     the display list.  Once finalize() has finished its work, the geometry
-    data in a display list is acessible as a QGLVertexArray:
+    data in a display list is acessible as a QGLVertexBuffer:
 
     \code
     displayList->finalize();
-    QGLVertexArray data = displayList->geometry()->vertexArray();
-    QVector3D vec = data.vector3DAt(5);
+    QGLVertexBuffer *data = displayList->geometry()->vertexBuffer();
     \endcode
 
     The finalize() function only needs to be called once in the application

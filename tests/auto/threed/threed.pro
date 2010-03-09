@@ -11,14 +11,14 @@ SUBDIRS = \
     qgllightmodel \
     qgllightparameters \
     qglmaterialparameters \
-    qglvertexarray \
     qglvertexbuffer \
-    qglvertexdescription \
     qglgeometry \
     qglindexarray \
     qglpainter \
     qgldisplaylist \
     qglsection \
     qgeometrydata \
-    qglcube \
     qgloperation
+
+TO_BE_PORTED = \
+    qglcube

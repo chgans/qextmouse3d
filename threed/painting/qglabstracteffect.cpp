@@ -41,6 +41,7 @@
 
 #include "qglabstracteffect.h"
 #include "qglpainter_p.h"
+#include <QtOpenGL/qglshaderprogram.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -458,6 +459,10 @@ void QGLAbstractEffect::setAttributeArray
     glVertexAttribPointer(GLuint(location), value.tupleSize(),
                           GLenum(value.type()), GL_FALSE,
                           value.stride(), value.data());
+#elif QT_VERSION >= 0x040700
+    program->setAttributeArray
+        (location, value.type(), value.data(),
+         value.tupleSize(), value.stride());
 #elif !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
     Q_UNUSED(program);
     const QGLContext *ctx = QGLContext::currentContext();

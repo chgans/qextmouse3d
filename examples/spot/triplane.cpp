@@ -41,7 +41,7 @@
 
 #include "triplane.h"
 
-#include "qglvertexarray.h"
+#include "qglvertexbuffer.h"
 #include "qglindexarray.h"
 #include "qglpainter.h"
 #include "qline3d.h"
@@ -110,7 +110,7 @@ TriPlane::TriPlane(const QPlane3D &plane, const QVector3D &side,
     // pointers to minimize copies) to do the next column
     QLine3D *l0 = &sideLine;
     QLine3D *l1 = &nxSideLine;
-    QGLVertexArray vertices(QGL::Position, 3);
+    QVector3DArray vertices;
     for (int col = 0; col < divisions; ++col)
     {
         // ternary ops here are avoiding fmuls & rounding errors at bounds
@@ -127,7 +127,9 @@ TriPlane::TriPlane(const QPlane3D &plane, const QVector3D &side,
             vertices.append(l1->point(t));
         }
         qSwap(l0, l1);
-        g->setVertexArray(vertices);
+        QGLVertexBuffer *buffer = new QGLVertexBuffer();
+        buffer->addAttribute(QGL::Position, vertices);
+        g->setVertexBuffer(buffer);
         mStrips.append(g);
     }
 

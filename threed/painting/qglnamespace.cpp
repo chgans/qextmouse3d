@@ -51,6 +51,32 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QGL::VertexAttribute
+    \since 4.7
+    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexArray()
+
+    \value Position The primary position of the vertex.
+    \value Normal The normal at each vertex.
+    \value Color The color at each vertex.
+    \value TextureCoord0 The texture co-ordinate at each vertex for texture unit 0.
+    \value TextureCoord1 The texture co-ordinate at each vertex for texture unit 1.
+    \value TextureCoord2 The texture co-ordinate at each vertex for texture unit 2.
+    \value TextureCoord3 The texture co-ordinate at each vertex for texture unit 3.
+    \value TextureCoord4 The texture co-ordinate at each vertex for texture unit 4.
+    \value TextureCoord5 The texture co-ordinate at each vertex for texture unit 5.
+    \value TextureCoord6 The texture co-ordinate at each vertex for texture unit 6.
+    \value TextureCoord7 The texture co-ordinate at each vertex for texture unit 7.
+    \value CustomVertex0 First custom vertex attribute.
+    \value CustomVertex1 Second custom vertex attribute.
+    \value CustomVertex2 Third custom vertex attribute.
+    \value CustomVertex3 Fourth custom vertex attribute.
+    \value CustomVertex4 Fifth custom vertex attribute.
+    \value CustomVertex5 Sixth custom vertex attribute.
+    \value CustomVertex6 Seventh custom vertex attribute.
+    \value CustomVertex7 Eighth custom vertex attribute.
+*/
+
+/*!
     \enum QGL::Face
     \since 4.7
     This enum defines the faces to apply an operation to.

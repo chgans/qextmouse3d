@@ -44,8 +44,9 @@
 
 #include "qcolor4b.h"
 #include "qglnamespace.h"
-#include "qglvertexarray.h"
 #include "qglindexarray.h"
+#include "qglattributevalue.h"
+#include "qcustomdataarray.h"
 #include "qbox3d.h"
 #include "qarray.h"
 #include "qvectorarray.h"
@@ -55,11 +56,12 @@ QT_BEGIN_NAMESPACE
 class QGeometryDataPrivate;
 class QLogicalVertex;
 class QGLPainter;
+class QGLVertexBuffer;
 
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
-}
+};
 
 class Q_QT3D_EXPORT QGeometryData
 {
@@ -74,7 +76,6 @@ public:
     void appendGeometry(const QGeometryData &data);
     int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int i) const;
-    QGLVertexArray toVertexArray() const;
     void normalizeNormals();
     QBox3D boundingBox() const;
     void setCommonNormal(const QVector3D &n);

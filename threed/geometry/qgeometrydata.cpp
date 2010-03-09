@@ -372,63 +372,6 @@ QLogicalVertex QGeometryData::vertexAt(int i) const
 }
 
 /*!
-    Returns a QGLVertexArray that contains all the data of this geometry.
-
-    NOTE: this is a temporary facility - when QGeometryData can function as
-        QGLVertexArray, uploading to the GPU and setting on QPainter then
-        this function can be removed.  The bounds checking asserts should be
-        moved at that point into what ever code does the upload/setting.
-*/
-QGLVertexArray QGeometryData::toVertexArray() const
-{
-    QGLVertexArray array;
-    check();
-    if (d)
-    {
-        const quint32 mask = 0x01;
-        quint32 fields = d->fields;
-        for (int field = 0; fields; ++field, fields >>= 1)
-        {
-            if (mask & fields)
-            {
-                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                array.addField(attr, d->size[field]);
-            }
-        }
-        for (int index = 0; index < d->count; ++index)
-        {
-            fields = d->fields;
-            for (int field = 0; fields; ++field, fields >>= 1)
-            {
-                if (mask & fields)
-                {
-                    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                    if (attr < QGL::TextureCoord0)
-                    {
-                        if (attr == QGL::Position)
-                            array.append(d->vertices.at(index));
-                        else if (attr == QGL::Normal)
-                            array.append(d->normals.at(index));
-                        else
-                            array.append(d->colors.at(index));
-                    }
-                    else if (attr < QGL::CustomVertex0)
-                    {
-                        array.append(d->textures.at(d->key[field]).at(index));
-                    }
-                    else
-                    {
-                        // TODO
-                        //array.append(d->attributes.at(field).at(index));
-                    }
-                }
-            }
-        }
-    }
-    return array;
-}
-
-/*!
     Normalize all the normal vectors in this geometry to unit length.
 */
 void QGeometryData::normalizeNormals()

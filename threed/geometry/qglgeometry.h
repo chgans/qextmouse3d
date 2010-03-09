@@ -44,7 +44,6 @@
 
 #include "qglnamespace.h"
 #include "qglindexarray.h"
-#include "qglvertexarray.h"
 #include "qglvertexbuffer.h"
 #include "qbox3d.h"
 
@@ -68,9 +67,6 @@ public:
 
     QGL::DrawingMode drawingMode() const;
     void setDrawingMode(QGL::DrawingMode value);
-
-    QGLVertexArray vertexArray() const;
-    void setVertexArray(const QGLVertexArray& array);
 
     QGLVertexBuffer *vertexBuffer() const;
     void setVertexBuffer(QGLVertexBuffer *buffer);

@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qgldepthbufferoptions.h"
-#include "qglvertexarray.h"
 #include "qglpainter.h"
 #include <QtCore/qatomic.h>
 #include <QtOpenGL/qgl.h>

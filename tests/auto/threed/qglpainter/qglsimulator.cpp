@@ -82,21 +82,24 @@ void QGLSimulator::setColor(const QColor& color)
 }
 
 // Draw a set of triangles from a vertex array.
-void QGLSimulator::drawTriangles(const QGLVertexArray& array)
+void QGLSimulator::drawTriangles(const QVector2DArray& array)
 {
     QVector<QPointF> points;
 
-    int field = array.fieldIndex(QGL::Position);
-    if (field == -1)
-        return;
-    int size = array.fields().fieldSize(field);
+    for (int index = 0; index < array.count(); ++index) {
+        QVector3D v = array[index];
+        points.append(project(v));
+    }
 
-    for (int index = 0; index < array.vertexCount(); ++index) {
-        QVector3D v;
-        if (size == 3)
-            v = array.vector3DAt(index, field);
-        else
-            v = array.vector2DAt(index, field);
+    m_painter->drawPolygon(points);
+}
+
+void QGLSimulator::drawTriangles(const QVector3DArray& array)
+{
+    QVector<QPointF> points;
+
+    for (int index = 0; index < array.count(); ++index) {
+        QVector3D v = array[index];
         points.append(project(v));
     }
 

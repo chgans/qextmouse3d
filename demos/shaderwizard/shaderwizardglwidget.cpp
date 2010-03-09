@@ -44,7 +44,6 @@
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglsphere.h"
-#include "qglvertexarray.h"
 #include <math.h>
 #include <QVector3D>
 #include "qglheightmap.h"

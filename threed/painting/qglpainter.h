@@ -50,7 +50,6 @@
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
 #include "qglvertexbuffer.h"
-#include "qglvertexarray.h"
 #include "qglindexarray.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
@@ -146,8 +145,6 @@ public:
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setVertexBuffer(const QGLVertexBuffer& buffer);
-
-    void setVertexArray(const QGLVertexArray& array);
 
     void setCommonNormal(const QVector3D& value);
 

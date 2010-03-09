@@ -118,14 +118,14 @@ void tst_QGLPainter::drawTrianglePaint()
     painter.projectionMatrix().ortho(widget->rect());
     painter.modelViewMatrix().setToIdentity();
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);
 
     painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
 }
 
@@ -140,7 +140,7 @@ void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
     proj.ortho(widget->rect());
     sim.setProjectionMatrix(proj);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);

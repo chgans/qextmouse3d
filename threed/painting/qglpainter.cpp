@@ -1011,13 +1011,6 @@ void QGLPainterPrivate::createEffect()
 
 #ifndef QT_NO_DEBUG
 
-void QGLPainterPrivate::removeRequiredFields(const QGLVertexArray& array)
-{
-    int count = array.m_fields.fieldCount();
-    for (int index = 0; index < count; ++index)
-        requiredFields.removeAll(array.m_fields.fieldAttribute(index));
-}
-
 void QGLPainterPrivate::removeRequiredFields
     (const QList<QGL::VertexAttribute>& array)
 {
@@ -1322,55 +1315,6 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
 #ifndef QT_NO_DEBUG
     d->removeRequiredFields(buffer.attributes());
 #endif
-}
-
-/*!
-    Sets vertex attributes on the current GL context based on the
-    fields in \a array.
-
-    The following example draws a single triangle, where each
-    vertex consists of a 3D position and a 2D texture co-ordinate:
-
-    \code
-    QGLVertexArray array(QGL::Position, 3, QGL::TextureCoord0, 2);
-    array.append(60.0f,  10.0f,  0.0f);
-    array.append(0.0f, 0.0f);
-    array.append(110.0f, 110.0f, 0.0f);
-    array.append(1.0f, 0.0f);
-    array.append(10.0f,  110.0f, 0.0f);
-    array.append(1.0f, 1.0f);
-    painter.setVertexArray(array);
-    painter.draw(QGL::Triangles, 3);
-    \endcode
-
-    If \a array has been uploaded into the GL server as a vertex
-    buffer, then the vertex buffer will be used to set the attributes.
-
-    \sa draw(), setCommonNormal(), QGLVertexArray::upload()
-*/
-void QGLPainter::setVertexArray(const QGLVertexArray& array)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
-    if (array.isUploaded() && array.bind()) {
-        QGLVertexArray bufferArray = array.toBufferForm();
-        for (int field = 0;
-                field < bufferArray.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (bufferArray.m_fields.fieldAttribute(field),
-                 bufferArray.attributeValue(field));
-        }
-        d->removeRequiredFields(bufferArray);
-        array.release();
-    } else {
-        for (int field = 0; field < array.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (array.m_fields.fieldAttribute(field),
-                 array.attributeValue(field));
-        }
-        d->removeRequiredFields(array);
-    }
 }
 
 /*!

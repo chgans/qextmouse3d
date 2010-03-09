@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qglmatrixstack.h"
-#include "qglvertexarray.h"
 #include "qglpainter_p.h"
 #include <QtOpenGL/qgl.h>
 

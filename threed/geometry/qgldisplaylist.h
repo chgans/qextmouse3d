@@ -51,7 +51,6 @@
 #include "qglscenenode.h"
 #include "qlogicalvertex.h"
 #include "qglattributevalue.h"
-#include "qglvertexdescription.h"
 #include "qglprimitive.h"
 
 QT_BEGIN_HEADER
@@ -146,7 +145,6 @@ private:
 
     friend class QGLSection;
 
-    QGLVertexArray toVertexArray() const;
     void setDirty(bool dirty);
 
 #ifndef QT_NO_DEBUG_STREAM

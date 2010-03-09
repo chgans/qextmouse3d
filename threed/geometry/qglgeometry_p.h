@@ -80,7 +80,6 @@ public:
 
     QGL::DrawingMode drawingMode;
     QGLIndexArray indexArray;
-    QGLVertexArray vertexArray;
     QGLVertexBuffer *vertexBuffer;
     int bufferThreshold;
     mutable bool modified;

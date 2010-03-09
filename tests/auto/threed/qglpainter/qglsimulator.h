@@ -46,7 +46,7 @@
 #include <QtGui/qcolor.h>
 #include <QtGui/qmatrix4x4.h>
 #include <QtGui/qvector3d.h>
-#include "qglvertexarray.h"
+#include "qvectorarray.h"
 
 class QGLSimulator
 {
@@ -70,7 +70,8 @@ public:
 
     void setColor(const QColor& color);
 
-    void drawTriangles(const QGLVertexArray& array);
+    void drawTriangles(const QVector2DArray& array);
+    void drawTriangles(const QVector3DArray& array);
 
 private:
     QPainter *m_painter;
