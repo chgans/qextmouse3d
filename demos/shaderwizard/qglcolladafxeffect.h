@@ -10,8 +10,6 @@ class QXmlStreamReader;
 class QGLColladaParam;
 class QGLColladaFxEffectPrivate;
 
-typedef QStack< QList<QGLColladaParam*> > StateStack;
-
 class QGLColladaFxEffect : public QGLShaderProgramEffect
 {
     friend class QGLColladaFxEffectFactory;
@@ -37,6 +35,9 @@ public:
     void setSid(QString);
     QString id();
     QString sid();
+
+    void setVertexShader(QString const & shader);
+    void setFragmentShader(QString const & shader);
 
     void setLighting(int lighting);
     int lighting();

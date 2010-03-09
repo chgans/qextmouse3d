@@ -75,6 +75,7 @@ public:
                       };
 
 private slots:
+    void on_actionExport_Collada_Effect_triggered();
     void on_actionLoad_Collada_Effect_triggered();
     void on_actionMultiTexture_Shader_triggered();
     void on_actionPer_Pixel_Lit_Texture_Shader_triggered();
@@ -105,6 +106,7 @@ protected:
     void setupSceneView();
     void loadScene(const QString &fileName);
     void loadEffect(const QString &fileName);
+    bool saveEffect();
     void handleScene(QGLAbstractScene *scene);
     void handleScene(QGLSceneNode *scene);
     void writeSettings();
