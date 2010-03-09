@@ -44,6 +44,7 @@
 #include "qglabstracteffect.h"
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
+#include <QtOpenGL/qglshaderprogram.h>
 #include <QtGui/private/qwidget_p.h>
 #include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
@@ -156,6 +157,7 @@ QGLPainterPrivate::~QGLPainterPrivate()
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];
     delete pick;
+    qDeleteAll(cachedPrograms);
 }
 
 QGLPainterExtensions *QGLPainterPrivate::extensions()
@@ -941,6 +943,62 @@ void QGLPainter::disableEffect()
         d->effect->setActive(false);
     d->userEffect = 0;
     d->effect = 0;
+}
+
+/*!
+    Returns the cached shader program associated with \a name; or null
+    if \a name is not currently associated with a shader program.
+
+    \sa setCachedProgram()
+*/
+QGLShaderProgram *QGLPainter::cachedProgram(const QString& name) const
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return d->cachedPrograms.value(name, 0);
+#else
+    Q_UNUSED(name);
+    return 0;
+#endif
+}
+
+/*!
+    Sets the cached shader \a program associated with \a name.
+
+    Effect objects can use this function to store pre-compiled
+    and pre-linked shader programs in the painter for future
+    use by the same effect.  The \a program will be destroyed
+    when context() is destroyed.
+
+    If \a program is null, then the program associated with \a name
+    will be destroyed.  If \a name is already present as a cached
+    program, then it will be replaced with \a program.
+
+    Names that start with "\c{qt.}" are reserved for use by Qt's
+    internal effects.
+
+    \sa cachedProgram()
+*/
+void QGLPainter::setCachedProgram
+    (const QString& name, QGLShaderProgram *program)
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QGLShaderProgram *current = d->cachedPrograms.value(name, 0);
+    if (current != program) {
+        if (program)
+            d->cachedPrograms[name] = program;
+        else
+            d->cachedPrograms.remove(name);
+        delete current;
+    }
+#else
+    // Wouldn't normally be called, but clean up anyway.
+    Q_UNUSED(name);
+    delete program;
+#endif
 }
 
 void QGLPainterPrivate::createEffect()

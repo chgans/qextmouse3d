@@ -72,6 +72,7 @@ class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
+class QGLShaderProgram;
 
 class Q_QT3D_EXPORT QGLPainter
 {
@@ -138,6 +139,9 @@ public:
     void setStandardEffect(QGL::StandardEffect effect);
 
     void disableEffect();
+
+    QGLShaderProgram *cachedProgram(const QString& name) const;
+    void setCachedProgram(const QString& name, QGLShaderProgram *program);
 
     QColor color() const;
     void setColor(const QColor& color);

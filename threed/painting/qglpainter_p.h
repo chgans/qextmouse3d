@@ -242,6 +242,7 @@ public:
     QGLPainter::Updates updates;
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
+    QMap<QString, QGLShaderProgram *> cachedPrograms;
 
     QGLPainterExtensions *extensions();    
 
