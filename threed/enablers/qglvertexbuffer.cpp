@@ -733,9 +733,11 @@ bool QGLVertexBuffer::upload()
                 if (count <= 0)
                     continue;
                 count = qMin(count, sectionSize);
+                int components = attr->elementSize() / sizeof(float);
                 vertexBufferInterleave
-                    (dst + attrPosn, stride, attr->value.floatData(),
-                     attr->elementSize() / sizeof(float), count);
+                    (dst + attrPosn, stride,
+                     attr->value.floatData() + vertex * components,
+                     components, count);
                 attrPosn += attr->elementSize() / sizeof(float);
             }
             size = sectionSize * stride;

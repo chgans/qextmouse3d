@@ -813,7 +813,6 @@ bool QGeometryData::upload()
             if (!d->vertexBuffer)
             {
                 d->vertexBuffer = new QGLVertexBuffer;
-                d->vertexBuffer->setPackingHint(QGLVertexBuffer::Append);
                 const quint32 mask = 0x01;
                 quint32 fields = d->fields;
                 for (int field = 0; fields; ++field, fields >>= 1)
