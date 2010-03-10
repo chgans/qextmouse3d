@@ -43,10 +43,12 @@
 #include "qglcolladafxeffectfactory.h"
 #include <QXmlStreamReader>
 #include <QColor>
+#include "qgl.h"
 
 class QGLColladaFxEffect;
 
 Q_DECLARE_METATYPE(QVector<float>)
+Q_DECLARE_METATYPE(QGLShaderProgramEffect*)
 
 static void cleanupEffectList(QList<QGLColladaFxEffect*> &effects)
 {
@@ -74,6 +76,8 @@ private slots:
     void processFloatList();
     void processLibraryImagesElement();
     void loadEffectsFromFile();
+    void exportImportEffect_data();
+    void exportImportEffect();
 };
 
 
@@ -195,6 +199,48 @@ void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
     QVERIFY2(cubeEffect->material()->shininess() == 20, "Shininess doesn't match");
 }
 
+void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
+{
+    QTest::addColumn<QGLShaderProgramEffect*>("effect");
+    QTest::addColumn<QString>("effectId");
+    QTest::addColumn<QString>("techniqueSid");
+
+    QGLShaderProgramEffect* effect = new QGLShaderProgramEffect;
+    QTest::newRow("empty effect") << effect << QString("EmptyEffect") << QString("EmptyTechnique");
+
+    effect = new QGLShaderProgramEffect;
+    effect->setFragmentShader("test fragment shader");
+    effect->setVertexShader("Test vertex shader");
+    QGLMaterialParameters* material = new QGLMaterialParameters;
+    material->setAmbientColor(QColor(1,2,3));
+    material->setDiffuseColor(QColor(2,3,4));
+    material->setEmittedLight(QColor(255,255,255));
+    material->setShininess(129);
+    material->setSpecularColor(QColor(3,4,5));
+    effect->setMaterial(material);
+
+    QTest::newRow("Test Effect") << effect << QString("TestEffect") << QString("TestTechnique");
+}
+
+void tst_QGLColladaFxEffectFactory::exportImportEffect()
+{
+    QFETCH(QGLShaderProgramEffect*, effect);
+    QFETCH(QString, effectId);
+    QFETCH(QString, techniqueSid);
+    QString colladaEffectString = QGLColladaFxEffectFactory::exportEffect(effect, effectId, techniqueSid);
+    QXmlStreamReader xml(colladaEffectString);
+
+    QList<QGLColladaFxEffect*> importedEffects = QGLColladaFxEffectFactory::loadEffectsFromXml(xml);
+    QCOMPARE(importedEffects.count(), 1);
+
+    QGLColladaFxEffect* importedEffect = importedEffects[0];
+    QCOMPARE(effect->fragmentShader(), importedEffect->fragmentShader());
+    QCOMPARE(effect->vertexShader(), importedEffect->vertexShader());
+    QEXPECT_FAIL("Test Effect", "QGLColladaFxEffect import/export does not respect materials", Continue);
+    QCOMPARE(effect->material(), importedEffect->material());
+    QCOMPARE(effect->requiredFields(), importedEffect->requiredFields());
+    QCOMPARE(effect->supportsPicking(), importedEffect->supportsPicking());
+}
 
 QTEST_APPLESS_MAIN(tst_QGLColladaFxEffectFactory)
 
