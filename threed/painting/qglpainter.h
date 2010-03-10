@@ -116,9 +116,11 @@ public:
     void setViewport(const QSize& size);
     void setViewport(int width, int height);
 
-    QRect scissorRect() const;
-    void setScissorRect(const QRect& rect);
-    void resetScissorRect();
+    QRect scissor() const;
+    void setScissor(const QRect& rect);
+    void intersectScissor(const QRect& rect);
+    void expandScissor(const QRect& rect);
+    void resetScissor();
 
     QGLMatrixStack& projectionMatrix();
     QGLMatrixStack& modelViewMatrix();

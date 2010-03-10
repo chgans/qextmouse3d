@@ -57,7 +57,9 @@ public:
     void setClearColor(const QColor& color) { m_clearColor = color; }
     void clear();
 
-    void setScissor(int x, int y, int width, int height);
+    void setScissor(const QRect& rect);
+    void intersectScissor(const QRect& rect);
+    void expandScissor(const QRect& rect);
     void clearScissor();
 
     void setViewport(int x, int y, int width, int height);
@@ -80,6 +82,7 @@ private:
     QRect m_viewport;
     QMatrix4x4 m_projectionMatrix;
     QMatrix4x4 m_modelViewMatrix;
+    QRect m_scissor;
 
     QPointF project(const QVector3D& vector) const;
 };

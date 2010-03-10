@@ -58,10 +58,22 @@ void QGLSimulator::clear()
     m_painter->fillRect(0, 0, m_size.width(), m_size.height(), m_clearColor);
 }
 
-void QGLSimulator::setScissor(int x, int y, int width, int height)
+void QGLSimulator::setScissor(const QRect& rect)
 {
-    QRect rect(x, height - 1 - y, width, height);
+    m_scissor = rect;
     m_painter->setClipRect(rect);
+}
+
+void QGLSimulator::intersectScissor(const QRect& rect)
+{
+    m_scissor = rect.intersected(m_scissor);
+    m_painter->setClipRect(m_scissor);
+}
+
+void QGLSimulator::expandScissor(const QRect& rect)
+{
+    m_scissor = rect.united(m_scissor);
+    m_painter->setClipRect(m_scissor);
 }
 
 void QGLSimulator::clearScissor()

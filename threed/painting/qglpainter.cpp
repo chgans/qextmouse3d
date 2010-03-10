@@ -120,6 +120,7 @@ QGLPainterPrivate::QGLPainterPrivate()
       backColorMaterial(0),
       fogParameters(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
+      scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
       pick(0)
@@ -627,69 +628,174 @@ void QGLPainter::setViewport(int width, int height)
 }
 
 /*!
-    Returns the currently active scissor rectangle.  The rectangle
-    will have zero size if scissoring is disabled.
+    Returns the currently active scissor rectangle; or a null rectangle
+    if scissoring is disabled.
 
-    Performance note: if setScissorRect() has not been called on this
+    The special rectangle value of (0, 0, -2, -2) is returned to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    Performance note: if setScissor() has not been called on this
     QGLPainter, then this function will have to perform a round-trip
     to the GL server to get the scissor rectangle.  This round-trip
-    can be avoided by calling setScissorRect() before scissorRect().
+    can be avoided by calling setScissor() before scissor().
 
-    \sa setScissorRect(), resetScissorRect()
+    Note that the returned rectangle will be in window co-ordinates,
+    with the origin at the top-left of the drawing surface.
+
+    \sa setScissor(), resetScissor()
 */
-QRect QGLPainter::scissorRect() const
+QRect QGLPainter::scissor() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect(0, 0, 0, 0));
-    if (d->scissorRect.isNull()) {
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
+    if (d->scissor.width() <= -3) {
         if (glIsEnabled(GL_SCISSOR_TEST)) {
+            QPaintDevice *device = d->context->device();
             GLint scissor[4];
             glGetIntegerv(GL_SCISSOR_BOX, scissor);
-            d->scissorRect =
-                QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+            if (scissor[2] != 0 && scissor[3] != 0) {
+                d->scissor = QRect
+                    (scissor[0], device->height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+            } else {
+                // Special value indicating an empty, but active, scissor.
+                d->scissor = QRect(0, 0, -2, -2);
+            }
         } else {
-            d->scissorRect = QRect(0, 0, 0, 0);
+            d->scissor = QRect();
         }
     }
-    return d->scissorRect;
+    return d->scissor;
 }
 
 /*!
     Enables scissoring to the boundaries of \a rect if it has a
-    non-zero size; disables scissoring if \a rect has a zero size.
+    non-zero size; disables scissoring if \a rect is null.
 
-    \sa scissorRect(), resetScissorRect()
+    The special rectangle value of (0, 0, -2, -2) is used to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.  It will be
+    intersected with the drawing surface's bounds before being
+    set in the GL server.
+
+    \sa scissor(), resetScissor(), intersectScissor()
 */
-void QGLPainter::setScissorRect(const QRect& rect)
+void QGLPainter::setScissor(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (rect.width() > 0 && rect.height() > 0) {
-        d->scissorRect = rect;
-        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+    if (rect.width() == -2) {
+        // Special value indicating an empty, but active, scissor.
+        d->scissor = rect;
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+    } else if (!rect.isNull()) {
+        QPaintDevice *device = d->context->device();
+        int height = device->height();
+        QRect r = rect.intersected(QRect(0, 0, device->width(), height));
+        if (r.isValid()) {
+            d->scissor = r;
+            glScissor(r.x(), height - (r.y() + r.height()),
+                      r.width(), r.height());
+        } else {
+            d->scissor = QRect(0, 0, -2, -2);
+            glScissor(0, 0, 0, 0);
+        }
         glEnable(GL_SCISSOR_TEST);
     } else {
-        d->scissorRect = QRect(0, 0, 0, 0);
+        d->scissor = QRect();
         glDisable(GL_SCISSOR_TEST);
     }
 }
 
 /*!
-    Resets this painter's notion of what the current scissorRect()
-    is set to.  The next time scissorRect() is called, the actual
+    Intersects the current scissor rectangle with \a rect and sets
+    the intersection as the new scissor.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), expandScissor()
+*/
+void QGLPainter::intersectScissor(const QRect& rect)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QRect current = scissor();
+    if (current.width() == -2) {
+        // Scissor is already active and empty: nothing to do.
+        return;
+    } else if (rect.isEmpty()) {
+        // Intersecting with an empty rectangle sets the scissor to empty.
+        // This includes the case where "rect" is (0, 0, -2, -2).
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+        return;
+    }
+    QPaintDevice *device = d->context->device();
+    QRect r;
+    if (current.isNull())
+        r = rect.intersected(QRect(0, 0, device->width(), device->height()));
+    else
+        r = current.intersected(rect);
+    if (r.isValid()) {
+        d->scissor = r;
+        glScissor(r.x(), device->height() - (r.y() + r.height()),
+                  r.width(), r.height());
+    } else {
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+    }
+    glEnable(GL_SCISSOR_TEST);
+}
+
+/*!
+    Expands the current scissor rectangle to also include the region
+    defined by \a rect and sets the expanded region as the new scissor.
+    The \a rect will be ignored if it is empty, or if the scissor is
+    currently disabled.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), intersectScissor()
+*/
+void QGLPainter::expandScissor(const QRect& rect)
+{
+    if (rect.isEmpty())
+        return;
+    QRect current = scissor();
+    if (current.width() == -2)
+        setScissor(rect);
+    else if (!current.isNull())
+        setScissor(rect.united(current));
+}
+
+/*!
+    Resets this painter's notion of what the current scissor()
+    is set to.  The next time scissor() is called, the actual
     scissor rectangle will be fetched from the GL server.
 
     This function is used to synchronize the state of the application
     with the GL server after the execution of raw GL commands that may
     have altered the scissor settings.
 
-    \sa scissorRect(), setScissorRect()
+    \sa scissor(), setScissor()
 */
-void QGLPainter::resetScissorRect()
+void QGLPainter::resetScissor()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->scissorRect = QRect();
+    d->scissor = QRect(0, 0, -3, -3);
 }
 
 /*!

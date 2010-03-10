@@ -233,7 +233,7 @@ public:
     QGLMaterialParameters *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
-    QRect scissorRect;
+    QRect scissor;
     QColor color;
     QGLPainter::Updates updates;
     GLuint currentBufferId;
