@@ -162,6 +162,8 @@ public:
     }
     QGLMaterialParameters* material;
     QGLShaderProgram *program;
+    QString vertexShader;
+    QString fragmentShader;
 };
 
 /*!
@@ -259,18 +261,18 @@ void QGLShaderProgramEffect::reloadShaders()
 
     program()->removeAllShaders();
 
-    if(vertexShader.length() > 0)
+    if(d->vertexShader.length() > 0)
     {
-        program()->addShaderFromSourceCode(QGLShader::Vertex, vertexShader);
+        program()->addShaderFromSourceCode(QGLShader::Vertex, d->vertexShader);
     }
     else
     {
         program()->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
     }
 
-    if(fragmentShader.length() > 0)
+    if(d->fragmentShader.length() > 0)
     {
-        program()->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
+        program()->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
     }
     else
     {
@@ -404,13 +406,13 @@ void QGLShaderProgramEffect::setVertexAttribute
 
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
-    vertexShader = shader;
+    d->vertexShader = shader;
     reloadShaders();
 }
 
 void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
 {
-    fragmentShader = shader;
+    d->fragmentShader = shader;
     reloadShaders();
 }
 
@@ -459,4 +461,14 @@ void QGLShaderProgramEffect::setProgram(QGLShaderProgram* program)
         delete d->program;
 
     d->program = program;
+}
+
+QString QGLShaderProgramEffect::vertexShader()
+{
+    return d->vertexShader;
+}
+
+QString QGLShaderProgramEffect::fragmentShader()
+{
+    return d->fragmentShader;
 }

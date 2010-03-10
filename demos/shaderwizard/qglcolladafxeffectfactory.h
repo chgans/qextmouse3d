@@ -8,6 +8,8 @@
 
 #include "qglcolladafxeffect.h"
 
+typedef QStack< QList<QGLColladaParam*>* > StateStack;
+
 class QGLColladaImageParam;
 class QGLColladaSurfaceParam;
 class QGLColladaSampler2DParam;
@@ -17,25 +19,42 @@ class QGLColladaSampler2DParam;
 class QGLColladaFxEffectFactory
 {
 public:
+    // Collada parsing functions
     static QList<QGLColladaFxEffect*> loadEffectsFromFile(const QString& fileName );
+
 protected:
     static QList<QGLColladaFxEffect*> loadEffectsFromXml( QXmlStreamReader& xml );
-    static void processLibraryImagesElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QList<QGLColladaFxEffect*> processLibraryEffectsElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QList<QGLColladaFxEffect*> processEffectElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QList<QGLColladaFxEffect*> processProfileElement( QXmlStreamReader& xml, StateStack& stateStack );
+    static void processLibraryImagesElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static QList<QGLColladaFxEffect*> processLibraryEffectsElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static QList<QGLColladaFxEffect*> processEffectElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static QList<QGLColladaFxEffect*> processProfileElement( QXmlStreamReader& xml, StateStack* stateStack );
 
-    static QGLColladaFxEffect* processTechniqueElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QGLColladaParam* processNewparamElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QGLColladaImageParam* processImageElement( QXmlStreamReader& xml, StateStack& stateStack );
-    static QGLColladaSurfaceParam* processSurfaceElement( QXmlStreamReader& xml, StateStack& stateStack, QString passedInSid = "");
-    static QGLColladaSampler2DParam* processSampler2DElement( QXmlStreamReader& xml, StateStack stateStack, QString passedInSid );
-    static QGLTexture2D* processTextureElement( QXmlStreamReader& xml , StateStack stateStack );
+    static QGLColladaParam* processPassElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect );
+    static QGLColladaFxEffect* processTechniqueElement( QXmlStreamReader& xml, StateStack* stateStack, QString &profileName );
+    static QGLColladaParam* processNewparamElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static QGLColladaImageParam* processImageElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static QGLColladaSurfaceParam* processSurfaceElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid = "");
+    static QGLColladaSampler2DParam* processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid );
+    static QGLTexture2D* processTextureElement( QXmlStreamReader& xml , StateStack* stateStack );
     static QVector<float> processFloatList( QXmlStreamReader& xml );
     static QColor processColorElement( QXmlStreamReader& xml );
     static float processParamOrFloatElement( QXmlStreamReader& xml );
     static QColor processColorOrTextureElement( QXmlStreamReader& xml );
     QGLColladaFxEffectFactory();
+    static void processProgramElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect );
+
+    // Collada generation functions
+public:
+    static QString exportEffect(QGLShaderProgramEffect *effect, QString effectId, QString techniqueSid);
+
+protected:
+    static QStringList glslProfileFromEffect(QGLShaderProgramEffect* effect, QString techniqueSid);
+    static QStringList generateProgramElement(QGLShaderProgramEffect* effect, QString techniqueSid);
+    static QStringList generateShaderElement( QGLShaderProgramEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid );
+    static QStringList generateBindUniformElement( QGLShaderProgramEffect* effect );
+    static QStringList generateBindAttributeElement( QGLShaderProgramEffect* effect );
+    static QStringList generateBindUniformElements( QGLShaderProgramEffect* effect );
+    static QStringList generateCodeElements( QGLShaderProgramEffect* effect, QString baseSid );
 };
 
 
@@ -59,6 +78,7 @@ public:
         Texture2DType,
         SurfaceType,
         ImageType,
+        CodeType,
         UserDefinedType = 100
     };
 
@@ -139,6 +159,18 @@ public:
 protected:
     QImage mImage;
     QString mName;
+};
+
+
+
+class QGLColladaCodeParam : public QGLColladaParam
+{
+    friend class QGLColladaFxEffectFactory;
+public:
+    QGLColladaCodeParam(QString sid, QString codeText);
+    const QString& code();
+protected:
+    const QString mCodeText;
 };
 
 #endif // QGLCOLLADAFXEFFECTFACTORY_H

@@ -50,6 +50,7 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QSettings>
+#include <QErrorMessage>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglmaterialcollection.h"
@@ -254,13 +255,41 @@ void MainWindow::loadEffect(const QString& fileName)
     {
         loadedEffects[0]->generateShaders();
         glDisplayWidget->setEffect(loadedEffects[0]);
-        //d->effect = duckeffects[0];
 
-        // Is this stuff necessary?
-        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->vertexShader);
-        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->fragmentShader);
+        ui->textEditVertexShader->setPlainText(loadedEffects[0]->vertexShader());
+        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->fragmentShader());
         update();
     }
+}
+
+bool MainWindow::saveEffect()
+{
+    QGLShaderProgramEffect *effectToExport = glDisplayWidget->effect();
+
+    if(effectToExport == 0)
+    {
+        QErrorMessage* noEffectMessage = new QErrorMessage(this);
+        noEffectMessage->setWindowTitle("ShaderWizard");
+        noEffectMessage->showMessage(tr("Unable to find effect to export, aborting export"), tr("Error Getting Effect"));
+        return false;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Export Effect as ColladaFx"),
+                                                    QDir::homePath(),
+                                                    tr("Collada Effects (*.dae *.xml)"));
+    QFile saveFile(fileName);
+    if(!saveFile.open(QFile::WriteOnly))
+    {
+        QErrorMessage* fileOpenError = new QErrorMessage(this);
+        fileOpenError->setWindowTitle("ShaderWizard");
+        fileOpenError->showMessage("Unable to open file for writing: " + fileName, "Error Opening File");
+        return false;
+    }
+
+    QString colladaString = QGLColladaFxEffectFactory::exportEffect(effectToExport, QFileInfo(saveFile).fileName() + "Effect", QFileInfo(saveFile).fileName() + "Technique");
+    QTextStream out(&saveFile);
+    out << colladaString;
+    return true;
 }
 
 static void addSceneNodeToDataModel(QStandardItem *parent, QGLSceneNode *node)
@@ -454,4 +483,9 @@ void MainWindow::on_actionLoad_Collada_Effect_triggered()
         return;
     emit openEffect(fileName);
     loadEffect(fileName);
+}
+
+void MainWindow::on_actionExport_Collada_Effect_triggered()
+{
+    saveEffect();
 }
