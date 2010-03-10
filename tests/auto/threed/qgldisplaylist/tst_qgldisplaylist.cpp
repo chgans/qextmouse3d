@@ -49,6 +49,7 @@
 #include "qglabstracteffect.h"
 #include "qgloperation.h"
 #include "qtest_helpers_p.h"
+#include "qgeometrydata.h"
 
 class tst_QGLDisplayList : public QObject
 {
@@ -870,30 +871,27 @@ void tst_QGLDisplayList::finalize()
 
     QCOMPARE(displayList.sections().count(), 0);
 
-#if 0   // TODO: needs to check the vertex buffer instead
     QGeometryData *geom = node->geometry();
-
-    QGLVertexArray verts = geom->toVertexArray();
     QGLIndexArray ids = geom->indices();
 
-    QCOMPARE(verts.vertexCount(), 13);
+    QCOMPARE(geom->count(QGL::Position), 13);
     QCOMPARE(ids.size(), 36);
 
     // triangulated face
     int tf = ids[node->start()]; // beginning of triangulated face
     QCOMPARE(node->count(), 12);
-    QCOMPARE(verts.vector3DAt(tf, QGL::Position), center);
-    QCOMPARE(verts.vector3DAt(tf + 2, QGL::Position), b);
-    QCOMPARE(verts.vector3DAt(tf, QGL::Normal), n0);
-    QCOMPARE(verts.vector3DAt(tf + 2, QGL::Normal), n0);
+    QCOMPARE(geom->vertex(tf), center);
+    QCOMPARE(geom->vertex(tf + 2), b);
+    QCOMPARE(geom->normal(tf), n0);
+    QCOMPARE(geom->normal(tf + 2), n0);
 
     int ext = ids[node2->start()]; // beginning of extrude
     int last = ids[node2->start() + (node2->count() - 1)];
     QCOMPARE(node2->count(), 24);
-    QCOMPARE(verts.vector3DAt(ext, QGL::Position), a - n);
-    QCOMPARE(verts.vector3DAt(ext, QGL::Normal), n1);
-    QCOMPARE(verts.vector3DAt(last, QGL::Position), d);
-    QCOMPARE(verts.vector3DAt(last, QGL::Normal), n4);
+    QCOMPARE(geom->vertex(ext), a - n);
+    QCOMPARE(geom->normal(ext), n1);
+    QCOMPARE(geom->vertex(last), d);
+    QCOMPARE(geom->normal(last), n4);
 
 #ifndef QT_NO_MEMBER_TEMPLATES
     QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
@@ -912,15 +910,12 @@ void tst_QGLDisplayList::finalize()
     QVERIFY(node3->geometry() != geom);
 
     geom = node3->geometry();
-    QGLVertexArray verts2 = geom->toVertexArray();
     QGLIndexArray ids2 = geom->indices();
 
     int tri = ids2[node->start()];
-    QGLVertexDescription desc = verts2.fields();
-    QCOMPARE(verts2.vector3DAt(tri, desc.indexOf(QGL::Position)), e);
-    QCOMPARE(verts2.vector3DAt(tri, desc.indexOf(QGL::Normal)), n10);
-    QCOMPARE(verts2.vector2DAt(tri, desc.indexOf(QGL::TextureCoord0)), ta);
-#endif
+    QCOMPARE(geom->vertex(tri), e);
+    QCOMPARE(geom->normal(tri), n10);
+    QCOMPARE(geom->texCoord(tri), ta);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLDisplayList)
