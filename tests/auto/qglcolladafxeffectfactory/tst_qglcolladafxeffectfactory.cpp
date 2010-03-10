@@ -159,11 +159,11 @@ void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
     xml.readNext();
 
     StateStack state;
-    QGLColladaFxEffectFactory::processLibraryImagesElement( xml, state );
+    QGLColladaFxEffectFactory::processLibraryImagesElement( xml, &state );
 
     // The structure is just an implementation detail, but the param and image
     // should be well formed:
-    QGLColladaParam* param = state.at(0).at(0);
+    QGLColladaParam* param = state.at(0)->at(0);
     QCOMPARE(param->type(), int(QGLColladaParam::ImageType));
     QGLColladaImageParam* imageParam = static_cast<QGLColladaImageParam*>(param);
     QCOMPARE(imageParam->name(), QString("Rose"));
