@@ -131,9 +131,7 @@ public:
     QMatrix4x4 matrix;
 #if !defined(QT_OPENGL_ES_2)
     GLenum glType;
-#if !defined(GL_OES_VERSION_1_0) || defined(GL_OES_VERSION_1_1)
     GLenum glFetchType;
-#endif
     QList<bool> serverStack;
 #endif
     QList<QMatrix4x4> stack;
@@ -144,23 +142,7 @@ public:
 QGLMatrixStackPrivate::QGLMatrixStackPrivate(QGLMatrixStack::Type t)
 {
     type = t;
-#if defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-    switch (t) {
-    case QGLMatrixStack::ModelViewMatrix:
-        glType = GL_MODELVIEW;
-        haveMatrix = false;
-        break;
-    case QGLMatrixStack::ProjectionMatrix:
-        glType = GL_PROJECTION;
-        haveMatrix = false;
-        break;
-    default:
-        glType = 0;
-        haveMatrix = true;  // We always have a user-defined matrix.
-        break;
-    }
-    haveMatrix = (t == QGLMatrixStack::UserMatrix);
-#elif !defined(QT_OPENGL_ES_2)
+#if !defined(QT_OPENGL_ES_2)
     switch (t) {
     case QGLMatrixStack::ModelViewMatrix:
         glType = GL_MODELVIEW;
@@ -328,11 +310,6 @@ void QGLMatrixStack::setToIdentity()
     avoided by calling operator=() or setToIdentity() to set the GL server's
     matrix to a known value.
 
-    Note: OpenGL/ES 1.0 does not have a mechanism to fetch the
-    current matrix.  On that platform, this function will forcibly set
-    the matrix to the identity if it has not been set previously
-    with operator=() or setToIdentity().
-
     Matrix stacks of type UserMatrix never need to perform a round-trip
     to the GL server because they are implemented purely client-side.
 
@@ -345,13 +322,6 @@ QMatrix4x4 QGLMatrixStack::top() const
         // We need to retrieve the current matrix from the GL server
         // because we have no way to know what state it is currently in.
         d->haveMatrix = true;
-#if defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-        // OpenGL/ES 1.0 does not have glGetFloatv, so we forcibly
-        // set the matrix to the identity so that it is in a known state.
-        glMatrixMode(d->glType);
-        glLoadIdentity();
-        d->matrix.setToIdentity();
-#else
         if (sizeof(qreal) == sizeof(GLfloat)) {
             glGetFloatv(d->glFetchType, reinterpret_cast<GLfloat *>
                                             (d->matrix.data()));
@@ -364,7 +334,6 @@ QMatrix4x4 QGLMatrixStack::top() const
                 m[index] = mat[index];
             d->matrix.optimize();
         }
-#endif
     }
 #endif
     return d->matrix;

@@ -265,9 +265,6 @@ void tst_QGLPainter::userMatrixStack()
 #if defined(QT_OPENGL_ES_2)
 #define QGL_NO_MATRIX_FETCH 1
 #define QGL_NO_MATRIX_RESET 1
-#elif defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_NO_MATRIX_FETCH 1
-#define QGL_MATRIX_RESET_TO_IDENTITY 1
 #endif
 
 #ifndef QGL_NO_MATRIX_FETCH
@@ -323,8 +320,7 @@ static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
 #endif
 
 // OpenGL/ES 2.0 does not have server-side matrices.
-// OpenGL/ES 1.0 cannot fetch the server-side matrices.
-// For these platforms, we stub out the checks and just hope that they work.
+// For such platforms, we stub out the checks and just hope that they work.
 static void clearGLMatrix(GLenum) {}
 static bool checkGLMatrix(GLenum, const QMatrix4x4&) { return true; }
 static void setGLMatrix(GLenum, const QMatrix4x4&) {}
@@ -368,8 +364,6 @@ void tst_QGLPainter::projectionMatrixStack()
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
     QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.projectionMatrix().top()));
 #else
     QVERIFY(qFuzzyCompare(m2, painter.projectionMatrix().top()));
 #endif
@@ -416,8 +410,6 @@ void tst_QGLPainter::modelViewMatrixStack()
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
     QVERIFY(qFuzzyCompare(m, painter.modelViewMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.modelViewMatrix().top()));
 #else
     QVERIFY(qFuzzyCompare(m2, painter.modelViewMatrix().top()));
 #endif

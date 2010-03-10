@@ -635,11 +635,6 @@ void QGLPainter::setViewport(int width, int height)
     to the GL server to get the scissor rectangle.  This round-trip
     can be avoided by calling setScissorRect() before scissorRect().
 
-    Note: OpenGL/ES 1.0 does not have a mechanism to fetch the
-    scissor rectangle.  On that platform, this function will forcibly
-    disable scissoring if it has not been set previously with
-    setScissorRect().
-
     \sa setScissorRect(), resetScissorRect()
 */
 QRect QGLPainter::scissorRect() const
@@ -647,7 +642,6 @@ QRect QGLPainter::scissorRect() const
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(QRect(0, 0, 0, 0));
     if (d->scissorRect.isNull()) {
-#if !defined(GL_OES_VERSION_1_0) || defined(GL_OES_VERSION_1_1)
         if (glIsEnabled(GL_SCISSOR_TEST)) {
             GLint scissor[4];
             glGetIntegerv(GL_SCISSOR_BOX, scissor);
@@ -656,12 +650,6 @@ QRect QGLPainter::scissorRect() const
         } else {
             d->scissorRect = QRect(0, 0, 0, 0);
         }
-#else
-        // OpenGL/ES 1.0 does not have glIsEnabled() or GL_SCISSOR_BOX,
-        // so force the scissor setting to a known state.
-        d->scissorRect = QRect(0, 0, 0, 0);
-        glDisable(GL_SCISSOR_TEST);
-#endif
     }
     return d->scissorRect;
 }
