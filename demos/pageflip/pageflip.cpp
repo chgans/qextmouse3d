@@ -108,7 +108,7 @@ public:
     ~PageFlipGradientEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
@@ -388,8 +388,9 @@ static char const gradientFragmentShader[] =
     "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
     "}\n";
 
-void PageFlipGradientEffect::setActive(bool flag)
+void PageFlipGradientEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!program) {
         if (!flag)
             return;

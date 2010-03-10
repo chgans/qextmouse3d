@@ -209,8 +209,9 @@ bool QGLShaderProgramEffect::supportsPicking() const
     If \a flag is true, creates the default program if no program currently
     exists.
 */
-void QGLShaderProgramEffect::setActive(bool flag)
+void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (program() == 0) {
         if(!flag)
             return;

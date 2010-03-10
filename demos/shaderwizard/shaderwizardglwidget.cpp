@@ -164,7 +164,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setCullFaces(QGL::CullBackFaces);
 
     if(d->effect)
-        d->effect->setActive(true);
+        d->effect->setActive(painter, true);
 }
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)

@@ -39,84 +39,56 @@
 **
 ****************************************************************************/
 
-#ifndef QGLFLATTEXTUREEFFECT_P_H
-#define QGLFLATTEXTUREEFFECT_P_H
-
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#ifndef QGLFLATTEXTUREEFFECT_H
+#define QGLFLATTEXTUREEFFECT_H
 
 #include "qglabstracteffect.h"
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_NAMESPACE
 
-#if !defined(QGL_SHADERS_ONLY)
+class QGLFlatTextureEffectPrivate;
+class QGLFlatDecalTextureEffectPrivate;
 
-class QGLFlatTextureEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLFlatTextureEffect : public QGLAbstractEffect
 {
 public:
     QGLFlatTextureEffect();
     virtual ~QGLFlatTextureEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-};
-
-class QGLFlatDecalTextureEffect : public QGLAbstractEffect
-{
-public:
-    QGLFlatDecalTextureEffect();
-    virtual ~QGLFlatDecalTextureEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLShaderProgram;
-
-class QGLFlatTextureEffect : public QGLAbstractEffect
-{
-public:
-    QGLFlatTextureEffect();
-    virtual ~QGLFlatTextureEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
-protected:
-    QGLShaderProgram *program;
-    int matrixUniform;
+private:
+    QScopedPointer<QGLFlatTextureEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFlatTextureEffect)
+    Q_DISABLE_COPY(QGLFlatTextureEffect)
 };
 
-class QGLFlatDecalTextureEffect : public QGLFlatTextureEffect
+class Q_QT3D_EXPORT QGLFlatDecalTextureEffect : public QGLAbstractEffect
 {
 public:
     QGLFlatDecalTextureEffect();
     virtual ~QGLFlatDecalTextureEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-private:
-    int colorUniform;
-};
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
-#endif // QGL_SHADERS_ONLY
+private:
+    QScopedPointer<QGLFlatDecalTextureEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFlatDecalTextureEffect)
+    Q_DISABLE_COPY(QGLFlatDecalTextureEffect)
+};
 
 QT_END_NAMESPACE
 

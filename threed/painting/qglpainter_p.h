@@ -275,8 +275,9 @@ public:
         return extn;
     }
 
-    inline void ensureEffect() { if (!effect) createEffect(); }
-    void createEffect();
+    inline void ensureEffect(QGLPainter *painter)
+        { if (!effect) createEffect(painter); }
+    void createEffect(QGLPainter *painter);
 
 #ifndef QT_NO_DEBUG
     // Required field checking is only done in debug builds.

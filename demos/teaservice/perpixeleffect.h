@@ -54,7 +54,7 @@ public:
     virtual ~PerPixelEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexAttribute

@@ -39,27 +39,18 @@
 **
 ****************************************************************************/
 
-#ifndef QGLFLATCOLOREFFECT_P_H
-#define QGLFLATCOLOREFFECT_P_H
-
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#ifndef QGLFLATCOLOREFFECT_H
+#define QGLFLATCOLOREFFECT_H
 
 #include "qglabstracteffect.h"
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_NAMESPACE
 
-#if !defined(QGL_SHADERS_ONLY)
+class QGLFlatColorEffectPrivate;
+class QGLPerVertexColorEffectPrivate;
 
-class QGLFlatColorEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLFlatColorEffect : public QGLAbstractEffect
 {
 public:
     QGLFlatColorEffect();
@@ -67,65 +58,38 @@ public:
 
     QList<QGL::VertexAttribute> requiredFields() const;
     bool supportsPicking() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-class QGLPerVertexColorEffect : public QGLAbstractEffect
-{
-public:
-    QGLPerVertexColorEffect();
-    virtual ~QGLPerVertexColorEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLShaderProgram;
-
-class QGLFlatColorEffect : public QGLAbstractEffect
-{
-public:
-    QGLFlatColorEffect();
-    virtual ~QGLFlatColorEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
 private:
-    QGLShaderProgram *program;
-    int colorUniform;
-    int matrixUniform;
+    QScopedPointer<QGLFlatColorEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFlatColorEffect)
+    Q_DISABLE_COPY(QGLFlatColorEffect)
 };
 
-class QGLPerVertexColorEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLPerVertexColorEffect : public QGLAbstractEffect
 {
 public:
     QGLPerVertexColorEffect();
     virtual ~QGLPerVertexColorEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
 private:
-    QGLShaderProgram *program;
-    int matrixUniform;
-};
+    QScopedPointer<QGLPerVertexColorEffectPrivate> d_ptr;
 
-#endif // QGL_SHADERS_ONLY
+    Q_DECLARE_PRIVATE(QGLPerVertexColorEffect)
+    Q_DISABLE_COPY(QGLPerVertexColorEffect)
+};
 
 QT_END_NAMESPACE
 

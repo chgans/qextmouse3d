@@ -217,7 +217,7 @@ void QGLColladaFxEffect::generateShaders()
 
     // Set inactive to trigger relinking later
     if(isActive())
-        setActive(false);
+        setActive(0, false);    // FIXME - really needs a painter
 }
 
 

@@ -129,7 +129,7 @@ class TestEffect : public QGLAbstractEffect
     {
         return QList<QGL::VertexAttribute>();
     }
-    void setActive(bool)
+    void setActive(QGLPainter *, bool)
     {
     }
 };

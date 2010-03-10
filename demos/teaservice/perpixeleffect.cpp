@@ -91,8 +91,9 @@ QList<QGL::VertexAttribute> PerPixelEffect::requiredFields() const
     return fields;
 }
 
-void PerPixelEffect::setActive(bool flag)
+void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!flag) {
         if (d->program) {
             d->program->disableAttributeArray(0);

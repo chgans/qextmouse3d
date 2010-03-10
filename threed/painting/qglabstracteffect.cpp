@@ -109,11 +109,11 @@ bool QGLAbstractEffect::supportsPicking() const
 }
 
 /*!
-    \fn void QGLAbstractEffect::setActive(bool flag)
+    \fn void QGLAbstractEffect::setActive(QGLPainter *painter, bool flag)
 
-    Activates or deactivates this effect, according to \a flag,
-    on the current GL context by selecting shader programs,
-    setting lighting and material parameters, etc.
+    Activates or deactivates this effect on \a painter,
+    according to \a flag, on the current GL context by selecting
+    shader programs, setting lighting and material parameters, etc.
 
     \sa update()
 */

@@ -54,10 +54,10 @@
 #if !defined(QT_NO_THREAD)
 #include <QtCore/qthreadstorage.h>
 #endif
-#include "qglflatcoloreffect_p.h"
-#include "qglflattextureeffect_p.h"
-#include "qgllitmaterialeffect_p.h"
-#include "qgllittextureeffect_p.h"
+#include "qglflatcoloreffect.h"
+#include "qglflattextureeffect.h"
+#include "qgllitmaterialeffect.h"
+#include "qgllittextureeffect.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
@@ -839,7 +839,7 @@ QGLAbstractEffect *QGLPainter::effect() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    d->ensureEffect();
+    d->ensureEffect(const_cast<QGLPainter *>(this));
     return d->effect;
 }
 
@@ -874,16 +874,16 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
     if (d->userEffect == effect)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = effect;
     if (effect && (!d->pick || !d->pick->isPicking)) {
         d->effect = effect;
-        d->effect->setActive(true);
+        d->effect->setActive(this, true);
         d->updates = UpdateAll;
     } else {
         // Revert to the effect associated with standardEffect().
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 
@@ -915,11 +915,11 @@ void QGLPainter::setStandardEffect(QGL::StandardEffect effect)
     if (d->standardEffect == effect && d->effect && d->userEffect == 0)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->standardEffect = effect;
     d->userEffect = 0;
     d->effect = 0;
-    d->ensureEffect();
+    d->ensureEffect(this);
 }
 
 /*!
@@ -940,7 +940,7 @@ void QGLPainter::disableEffect()
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = 0;
     d->effect = 0;
 }
@@ -1001,25 +1001,25 @@ void QGLPainter::setCachedProgram
 #endif
 }
 
-void QGLPainterPrivate::createEffect()
+void QGLPainterPrivate::createEffect(QGLPainter *painter)
 {
     if (userEffect) {
         if (!pick || !pick->isPicking) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         if (userEffect->supportsPicking()) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
         setRequiredFields(effect->requiredFields());
         updates = QGLPainter::UpdateAll;
         return;
@@ -1058,10 +1058,10 @@ void QGLPainterPrivate::createEffect()
             stdeffects[int(standardEffect)] = effect;
     }
     if (!pick || !pick->isPicking || effect->supportsPicking()) {
-        effect->setActive(true);
+        effect->setActive(painter, true);
     } else {
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
     }
     setRequiredFields(effect->requiredFields());
     updates = QGLPainter::UpdateAll;
@@ -1348,7 +1348,7 @@ void QGLPainter::setVertexAttribute
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     d->effect->setVertexAttribute(attribute, value);
     d->removeRequiredField(attribute);
 }
@@ -1368,7 +1368,7 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     buffer.setOnEffect(d->effect);
 #ifndef QT_NO_DEBUG
     d->removeRequiredFields(buffer.attributes());
@@ -1385,7 +1385,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     d->effect->setCommonNormal(value);
 #ifndef QT_NO_DEBUG
     d->requiredFields.removeAll(QGL::Normal);
@@ -1577,7 +1577,7 @@ void QGLPainter::update()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     QGLPainter::Updates updates = d->updates;
     d->updates = 0;
     if (d->modelViewMatrix.updateServer())
@@ -2166,9 +2166,9 @@ void QGLPainter::setPicking(bool value)
         // Switch to/from the pick effect.
         d->pick->isPicking = value;
         if (d->effect)
-            d->effect->setActive(false);
+            d->effect->setActive(this, false);
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 

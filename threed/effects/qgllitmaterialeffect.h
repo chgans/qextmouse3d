@@ -39,79 +39,40 @@
 **
 ****************************************************************************/
 
-#ifndef QGLLITTEXTUREEFFECT_P_H
-#define QGLLITTEXTUREEFFECT_P_H
+#ifndef QGLLITCOLOREFFECT_H
+#define QGLLITCOLOREFFECT_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
-#include "qgllitmaterialeffect_p.h"
+#include "qglabstracteffect.h"
 
 QT_BEGIN_NAMESPACE
 
-#if !defined(QGL_SHADERS_ONLY)
+class QGLLitMaterialEffectPrivate;
 
-class QGLLitTextureEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLLitMaterialEffect : public QGLAbstractEffect
 {
 public:
-    QGLLitTextureEffect(GLenum mode);
-    virtual ~QGLLitTextureEffect();
-
+    QGLLitMaterialEffect();
+    virtual ~QGLLitMaterialEffect();
+   
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+    void setCommonNormal(const QVector3D& value);
+
+protected:
+    QGLLitMaterialEffect
+        (GLenum mode, const char *vshader, const char *fshader,
+         const QString& programName);
 
 private:
-    GLenum envMode;
+    QScopedPointer<QGLLitMaterialEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLLitMaterialEffect)
+    Q_DISABLE_COPY(QGLLitMaterialEffect)
 };
-
-class QGLLitDecalTextureEffect : public QGLLitTextureEffect
-{
-public:
-    QGLLitDecalTextureEffect();
-    virtual ~QGLLitDecalTextureEffect();
-
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-class QGLLitModulateTextureEffect : public QGLLitTextureEffect
-{
-public:
-    QGLLitModulateTextureEffect();
-    virtual ~QGLLitModulateTextureEffect();
-
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLLitDecalTextureEffect : public QGLLitMaterialEffect
-{
-public:
-    QGLLitDecalTextureEffect();
-    virtual ~QGLLitDecalTextureEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-};
-
-class QGLLitModulateTextureEffect : public QGLLitMaterialEffect
-{
-public:
-    QGLLitModulateTextureEffect();
-    virtual ~QGLLitModulateTextureEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-};
-
-#endif // QGL_SHADERS_ONLY
 
 QT_END_NAMESPACE
 

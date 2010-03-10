@@ -54,7 +54,7 @@ public:
     virtual ~QGLShaderProgramEffect();
     QList<QGL::VertexAttribute> requiredFields() const;
     bool supportsPicking() const;
-    virtual void setActive(bool flag);
+    virtual void setActive(QGLPainter *painter, bool flag);
     virtual bool isActive() { return currentlyActive;}
     void setVertexAttribute(QGL::VertexAttribute attribute,
                             const QGLAttributeValue& value);

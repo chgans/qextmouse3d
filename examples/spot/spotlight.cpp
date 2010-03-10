@@ -137,7 +137,7 @@ void Spotlight::position(QGLPainter *painter)
 void Spotlight::draw(QGLPainter *painter)
 {
     // glDisable(GL_LIGHTING);
-    painter->effect()->setActive(false);
+    painter->effect()->setActive(painter, false);
     painter->setColor(light.diffuseColor());
 
     painter->modelViewMatrix().push();
@@ -152,6 +152,6 @@ void Spotlight::draw(QGLPainter *painter)
     painter->draw(QGL::Lines, 2);
     painter->update();
     painter->modelViewMatrix().pop();
-    painter->effect()->setActive(true);
+    painter->effect()->setActive(painter, true);
     // glEnable(GL_LIGHTING);
 }

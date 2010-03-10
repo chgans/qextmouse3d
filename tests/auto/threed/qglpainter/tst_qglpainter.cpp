@@ -45,6 +45,7 @@
 #include "qgltestwidget.h"
 #include "qglpainter.h"
 #include "qglsimulator.h"
+#include "qglflatcoloreffect.h"
 
 class tst_QGLPainter : public QObject
 {
@@ -123,10 +124,12 @@ void tst_QGLPainter::drawTrianglePaint()
     vertices.append(500, 100);
     vertices.append(500, 500);
 
-    painter.setStandardEffect(QGL::FlatColor);
+    QGLFlatColorEffect effect;
+    painter.setUserEffect(&effect);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
+    painter.setUserEffect(0);
 }
 
 void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)

@@ -39,74 +39,38 @@
 **
 ****************************************************************************/
 
-#ifndef QGLLITCOLOREFFECT_P_H
-#define QGLLITCOLOREFFECT_P_H
+#ifndef QGLLITTEXTUREEFFECT_H
+#define QGLLITTEXTUREEFFECT_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
-#include "qglabstracteffect.h"
+#include "qgllitmaterialeffect.h"
 
 QT_BEGIN_NAMESPACE
 
-#if !defined(QGL_SHADERS_ONLY)
-
-class QGLLitMaterialEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLLitTextureEffect : public QGLLitMaterialEffect
 {
 public:
-    QGLLitMaterialEffect();
-    virtual ~QGLLitMaterialEffect();
-   
-    QList<QGL::VertexAttribute> requiredFields() const;
-
-    void setActive(bool flag);
-
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLShaderProgram;
-
-class QGLLitMaterialEffect : public QGLAbstractEffect
-{
-public:
-    QGLLitMaterialEffect(const char *vshader, const char *fshader);
-    QGLLitMaterialEffect();
-    virtual ~QGLLitMaterialEffect();
+    virtual ~QGLLitTextureEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-
-    void setActive(bool flag);
-
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-    void setCommonNormal(const QVector3D& value);
 
 protected:
-    QGLShaderProgram *program;
-    const char *vertexShader;
-    const char *fragmentShader;
-    int matrixUniform;
-    int modelViewUniform;
-    int normalMatrixUniform;
-    int textureCoordsAttribute;
+    QGLLitTextureEffect(GLenum mode, const char *vshader, const char *fshader,
+                        const QString& programName);
 };
 
-#endif // QGL_SHADERS_ONLY
+class Q_QT3D_EXPORT QGLLitDecalTextureEffect : public QGLLitTextureEffect
+{
+public:
+    QGLLitDecalTextureEffect();
+    virtual ~QGLLitDecalTextureEffect();
+};
+
+class Q_QT3D_EXPORT QGLLitModulateTextureEffect : public QGLLitTextureEffect
+{
+public:
+    QGLLitModulateTextureEffect();
+    virtual ~QGLLitModulateTextureEffect();
+};
 
 QT_END_NAMESPACE
 

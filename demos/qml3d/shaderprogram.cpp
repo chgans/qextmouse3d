@@ -79,7 +79,7 @@ public:
 
     QList<QGL::VertexAttribute> requiredFields() const;
 
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
@@ -190,8 +190,9 @@ QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
     This activates or deactivates the shader based on the \a flag paramter.  This effectively binds
     or releases the QGLShaderProgram.
 */
-void ShaderProgramEffect::setActive(bool flag)
+void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (flag) {
         program->bind();
         if (texture0 != -1)
