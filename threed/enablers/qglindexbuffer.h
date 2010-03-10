@@ -75,6 +75,7 @@ public:
 #endif
 
     int indexCount() const;
+    bool isEmpty() const { return indexCount() == 0; }
 
     bool upload();
     bool isUploaded() const;

@@ -305,6 +305,12 @@ int QGLIndexBuffer::indexCount() const
 }
 
 /*!
+    \fn bool QGLIndexBuffer::isEmpty() const
+
+    Returns true if indexCount() is zero; false otherwise.
+*/
+
+/*!
     Uploads the index data specified by a previous setIndices()
     call into the GL server as an index buffer object.
 
