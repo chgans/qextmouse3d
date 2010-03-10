@@ -68,8 +68,8 @@ public:
     QGL::DrawingMode drawingMode() const;
     void setDrawingMode(QGL::DrawingMode value);
 
-    QGLVertexBuffer *vertexBuffer() const;
-    void setVertexBuffer(QGLVertexBuffer *buffer);
+    QGLVertexBuffer vertexBuffer() const;
+    void setVertexBuffer(const QGLVertexBuffer& buffer);
 
     QGLIndexArray indexArray() const;
     void setIndexArray(const QGLIndexArray& array);

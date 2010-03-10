@@ -127,8 +127,8 @@ TriPlane::TriPlane(const QPlane3D &plane, const QVector3D &side,
             vertices.append(l1->point(t));
         }
         qSwap(l0, l1);
-        QGLVertexBuffer *buffer = new QGLVertexBuffer();
-        buffer->addAttribute(QGL::Position, vertices);
+        QGLVertexBuffer buffer;
+        buffer.addAttribute(QGL::Position, vertices);
         g->setVertexBuffer(buffer);
         mStrips.append(g);
     }

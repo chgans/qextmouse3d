@@ -45,6 +45,7 @@
 #include "qcolor4b.h"
 #include "qglnamespace.h"
 #include "qglindexarray.h"
+#include "qglvertexbuffer.h"
 #include "qglattributevalue.h"
 #include "qcustomdataarray.h"
 #include "qbox3d.h"
@@ -56,7 +57,6 @@ QT_BEGIN_NAMESPACE
 class QGeometryDataPrivate;
 class QLogicalVertex;
 class QGLPainter;
-class QGLVertexBuffer;
 
 namespace QGL
 {
@@ -96,7 +96,7 @@ public:
     Q_DECLARE_FLAGS(BufferStrategy, BufferStrategyFlags)
     void setBufferStrategy(BufferStrategy strategy);
     BufferStrategy bufferStrategy() const;
-    const QGLVertexBuffer *vertexBuffer() const;
+    QGLVertexBuffer vertexBuffer() const;
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);

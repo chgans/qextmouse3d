@@ -159,7 +159,7 @@ void QGLGeometry::setDrawingMode(QGL::DrawingMode value)
 
     \sa setVertexBuffer(), indexArray()
 */
-QGLVertexBuffer *QGLGeometry::vertexBuffer() const
+QGLVertexBuffer QGLGeometry::vertexBuffer() const
 {
     Q_D(const QGLGeometry);
     return d->vertexBuffer;
@@ -172,14 +172,11 @@ QGLVertexBuffer *QGLGeometry::vertexBuffer() const
 
     \sa vertexBuffer(), setIndexArray(), isModified()
 */
-void QGLGeometry::setVertexBuffer(QGLVertexBuffer *buffer)
+void QGLGeometry::setVertexBuffer(const QGLVertexBuffer& buffer)
 {
     Q_D(QGLGeometry);
-    if (d->vertexBuffer != buffer) {
-        delete d->vertexBuffer;
-        d->vertexBuffer = buffer;
-        d->modified = true;
-    }
+    d->vertexBuffer = buffer;
+    d->modified = true;
 }
 
 /*!
@@ -325,10 +322,6 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (!d->boundingBox.isNull() && !painter->isVisible(d->boundingBox))
         return;
 
-    // Need to have some vertices to draw.
-    if (!d->vertexBuffer)
-        return;
-
     const QGLMaterialParameters *save = 0;
     bool changedTex = false;
     if (mPalette && mMaterial != -1)
@@ -346,8 +339,8 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     // Determine if we need to recreate the vertex buffers in the GL server.
     // If the last upload attempt failed, then don't try again.
     if (d->uploadState) {
-        if (!d->vertexBuffer->isUploaded()) {
-            if (d->vertexBuffer->vertexCount() >= d->bufferThreshold)
+        if (!d->vertexBuffer.isUploaded()) {
+            if (d->vertexBuffer.vertexCount() >= d->bufferThreshold)
                 d->uploadState = upload();
         } else if (d->modified) {
             d->uploadState = upload();
@@ -356,10 +349,10 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     d->modified = false;
 
     // Draw the geometry.
-    painter->setVertexBuffer(*d->vertexBuffer);
+    painter->setVertexBuffer(d->vertexBuffer);
     if (d->indexArray.isEmpty()) {
         if (count == 0)
-            count = d->vertexBuffer->vertexCount();
+            count = d->vertexBuffer.vertexCount();
         painter->draw(d->drawingMode, count, start);
     } else {
         if (count == 0)
@@ -406,25 +399,21 @@ bool QGLGeometry::upload()
     Q_D(QGLGeometry);
 
     // If we already have buffers, then bail out if the geometry is unchanged.
-    if (d->vertexBuffer) {
-        if (d->vertexBuffer->isUploaded() && !d->modified)
-            return true;
-    }
+    if (d->vertexBuffer.isUploaded() && !d->modified)
+        return true;
 
     // If we know that vertex buffers are not supported, then stop now.
     if (!haveVBOs)
         return false;
 
     // Try to create the vertex buffer in the GL server.
-    if (d->vertexBuffer) {
-        if (!d->vertexBuffer->upload()) {
-            if (haveVBOs) {
-                qWarning() << "QGLGeometry: vertex buffer objects are not "
-                              "supported by the GL server";
-            }
-            haveVBOs = false;
-            return false;
+    if (!d->vertexBuffer.upload()) {
+        if (haveVBOs) {
+            qWarning() << "QGLGeometry: vertex buffer objects are not "
+                          "supported by the GL server";
         }
+        haveVBOs = false;
+        return false;
     }
 
     // Create the index buffer if necessary.

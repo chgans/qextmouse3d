@@ -67,7 +67,6 @@ public:
     QGLGeometryPrivate(int version = QObjectPrivateVersion)
         : QObjectPrivate(version)
         , drawingMode(QGL::NoDrawingMode)
-        , vertexBuffer(0)
         , bufferThreshold(32)
         , modified(false)
         , uploadState(true)
@@ -75,12 +74,11 @@ public:
     }
     ~QGLGeometryPrivate()
     {
-        delete vertexBuffer;
     }
 
     QGL::DrawingMode drawingMode;
     QGLIndexArray indexArray;
-    QGLVertexBuffer *vertexBuffer;
+    QGLVertexBuffer vertexBuffer;
     int bufferThreshold;
     mutable bool modified;
     bool uploadState;

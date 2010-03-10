@@ -128,7 +128,7 @@ public:
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
     QGLIndexArray indices;
-    QGLVertexBuffer *vertexBuffer;
+    QGLVertexBuffer vertexBuffer;
     bool uploadsViable;
     bool modified;
     QBox3D bb;
@@ -144,8 +144,7 @@ public:
 };
 
 QGeometryDataPrivate::QGeometryDataPrivate()
-    : vertexBuffer(0)
-    , uploadsViable(true)
+    : uploadsViable(true)
     , modified(false)
     , fields(0)
     , count(0)
@@ -160,7 +159,6 @@ QGeometryDataPrivate::QGeometryDataPrivate()
 
 QGeometryDataPrivate::~QGeometryDataPrivate()
 {
-    delete vertexBuffer;
 }
 
 QGeometryDataPrivate *QGeometryDataPrivate::clone() const
@@ -765,8 +763,8 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
     {
         if (upload())
         {
-            Q_ASSERT(d->vertexBuffer);
-            painter->setVertexBuffer(*d->vertexBuffer);
+            Q_ASSERT(!d->vertexBuffer.isEmpty());
+            painter->setVertexBuffer(d->vertexBuffer);
         }
         else
         {
@@ -810,9 +808,8 @@ bool QGeometryData::upload()
         if (d->modified)
         {
             check();
-            if (!d->vertexBuffer)
+            if (d->vertexBuffer.isEmpty())
             {
-                d->vertexBuffer = new QGLVertexBuffer;
                 const quint32 mask = 0x01;
                 quint32 fields = d->fields;
                 for (int field = 0; fields; ++field, fields >>= 1)
@@ -821,17 +818,17 @@ bool QGeometryData::upload()
                         continue;
                     QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
                     if (attr == QGL::Position)
-                        d->vertexBuffer->addAttribute(attr, d->vertices);
+                        d->vertexBuffer.addAttribute(attr, d->vertices);
                     else if (attr == QGL::Normal)
-                        d->vertexBuffer->addAttribute(attr, d->normals);
+                        d->vertexBuffer.addAttribute(attr, d->normals);
                     else if (attr == QGL::Color)
-                        d->vertexBuffer->addAttribute(attr, d->colors);
+                        d->vertexBuffer.addAttribute(attr, d->colors);
                     else if (attr < QGL::CustomVertex0)
-                        d->vertexBuffer->addAttribute(attr, d->textures.at(d->key[field]));
+                        d->vertexBuffer.addAttribute(attr, d->textures.at(d->key[field]));
                     else
-                        d->vertexBuffer->addAttribute(attr, d->attributes.at(d->key[field]));
+                        d->vertexBuffer.addAttribute(attr, d->attributes.at(d->key[field]));
                 }
-                if (d->vertexBuffer->upload())
+                if (d->vertexBuffer.upload())
                 {
                     if (!(d->bufferStrategy & KeepClientData))
                         clear();
@@ -839,8 +836,7 @@ bool QGeometryData::upload()
                 else
                 {
                     qWarning("QGeometryData: vertex buffer objects not supported");
-                    delete d->vertexBuffer;
-                    d->vertexBuffer = 0;
+                    d->vertexBuffer = QGLVertexBuffer();
                     d->uploadsViable = false;
                     vboUploaded = false;
                 }
@@ -882,14 +878,11 @@ QGeometryData::BufferStrategy QGeometryData::bufferStrategy() const
 }
 
 /*!
-    Returns a pointer to the vertex buffer for this geometry, or null if
-    no vertex buffer exists.
+    Returns a reference to the vertex buffer for this geometry.
 */
-const QGLVertexBuffer *QGeometryData::vertexBuffer() const
+QGLVertexBuffer QGeometryData::vertexBuffer() const
 {
-    if (d)
-        return d->vertexBuffer;
-    return 0;
+    return d->vertexBuffer;
 }
 
 /*!
