@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include <ctime>
 #include <QtTest/QtTest>
 #include "qgldisplaylist.h"
 #include "qgloperation.h"

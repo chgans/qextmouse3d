@@ -60,7 +60,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,ShaderProgram,ShaderProgram)
+//QML_DEFINE_TYPE(Qt,4,6,ShaderProgram,ShaderProgram)
 
 /*
   The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.  It contains the actual

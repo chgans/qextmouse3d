@@ -408,6 +408,8 @@ void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
     d->vertexShader = shader;
     reloadShaders();
+
+
 }
 
 void QGLShaderProgramEffect::setFragmentShader(QString const &shader)

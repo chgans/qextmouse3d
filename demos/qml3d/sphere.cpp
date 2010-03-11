@@ -45,7 +45,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Sphere,Sphere)
+//QML_DEFINE_TYPE(Qt,4,6,Sphere,Sphere)
 
 class SpherePrivate
 {
