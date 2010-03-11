@@ -89,7 +89,8 @@ public:
     QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
-    QGLVertexArray backdropVertices;
+    //QGLVertexArray backdropVertices;
+    QGLVertexBuffer backdropVertices;
     Qml3dView *view;
 };
 
@@ -101,7 +102,8 @@ ViewportPrivate::ViewportPrivate()
     , camera(0)
     , lightModel(0)
     , backdrop(0)
-    , backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
+    //, backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
+    , backdropVertices()
     , view(0)
 {
     depthBufferOptions.setEnabled(true);
@@ -116,14 +118,31 @@ ViewportPrivate::ViewportPrivate()
     // Construct the vertices for a quad with (0, 0) as the
     // texture co-ordinate for the bottom-left of the screen
     // and (1, 1) as the texture co-ordinate for the top-right.
-    backdropVertices.append(-1.0f, -1.0f);
-    backdropVertices.append(0.0f, 0.0f);
-    backdropVertices.append(-1.0f, 1.0f);
-    backdropVertices.append(0.0f, 1.0f);
-    backdropVertices.append(1.0f, 1.0f);
-    backdropVertices.append(1.0f, 1.0f);
-    backdropVertices.append(1.0f, -1.0f);
-    backdropVertices.append(1.0f, 0.0f);
+    backdropVertices.setPackingHint(QGLVertexBuffer::Append);
+
+    QArray<QVector2D> pos;
+    pos.append(QVector2D(-1.0f, -1.0f));
+    pos.append(QVector2D(-1.0f,  1.0f));
+    pos.append(QVector2D( 1.0f,  1.0f));
+    pos.append(QVector2D( 1.0f, -1.0f));
+
+    QArray<QVector2D> tex;
+    pos.append(QVector2D(0.0f, 0.0f));
+    pos.append(QVector2D(0.0f, 1.0f));
+    pos.append(QVector2D(1.0f, 1.0f));
+    pos.append(QVector2D(1.0f, 0.0f));
+
+    backdropVertices.addAttribute(QGL::VertexAttribute::Position, pos);
+    backdropVertices.addAttribute(QGL::VertexAttribute::TextureCoord0, tex);
+
+    //backdropVertices.append(-1.0f, -1.0f);
+    //backdropVertices.append(0.0f, 0.0f);
+    //backdropVertices.append(-1.0f, 1.0f);
+    //backdropVertices.append(0.0f, 1.0f);
+    //backdropVertices.append(1.0f, 1.0f);
+    //backdropVertices.append(1.0f, 1.0f);
+    //backdropVertices.append(1.0f, -1.0f);
+    //backdropVertices.append(1.0f, 0.0f);
 }
 
 /*!
@@ -375,7 +394,8 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
-        painter->setVertexArray(d->backdropVertices);
+        //painter->setVertexArray(d->backdropVertices);
+        painter->setVertexBuffer(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
 

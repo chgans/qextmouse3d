@@ -559,12 +559,13 @@ QObject *Mesh::material(const QString& name)
         return NULL;
     }
 
-    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);
-    QGLMaterialCollection *p = node->geometry()->palette();
+    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);   
+    QGLMaterialCollection *p = node->palette();
+    
     int index = p->materialIndexByName(name);
     if (index == -1)
         return 0;
-    QGLMaterial *params = p->materialByIndex(index);
+    QGLMaterial *params =  p->materialByIndex(index);
     if (params && !d->connected.contains(params)) {
         d->connected.append(params);
         connect(params, SIGNAL(materialChanged()), this, SIGNAL(dataChanged()));

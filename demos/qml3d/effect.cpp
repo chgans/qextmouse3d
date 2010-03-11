@@ -78,7 +78,7 @@
 QT_BEGIN_NAMESPACE
 
 //QML_DEFINE_TYPE(Qt,4,6,Effect,Effect)
-QML_DEFINE_TYPE(Qt,4,6,Material,QGLMaterial)
+//QML_DEFINE_TYPE(Qt,4,6,Material,QGLMaterial)
 //QML_DEFINE_TYPE(Qt,4,6,Fog,QGLFogParameters)
 
 class EffectPrivate
