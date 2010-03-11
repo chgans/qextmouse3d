@@ -10,6 +10,7 @@ SUBDIRS = \
     qglfogparameters \
     qgllightmodel \
     qgllightparameters \
+    qglmaterial \
     qglmaterialparameters \
     qglvertexbuffer \
     qglgeometry \

@@ -9,6 +9,7 @@ HEADERS += \
     qglfogparameters.h \
     qgllightmodel.h \
     qgllightparameters.h \
+    qglmaterial.h \
     qglmaterialparameters.h \
     qglmatrixstack.h \
     qglnamespace.h \
@@ -22,6 +23,7 @@ SOURCES += \
     qglfogparameters.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
+    qglmaterial.cpp \
     qglmaterialparameters.cpp \
     qglmatrixstack.cpp \
     qglnamespace.cpp \
