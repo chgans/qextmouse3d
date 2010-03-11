@@ -233,7 +233,8 @@ public:
     QGLMaterial *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
-    QRect scissor;
+    QRect viewport; // GL co-ordinates - origin bottom-left.
+    QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
     GLuint currentBufferId;
