@@ -98,7 +98,6 @@ namespace QGL
 
     enum DrawingMode
     {
-        NoDrawingMode               = -1,
         Points                      = 0x0000, // GL_POINTS
         Lines                       = 0x0001, // GL_LINES
         LineLoop                    = 0x0002, // GL_LINE_LOOP

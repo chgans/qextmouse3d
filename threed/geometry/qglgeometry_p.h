@@ -66,7 +66,7 @@ class QGLGeometryPrivate : public QObjectPrivate
 public:
     QGLGeometryPrivate(int version = QObjectPrivateVersion)
         : QObjectPrivate(version)
-        , drawingMode(QGL::NoDrawingMode)
+        , drawingMode(QGL::Triangles)
         , bufferThreshold(32)
         , modified(false)
         , uploadState(true)

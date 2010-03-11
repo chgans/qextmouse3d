@@ -57,7 +57,7 @@ private slots:
 void tst_QGLGeometry::create()
 {
     QGLGeometry geom;
-    QCOMPARE(geom.drawingMode(), QGL::NoDrawingMode);
+    QCOMPARE(geom.drawingMode(), QGL::Triangles);
     QVERIFY(geom.indexArray().isEmpty());
     QCOMPARE(geom.bufferThreshold(), 32);
     QVERIFY(geom.boundingBox().isNull());

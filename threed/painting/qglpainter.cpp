@@ -1693,10 +1693,6 @@ void QGLPainter::update()
 */
 void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     glDrawArrays((GLenum)mode, index, count);
@@ -1719,10 +1715,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 */
 void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     if (indices.isUploaded() && indices.bind()) {
@@ -1754,10 +1746,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
                       int offset, int count)
 {
     Q_ASSERT(offset >= 0 && count >= 0 && (offset + count) <= indices.size());
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     if (indices.isUploaded() && indices.bind()) {

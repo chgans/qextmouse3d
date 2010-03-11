@@ -105,7 +105,6 @@ QT_BEGIN_NAMESPACE
     \since 4.7
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
-    \value NoDrawingMode The drawing mode is not specified.
     \value Points Draws a point at each of the specified vertices.
     \value Lines Draws a series of unconnected line segments, using two
            vertices for each line.

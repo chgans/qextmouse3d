@@ -133,7 +133,7 @@ QGLGeometry::~QGLGeometry()
 
 /*!
     Returns the drawing mode to use for this geometry object.
-    The default value is QGL::NoDrawingMode.
+    The default value is QGL::Triangles.
 
     \sa setDrawingMode()
 */
