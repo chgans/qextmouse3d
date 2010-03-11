@@ -54,7 +54,7 @@
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglmaterialcollection.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 
 #include "shaderwizardglwidget.h"
 #include "qglslsyntaxhighlighter.h"
@@ -95,7 +95,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupSceneModel();
     setupSceneView();
 
-    connect(this, SIGNAL(materialSelected(QGLMaterialParameters*)), ui->materialInspectorWidget, SLOT(setMaterial(QGLMaterialParameters*)));
+    connect(this, SIGNAL(materialSelected(QGLMaterial*)), ui->materialInspectorWidget, SLOT(setMaterial(QGLMaterial*)));
     connect(ui->materialInspectorWidget, SIGNAL(ambientColorChanged(QColor)), glDisplayWidget, SLOT(setAmbientMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(diffuseColorChanged(QColor)), glDisplayWidget, SLOT(setDiffuseMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(specularColorChanged(QColor)), glDisplayWidget, SLOT(setSpecularMaterialColor(QColor)));

@@ -134,7 +134,7 @@ TriPlane::TriPlane(const QPlane3D &plane, const QVector3D &side,
     }
 
     // Material for the floor
-    mat = new QGLMaterialParameters();
+    mat = new QGLMaterial();
     mat->setAmbientColor(QColor(32, 34, 32));
     mat->setDiffuseColor(QColor(128, 36, 36));
     mat->setSpecularColor(QColor::fromRgbF(0.4, 0.4, 0.4, 1.0));

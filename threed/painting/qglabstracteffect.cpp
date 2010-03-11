@@ -227,7 +227,7 @@ static void setLight(int light, const QGLLightParameters *parameters,
     glLightfv(light, GL_QUADRATIC_ATTENUATION, params);
 }
 
-static void setMaterial(int face, const QGLMaterialParameters *parameters)
+static void setMaterial(int face, const QGLMaterial *parameters)
 {
     GLfloat params[17];
 
@@ -349,8 +349,8 @@ void QGLAbstractEffect::updateLighting
 
     // Update the materials if they have changed.
     if ((updates & QGLPainter::UpdateMaterials) != 0 && hasEnabledLights) {
-        const QGLMaterialParameters *frontMaterial = painter->faceMaterial(QGL::FrontFaces);
-        const QGLMaterialParameters *backMaterial = painter->faceMaterial(QGL::BackFaces);
+        const QGLMaterial *frontMaterial = painter->faceMaterial(QGL::FrontFaces);
+        const QGLMaterial *backMaterial = painter->faceMaterial(QGL::BackFaces);
         if (frontMaterial == backMaterial) {
             setMaterial(GL_FRONT_AND_BACK, frontMaterial);
         } else {

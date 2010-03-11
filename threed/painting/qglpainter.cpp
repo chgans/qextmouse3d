@@ -2063,21 +2063,21 @@ void QGLPainter::setLightParameters
 
     \sa setFaceMaterial(), setFaceColor()
 */
-const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
+const QGLMaterial *QGLPainter::faceMaterial(QGL::Face face) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterialParameters());
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterial());
     if (face == QGL::BackFaces) {
         if (!d->backMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->backMaterial = d->defaultMaterial;
         }
         return d->backMaterial;
     } else {
         if (!d->frontMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->frontMaterial = d->defaultMaterial;
         }
         return d->frontMaterial;
@@ -2100,7 +2100,7 @@ const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
     \sa faceMaterial(), setFaceColor()
 */
 void QGLPainter::setFaceMaterial
-        (QGL::Face face, const QGLMaterialParameters *value)
+        (QGL::Face face, const QGLMaterial *value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
@@ -2121,14 +2121,14 @@ void QGLPainter::setFaceMaterial
     d->updates |= QGLPainter::UpdateMaterials;
 }
 
-static QGLMaterialParameters *createColorMaterial
-    (QGLMaterialParameters *prev, const QColor& color)
+static QGLMaterial *createColorMaterial
+    (QGLMaterial *prev, const QColor& color)
 {
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (prev)
         material = prev;
     else
-        material = new QGLMaterialParameters();
+        material = new QGLMaterial();
     material->setAmbientColor
         (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
                           color.blueF() * 0.2, color.alphaF()));

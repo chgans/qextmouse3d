@@ -43,7 +43,7 @@
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -123,7 +123,7 @@ public:
     QMap<int, branchObject> sceneBranches;
     QList<QGLSceneObject *>sceneObjects;
     QGLSceneObject *mainSceneObject;
-    QList<QGLMaterialParameters *> connected;
+    QList<QGLMaterial *> connected;
     int refCount;
     bool completed;
     bool loaded;
@@ -564,7 +564,7 @@ QObject *Mesh::material(const QString& name)
     int index = p->materialIndexByName(name);
     if (index == -1)
         return 0;
-    QGLMaterialParameters *params = p->materialByIndex(index);
+    QGLMaterial *params = p->materialByIndex(index);
     if (params && !d->connected.contains(params)) {
         d->connected.append(params);
         connect(params, SIGNAL(materialChanged()), this, SIGNAL(dataChanged()));

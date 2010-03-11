@@ -226,11 +226,11 @@ public:
     QGLLightParameters *defaultLight1;
     int enabledLights;
     int maxLights;
-    const QGLMaterialParameters *frontMaterial;
-    const QGLMaterialParameters *backMaterial;
-    QGLMaterialParameters *defaultMaterial;
-    QGLMaterialParameters *frontColorMaterial;
-    QGLMaterialParameters *backColorMaterial;
+    const QGLMaterial *frontMaterial;
+    const QGLMaterial *backMaterial;
+    QGLMaterial *defaultMaterial;
+    QGLMaterial *frontColorMaterial;
+    QGLMaterial *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
     QRect scissor;

@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
 
 class MeshPrivate;
 class QGLAbstractScene;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLSceneObject;
 
 class Mesh : public QObject, public QmlParserStatus

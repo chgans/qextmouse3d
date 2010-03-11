@@ -157,7 +157,7 @@ void PerPixelEffect::update
         lparams = painter->lightParameters(0);
 
     // Get the front material parameters.
-    const QGLMaterialParameters *mparams = painter->faceMaterial(QGL::FrontFaces);
+    const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
 
     // Set the uniform variables on the shader program.
     d->program->setUniformValue("acli", lparams->ambientColor());

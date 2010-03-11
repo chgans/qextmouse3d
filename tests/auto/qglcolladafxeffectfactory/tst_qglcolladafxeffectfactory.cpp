@@ -211,7 +211,7 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
     effect = new QGLShaderProgramEffect;
     effect->setFragmentShader("test fragment shader");
     effect->setVertexShader("Test vertex shader");
-    QGLMaterialParameters* material = new QGLMaterialParameters;
+    QGLMaterial* material = new QGLMaterial;
     material->setAmbientColor(QColor(1,2,3));
     material->setDiffuseColor(QColor(2,3,4));
     material->setEmittedLight(QColor(255,255,255));

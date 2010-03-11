@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qgl3dsloader.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexture2d.h"
@@ -256,7 +256,7 @@ QString QGL3dsLoader::ensureResourceFile(const QString &fileName)
 void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
 {
     QGLMaterialCollection *palette = mRootNode->palette();
-    QGLMaterialParameters *mat = new QGLMaterialParameters();
+    QGLMaterial *mat = new QGLMaterial();
     Lib3dsRgba &amb = mat3ds->ambient;
     Lib3dsRgba &dif = mat3ds->diffuse;
     Lib3dsRgba &spc = mat3ds->specular;

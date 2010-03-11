@@ -168,7 +168,7 @@ void QGLColladaFxEffect::setSid(QString sid)
 
 
 
-void QGLColladaFxEffectPrivate::addMaterialChannelsToShaderSnippets(const QGLMaterialParameters *material)
+void QGLColladaFxEffectPrivate::addMaterialChannelsToShaderSnippets(const QGLMaterial *material)
 {
     int textureUnit = 1;
 

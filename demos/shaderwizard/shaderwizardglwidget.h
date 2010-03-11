@@ -131,7 +131,7 @@ private:
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
-    QGLMaterialParameters *mMaterial;
+    QGLMaterial *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLTexture2D *mTexture;
 

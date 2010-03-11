@@ -135,7 +135,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QVector3DArray normals;
     qreal x, y, z;
     quint32 fields = 0;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
     QList<QGLSceneObject *> groups;
@@ -306,7 +306,7 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
     QByteArray line;
     QByteArray keyword;
     int posn, index;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QString materialName;
     QString textureName;
 
@@ -339,7 +339,7 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
                 qWarning() << "redefining obj material:" << materialName;
                 material = palette->materialByIndex(index);
             } else {
-                material = new QGLMaterialParameters();
+                material = new QGLMaterial();
                 material->setObjectName(materialName);
                 palette->addMaterial(material);
             }

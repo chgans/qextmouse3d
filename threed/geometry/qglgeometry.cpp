@@ -42,7 +42,7 @@
 #include "qglgeometry.h"
 #include "qglgeometry_p.h"
 #include "qglpainter.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 
 #include <QtCore/qlist.h>
@@ -322,7 +322,7 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (!d->boundingBox.isNull() && !painter->isVisible(d->boundingBox))
         return;
 
-    const QGLMaterialParameters *save = 0;
+    const QGLMaterial *save = 0;
     bool changedTex = false;
     if (mPalette && mMaterial != -1)
     {

@@ -537,7 +537,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
     }
 
-    const QGLMaterialParameters *saveMat = 0;
+    const QGLMaterial *saveMat = 0;
     bool changedTex = false;
     if (d->palette && d->material != -1)
     {

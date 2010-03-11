@@ -53,7 +53,7 @@
 #include "qglindexarray.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglfogparameters.h"
 #include "qglmatrixstack.h"
 #include "qglcamera.h"
@@ -187,8 +187,8 @@ public:
     void setLightParameters(int number, const QGLLightParameters *parameters,
                             const QMatrix4x4& transform);
 
-    const QGLMaterialParameters *faceMaterial(QGL::Face face) const;
-    void setFaceMaterial(QGL::Face face, const QGLMaterialParameters *value);
+    const QGLMaterial *faceMaterial(QGL::Face face) const;
+    void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
     void setFaceColor(QGL::Face face, const QColor& color);
 
     const QGLFogParameters *fogParameters() const;

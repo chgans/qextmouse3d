@@ -62,8 +62,8 @@ public:
 
     virtual void setVertexShader(QString const &  shader);
     virtual void setFragmentShader(QString const & shader);
-    virtual void setMaterial(QGLMaterialParameters* newMaterial);
-    virtual QGLMaterialParameters* material();
+    virtual void setMaterial(QGLMaterial* newMaterial);
+    virtual QGLMaterial* material();
     virtual void setProgram(QGLShaderProgram* program);
     virtual QString vertexShader();
     virtual QString fragmentShader();
