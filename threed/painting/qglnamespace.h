@@ -105,7 +105,11 @@ namespace QGL
         LineStrip                   = 0x0003, // GL_LINE_STRIP
         Triangles                   = 0x0004, // GL_TRIANGLES
         TriangleStrip               = 0x0005, // GL_TRIANGLE_STRIP
-        TriangleFan                 = 0x0006  // GL_TRIANGLE_FAN
+        TriangleFan                 = 0x0006, // GL_TRIANGLE_FAN
+        LinesAdjacency              = 0x000A, // GL_LINES_ADJACENCY
+        LineStripAdjacency          = 0x000B, // GL_LINE_STRIP_ADJACENCY
+        TrianglesAdjacency          = 0x000C, // GL_TRIANGLES_ADJACENCY
+        TriangleStripAdjacency      = 0x000D  // GL_TRIANGLE_STRIP_ADJACENCY
     };
 
     enum StandardEffect
