@@ -2295,12 +2295,7 @@ static QGLMaterial *createColorMaterial
         material = prev;
     else
         material = new QGLMaterial();
-    material->setAmbientColor
-        (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
-                          color.blueF() * 0.2, color.alphaF()));
-    material->setDiffuseColor
-        (QColor::fromRgbF(color.redF() * 0.8, color.greenF() * 0.8,
-                          color.blueF() * 0.8, color.alphaF()));
+    material->setColor(color);
     return material;
 }
 
