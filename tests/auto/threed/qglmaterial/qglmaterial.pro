@@ -3,7 +3,7 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglmaterialparameters.cpp
+SOURCES += tst_qglmaterial.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 

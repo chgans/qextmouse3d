@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-// Helper class for QGLIndexArray and QGLVertexArray.  May go away in future.
+// Helper class for QGLIndexArray.  May go away in future.
 class Q_QT3D_EXPORT QGLReferencedBuffer : public QGLBuffer
 {
 public:

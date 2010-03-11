@@ -39,30 +39,57 @@
 **
 ****************************************************************************/
 
-#ifndef TRIPLANE_H
-#define TRIPLANE_H
+#ifndef QGLFLATTEXTUREEFFECT_H
+#define QGLFLATTEXTUREEFFECT_H
 
-#include "qglgeometry.h"
+#include "qglabstracteffect.h"
+#include <QtCore/qscopedpointer.h>
 
-#include <QSizeF>
+QT_BEGIN_NAMESPACE
 
-class QPlane3D;
-class QGLMaterial;
+class QGLFlatTextureEffectPrivate;
+class QGLFlatDecalTextureEffectPrivate;
 
-class TriPlane : public QGLGeometry
+class Q_QT3D_EXPORT QGLFlatTextureEffect : public QGLAbstractEffect
 {
 public:
-    TriPlane(const QPlane3D &plane,
-              const QVector3D &side,
-              QSizeF size = QSizeF(100.0f, 100.0f),
-              int level = 2);
-    ~TriPlane();
-    void draw(QGLPainter *painter);
-    bool upload();
+    QGLFlatTextureEffect();
+    virtual ~QGLFlatTextureEffect();
+
+    QList<QGL::VertexAttribute> requiredFields() const;
+    void setActive(QGLPainter *painter, bool flag);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
 private:
-    QVector<QGLGeometry*> mStrips;
-    QVector3D mNormal;
-    QGLMaterial *mat;
+    QScopedPointer<QGLFlatTextureEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFlatTextureEffect)
+    Q_DISABLE_COPY(QGLFlatTextureEffect)
 };
 
-#endif // TRIPLANE_H
+class Q_QT3D_EXPORT QGLFlatDecalTextureEffect : public QGLAbstractEffect
+{
+public:
+    QGLFlatDecalTextureEffect();
+    virtual ~QGLFlatDecalTextureEffect();
+
+    QList<QGL::VertexAttribute> requiredFields() const;
+    void setActive(QGLPainter *painter, bool flag);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
+private:
+    QScopedPointer<QGLFlatDecalTextureEffectPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFlatDecalTextureEffect)
+    Q_DISABLE_COPY(QGLFlatDecalTextureEffect)
+};
+
+QT_END_NAMESPACE
+
+#endif

@@ -473,6 +473,11 @@ void QGLGraphicsViewportItem::paint
     // Disable the current drawing effect so that QGLPainter will
     // forcibly update the GL context the next time QGLPainter is used.
     glpainter.disableEffect();
+
+    // Try to restore the GL state to something paint-engine compatible.
+    glpainter.setCullFaces(QGL::CullDisabled);
+    QGLDepthBufferOptions().apply(&glpainter);
+    QGLBlendOptions().apply(&glpainter);
 }
 
 /*!

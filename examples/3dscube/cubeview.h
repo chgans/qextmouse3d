@@ -118,7 +118,7 @@ private:
     int mSelectMaterial;
     QGLSceneNode *mCurrentSelected;
     int mSelectColorAnimate;
-    QMap<QGLGeometry *, int> mSaveMaterials;
+    QMap<QGLSceneNode *, int> mSaveMaterials;
     bool mAnimationEnabled;
     QString mInitialModel;
     bool mWarningDisplayed;

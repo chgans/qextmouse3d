@@ -85,7 +85,7 @@ public:
     const GLfloat *vertexArray() const { return vertices[0][0]; }
 
     // Get the vertex array stride in bytes.
-    int stride() const { return 5 * 5 * sizeof(GLfloat); }
+    int stride() const { return 5 * sizeof(GLfloat); }
 
     // Draw a specific page.
     void drawPage(int page) const;

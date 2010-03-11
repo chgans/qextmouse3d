@@ -41,7 +41,7 @@
 
 #include "effect.h"
 #include "qglpainter.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglfogparameters.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -78,7 +78,7 @@
 QT_BEGIN_NAMESPACE
 
 //QML_DEFINE_TYPE(Qt,4,6,Effect,Effect)
-//QML_DEFINE_TYPE(Qt,4,6,Material,QGLMaterialParameters)
+QML_DEFINE_TYPE(Qt,4,6,Material,QGLMaterial)
 //QML_DEFINE_TYPE(Qt,4,6,Fog,QGLFogParameters)
 
 class EffectPrivate
@@ -101,7 +101,7 @@ public:
     QImage texture;
     QGLTexture2D *texture2D;
     QUrl textureUrl;
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     QGLFogParameters *fog;
     QNetworkReply *textureReply;
 };
@@ -224,15 +224,15 @@ void Effect::setTextureImage(const QImage& value)
 /*!
     \property Effect::material
     \brief Material parameters are defined in an \l Effect in QML/3d via the
-    \c material property.  This specifies a set of \l QGLMaterialParameters which
+    \c material property.  This specifies a set of \l QGLMaterial which
     are then used when creating the effect.
 */
-QGLMaterialParameters *Effect::material() const
+QGLMaterial *Effect::material() const
 {
     return d->material;
 }
 
-void Effect::setMaterial(QGLMaterialParameters *value)
+void Effect::setMaterial(QGLMaterial *value)
 {
     if (d->material != value) {
         if (d->material) {

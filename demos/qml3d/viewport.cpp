@@ -317,6 +317,8 @@ void Viewport::setBackdrop(Effect *value)
 */
 void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidget *widget)
 {
+    Q_UNUSED(style);
+    Q_UNUSED(widget);
     QGLPainter painter;
     if (!painter.begin(p)) {
         qDebug("GL graphics system is not active; cannot use 3D items");

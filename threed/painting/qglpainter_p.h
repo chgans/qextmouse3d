@@ -101,18 +101,11 @@ typedef GLboolean (APIENTRYP q_PFNGLUNMAPBUFFERPROC) (GLenum target);
 typedef void (APIENTRY *_glActiveTexture) (GLenum);
 typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
 
-typedef void (APIENTRY *_glActiveTextureARB) (GLenum);
-typedef void (APIENTRY *_glClientActiveTextureARB) (GLenum);
-
 typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
 
-// We can call the buffer functions directly in OpenGL/ES 1.1 or higher,
+// We can call the buffer functions directly in OpenGL/ES,
 // but all other platforms need to resolve the extensions.
-#if defined(QT_OPENGL_ES)
-#if defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_RESOLVE_BUFFER_FUNCS 1
-#endif
-#else
+#if !defined(QT_OPENGL_ES)
 #define QGL_RESOLVE_BUFFER_FUNCS 1
 #endif
 
@@ -148,9 +141,6 @@ public:
         qt_glActiveTexture = 0;
         qt_glClientActiveTexture = 0;
         multiTextureResolved = false;
-        qt_glActiveTextureARB = 0;
-        qt_glClientActiveTextureARB = 0;
-        multiTextureARBResolved = false;
 
         vertexAttribPointer = 0;
     }
@@ -181,9 +171,6 @@ public:
     q_PFNGLUNMAPBUFFERPROC unmapBuffer;
     _glActiveTexture qt_glActiveTexture;
     _glClientActiveTexture qt_glClientActiveTexture;
-    _glActiveTextureARB qt_glActiveTextureARB;
-    _glClientActiveTextureARB qt_glClientActiveTextureARB;
-    bool multiTextureARBResolved;
     bool multiTextureResolved;
 
     q_glVertexAttribPointer vertexAttribPointer;
@@ -239,22 +226,22 @@ public:
     QGLLightParameters *defaultLight1;
     int enabledLights;
     int maxLights;
-    const QGLMaterialParameters *frontMaterial;
-    const QGLMaterialParameters *backMaterial;
-    QGLMaterialParameters *defaultMaterial;
-    QGLMaterialParameters *frontColorMaterial;
-    QGLMaterialParameters *backColorMaterial;
+    const QGLMaterial *frontMaterial;
+    const QGLMaterial *backMaterial;
+    QGLMaterial *defaultMaterial;
+    QGLMaterial *frontColorMaterial;
+    QGLMaterial *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
-    QRect scissorRect;
+    QRect scissor;
     QColor color;
     QGLPainter::Updates updates;
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
+    QMap<QString, QGLShaderProgram *> cachedPrograms;
 
     QGLPainterExtensions *extensions();    
 
-    #if defined(Q_WS_WIN)
     QGLPainterExtensions *resolveMultiTextureExtensions()
     {
         QGLPainterExtensions *extn = extensions();
@@ -265,52 +252,40 @@ public:
                     this->context->getProcAddress
                         (QLatin1String("glActiveTexture"));
             }
+            if (!extn->qt_glActiveTexture) {
+                extn->qt_glActiveTexture = (_glActiveTexture)
+                    this->context->getProcAddress
+                        (QLatin1String("glActiveTextureARB"));
+            }
             if (!extn->qt_glClientActiveTexture) {
                 extn->qt_glClientActiveTexture = (_glClientActiveTexture)
                     this->context->getProcAddress
                         (QLatin1String("glClientActiveTexture"));
             }
-        }
-        return extn;
-    }
-
-    QGLPainterExtensions *resolveMultiTextureExtensionsARB()
-    {
-        QGLPainterExtensions *extn = extensions();
-        if (!(extn->multiTextureARBResolved)) {
-            extn->multiTextureARBResolved = true;
-            if (!extn->qt_glActiveTextureARB) {
-                extn->qt_glActiveTextureARB = (_glActiveTextureARB)
-                    this->context->getProcAddress
-                        (QLatin1String("glActiveTextureARB"));
-            }
-            if (!extn->qt_glClientActiveTextureARB) {
-                extn->qt_glClientActiveTextureARB = (_glClientActiveTextureARB)
+            if (!extn->qt_glClientActiveTexture) {
+                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
                     this->context->getProcAddress
                         (QLatin1String("glClientActiveTextureARB"));
             }
         }
         return extn;
-	}
-    #endif
+    }
 
-    inline void ensureEffect() { if (!effect) createEffect(); }
-    void createEffect();
+    inline void ensureEffect(QGLPainter *painter)
+        { if (!effect) createEffect(painter); }
+    void createEffect(QGLPainter *painter);
 
 #ifndef QT_NO_DEBUG
     // Required field checking is only done in debug builds.
     QList<QGL::VertexAttribute> requiredFields;
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { requiredFields = fields; }
-    void removeRequiredFields(const QGLVertexArray& array);
     void removeRequiredFields(const QList<QGL::VertexAttribute>& array);
     void removeRequiredField(QGL::VertexAttribute attribute)
         { requiredFields.removeAll(attribute); }
 #else
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { Q_UNUSED(fields); }
-    inline void removeRequiredFields(const QGLVertexArray& array)
-        { Q_UNUSED(array); }
     inline void removeRequiredFields(const QList<QGL::VertexAttribute>& array)
         { Q_UNUSED(array); }
     inline void removeRequiredField(QGL::VertexAttribute attribute)

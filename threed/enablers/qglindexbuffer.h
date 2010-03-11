@@ -39,12 +39,12 @@
 **
 ****************************************************************************/
 
-#ifndef QGLMATERIALPARAMETERS_H
-#define QGLMATERIALPARAMETERS_H
+#ifndef QGLINDEXBUFFER_H
+#define QGLINDEXBUFFER_H
 
-#include "qt3dglobal.h"
-#include <QtCore/qobject.h>
-#include <QtGui/qcolor.h>
+#include <QtOpenGL/qglbuffer.h>
+#include "qglnamespace.h"
+#include "qarray.h"
 
 QT_BEGIN_HEADER
 
@@ -52,50 +52,43 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLMaterialParametersPrivate;
+class QGLIndexBufferPrivate;
 
-class Q_QT3D_EXPORT QGLMaterialParameters : public QObject
+class Q_QT3D_EXPORT QGLIndexBuffer
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLMaterialParameters)
-    Q_PROPERTY(QColor ambientColor READ ambientColor WRITE setAmbientColor NOTIFY ambientColorChanged)
-    Q_PROPERTY(QColor diffuseColor READ diffuseColor WRITE setDiffuseColor NOTIFY diffuseColorChanged)
-    Q_PROPERTY(QColor specularColor READ specularColor WRITE setSpecularColor NOTIFY specularColorChanged)
-    Q_PROPERTY(QColor emittedLight READ emittedLight WRITE setEmittedLight NOTIFY emittedLightChanged)
-    Q_PROPERTY(int shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
 public:
-    explicit QGLMaterialParameters(QObject *parent = 0);
-    ~QGLMaterialParameters();
+    QGLIndexBuffer();
+    QGLIndexBuffer(const QGLIndexBuffer& other);
+    ~QGLIndexBuffer();
 
-    QColor ambientColor() const;
-    void setAmbientColor(const QColor& value);
+    QGLIndexBuffer& operator=(const QGLIndexBuffer& other);
 
-    QColor diffuseColor() const;
-    void setDiffuseColor(const QColor& value);
+    QGLBuffer::UsagePattern usagePattern() const;
+    void setUsagePattern(QGLBuffer::UsagePattern value);
 
-    QColor specularColor() const;
-    void setSpecularColor(const QColor& value);
+    void setIndices(const QArray<ushort>& values);
+    void replaceIndices(int index, const QArray<ushort>& values);
 
-    QColor emittedLight() const;
-    void setEmittedLight(const QColor& value);
+#if !defined(QT_OPENGL_ES) || defined(qdoc)
+    void setIndices(const QArray<int>& values);
+    void replaceIndices(int index, const QArray<int>& values);
+#endif
 
-    int shininess() const;
-    void setShininess(int value);
+    int indexCount() const;
+    bool isEmpty() const { return indexCount() == 0; }
 
-    bool operator==(const QGLMaterialParameters &) const;
+    bool upload();
+    bool isUploaded() const;
 
-Q_SIGNALS:
-    void ambientColorChanged();
-    void diffuseColorChanged();
-    void specularColorChanged();
-    void emittedLightChanged();
-    void shininessChanged();
-    void materialChanged();
+    QGLBuffer *buffer() const;
+
+    void draw(QGL::DrawingMode mode);
+    void draw(QGL::DrawingMode mode, int offset, int count);
 
 private:
-    QGLMaterialParametersPrivate *d;
+    QGLIndexBufferPrivate *d_ptr;
 
-    Q_DISABLE_COPY(QGLMaterialParameters)
+    Q_DECLARE_PRIVATE(QGLIndexBuffer)
 };
 
 QT_END_NAMESPACE

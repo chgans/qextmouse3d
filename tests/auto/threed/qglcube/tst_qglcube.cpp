@@ -170,9 +170,10 @@ void tst_QGLCube::create()
     QGLCube cube;
     QGLDisplayList list;
     list.newSection(QGL::Faceted);
+    QGLSceneNode *node = list.currentNode();
     list << cube;
     list.finalize();
-    QGLVertexArray ary = list.geometry()->vertexArray();
+    QGLVertexArray ary = node->geometry()->toVertexArray();
     QGLVertexDescription desc = ary.fields();
     int verts = desc.indexOf(QGL::Position);
     int texx = desc.indexOf(QGL::TextureCoord0);
@@ -199,9 +200,10 @@ void tst_QGLCube::size()
     {
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cube;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
         for (int i = 0, v = 0; i < QGL_CUBE_SIZE; ++v, i += 8)
         {
@@ -216,9 +218,10 @@ void tst_QGLCube::size()
     {
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cube;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
         for (int i = 0, v = 0; i < QGL_CUBE_SIZE; ++v, i += 8)
         {
@@ -242,10 +245,11 @@ void tst_QGLCube::face()
     {
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cfL << cfT << cfR << cfBt << cfF << cfBk;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
-        QGLIndexArray indx = list.geometry()->indexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
+        QGLIndexArray indx = node->geometry()->indices();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
         QVector3DArray fm;
         for (int i = 0; i < QGL_CUBE_SIZE; i += 8)
@@ -277,9 +281,10 @@ void tst_QGLCube::face()
     {
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cubeFace;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
         for (int i = begin; i < end; i += 8)
         {
@@ -295,9 +300,10 @@ void tst_QGLCube::face()
     {
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cubeFace;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
         for (int i = begin; i < end; i += 8)
         {
@@ -334,9 +340,10 @@ void tst_QGLCube::texCoords()
         int begin = f * 8 * 6;
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cfL;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
 
         int i = begin;  // starts at bottom right
@@ -382,9 +389,10 @@ void tst_QGLCube::texCoords()
         int begin = f * 8 * 6;
         QGLDisplayList list;
         list.newSection(QGL::Faceted);
+	QGLSceneNode *node = list.currentNode();
         list << cfT;
         list.finalize();
-        QGLVertexArray ary = list.geometry()->vertexArray();
+        QGLVertexArray ary = node->geometry()->toVertexArray();
         int texx = ary.fields().indexOf(QGL::TextureCoord0);
 
         int i = begin;  // starts at bottom right

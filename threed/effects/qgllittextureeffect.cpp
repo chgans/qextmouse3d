@@ -39,21 +39,56 @@
 **
 ****************************************************************************/
 
-#include "qgllittextureeffect_p.h"
+#include "qgllittextureeffect.h"
 
 QT_BEGIN_NAMESPACE
 
-#if !defined(QGL_SHADERS_ONLY)
+/*!
+    \class QGLLitTextureEffect
+    \since 4.7
+    \brief The QGLLitTextureEffect class provides a standard effect base class for drawing fragments with a lit texture.
+    \ingroup qt3d
+    \ingroup qt3d::painting
 
-QGLLitTextureEffect::QGLLitTextureEffect(GLenum mode)
+    \sa QGLLitDecalTextureEffect, QGLLitModulateTextureEffect
+*/
+
+/*!
+    \class QGLLitDecalTextureEffect
+    \since 4.7
+    \brief The QGLLitDecalTextureEffect class provides a standard effect for drawing fragments with a texture decaled over a lit material.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+/*!
+    \class QGLLitModulateTextureEffect
+    \since 4.7
+    \brief The QGLLitModulateTextureEffect class provides a standard effect for drawing fragments with a texture modulated with a lit material.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+/*!
+    \internal
+*/
+QGLLitTextureEffect::QGLLitTextureEffect
+        (GLenum mode, const char *vshader, const char *fshader,
+         const QString& programName)
+    : QGLLitMaterialEffect(mode, vshader, fshader, programName)
 {
-    envMode = mode;
 }
 
+/*!
+    Destroys this lit texture effect.
+*/
 QGLLitTextureEffect::~QGLLitTextureEffect()
 {
 }
 
+/*!
+    \reimp
+*/
 QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
 {
     QList<QGL::VertexAttribute> fields;
@@ -63,70 +98,7 @@ QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
     return fields;
 }
 
-void QGLLitTextureEffect::setActive(bool flag)
-{
-    if (flag) {
-        glEnable(GL_LIGHTING);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        enableVertexAttribute(QGL::TextureCoord0);
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, envMode);
-    } else {
-        glDisable(GL_LIGHTING);
-        glDisable(GL_FOG);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY);
-        disableVertexAttribute(QGL::TextureCoord0);
-    }
-}
-
-void QGLLitTextureEffect::update
-    (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    updateLighting(painter, updates);
-    if ((updates & QGLPainter::UpdateFog) != 0)
-        updateFog(painter);
-}
-
-QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
-    : QGLLitTextureEffect(GL_DECAL)
-{
-}
-
-QGLLitDecalTextureEffect::~QGLLitDecalTextureEffect()
-{
-}
-
-void QGLLitDecalTextureEffect::update
-    (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateColor) != 0) {
-        QColor color = painter->color();
-        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    }
-    QGLLitTextureEffect::update(painter, updates);
-}
-
-QGLLitModulateTextureEffect::QGLLitModulateTextureEffect()
-    : QGLLitTextureEffect(GL_MODULATE)
-{
-}
-
-QGLLitModulateTextureEffect::~QGLLitModulateTextureEffect()
-{
-}
-
-void QGLLitModulateTextureEffect::update
-    (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateColor) != 0) {
-        QColor color = painter->color();
-        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    }
-    QGLLitTextureEffect::update(painter, updates);
-}
-
-#else // QGL_SHADERS_ONLY
+#if defined(QGL_SHADERS_ONLY)
 
 static char const litTextureVertexShader[] =
     "attribute highp vec4 vertex;\n"
@@ -172,42 +144,46 @@ static char const litModulateFragmentShader[] =
     "    gl_FragColor = col * lcolor;\n"
     "}\n";
 
+#endif
+
+/*!
+    Constructs a new lit decal texture effect.
+*/
 QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
-    : QGLLitMaterialEffect(litTextureVertexShader, litDecalFragmentShader)
+#if !defined(QGL_SHADERS_ONLY)
+    : QGLLitTextureEffect(GL_DECAL, 0, 0, QString())
+#else
+    : QGLLitTextureEffect(0, litTextureVertexShader, litDecalFragmentShader,
+                          QLatin1String("qt.texture.litdecal"))
+#endif
 {
 }
 
+/*!
+    Destroys this lit decal texture effect.
+*/
 QGLLitDecalTextureEffect::~QGLLitDecalTextureEffect()
 {
 }
 
-QList<QGL::VertexAttribute> QGLLitDecalTextureEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    fields += QGL::TextureCoord0;
-    return fields;
-}
-
+/*!
+    Constructs a new lit modulate texture effect.
+*/
 QGLLitModulateTextureEffect::QGLLitModulateTextureEffect()
-    : QGLLitMaterialEffect(litTextureVertexShader, litModulateFragmentShader)
+#if !defined(QGL_SHADERS_ONLY)
+    : QGLLitTextureEffect(GL_MODULATE, 0, 0, QString())
+#else
+    : QGLLitTextureEffect(0, litTextureVertexShader, litModulateFragmentShader,
+                          QLatin1String("qt.texture.litmodulate"))
+#endif
 {
 }
 
+/*!
+    Destroys this lit modulate texture effect.
+*/
 QGLLitModulateTextureEffect::~QGLLitModulateTextureEffect()
 {
 }
-
-QList<QGL::VertexAttribute> QGLLitModulateTextureEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    fields += QGL::TextureCoord0;
-    return fields;
-}
-
-#endif // QGL_SHADERS_ONLY
 
 QT_END_NAMESPACE

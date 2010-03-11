@@ -44,8 +44,10 @@
 
 #include "qcolor4b.h"
 #include "qglnamespace.h"
-#include "qglvertexarray.h"
 #include "qglindexarray.h"
+#include "qglvertexbuffer.h"
+#include "qglattributevalue.h"
+#include "qcustomdataarray.h"
 #include "qbox3d.h"
 #include "qarray.h"
 #include "qvectorarray.h"
@@ -54,11 +56,12 @@ QT_BEGIN_NAMESPACE
 
 class QGeometryDataPrivate;
 class QLogicalVertex;
+class QGLPainter;
 
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
-}
+};
 
 class Q_QT3D_EXPORT QGeometryData
 {
@@ -73,19 +76,31 @@ public:
     void appendGeometry(const QGeometryData &data);
     int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int i) const;
-    QGLVertexArray toVertexArray() const;
     void normalizeNormals();
     QBox3D boundingBox() const;
     void setCommonNormal(const QVector3D &n);
-    QVector3D commonNormal() const;
+    const QVector3D &commonNormal() const;
     QGeometryData zippedWith(const QGeometryData &other) const;
     void zipWith(const QGeometryData &other);
     void clear();
     void clear(QGL::VertexAttribute);
     void reserve(int amount);
+    void draw(QGLPainter *painter, int start, int count);
+    bool upload();
+    enum BufferStrategyFlags
+    {
+        InvalidStrategy     = 0x00,
+        KeepClientData      = 0x01,
+        BufferIfPossible    = 0x02,
+    };
+    Q_DECLARE_FLAGS(BufferStrategy, BufferStrategyFlags)
+    void setBufferStrategy(BufferStrategy strategy);
+    BufferStrategy bufferStrategy() const;
+    QGLVertexBuffer vertexBuffer() const;
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);
+    void appendIndices(const QGLIndexArray &indices);
     QGLIndexArray indices() const;
 
     void appendVertex(const QVector3D &v0);
@@ -124,19 +139,19 @@ public:
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
-    QVector3D vertex(int i) const;
+    const QVector3D &vertex(int i) const;
 
     QVector3D &normalRef(int i);
     QVector3DArray normals() const;
-    QVector3D normal(int i) const;
+    const QVector3D &normal(int i) const;
 
     QColor4B &colorRef(int i);
     QArray<QColor4B> colors() const;
-    QColor4B color(int i) const;
+    const QColor4B &color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
-    QVector2D texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
+    const QVector2D &texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
 
     float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
@@ -146,11 +161,15 @@ public:
     QVector2D vector2DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
     QVector3D vector3DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
 
+    QGLAttributeValue attributeValue(QGL::VertexAttribute field) const;
     bool hasField(QGL::VertexAttribute field) const;
     void enableField(QGL::VertexAttribute field);
     quint32 fields() const;
     int count() const;
     int count(QGL::VertexAttribute field) const;
+    int indexCount() const;
+protected:
+    const QVector3DArray *vertexData() const;
 private:
     void detach();
 #ifndef QT_NO_DEBUG
@@ -162,6 +181,8 @@ private:
 
     QGeometryDataPrivate *d;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGeometryData::BufferStrategy);
 
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGeometryData &vertices);

@@ -51,6 +51,32 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QGL::VertexAttribute
+    \since 4.7
+    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexArray()
+
+    \value Position The primary position of the vertex.
+    \value Normal The normal at each vertex.
+    \value Color The color at each vertex.
+    \value TextureCoord0 The texture co-ordinate at each vertex for texture unit 0.
+    \value TextureCoord1 The texture co-ordinate at each vertex for texture unit 1.
+    \value TextureCoord2 The texture co-ordinate at each vertex for texture unit 2.
+    \value TextureCoord3 The texture co-ordinate at each vertex for texture unit 3.
+    \value TextureCoord4 The texture co-ordinate at each vertex for texture unit 4.
+    \value TextureCoord5 The texture co-ordinate at each vertex for texture unit 5.
+    \value TextureCoord6 The texture co-ordinate at each vertex for texture unit 6.
+    \value TextureCoord7 The texture co-ordinate at each vertex for texture unit 7.
+    \value CustomVertex0 First custom vertex attribute.
+    \value CustomVertex1 Second custom vertex attribute.
+    \value CustomVertex2 Third custom vertex attribute.
+    \value CustomVertex3 Fourth custom vertex attribute.
+    \value CustomVertex4 Fifth custom vertex attribute.
+    \value CustomVertex5 Sixth custom vertex attribute.
+    \value CustomVertex6 Seventh custom vertex attribute.
+    \value CustomVertex7 Eighth custom vertex attribute.
+*/
+
+/*!
     \enum QGL::Face
     \since 4.7
     This enum defines the faces to apply an operation to.
@@ -79,14 +105,13 @@ QT_BEGIN_NAMESPACE
     \since 4.7
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
-    \value NoDrawingMode The drawing mode is not specified.
     \value Points Draws a point at each of the specified vertices.
     \value Lines Draws a series of unconnected line segments, using two
            vertices for each line.
-    \value LineLoop series of connected line seguments, from the
+    \value LineLoop series of connected line segments, from the
            first to the last vertex, and then connecting the last
            vertex back to the first vertex.
-    \value LineStrip Draws a series of connected line seguments, from the
+    \value LineStrip Draws a series of connected line segments, from the
            first to the last vertex.
     \value Triangles Draws a series of triangles using three vertices from
            the enabled vertex arrays for each triangle.
@@ -97,6 +122,24 @@ QT_BEGIN_NAMESPACE
            first vertex in the enabled vertex arrays, starting with the
            first three vertices and then one extra vertex for each additional
            triangle.
+    \value LinesAdjacency Draws a series of unconnected lines, using
+           two vertices for each line to define the positions, and an
+           additional vertices per line to define adjacent points.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
+    \value LineStripAdjacency Draws a series of connected line segments,
+           from the second to the second last vertex.  The first and last
+           vertices define adjacent points.  This drawing mode is only
+           supported on OpenGL systems that have geometry shaders.
+    \value TrianglesAdjacency Draws a series of triangles using three
+           vertices from the enabled vertex arrays for each triangle.
+           An additional three vertices per triangle are supplied to
+           define adjacent points.  This drawing mode is only supported
+           on OpenGL systems that have geometry shaders.
+    \value TriangleStripAdjacency Draws a series of triangles in a strip,
+           with additional vertices for points adjacent to the strip.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
 */
 
 /*!
@@ -200,9 +243,20 @@ QT_BEGIN_NAMESPACE
     \relates QGLDisplayList
 
     This enum defines vertex smoothing treatments.
-    \value Unspecified The vertex smoothing is not specified
-    \value Smooth The vertices have lighting normals averaged for each face.
-    \value Faceted The vertices have lighting normals seperate for each face.
+    \value NoSmoothing No smoothing processing is performed.
+    \value Smooth Lighting normals averaged for each face for a smooth appearance.
+    \value Faceted Lighting normals seperate for each face for a faceted appearance.
+*/
+
+/*!
+    \enum QGL::Strategy
+    \since 4.7
+    \relates QGLDisplayList
+
+    This enum defines vertex processing strategies for performance tuning.
+    \value NullStrategy No vertex processing is done - use this for raw data.
+    \value HashLookup The vertices are processed using a QHash - use for random data.
+    \value MapLookup The vertices are processed using a QMap - use for spatially ordered data.
 */
 
 QT_END_NAMESPACE

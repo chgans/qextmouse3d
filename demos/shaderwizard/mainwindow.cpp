@@ -50,13 +50,15 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QSettings>
+#include <QErrorMessage>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglmaterialcollection.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 
 #include "shaderwizardglwidget.h"
 #include "qglslsyntaxhighlighter.h"
+#include "qglcolladafxeffectfactory.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -84,6 +86,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, SIGNAL(sceneCreated(QObject*)), glDisplayWidget, SLOT(setSceneManager(QObject*)));
     connect(this, SIGNAL(sceneSelected(QObject*)), glDisplayWidget, SLOT(setSceneObject(QObject*)));
+    connect(glDisplayWidget, SIGNAL(vertexShaderChanged(QString)), ui->textEditVertexShader, SLOT(setPlainText(QString)));
+    connect(glDisplayWidget, SIGNAL(fragmentShaderChanged(QString)), ui->textEditFragmentShader, SLOT(setPlainText(QString)));
 
     new QGLSLSyntaxHighlighter(ui->textEditVertexShader->document());
     new QGLSLSyntaxHighlighter(ui->textEditFragmentShader->document());
@@ -91,7 +95,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupSceneModel();
     setupSceneView();
 
-    connect(this, SIGNAL(materialSelected(QGLMaterialParameters*)), ui->materialInspectorWidget, SLOT(setMaterial(QGLMaterialParameters*)));
+    connect(this, SIGNAL(materialSelected(QGLMaterial*)), ui->materialInspectorWidget, SLOT(setMaterial(QGLMaterial*)));
     connect(ui->materialInspectorWidget, SIGNAL(ambientColorChanged(QColor)), glDisplayWidget, SLOT(setAmbientMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(diffuseColorChanged(QColor)), glDisplayWidget, SLOT(setDiffuseMaterialColor(QColor)));
     connect(ui->materialInspectorWidget, SIGNAL(specularColorChanged(QColor)), glDisplayWidget, SLOT(setSpecularMaterialColor(QColor)));
@@ -242,6 +246,52 @@ void MainWindow::loadScene(const QString& fileName)
     doRecentFileMenu(fileName);
 }
 
+void MainWindow::loadEffect(const QString& fileName)
+{
+    QList<QGLColladaFxEffect*> loadedEffects = QGLColladaFxEffectFactory::loadEffectsFromFile(fileName);
+    if(loadedEffects.count() == 0)
+        qWarning() << "Warning: Failed to load effects from file " << fileName;
+    else
+    {
+        loadedEffects[0]->generateShaders();
+        glDisplayWidget->setEffect(loadedEffects[0]);
+
+        ui->textEditVertexShader->setPlainText(loadedEffects[0]->vertexShader());
+        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->fragmentShader());
+        update();
+    }
+}
+
+bool MainWindow::saveEffect()
+{
+    QGLShaderProgramEffect *effectToExport = glDisplayWidget->effect();
+
+    if(effectToExport == 0)
+    {
+        QErrorMessage* noEffectMessage = new QErrorMessage(this);
+        noEffectMessage->setWindowTitle("ShaderWizard");
+        noEffectMessage->showMessage(tr("Unable to find effect to export, aborting export"), tr("Error Getting Effect"));
+        return false;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Export Effect as ColladaFx"),
+                                                    QDir::homePath(),
+                                                    tr("Collada Effects (*.dae *.xml)"));
+    QFile saveFile(fileName);
+    if(!saveFile.open(QFile::WriteOnly))
+    {
+        QErrorMessage* fileOpenError = new QErrorMessage(this);
+        fileOpenError->setWindowTitle("ShaderWizard");
+        fileOpenError->showMessage("Unable to open file for writing: " + fileName, "Error Opening File");
+        return false;
+    }
+
+    QString colladaString = QGLColladaFxEffectFactory::exportEffect(effectToExport, QFileInfo(saveFile).fileName() + "Effect", QFileInfo(saveFile).fileName() + "Technique");
+    QTextStream out(&saveFile);
+    out << colladaString;
+    return true;
+}
+
 static void addSceneNodeToDataModel(QStandardItem *parent, QGLSceneNode *node)
 {
     if(!node)
@@ -328,9 +378,9 @@ void MainWindow::modelItemActivated(QModelIndex index)
     {
         emit sceneSelected(object);
         QGLSceneNode *scene = qobject_cast<QGLSceneNode *>(object);
-        if(scene && scene->geometry() && scene->geometry()->material() != -1)
+        if(scene && scene->material() != -1)
         {
-            emit materialSelected( scene->geometry()->palette()->materialByIndex( scene->geometry()->material() ));
+            emit materialSelected( scene->palette()->materialByIndex( scene->material() ));
         }
     }
 }
@@ -422,4 +472,20 @@ void MainWindow::recentFileActionTriggered()
 void MainWindow::on_actionMultiTexture_Shader_triggered()
 {    
     setShadersFromFiles(":/shaders/per_pixel_texture.vsh",":/shaders/multitexture.fsh");
+}
+
+void MainWindow::on_actionLoad_Collada_Effect_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                                                 QDir::homePath(),
+                                                 tr("Collada Effects (*.dae *.xml)"));
+    if (fileName.isEmpty())
+        return;
+    emit openEffect(fileName);
+    loadEffect(fileName);
+}
+
+void MainWindow::on_actionExport_Collada_Effect_triggered()
+{
+    saveEffect();
 }

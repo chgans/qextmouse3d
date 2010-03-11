@@ -60,7 +60,6 @@
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
 
-class QGLGeometry;
 class QGLAbstractEffect;
 
 class QGLSceneNodePrivate : public QGLSceneObjectPrivate
@@ -76,11 +75,13 @@ public:
         , material(-1)
         , start(0)
         , count(0)
-		, isVisible(true)
+        , isVisible(true)
+        , viewNormals(false)
     {
     }
 
-    QGLGeometry *geometry;
+    QGeometryData *geometry;
+    QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
@@ -89,7 +90,8 @@ public:
     int material;
     int start;
     int count;
-	bool isVisible;
+    bool isVisible;
+    bool viewNormals;
 };
 
 #endif // QGLSCENENODE_P_H

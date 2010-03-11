@@ -61,11 +61,11 @@ class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
     Q_DECLARE_PRIVATE(QGLSceneNode);
 public:
     explicit QGLSceneNode(QObject *parent = 0);
-    explicit QGLSceneNode(QGLGeometry *geometry, QObject *parent = 0);
+    explicit QGLSceneNode(QGeometryData *geometry, QObject *parent = 0);
     virtual ~QGLSceneNode();
 
-    QGLGeometry *geometry() const;
-    void setGeometry(QGLGeometry *);
+    QGeometryData *geometry() const;
+    void setGeometry(QGeometryData *);
 
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &);
@@ -88,7 +88,11 @@ public:
     int material() const;
     void setMaterial(int material);
 
+    QGLMaterialCollection *palette() const;
+    void setPalette(QGLMaterialCollection *palette);
+
     QList<QGLSceneNode*> childNodes() const;
+    QList<QGLSceneNode*> allChildren() const;
     void setChildNodes(const QList<QGLSceneNode*> &children);
     void addNode(QGLSceneNode *node);
     void removeNode(QGLSceneNode *node);
@@ -97,6 +101,10 @@ public:
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
     virtual QGLSceneNode *clone(QObject *parent = 0) const;
+
+    void setNormalViewEnabled(bool enabled);
+    bool normalViewEnabled() const;
+
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
 

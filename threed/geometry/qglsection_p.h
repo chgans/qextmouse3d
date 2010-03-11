@@ -72,13 +72,11 @@ class QGLSceneNode;
 class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
-    QGLSection(QGLDisplayList *d, QGL::Smoothing s = QGL::Smooth);
+    QGLSection(QGLDisplayList *d, QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::MapLookup);
     ~QGLSection();
 
     void reserve(int amount);
 
-    QGLIndexArray indices() const;
-    int indexCount() const;
     void append(const QLogicalVertex &lv);
     void append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c);
     void appendSmooth(const QLogicalVertex &lv);

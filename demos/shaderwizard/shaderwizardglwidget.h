@@ -56,6 +56,7 @@ class QGLSceneNode;
 class QGLSceneObject;
 class QGLHeightMap;
 class QGLSphere;
+class QGLShaderProgramEffect;
 
 class ShaderWizardGLWidget : public QGLView
 {
@@ -83,9 +84,10 @@ public:
     QColor specularMaterialColor();
 
     int materialShininess();
+    QGLShaderProgramEffect* effect();
 
 public slots:
-    void setGeometry(QGLGeometry *geom);
+    void setSceneNode(QGLSceneNode *geom);
 
     void setCubeGeometry();
     void setSphereGeometry();
@@ -110,21 +112,26 @@ public slots:
     void setTextureImage(const QImage &image);
 
     void clearScene();
+    void setEffect(QGLShaderProgramEffect* effect);
+
+signals:
+    void vertexShaderChanged(const QString);
+    void fragmentShaderChanged(const QString);
 
 private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
-    void setDefaultCamera(QGLGeometry* geometry);
+    void setDefaultCamera(QGLSceneNode* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
-    QGLGeometry *mGeometry;
+    QGLSceneNode *mSceneNode;
     QGLAbstractScene *mSceneManager;
     QGLSceneObject *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
-    QGLMaterialParameters *mMaterial;
+    QGLMaterial *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLTexture2D *mTexture;
 

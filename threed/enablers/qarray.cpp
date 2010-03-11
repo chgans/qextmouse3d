@@ -1048,6 +1048,26 @@ QT_BEGIN_NAMESPACE
     returns false.
 */
 
+#ifndef QT_NO_DATASTREAM
+
+/*!
+    \fn QDataStream& operator<<(QDataStream& stream, const QArray<T, PreallocSize>& array)
+    \relates QArray
+
+    Writes \a array to the given \a stream and returns a reference
+    to the \a stream.
+*/
+
+/*!
+    \fn QDataStream& operator>>(QDataStream& stream, QArray<T, PreallocSize>& array)
+    \relates QArray
+
+    Reads \a array from the given \a stream and returns a reference
+    to the \a stream.
+*/
+
+#endif
+
 /*!
     \class QUnsharedArray
     \brief The QUnsharedArray class is a template class for an unshared array.

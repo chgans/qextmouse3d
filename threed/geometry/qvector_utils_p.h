@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLFLATTEXTUREEFFECT_P_H
-#define QGLFLATTEXTUREEFFECT_P_H
+#ifndef QVECTOR_UTILS_P_H
+#define QVECTOR_UTILS_P_H
 
 //
 //  W A R N I N G
@@ -53,71 +53,58 @@
 // We mean it.
 //
 
-#include "qglabstracteffect.h"
+#include <QtGui/qvector3d.h>
+#include <QtGui/qvector2d.h>
 
-QT_BEGIN_NAMESPACE
+// Replacement for qFuzzyCompare(QVector3D, QVector3D) and friends,
+// for a specific case where the results are going to be rendered
+// by the GPU onto a display.
+//
+// The accuracy of this comparison should not change.  Especially it
+// should not change when you go from doubles to floats or when
+// you get close to zero.  If two verts or lighting normals are
+// the same to within 5 places of floating point accuracy then they
+// will dislay as being on top of each other.
+//
+// Also this avoids doing 3 floating point multiplications every time
+// since the normal qFuzzyIsNull does a mul to scale the epsilon when
+// close to zero.
 
-#if !defined(QGL_SHADERS_ONLY)
-
-class QGLFlatTextureEffect : public QGLAbstractEffect
+inline bool qFskIsNull(double d)
 {
-public:
-    QGLFlatTextureEffect();
-    virtual ~QGLFlatTextureEffect();
+    return qAbs(d) <= 0.00001;
+}
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-};
-
-class QGLFlatDecalTextureEffect : public QGLAbstractEffect
+inline bool qFskIsNull(float f)
 {
-public:
-    QGLFlatDecalTextureEffect();
-    virtual ~QGLFlatDecalTextureEffect();
+    return qAbs(f) <= 0.00001f;
+}
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-};
-
-#else // QGL_SHADERS_ONLY
-
-class QGLShaderProgram;
-
-class QGLFlatTextureEffect : public QGLAbstractEffect
+inline bool qFskCompare(float a, float b)
 {
-public:
-    QGLFlatTextureEffect();
-    virtual ~QGLFlatTextureEffect();
+    return qFskIsNull(a - b);
+}
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
-protected:
-    QGLShaderProgram *program;
-    int matrixUniform;
-};
-
-class QGLFlatDecalTextureEffect : public QGLFlatTextureEffect
+inline bool qFskCompare(double a, double b)
 {
-public:
-    QGLFlatDecalTextureEffect();
-    virtual ~QGLFlatDecalTextureEffect();
+    return qFskIsNull(a - b);
+}
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+inline bool qFskCompare(const QVector3D &a, const QVector3D &b)
+{
+    return (
+            qFskIsNull(a.x() - b.x()) &&
+            qFskIsNull(a.y() - b.y()) &&
+            qFskIsNull(a.z() - b.z())
+            );
+}
 
-private:
-    int colorUniform;
-};
+inline bool qFskCompare(const QVector2D &a, const QVector2D &b)
+{
+    return (
+            qFskIsNull(a.x() - b.x()) &&
+            qFskIsNull(a.y() - b.y())
+            );
+}
 
-#endif // QGL_SHADERS_ONLY
-
-QT_END_NAMESPACE
-
-#endif
+#endif // QVECTOR_UTILS_P_H

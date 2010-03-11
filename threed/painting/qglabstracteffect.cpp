@@ -41,6 +41,7 @@
 
 #include "qglabstracteffect.h"
 #include "qglpainter_p.h"
+#include <QtOpenGL/qglshaderprogram.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -108,11 +109,11 @@ bool QGLAbstractEffect::supportsPicking() const
 }
 
 /*!
-    \fn void QGLAbstractEffect::setActive(bool flag)
+    \fn void QGLAbstractEffect::setActive(QGLPainter *painter, bool flag)
 
-    Activates or deactivates this effect, according to \a flag,
-    on the current GL context by selecting shader programs,
-    setting lighting and material parameters, etc.
+    Activates or deactivates this effect on \a painter,
+    according to \a flag, on the current GL context by selecting
+    shader programs, setting lighting and material parameters, etc.
 
     \sa update()
 */
@@ -226,7 +227,7 @@ static void setLight(int light, const QGLLightParameters *parameters,
     glLightfv(light, GL_QUADRATIC_ATTENUATION, params);
 }
 
-static void setMaterial(int face, const QGLMaterialParameters *parameters)
+static void setMaterial(int face, const QGLMaterial *parameters)
 {
     GLfloat params[17];
 
@@ -348,8 +349,8 @@ void QGLAbstractEffect::updateLighting
 
     // Update the materials if they have changed.
     if ((updates & QGLPainter::UpdateMaterials) != 0 && hasEnabledLights) {
-        const QGLMaterialParameters *frontMaterial = painter->faceMaterial(QGL::FrontFaces);
-        const QGLMaterialParameters *backMaterial = painter->faceMaterial(QGL::BackFaces);
+        const QGLMaterial *frontMaterial = painter->faceMaterial(QGL::FrontFaces);
+        const QGLMaterial *backMaterial = painter->faceMaterial(QGL::BackFaces);
         if (frontMaterial == backMaterial) {
             setMaterial(GL_FRONT_AND_BACK, frontMaterial);
         } else {
@@ -458,6 +459,10 @@ void QGLAbstractEffect::setAttributeArray
     glVertexAttribPointer(GLuint(location), value.tupleSize(),
                           GLenum(value.type()), GL_FALSE,
                           value.stride(), value.data());
+#elif QT_VERSION >= 0x040700
+    program->setAttributeArray
+        (location, value.type(), value.data(),
+         value.tupleSize(), value.stride());
 #elif !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
     Q_UNUSED(program);
     const QGLContext *ctx = QGLContext::currentContext();

@@ -52,39 +52,33 @@ class QGLShaderProgramEffect : public QGLAbstractEffect
 public:
     QGLShaderProgramEffect();
     virtual ~QGLShaderProgramEffect();
-    QList<QGL::VertexAttribute> requiredFields() const;
-    bool supportsPicking() const;
-    virtual void setActive(bool flag);
+    virtual QList<QGL::VertexAttribute> requiredFields() const;
+    virtual bool supportsPicking() const;
+    virtual void setActive(QGLPainter *painter, bool flag);
     virtual bool isActive() { return currentlyActive;}
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    virtual void setVertexAttribute(QGL::VertexAttribute attribute,
+                            const QGLAttributeValue& value);
+    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexShader(QString const &  shader );
-    void setFragmentShader(QString const & shader );
-
-    void setMaterial(QGLMaterialParameters* newMaterial);
-    QGLMaterialParameters* material();
+    virtual void setVertexShader(QString const &  shader);
+    virtual void setFragmentShader(QString const & shader);
+    virtual void setMaterial(QGLMaterial* newMaterial);
+    virtual QGLMaterial* material();
+    virtual void setProgram(QGLShaderProgram* program);
+    virtual QString vertexShader();
+    virtual QString fragmentShader();
 
 protected:
+    virtual QGLShaderProgram* program();
     virtual void reloadShaders();
     virtual void bindProgramAttributes();
-    virtual void bindProgramUniforms();
-    QGLShaderProgram *program;
 
- private:
-    QString vertexShader;
-    QString fragmentShader;
-    int colorUniform;
+private:
     int colorAttribute;
-    int matrixUniform;
-    int timeUniform;
-    int lightDirectionUniform ;
     bool currentlyActive;
     bool textureAttributeSet;
     int textureId;
     QGLShaderProgramEffectPrivate *d;
-
 };
 
 #endif // QGLSHADERPROGRAMEFFECT_H

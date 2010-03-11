@@ -11,6 +11,5 @@ SOURCES += tst_qglcolladafxeffectfactory.cpp \
     ../../../demos/shaderwizard/qglcolladafxeffect.cpp \
     ../../../demos/shaderwizard/qglshaderprogrameffect.cpp
 INCLUDEPATH += ../../../demos/shaderwizard/
-INSTALLS += collada_cube.xml
 OTHER_FILES += collada_cube.xml
 RESOURCES += tst_qglcolladafxeffectfactory.qrc

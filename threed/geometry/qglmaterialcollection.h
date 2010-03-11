@@ -46,7 +46,7 @@
 #include <QtCore/qstringlist.h>
 
 #include "qt3dglobal.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qgltexture2d.h"
 
 QT_BEGIN_HEADER
@@ -64,13 +64,13 @@ class Q_QT3D_EXPORT QGLMaterialCollection : public QObject
 public:
     QGLMaterialCollection(QObject *parent = 0);
     virtual ~QGLMaterialCollection();
-    inline QGLMaterialParameters *materialByIndex(int) const;
+    inline QGLMaterial *materialByIndex(int) const;
     inline int materialIndexByName(const QString &) const;
     inline QString materialName(int) const;
     inline void markMaterialAsUsed(int);
     void removeUnusedMaterials();
-    inline int addMaterial(QGLMaterialParameters *);
-    inline void removeMaterial(QGLMaterialParameters *);
+    inline int addMaterial(QGLMaterial *);
+    inline void removeMaterial(QGLMaterial *);
     inline void removeMaterial(int);
     inline bool isEmpty() const;
     inline int size() const;
@@ -81,13 +81,13 @@ private slots:
     void materialDeleted();
 
 private:
-    QList<QGLMaterialParameters *> mMaterials;
+    QList<QGLMaterial *> mMaterials;
     QList<QGLTexture2D *> mTextures;
     QStringList mMaterialNames;
     QList<bool> mMaterialsUsed;
 };
 
-inline QGLMaterialParameters *QGLMaterialCollection::materialByIndex(int ix) const
+inline QGLMaterial *QGLMaterialCollection::materialByIndex(int ix) const
 {
     return mMaterials.at(ix);
 }
@@ -112,7 +112,7 @@ inline void QGLMaterialCollection::markMaterialAsUsed(int m)
         mMaterialsUsed[m] = true;
 }
 
-inline int QGLMaterialCollection::addMaterial(QGLMaterialParameters *mat)
+inline int QGLMaterialCollection::addMaterial(QGLMaterial *mat)
 {
     int index = mMaterials.count();
     mMaterials.append(mat);
@@ -123,7 +123,7 @@ inline int QGLMaterialCollection::addMaterial(QGLMaterialParameters *mat)
     return index;
 }
 
-inline void QGLMaterialCollection::removeMaterial(QGLMaterialParameters *material)
+inline void QGLMaterialCollection::removeMaterial(QGLMaterial *material)
 {
     int index = mMaterials.indexOf(material);
     if (index == -1)

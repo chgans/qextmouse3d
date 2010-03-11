@@ -64,7 +64,7 @@ QT_BEGIN_NAMESPACE
     desktop OpenGL systems.  The name \c ElementType is a \c typedef alias for the
     type of these indices.
 
-    \sa QGLVertexArray
+    \sa QGLVertexBuffer
 */
 
 /*!

@@ -43,12 +43,8 @@
 #include "qglpainter_p.h"
 #include "qglabstracteffect.h"
 #include <QtOpenGL/qglpixelbuffer.h>
-// qglextensions_p.h defines GL_TEXTURE0, but we want to know
-// if it doesn't actually exist on the underlying GL system.
-#if defined(GL_TEXTURE0)
-#define QGL_TEXTURE0        GL_TEXTURE0
-#endif
 #include <QtOpenGL/private/qgl_p.h>
+#include <QtOpenGL/qglshaderprogram.h>
 #include <QtGui/private/qwidget_p.h>
 #include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
@@ -58,16 +54,15 @@
 #if !defined(QT_NO_THREAD)
 #include <QtCore/qthreadstorage.h>
 #endif
-#include "qglflatcoloreffect_p.h"
-#include "qglflattextureeffect_p.h"
-#include "qgllitmaterialeffect_p.h"
-#include "qgllittextureeffect_p.h"
+#include "qglflatcoloreffect.h"
+#include "qglflattextureeffect.h"
+#include "qgllitmaterialeffect.h"
+#include "qgllittextureeffect.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
-
-
+#include "qgeometrydata.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -125,6 +120,7 @@ QGLPainterPrivate::QGLPainterPrivate()
       backColorMaterial(0),
       fogParameters(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
+      scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
       pick(0)
@@ -162,6 +158,7 @@ QGLPainterPrivate::~QGLPainterPrivate()
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];
     delete pick;
+    qDeleteAll(cachedPrograms);
 }
 
 QGLPainterExtensions *QGLPainterPrivate::extensions()
@@ -631,81 +628,174 @@ void QGLPainter::setViewport(int width, int height)
 }
 
 /*!
-    Returns the currently active scissor rectangle.  The rectangle
-    will have zero size if scissoring is disabled.
+    Returns the currently active scissor rectangle; or a null rectangle
+    if scissoring is disabled.
 
-    Performance note: if setScissorRect() has not been called on this
+    The special rectangle value of (0, 0, -2, -2) is returned to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    Performance note: if setScissor() has not been called on this
     QGLPainter, then this function will have to perform a round-trip
     to the GL server to get the scissor rectangle.  This round-trip
-    can be avoided by calling setScissorRect() before scissorRect().
+    can be avoided by calling setScissor() before scissor().
 
-    Note: OpenGL/ES 1.0 does not have a mechanism to fetch the
-    scissor rectangle.  On that platform, this function will forcibly
-    disable scissoring if it has not been set previously with
-    setScissorRect().
+    Note that the returned rectangle will be in window co-ordinates,
+    with the origin at the top-left of the drawing surface.
 
-    \sa setScissorRect(), resetScissorRect()
+    \sa setScissor(), resetScissor()
 */
-QRect QGLPainter::scissorRect() const
+QRect QGLPainter::scissor() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect(0, 0, 0, 0));
-    if (d->scissorRect.isNull()) {
-#if !defined(GL_OES_VERSION_1_0) || defined(GL_OES_VERSION_1_1)
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
+    if (d->scissor.width() <= -3) {
         if (glIsEnabled(GL_SCISSOR_TEST)) {
+            QPaintDevice *device = d->context->device();
             GLint scissor[4];
             glGetIntegerv(GL_SCISSOR_BOX, scissor);
-            d->scissorRect =
-                QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+            if (scissor[2] != 0 && scissor[3] != 0) {
+                d->scissor = QRect
+                    (scissor[0], device->height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+            } else {
+                // Special value indicating an empty, but active, scissor.
+                d->scissor = QRect(0, 0, -2, -2);
+            }
         } else {
-            d->scissorRect = QRect(0, 0, 0, 0);
+            d->scissor = QRect();
         }
-#else
-        // OpenGL/ES 1.0 does not have glIsEnabled() or GL_SCISSOR_BOX,
-        // so force the scissor setting to a known state.
-        d->scissorRect = QRect(0, 0, 0, 0);
-        glDisable(GL_SCISSOR_TEST);
-#endif
     }
-    return d->scissorRect;
+    return d->scissor;
 }
 
 /*!
     Enables scissoring to the boundaries of \a rect if it has a
-    non-zero size; disables scissoring if \a rect has a zero size.
+    non-zero size; disables scissoring if \a rect is null.
 
-    \sa scissorRect(), resetScissorRect()
+    The special rectangle value of (0, 0, -2, -2) is used to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.  It will be
+    intersected with the drawing surface's bounds before being
+    set in the GL server.
+
+    \sa scissor(), resetScissor(), intersectScissor()
 */
-void QGLPainter::setScissorRect(const QRect& rect)
+void QGLPainter::setScissor(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (rect.width() > 0 && rect.height() > 0) {
-        d->scissorRect = rect;
-        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+    if (rect.width() == -2) {
+        // Special value indicating an empty, but active, scissor.
+        d->scissor = rect;
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+    } else if (!rect.isNull()) {
+        QPaintDevice *device = d->context->device();
+        int height = device->height();
+        QRect r = rect.intersected(QRect(0, 0, device->width(), height));
+        if (r.isValid()) {
+            d->scissor = r;
+            glScissor(r.x(), height - (r.y() + r.height()),
+                      r.width(), r.height());
+        } else {
+            d->scissor = QRect(0, 0, -2, -2);
+            glScissor(0, 0, 0, 0);
+        }
         glEnable(GL_SCISSOR_TEST);
     } else {
-        d->scissorRect = QRect(0, 0, 0, 0);
+        d->scissor = QRect();
         glDisable(GL_SCISSOR_TEST);
     }
 }
 
 /*!
-    Resets this painter's notion of what the current scissorRect()
-    is set to.  The next time scissorRect() is called, the actual
+    Intersects the current scissor rectangle with \a rect and sets
+    the intersection as the new scissor.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), expandScissor()
+*/
+void QGLPainter::intersectScissor(const QRect& rect)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QRect current = scissor();
+    if (current.width() == -2) {
+        // Scissor is already active and empty: nothing to do.
+        return;
+    } else if (rect.isEmpty()) {
+        // Intersecting with an empty rectangle sets the scissor to empty.
+        // This includes the case where "rect" is (0, 0, -2, -2).
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+        return;
+    }
+    QPaintDevice *device = d->context->device();
+    QRect r;
+    if (current.isNull())
+        r = rect.intersected(QRect(0, 0, device->width(), device->height()));
+    else
+        r = current.intersected(rect);
+    if (r.isValid()) {
+        d->scissor = r;
+        glScissor(r.x(), device->height() - (r.y() + r.height()),
+                  r.width(), r.height());
+    } else {
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+    }
+    glEnable(GL_SCISSOR_TEST);
+}
+
+/*!
+    Expands the current scissor rectangle to also include the region
+    defined by \a rect and sets the expanded region as the new scissor.
+    The \a rect will be ignored if it is empty, or if the scissor is
+    currently disabled.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), intersectScissor()
+*/
+void QGLPainter::expandScissor(const QRect& rect)
+{
+    if (rect.isEmpty())
+        return;
+    QRect current = scissor();
+    if (current.width() == -2)
+        setScissor(rect);
+    else if (!current.isNull())
+        setScissor(rect.united(current));
+}
+
+/*!
+    Resets this painter's notion of what the current scissor()
+    is set to.  The next time scissor() is called, the actual
     scissor rectangle will be fetched from the GL server.
 
     This function is used to synchronize the state of the application
     with the GL server after the execution of raw GL commands that may
     have altered the scissor settings.
 
-    \sa scissorRect(), setScissorRect()
+    \sa scissor(), setScissor()
 */
-void QGLPainter::resetScissorRect()
+void QGLPainter::resetScissor()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->scissorRect = QRect();
+    d->scissor = QRect(0, 0, -3, -3);
 }
 
 /*!
@@ -843,7 +933,7 @@ QGLAbstractEffect *QGLPainter::effect() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    d->ensureEffect();
+    d->ensureEffect(const_cast<QGLPainter *>(this));
     return d->effect;
 }
 
@@ -878,16 +968,16 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
     if (d->userEffect == effect)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = effect;
     if (effect && (!d->pick || !d->pick->isPicking)) {
         d->effect = effect;
-        d->effect->setActive(true);
+        d->effect->setActive(this, true);
         d->updates = UpdateAll;
     } else {
         // Revert to the effect associated with standardEffect().
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 
@@ -919,11 +1009,11 @@ void QGLPainter::setStandardEffect(QGL::StandardEffect effect)
     if (d->standardEffect == effect && d->effect && d->userEffect == 0)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->standardEffect = effect;
     d->userEffect = 0;
     d->effect = 0;
-    d->ensureEffect();
+    d->ensureEffect(this);
 }
 
 /*!
@@ -944,30 +1034,86 @@ void QGLPainter::disableEffect()
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = 0;
     d->effect = 0;
 }
 
-void QGLPainterPrivate::createEffect()
+/*!
+    Returns the cached shader program associated with \a name; or null
+    if \a name is not currently associated with a shader program.
+
+    \sa setCachedProgram()
+*/
+QGLShaderProgram *QGLPainter::cachedProgram(const QString& name) const
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return d->cachedPrograms.value(name, 0);
+#else
+    Q_UNUSED(name);
+    return 0;
+#endif
+}
+
+/*!
+    Sets the cached shader \a program associated with \a name.
+
+    Effect objects can use this function to store pre-compiled
+    and pre-linked shader programs in the painter for future
+    use by the same effect.  The \a program will be destroyed
+    when context() is destroyed.
+
+    If \a program is null, then the program associated with \a name
+    will be destroyed.  If \a name is already present as a cached
+    program, then it will be replaced with \a program.
+
+    Names that start with "\c{qt.}" are reserved for use by Qt's
+    internal effects.
+
+    \sa cachedProgram()
+*/
+void QGLPainter::setCachedProgram
+    (const QString& name, QGLShaderProgram *program)
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QGLShaderProgram *current = d->cachedPrograms.value(name, 0);
+    if (current != program) {
+        if (program)
+            d->cachedPrograms[name] = program;
+        else
+            d->cachedPrograms.remove(name);
+        delete current;
+    }
+#else
+    // Wouldn't normally be called, but clean up anyway.
+    Q_UNUSED(name);
+    delete program;
+#endif
+}
+
+void QGLPainterPrivate::createEffect(QGLPainter *painter)
 {
     if (userEffect) {
         if (!pick || !pick->isPicking) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         if (userEffect->supportsPicking()) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
         setRequiredFields(effect->requiredFields());
         updates = QGLPainter::UpdateAll;
         return;
@@ -1006,23 +1152,16 @@ void QGLPainterPrivate::createEffect()
             stdeffects[int(standardEffect)] = effect;
     }
     if (!pick || !pick->isPicking || effect->supportsPicking()) {
-        effect->setActive(true);
+        effect->setActive(painter, true);
     } else {
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
     }
     setRequiredFields(effect->requiredFields());
     updates = QGLPainter::UpdateAll;
 }
 
 #ifndef QT_NO_DEBUG
-
-void QGLPainterPrivate::removeRequiredFields(const QGLVertexArray& array)
-{
-    int count = array.m_fields.fieldCount();
-    for (int index = 0; index < count; ++index)
-        requiredFields.removeAll(array.m_fields.fieldAttribute(index));
-}
 
 void QGLPainterPrivate::removeRequiredFields
     (const QList<QGL::VertexAttribute>& array)
@@ -1117,29 +1256,7 @@ void QGLPainter::setColor(const QColor& color)
     d->updates |= UpdateColor;
 }
 
-
-#if !defined(QT_OPENGL_ES) && defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
-
-static QGLPainterExtensions *resolveMultiTextureExtensions(QGLPainterPrivate *pd)
-{
-    QGLPainterExtensions *extn = pd->extensions();
-    if (!(extn->multiTextureResolved)) {
-        extn->multiTextureResolved = true;
-        if (!extn->qt_glActiveTexture) {
-            extn->qt_glActiveTexture = (_glActiveTexture)
-                pd->context->getProcAddress
-                    (QLatin1String("glActiveTexture"));
-        }
-        if (!extn->qt_glClientActiveTexture) {
-            extn->qt_glClientActiveTexture = (_glClientActiveTexture)
-                pd->context->getProcAddress
-                    (QLatin1String("glClientActiveTexture"));
-        }
-    }
-    return extn;
-}
-
-#endif
+#define QGL_TEXTURE0    0x84C0
 
 void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
@@ -1171,51 +1288,24 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     case QGL::TextureCoord7:
     {
         int unit = (int)(attribute - QGL::TextureCoord0);
-
-#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)			
-        // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
-        QGLPainter painter(QGLContext::currentContext());
-        if (!painter.d_ptr->extensions()->multiTextureResolved)
-            painter.d_ptr->resolveMultiTextureExtensions();
-
-        if (painter.d_ptr->extensions()->qt_glClientActiveTexture) {
-            painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-            if (unit != 0)  // Stay on unit 0 between requests.
-                painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
-        } else if (unit!=0) {
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-        }
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
         glClientActiveTexture(QGL_TEXTURE0 + unit);
         glTexCoordPointer(value.tupleSize(), value.type(),
                           value.stride(), value.data());
         if (unit != 0)  // Stay on unit 0 between requests.
             glClientActiveTexture(QGL_TEXTURE0);
-#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-       QGLPainter painter(QGLContext::currentContext());
-        if (!painter.d_ptr->extensions()->multiTextureARBResolved)
-            painter.d_ptr->resolveMultiTextureExtensionsARB();
-
-        if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB) {
-            painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
+#else
+        QGLPainter painter(QGLContext::currentContext());
+        QGLPainterExtensions *extn =
+            painter.d_ptr->resolveMultiTextureExtensions();
+        if (extn->qt_glClientActiveTexture) {
+            extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
             glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
             if (unit != 0)  // Stay on unit 0 between requests.
-                painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
-        } else if (unit!=0) {
-            glTexCoordPointer(value.tupleSize(), value.type(),
-            value.stride(), value.data());
+                extn->qt_glClientActiveTexture(QGL_TEXTURE0);
+        } else if (unit == 0) {
+            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
         }
-#elif defined(GL_TEXTURE0_ARB)
-        glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-        glTexCoordPointer(value.tupleSize(), value.type(),
-                          value.stride(), value.data());
-        if (unit != 0)
-            glClientActiveTextureARB(GL_TEXTURE0_ARB);
-#else
-        if (unit == 0)
-            glTexCoordPointer(value.tupleSize(), value.type(),
-                              value.stride(), value.data());
 #endif
     }
     break;
@@ -1257,49 +1347,23 @@ void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
-            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
-            QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
-			}
-            // The GL implementation does not support multitexturing.
-            else if (unit == 0)
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
             glClientActiveTexture(QGL_TEXTURE0 + unit);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
-#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-           QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
-			}
-			// The GL implementation does not support multitexturing.
-            else if (unit == 0)
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-#elif defined(GL_TEXTURE0_ARB)
-            glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)
-                glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            // The GL implementation does not support multitexturing.
-            if (unit == 0)
+            QGLPainter painter(QGLContext::currentContext());
+            QGLPainterExtensions *extn =
+                painter.d_ptr->resolveMultiTextureExtensions();
+            if (extn->qt_glClientActiveTexture) {
+                extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                if (unit != 0)  // Stay on unit 0 between requests.
+                    extn->qt_glClientActiveTexture(QGL_TEXTURE0);
+            } else if (unit == 0) {
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
 #endif
         }
         break;
@@ -1335,48 +1399,23 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined (QGL_TEXTURE0) && defined(Q_WS_WIN)
-            // The GL implementation does not support multitexturing natively - we should attempt to resolve it or use the supported base-functions
-            QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureResolved) painter.d_ptr->resolveMultiTextureExtensions();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTexture)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0+unit);			
-				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTexture(QGL_TEXTURE0);			
-			}
-            // The GL implementation does not support multitexturing.
-            else if (unit == 0)
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
             glClientActiveTexture(QGL_TEXTURE0 + unit);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
-#elif defined(GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-           QGLPainter painter(QGLContext::currentContext());
-			if (!painter.d_ptr->extensions()->multiTextureARBResolved) painter.d_ptr->resolveMultiTextureExtensionsARB();
-
-			if (painter.d_ptr->extensions()->qt_glClientActiveTextureARB)
-			{
-				painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB+unit);			
-				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-				if (unit != 0)  // Stay on unit 0 between requests.
-					painter.d_ptr->extensions()->qt_glClientActiveTextureARB(GL_TEXTURE0_ARB);			
-			}
-			// The GL implementation does not support multitexturing.
-            else if (unit == 0)
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#elif defined(GL_TEXTURE0_ARB)
-            glClientActiveTextureARB(GL_TEXTURE0_ARB + unit);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)
-                glClientActiveTextureARB(GL_TEXTURE0_ARB);
 #else
-            if (unit == 0)
+            QGLPainter painter(QGLContext::currentContext());
+            QGLPainterExtensions *extn =
+                painter.d_ptr->resolveMultiTextureExtensions();
+            if (extn->qt_glClientActiveTexture) {
+                extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                if (unit != 0)  // Stay on unit 0 between requests.
+                    extn->qt_glClientActiveTexture(QGL_TEXTURE0);
+            } else if (unit == 0) {
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
 #endif
         }
         break;
@@ -1403,7 +1442,7 @@ void QGLPainter::setVertexAttribute
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     d->effect->setVertexAttribute(attribute, value);
     d->removeRequiredField(attribute);
 }
@@ -1423,60 +1462,11 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     buffer.setOnEffect(d->effect);
 #ifndef QT_NO_DEBUG
     d->removeRequiredFields(buffer.attributes());
 #endif
-}
-
-/*!
-    Sets vertex attributes on the current GL context based on the
-    fields in \a array.
-
-    The following example draws a single triangle, where each
-    vertex consists of a 3D position and a 2D texture co-ordinate:
-
-    \code
-    QGLVertexArray array(QGL::Position, 3, QGL::TextureCoord0, 2);
-    array.append(60.0f,  10.0f,  0.0f);
-    array.append(0.0f, 0.0f);
-    array.append(110.0f, 110.0f, 0.0f);
-    array.append(1.0f, 0.0f);
-    array.append(10.0f,  110.0f, 0.0f);
-    array.append(1.0f, 1.0f);
-    painter.setVertexArray(array);
-    painter.draw(QGL::Triangles, 3);
-    \endcode
-
-    If \a array has been uploaded into the GL server as a vertex
-    buffer, then the vertex buffer will be used to set the attributes.
-
-    \sa draw(), setCommonNormal(), QGLVertexArray::upload()
-*/
-void QGLPainter::setVertexArray(const QGLVertexArray& array)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
-    if (array.isUploaded() && array.bind()) {
-        QGLVertexArray bufferArray = array.toBufferForm();
-        for (int field = 0;
-                field < bufferArray.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (bufferArray.m_fields.fieldAttribute(field),
-                 bufferArray.attributeValue(field));
-        }
-        d->removeRequiredFields(bufferArray);
-        array.release();
-    } else {
-        for (int field = 0; field < array.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (array.m_fields.fieldAttribute(field),
-                 array.attributeValue(field));
-        }
-        d->removeRequiredFields(array);
-    }
 }
 
 /*!
@@ -1489,7 +1479,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     d->effect->setCommonNormal(value);
 #ifndef QT_NO_DEBUG
     d->requiredFields.removeAll(QGL::Normal);
@@ -1566,25 +1556,12 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     d->texturesInUse[unit] = (texture != 0);
 
     // Select the texture unit and bind the texture.
-#undef glActiveTexture      // Remove definition in qglextensions_p.h.
-//#if !defined(QT_OPENGL_ES)
-//    const QGLContext *ctx = d->context;
-//#else
-//#undef glActiveTexture      // Remove definition in qglextensions_p.h.
-//#endif
-
-#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
-    d->resolveMultiTextureExtensions();
-    if (d->extensionFuncs->qt_glActiveTexture) 
-		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
     glActiveTexture(QGL_TEXTURE0 + unit);
-#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-    d->resolveMultiTextureExtensionsARB();
-    if (d->extensionFuncs->qt_glActiveTextureARB)
-		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
-#elif defined(GL_TEXTURE0_ARB)
-  glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+#else
+    QGLPainterExtensions *extn = d->resolveMultiTextureExtensions();
+    if (extn->qt_glActiveTexture)
+        extn->qt_glActiveTexture(QGL_TEXTURE0 + unit);
 #endif
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -1600,20 +1577,12 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
-    d->resolveMultiTextureExtensions();
-    if (d->extensionFuncs->qt_glActiveTexture && unit!=0) 
-		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
     if (unit != 0)
         glActiveTexture(QGL_TEXTURE0);
-#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-	d->resolveMultiTextureExtensionsARB();
-    if (d->extensionFuncs->qt_glActiveTextureARB && unit!=0) 
-		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
-#elif defined(GL_TEXTURE0_ARB)
-    if (unit != 0)
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+#else
+    if (unit != 0 && extn->qt_glActiveTexture)
+        extn->qt_glActiveTexture(QGL_TEXTURE0);
 #endif
 }
 
@@ -1636,26 +1605,12 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     d->texturesInUse[unit] = (texture != 0);
 
     // Select the texture unit and bind the texture.
-#undef glActiveTexture      // Remove definition in qglextensions_p.h.
-
-//#if !defined(QT_OPENGL_ES)
-//    const QGLContext *ctx = d->context;
-//#else
-//#undef glActiveTexture      // Remove definition in qglextensions_p.h.
-//#endif
-
-#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
-    d->resolveMultiTextureExtensions();
-    if (d->extensionFuncs->qt_glActiveTexture) 
-		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
     glActiveTexture(QGL_TEXTURE0 + unit);
-#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-	d->resolveMultiTextureExtensionsARB();
-    if (d->extensionFuncs->qt_glActiveTextureARB) 
-		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
-#elif defined(GL_TEXTURE0_ARB)
-    glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+#else
+    QGLPainterExtensions *extn = d->resolveMultiTextureExtensions();
+    if (extn->qt_glActiveTexture)
+        extn->qt_glActiveTexture(QGL_TEXTURE0 + unit);
 #endif
     if (!texture) {
         QGLTextureCube::release();
@@ -1671,20 +1626,12 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined (QGL_TEXTURE0) && defined (Q_WS_WIN)
-    d->resolveMultiTextureExtensions();
-    if (d->extensionFuncs->qt_glActiveTexture && unit!=0) 
-		d->extensionFuncs->qt_glActiveTexture(QGL_TEXTURE0+unit);
-#elif defined(QGL_TEXTURE0)
+#if defined(QT_OPENGL_ES)
     if (unit != 0)
         glActiveTexture(QGL_TEXTURE0);
-#elif defined (GL_TEXTURE0_ARB) && defined (Q_WS_WIN)
-	d->resolveMultiTextureExtensionsARB();
-    if (d->extensionFuncs->qt_glActiveTextureARB && unit!=0) 
-		d->extensionFuncs->qt_glActiveTextureARB(GL_TEXTURE0_ARB+unit);
-#elif defined(GL_TEXTURE0_ARB)
-    if (unit != 0)
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+#else
+    if (unit != 0 && extn->qt_glActiveTexture)
+        extn->qt_glActiveTexture(QGL_TEXTURE0);
 #endif
 }
 
@@ -1724,7 +1671,7 @@ void QGLPainter::update()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     QGLPainter::Updates updates = d->updates;
     d->updates = 0;
     if (d->modelViewMatrix.updateServer())
@@ -1746,10 +1693,6 @@ void QGLPainter::update()
 */
 void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     glDrawArrays((GLenum)mode, index, count);
@@ -1772,10 +1715,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 */
 void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     if (indices.isUploaded() && indices.bind()) {
@@ -1807,10 +1746,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
                       int offset, int count)
 {
     Q_ASSERT(offset >= 0 && count >= 0 && (offset + count) <= indices.size());
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     if (indices.isUploaded() && indices.bind()) {
@@ -2128,21 +2063,21 @@ void QGLPainter::setLightParameters
 
     \sa setFaceMaterial(), setFaceColor()
 */
-const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
+const QGLMaterial *QGLPainter::faceMaterial(QGL::Face face) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterialParameters());
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterial());
     if (face == QGL::BackFaces) {
         if (!d->backMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->backMaterial = d->defaultMaterial;
         }
         return d->backMaterial;
     } else {
         if (!d->frontMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->frontMaterial = d->defaultMaterial;
         }
         return d->frontMaterial;
@@ -2165,7 +2100,7 @@ const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
     \sa faceMaterial(), setFaceColor()
 */
 void QGLPainter::setFaceMaterial
-        (QGL::Face face, const QGLMaterialParameters *value)
+        (QGL::Face face, const QGLMaterial *value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
@@ -2186,14 +2121,14 @@ void QGLPainter::setFaceMaterial
     d->updates |= QGLPainter::UpdateMaterials;
 }
 
-static QGLMaterialParameters *createColorMaterial
-    (QGLMaterialParameters *prev, const QColor& color)
+static QGLMaterial *createColorMaterial
+    (QGLMaterial *prev, const QColor& color)
 {
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (prev)
         material = prev;
     else
-        material = new QGLMaterialParameters();
+        material = new QGLMaterial();
     material->setAmbientColor
         (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
                           color.blueF() * 0.2, color.alphaF()));
@@ -2313,9 +2248,9 @@ void QGLPainter::setPicking(bool value)
         // Switch to/from the pick effect.
         d->pick->isPicking = value;
         if (d->effect)
-            d->effect->setActive(false);
+            d->effect->setActive(this, false);
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 
