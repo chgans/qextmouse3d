@@ -77,8 +77,10 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
     
-    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
     
+    //Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
+    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> transform READ transform DESIGNABLE false FINAL)
+
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
     
@@ -90,8 +92,11 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     //CHILDREN LIST :-)
     Q_PROPERTY(QDeclarativeListProperty<Item3d> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
 
-    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState *>* states READ states DESIGNABLE false)
-    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition *>* transitions READ transitions DESIGNABLE false)
+    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState *>* states READ states DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
+    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition *>* transitions READ transitions DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
+
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
@@ -143,21 +148,16 @@ public:
     QDeclarativeListProperty<QObject> resources();
     QDeclarativeListProperty<Item3d> fxChildren();    
 
-    QDeclarativeListProperty<QGraphicsTransform *> *transform();
+    //QDeclarativeListProperty<QGraphicsTransform *> *transform();
+    QDeclarativeListProperty<QGraphicsTransform> transform();
 
-    QDeclarativeListProperty<QDeclarativeState *>* states();
+    //QDeclarativeListProperty<QDeclarativeState *>* states();
+    QDeclarativeListProperty<QDeclarativeState> states();
     QDeclarativeState *findState(const QString &name) const;
 
-    QDeclarativeListProperty<QDeclarativeTransition *>* transitions();
-
-    //START NEW QML STUFF
-    //QDeclarativeListProperty<QObject> data();
-    //QDeclarativeListProperty<Item3d> fxChildren();
-    //QDeclarativeListProperty<QObject> resources();
-    //QDeclarativeListProperty<QDeclarativeState> states();
-    //QDeclarativeListProperty<QDeclarativeTransition> transitions();
-    //END NEW QML STUFF
-
+    //QDeclarativeListProperty<QDeclarativeTransition *>* transitions();
+    QDeclarativeListProperty<QDeclarativeTransition> transitions();
+    
     QString state() const;
     void setState(const QString &);
 
