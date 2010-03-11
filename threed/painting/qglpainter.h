@@ -115,6 +115,7 @@ public:
     void setViewport(const QRect& rect);
     void setViewport(const QSize& size);
     void setViewport(int width, int height);
+    void resetViewport();
 
     QRect scissor() const;
     void setScissor(const QRect& rect);
@@ -128,6 +129,11 @@ public:
 
     bool isVisible(const QVector3D& point) const;
     bool isVisible(const QBox3D& box) const;
+
+    QVector3D project(const QVector3D& point, bool *ok = 0) const;
+    QVector3D unproject(const QVector3D& point, bool *ok = 0) const;
+    QVector4D unproject(const QVector4D& point, qreal nearPlane,
+                        qreal farPlane, bool *ok = 0) const;
 
     qreal aspectRatio() const;
     qreal aspectRatio(const QSize& viewportSize) const;

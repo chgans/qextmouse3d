@@ -571,60 +571,83 @@ void QGLPainter::setDepthTestingEnabled(bool value)
     Returns the viewport for the active GL context.  The origin for
     the returned rectangle is the top-left of the drawing surface.
 
-    \sa setViewport()
+    \sa setViewport(), resetViewport()
 */
 QRect QGLPainter::viewport() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
-    QPaintDevice *device = d->context->device();
-    if (device) {
+    if (d->viewport.isNull()) {
         GLint view[4];
         glGetIntegerv(GL_VIEWPORT, view);
-        return QRect(view[0], device->height() - (view[1] + view[3]),
-                     view[1], view[3]);
-    } else {
-        return QRect();
+        d->viewport = QRect(view[0], view[1], view[2], view[3]);
     }
+    // Convert the GL viewport into standard Qt co-ordinates.
+    return QRect(d->viewport.x(),
+                 d->context->device()->height() -
+                        (d->viewport.y() + d->viewport.height()),
+                 d->viewport.width(), d->viewport.height());
 }
 
 /*!
     Sets the viewport for the active GL context to \a rect.
     The origin for \a rect is the top-left of the drawing surface.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    QPaintDevice *device = d->context->device();
-    if (device) {
-        int y = device->height() - (rect.y() + rect.height());
-        glViewport(rect.x(), y, rect.width(), rect.height());
-    }
+    int y = d->context->device()->height() - (rect.y() + rect.height());
+    glViewport(rect.x(), y, rect.width(), rect.height());
+    d->viewport = QRect(rect.x(), y, rect.width(), rect.height());
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a size.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(const QSize& size)
 {
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     glViewport(0, 0, size.width(), size.height());
+    d->viewport = QRect(0, 0, size.width(), size.height());
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a width and \a height.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(int width, int height)
 {
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     glViewport(0, 0, width, height);
+    d->viewport = QRect(0, 0, width, height);
+}
+
+/*!
+    Resets this painter's notion of what the current viewport()
+    is set to.  The next time viewport() is called, the actual
+    viewport rectangle will be fetched from the GL server.
+
+    This function is used to synchronize the state of the application
+    with the GL server after the execution of raw GL commands that may
+    have altered the viewport settings.
+
+    \sa viewport(), setViewport()
+*/
+void QGLPainter::resetViewport()
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->viewport = QRect();
 }
 
 /*!
@@ -861,6 +884,149 @@ bool QGLPainter::isVisible(const QBox3D& box) const
     QBox3D projected = box.transformed
         (d->projectionMatrix * d->modelViewMatrix);
     return d->viewingCube.intersects(projected);
+}
+
+/*!
+    Projects a \a point in object model space to window co-ordinates
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the window co-ordinates.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa unproject()
+*/
+QVector3D QGLPainter::project(const QVector3D& point, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector3D());
+
+    // Map the point using the modelview and projection matrices.
+    QVector4D v = d->modelViewMatrix.top() * QVector4D(point, 1.0f);
+    v = d->projectionMatrix.top() * v;
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+
+    // Map the co-ordinates to the range 0-1.
+    qreal x = (v.x() / v.w()) * 0.5f + 0.5f;
+    qreal y = (v.y() / v.w()) * 0.5f + 0.5f;
+    qreal z = (v.z() / v.w()) * 0.5f + 0.5f;
+
+    // Map x and y to the viewport dimensions.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    x = x * d->viewport.width() + d->viewport.x();
+    y = y * d->viewport.height() + d->viewport.y();
+    if (ok)
+        *ok = true;
+    return QVector3D(x, y, z);
+}
+
+/*!
+    Projects a \a point in window co-ordinates back to object model space
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the object model co-ordinates.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa project()
+*/
+QVector3D QGLPainter::unproject(const QVector3D& point, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector3D());
+
+    // Invert the combined modelview/projection matrix.
+    bool invertible;
+    QMatrix4x4 m = combinedMatrix().inverted(&invertible);
+    if (!invertible) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+
+    // Map from window co-ordinates to the (-1, -1) - (1, 1) viewport.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    qreal x = ((point.x() - d->viewport.x()) / d->viewport.width()) * 2 - 1;
+    qreal y = ((point.y() - d->viewport.y()) / d->viewport.height()) * 2 - 1;
+    qreal z = point.z() * 2 - 1;
+
+    // Map the point back through the inverse of the projection.
+    QVector4D v = m * QVector4D(x, y, z, 1.0f);
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+    if (ok)
+        *ok = true;
+    return QVector3D(v.x() / v.w(), v.y() / v.w(), v.z() / v.w());
+}
+
+/*!
+    \overload
+
+    Projects a 4D \a point in window co-ordinates back to object model space
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the object model co-ordinates, including the w co-ordinate.
+
+    The \a nearPlane and \a farPlane parameters are used to specify the
+    near and far clipping planes in the z direction.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa project()
+*/
+QVector4D QGLPainter::unproject
+    (const QVector4D& point, qreal nearPlane, qreal farPlane, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector4D());
+
+    // Invert the combined modelview/projection matrix.
+    bool invertible;
+    QMatrix4x4 m = combinedMatrix().inverted(&invertible);
+    if (!invertible) {
+        if (ok)
+            *ok = false;
+        return QVector4D();
+    }
+
+    // Map from window co-ordinates to the (-1, -1) - (1, 1) viewport.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    qreal x = ((point.x() - d->viewport.x()) / d->viewport.width()) * 2 - 1;
+    qreal y = ((point.y() - d->viewport.y()) / d->viewport.height()) * 2 - 1;
+    qreal z = ((point.z() - nearPlane) / (farPlane - nearPlane)) * 2 - 1;
+
+    // Map the point back through the inverse of the projection.
+    QVector4D v = m * QVector4D(x, y, z, point.w());
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector4D();
+    }
+    if (ok)
+        *ok = true;
+    return v;
 }
 
 /*!
