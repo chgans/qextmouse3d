@@ -132,8 +132,8 @@ ViewportPrivate::ViewportPrivate()
     pos.append(QVector2D(1.0f, 1.0f));
     pos.append(QVector2D(1.0f, 0.0f));
 
-    backdropVertices.addAttribute(QGL::VertexAttribute::Position, pos);
-    backdropVertices.addAttribute(QGL::VertexAttribute::TextureCoord0, tex);
+    backdropVertices.addAttribute(QGL::Position, pos);
+    backdropVertices.addAttribute(QGL::TextureCoord0, tex);
 
     //backdropVertices.append(-1.0f, -1.0f);
     //backdropVertices.append(0.0f, 0.0f);

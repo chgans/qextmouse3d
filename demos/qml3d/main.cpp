@@ -56,7 +56,7 @@
 #include <QtCore/qvariantanimation.h>
 #include <QFileInfo>
 #include "viewport.h"
-#include "Effect.h"
+#include "effect.h"
 #include "rotation3d.h"
 
 static QVariant interpolateVector3D
