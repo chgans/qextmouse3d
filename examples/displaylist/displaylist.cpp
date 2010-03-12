@@ -43,7 +43,7 @@
 #include "qgldisplaylist.h"
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 
@@ -120,9 +120,9 @@ QGLDisplayList *DisplayListView::buildGeometry()
 {
     //! [2]
     QGLDisplayList *soupCan = new QGLDisplayList();
-    QGLMaterialCollection *mats = soupCan->geometry()->palette();
+    QGLMaterialCollection *mats = soupCan->palette();
 
-    QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
+    QGLMaterial *parms = new QGLMaterial(mats);
     parms->setAmbientColor(QColor(32, 32, 64));
     parms->setDiffuseColor(QColor(64, 64, 128));
     int canMat = mats->addMaterial(parms);

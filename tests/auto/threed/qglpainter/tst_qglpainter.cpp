@@ -45,6 +45,7 @@
 #include "qgltestwidget.h"
 #include "qglpainter.h"
 #include "qglsimulator.h"
+#include "qglflatcoloreffect.h"
 
 class tst_QGLPainter : public QObject
 {
@@ -58,6 +59,7 @@ private slots:
     void cleanupTestCase();
     void clear();
     void drawTriangle();
+    void scissor();
     void userMatrixStack();
     void projectionMatrixStack();
     void modelViewMatrixStack();
@@ -67,6 +69,8 @@ public slots:
     void clearPaintQ(QPainter *painter, const QSize& size);
     void drawTrianglePaint();
     void drawTrianglePaintQ(QPainter *painter, const QSize& size);
+    void scissorPaint();
+    void scissorPaintQ(QPainter *painter, const QSize& size);
 
 private:
     QGLTestWidget *widget;
@@ -118,15 +122,17 @@ void tst_QGLPainter::drawTrianglePaint()
     painter.projectionMatrix().ortho(widget->rect());
     painter.modelViewMatrix().setToIdentity();
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);
 
-    painter.setStandardEffect(QGL::FlatColor);
+    QGLFlatColorEffect effect;
+    painter.setUserEffect(&effect);
     painter.setColor(Qt::green);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
+    painter.setUserEffect(0);
 }
 
 void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
@@ -140,11 +146,198 @@ void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
     proj.ortho(widget->rect());
     sim.setProjectionMatrix(proj);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);
 
+    sim.drawTriangles(vertices);
+}
+
+static QRect fetchGLScissor(const QRect& windowRect)
+{
+    GLint scissor[4];
+    glGetIntegerv(GL_SCISSOR_BOX, scissor);
+    if (scissor[2] != 0 && scissor[3] != 0) {
+        return QRect(scissor[0],
+                     windowRect.height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+    } else {
+        // Normally should be (0, 0, 0, 0) - don't adjust for window height.
+        return QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+    }
+}
+
+void tst_QGLPainter::scissor()
+{
+    // Run a painting test to check that the scissor works.
+    QVERIFY(widget->runTest(this, "scissorPaint"));
+
+    // Perform some lower level tests to ensure that the
+    // GL state is updated properly as the scissor changes.
+    QGLPainter painter;
+    painter.begin(widget);
+    QRect windowRect = widget->rect();
+
+    QVERIFY(painter.scissor().isNull());
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+
+    painter.setScissor(windowRect);
+    QCOMPARE(painter.scissor(), windowRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), windowRect);
+
+    QRect subRect(windowRect.width() / 3,
+                  windowRect.height() / 3,
+                  2 * windowRect.width() / 3,
+                  2 * windowRect.height() / 3);
+    painter.setScissor(subRect);
+    QCOMPARE(painter.scissor(), subRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    QRect leftHalf(0, 0, windowRect.width() / 2, windowRect.height());
+    painter.intersectScissor(leftHalf);
+    QCOMPARE(painter.scissor(), subRect.intersected(leftHalf));
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect.intersected(leftHalf));
+
+    QRect rightHalf(windowRect.width() - windowRect.width() / 2, 0,
+                    windowRect.width() / 2, windowRect.height());
+    QRect expandedRect(subRect.x(), 0, windowRect.width() - subRect.x(),
+                       windowRect.height());
+    painter.expandScissor(rightHalf);
+    QCOMPARE(painter.scissor(), expandedRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), expandedRect);
+
+    // QRect(0, 0, -2, -2) is a special value indicating "clip everything".
+    painter.setScissor(QRect(0, 0, -2, -2));
+    QCOMPARE(painter.scissor(), QRect(0, 0, -2, -2));
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), QRect(0, 0, 0, 0));
+
+    painter.setScissor(subRect);
+    painter.setScissor(QRect());
+    QCOMPARE(painter.scissor(), QRect());
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    painter.setScissor(windowRect);
+    glScissor(subRect.x(),
+              windowRect.height() - (subRect.y() + subRect.height()),
+              subRect.width(), subRect.height());
+    painter.resetScissor();
+    QCOMPARE(painter.scissor(), subRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    glDisable(GL_SCISSOR_TEST);
+    painter.resetScissor();
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+    QCOMPARE(painter.scissor(), QRect());
+}
+
+void tst_QGLPainter::scissorPaint()
+{
+    QGLPainter painter;
+    painter.begin();
+    painter.setClearColor(Qt::black);
+    painter.clear();
+
+    painter.projectionMatrix().setToIdentity();
+    painter.projectionMatrix().ortho(widget->rect());
+    painter.modelViewMatrix().setToIdentity();
+
+    QVector2DArray vertices;
+    vertices.append(10, 100);
+    vertices.append(500, 100);
+    vertices.append(500, 500);
+
+    // Paint a green triangle.
+    QGLFlatColorEffect effect;
+    painter.setUserEffect(&effect);
+    painter.setColor(Qt::green);
+    painter.setVertexAttribute(QGL::Position, vertices);
+    painter.draw(QGL::Triangles, 3);
+
+    // Change the top part of the triangle to blue.
+    painter.setScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 2, 200)));
+    painter.setColor(Qt::blue);
+    painter.draw(QGL::Triangles, 3);
+
+    // Intersect and draw red over the blue section.
+    painter.intersectScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150)));
+    painter.setColor(Qt::red);
+    painter.draw(QGL::Triangles, 3);
+
+    // Change the bottom part of the triangle to yellow.
+    int y = qMin(widget->height() / 2, 350);
+    painter.setScissor
+        (QRect(0, y, 400, widget->height() - y));
+    painter.setColor(Qt::yellow);
+    painter.draw(QGL::Triangles, 3);
+
+    // Intersect and expand, to extend the yellow region.
+    painter.intersectScissor
+        (QRect(0, y + 20, 400, widget->height() - y - 20));
+    painter.expandScissor
+        (QRect(0, y + 20, 450, widget->height() - y - 20));
+    painter.setColor(Qt::yellow);
+    painter.draw(QGL::Triangles, 3);
+
+    painter.setUserEffect(0);
+
+    painter.setScissor(QRect());
+}
+
+void tst_QGLPainter::scissorPaintQ(QPainter *painter, const QSize& size)
+{
+    QGLSimulator sim(painter, size);
+
+    sim.clear();
+
+    QMatrix4x4 proj;
+    proj.ortho(widget->rect());
+    sim.setProjectionMatrix(proj);
+
+    QVector2DArray vertices;
+    vertices.append(10, 100);
+    vertices.append(500, 100);
+    vertices.append(500, 500);
+
+    // Paint a green triangle.
+    sim.setColor(Qt::green);
+    sim.drawTriangles(vertices);
+
+    // Change the top part of the triangle to blue.
+    sim.setScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 2, 200)));
+    sim.setColor(Qt::blue);
+    sim.drawTriangles(vertices);
+
+    // Intersect and draw red over the blue section.
+    sim.intersectScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150)));
+    sim.setColor(Qt::red);
+    sim.drawTriangles(vertices);
+
+    // Change the bottom part of the triangle to yellow.
+    int y = qMin(widget->height() / 2, 350);
+    sim.setScissor
+        (QRect(0, y, 400, widget->height() - y));
+    sim.setColor(Qt::yellow);
+    sim.drawTriangles(vertices);
+
+    // Intersect and expand, to extend the yellow region.
+    sim.intersectScissor
+        (QRect(0, y + 20, 400, widget->height() - y - 20));
+    sim.expandScissor
+        (QRect(0, y + 20, 450, widget->height() - y - 20));
+    sim.setColor(Qt::yellow);
     sim.drawTriangles(vertices);
 }
 
@@ -262,9 +455,6 @@ void tst_QGLPainter::userMatrixStack()
 #if defined(QT_OPENGL_ES_2)
 #define QGL_NO_MATRIX_FETCH 1
 #define QGL_NO_MATRIX_RESET 1
-#elif defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_NO_MATRIX_FETCH 1
-#define QGL_MATRIX_RESET_TO_IDENTITY 1
 #endif
 
 #ifndef QGL_NO_MATRIX_FETCH
@@ -320,8 +510,7 @@ static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
 #endif
 
 // OpenGL/ES 2.0 does not have server-side matrices.
-// OpenGL/ES 1.0 cannot fetch the server-side matrices.
-// For these platforms, we stub out the checks and just hope that they work.
+// For such platforms, we stub out the checks and just hope that they work.
 static void clearGLMatrix(GLenum) {}
 static bool checkGLMatrix(GLenum, const QMatrix4x4&) { return true; }
 static void setGLMatrix(GLenum, const QMatrix4x4&) {}
@@ -365,8 +554,6 @@ void tst_QGLPainter::projectionMatrixStack()
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
     QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.projectionMatrix().top()));
 #else
     QVERIFY(qFuzzyCompare(m2, painter.projectionMatrix().top()));
 #endif
@@ -413,8 +600,6 @@ void tst_QGLPainter::modelViewMatrixStack()
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
     QVERIFY(qFuzzyCompare(m, painter.modelViewMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.modelViewMatrix().top()));
 #else
     QVERIFY(qFuzzyCompare(m2, painter.modelViewMatrix().top()));
 #endif

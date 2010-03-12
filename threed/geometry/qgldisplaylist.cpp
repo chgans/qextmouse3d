@@ -256,9 +256,7 @@
     QGLDisplayList functions calculate lighting normals, when building
     geometry.  This saves the application programmer from having to write
     code to calculate them.  Normals for each triangle (a, b, c) are
-    calculated as the QVector3D::crossProduct(b - a, c - a).  Note that
-    the normals are not normalized to unit length until finalize() is
-    called.
+    calculated as the QVector3D::normal(a, b, c).
 
     If lighting normals are explicitly supplied when using QGLDisplayList,
     then this calculation is not done.  This may save on build time.
@@ -393,12 +391,11 @@
     The finalize method also destroys all the internal vertex management
     data structures, with the result that no more geometry may be added to
     the display list.  Once finalize() has finished its work, the geometry
-    data in a display list is acessible as a QGLVertexArray:
+    data in a display list is acessible as a QGLVertexBuffer:
 
     \code
     displayList->finalize();
-    QGLVertexArray data = displayList->geometry()->vertexArray();
-    QVector3D vec = data.vector3DAt(5);
+    QGLVertexBuffer *data = displayList->geometry()->vertexBuffer();
     \endcode
 
     The finalize() function only needs to be called once in the application
@@ -430,10 +427,9 @@ QGLDisplayListPrivate::~QGLDisplayListPrivate()
 QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials)
     : QGLSceneNode(*new QGLDisplayListPrivate, parent)
 {
-    setGeometry(new QGLGeometry(this));
     if (!materials)
         materials = new QGLMaterialCollection(this);
-    geometry()->setPalette(materials);
+    setPalette(materials);
 }
 
 /*!
@@ -468,26 +464,25 @@ QGLPrimitive *QGLDisplayList::currentPrimitive()
     stored in here, and needs to be restored unless persisting it
     to the next iteration.
 */
-void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
+void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
 {
-    Q_D(QGLDisplayList);
-    Q_ASSERT(d->currentSection);
-    Q_ASSERT(d->currentNode);
+    Q_ASSERT(currentSection);
+    Q_ASSERT(currentNode);
     bool calcNormal = !p.hasField(QGL::Normal) && p.commonNormal().isNull();
     QLogicalVertex a(p, i);
     QLogicalVertex b(p, j);
     QLogicalVertex c(p, k);
     QVector3D norm;
     if (calcNormal)
-        norm = QVector3D::crossProduct(b - a, c - a);
+        norm = QVector3D::normal(a, b, c);
     // if the normal was calculated, and it was null, then this is a null
     // triangle - don't add it, it just wastes space - see class doco
     if (!calcNormal || !norm.isNull())
     {
         if (calcNormal)
             p.setCommonNormal(norm);
-        d->currentSection->append(a, b, c);
-        d->currentNode->setCount(d->currentNode->count() + 3);
+        currentSection->append(a, b, c);
+        currentNode->setCount(currentNode->count() + 3);
     }
 }
 
@@ -507,22 +502,23 @@ void QGLDisplayList::addTriangle(int i, int j, int k, QGLPrimitive &p)
 */
 void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive t = triangle;
     QVector3D save = t.commonNormal();
     const QGLIndexArray indices = t.indices();
     if (indices.isEmpty())
     {
-        for (int i = 0; i < t.count(); i += 3)
+        for (int i = 0; i < t.count() - 2; i += 3)
         {
-            addTriangle(i, i+1, i+2, t);
+            d->addTriangle(i, i+1, i+2, t);
             t.setCommonNormal(save);
         }
     }
     else
     {
-        for (int i = 0; i < indices.size(); i += 3)
+        for (int i = 0; i < indices.size() - 2; i += 3)
         {
-            addTriangle(indices[i], indices[i+1], indices[i+2], t);
+            d->addTriangle(indices[i], indices[i+1], indices[i+2], t);
             t.setCommonNormal(save);
         }
     }
@@ -541,12 +537,13 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 */
 void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive q = quad;
     QVector3D save = q.commonNormal();
     for (int i = 0; i < q.count(); i += 4)
     {
-        addTriangle(i, i+1, i+2, q);
-        addTriangle(i, i+2, i+3, q);
+        d->addTriangle(i, i+1, i+2, q);
+        d->addTriangle(i, i+2, i+3, q);
         q.setCommonNormal(save);
     }
 }
@@ -572,11 +569,12 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 */
 void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive f = fan;
     QVector3D save = f.commonNormal();
     for (int i = 1; i < f.count() - 1; ++i)
     {
-        addTriangle(0, i, i+1, f);
+        d->addTriangle(0, i, i+1, f);
         f.setCommonNormal(save);
     }
 }
@@ -603,14 +601,15 @@ void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 */
 void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
-            addTriangle(i+1, i, i+2, s);
+            d->addTriangle(i+1, i, i+2, s);
         else
-            addTriangle(i, i+1, i+2, s);
+            d->addTriangle(i, i+1, i+2, s);
         s.setCommonNormal(save);
     }
 }
@@ -630,12 +629,13 @@ void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count(); i += 2)
     {
-        addTriangle(i, i+2, i+3, s);
-        addTriangle(i, i+3, i+1, s);
+        d->addTriangle(i, i+2, i+3, s);
+        d->addTriangle(i, i+3, i+1, s);
         s.setCommonNormal(save);
     }
 }
@@ -673,6 +673,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
 */
 void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive f;
     if (!(face.flags() & QGL::USE_VERTEX_0_AS_CTR))
     {
@@ -690,7 +691,7 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
             int n = i + 1;
             if (n == cnt)
                 n = 1;
-            addTriangle(0, i, n, f);
+            d->addTriangle(0, i, n, f);
         }
     }
 }
@@ -739,40 +740,45 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
                                     const QGLPrimitive &bottom)
 {
+    Q_D(QGLDisplayList);
     QGLPrimitive zipped = bottom.zippedWith(top);
     QVector3D norm = top.commonNormal() + bottom.commonNormal();
     zipped.setCommonNormal(norm);
     for (int i = 0; i < zipped.count() - 2; i += 2)
     {
-        addTriangle(i, i+2, i+3, zipped);
-        addTriangle(i, i+3, i+1, zipped);
+        d->addTriangle(i, i+2, i+3, zipped);
+        d->addTriangle(i, i+3, i+1, zipped);
         zipped.setCommonNormal(norm);
     }
 }
 
 /*!
     \internal
-    Adjust the nodes in \a sec by shifting their start by \a offset,
-    and setting their  geometry to \a geom.  D  If \a top is null, this
-    function does nothing. Returns the total number of indexes for this
-    node, and all its children.  If the node has total number of indexes
-    equal to zero, then delete it.  If the node has children do the same
-    recursively to all of them.
 */
-void QGLDisplayList::adjustSectionNodes(QGLSection *sec,
-                                       int offset, QGLGeometry *geom)
+void QGLDisplayListPrivate::adjustSectionNodes(QGLSection *sec,
+                                       int offset, QGeometryData *geom)
 {
     QList<QGLSceneNode*> children = sec->nodes();
     QList<QGLSceneNode*>::iterator it = children.begin();
+    QList<QGLSceneNode*> deleted;
     for ( ; it != children.end(); ++it)
-        adjustNodeTree(*it, offset, geom);
+        adjustNodeTree(*it, offset, geom, deleted);
 }
 
-int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
-                                   int offset, QGLGeometry *geom)
+/*!
+    \internal
+    Adjust \a top by incrementing its start by \a offset, and setting its
+    geometry to \a geom.  Find the cumulative total of indexes -
+    QGLSceneNode::count() - for \a top and all its children.  If this total is
+    equal to zero, then delete that node.
+*/
+int QGLDisplayListPrivate::adjustNodeTree(QGLSceneNode *top,
+                                   int offset, QGeometryData *geom,
+                                   QList<QGLSceneNode*> &deleted)
 {
+    Q_Q(QGLDisplayList);
     int totalItems = 0;
-    if (top)
+    if (top && !deleted.contains(top))
     {
         Q_ASSERT(geom);
         top->setStart(top->start() + offset);
@@ -782,12 +788,13 @@ int QGLDisplayList::adjustNodeTree(QGLSceneNode *top,
         QList<QGLSceneNode*>::iterator it = children.begin();
         for ( ; it != children.end(); ++it)
         {
-            totalItems += adjustNodeTree(*it, offset, geom);
+            totalItems += adjustNodeTree(*it, offset, geom, deleted);
         }
-        if (totalItems == 0)
+        if (totalItems == 0 && top->objectName().isEmpty())
         {
-            top->disconnect(this, SLOT(deleteNode(QObject*)));
+            top->disconnect(q, SLOT(deleteNode(QObject*)));
             delete top;
+            deleted.append(top);
         }
     }
     return totalItems;
@@ -855,15 +862,13 @@ void QGLDisplayList::finalize()
     if (d->finalizeNeeded)
     {
         end();
-        QGLGeometry *g = 0;
-        QMap<quint32, QGLGeometry *> geos;
-        int secNum = 0;
+        QGeometryData *g = 0;
+        QMap<quint32, QGeometryData *> geos;
         while (d->sections.count())
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
             QGLIndexArray indices = s->indices();
-            const QGLIndexArray::ElementType *vi = indices.constData();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
             int scnt = s->count();
@@ -882,59 +887,55 @@ void QGLDisplayList::finalize()
             s->normalizeNormals();
             int sectionOffset = 0;
             int sectionIndexOffset = 0;
-            QMap<quint32, QGLGeometry *>::const_iterator it =
+            QMap<quint32, QGeometryData *>::const_iterator it =
                     geos.constFind(s->fields());
             if (it != geos.constEnd())
             {
                 g = it.value();
-                QGLVertexArray va = g->vertexArray();
-                sectionOffset = va.vertexCount();
-                va.append(s->toVertexArray());
-                QGLIndexArray ia = g->indexArray();
-                sectionIndexOffset = ia.size();
+                sectionOffset = g->count();
+                sectionIndexOffset = g->indexCount();
+                g->appendGeometry(*s);
                 for (int i = 0; i < icnt; ++i)
-                    ia.append(vi[i] + sectionOffset);
-                g->setVertexArray(va);
-                g->setIndexArray(ia);
+                    indices[i] += sectionOffset;
+                g->appendIndices(indices);
             }
             else
             {
-                if (g == 0)
-                    g = geometry();
-                else
-                    g = new QGLGeometry(this);
-                g->setVertexArray(s->toVertexArray());
-                QGLIndexArray iry;
-                iry.reserve(icnt);
-                for (int i = 0; i < icnt; ++i)
-                    iry.append(vi[i]);
-                g->setIndexArray(iry);
-                g->setDrawingMode(QGL::Triangles);
-                g->setPalette(geometry()->palette());
+                g = new QGeometryData(*s);
                 geos.insert(s->fields(), g);
             }
-            adjustSectionNodes(s, sectionIndexOffset, g);
-            g->setBoundingBox(g->boundingBox().expanded(s->boundingBox()));
-            delete s;
-            ++secNum;
+            d->adjustSectionNodes(s, sectionIndexOffset, g);
         }
         d->finalizeNeeded = false;
     }
 }
 
 /*!
-    Creates a new section with smoothing mode set to \a smooth and makes
-    it current on this QGLDisplayList.  A section must be created before
+    Creates a new section with smoothing mode set to \a smooth and using
+    the given vertex processing \a strategy.  By default \a smooth is
+    QGL::Smooth, and \a strategy is QGL::HashLookup.  The new section is made
+    current on this QGLDisplayList.  A section must be created before
     any geometry or new nodes can be added to the displaylist.
 
     The internal node stack is cleared, a section-level QGLSceneNode is
     created for this section by calling newNode().
 
+    The \a strategy allows for performance tuning for particular types of
+    scenes.  When there is a large amount of data, and it is known
+    apriori that the data is correct, choose QGL::NullStrategy to turn off
+    all vertex processing.  This setting will also set the smoothing mode
+    to QGL::NoSmoothing and disable duplicates indexing.
+
+    Otherwise leave the default setting of QGL::HashLookup to have vertices
+    processed via a hash structure for smoothing and duplicate indexing.
+
     \sa newNode(), pushNode()
 */
-void QGLDisplayList::newSection(QGL::Smoothing smooth)
+void QGLDisplayList::newSection(QGL::Smoothing smooth, QGL::Strategy strategy)
 {
-    new QGLSection(this, smooth);  // calls addSection
+    if (strategy == QGL::NullStrategy)
+        smooth = QGL::NoSmoothing;
+    new QGLSection(this, smooth, strategy);  // calls addSection
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)
@@ -993,7 +994,8 @@ QGLSceneNode *QGLDisplayList::newNode()
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
-    d->currentNode = new QGLSceneNode(parentNode);
+    d->currentNode = new QGLSceneNode(geometry(), parentNode);
+    d->currentNode->setPalette(parentNode->palette());
     d->currentNode->setStart(d->currentSection->indexCount());
     connect(d->currentNode, SIGNAL(destroyed(QObject*)),
             this, SLOT(deleteNode(QObject*)));
@@ -1054,9 +1056,11 @@ QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
-    d->nodeStack.append(d->currentNode);
-    d->currentNode = new QGLSceneNode(d->currentNode);
+    QGLSceneNode *parentNode = d->currentNode;
+    d->nodeStack.append(parentNode);
+    d->currentNode = new QGLSceneNode(geometry(), parentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
+    d->currentNode->setPalette(parentNode->palette());
     return d->currentNode;
 }
 
@@ -1084,8 +1088,10 @@ QGLSceneNode *QGLDisplayList::popNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = s->clone(parentNode);
+    d->currentNode->setChildNodes(QList<QGLSceneNode*>());
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
+    d->currentNode->setPalette(parentNode->palette());
     if (d->nodeStack.count() == 0)
         d->currentSection->addNode(d->currentNode);
     return d->currentNode;
@@ -1099,6 +1105,17 @@ void QGLDisplayList::setDirty(bool dirty)
 {
     Q_D(QGLDisplayList);
     d->finalizeNeeded = dirty;
+}
+
+/*!
+    Returns the current operation, as set by begin().  Data added
+    for example by addVertex() will be accumulated for use in this
+    operation.
+*/
+QGL::Operation QGLDisplayList::currentOperation() const
+{
+    Q_D(const QGLDisplayList);
+    return d->operation;
 }
 
 /*!
@@ -1162,6 +1179,7 @@ void QGLDisplayList::end()
         {
             delete d->currentOperation;
             d->currentOperation = 0;
+            d->operation = QGL::NO_OP;
         }
     }
 }

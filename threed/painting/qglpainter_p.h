@@ -103,13 +103,9 @@ typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
 
 typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
 
-// We can call the buffer functions directly in OpenGL/ES 1.1 or higher,
+// We can call the buffer functions directly in OpenGL/ES,
 // but all other platforms need to resolve the extensions.
-#if defined(QT_OPENGL_ES)
-#if defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_RESOLVE_BUFFER_FUNCS 1
-#endif
-#else
+#if !defined(QT_OPENGL_ES)
 #define QGL_RESOLVE_BUFFER_FUNCS 1
 #endif
 
@@ -230,18 +226,20 @@ public:
     QGLLightParameters *defaultLight1;
     int enabledLights;
     int maxLights;
-    const QGLMaterialParameters *frontMaterial;
-    const QGLMaterialParameters *backMaterial;
-    QGLMaterialParameters *defaultMaterial;
-    QGLMaterialParameters *frontColorMaterial;
-    QGLMaterialParameters *backColorMaterial;
+    const QGLMaterial *frontMaterial;
+    const QGLMaterial *backMaterial;
+    QGLMaterial *defaultMaterial;
+    QGLMaterial *frontColorMaterial;
+    QGLMaterial *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
-    QRect scissorRect;
+    QRect viewport; // GL co-ordinates - origin bottom-left.
+    QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
+    QMap<QString, QGLShaderProgram *> cachedPrograms;
 
     QGLPainterExtensions *extensions();    
 
@@ -274,23 +272,21 @@ public:
         return extn;
     }
 
-    inline void ensureEffect() { if (!effect) createEffect(); }
-    void createEffect();
+    inline void ensureEffect(QGLPainter *painter)
+        { if (!effect) createEffect(painter); }
+    void createEffect(QGLPainter *painter);
 
 #ifndef QT_NO_DEBUG
     // Required field checking is only done in debug builds.
     QList<QGL::VertexAttribute> requiredFields;
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { requiredFields = fields; }
-    void removeRequiredFields(const QGLVertexArray& array);
     void removeRequiredFields(const QList<QGL::VertexAttribute>& array);
     void removeRequiredField(QGL::VertexAttribute attribute)
         { requiredFields.removeAll(attribute); }
 #else
     inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
         { Q_UNUSED(fields); }
-    inline void removeRequiredFields(const QGLVertexArray& array)
-        { Q_UNUSED(array); }
     inline void removeRequiredFields(const QList<QGL::VertexAttribute>& array)
         { Q_UNUSED(array); }
     inline void removeRequiredField(QGL::VertexAttribute attribute)

@@ -2,6 +2,7 @@
 
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
+#include <QtOpenGL/private/qglextensions_p.h>
 
 #include <private/qglextensions_p.h>
 

@@ -1,5 +1,6 @@
 #include <QVector>
 #include <QFile>
+#include <QTime>
 #include "qgltexture2d.h"
 #include "qgl.h"
 
@@ -16,13 +17,48 @@
 //#define DEBUG_QGL_COLLADA_PARSING
 //#define DEBUG_MATERIALS
 
-// xml convenience function - find the end of the given tagname, bailing
-// out of as many child nodes as necessary.
+#define INDENT_SIZE 4
 
+static int QGLColladaIndentLevel = 0;
+
+// This is a simple RAII helper class to conveniently indent across
+// various functions when building up the collada elements.
+// Instantiate an indent to increment the indent level with that scope.
+// add an indent object to the beginning of a string to indent it
+// the correct amount.
+class Indent
+{
+public:
+    static int currentIndent() { return QGLColladaIndentLevel; };
+    Indent()
+    {
+        ++QGLColladaIndentLevel;
+    };
+    ~Indent()
+    {
+        --QGLColladaIndentLevel;
+    }
+};
+
+QString operator +(Indent&, QString string)
+{
+    return QString(QGLColladaIndentLevel * INDENT_SIZE, ' ') + string;
+}
+
+QString operator +(char c, Indent&)
+{
+    return c + QString(QGLColladaIndentLevel * INDENT_SIZE, ' ');
+}
+
+// xml convenience function - find the first end tag with the given tagname
+// Note that this is not as smart as xml.skipCurrentElement(), and does
+// not handle the case where (grand)children node share tagName
+// With this caveat, can be called from within any (grand)child node.
 static inline void findEndTag( QXmlStreamReader& xml, QString tagName )
 {
     while( !xml.atEnd() && !( xml.tokenType() == xml.EndElement && xml.name() == tagName))
     {
+
         xml.readNext();
     }
 }
@@ -35,12 +71,12 @@ static inline void findEndTag( QXmlStreamReader& xml, QString tagName )
     or name that is equal to \a stringToMatch
     Note that this using this is not in line with the Collada specification.
   */
-static inline QGLColladaParam* findParameterGenerous(StateStack& stateStack, QString stringToMatch)
+static inline QGLColladaParam* findParameterGenerous(StateStack* stateStack, QString stringToMatch)
 {
-    for ( int i = stateStack.count() - 1 ; 0 <= i; i-- )
+    for ( int i = stateStack->count() - 1 ; 0 <= i; i-- )
     {
-        QList<QGLColladaParam*> params = stateStack.at( i );
-        foreach( QGLColladaParam* param, params )
+        QList<QGLColladaParam*> *params = stateStack->at( i );
+        foreach( QGLColladaParam* param, *params )
         {
             if( param == 0 )
             {
@@ -88,9 +124,74 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromFile( const
 
     QXmlStreamReader xml;
     xml.setDevice( &file );
+    if(xml.tokenType() == QXmlStreamReader::Invalid)
+        file.readLine();
+    xml.setDevice( &file );
+
     return loadEffectsFromXml( xml );
 }
 
+
+
+QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, QString effectId, QString techniqueSid)
+{
+    QStringList result;
+
+    //    QList<QGL::VertexAttribute> requiredFields() const;
+    //    bool supportsPicking() const;
+    //    void setVertexAttribute(QGL::VertexAttribute attribute,
+    //                            const QGLAttributeValue& value);
+    //
+    //    QString vertexShader = effect->vertexShader();
+    //    QString fragmentShader = effect->fragmentShader();
+    //    QGLMaterial* material = effect->material();
+    //
+    //    virtual void bindProgramAttributes();
+    //    virtual void bindProgramUniforms();
+    //
+    //private:
+    //    int colorUniform;
+    //    int colorAttribute;
+    //
+    //    int matrixUniform;
+    //    int timeUniform;
+    //    int lightDirectionUniform;
+    //
+    //    bool textureAttributeSet;
+    //    int textureId;
+    //
+    //    QGLShaderProgramEffectPrivate* privateObject = effect->d;
+    //    QGLMaterial* material = privateObject->material;
+    //    d->QGLShaderProgram *program = privateObject->program;
+
+    result += "<?xml version=\"1.0\"?>";
+
+    result += "<COLLADA "\
+              "xmlns=\"http://www.collada.org/2005/11/COLLADASchema\" version=\"1.5.0\" >";
+
+    {
+        Indent indent;
+        result += indent + "<asset>";
+        {
+            Indent indent;
+            QDateTime time = QDateTime::currentDateTime();
+            result += indent + "<created>" + time.toString(Qt::ISODate) + "</created>";
+            result += indent + "<modified>" + time.toString(Qt::ISODate) + "</modified>";
+        }
+        result += indent + "</asset>";
+
+        result += indent + "<library_effects>";
+        {
+            Indent indent;
+            result += indent + "<effect " + "id=\"" + effectId + "\">";
+            result += glslProfileFromEffect(effect, techniqueSid);
+            result += indent + "</effect>";
+        }
+        result += indent + "</library_effects>";
+        result += "</COLLADA>";
+        return result.join("\n");
+    }
+}
 
 
 /*!
@@ -104,11 +205,12 @@ inline QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml(
 
     while( !xml.atEnd() ) {
         xml.readNextStartElement();
+
         if( xml.name() == "library_effects" ) {
-            result += processLibraryEffectsElement( xml , stateStack );
+            result += processLibraryEffectsElement( xml , &stateStack );
         } else if (xml.name() == "library_images")
         {
-            processLibraryImagesElement( xml, stateStack );
+            processLibraryImagesElement( xml, &stateStack );
         }
     }
 
@@ -366,12 +468,22 @@ QString QGLColladaImageParam::name()
     return mName;
 }
 
+QGLColladaCodeParam::QGLColladaCodeParam(QString sid, QString codeText)
+    : QGLColladaParam(sid, QGLColladaParam::CodeType)
+    , mCodeText(codeText)
+{
+}
+
+const QString& QGLColladaCodeParam::code()
+{
+    return mCodeText;
+};
 
 
 /*!
   \internal
 */
-QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlStreamReader& xml , StateStack& stateStack, QString passedInSid)
+QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlStreamReader& xml , StateStack* stateStack, QString passedInSid)
 {
     Q_UNUSED(stateStack);
     QXmlStreamAttributes attributes = xml.attributes();
@@ -421,7 +533,7 @@ QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xm
 /*!
   \internal
 */
-inline QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack stateStack, QString passedInSid )
+inline QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid )
 {
     Q_UNUSED(stateStack);
     QGLColladaSampler2DParam* result = 0;
@@ -522,9 +634,9 @@ float QGLColladaFxEffectFactory::processParamOrFloatElement( QXmlStreamReader& x
     and pushes any images found onto the \a stateStack for use in resolving
     elements later.
 */
-void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& xml, StateStack& stateStack )
+void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& xml, StateStack* stateStack )
 {
-    QList<QGLColladaParam*> list;
+    QList<QGLColladaParam*>* list = new QList<QGLColladaParam*>;
     xml.readNextStartElement();
 
     if( xml.name() == "asset" )
@@ -537,22 +649,21 @@ void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& x
     while( xml.name() == "image" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         QGLColladaParam* imageParam = processImageElement( xml , stateStack );
-        list.append( imageParam );
+        list->append( imageParam );
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
 
-    stateStack.push_back(list);
+    stateStack->push_back(list);
 }
 
 
 /*!
   \internal
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsElement( QXmlStreamReader& xml, StateStack& stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsElement( QXmlStreamReader& xml, StateStack* stateStack )
 {
     QList<QGLColladaFxEffect*> result;
-
     // A collada library_effects is
     //    0 or 1 <asset>
     //    1 or more <effect>,
@@ -588,8 +699,9 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsEleme
   \internal
   Parses and consumes an effect element from \a xml.
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXmlStreamReader& xml, StateStack& stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXmlStreamReader& xml, StateStack* stateStack )
 {
+    Q_UNUSED(stateStack);
     //    An effect element is:
     //    0 or 1 <annotate>
     //    0 or more newparam
@@ -601,21 +713,21 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
 
     if( xml.name() == "annotate" )
     {
-        qWarning() << "effect annotation not supported";
+        qWarning() << "effect annotation not supported ( line" << xml.lineNumber() << ")";
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
 
-    QList<QGLColladaParam*> params;
+    QList<QGLColladaParam*>* params = new QList<QGLColladaParam*>;
     while( xml.name() == "newparam" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
         QGLColladaParam* result = processNewparamElement( xml , stateStack );
         if( result != 0 )
-            params.append( result );
+            params->append( result );
 
         xml.readNextStartElement();
     }
-    stateStack.push_back( params );
+    stateStack->push_back( params );
 
     // find any of the profile_* elements defined in the spec
     QRegExp profileRegExp( "profile_(BRIDGE|CG|GLES2?|GLSL|COMMON)" );
@@ -634,16 +746,35 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
 /*!
   \internal
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXmlStreamReader& xml, StateStack& stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXmlStreamReader& xml, StateStack* stateStack )
 {
-    //    A profile_GLES2 element is:
-    //    0 or 1 <asset>
-    //    0 or more <code> or <include>
-    //    0 or more <newparam>
-    //    1 or more <technique>
+    // A profile_GLES2 element is:
+    // 0 or 1 <asset>
+    // 0 or more <code> or <include>
+    // 0 or more <newparam>
+    // 1 or more <technique>
+
+    // A profile_GLSL element is:
+    // 0 or 1 <asset>
+    // 0 or more <code>
+    // 0 or more <include>
+    // 0 or more <newparam>
+    // 1 or more <technique>
+    // 0 or more <extra>
+
+    // A profile_COMMON element is
+    // an optional id element
+    // 0 or 1 <asset>
+    // 0 or more <newparam>
+    // 1 <technique>
+    // 0 or more <extra>
+
+    // Note: techniques need to be handled differently for different profiles
 
     QString rootNodeString = xml.name().toString();
     QList<QGLColladaFxEffect*> result;
+    QList<QGLColladaParam*>* params = new QList<QGLColladaParam*>;
+    stateStack->push_back(params);
 
     xml.readNextStartElement();
     if( xml.name() == "asset" )
@@ -653,40 +784,144 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
         xml.readNextStartElement();
     }
 
-    QList<QGLColladaParam*> params;
+    if(rootNodeString == "profile_GLSL")
+    {
+        while ( xml.name() == "code" )
+        {
+            QString codeSid = xml.attributes().value("sid").toString();
+            QString codeText = xml.readElementText();
+
+            params->append(new QGLColladaCodeParam(codeSid, codeText));
+
+            findEndTag(xml, "code");
+            xml.readNextStartElement();
+        }
+
+
+        while ( xml.name() == "include" )
+        {
+            QString includeSid = xml.attributes().value("sid").toString();
+            QString includeUrl = xml.attributes().value("url").toString();
+
+            // create an include param?
+            qWarning() << "Warning: include element not supported in " << rootNodeString << "elements ( line" << xml.lineNumber() << ")";
+
+            findEndTag(xml, "include");
+            xml.readNextStartElement();
+        }
+
+    }
+
     while( xml.tokenType() == QXmlStreamReader::StartElement &&
            ( xml.name() == "newparam" || xml.name() == "image" ))
     {
         if( xml.name() == "newparam" )
-            params.append( processNewparamElement( xml , stateStack ));
+            params->append( processNewparamElement( xml , stateStack ));
         else if( xml.name() == "image" )
-            params.append( processImageElement( xml , stateStack ));
+            params->append( processImageElement( xml , stateStack ));
 
         xml.readNextStartElement();
     }
-    stateStack.push_back(params);
 
-    if( xml.name() == "technique" )
+
+    while ( xml.name() == "technique" )
     {
-        QGLColladaFxEffect* technique = processTechniqueElement( xml, stateStack );
-        result.append( technique );
+        result.append(
+                processTechniqueElement( xml, stateStack, rootNodeString ));
+        xml.readNextStartElement();
+        // only 1 technique in profile_COMMON
+        if( rootNodeString == "profile_COMMON")
+        {
+            break;
+        }
+    };
+
+    while ( xml.name() == "extra" )
+    {
+        qWarning() << "extra elements currently not supported in " << rootNodeString << "elements ( line" << xml.lineNumber() << ")";
+        findEndTag( xml, "extra" );
         xml.readNextStartElement();
     };
 
-    stateStack.pop_back();
+    stateStack->pop_back();
     findEndTag( xml, rootNodeString );
     return result;
 }
 
 
-QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStreamReader& xml, StateStack& stateStack )
+QGLColladaParam* QGLColladaFxEffectFactory::processPassElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect )
 {
-    //    A technique is:
-    //    0 or 1 <asset>
-    //    0 or more <annotate>
-    //    any 1 of <blinn>, <constant>, <lambert>, <phong>
-    //    1 or more <pass>
-    //    0 or more <extra>
+    QGLColladaParam* result = 0;
+    // a profile_GLSL pass is:
+    // 0 or 1 <annotate>
+    // 0 or 1 <states>
+    // 0 or 1 <program> (CG, GLES2 or GLSL only)
+    // 0 or 1 <evaluate>
+    // 0 or 1 <extra>
+
+    xml.readNextStartElement();
+
+    if( xml.name() == "annotate" )
+    {
+        qWarning() << "Warning: annotate element not supported ( line" << xml.lineNumber() << ")";
+        findEndTag( xml, "annotate" );
+        xml.readNextStartElement();
+    }
+
+    if( xml.name() == "states" )
+    {
+        qWarning() << "Warning: states element not supported ( line" << xml.lineNumber() << ")";
+        findEndTag( xml, "states" );
+        xml.readNextStartElement();
+    }
+
+    // 0 or 1 <program> (CG, GLES2 or GLSL only)
+    if( xml.name() == "program" )
+    {
+        processProgramElement( xml, stateStack, effect );
+        findEndTag( xml, "program" );
+        xml.readNextStartElement();
+    }
+
+    // 0 or 1 <evaluate>
+    if( xml.name() == "evaluate" )
+    {
+        qWarning() << "Warning: evaluate element not supported ( line" << xml.lineNumber() << ")";
+        findEndTag( xml, "evaluate" );
+        xml.readNextStartElement();
+    }
+
+    // 0 or more <extra>
+    while ( xml.name() == "extra" )
+    {
+        qWarning() << "Warning: extra element not supported ( line" << xml.lineNumber() << ")";
+        findEndTag( xml, "extra" );
+        xml.readNextStartElement();
+    }
+
+    findEndTag( xml, "pass");
+    return result;
+}
+
+QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStreamReader& xml, StateStack* stateStack, QString &profileName )
+{
+    // A 1.4 technique is:
+    // 0 or 1 <asset>
+    // 0 or more <newparam> or <image> (in any order)
+    // 0 or more of <constant>, <lambert>, <phong>, <blinn>
+    // 0 or more <extra>
+
+    // A 1.5 profile_COMMON technique is:
+    // 0 or 1 <asset>
+    // exactly 1 of <blinn>, <constant>, <lambert>, or <phong>
+    // 0 or more <extra>
+
+    // a profile_GLSL technique is:
+    // 0 or 1 <asset>
+    // 0 or more <annotate>
+    // 1 or more <pass>
+    // 0 or more <extra>
+
     QGLColladaFxEffect* effect = new QGLColladaFxEffect();
 
     QXmlStreamAttributes attributes = xml.attributes();
@@ -711,11 +946,12 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
     }
 
     // Collada specifies exactly one of blinn, lambert, constant or phong
-    // If the effect is malformed, default QGLMaterialParameters will be used.
-    QGLMaterialParameters* material = new QGLMaterialParameters;
+    // If the effect is malformed, default QGLMaterial will be used.
+    QGLMaterial* material = new QGLMaterial;
 
-
-    if( xml.name() == "blinn" || xml.name() == "phong" || xml.name() == "constant"|| xml.name() == "lambert" )
+    if( profileName == "profile_COMMON" &&
+        (xml.name() == "blinn" || xml.name() == "phong" ||
+         xml.name() == "constant"|| xml.name() == "lambert") )
     {
         if( xml.name() == "blinn" )
         {
@@ -794,7 +1030,6 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                 xml.skipCurrentElement();
                 xml.readNextStartElement();
             }
-
 
             if( xml.name() == "diffuse" )
             {
@@ -943,26 +1178,26 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
         }
         xml.skipCurrentElement();
         xml.readNextStartElement();
-    }
 
-    effect->setMaterial( material );
+        effect->setMaterial( material );
 
-    switch(effect->lighting())
-    {
-    case QGLColladaFxEffect::PhongLighting:
-    case QGLColladaFxEffect::LambertLighting:
-        qWarning() << "Warning: requested lighting not supported, using Blinn-Phong instead";
-    case QGLColladaFxEffect::BlinnLighting:
-        effect->addBlinnPhongLighting();
-    case QGLColladaFxEffect::ConstantLighting:
-    case QGLColladaFxEffect::NoLighting:
-    default:
-        break;
-    }
+        switch(effect->lighting())
+        {
+        case QGLColladaFxEffect::PhongLighting:
+        case QGLColladaFxEffect::LambertLighting:
+            qWarning() << "Warning: requested lighting not supported, using Blinn-Phong instead";
+        case QGLColladaFxEffect::BlinnLighting:
+            effect->addBlinnPhongLighting();
+        case QGLColladaFxEffect::ConstantLighting:
+        case QGLColladaFxEffect::NoLighting:
+        default:
+            break;
+        }
+    };
 
     while( xml.name() == "pass" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        qWarning() << "Warning: pass element not supported ( line" << xml.lineNumber() << ")";
+        processPassElement( xml, stateStack, effect);
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
@@ -975,7 +1210,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
 
 
-QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamReader& xml, StateStack &stateStack)
+QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamReader& xml, StateStack* stateStack)
 {
     QXmlStreamAttributes attributes = xml.attributes();
     QGLColladaParam* result = 0;
@@ -1036,7 +1271,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
     \internal
     Parses and consumes a texture collada element from \a xml.
 */
-inline QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , StateStack stateStack)
+inline QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , StateStack* stateStack)
 {
     QGLTexture2D* result = new QGLTexture2D();
     QXmlStreamAttributes attributes = xml.attributes();
@@ -1094,7 +1329,7 @@ inline QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStrea
   \internal
   Parses and consumes an image element from \a xml.
 */
-QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, StateStack& stateStack )
+QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, StateStack* stateStack )
 {
     Q_UNUSED(stateStack);
     // 1.4 has a bunch of optional values in the attributes:
@@ -1136,4 +1371,270 @@ QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStream
         result->mName = name;
     }
     return result;
+}
+
+QStringList QGLColladaFxEffectFactory::glslProfileFromEffect(QGLShaderProgramEffect* effect, QString sid)
+{
+    Q_UNUSED(effect)
+    Indent indent;
+    QStringList result;
+    result += indent + "<profile_GLSL>";
+    {
+        result += generateCodeElements(effect, sid);
+        result += indent + "<technique " + "sid=\"" + sid + "\"" + ">";
+        {
+            Indent indent;
+            result += indent + "<pass>";
+            result += generateProgramElement(effect, sid);
+            result += indent + "</pass>";
+        }
+        result += indent + "</technique>";
+    }
+    result += indent + "</profile_GLSL>";
+
+    return result;
+}
+
+QStringList QGLColladaFxEffectFactory::generateProgramElement(QGLShaderProgramEffect* effect, QString techniqueSid)
+{
+    QStringList result;
+    QString vertexShaderRefSid = "VertexShaderRefSidRefsCodeOrIncludeAtProfileOrEffectLevel";
+    QString fragmentShaderRefSid = "FragmentShaderRefSidRefsCodeOrIncludeAtProfileOrEffectLevel";
+    Indent indent;
+    result += indent + "<program>";
+    result += generateShaderElement(effect, techniqueSid + "VertexShader", techniqueSid + "FragmentShader");
+    // 0 or more
+    result += generateBindAttributeElement( effect );
+    // 0 or more
+    result += generateBindUniformElements( effect );
+    result += indent + "</program>";
+    return result;
+}
+
+QStringList QGLColladaFxEffectFactory::generateShaderElement( QGLShaderProgramEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid )
+{
+    Q_UNUSED(effect);
+    QStringList result;
+    Indent indent;
+    result += indent + "<shader stage=\"VERTEX\">";
+    {
+        Indent indent;
+        result += indent + "<sources>";
+        {
+            // 0 or more <import> elements
+            Indent indent;
+            result += indent + "<import ref=\"" + vertexShaderRefSid + "\"/>";
+        }
+        result += indent + "</sources>";
+        // 0 or <extra> elements;
+    }
+    result += indent + "</shader>";
+
+    result += indent + "<shader stage=\"FRAGMENT\">";
+    {
+        Indent indent;
+        result += indent + "<sources>";
+        {
+            Indent indent;
+            result += indent + "<import ref=\"" + fragmentShaderRefSid + "\"/>";
+        }
+        result += indent + "</sources>";
+        // <extra> element(s) here if necessary;
+    }
+    result += indent + "</shader>";
+    return result;
+}
+
+QStringList QGLColladaFxEffectFactory::generateBindAttributeElement( QGLShaderProgramEffect* effect )
+{
+    // Currently no need for bind_attribute elements.
+    Q_UNUSED(effect);
+    QStringList result;
+    //    Indent indent;
+    //    result += indent + "<bind_attribute>";
+    //    result += indent + "</bind_attribute>";
+    return result;
+}
+
+QStringList generateBindUniformParamElement( QString symbol, QString ref)
+{
+    QStringList result;
+    // 0 or more <bind_uniform> elements
+    Indent indent;
+    result += indent + "<bind_uniform symbol=\"" + symbol + "\">";
+    {
+        Indent indent;
+        result += indent + "<param ref=\"" + ref + "\">";
+    }
+    result += indent + "</bind_uniform>";
+    return result;
+}
+
+QStringList generateBindUniformParamElement( QString symbol, const QVector3D& value)
+{
+    QStringList result;
+    // 0 or more <bind_uniform> elements
+    Indent indent;
+    result += indent + "<bind_uniform symbol=\"" + symbol + "\">";
+    {
+        Indent indent;
+        result += indent + QString("<float3> %1 %2 %3 </float3>").arg(value.x()).arg(value.y()).arg(value.z());
+    }
+    result += indent + "</bind_uniform>";
+    return result;
+}
+
+QStringList generateBindUniformParamElement( QString symbol, const QColor& value)
+{
+    QStringList result;
+    // 0 or more <bind_uniform> elements
+    Indent indent;
+    result += indent + "<bind_uniform symbol=\"" + symbol + "\">";
+    {
+        Indent indent;
+        result += indent + QString("<float3> %1 %2 %3 </float3>").arg(value.redF()).arg(value.greenF()).arg(value.blueF());
+    }
+    result += indent + "</bind_uniform>";
+    return result;
+}
+
+
+QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderProgramEffect* effect )
+{
+    QStringList result;
+    if(effect == 0)
+        return result;
+//    // 0 or more <bind_uniform> elements
+    if(effect->material() != 0)
+    {
+        QGLMaterial* material = effect->material();
+        result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
+        result += generateBindUniformParamElement( "ambientColor", material->ambientColor());
+        result += generateBindUniformParamElement( "diffuseColor", material->diffuseColor());
+        result += generateBindUniformParamElement( "emittedLight", material->emittedLight());
+        result += generateBindUniformParamElement( "objectName", material->objectName()); // ?
+        result += generateBindUniformParamElement( "shininess", material->shininess());
+        result += generateBindUniformParamElement( "specularColor", material->specularColor());
+    }
+    effect->supportsPicking();
+
+    // TODO: Find and store effect uniforms
+//    effect->bindProgramUniforms();
+
+    // Example uniforms
+//    result += generateBindUniformParamElement( "exampleRefSymbol", QString("exampleRef"));
+//    result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
+    return result;
+}
+
+QStringList QGLColladaFxEffectFactory::generateCodeElements( QGLShaderProgramEffect* effect, QString baseSid )
+{
+    QStringList result;
+    // 0 or more <bind_uniform> elements
+    Indent indent;
+
+    // put all this on one line to avoid adding carriage returns to the
+    // shader programs
+    result += indent + "<code sid=\"" + baseSid + "VertexShader" + "\">"
+              + effect->vertexShader() + "</code>";
+
+    result += indent + "<code sid=\"" + baseSid + "FragmentShader" + "\">"
+              + effect->fragmentShader() + "</code>";
+
+    return result;
+}
+
+void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect )
+{
+    // A profile_GLSL shader element is
+    // 0 or more <shader>
+    // 0 or more <bind_attribute>
+    // 0 or more <bind_uniform>
+
+    xml.readNextStartElement();
+
+    while( xml.name() == "shader" )
+    {
+        // in profile_GLSL a shader is
+        // exactly 1  <source>
+        // 0 or more <extra>
+
+        QString stage = xml.attributes().value("stage").toString();
+        xml.readNextStartElement();
+        if( xml.name() == "sources" )
+        {
+            // a <sources> element is
+            // 1 or more <inline> elements
+            // 0 or more <import> elements
+            // Note: child elements can appear in any order
+
+            xml.readNextStartElement();
+            while( (xml.name() == "inline" || xml.name() == "import") && xml.tokenType() == QXmlStreamReader::StartElement)
+            {
+                if( xml.name() == "import")
+                {
+                    QString ref = xml.attributes().value("ref").toString();
+
+                    QXmlStreamAttribute attr;
+                    if(xml.attributes().count())
+                    {
+                        attr = xml.attributes().first();
+                    }
+                    QGLColladaParam* param = findParameterGenerous(stateStack, ref);
+                    if(param  == 0 || param->type() != QGLColladaParam::CodeType)
+                    {
+                        qWarning() << "null or unexpected parameter found in import element ( line"
+                                <<  xml.lineNumber()<<")";
+                    }
+                    else
+                    {
+                        QGLColladaCodeParam* codeParam = static_cast<QGLColladaCodeParam*>(param);
+                        if(stage == "VERTEX")
+                        {
+                            effect->setVertexShader( codeParam->code() );
+                        }
+                        else if (stage == "FRAGMENT")
+                        {
+                            effect->setFragmentShader( codeParam->code() );
+                        } else
+                        {
+                            qWarning() << "unrecognized shader stage: "
+                                    << stage << " ( line" <<  xml.lineNumber()<<")";
+                        }
+                    }
+
+                } else if( xml.name() == "inline")
+                {
+
+                }
+                xml.readNextStartElement();
+            }
+        } else {
+            qWarning() << "collada parsing error. expected <sources> element ( line"
+                    <<  xml.lineNumber()<<")";
+        }
+
+        if(xml.name() == "extra")
+            qWarning() << "Warning: extra element not supported in profile_GLSL <shader> element ( line" << xml.lineNumber()<<")";
+
+        findEndTag ( xml, "shader");
+        xml.readNextStartElement();
+    }
+
+    while( xml.name() == "bind_attribute" )
+    {
+        qWarning() << "Warning: bind_attribute element not supported ( line" << xml.lineNumber()<<")";
+        findEndTag ( xml, "bind_attribute");
+        xml.readNextStartElement();
+    }
+
+    while( xml.name() == "bind_uniform" )
+    {
+        qWarning() << "Warning: bind_uniform element not supported ( line" << xml.lineNumber()<<")";
+        findEndTag ( xml, "bind_uniform");
+        xml.readNextStartElement();
+    }
+
+    findEndTag(xml, "program");
+    return;
 }

@@ -2,7 +2,7 @@
 #define MATERIALINSPECTOR_H
 
 #include <QtGui/QWidget>
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include <QPointer>
 #include <QDialog>
 
@@ -29,7 +29,7 @@ public:
     explicit MaterialInspector(QWidget *parent = 0);
     virtual ~MaterialInspector();
 public slots:
-    void setMaterial(QGLMaterialParameters* newMaterial);
+    void setMaterial(QGLMaterial* newMaterial);
     void setAmbientColor(QColor color);
     void setDiffuseColor(QColor color);
     void setSpecularColor(QColor color);
@@ -61,7 +61,7 @@ protected:
 
 private:
     Ui::MaterialInspector *m_ui;
-    QPointer<QGLMaterialParameters> currentMaterial;
+    QPointer<QGLMaterial> currentMaterial;
     QColorDialog *dialog;
     SignalTarget target;
     QColor backupColor;

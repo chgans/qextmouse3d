@@ -51,7 +51,6 @@
 #include "qglscenenode.h"
 #include "qlogicalvertex.h"
 #include "qglattributevalue.h"
-#include "qglvertexdescription.h"
 #include "qglprimitive.h"
 
 QT_BEGIN_HEADER
@@ -80,7 +79,7 @@ public:
     }
 
     // section management
-    void newSection(QGL::Smoothing = QGL::Smooth);
+    void newSection(QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::HashLookup);
 
     // scene management
     QGLSceneNode *currentNode();
@@ -93,6 +92,7 @@ public:
     // geometry building by begin() / end()
     void begin(QGL::Operation);
     void end();
+    QGL::Operation currentOperation() const;
 
     void setFlags(QGL::OperationFlags flag);
     QGL::OperationFlags flags() const;
@@ -142,13 +142,9 @@ private slots:
 private:
     Q_DISABLE_COPY(QGLDisplayList);
     void addSection(QGLSection *section);
-    void addTriangle(int a, int b, int c, QGLPrimitive &p);
-    void adjustSectionNodes(QGLSection *sec, int offset, QGLGeometry *geom);
-    int adjustNodeTree(QGLSceneNode *top, int offset, QGLGeometry *geom);
 
     friend class QGLSection;
 
-    QGLVertexArray toVertexArray() const;
     void setDirty(bool dirty);
 
 #ifndef QT_NO_DEBUG_STREAM

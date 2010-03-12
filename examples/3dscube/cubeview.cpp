@@ -60,8 +60,8 @@
 #include "qglscenenode.h"
 #include "qglpainter.h"
 #include "qglcamera.h"
-#include "qglgeometry.h"
-#include "qglmaterialparameters.h"
+#include "qgeometrydata.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qline3d.h"
 
@@ -128,7 +128,6 @@ void CubeView::importModel(const QString &name)
     QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
-    //qDumpScene(mSceneRoot);
 }
 
 void CubeView::loadColors()
@@ -137,7 +136,7 @@ void CubeView::loadColors()
         mColorMenu->clear();
     QGLMaterialCollection *materials = 0;
     if (mSceneRoot && mSceneRoot->geometry())
-        materials = mSceneRoot->geometry()->palette();
+        materials = mSceneRoot->palette();
     QStringList names;
     if (materials)
     {
@@ -157,7 +156,7 @@ void CubeView::loadColors()
     }
     for (int index = 0; index < materials->size(); ++index)
     {
-        QGLMaterialParameters *mat = materials->materialByIndex(index);
+        QGLMaterial *mat = materials->materialByIndex(index);
         QPixmap px(16, 16);
         px.fill(mat->diffuseColor());
         QAction *act = new QAction(QIcon(px), materials->materialName(index), this);
@@ -173,14 +172,14 @@ void CubeView::changeColor()
     QAction *act = qobject_cast<QAction*>(sender());
     if (!act)
         return;
-    QGLMaterialCollection *materials = mSceneRoot->geometry()->palette();
+    QGLMaterialCollection *materials = mSceneRoot->palette();
     int index = materials->materialIndexByName(act->text());
     if (index == -1)
     {
         QMessageBox::warning(this, "Material Invalid", tr("Material %1 not found").arg(act->text()));
         return;
     }
-    QGLMaterialParameters *mat = materials->materialByIndex(index);
+    QGLMaterial *mat = materials->materialByIndex(index);
     QColor color;
     if (mat)
         color = QColorDialog::getColor(mat->diffuseColor(), this);
@@ -222,10 +221,10 @@ void CubeView::loadComponents()
                      qPrintable((*it)->objectName()));
             continue;
         }
-        QGLGeometry *mesh = nodeObj->geometry();
+        QGeometryData *mesh = nodeObj->geometry();
         if (!mesh)
             continue;
-        QString meshName = mesh->objectName();
+        QString meshName = nodeObj->objectName();
         QAction *act = new QAction(meshName, this);
         mComponentMenu->addAction(act);
         QObject::connect(act, SIGNAL(triggered()), this, SLOT(selectComponent()));
@@ -239,38 +238,36 @@ void CubeView::restoreMaterial(QGLSceneNode *root)
     // recurse down from the root node finding all the materials
     // this doesn't go far enough tho' - could go down into the
     // faces which may have materials individually assigned
-    QGLGeometry *g;
-    QList<QGLGeometry *> modList;
-    modList.append(root->geometry());
+    QList<QGLSceneNode *> modList;
+    modList.append(root);
     while (modList.count() > 0)
     {
-        QGLGeometry *mod = modList.takeFirst();
+        QGLSceneNode *mod = modList.takeFirst();
         Q_ASSERT(mSaveMaterials.contains(mod));
         mod->setMaterial(mSaveMaterials[mod]);
-        QObjectList ch = mod->children();
-        QObjectList::iterator it(ch.begin());
+        QList<QGLSceneNode*> ch = mod->childNodes();
+        QList<QGLSceneNode*>::const_iterator it = ch.begin();
         for ( ; it != ch.end(); ++it)
-            if ((g = qobject_cast<QGLGeometry*>(*it)))
-                modList.append(g);
+            if (!modList.contains(*it))
+                modList.append(*it);
     }
 }
 
 void CubeView::setMaterial(QGLSceneNode *root, int material)
 {
-    QGLGeometry *g;
-    QList<QGLGeometry *> modList;
-    modList.append(root->geometry());
+    QList<QGLSceneNode *> modList;
+    modList.append(root);
     mSaveMaterials.clear();
     while (modList.count() > 0)
     {
-        QGLGeometry *mod = modList.takeFirst();
+        QGLSceneNode *mod = modList.takeFirst();
         mSaveMaterials.insert(mod, mod->material());
         mod->setMaterial(material);
-        QObjectList ch = mod->children();
-        QObjectList::iterator it(ch.begin());
+        QList<QGLSceneNode*> ch = mod->childNodes();
+        QList<QGLSceneNode*>::const_iterator it = ch.begin();
         for ( ; it != ch.end(); ++it)
-            if ((g = qobject_cast<QGLGeometry*>(*it)))
-                modList.append(g);
+            if (!modList.contains(*it))
+                modList.append(*it);
     }
 }
 
@@ -299,11 +296,11 @@ void CubeView::selectComponent()
 */
 void CubeView::makeSelectColor(QColor color)
 {
-    QGLMaterialParameters *mat = 0;
-    QGLMaterialCollection *palette = mSceneRoot->geometry()->palette();
+    QGLMaterial *mat = 0;
+    QGLMaterialCollection *palette = mSceneRoot->palette();
     if (mSelectMaterial == -1)
     {
-        mat = new QGLMaterialParameters();
+        mat = new QGLMaterial();
         mSelectMaterial = palette->addMaterial(mat);
     }
     else

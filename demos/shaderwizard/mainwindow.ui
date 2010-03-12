@@ -90,6 +90,8 @@
     <property name="title">
      <string>Shaders</string>
     </property>
+    <addaction name="actionExport_Collada_Effect"/>
+    <addaction name="separator"/>
     <addaction name="actionFlat_Shader"/>
     <addaction name="actionToon_Shader"/>
     <addaction name="actionPer_Pixel_Lighting_Shader"/>
@@ -286,6 +288,11 @@
   <action name="actionLoad_Collada_Effect">
    <property name="text">
     <string>Load Collada Effect</string>
+   </property>
+  </action>
+  <action name="actionExport_Collada_Effect">
+   <property name="text">
+    <string>Export Collada Effect</string>
    </property>
   </action>
  </widget>

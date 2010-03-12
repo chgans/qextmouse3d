@@ -56,7 +56,7 @@ void MaterialInspector::changeEvent(QEvent *e)
     }
 }
 
-void MaterialInspector::setMaterial(QGLMaterialParameters* newMaterial)
+void MaterialInspector::setMaterial(QGLMaterial* newMaterial)
 {
     currentMaterial = newMaterial;
 

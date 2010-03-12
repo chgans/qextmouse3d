@@ -30,6 +30,8 @@ QGLColladaFxEffectPrivate::QGLColladaFxEffectPrivate() : id()
         , diffuseTexture(0)
         , specularTexture(0)
         , lighting(QGLColladaFxEffect::NoLighting)
+        , hasCustomVertexShader(false)
+        , hasCustomFragmentShader(false)
 {
     resetGlueSnippets();
 }
@@ -123,10 +125,23 @@ void QGLColladaFxEffect::update(QGLPainter *painter, QGLPainter::Updates updates
         // Start from texture unit 1 so as not to stomp a texture set on the
         // painter.
         int textureUnit = 1;
-        d->setTextureUniform(program(), painter, "Emissive", d->emissiveTexture, &textureUnit, material()->emittedLight());
-        d->setTextureUniform(program(), painter, "Ambient", d->ambientTexture, &textureUnit, material()->ambientColor());
-        d->setTextureUniform(program(), painter, "Diffuse", d->diffuseTexture, &textureUnit, material()->diffuseColor());
-        d->setTextureUniform(program(), painter, "Specular", d->specularTexture, &textureUnit, material()->specularColor());
+        d->setTextureUniform(
+                program(), painter, "Emissive", d->emissiveTexture,
+                &textureUnit,
+                material() ? material()->emittedLight() : QColor());
+
+        d->setTextureUniform(
+                program(), painter, "Ambient", d->ambientTexture, &textureUnit,
+                material() ? material()->ambientColor() : QColor());
+
+        d->setTextureUniform(
+                program(), painter, "Diffuse", d->diffuseTexture, &textureUnit,
+                material() ? material()->diffuseColor() : QColor());
+
+        d->setTextureUniform(
+                program(), painter, "Specular", d->specularTexture,
+                &textureUnit,
+                material() ? material()->specularColor() : QColor());
     }
 }
 
@@ -153,7 +168,7 @@ void QGLColladaFxEffect::setSid(QString sid)
 
 
 
-void QGLColladaFxEffectPrivate::addMaterialChannelsToShaderSnippets(const QGLMaterialParameters *material)
+void QGLColladaFxEffectPrivate::addMaterialChannelsToShaderSnippets(const QGLMaterial *material)
 {
     int textureUnit = 1;
 
@@ -203,21 +218,27 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
 
 void QGLColladaFxEffect::generateShaders()
 {
-    setVertexShader(
-            d->vertexShaderDeclarationSnippets.join("\n")
-            + "\n" + d->vertexShaderMainGlueSnippet
-            + d->vertexShaderCodeSnippets.join("\n")
-            + "\n" + d->vertexShaderEndGlueSnippet);
+    if(!d->hasCustomVertexShader)
+    {
+        setVertexShader(
+                d->vertexShaderDeclarationSnippets.join("\n")
+                + "\n" + d->vertexShaderMainGlueSnippet
+                + d->vertexShaderCodeSnippets.join("\n")
+                + "\n" + d->vertexShaderEndGlueSnippet);
+    }
 
-    setFragmentShader(
-            d->fragmentShaderDeclarationSnippets.join("\n")
-            + "\n" + d->fragmentShaderMainGlueSnippet
-            +  d->fragmentShaderCodeSnippets.join("\n")
-            + "\n" + d->fragmentShaderEndGlueSnippet);
+    if(!d->hasCustomFragmentShader)
+    {
+        setFragmentShader(
+                d->fragmentShaderDeclarationSnippets.join("\n")
+                + "\n" + d->fragmentShaderMainGlueSnippet
+                +  d->fragmentShaderCodeSnippets.join("\n")
+                + "\n" + d->fragmentShaderEndGlueSnippet);
+    }
 
     // Set inactive to trigger relinking later
     if(isActive())
-        setActive(false);
+        setActive(0, false);    // FIXME - really needs a painter
 }
 
 
@@ -288,6 +309,19 @@ QGLTexture2D* QGLColladaFxEffect::diffuseTexture()
 {
     return d->diffuseTexture;
 }
+
+void QGLColladaFxEffect::setVertexShader(QString const &  shader)
+{
+    d->hasCustomVertexShader = shader.length() > 0;
+    QGLShaderProgramEffect::setVertexShader(shader);
+}
+
+void QGLColladaFxEffect::setFragmentShader(QString const & shader)
+{
+    d->hasCustomFragmentShader = shader.length() > 0;
+    QGLShaderProgramEffect::setFragmentShader(shader);
+}
+
 
 void QGLColladaFxEffect::setLighting(int lighting)
 {

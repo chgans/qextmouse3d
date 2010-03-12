@@ -146,6 +146,7 @@ inline bool QPlane3D::sameSide(const QVector3D &pointA, const QVector3D &pointB)
     qreal dpB = QVector3D::dotProduct(pointB - m_origin, m_normal);
     if (qIsNull(dpA) || qIsNull(dpB))
         return false;
+    return true;
 }
 
 QT_END_NAMESPACE

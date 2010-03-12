@@ -57,8 +57,7 @@ private slots:
 void tst_QGLGeometry::create()
 {
     QGLGeometry geom;
-    QCOMPARE(geom.drawingMode(), QGL::NoDrawingMode);
-    QVERIFY(geom.vertexArray().isEmpty());
+    QCOMPARE(geom.drawingMode(), QGL::Triangles);
     QVERIFY(geom.indexArray().isEmpty());
     QCOMPARE(geom.bufferThreshold(), 32);
     QVERIFY(geom.boundingBox().isNull());
@@ -66,14 +65,7 @@ void tst_QGLGeometry::create()
 
 void tst_QGLGeometry::accessors()
 {
-    QGLVertexArray array;
     QGLGeometry geom;
-    geom.setVertexArray(array);
-    QCOMPARE(geom.vertexArray(), array);
-    array << QVector3D(1.0, 2.0, 3.0);
-    QVERIFY(geom.vertexArray() != array);
-    geom.setVertexArray(array);
-    QCOMPARE(geom.vertexArray(), array);
     QGLIndexArray indexes;
     indexes.append(1, 2, 3, 4);
     geom.setIndexArray(indexes);

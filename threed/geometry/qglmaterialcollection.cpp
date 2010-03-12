@@ -84,7 +84,7 @@ QT_BEGIN_NAMESPACE
     To make a texture map to a given material call setTexture(int, QGLTexture2D*)
     and to retrieve that texture for the material use texture(int).
 
-    The collection takes ownership of the QGLMaterialParameters and QGLTexture2D
+    The collection takes ownership of the QGLMaterial and QGLTexture2D
     objects passed to it by the addMaterial() and setTexture() functions.  These
     objects will be destroyed when the collection is destroyed.
 */
@@ -100,20 +100,20 @@ QGLMaterialCollection::QGLMaterialCollection(QObject *parent)
 
 /*!
     Destroy this QGLMaterialCollection object recovering any resources.
-    All QGLMaterialParameters and QGLTexture2D objects referenced by the
+    All QGLMaterial and QGLTexture2D objects referenced by the
     collection will be destroyed.  For this reason do not add a
-    QGLMaterialParameters or QGLTexture2D object to more than one
+    QGLMaterial or QGLTexture2D object to more than one
     QGLMaterialCollection.
 */
 QGLMaterialCollection::~QGLMaterialCollection()
 {
-    qDeleteAll(QSet<QGLMaterialParameters*>::fromList(mMaterials));
+    qDeleteAll(QSet<QGLMaterial*>::fromList(mMaterials));
     qDeleteAll(QSet<QGLTexture2D*>::fromList(mTextures));
 }
 
 /*!
-    \fn QGLMaterialParameters *QGLMaterialCollection::materialByIndex(int index) const
-    Returns a pointer to the QGLMaterialParameters object corresponding
+    \fn QGLMaterial *QGLMaterialCollection::materialByIndex(int index) const
+    Returns a pointer to the QGLMaterial object corresponding
     to the \a index given.
 
     This method executes in constant time, and is intended for fast lookup.
@@ -139,7 +139,7 @@ QGLMaterialCollection::~QGLMaterialCollection()
 
 /*!
     \fn int QGLMaterialCollection::materialIndexByName(const QString &name) const
-    Returns an index to a QGLMaterialParameters object corresponding to
+    Returns an index to a QGLMaterial object corresponding to
     the material \a name given.
 
     This method scans the list of material names, and thus has O(n) complexity.
@@ -192,7 +192,7 @@ void QGLMaterialCollection::removeUnusedMaterials()
 }
 
 /*!
-    \fn int QGLMaterialCollection::addMaterial(QGLMaterialParameters *material)
+    \fn int QGLMaterialCollection::addMaterial(QGLMaterial *material)
     Adds the \a material to this collection and returns its new index.  The
     collection takes ownership of the material and will delete it when the
     collection is destroyed.
@@ -201,7 +201,7 @@ void QGLMaterialCollection::removeUnusedMaterials()
 */
 
 /*!
-    \fn void QGLMaterialCollection::removeMaterial(QGLMaterialParameters *material)
+    \fn void QGLMaterialCollection::removeMaterial(QGLMaterial *material)
     Removes the \a material from this collection.  This method simply
     call removeMaterial(int) with the index of the material.
 
@@ -241,7 +241,7 @@ void QGLMaterialCollection::removeUnusedMaterials()
 */
 void QGLMaterialCollection::materialDeleted()
 {
-    QGLMaterialParameters *mat = qobject_cast<QGLMaterialParameters *>(sender());
+    QGLMaterial *mat = qobject_cast<QGLMaterial *>(sender());
     removeMaterial(mat);
 }
 

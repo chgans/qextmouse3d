@@ -150,32 +150,32 @@ private slots:
     void teaspoon2Clicked();
 
 private:
-    QGLMaterialParameters *china;
-    QGLMaterialParameters *chinaHighlight;
-    QGLMaterialParameters *metal;
-    QGLMaterialParameters *metalHighlight;
+    QGLMaterial *china;
+    QGLMaterial *chinaHighlight;
+    QGLMaterial *metal;
+    QGLMaterial *metalHighlight;
 };
 
 TeaService::TeaService(QObject *parent)
     : QObject(parent)
 {
-    china = new QGLMaterialParameters(this);
+    china = new QGLMaterial(this);
     china->setAmbientColor(QColor(192, 150, 128));
     china->setSpecularColor(QColor(60, 60, 60));
     china->setShininess(128);
 
-    chinaHighlight = new QGLMaterialParameters(this);
+    chinaHighlight = new QGLMaterial(this);
     chinaHighlight->setAmbientColor(QColor(255, 192, 0));
     chinaHighlight->setSpecularColor(QColor(60, 60, 0));
     chinaHighlight->setShininess(128);
 
-    metal = new QGLMaterialParameters(this);
+    metal = new QGLMaterial(this);
     metal->setAmbientColor(QColor(255, 255, 255));
     metal->setDiffuseColor(QColor(150, 150, 150));
     metal->setSpecularColor(QColor(255, 255, 255));
     metal->setShininess(128);
 
-    metalHighlight = new QGLMaterialParameters(this);
+    metalHighlight = new QGLMaterial(this);
     metalHighlight->setAmbientColor(QColor(255, 255, 96));
     metalHighlight->setDiffuseColor(QColor(150, 150, 96));
     metalHighlight->setSpecularColor(QColor(255, 255, 255));

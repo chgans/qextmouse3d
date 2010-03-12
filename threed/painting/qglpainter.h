@@ -50,11 +50,10 @@
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
 #include "qglvertexbuffer.h"
-#include "qglvertexarray.h"
 #include "qglindexarray.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglfogparameters.h"
 #include "qglmatrixstack.h"
 #include "qglcamera.h"
@@ -72,6 +71,8 @@ class QGLStencilBufferOptions;
 class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
+class QGeometryData;
+class QGLShaderProgram;
 
 class Q_QT3D_EXPORT QGLPainter
 {
@@ -114,10 +115,13 @@ public:
     void setViewport(const QRect& rect);
     void setViewport(const QSize& size);
     void setViewport(int width, int height);
+    void resetViewport();
 
-    QRect scissorRect() const;
-    void setScissorRect(const QRect& rect);
-    void resetScissorRect();
+    QRect scissor() const;
+    void setScissor(const QRect& rect);
+    void intersectScissor(const QRect& rect);
+    void expandScissor(const QRect& rect);
+    void resetScissor();
 
     QGLMatrixStack& projectionMatrix();
     QGLMatrixStack& modelViewMatrix();
@@ -125,6 +129,11 @@ public:
 
     bool isVisible(const QVector3D& point) const;
     bool isVisible(const QBox3D& box) const;
+
+    QVector3D project(const QVector3D& point, bool *ok = 0) const;
+    QVector3D unproject(const QVector3D& point, bool *ok = 0) const;
+    QVector4D unproject(const QVector4D& point, qreal nearPlane,
+                        qreal farPlane, bool *ok = 0) const;
 
     qreal aspectRatio() const;
     qreal aspectRatio(const QSize& viewportSize) const;
@@ -139,14 +148,15 @@ public:
 
     void disableEffect();
 
+    QGLShaderProgram *cachedProgram(const QString& name) const;
+    void setCachedProgram(const QString& name, QGLShaderProgram *program);
+
     QColor color() const;
     void setColor(const QColor& color);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setVertexBuffer(const QGLVertexBuffer& buffer);
-
-    void setVertexArray(const QGLVertexArray& array);
 
     void setCommonNormal(const QVector3D& value);
 
@@ -183,8 +193,8 @@ public:
     void setLightParameters(int number, const QGLLightParameters *parameters,
                             const QMatrix4x4& transform);
 
-    const QGLMaterialParameters *faceMaterial(QGL::Face face) const;
-    void setFaceMaterial(QGL::Face face, const QGLMaterialParameters *value);
+    const QGLMaterial *faceMaterial(QGL::Face face) const;
+    void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
     void setFaceColor(QGL::Face face, const QColor& color);
 
     const QGLFogParameters *fogParameters() const;

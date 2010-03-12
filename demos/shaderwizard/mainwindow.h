@@ -53,7 +53,7 @@ class QAbstractItemModel;
 class QStandardItemModel;
 class QGLAbstractScene;
 class QGLSceneNode;
-class QGLMaterialParameters;
+class QGLMaterial;
 
 namespace Ui
 {
@@ -75,6 +75,7 @@ public:
                       };
 
 private slots:
+    void on_actionExport_Collada_Effect_triggered();
     void on_actionLoad_Collada_Effect_triggered();
     void on_actionMultiTexture_Shader_triggered();
     void on_actionPer_Pixel_Lit_Texture_Shader_triggered();
@@ -98,13 +99,14 @@ signals:
     void openEffect(const QString &);
     void sceneCreated(QObject* object);
     void sceneSelected(QObject* object);
-    void materialSelected(QGLMaterialParameters*);
+    void materialSelected(QGLMaterial*);
 protected:
     void closeEvent(QCloseEvent *event);
     void setupSceneModel();
     void setupSceneView();
     void loadScene(const QString &fileName);
     void loadEffect(const QString &fileName);
+    bool saveEffect();
     void handleScene(QGLAbstractScene *scene);
     void handleScene(QGLSceneNode *scene);
     void writeSettings();

@@ -41,7 +41,6 @@
 
 #include "qglheightmap.h"
 #include <QVector3D>
-#include "qglvertexarray.h"
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
 

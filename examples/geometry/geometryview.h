@@ -49,7 +49,7 @@ class QTimer;
 class QuadPlane;
 class Geometry;
 class QGLLightParameters;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLLightModel;
 class QGLMaterialCollection;
 
@@ -77,8 +77,8 @@ private:
     int angle;
     QGLLightParameters *lp;
     QGLMaterialCollection *palette;
-    QGLMaterialParameters *mat1;
-    QGLMaterialParameters *mat2;
+    QGLMaterial *mat1;
+    QGLMaterial *mat2;
     QGLLightModel *mdl;
 };
 

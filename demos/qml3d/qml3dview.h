@@ -43,7 +43,7 @@
 #define QML3DVIEW_H
 
 #include "qglview.h"
-#include <QtDeclarative/qmlengine.h>
+#include <QtDeclarative/qdeclarativeengine.h>
 
 QT_BEGIN_HEADER
 
@@ -78,8 +78,8 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QmlEngine engine;
-    QmlComponent *component;
+    QDeclarativeEngine engine;
+    QDeclarativeComponent *component;
     Viewport *m_viewport;
     bool initGLCalled;
     int pickId;

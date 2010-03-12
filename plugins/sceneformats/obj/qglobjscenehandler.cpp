@@ -135,7 +135,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QVector3DArray normals;
     qreal x, y, z;
     quint32 fields = 0;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
     QList<QGLSceneObject *> groups;
@@ -143,7 +143,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     // Create the display list and start an initial Faceted section.
     QGLDisplayList *dlist = new QGLDisplayList();
     dlist->newSection(smoothing);
-    palette = dlist->geometry()->palette();
+    palette = dlist->palette();
     defaultNode = dlist;
     defaultNode->setObjectName(QLatin1String("__main"));
     dlist->pushNode();
@@ -306,7 +306,7 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
     QByteArray line;
     QByteArray keyword;
     int posn, index;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QString materialName;
     QString textureName;
 
@@ -339,7 +339,7 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
                 qWarning() << "redefining obj material:" << materialName;
                 material = palette->materialByIndex(index);
             } else {
-                material = new QGLMaterialParameters();
+                material = new QGLMaterial();
                 material->setObjectName(materialName);
                 palette->addMaterial(material);
             }

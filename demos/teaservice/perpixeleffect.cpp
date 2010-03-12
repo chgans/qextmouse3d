@@ -91,8 +91,9 @@ QList<QGL::VertexAttribute> PerPixelEffect::requiredFields() const
     return fields;
 }
 
-void PerPixelEffect::setActive(bool flag)
+void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!flag) {
         if (d->program) {
             d->program->disableAttributeArray(0);
@@ -156,7 +157,7 @@ void PerPixelEffect::update
         lparams = painter->lightParameters(0);
 
     // Get the front material parameters.
-    const QGLMaterialParameters *mparams = painter->faceMaterial(QGL::FrontFaces);
+    const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
 
     // Set the uniform variables on the shader program.
     d->program->setUniformValue("acli", lparams->ambientColor());

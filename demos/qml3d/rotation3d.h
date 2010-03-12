@@ -43,7 +43,7 @@
 #define ROTATION3D_H
 
 #include <QtGui/QGraphicsTransform>
-#include <QtDeclarative/qml.h>
+#include <QtDeclarative/qdeclarative.h>
 
 QT_BEGIN_HEADER
 

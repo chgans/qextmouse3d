@@ -108,7 +108,7 @@ public:
     ~PageFlipGradientEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
@@ -217,9 +217,12 @@ void PageFlipView::paintGL()
     pageFlipMath.setShowPageReverse(false);
     pageFlipMath.compute(posn);
 
-    QGLVertexArray vertices(QGL::Position, 2, QGL::TextureCoord0, 2,
-                            QGL::CustomVertex0, 1);
-    vertices.setRawData(pageFlipMath.vertexArray(), 4 * 5 * 5);
+    QGLAttributeValue positions
+        (2, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray());
+    QGLAttributeValue texCoords
+        (2, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray() + 2);
+    QGLAttributeValue gradientCoords
+        (1, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray() + 4);
 
 #if defined(QT_OPENGL_ES_1)
     painter.setStandardEffect(QGL::FlatReplaceTexture2D);
@@ -229,7 +232,9 @@ void PageFlipView::paintGL()
     painter.setColor(colors[colorIndex]);
     painter.setTexture(0, &(textures[colorIndex]));
     painter.setTexture(1, &gradientTexture);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, positions);
+    painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
+    painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
     setAlphaValue(1.0f);
     painter.update();
     pageFlipMath.drawPage(0);
@@ -260,7 +265,9 @@ void PageFlipView::paintGL()
     painter.setTexture(1, (QGLTexture2D *)0);
 
     painter.setStandardEffect(QGL::FlatColor);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, positions);
+    painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
+    painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
     painter.setColor(QColor(0, 0, 0, 255));
     painter.update();
     pageFlipMath.drawOutline(2);
@@ -381,8 +388,9 @@ static char const gradientFragmentShader[] =
     "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
     "}\n";
 
-void PageFlipGradientEffect::setActive(bool flag)
+void PageFlipGradientEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!program) {
         if (!flag)
             return;

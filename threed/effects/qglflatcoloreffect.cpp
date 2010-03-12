@@ -39,13 +39,60 @@
 **
 ****************************************************************************/
 
-#include "qglflatcoloreffect_p.h"
-#if defined(QGL_SHADERS_ONLY)
+#include "qglflatcoloreffect.h"
 #include <QtOpenGL/qglshaderprogram.h>
-#endif
 
 QT_BEGIN_NAMESPACE
 
+/*!
+    \class QGLFlatColorEffect
+    \since 4.7
+    \brief The QGLFlatColorEffect class provides a standard effect that draws fragments with a flat unlit color.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+/*!
+    \class QGLPerVertexColorEffect
+    \since 4.7
+    \brief The QGLPerVertexColorEffect class provides a standard effect that draws fragments with a per-vertex unlit color.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+class QGLFlatColorEffectPrivate
+{
+public:
+    QGLFlatColorEffectPrivate()
+        : program(0)
+        , matrixUniform(-1)
+        , colorUniform(-1)
+    {
+    }
+
+    QGLShaderProgram *program;
+    int matrixUniform;
+    int colorUniform;
+};
+
+/*!
+    Constructs a new flat color effect.
+*/
+QGLFlatColorEffect::QGLFlatColorEffect()
+    : d_ptr(new QGLFlatColorEffectPrivate)
+{
+}
+
+/*!
+    Destroys this flat color effect.
+*/
+QGLFlatColorEffect::~QGLFlatColorEffect()
+{
+}
+
+/*!
+    \reimp
+*/
 QList<QGL::VertexAttribute> QGLFlatColorEffect::requiredFields() const
 {
     QList<QGL::VertexAttribute> fields;
@@ -53,117 +100,45 @@ QList<QGL::VertexAttribute> QGLFlatColorEffect::requiredFields() const
     return fields;
 }
 
-QList<QGL::VertexAttribute> QGLPerVertexColorEffect::requiredFields() const
+/*!
+    \reimp
+*/
+bool QGLFlatColorEffect::supportsPicking() const
 {
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Color;
-    return fields;
+    return true;
 }
 
+/*!
+    \reimp
+*/
+void QGLFlatColorEffect::setActive(QGLPainter *painter, bool flag)
+{
 #if !defined(QGL_SHADERS_ONLY)
-
-QGLFlatColorEffect::QGLFlatColorEffect()
-{
-}
-
-QGLFlatColorEffect::~QGLFlatColorEffect()
-{
-}
-
-bool QGLFlatColorEffect::supportsPicking() const
-{
-    return true;
-}
-
-void QGLFlatColorEffect::setActive(bool flag)
-{
-    if (flag) {
+    Q_UNUSED(painter);
+    if (flag)
         glEnableClientState(GL_VERTEX_ARRAY);
-    } else {
+    else
         glDisableClientState(GL_VERTEX_ARRAY);
-        glDisable(GL_FOG);
-    }
-}
+#else
+    static char const flatColorVertexShader[] =
+        "attribute highp vec4 vertex;\n"
+        "uniform mediump mat4 matrix;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_Position = matrix * vertex;\n"
+        "}\n";
 
-void QGLFlatColorEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateColor) != 0) {
-        QColor color;
-        if (painter->isPicking())
-            color = painter->pickColor();
-        else
-            color = painter->color();
-        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    }
-    if ((updates & QGLPainter::UpdateFog) != 0)
-        updateFog(painter);
-}
+    static char const flatColorFragmentShader[] =
+        "uniform mediump vec4 color;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_FragColor = color;\n"
+        "}\n";
 
-QGLPerVertexColorEffect::QGLPerVertexColorEffect()
-{
-}
-
-QGLPerVertexColorEffect::~QGLPerVertexColorEffect()
-{
-}
-
-void QGLPerVertexColorEffect::setActive(bool flag)
-{
-    if (flag) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
-    } else {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisable(GL_FOG);
-    }
-}
-
-void QGLPerVertexColorEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateFog) != 0)
-        updateFog(painter);
-}
-
-#else // QGL_SHADERS_ONLY
-
-QGLFlatColorEffect::QGLFlatColorEffect()
-{
-    program = 0;
-    colorUniform = -1;
-    matrixUniform = -1;
-}
-
-QGLFlatColorEffect::~QGLFlatColorEffect()
-{
-    delete program;
-}
-
-bool QGLFlatColorEffect::supportsPicking() const
-{
-    return true;
-}
-
-static char const flatColorVertexShader[] =
-    "attribute highp vec4 vertex;\n"
-    "uniform mediump mat4 matrix;\n"
-    "void main(void)\n"
-    "{\n"
-    "    gl_Position = matrix * vertex;\n"
-    "}\n";
-
-static char const flatColorFragmentShader[] =
-    "uniform mediump vec4 color;\n"
-    "void main(void)\n"
-    "{\n"
-    "    gl_FragColor = color;\n"
-    "}\n";
-
-void QGLFlatColorEffect::setActive(bool flag)
-{
+    Q_D(QGLFlatColorEffect);
+    QGLShaderProgram *program =
+        painter->cachedProgram(QLatin1String("qt.color.flat"));
+    d->program = program;
     if (!program) {
         if (!flag)
             return;
@@ -174,11 +149,12 @@ void QGLFlatColorEffect::setActive(bool flag)
         if (!program->link()) {
             qWarning("QGLFlatColorEffect::setActive(): could not link shader program");
             delete program;
-            program = 0;
             return;
         }
-        colorUniform = program->uniformLocation("color");
-        matrixUniform = program->uniformLocation("matrix");
+        painter->setCachedProgram(QLatin1String("qt.color.flat"), program);
+        d->program = program;
+        d->colorUniform = program->uniformLocation("color");
+        d->matrixUniform = program->uniformLocation("matrix");
         program->bind();
         program->enableAttributeArray(0);
     } else if (flag) {
@@ -188,63 +164,132 @@ void QGLFlatColorEffect::setActive(bool flag)
         program->disableAttributeArray(0);
         program->release();
     }
+#endif
 }
 
+/*!
+    \reimp
+*/
 void QGLFlatColorEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
+#if !defined(QGL_SHADERS_ONLY)
+    if ((updates & QGLPainter::UpdateColor) != 0) {
+        QColor color;
+        if (painter->isPicking())
+            color = painter->pickColor();
+        else
+            color = painter->color();
+        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    }
+#else
+    Q_D(QGLFlatColorEffect);
     if ((updates & QGLPainter::UpdateColor) != 0) {
         if (painter->isPicking())
-            program->setUniformValue(colorUniform, painter->pickColor());
+            d->program->setUniformValue(d->colorUniform, painter->pickColor());
         else
-            program->setUniformValue(colorUniform, painter->color());
+            d->program->setUniformValue(d->colorUniform, painter->color());
     }
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
-        program->setUniformValue(matrixUniform, proj * mv);
+        d->program->setUniformValue(d->matrixUniform, proj * mv);
     }
+#endif
 }
 
+/*!
+    \reimp
+*/
 void QGLFlatColorEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
+#if !defined(QGL_SHADERS_ONLY)
+    QGLAbstractEffect::setVertexAttribute(attribute, value);
+#else
+    Q_D(QGLFlatColorEffect);
     if (attribute == QGL::Position)
-        setAttributeArray(program, 0, value);
+        setAttributeArray(d->program, 0, value);
+#endif
 }
 
-QGLPerVertexColorEffect::QGLPerVertexColorEffect()
+class QGLPerVertexColorEffectPrivate
 {
-    program = 0;
-    matrixUniform = -1;
+public:
+    QGLPerVertexColorEffectPrivate()
+        : program(0)
+        , matrixUniform(-1)
+    {
+    }
+
+    QGLShaderProgram *program;
+    int matrixUniform;
+};
+
+/*!
+    Constructs a new per-vertex color effect.
+*/
+QGLPerVertexColorEffect::QGLPerVertexColorEffect()
+    : d_ptr(new QGLPerVertexColorEffectPrivate)
+{
 }
 
+/*!
+    Destroys this per-vertex color effect.
+*/
 QGLPerVertexColorEffect::~QGLPerVertexColorEffect()
 {
-    delete program;
 }
 
-static char const pvColorVertexShader[] =
-    "attribute highp vec4 vertex;\n"
-    "attribute mediump vec4 color;\n"
-    "uniform mediump mat4 matrix;\n"
-    "varying mediump vec4 qColor;\n"
-    "void main(void)\n"
-    "{\n"
-    "    gl_Position = matrix * vertex;\n"
-    "    qColor = color;\n"
-    "}\n";
-
-static char const pvColorFragmentShader[] =
-    "varying mediump vec4 qColor;\n"
-    "void main(void)\n"
-    "{\n"
-    "    gl_FragColor = qColor;\n"
-    "}\n";
-
-void QGLPerVertexColorEffect::setActive(bool flag)
+/*!
+    \reimp
+*/
+QList<QGL::VertexAttribute> QGLPerVertexColorEffect::requiredFields() const
 {
+    QList<QGL::VertexAttribute> fields;
+    fields += QGL::Position;
+    fields += QGL::Color;
+    return fields;
+}
+
+/*!
+    \reimp
+*/
+void QGLPerVertexColorEffect::setActive(QGLPainter *painter, bool flag)
+{
+#if !defined(QGL_SHADERS_ONLY)
+    Q_UNUSED(painter);
+    if (flag) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+    } else {
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+    }
+#else
+    static char const pvColorVertexShader[] =
+        "attribute highp vec4 vertex;\n"
+        "attribute mediump vec4 color;\n"
+        "uniform mediump mat4 matrix;\n"
+        "varying mediump vec4 qColor;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_Position = matrix * vertex;\n"
+        "    qColor = color;\n"
+        "}\n";
+
+    static char const pvColorFragmentShader[] =
+        "varying mediump vec4 qColor;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_FragColor = qColor;\n"
+        "}\n";
+
+    Q_D(QGLPerVertexColorEffect);
+    QGLShaderProgram *program =
+        painter->cachedProgram(QLatin1String("qt.color.pervertex"));
+    d->program = program;
     if (!program) {
         if (!flag)
             return;
@@ -259,7 +304,9 @@ void QGLPerVertexColorEffect::setActive(bool flag)
             program = 0;
             return;
         }
-        matrixUniform = program->uniformLocation("matrix");
+        painter->setCachedProgram(QLatin1String("qt.color.pervertex"), program);
+        d->program = program;
+        d->matrixUniform = program->uniformLocation("matrix");
         program->bind();
         program->enableAttributeArray(0);
         program->enableAttributeArray(1);
@@ -272,26 +319,44 @@ void QGLPerVertexColorEffect::setActive(bool flag)
         program->disableAttributeArray(1);
         program->release();
     }
+#endif
 }
 
+/*!
+    \reimp
+*/
 void QGLPerVertexColorEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
+#if !defined(QGL_SHADERS_ONLY)
+    Q_UNUSED(painter);
+    Q_UNUSED(updates);
+#else
+    Q_UNUSED(painter);
+    Q_D(QGLPerVertexColorEffect);
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
-        program->setUniformValue(matrixUniform, painter->combinedMatrix());
+        d->program->setUniformValue
+            (d->matrixUniform, painter->combinedMatrix());
     }
+#endif
 }
 
+/*!
+    \reimp
+*/
 void QGLPerVertexColorEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
+#if !defined(QGL_SHADERS_ONLY)
+    QGLAbstractEffect::setVertexAttribute(attribute, value);
+#else
+    Q_D(QGLPerVertexColorEffect);
     if (attribute == QGL::Position)
-        setAttributeArray(program, 0, value);
+        setAttributeArray(d->program, 0, value);
     else if (attribute == QGL::Color)
-        setAttributeArray(program, 1, value);
+        setAttributeArray(d->program, 1, value);
+#endif
 }
-
-#endif // QGL_SHADERS_ONLY
 
 QT_END_NAMESPACE

@@ -160,8 +160,10 @@ public:
         delete program;
         program = 0;
     }
-    QGLMaterialParameters* material;
+    QGLMaterial* material;
     QGLShaderProgram *program;
+    QString vertexShader;
+    QString fragmentShader;
 };
 
 /*!
@@ -209,8 +211,9 @@ bool QGLShaderProgramEffect::supportsPicking() const
     If \a flag is true, creates the default program if no program currently
     exists.
 */
-void QGLShaderProgramEffect::setActive(bool flag)
+void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (program() == 0) {
         if(!flag)
             return;
@@ -258,18 +261,18 @@ void QGLShaderProgramEffect::reloadShaders()
 
     program()->removeAllShaders();
 
-    if(vertexShader.length() > 0)
+    if(d->vertexShader.length() > 0)
     {
-        program()->addShaderFromSourceCode(QGLShader::Vertex, vertexShader);
+        program()->addShaderFromSourceCode(QGLShader::Vertex, d->vertexShader);
     }
     else
     {
         program()->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
     }
 
-    if(fragmentShader.length() > 0)
+    if(d->fragmentShader.length() > 0)
     {
-        program()->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader);
+        program()->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
     }
     else
     {
@@ -373,7 +376,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         program()->setUniformValue("acs", model->ambientSceneColor());
 
         // Set the uniform variables for the material
-        const QGLMaterialParameters *material;
+        const QGLMaterial *material;
         if(d->material)
         {
             material = d->material;
@@ -403,13 +406,15 @@ void QGLShaderProgramEffect::setVertexAttribute
 
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
-    vertexShader = shader;
+    d->vertexShader = shader;
     reloadShaders();
+
+
 }
 
 void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
 {
-    fragmentShader = shader;
+    d->fragmentShader = shader;
     reloadShaders();
 }
 
@@ -420,7 +425,7 @@ void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
 
   \sa QGLPainter, material()
 */
-void QGLShaderProgramEffect::setMaterial(QGLMaterialParameters* newMaterial)
+void QGLShaderProgramEffect::setMaterial(QGLMaterial* newMaterial)
 {
     d->material = newMaterial;
 }
@@ -429,7 +434,7 @@ void QGLShaderProgramEffect::setMaterial(QGLMaterialParameters* newMaterial)
     Returns a pointer to the material of this effect.  If the effect has no material,
     this function returns 0;
 */
-QGLMaterialParameters* QGLShaderProgramEffect::material()
+QGLMaterial* QGLShaderProgramEffect::material()
 {
     return d->material;
 }
@@ -458,4 +463,14 @@ void QGLShaderProgramEffect::setProgram(QGLShaderProgram* program)
         delete d->program;
 
     d->program = program;
+}
+
+QString QGLShaderProgramEffect::vertexShader()
+{
+    return d->vertexShader;
+}
+
+QString QGLShaderProgramEffect::fragmentShader()
+{
+    return d->fragmentShader;
 }

@@ -40,24 +40,24 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 
-class tst_QGLMaterialParameters : public QObject
+class tst_QGLMaterial : public QObject
 {
     Q_OBJECT
 public:
-    tst_QGLMaterialParameters() {}
-    ~tst_QGLMaterialParameters() {}
+    tst_QGLMaterial() {}
+    ~tst_QGLMaterial() {}
 
 private slots:
     void create();
     void modify();
 };
 
-void tst_QGLMaterialParameters::create()
+void tst_QGLMaterial::create()
 {
     // Test that a newly created object has the correct defaults.
-    QGLMaterialParameters params;
+    QGLMaterial params;
     QCOMPARE(params.ambientColor().redF(), 0.2);
     QCOMPARE(params.ambientColor().greenF(), 0.2);
     QCOMPARE(params.ambientColor().blueF(), 0.2);
@@ -74,13 +74,13 @@ void tst_QGLMaterialParameters::create()
     QCOMPARE(params.emittedLight().green(), 0);
     QCOMPARE(params.emittedLight().blue(), 0);
     QCOMPARE(params.emittedLight().alpha(), 255);
-    QCOMPARE(params.shininess(), 0);
+    QCOMPARE(params.shininess(), qreal(0));
 }
 
-void tst_QGLMaterialParameters::modify()
+void tst_QGLMaterial::modify()
 {
     // Test modifying each field individually.
-    QGLMaterialParameters params;
+    QGLMaterial params;
     params.setAmbientColor(Qt::green);
     QCOMPARE(params.ambientColor().red(), 0);
     QCOMPARE(params.ambientColor().green(), 255);
@@ -102,7 +102,7 @@ void tst_QGLMaterialParameters::modify()
     QCOMPARE(params.emittedLight().blue(), 255);
     QCOMPARE(params.emittedLight().alpha(), 255);
     params.setShininess(128);
-    QCOMPARE(params.shininess(), 128);
+    QCOMPARE(params.shininess(), qreal(128));
 
     // Test that we don't get any side effects between properties.
     QCOMPARE(params.ambientColor().red(), 0);
@@ -121,9 +121,9 @@ void tst_QGLMaterialParameters::modify()
     QCOMPARE(params.emittedLight().green(), 255);
     QCOMPARE(params.emittedLight().blue(), 255);
     QCOMPARE(params.emittedLight().alpha(), 255);
-    QCOMPARE(params.shininess(), 128);
+    QCOMPARE(params.shininess(), qreal(128));
 }
 
-QTEST_APPLESS_MAIN(tst_QGLMaterialParameters)
+QTEST_APPLESS_MAIN(tst_QGLMaterial)
 
-#include "tst_qglmaterialparameters.moc"
+#include "tst_qglmaterial.moc"

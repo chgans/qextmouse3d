@@ -84,9 +84,10 @@ public:
     QColor specularMaterialColor();
 
     int materialShininess();
+    QGLShaderProgramEffect* effect();
 
 public slots:
-    void setGeometry(QGLGeometry *geom);
+    void setSceneNode(QGLSceneNode *geom);
 
     void setCubeGeometry();
     void setSphereGeometry();
@@ -121,16 +122,16 @@ private:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
-    void setDefaultCamera(QGLGeometry* geometry);
+    void setDefaultCamera(QGLSceneNode* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
-    QGLGeometry *mGeometry;
+    QGLSceneNode *mSceneNode;
     QGLAbstractScene *mSceneManager;
     QGLSceneObject *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
-    QGLMaterialParameters *mMaterial;
+    QGLMaterial *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLTexture2D *mTexture;
 

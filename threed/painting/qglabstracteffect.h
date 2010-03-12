@@ -66,7 +66,7 @@ public:
 
     virtual bool supportsPicking() const;
 
-    virtual void setActive(bool flag) = 0;
+    virtual void setActive(QGLPainter *painter, bool flag) = 0;
 
     virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 

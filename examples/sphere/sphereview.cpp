@@ -88,7 +88,7 @@ SphereView::SphereView(QWidget *parent)
     lp = new QGLLightParameters(this);
     lp->setDirection(QVector3D(1.0, 0.0, 0.0));
 
-    mat = new QGLMaterialParameters(this);
+    mat = new QGLMaterial(this);
     mat->setDiffuseColor(QColor(255, 255, 255));
 
     mdl = new QGLLightModel(this);
