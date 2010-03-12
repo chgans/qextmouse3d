@@ -1935,6 +1935,52 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
 }
 
 /*!
+    \overload
+
+    Draws primitives using vertices from the arrays specified by
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
+
+    This operation will consume all of the elements of \a indices,
+    which are used to index into the enabled arrays.
+
+    If \a indices has been uploaded to the GL server as an index
+    buffer, then this function will draw using that index buffer.
+
+    \sa update(), QGLIndexArray::upload()
+*/
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
+{
+    update();
+    checkRequiredFields();
+    const_cast<QGLIndexBuffer &>(indices).draw(mode);
+}
+
+/*!
+    \overload
+
+    Draws primitives using vertices from the arrays specified by
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
+
+    This operation will consume \a count elements of \a indices,
+    starting at \a offset, which are used to index into the enabled arrays.
+
+    If \a indices has been uploaded to the GL server as an index
+    buffer, then this function will draw using that index buffer.
+
+    \sa update(), QGLIndexArray::upload()
+*/
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices,
+                      int offset, int count)
+{
+    Q_ASSERT(offset >= 0 && count >= 0);
+    update();
+    checkRequiredFields();
+    const_cast<QGLIndexBuffer &>(indices).draw(mode, offset, count);
+}
+
+/*!
     Sets the point \a size to use with draw().
 
     This function has no effect if a shader program is in use,
