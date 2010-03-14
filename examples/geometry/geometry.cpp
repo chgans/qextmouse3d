@@ -188,9 +188,9 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
     mat->setDiffuseColor(QColor(32, 32, 32));
     int m = palette()->addMaterial(mat);
 
-    QGLTexture2D *texture = new QGLTexture2D;
+    QGLTexture2D *texture = new QGLTexture2D(mat);
     texture->setImage(uv);
-    palette()->setTexture(m, texture);
+    mat->setTexture(texture);
 
     setMaterial(m);
 

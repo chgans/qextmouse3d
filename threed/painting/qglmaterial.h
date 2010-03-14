@@ -57,6 +57,7 @@ class QGLMaterialPrivate;
 class QGLTexture2D;
 class QGLTextureCube;
 class QGLPainter;
+class QGLMaterialCollection;
 
 class Q_QT3D_EXPORT QGLMaterial : public QObject
 {
@@ -113,6 +114,9 @@ Q_SIGNALS:
     void shininessChanged();
     void texturesChanged();
     void materialChanged();
+
+private:
+    friend class QGLMaterialCollection;
 };
 
 QT_END_NAMESPACE

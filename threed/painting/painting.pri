@@ -31,4 +31,5 @@ SOURCES += \
 
 PRIVATE_HEADERS += \
     qglpainter_p.h \
-    qglpickcolors_p.h
+    qglpickcolors_p.h \
+    qglmaterial_p.h

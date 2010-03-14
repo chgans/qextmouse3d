@@ -207,7 +207,7 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
         if(!mSceneNode->palette())
             mSceneNode->setPalette(mMaterialCollection);
         mMaterialCollection->setParent(mSceneNode);
-        int materialIndex = mSceneNode->palette()->materialIndexByName("ShaderWizardGLWidgetMaterial");
+        int materialIndex = mSceneNode->palette()->indexOf("ShaderWizardGLWidgetMaterial");
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
         mSceneNode->setMaterial(materialIndex);

@@ -40,9 +40,8 @@
 ****************************************************************************/
 
 #include "qglmaterial.h"
+#include "qglmaterial_p.h"
 #include "qglpainter.h"
-#include <QtCore/private/qobject_p.h>
-#include <QtCore/qmap.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -54,27 +53,15 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::painting
 */
 
-class QGLMaterialPrivate : public QObjectPrivate
-{
-    Q_DECLARE_PUBLIC(QGLMaterial)
-public:
-    explicit QGLMaterialPrivate(int version = QObjectPrivateVersion);
-
-    QColor basicColor;
-    QColor ambientColor;
-    QColor diffuseColor;
-    QColor specularColor;
-    QColor emittedLight;
-    qreal shininess;
-    QMap<int, QGLTexture2D *> textures;
-};
-
 QGLMaterialPrivate::QGLMaterialPrivate(int version)
     : QObjectPrivate(version),
       basicColor(255, 255, 255, 255),
       specularColor(0, 0, 0, 255),
       emittedLight(0, 0, 0, 255),
-      shininess(0)
+      shininess(0),
+      collection(0),
+      index(-1),
+      used(false)
 {
     ambientColor.setRgbF(0.2f, 0.2f, 0.2f, 1.0f);
     diffuseColor.setRgbF(0.8f, 0.8f, 0.8f, 1.0f);
