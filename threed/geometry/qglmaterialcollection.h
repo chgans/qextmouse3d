@@ -60,6 +60,7 @@ class Q_QT3D_EXPORT QGLMaterialCollection : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLMaterialCollection)
+    Q_DISABLE_COPY(QGLMaterialCollection)
 public:
     QGLMaterialCollection(QObject *parent = 0);
     virtual ~QGLMaterialCollection();
