@@ -74,6 +74,8 @@ public:
     int indexOf(const QString &name) const;
 
     QString materialName(int index) const;
+
+    bool isMaterialUsed(int index) const;
     void markMaterialAsUsed(int index);
     void removeUnusedMaterials();
 

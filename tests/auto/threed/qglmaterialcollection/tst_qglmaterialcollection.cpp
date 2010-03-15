@@ -53,6 +53,7 @@ private slots:
     void simple();
     void addMaterial();
     void ownership();
+    void markUsed();
 
 public slots:
     void materialDestroyed() { ++destroyCount; }
@@ -105,12 +106,32 @@ void tst_QGLMaterialCollection::addMaterial()
         materials[index] = mat;
         QCOMPARE(coll->addMaterial(mat), index);
     }
+    QCOMPARE(coll->size(), Size);
+    QVERIFY(!coll->isEmpty());
 
     for (int index = 0; index < Size; ++index) {
+        QString name = QString::number(index);
         QVERIFY(coll->material(index) == materials[index]);
-        QCOMPARE(coll->indexOf(QString::number(index)), index);
-        QCOMPARE(coll->materialName(index), QString::number(index));
+        QVERIFY(coll->material(name) == materials[index]);
+        QVERIFY(coll->contains(materials[index]));
+        QVERIFY(coll->contains(name));
+        QCOMPARE(coll->indexOf(materials[index]), index);
+        QCOMPARE(coll->indexOf(name), index);
+        QCOMPARE(coll->materialName(index), name);
     }
+
+    QGLMaterial *mat = new QGLMaterial();
+
+    QVERIFY(!coll->material(-1));
+    QVERIFY(!coll->material(coll->size()));
+    QVERIFY(!coll->contains(0));
+    QVERIFY(!coll->contains(mat));
+    QVERIFY(!coll->contains(QLatin1String("foo")));
+    QCOMPARE(coll->indexOf(0), -1);
+    QCOMPARE(coll->indexOf(mat), -1);
+    QCOMPARE(coll->indexOf(QLatin1String("foo")), -1);
+
+    delete mat;
 
     destroyCount = 0;
     delete coll;
@@ -144,16 +165,70 @@ void tst_QGLMaterialCollection::ownership()
     QVERIFY(coll2.isEmpty());
 
     // Remove a material from the first collection and add it to the second.
+    QVERIFY(mat->parent() == &coll);
     coll.removeMaterial(mat);
+    QVERIFY(!mat->parent());    // Parent should revert to null when removed.
     QCOMPARE(coll.size(), 2);   // Still two elements, one is null.
     QVERIFY(coll.material(0) == 0);
     QVERIFY(coll.material(1) == mat2);
     QCOMPARE(coll.indexOf(QLatin1String("foo")), -1);
     QCOMPARE(coll.indexOf(QLatin1String("bar")), 1);
     QCOMPARE(coll2.addMaterial(mat), 0);
+    QVERIFY(mat->parent() == &coll2);
     QCOMPARE(coll2.size(), 1);
     QVERIFY(coll2.material(0) == mat);
     QCOMPARE(coll2.indexOf(QLatin1String("foo")), 0);
+}
+
+// Test material marking.
+void tst_QGLMaterialCollection::markUsed()
+{
+    QGLMaterialCollection coll;
+
+    QGLMaterial *mat = new QGLMaterial(this);
+    mat->setObjectName(QLatin1String("foo"));
+    connect(mat, SIGNAL(destroyed()), this, SLOT(materialDestroyed()));
+
+    QGLMaterial *mat2 = new QGLMaterial(this);
+    mat2->setObjectName(QLatin1String("bar"));
+    connect(mat2, SIGNAL(destroyed()), this, SLOT(materialDestroyed()));
+
+    QGLMaterial *mat3 = new QGLMaterial(this);
+    mat3->setObjectName(QLatin1String("baz"));
+    connect(mat3, SIGNAL(destroyed()), this, SLOT(materialDestroyed()));
+
+    coll.addMaterial(mat);
+    coll.addMaterial(mat2);
+    coll.addMaterial(mat3);
+
+    QVERIFY(!coll.isMaterialUsed(0));
+    QVERIFY(!coll.isMaterialUsed(1));
+    QVERIFY(!coll.isMaterialUsed(2));
+
+    coll.markMaterialAsUsed(1);
+    QVERIFY(!coll.isMaterialUsed(0));
+    QVERIFY(coll.isMaterialUsed(1));
+    QVERIFY(!coll.isMaterialUsed(2));
+
+    QVERIFY(coll.material(0) == mat);
+    QVERIFY(coll.material(1) == mat2);
+    QVERIFY(coll.material(2) == mat3);
+
+    destroyCount = 0;
+    coll.removeUnusedMaterials();
+    QCOMPARE(destroyCount, 2);
+
+    QVERIFY(coll.material(0) == 0);
+    QVERIFY(coll.material(1) == mat2);
+    QVERIFY(coll.material(2) == 0);
+
+    QVERIFY(!coll.contains(QLatin1String("foo")));
+    QVERIFY(coll.contains(QLatin1String("bar")));
+    QVERIFY(!coll.contains(QLatin1String("baz")));
+
+    // Bounds checks.
+    QVERIFY(!coll.isMaterialUsed(-1));
+    QVERIFY(!coll.isMaterialUsed(3));
 }
 
 QTEST_APPLESS_MAIN(tst_QGLMaterialCollection)

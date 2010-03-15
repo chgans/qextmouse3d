@@ -104,11 +104,8 @@ QGLMaterialCollection::QGLMaterialCollection(QObject *parent)
 }
 
 /*!
-    Destroy this QGLMaterialCollection object recovering any resources.
-
-    All QGLMaterial objects referred to by this collection will be destroyed.
-    For this reason do not add a QGLMaterial to more than one
-    QGLMaterialCollection.
+    Destroy this collection.  All material objects referred to by this
+    collection will be destroyed.
 */
 QGLMaterialCollection::~QGLMaterialCollection()
 {
@@ -121,20 +118,16 @@ QGLMaterialCollection::~QGLMaterialCollection()
     Returns a pointer to the material corresponding to \a index; or null
     if \a index is out of range or the material has been removed.
 
-    This method executes in constant time, and is intended for fast lookup.
-    Use this method during rendering and animation to obtain a material
-    to paint with.
-
     Here's an example of searching for a material with a given ambient
-    \c{color} in a QGLMaterialCollection \c{materials}:
+    \c{color} in the collection \c{materials}:
 
     \code
-    int colorIndex = 0;
-    for ( ; colorIndex < materials->size(); ++colorIndex)
+    for (int colorIndex; colorIndex < materials->size(); ++colorIndex) {
         if (material(colorIndex) &&
                 material(colorIndex)->ambientColor() == color)
             break;
-    if (colorIndex != materials->size())
+    }
+    if (colorIndex < materials->size())
         myObject->setMaterial(colorIndex);
     \endcode
 */
@@ -231,19 +224,33 @@ QString QGLMaterialCollection::materialName(int index) const
 }
 
 /*!
+    Returns true if the material at \a index in this collection has been
+    marked as used by markMaterialAsUsed().
+
+    \sa markMaterialAsUsed()
+*/
+bool QGLMaterialCollection::isMaterialUsed(int index) const
+{
+    QGLMaterial *mat = material(index);
+    if (mat)
+        return mat->d_func()->used;
+    else
+        return false;
+}
+
+/*!
     Flags the material corresponding to the \a index as used.  Some model files
     may contain a range of materials, applying to various objects in the scene.
 
-    When a particular object is loaded from the file, many of those materials may
-    not be used in that object.  This wastes space, and makes processing materials
-    by name difficult, with many spurious materials being stored.
-
-    Materials flagged as used will not be removed by removeUnusedMaterials().
+    When a particular object is loaded from the file, many of those
+    materials may not be used in that object.  This wastes space,
+    with many spurious materials being stored.
 
     Use this method during model loading or construction to mark off
-    materials that have been used.
+    materials that have been used.  Materials so marked will not
+    be removed by removeUnusedMaterials().
 
-    \sa removeUnusedMaterials()
+    \sa removeUnusedMaterials(), isMaterialUsed()
 */
 void QGLMaterialCollection::markMaterialAsUsed(int index)
 {
@@ -255,7 +262,7 @@ void QGLMaterialCollection::markMaterialAsUsed(int index)
 /*!
     Removes and deletes materials which have not been marked as used.
 
-    \sa markMaterialAsUsed()
+    \sa markMaterialAsUsed(), isMaterialUsed()
 */
 void QGLMaterialCollection::removeUnusedMaterials()
 {
@@ -337,6 +344,7 @@ void QGLMaterialCollection::removeMaterial(QGLMaterial *material)
     d->materials[dm->index] = 0;
     if (!dm->name.isEmpty())
         d->materialNames.remove(dm->name);
+    material->setParent(0);
 
     // Detach from the owning collection.
     dm->collection = 0;
@@ -367,6 +375,7 @@ QGLMaterial *QGLMaterialCollection::removeMaterial(int index)
     d->materials[index] = 0;
     if (!dm->name.isEmpty())
         d->materialNames.remove(dm->name);
+    material->setParent(0);
 
     // Detach from the owning collection.
     dm->collection = 0;
@@ -404,6 +413,5 @@ int QGLMaterialCollection::size() const
 */
 void QGLMaterialCollection::materialDeleted()
 {
-    QGLMaterial *mat = qobject_cast<QGLMaterial *>(sender());
-    removeMaterial(mat);
+    removeMaterial(qobject_cast<QGLMaterial *>(sender()));
 }
