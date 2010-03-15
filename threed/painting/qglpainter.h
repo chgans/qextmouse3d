@@ -172,6 +172,7 @@ public:
     void update();
 
     void draw(QGL::DrawingMode mode, int count, int index = 0);
+    void draw(QGL::DrawingMode mode, const ushort *indices, int count);
     void draw(QGL::DrawingMode mode, const QGLIndexArray& indices);
     void draw(QGL::DrawingMode mode, const QGLIndexArray& indices, int offset, int count);
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);

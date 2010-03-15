@@ -1871,6 +1871,25 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
+    This operation will consume \a count elements of \a indices,
+    which are used to index into the enabled arrays.
+
+    \sa update()
+*/
+void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
+{
+    update();
+    checkRequiredFields();
+    glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
+}
+
+/*!
+    \overload
+
+    Draws primitives using vertices from the arrays specified by
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
+
     This operation will consume all of the elements of \a indices,
     which are used to index into the enabled arrays.
 
