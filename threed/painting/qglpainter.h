@@ -50,6 +50,7 @@
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
 #include "qglvertexbuffer.h"
+#include "qglindexbuffer.h"
 #include "qglindexarray.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
@@ -173,6 +174,8 @@ public:
     void draw(QGL::DrawingMode mode, int count, int index = 0);
     void draw(QGL::DrawingMode mode, const QGLIndexArray& indices);
     void draw(QGL::DrawingMode mode, const QGLIndexArray& indices, int offset, int count);
+    void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
+    void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
 
     void setPointSize(qreal size);
     void setLineWidth(qreal width);
