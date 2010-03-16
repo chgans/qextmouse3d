@@ -53,7 +53,6 @@
 // We mean it.
 //
 
-#include "qglgeometry_p.h"
 #include "qglscenenode_p.h"
 #include "qgldisplaylist.h"
 

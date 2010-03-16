@@ -43,7 +43,8 @@
 #define QGLSCENENODE_H
 
 #include "qglsceneobject.h"
-#include "qglgeometry.h"
+#include "qgeometrydata.h"
+#include "qglmaterialcollection.h"
 
 QT_BEGIN_HEADER
 
@@ -52,7 +53,6 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLSceneNodePrivate;
-class QGLGeometry;
 class QGLAbstractEffect;
 
 class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject

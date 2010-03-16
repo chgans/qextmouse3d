@@ -84,7 +84,7 @@ QT_BEGIN_NAMESPACE
     \o applies any local transformation that may be set for this node
     \o sets the nodes material onto the painter, if the material is valid
     \o calls draw() for all the child nodes
-    \o calls draw(start, count) on this nodes QGLGeometry object (if any)
+    \o calls draw(start, count) on this nodes geometry object (if any)
     \o restores the geometry's original material if it was changed
     \o restores the model-view matrix if any local transform was applied
     \endlist

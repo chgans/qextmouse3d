@@ -76,7 +76,7 @@
     \endcode
 
     Assuming that an appropriate QGLContext or QGLView is available, a
-    height map can be created and drawn immediately with the QGLGeometry::draw()
+    height map can be created and drawn immediately with the QGLDisplayList::draw()
     function.  Calculating the vertexes is expensive, however, and it is not
     recommend that a QGLHeightMap be recreated every update.
 

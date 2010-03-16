@@ -306,7 +306,7 @@
 
     \snippet displaylist/displaylist.cpp 1
 
-    Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
+    Call the \l{QGLSceneNode::palette()}{palette()} function on the scene node's
     geometry to get the QGLMaterialCollection for the node, and record textures
     and materials into it.  Typically a display lists nodes, and usually the
     whole application will share the one palette, so if you have a top-level
@@ -841,7 +841,7 @@ static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
 
     This function does the following:
     \list
-        \o packs all geometry data from sections into QGLGeomtry instances
+        \o packs all geometry data from sections into QGLSceneNode instances
         \o references this data via QGLSceneNode start() and count()
         \o uploads the data to the graphics hardware, if possible
         \o deletes all QGLSection instances in this list

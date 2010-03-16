@@ -46,7 +46,6 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qglgeometry.h"
 #include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 
