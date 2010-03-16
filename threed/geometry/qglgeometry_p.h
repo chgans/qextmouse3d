@@ -77,7 +77,7 @@ public:
     }
 
     QGL::DrawingMode drawingMode;
-    QGLIndexArray indexArray;
+    QGLIndexBuffer indexBuffer;
     QGLVertexBuffer vertexBuffer;
     int bufferThreshold;
     mutable bool modified;

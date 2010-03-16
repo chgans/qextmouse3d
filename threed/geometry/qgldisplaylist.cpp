@@ -45,7 +45,6 @@
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qglprimitive.h"
-#include "qglindexarray.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -505,7 +504,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     Q_D(QGLDisplayList);
     QGLPrimitive t = triangle;
     QVector3D save = t.commonNormal();
-    const QGLIndexArray indices = t.indices();
+    const QGL::IndexArray indices = t.indices();
     if (indices.isEmpty())
     {
         for (int i = 0; i < t.count() - 2; i += 3)
@@ -868,7 +867,7 @@ void QGLDisplayList::finalize()
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
-            QGLIndexArray indices = s->indices();
+            QGL::IndexArray indices = s->indices();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
             int scnt = s->count();

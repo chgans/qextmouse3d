@@ -43,7 +43,7 @@
 #define QGLGEOMETRY_H
 
 #include "qglnamespace.h"
-#include "qglindexarray.h"
+#include "qglindexbuffer.h"
 #include "qglvertexbuffer.h"
 #include "qbox3d.h"
 
@@ -71,8 +71,8 @@ public:
     QGLVertexBuffer vertexBuffer() const;
     void setVertexBuffer(const QGLVertexBuffer& buffer);
 
-    QGLIndexArray indexArray() const;
-    void setIndexArray(const QGLIndexArray& array);
+    QGLIndexBuffer indexBuffer() const;
+    void setIndexBuffer(const QGLIndexBuffer& buffer);
 
     int bufferThreshold() const;
     void setBufferThreshold(int value);

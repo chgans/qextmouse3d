@@ -157,7 +157,7 @@ void QGLGeometry::setDrawingMode(QGL::DrawingMode value)
 /*!
     Returns the vertex buffer for this geometry object.
 
-    \sa setVertexBuffer(), indexArray()
+    \sa setVertexBuffer(), indexBuffer()
 */
 QGLVertexBuffer QGLGeometry::vertexBuffer() const
 {
@@ -170,7 +170,7 @@ QGLVertexBuffer QGLGeometry::vertexBuffer() const
     vertex buffer is destroyed and ownership of \a buffer transfers
     to this geometry object.
 
-    \sa vertexBuffer(), setIndexArray(), isModified()
+    \sa vertexBuffer(), setIndexBuffer(), isModified()
 */
 void QGLGeometry::setVertexBuffer(const QGLVertexBuffer& buffer)
 {
@@ -187,12 +187,12 @@ void QGLGeometry::setVertexBuffer(const QGLVertexBuffer& buffer)
     The default value is an empty array, which indicates that all
     of the vertices in vertexBuffer() should be used for drawing.
     
-    \sa setIndexArray(), vertexBuffer()
+    \sa setIndexBuffer(), vertexBuffer()
 */
-QGLIndexArray QGLGeometry::indexArray() const
+QGLIndexBuffer QGLGeometry::indexBuffer() const
 {
     Q_D(const QGLGeometry);
-    return d->indexArray;
+    return d->indexBuffer;
 }
 
 /*!
@@ -203,12 +203,12 @@ QGLIndexArray QGLGeometry::indexArray() const
     If \a array is an empty array, then all of the vertices in
     vertexBuffer() will be used for drawing.
 
-    \sa indexArray(), setVertexBuffer(), isModified()
+    \sa indexBuffer(), setVertexBuffer(), isModified()
 */
-void QGLGeometry::setIndexArray(const QGLIndexArray& array)
+void QGLGeometry::setIndexBuffer(const QGLIndexBuffer& array)
 {
     Q_D(QGLGeometry);
-    d->indexArray = array;
+    d->indexBuffer = array;
     d->modified = true;
 }
 
@@ -307,7 +307,7 @@ void QGLGeometry::draw(QGLPainter *painter)
     Subclasses may implement their own caching or geometry
     subdivision policy by overriding draw().  The isModified() function
     can be used from the subclass to determine if the vertexBuffer()
-    or indexArray() values have changed since the last call to draw().
+    or indexBuffer() values have changed since the last call to draw().
 
     If a material has been set for this geometry with setMaterial(), then
     this is used to render the front faces.
@@ -350,14 +350,14 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
 
     // Draw the geometry.
     painter->setVertexBuffer(d->vertexBuffer);
-    if (d->indexArray.isEmpty()) {
+    if (d->indexBuffer.isEmpty()) {
         if (count == 0)
             count = d->vertexBuffer.vertexCount();
         painter->draw(d->drawingMode, count, start);
     } else {
         if (count == 0)
-            count = d->indexArray.size();
-        painter->draw(d->drawingMode, d->indexArray, start, count);
+            count = d->indexBuffer.indexCount();
+        painter->draw(d->drawingMode, d->indexBuffer, start, count);
     }
 
     if (save)
@@ -417,7 +417,7 @@ bool QGLGeometry::upload()
     }
 
     // Create the index buffer if necessary.
-    if (!d->indexArray.upload()) {
+    if (!d->indexBuffer.upload()) {
         if (haveVBOs) {
             qWarning() << "QGLGeometry: index buffer objects are not "
                           "supported by the GL server";
@@ -431,14 +431,14 @@ bool QGLGeometry::upload()
 }
 
 /*!
-    Returns true if setVertexBuffer() or setIndexArray() was called
+    Returns true if setVertexBuffer() or setIndexBuffer() was called
     since the last call to draw() or isModified(); false otherwise.
     
     This function is intended for use in subclasses that override
     draw() to determine if the geometry has changed since the last
     time it was drawn.
 
-    \sa setVertexBuffer(), setIndexArray()
+    \sa setVertexBuffer(), setIndexBuffer()
 */
 bool QGLGeometry::isModified() const
 {

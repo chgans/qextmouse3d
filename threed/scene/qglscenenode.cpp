@@ -564,7 +564,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         {
             QVector3DArray verts;
             QArray<QColor4B> colors;
-            QGLIndexArray indices = d->geometry->indices();
+            QGL::IndexArray indices = d->geometry->indices();
             for (int i = d->start; i < d->start + d->count; ++i)
             {
                 int ix = indices[i];

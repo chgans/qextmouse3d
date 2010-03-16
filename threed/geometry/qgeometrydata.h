@@ -44,7 +44,7 @@
 
 #include "qcolor4b.h"
 #include "qglnamespace.h"
-#include "qglindexarray.h"
+#include "qglindexbuffer.h"
 #include "qglvertexbuffer.h"
 #include "qglattributevalue.h"
 #include "qcustomdataarray.h"
@@ -61,6 +61,12 @@ class QGLPainter;
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
+
+#if defined(QT_OPENGL_ES)
+    typedef QArray<ushort> IndexArray;
+#else
+    typedef QArray<int> IndexArray;
+#endif
 };
 
 class Q_QT3D_EXPORT QGeometryData
@@ -97,11 +103,12 @@ public:
     void setBufferStrategy(BufferStrategy strategy);
     BufferStrategy bufferStrategy() const;
     QGLVertexBuffer vertexBuffer() const;
+    QGLIndexBuffer indexBuffer() const;
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);
-    void appendIndices(const QGLIndexArray &indices);
-    QGLIndexArray indices() const;
+    void appendIndices(const QGL::IndexArray &indices);
+    QGL::IndexArray indices() const;
 
     void appendVertex(const QVector3D &v0);
     void appendVertex(const QVector3D &v0, const QVector3D &v1);
