@@ -327,9 +327,9 @@ void QGLGeometry::draw(QGLPainter *painter, int start, int count)
     if (mPalette && mMaterial != -1)
     {
         save = painter->faceMaterial(QGL::FrontFaces);
-        painter->setFaceMaterial(QGL::FrontFaces,
-                                 mPalette->materialByIndex(mMaterial));
-        QGLTexture2D *tex = mPalette->texture(mMaterial);
+        QGLMaterial *mat = mPalette->material(mMaterial);
+        painter->setFaceMaterial(QGL::FrontFaces, mat);
+        QGLTexture2D *tex = mat->texture();
         if (tex) {
             painter->setTexture(tex);
             changedTex = true;

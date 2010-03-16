@@ -39,60 +39,49 @@
 **
 ****************************************************************************/
 
-#ifndef QGLMATERIALCOLLECTION_H
-#define QGLMATERIALCOLLECTION_H
+#ifndef QGLMATERIAL_P_H
+#define QGLMATERIAL_P_H
 
-#include <QtCore/qobject.h>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
-#include "qt3dglobal.h"
 #include "qglmaterial.h"
-#include "qgltexture2d.h"
+#include <QtCore/private/qobject_p.h>
+#include <QtCore/qmap.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-class QGLMaterialCollectionPrivate;
-
-class Q_QT3D_EXPORT QGLMaterialCollection : public QObject
+class QGLMaterialPrivate : public QObjectPrivate
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLMaterialCollection)
-    Q_DISABLE_COPY(QGLMaterialCollection)
+    Q_DECLARE_PUBLIC(QGLMaterial)
 public:
-    QGLMaterialCollection(QObject *parent = 0);
-    virtual ~QGLMaterialCollection();
+    explicit QGLMaterialPrivate(int version = QObjectPrivateVersion);
 
-    QGLMaterial *material(int index) const;
-    QGLMaterial *material(const QString &name) const;
-
-    bool contains(QGLMaterial *material) const;
-    bool contains(const QString &name) const;
-
-    int indexOf(QGLMaterial *material) const;
-    int indexOf(const QString &name) const;
-
-    QString materialName(int index) const;
-
-    bool isMaterialUsed(int index) const;
-    void markMaterialAsUsed(int index);
-    void removeUnusedMaterials();
-
-    int addMaterial(QGLMaterial *material);
-    void removeMaterial(QGLMaterial *material);
-    QGLMaterial *removeMaterial(int index);
-
-    bool isEmpty() const;
-    int size() const;
-
-private slots:
-    void materialDeleted();
+    QColor basicColor;
+    QColor ambientColor;
+    QColor diffuseColor;
+    QColor specularColor;
+    QColor emittedLight;
+    qreal shininess;
+    QMap<int, QGLTexture2D *> textures;
+    QGLMaterialCollection *collection;
+    int index;
+    QString name;
+    bool used;
 };
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // QGLMATERIALCOLLECTION_H
+#endif

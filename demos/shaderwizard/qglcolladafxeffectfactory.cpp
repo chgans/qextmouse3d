@@ -229,6 +229,10 @@ QGLColladaParam::QGLColladaParam( QString sid, float x, float y, float z ) : mSi
 }
 
 
+QGLColladaParam::~QGLColladaParam()
+{
+
+}
 
 /*!
   \internal

@@ -159,7 +159,7 @@ void QGL3dsMesh::analyzeMesh()
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         face = &m_mesh->faceL[f];
-        int matIx = pal->materialIndexByName(face->material);
+        int matIx = pal->indexOf(face->material);
 #ifndef QT_NO_DEBUG_STREAM
         if (matIx == -1 && strlen(face->material) != 0)
             qDebug("Bad .3ds file: no material %s! (Referenced in mesh %s)\n",
@@ -188,7 +188,8 @@ void QGL3dsMesh::analyzeMesh()
         }
         if (!m_plainMaterials.contains(matIx) && !m_textureMaterials.contains(matIx))
         {
-            if (pal->texture(matIx))
+            QGLMaterial *mat = pal->material(matIx);
+            if (mat && mat->texture())
                 m_textureMaterials.insert(matIx);
             else
                 m_plainMaterials.insert(matIx);
@@ -205,7 +206,8 @@ void QGL3dsMesh::analyzeMesh()
 */
 void QGL3dsMesh::checkTextures(int material)
 {
-    QGLTexture2D *tex = palette()->texture(material);
+    QGLMaterial *mat = palette()->material(material);
+    QGLTexture2D *tex = (mat ? mat->texture() : 0);
     m_hasTextures = false;
     if (tex)
     {
@@ -274,7 +276,7 @@ void QGL3dsMesh::generateVertices()
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             {
                 Lib3dsFace *face = &m_mesh->faceL[f];
-                if (palette()->materialIndexByName(face->material) == matIx &&
+                if (palette()->indexOf(face->material) == matIx &&
                     ((key & face->smoothing) || (key == 1 && face->smoothing == 0)))
                 {
                     Lib3dsVector &l3a = m_mesh->pointL[face->points[0]].pos;

@@ -542,9 +542,9 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (d->palette && d->material != -1)
     {
         saveMat = painter->faceMaterial(QGL::FrontFaces);
-        painter->setFaceMaterial(QGL::FrontFaces,
-                                 d->palette->materialByIndex(d->material));
-        QGLTexture2D *tex = d->palette->texture(d->material);
+        QGLMaterial *mat = d->palette->material(d->material);
+        painter->setFaceMaterial(QGL::FrontFaces, mat);
+        QGLTexture2D *tex = mat->texture(d->material);
         if (tex)
         {
             painter->setTexture(tex);

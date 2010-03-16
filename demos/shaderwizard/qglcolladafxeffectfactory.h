@@ -63,11 +63,6 @@ class QGLColladaParam
 {
     friend class QGLColladaFxEffectFactory;
 public:
-    QGLColladaParam( QString sid, float f );
-    QGLColladaParam( QString sid, float x, float y );
-    QGLColladaParam( QString sid, float x, float y, float z );
-    QGLColladaParam( QString sid, float x, float y, float z, float w);
-
     enum {
         UnknownType = 0,
         floatType,
@@ -82,11 +77,19 @@ public:
         UserDefinedType = 100
     };
 
+    QGLColladaParam( QString sid, float f );
+    QGLColladaParam( QString sid, float x, float y );
+    QGLColladaParam( QString sid, float x, float y, float z );
+    QGLColladaParam( QString sid, float x, float y, float z, float w);
+    virtual ~QGLColladaParam();
+
     int type();
     QVector<float> value();
     QString sid();
     QString id();
+
     static QString typeString(int);
+
 protected:
     QGLColladaParam(QString sid, int type);
     QString mSid;
