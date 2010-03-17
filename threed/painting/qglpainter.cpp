@@ -1871,67 +1871,16 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
-    This operation will consume all of the elements of \a indices,
+    This operation will consume \a count elements of \a indices,
     which are used to index into the enabled arrays.
 
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
+    \sa update()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
+void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
 {
     update();
     checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        glDrawElements((GLenum)mode, indices.size(), indices.type(),
-                       reinterpret_cast<const char *>(0));
-        indices.release();
-    } else {
-        glDrawElements((GLenum)mode, indices.size(),
-                       indices.type(), indices.constData());
-    }
-}
-
-/*!
-    \overload
-
-    Draws primitives using vertices from the arrays specified by
-    setVertexAttribute().  The type of primitive to draw is
-    specified by \a mode.
-
-    This operation will consume \a count elements of \a indices,
-    starting at \a offset, which are used to index into the enabled arrays.
-
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
-*/
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
-                      int offset, int count)
-{
-    Q_ASSERT(offset >= 0 && count >= 0 && (offset + count) <= indices.size());
-    update();
-    checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(ushort)));
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(int)));
-        }
-        indices.release();
-    } else {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const ushort *>(indices.constData()) + offset);
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const int *>(indices.constData()) + offset);
-        }
-    }
+    glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
 }
 
 /*!
@@ -2295,12 +2244,7 @@ static QGLMaterial *createColorMaterial
         material = prev;
     else
         material = new QGLMaterial();
-    material->setAmbientColor
-        (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
-                          color.blueF() * 0.2, color.alphaF()));
-    material->setDiffuseColor
-        (QColor::fromRgbF(color.redF() * 0.8, color.greenF() * 0.8,
-                          color.blueF() * 0.8, color.alphaF()));
+    material->setColor(color);
     return material;
 }
 

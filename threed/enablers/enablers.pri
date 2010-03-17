@@ -4,9 +4,7 @@ HEADERS += \
     qglattributevalue.h \
     qglcontextscope.h \
     qglcontextwatcher.h \
-    qglindexarray.h \
     qglindexbuffer.h \
-    qglreferencedbuffer.h \
     qgltexture2d.h \
     qgltexturecube.h \
     qglvertexbuffer.h \
@@ -16,7 +14,6 @@ HEADERS += \
 SOURCES += qglattributevalue.cpp \
     qglcontextscope.cpp \
     qglcontextwatcher.cpp \
-    qglindexarray.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \

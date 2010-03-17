@@ -73,7 +73,7 @@ private slots:
     void finalize();
 };
 
-// Indices in a QGLIndexArray are int on desktop, ushort on OpenGL/ES.
+// Indices in a QGL::IndexArray are int on desktop, ushort on OpenGL/ES.
 // This macro works around the discrepancy to avoid confusing QCOMPARE.
 #define QCOMPARE_INDEX(x,y)     QCOMPARE(int(x), int(y))
 
@@ -745,7 +745,7 @@ void tst_QGLDisplayList::extrude()
     QCOMPARE(sec->count(), 8);
     QVector3DArray vrts = sec->vertices();
     QVector3DArray nrms = sec->normals();
-    QGLIndexArray inxs = sec->indices();
+    QGL::IndexArray inxs = sec->indices();
 
     QCOMPARE(vrts.count(), 8);
     QCOMPARE(vrts.at(0), edges.at(0) - n);
@@ -872,7 +872,7 @@ void tst_QGLDisplayList::finalize()
     QCOMPARE(displayList.sections().count(), 0);
 
     QGeometryData *geom = node->geometry();
-    QGLIndexArray ids = geom->indices();
+    QGL::IndexArray ids = geom->indices();
 
     QCOMPARE(geom->count(QGL::Position), 13);
     QCOMPARE(ids.size(), 36);
@@ -910,7 +910,7 @@ void tst_QGLDisplayList::finalize()
     QVERIFY(node3->geometry() != geom);
 
     geom = node3->geometry();
-    QGLIndexArray ids2 = geom->indices();
+    QGL::IndexArray ids2 = geom->indices();
 
     int tri = ids2[node->start()];
     QCOMPARE(geom->vertex(tri), e);

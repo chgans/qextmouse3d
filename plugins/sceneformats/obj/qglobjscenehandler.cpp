@@ -235,11 +235,12 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             QString materialName = QString::fromLocal8Bit(line.mid(posn));
             if (!materialName.isEmpty() &&
                 materialName != QLatin1String("(null)")) {
-                index = palette->materialIndexByName(materialName);
+                index = palette->indexOf(materialName);
                 if (index != -1) {
                     QGLSceneNode *node = dlist->newNode();
                     node->setMaterial(index);
-                    if (palette->texture(index))
+                    QGLMaterial *material = palette->material(index);
+                    if (material->texture())
                         node->setEffect(QGL::LitDecalTexture2D);
                     else
                         node->setEffect(QGL::LitMaterial);
@@ -334,10 +335,10 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
             // Start a new material definition.
             posn = objSkipWS(line, posn);
             materialName = QString::fromLocal8Bit(line.mid(posn));
-            index = palette->materialIndexByName(materialName);
+            index = palette->indexOf(materialName);
             if (index != -1) {
                 qWarning() << "redefining obj material:" << materialName;
-                material = palette->materialByIndex(index);
+                material = palette->material(index);
             } else {
                 material = new QGLMaterial();
                 material->setObjectName(materialName);
@@ -361,11 +362,14 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
             textureName = QString::fromLocal8Bit(line.mid(posn));
             QGLTexture2D *texture = loadTexture(textureName);
             if (texture) {
-                index = palette->materialIndexByName(materialName);
-                if (index >= 0)
-                    palette->setTexture(index, texture);
-                else
+                index = palette->indexOf(materialName);
+                if (index >= 0) {
+                    QGLMaterial *material = palette->material(index);
+                    texture->setParent(material);
+                    material->setTexture(texture);
+                } else {
                     delete texture;
+                }
             }
         } else if (keyword == "d") {
             // "Dissolve factor" of the material, which is its opacity.

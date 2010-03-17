@@ -1,10 +1,9 @@
 load(qttest_p4.prf)
-TARGET=qglindexarray
 TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglindexarray.cpp
+SOURCES += tst_qglmaterialcollection.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 

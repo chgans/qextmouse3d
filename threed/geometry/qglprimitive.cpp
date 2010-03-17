@@ -50,7 +50,7 @@
     \ingroup qt3d::geometry
 
     Use QGLPrimitive instances to pass defining geometry information into
-    QGLGeometry calls.  As a subclass of QGLGeometry, QGLPrimitive inherits
+    QGeometryData calls.  As a subclass of QGeometryData, QGLPrimitive inherits
     all the low-level vertex and other data definition functions.  QGLPrimitive
     adds the setFlags() functions for defining how QGLDisplayList
     will treat that data when definining primitives.

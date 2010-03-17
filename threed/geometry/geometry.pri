@@ -2,7 +2,6 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += qglcube.h \
     qglsphere.h \
-    qglgeometry.h \
     qgeometrydata.h \
     qlogicalvertex.h \
     qgldisplaylist.h \
@@ -13,7 +12,6 @@ HEADERS += qglcube.h \
     qgloperation.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
-    qglgeometry.cpp \
     qgeometrydata.cpp \
     qgldisplaylist.cpp \
     qglsection.cpp \
@@ -24,7 +22,6 @@ SOURCES += qglcube.cpp \
     qgloperation.cpp \
     qglprimitive.cpp
 PRIVATE_HEADERS += qglteapot_data_p.h \
-    qglgeometry_p.h \
     qgldisplaylist_p.h \
     qglsection_p.h \
     qgldisplaylist_p.h \

@@ -130,9 +130,9 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QImage soupLabel(":/images/qt-soup.png");
     if (soupLabel.isNull())
         qWarning("Could not load texture :/images/qt-soup.png");
-    QGLTexture2D *tex = new QGLTexture2D();
+    QGLTexture2D *tex = new QGLTexture2D(parms);
     tex->setImage(soupLabel);
-    mats->setTexture(canMat, tex);
+    parms->setTexture(tex);
 
     // default effect for can where no other effect set
     soupCan->setEffect(QGL::LitMaterial);

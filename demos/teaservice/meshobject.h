@@ -44,7 +44,6 @@
 
 #include <QtCore/qobject.h>
 #include <QtGui/qevent.h>
-#include "qglgeometry.h"
 #include "qglpainter.h"
 #include "qglsceneobject.h"
 #include "qgldisplaylist.h"

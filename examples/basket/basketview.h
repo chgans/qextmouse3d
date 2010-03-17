@@ -46,7 +46,6 @@
 #include "qgltexture2d.h"
 #include "qgldisplaylist.h"
 
-class QGLGeometry;
 class QTimer;
 
 class BasketView : public QGLView

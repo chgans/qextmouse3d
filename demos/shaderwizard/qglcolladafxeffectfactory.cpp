@@ -137,33 +137,6 @@ QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, 
 {
     QStringList result;
 
-    //    QList<QGL::VertexAttribute> requiredFields() const;
-    //    bool supportsPicking() const;
-    //    void setVertexAttribute(QGL::VertexAttribute attribute,
-    //                            const QGLAttributeValue& value);
-    //
-    //    QString vertexShader = effect->vertexShader();
-    //    QString fragmentShader = effect->fragmentShader();
-    //    QGLMaterial* material = effect->material();
-    //
-    //    virtual void bindProgramAttributes();
-    //    virtual void bindProgramUniforms();
-    //
-    //private:
-    //    int colorUniform;
-    //    int colorAttribute;
-    //
-    //    int matrixUniform;
-    //    int timeUniform;
-    //    int lightDirectionUniform;
-    //
-    //    bool textureAttributeSet;
-    //    int textureId;
-    //
-    //    QGLShaderProgramEffectPrivate* privateObject = effect->d;
-    //    QGLMaterial* material = privateObject->material;
-    //    d->QGLShaderProgram *program = privateObject->program;
-
     result += "<?xml version=\"1.0\"?>";
 
     result += "<COLLADA "\
@@ -256,6 +229,10 @@ QGLColladaParam::QGLColladaParam( QString sid, float x, float y, float z ) : mSi
 }
 
 
+QGLColladaParam::~QGLColladaParam()
+{
+
+}
 
 /*!
   \internal

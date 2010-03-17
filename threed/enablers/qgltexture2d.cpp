@@ -156,12 +156,12 @@ void QGLTexture2DPrivate::destroyedContext(const QGLContext *context)
 }
 
 /*!
-    Constructs a null texture object.
+    Constructs a null texture object and attaches it to \a parent.
 
     \sa isNull()
 */
-QGLTexture2D::QGLTexture2D()
-    : d_ptr(new QGLTexture2DPrivate())
+QGLTexture2D::QGLTexture2D(QObject *parent)
+    : QObject(parent), d_ptr(new QGLTexture2DPrivate())
 {
 }
 

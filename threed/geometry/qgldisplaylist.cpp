@@ -45,7 +45,6 @@
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qglprimitive.h"
-#include "qglindexarray.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -307,7 +306,7 @@
 
     \snippet displaylist/displaylist.cpp 1
 
-    Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
+    Call the \l{QGLSceneNode::palette()}{palette()} function on the scene node's
     geometry to get the QGLMaterialCollection for the node, and record textures
     and materials into it.  Typically a display lists nodes, and usually the
     whole application will share the one palette, so if you have a top-level
@@ -505,7 +504,7 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
     Q_D(QGLDisplayList);
     QGLPrimitive t = triangle;
     QVector3D save = t.commonNormal();
-    const QGLIndexArray indices = t.indices();
+    const QGL::IndexArray indices = t.indices();
     if (indices.isEmpty())
     {
         for (int i = 0; i < t.count() - 2; i += 3)
@@ -842,7 +841,7 @@ static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
 
     This function does the following:
     \list
-        \o packs all geometry data from sections into QGLGeomtry instances
+        \o packs all geometry data from sections into QGLSceneNode instances
         \o references this data via QGLSceneNode start() and count()
         \o uploads the data to the graphics hardware, if possible
         \o deletes all QGLSection instances in this list
@@ -868,7 +867,7 @@ void QGLDisplayList::finalize()
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
-            QGLIndexArray indices = s->indices();
+            QGL::IndexArray indices = s->indices();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
             int scnt = s->count();
