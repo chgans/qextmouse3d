@@ -1860,7 +1860,8 @@ void QGLPainter::update()
         updates |= UpdateModelViewMatrix;
     if (d->projectionMatrix.updateServer())
         updates |= UpdateProjectionMatrix;
-    d->effect->update(this, updates);
+    if (updates != 0)
+        d->effect->update(this, updates);
 }
 
 /*!
