@@ -54,7 +54,7 @@
 #include <QtCore/qmath.h>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglcolladafxeffect.h"
 #include "qglcolladafxeffectfactory.h"
@@ -93,7 +93,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
         , mSceneRoot(0)
         , mLightParameters(new QGLLightParameters(this))
         , mLightModel(new QGLLightModel(this))
-        , mMaterial(new QGLMaterialParameters())
+        , mMaterial(new QGLMaterial())
         , mMaterialCollection(new QGLMaterialCollection(this))
         , mTexture(new QGLTexture2D())
         , cube(0)
@@ -207,7 +207,7 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
         if(!mSceneNode->palette())
             mSceneNode->setPalette(mMaterialCollection);
         mMaterialCollection->setParent(mSceneNode);
-        int materialIndex = mSceneNode->palette()->materialIndexByName("ShaderWizardGLWidgetMaterial");
+        int materialIndex = mSceneNode->palette()->indexOf("ShaderWizardGLWidgetMaterial");
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
         mSceneNode->setMaterial(materialIndex);

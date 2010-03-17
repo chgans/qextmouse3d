@@ -48,8 +48,9 @@
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
 #include <QtGui/qevent.h>
-#include <QtDeclarative/qmlcontext.h>
-#include <QtDeclarative/private/qmlstategroup_p.h>
+#include <QtDeclarative/qdeclarativecontext.h>
+#include <QtDeclarative/private/qdeclarativestategroup_p.h>
+#include <QtDeclarative/private/qdeclarativeitem_p.h>
 
 /*!
     \class Item3d
@@ -220,7 +221,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Item3d,Item3d)
+//QML_DEFINE_TYPE(Qt,4,6,Item3d,Item3d)
 
 class Item3dPrivate
 {
@@ -235,7 +236,6 @@ public:
         , objectPickId(-1)
         , cullFaces(Item3d::CullDisabled)
         , _stateGroup(0)
-       // , targetNode(0)
         , inheritEvents(false)
         , isVisible(true)
         , isInitialized(false)
@@ -250,220 +250,178 @@ public:
     Effect *effect;    
     int objectPickId;
     Item3d::CullFaces cullFaces;
-    QmlStateGroup *states();
-    QmlStateGroup *_stateGroup;
+    QDeclarativeStateGroup *states();
+    QDeclarativeStateGroup *_stateGroup;
+
     bool inheritEvents;
     bool isVisible;
     bool isInitialized;
     int mainBranchId;
     QString name;
     QString meshNode;
-    
+
     // data property
-    void data_removeAt(int);
-    int data_count() const;
-    void data_append(QObject *);
-    void data_insert(int, QObject *);
-    QObject *data_at(int) const;
-    void data_clear();
-    QML_DECLARE_LIST_PROXY(Item3dPrivate, QObject *, data)
-
+    static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
+    
     // resources property
-    void resources_removeAt(int);
-    int resources_count() const;
-    void resources_append(QObject *);
-    void resources_insert(int, QObject *);
-    QObject *resources_at(int) const;
-    void resources_clear();
-    QML_DECLARE_LIST_PROXY(Item3dPrivate, QObject *, resources)
+    static QObject *resources_at(QDeclarativeListProperty<QObject> *, int);
+    static void resources_append(QDeclarativeListProperty<QObject> *, QObject *);
+    static int resources_count(QDeclarativeListProperty<QObject> *);
 
-    // children property
-    void children_removeAt(int);
-    int children_count() const;
-    void children_append(Item3d *);
-    void children_insert(int, Item3d *);
-    Item3d *children_at(int) const;
-    void children_clear();
-    QML_DECLARE_LIST_PROXY(Item3dPrivate, Item3d *, children)
-    QList<Item3d *> childrenList;
+    //// children property
+    static Item3d *children_at(QDeclarativeListProperty<Item3d> *, int);
+    static void children_append(QDeclarativeListProperty<Item3d> *, Item3d *);
+    static int children_count(QDeclarativeListProperty<Item3d> *);
 
     // transform property
-    void transform_removeAt(int);
-    int transform_count() const;
-    void transform_append(QGraphicsTransform *);
-    void transform_insert(int, QGraphicsTransform *);
-    QGraphicsTransform *transform_at(int) const;
-    void transform_clear();
-    QML_DECLARE_LIST_PROXY(Item3dPrivate, QGraphicsTransform *, transform)
+    static int transform_count(QDeclarativeListProperty<QGraphicsTransform> *list);
+    static void transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
+    static QGraphicsTransform *transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
+    static void transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
     QList<QGraphicsTransform *> transforms;
 
 
 };
 
-void Item3dPrivate::transform_removeAt(int i)
-{
-    transforms.removeAt(i);
-    item->update();
-}
 
-int Item3dPrivate::transform_count() const
-{
-    return transforms.count();
-}
-
-void Item3dPrivate::transform_append(QGraphicsTransform *item)
-{
-    if (!transforms.contains(item)) {
-        transforms.append(item);
-
-        // XXX - need a better way of doing this.
-        if (qobject_cast<QGraphicsScale *>(item)) {
-            QObject::connect(item, SIGNAL(originChanged()),
-                             this->item, SLOT(update()));
-            QObject::connect(item, SIGNAL(scaleChanged()),
-                             this->item, SLOT(update()));
-        } else if (qobject_cast<QGraphicsRotation *>(item)) {
-            QObject::connect(item, SIGNAL(originChanged()),
-                             this->item, SLOT(update()));
-            QObject::connect(item, SIGNAL(angleChanged()),
-                             this->item, SLOT(update()));
-            QObject::connect(item, SIGNAL(axisChanged()),
-                             this->item, SLOT(update()));
-        }
-
-        this->item->update();
+int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
+{  
+    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
+    if (object) {
+        QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
+        return d->transformData ? d->transformData->graphicsTransforms.size() : 0;
+    } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
+        return 0;
     }
 }
 
-void Item3dPrivate::transform_insert(int, QGraphicsTransform *)
+void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
 {
-    // ###
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    QList<QGraphicsTransform *> *ptrans;
+    if (object)
+    {
+        ptrans = &object->d->transforms;
+
+        //We now need to connect the underlying transform so that any change will update the graphical item.
+        if (!ptrans->contains(item)) {
+            ptrans->append(item);            
+            if (qobject_cast<QGraphicsScale *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(scaleChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsRotation *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(angleChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(axisChanged()),
+                                 object, SLOT(update()));
+            }
+        }
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to add transformation to.";
 }
 
-QGraphicsTransform *Item3dPrivate::transform_at(int idx) const
-{
-    return transforms.at(idx);
-}
-
-void Item3dPrivate::transform_clear()
-{
-    transforms.clear();
-    item->update();
-}
-
-
-void Item3dPrivate::data_removeAt(int)
-{
-    // ###
-}
-
-int Item3dPrivate::data_count() const
-{
-    // ###
+QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
+{    
+   Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        return object->d->transforms.at(idx);
+    } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformations";
+        return 0;
+    }
     return 0;
 }
 
-void Item3dPrivate::data_append(QObject *o)
+void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
+{
+
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        object->d->transforms.clear();
+        object->update();
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to clear of transformations";
+}
+
+
+
+void Item3dPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
     Item3d *i = qobject_cast<Item3d *>(o);
-    if (i)
-        item->children()->append(i);
+    if (i) 
+        i->setParent(static_cast<Item3d *>(prop->object));
     else
-        resources_append(o);
+        o->setParent(static_cast<Item3d *>(prop->object));
 }
 
-void Item3dPrivate::data_insert(int, QObject *)
+
+QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, int index)
 {
-    // ###
+    QObjectList children = prop->object->children();
+    if (index < children.count())
+        return children.at(index);
+    else
+        return 0;
 }
 
-QObject *Item3dPrivate::data_at(int) const
+void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
-    // ###
-    return 0;
+    o->setParent(prop->object);
 }
 
-void Item3dPrivate::data_clear()
+int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject> *prop)
 {
-    // ###
+    return prop->object->children().count();
 }
 
-void Item3dPrivate::resources_removeAt(int)
+Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<Item3d> *prop, int index)
 {
-    // ###
+    QObjectList thechildren = static_cast<Item3d*>(prop->object)->children();
+
+    if (index < thechildren.count())
+        return qobject_cast<Item3d *>(thechildren.at(index));
+    else
+        return 0;
 }
 
-int Item3dPrivate::resources_count() const
+void Item3dPrivate::children_append(QDeclarativeListProperty<Item3d> *prop, Item3d *i)
 {
-    // ###
-    return 0;
-}
+    if (i)
+    {
+        i->setParent(static_cast<QObject*>(prop->object));
 
-void Item3dPrivate::resources_append(QObject *o)
-{
-    o->setParent(item);
-}
-
-void Item3dPrivate::resources_insert(int, QObject *)
-{
-    // ###
-}
-
-QObject *Item3dPrivate::resources_at(int) const
-{
-    // ###
-    return 0;
-}
-
-void Item3dPrivate::resources_clear()
-{
-    // ###
-}
-
-void Item3dPrivate::children_removeAt(int idx)
-{
-    childrenList.removeAt(idx);
-}
-
-int Item3dPrivate::children_count() const
-{
-    return childrenList.count();
-}
-
-void Item3dPrivate::children_append(Item3d *newItem)
-{
-    childrenList.append(newItem);
-    newItem->setParent(item);
-
-    if (inheritEvents) {
-        QObject::connect(newItem, SIGNAL(clicked()), item, SIGNAL(clicked()));
-        QObject::connect(newItem, SIGNAL(doubleClicked()), item, SIGNAL(doubleClicked()));
-        QObject::connect(newItem, SIGNAL(pressed()), item, SIGNAL(pressed()));
-        QObject::connect(newItem, SIGNAL(released()), item, SIGNAL(released()));
-        QObject::connect(newItem, SIGNAL(hoverEnter()), item, SIGNAL(hoverEnter()));
-        QObject::connect(newItem, SIGNAL(hoverLeave()), item, SIGNAL(hoverLeave()));
+        //Because this is now a static function, we can no longer apply the following :-(
+        //however it is still carried out in the "initialize" function of Item3d.
+        /*
+        if (inheritEvents) {
+            QObject::connect(i, SIGNAL(clicked()), item, SIGNAL(clicked()));
+            QObject::connect(i, SIGNAL(doubleClicked()), item, SIGNAL(doubleClicked()));
+            QObject::connect(i, SIGNAL(pressed()), item, SIGNAL(pressed()));
+            QObject::connect(i, SIGNAL(released()), item, SIGNAL(released()));
+            QObject::connect(i, SIGNAL(hoverEnter()), item, SIGNAL(hoverEnter()));
+            QObject::connect(i, SIGNAL(hoverLeave()), item, SIGNAL(hoverLeave()));
+        }
+        */
     }
 }
 
-void Item3dPrivate::children_insert(int idx, Item3d *newItem)
+int Item3dPrivate::children_count(QDeclarativeListProperty<Item3d> *prop)
 {
-    childrenList.insert(idx, newItem);
+    return static_cast<Item3d*>(prop->object)->children().count();
 }
 
-Item3d *Item3dPrivate::children_at(int idx) const
-{
-    return childrenList.at(idx);
-}
 
-void Item3dPrivate::children_clear()
-{
-    childrenList.clear();
-}
-
-QmlStateGroup *Item3dPrivate::states()
+QDeclarativeStateGroup *Item3dPrivate::states()
 {
     if (!_stateGroup) {
-        _stateGroup = new QmlStateGroup(item);
+        _stateGroup = new QDeclarativeStateGroup(item);
         _stateGroup->classBegin();
         QObject::connect(_stateGroup, SIGNAL(stateChanged(QString)),
                          item, SIGNAL(stateChanged(QString)));
@@ -471,6 +429,7 @@ QmlStateGroup *Item3dPrivate::states()
 
     return _stateGroup;
 }
+
 
 /*!
     Constructs an \l Item3d with the default properties and
@@ -624,11 +583,13 @@ void Item3d::setScale(qreal value)
 
     By default this list of transformations is empty.
 */
-QmlList<QGraphicsTransform *>* Item3d::transform()
-{
-    return &(d->transform);
-}
 
+
+QDeclarativeListProperty<QGraphicsTransform> Item3d::transform()
+{
+    return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->transform_append, d->transform_count,
+                                               d->transform_at, d->transform_clear);
+}
 
 /*!
     \property Item3d::inheritEvents
@@ -766,12 +727,16 @@ void Item3d::setEffect(Effect *value)
 }
 
 
+
 /*!
-    
+    \property Item3d::children
+    \brief This property exists to allow declaration of specific child items for the Item3d.
 */
-QmlList<Item3d *> *Item3d::children()
+QDeclarativeListProperty<Item3d> Item3d::fxChildren()
 {
-    return &(d->children);
+    return QDeclarativeListProperty<Item3d>(this, 0, Item3dPrivate::children_append,
+                                                     Item3dPrivate::children_count, 
+                                                     Item3dPrivate::children_at); 
 }
 
 /*!
@@ -779,19 +744,23 @@ QmlList<Item3d *> *Item3d::children()
     \brief This property exists to allow future expansion of the \i Item3d class to include
     additional data and resources.  Currently there is no underlying implementation for this.
 */
-QmlList<QObject *> *Item3d::resources()
+QDeclarativeListProperty<QObject> Item3d::resources()
 {
-    return &(d->resources);
+    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::resources_append, 
+                                             Item3dPrivate::resources_count, 
+                                             Item3dPrivate::resources_at); 
 }
+
+
 
 /*!
     \property Item3d::data
-    \brief This property exists to allow future expansion of the \l Item3d class to include
+    \brief This property exists to allow future expansion of the \i Item3d class to include
     additional data and resources.  Currently there is no underlying implementation for this.
 */
-QmlList<QObject *> *Item3d::data()
+QDeclarativeListProperty<QObject> Item3d::data() 
 {
-    return &(d->data);
+    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::data_append);
 }
 
 /*!
@@ -807,19 +776,19 @@ QmlList<QObject *> *Item3d::data()
 
     By default the list of valid states for the item is empty.
 
-    /sa state(), QMLState, transitions()
+    /sa state(), QDeclarativeState, transitions()
 */
-QmlList<QmlState *>* Item3d::states()
-{
+QDeclarativeListProperty<QDeclarativeState> Item3d::states()
+{    
     return d->states()->statesProperty();
 }
 
 /*!
     Occasionally it is necessary to find a given state based on its \a name as expressed by a 
     string.  This function allows users to do so by providing a QString name, and returning
-    a corresponding QmlState.
+    a corresponding QDeclarativeState.
 */
-QmlState *Item3d::findState(const QString &name) const
+QDeclarativeState *Item3d::findState(const QString &name) const
 {
     if (!d->_stateGroup)
         return 0;
@@ -838,13 +807,14 @@ QmlState *Item3d::findState(const QString &name) const
     
     As with states, by default there are no transitions defined.
     
-    /sa state(), QMLState, states()
+    /sa state(), QDeclarativeState, states()
     
 */
-QmlList<QmlTransition *>* Item3d::transitions()
-{
+QDeclarativeListProperty<QDeclarativeTransition> Item3d::transitions()
+{    
     return d->states()->transitionsProperty();
 }
+
 
 /*!
     \property Item3d::state
@@ -987,12 +957,22 @@ void Item3d::draw(QGLPainter *painter)
     //1) Item Transforms
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
-    if (!d->transforms.isEmpty()) {
+    //QDeclarativeListProperty<QGraphicsTransform> transformList = transform();
+    //int transformCount = d->transform_count(&transformList);
+    int transformCount = d->transforms.count();
+    if (transformCount>0) {
+    //if (!d->transforms.isEmpty()) {
         // The transformations are applied in reverse order of their
         // lexical appearance in the QML file.
         QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = d->transforms.size() - 1; index >= 0; --index)
-            d->transforms[index]->applyTo(&m);
+        //for (int index = d->transforms.size() - 1; index >= 0; --index)
+        for (int index = transformCount - 1; index >= 0; --index) {
+            //QGraphicsTransform *trans = d->transform_at(&transformList,index);
+            //trans->applyTo(&m);
+            //if (d->transforms[index]->
+            d->transforms.at(index)->applyTo(&m);
+        }
+            
         painter->modelViewMatrix() = m;
     }
     if (d->scale != 1.0f)
@@ -1136,7 +1116,7 @@ void Item3d::drawItem(QGLPainter *painter)
 /*!
     This function handles the standard mouse events for the item as contained in \a e.
 
-    Returns the boolean value of the regular QObject::event() function.
+    Returns the boolean value of the regular QObject::event() function.oo
 */
 bool Item3d::event(QEvent *e)
 {

@@ -110,7 +110,7 @@ void MeshObject::draw(QGLPainter *painter)
         painter->modelViewMatrix().rotate(m_rotationAngle, m_rotationVector);
 
     // Apply the material and effect to the painter.
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (m_hovering)
         material = m_hoverMaterial;
     else

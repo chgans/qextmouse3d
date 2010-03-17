@@ -47,7 +47,6 @@
 #include "qglview.h"
 #include "qglteapot.h"
 
-class QGLGeometry;
 class QTimer;
 
 class VideoView : public QGLView

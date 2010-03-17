@@ -306,7 +306,7 @@ void QGLLitMaterialEffect::update
         QVector4D scm[MaxMaterials];
         QVector4D ecm[MaxMaterials];
         float srm[MaxMaterials];
-        const QGLMaterialParameters *mparams = painter->faceMaterial(QGL::FrontFaces);
+        const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
         acm[0] = colorToVector4(mparams->ambientColor());
         dcm[0] = colorToVector4(mparams->diffuseColor());
         scm[0] = colorToVector4(mparams->specularColor());

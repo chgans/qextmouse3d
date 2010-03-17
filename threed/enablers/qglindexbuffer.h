@@ -39,45 +39,66 @@
 **
 ****************************************************************************/
 
-#include <QtTest/QtTest>
-#include "qglgeometry.h"
+#ifndef QGLINDEXBUFFER_H
+#define QGLINDEXBUFFER_H
 
-class tst_QGLGeometry : public QObject
+#include <QtOpenGL/qgl.h>
+#include <QtOpenGL/qglbuffer.h>
+#include "qglnamespace.h"
+#include "qarray.h"
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QGLIndexBufferPrivate;
+class QGLPainter;
+
+class Q_QT3D_EXPORT QGLIndexBuffer
 {
-    Q_OBJECT
 public:
-    tst_QGLGeometry() {}
-    ~tst_QGLGeometry() {}
+    QGLIndexBuffer();
+    QGLIndexBuffer(const QGLIndexBuffer& other);
+    ~QGLIndexBuffer();
 
-private slots:
-    void create();
-    void accessors();
+    QGLIndexBuffer& operator=(const QGLIndexBuffer& other);
+
+    QGLBuffer::UsagePattern usagePattern() const;
+    void setUsagePattern(QGLBuffer::UsagePattern value);
+
+    void setIndices(const QArray<ushort>& values);
+    void replaceIndices(int index, const QArray<ushort>& values);
+
+#if !defined(QT_OPENGL_ES) || defined(qdoc)
+    void setIndices(const QArray<int>& values);
+    void replaceIndices(int index, const QArray<int>& values);
+#endif
+
+    GLenum elementType() const;
+
+    int indexCount() const;
+    bool isEmpty() const { return indexCount() == 0; }
+
+    bool upload();
+    bool isUploaded() const;
+
+    QGLBuffer *buffer() const;
+
+    bool bind() const;
+    void release() const;
+
+private:
+    QGLIndexBufferPrivate *d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLIndexBuffer)
+
+    friend class QGLPainter;
 };
 
-void tst_QGLGeometry::create()
-{
-    QGLGeometry geom;
-    QCOMPARE(geom.drawingMode(), QGL::NoDrawingMode);
-    QVERIFY(geom.indexArray().isEmpty());
-    QCOMPARE(geom.bufferThreshold(), 32);
-    QVERIFY(geom.boundingBox().isNull());
-}
+QT_END_NAMESPACE
 
-void tst_QGLGeometry::accessors()
-{
-    QGLGeometry geom;
-    QGLIndexArray indexes;
-    indexes.append(1, 2, 3, 4);
-    geom.setIndexArray(indexes);
-    QCOMPARE(geom.indexArray(), indexes);
-    QBox3D box(QVector3D(), QVector3D(3.0, 4.0, 5.0));
-    geom.setBoundingBox(box);
-    QCOMPARE(geom.boundingBox(), box);
-    geom.setBufferThreshold(0);
-    QCOMPARE(geom.bufferThreshold(), 0);
-    geom.setDrawingMode(QGL::Lines);
-}
+QT_END_HEADER
 
-QTEST_APPLESS_MAIN(tst_QGLGeometry)
-
-#include "tst_qglgeometry.moc"
+#endif

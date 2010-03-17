@@ -39,11 +39,12 @@
 **
 ****************************************************************************/
 
-#ifndef QGLMATERIALPARAMETERS_H
-#define QGLMATERIALPARAMETERS_H
+#ifndef QGLMATERIAL_H
+#define QGLMATERIAL_H
 
 #include "qt3dglobal.h"
 #include <QtCore/qobject.h>
+#include <QtCore/qscopedpointer.h>
 #include <QtGui/qcolor.h>
 
 QT_BEGIN_HEADER
@@ -52,20 +53,31 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLMaterialParametersPrivate;
+class QGLMaterialPrivate;
+class QGLTexture2D;
+class QGLTextureCube;
+class QGLPainter;
+class QGLMaterialCollection;
 
-class Q_QT3D_EXPORT QGLMaterialParameters : public QObject
+class Q_QT3D_EXPORT QGLMaterial : public QObject
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLMaterialParameters)
+    Q_DECLARE_PRIVATE(QGLMaterial)
+    Q_DISABLE_COPY(QGLMaterial)
+    Q_PROPERTY(QColor basicColor READ basicColor WRITE setBasicColor NOTIFY basicColorChanged)
     Q_PROPERTY(QColor ambientColor READ ambientColor WRITE setAmbientColor NOTIFY ambientColorChanged)
     Q_PROPERTY(QColor diffuseColor READ diffuseColor WRITE setDiffuseColor NOTIFY diffuseColorChanged)
     Q_PROPERTY(QColor specularColor READ specularColor WRITE setSpecularColor NOTIFY specularColorChanged)
     Q_PROPERTY(QColor emittedLight READ emittedLight WRITE setEmittedLight NOTIFY emittedLightChanged)
-    Q_PROPERTY(int shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY basicColorChanged)
+    Q_PROPERTY(qreal shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
+    Q_PROPERTY(QGLTexture2D *texture READ texture WRITE setTexture NOTIFY texturesChanged)
 public:
-    explicit QGLMaterialParameters(QObject *parent = 0);
-    ~QGLMaterialParameters();
+    explicit QGLMaterial(QObject *parent = 0);
+    ~QGLMaterial();
+
+    QColor basicColor() const;
+    void setBasicColor(const QColor& value);
 
     QColor ambientColor() const;
     void setAmbientColor(const QColor& value);
@@ -79,23 +91,32 @@ public:
     QColor emittedLight() const;
     void setEmittedLight(const QColor& value);
 
-    int shininess() const;
-    void setShininess(int value);
+    QColor color() const;
+    void setColor(const QColor& value);
 
-    bool operator==(const QGLMaterialParameters &) const;
+    qreal shininess() const;
+    void setShininess(qreal value);
+
+    QGLTexture2D *texture(int layer = 0) const;
+    void setTexture(QGLTexture2D *value, int layer = 0);
+
+    int textureLayerCount() const;
+
+    void bindTextures(QGLPainter *painter);
+    void releaseTextures(QGLPainter *painter);
 
 Q_SIGNALS:
+    void basicColorChanged();
     void ambientColorChanged();
     void diffuseColorChanged();
     void specularColorChanged();
     void emittedLightChanged();
     void shininessChanged();
+    void texturesChanged();
     void materialChanged();
 
 private:
-    QGLMaterialParametersPrivate *d;
-
-    Q_DISABLE_COPY(QGLMaterialParameters)
+    friend class QGLMaterialCollection;
 };
 
 QT_END_NAMESPACE

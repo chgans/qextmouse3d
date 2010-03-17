@@ -43,7 +43,7 @@
 #include "qgldisplaylist.h"
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 
@@ -122,7 +122,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QGLDisplayList *soupCan = new QGLDisplayList();
     QGLMaterialCollection *mats = soupCan->palette();
 
-    QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
+    QGLMaterial *parms = new QGLMaterial(mats);
     parms->setAmbientColor(QColor(32, 32, 64));
     parms->setDiffuseColor(QColor(64, 64, 128));
     int canMat = mats->addMaterial(parms);
@@ -130,9 +130,9 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QImage soupLabel(":/images/qt-soup.png");
     if (soupLabel.isNull())
         qWarning("Could not load texture :/images/qt-soup.png");
-    QGLTexture2D *tex = new QGLTexture2D();
+    QGLTexture2D *tex = new QGLTexture2D(parms);
     tex->setImage(soupLabel);
-    mats->setTexture(canMat, tex);
+    parms->setTexture(tex);
 
     // default effect for can where no other effect set
     soupCan->setEffect(QGL::LitMaterial);

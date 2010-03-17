@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qgl3dsloader.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexture2d.h"
@@ -256,7 +256,7 @@ QString QGL3dsLoader::ensureResourceFile(const QString &fileName)
 void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
 {
     QGLMaterialCollection *palette = mRootNode->palette();
-    QGLMaterialParameters *mat = new QGLMaterialParameters();
+    QGLMaterial *mat = new QGLMaterial();
     Lib3dsRgba &amb = mat3ds->ambient;
     Lib3dsRgba &dif = mat3ds->diffuse;
     Lib3dsRgba &spc = mat3ds->specular;
@@ -265,7 +265,7 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
     mat->setSpecularColor(QColor::fromRgbF(spc[0], spc[1], spc[2], spc[3]));
     mat->setShininess(128 * mat3ds->shininess);
     mat->setObjectName(mat3ds->name);
-    int index = palette->addMaterial(mat);
+    palette->addMaterial(mat);
     if (mat3ds->texture1_map.name[0])
     {
         QString txName(mat3ds->texture1_map.name);
@@ -276,12 +276,14 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
         }
         else
         {
-            QGLTexture2D *texture = new QGLTexture2D();
+            // Parent the texture off the QGLMaterial so that it
+            // will be automatically destroyed when the material is.
+            QGLTexture2D *texture = new QGLTexture2D(mat);
             if (txName.toLower().endsWith(".dds"))
                 texture->setDdsImage(txName);
             else
                 texture->setImage(QImage(txName));
-            palette->setTexture(index, texture);
+            mat->setTexture(texture);
         }
     }
 }

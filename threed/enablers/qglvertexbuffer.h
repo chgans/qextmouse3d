@@ -62,7 +62,10 @@ class Q_QT3D_EXPORT QGLVertexBuffer
 {
 public:
     QGLVertexBuffer();
+    QGLVertexBuffer(const QGLVertexBuffer& other);
     ~QGLVertexBuffer();
+
+    QGLVertexBuffer& operator=(const QGLVertexBuffer& other);
 
     enum PackingHint
     {
@@ -96,6 +99,7 @@ public:
     QGLAttributeValue attributeValue(QGL::VertexAttribute attribute) const;
 
     int vertexCount() const;
+    bool isEmpty() const { return vertexCount() == 0; }
 
     bool upload();
     bool isUploaded() const;
@@ -106,9 +110,8 @@ public:
     void release() const;
 
 private:
-    QScopedPointer<QGLVertexBufferPrivate> d_ptr;
+    QGLVertexBufferPrivate *d_ptr;
 
-    Q_DISABLE_COPY(QGLVertexBuffer)
     Q_DECLARE_PRIVATE(QGLVertexBuffer)
 
     friend class QGLPainter;

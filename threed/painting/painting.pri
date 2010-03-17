@@ -9,7 +9,7 @@ HEADERS += \
     qglfogparameters.h \
     qgllightmodel.h \
     qgllightparameters.h \
-    qglmaterialparameters.h \
+    qglmaterial.h \
     qglmatrixstack.h \
     qglnamespace.h \
     qglpainter.h \
@@ -22,7 +22,7 @@ SOURCES += \
     qglfogparameters.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
-    qglmaterialparameters.cpp \
+    qglmaterial.cpp \
     qglmatrixstack.cpp \
     qglnamespace.cpp \
     qglpainter.cpp \
@@ -31,4 +31,5 @@ SOURCES += \
 
 PRIVATE_HEADERS += \
     qglpainter_p.h \
-    qglpickcolors_p.h
+    qglpickcolors_p.h \
+    qglmaterial_p.h

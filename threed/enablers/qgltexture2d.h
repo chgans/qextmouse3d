@@ -54,10 +54,11 @@ QT_MODULE(Qt3d)
 
 class QGLTexture2DPrivate;
 
-class Q_QT3D_EXPORT QGLTexture2D
+class Q_QT3D_EXPORT QGLTexture2D : public QObject
 {
+    Q_OBJECT
 public:
-    QGLTexture2D();
+    QGLTexture2D(QObject *parent = 0);
     ~QGLTexture2D();
 
     bool isNull() const;

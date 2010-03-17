@@ -61,7 +61,7 @@
 #include "qglpainter.h"
 #include "qglcamera.h"
 #include "qgeometrydata.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qline3d.h"
 
@@ -156,7 +156,7 @@ void CubeView::loadColors()
     }
     for (int index = 0; index < materials->size(); ++index)
     {
-        QGLMaterialParameters *mat = materials->materialByIndex(index);
+        QGLMaterial *mat = materials->material(index);
         QPixmap px(16, 16);
         px.fill(mat->diffuseColor());
         QAction *act = new QAction(QIcon(px), materials->materialName(index), this);
@@ -173,13 +173,13 @@ void CubeView::changeColor()
     if (!act)
         return;
     QGLMaterialCollection *materials = mSceneRoot->palette();
-    int index = materials->materialIndexByName(act->text());
+    int index = materials->indexOf(act->text());
     if (index == -1)
     {
         QMessageBox::warning(this, "Material Invalid", tr("Material %1 not found").arg(act->text()));
         return;
     }
-    QGLMaterialParameters *mat = materials->materialByIndex(index);
+    QGLMaterial *mat = materials->material(index);
     QColor color;
     if (mat)
         color = QColorDialog::getColor(mat->diffuseColor(), this);
@@ -296,16 +296,16 @@ void CubeView::selectComponent()
 */
 void CubeView::makeSelectColor(QColor color)
 {
-    QGLMaterialParameters *mat = 0;
+    QGLMaterial *mat = 0;
     QGLMaterialCollection *palette = mSceneRoot->palette();
     if (mSelectMaterial == -1)
     {
-        mat = new QGLMaterialParameters();
+        mat = new QGLMaterial();
         mSelectMaterial = palette->addMaterial(mat);
     }
     else
     {
-        mat = palette->materialByIndex(mSelectMaterial);
+        mat = palette->material(mSelectMaterial);
     }
     mat->setAmbientColor(color.darker(500));  // set ambient to 20%
     mat->setDiffuseColor(color.darker(125));  // set diffuse to 80%

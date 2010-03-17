@@ -44,9 +44,9 @@
 
 #include <QtCore/qobject.h>
 #include <QtCore/qurl.h>
-#include <QtDeclarative/qml.h>
-#include <QtDeclarative/qmlengine.h>
-#include <QtDeclarative/qmlparserstatus.h>
+#include <QtDeclarative/qdeclarative.h>
+#include <QtDeclarative/qdeclarativeengine.h>
+#include <QtDeclarative/qdeclarativeparserstatus.h>
 #include "qglpainter.h"
 #include "qglsceneobject.h"
 
@@ -56,13 +56,13 @@ QT_BEGIN_NAMESPACE
 
 class MeshPrivate;
 class QGLAbstractScene;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLSceneObject;
 
-class Mesh : public QObject, public QmlParserStatus
+class Mesh : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
-    Q_INTERFACES(QmlParserStatus)
+    Q_INTERFACES(QDeclarativeParserStatus)
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY dataChanged)
     Q_PROPERTY(QString meshName READ meshName WRITE setMeshName NOTIFY dataChanged)
 

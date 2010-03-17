@@ -48,7 +48,7 @@
 
 class QTimer;
 class QGLSphere;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLLightModel;
 
 class SphereView : public QGLView
@@ -76,7 +76,7 @@ private:
     QTimer *timer;
     int angle;
     QGLLightParameters *lp;
-    QGLMaterialParameters *mat;
+    QGLMaterial *mat;
     QGLLightModel *mdl;
 };
 

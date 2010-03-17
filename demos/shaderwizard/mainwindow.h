@@ -53,7 +53,7 @@ class QAbstractItemModel;
 class QStandardItemModel;
 class QGLAbstractScene;
 class QGLSceneNode;
-class QGLMaterialParameters;
+class QGLMaterial;
 
 namespace Ui
 {
@@ -99,7 +99,7 @@ signals:
     void openEffect(const QString &);
     void sceneCreated(QObject* object);
     void sceneSelected(QObject* object);
-    void materialSelected(QGLMaterialParameters*);
+    void materialSelected(QGLMaterial*);
 protected:
     void closeEvent(QCloseEvent *event);
     void setupSceneModel();

@@ -46,11 +46,11 @@
 #include <QtCore/qvariant.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qgraphicstransform.h>
-#include <QtDeclarative/qml.h>
-#include <QtDeclarative/qmllist.h>
-#include <QtDeclarative/private/qmlstate_p.h>
-#include <QtDeclarative/private/qmltransition_p.h>
-#include <QtDeclarative/qmlparserstatus.h>
+#include <QtDeclarative/qdeclarative.h>
+#include <QtDeclarative/qdeclarativelist.h>
+#include <QtDeclarative/private/qdeclarativestate_p.h>
+#include <QtDeclarative/private/qdeclarativetransition_p.h>
+#include <QtDeclarative/qdeclarativeparserstatus.h>
 #include "qglpainter.h"
 #include "mesh.h"
 
@@ -64,10 +64,10 @@ class Qml3dView;
 class Viewport;
 class QGLSceneNode;
 
-class Item3d : public QObject, public QmlParserStatus
+class Item3d : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
-    Q_INTERFACES(QmlParserStatus)
+    Q_INTERFACES(QDeclarativeParserStatus)
     Q_ENUMS(CullFace)
     Q_FLAGS(CullFaces)
     Q_FLAGS(Mode)
@@ -76,13 +76,27 @@ class Item3d : public QObject, public QmlParserStatus
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
-    Q_PROPERTY(QmlList<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
+    
+    
+    //Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
+    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> transform READ transform DESIGNABLE false FINAL)
+
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
-    Q_PROPERTY(QmlList<QObject *>* resources READ resources DESIGNABLE false)
-    Q_PROPERTY(QmlList<QObject *>* data READ data DESIGNABLE false)
-    Q_PROPERTY(QmlList<QmlState *>* states READ states DESIGNABLE false)
-    Q_PROPERTY(QmlList<QmlTransition *>* transitions READ transitions DESIGNABLE false)
+    
+    //Q_PROPERTY(QDeclarativeListProperty<QObject *>* resources READ resources DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
+    //Q_PROPERTY(QDeclarativeListProperty<QObject *>* data READ data DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
+
+    //CHILDREN LIST :-)
+    Q_PROPERTY(QDeclarativeListProperty<Item3d> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
+
+    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState *>* states READ states DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
+    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition *>* transitions READ transitions DESIGNABLE false)
+    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
+
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
@@ -116,9 +130,7 @@ public:
     void setZ(qreal value);
 
     qreal scale() const;
-    void setScale(qreal value);
-
-    QmlList<QGraphicsTransform *> *transform();
+    void setScale(qreal value); 
 
     Mesh *mesh() const;
     void setMesh(Mesh* value);
@@ -129,15 +141,23 @@ public:
     Effect *effect() const;
     void setEffect(Effect *value);
 
-    QmlList<Item3d *> *children();
-    QmlList<QObject *> *resources();
-    QmlList<QObject *> *data();
+    //QDeclarativeListProperty<Item3d *> *children();
+//    QDeclarativeListProperty<QObject *> *resources();
+//    QMLified below_ QDeclarativeListProperty<QObject *> *data();
+    QDeclarativeListProperty<QObject> data();
+    QDeclarativeListProperty<QObject> resources();
+    QDeclarativeListProperty<Item3d> fxChildren();    
 
-    QmlList<QmlState *>* states();
-    QmlState *findState(const QString &name) const;
+    //QDeclarativeListProperty<QGraphicsTransform *> *transform();
+    QDeclarativeListProperty<QGraphicsTransform> transform();
 
-    QmlList<QmlTransition *>* transitions();
+    //QDeclarativeListProperty<QDeclarativeState *>* states();
+    QDeclarativeListProperty<QDeclarativeState> states();
+    QDeclarativeState *findState(const QString &name) const;
 
+    //QDeclarativeListProperty<QDeclarativeTransition *>* transitions();
+    QDeclarativeListProperty<QDeclarativeTransition> transitions();
+    
     QString state() const;
     void setState(const QString &);
 
@@ -149,9 +169,6 @@ public:
 
     QString meshNode() const;					
     void setMeshNode(const QString &);			
-
- //   QGLSceneNode * meshObject();
- //   void setMeshObject(QGLSceneNode *object);
 
     bool isVisible() const;
     void setIsVisible(bool visibility);
@@ -193,6 +210,8 @@ Q_SIGNALS:
 
 private:
     Item3dPrivate *d;
+
+    friend class Item3dPrivate;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Item3d::CullFaces)

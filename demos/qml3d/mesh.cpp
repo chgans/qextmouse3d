@@ -43,11 +43,11 @@
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QtDeclarative/qmlengine.h>
+#include <QtDeclarative/qdeclarativeengine.h>
 #include <QtCore/qlist.h>
 
 /*!
@@ -97,7 +97,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
+//QML_DEFINE_TYPE(Qt,4,6,Mesh,Mesh)
 
 class MeshPrivate
 {
@@ -123,7 +123,7 @@ public:
     QMap<int, branchObject> sceneBranches;
     QList<QGLSceneObject *>sceneObjects;
     QGLSceneObject *mainSceneObject;
-    QList<QGLMaterialParameters *> connected;
+    QList<QGLMaterial *> connected;
     int refCount;
     bool completed;
     bool loaded;
@@ -407,11 +407,18 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
     else {
         int branchId = nextSceneBranchId();        
         QGLSceneObject *sceneObj = getSceneObject(nodeName);        
+        QGLSceneNode *sceneNode = qobject_cast<QGLSceneNode *>(sceneObj);
         if (sceneObj) {
-            QObject *prevParent=sceneObj->parent();
+            QGLSceneNode *parentNode = qobject_cast<QGLSceneNode *>(sceneNode->parent());
+            
+            QObject *prevParent=parentNode;//sceneObj->parent();            
+            parentNode->removeNode(sceneNode);  //this becomes irrelevant.
+            
+            //sceneNode->setParent(d->scene);     //TODO: currently this fails as sceneNode changes make problems.
             //If no specific parent is nominated, use the scene specified by the mesh
             parent ? sceneObj->setParent(parent)  : sceneObj->setParent(d->scene);
             addSceneBranch(sceneObj, prevParent);
+            
             return branchId;
         }
         else {
@@ -559,12 +566,10 @@ QObject *Mesh::material(const QString& name)
         return NULL;
     }
 
-    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);
-    QGLMaterialCollection *p = node->geometry()->palette();
-    int index = p->materialIndexByName(name);
-    if (index == -1)
-        return 0;
-    QGLMaterialParameters *params = p->materialByIndex(index);
+    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);   
+    QGLMaterialCollection *p = node->palette();
+    
+    QGLMaterial *params =  p->material(name);
     if (params && !d->connected.contains(params)) {
         d->connected.append(params);
         connect(params, SIGNAL(materialChanged()), this, SIGNAL(dataChanged()));

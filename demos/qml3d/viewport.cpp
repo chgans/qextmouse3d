@@ -69,10 +69,11 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Viewport,Viewport)
-QML_DEFINE_TYPE(Qt,4,6,LightModel,QGLLightModel)
-QML_DEFINE_TYPE(Qt,4,6,Light,QGLLightParameters)
-QML_DEFINE_TYPE(Qt,4,6,Camera,QGLCamera)
+//QML_DEFINE_TYPE(Qt,4,6,Viewport,Viewport)
+//QML_DEFINE_TYPE(Qt,4,6,LightModel,QGLLightModel)
+//QML_DEFINE_TYPE(Qt,4,6,Light,QGLLightParameters)
+//QML_DEFINE_TYPE(Qt,4,6,Camera,QGLCamera)
+
 
 class ViewportPrivate
 {
@@ -88,7 +89,8 @@ public:
     QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
-    QGLVertexArray backdropVertices;
+    //QGLVertexArray backdropVertices;
+    QGLVertexBuffer backdropVertices;
     Qml3dView *view;
 };
 
@@ -100,7 +102,8 @@ ViewportPrivate::ViewportPrivate()
     , camera(0)
     , lightModel(0)
     , backdrop(0)
-    , backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
+    //, backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
+    , backdropVertices()
     , view(0)
 {
     depthBufferOptions.setEnabled(true);
@@ -115,21 +118,38 @@ ViewportPrivate::ViewportPrivate()
     // Construct the vertices for a quad with (0, 0) as the
     // texture co-ordinate for the bottom-left of the screen
     // and (1, 1) as the texture co-ordinate for the top-right.
-    backdropVertices.append(-1.0f, -1.0f);
-    backdropVertices.append(0.0f, 0.0f);
-    backdropVertices.append(-1.0f, 1.0f);
-    backdropVertices.append(0.0f, 1.0f);
-    backdropVertices.append(1.0f, 1.0f);
-    backdropVertices.append(1.0f, 1.0f);
-    backdropVertices.append(1.0f, -1.0f);
-    backdropVertices.append(1.0f, 0.0f);
+    backdropVertices.setPackingHint(QGLVertexBuffer::Append);
+
+    QArray<QVector2D> pos;
+    pos.append(QVector2D(-1.0f, -1.0f));
+    pos.append(QVector2D(-1.0f,  1.0f));
+    pos.append(QVector2D( 1.0f,  1.0f));
+    pos.append(QVector2D( 1.0f, -1.0f));
+
+    QArray<QVector2D> tex;
+    pos.append(QVector2D(0.0f, 0.0f));
+    pos.append(QVector2D(0.0f, 1.0f));
+    pos.append(QVector2D(1.0f, 1.0f));
+    pos.append(QVector2D(1.0f, 0.0f));
+
+    backdropVertices.addAttribute(QGL::Position, pos);
+    backdropVertices.addAttribute(QGL::TextureCoord0, tex);
+
+    //backdropVertices.append(-1.0f, -1.0f);
+    //backdropVertices.append(0.0f, 0.0f);
+    //backdropVertices.append(-1.0f, 1.0f);
+    //backdropVertices.append(0.0f, 1.0f);
+    //backdropVertices.append(1.0f, 1.0f);
+    //backdropVertices.append(1.0f, 1.0f);
+    //backdropVertices.append(1.0f, -1.0f);
+    //backdropVertices.append(1.0f, 0.0f);
 }
 
 /*!
-    Construct the class and assign it a \a parent QmlGraphicsItem.
+    Construct the class and assign it a \a parent QDeclarativeItem.
 */
-Viewport::Viewport(QmlGraphicsItem *parent)
-    : QmlGraphicsItem(parent)
+Viewport::Viewport(QDeclarativeItem *parent)
+    : QDeclarativeItem(parent)
 {
     d = new ViewportPrivate();
     setFlag(QGraphicsItem::ItemHasNoContents, false);
@@ -328,7 +348,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     if (!d->itemsInitialized)
         initialize(0, &painter);
 
-    // Modify the GL viewport to only cover the extent of this QmlGraphicsItem.
+    // Modify the GL viewport to only cover the extent of this QDeclarativeItem.
     QTransform transform = p->transform();
     painter.setViewport(QRect(qRound(transform.dx()), qRound(transform.dy()),
                               width(), height()));
@@ -357,7 +377,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 */
 void Viewport::earlyDraw(QGLPainter *painter)
 {
-    // If we have a QmlGraphicsItem parent, then assume that it has cleared
+    // If we have a QDeclarativeItem parent, then assume that it has cleared
     // the screen (e.g. Rect::color), and just clear the depth buffer.
     if (parentItem())
         painter->clear(QGL::ClearDepthBuffer);
@@ -374,7 +394,8 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
-        painter->setVertexArray(d->backdropVertices);
+        //painter->setVertexArray(d->backdropVertices);
+        painter->setVertexBuffer(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
 
@@ -435,7 +456,7 @@ void Viewport::draw(QGLPainter *painter)
 
 void Viewport::initialize(Qml3dView *view, QGLPainter *painter)
 {
-    // Remember which view we are associate with, if any.
+    // Remember which view we are associated with, if any.
     d->view = view;
 
     // Apply the camera to the view.

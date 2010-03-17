@@ -8,7 +8,7 @@
 
 class QGLPainter;
 class QGLShaderProgram;
-class QGLMaterialParameters;
+class QGLMaterial;
 
 class QGLColladaFxEffectPrivate
 {
@@ -17,7 +17,7 @@ public:
     QGLColladaFxEffectPrivate();
     ~QGLColladaFxEffectPrivate();
 
-    void addMaterialChannelsToShaderSnippets(const QGLMaterialParameters *material);
+    void addMaterialChannelsToShaderSnippets(const QGLMaterial *material);
     void resetGlueSnippets();
     void setTextureUniform(QGLShaderProgram *program, QGLPainter* painter, QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor);
     void updateMaterialChannelSnippets(QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor);

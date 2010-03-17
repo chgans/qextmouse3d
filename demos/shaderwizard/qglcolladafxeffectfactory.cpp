@@ -137,33 +137,6 @@ QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, 
 {
     QStringList result;
 
-    //    QList<QGL::VertexAttribute> requiredFields() const;
-    //    bool supportsPicking() const;
-    //    void setVertexAttribute(QGL::VertexAttribute attribute,
-    //                            const QGLAttributeValue& value);
-    //
-    //    QString vertexShader = effect->vertexShader();
-    //    QString fragmentShader = effect->fragmentShader();
-    //    QGLMaterialParameters* material = effect->material();
-    //
-    //    virtual void bindProgramAttributes();
-    //    virtual void bindProgramUniforms();
-    //
-    //private:
-    //    int colorUniform;
-    //    int colorAttribute;
-    //
-    //    int matrixUniform;
-    //    int timeUniform;
-    //    int lightDirectionUniform;
-    //
-    //    bool textureAttributeSet;
-    //    int textureId;
-    //
-    //    QGLShaderProgramEffectPrivate* privateObject = effect->d;
-    //    QGLMaterialParameters* material = privateObject->material;
-    //    d->QGLShaderProgram *program = privateObject->program;
-
     result += "<?xml version=\"1.0\"?>";
 
     result += "<COLLADA "\
@@ -256,6 +229,10 @@ QGLColladaParam::QGLColladaParam( QString sid, float x, float y, float z ) : mSi
 }
 
 
+QGLColladaParam::~QGLColladaParam()
+{
+
+}
 
 /*!
   \internal
@@ -946,8 +923,8 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
     }
 
     // Collada specifies exactly one of blinn, lambert, constant or phong
-    // If the effect is malformed, default QGLMaterialParameters will be used.
-    QGLMaterialParameters* material = new QGLMaterialParameters;
+    // If the effect is malformed, default QGLMaterial will be used.
+    QGLMaterial* material = new QGLMaterial;
 
     if( profileName == "profile_COMMON" &&
         (xml.name() == "blinn" || xml.name() == "phong" ||
@@ -1507,7 +1484,7 @@ QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderPro
 //    // 0 or more <bind_uniform> elements
     if(effect->material() != 0)
     {
-        QGLMaterialParameters* material = effect->material();
+        QGLMaterial* material = effect->material();
         result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
         result += generateBindUniformParamElement( "ambientColor", material->ambientColor());
         result += generateBindUniformParamElement( "diffuseColor", material->diffuseColor());

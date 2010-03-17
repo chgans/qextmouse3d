@@ -688,7 +688,7 @@ QDebug operator<<(QDebug dbg, const QGLSection &section)
             << "- count:" << section.count()
             << "- smoothing mode:" << (section.smoothing() == QGL::Smooth ?
                                        "QGL::Smooth" : "QGL::Faceted") << "\n";
-    QGLIndexArray indices = section.indices();
+    QGL::IndexArray indices = section.indices();
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];

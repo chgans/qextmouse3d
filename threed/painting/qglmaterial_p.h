@@ -39,30 +39,45 @@
 **
 ****************************************************************************/
 
-#ifndef QGLREFERENCEDBUFFER_H
-#define QGLREFERENCEDBUFFER_H
+#ifndef QGLMATERIAL_P_H
+#define QGLMATERIAL_P_H
 
-#include <QtOpenGL/qglbuffer.h>
-#include <QtCore/qatomic.h>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include "qglmaterial.h"
+#include <QtCore/private/qobject_p.h>
+#include <QtCore/qmap.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-// Helper class for QGLIndexArray.  May go away in future.
-class Q_QT3D_EXPORT QGLReferencedBuffer : public QGLBuffer
+class QGLMaterialPrivate : public QObjectPrivate
 {
+    Q_DECLARE_PUBLIC(QGLMaterial)
 public:
-    explicit QGLReferencedBuffer(QGLBuffer::Type type) : QGLBuffer(type), m_ref(1) {}
-    ~QGLReferencedBuffer() {}
+    explicit QGLMaterialPrivate(int version = QObjectPrivateVersion);
 
-    void ref() { m_ref.ref(); }
-    bool deref() { return m_ref.deref(); }
-
-private:
-    QAtomicInt m_ref;
+    QColor basicColor;
+    QColor ambientColor;
+    QColor diffuseColor;
+    QColor specularColor;
+    QColor emittedLight;
+    qreal shininess;
+    QMap<int, QGLTexture2D *> textures;
+    QGLMaterialCollection *collection;
+    int index;
+    QString name;
+    bool used;
 };
 
 QT_END_NAMESPACE

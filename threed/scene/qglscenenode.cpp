@@ -84,7 +84,7 @@ QT_BEGIN_NAMESPACE
     \o applies any local transformation that may be set for this node
     \o sets the nodes material onto the painter, if the material is valid
     \o calls draw() for all the child nodes
-    \o calls draw(start, count) on this nodes QGLGeometry object (if any)
+    \o calls draw(start, count) on this nodes geometry object (if any)
     \o restores the geometry's original material if it was changed
     \o restores the model-view matrix if any local transform was applied
     \endlist
@@ -493,6 +493,8 @@ void QGLSceneNode::setParent(QObject *parent)
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
         sceneParent->addNode(this);
+    else
+        qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent (Scene)node to add the new node to.");
     QObject::setParent(parent);
 }
 
@@ -537,14 +539,14 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
     }
 
-    const QGLMaterialParameters *saveMat = 0;
+    const QGLMaterial *saveMat = 0;
     bool changedTex = false;
     if (d->palette && d->material != -1)
     {
         saveMat = painter->faceMaterial(QGL::FrontFaces);
-        painter->setFaceMaterial(QGL::FrontFaces,
-                                 d->palette->materialByIndex(d->material));
-        QGLTexture2D *tex = d->palette->texture(d->material);
+        QGLMaterial *mat = d->palette->material(d->material);
+        painter->setFaceMaterial(QGL::FrontFaces, mat);
+        QGLTexture2D *tex = mat->texture(d->material);
         if (tex)
         {
             painter->setTexture(tex);
@@ -564,7 +566,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         {
             QVector3DArray verts;
             QArray<QColor4B> colors;
-            QGLIndexArray indices = d->geometry->indices();
+            QGL::IndexArray indices = d->geometry->indices();
             for (int i = d->start; i < d->start + d->count; ++i)
             {
                 int ix = indices[i];

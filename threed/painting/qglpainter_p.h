@@ -103,13 +103,9 @@ typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
 
 typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
 
-// We can call the buffer functions directly in OpenGL/ES 1.1 or higher,
+// We can call the buffer functions directly in OpenGL/ES,
 // but all other platforms need to resolve the extensions.
-#if defined(QT_OPENGL_ES)
-#if defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_RESOLVE_BUFFER_FUNCS 1
-#endif
-#else
+#if !defined(QT_OPENGL_ES)
 #define QGL_RESOLVE_BUFFER_FUNCS 1
 #endif
 
@@ -230,19 +226,21 @@ public:
     QGLLightParameters *defaultLight1;
     int enabledLights;
     int maxLights;
-    const QGLMaterialParameters *frontMaterial;
-    const QGLMaterialParameters *backMaterial;
-    QGLMaterialParameters *defaultMaterial;
-    QGLMaterialParameters *frontColorMaterial;
-    QGLMaterialParameters *backColorMaterial;
+    const QGLMaterial *frontMaterial;
+    const QGLMaterial *backMaterial;
+    QGLMaterial *defaultMaterial;
+    QGLMaterial *frontColorMaterial;
+    QGLMaterial *backColorMaterial;
     const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
-    QRect scissorRect;
+    QRect viewport; // GL co-ordinates - origin bottom-left.
+    QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
+    QList<QGLFramebufferObject *> surfaceStack;
 
     QGLPainterExtensions *extensions();    
 

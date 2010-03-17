@@ -39,54 +39,42 @@
 **
 ****************************************************************************/
 
-#ifndef QGLGEOMETRY_P_H
-#define QGLGEOMETRY_P_H
+#ifndef CUBEVIEW_H
+#define CUBEVIEW_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
+#include "qglview.h"
+#include "qgldisplaylist.h"
 
-#include <QtCore/private/qobject_p.h>
+class QGLFramebufferObject;
+class QGLCamera;
 
-#include "qglgeometry.h"
-#include "qglnamespace.h"
-
-QT_BEGIN_NAMESPACE
-
-class QGLGeometryPrivate : public QObjectPrivate
+class CubeView : public QGLView
 {
-    Q_DECLARE_PUBLIC(QGLGeometry)
+    Q_OBJECT
+    Q_PROPERTY(qreal teapotAngle READ teapotAngle WRITE setTeapotAngle)
+    Q_PROPERTY(qreal cubeAngle READ cubeAngle WRITE setCubeAngle)
 public:
-    QGLGeometryPrivate(int version = QObjectPrivateVersion)
-        : QObjectPrivate(version)
-        , drawingMode(QGL::NoDrawingMode)
-        , vertexBuffer(0)
-        , bufferThreshold(32)
-        , modified(false)
-        , uploadState(true)
-    {
-    }
-    ~QGLGeometryPrivate()
-    {
-        delete vertexBuffer;
-    }
+    CubeView(QWidget *parent = 0);
+    ~CubeView();
 
-    QGL::DrawingMode drawingMode;
-    QGLIndexArray indexArray;
-    QGLVertexBuffer *vertexBuffer;
-    int bufferThreshold;
-    mutable bool modified;
-    bool uploadState;
-    QBox3D boundingBox;
+    qreal teapotAngle() const { return tangle; }
+    void setTeapotAngle(qreal angle);
+
+    qreal cubeAngle() const { return cangle; }
+    void setCubeAngle(qreal angle);
+
+protected:
+    void initializeGL(QGLPainter *painter);
+    void paintGL(QGLPainter *painter);
+
+private:
+    QGLDisplayList cube;
+    QGLDisplayList teapot;
+    QGLFramebufferObject *fbo;
+    QGLCamera *innerCamera;
+    qreal tangle;
+    qreal cangle;
+    bool needsUpdate;
 };
 
-QT_END_NAMESPACE
-
-#endif // QGLGEOMETRY_P_H
+#endif

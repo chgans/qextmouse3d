@@ -10,10 +10,9 @@ SUBDIRS = \
     qglfogparameters \
     qgllightmodel \
     qgllightparameters \
-    qglmaterialparameters \
+    qglmaterial \
+    qglmaterialcollection \
     qglvertexbuffer \
-    qglgeometry \
-    qglindexarray \
     qglpainter \
     qgldisplaylist \
     qglsection \

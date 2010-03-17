@@ -45,6 +45,7 @@
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
+#include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/private/qwidget_p.h>
 #include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
@@ -120,6 +121,7 @@ QGLPainterPrivate::QGLPainterPrivate()
       backColorMaterial(0),
       fogParameters(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
+      scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
       pick(0)
@@ -461,12 +463,27 @@ bool QGLPainter::begin(QPainter *painter)
     If this assumption doesn't apply, then call disableEffect()
     to disable the effect before calling end().
 
+    This function will pop all surfaces from the surface stack,
+    and return currentSurface() to null (the default drawing surface).
+
     \sa begin(), isActive(), disableEffect()
 */
 bool QGLPainter::end()
 {
     if (!d_ptr)
         return false;
+    if (!d_ptr->surfaceStack.isEmpty() && int(d_ptr->ref) <= 2) {
+        // Restore the default drawing surface before ending painting
+        // operations.  This is needed for proper interoperation with
+        // the OpenGL paint engine which will assume that it is drawing
+        // to the default drawing surface after endNativePainting().
+        // The ref needs to be 2 or less so that we don't do this
+        // if the QGLPainter was nested within another instance of itself.
+        QGLFramebufferObject *fbo = d_ptr->surfaceStack.last();
+        if (fbo)
+            fbo->release();
+        d_ptr->surfaceStack.clear();
+    }
     if (d_ptr->activePaintEngine) {
         d_ptr->activePaintEngine->endNativePainting();
         d_ptr->activePaintEngine = 0;
@@ -570,138 +587,254 @@ void QGLPainter::setDepthTestingEnabled(bool value)
     Returns the viewport for the active GL context.  The origin for
     the returned rectangle is the top-left of the drawing surface.
 
-    \sa setViewport()
+    \sa setViewport(), resetViewport()
 */
 QRect QGLPainter::viewport() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
-    QPaintDevice *device = d->context->device();
-    if (device) {
+    if (d->viewport.isNull()) {
         GLint view[4];
         glGetIntegerv(GL_VIEWPORT, view);
-        return QRect(view[0], device->height() - (view[1] + view[3]),
-                     view[1], view[3]);
-    } else {
-        return QRect();
+        d->viewport = QRect(view[0], view[1], view[2], view[3]);
     }
+    // Convert the GL viewport into standard Qt co-ordinates.
+    return QRect(d->viewport.x(),
+                 d->context->device()->height() -
+                        (d->viewport.y() + d->viewport.height()),
+                 d->viewport.width(), d->viewport.height());
 }
 
 /*!
     Sets the viewport for the active GL context to \a rect.
     The origin for \a rect is the top-left of the drawing surface.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    QPaintDevice *device = d->context->device();
-    if (device) {
-        int y = device->height() - (rect.y() + rect.height());
-        glViewport(rect.x(), y, rect.width(), rect.height());
-    }
+    int y = d->context->device()->height() - (rect.y() + rect.height());
+    glViewport(rect.x(), y, rect.width(), rect.height());
+    d->viewport = QRect(rect.x(), y, rect.width(), rect.height());
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a size.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(const QSize& size)
 {
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     glViewport(0, 0, size.width(), size.height());
+    d->viewport = QRect(0, 0, size.width(), size.height());
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a width and \a height.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(int width, int height)
 {
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     glViewport(0, 0, width, height);
+    d->viewport = QRect(0, 0, width, height);
 }
 
 /*!
-    Returns the currently active scissor rectangle.  The rectangle
-    will have zero size if scissoring is disabled.
+    Resets this painter's notion of what the current viewport()
+    is set to.  The next time viewport() is called, the actual
+    viewport rectangle will be fetched from the GL server.
 
-    Performance note: if setScissorRect() has not been called on this
-    QGLPainter, then this function will have to perform a round-trip
-    to the GL server to get the scissor rectangle.  This round-trip
-    can be avoided by calling setScissorRect() before scissorRect().
+    This function is used to synchronize the state of the application
+    with the GL server after the execution of raw GL commands that may
+    have altered the viewport settings.
 
-    Note: OpenGL/ES 1.0 does not have a mechanism to fetch the
-    scissor rectangle.  On that platform, this function will forcibly
-    disable scissoring if it has not been set previously with
-    setScissorRect().
-
-    \sa setScissorRect(), resetScissorRect()
+    \sa viewport(), setViewport()
 */
-QRect QGLPainter::scissorRect() const
+void QGLPainter::resetViewport()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect(0, 0, 0, 0));
-    if (d->scissorRect.isNull()) {
-#if !defined(GL_OES_VERSION_1_0) || defined(GL_OES_VERSION_1_1)
+    QGLPAINTER_CHECK_PRIVATE();
+    d->viewport = QRect();
+}
+
+/*!
+    Returns the currently active scissor rectangle; or a null rectangle
+    if scissoring is disabled.
+
+    The special rectangle value of (0, 0, -2, -2) is returned to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    Performance note: if setScissor() has not been called on this
+    QGLPainter, then this function will have to perform a round-trip
+    to the GL server to get the scissor rectangle.  This round-trip
+    can be avoided by calling setScissor() before scissor().
+
+    Note that the returned rectangle will be in window co-ordinates,
+    with the origin at the top-left of the drawing surface.
+
+    \sa setScissor(), resetScissor()
+*/
+QRect QGLPainter::scissor() const
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
+    if (d->scissor.width() <= -3) {
         if (glIsEnabled(GL_SCISSOR_TEST)) {
+            QPaintDevice *device = d->context->device();
             GLint scissor[4];
             glGetIntegerv(GL_SCISSOR_BOX, scissor);
-            d->scissorRect =
-                QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+            if (scissor[2] != 0 && scissor[3] != 0) {
+                d->scissor = QRect
+                    (scissor[0], device->height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+            } else {
+                // Special value indicating an empty, but active, scissor.
+                d->scissor = QRect(0, 0, -2, -2);
+            }
         } else {
-            d->scissorRect = QRect(0, 0, 0, 0);
+            d->scissor = QRect();
         }
-#else
-        // OpenGL/ES 1.0 does not have glIsEnabled() or GL_SCISSOR_BOX,
-        // so force the scissor setting to a known state.
-        d->scissorRect = QRect(0, 0, 0, 0);
-        glDisable(GL_SCISSOR_TEST);
-#endif
     }
-    return d->scissorRect;
+    return d->scissor;
 }
 
 /*!
     Enables scissoring to the boundaries of \a rect if it has a
-    non-zero size; disables scissoring if \a rect has a zero size.
+    non-zero size; disables scissoring if \a rect is null.
 
-    \sa scissorRect(), resetScissorRect()
+    The special rectangle value of (0, 0, -2, -2) is used to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.  It will be
+    intersected with the drawing surface's bounds before being
+    set in the GL server.
+
+    \sa scissor(), resetScissor(), intersectScissor()
 */
-void QGLPainter::setScissorRect(const QRect& rect)
+void QGLPainter::setScissor(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (rect.width() > 0 && rect.height() > 0) {
-        d->scissorRect = rect;
-        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+    if (rect.width() == -2) {
+        // Special value indicating an empty, but active, scissor.
+        d->scissor = rect;
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+    } else if (!rect.isNull()) {
+        QPaintDevice *device = d->context->device();
+        int height = device->height();
+        QRect r = rect.intersected(QRect(0, 0, device->width(), height));
+        if (r.isValid()) {
+            d->scissor = r;
+            glScissor(r.x(), height - (r.y() + r.height()),
+                      r.width(), r.height());
+        } else {
+            d->scissor = QRect(0, 0, -2, -2);
+            glScissor(0, 0, 0, 0);
+        }
         glEnable(GL_SCISSOR_TEST);
     } else {
-        d->scissorRect = QRect(0, 0, 0, 0);
+        d->scissor = QRect();
         glDisable(GL_SCISSOR_TEST);
     }
 }
 
 /*!
-    Resets this painter's notion of what the current scissorRect()
-    is set to.  The next time scissorRect() is called, the actual
+    Intersects the current scissor rectangle with \a rect and sets
+    the intersection as the new scissor.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), expandScissor()
+*/
+void QGLPainter::intersectScissor(const QRect& rect)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QRect current = scissor();
+    if (current.width() == -2) {
+        // Scissor is already active and empty: nothing to do.
+        return;
+    } else if (rect.isEmpty()) {
+        // Intersecting with an empty rectangle sets the scissor to empty.
+        // This includes the case where "rect" is (0, 0, -2, -2).
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+        return;
+    }
+    QPaintDevice *device = d->context->device();
+    QRect r;
+    if (current.isNull())
+        r = rect.intersected(QRect(0, 0, device->width(), device->height()));
+    else
+        r = current.intersected(rect);
+    if (r.isValid()) {
+        d->scissor = r;
+        glScissor(r.x(), device->height() - (r.y() + r.height()),
+                  r.width(), r.height());
+    } else {
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+    }
+    glEnable(GL_SCISSOR_TEST);
+}
+
+/*!
+    Expands the current scissor rectangle to also include the region
+    defined by \a rect and sets the expanded region as the new scissor.
+    The \a rect will be ignored if it is empty, or if the scissor is
+    currently disabled.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), intersectScissor()
+*/
+void QGLPainter::expandScissor(const QRect& rect)
+{
+    if (rect.isEmpty())
+        return;
+    QRect current = scissor();
+    if (current.width() == -2)
+        setScissor(rect);
+    else if (!current.isNull())
+        setScissor(rect.united(current));
+}
+
+/*!
+    Resets this painter's notion of what the current scissor()
+    is set to.  The next time scissor() is called, the actual
     scissor rectangle will be fetched from the GL server.
 
     This function is used to synchronize the state of the application
     with the GL server after the execution of raw GL commands that may
     have altered the scissor settings.
 
-    \sa scissorRect(), setScissorRect()
+    \sa scissor(), setScissor()
 */
-void QGLPainter::resetScissorRect()
+void QGLPainter::resetScissor()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->scissorRect = QRect();
+    d->scissor = QRect(0, 0, -3, -3);
 }
 
 /*!
@@ -767,6 +900,149 @@ bool QGLPainter::isVisible(const QBox3D& box) const
     QBox3D projected = box.transformed
         (d->projectionMatrix * d->modelViewMatrix);
     return d->viewingCube.intersects(projected);
+}
+
+/*!
+    Projects a \a point in object model space to window co-ordinates
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the window co-ordinates.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa unproject()
+*/
+QVector3D QGLPainter::project(const QVector3D& point, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector3D());
+
+    // Map the point using the modelview and projection matrices.
+    QVector4D v = d->modelViewMatrix.top() * QVector4D(point, 1.0f);
+    v = d->projectionMatrix.top() * v;
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+
+    // Map the co-ordinates to the range 0-1.
+    qreal x = (v.x() / v.w()) * 0.5f + 0.5f;
+    qreal y = (v.y() / v.w()) * 0.5f + 0.5f;
+    qreal z = (v.z() / v.w()) * 0.5f + 0.5f;
+
+    // Map x and y to the viewport dimensions.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    x = x * d->viewport.width() + d->viewport.x();
+    y = y * d->viewport.height() + d->viewport.y();
+    if (ok)
+        *ok = true;
+    return QVector3D(x, y, z);
+}
+
+/*!
+    Projects a \a point in window co-ordinates back to object model space
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the object model co-ordinates.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa project()
+*/
+QVector3D QGLPainter::unproject(const QVector3D& point, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector3D());
+
+    // Invert the combined modelview/projection matrix.
+    bool invertible;
+    QMatrix4x4 m = combinedMatrix().inverted(&invertible);
+    if (!invertible) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+
+    // Map from window co-ordinates to the (-1, -1) - (1, 1) viewport.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    qreal x = ((point.x() - d->viewport.x()) / d->viewport.width()) * 2 - 1;
+    qreal y = ((point.y() - d->viewport.y()) / d->viewport.height()) * 2 - 1;
+    qreal z = point.z() * 2 - 1;
+
+    // Map the point back through the inverse of the projection.
+    QVector4D v = m * QVector4D(x, y, z, 1.0f);
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector3D();
+    }
+    if (ok)
+        *ok = true;
+    return QVector3D(v.x() / v.w(), v.y() / v.w(), v.z() / v.w());
+}
+
+/*!
+    \overload
+
+    Projects a 4D \a point in window co-ordinates back to object model space
+    using the current modelViewMatrix(), projectionMatrix(), and viewport().
+    Returns the object model co-ordinates, including the w co-ordinate.
+
+    The \a nearPlane and \a farPlane parameters are used to specify the
+    near and far clipping planes in the z direction.
+
+    If \a ok is not null, then it will be set if true if the projection
+    was possible, or false if \a point cannot be projected.
+
+    \sa project()
+*/
+QVector4D QGLPainter::unproject
+    (const QVector4D& point, qreal nearPlane, qreal farPlane, bool *ok) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QVector4D());
+
+    // Invert the combined modelview/projection matrix.
+    bool invertible;
+    QMatrix4x4 m = combinedMatrix().inverted(&invertible);
+    if (!invertible) {
+        if (ok)
+            *ok = false;
+        return QVector4D();
+    }
+
+    // Map from window co-ordinates to the (-1, -1) - (1, 1) viewport.
+    if (d->viewport.isNull()) {
+        GLint view[4];
+        glGetIntegerv(GL_VIEWPORT, view);
+        const_cast<QGLPainterPrivate *>(d)->viewport
+            = QRect(view[0], view[1], view[2], view[3]);
+    }
+    qreal x = ((point.x() - d->viewport.x()) / d->viewport.width()) * 2 - 1;
+    qreal y = ((point.y() - d->viewport.y()) / d->viewport.height()) * 2 - 1;
+    qreal z = ((point.z() - nearPlane) / (farPlane - nearPlane)) * 2 - 1;
+
+    // Map the point back through the inverse of the projection.
+    QVector4D v = m * QVector4D(x, y, z, point.w());
+    if (qFuzzyCompare(v.w(), qreal(0.0f))) {
+        if (ok)
+            *ok = false;
+        return QVector4D();
+    }
+    if (ok)
+        *ok = true;
+    return v;
 }
 
 /*!
@@ -1584,7 +1860,8 @@ void QGLPainter::update()
         updates |= UpdateModelViewMatrix;
     if (d->projectionMatrix.updateServer())
         updates |= UpdateProjectionMatrix;
-    d->effect->update(this, updates);
+    if (updates != 0)
+        d->effect->update(this, updates);
 }
 
 /*!
@@ -1599,10 +1876,6 @@ void QGLPainter::update()
 */
 void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     glDrawArrays((GLenum)mode, index, count);
@@ -1615,75 +1888,116 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
-    This operation will consume all of the elements of \a indices,
+    This operation will consume \a count elements of \a indices,
     which are used to index into the enabled arrays.
 
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
+    \sa update()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
+void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        glDrawElements((GLenum)mode, indices.size(), indices.type(),
-                       reinterpret_cast<const char *>(0));
-        indices.release();
-    } else {
-        glDrawElements((GLenum)mode, indices.size(),
-                       indices.type(), indices.constData());
+    glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
+}
+
+/*!
+    Pushes \a fbo onto the surface stack and makes it the current
+    drawing surface for context().  If \a fbo is null, then the
+    current drawing surface will be set to the default (e.g. the window).
+
+    Note: the \a fbo object must remain valid until popped from
+    the stack or end() is called.  All surfaces are popped from
+    the stack by end().
+
+    \sa popSurface(), currentSurface(), surfaceSize()
+*/
+void QGLPainter::pushSurface(QGLFramebufferObject *fbo)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLFramebufferObject *fboTop;
+    if (d->surfaceStack.isEmpty())
+        fboTop = 0;
+    else
+        fboTop = d->surfaceStack.last();
+    d->surfaceStack.append(fbo);
+    if (fbo != fboTop) {
+        if (fbo)
+            fbo->bind();
+        else if (fboTop)
+            fboTop->release();
     }
 }
 
 /*!
-    \overload
+    Pops the top-most framebuffer object from the surface stack
+    and returns it.  The next object on the stack will be made
+    the current drawing surface for context().  Does nothing
+    if the surface stack is empty when this function is called.
 
-    Draws primitives using vertices from the arrays specified by
-    setVertexAttribute().  The type of primitive to draw is
-    specified by \a mode.
-
-    This operation will consume \a count elements of \a indices,
-    starting at \a offset, which are used to index into the enabled arrays.
-
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
+    \sa pushSurface(), currentSurface()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
-                      int offset, int count)
+QGLFramebufferObject *QGLPainter::popSurface()
 {
-    Q_ASSERT(offset >= 0 && count >= 0 && (offset + count) <= indices.size());
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
-    update();
-    checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(ushort)));
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(int)));
-        }
-        indices.release();
-    } else {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const ushort *>(indices.constData()) + offset);
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const int *>(indices.constData()) + offset);
-        }
-    }
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    QGLFramebufferObject *fbo = d->surfaceStack.takeLast();
+    QGLFramebufferObject *fboNext;
+    if (d->surfaceStack.isEmpty())
+        fboNext = 0;
+    else
+        fboNext = d->surfaceStack.last();
+    if (fboNext)
+        fboNext->bind();
+    else if (fbo)
+        fbo->release();
+    return fbo;
+}
+
+/*!
+    Returns the framebuffer object corresponding to the current
+    drawing surface; null if using the default drawing surface.
+
+    \sa pushSurface(), popSurface(), surfaceSize()
+*/
+QGLFramebufferObject *QGLPainter::currentSurface() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    else
+        return d->surfaceStack.last();
+}
+
+/*!
+    Returns the size of the current drawing surface.
+
+    This function is typically used after calling pushSurface() or
+    popSurface() to readjust the viewport() for the dimensions of
+    the current drawing surface.
+
+    \code
+    painter.pushSurface(fbo);
+    painter.setViewport(painter.surfaceSize());
+    ...
+    painter.popSurface();
+    painter.setViewport(painter.surfaceSize());
+    \endcode
+
+    \sa currentSurface(), viewport()
+*/
+QSize QGLPainter::surfaceSize() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QSize());
+    QGLFramebufferObject *fbo;
+    if (!d->surfaceStack.isEmpty() && (fbo = d->surfaceStack.last()) != 0)
+        return fbo->size();
+    QPaintDevice *device = d->context->device();
+    return QSize(device->width(), device->height());
 }
 
 /*!
@@ -1981,21 +2295,21 @@ void QGLPainter::setLightParameters
 
     \sa setFaceMaterial(), setFaceColor()
 */
-const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
+const QGLMaterial *QGLPainter::faceMaterial(QGL::Face face) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterialParameters());
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterial());
     if (face == QGL::BackFaces) {
         if (!d->backMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->backMaterial = d->defaultMaterial;
         }
         return d->backMaterial;
     } else {
         if (!d->frontMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->frontMaterial = d->defaultMaterial;
         }
         return d->frontMaterial;
@@ -2018,7 +2332,7 @@ const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
     \sa faceMaterial(), setFaceColor()
 */
 void QGLPainter::setFaceMaterial
-        (QGL::Face face, const QGLMaterialParameters *value)
+        (QGL::Face face, const QGLMaterial *value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
@@ -2039,20 +2353,15 @@ void QGLPainter::setFaceMaterial
     d->updates |= QGLPainter::UpdateMaterials;
 }
 
-static QGLMaterialParameters *createColorMaterial
-    (QGLMaterialParameters *prev, const QColor& color)
+static QGLMaterial *createColorMaterial
+    (QGLMaterial *prev, const QColor& color)
 {
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (prev)
         material = prev;
     else
-        material = new QGLMaterialParameters();
-    material->setAmbientColor
-        (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
-                          color.blueF() * 0.2, color.alphaF()));
-    material->setDiffuseColor
-        (QColor::fromRgbF(color.redF() * 0.8, color.greenF() * 0.8,
-                          color.blueF() * 0.8, color.alphaF()));
+        material = new QGLMaterial();
+    material->setColor(color);
     return material;
 }
 

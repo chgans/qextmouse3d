@@ -46,7 +46,7 @@
 #include <QtCore/qurl.h>
 #include <QtGui/qcolor.h>
 #include <QtGui/qimage.h>
-#include <QtDeclarative/qml.h>
+#include <QtDeclarative/qdeclarative.h>
 #include "qgltexture2d.h"
 
 QT_BEGIN_HEADER
@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
 
 class EffectPrivate;
 class QGLPainter;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLFogParameters;
 
 class Effect : public QObject
@@ -64,7 +64,7 @@ class Effect : public QObject
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY effectChanged)
     Q_PROPERTY(QUrl texture READ texture WRITE setTexture NOTIFY effectChanged)
     Q_PROPERTY(QImage textureImage READ textureImage WRITE setTextureImage NOTIFY effectChanged)
-    Q_PROPERTY(QGLMaterialParameters *material READ material WRITE setMaterial NOTIFY effectChanged)
+    Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
     Q_PROPERTY(QGLFogParameters *fog READ fog WRITE setFog NOTIFY effectChanged)
 public:
     Effect(QObject *parent = 0);
@@ -79,8 +79,8 @@ public:
     QImage textureImage() const;
     void setTextureImage(const QImage& value);
 
-    QGLMaterialParameters *material() const;
-    void setMaterial(QGLMaterialParameters *value);
+    QGLMaterial *material() const;
+    void setMaterial(QGLMaterial *value);
 
     QGLFogParameters *fog() const;
     void setFog(QGLFogParameters *value);
@@ -102,7 +102,7 @@ private:
 };
 
 QML_DECLARE_TYPE(Effect)
-QML_DECLARE_TYPE(QGLMaterialParameters)
+QML_DECLARE_TYPE(QGLMaterial)
 QML_DECLARE_TYPE(QGLFogParameters)
 
 QT_END_NAMESPACE

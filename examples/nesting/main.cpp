@@ -39,50 +39,18 @@
 **
 ****************************************************************************/
 
-#include <QtTest/QtTest>
-#include "qglindexarray.h"
+#include <QApplication>
+#include "cubeview.h"
 
-class tst_QGLIndexArray : public QObject
+int main(int argc, char *argv[])
 {
-    Q_OBJECT
-public:
-    tst_QGLIndexArray() {}
-    ~tst_QGLIndexArray() {}
-
-private slots:
-    void create();
-    void accessors();
-};
-
-void tst_QGLIndexArray::create()
-{
-    QGLIndexArray indexes;
-    QCOMPARE(indexes.size(), 0);
-    QVERIFY(indexes.isEmpty());
-    QCOMPARE(indexes, indexes);   // operator ==
-    QCOMPARE(indexes.constData(), (void*)0);
-    QCOMPARE(indexes.data(), (void*)0);
+    QApplication app(argc, argv);
+    CubeView view;
+    if (QApplication::arguments().contains("-maximize"))
+        view.showMaximized();
+    else if (QApplication::arguments().contains("-fullscreen"))
+        view.showFullScreen();
+    else
+        view.show();
+    return app.exec();
 }
-
-void tst_QGLIndexArray::accessors()
-{
-    QGLIndexArray indexes;
-    QGLIndexArray indexes2;
-    QCOMPARE(indexes, indexes2);
-    indexes += 1;
-    QCOMPARE((int)(indexes[0]), 1);
-    QCOMPARE(indexes.size(), 1);
-    indexes += 2;
-    QCOMPARE((int)(indexes[1]), 2);
-    QCOMPARE(indexes.size(), 2);
-    indexes2 << 1;
-    QCOMPARE((int)(indexes2[0]), 1);
-    QCOMPARE(indexes2.size(), 1);
-    indexes2 << 2;
-    QCOMPARE((int)(indexes2[1]), 2);
-    QCOMPARE(indexes2.size(), 2);
-}
-
-QTEST_APPLESS_MAIN(tst_QGLIndexArray)
-
-#include "tst_qglindexarray.moc"

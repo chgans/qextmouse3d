@@ -108,7 +108,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QML_DEFINE_TYPE(Qt,4,6,Rotation3D,Rotation3D)
+//QML_DEFINE_TYPE(Qt,4,6,Rotation3D,Rotation3D)
 
 /*!
   Object creation and assigment of \a parent object.

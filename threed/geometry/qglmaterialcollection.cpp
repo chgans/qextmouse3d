@@ -40,8 +40,10 @@
 ****************************************************************************/
 
 #include "qglmaterialcollection.h"
-
-#include <QtCore/qset.h>
+#include "qglmaterial_p.h"
+#include <QtCore/qlist.h>
+#include <QtCore/qhash.h>
+#include <QtCore/private/qobject_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -64,10 +66,6 @@ QT_BEGIN_NAMESPACE
     this case the materials can be specified as a short data type using an
     offset into the collection, rather than the material name.
 
-    The access functions for fetching a QGLMaterialsParameter object by
-    the index (the short data type) are inlined and execute in constant
-    time.
-
     When building up a collection, meshes that refer to the various materials
     can check off which ones are used by calling markMaterialAsUsed(), and then
     remove spurious unused materials by calling removeUnusedMaterials().  This
@@ -75,184 +73,345 @@ QT_BEGIN_NAMESPACE
     number of materials may be specified but only a few of those materials
     are used by the particular mesh selected from the scene.
 
-    In the case where a given material is mapped 1-to-1 with a given texture
-    then the corresponding textures may be stored in the collection also.
-
     To make a material available from a collection, call addMaterial().  To
     retrieve a material from the collection call removeMaterial().
 
-    To make a texture map to a given material call setTexture(int, QGLTexture2D*)
-    and to retrieve that texture for the material use texture(int).
-
-    The collection takes ownership of the QGLMaterialParameters and QGLTexture2D
-    objects passed to it by the addMaterial() and setTexture() functions.  These
+    The collection takes ownership of the QGLMaterial
+    objects passed to it by the addMaterial() function.  These
     objects will be destroyed when the collection is destroyed.
 */
+
+class QGLMaterialCollectionPrivate : public QObjectPrivate
+{
+    Q_DECLARE_PUBLIC(QGLMaterialCollection)
+public:
+    QGLMaterialCollectionPrivate(int version = QObjectPrivateVersion)
+        : QObjectPrivate(version)
+    {
+    }
+
+    QList<QGLMaterial *> materials;
+    QHash<QString, int> materialNames;
+};
 
 /*!
     Construct a new empty QGLMaterialCollection object.  The \a parent
     is set as the parent of this object.
 */
 QGLMaterialCollection::QGLMaterialCollection(QObject *parent)
-    : QObject(parent)
+    : QObject(*new QGLMaterialCollectionPrivate, parent)
 {
 }
 
 /*!
-    Destroy this QGLMaterialCollection object recovering any resources.
-    All QGLMaterialParameters and QGLTexture2D objects referenced by the
-    collection will be destroyed.  For this reason do not add a
-    QGLMaterialParameters or QGLTexture2D object to more than one
-    QGLMaterialCollection.
+    Destroy this collection.  All material objects referred to by this
+    collection will be destroyed.
 */
 QGLMaterialCollection::~QGLMaterialCollection()
 {
-    qDeleteAll(QSet<QGLMaterialParameters*>::fromList(mMaterials));
-    qDeleteAll(QSet<QGLTexture2D*>::fromList(mTextures));
+    // The QGLMaterial QObject's are reparented to the collection
+    // when addMaterial() is called, so the QObject destructor
+    // will take care of cleaning them up for us.
 }
 
 /*!
-    \fn QGLMaterialParameters *QGLMaterialCollection::materialByIndex(int index) const
-    Returns a pointer to the QGLMaterialParameters object corresponding
-    to the \a index given.
+    Returns a pointer to the material corresponding to \a index; or null
+    if \a index is out of range or the material has been removed.
 
-    This method executes in constant time, and is intended for fast lookup.
-    Use this method during rendering and animation to obtain a material
-    to paint with.
-
-    Here's an example of searching for a material with given ambientColor
-    \c{color} in a QGLMaterialCollection \c{materials}:
+    Here's an example of searching for a material with a given ambient
+    \c{color} in the collection \c{materials}:
 
     \code
-    int colorIndex = 0;
-    for ( ; colorIndex < materials->size(); ++colorIndex)
-        if (materialByIndex(colorIndex) &&
-                materialByIndex(colorIndex)->ambientColor() == color)
+    for (int colorIndex; colorIndex < materials->size(); ++colorIndex) {
+        if (material(colorIndex) &&
+                material(colorIndex)->ambientColor() == color)
             break;
-    if (colorIndex != materials->size())
+    }
+    if (colorIndex < materials->size())
         myObject->setMaterial(colorIndex);
     \endcode
-
-    If a material has been removed, then the pointer returned will be null,
-    so check the return result before using it.
 */
+QGLMaterial *QGLMaterialCollection::material(int index) const
+{
+    Q_D(const QGLMaterialCollection);
+    return d->materials.value(index, 0);
+}
 
 /*!
-    \fn int QGLMaterialCollection::materialIndexByName(const QString &name) const
-    Returns an index to a QGLMaterialParameters object corresponding to
-    the material \a name given.
+    \overload
 
-    This method scans the list of material names, and thus has O(n) complexity.
-    Use this method during model loading to set material indexes in a mesh.
+    Returns the material associated with \a name in this collection;
+    null if \a name is not present or the material has been removed.
 */
+QGLMaterial *QGLMaterialCollection::material(const QString &name) const
+{
+    Q_D(const QGLMaterialCollection);
+    int index = d->materialNames.value(name, -1);
+    if (index >= 0)
+        return d->materials[index];
+    else
+        return 0;
+}
 
 /*!
-    \fn QString QGLMaterialCollection::materialName(int m) const
-    Returns the name of material with index \a m as a QString.  If no such
-    index exists (including if \a m is -1) then a null QString is returned.
+    Returns true if this collection contains \a material; false otherwise.
+
+    \sa indexOf()
 */
+bool QGLMaterialCollection::contains(QGLMaterial *material) const
+{
+    return material && material->d_func()->collection == this;
+}
 
 /*!
-    \fn void QGLMaterialCollection::markMaterialAsUsed(int index)
-    Flags the material corresponding to the \a index as used.  Some model files
-    may contain a range of materials, applying to various objects in the scene.
+    \overload
 
-    When a particular object is loaded from the file, many of those materials may
-    not be used in that object.  This wastes space, and makes processing materials
-    by name difficult, with many spurious materials being stored.
+    Returns true if this collection contains a material called \a name;
+    false otherwise.
 
-    Materials flagged as used will not be removed by removeUnusedMaterials(); and
-    their names will be returned by the materialNames() method.
-
-    Use this method during model loading or construction to mark off
-    materials that have been used.
-
-    \sa removeUnusedMaterials()
+    \sa indexOf()
 */
+bool QGLMaterialCollection::contains(const QString &name) const
+{
+    Q_D(const QGLMaterialCollection);
+    return d->materialNames.contains(name);
+}
 
 /*!
-    Removes and deletes materials which have not been marked as used.
-    Once this method has been called, the materialNames() method can be called
-    with a guarantee that all material names listed are utilized in the model.
+    Returns the index of \a material in this collection; -1 if
+    \a material is not present in this collection.
+
+    \sa contains()
+*/
+int QGLMaterialCollection::indexOf(QGLMaterial *material) const
+{
+    if (material && material->d_func()->collection == this)
+        return material->d_func()->index;
+    else
+        return -1;
+}
+
+/*!
+    \overload
+
+    Returns the index of the material called \a name in this collection;
+    -1 if \a name is not present in this collection.
+
+    \sa contains()
+*/
+int QGLMaterialCollection::indexOf(const QString &name) const
+{
+    Q_D(const QGLMaterialCollection);
+    return d->materialNames.value(name, -1);
+}
+
+/*!
+    Returns the name of the material at \a index in this material collection;
+    a null QString if \a index is out of range.
+*/
+QString QGLMaterialCollection::materialName(int index) const
+{
+    Q_D(const QGLMaterialCollection);
+    if (index >= 0 && index < d->materials.count()) {
+        QGLMaterial *material = d->materials[index];
+        if (material) {
+            // Use the name in the private data block just in case the
+            // application has modified objectName() since adding.
+            return material->d_func()->name;
+        }
+    }
+    return QString();
+}
+
+/*!
+    Returns true if the material at \a index in this collection has been
+    marked as used by markMaterialAsUsed().
 
     \sa markMaterialAsUsed()
 */
+bool QGLMaterialCollection::isMaterialUsed(int index) const
+{
+    QGLMaterial *mat = material(index);
+    if (mat)
+        return mat->d_func()->used;
+    else
+        return false;
+}
+
+/*!
+    Flags the material corresponding to the \a index as used.  Some model files
+    may contain a range of materials, applying to various objects in the scene.
+
+    When a particular object is loaded from the file, many of those
+    materials may not be used in that object.  This wastes space,
+    with many spurious materials being stored.
+
+    Use this method during model loading or construction to mark off
+    materials that have been used.  Materials so marked will not
+    be removed by removeUnusedMaterials().
+
+    \sa removeUnusedMaterials(), isMaterialUsed()
+*/
+void QGLMaterialCollection::markMaterialAsUsed(int index)
+{
+    QGLMaterial *mat = material(index);
+    if (mat)
+        mat->d_func()->used = true;
+}
+
+/*!
+    Removes and deletes materials which have not been marked as used.
+
+    \sa markMaterialAsUsed(), isMaterialUsed()
+*/
 void QGLMaterialCollection::removeUnusedMaterials()
 {
-    int index = 0;
-    QList<bool>::const_iterator it(mMaterialsUsed.begin());
-    for ( ; it != mMaterialsUsed.end(); ++it, ++index)
-    {
-        if (!(*it))
-        {
-            delete mMaterials[index];
-            removeMaterial(index);
-        }
+    Q_D(QGLMaterialCollection);
+    for (int index = 0; index < d->materials.size(); ++index) {
+        QGLMaterial *material = d->materials[index];
+        if (material && !material->d_func()->used)
+            delete removeMaterial(index);
     }
 }
 
 /*!
-    \fn int QGLMaterialCollection::addMaterial(QGLMaterialParameters *material)
-    Adds the \a material to this collection and returns its new index.  The
+    Adds \a material to this collection and returns its new index.  The
     collection takes ownership of the material and will delete it when the
-    collection is destroyed.
+    collection is destroyed.  Initially the \a material is marked as unused.
 
-    \sa removeMaterial()
+    The QObject::objectName() of \a material at the time addMaterial()
+    is called will be used as the material's name within this collection.
+    Changes to the object name after the material is added are ignored.
+
+    If \a material is already present in this collection, then this
+    function will return the index that was previously assigned.
+
+    Returns -1 if \a material has been added to another collection.
+
+    \sa removeMaterial(), markMaterialAsUsed()
 */
+int QGLMaterialCollection::addMaterial(QGLMaterial *material)
+{
+    Q_D(QGLMaterialCollection);
+    Q_ASSERT(material);
+
+    // Allocate a new index for the material.
+    int index = d->materials.count();
+
+    // Record the index in the private data attached to the material.
+    // This allows us to find the material's index quickly later.
+    QGLMaterialPrivate *dm = material->d_func();
+    if (dm->collection) {
+        if (dm->collection == this)
+            return dm->index;
+        return -1;
+    }
+    dm->collection = this;
+    dm->index = index;
+    dm->name = material->objectName();
+    dm->used = false;
+
+    // Add the material to this collection.
+    material->setParent(this);
+    d->materials.append(material);
+    if (!dm->name.isEmpty())
+        d->materialNames[dm->name] = index;
+    connect(material, SIGNAL(destroyed()), this, SLOT(materialDeleted()));
+    return index;
+}
 
 /*!
-    \fn void QGLMaterialCollection::removeMaterial(QGLMaterialParameters *material)
-    Removes the \a material from this collection.  This method simply
-    call removeMaterial(int) with the index of the material.
+    Removes all instances of \a material from this collection.
+    The \a material object is not deleted and can be reused.
+
+    Does nothing if \a material is null or not a member of
+    this collection.
 
     \sa addMaterial()
 */
+void QGLMaterialCollection::removeMaterial(QGLMaterial *material)
+{
+    Q_D(QGLMaterialCollection);
+    if (!material)
+        return;
+
+    // Check the material's owning collection.
+    QGLMaterialPrivate *dm = material->d_func();
+    if (dm->collection != this)
+        return;
+
+    // Remove the material from the collection.
+    d->materials[dm->index] = 0;
+    if (!dm->name.isEmpty())
+        d->materialNames.remove(dm->name);
+    material->setParent(0);
+
+    // Detach from the owning collection.
+    dm->collection = 0;
+    dm->index = -1;
+}
 
 /*!
-    \fn void QGLMaterialCollection::removeMaterial(int index)
-    Removes the material corresponding to \a index from this collection.
+    Removes the material at \a index from this collection, and returns
+    a pointer to the material.
+
     Since the collection is designed for fast lookup by index, the
-    internal record is not removed but the pointer stored is set to NULL.
-    The material is flagged as not used, and its name is set to empty.
-    The collection disowns the \a index and the caller must ensure
-    it is deleted.
+    the stored material pointer is set to null but the \a index
+    otherwise remains valid.
 */
+QGLMaterial *QGLMaterialCollection::removeMaterial(int index)
+{
+    Q_D(QGLMaterialCollection);
+
+    // Bail out if the material is invalid.
+    if (index < 0 || index >= d->materials.count())
+        return 0;
+    QGLMaterial *material = d->materials[index];
+    if (!material)
+        return 0;
+
+    // Remove the material from the collection.
+    QGLMaterialPrivate *dm = material->d_func();
+    d->materials[index] = 0;
+    if (!dm->name.isEmpty())
+        d->materialNames.remove(dm->name);
+    material->setParent(0);
+
+    // Detach from the owning collection.
+    dm->collection = 0;
+    dm->index = -1;
+    return material;
+}
 
 /*!
-    \fn bool QGLMaterialCollection::isEmpty() const
-    Returns true if the collection is empty, false otherwise.  If the collection is
-    empty then its size is 0.
+    Returns true if this collection is empty, false otherwise.
 
     \sa size()
 */
+bool QGLMaterialCollection::isEmpty() const
+{
+    Q_D(const QGLMaterialCollection);
+    return d->materials.isEmpty();
+}
 
 /*!
-    \fn int QGLMaterialCollection::size() const
-    Returns the size of this collection which is the number of
-    (possibly NULL) QGLMaterialParamters pointers it contains.
+    Returns the number of (possibly null) materials in this collection.
+    Null materials result from calling removeMaterial().
 
     \sa isEmpty()
 */
+int QGLMaterialCollection::size() const
+{
+    Q_D(const QGLMaterialCollection);
+    return d->materials.size();
+}
 
 /*!
     \internal
-    Responds to the deleted() signal by calling removeMaterial on the
+    Responds to the destroyed() signal by calling removeMaterial() on the
     material about to be deleted;
 */
 void QGLMaterialCollection::materialDeleted()
 {
-    QGLMaterialParameters *mat = qobject_cast<QGLMaterialParameters *>(sender());
-    removeMaterial(mat);
+    removeMaterial(qobject_cast<QGLMaterial *>(sender()));
 }
-
-/*!
-    \fn void QGLMaterialCollection::setTexture(int index, QGLTexture2D *texture)
-    Sets the QGLTexture2D for the given \a index to be \a texture.  This
-    collection takes ownership of \a texture and will delete it on destruction.
-*/
-
-/*!
-    \fn QGLTexture2D *QGLMaterialCollection::texture(int index)
-    Returns the QGLTexture2D pointer for the given \a index, or NULL if
-    no such pointer has been set.
-*/

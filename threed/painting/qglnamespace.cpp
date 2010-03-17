@@ -105,14 +105,13 @@ QT_BEGIN_NAMESPACE
     \since 4.7
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
-    \value NoDrawingMode The drawing mode is not specified.
     \value Points Draws a point at each of the specified vertices.
     \value Lines Draws a series of unconnected line segments, using two
            vertices for each line.
-    \value LineLoop series of connected line seguments, from the
+    \value LineLoop series of connected line segments, from the
            first to the last vertex, and then connecting the last
            vertex back to the first vertex.
-    \value LineStrip Draws a series of connected line seguments, from the
+    \value LineStrip Draws a series of connected line segments, from the
            first to the last vertex.
     \value Triangles Draws a series of triangles using three vertices from
            the enabled vertex arrays for each triangle.
@@ -123,6 +122,24 @@ QT_BEGIN_NAMESPACE
            first vertex in the enabled vertex arrays, starting with the
            first three vertices and then one extra vertex for each additional
            triangle.
+    \value LinesAdjacency Draws a series of unconnected lines, using
+           two vertices for each line to define the positions, and an
+           additional vertices per line to define adjacent points.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
+    \value LineStripAdjacency Draws a series of connected line segments,
+           from the second to the second last vertex.  The first and last
+           vertices define adjacent points.  This drawing mode is only
+           supported on OpenGL systems that have geometry shaders.
+    \value TrianglesAdjacency Draws a series of triangles using three
+           vertices from the enabled vertex arrays for each triangle.
+           An additional three vertices per triangle are supplied to
+           define adjacent points.  This drawing mode is only supported
+           on OpenGL systems that have geometry shaders.
+    \value TriangleStripAdjacency Draws a series of triangles in a strip,
+           with additional vertices for points adjacent to the strip.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
 */
 
 /*!

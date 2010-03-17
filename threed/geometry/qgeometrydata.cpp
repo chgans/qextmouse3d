@@ -41,7 +41,6 @@
 
 #include "qgeometrydata.h"
 #include "qlogicalvertex.h"
-#include "qglindexarray.h"
 #include "qglpainter.h"
 
 #include <QtCore/qdebug.h>
@@ -113,6 +112,13 @@
      \sa QGLPrimitive
 */
 
+/*!
+    \typedef QGL::IndexArray
+
+    This is a convenience for either QArray<ushort> (OpenGL/ES) or
+    QArray<int> (desktop OpenGL).
+*/
+
 class QGeometryDataPrivate
 {
 public:
@@ -127,8 +133,9 @@ public:
     QArray<QColor4B> colors;
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
-    QGLIndexArray indices;
-    QGLVertexBuffer *vertexBuffer;
+    QGL::IndexArray indices;
+    QGLVertexBuffer vertexBuffer;
+    QGLIndexBuffer indexBuffer;
     bool uploadsViable;
     bool modified;
     QBox3D bb;
@@ -144,8 +151,7 @@ public:
 };
 
 QGeometryDataPrivate::QGeometryDataPrivate()
-    : vertexBuffer(0)
-    , uploadsViable(true)
+    : uploadsViable(true)
     , modified(false)
     , fields(0)
     , count(0)
@@ -160,7 +166,6 @@ QGeometryDataPrivate::QGeometryDataPrivate()
 
 QGeometryDataPrivate::~QGeometryDataPrivate()
 {
-    delete vertexBuffer;
 }
 
 QGeometryDataPrivate *QGeometryDataPrivate::clone() const
@@ -173,6 +178,7 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
     temp->textures = textures;
     temp->indices = indices;
     temp->vertexBuffer = vertexBuffer;
+    temp->indexBuffer = indexBuffer;
     temp->uploadsViable = uploadsViable;
     temp->modified = modified;
     temp->bb = bb;
@@ -764,26 +770,11 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
 {
     if (d && d->indices.size() && d->count)
     {
-        if (upload())
-        {
-            Q_ASSERT(d->vertexBuffer);
-            painter->setVertexBuffer(*d->vertexBuffer);
-        }
-        else
-        {
-            quint32 fields = d->fields;
-            quint32 mask = 0x01;
-            for (int field = 0; fields; ++field, fields >>= 1)
-            {
-                if (!(mask & fields))
-                    continue;
-                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                painter->setVertexAttribute(attr, attributeValue(attr));
-            }
-        }
+        upload();
+        painter->setVertexBuffer(d->vertexBuffer);
         if (count == 0)
-            count = d->indices.size();
-        painter->draw(QGL::Triangles, d->indices, start, count);
+            count = d->indexBuffer.indexCount();
+        painter->draw(QGL::Triangles, d->indexBuffer, start, count);
     }
 }
 
@@ -805,53 +796,61 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
 bool QGeometryData::upload()
 {
     bool vboUploaded = false;
-    if (d && d->uploadsViable && (d->bufferStrategy & BufferIfPossible))
+    bool iboUploaded = false;
+
+    if (!d)
+        return false;
+    if (!d->modified)
+        return d->vertexBuffer.isUploaded() && d->indexBuffer.isUploaded();
+
+    check();
+
+    // Need to recreate the buffers from the modified data.
+    d->vertexBuffer = QGLVertexBuffer();
+    d->indexBuffer = QGLIndexBuffer();
+
+    // Copy the geometry data to the vertex buffer.
+    const quint32 mask = 0x01;
+    quint32 fields = d->fields;
+    for (int field = 0; fields; ++field, fields >>= 1)
     {
-        vboUploaded = true;
-        if (d->modified)
-        {
-            check();
-            if (!d->vertexBuffer)
-            {
-                d->vertexBuffer = new QGLVertexBuffer;
-                const quint32 mask = 0x01;
-                quint32 fields = d->fields;
-                for (int field = 0; fields; ++field, fields >>= 1)
-                {
-                    if (!(mask & fields))
-                        continue;
-                    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                    if (attr == QGL::Position)
-                        d->vertexBuffer->addAttribute(attr, d->vertices);
-                    else if (attr == QGL::Normal)
-                        d->vertexBuffer->addAttribute(attr, d->normals);
-                    else if (attr == QGL::Color)
-                        d->vertexBuffer->addAttribute(attr, d->colors);
-                    else if (attr < QGL::CustomVertex0)
-                        d->vertexBuffer->addAttribute(attr, d->textures.at(d->key[field]));
-                    else
-                        d->vertexBuffer->addAttribute(attr, d->attributes.at(d->key[field]));
-                }
-                if (d->vertexBuffer->upload())
-                {
-                    if (!(d->bufferStrategy & KeepClientData))
-                        clear();
-                }
-                else
-                {
-                    qWarning("QGeometryData: vertex buffer objects not supported");
-                    delete d->vertexBuffer;
-                    d->vertexBuffer = 0;
-                    d->uploadsViable = false;
-                    vboUploaded = false;
-                }
-            }
-            if (!d->indices.upload())
-                vboUploaded = false;
-        }
-        d->modified = false;
+        if (!(mask & fields))
+            continue;
+        QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+        if (attr == QGL::Position)
+            d->vertexBuffer.addAttribute(attr, d->vertices);
+        else if (attr == QGL::Normal)
+            d->vertexBuffer.addAttribute(attr, d->normals);
+        else if (attr == QGL::Color)
+            d->vertexBuffer.addAttribute(attr, d->colors);
+        else if (attr < QGL::CustomVertex0)
+            d->vertexBuffer.addAttribute(attr, d->textures.at(d->key[field]));
+        else
+            d->vertexBuffer.addAttribute(attr, d->attributes.at(d->key[field]));
     }
-    return vboUploaded;
+
+    // Upload the buffer if requested, otherwise keep it client-side.
+    // Note: QGLVertexBuffer will act as a client-side buffer if not uploaded.
+    if ((d->bufferStrategy & BufferIfPossible) != 0)
+    {
+        if (d->vertexBuffer.upload())
+            vboUploaded = true;
+    }
+
+    // Copy the geometry data to the index buffer and upload if requested.
+    d->indexBuffer.setIndices(d->indices);
+    if ((d->bufferStrategy & BufferIfPossible) != 0)
+    {
+        if (d->indexBuffer.upload())
+            iboUploaded = true;
+    }
+
+    d->modified = false;
+
+    if (!(d->bufferStrategy & KeepClientData) && vboUploaded && iboUploaded)
+        clear();
+
+    return vboUploaded && iboUploaded;
 }
 
 /*!
@@ -883,14 +882,23 @@ QGeometryData::BufferStrategy QGeometryData::bufferStrategy() const
 }
 
 /*!
-    Returns a pointer to the vertex buffer for this geometry, or null if
-    no vertex buffer exists.
+    Returns a reference to the vertex buffer for this geometry.
+
+    \sa indexBuffer()
 */
-const QGLVertexBuffer *QGeometryData::vertexBuffer() const
+QGLVertexBuffer QGeometryData::vertexBuffer() const
 {
-    if (d)
-        return d->vertexBuffer;
-    return 0;
+    return d->vertexBuffer;
+}
+
+/*!
+    Returns a reference to the index buffer for this geometry.
+
+    \sa vertexBuffer()
+*/
+QGLIndexBuffer QGeometryData::indexBuffer() const
+{
+    return d->indexBuffer;
 }
 
 /*!
@@ -923,18 +931,18 @@ void QGeometryData::appendIndices(int index1, int index2, int index3)
 
     \sa appendIndex(), appendIndices()
 */
-QGLIndexArray QGeometryData::indices() const
+QGL::IndexArray QGeometryData::indices() const
 {
     if (d)
         return d->indices;
     else
-        return QGLIndexArray();
+        return QGL::IndexArray();
 }
 
 /*!
     Appends the \a indices to the geometry's index array.
 */
-void QGeometryData::appendIndices(const QGLIndexArray &indices)
+void QGeometryData::appendIndices(const QGL::IndexArray &indices)
 {
     detach();
     d->modified = true;

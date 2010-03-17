@@ -46,7 +46,6 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qglgeometry.h"
 #include "qgldisplaylist.h"
 #include "qgltexture2d.h"
 
@@ -131,7 +130,7 @@ private:
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
-    QGLMaterialParameters *mMaterial;
+    QGLMaterial *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLTexture2D *mTexture;
 

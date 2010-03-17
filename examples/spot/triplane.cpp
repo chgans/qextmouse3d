@@ -42,7 +42,6 @@
 #include "triplane.h"
 
 #include "qglvertexbuffer.h"
-#include "qglindexarray.h"
 #include "qglpainter.h"
 #include "qline3d.h"
 #include "qplane3d.h"
@@ -127,14 +126,14 @@ TriPlane::TriPlane(const QPlane3D &plane, const QVector3D &side,
             vertices.append(l1->point(t));
         }
         qSwap(l0, l1);
-        QGLVertexBuffer *buffer = new QGLVertexBuffer();
-        buffer->addAttribute(QGL::Position, vertices);
+        QGLVertexBuffer buffer;
+        buffer.addAttribute(QGL::Position, vertices);
         g->setVertexBuffer(buffer);
         mStrips.append(g);
     }
 
     // Material for the floor
-    mat = new QGLMaterialParameters();
+    mat = new QGLMaterial();
     mat->setAmbientColor(QColor(32, 34, 32));
     mat->setDiffuseColor(QColor(128, 36, 36));
     mat->setSpecularColor(QColor::fromRgbF(0.4, 0.4, 0.4, 1.0));
