@@ -42,7 +42,7 @@
 #ifndef VIEWPORT_H
 #define VIEWPORT_H
 
-#include <QtDeclarative/qdeclarativeItem.h>
+#include <QtDeclarative/qdeclarativeitem.h>
 #include "item3d.h"
 
 QT_BEGIN_HEADER

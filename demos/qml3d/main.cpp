@@ -56,7 +56,7 @@
 #include <QtCore/qvariantanimation.h>
 #include <QFileInfo>
 #include "viewport.h"
-#include "Effect.h"
+#include "effect.h"
 #include "rotation3d.h"
 
 static QVariant interpolateVector3D
@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
     QML_REGISTER_TYPE(Qt,4,6,Rotation3D,Rotation3D);
     QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterial);
+    
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
