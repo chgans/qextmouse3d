@@ -45,6 +45,7 @@
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
+#include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/private/qwidget_p.h>
 #include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
@@ -462,12 +463,27 @@ bool QGLPainter::begin(QPainter *painter)
     If this assumption doesn't apply, then call disableEffect()
     to disable the effect before calling end().
 
+    This function will pop all surfaces from the surface stack,
+    and return currentSurface() to null (the default drawing surface).
+
     \sa begin(), isActive(), disableEffect()
 */
 bool QGLPainter::end()
 {
     if (!d_ptr)
         return false;
+    if (!d_ptr->surfaceStack.isEmpty() && int(d_ptr->ref) <= 2) {
+        // Restore the default drawing surface before ending painting
+        // operations.  This is needed for proper interoperation with
+        // the OpenGL paint engine which will assume that it is drawing
+        // to the default drawing surface after endNativePainting().
+        // The ref needs to be 2 or less so that we don't do this
+        // if the QGLPainter was nested within another instance of itself.
+        QGLFramebufferObject *fbo = d_ptr->surfaceStack.last();
+        if (fbo)
+            fbo->release();
+        d_ptr->surfaceStack.clear();
+    }
     if (d_ptr->activePaintEngine) {
         d_ptr->activePaintEngine->endNativePainting();
         d_ptr->activePaintEngine = 0;
@@ -1881,6 +1897,106 @@ void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
     update();
     checkRequiredFields();
     glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
+}
+
+/*!
+    Pushes \a fbo onto the surface stack and makes it the current
+    drawing surface for context().  If \a fbo is null, then the
+    current drawing surface will be set to the default (e.g. the window).
+
+    Note: the \a fbo object must remain valid until popped from
+    the stack or end() is called.  All surfaces are popped from
+    the stack by end().
+
+    \sa popSurface(), currentSurface(), surfaceSize()
+*/
+void QGLPainter::pushSurface(QGLFramebufferObject *fbo)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLFramebufferObject *fboTop;
+    if (d->surfaceStack.isEmpty())
+        fboTop = 0;
+    else
+        fboTop = d->surfaceStack.last();
+    d->surfaceStack.append(fbo);
+    if (fbo != fboTop) {
+        if (fbo)
+            fbo->bind();
+        else if (fboTop)
+            fboTop->release();
+    }
+}
+
+/*!
+    Pops the top-most framebuffer object from the surface stack
+    and returns it.  The next object on the stack will be made
+    the current drawing surface for context().  Does nothing
+    if the surface stack is empty when this function is called.
+
+    \sa pushSurface(), currentSurface()
+*/
+QGLFramebufferObject *QGLPainter::popSurface()
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    QGLFramebufferObject *fbo = d->surfaceStack.takeLast();
+    QGLFramebufferObject *fboNext;
+    if (d->surfaceStack.isEmpty())
+        fboNext = 0;
+    else
+        fboNext = d->surfaceStack.last();
+    if (fboNext)
+        fboNext->bind();
+    else if (fbo)
+        fbo->release();
+    return fbo;
+}
+
+/*!
+    Returns the framebuffer object corresponding to the current
+    drawing surface; null if using the default drawing surface.
+
+    \sa pushSurface(), popSurface(), surfaceSize()
+*/
+QGLFramebufferObject *QGLPainter::currentSurface() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    else
+        return d->surfaceStack.last();
+}
+
+/*!
+    Returns the size of the current drawing surface.
+
+    This function is typically used after calling pushSurface() or
+    popSurface() to readjust the viewport() for the dimensions of
+    the current drawing surface.
+
+    \code
+    painter.pushSurface(fbo);
+    painter.setViewport(painter.surfaceSize());
+    ...
+    painter.popSurface();
+    painter.setViewport(painter.surfaceSize());
+    \endcode
+
+    \sa currentSurface(), viewport()
+*/
+QSize QGLPainter::surfaceSize() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QSize());
+    QGLFramebufferObject *fbo;
+    if (!d->surfaceStack.isEmpty() && (fbo = d->surfaceStack.last()) != 0)
+        return fbo->size();
+    QPaintDevice *device = d->context->device();
+    return QSize(device->width(), device->height());
 }
 
 /*!
