@@ -493,6 +493,8 @@ void QGLSceneNode::setParent(QObject *parent)
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
         sceneParent->addNode(this);
+    else
+        qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent (Scene)node to add the new node to.");
     QObject::setParent(parent);
 }
 

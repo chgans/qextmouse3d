@@ -210,6 +210,8 @@ Q_SIGNALS:
 
 private:
     Item3dPrivate *d;
+
+    friend class Item3dPrivate;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Item3d::CullFaces)
