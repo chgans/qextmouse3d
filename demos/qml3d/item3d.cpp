@@ -291,6 +291,7 @@ int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> 
         QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
         return d->transformData ? d->transformData->graphicsTransforms.size() : 0;
     } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
         return 0;
     }
 }
@@ -321,6 +322,8 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
             }
         }
     }
+    else
+        qWarning()<<"Warning: could not find Item3d to add transformation to.";
 }
 
 QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
@@ -329,6 +332,7 @@ QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphi
     if (object) {
         return object->d->transforms.at(idx);
     } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformations";
         return 0;
     }
     return 0;
@@ -342,6 +346,8 @@ void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform>
         object->d->transforms.clear();
         object->update();
     }
+    else
+        qWarning()<<"Warning: could not find Item3d to clear of transformations";
 }
 
 
