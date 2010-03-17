@@ -122,6 +122,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
     painter->setStandardEffect(QGL::LitMaterial);
 
+    painter->setDepthTestingEnabled(false);
     painter->clear();
     teapot.draw(painter);
 
@@ -130,12 +131,15 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().pop();
     painter->setViewport(painter->surfaceSize());
 
-    painter->setFaceColor(QGL::AllFaces, QColor(0, 160, 202));
+    painter->setFaceColor(QGL::AllFaces, QColor(0, 160, 202, 125));
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     glBindTexture(GL_TEXTURE_2D, fbo->texture());
     glEnable(GL_TEXTURE_2D);
 
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
+    painter->setCullFaces(QGL::CullFrontFaces);
+    cube.draw(painter);
+    painter->setCullFaces(QGL::CullBackFaces);
     cube.draw(painter);
 
     glBindTexture(GL_TEXTURE_2D, 0);
