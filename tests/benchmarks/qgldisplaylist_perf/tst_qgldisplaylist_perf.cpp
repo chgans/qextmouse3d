@@ -42,6 +42,15 @@
 #include <QtTest/QtTest>
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
+#include "qglteapot.h"
+#include "qglsection_p.h"
+
+class TestList : public QGLDisplayList
+{
+public:
+    QGLSection *section() { return currentSection(); }
+    void setDefThreshold(int t) { setDefaultThreshold(t); }
+};
 
 class tst_QGLDisplayList : public QObject
 {
@@ -49,42 +58,46 @@ class tst_QGLDisplayList : public QObject
 public:
     tst_QGLDisplayList() {}
     virtual ~tst_QGLDisplayList() {}
+    void addQuadBenchMarks(const QVector3DArray &data, int type);
 
 private slots:
-    void addQuad_data();
-    void addQuad();
-    void teapot_data();
+    void addQuadRandom_data();
+    void addQuadRandom();
+    void addQuadOrdered_data();
+    void addQuadOrdered();
     void teapot();
 };
 
 enum {
-    Test_Baseline,
-    Test_Random,
-    Test_Sections,
-    Test_None,
-    Test_Hash,
-    Test_Map
+    Test_3,
+    Test_7,
+    Test_10,
+    Test_20
 };
 
-void tst_QGLDisplayList::addQuad_data()
+void tst_QGLDisplayList::addQuadRandom_data()
 {
     QTest::addColumn<int>("size");
     QTest::addColumn<int>("type");
 
     QByteArray name;
-    for (int size = 5000; size < 10000; size += 200)
+    for (int size = 10; size < 10000; size += 10)
     {
-        name = "Baseline--";
+        name = "T3--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Baseline);
+        QTest::newRow(name.constData()) << size << int(Test_3);
 
-        name = "Random--";
+        name = "T7--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Random);
+        QTest::newRow(name.constData()) << size << int(Test_7);
 
-        name = "Sections--";
+        name = "T10--";
         name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_Sections);
+        QTest::newRow(name.constData()) << size << int(Test_10);
+
+        name = "T20--";
+        name += QString::number(size);
+        QTest::newRow(name.constData()) << size << int(Test_20);
     }
 }
 
@@ -104,97 +117,121 @@ QVector3D randVector()
     return QVector3D(randCoord(), randCoord(), randCoord());
 }
 
-void tst_QGLDisplayList::addQuad()
+void tst_QGLDisplayList::addQuadRandom()
 {
     QFETCH(int, size);
     QFETCH(int, type);
 
     int n = qSqrt(size);
-    if (type == Test_Baseline)
+    size = n * n;
+    QVector3DArray data;
+    data.reserve(size);
+    for (int i = 0; i < size; ++i)
+    {
+        // make sure (in face of randomness) we get a planar quad
+        QVector3D origin = randVector();
+        QVector3D a;
+        while (a.isNull())
+            a = randVector();
+        QVector3D b;
+        while (b.isNull())
+            b = randVector();
+        data.append(origin, a, a+b, b);
+    }
+    addQuadBenchMarks(data, type);
+}
+
+void tst_QGLDisplayList::addQuadBenchMarks(const QVector3DArray &data, int type)
+{
+    int size = data.size();
+    if (type == Test_3)
     {
         QBENCHMARK {
-            QGLDisplayList list;
-            list.newSection(QGL::Smooth, QGL::MapLookup);
-            for (int i = 0; i < n; ++i)
+            TestList list;
+            list.newSection(QGL::Smooth);
+            list.section()->setMapThreshold(3);
+            for (int i = 0; (i+3) < size; i += 4)
             {
-                for (int j = 0; j < n; ++j)
-                {
-                    QGLOperation op(&list, QGL::QUAD);
-                    op << QVector3D(1.0f * i, 1.0f * j, 0.0f);
-                    op << QVector3D(1.0f * (i+1), 1.0f * j, 0.0f);
-                    op << QVector3D(1.0f * (i+1), 1.0f * (j+1), 0.0f);
-                    op << QVector3D(1.0f * i, 1.0f * (j+1), 0.0f);
-                }
+                QGLOperation op(&list, QGL::QUAD);
+                op << data[i] << data[i+1] << data[i+2] << data[i+3];
             }
             list.finalize();
         }
     }
-    else if (type == Test_Random)
+    else if (type == Test_7)
     {
         QBENCHMARK {
-            QGLDisplayList list;
-            for (int i = 0; i < n; ++i)
+            TestList list;
+            list.newSection(QGL::Smooth);
+            list.section()->setMapThreshold(7);
+            for (int i = 0; (i+3) < size; i += 4)
             {
-                list.newSection(QGL::Smooth, QGL::MapLookup);
-                for (int j = 0; j < n; ++j)
-                {
-                    QGLOperation op(&list, QGL::QUAD);
-                    QVector3D origin = randVector();
-                    QVector3D a;
-                    while (a.isNull())
-                        a = randVector();
-                    QVector3D b;
-                    while (b.isNull())
-                        b = randVector();
-                    op << origin;
-                    op << (origin + a);
-                    op << (origin + a + b);
-                    op << (origin + b);
-                }
+                QGLOperation op(&list, QGL::QUAD);
+                op << data[i] << data[i+1] << data[i+2] << data[i+3];
             }
             list.finalize();
         }
     }
-    else if (type == Test_Sections)
+    else if (type == Test_10)
     {
         QBENCHMARK {
-            QGLDisplayList list;
-            for (int i = 0; i < n; ++i)
+            TestList list;
+            list.newSection(QGL::Smooth);
+            list.section()->setMapThreshold(10);
+            for (int i = 0; (i+3) < size; i += 4)
             {
-                list.newSection(QGL::Smooth, QGL::MapLookup);
-                for (int j = 0; j < n; ++j)
-                {
-                    QGLOperation op(&list, QGL::QUAD);
-                    op << QVector3D(1.0f * i, 1.0f * j, 0.0f);
-                    op << QVector3D(1.0f * (i+1), 1.0f * j, 0.0f);
-                    op << QVector3D(1.0f * (i+1), 1.0f * (j+1), 0.0f);
-                    op << QVector3D(1.0f * i, 1.0f * (j+1), 0.0f);
-                }
+                QGLOperation op(&list, QGL::QUAD);
+                op << data[i] << data[i+1] << data[i+2] << data[i+3];
+            }
+            list.finalize();
+        }
+    }
+    else if (type == Test_20)
+    {
+        QBENCHMARK {
+            TestList list;
+            list.newSection(QGL::Smooth);
+            list.section()->setMapThreshold(20);
+            for (int i = 0; (i+3) < size; i += 4)
+            {
+                QGLOperation op(&list, QGL::QUAD);
+                op << data[i] << data[i+1] << data[i+2] << data[i+3];
             }
             list.finalize();
         }
     }
 }
 
-void tst_QGLDisplayList::teapot_data()
+void tst_QGLDisplayList::addQuadOrdered_data()
 {
-    QTest::addColumn<int>("type");
+    addQuadRandom_data();
+}
 
-    QByteArray name;
-    name = "None--";
-    QTest::newRow(name.constData()) << int(Test_None);
+void tst_QGLDisplayList::addQuadOrdered()
+{
+    QFETCH(int, size);
+    QFETCH(int, type);
 
-    name = "QHash--";
-    QTest::newRow(name.constData()) << int(Test_Hash);
-
-    name = "QMap--";
-    QTest::newRow(name.constData()) << int(Test_Map);
+    int n = qSqrt(size);
+    size = n * n;
+    QVector3DArray data;
+    data.reserve(size);
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            data.append(QVector3D(1.0f * i, 1.0f * j, 0.0f),
+                        QVector3D(1.0f * (i+1), 1.0f * j, 0.0f),
+                        QVector3D(1.0f * (i+1), 1.0f * (j+1), 0.0f),
+                        QVector3D(1.0f * i, 1.0f * (j+1), 0.0f));
+    addQuadBenchMarks(data, type);
 }
 
 void tst_QGLDisplayList::teapot()
 {
-    QFETCH(int, type);
-
+    QBENCHMARK {
+        QGLDisplayList list;
+        list << QGLTeapot();
+        list.finalize();
+    }
 }
 
 

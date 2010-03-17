@@ -72,7 +72,7 @@ class QGLSceneNode;
 class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
-    QGLSection(QGLDisplayList *d, QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::MapLookup);
+    QGLSection(QGLDisplayList *d, QGL::Smoothing sm = QGL::Smooth);
     ~QGLSection();
 
     void reserve(int amount);
@@ -102,6 +102,8 @@ public:
     }
     inline QGL::Smoothing smoothing() const;
     inline QGLDisplayList *displayList() const;
+    int mapThreshold() const;
+    void setMapThreshold(int);
     QList<QGLSceneNode*> nodes() const;
     void addNode(QGLSceneNode *node);
     bool deleteNode(QGLSceneNode *node);

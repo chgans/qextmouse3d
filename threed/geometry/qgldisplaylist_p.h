@@ -85,6 +85,7 @@ public:
     QGLPrimitive *currentOperation;
     QGL::Operation operation;
     QList<QGLPrimitive *> primitiveQueue;
+    int defThreshold;
 };
 
 inline void QGLDisplayListPrivate::setDirty(bool dirty)
