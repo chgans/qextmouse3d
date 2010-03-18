@@ -19,8 +19,8 @@ Viewport {
             running: true
             repeat: true
             PauseAnimation { duration: 500 }
-            NumberAnimation { to : 9.0; duration: 300; easing:"easeOutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing:"easeOutBounce" }
+            NumberAnimation { to : 9.0; duration: 300; easing.type:"OutQuad" }
+            NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
         }
     }
 

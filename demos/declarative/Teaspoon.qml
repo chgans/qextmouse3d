@@ -1,12 +1,12 @@
 import Qt 4.6
 
 Item3d {
-    id: "Top"
+    id: "top"
     property real saucerY
     Item3d {
         id: teaspoon1
         property real y_lift
-        y: Math.max(y_lift,Top.saucerY)
+        y: Math.max(y_lift,top.saucerY)
         transform: Rotation3D {
             angle: 275
             axis: Qt.vector3d(1, 0, 0)
@@ -23,8 +23,8 @@ Item3d {
 
         y_lift: SequentialAnimation {
             running: teaspoon1.bounce
-            NumberAnimation { to : 1; duration: 300; easing:"easeOutQuad" }
-            NumberAnimation { to : 0; duration: 300; easing:"easeOutBounce" }
+            NumberAnimation { to : 1; duration: 300; easing.type:"OutQuad" }
+            NumberAnimation { to : 0; duration: 300; easing.type:"OutBounce" }
             onCompleted: teaspoon1.bounce = false
         }
     }

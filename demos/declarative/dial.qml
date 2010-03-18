@@ -1,7 +1,7 @@
 import Qt 4.6
 
 Rectangle {
-    id: Dial
+    id: dial
     property int max: 220
     property int redstart: 101
     property int step: 2
@@ -27,8 +27,8 @@ Rectangle {
 
     Text {
         text: "km/h"
-        anchors.horizontalCenter: Dial.horizontalCenter
-        y: Dial.height/4
+        anchors.horizontalCenter: dial.horizontalCenter
+        y: dial.height/4
         font.family: fontFamily
         font.italic: fontItalic
         font.pointSize: fontSize
@@ -36,12 +36,12 @@ Rectangle {
     }
 
     Repeater {
-        dataSource: Dial.max/step+1
+        model: dial.max/step+1
         Item {
-            id: Tick
-            width: Dial.width
-            height: Dial.height
-            rotation: (index*step-(Dial.max+1)/2)*(degrees/(Dial.max+1))+orientation
+            id: tick
+            width: dial.width
+            height: dial.height
+            rotation: (index*step-(dial.max+1)/2)*(degrees/(dial.max+1))+orientation
             transformOrigin: "Center"
             Rectangle {
                 x: index*step%bigstep == 0 ? 0 : tickBigLengthOver
@@ -50,12 +50,12 @@ Rectangle {
                 height: tickWidth
                 color: index*step >= redstart ? redColor : tickColor
                 Text {
-                    id: Label
+                    id: label
                     x: tickBigLength+textGutter
                     y: -height/2
-                    rotation: -Tick.rotation
+                    rotation: -tick.rotation
                     transformOrigin: "Center"
-                    font: Other.font
+                    //font: Other.font
                     font.family: fontFamily
                     font.italic: fontItalic
                     font.pointSize: fontSize
