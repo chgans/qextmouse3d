@@ -14,13 +14,14 @@ Viewport {
                 zScale: 1.5
             },
             Rotation3D {
-                angle: NumberAnimation {
+				id: rotation
+                NumberAnimation on angle {
                     running: true
                     repeat: true
                     from: 0
                     to: 360
                     duration: 2000
-                }
+                } 
                 axis: Qt.vector3d(0, 1, 0)
             }
         ]

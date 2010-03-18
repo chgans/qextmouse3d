@@ -9,7 +9,7 @@ Viewport {
             material: china
         }
 
-        y: SequentialAnimation {
+        SequentialAnimation on y{
             running: true
             repeat: true
             PauseAnimation { duration: 500 }

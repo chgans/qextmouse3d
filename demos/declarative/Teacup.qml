@@ -18,10 +18,10 @@ Item3d {
         y: top.spoonY
     }
 
-    SequentialAnimation {
+    SequentialAnimation on spoonY {
         running: top.bounce
-        NumberAnimation { target: top; property:"spoonY"; to : 1; duration: 300; easing.type:"OutQuad" }
-        NumberAnimation { target: top; property:"spoonY"; to : 0; duration: 300; easing.type:"OutBounce" }
+        NumberAnimation { to : 1; duration: 300; easing.type:"OutQuad" }
+        NumberAnimation { to : 0; duration: 300; easing.type:"OutBounce" }
         onCompleted: top.bounce = false
     }
 }
