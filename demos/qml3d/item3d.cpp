@@ -455,29 +455,6 @@ Item3d::~Item3d()
 
 
 
-/*! TODO: Docs - pivot is experimenting with a fixed pivot point for specific animation needs (pivot around this hip joint, etc
-*/
-
-QVector3D Item3d::pivot() const
-{
-    return d->pivot;
-}
-
-void Item3d::setPivot(const QVector3D &value)
-{
-    d->pivot=value;
-}
-
-bool Item3d::usePivot() const
-{
-    return d->usePivot;
-}
-
-void Item3d::setUsePivot(bool usePivot)
-{
-    d->usePivot = usePivot;
-}
-
 /*!
     \property Item3d::position
     \brief This defines the \l Item3d position in 3d space as a QVector3d.
