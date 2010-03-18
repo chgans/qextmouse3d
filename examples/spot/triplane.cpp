@@ -42,7 +42,6 @@
 #include "triplane.h"
 
 #include "qglvertexbuffer.h"
-#include "qglindexarray.h"
 #include "qglpainter.h"
 #include "qline3d.h"
 #include "qplane3d.h"

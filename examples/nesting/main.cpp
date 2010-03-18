@@ -39,34 +39,18 @@
 **
 ****************************************************************************/
 
-#ifndef QGLREFERENCEDBUFFER_H
-#define QGLREFERENCEDBUFFER_H
+#include <QApplication>
+#include "cubeview.h"
 
-#include <QtOpenGL/qglbuffer.h>
-#include <QtCore/qatomic.h>
-
-QT_BEGIN_HEADER
-
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-// Helper class for QGLIndexArray.  May go away in future.
-class Q_QT3D_EXPORT QGLReferencedBuffer : public QGLBuffer
+int main(int argc, char *argv[])
 {
-public:
-    explicit QGLReferencedBuffer(QGLBuffer::Type type) : QGLBuffer(type), m_ref(1) {}
-    ~QGLReferencedBuffer() {}
-
-    void ref() { m_ref.ref(); }
-    bool deref() { return m_ref.deref(); }
-
-private:
-    QAtomicInt m_ref;
-};
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+    QApplication app(argc, argv);
+    CubeView view;
+    if (QApplication::arguments().contains("-maximize"))
+        view.showMaximized();
+    else if (QApplication::arguments().contains("-fullscreen"))
+        view.showFullScreen();
+    else
+        view.show();
+    return app.exec();
+}

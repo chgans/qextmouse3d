@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
     QML_REGISTER_TYPE(Qt,4,6,Rotation3D,Rotation3D);
     QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterial);
+    
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;

@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglindexbuffer.h"
+#include "qglpainter.h"
 #include <QtOpenGL/qgl.h>
 #include <QtCore/qatomic.h>
 
@@ -296,6 +297,20 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<int>& values)
 #endif
 
 /*!
+    Returns the element type for this index buffer, \c{GL_UNSIGNED_SHORT}
+    or \c{GL_UNSIGNED_INT}.
+*/
+GLenum QGLIndexBuffer::elementType() const
+{
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    Q_D(const QGLIndexBuffer);
+    return d->elementType;
+#else
+    return GL_UNSIGNED_SHORT;
+#endif
+}
+
+/*!
     Returns the number of indices in this index buffer.
 */
 int QGLIndexBuffer::indexCount() const
@@ -321,10 +336,10 @@ int QGLIndexBuffer::indexCount() const
     Once the index data has been uploaded, the client-side copies of
     the data arrays will be released.  If the index data could not be
     uploaded, then it is retained client-side.  This way, regardless of
-    whether the data could be uploaded or not, draw() can be used to
-    support drawing of primitives using this object.
+    whether the data could be uploaded or not, QGLPainter::draw() can
+    be used to support drawing of primitives using this object.
 
-    \sa isUploaded(), setIndices(), draw()
+    \sa isUploaded(), setIndices(), QGLPainter::draw()
 */
 bool QGLIndexBuffer::upload()
 {
@@ -384,14 +399,61 @@ QGLBuffer *QGLIndexBuffer::buffer() const
 }
 
 /*!
-    Draws all elements in this index buffer according to \a mode.
+    Binds this index buffer to the current GL context.  Returns false if
+    binding was not possible, usually because upload() has not been called.
 
-    If the index buffer has not been uploaded to the GL server,
-    this will draw using a client-side array.
+    The buffer must be bound to the same QGLContext current when upload()
+    was called, or to another QGLContext that is sharing with it.
+    Otherwise, false will be returned from this function.
+
+    \sa release(), upload()
 */
-void QGLIndexBuffer::draw(QGL::DrawingMode mode)
+bool QGLIndexBuffer::bind() const
 {
-    Q_D(QGLIndexBuffer);
+    Q_D(const QGLIndexBuffer);
+    if (d->buffer)
+        return d->buffer->bind();
+    else
+        return false;
+}
+
+/*!
+    Releases this index buffer from the current GL context.
+
+    This function must be called with the same QGLContext current
+    as when bind() was called on the index buffer.
+
+    \sa bind()
+*/
+void QGLIndexBuffer::release() const
+{
+    Q_D(const QGLIndexBuffer);
+    if (d->buffer)
+        d->buffer->release();
+}
+
+/*!
+    \overload
+
+    Draws primitives using vertices from the arrays specified by
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
+
+    This operation will consume all of the elements of \a indices,
+    which are used to index into the enabled arrays.
+
+    If \a indices has not been uploaded to the GL server as an index
+    buffer, then this function will draw using a client-side array.
+
+    \sa update(), QGLIndexBuffer::upload()
+*/
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
+{
+    const QGLIndexBufferPrivate *d = indices.d_func();
+    update();
+#ifndef QT_NO_DEBUG
+    checkRequiredFields();
+#endif
 #ifdef QGL_INT_BUFFERS_SUPPORTED
     if (d->buffer) {
         d->buffer->bind();
@@ -419,15 +481,25 @@ void QGLIndexBuffer::draw(QGL::DrawingMode mode)
 /*!
     \overload
 
-    Draws the \a count elements starting at \a offset in this index
-    buffer according to \a mode.
+    Draws primitives using vertices from the arrays specified by
+    setVertexAttribute().  The type of primitive to draw is
+    specified by \a mode.
 
-    If the index buffer has not been uploaded to the GL server,
-    this will draw using a client-side array.
+    This operation will consume \a count elements of \a indices,
+    starting at \a offset, which are used to index into the enabled arrays.
+
+    If \a indices has not been uploaded to the GL server as an index
+    buffer, then this function will draw using a client-side array.
+
+    \sa update(), QGLIndexBuffer::upload()
 */
-void QGLIndexBuffer::draw(QGL::DrawingMode mode, int offset, int count)
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count)
 {
-    Q_D(QGLIndexBuffer);
+    const QGLIndexBufferPrivate *d = indices.d_func();
+    update();
+#ifndef QT_NO_DEBUG
+    checkRequiredFields();
+#endif
 #ifdef QGL_INT_BUFFERS_SUPPORTED
     if (d->buffer) {
         d->buffer->bind();

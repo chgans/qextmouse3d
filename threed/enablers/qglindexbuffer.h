@@ -42,6 +42,7 @@
 #ifndef QGLINDEXBUFFER_H
 #define QGLINDEXBUFFER_H
 
+#include <QtOpenGL/qgl.h>
 #include <QtOpenGL/qglbuffer.h>
 #include "qglnamespace.h"
 #include "qarray.h"
@@ -53,6 +54,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLIndexBufferPrivate;
+class QGLPainter;
 
 class Q_QT3D_EXPORT QGLIndexBuffer
 {
@@ -74,6 +76,8 @@ public:
     void replaceIndices(int index, const QArray<int>& values);
 #endif
 
+    GLenum elementType() const;
+
     int indexCount() const;
     bool isEmpty() const { return indexCount() == 0; }
 
@@ -82,13 +86,15 @@ public:
 
     QGLBuffer *buffer() const;
 
-    void draw(QGL::DrawingMode mode);
-    void draw(QGL::DrawingMode mode, int offset, int count);
+    bool bind() const;
+    void release() const;
 
 private:
     QGLIndexBufferPrivate *d_ptr;
 
     Q_DECLARE_PRIVATE(QGLIndexBuffer)
+
+    friend class QGLPainter;
 };
 
 QT_END_NAMESPACE

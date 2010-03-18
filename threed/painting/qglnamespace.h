@@ -156,13 +156,6 @@ namespace QGL
         Smooth,
         Faceted
     };
-
-    enum Strategy
-    {
-        NullStrategy,
-        HashLookup,
-        MapLookup
-    };
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)

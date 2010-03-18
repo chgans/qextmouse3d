@@ -45,7 +45,6 @@
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qglprimitive.h"
-#include "qglindexarray.h"
 
 #include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
@@ -280,6 +279,20 @@
     See the documentation below of the individual addTriangle() and other
     functions for more details.
 
+    \section2 Raw Triangle Mode
+
+    Where generation of indices and normals is not needed - for example if
+    porting an existing application, or where indices and normals result
+    naturally; it is possible to do a very fast add of triangles, without
+    using any of QGLDisplayList's processing.
+
+    Simply ensure that indices are created in the QGLPrimitive passed to
+    the addTriangle() function, and this will trigger "raw triangle" mode.
+
+    When adding triangles in this way ensure that all appropriate values
+    have been correctly set, and that the normals, indices and other data
+    are correctly calculated, since no checking is done.
+
     \section1 Display Lists and Scene Nodes
 
     QGLSceneNodes are used to manage application of local transformations,
@@ -307,7 +320,7 @@
 
     \snippet displaylist/displaylist.cpp 1
 
-    Call the \l{QGLGeometry::palette()}{palette()} function on the scene node's
+    Call the \l{QGLSceneNode::palette()}{palette()} function on the scene node's
     geometry to get the QGLMaterialCollection for the node, and record textures
     and materials into it.  Typically a display lists nodes, and usually the
     whole application will share the one palette, so if you have a top-level
@@ -412,6 +425,7 @@ QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
     , currentNode(0)
     , currentOperation(0)
     , operation(QGL::NO_OP)
+    , defThreshold(5)
 {
 }
 
@@ -479,6 +493,7 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
     // triangle - don't add it, it just wastes space - see class doco
     if (!calcNormal || !norm.isNull())
     {
+        // use common normal to communicate the normal down the stack
         if (calcNormal)
             p.setCommonNormal(norm);
         currentSection->append(a, b, c);
@@ -488,6 +503,17 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
 
 /*!
     Add a \a triangle or series of triangles to this display list.
+
+    If \a triangle has indices specified then no processing of any kind is
+    done and all the geometry is simply dumped in to the display list.
+
+    This "raw triangle" mode is for advanced use, and it is assumed that
+    the user knows what they are doing, in particular that the indices
+    supplied are correct, and normals are supplied and correct.
+
+    Otherwise, if no indices are supplied, then the list is broken into
+    groups of 3 vertices, each processed as a triangle.
+
     Any vertices at the end of the list under a multiple of 3 are
     ignored.
 
@@ -495,30 +521,31 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
     the cross-product \c{(b - a) x (c - a)}, for each group of 3
     logical vertices \c{a(triangle, i), b(triangle, i+1), c(triangle, i+2)}.
 
-    In the case of a degenerate triangle, where this cross-product is null,
+    In the case of a degenerate triangle, where the cross-product is null,
     that triangle is skipped.  Supplying normals suppresses this behaviour
     and degenerate triangles will be added to the geometry.
+
+    Normals are not calculated in "raw triangle" mode, and skipping of null
+    triangles is likewise not performed.
+
     \sa addQuad()
 */
 void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 {
     Q_D(QGLDisplayList);
-    QGLPrimitive t = triangle;
-    QVector3D save = t.commonNormal();
-    const QGLIndexArray indices = t.indices();
-    if (indices.isEmpty())
+    if (triangle.indexCount() > 0)
     {
-        for (int i = 0; i < t.count() - 2; i += 3)
-        {
-            d->addTriangle(i, i+1, i+2, t);
-            t.setCommonNormal(save);
-        }
+        d->currentSection->appendGeometry(triangle);
+        d->currentSection->appendIndices(triangle.indices());
+        d->currentNode->setCount(d->currentNode->count() + triangle.indexCount());
     }
     else
     {
-        for (int i = 0; i < indices.size() - 2; i += 3)
+        QGLPrimitive t = triangle;
+        QVector3D save = t.commonNormal();
+        for (int i = 0; i < t.count() - 2; i += 3)
         {
-            d->addTriangle(indices[i], indices[i+1], indices[i+2], t);
+            d->addTriangle(i, i+1, i+2, t);
             t.setCommonNormal(save);
         }
     }
@@ -842,7 +869,7 @@ static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
 
     This function does the following:
     \list
-        \o packs all geometry data from sections into QGLGeomtry instances
+        \o packs all geometry data from sections into QGLSceneNode instances
         \o references this data via QGLSceneNode start() and count()
         \o uploads the data to the graphics hardware, if possible
         \o deletes all QGLSection instances in this list
@@ -868,7 +895,7 @@ void QGLDisplayList::finalize()
         {
             // pack sections that have the same fields into one geometry
             QGLSection *s = d->sections.takeFirst();
-            QGLIndexArray indices = s->indices();
+            QGL::IndexArray indices = s->indices();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
             int scnt = s->count();
@@ -905,43 +932,33 @@ void QGLDisplayList::finalize()
                 geos.insert(s->fields(), g);
             }
             d->adjustSectionNodes(s, sectionIndexOffset, g);
+            delete s;
         }
         d->finalizeNeeded = false;
     }
 }
 
 /*!
-    Creates a new section with smoothing mode set to \a smooth and using
-    the given vertex processing \a strategy.  By default \a smooth is
-    QGL::Smooth, and \a strategy is QGL::HashLookup.  The new section is made
+    Creates a new section with smoothing mode set to \a smooth.  By default
+    \a smooth is QGL::Smooth.  The new section is made
     current on this QGLDisplayList.  A section must be created before
     any geometry or new nodes can be added to the displaylist.
 
     The internal node stack is cleared, a section-level QGLSceneNode is
     created for this section by calling newNode().
 
-    The \a strategy allows for performance tuning for particular types of
-    scenes.  When there is a large amount of data, and it is known
-    apriori that the data is correct, choose QGL::NullStrategy to turn off
-    all vertex processing.  This setting will also set the smoothing mode
-    to QGL::NoSmoothing and disable duplicates indexing.
-
-    Otherwise leave the default setting of QGL::HashLookup to have vertices
-    processed via a hash structure for smoothing and duplicate indexing.
-
     \sa newNode(), pushNode()
 */
-void QGLDisplayList::newSection(QGL::Smoothing smooth, QGL::Strategy strategy)
+void QGLDisplayList::newSection(QGL::Smoothing smooth)
 {
-    if (strategy == QGL::NullStrategy)
-        smooth = QGL::NoSmoothing;
-    new QGLSection(this, smooth, strategy);  // calls addSection
+    new QGLSection(this, smooth);  // calls addSection
 }
 
 void QGLDisplayList::addSection(QGLSection *sec)
 {
     Q_D(QGLDisplayList);
     d->currentSection = sec;
+    sec->setMapThreshold(d->defThreshold);
     d->sections.append(sec);
     d->nodeStack.clear();
     newNode();
@@ -965,6 +982,16 @@ QList<QGLSection*> QGLDisplayList::sections() const
 {
     Q_D(const QGLDisplayList);
     return d->sections;
+}
+
+/*!
+    \internal
+    Test function only.
+*/
+void QGLDisplayList::setDefaultThreshold(int t)
+{
+    Q_D(QGLDisplayList);
+    d->defThreshold = t;
 }
 
 /*!

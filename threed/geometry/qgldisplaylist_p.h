@@ -53,7 +53,6 @@
 // We mean it.
 //
 
-#include "qglgeometry_p.h"
 #include "qglscenenode_p.h"
 #include "qgldisplaylist.h"
 
@@ -85,6 +84,7 @@ public:
     QGLPrimitive *currentOperation;
     QGL::Operation operation;
     QList<QGLPrimitive *> primitiveQueue;
+    int defThreshold;
 };
 
 inline void QGLDisplayListPrivate::setDirty(bool dirty)

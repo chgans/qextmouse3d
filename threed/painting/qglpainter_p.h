@@ -240,6 +240,7 @@ public:
     GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
+    QList<QGLFramebufferObject *> surfaceStack;
 
     QGLPainterExtensions *extensions();    
 

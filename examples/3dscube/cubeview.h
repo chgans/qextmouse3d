@@ -50,7 +50,6 @@ class QGLAbstractScene;
 class QGLLightParameters;
 class QGLLightModel;
 class QMenu;
-class QGLGeometry;
 class QGLSceneNode;
 
 class CubeView : public QGLWidget

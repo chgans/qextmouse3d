@@ -50,6 +50,7 @@
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
+#include <QtDeclarative/private/qdeclarativeitem_p.h>
 
 /*!
     \class Item3d
@@ -235,7 +236,6 @@ public:
         , objectPickId(-1)
         , cullFaces(Item3d::CullDisabled)
         , _stateGroup(0)
-       // , targetNode(0)
         , inheritEvents(false)
         , isVisible(true)
         , isInitialized(false)
@@ -278,120 +278,76 @@ public:
     static void transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
     static QGraphicsTransform *transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
     static void transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
-
-
-    // The following shall not be removed until the transform property is working properly
-  //  // transform property
-    //void transform_removeAt(QDeclarativeListProperty<QObject>*,int);
-    //int transform_count(QDeclarativeListProperty<QObject>*) const;
-    //void transform_append(QDeclarativeListProperty<QObject>*,QGraphicsTransform *);
-    //void transform_insert(QDeclarativeListProperty<QObject>*,int, QGraphicsTransform *);
-    //QGraphicsTransform *transform_at(QDeclarativeListProperty<QObject>*,int) const;
-    //void transform_clear(QDeclarativeListProperty<QObject>*);
-//    QML_DECLARE_LIST_PROXY(Item3dPrivate, QGraphicsTransform *, transform)
     QList<QGraphicsTransform *> transforms;
 
 
 };
 
-// The following shall not be removed until the transform property is working properly
-//
-//void Item3dPrivate::transform_removeAt(QDeclarativeListProperty<QObject>* ql, int i)
-//{
-//    //transforms.removeAt(i);
-//    //item->update();
-//}
-//
-//int Item3dPrivate::transform_count(QDeclarativeListProperty<QObject>*ql) const
-//{
-////    return transforms.count();
-//    return 0;
-//}
-//
-//
-//void Item3dPrivate::transform_append(QDeclarativeListProperty<QObject>* ql,QGraphicsTransform *item)
-//{
-//    //if (!transforms.contains(item)) {
-//    //    transforms.append(item);
-//
-//    //    // XXX - need a better way of doing this.
-//    //    if (qobject_cast<QGraphicsScale *>(item)) {
-//    //        QObject::connect(item, SIGNAL(originChanged()),
-//    //                         this->item, SLOT(update()));
-//    //        QObject::connect(item, SIGNAL(scaleChanged()),
-//    //                         this->item, SLOT(update()));
-//    //    } else if (qobject_cast<QGraphicsRotation *>(item)) {
-//    //        QObject::connect(item, SIGNAL(originChanged()),
-//    //                         this->item, SLOT(update()));
-//    //        QObject::connect(item, SIGNAL(angleChanged()),
-//    //                         this->item, SLOT(update()));
-//    //        QObject::connect(item, SIGNAL(axisChanged()),
-//    //                         this->item, SLOT(update()));
-//    //    }
-//
-//    //    this->item->update();
-//    //}
-//}
-//
-//void Item3dPrivate::transform_insert(QDeclarativeListProperty<QObject>* ql,int, QGraphicsTransform *)
-//{
-//    // ###
-//}
-//
-//QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QObject>* ql,int idx) const
-//{
-////    return transforms.at(idx);
-//    return 0;
-//}
-//
-//void Item3dPrivate::transform_clear(QDeclarativeListProperty<QObject>* ql)
-//{
-//    //transforms.clear();
-//    //item->update();
-//}
 
 int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
-{    
-    return 0;
-    /*QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
+{  
+    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
     if (object) {
         QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
         return d->transformData ? d->transformData->graphicsTransforms.size() : 0;
     } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
         return 0;
-    }*/
+    }
 }
 
 void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
 {
- /*   QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    QList<QGraphicsTransform *> *ptrans;
     if (object)
-        QGraphicsItemPrivate::get(object)->appendGraphicsTransform(item);*/
+    {
+        ptrans = &object->d->transforms;
+
+        //We now need to connect the underlying transform so that any change will update the graphical item.
+        if (!ptrans->contains(item)) {
+            ptrans->append(item);            
+            if (qobject_cast<QGraphicsScale *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(scaleChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsRotation *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(angleChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(axisChanged()),
+                                 object, SLOT(update()));
+            }
+        }
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to add transformation to.";
 }
 
 QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
-{
-    //QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-    //if (object) {
-    //    QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-    //    if (!d->transformData)
-    //        return 0;
-    //    return d->transformData->graphicsTransforms.at(idx);
-    //} else {
-    //    return 0;
-    //}
+{    
+   Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        return object->d->transforms.at(idx);
+    } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformations";
+        return 0;
+    }
     return 0;
 }
 
 void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
 {
-    //QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
-    //if (object) {
-    //    QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-    //    if (!d->transformData)
-    //        return;
-    //    object->setTransformations(QList<QGraphicsTransform *>());
-    //}
+
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        object->d->transforms.clear();
+        object->update();
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to clear of transformations";
 }
 
 
@@ -400,7 +356,7 @@ void Item3dPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject
 {
     Item3d *i = qobject_cast<Item3d *>(o);
     if (i) 
-        i-(static_cast<Item3d *>(prop->object));
+        i->setParent(static_cast<Item3d *>(prop->object));
     else
         o->setParent(static_cast<Item3d *>(prop->object));
 }
@@ -628,14 +584,7 @@ void Item3d::setScale(qreal value)
     By default this list of transformations is empty.
 */
 
-// The following shall not be removed until the transform property is working properly
-//QDeclarativeListProperty<QGraphicsTransform *>* Item3d::transform()
-//
-//{
-//
-// //   return &(d->transform);
-//    return 0;
-//}
+
 QDeclarativeListProperty<QGraphicsTransform> Item3d::transform()
 {
     return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->transform_append, d->transform_count,
@@ -1008,12 +957,22 @@ void Item3d::draw(QGLPainter *painter)
     //1) Item Transforms
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
-    if (!d->transforms.isEmpty()) {
+    //QDeclarativeListProperty<QGraphicsTransform> transformList = transform();
+    //int transformCount = d->transform_count(&transformList);
+    int transformCount = d->transforms.count();
+    if (transformCount>0) {
+    //if (!d->transforms.isEmpty()) {
         // The transformations are applied in reverse order of their
         // lexical appearance in the QML file.
         QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = d->transforms.size() - 1; index >= 0; --index)
-            d->transforms[index]->applyTo(&m);
+        //for (int index = d->transforms.size() - 1; index >= 0; --index)
+        for (int index = transformCount - 1; index >= 0; --index) {
+            //QGraphicsTransform *trans = d->transform_at(&transformList,index);
+            //trans->applyTo(&m);
+            //if (d->transforms[index]->
+            d->transforms.at(index)->applyTo(&m);
+        }
+            
         painter->modelViewMatrix() = m;
     }
     if (d->scale != 1.0f)

@@ -39,50 +39,52 @@
 **
 ****************************************************************************/
 
-#include <QtTest/QtTest>
-#include "qglindexarray.h"
+#ifndef CUBEVIEW_H
+#define CUBEVIEW_H
 
-class tst_QGLIndexArray : public QObject
+#include "qglview.h"
+#include "qgldisplaylist.h"
+
+class QGLFramebufferObject;
+class QGLCamera;
+
+class CubeView : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal teapotAngle READ teapotAngle WRITE setTeapotAngle)
+    Q_PROPERTY(qreal cubeAngle READ cubeAngle WRITE setCubeAngle)
+    Q_PROPERTY(qreal orbitAngle READ orbitAngle WRITE setOrbitAngle)
 public:
-    tst_QGLIndexArray() {}
-    ~tst_QGLIndexArray() {}
+    CubeView(QWidget *parent = 0);
+    ~CubeView();
 
-private slots:
-    void create();
-    void accessors();
+    qreal teapotAngle() const { return tangle; }
+    void setTeapotAngle(qreal angle) { tangle = angle; performUpdate(); }
+
+    qreal cubeAngle() const { return cangle; }
+    void setCubeAngle(qreal angle) { cangle = angle; performUpdate(); }
+
+    qreal orbitAngle() const { return oangle; }
+    void setOrbitAngle(qreal angle) { oangle = angle; performUpdate(); }
+
+protected:
+    void initializeGL(QGLPainter *painter);
+    void paintGL(QGLPainter *painter);
+
+private:
+    QGLDisplayList cube;
+    QGLDisplayList teapot;
+    QGLTexture2D qtlogo;
+    QGLFramebufferObject *fbo;
+    QGLCamera *innerCamera;
+    qreal tangle;
+    qreal cangle;
+    qreal oangle;
+    bool needsUpdate;
+
+    void performUpdate();
+    void drawCube1(QGLPainter *painter, const QVector3D &posn);
+    void drawCube2(QGLPainter *painter, const QVector3D &posn);
 };
 
-void tst_QGLIndexArray::create()
-{
-    QGLIndexArray indexes;
-    QCOMPARE(indexes.size(), 0);
-    QVERIFY(indexes.isEmpty());
-    QCOMPARE(indexes, indexes);   // operator ==
-    QCOMPARE(indexes.constData(), (void*)0);
-    QCOMPARE(indexes.data(), (void*)0);
-}
-
-void tst_QGLIndexArray::accessors()
-{
-    QGLIndexArray indexes;
-    QGLIndexArray indexes2;
-    QCOMPARE(indexes, indexes2);
-    indexes += 1;
-    QCOMPARE((int)(indexes[0]), 1);
-    QCOMPARE(indexes.size(), 1);
-    indexes += 2;
-    QCOMPARE((int)(indexes[1]), 2);
-    QCOMPARE(indexes.size(), 2);
-    indexes2 << 1;
-    QCOMPARE((int)(indexes2[0]), 1);
-    QCOMPARE(indexes2.size(), 1);
-    indexes2 << 2;
-    QCOMPARE((int)(indexes2[1]), 2);
-    QCOMPARE(indexes2.size(), 2);
-}
-
-QTEST_APPLESS_MAIN(tst_QGLIndexArray)
-
-#include "tst_qglindexarray.moc"
+#endif

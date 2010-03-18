@@ -13,8 +13,6 @@ SUBDIRS = \
     qglmaterial \
     qglmaterialcollection \
     qglvertexbuffer \
-    qglgeometry \
-    qglindexarray \
     qglpainter \
     qgldisplaylist \
     qglsection \

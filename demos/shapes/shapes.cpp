@@ -271,13 +271,9 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     // Overpaint some lines to show the triangle boundaries.
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(202, 170, 0));
-    QGLIndexArray indices;
-    indices.append(0);
-    indices.append(2);
-    indices.append(0);
-    indices.append(3);
+    static ushort const indices[] = {0, 2, 0, 3};
     painter->setVertexAttribute(QGL::Position, vertices);
-    painter->draw(QGL::Lines, indices);
+    painter->draw(QGL::Lines, indices, 4);
 
     drawText(painter, rect, tr("Triangle fan"));
 }
