@@ -87,6 +87,11 @@ public:
     QGLBuffer *buffer;
 };
 
+const QArray<ushort> &QGLIndexBuffer::indices() const
+{
+    return d_func()->indicesShort;
+}
+
 /*!
     Creates a new index buffer.
 */

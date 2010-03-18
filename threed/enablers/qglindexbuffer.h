@@ -68,6 +68,8 @@ public:
     QGLBuffer::UsagePattern usagePattern() const;
     void setUsagePattern(QGLBuffer::UsagePattern value);
 
+    const QArray<ushort> &indices() const;
+
     void setIndices(const QArray<ushort>& values);
     void replaceIndices(int index, const QArray<ushort>& values);
 
