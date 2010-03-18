@@ -76,7 +76,7 @@ qreal Cube::size() const
 void Cube::setSize(qreal value)
 {
     d->size = value;
-    delete d->cube;
+    //        delete d->cube;
     d->cube = 0;
     emit sizeChanged();
     update();

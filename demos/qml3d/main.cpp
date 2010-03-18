@@ -58,6 +58,8 @@
 #include "viewport.h"
 #include "effect.h"
 #include "rotation3d.h"
+#include "shaderprogram.h"
+#include "cube.h"
 
 static QVariant interpolateVector3D
     (const QVector3D &f, const QVector3D &t, qreal progress)
@@ -79,7 +81,8 @@ int main(int argc, char *argv[])
     QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
     QML_REGISTER_TYPE(Qt,4,6,Rotation3D,Rotation3D);
     QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterial);
-    
+    QML_REGISTER_TYPE(Qt,4,6,ShaderProgram,ShaderProgram);
+    QML_REGISTER_TYPE(Qt,4,6,Cube,Cube);
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;

@@ -72,31 +72,20 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_FLAGS(CullFaces)
     Q_FLAGS(Mode)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(QVector3D pivotPoint READ pivot WRITE setPivot NOTIFY pivotChanged)
+    Q_PROPERTY(bool usePivot READ usePivot WRITE setUsePivot NOTIFY pivotChanged)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
-    
-    
-    //Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform *>* transform READ transform DESIGNABLE false FINAL)
+    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)   
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> transform READ transform DESIGNABLE false FINAL)
-
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
-    
-    //Q_PROPERTY(QDeclarativeListProperty<QObject *>* resources READ resources DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
-    //Q_PROPERTY(QDeclarativeListProperty<QObject *>* data READ data DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
-
-    //CHILDREN LIST :-)
     Q_PROPERTY(QDeclarativeListProperty<Item3d> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
-
-    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState *>* states READ states DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
-    //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition *>* transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
-
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
@@ -122,6 +111,12 @@ public:
     QVector3D position() const;
     void setPosition(const QVector3D& value);
 
+    QVector3D pivot() const;
+    void setPivot(const QVector3D &value);
+
+    bool usePivot() const;
+    void setUsePivot(bool usePivot);
+
     qreal x() const;
     void setX(qreal value);
     qreal y() const;
@@ -141,21 +136,15 @@ public:
     Effect *effect() const;
     void setEffect(Effect *value);
 
-    //QDeclarativeListProperty<Item3d *> *children();
-//    QDeclarativeListProperty<QObject *> *resources();
-//    QMLified below_ QDeclarativeListProperty<QObject *> *data();
     QDeclarativeListProperty<QObject> data();
     QDeclarativeListProperty<QObject> resources();
     QDeclarativeListProperty<Item3d> fxChildren();    
 
-    //QDeclarativeListProperty<QGraphicsTransform *> *transform();
     QDeclarativeListProperty<QGraphicsTransform> transform();
 
-    //QDeclarativeListProperty<QDeclarativeState *>* states();
     QDeclarativeListProperty<QDeclarativeState> states();
     QDeclarativeState *findState(const QString &name) const;
 
-    //QDeclarativeListProperty<QDeclarativeTransition *>* transitions();
     QDeclarativeListProperty<QDeclarativeTransition> transitions();
     
     QString state() const;

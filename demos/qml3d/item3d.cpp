@@ -179,8 +179,8 @@
 			
             SequentialAnimation {
                 running: rotor.spin
-			    NumberAnimation {target: rotateBlades; property: "angle"; to : 360.0; duration: 750; easing:"easeOutQuad" }	
-               onCompleted: rotor.spin = false
+			    NumberAnimation {target: rotateBlades; property: "angle"; to : 360.0; duration: 750; easing.type:"OutQuad" }	
+                onCompleted: rotor.spin = false
 			}
 		}
 
@@ -230,6 +230,8 @@ public:
         : item(_item)
         , viewport(0)
         , position(0.0f, 0.0f, 0.0f)
+        , pivot(0.0f,0.0f,0.0f)
+        , usePivot(false)
         , scale(1.0f)
         , mesh(0)
         , effect(0)
@@ -245,6 +247,8 @@ public:
     Item3d *item;
     Viewport *viewport;
     QVector3D position;
+    QVector3D pivot;
+    bool usePivot;
     qreal scale;
     Mesh *mesh;
     Effect *effect;    
@@ -447,6 +451,31 @@ Item3d::Item3d(QObject *parent)
 Item3d::~Item3d()
 {
     delete d;
+}
+
+
+
+/*! TODO: Docs - pivot is experimenting with a fixed pivot point for specific animation needs (pivot around this hip joint, etc
+*/
+
+QVector3D Item3d::pivot() const
+{
+    return d->pivot;
+}
+
+void Item3d::setPivot(const QVector3D &value)
+{
+    d->pivot=value;
+}
+
+bool Item3d::usePivot() const
+{
+    return d->usePivot;
+}
+
+void Item3d::setUsePivot(bool usePivot)
+{
+    d->usePivot = usePivot;
 }
 
 /*!
@@ -957,19 +986,13 @@ void Item3d::draw(QGLPainter *painter)
     //1) Item Transforms
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(d->position);
-    //QDeclarativeListProperty<QGraphicsTransform> transformList = transform();
-    //int transformCount = d->transform_count(&transformList);
     int transformCount = d->transforms.count();
     if (transformCount>0) {
-    //if (!d->transforms.isEmpty()) {
         // The transformations are applied in reverse order of their
         // lexical appearance in the QML file.
         QMatrix4x4 m = painter->modelViewMatrix();
-        //for (int index = d->transforms.size() - 1; index >= 0; --index)
         for (int index = transformCount - 1; index >= 0; --index) {
-            //QGraphicsTransform *trans = d->transform_at(&transformList,index);
-            //trans->applyTo(&m);
-            //if (d->transforms[index]->
+            
             d->transforms.at(index)->applyTo(&m);
         }
             
