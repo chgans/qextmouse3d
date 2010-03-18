@@ -283,6 +283,7 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
                 texture->setDdsImage(txName);
             else
                 texture->setImage(QImage(txName));
+            texture->setObjectName(txName);
             mat->setTexture(texture);
         }
     }

@@ -119,6 +119,10 @@ private:
     friend class QGLMaterialCollection;
 };
 
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLMaterial &material);
+#endif
+
 QT_END_NAMESPACE
 
 QT_END_HEADER

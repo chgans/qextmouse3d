@@ -416,4 +416,23 @@ void QGLMaterial::releaseTextures(QGLPainter *painter)
     \sa texturesChanged()
 */
 
+#ifndef QT_NO_DEBUG_STREAM
+#include "qgltexture2d.h"
+
+QDebug operator<<(QDebug dbg, const QGLMaterial &material)
+{
+    dbg << &material <<
+            "-- Amb:" << material.ambientColor() <<
+            "-- Diff:" << material.diffuseColor() <<
+            "-- Spec:" << material.specularColor() <<
+            "-- Shin:" << material.shininess();
+    for (int i = 0; i < material.textureLayerCount(); ++i)
+        if (material.texture(i) != 0)
+            dbg << "\n    -- Tex" << i << ":" << material.texture(i)
+            << material.texture(i)->objectName();
+    dbg << "\n";
+    return dbg;
+}
+#endif
+
 QT_END_NAMESPACE
