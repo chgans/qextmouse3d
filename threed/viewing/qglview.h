@@ -65,7 +65,8 @@ public:
     {
         ObjectPicking       = 0x0001,
         ShowPicking         = 0x0002,
-        CameraNavigation    = 0x0004
+        CameraNavigation    = 0x0004,
+        PaintingLog         = 0x0008
     };
     Q_DECLARE_FLAGS(Options, Option)
 

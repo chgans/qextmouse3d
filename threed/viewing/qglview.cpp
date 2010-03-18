@@ -47,6 +47,8 @@
 #include <QtCore/qmap.h>
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qdatetime.h>
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -129,6 +131,7 @@ QT_BEGIN_NAMESPACE
            problems with object picking.  Disabled by default.
     \value CameraNavigation Camera navigation using the keyboard and mouse
            is enabled.  Enabled by default.
+    \omitvalue PaintingLog
 */
 
 /*!
@@ -180,6 +183,12 @@ public:
                          parent, SLOT(cameraChanged()));
         QObject::connect(defaultCamera, SIGNAL(viewChanged()),
                          parent, SLOT(cameraChanged()));
+
+        logTime.start();
+        lastFrameTime.start();
+        QByteArray env = qgetenv("QT3D_LOG_EVENTS");
+        if (env == "1")
+            options |= QGLView::PaintingLog;
     }
     ~QGLViewPrivate()
     {
@@ -202,7 +211,36 @@ public:
     QPoint startPan;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
+    QTime logTime;
+    QTime enterTime;
+    QTime lastFrameTime;
+
+    inline void logEnter(const char *message);
+    inline void logLeave(const char *message);
 };
+
+inline void QGLViewPrivate::logEnter(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    enterTime.start();
+    int sinceLast = lastFrameTime.restart();
+    qDebug("LOG[%d:%02d:%02d.%03d]: ENTER: %s (%d ms since last enter)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, sinceLast);
+}
+
+inline void QGLViewPrivate::logLeave(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    int duration = enterTime.elapsed();
+    qDebug("LOG[%d:%02d:%02d.%03d]: LEAVE: %s (%d ms elapsed)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, duration);
+}
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
@@ -399,12 +437,14 @@ void QGLView::performUpdate()
 */
 void QGLView::initializeGL()
 {
+    d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
     d->depthBufferOptions.apply(&painter);
     d->blendOptions.apply(&painter);
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
+    d->logLeave("QGLView::initializeGL");
 }
 
 /*!
@@ -424,6 +464,7 @@ void QGLView::resizeGL(int w, int h)
 */
 void QGLView::paintGL()
 {
+    d->logEnter("QGLView::paintGL");
     // We may need to regenerate the pick buffer on the next mouse event.
     d->pickBufferMaybeInvalid = true;
 
@@ -502,6 +543,7 @@ void QGLView::paintGL()
 #endif
         }
     }
+    d->logLeave("QGLView::paintGL");
 }
 
 /*!
