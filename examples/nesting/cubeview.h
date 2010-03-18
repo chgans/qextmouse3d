@@ -53,15 +53,19 @@ class CubeView : public QGLView
     Q_OBJECT
     Q_PROPERTY(qreal teapotAngle READ teapotAngle WRITE setTeapotAngle)
     Q_PROPERTY(qreal cubeAngle READ cubeAngle WRITE setCubeAngle)
+    Q_PROPERTY(qreal orbitAngle READ orbitAngle WRITE setOrbitAngle)
 public:
     CubeView(QWidget *parent = 0);
     ~CubeView();
 
     qreal teapotAngle() const { return tangle; }
-    void setTeapotAngle(qreal angle);
+    void setTeapotAngle(qreal angle) { tangle = angle; performUpdate(); }
 
     qreal cubeAngle() const { return cangle; }
-    void setCubeAngle(qreal angle);
+    void setCubeAngle(qreal angle) { cangle = angle; performUpdate(); }
+
+    qreal orbitAngle() const { return oangle; }
+    void setOrbitAngle(qreal angle) { oangle = angle; performUpdate(); }
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -70,11 +74,17 @@ protected:
 private:
     QGLDisplayList cube;
     QGLDisplayList teapot;
+    QGLTexture2D qtlogo;
     QGLFramebufferObject *fbo;
     QGLCamera *innerCamera;
     qreal tangle;
     qreal cangle;
+    qreal oangle;
     bool needsUpdate;
+
+    void performUpdate();
+    void drawCube1(QGLPainter *painter, const QVector3D &posn);
+    void drawCube2(QGLPainter *painter, const QVector3D &posn);
 };
 
 #endif
