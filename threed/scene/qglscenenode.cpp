@@ -186,6 +186,65 @@ QGeometryData *QGLSceneNode::geometry() const
 }
 
 /*!
+    Returns a bounding box for the portion of the geometry referenced by
+    this scene node.  If the value of start() is 0, and count() is the same
+    as geometry()->size() then the bounding box will be the same as
+    geometry()->boundingBox().  However if the scene node only references
+    some part of the geometry, a bounding box for this section is calculated.
+*/
+QBox3D QGLSceneNode::boundingBox() const
+{
+    Q_D(const QGLSceneNode);
+    QBox3D bb;
+    if (d->geometry)
+    {
+        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        {
+            bb = d->geometry->boundingBox();
+        }
+        else
+        {
+            for (int i = d->start; i < d->count; ++i)
+                bb.expand(d->geometry->vertex(i));
+        }
+    }
+    return bb;
+}
+
+/*!
+    Returns the coordinates of the center of the portion of the geometry
+    referenced by this scene node.
+
+    The center is calculated as the centroid or geometric barycenter
+    of the vertices (the average of the vertices).  For a convex hull this
+    is guaranteed to be inside the figure.
+
+    If the value of start() is 0, and count() is the same
+    as geometry()->size() then the center will be the same as
+    geometry()->center().  However if the scene node only references
+    some part of the geometry, a center for this part is calculated.
+*/
+QVector3D QGLSceneNode::center() const
+{
+    Q_D(const QGLSceneNode);
+    QVector3D center;
+    if (d->geometry)
+    {
+        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        {
+            center = d->geometry->center();
+        }
+        else
+        {
+            for (int i = 0; i < d->geometry->count(); ++i)
+                center += d->geometry->vertex(i);
+            center /= (float)d->geometry->count();
+        }
+    }
+    return center;
+}
+
+/*!
     Sets the geometry associated with this node to be \a geometry.
     Typically the \a geometry will be some type of mesh object.  The
     default implementation of the QGLSceneNode::draw() method will call

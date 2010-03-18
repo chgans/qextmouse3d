@@ -84,8 +84,11 @@ public:
     QLogicalVertex vertexAt(int i) const;
     void normalizeNormals();
     QBox3D boundingBox() const;
+    QVector3D center() const;
+
     void setCommonNormal(const QVector3D &n);
     const QVector3D &commonNormal() const;
+
     QGeometryData zippedWith(const QGeometryData &other) const;
     void zipWith(const QGeometryData &other);
     void clear();
