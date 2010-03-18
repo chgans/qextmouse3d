@@ -208,16 +208,11 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
     with respect to vertex buffer objects.  The strategies are essentially a
     combination of whether the client data is kept around after it has been
     successfully uploaded to the GPU; and whether an upload is attempted at
-    all.  If the data is not successfully uploaded, then client data must be
-    kept in order to draw - hence the NoStrategy represents an invalid option.
-
-    A reasonable default is the StaticStrategy which will dispose of the client
-    data, on a successful upload.
+    all.
 
     If the data set is very small it may be pointless to use up a VBO, hence
-    in this case SaveGPUMemory may be used (which is simply an alias for
-    KeepClientData) resulting in no attempt to upload the data and client side
-    arrays used instead.
+    in this case KeepClientData may be used resulting in no attempt to upload
+    the data and client side arrays used instead.
 
     \value InvalidStrategy No valid strategy has been specified.
     \value KeepClientData Keep the client data, even after successful upload to the GPU.
@@ -292,40 +287,46 @@ void QGeometryData::appendGeometry(const QGeometryData &data)
 {
     if (data.d && data.count())
     {
-        detach();
-        d->modified = true;
-        d->boxValid = false;
-        int cnt = data.d->count;
-        const quint32 mask = 0x01;
-        // only append fields that are in both, unless we have NO fields, then
-        // append everything that is in data
-        quint32 fields = d->fields ? d->fields & data.d->fields : data.d->fields;
-        for (int field = 0; fields; ++field, fields >>= 1)
+        if (!d || count() == 0)
         {
-            if (mask & fields)
+            *this = data;
+        }
+        else
+        {
+            detach();
+            d->modified = true;
+            d->boxValid = false;
+            int cnt = data.d->count;
+            const quint32 mask = 0x01;
+            quint32 fields = d->fields | data.fields();
+            d->fields = fields;
+            for (int field = 0; fields; ++field, fields >>= 1)
             {
-                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                enableField(attr);  // might not be enabled if we had NO fields
-                if (attr < QGL::TextureCoord0)
+                if (mask & fields)
                 {
-                    if (attr == QGL::Position)
-                        d->vertices.append(data.d->vertices);
-                    else if (attr == QGL::Normal)
-                        d->normals.append(data.d->normals);
-                    else  // colors
-                        d->colors.append(data.d->colors);
-                }
-                else if (attr < QGL::CustomVertex0)
-                {
-                    d->textures[d->key[attr]].append(data.texCoords(attr));
-                }
-                else
-                {
-                    d->attributes[d->key[attr]].append(data.attributes(attr));
+                    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                    enableField(attr);  // might not be enabled if we had NO fields
+                    if (attr < QGL::TextureCoord0)
+                    {
+                        if (attr == QGL::Position)
+                            d->vertices.append(data.d->vertices);
+                        else if (attr == QGL::Normal)
+                            d->normals.append(data.d->normals);
+                        else  // colors
+                            d->colors.append(data.d->colors);
+                    }
+                    else if (attr < QGL::CustomVertex0)
+                    {
+                        d->textures[d->key[attr]].append(data.texCoords(attr));
+                    }
+                    else
+                    {
+                        d->attributes[d->key[attr]].append(data.attributes(attr));
+                    }
                 }
             }
+            d->count += cnt;
         }
-        d->count += cnt;
     }
 }
 

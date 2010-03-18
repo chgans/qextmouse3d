@@ -79,7 +79,7 @@ public:
     }
 
     // section management
-    void newSection(QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::HashLookup);
+    void newSection(QGL::Smoothing sm = QGL::Smooth);
 
     // scene management
     QGLSceneNode *currentNode();
@@ -135,6 +135,7 @@ protected:
     // internal and test functions
     QGLSection *currentSection() const;
     QList<QGLSection*> sections() const;
+    void setDefaultThreshold(int);
 
 private slots:
     void deleteNode(QObject *);

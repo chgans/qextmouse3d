@@ -73,6 +73,7 @@ class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
 class QGLShaderProgram;
+class QGLFramebufferObject;
 
 class Q_QT3D_EXPORT QGLPainter
 {
@@ -174,6 +175,11 @@ public:
     void draw(QGL::DrawingMode mode, const ushort *indices, int count);
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
+
+    void pushSurface(QGLFramebufferObject *fbo);
+    QGLFramebufferObject *popSurface();
+    QGLFramebufferObject *currentSurface() const;
+    QSize surfaceSize() const;
 
     void setPointSize(qreal size);
     void setLineWidth(qreal width);

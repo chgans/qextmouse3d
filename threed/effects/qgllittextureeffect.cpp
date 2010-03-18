@@ -128,7 +128,7 @@ static char const litDecalFragmentShader[] =
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
     "    mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
-    "    gl_FragColor = vec4(clamp(lcolor.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), 1.0);\n"
+    "    gl_FragColor = vec4(clamp(lcolor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), lcolor.a);\n"
     "}\n";
 
 static char const litModulateFragmentShader[] =

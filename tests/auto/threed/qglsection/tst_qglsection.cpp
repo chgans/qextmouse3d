@@ -51,13 +51,17 @@ class tst_QGLSection : public QObject
 public:
     tst_QGLSection() {}
     ~tst_QGLSection() {}
+    void testSmooth(QGLSection *sec, QGLDisplayList *list);
+    void testFaceted(QGLSection *sec, QGLDisplayList *list);
 
 private slots:
     void create();
     void modify();
     void append();
     void appendSmooth();
+    void appendSmoothMap();
     void appendFaceted();
+    void appendFacetedMap();
     void appendTexCoord();
     void appendColor();
     void accessors();
@@ -102,12 +106,13 @@ void tst_QGLSection::create()
     TestQGLDisplayList list;
     list.newSection();
     QGLSection *section = list.currentSection();
-    QVERIFY(!section->hasField(QGL::Position));
-    QCOMPARE(section->fields(), (quint32)0);
+    QVERIFY(section->hasField(QGL::Position));   // need this initially now
+    QCOMPARE(section->fields(), (quint32)1);
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
     QCOMPARE(section->displayList(), &list);
     QCOMPARE(section->boundingBox(), QBox3D());
+    QCOMPARE(section->mapThreshold(), 5);
 }
 
 void tst_QGLSection::modify()
@@ -125,6 +130,8 @@ void tst_QGLSection::modify()
     p.appendVertex(vb);
     p.appendVertex(vc);
     p.setCommonNormal(n);
+    section->setMapThreshold(30);
+    QCOMPARE(section->mapThreshold(), 30);
     list.addTriangle(p);
     QCOMPARE(section->count(), 3);
     list.newSection();
@@ -156,42 +163,65 @@ void tst_QGLSection::appendSmooth()
 {
     TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
+    testSmooth(section, &list);
+}
+
+void tst_QGLSection::appendSmoothMap()
+{
+    TestQGLDisplayList list;
+    QGLSectionTest *section = new QGLSectionTest(&list);
+    int t = section->mapThreshold();
+    QVector3D testVertex(-12.34f, -23.45f, -34.56f);
+    QVector3D incrVector(0.02, 0.02, 0.02);
+    QVector3D testNormal(1.0f, 0.0f, 0.0f);
+    for (int i = 0; i < (t - 2); ++i)
+    {
+        section->appendSmooth(QLogicalVertex(testVertex, testNormal));
+        testVertex += incrVector;
+    }
+    testSmooth(section, &list);
+}
+
+void tst_QGLSection::testSmooth(QGLSection *section, QGLDisplayList *list)
+{
+    int poffset = section->count(QGL::Position);
+    int noffset = section->count(QGL::Normal);
 
     // append a vertex - check it appears in the data along with its normal
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(4.321f, 5.432f, 6.543f);
     section->appendSmooth(QLogicalVertex(testVertex, testNormal));
-    QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->vertices().at(0), testVertex);
-    QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), testNormal);
-    QCOMPARE(section->indices().size(), 1);
-    QCOMPARE_INDEX(section->indices()[0], 0);
+    QCOMPARE(section->vertices().count(), poffset + 1);
+    QCOMPARE(section->vertices().at(poffset + 0), testVertex);
+    QCOMPARE(section->normals().count(), noffset + 1);
+    QCOMPARE(section->normals().at(noffset + 0), testNormal);
+    QCOMPARE(section->indices().size(), poffset + 1);
+    QCOMPARE_INDEX(section->indices()[poffset + 0], poffset + 0);
 
     // append a vertex equal to one already appended - check it was coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
     QVector3D result = testNormal + testNormal2; // QVector3D(0.0f, 0.0f, 7.543f);
     section->appendSmooth(QLogicalVertex(testVertex, testNormal2));
-    QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->vertices().at(0),testVertex);
-    QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), result);
-    QCOMPARE(section->indices().size(), 2);
-    QCOMPARE_INDEX(section->indices()[1], 0);
+    QCOMPARE(section->vertices().count(), poffset + 1);
+    QCOMPARE(section->vertices().at(poffset + 0), testVertex);
+    QCOMPARE(section->normals().count(), noffset + 1);
+    QCOMPARE(section->normals().at(noffset + 0), result);
+    QCOMPARE(section->indices().size(), poffset + 2);
+    QCOMPARE_INDEX(section->indices()[poffset + 1], poffset + 0);
 
     // append a new  different vertex - check it is not coalesced
     QVector3D testVertex2(-1.234f, -2.345f, -3.456f);
     QVector3D testNormal3(-4.321f, -5.432f, -6.543f);
     section->appendSmooth(QLogicalVertex(testVertex2, testNormal3));
-    QCOMPARE(section->vertices().count(), 2);
-    QCOMPARE(section->vertices().at(1), testVertex2);
-    QCOMPARE(section->normals().count(), 2);
-    QCOMPARE(section->normals().at(1), testNormal3);
-    QCOMPARE(section->indices().size(), 3);
-    QCOMPARE_INDEX(section->indices()[2], 1);
+    QCOMPARE(section->vertices().count(), poffset + 2);
+    QCOMPARE(section->vertices().at(poffset + 1), testVertex2);
+    QCOMPARE(section->normals().count(), noffset + 2);
+    QCOMPARE(section->normals().at(noffset + 1), testNormal3);
+    QCOMPARE(section->indices().size(), poffset + 3);
+    QCOMPARE_INDEX(section->indices()[poffset + 2], poffset + 1);
 
     // append a vertex equal to one already appended, but inside a new section - check its not coalesced
-    section = new QGLSectionTest(&list);
+    section = new QGLSectionTest(list);
     section->appendSmooth(QLogicalVertex(testVertex2, testNormal3));
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex2);
@@ -205,39 +235,64 @@ void tst_QGLSection::appendFaceted()
 {
     TestQGLDisplayList list;
     QGLSectionTest *section = new QGLSectionTest(&list);
+    // test the part where its only using the QArray
+    testFaceted(section, &list);
+}
+
+void tst_QGLSection::appendFacetedMap()
+{
+    TestQGLDisplayList list;
+    QGLSectionTest *section = new QGLSectionTest(&list);
+    // now create a new section and fill to just below the threshold for QMap
+    int t = section->mapThreshold();
+    QVector3D testVertex(-12.34f, -23.45f, -34.56f);
+    QVector3D incrVector(0.02, 0.02, 0.02);
+    QVector3D testNormal(1.0f, 0.0f, 0.0f);
+    for (int i = 0; i < (t - 2); ++i)
+    {
+        section->appendSmooth(QLogicalVertex(testVertex, testNormal));
+        testVertex += incrVector;
+    }
+    testFaceted(section, &list);
+}
+
+void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)
+{
+    int poffset = section->count(QGL::Position);
+    int noffset = section->count(QGL::Normal);
 
     // append a vertex - check it appears in the data along with its normal
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(4.321f, 5.432f, 6.543f);
     section->appendFaceted(QLogicalVertex(testVertex, testNormal));
-    QCOMPARE(section->vertices().count(), 1);
-    QCOMPARE(section->vertices().at(0), testVertex);
-    QCOMPARE(section->normals().count(), 1);
-    QCOMPARE(section->normals().at(0), testNormal);
-    QCOMPARE(section->indices().size(), 1);
-    QCOMPARE_INDEX(section->indices()[0], 0);
+    QCOMPARE(section->vertices().count(), poffset + 1);
+    QCOMPARE(section->vertices().at(poffset + 0), testVertex);
+    QCOMPARE(section->normals().count(), noffset + 1);
+    QCOMPARE(section->normals().at(noffset + 0), testNormal);
+    QCOMPARE(section->indices().size(), poffset + 1);
+    QCOMPARE_INDEX(section->indices()[poffset + 0], poffset + 0);
 
     // append a vertex equal to one already appended, but with different normal - check it was NOT coalesced
     QVector3D testNormal2(0.0f, 0.0f, 1.0f);
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
-    QCOMPARE(section->vertices().count(), 2);
-    QCOMPARE(section->vertices().at(1), testVertex);
-    QCOMPARE(section->normals().count(), 2);
-    QCOMPARE(section->normals().at(1), testNormal2);
-    QCOMPARE(section->indices().size(), 2);
-    QCOMPARE_INDEX(section->indices()[1], 1);
+    QCOMPARE(section->vertices().count(), poffset + 2);
+    QCOMPARE(section->vertices().at(poffset + 1), testVertex);
+    QCOMPARE(section->normals().count(), noffset + 2);
+    QCOMPARE(section->normals().at(noffset + 1), testNormal2);
+    QCOMPARE(section->indices().size(), poffset + 2);
+    QCOMPARE_INDEX(section->indices()[poffset + 1], poffset + 1);
 
     // append a vertex equal to one already appended, but with same normal - check it WAS coalesced
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
-    QCOMPARE(section->vertices().count(), 2);
-    QCOMPARE(section->vertices().at(1), testVertex);
-    QCOMPARE(section->normals().count(), 2);
-    QCOMPARE(section->normals().at(1), testNormal2);
-    QCOMPARE(section->indices().size(), 3);
-    QCOMPARE_INDEX(section->indices()[2], 1);
+    QCOMPARE(section->vertices().count(), poffset + 2);
+    QCOMPARE(section->vertices().at(poffset + 1), testVertex);
+    QCOMPARE(section->normals().count(), noffset + 2);
+    QCOMPARE(section->normals().at(noffset + 1), testNormal2);
+    QCOMPARE(section->indices().size(), poffset + 3);
+    QCOMPARE_INDEX(section->indices()[poffset + 2], poffset + 1);
 
     // append a vertex equal to one already appended, with same normal, BUT in a new section - check it was NOT coalesced
-    section = new QGLSectionTest(&list);
+    section = new QGLSectionTest(list);
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex);

@@ -39,59 +39,18 @@
 **
 ****************************************************************************/
 
-#ifndef QGLDISPLAYLIST_P_H
-#define QGLDISPLAYLIST_P_H
+#include <QApplication>
+#include "cubeview.h"
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt API.  It exists purely as an
-// implementation detail.  This header file may change from version to
-// version without notice, or even be removed.
-//
-// We mean it.
-//
-
-#include "qglscenenode_p.h"
-#include "qgldisplaylist.h"
-
-#include <QtCore/qmap.h>
-
-QT_BEGIN_NAMESPACE
-
-class QGLDisplayList;
-class QGLSection;
-class QGLPrimitive;
-
-class QGLDisplayListPrivate : public QGLSceneNodePrivate
+int main(int argc, char *argv[])
 {
-    Q_DECLARE_PUBLIC(QGLDisplayList);
-public:
-    QGLDisplayListPrivate(int version = QObjectPrivateVersion);
-    ~QGLDisplayListPrivate();
-    inline void setDirty(bool dirty = true);
-    void addTriangle(int a, int b, int c, QGLPrimitive &p);
-    void adjustSectionNodes(QGLSection *sec, int offset, QGeometryData *geom);
-    int adjustNodeTree(QGLSceneNode *top, int offset, QGeometryData *geom,
-                       QList<QGLSceneNode*> &deleted);
-
-    bool finalizeNeeded;
-    QList<QGLSection*> sections;
-    QGLSection *currentSection;
-    QList<QGLSceneNode*> nodeStack;
-    QPointer<QGLSceneNode> currentNode;
-    QGLPrimitive *currentOperation;
-    QGL::Operation operation;
-    QList<QGLPrimitive *> primitiveQueue;
-    int defThreshold;
-};
-
-inline void QGLDisplayListPrivate::setDirty(bool dirty)
-{
-    finalizeNeeded = dirty;
+    QApplication app(argc, argv);
+    CubeView view;
+    if (QApplication::arguments().contains("-maximize"))
+        view.showMaximized();
+    else if (QApplication::arguments().contains("-fullscreen"))
+        view.showFullScreen();
+    else
+        view.show();
+    return app.exec();
 }
-
-QT_END_NAMESPACE
-
-#endif // QGLDISPLAYLIST_P_H
