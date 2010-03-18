@@ -171,7 +171,7 @@ QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, 
   \internal
   parse the top level \a xml from a .dae file and process the library_effects elements therein.
 */
-inline QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml )
 {
     QList<QGLColladaFxEffect*> result;
     StateStack stateStack;
@@ -510,7 +510,7 @@ QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xm
 /*!
   \internal
 */
-inline QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid )
+QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid )
 {
     Q_UNUSED(stateStack);
     QGLColladaSampler2DParam* result = 0;
@@ -545,7 +545,7 @@ inline QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElem
     \internal
     Parses and consumes a color collada element from \a xml.
 */
-inline QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
+QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
 {
 
     QVector<float> floatList = processFloatList( xml );
@@ -568,7 +568,7 @@ inline QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& 
     \internal
     Parses and consumes an fx_common_color_or_texture_type collada element from \a xml.
 */
-inline QColor QGLColladaFxEffectFactory::processColorOrTextureElement( QXmlStreamReader& xml )
+QColor QGLColladaFxEffectFactory::processColorOrTextureElement( QXmlStreamReader& xml )
 {
     if( xml.name() == "color")
     {
@@ -1248,7 +1248,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
     \internal
     Parses and consumes a texture collada element from \a xml.
 */
-inline QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , StateStack* stateStack)
+QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , StateStack* stateStack)
 {
     QGLTexture2D* result = new QGLTexture2D();
     QXmlStreamAttributes attributes = xml.attributes();

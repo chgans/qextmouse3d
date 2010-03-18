@@ -96,11 +96,12 @@ void qLightVertex(vec4 vertex, vec3 normal)
     }
 
     // Generate the final output colors.
+    float alpha = dcm[material].a;
     if (!separateSpecular) {
-        qColor = clamp(color + scolor, 0.0, 1.0);
+        qColor = vec4(clamp(color.rgb + scolor.rgb, 0.0, 1.0), alpha);
         qSecondaryColor = vec4(0, 0, 0, 1);
     } else {
-        qColor = clamp(color, 0.0, 1.0);
+        qColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
         qSecondaryColor = clamp(scolor, 0.0, 1.0);
     }
 }

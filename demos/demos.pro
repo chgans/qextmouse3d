@@ -4,6 +4,6 @@ SUBDIRS = teaservice shapes
     SUBDIRS += pageflip shaderwizard
 }
 
-
-SUBDIRS += qml3d
-
+contains(QT_CONFIG, declarative) {
+    SUBDIRS += qml3d
+}

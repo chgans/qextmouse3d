@@ -50,6 +50,7 @@ CubeView::CubeView(QWidget *parent)
     , fbo(0)
     , tangle(0.0f)
     , cangle(0.0f)
+    , oangle(0.0f)
     , needsUpdate(true)
 {
     innerCamera = new QGLCamera(this);
@@ -69,6 +70,13 @@ CubeView::CubeView(QWidget *parent)
     animation->setDuration(5000);
     animation->setLoopCount(-1);
     animation->start();
+
+    animation = new QPropertyAnimation(this, "orbitAngle", this);
+    animation->setStartValue(0.0f);
+    animation->setEndValue(360.0f);
+    animation->setDuration(5000);
+    animation->setLoopCount(-1);
+    animation->start();
 }
 
 CubeView::~CubeView()
@@ -76,18 +84,8 @@ CubeView::~CubeView()
     delete fbo;
 }
 
-void CubeView::setTeapotAngle(qreal angle)
+void CubeView::performUpdate()
 {
-    tangle = angle;
-    if (!needsUpdate) {
-        needsUpdate = true;
-        update();
-    }
-}
-
-void CubeView::setCubeAngle(qreal angle)
-{
-    cangle = angle;
     if (!needsUpdate) {
         needsUpdate = true;
         update();
@@ -97,13 +95,16 @@ void CubeView::setCubeAngle(qreal angle)
 void CubeView::initializeGL(QGLPainter *)
 {
     cube.newSection(QGL::Faceted);
-    cube << QGLCube(2.0f);
+    cube << QGLCube(1.5f);
     cube.finalize();
 
     teapot << QGLTeapot();
     teapot.finalize();
 
     fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
+
+    QImage textureImage(":/qtlogo.png");
+    qtlogo.setImage(textureImage);
 }
 
 void CubeView::paintGL(QGLPainter *painter)
@@ -134,12 +135,33 @@ void CubeView::paintGL(QGLPainter *painter)
 
     painter->setDepthTestingEnabled(false);
 
+    painter->modelViewMatrix().rotate(oangle, 0.0f, 1.0f, 0.0f);
+
+    QMatrix4x4 m = painter->modelViewMatrix();
+    QVector3D cube1pos(-1.5f, 0.0f, 0.0f);
+    QVector3D cube2pos(1.5f, 0.0f, 0.0f);
+
+    if (m.map(cube1pos).z() < m.map(cube2pos).z()) {
+        drawCube1(painter, cube1pos);
+        drawCube2(painter, cube2pos);
+    } else {
+        drawCube2(painter, cube2pos);
+        drawCube1(painter, cube1pos);
+    }
+}
+
+void CubeView::drawCube1(QGLPainter *painter, const QVector3D &posn)
+{
+    painter->modelViewMatrix().push();
+
     painter->setFaceColor(QGL::AllFaces, QColor(0, 160, 202, 125));
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     glBindTexture(GL_TEXTURE_2D, fbo->texture());
     glEnable(GL_TEXTURE_2D);
 
+    painter->modelViewMatrix().translate(posn);
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
+
     painter->setCullFaces(QGL::CullFrontFaces);
     cube.draw(painter);
     painter->setCullFaces(QGL::CullBackFaces);
@@ -147,4 +169,25 @@ void CubeView::paintGL(QGLPainter *painter)
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+
+    painter->modelViewMatrix().pop();
+}
+
+void CubeView::drawCube2(QGLPainter *painter, const QVector3D &posn)
+{
+    painter->modelViewMatrix().push();
+
+    painter->setTexture(&qtlogo);
+    painter->setFaceColor(QGL::AllFaces, QColor(202, 100, 0, 150));
+    painter->setStandardEffect(QGL::LitDecalTexture2D);
+
+    painter->modelViewMatrix().translate(posn);
+    painter->modelViewMatrix().rotate(cangle, 1.0f, -1.0f, 1.0f);
+
+    painter->setCullFaces(QGL::CullFrontFaces);
+    cube.draw(painter);
+    painter->setCullFaces(QGL::CullBackFaces);
+    cube.draw(painter);
+
+    painter->modelViewMatrix().pop();
 }
