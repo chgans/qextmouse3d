@@ -88,10 +88,10 @@ Viewport {
             }
         }
 
-        y: SequentialAnimation {
+        SequentialAnimation {
             running: teapot.bounce
-            NumberAnimation { to : 1.0; duration: 300; easing.type: "OutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing.type: "OutBounce" }
+            NumberAnimation {target: teapot; property: "y"; to : 1.0; duration: 300; easing.type: "OutQuad" }
+            NumberAnimation {target: teapot; property: "y"; to : 0.0; duration: 300; easing.type: "OutBounce" }
             onCompleted: teapot.bounce = false
         }
 

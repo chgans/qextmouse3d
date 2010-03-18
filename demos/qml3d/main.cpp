@@ -72,6 +72,22 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     //We now have to register types at runtime rather than globally in the .cpp file.
+    
+    
+    qmlRegisterType<Effect>("Qt",4,6,"Effect");
+    qmlRegisterType<Mesh>("Qt",4,6,"Mesh");
+    qmlRegisterType<Item3d>("Qt",4,6,"Item3d");
+    qmlRegisterType<Viewport>("Qt",4,6,"Viewport");
+    qmlRegisterType<QGLLightModel>("Qt",4,6,"LightModel");
+    qmlRegisterType<QGLLightParameters>("Qt",4,6,"Light");
+    qmlRegisterType<QGLCamera>("Qt",4,6,"Camera");
+    qmlRegisterType<Rotation3D>("Qt",4,6,"Rotation3D");
+    qmlRegisterType<QGLMaterial>("Qt",4,6,"Material");
+    qmlRegisterType<ShaderProgram>("Qt",4,6,"ShaderProgram");
+    qmlRegisterType<Cube>("Qt",4,6,"Cube");
+
+
+/*  //Uncomment this section if you are not using the 4.7 branch (eg. you are using master, oslo staging 2, etc).
     QML_REGISTER_TYPE(Qt,4,6,Effect,Effect);
     QML_REGISTER_TYPE(Qt,4,6,Mesh,Mesh);
     QML_REGISTER_TYPE(Qt,4,6,Item3d,Item3d);
@@ -83,7 +99,7 @@ int main(int argc, char *argv[])
     QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterial);
     QML_REGISTER_TYPE(Qt,4,6,ShaderProgram,ShaderProgram);
     QML_REGISTER_TYPE(Qt,4,6,Cube,Cube);
-
+*/
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
     if (QApplicationPrivate::graphics_system_name.compare

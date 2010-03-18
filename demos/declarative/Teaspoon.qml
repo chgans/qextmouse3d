@@ -21,10 +21,10 @@ Item3d {
         onHoverLeave: { effect.material = metal }
         onClicked: { teaspoon1.bounce = true }
 
-        y_lift: SequentialAnimation {
+        SequentialAnimation {
             running: teaspoon1.bounce
-            NumberAnimation { to : 1; duration: 300; easing.type:"OutQuad" }
-            NumberAnimation { to : 0; duration: 300; easing.type:"OutBounce" }
+            NumberAnimation {target: teaspoon1; property: "y_lift"; to : 1; duration: 300; easing.type:"OutQuad" }
+            NumberAnimation {target: teaspoon1; property: "y_lift"; to : 0; duration: 300; easing.type:"OutBounce" }
             onCompleted: teaspoon1.bounce = false
         }
     }

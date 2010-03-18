@@ -1,7 +1,7 @@
 import Qt 4.6
 
 Item3d {
-    id: "top"
+    id: top
     property real spoonY
     property bool bounce: false
 
@@ -18,10 +18,10 @@ Item3d {
         y: top.spoonY
     }
 
-    spoonY: SequentialAnimation {
+    SequentialAnimation {
         running: top.bounce
-        NumberAnimation { to : 1; duration: 300; easing.type:"OutQuad" }
-        NumberAnimation { to : 0; duration: 300; easing.type:"OutBounce" }
+        NumberAnimation { target: top; property:"spoonY"; to : 1; duration: 300; easing.type:"OutQuad" }
+        NumberAnimation { target: top; property:"spoonY"; to : 0; duration: 300; easing.type:"OutBounce" }
         onCompleted: top.bounce = false
     }
 }
