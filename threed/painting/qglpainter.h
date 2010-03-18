@@ -51,10 +51,6 @@
 #include "qbox3d.h"
 #include "qglvertexbuffer.h"
 #include "qglindexbuffer.h"
-<<<<<<< HEAD:threed/painting/qglpainter.h
-#include "qglindexarray.h"
-=======
->>>>>>> 282e65a86d24a3e1bab05564ba9918b5133af151:threed/painting/qglpainter.h
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglmaterial.h"
