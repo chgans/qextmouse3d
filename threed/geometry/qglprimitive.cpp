@@ -104,21 +104,6 @@ QGLPrimitive::QGLPrimitive()
 */
 
 /*!
-    Returns the coordinates of the center of the primitive.
-    The center is calculated as the centroid or geometric barycenter
-    of the vertices (the average of the vertices).  For a convex hull this
-    is guaranteed to be inside the figure.
-*/
-QVector3D QGLPrimitive::center() const
-{
-    QVector3D center;
-    QArray<QVector3D> v = vertices();
-    for (int i = 0; i < v.count(); ++i)
-        center += v[i];
-    return center / (float)v.count();
-}
-
-/*!
     \fn void QGLPrimitive::setFlags(QGL::OperationFlags flags)
     Sets the primitive's operation flags to \a flags.
 */

@@ -419,6 +419,21 @@ QBox3D QGeometryData::boundingBox() const
 }
 
 /*!
+    Returns the coordinates of the center of the geometry.
+
+    The center is calculated as the centroid or geometric barycenter
+    of the vertices (the average of the vertices).  For a convex hull this
+    is guaranteed to be inside the figure.
+*/
+QVector3D QGeometryData::center() const
+{
+    QVector3D center;
+    for (int i = 0; i < d->vertices.count(); ++i)
+        center += d->vertices.at(i);
+    return center / (float)d->vertices.count();
+}
+
+/*!
     Sets \a normal to be a common normal.  This normal vector is used for
     all vertices in the geometry.
 */

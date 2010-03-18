@@ -84,7 +84,6 @@ public:
     QGLPrimitive zippedWith(const QGLPrimitive &other) const;
     void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
                                     QGL::VertexAttribute attribute = QGL::TextureCoord0);
-    QVector3D center() const;
 protected:
     QGL::OperationFlags m_flags;
 };

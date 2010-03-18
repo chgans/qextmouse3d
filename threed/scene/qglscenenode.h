@@ -67,6 +67,9 @@ public:
     QGeometryData *geometry() const;
     void setGeometry(QGeometryData *);
 
+    QBox3D boundingBox() const;
+    QVector3D center() const;
+
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &);
 

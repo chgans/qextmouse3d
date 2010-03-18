@@ -186,6 +186,65 @@ QGeometryData *QGLSceneNode::geometry() const
 }
 
 /*!
+    Returns a bounding box for the portion of the geometry referenced by
+    this scene node.  If the value of start() is 0, and count() is the same
+    as geometry()->size() then the bounding box will be the same as
+    geometry()->boundingBox().  However if the scene node only references
+    some part of the geometry, a bounding box for this section is calculated.
+*/
+QBox3D QGLSceneNode::boundingBox() const
+{
+    Q_D(const QGLSceneNode);
+    QBox3D bb;
+    if (d->geometry)
+    {
+        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        {
+            bb = d->geometry->boundingBox();
+        }
+        else
+        {
+            for (int i = d->start; i < d->count; ++i)
+                bb.expand(d->geometry->vertex(i));
+        }
+    }
+    return bb;
+}
+
+/*!
+    Returns the coordinates of the center of the portion of the geometry
+    referenced by this scene node.
+
+    The center is calculated as the centroid or geometric barycenter
+    of the vertices (the average of the vertices).  For a convex hull this
+    is guaranteed to be inside the figure.
+
+    If the value of start() is 0, and count() is the same
+    as geometry()->size() then the center will be the same as
+    geometry()->center().  However if the scene node only references
+    some part of the geometry, a center for this part is calculated.
+*/
+QVector3D QGLSceneNode::center() const
+{
+    Q_D(const QGLSceneNode);
+    QVector3D center;
+    if (d->geometry)
+    {
+        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        {
+            center = d->geometry->center();
+        }
+        else
+        {
+            for (int i = 0; i < d->geometry->count(); ++i)
+                center += d->geometry->vertex(i);
+            center /= (float)d->geometry->count();
+        }
+    }
+    return center;
+}
+
+/*!
     Sets the geometry associated with this node to be \a geometry.
     Typically the \a geometry will be some type of mesh object.  The
     default implementation of the QGLSceneNode::draw() method will call
@@ -543,14 +602,22 @@ void QGLSceneNode::draw(QGLPainter *painter)
     bool changedTex = false;
     if (d->palette && d->material != -1)
     {
-        saveMat = painter->faceMaterial(QGL::FrontFaces);
         QGLMaterial *mat = d->palette->material(d->material);
-        painter->setFaceMaterial(QGL::FrontFaces, mat);
-        QGLTexture2D *tex = mat->texture(d->material);
-        if (tex)
+        if (painter->faceMaterial(QGL::FrontFaces) != mat)
         {
-            painter->setTexture(tex);
-            changedTex = true;
+            saveMat = painter->faceMaterial(QGL::FrontFaces);
+            painter->setFaceMaterial(QGL::FrontFaces, mat);
+            int texUnit = 0;
+            for (int i = 0; i < mat->textureLayerCount(); ++i)
+            {
+                QGLTexture2D *tex = mat->texture(i);
+                if (tex)
+                {
+                    painter->setTexture(texUnit, tex);
+                    changedTex = true;
+                    ++texUnit;
+                }
+            }
         }
     }
 
@@ -678,7 +745,7 @@ bool QGLSceneNode::normalViewEnabled() const
 
 #ifndef QT_NO_DEBUG_STREAM
 #include "qglmaterialcollection.h"
-
+#include "qgltexture2d.h"
 /*!
     \relates QGLSceneNode
     Print a description of \a node, and all its descendants, to stderr.  Only
@@ -716,8 +783,35 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     if (node->geometry())
     {
         fprintf(stderr, "%s geometry: %p\n", qPrintable(ind), node->geometry());
-        fprintf(stderr, "%s material: %d == %s\n", qPrintable(ind), node->material(),
-                qPrintable(node->palette()->materialName(node->material())));
+        fprintf(stderr, "%s material: %d", qPrintable(ind), node->material());
+        QGLMaterial *mat = node->palette()->material(node->material());
+        if (mat)
+        {
+            if (mat->objectName().isEmpty())
+                fprintf(stderr, " -- %p:", mat);
+            else
+                fprintf(stderr, " -- \"%s\":",
+                        qPrintable(mat->objectName()));
+            fprintf(stderr, " Amb: %s - Diff: %s - Spec: %s - Shin: %0.2f\n",
+                    qPrintable(mat->ambientColor().name()),
+                    qPrintable(mat->diffuseColor().name()),
+                    qPrintable(mat->specularColor().name()),
+                    mat->shininess());
+            for (int i = 0; i < mat->textureLayerCount(); ++i)
+            {
+                if (mat->texture(i) != 0)
+                {
+                    QGLTexture2D *tex = mat->texture(i);
+                    if (tex->objectName().isEmpty())
+                        fprintf(stderr, "%s         texture %p", qPrintable(ind), tex);
+                    else
+                        fprintf(stderr, "%s         texture %s", qPrintable(ind),
+                                qPrintable(tex->objectName()));
+                    QSize sz = tex->size();
+                    fprintf(stderr, " - size: %d (w) x %d (h)\n", sz.width(), sz.height());
+                }
+            }
+        }
     }
     else
     {
@@ -771,14 +865,17 @@ QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
 
     if (node.geometry())
     {
+        QGLMaterial *mat = node.palette()->material(node.material());
+        QString mdesc;
+        if (mat)
+            mdesc = mat->objectName();
         dbg << "\n    geometry:" << node.geometry();
-        dbg << "\n    material:" << QString("#%1 ==").arg(QString::number(node.material()))
-                << node.palette()->materialName(node.material());
+        dbg << "\n    material" << node.material() << ": " << mat << mdesc;
     }
     else
     {
         dbg << "\n    geometry: NULL";
-        dbg << "\n    material:" << QString("#%1").arg(QString::number(node.material()));
+        dbg << "\n    material" << node.material();
     }
 
     if (node.hasEffect())
