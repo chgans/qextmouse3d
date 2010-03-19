@@ -44,6 +44,7 @@
 #include "qgldisplaylist.h"
 #include "qgeometrydata.h"
 #include "qtest_helpers_p.h"
+#include "qvectorarray.h"
 
 class tst_QGLSection : public QObject
 {
@@ -62,6 +63,7 @@ private slots:
     void appendSmoothMap();
     void appendFaceted();
     void appendFacetedMap();
+    void accumNormals();
     void appendTexCoord();
     void appendColor();
     void accessors();
@@ -254,6 +256,154 @@ void tst_QGLSection::appendFacetedMap()
         testVertex += incrVector;
     }
     testFaceted(section, &list);
+}
+
+void tst_QGLSection::accumNormals()
+{
+    /*
+      plan view - x/y plane:
+    ^       ----------
+    |      / |     |  \
+    y     /  |     |   \
+         /___|_____|____\
+        |    |     |     |
+        |    |     |     |
+        |____|_____|_____|
+         \   |*    |    /
+          \  |     |   /
+           \ |     |  /
+             ---------       -->  x
+
+      side view - x/z plane:
+            ________          z = 1
+          / |*    | \
+         /  |     |  \
+        /   |     |   \
+       -----------------      z = 0
+
+    The normals smoothing should make this as "round" as possible.
+
+    This mesh is a cap that could be the top of a sphere - its a central
+    quad in the z = 1 plane, with x = 1, y = 1 as the bottom-left corner;
+    with four more quads above, below, to the left and to the right, as
+    viewed looking down the -ve z axis (plan view).  The four quads around
+    the central one join one one edge (in the z = 1 plane) and on the opp.
+    edge slope down to the z = 0 plane.  The four corners are filled in
+    with triangles, so that the whole figure looks like an octagon in plan.
+
+    Each quad of course, is actually divided from bottom-left to top-right
+    into two triangles (not shown in the ascii art for clarity).  The total
+    number of triangles in the rendered result should be 14.
+
+    At the vertex marked with the asterisk - #3 in the data below - there
+    are 5 triangular faces contributing normals to the smoothed sum. The
+    quad on the top has two co-planar triangles, and _each_ of those has
+    a normal equal to (0, 0, 1) - only one of these should be summed.
+    The other triangles are 1/2 of the two neighbouring quads - one has a
+    normal of (-1, 0, 1) the other (0, -1, 1) - and the corner triangle
+    which has a normal of (-1, -1, 1).
+
+    The normalized sum of these is roughly (-0.4, -0.4, 0.8).
+
+    If the normal from the extra triangle is erroneously included then
+    the normalized sum is roughly (-0.35, -0.35, 0.87).
+
+    The resulting normal is pulled more in the z-direction.
+
+    In general if a a flat plane is broken up into a large number of
+    triangles, they can bias the normal calculation.  In a model often
+    this can occur where triangulation algorithms produce degenerate
+    solutions with many triangles converging on a point.
+
+    This test is to cover this problem.
+    */
+    TestQGLDisplayList list;
+    list.newSection(QGL::Smooth); // default - but making the point
+    //QGLSection *section = list.currentSection();
+    QGLSceneNode *node = list.currentNode();
+    static float data[12*3] = {
+        1.0f, 0.0f, 0.0f,
+        2.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 1.0f,
+        2.0f, 1.0f, 1.0f,
+        3.0f, 1.0f, 0.0f,
+        0.0f, 2.0f, 0.0f,
+        1.0f, 2.0f, 1.0f,
+        2.0f, 2.0f, 1.0f,
+        3.0f, 2.0f, 0.0f,
+        1.0f, 3.0f, 0.0f,
+        2.0f, 3.0f, 0.0f
+    };
+    QVector3DArray v =  QVector3DArray::fromRawData((const QVector3D *)data, 12);
+    QGLPrimitive quads;
+    quads.appendVertex(v[0], v[1], v[4], v[3]);      // 0
+    quads.appendVertex(v[2], v[3], v[7], v[6]);      // 1
+    quads.appendVertex(v[3], v[4], v[8], v[7]);      // 2
+    quads.appendVertex(v[4], v[5], v[9], v[8]);      // 3
+    quads.appendVertex(v[7], v[8], v[11], v[10]);    // 4
+    list.addQuad(quads);
+    QGLPrimitive triangles;
+    triangles.appendVertex(v[0], v[3], v[2]);        // 5
+    triangles.appendVertex(v[1], v[5], v[4]);        // 6
+    triangles.appendVertex(v[6], v[7], v[10]);       // 7
+    triangles.appendVertex(v[8], v[9], v[11]);       // 8
+    list.addTriangle(triangles);
+    list.finalize();
+
+    // There are 9 faces as shown above - here are their normals
+    QVector3DArray face_norms;
+    face_norms.extend(9);
+    face_norms[0] = QVector3D(0, -1, 1);
+    face_norms[1] = QVector3D(-1, 0, 1);
+    face_norms[2] = QVector3D(0, 0, 1);
+    face_norms[3] = QVector3D(1, 0, 1);
+    face_norms[4] = QVector3D(0, 1, 1);
+    face_norms[5] = QVector3D(-1, -1, 1);
+    face_norms[6] = QVector3D(1, -1, 1);
+    face_norms[7] = QVector3D(-1, 1, 1);
+    face_norms[8] = QVector3D(1, 1, 1);
+    for (int i = 0; i < 9; ++i)
+        face_norms[i].normalize();
+
+    QVector3DArray expected;
+    expected.extend(12);
+    expected[0] = face_norms[0] + face_norms[5];
+    expected[1] = face_norms[0] + face_norms[6];
+    expected[4] = face_norms[1] + face_norms[5];
+    expected[3] = face_norms[0] + face_norms[1] + face_norms[2] + face_norms[5];
+    expected[2] = face_norms[0] + face_norms[2] + face_norms[3] + face_norms[6];
+    expected[8] = face_norms[3] + face_norms[6];
+    expected[6] = face_norms[1] + face_norms[7];
+    expected[5] = face_norms[1] + face_norms[2] + face_norms[4] + face_norms[7];
+    expected[7] = face_norms[2] + face_norms[3] + face_norms[4] + face_norms[8];
+    expected[9] = face_norms[3] + face_norms[8];
+    expected[11] = face_norms[4] + face_norms[7];
+    expected[10] = face_norms[4] + face_norms[8];
+    for (int i = 0; i < 12; ++i)
+        expected[i].normalize();
+
+    QGeometryData *res = node->geometry();
+    QVERIFY(res != (QGeometryData*)0);
+    QCOMPARE(res->count(QGL::Position), 12);
+    QCOMPARE(res->count(QGL::Normal), 12);
+    QCOMPARE(res->indexCount(), 14 * 3);
+    QCOMPARE(res->vertex(0), v[0]);
+    QCOMPARE(res->vertex(4), v[2]);
+    QCOMPARE(res->vertex(7), v[8]);
+    QCOMPARE(res->vertex(11), v[10]);
+    QCOMPARE(res->normal(0), expected.at(0));
+    QCOMPARE(res->normal(1), expected.at(1));
+    QCOMPARE(res->normal(2), expected.at(2));
+    QCOMPARE(res->normal(3), expected.at(3));
+    QCOMPARE(res->normal(4), expected.at(4));
+    QCOMPARE(res->normal(5), expected.at(5));
+    QCOMPARE(res->normal(6), expected.at(6));
+    QCOMPARE(res->normal(7), expected.at(7));
+    QCOMPARE(res->normal(8), expected.at(8));
+    QCOMPARE(res->normal(9), expected.at(9));
+    QCOMPARE(res->normal(10), expected.at(10));
+    QCOMPARE(res->normal(11), expected.at(11));
 }
 
 void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)
