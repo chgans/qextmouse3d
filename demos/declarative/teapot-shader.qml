@@ -8,7 +8,7 @@ Item3d {
     effect: program
 
     transform: Rotation3D {
-        angle: NumberAnimation {
+        NumberAnimation on angle{
             running: true
             repeat: true
             from: 0
@@ -18,7 +18,7 @@ Item3d {
         axis: Qt.vector3d(1, -0.3, 0)
     }
 
-    y: SequentialAnimation {
+    SequentialAnimation on y{
         running: true
         repeat: true
         PauseAnimation { duration: 500 }
@@ -29,7 +29,7 @@ Item3d {
     ShaderProgram {
         id: program
         texture: "textures/qtlogo.png"
-        color: SequentialAnimation {
+        SequentialAnimation on color{
             running: true
             repeat: true
             ColorAnimation {

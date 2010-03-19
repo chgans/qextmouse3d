@@ -98,7 +98,7 @@ public:
     void ref();
     bool deref();
 
-    Q_INVOKABLE QObject *material(const QString& name);
+    Q_INVOKABLE QObject *material(const QString& nodeName, const QString& materialName);
 
     void componentComplete();
 

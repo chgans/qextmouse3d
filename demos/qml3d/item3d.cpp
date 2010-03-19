@@ -1169,15 +1169,6 @@ void Item3d::update()
         d->viewport->update3d();
 }
 
-//void Item3d::setMeshObject(QGLSceneNode *object)
-//{
-//    d->targetNode = object;
-//}
-//
-//QGLSceneNode * Item3d::meshObject()
-//{
-//    return d->targetNode;
-//}
 
 /*!
     \property Item3d::isVisible

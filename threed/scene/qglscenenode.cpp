@@ -39,6 +39,7 @@
 **
 ****************************************************************************/
 
+#include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglscenenode_p.h"
 #include "qglpainter.h"
@@ -552,8 +553,17 @@ void QGLSceneNode::setParent(QObject *parent)
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
         sceneParent->addNode(this);
-    else
-        qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent (Scene)node to add the new node to.");
+    else 
+    {
+        //If the parent wasn't a scene node, then usually we would expect it to be an 
+        //abstract scene - failing this we should probably warn the user, as in some
+        //instances it may indicate an incorrect assignment (there is a slight overhead
+        //to this, so this is usually useful for debugging, and may be removed later).
+        QGLAbstractScene *abstractScene = qobject_cast<QGLAbstractScene*>(parent);
+        if (!abstractScene) qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent Scene Node or Scene to add the new node to.");
+    }
+        
+    //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
 }
 

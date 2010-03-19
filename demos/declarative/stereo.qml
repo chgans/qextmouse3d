@@ -15,7 +15,7 @@ Viewport {
             material: china
         }
 
-        z: SequentialAnimation {
+        SequentialAnimation on z {
             running: true
             repeat: true
             PauseAnimation { duration: 500 }
