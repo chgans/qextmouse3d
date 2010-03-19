@@ -529,10 +529,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
                     normalRef(found_index) += lv.normal();
                     d->accumulateNormal(found_index, lv.normal());
                 }
-                while (found_index != -1)
-                {
-                    found_index = d->nextIndex();
-                }
+                found_index = d->nextIndex();
             }
         }
     }
