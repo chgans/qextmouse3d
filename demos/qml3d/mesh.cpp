@@ -548,28 +548,29 @@ bool Mesh::deref()
 /*!
     Assign the mesh the material \a name from the \l QGLMaterialCollection class.
 */
-QObject *Mesh::material(const QString& name)
+QObject *Mesh::material(const QString& nodeName, const QString& materialName)
 {    
     if (!d->scene)
         return 0;
     
     QGLSceneObject *sceneObject;
     
-    if (name.isEmpty())
+    if (nodeName.isEmpty())
         sceneObject = getSceneObject();
     else
-        sceneObject = getSceneObject(name);
+        sceneObject = getSceneObject(nodeName);
     
-    if(!sceneObject) {
-        qWarning()  << "Attempt to get material data from scene node " 
-                    << name <<" failed.";
+    if(!sceneObject || materialName.isEmpty()) {
+        qWarning()  << "Attempt to get material data " <<materialName << " from scene node " 
+                    << nodeName <<" failed.";        
         return NULL;
     }
 
     QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);   
+    
     QGLMaterialCollection *p = node->palette();
     
-    QGLMaterial *params =  p->material(name);
+    QGLMaterial *params =  p->material(materialName);
     if (params && !d->connected.contains(params)) {
         d->connected.append(params);
         connect(params, SIGNAL(materialChanged()), this, SIGNAL(dataChanged()));
