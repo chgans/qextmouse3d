@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
         return app.exec();
     } else {
         Qml3dView view;
-        view.setUrl(url);
+        view.setSource(url);
         view.show();
         
         return app.exec();
