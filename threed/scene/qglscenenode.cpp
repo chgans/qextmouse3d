@@ -632,7 +632,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (d->viewNormals)
         {
             QVector3DArray verts;
-            QArray<QColor4B> colors;
             QGL::IndexArray indices = d->geometry->indices();
             for (int i = d->start; i < d->start + d->count; ++i)
             {
@@ -640,13 +639,10 @@ void QGLSceneNode::draw(QGLPainter *painter)
                 QVector3D a = d->geometry->vertex(ix);
                 QVector3D b = a + d->geometry->normal(ix);
                 verts.append(a, b);
-                colors.append(QColor4B(Qt::red), QColor4B(Qt::red));
             }
-            painter->setVertexAttribute(QGL::Color, QGLAttributeValue(colors));
             painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
             glLineWidth(2.0f);
             painter->draw(QGL::Lines, verts.size());
-            glFlush();
         }
     }
 
