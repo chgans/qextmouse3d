@@ -84,6 +84,7 @@ public:
 
     void registerObject(int objectId, QObject *object);
     void deregisterObject(int objectId);
+    QObject *objectForPoint(const QPoint &point);
 
     QGLCamera *camera() const;
     void setCamera(QGLCamera *camera);
@@ -112,8 +113,6 @@ protected:
     void wheelEvent(QWheelEvent *e);
 #endif
     void keyPressEvent(QKeyEvent *e);
-
-    QObject *objectUnderMouse(QMouseEvent *e);
 
     QPointF viewDelta(int deltax, int deltay) const;
     QPointF viewDelta(const QPoint &delta) const

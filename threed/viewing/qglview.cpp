@@ -340,7 +340,7 @@ QGLView::StereoType QGLView::stereoType() const
     persist for the lifetime of the QGLView, or until
     deregisterObject() is called for \a objectId.
 
-    \sa deregisterObject(), pickGL(), objectUnderMouse()
+    \sa deregisterObject(), pickGL(), objectForPoint()
 */
 void QGLView::registerObject(int objectId, QObject *object)
 {
@@ -672,7 +672,7 @@ void QGLView::mousePressEvent(QMouseEvent *e)
 {
     QObject *object;
     if (!d->panning && (d->options & QGLView::ObjectPicking) != 0)
-        object = objectUnderMouse(e);
+        object = objectForPoint(e->pos());
     else
         object = 0;
     if (d->pressedObject) {
@@ -719,7 +719,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
     }
     if (d->pressedObject) {
         // Notify the previously pressed object about the release.
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         QObject *pressed = d->pressedObject;
         if (e->button() == d->pressedButton) {
             d->pressedObject = 0;
@@ -760,7 +760,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
 void QGLView::mouseDoubleClickEvent(QMouseEvent *e)
 {
     if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (object) {
             // Simulate a double click event for (0, 0).
             QMouseEvent event
@@ -787,7 +787,7 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
         else
             rotate(delta.x(), delta.y());
     } else if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (d->pressedObject) {
             // Send the move event to the pressed object.  Use a position
             // of (0, 0) if the mouse is still within the pressed object,
@@ -928,18 +928,17 @@ static inline int powerOfTwo(int value)
 
 /*!
     Returns the registered object that is under the mouse position
-    specified by \a e.  This may be used by subclasses to re-implement
-    mousePressEvent(), mouseReleaseEvent(), etc.
+    specified by \a point.  This function may need to regenerate
+    the contents of the pick buffer by repainting the scene
+    with pickGL().
 
     \sa registerObject()
 */
-QObject *QGLView::objectUnderMouse(QMouseEvent *e)
+QObject *QGLView::objectForPoint(const QPoint &point)
 {
     // Check the window boundaries in case a mouse move has
     // moved the pointer outside the window.
-    int x = e->x();
-    int y = e->y();
-    if (!rect().contains(x, y))
+    if (!rect().contains(point))
         return 0;
 
     // Do we need to refresh the pick buffer contents?
@@ -978,7 +977,7 @@ QObject *QGLView::objectUnderMouse(QMouseEvent *e)
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(x, height() - 1 - y);    
+    int objectId = painter.pickObject(point.x(), height() - 1 - point.y());
     QObject *object = d->objects.value(objectId, 0);
     
     // Release the framebuffer object and return.
