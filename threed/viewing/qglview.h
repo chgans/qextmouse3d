@@ -88,6 +88,8 @@ public:
     QGLCamera *camera() const;
     void setCamera(QGLCamera *camera);
 
+    QVector3D mapPoint(const QPoint &point) const;
+
 public Q_SLOTS:
     void queueUpdate();
 
@@ -111,6 +113,12 @@ protected:
 #endif
     void keyPressEvent(QKeyEvent *e);
 
+    QObject *objectUnderMouse(QMouseEvent *e);
+
+    QPointF viewDelta(int deltax, int deltay) const;
+    QPointF viewDelta(const QPoint &delta) const
+        { return viewDelta(delta.x(), delta.y()); }
+
 private Q_SLOTS:
     void cameraChanged();
     void performUpdate();
@@ -118,14 +126,12 @@ private Q_SLOTS:
 private:
     QGLViewPrivate *d;
 
-    QObject *objectUnderMouse(QMouseEvent *e);
     static void sendEnterEvent(QObject *object);
     static void sendLeaveEvent(QObject *object);
 
     void wheel(int delta);
     void pan(int deltax, int deltay);
     void rotate(int deltax, int deltay);
-    QPointF viewDelta(int deltax, int deltay);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLView::Options)

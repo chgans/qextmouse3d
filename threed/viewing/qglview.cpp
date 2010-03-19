@@ -340,7 +340,7 @@ QGLView::StereoType QGLView::stereoType() const
     persist for the lifetime of the QGLView, or until
     deregisterObject() is called for \a objectId.
 
-    \sa deregisterObject(), pickGL()
+    \sa deregisterObject(), pickGL(), objectUnderMouse()
 */
 void QGLView::registerObject(int objectId, QObject *object)
 {
@@ -402,6 +402,43 @@ void QGLView::setCamera(QGLCamera *value)
             this, SLOT(cameraChanged()));
 
     cameraChanged();
+}
+
+/*!
+    Maps \a point from viewport co-ordinates to eye co-ordinates.
+
+    The returned vector will have its x and y components set to the
+    position of the point on the near plane, and the z component
+    set to the inverse of the camera's near plane.
+
+    This function is used for converting a mouse event's position
+    into eye co-ordinates within the current camera view.
+
+    \sa QGLCamera::mapPoint()
+*/
+QVector3D QGLView::mapPoint(const QPoint &point) const
+{
+    QSize viewportSize(size());
+    qreal aspectRatio;
+
+    // Get the size of the underlying paint device.
+    int width = viewportSize.width();
+    int height = viewportSize.height();
+
+    // Use the device's DPI setting to determine the pixel aspect ratio.
+    int dpiX = logicalDpiX();
+    int dpiY = logicalDpiY();
+    if (dpiX <= 0 || dpiY <= 0)
+        dpiX = dpiY = 1;
+
+    // Derive the aspect ratio based on window and pixel size.
+    if (width <= 0 || height <= 0)
+        aspectRatio = 1.0f;
+    else
+        aspectRatio = ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
+
+    // Map the point into eye co-ordinates.
+    return d->camera->mapPoint(point, aspectRatio, viewportSize);
 }
 
 void QGLView::cameraChanged()
@@ -889,6 +926,13 @@ static inline int powerOfTwo(int value)
     return p;
 }
 
+/*!
+    Returns the registered object that is under the mouse position
+    specified by \a e.  This may be used by subclasses to re-implement
+    mousePressEvent(), mouseReleaseEvent(), etc.
+
+    \sa registerObject()
+*/
 QObject *QGLView::objectUnderMouse(QMouseEvent *e)
 {
     // Check the window boundaries in case a mouse move has
@@ -1009,9 +1053,19 @@ void QGLView::rotate(int deltax, int deltay)
     d->camera->rotateCenter(q);
 }
 
-// Convert deltas in the X and Y directions into percentages of
-// the view width and height.
-QPointF QGLView::viewDelta(int deltax, int deltay)
+/*!
+    Converts \a deltax and \a deltay into percentages of the
+    view width and height.  Returns a QPointF containing the
+    percentage values, typically between -1 and 1.
+
+    This function is typically used by subclasses to convert a
+    change in mouse position into a relative distance travelled
+    across the field of view.
+
+    The returned value is corrected for the camera() screen
+    rotation and view size.
+*/
+QPointF QGLView::viewDelta(int deltax, int deltay) const
 {
     int w = width();
     int h = height();
@@ -1051,5 +1105,14 @@ QPointF QGLView::viewDelta(int deltax, int deltay)
     }
     return QPointF(deltax * scaleX / w, deltay * scaleY / h);
 }
+
+/*!
+    \fn QPointF QGLView::viewDelta(const QPoint &delta) const
+    \overload
+
+    Converts the x and y components of \a delta into percentages
+    of the view width and height.  Returns a QPointF containing
+    the percentage values, typically between -1 and 1.
+*/
 
 QT_END_NAMESPACE

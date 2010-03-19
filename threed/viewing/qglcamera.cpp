@@ -1073,7 +1073,8 @@ void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize,
 
 /*!
     Maps \a point from viewport co-ordinates to eye co-ordinates.
-    The size of the viewport on \a painter is given by \a viewportSize.
+    The size of the viewport is given by \a viewportSize, and its
+    aspect ratio by \a aspectRatio.
 
     The returned vector will have its x and y components set to the
     position of the point on the near plane, and the z component
@@ -1083,7 +1084,7 @@ void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize,
     into eye co-ordinates within the current camera view.
 */
 QVector3D QGLCamera::mapPoint
-    (const QPoint& point, QGLPainter *painter, const QSize& viewportSize) const
+    (const QPoint& point, qreal aspectRatio, const QSize& viewportSize) const
 {
     Q_D(const QGLCamera);
 
@@ -1092,7 +1093,6 @@ QVector3D QGLCamera::mapPoint
     int y = point.y();
     int width = viewportSize.width();
     int height = viewportSize.height();
-    qreal aspectRatio = painter->aspectRatio(viewportSize);
     if (d->screenRotation == 90) {
         if (aspectRatio != 0.0f)
             aspectRatio = 1.0f / aspectRatio;
@@ -1125,7 +1125,7 @@ QVector3D QGLCamera::mapPoint
         yrel = 0.0f;
 
     // Reverse the projection and return the point in world co-ordinates.
-    QMatrix4x4 m = projectionMatrix(painter->aspectRatio(viewportSize));
+    QMatrix4x4 m = projectionMatrix(aspectRatio);
     QMatrix4x4 invm = m.inverted();
     return invm.map(QVector3D(xrel, yrel, -1.0f));
 }

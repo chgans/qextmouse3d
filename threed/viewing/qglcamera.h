@@ -160,7 +160,7 @@ public:
     void apply(QGLPainter *painter, const QSize& viewportSize, const QVector3D& eyeAdjust) const;
 
     QVector3D mapPoint
-        (const QPoint& point, QGLPainter *painter,
+        (const QPoint& point, qreal aspectRatio,
          const QSize& viewportSize) const;
 
 Q_SIGNALS:
