@@ -88,11 +88,9 @@ QGLTexture2DPrivate::QGLTexture2DPrivate()
 {
     ddsPixels = 0;
     ddsHeader = 0;
-    minifyFilter = QGL::LinearMipmapLinear;
-    magnifyFilter = QGL::Linear;
     horizontalWrap = QGL::Repeat;
     verticalWrap = QGL::Repeat;
-    generateMipmap = true;
+    bindOptions = QGLContext::DefaultBindOption;
 #if !defined(QT_OPENGL_ES)
     mipmapSupported = false;
     mipmapSupportedKnown = false;
@@ -495,73 +493,33 @@ void QGLTexture2D::copyImage(const QImage& image, const QPoint& offset)
 }
 
 /*!
-    Returns the texture minifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    smaller than the texture itself.  The default value is
-    QGL::LinearMipmapLinear.
+    Returns the options to use when binding the image() to an OpenGL
+    context for the first time.  The default options are
+    QGLContext::LinearFilteringBindOption |
+    QGLContext::InvertedYBindOption | QGLContext::MipmapBindOption.
 
-    \sa setMinifyFilter(), magnifyFilter()
+    \sa setBindOptions()
 */
-QGL::TextureFilter QGLTexture2D::minifyFilter() const
+QGLContext::BindOptions QGLTexture2D::bindOptions() const
 {
     Q_D(const QGLTexture2D);
-    return d->minifyFilter;
+    return d->bindOptions;
 }
 
 /*!
-    Sets the texture minifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is smaller than the texture itself.
+    Sets the \a options to use when binding the image() to an
+    OpenGL context.  If the image() has already been bound,
+    then changing the options will cause it to be recreated
+    from image() the next time bind() is called.
 
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    If generateMipmap() is false and \a value refers to a mipmap
-    filtering mode, then the equivalent non-mipmap mode of
-    QGL::Linear or QGL::Nearest will be used instead.
-
-    \sa minifyFilter(), setMagnifyFilter()
+    \sa bindOptions(), bind()
 */
-void QGLTexture2D::setMinifyFilter(QGL::TextureFilter value)
+void QGLTexture2D::setBindOptions(QGLContext::BindOptions options)
 {
     Q_D(QGLTexture2D);
-    if (d->minifyFilter != value) {
-        d->minifyFilter = value;
-        ++(d->parameterGeneration);
-    }
-}
-
-/*!
-    Returns the texture magnifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    larger than the texture itself.  The default value is
-    QGL::Linear.
-
-    \sa setMagnifyFilter(), minifyFilter()
-*/
-QGL::TextureFilter QGLTexture2D::magnifyFilter() const
-{
-    Q_D(const QGLTexture2D);
-    return d->magnifyFilter;
-}
-
-/*!
-    Sets the texture magnifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is larger than the texture itself.
-    The only valid values are QGL::Nearest and QGL::Linear.
-
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    \sa magnifyFilter(), setMinifyFilter()
-*/
-void QGLTexture2D::setMagnifyFilter(QGL::TextureFilter value)
-{
-    Q_D(QGLTexture2D);
-    if (d->magnifyFilter != value) {
-        d->magnifyFilter = value;
-        ++(d->parameterGeneration);
+    if (d->bindOptions != options) {
+        d->bindOptions = options;
+        ++(d->imageGeneration);
     }
 }
 
@@ -681,29 +639,38 @@ void QGLTexture2D::setVerticalWrap(QGL::TextureWrap value)
     Returns true if mipmaps should be generated for this texture
     whenever image() changes; false otherwise.  The default value is true.
 
-    \sa setGenerateMipmap()
+    This function is a convenience to test for the
+    QGLContext::MipmapBindOption in bindOptions().
+
+    \sa setGenerateMipmap(), bindOptions()
 */
 bool QGLTexture2D::generateMipmap() const
 {
     Q_D(const QGLTexture2D);
-    return d->generateMipmap;
+    return (d->bindOptions & QGLContext::MipmapBindOption) != 0;
 }
 
 /*!
     Enables or disables the generation of mipmaps for this
-    texture whenever image() changes according to \a value.
+    texture according to \a value.  The \a value will not be
+    applied to the texture in the GL server until the next
+    call to bind().
 
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
+    This function is a convenience to set the
+    QGLContext::MipmapBindOption in bindOptions() to \a value.
 
     \sa generateMipmap()
 */
 void QGLTexture2D::setGenerateMipmap(bool value)
 {
     Q_D(QGLTexture2D);
-    if (d->generateMipmap != value) {
-        d->generateMipmap = value;
-        ++(d->parameterGeneration);
+    bool genMipmap = (d->bindOptions & QGLContext::MipmapBindOption) != 0;
+    if (genMipmap != value) {
+        if (value)
+            d->bindOptions |= QGLContext::MipmapBindOption;
+        else
+            d->bindOptions &= ~QGLContext::MipmapBindOption;
+        ++(d->imageGeneration);
     }
 }
 
@@ -778,6 +745,7 @@ bool QGLTexture2DPrivate::bind(GLenum target)
     glBindTexture(target, info->textureId);
 
     // If the parameter generation has changed, then alter the parameters.
+    bool generateMipmap = (bindOptions & QGLContext::MipmapBindOption) != 0;
     if (parameterGeneration != info->parameterGeneration) {
         info->parameterGeneration = parameterGeneration;
         bool mipmapEnabled = generateMipmap;
@@ -811,18 +779,23 @@ bool QGLTexture2DPrivate::bind(GLenum target)
         if (generateMipmap)
             glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 #endif
-        QGL::TextureFilter minify = minifyFilter;
+        GLenum minify, magnify;
         if (!mipmapEnabled) {
-            // Don't use the mipmap modes if mipmap creation is disabled.
-            if (minify == QGL::NearestMipmapNearest ||
-                    minify == QGL::NearestMipmapLinear)
-                minify = QGL::Nearest;
-            else if (minify == QGL::LinearMipmapNearest ||
-                        minify == QGL::LinearMipmapLinear)
-                minify = QGL::Linear;
+            if (bindOptions & QGLContext::LinearFilteringBindOption)
+                minify = magnify = GL_LINEAR;
+            else
+                minify = magnify = GL_NEAREST;
+        } else {
+            if (bindOptions & QGLContext::LinearFilteringBindOption) {
+                minify = GL_LINEAR_MIPMAP_LINEAR;
+                magnify = GL_LINEAR;
+            } else {
+                minify = GL_NEAREST_MIPMAP_NEAREST;
+                magnify = GL_NEAREST;
+            }
         }
         q_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minify);
-        q_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magnifyFilter);
+        q_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magnify);
         q_glTexParameteri(target, GL_TEXTURE_WRAP_S, horizontalWrap);
         q_glTexParameteri(target, GL_TEXTURE_WRAP_T, verticalWrap);
     }

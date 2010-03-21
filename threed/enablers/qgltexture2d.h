@@ -75,11 +75,8 @@ public:
 
     void copyImage(const QImage& image, const QPoint& offset = QPoint(0, 0));
 
-    QGL::TextureFilter minifyFilter() const;
-    void setMinifyFilter(QGL::TextureFilter value);
-
-    QGL::TextureFilter magnifyFilter() const;
-    void setMagnifyFilter(QGL::TextureFilter value);
+    QGLContext::BindOptions bindOptions() const;
+    void setBindOptions(QGLContext::BindOptions options);
 
     QGL::TextureWrap horizontalWrap() const;
     void setHorizontalWrap(QGL::TextureWrap value);

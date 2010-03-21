@@ -176,27 +176,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \enum QGL::TextureFilter
-    \since 4.7
-    This enum defines the minifying or magnifying filter to use for a texture.
-
-    \value Nearest Use the value that is nearest the pixel being textured.
-    \value Linear Use the linear weighted average of the nearby pixels.
-    \value NearestMipmapNearest Choose the mipmap that is nearest in size
-        and then use the value that is nearest the pixel being textured.
-    \value NearestMipmapLinear Choose the two mipmaps that most closely
-        match the final pixel size, select a pixel from each using the
-        Nearest criteria, and then produce the linear weighted average
-        of those two values.
-    \value LinearMipmapNearest Choose the mipmap that is nearest in size
-        and then use the linear weighted average of the nearby pixels.
-    \value LinearMipmapLinear Choose the two mipmaps that most closely
-        match the final pixel size, select a pixel from each using the
-        Linear criteria, and then produce the linear weighted average
-        of those two values.
-*/
-
-/*!
     \enum QGL::TextureWrap
     \since 4.7
     This enum defines the wrapping mode for texture co-ordinates.

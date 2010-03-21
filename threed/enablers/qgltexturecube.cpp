@@ -356,73 +356,33 @@ void QGLTextureCube::copyImage
 }
 
 /*!
-    Returns the texture minifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    smaller than the texture itself.  The default value is
-    QGL::LinearMipmapLinear.
+    Returns the options to use when binding the image() to an OpenGL
+    context for the first time.  The default options are
+    QGLContext::LinearFilteringBindOption |
+    QGLContext::InvertedYBindOption | QGLContext::MipmapBindOption.
 
-    \sa setMinifyFilter(), magnifyFilter()
+    \sa setBindOptions()
 */
-QGL::TextureFilter QGLTextureCube::minifyFilter() const
+QGLContext::BindOptions QGLTextureCube::bindOptions() const
 {
     Q_D(const QGLTextureCube);
-    return d->minifyFilter;
+    return d->bindOptions;
 }
 
 /*!
-    Sets the texture minifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is smaller than the texture itself.
+    Sets the \a options to use when binding the image() to an
+    OpenGL context.  If the image() has already been bound,
+    then changing the options will cause it to be recreated
+    from image() the next time bind() is called.
 
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    If generateMipmap() is false and \a value refers to a mipmap
-    filtering mode, then the equivalent non-mipmap mode of
-    QGL::Linear or QGL::Nearest will be used instead.
-
-    \sa minifyFilter(), setMagnifyFilter()
+    \sa bindOptions(), bind()
 */
-void QGLTextureCube::setMinifyFilter(QGL::TextureFilter value)
+void QGLTextureCube::setBindOptions(QGLContext::BindOptions options)
 {
     Q_D(QGLTextureCube);
-    if (d->minifyFilter != value) {
-        d->minifyFilter = value;
-        ++(d->parameterGeneration);
-    }
-}
-
-/*!
-    Returns the texture magnifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    larger than the texture itself.  The default value is
-    QGL::Linear.
-
-    \sa setMagnifyFilter(), minifyFilter()
-*/
-QGL::TextureFilter QGLTextureCube::magnifyFilter() const
-{
-    Q_D(const QGLTextureCube);
-    return d->magnifyFilter;
-}
-
-/*!
-    Sets the texture magnifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is larger than the texture itself.
-    The only valid values are QGL::Nearest and QGL::Linear.
-
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    \sa magnifyFilter(), setMinifyFilter()
-*/
-void QGLTextureCube::setMagnifyFilter(QGL::TextureFilter value)
-{
-    Q_D(QGLTextureCube);
-    if (d->magnifyFilter != value) {
-        d->magnifyFilter = value;
-        ++(d->parameterGeneration);
+    if (d->bindOptions != options) {
+        d->bindOptions = options;
+        ++(d->imageGeneration);
     }
 }
 
@@ -501,12 +461,15 @@ void QGLTextureCube::setVerticalWrap(QGL::TextureWrap value)
     whenever the face images change; false otherwise.  The default
     value is true.
 
+    This function is a convenience to test for the
+    QGLContext::MipmapBindOption in bindOptions().
+
     \sa setGenerateMipmap()
 */
 bool QGLTextureCube::generateMipmap() const
 {
     Q_D(const QGLTextureCube);
-    return d->generateMipmap;
+    return (d->bindOptions & QGLContext::MipmapBindOption) != 0;
 }
 
 /*!
@@ -521,9 +484,13 @@ bool QGLTextureCube::generateMipmap() const
 void QGLTextureCube::setGenerateMipmap(bool value)
 {
     Q_D(QGLTextureCube);
-    if (d->generateMipmap != value) {
-        d->generateMipmap = value;
-        ++(d->parameterGeneration);
+    bool genMipmap = (d->bindOptions & QGLContext::MipmapBindOption) != 0;
+    if (genMipmap != value) {
+        if (value)
+            d->bindOptions |= QGLContext::MipmapBindOption;
+        else
+            d->bindOptions &= ~QGLContext::MipmapBindOption;
+        ++(d->imageGeneration);
     }
 }
 

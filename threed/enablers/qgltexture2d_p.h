@@ -105,11 +105,9 @@ public:
     QImage image;
     GLubyte *ddsPixels;
     DDSFormat *ddsHeader;
-    QGL::TextureFilter minifyFilter;
-    QGL::TextureFilter magnifyFilter;
+    QGLContext::BindOptions bindOptions;
     QGL::TextureWrap horizontalWrap;
     QGL::TextureWrap verticalWrap;
-    bool generateMipmap;
 #if !defined(QT_OPENGL_ES)
     bool mipmapSupported;
     bool mipmapSupportedKnown;
