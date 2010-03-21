@@ -42,18 +42,24 @@
 #include "stereoview.h"
 #include "qglteapot.h"
 #include "qglcube.h"
+#include "qglmaterial.h"
 
 void StereoView::initializeGL(QGLPainter *painter)
 {
-    teapot = list.newNode();
-    list << QGLTeapot();
+    teapot << QGLTeapot();
+    teapot.finalize();
 
-    cube = list.newNode();
-    list << QGLCube(1.f);
+    cube.newSection(QGL::Faceted);
+    cube << QGLCube(1.0f);
+    cube.finalize();
 
-    list.finalize();
+    QGLMaterial *china = new QGLMaterial(this);
+    china->setAmbientColor(QColor(192, 150, 128));
+    china->setSpecularColor(QColor(60, 60, 60));
+    china->setShininess(128);
 
     painter->setLightEnabled(0, true);
+    painter->setFaceMaterial(QGL::AllFaces, china);
     painter->setStandardEffect(QGL::LitMaterial);
 
     camera()->setEye(QVector3D(0.0f, 0.0f, 15.0f));
@@ -62,8 +68,8 @@ void StereoView::initializeGL(QGLPainter *painter)
 
 void StereoView::paintGL(QGLPainter *painter)
 {
-    teapot->draw(painter);
+    teapot.draw(painter);
 
     painter->modelViewMatrix().translate(-1.0f, 0.0f, 2.0f);
-    cube->draw(painter);
+    cube.draw(painter);
 }

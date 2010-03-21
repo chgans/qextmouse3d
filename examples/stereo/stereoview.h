@@ -57,9 +57,8 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLDisplayList list;
-    QGLSceneNode *teapot;
-    QGLSceneNode *cube;
+    QGLDisplayList teapot;
+    QGLDisplayList cube;
 };
 
 #endif

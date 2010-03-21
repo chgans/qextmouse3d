@@ -39,13 +39,11 @@
 **
 ****************************************************************************/
 
-#ifndef QGLINDEXBUFFER_H
-#define QGLINDEXBUFFER_H
+#ifndef QGLVIEWPORT_H
+#define QGLVIEWPORT_H
 
-#include <QtOpenGL/qgl.h>
-#include <QtOpenGL/qglbuffer.h>
-#include "qglnamespace.h"
-#include "qarray.h"
+#include "qglpainter.h"
+#include "qglcamera.h"
 
 QT_BEGIN_HEADER
 
@@ -53,50 +51,59 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLIndexBufferPrivate;
-class QGLPainter;
+class QGLViewportPrivate;
 
-class Q_QT3D_EXPORT QGLIndexBuffer
+class Q_QT3D_EXPORT QGLViewport : public QObject
 {
+    Q_OBJECT
+    Q_ENUMS(Option)
+    Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY viewportChanged)
+    Q_PROPERTY(QRect rect READ rect WRITE setRect NOTIFY viewportChanged)
+    Q_PROPERTY(int layer READ layer WRITE setLayer NOTIFY viewportChanged)
+    Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera NOTIFY viewportChanged)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY viewportChanged)
 public:
-    QGLIndexBuffer();
-    QGLIndexBuffer(const QGLIndexBuffer& other);
-    ~QGLIndexBuffer();
+    explicit QGLViewport(QObject *parent = 0);
+    ~QGLViewport();
 
-    QGLIndexBuffer& operator=(const QGLIndexBuffer& other);
+    bool isEnabled() const;
+    void setEnabled(bool enable);
 
-    QGLBuffer::UsagePattern usagePattern() const;
-    void setUsagePattern(QGLBuffer::UsagePattern value);
+    QRect rect() const;
+    void setRect(const QRect &rect);
 
-    const QArray<ushort> &indices() const;
+    int layer() const;
+    void setLayer(int layer);
 
-    void setIndices(const QArray<ushort>& values);
-    void replaceIndices(int index, const QArray<ushort>& values);
+    QGLCamera *camera() const;
+    void setCamera(QGLCamera *camera);
 
-#if !defined(QT_OPENGL_ES) || defined(qdoc)
-    void setIndices(const QArray<int>& values);
-    void replaceIndices(int index, const QArray<int>& values);
-#endif
+    QColor backgroundColor() const;
+    void setBackgroundColor(const QColor& color);
 
-    GLenum elementType() const;
+    enum Eye
+    {
+        NoEye,
+        LeftEye,
+        RightEye
+    };
 
-    int indexCount() const;
-    bool isEmpty() const { return indexCount() == 0; }
+    virtual void prepareGL(QGLPainter *painter, QGLViewport::Eye eye,
+                           QPaintDevice *window, const QRect &windowRect);
+    virtual void paintGL(QGLPainter *painter) = 0;
+    virtual bool needsPickUpdate();
 
-    bool upload();
-    bool isUploaded() const;
+public Q_SLOTS:
+    void update();
 
-    QGLBuffer *buffer() const;
-
-    bool bind() const;
-    void release() const;
+Q_SIGNALS:
+    void viewportChanged();
 
 private:
-    QGLIndexBufferPrivate *d_ptr;
+    QScopedPointer<QGLViewportPrivate> d_ptr;
 
-    Q_DECLARE_PRIVATE(QGLIndexBuffer)
-
-    friend class QGLPainter;
+    Q_DECLARE_PRIVATE(QGLViewport)
+    Q_DISABLE_COPY(QGLViewport)
 };
 
 QT_END_NAMESPACE

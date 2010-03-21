@@ -47,6 +47,8 @@
 #include <QtCore/qmap.h>
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qdatetime.h>
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -129,6 +131,7 @@ QT_BEGIN_NAMESPACE
            problems with object picking.  Disabled by default.
     \value CameraNavigation Camera navigation using the keyboard and mouse
            is enabled.  Enabled by default.
+    \omitvalue PaintingLog
 */
 
 /*!
@@ -180,6 +183,12 @@ public:
                          parent, SLOT(cameraChanged()));
         QObject::connect(defaultCamera, SIGNAL(viewChanged()),
                          parent, SLOT(cameraChanged()));
+
+        logTime.start();
+        lastFrameTime.start();
+        QByteArray env = qgetenv("QT3D_LOG_EVENTS");
+        if (env == "1")
+            options |= QGLView::PaintingLog;
     }
     ~QGLViewPrivate()
     {
@@ -202,7 +211,36 @@ public:
     QPoint startPan;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
+    QTime logTime;
+    QTime enterTime;
+    QTime lastFrameTime;
+
+    inline void logEnter(const char *message);
+    inline void logLeave(const char *message);
 };
+
+inline void QGLViewPrivate::logEnter(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    enterTime.start();
+    int sinceLast = lastFrameTime.restart();
+    qDebug("LOG[%d:%02d:%02d.%03d]: ENTER: %s (%d ms since last enter)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, sinceLast);
+}
+
+inline void QGLViewPrivate::logLeave(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    int duration = enterTime.elapsed();
+    qDebug("LOG[%d:%02d:%02d.%03d]: LEAVE: %s (%d ms elapsed)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, duration);
+}
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
@@ -302,7 +340,7 @@ QGLView::StereoType QGLView::stereoType() const
     persist for the lifetime of the QGLView, or until
     deregisterObject() is called for \a objectId.
 
-    \sa deregisterObject(), pickGL()
+    \sa deregisterObject(), pickGL(), objectForPoint()
 */
 void QGLView::registerObject(int objectId, QObject *object)
 {
@@ -366,6 +404,43 @@ void QGLView::setCamera(QGLCamera *value)
     cameraChanged();
 }
 
+/*!
+    Maps \a point from viewport co-ordinates to eye co-ordinates.
+
+    The returned vector will have its x and y components set to the
+    position of the point on the near plane, and the z component
+    set to the inverse of the camera's near plane.
+
+    This function is used for converting a mouse event's position
+    into eye co-ordinates within the current camera view.
+
+    \sa QGLCamera::mapPoint()
+*/
+QVector3D QGLView::mapPoint(const QPoint &point) const
+{
+    QSize viewportSize(size());
+    qreal aspectRatio;
+
+    // Get the size of the underlying paint device.
+    int width = viewportSize.width();
+    int height = viewportSize.height();
+
+    // Use the device's DPI setting to determine the pixel aspect ratio.
+    int dpiX = logicalDpiX();
+    int dpiY = logicalDpiY();
+    if (dpiX <= 0 || dpiY <= 0)
+        dpiX = dpiY = 1;
+
+    // Derive the aspect ratio based on window and pixel size.
+    if (width <= 0 || height <= 0)
+        aspectRatio = 1.0f;
+    else
+        aspectRatio = ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
+
+    // Map the point into eye co-ordinates.
+    return d->camera->mapPoint(point, aspectRatio, viewportSize);
+}
+
 void QGLView::cameraChanged()
 {
     // The pick buffer will need to be refreshed at the new camera position.
@@ -399,12 +474,14 @@ void QGLView::performUpdate()
 */
 void QGLView::initializeGL()
 {
+    d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
     d->depthBufferOptions.apply(&painter);
     d->blendOptions.apply(&painter);
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
+    d->logLeave("QGLView::initializeGL");
 }
 
 /*!
@@ -424,6 +501,7 @@ void QGLView::resizeGL(int w, int h)
 */
 void QGLView::paintGL()
 {
+    d->logEnter("QGLView::paintGL");
     // We may need to regenerate the pick buffer on the next mouse event.
     d->pickBufferMaybeInvalid = true;
 
@@ -502,6 +580,7 @@ void QGLView::paintGL()
 #endif
         }
     }
+    d->logLeave("QGLView::paintGL");
 }
 
 /*!
@@ -593,7 +672,7 @@ void QGLView::mousePressEvent(QMouseEvent *e)
 {
     QObject *object;
     if (!d->panning && (d->options & QGLView::ObjectPicking) != 0)
-        object = objectUnderMouse(e);
+        object = objectForPoint(e->pos());
     else
         object = 0;
     if (d->pressedObject) {
@@ -640,7 +719,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
     }
     if (d->pressedObject) {
         // Notify the previously pressed object about the release.
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         QObject *pressed = d->pressedObject;
         if (e->button() == d->pressedButton) {
             d->pressedObject = 0;
@@ -681,7 +760,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
 void QGLView::mouseDoubleClickEvent(QMouseEvent *e)
 {
     if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (object) {
             // Simulate a double click event for (0, 0).
             QMouseEvent event
@@ -708,7 +787,7 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
         else
             rotate(delta.x(), delta.y());
     } else if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (d->pressedObject) {
             // Send the move event to the pressed object.  Use a position
             // of (0, 0) if the mouse is still within the pressed object,
@@ -847,13 +926,19 @@ static inline int powerOfTwo(int value)
     return p;
 }
 
-QObject *QGLView::objectUnderMouse(QMouseEvent *e)
+/*!
+    Returns the registered object that is under the mouse position
+    specified by \a point.  This function may need to regenerate
+    the contents of the pick buffer by repainting the scene
+    with pickGL().
+
+    \sa registerObject()
+*/
+QObject *QGLView::objectForPoint(const QPoint &point)
 {
     // Check the window boundaries in case a mouse move has
     // moved the pointer outside the window.
-    int x = e->x();
-    int y = e->y();
-    if (!rect().contains(x, y))
+    if (!rect().contains(point))
         return 0;
 
     // Do we need to refresh the pick buffer contents?
@@ -892,7 +977,7 @@ QObject *QGLView::objectUnderMouse(QMouseEvent *e)
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(x, height() - 1 - y);    
+    int objectId = painter.pickObject(point.x(), height() - 1 - point.y());
     QObject *object = d->objects.value(objectId, 0);
     
     // Release the framebuffer object and return.
@@ -967,9 +1052,19 @@ void QGLView::rotate(int deltax, int deltay)
     d->camera->rotateCenter(q);
 }
 
-// Convert deltas in the X and Y directions into percentages of
-// the view width and height.
-QPointF QGLView::viewDelta(int deltax, int deltay)
+/*!
+    Converts \a deltax and \a deltay into percentages of the
+    view width and height.  Returns a QPointF containing the
+    percentage values, typically between -1 and 1.
+
+    This function is typically used by subclasses to convert a
+    change in mouse position into a relative distance travelled
+    across the field of view.
+
+    The returned value is corrected for the camera() screen
+    rotation and view size.
+*/
+QPointF QGLView::viewDelta(int deltax, int deltay) const
 {
     int w = width();
     int h = height();
@@ -1009,5 +1104,14 @@ QPointF QGLView::viewDelta(int deltax, int deltay)
     }
     return QPointF(deltax * scaleX / w, deltay * scaleY / h);
 }
+
+/*!
+    \fn QPointF QGLView::viewDelta(const QPoint &delta) const
+    \overload
+
+    Converts the x and y components of \a delta into percentages
+    of the view width and height.  Returns a QPointF containing
+    the percentage values, typically between -1 and 1.
+*/
 
 QT_END_NAMESPACE

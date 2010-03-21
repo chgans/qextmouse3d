@@ -21,7 +21,7 @@ Item3d {
         onHoverLeave: { effect.material = metal }
         onClicked: { teaspoon1.bounce = true }
 
-        y_lift: SequentialAnimation {
+        SequentialAnimation on y_lift {
             running: teaspoon1.bounce
             NumberAnimation { to : 1; duration: 300; easing.type:"OutQuad" }
             NumberAnimation { to : 0; duration: 300; easing.type:"OutBounce" }

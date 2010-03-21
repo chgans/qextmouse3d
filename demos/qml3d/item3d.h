@@ -72,8 +72,6 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_FLAGS(CullFaces)
     Q_FLAGS(Mode)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
-    Q_PROPERTY(QVector3D pivotPoint READ pivot WRITE setPivot NOTIFY pivotChanged)
-    Q_PROPERTY(bool usePivot READ usePivot WRITE setUsePivot NOTIFY pivotChanged)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
@@ -110,12 +108,6 @@ public:
 
     QVector3D position() const;
     void setPosition(const QVector3D& value);
-
-    QVector3D pivot() const;
-    void setPivot(const QVector3D &value);
-
-    bool usePivot() const;
-    void setUsePivot(bool usePivot);
 
     qreal x() const;
     void setX(qreal value);

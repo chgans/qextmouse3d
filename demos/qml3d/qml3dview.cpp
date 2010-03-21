@@ -79,7 +79,7 @@ QT_BEGIN_NAMESPACE
             url = QUrl::fromLocalFile(fi.absoluteFilePath());
 
         Qml3dView view;
-        view.setUrl(url);
+        view.setSource(url);
         view.show();
 
         return app.exec();
@@ -88,7 +88,7 @@ QT_BEGIN_NAMESPACE
 
     This is a relatively simple example which shows how easy it can be to use the Qml3dView class.
 
-    The user need only define a source URL, then call the setURL() and the show() functions.
+    The user need only define a source URL, then call the setSource() and the show() functions.
 
     Internally the class sets the necessary parameters and functions for OpenGL activities, as
     well as user interaction through picking and mouse actions.  Initialisation of scene elements
@@ -158,7 +158,7 @@ void Qml3dView::paintGL(QGLPainter *painter)
 /*!
     Sets the url which contains the QML source for this environment to \a url.
 */
-void Qml3dView::setUrl(const QUrl& url)
+void Qml3dView::setSource(const QUrl& url)
 {
     // Load the .qml file into a sub-context.
     component = new QDeclarativeComponent(&engine, url, this);
