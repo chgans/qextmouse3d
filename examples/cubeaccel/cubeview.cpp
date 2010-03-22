@@ -48,7 +48,7 @@
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent),
-      sensitivity(0.333f)
+      sensitivity(0.1f)
 {
     setOption(CameraNavigation, false);
 
