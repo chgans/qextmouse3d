@@ -53,7 +53,10 @@ void qLightVertex(vec4 vertex, vec3 normal)
 
     // Determine the cosine of the angle between the normal and the
     // vector from the vertex to the light.
-    toLight = normalize(pli);
+    if (pliw == 0.0)
+        toLight = normalize(pli);
+    else
+        toLight = normalize(pli - vertex.xyz);
     angle = max(dot(normal, toLight), 0.0);
 
     // Calculate the ambient and diffuse light components.
