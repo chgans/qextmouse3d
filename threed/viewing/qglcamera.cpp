@@ -296,6 +296,7 @@ public:
     qreal eyeSeparation;
     QVector3D motionAdjustment;
     QQuaternion motionQuaternion;
+    bool adjustForAspectRatio;
 
     void lookAt(QGLPainter *painter, const QVector3D& adjust) const;
 };
@@ -313,7 +314,8 @@ QGLCameraPrivate::QGLCameraPrivate()
       center(0.0f, 0.0f, 0.0f),
       viewVector(0.0f, 0.0f, -10.0f),
       eyeSeparation(0.0f),
-      motionAdjustment(0.0f, 0.0f, 1.0f)
+      motionAdjustment(0.0f, 0.0f, 1.0f),
+      adjustForAspectRatio(true)
 {
 }
 
@@ -848,6 +850,33 @@ void QGLCamera::setMotionAdjustment(const QVector3D& vector)
 }
 
 /*!
+    \property QGLCamera::adjustForAspectRatio
+    \brief the adjustment state of the aspect ratio in the viewing volume.
+
+    By default, QGLCamera adjusts the viewing volume for the aspect
+    ratio of the window so that pixels appear square without the
+    application needing to adjust viewSize() manually.
+
+    If this property is false, then the aspect ratio adjustment is
+    not performed.
+*/
+
+bool QGLCamera::adjustForAspectRatio() const
+{
+    Q_D(const QGLCamera);
+    return d->adjustForAspectRatio;
+}
+
+void QGLCamera::setAdjustForAspectRatio(bool value)
+{
+    Q_D(QGLCamera);
+    if (d->adjustForAspectRatio != value) {
+        d->adjustForAspectRatio = value;
+        emit viewChanged();
+    }
+}
+
+/*!
     Returns the quaternion corresponding to tilting the view up or
     down by \a angle degrees.  The returned quaternion can be applied to
     the eye() position with rotateEye() or to the center() position with
@@ -967,6 +996,8 @@ QMatrix4x4 QGLCamera::projectionMatrix(qreal aspectRatio) const
 {
     Q_D(const QGLCamera);
     QMatrix4x4 m;
+    if (!d->adjustForAspectRatio)
+        aspectRatio = 1.0f;
     if (d->screenRotation != 0) {
         m.rotate((qreal)(d->screenRotation), 0.0f, 0.0f, 1.0f);
         if (d->screenRotation == 90 || d->screenRotation == 270) {
@@ -1093,6 +1124,8 @@ QVector3D QGLCamera::mapPoint
     int y = point.y();
     int width = viewportSize.width();
     int height = viewportSize.height();
+    if (!d->adjustForAspectRatio)
+        aspectRatio = 1.0f;
     if (d->screenRotation == 90) {
         if (aspectRatio != 0.0f)
             aspectRatio = 1.0f / aspectRatio;

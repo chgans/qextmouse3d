@@ -80,6 +80,7 @@ class Q_QT3D_EXPORT QGLCamera : public QObject
     Q_PROPERTY(QVector3D center READ center WRITE setCenter NOTIFY viewChanged)
     Q_PROPERTY(qreal eyeSeparation READ eyeSeparation WRITE setEyeSeparation NOTIFY viewChanged)
     Q_PROPERTY(QVector3D motionAdjustment READ motionAdjustment WRITE setMotionAdjustment DESIGNABLE false NOTIFY viewChanged)
+    Q_PROPERTY(bool adjustForAspectRatio READ adjustForAspectRatio WRITE setAdjustForAspectRatio NOTIFY viewChanged)
 public:
     explicit QGLCamera(QObject *parent = 0);
     ~QGLCamera();
@@ -139,6 +140,9 @@ public:
 
     QVector3D motionAdjustment() const;
     void setMotionAdjustment(const QVector3D& vector);
+
+    bool adjustForAspectRatio() const;
+    void setAdjustForAspectRatio(bool value);
 
     QQuaternion tilt(qreal angle) const;
     QQuaternion pan(qreal angle) const;
