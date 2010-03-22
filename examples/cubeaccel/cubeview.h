@@ -63,7 +63,12 @@ private slots:
 private:
     QGLTexture2D texture;
     QGLDisplayList cube;
+    QGLDisplayList room;
+    QGLDisplayList teapot;
+    QGLCamera *roomCamera;
     qreal sensitivity;
+    QGLLightModel *roomModel;
+    QGLLightModel *normalModel;
 
     QVector3D gravity() const;
 };
