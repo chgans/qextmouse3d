@@ -492,12 +492,39 @@ void QGLBuffer::release() const
 }
 
 /*!
+    Releases the buffer associated with \a type in the current
+    QGLContext.
+
+    This function is a direct call to \c{glBindBuffer(type, 0)}
+    for use when the caller does not know which QGLBuffer has
+    been bound to the context but wants to make sure that it
+    is released.
+
+    \code
+    QGLBuffer::release(QGLBuffer::VertexBuffer);
+    \endcode
+*/
+void QGLBuffer::release(QGLBuffer::Type type)
+{
+#if !defined(QGL_RESOLVE_BUFFER_FUNCS)
+    glBindBuffer(GLenum(type), 0);
+#else
+    const QGLContext *ctx = QGLContext::currentContext();
+    if (!ctx)
+        return;
+    QGLPainterExtensions *extensions = loadBufferFunctions(ctx);
+    if (extensions)
+        extensions->bindBuffer(GLenum(type), 0);
+#endif
+}
+
+/*!
     Returns the GL identifier associated with this buffer; zero if
     the buffer has not been created.
 
     \sa isCreated()
 */
-uint QGLBuffer::bufferId() const
+GLuint QGLBuffer::bufferId() const
 {
     Q_D(const QGLBuffer);
     return d->guard.id();

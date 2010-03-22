@@ -44,6 +44,7 @@
 
 #include "qt3dglobal.h"
 #include <QtCore/qscopedpointer.h>
+#include <QtOpenGL/qgl.h>
 
 QT_BEGIN_HEADER
 
@@ -98,7 +99,9 @@ public:
     bool bind() const;
     void release() const;
 
-    uint bufferId() const;
+    static void release(QGLBuffer::Type type);
+
+    GLuint bufferId() const;
 
     int size() const;
 
