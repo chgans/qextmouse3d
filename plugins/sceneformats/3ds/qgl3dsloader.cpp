@@ -280,7 +280,7 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
             // will be automatically destroyed when the material is.
             QGLTexture2D *texture = new QGLTexture2D(mat);
             if (txName.toLower().endsWith(".dds"))
-                texture->setDdsImage(txName);
+                texture->setCompressedFile(txName);
             else
                 texture->setImage(QImage(txName));
             texture->setObjectName(txName);

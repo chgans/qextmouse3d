@@ -41,6 +41,8 @@
 
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
+#include "qgltextureutils_p.h"
+#include "qglcontextscope.h"
 #include "qglpainter_p.h"
 
 #include <QtCore/qfile.h>
@@ -86,8 +88,6 @@ QT_BEGIN_NAMESPACE
 
 QGLTexture2DPrivate::QGLTexture2DPrivate()
 {
-    ddsPixels = 0;
-    ddsHeader = 0;
     horizontalWrap = QGL::Repeat;
     verticalWrap = QGL::Repeat;
     bindOptions = QGLContext::DefaultBindOption;
@@ -98,58 +98,22 @@ QGLTexture2DPrivate::QGLTexture2DPrivate()
     imageGeneration = 0;
     parameterGeneration = 0;
     infos = 0;
-    flipped = false;
 }
 
 QGLTexture2DPrivate::~QGLTexture2DPrivate()
 {
-    free(ddsPixels);
-    free(ddsHeader);
     // Destroy the texture id's in the GL server in their original contexts.
     QGLTexture2DTextureInfo *current = infos;
     QGLTexture2DTextureInfo *next;
-    const QGLContext *ctx = QGLContext::currentContext();
-    const QGLContext *activectx = ctx;
     while (current != 0) {
         next = current->next;
-        if (!current->isLiteral) {
-            if (current->context != activectx) {
-                activectx = current->context;
-                const_cast<QGLContext *>(activectx)->makeCurrent();
-            }
-            glDeleteTextures(1, &(current->textureId));
+        if (!current->isLiteral && current->tex.textureId()) {
+            QGLContextScope scope(current->tex.context());
+            GLuint textureId = current->tex.textureId();
+            glDeleteTextures(1, &textureId);
         }
         delete current;
         current = next;
-    }
-    if (activectx != ctx) {
-        if (ctx)
-            const_cast<QGLContext *>(ctx)->makeCurrent();
-        else
-            const_cast<QGLContext *>(activectx)->doneCurrent();
-    }
-}
-
-void QGLTexture2DPrivate::destroyedContext(const QGLContext *context)
-{
-    // Scan the texture information to remove the block for "context".
-    // We assume that the texture identifier was destroyed by GL itself.
-    QGLTexture2DTextureInfo *current = infos;
-    QGLTexture2DTextureInfo *prev = 0;
-    QGLTexture2DTextureInfo *next;
-    while (current != 0) {
-        if (current->context == context) {
-            next = current->next;
-            delete current;
-            current = next;
-            if (prev)
-                prev->next = next;
-            else
-                infos = next;
-        } else {
-            prev = current;
-            current = current->next;
-        }
     }
 }
 
@@ -261,16 +225,7 @@ QImage QGLTexture2D::image() const
 void QGLTexture2D::setImage(const QImage& image)
 {
     Q_D(QGLTexture2D);
-    if (d->ddsHeader)  // clear any dds image header
-    {
-        free(d->ddsHeader);
-        d->ddsHeader = 0;
-    }
-    if (d->ddsPixels)  // clear any dds image
-    {
-        free(d->ddsPixels);
-        d->ddsPixels = 0;
-    }
+    d->compressedData = QByteArray(); // Clear compressed file data.
     if (image.isNull()) {
         // Don't change the imageGeneration, because we aren't actually
         // changing the image in the GL server, only the client copy.
@@ -307,159 +262,53 @@ void QGLTexture2D::clearImage()
     d->image = QImage();
 }
 
-// DDS stuff - all taken from qgl.cpp
-struct DDSFormat {
-    quint32 dwSize;
-    quint32 dwFlags;
-    quint32 dwHeight;
-    quint32 dwWidth;
-    quint32 dwLinearSize;
-    quint32 dummy1;
-    quint32 dwMipMapCount;
-    quint32 dummy2[11];
-    struct {
-        quint32 dummy3[2];
-        quint32 dwFourCC;
-        quint32 dummy4[5];
-    } ddsPixelFormat;
-};
-
-// compressed texture pixel formats
-#define FOURCC_DXT1  0x31545844
-#define FOURCC_DXT2  0x32545844
-#define FOURCC_DXT3  0x33545844
-#define FOURCC_DXT4  0x34545844
-#define FOURCC_DXT5  0x35545844
-
-#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
-#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0
-#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT  0x83F1
-#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT  0x83F2
-#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT  0x83F3
-#endif
-
 #ifndef GL_GENERATE_MIPMAP_SGIS
 #define GL_GENERATE_MIPMAP_SGIS       0x8191
 #define GL_GENERATE_MIPMAP_HINT_SGIS  0x8192
 #endif
 
-#ifndef APIENTRY
-# define APIENTRY
-#endif
-typedef void (APIENTRY *pfn_glCompressedTexImage2DARB) (GLenum, GLint, GLenum, GLsizei,
-                                                        GLsizei, GLint, GLsizei, const GLvoid *);
-static pfn_glCompressedTexImage2DARB qt_glCompressedTexImage2DARB = 0;
-static bool pfn_initialized = false;
-
 /*!
-    Sets a Direct Draw Surface (DDS) image at \a path on this texture.
+    Sets this texture to the contents of a compressed image file
+    at \a path.  Returns true if the file exists and has a supported
+    compressed format; false otherwise.
 
-    The \a path should be a file-system path relative to the current directory
-    or an absolute \a path, identifying a DDS image file.
+    The DDS, ETC1, PVRTC2, and PVRTC4 compression formats are
+    supported, assuming that the GL implementation has the
+    appropriate extension.
 
-    The DDS image will be uploaded into the GL server the next time bind()
-    is called.  Only the DXT1, DXT3 and DXT5 DDS formats are supported.
-
-    Note that this will only work if the implementation supports the
-    \c GL_ARB_texture_compression and \c GL_EXT_texture_compression_s3tc
-    extensions.
-
-    If the DDS image cannot be loaded then the current image is cleared in the
-    client but the GL texture will retain its current value.
-
-    Returns true if the DDS image could be loaded for the texture, and
-    otherwise returns false.
-
-    Since DDS is an optimized format for uploading directly to an OpenGL
-    texture it is not retained internally as a QImage.
-
-    Subsequent calls to image() will return a null QImage.
-
-    This method sets the flip vertically flag to true, since DDS textures
-    are inverted top to bottom with respect to OpenGL.
-
-    \sa setImage(), setSize(), flipVertically()
+    \sa setImage(), setSize()
 */
-bool QGLTexture2D::setDdsImage(const QString &path)
+bool QGLTexture2D::setCompressedFile(const QString &path)
 {
     Q_D(QGLTexture2D);
     d->image = QImage();
 
     QFile f(path);
-    if (!f.exists())
-    {
-        qWarning("QGLTexture2D::setDdsImage(%s): File not found",
-                 path.toLocal8Bit().constData());
-        return false;
-    }
     if (!f.open(QIODevice::ReadOnly))
     {
-        qWarning("QGLTexture2D::setDdsImage(%s): File could not be read",
+        qWarning("QGLTexture2D::setCompressedFile(%s): File could not be read",
                  path.toLocal8Bit().constData());
         return false;
     }
-
-    char tag[4];
-    f.read(&tag[0], 4);
-    if (strncmp(tag,"DDS ", 4) != 0) {
-        qWarning("QGLTexture2D::setDdsImage(%s): not a DDS image file.",
-                 path.toLocal8Bit().constData());
-        return false;
-    }
-
-    if (!d->ddsHeader)
-        d->ddsHeader = (DDSFormat *)(malloc(sizeof(DDSFormat)));
-    Q_CHECK_PTR(d->ddsHeader);
-    if (f.read((char *)d->ddsHeader, sizeof(DDSFormat)) < (int)sizeof(DDSFormat))
-    {
-        qWarning("QGLTexture2D::setDdsImage(%s): reading failed.",
-                 path.toLocal8Bit().constData());
-        return false;
-    }
-
-    if (!d->ddsHeader->dwLinearSize || !d->ddsHeader->dwMipMapCount) {
-        qWarning("QGLTexture2D::setDdsImage(%s): DDS image size or map count zero.",
-                 path.toLocal8Bit().constData());
-        return false;
-    }
-
-    int factor = 4;
-    int bufferSize = 0;
-    int blockSize = 16;
-    switch(d->ddsHeader->ddsPixelFormat.dwFourCC) {
-    case FOURCC_DXT1:
-        factor = 2;
-        blockSize = 8;
-        break;
-    case FOURCC_DXT3:
-        break;
-    case FOURCC_DXT5:
-        break;
-    default:
-        qWarning("QGLTexture2D::setDdsImage(%s): DDS image format not supported.",
-                 path.toLocal8Bit().constData());
-        return 0;
-    }
-
-    if (d->ddsHeader->dwMipMapCount > 1)
-        bufferSize = d->ddsHeader->dwLinearSize * factor;
-    else
-        bufferSize = d->ddsHeader->dwLinearSize;
-
-    d->ddsPixels = (GLubyte *)(malloc(bufferSize * sizeof(GLubyte)));
-    Q_CHECK_PTR(d->ddsPixels);
-    f.seek(d->ddsHeader->dwSize + 4);
-    f.read((char *)d->ddsPixels, bufferSize);
+    QByteArray data = f.readAll();
     f.close();
 
-    int w = d->ddsHeader->dwWidth;
-    int h = d->ddsHeader->dwHeight;
+    bool hasAlpha, isFlipped;
+    if (!QGLBoundTexture::canBindCompressedTexture
+            (data.constData(), data.size(), 0, &hasAlpha, &isFlipped)) {
+        qWarning("QGLTexture2D::setCompressedFile(%s): Format is not supported",
+                 path.toLocal8Bit().constData());
+        return false;
+    }
 
-    if (!d->size.isValid())
-        setSize(QSize(w, h));
+    // The 3DS loader expects the flip state to be set before bind(). 
+    if (isFlipped)
+        d->bindOptions &= ~QGLContext::InvertedYBindOption;
+    else
+        d->bindOptions |= QGLContext::InvertedYBindOption;
+
+    d->compressedData = data;
     ++(d->imageGeneration);
-    d->flipped = true;
-
     return true;
 }
 
@@ -487,7 +336,7 @@ void QGLTexture2D::copyImage(const QImage& image, const QPoint& offset)
                     GL_UNSIGNED_BYTE, img.bits());
 #if defined(QT_OPENGL_ES_2)
     Q_D(QGLTexture2D);
-    if (d->generateMipmap)
+    if (d->bindOptions & QGLContext::MipmapBindOption)
         glGenerateMipmap(GL_TEXTURE_2D);
 #endif
 }
@@ -533,48 +382,6 @@ QGL::TextureWrap QGLTexture2D::horizontalWrap() const
 {
     Q_D(const QGLTexture2D);
     return d->horizontalWrap;
-}
-
-QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value)
-{
-    switch (value) {
-#if defined(QT_OPENGL_ES)
-    case QGL::Clamp:
-        value = QGL::ClampToEdge;
-        break;
-#endif
-#if !defined(QT_OPENGL_ES)
-    case QGL::ClampToBorder:
-        if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_1_3)
-                == 0)
-            value = QGL::Clamp;
-        break;
-#else
-    case QGL::ClampToBorder:
-        value = QGL::ClampToEdge;
-        break;
-#endif
-#if !defined(QT_OPENGL_ES)
-    case QGL::ClampToEdge:
-        if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_1_2)
-                == 0)
-            value = QGL::Clamp;
-        break;
-#endif
-#if !defined(QT_OPENGL_ES)
-    case QGL::MirroredRepeat:
-        if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_1_4)
-                == 0)
-            value = QGL::Repeat;
-        break;
-#elif !defined(QT_OPENGL_ES_2)
-    case QGL::MirroredRepeat:
-        value = QGL::Repeat;
-        break;
-#endif
-    default: break;
-    }
-    return value;
 }
 
 /*!
@@ -636,58 +443,6 @@ void QGLTexture2D::setVerticalWrap(QGL::TextureWrap value)
 }
 
 /*!
-    Returns true if mipmaps should be generated for this texture
-    whenever image() changes; false otherwise.  The default value is true.
-
-    This function is a convenience to test for the
-    QGLContext::MipmapBindOption in bindOptions().
-
-    \sa setGenerateMipmap(), bindOptions()
-*/
-bool QGLTexture2D::generateMipmap() const
-{
-    Q_D(const QGLTexture2D);
-    return (d->bindOptions & QGLContext::MipmapBindOption) != 0;
-}
-
-/*!
-    Enables or disables the generation of mipmaps for this
-    texture according to \a value.  The \a value will not be
-    applied to the texture in the GL server until the next
-    call to bind().
-
-    This function is a convenience to set the
-    QGLContext::MipmapBindOption in bindOptions() to \a value.
-
-    \sa generateMipmap()
-*/
-void QGLTexture2D::setGenerateMipmap(bool value)
-{
-    Q_D(QGLTexture2D);
-    bool genMipmap = (d->bindOptions & QGLContext::MipmapBindOption) != 0;
-    if (genMipmap != value) {
-        if (value)
-            d->bindOptions |= QGLContext::MipmapBindOption;
-        else
-            d->bindOptions &= ~QGLContext::MipmapBindOption;
-        ++(d->imageGeneration);
-    }
-}
-
-#if !defined(QT_OPENGL_ES)
-#define q_glTexParameteri(target,name,value) \
-        glTexParameteri((target), (name), int(value))
-#else
-#define q_glTexParameteri(target,name,value) \
-        glTexParameterf((target), (name), GLfloat(int(value)))
-#endif
-
-#ifndef GL_GENERATE_MIPMAP
-#define GL_GENERATE_MIPMAP 0x8191
-#define GL_GENERATE_MIPMAP_HINT 0x8192
-#endif
-
-/*!
     Binds this texture to the 2D texture target.
 
     If this texture object is not associated with an identifier in
@@ -718,185 +473,55 @@ bool QGLTexture2DPrivate::bind(GLenum target)
     // Find the information block for the context, or create one.
     QGLTexture2DTextureInfo *info = infos;
     QGLTexture2DTextureInfo *prev = 0;
-    while (info != 0 && info->context != ctx) {
+    while (info != 0 && !QGLContext::areSharing(info->tex.context(), ctx)) {
         if (info->isLiteral)
             return false; // Cannot create extra texture id's for literals.
         prev = info;
         info = info->next;
     }
-    bool firstTime = false;
     if (!info) {
-        GLuint id = 0;
-        glGenTextures(1, &id);
         info = new QGLTexture2DTextureInfo
-            (ctx, id, imageGeneration - 1, parameterGeneration - 1);
+            (ctx, 0, imageGeneration - 1, parameterGeneration - 1);
         if (prev)
             prev->next = info;
         else
             infos = info;
-        QObject::connect(QGLPainterPrivateCache::instance(),
-                         SIGNAL(destroyedContext(const QGLContext *)),
-                         this, SLOT(destroyedContext(const QGLContext *)));
-        firstTime = true;
     }
 
-
-    // Bind the texture to the 2D texture target.
-    glBindTexture(target, info->textureId);
+    if (!info->tex.textureId() || imageGeneration != info->imageGeneration) {
+        // Create the texture contents and upload a new image.
+        info->tex.setOptions(bindOptions);
+        if (!compressedData.isEmpty()) {
+            info->tex.bindCompressedTexture
+                (compressedData.constData(), compressedData.size());
+        } else {
+            info->tex.startUpload(target, image.size());
+            bindImages(info);
+            info->tex.finishUpload(target);
+        }
+        info->imageGeneration = imageGeneration;
+    } else {
+        // Bind the existing texture to the texture target.
+        glBindTexture(target, info->tex.textureId());
+    }
 
     // If the parameter generation has changed, then alter the parameters.
-    bool generateMipmap = (bindOptions & QGLContext::MipmapBindOption) != 0;
     if (parameterGeneration != info->parameterGeneration) {
         info->parameterGeneration = parameterGeneration;
-        bool mipmapEnabled = generateMipmap;
-#if !defined(QT_OPENGL_ES)
-        if (!mipmapSupportedKnown) {
-            if ((QGLFormat::openGLVersionFlags() &
-                    QGLFormat::OpenGL_Version_1_4) != 0) {
-                // Mipmap generation is standard in OpenGL 1.4 and higher.
-                mipmapSupported = true;
-            } else {
-                // In OpenGL 1.3 and older, see if the extension is present.
-                QString extensions =
-                    QLatin1String(reinterpret_cast<const char *>
-                                    (glGetString(GL_EXTENSIONS)));
-                if (extensions.contains(QLatin1String("generate_mipmap")))
-                    mipmapSupported = true;
-            }
-            mipmapSupportedKnown = true;
-        }
-        if (mipmapSupported) {
-            if (generateMipmap)
-                glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-            q_glTexParameteri(target, GL_GENERATE_MIPMAP,
-                              generateMipmap ? GL_TRUE : GL_FALSE);
-        } else {
-            mipmapEnabled = false;
-        }
-#elif !defined(QT_OPENGL_ES_2)
-        q_glTexParameteri(target, GL_GENERATE_MIPMAP,
-                          generateMipmap ? GL_TRUE : GL_FALSE);
-        if (generateMipmap)
-            glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-#endif
-        GLenum minify, magnify;
-        if (!mipmapEnabled) {
-            if (bindOptions & QGLContext::LinearFilteringBindOption)
-                minify = magnify = GL_LINEAR;
-            else
-                minify = magnify = GL_NEAREST;
-        } else {
-            if (bindOptions & QGLContext::LinearFilteringBindOption) {
-                minify = GL_LINEAR_MIPMAP_LINEAR;
-                magnify = GL_LINEAR;
-            } else {
-                minify = GL_NEAREST_MIPMAP_NEAREST;
-                magnify = GL_NEAREST;
-            }
-        }
-        q_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minify);
-        q_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magnify);
         q_glTexParameteri(target, GL_TEXTURE_WRAP_S, horizontalWrap);
         q_glTexParameteri(target, GL_TEXTURE_WRAP_T, verticalWrap);
-    }
-
-    // If the image generation has changed, then re-upload the image.
-    if (imageGeneration != info->imageGeneration) {
-        info->imageGeneration = imageGeneration;
-        bindImage(target, firstTime, image);
     }
 
     // Texture is ready to be used.
     return true;
 }
 
-void QGLTexture2DPrivate::bindImage
-        (GLenum target, bool firstTime, const QImage& image)
+void QGLTexture2DPrivate::bindImages(QGLTexture2DTextureInfo *info)
 {
-    if (ddsPixels)
-    {
-        const QGLContext *ctx = QGLContext::currentContext();
-        if (!pfn_initialized)
-            qt_glCompressedTexImage2DARB = (pfn_glCompressedTexImage2DARB)ctx->getProcAddress(
-                QLatin1String("glCompressedTexImage2DARB"));
-        if (!qt_glCompressedTexImage2DARB)
-        {
-            qWarning("QGLTexture2D::setDdsImage: The GL implementation does not"
-                     "support texture compression extensions");
-            return;
-        }
-
-        // taken from qlg.cpp: QGLContext::bindTexture(QString)
-        int blockSize = 16;
-        GLenum format;
-
-        switch(ddsHeader->ddsPixelFormat.dwFourCC)
-        {
-        case FOURCC_DXT1:
-            format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            blockSize = 8;
-            break;
-        case FOURCC_DXT3:
-            format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-            break;
-        case FOURCC_DXT5:
-            format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-            break;
-        default:
-            Q_ASSERT(false);  // this is checked when the file is loaded
-        }
-
-        int sz = 0;
-        int offset = 0;
-        int w = size.width();
-        int h = size.height();
-
-        // load mip-maps
-
-        for (quint32 i = 0; i < ddsHeader->dwMipMapCount; ++i)
-        {
-            if (w == 0)
-                w = 1;
-            if (h == 0)
-                h = 1;
-
-            sz = ((w + 3) / 4) * ((h + 3) / 4) * blockSize;
-            qt_glCompressedTexImage2DARB(GL_TEXTURE_2D, i, format, w, h, 0,
-                                         sz, ddsPixels + offset);
-            offset += sz;
-
-            // half size for each mip-map level
-            w = w / 2;
-            h = h / 2;
-        }
-        // note that if we know for sure that the texture is not going to be
-        // bind()'ed again then ddsPixels should be free'd here.
-        return;
-    }
-    if (!image.isNull()) {
-        QImage img;
-        if (image.size() == size)
-            img = QGLWidget::convertToGLFormat(image);
-        else
-            img = QGLWidget::convertToGLFormat(image.scaled(size));
-        glTexImage2D(target, 0, GL_RGBA, img.width(),
-                     img.height(), 0,  GL_RGBA,
-                     GL_UNSIGNED_BYTE, img.bits());
-#if defined(QT_OPENGL_ES_2)
-        // Cube map mipmaps need to be generated after all faces are uploaded.
-        if ((target < GL_TEXTURE_CUBE_MAP_POSITIVE_X ||
-             target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z) &&
-                generateMipmap) {
-            glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-            glGenerateMipmap(target);
-        }
-#endif
-    } else if (firstTime && size.isValid()) {
-        // This is the first time we have created the texture.
-        // We have a size but no image, so just create the memory.
-        glTexImage2D(target, 0, GL_RGBA, size.width(),
-                     size.height(), 0,  GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    }
+    if (!image.isNull())
+        info->tex.uploadFace(GL_TEXTURE_2D, image, size);
+    else if (size.isValid())
+        info->tex.createFace(GL_TEXTURE_2D, size);
 }
 
 /*!
@@ -926,39 +551,9 @@ GLuint QGLTexture2D::textureId() const
     if (!ctx)
         return 0;
     QGLTexture2DTextureInfo *info = d->infos;
-    while (info != 0 && info->context != ctx)
+    while (info != 0 && !QGLContext::areSharing(info->tex.context(), ctx))
         info = info->next;
-    return info ? info->textureId : 0;
-}
-
-/*!
-    Returns true if this texture object is flipped vertically.  This
-    is the case for example when DDS textures are imported, since MS
-    Direct Draw uses the top-left of the screen as the origin, and
-    OpenGL uses the bottom-left.
-
-    This flag simply provides information - code must handle the flipped
-    case, by for example using \c{1.0f - texCoord}.
-
-    \sa setFlipVertically(), setDdsImage()
-*/
-bool QGLTexture2D::flipVertically() const
-{
-    Q_D(const QGLTexture2D);
-    return d->flipped;
-}
-
-/*!
-    Sets the flip vertically flag for this texture to \a flip.  This
-    indicates to client code using this texture that texture coordinates
-    will need to be flipped vertically before activating this texture.
-
-    \sa flipVertically(), setDdsImage()
-*/
-void QGLTexture2D::setFlipVertically(bool flip)
-{
-    Q_D(QGLTexture2D);
-    d->flipped = flip;
+    return info ? info->tex.textureId() : 0;
 }
 
 /*!
@@ -988,10 +583,6 @@ QGLTexture2D *QGLTexture2D::fromTextureId(GLuint id, const QSize& size)
         (ctx, id, texture->d_ptr->imageGeneration,
          texture->d_ptr->parameterGeneration, true);
     texture->d_ptr->infos = info;
-    QObject::connect(QGLPainterPrivateCache::instance(),
-                     SIGNAL(destroyedContext(const QGLContext *)),
-                     texture->d_ptr.data(),
-                     SLOT(destroyedContext(const QGLContext *)));
     return texture;
 }
 

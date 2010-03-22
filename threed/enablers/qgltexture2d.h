@@ -69,7 +69,7 @@ public:
 
     QImage image() const;
     void setImage(const QImage& image);
-    bool setDdsImage(const QString &path);
+    bool setCompressedFile(const QString &path);
 
     void clearImage();
 
@@ -84,16 +84,10 @@ public:
     QGL::TextureWrap verticalWrap() const;
     void setVerticalWrap(QGL::TextureWrap value);
 
-    bool generateMipmap() const;
-    void setGenerateMipmap(bool value);
-
     bool bind() const;
     void release() const;
 
     GLuint textureId() const;
-
-    bool flipVertically() const;
-    void setFlipVertically(bool);
 
     static QGLTexture2D *fromTextureId(GLuint id, const QSize& size);
 

@@ -41,6 +41,7 @@
 
 #include "qgltexturecube.h"
 #include "qgltexture2d_p.h"
+#include "qgltextureutils_p.h"
 #include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -98,7 +99,7 @@ public:
     QGLTextureCubePrivate();
     ~QGLTextureCubePrivate();
 
-    virtual void bindImage(GLenum target, bool firstTime, const QImage& image);
+    void bindImages(QGLTexture2DTextureInfo *info);
 
     QImage otherImages[5];
     uint changedFaces;
@@ -113,46 +114,23 @@ QGLTextureCubePrivate::~QGLTextureCubePrivate()
 {
 }
 
-void QGLTextureCubePrivate::bindImage
-    (GLenum, bool firstTime, const QImage& image)
+void QGLTextureCubePrivate::bindImages(QGLTexture2DTextureInfo *info)
 {
-#if defined(QT_OPENGL_ES_2)
-    bool nonNullImages = false;
-#endif
-
     // Handle the first face.
-    if (firstTime || (changedFaces & (1 << 0)) != 0) {
-        QGLTexture2DPrivate::bindImage
-            (GL_TEXTURE_CUBE_MAP_POSITIVE_X, firstTime, image);
-#if defined(QT_OPENGL_ES_2)
-        if (!image.isNull())
-            nonNullImages = true;
-#endif
-    }
+    if (!image.isNull())
+        info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, image, size);
+    else if (size.isValid())
+        info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, size);
 
     // Handle the other faces.
     for (int face = 1; face < 6; ++face) {
-        if (!firstTime && (changedFaces & (1 << face)) == 0)
-            continue;
-        QGLTexture2DPrivate::bindImage
-            (GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-             firstTime, otherImages[face - 1]);
-#if defined(QT_OPENGL_ES_2)
-        if (!otherImages[face - 1].isNull())
-            nonNullImages = true;
-#endif
+        if (!otherImages[face - 1].isNull()) {
+            info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+                                 otherImages[face - 1], size);
+        } else {
+            info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, size);
+        }
     }
-
-    // Clear the change flags.
-    changedFaces = 0;
-
-    // Generate mipmaps if OpenGL/ES 2.0.
-#if defined(QT_OPENGL_ES_2)
-    if (nonNullImages && generateMipmap) {
-        glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    }
-#endif
 }
 
 /*!
@@ -457,44 +435,6 @@ void QGLTextureCube::setVerticalWrap(QGL::TextureWrap value)
 }
 
 /*!
-    Returns true if mipmaps should be generated for this texture
-    whenever the face images change; false otherwise.  The default
-    value is true.
-
-    This function is a convenience to test for the
-    QGLContext::MipmapBindOption in bindOptions().
-
-    \sa setGenerateMipmap()
-*/
-bool QGLTextureCube::generateMipmap() const
-{
-    Q_D(const QGLTextureCube);
-    return (d->bindOptions & QGLContext::MipmapBindOption) != 0;
-}
-
-/*!
-    Enables or disables the generation of mipmaps for this
-    texture whenever the face images change according to \a value.
-
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    \sa generateMipmap()
-*/
-void QGLTextureCube::setGenerateMipmap(bool value)
-{
-    Q_D(QGLTextureCube);
-    bool genMipmap = (d->bindOptions & QGLContext::MipmapBindOption) != 0;
-    if (genMipmap != value) {
-        if (value)
-            d->bindOptions |= QGLContext::MipmapBindOption;
-        else
-            d->bindOptions &= ~QGLContext::MipmapBindOption;
-        ++(d->imageGeneration);
-    }
-}
-
-/*!
     Binds this texture to the cube map texture target.
 
     If this texture object is not associated with an identifier in
@@ -541,9 +481,9 @@ GLuint QGLTextureCube::textureId() const
     if (!ctx)
         return 0;
     QGLTexture2DTextureInfo *info = d->infos;
-    while (info != 0 && info->context != ctx)
+    while (info != 0 && info->tex.context() != ctx)
         info = info->next;
-    return info ? info->textureId : 0;
+    return info ? info->tex.textureId() : 0;
 }
 
 /*!

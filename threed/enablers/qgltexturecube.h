@@ -90,9 +90,6 @@ public:
     QGL::TextureWrap verticalWrap() const;
     void setVerticalWrap(QGL::TextureWrap value);
 
-    bool generateMipmap() const;
-    void setGenerateMipmap(bool value);
-
     bool bind() const;
     static void release();
 

@@ -54,37 +54,28 @@
 //
 
 #include "qgltexture2d.h"
+#include "qgltextureutils_p.h"
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_NAMESPACE
-
-#ifndef GL_TEXTURE_CUBE_MAP
-#define GL_TEXTURE_CUBE_MAP 0x8513
-#endif
-#ifndef GL_TEXTURE_CUBE_MAP_POSITIVE_X
-#define GL_TEXTURE_CUBE_MAP_POSITIVE_X 0x8515
-#endif
-#ifndef GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 0x851A
-#endif
 
 class QGLTexture2DTextureInfo
 {
 public:
     QGLTexture2DTextureInfo
-        (const QGLContext *context, GLuint textureId, uint imageGeneration,
-         uint parameterGeneration, bool isLiteral = false)
+            (const QGLContext *context, GLuint textureId, uint imageGeneration,
+             uint parameterGeneration, bool isLiteral = false)
+        : tex(context)
     {
-        this->context = context;
-        this->textureId = textureId;
+        if (textureId)
+            tex.setTextureId(textureId);
         this->imageGeneration = imageGeneration;
         this->parameterGeneration = parameterGeneration;
         this->isLiteral = isLiteral;
         this->next = 0;
     }
 
-    const QGLContext *context;
-    GLuint textureId;
+    QGLBoundTexture tex;
     uint imageGeneration;
     uint parameterGeneration;
     bool isLiteral;
@@ -103,8 +94,7 @@ public:
     QSize size;
     QSize requestedSize;
     QImage image;
-    GLubyte *ddsPixels;
-    DDSFormat *ddsHeader;
+    QByteArray compressedData;
     QGLContext::BindOptions bindOptions;
     QGL::TextureWrap horizontalWrap;
     QGL::TextureWrap verticalWrap;
@@ -115,26 +105,10 @@ public:
     uint imageGeneration;
     uint parameterGeneration;
     QGLTexture2DTextureInfo *infos;
-    bool flipped;
 
     bool bind(GLenum target);
-
-    virtual void bindImage(GLenum target, bool firstTime, const QImage& image);
-
-private slots:
-    void destroyedContext(const QGLContext *context);
+    virtual void bindImages(QGLTexture2DTextureInfo *info);
 };
-
-// Find the next power of 2 which is "value" or greater.
-inline int qt_gl_next_power_of_two(int value)
-{
-    int p = 1;
-    while (p < value)
-        p <<= 1;
-    return p;
-}
-
-QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value);
 
 QT_END_NAMESPACE
 

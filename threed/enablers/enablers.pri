@@ -17,8 +17,11 @@ SOURCES += qglattributevalue.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
+    qgltextureutils.cpp \
     qglvertexbuffer.cpp \
     qarray.cpp \
     qcustomdataarray.cpp \
     qvectorarray.cpp
-PRIVATE_HEADERS += qgltexture2d_p.h
+PRIVATE_HEADERS += \
+    qgltexture2d_p.h \
+    qgltextureutils_p.h
