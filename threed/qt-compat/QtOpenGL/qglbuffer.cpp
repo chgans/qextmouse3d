@@ -218,8 +218,6 @@ QGLBuffer::QGLBuffer(QGLBuffer::Type type)
 {
 }
 
-#define ctx d->guard.context()
-
 /*!
     Destroys this buffer object, including the storage being
     used in the GL server.
