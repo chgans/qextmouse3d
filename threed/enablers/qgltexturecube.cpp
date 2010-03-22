@@ -328,7 +328,7 @@ void QGLTextureCube::copyImage
                     GL_UNSIGNED_BYTE, img.bits());
 #if defined(QT_OPENGL_ES_2)
     Q_D(QGLTextureCube);
-    if (d->generateMipmap)
+    if (d->bindOptions & QGLContext::MipmapBindOption)
         glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 #endif
 }
