@@ -4,7 +4,6 @@ SUBDIRS = \
     qcustomdataarray \
     qvectorarray \
     qglblendoptions \
-    qglbuffer \
     qglcamera \
     qgldepthbufferoptions \
     qglfogparameters \
