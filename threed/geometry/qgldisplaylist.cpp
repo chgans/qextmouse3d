@@ -468,7 +468,7 @@ QGLPrimitive *QGLDisplayList::currentPrimitive()
     Q_D(QGLDisplayList);
     return d->currentOperation;
 }
-
+#include "qvector_utils_p.h"
 /*!
     \internal
     Helper function to calculate normal if required, and actually
@@ -488,7 +488,13 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
     QLogicalVertex c(p, k);
     QVector3D norm;
     if (calcNormal)
-        norm = QVector3D::normal(a, b, c);
+        norm = QVector3D::crossProduct(b - a, c - b);
+    if (qFskIsNull(norm.x()))
+        norm.setX(0.0f);
+    if (qFskIsNull(norm.y()))
+        norm.setY(0.0f);
+    if (qFskIsNull(norm.z()))
+        norm.setZ(0.0f);
     // if the normal was calculated, and it was null, then this is a null
     // triangle - don't add it, it just wastes space - see class doco
     if (!calcNormal || !norm.isNull())
