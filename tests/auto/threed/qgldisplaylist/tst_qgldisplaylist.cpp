@@ -290,7 +290,6 @@ void tst_QGLDisplayList::geometryBuild()
 
     displayList.newSection();
     displayList.begin(QGL::TRIANGLE_STRIP);
-    QVERIFY(displayList.currentPrimitive() != p);
     p = displayList.currentPrimitive();
     QVERIFY(p != (QGLPrimitive*)0);  // should get a whole new primitive here
     sec = displayList.currentSection();
