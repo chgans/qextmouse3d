@@ -128,6 +128,13 @@ void CubeView::importModel(const QString &name)
     QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
+    //qDumpScene(mSceneRoot);
+    int totalIndexes = 0;
+    QList<QGLSceneNode *> children = mSceneRoot->allChildren();
+    QList<QGLSceneNode*>::const_iterator it(children.begin());
+    for ( ; it != children.end(); ++it)
+        totalIndexes += (*it)->count();
+    qDebug() << (totalIndexes / 3) << "triangles";
 }
 
 void CubeView::loadColors()
