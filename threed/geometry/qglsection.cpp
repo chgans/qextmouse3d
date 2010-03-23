@@ -111,7 +111,7 @@
 */
 
 // allow QVector3D's to be stored in a QMap
-bool operator<(const QVector3D &a, const QVector3D &b)
+inline bool operator<(const QVector3D &a, const QVector3D &b)
 {
     if (qFskCompare(a.x(), b.x()))
     {
@@ -135,6 +135,17 @@ bool operator<(const QVector3D &a, const QVector3D &b)
     {
         return a.x() < b.x();
     }
+}
+
+inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
+{
+    bool res = false;
+    if (!a.isNull() && !b.isNull())
+    {
+        float dot = QVector3D::dotProduct(a, b);
+        res = qFskCompare((qreal)dot, a.length() * b.length());
+    }
+    return res;
 }
 
 class QGLSectionPrivate
@@ -162,7 +173,8 @@ public:
         while (ptr != -1)
         {
             int val_ptr = normPtrs.at(ptr);
-            if (qFskCompare(normValues.at(val_ptr), norm))
+            if (normValues.at(val_ptr) == norm)
+            //if (qSameDirection(normValues.at(val_ptr), norm))
                 return true;
             ptr = normPtrs.at(ptr+1);
         }

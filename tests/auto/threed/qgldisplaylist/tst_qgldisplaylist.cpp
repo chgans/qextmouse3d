@@ -283,9 +283,9 @@ void tst_QGLDisplayList::geometryBuild()
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
     QCOMPARE(sec->vertex(2), c);
-    QCOMPARE(sec->normal(0), norm);
-    QCOMPARE(sec->normal(1), norm);
-    QCOMPARE(sec->normal(2), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(1).normalized(), norm);
+    QCOMPARE(sec->normal(2).normalized(), norm);
     QCOMPARE(node->count(), 3);
 
     displayList.newSection();
@@ -319,9 +319,9 @@ void tst_QGLDisplayList::geometryBuild()
     QCOMPARE(sec->vertex(3), c);
     QCOMPARE(sec->vertex(4), f);
     QCOMPARE(sec->vertex(5), e);
-    QCOMPARE(sec->normal(0), norm);
-    QCOMPARE(sec->normal(3), norm);
-    QCOMPARE(sec->normal(5), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(3).normalized(), norm);
+    QCOMPARE(sec->normal(5).normalized(), norm);
     QCOMPARE(node->count(), 12); // TRIANGLE_STRIP will here draw 4 triangles = 12 indices
 
     // now go on and test TRIANGLE_FAN
@@ -348,8 +348,8 @@ void tst_QGLDisplayList::geometryBuild()
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(2), c);
     QCOMPARE(sec->vertex(4), e);
-    QCOMPARE(sec->normal(0), norm);
-    QCOMPARE(sec->normal(4), norm);
+    QCOMPARE(sec->normal(0).normalized(), norm);
+    QCOMPARE(sec->normal(4).normalized(), norm);
     QCOMPARE(node->count(), 9); // TRIANGLE_FAN will here draw 3 triangles = 9 indices
 
     displayList.begin(QGL::TRIANGULATED_FACE);
@@ -739,7 +739,7 @@ void tst_QGLDisplayList::extrude()
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
     displayList.addQuadsZipped(p, q);
-    sec->normalizeNormals();
+    //sec->normalizeNormals();
 
     QCOMPARE(sec->count(), 8);
     QVector3DArray vrts = sec->vertices();

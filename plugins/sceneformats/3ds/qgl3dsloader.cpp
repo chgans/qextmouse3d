@@ -166,7 +166,6 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
                     sceneNode->setObjectName(nodeName);
                     loadNodes(node->childs, sceneNode);
                 }
-                qDebug() << "Node with no mesh" << meshName << "created" << nodeName;
             }
         }
 #ifndef QT_NO_DEBUG_STREAM
