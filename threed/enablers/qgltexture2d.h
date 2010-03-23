@@ -71,6 +71,8 @@ public:
     void setImage(const QImage& image);
     bool setCompressedFile(const QString &path);
 
+    void setPixmap(const QPixmap& pixmap);
+
     void clearImage();
 
     void copyImage(const QImage& image, const QPoint& offset = QPoint(0, 0));

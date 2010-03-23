@@ -220,7 +220,7 @@ QImage QGLTexture2D::image() const
 
     If \a image is null, then this function is equivalent to clearImage().
 
-    \sa image(), setSize(), copyImage()
+    \sa image(), setSize(), copyImage(), setPixmap()
 */
 void QGLTexture2D::setImage(const QImage& image)
 {
@@ -236,6 +236,27 @@ void QGLTexture2D::setImage(const QImage& image)
         d->image = image;
         ++(d->imageGeneration);
     }
+}
+
+/*!
+    Sets the image that is associated with this texture to \a pixmap.
+
+    This is a convenience that calls setImage() after converting
+    \a pixmap into a QImage.  It may be more efficient on some
+    platforms than the application calling QPixmap::toImage().
+
+    \sa setImage()
+*/
+void QGLTexture2D::setPixmap(const QPixmap& pixmap)
+{
+    QImage image = pixmap.toImage();
+    if (pixmap.depth() == 16 && !image.hasAlphaChannel()) {
+        // If the system depth is 16 and the pixmap doesn't have an alpha channel
+        // then we convert it to RGB16 in the hope that it gets uploaded as a 16
+        // bit texture which is much faster to access than a 32-bit one.
+        image = image.convertToFormat(QImage::Format_RGB16);
+    }
+    setImage(image);
 }
 
 /*!
