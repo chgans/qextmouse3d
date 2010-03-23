@@ -64,6 +64,7 @@ private slots:
     void appendFaceted();
     void appendFacetedMap();
     void accumNormals();
+    void normalizedNormals();
     void appendTexCoord();
     void appendColor();
     void accessors();
@@ -261,6 +262,14 @@ void tst_QGLSection::appendFacetedMap()
 void tst_QGLSection::accumNormals()
 {
     /*
+    This mesh is a cap that could be the top of a sphere - its a central
+    quad in the z = 1 plane, with x = 1, y = 1 as the bottom-left corner;
+    with four more quads above, below, to the left and to the right, as
+    viewed looking down the -ve z axis (plan view).  The four quads around
+    the central one join one one edge (in the z = 1 plane) and on the opp.
+    edge slope down to the z = 0 plane.  The four corners are filled in
+    with triangles, so that the whole figure looks like an octagon in plan.
+
       plan view - x/y plane:
     ^       ----------
     |      / |     |  \
@@ -272,7 +281,7 @@ void tst_QGLSection::accumNormals()
          \   |*    |    /
           \  |     |   /
            \ |     |  /
-             ---------       -->  x
+            ----------       -->  x
 
       side view - x/z plane:
             ________          z = 1
@@ -282,14 +291,6 @@ void tst_QGLSection::accumNormals()
        -----------------      z = 0
 
     The normals smoothing should make this as "round" as possible.
-
-    This mesh is a cap that could be the top of a sphere - its a central
-    quad in the z = 1 plane, with x = 1, y = 1 as the bottom-left corner;
-    with four more quads above, below, to the left and to the right, as
-    viewed looking down the -ve z axis (plan view).  The four quads around
-    the central one join one one edge (in the z = 1 plane) and on the opp.
-    edge slope down to the z = 0 plane.  The four corners are filled in
-    with triangles, so that the whole figure looks like an octagon in plan.
 
     Each quad of course, is actually divided from bottom-left to top-right
     into two triangles (not shown in the ascii art for clarity).  The total
@@ -363,8 +364,8 @@ void tst_QGLSection::accumNormals()
     face_norms[6] = QVector3D(1, -1, 1);
     face_norms[7] = QVector3D(-1, 1, 1);
     face_norms[8] = QVector3D(1, 1, 1);
-    for (int i = 0; i < 9; ++i)
-        face_norms[i].normalize();
+    //for (int i = 0; i < 9; ++i)
+    //    face_norms[i].normalize();
 
     QVector3DArray expected;
     expected.extend(12);
@@ -404,6 +405,49 @@ void tst_QGLSection::accumNormals()
     QCOMPARE(res->normal(9), expected.at(9));
     QCOMPARE(res->normal(10), expected.at(10));
     QCOMPARE(res->normal(11), expected.at(11));
+}
+
+void tst_QGLSection::normalizedNormals()
+{
+    const qreal qRadius = 1.0f;
+    const qreal qHeight = 0.6f;
+    const qreal qThickness = 0.4f;
+    const int qNumSlices = 16;
+
+    TestQGLDisplayList list;
+    list.newSection(QGL::Smooth); // default - but making the point
+    //QGLSection *section = list.currentSection();
+    QGLSceneNode *node = list.currentNode();
+
+    // draw two 90 degree arcs, qThickness apart radially, and qHeight apart
+    // in the z dimension.  the points on the two arcs are joined into quads
+    // but all the points on the high arc are joined to one single point in
+    // the same z plane.
+    QVector3D ap(qRadius, 0.0f, 0.0f);
+    QVector3D bp(qRadius + qThickness, 0.0f, qHeight);
+    QVector3D anc(qRadius * 2.0f, qRadius *2.0f, qHeight);
+    for (int slice = 1; slice < qNumSlices; ++slice)
+    {
+        const qreal pi2 = 2.0 * M_PI;
+        qreal angle = (slice * pi2) / (4 * qNumSlices);
+        qreal cs = qCos(angle);
+        qreal sn = qSin(angle);
+        QVector3D a(cs * qRadius, sn * qRadius, 0.0f);
+        QVector3D b(cs * (qRadius + qThickness), sn * (qRadius + qThickness), qHeight);
+        QGLPrimitive quad;
+        quad.appendVertex(ap, bp, b, a);
+        list.addQuad(quad);
+        QGLPrimitive tri;
+        tri.appendVertex(b, bp, anc);
+        list.addTriangle(tri);
+        ap = a;
+        bp = b;
+    }
+    list.finalize();
+    QGeometryData *data = node->geometry();
+    QVERIFY(data != (QGeometryData*)0);
+    //qDebug() << "#############" << *data;
+    QCOMPARE(data->count(QGL::Position), 33);
 }
 
 void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)
