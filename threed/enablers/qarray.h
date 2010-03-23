@@ -1552,12 +1552,12 @@ QDataStream& operator>>(QDataStream& stream, QArray<T, PreallocSize>& array)
 template <typename T, int PreallocSize>
 QDebug operator<<(QDebug dbg, const QArray<T, PreallocSize>& array)
 {
-    dbg.nospace() << "QArray(";
+    dbg.nospace() << "QArray(\n";
     int size = array.size();
     for (int index = 0; index < size; ++index) {
         if (index)
-            dbg << ", ";
-        dbg << array.at(index);
+            dbg << ",\n";
+        dbg << "   " << array.at(index);
     }
     dbg << ')';
     return dbg.space();
