@@ -133,7 +133,12 @@ void CubeView::importModel(const QString &name)
     QList<QGLSceneNode *> children = mSceneRoot->allChildren();
     QList<QGLSceneNode*>::const_iterator it(children.begin());
     for ( ; it != children.end(); ++it)
-        totalIndexes += (*it)->count();
+    {
+        QGLSceneNode  *n = *it;
+        totalIndexes += n->count();
+        //if (n->objectName() == "BatteryCov::ShaderTexture 2::0")
+        //    n->setNormalViewEnabled(true);
+    }
     qDebug() << (totalIndexes / 3) << "triangles";
 }
 
