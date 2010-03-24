@@ -426,7 +426,7 @@ private:
     int m_offset, m_size;
 };
 
-int Q_QT3D_EXPORT qArrayAllocMore(int alloc, int extra);
+int Q_QT3D_EXPORT qArrayAllocMore(int alloc, int extra, int sizeOfT);
 
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::free(T *data, int count)
@@ -523,7 +523,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detach_helper()
 
     // Allocate a new block on the heap and copy the data across.
     int size = m_end - m_start;
-    int capacity = qArrayAllocMore(size, 0);
+    int capacity = qArrayAllocMore(size, 0, sizeof(T));
     m_data = copyData(m_start, size, capacity);
 
     // Update the start/end/append pointers for faster updates.
@@ -567,7 +567,7 @@ template <typename T, int PreallocSize>
 Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
 {
     int size = m_end - m_start;
-    int capacity = qArrayAllocMore(size, needed);
+    int capacity = qArrayAllocMore(size, needed, sizeof(T));
     if (!m_data || m_data->ref != 1) {
         // Copy preallocated, raw, or shared data and expand the capacity.
         Data *data = copyData(m_start, size, capacity);
@@ -597,7 +597,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::setSize(int size)
         initPrealloc();
         m_data = 0;
     } else {
-        int capacity = qArrayAllocMore(size, 0);
+        int capacity = qArrayAllocMore(size, 0, sizeof(T));
         Data *data = reinterpret_cast<Data *>
             (qMalloc(sizeof(Data) + sizeof(T) * (capacity - 1)));
         Q_CHECK_PTR(data);
