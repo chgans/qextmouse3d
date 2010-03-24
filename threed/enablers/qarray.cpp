@@ -1506,23 +1506,24 @@ QT_BEGIN_NAMESPACE
     \sa constBegin(), end(), QArrayRef::const_iterator
 */
 
-int qArrayAllocMore(int alloc, int extra)
+int qArrayAllocMore(int alloc, int extra, int sizeOfT)
 {
     if (alloc == 0 && extra == 0)
         return 0;
     const int page = 1 << 12;
     int nalloc;
     alloc += extra;
+    alloc *= sizeOfT;
     // don't do anything if the loop will overflow signed int.
     if (alloc >= INT_MAX/2)
-        return INT_MAX;
+        return INT_MAX / sizeOfT;
     nalloc = (alloc < page) ? 64 : page;
     while (nalloc < alloc) {
         if (nalloc <= 0)
-            return INT_MAX;
+            return INT_MAX / sizeOfT;
         nalloc *= 2;
     }
-    return nalloc;
+    return nalloc / sizeOfT;
 }
 
 QT_END_NAMESPACE

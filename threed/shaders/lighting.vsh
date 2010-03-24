@@ -19,7 +19,6 @@ uniform mediump vec4 ecm[2];    // Emissive color of the material
 uniform mediump float srm[2];   // Specular exponent of the material
 uniform mediump vec4 acs;       // Light model's ambient color of the scene
 uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
-uniform bool separateSpecular;  // Light model indicates separate specular color
 uniform bool twoSided;          // Light model indicates two-sided lighting
 
 varying mediump vec4 qColor;
@@ -100,11 +99,6 @@ void qLightVertex(vec4 vertex, vec3 normal)
 
     // Generate the final output colors.
     float alpha = dcm[material].a;
-    if (!separateSpecular) {
-        qColor = vec4(clamp(color.rgb + scolor.rgb, 0.0, 1.0), alpha);
-        qSecondaryColor = vec4(0, 0, 0, 1);
-    } else {
-        qColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
-        qSecondaryColor = clamp(scolor, 0.0, 1.0);
-    }
+    qColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
+    qSecondaryColor = clamp(scolor, 0.0, 1.0);
 }

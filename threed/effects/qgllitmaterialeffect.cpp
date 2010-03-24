@@ -295,7 +295,6 @@ void QGLLitMaterialEffect::update
         const QGLLightModel *model = painter->lightModel();
         program->setUniformValue("twoSided", (int)(model->model() == QGLLightModel::TwoSided));
         program->setUniformValue("viewerAtInfinity", (int)(model->viewerPosition() == QGLLightModel::ViewerAtInfinity));
-        program->setUniformValue("separateSpecular", (int)(model->colorControl() == QGLLightModel::SeparateSpecularColor));
         program->setUniformValue("acs", model->ambientSceneColor());
     }
     if ((updates & QGLPainter::UpdateMaterials) != 0) {
