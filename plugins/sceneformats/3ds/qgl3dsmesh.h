@@ -50,6 +50,8 @@
 class QGLMaterialCollection;
 class QGL3dsLoader;
 class Lib3dsMesh;
+class AdjListNode;
+class AdjListHead;
 
 class QGL3dsMesh : public QGLDisplayList
 {
@@ -57,17 +59,22 @@ Q_OBJECT
 public:
     explicit QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent = 0,
                         QGLMaterialCollection *materials = 0);
+    virtual ~QGL3dsMesh();
     void initialize();
     bool hasTexture() { return m_hasTextures; }
 
 protected:
     void analyzeMesh();
+    void modulateMesh();
     void checkTextures(int);
     QMatrix4x4 meshMatrix() const;
     void generateVertices();
 
 private:
     void processNodeForMaterial(int matIx, QGLSceneNode *node);
+    QArray<int> mapFacesToVerts(Lib3dsDword *allKeys);
+    void addToAdjacencyMap(Lib3dsFace *face, int *mptr, int *hptr, Lib3dsFace *nbr);
+    void buildAdjacencyMap(const QArray<int> &vlist);
 
     Lib3dsMesh *m_mesh;
     bool m_hasTextures;
@@ -78,6 +85,9 @@ private:
     QMap<int, int> m_groupCounts;
     QMap<int, Lib3dsDword> m_keys;
     bool m_texFlip;
+    bool m_hasZeroSmoothing;
+    AdjListNode *m_faceMap;
+    AdjListHead *m_faceMapHeads;
 };
 
 #endif // QGL3DSMESH_H
