@@ -861,11 +861,11 @@ static int nodeCount(const QList<QGLSceneNode*> &list)
     return total;
 }
 
-static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
+static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int nodeCount,
                               const char *msg)
 {
-    qWarning("Ignoring section %d with %d vertices and"
-             " %d indexes - %s", secCount, vertCount, nodeCount, msg);
+    qWarning("Ignoring section %d (%p) with %d vertices and"
+             " %d indexes - %s", secCount, s, vertCount, nodeCount, msg);
 }
 
 /*!
@@ -909,11 +909,11 @@ void QGLDisplayList::finalize()
             {
 #ifndef QT_NO_DEBUG
                     if (ncnt == 0)
-                        warnIgnore(scnt, icnt, ncnt, "nodes empty");
+                        warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
                     else if (scnt == 0)
-                        warnIgnore(scnt, icnt, ncnt, "geometry count zero");
+                        warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
                     else
-                        warnIgnore(scnt, icnt, ncnt, "index count zero");
+                        warnIgnore(scnt, s, icnt, ncnt, "index count zero");
 #endif
                 continue;
             }
