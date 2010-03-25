@@ -101,6 +101,7 @@ public:
         appendFlat(c);
     }
     inline QGL::Smoothing smoothing() const;
+    inline void setSmoothing(QGL::Smoothing s);
     inline QGLDisplayList *displayList() const;
     int mapThreshold() const;
     void setMapThreshold(int);
@@ -121,6 +122,11 @@ private:
 inline QGL::Smoothing QGLSection::smoothing() const
 {
     return m_smoothing;
+}
+
+inline void QGLSection::setSmoothing(QGL::Smoothing s)
+{
+    m_smoothing = s;
 }
 
 inline QGLDisplayList *QGLSection::displayList() const

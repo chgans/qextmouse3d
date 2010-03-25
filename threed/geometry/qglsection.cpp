@@ -137,7 +137,7 @@ inline bool operator<(const QVector3D &a, const QVector3D &b)
     }
 }
 
-inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
+static inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
 {
     bool res = false;
     if (!a.isNull() && !b.isNull())
@@ -173,8 +173,8 @@ public:
         while (ptr != -1)
         {
             int val_ptr = normPtrs.at(ptr);
-            if (normValues.at(val_ptr) == norm)
-            //if (qSameDirection(normValues.at(val_ptr), norm))
+            //if (normValues.at(val_ptr) == norm)
+            if (qSameDirection(normValues.at(val_ptr), norm))
                 return true;
             ptr = normPtrs.at(ptr+1);
         }
