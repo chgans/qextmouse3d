@@ -115,9 +115,6 @@ private:
     Q_DECLARE_PRIVATE(QGLVertexBuffer)
 
     friend class QGLPainter;
-
-    void setOnEffect(QGLAbstractEffect *effect) const;
-    QList<QGL::VertexAttribute> attributes() const;
 };
 
 QT_END_NAMESPACE

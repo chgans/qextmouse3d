@@ -64,6 +64,7 @@
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
 #include "qgeometrydata.h"
+#include "qglvertexbuffer_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -124,7 +125,9 @@ QGLPainterPrivate::QGLPainterPrivate()
       scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
-      pick(0)
+      pick(0),
+      boundVertexBuffer(0),
+      boundIndexBuffer(0)
 {
     context = 0;
     effect = 0;
@@ -472,6 +475,14 @@ bool QGLPainter::end()
 {
     if (!d_ptr)
         return false;
+    if (d_ptr->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d_ptr->boundVertexBuffer = 0;
+    }
+    if (d_ptr->boundIndexBuffer) {
+        QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d_ptr->boundIndexBuffer = 0;
+    }
     if (!d_ptr->surfaceStack.isEmpty() && int(d_ptr->ref) <= 2) {
         // Restore the default drawing surface before ending painting
         // operations.  This is needed for proper interoperation with
@@ -1477,9 +1488,13 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
         if (unit != 0)  // Stay on unit 0 between requests.
             glClientActiveTexture(QGL_TEXTURE0);
 #else
-        QGLPainter painter(QGLContext::currentContext());
+        const QGLContext *ctx = QGLContext::currentContext();
+        if (!ctx)
+            break;;
+        QGLPainterPrivate *painter =
+            QGLPainterPrivateCache::instance()->fromContext(ctx);
         QGLPainterExtensions *extn =
-            painter.d_ptr->resolveMultiTextureExtensions();
+            painter->resolveMultiTextureExtensions();
         if (extn->qt_glClientActiveTexture) {
             extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
             glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
@@ -1535,9 +1550,13 @@ void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
 #else
-            QGLPainter painter(QGLContext::currentContext());
+            const QGLContext *ctx = QGLContext::currentContext();
+            if (!ctx)
+                break;;
+            QGLPainterPrivate *painter =
+                QGLPainterPrivateCache::instance()->fromContext(ctx);
             QGLPainterExtensions *extn =
-                painter.d_ptr->resolveMultiTextureExtensions();
+                painter->resolveMultiTextureExtensions();
             if (extn->qt_glClientActiveTexture) {
                 extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1587,9 +1606,13 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
             if (unit != 0)  // Stay on unit 0 between requests.
                 glClientActiveTexture(QGL_TEXTURE0);
 #else
-            QGLPainter painter(QGLContext::currentContext());
+            const QGLContext *ctx = QGLContext::currentContext();
+            if (!ctx)
+                break;;
+            QGLPainterPrivate *painter =
+                QGLPainterPrivateCache::instance()->fromContext(ctx);
             QGLPainterExtensions *extn =
-                painter.d_ptr->resolveMultiTextureExtensions();
+                painter->resolveMultiTextureExtensions();
             if (extn->qt_glClientActiveTexture) {
                 extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1625,6 +1648,10 @@ void QGLPainter::setVertexAttribute
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(this);
+    if (d->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d->boundVertexBuffer = 0;
+    }
     d->effect->setVertexAttribute(attribute, value);
     d->removeRequiredField(attribute);
 }
@@ -1645,9 +1672,23 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(this);
-    buffer.setOnEffect(d->effect);
+    const QGLVertexBufferPrivate *bd = buffer.d_func();
+    if (bd->buffer) {
+        GLuint id = bd->buffer->bufferId();
+        if (id != d->boundVertexBuffer) {
+            bd->buffer->bind();
+            d->boundVertexBuffer = id;
+        }
+    } else if (d->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d->boundVertexBuffer = 0;
+    }
+    for (int index = 0; index < bd->attributes.size(); ++index) {
+        QGLVertexBufferAttribute *attr = bd->attributes[index];
+        d->effect->setVertexAttribute(attr->attribute, attr->value);
+    }
 #ifndef QT_NO_DEBUG
-    d->removeRequiredFields(buffer.attributes());
+    d->removeRequiredFields(bd->attributeNames);
 #endif
 }
 

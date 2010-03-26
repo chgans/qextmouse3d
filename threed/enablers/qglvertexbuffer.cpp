@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglvertexbuffer.h"
+#include "qglvertexbuffer_p.h"
 #include "qglabstracteffect.h"
 #include <QtCore/qlist.h>
 #include <QtCore/qatomic.h>
@@ -54,42 +55,6 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::enablers
 */
 
-class QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferAttribute(QGL::VertexAttribute attr) : attribute(attr) {}
-
-    virtual void clear() = 0;
-    virtual QGLAttributeValue uploadValue() = 0;
-    virtual int count() = 0;
-    virtual int elementSize() = 0;
-    virtual void replace
-        (int index, int count, const QGLAttributeValue& value) = 0;
-
-    QGL::VertexAttribute attribute;
-    QGLAttributeValue value;
-};
-
-class QGLVertexBufferFloatAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferFloatAttribute
-            (QGL::VertexAttribute attr, const QArray<float>& array)
-        : QGLVertexBufferAttribute(attr), floatArray(array)
-    {
-        value = QGLAttributeValue(floatArray);
-    }
-
-    void clear() { floatArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(floatArray); }
-    int count() { return floatArray.count(); }
-    int elementSize() { return sizeof(float); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<float> floatArray;
-};
-
 void QGLVertexBufferFloatAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
@@ -100,26 +65,6 @@ void QGLVertexBufferFloatAttribute::replace
              (index + count) <= floatArray.size());
     floatArray.replace(index, value.floatData(), count);
 }
-
-class QGLVertexBufferVector2DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector2DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector2D>& array)
-        : QGLVertexBufferAttribute(attr), vector2DArray(array)
-    {
-        value = QGLAttributeValue(vector2DArray);
-    }
-
-    void clear() { vector2DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector2DArray); }
-    int count() { return vector2DArray.count(); }
-    int elementSize() { return sizeof(QVector2D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector2D> vector2DArray;
-};
 
 void QGLVertexBufferVector2DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -133,26 +78,6 @@ void QGLVertexBufferVector2DAttribute::replace
         (index, reinterpret_cast<const QVector2D *>(value.floatData()), count);
 }
 
-class QGLVertexBufferVector3DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector3DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector3D>& array)
-        : QGLVertexBufferAttribute(attr), vector3DArray(array)
-    {
-        value = QGLAttributeValue(vector3DArray);
-    }
-
-    void clear() { vector3DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector3DArray); }
-    int count() { return vector3DArray.count(); }
-    int elementSize() { return sizeof(QVector3D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector3D> vector3DArray;
-};
-
 void QGLVertexBufferVector3DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
@@ -164,26 +89,6 @@ void QGLVertexBufferVector3DAttribute::replace
     vector3DArray.replace
         (index, reinterpret_cast<const QVector3D *>(value.floatData()), count);
 }
-
-class QGLVertexBufferVector4DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector4DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector4D>& array)
-        : QGLVertexBufferAttribute(attr), vector4DArray(array)
-    {
-        value = QGLAttributeValue(vector4DArray);
-    }
-
-    void clear() { vector4DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector4DArray); }
-    int count() { return vector4DArray.count(); }
-    int elementSize() { return sizeof(QVector4D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector4D> vector4DArray;
-};
 
 void QGLVertexBufferVector4DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -197,26 +102,6 @@ void QGLVertexBufferVector4DAttribute::replace
         (index, reinterpret_cast<const QVector4D *>(value.floatData()), count);
 }
 
-class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferColorAttribute
-            (QGL::VertexAttribute attr, const QArray<QColor4B>& array)
-        : QGLVertexBufferAttribute(attr), colorArray(array)
-    {
-        value = QGLAttributeValue(colorArray);
-    }
-
-    void clear() { colorArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(colorArray); }
-    int count() { return colorArray.count(); }
-    int elementSize() { return sizeof(QColor4B); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QColor4B> colorArray;
-};
-
 void QGLVertexBufferColorAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
@@ -228,26 +113,6 @@ void QGLVertexBufferColorAttribute::replace
     colorArray.replace
         (index, reinterpret_cast<const QColor4B *>(value.data()), count);
 }
-
-class QGLVertexBufferCustomAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferCustomAttribute
-            (QGL::VertexAttribute attr, const QCustomDataArray& array)
-        : QGLVertexBufferAttribute(attr), customArray(array)
-    {
-        value = QGLAttributeValue(customArray);
-    }
-
-    void clear() { customArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(customArray); }
-    int count() { return customArray.count(); }
-    int elementSize() { return customArray.elementSize(); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QCustomDataArray customArray;
-};
 
 void QGLVertexBufferCustomAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -298,34 +163,6 @@ void QGLVertexBufferCustomAttribute::replace
     default: break;
     }
 }
-
-class QGLVertexBufferPrivate
-{
-public:
-    QGLVertexBufferPrivate()
-        : buffer(0),
-          usagePattern(QGLBuffer::StaticDraw),
-          packingHint(QGLVertexBuffer::Interleave),
-          actualPackingHint(QGLVertexBuffer::Interleave),
-          vertexCount(0)
-    {
-        ref = 1;
-    }
-    ~QGLVertexBufferPrivate()
-    {
-        qDeleteAll(attributes);
-        delete buffer;
-    }
-
-    QBasicAtomicInt ref;
-    QGLBuffer *buffer;
-    QGLBuffer::UsagePattern usagePattern;
-    QGLVertexBuffer::PackingHint packingHint;
-    QGLVertexBuffer::PackingHint actualPackingHint;
-    QList<QGLVertexBufferAttribute *> attributes;
-    QList<QGL::VertexAttribute> attributeNames;
-    int vertexCount;
-};
 
 /*!
     Constructs a new vertex buffer.
@@ -910,31 +747,6 @@ void QGLVertexBuffer::release() const
     Q_D(const QGLVertexBuffer);
     if (d->buffer)
         d->buffer->release();
-}
-
-/*!
-    \internal
-*/
-void QGLVertexBuffer::setOnEffect(QGLAbstractEffect *effect) const
-{
-    Q_D(const QGLVertexBuffer);
-    if (d->buffer)
-        d->buffer->bind();
-    for (int index = 0; index < d->attributes.size(); ++index) {
-        QGLVertexBufferAttribute *attr = d->attributes[index];
-        effect->setVertexAttribute(attr->attribute, attr->value);
-    }
-    if (d->buffer)
-        d->buffer->release();
-}
-
-/*!
-    \internal
-*/
-QList<QGL::VertexAttribute> QGLVertexBuffer::attributes() const
-{
-    Q_D(const QGLVertexBuffer);
-    return d->attributeNames;
 }
 
 QT_END_NAMESPACE

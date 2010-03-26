@@ -241,6 +241,8 @@ public:
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
     QList<QGLFramebufferObject *> surfaceStack;
+    GLuint boundVertexBuffer;
+    GLuint boundIndexBuffer;
 
     QGLPainterExtensions *extensions();    
 
