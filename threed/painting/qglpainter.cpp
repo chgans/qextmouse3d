@@ -359,6 +359,10 @@ bool QGLPainter::begin(const QGLContext *context)
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
 
+    // Force the matrices to be updated the first time we use them.
+    d_ptr->modelViewMatrix.markDirty();
+    d_ptr->projectionMatrix.markDirty();
+
     return true;
 }
 

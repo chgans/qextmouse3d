@@ -42,6 +42,7 @@
 #include "qglmatrixstack.h"
 #include "qglpainter_p.h"
 #include <QtOpenGL/qgl.h>
+#include <QtCore/qstack.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -131,10 +132,8 @@ public:
 #if !defined(QT_OPENGL_ES_2)
     GLenum glType;
     GLenum glFetchType;
-    QList<bool> serverStack;
 #endif
-    QList<QMatrix4x4> stack;
-    bool haveMatrix;
+    QStack<QMatrix4x4> stack;
     bool isDirty;
 };
 
@@ -146,21 +145,16 @@ QGLMatrixStackPrivate::QGLMatrixStackPrivate(QGLMatrixStack::Type t)
     case QGLMatrixStack::ModelViewMatrix:
         glType = GL_MODELVIEW;
         glFetchType = GL_MODELVIEW_MATRIX;
-        haveMatrix = false;
         break;
     case QGLMatrixStack::ProjectionMatrix:
         glType = GL_PROJECTION;
         glFetchType = GL_PROJECTION_MATRIX;
-        haveMatrix = false;
         break;
     default:
         glType = 0;
         glFetchType = 0;
-        haveMatrix = true;
         break;
     }
-#else
-    haveMatrix = true;  // We always have the matrix for OpenGL/ES 2.0.
 #endif
     isDirty = true;
 }
@@ -193,33 +187,11 @@ QGLMatrixStack::~QGLMatrixStack()
 
 /*!
     Returns the type of matrices being managed by this matrix stack:
-    QGL::ModelViewMatrix or QGL::ProjectionMatrix.
+    ModelViewMatrix, ProjectionMatrix, or UserMatrix.
 */
 QGLMatrixStack::Type QGLMatrixStack::type() const
 {
     return d->type;
-}
-
-/*!
-    Resets the application's notion of the top-most element in this
-    matrix stack to the value from the GL server.
-
-    This function is used to synchronize the state of the application
-    with the GL server after the execution of raw GL commands that may
-    have altered the matrix in the server.
-
-    An alternative is to call operator=() or setToIdentity() to forcibly
-    set the matrix in the GL server to a known value.
-
-    \sa top(), operator=(), setToIdentity()
-*/
-void QGLMatrixStack::reset()
-{
-#if !defined(QT_OPENGL_ES_2)
-    if (d->type != UserMatrix)
-        d->haveMatrix = false;
-#endif
-    d->isDirty = true;
 }
 
 /*!
@@ -230,59 +202,27 @@ void QGLMatrixStack::reset()
     The depths of the traditional \c{GL_MODELVIEW} and \c{GL_PROJECTION}
     matrix stacks in the GL server are system-dependent and easy to
     overflow in nested rendering code using \c{glPushMatrix()}.
+    By contrast, the push() function provides an arbitrary-sized stack
+    in client memory.
 
-    The push() function provides an arbitrary-sized stack in client memory.
-    If it knows the matrix value, it will push it onto the client stack.
-    If it does not know the matrix value yet, then push() will call
-    \c{glPushMatrix()} instead.  To ensure that push() knows the
-    matrix value, it should be forcibly set with a call to operator=()
-    or setToIdentity().
-    
     \sa pop(), top()
 */
 void QGLMatrixStack::push()
 {
-#if !defined(QT_OPENGL_ES_2)
-    // If we don't have the matrix value, then make the GL server save it.
-    if (!d->haveMatrix && d->glType) {
-        glMatrixMode(d->glType);
-        glPushMatrix();
-        d->serverStack.append(true);
-    } else {
-        d->serverStack.append(false);
-    }
-#endif
-    d->stack.append(d->matrix);
+    d->stack.push(d->matrix);
 }
 
 /*!
     Pops the top-most matrix from this matrix stack and sets the
-    current matrix to the next value down.
+    current matrix to the next value down.  Does nothing if the
+    matrix stack contains a single entry.
 
     \sa push()
 */
 void QGLMatrixStack::pop()
 {
-#if !defined(QT_OPENGL_ES_2)
-    if (d->stack.isEmpty() && d->glType) {
-        glMatrixMode(d->glType);
-        glPopMatrix();
-        d->haveMatrix = false;
-    } else if (!d->stack.isEmpty()) {
-        bool inServer = d->serverStack.takeLast();
-        d->matrix = d->stack.takeLast();
-        if (inServer) {
-            glMatrixMode(d->glType);
-            glPopMatrix();
-            d->haveMatrix = false;
-        } else {
-            d->haveMatrix = true;
-        }
-    }
-#else
     if (!d->stack.isEmpty())
-        d->matrix = d->stack.takeLast();
-#endif
+        d->matrix = d->stack.pop();
     d->isDirty = true;
 }
 
@@ -294,7 +234,6 @@ void QGLMatrixStack::pop()
 void QGLMatrixStack::setToIdentity()
 {
     d->matrix.setToIdentity();
-    d->haveMatrix = true;
     d->isDirty = true;
 }
 
@@ -303,38 +242,10 @@ void QGLMatrixStack::setToIdentity()
     This is typically used to fetch the matrix so it can be set on
     user-defined shader programs.
 
-    Performance note: if the matrix has not been set previously,
-    then this function may need to perform a round trip to the GL server
-    to obtain the current state of the matrix.  The round-trip can be
-    avoided by calling operator=() or setToIdentity() to set the GL server's
-    matrix to a known value.
-
-    Matrix stacks of type UserMatrix never need to perform a round-trip
-    to the GL server because they are implemented purely client-side.
-
-    \sa operator=(), setToIdentity()
+    \sa operator=(), readServerMatrix()
 */
 QMatrix4x4 QGLMatrixStack::top() const
 {
-#if !defined(QT_OPENGL_ES_2)
-    if (!(d->haveMatrix)) {
-        // We need to retrieve the current matrix from the GL server
-        // because we have no way to know what state it is currently in.
-        d->haveMatrix = true;
-        if (sizeof(qreal) == sizeof(GLfloat)) {
-            glGetFloatv(d->glFetchType, reinterpret_cast<GLfloat *>
-                                            (d->matrix.data()));
-            d->matrix.optimize();
-        } else {
-            GLfloat mat[16];
-            glGetFloatv(d->glFetchType, mat);
-            qreal *m = d->matrix.data();
-            for (int index = 0; index < 16; ++index)
-                m[index] = mat[index];
-            d->matrix.optimize();
-        }
-    }
-#endif
     return d->matrix;
 }
 
@@ -354,7 +265,6 @@ QMatrix4x4 QGLMatrixStack::top() const
 QGLMatrixStack& QGLMatrixStack::operator=(const QMatrix4x4& matrix)
 {
     d->matrix = matrix;
-    d->haveMatrix = true;
     d->isDirty = true;
     return *this;
 }
@@ -366,8 +276,6 @@ QGLMatrixStack& QGLMatrixStack::operator=(const QMatrix4x4& matrix)
 */
 QGLMatrixStack& QGLMatrixStack::operator*=(const QMatrix4x4& matrix)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix *= matrix;
     d->isDirty = true;
     return *this;
@@ -384,8 +292,6 @@ void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
     // which gives the location of a pixel within the rectangle,
     // instead of the extent of the rectangle.  We want the extent.
     // QRectF expresses the extent properly.
-    if (!d->haveMatrix)
-        this->top();
     d->matrix.ortho(rect.x(), rect.x() + rect.width(),
                     rect.y() + rect.height(), rect.y(), nearPlane, farPlane);
     d->isDirty = true;
@@ -405,8 +311,6 @@ void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
 */
 void QGLMatrixStack::translate(qreal x, qreal y, qreal z)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.translate(x, y, z);
     d->isDirty = true;
 }
@@ -419,8 +323,6 @@ void QGLMatrixStack::translate(qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::translate(const QVector3D& vector)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.translate(vector);
     d->isDirty = true;
 }
@@ -439,8 +341,6 @@ void QGLMatrixStack::translate(const QVector3D& vector)
 */
 void QGLMatrixStack::scale(qreal x, qreal y, qreal z)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.scale(x, y, z);
     d->isDirty = true;
 }
@@ -459,8 +359,6 @@ void QGLMatrixStack::scale(qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::scale(qreal factor)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.scale(factor);
     d->isDirty = true;
 }
@@ -473,8 +371,6 @@ void QGLMatrixStack::scale(qreal factor)
 */
 void QGLMatrixStack::scale(const QVector3D& vector)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.scale(vector);
     d->isDirty = true;
 }
@@ -494,8 +390,6 @@ void QGLMatrixStack::scale(const QVector3D& vector)
 */
 void QGLMatrixStack::rotate(qreal angle, qreal x, qreal y, qreal z)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.rotate(angle, x, y, z);
     d->isDirty = true;
 }
@@ -508,8 +402,6 @@ void QGLMatrixStack::rotate(qreal angle, qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::rotate(qreal angle, const QVector3D& vector)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.rotate(angle, vector);
     d->isDirty = true;
 }
@@ -529,9 +421,56 @@ void QGLMatrixStack::rotate(qreal angle, const QVector3D& vector)
 */
 void QGLMatrixStack::rotate(const QQuaternion &quaternion)
 {
-    if (!d->haveMatrix)
-        top();
     d->matrix.rotate(quaternion);
+    d->isDirty = true;
+}
+
+/*!
+    Reads the matrix in the GL server that corresponds to \a type in
+    the current GL context and returns it.
+
+    This function ignores the contents of the matrix stack in the
+    client and reads the actual value in the GL server.  This can
+    be used to read back a matrix value that was set by raw GL code:
+
+    \code
+    painter.modelViewMatrix() =
+        QGLMatrixStack::readerServerMatrix(QGLMatrixStack::ModelViewMatrix);
+    \endcode
+
+    Under OpenGL/ES 2.0, this function will return the identity matrix
+    because server-side matrices are not supported.  If \a type is
+    UserMatrix, then the return value will also be the identity matrix.
+
+    \sa top()
+*/
+QMatrix4x4 QGLMatrixStack::readServerMatrix(QGLMatrixStack::Type type)
+{
+    QMatrix4x4 matrix;
+#if !defined(QT_OPENGL_ES_2)
+    GLenum fetchType;
+    if (type == ModelViewMatrix)
+        fetchType = GL_MODELVIEW_MATRIX;
+    else if (type == ProjectionMatrix)
+        fetchType = GL_PROJECTION_MATRIX;
+    else
+        return matrix;
+    if (sizeof(qreal) == sizeof(GLfloat)) {
+        glGetFloatv(fetchType, reinterpret_cast<GLfloat *>(matrix.data()));
+    } else {
+        GLfloat mat[16];
+        glGetFloatv(fetchType, mat);
+        qreal *m = matrix.data();
+        for (int index = 0; index < 16; ++index)
+            m[index] = mat[index];
+    }
+    matrix.optimize();
+#endif
+    return matrix;
+}
+
+void QGLMatrixStack::markDirty()
+{
     d->isDirty = true;
 }
 
@@ -539,7 +478,7 @@ bool QGLMatrixStack::updateServer()
 {
     bool dirty = d->isDirty;
 #if !defined(QT_OPENGL_ES_2)
-    if (dirty && d->type != UserMatrix && d->haveMatrix) {
+    if (dirty && d->type != UserMatrix) {
         glMatrixMode(d->glType);
         if (sizeof(qreal) == sizeof(GLfloat)) {
             glLoadMatrixf(reinterpret_cast<const GLfloat *>
@@ -564,10 +503,6 @@ QMatrix4x4 QGLPainter::combinedMatrix() const
         return QMatrix4x4();
     QGLMatrixStackPrivate *proj = d->projectionMatrix.d;
     QGLMatrixStackPrivate *mv = d->modelViewMatrix.d;
-    if (!proj->haveMatrix)
-        d->projectionMatrix.top();
-    if (!mv->haveMatrix)
-        d->modelViewMatrix.top();
     return proj->matrix * mv->matrix;
 }
 

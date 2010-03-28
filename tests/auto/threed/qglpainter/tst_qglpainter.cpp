@@ -510,17 +510,18 @@ void tst_QGLPainter::projectionMatrixStack()
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, m));
 
-    // Write an explict value to the GL server and reset the client-side copy.
+    // Write an explict value to the GL server and read it back.
     QMatrix4x4 m2;
     m2.ortho(widget->rect());
     setGLMatrix(GL_PROJECTION, m2);
-    painter.projectionMatrix().reset();
+    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
+        (QGLMatrixStack::ProjectionMatrix);
 
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
+    QVERIFY(qFuzzyCompare(m, m3));
 #else
-    QVERIFY(qFuzzyCompare(m2, painter.projectionMatrix().top()));
+    QVERIFY(qFuzzyCompare(m2, m3));
 #endif
 }
 
@@ -556,17 +557,18 @@ void tst_QGLPainter::modelViewMatrixStack()
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));
 
-    // Write an explict value to the GL server and reset the client-side copy.
+    // Write an explict value to the GL server and read it back.
     QMatrix4x4 m2;
     m2.translate(5, 6, 7);
     setGLMatrix(GL_MODELVIEW, m2);
-    painter.modelViewMatrix().reset();
+    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
+        (QGLMatrixStack::ModelViewMatrix);
 
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.modelViewMatrix().top()));
+    QVERIFY(qFuzzyCompare(m, m3));
 #else
-    QVERIFY(qFuzzyCompare(m2, painter.modelViewMatrix().top()));
+    QVERIFY(qFuzzyCompare(m2, m3));
 #endif
 }
 

@@ -70,7 +70,6 @@ public:
 
     QMatrix4x4 top() const;
 
-    void reset();
     void push();
     void pop();
 
@@ -92,6 +91,8 @@ public:
 
     operator QMatrix4x4() const;
 
+    static QMatrix4x4 readServerMatrix(QGLMatrixStack::Type type);
+
 private:
     Q_DISABLE_COPY(QGLMatrixStack)
 
@@ -102,7 +103,7 @@ private:
     friend class QGLPainterPrivate;
     friend class QGLPainter;
 
-    bool isDirty() const;
+    void markDirty();
     bool updateServer();
 };
 
