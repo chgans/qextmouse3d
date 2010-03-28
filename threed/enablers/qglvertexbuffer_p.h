@@ -63,6 +63,7 @@ class QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferAttribute(QGL::VertexAttribute attr) : attribute(attr) {}
+    virtual ~QGLVertexBufferAttribute() {}
 
     virtual void clear() = 0;
     virtual QGLAttributeValue uploadValue() = 0;
