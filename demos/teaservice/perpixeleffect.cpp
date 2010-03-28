@@ -133,10 +133,9 @@ void PerPixelEffect::update
     // Update the matrix uniforms.
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
-        QMatrix4x4 mv = painter->modelViewMatrix();
         d->program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
-        d->program->setUniformValue(d->modelViewUniform, mv);
-        d->program->setUniformValue(d->normalMatrixUniform, mv.normalMatrix());
+        d->program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
+        d->program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
 
     // Bail out if the lights or materials have not changed.

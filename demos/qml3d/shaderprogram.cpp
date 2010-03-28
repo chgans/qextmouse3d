@@ -214,13 +214,12 @@ void ShaderProgramEffect::update
     // Update the matrix uniforms.
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
-        QMatrix4x4 mv = painter->modelViewMatrix();
         if (matrixUniform != -1)
             program->setUniformValue(matrixUniform, painter->combinedMatrix());
         if (modelViewMatrixUniform != -1)
-            program->setUniformValue(modelViewMatrixUniform, mv);
+            program->setUniformValue(modelViewMatrixUniform, painter->modelViewMatrix());
         if (normalMatrixUniform != -1)
-            program->setUniformValue(normalMatrixUniform, mv.normalMatrix());
+            program->setUniformValue(normalMatrixUniform, painter->normalMatrix());
     }
 
     // Update the static color in if "qgl_Color" is a uniform.

@@ -523,4 +523,13 @@ QMatrix4x4 QGLPainter::combinedMatrix() const
     return proj->matrix * mv->matrix;
 }
 
+QMatrix3x3 QGLPainter::normalMatrix() const
+{
+    const QGLPainterPrivate *d = d_func();
+    if (!d)
+        return QMatrix3x3();
+    const QGLMatrixStackPrivate *mv = d->modelViewMatrix.d_func();
+    return mv->matrix.normalMatrix();
+}
+
 QT_END_NAMESPACE

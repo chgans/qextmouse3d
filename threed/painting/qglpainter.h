@@ -127,6 +127,7 @@ public:
     QGLMatrixStack& projectionMatrix();
     QGLMatrixStack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
+    QMatrix3x3 normalMatrix() const;
 
     bool isVisible(const QVector3D& point) const;
     bool isVisible(const QBox3D& box) const;

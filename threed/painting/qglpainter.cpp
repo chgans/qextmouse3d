@@ -867,7 +867,7 @@ QGLMatrixStack& QGLPainter::projectionMatrix()
 /*!
     Returns a reference to the modelview matrix stack.
 
-    \sa projectionMatrix(), combinedMatrix()
+    \sa projectionMatrix(), combinedMatrix(), normalMatrix()
 */
 QGLMatrixStack& QGLPainter::modelViewMatrix()
 {
@@ -887,7 +887,20 @@ QGLMatrixStack& QGLPainter::modelViewMatrix()
     projectionMatrix() and modelViewMatrix() separately and
     multiplying the return values.
 
-    \sa projectionMatrix(), modelViewMatrix()
+    \sa projectionMatrix(), modelViewMatrix(), normalMatrix()
+*/
+// Implemented in qglmatrixstack.cpp.
+
+/*!
+    \fn QMatrix3x3 QGLPainter::normalMatrix() const
+
+    Returns the normal matrix corresponding to modelViewMatrix().
+
+    The normal matrix is the transpose of the inverse of the top-left
+    3x3 part of the 4x4 modelview matrix.  If the 3x3 sub-matrix is not
+    invertible, this function returns the identity.
+
+    \sa modelViewMatrix(), combinedMatrix()
 */
 // Implemented in qglmatrixstack.cpp.
 

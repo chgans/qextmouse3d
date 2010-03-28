@@ -253,10 +253,9 @@ void QGLLitMaterialEffect::update
     QGLShaderProgram *program = d->program;
     if ((updates & (QGLPainter::UpdateProjectionMatrix |
                     QGLPainter::UpdateModelViewMatrix)) != 0) {
-        QMatrix4x4 mv = painter->modelViewMatrix();
         program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
-        program->setUniformValue(d->modelViewUniform, mv);
-        program->setUniformValue(d->normalMatrixUniform, mv.normalMatrix());
+        program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
+        program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
     if ((updates & QGLPainter::UpdateLights) != 0) {
         // Find the first enabled light.
