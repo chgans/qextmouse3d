@@ -163,8 +163,8 @@ QGLMatrixStackPrivate::QGLMatrixStackPrivate(QGLMatrixStack::Type t)
     \internal
 */
 QGLMatrixStack::QGLMatrixStack(QGLMatrixStack::Type type)
+    : d_ptr(new QGLMatrixStackPrivate(type))
 {
-    d = new QGLMatrixStackPrivate(type);
 }
 
 /*!
@@ -173,8 +173,8 @@ QGLMatrixStack::QGLMatrixStack(QGLMatrixStack::Type type)
     \sa type()
 */
 QGLMatrixStack::QGLMatrixStack()
+    : d_ptr(new QGLMatrixStackPrivate(UserMatrix))
 {
-    d = new QGLMatrixStackPrivate(QGLMatrixStack::UserMatrix);
 }
 
 /*!
@@ -182,7 +182,6 @@ QGLMatrixStack::QGLMatrixStack()
 */
 QGLMatrixStack::~QGLMatrixStack()
 {
-    delete d;
 }
 
 /*!
@@ -191,6 +190,7 @@ QGLMatrixStack::~QGLMatrixStack()
 */
 QGLMatrixStack::Type QGLMatrixStack::type() const
 {
+    Q_D(const QGLMatrixStack);
     return d->type;
 }
 
@@ -209,6 +209,7 @@ QGLMatrixStack::Type QGLMatrixStack::type() const
 */
 void QGLMatrixStack::push()
 {
+    Q_D(QGLMatrixStack);
     d->stack.push(d->matrix);
 }
 
@@ -221,6 +222,7 @@ void QGLMatrixStack::push()
 */
 void QGLMatrixStack::pop()
 {
+    Q_D(QGLMatrixStack);
     if (!d->stack.isEmpty())
         d->matrix = d->stack.pop();
     d->isDirty = true;
@@ -233,6 +235,7 @@ void QGLMatrixStack::pop()
 */
 void QGLMatrixStack::setToIdentity()
 {
+    Q_D(QGLMatrixStack);
     d->matrix.setToIdentity();
     d->isDirty = true;
 }
@@ -246,6 +249,7 @@ void QGLMatrixStack::setToIdentity()
 */
 QMatrix4x4 QGLMatrixStack::top() const
 {
+    Q_D(const QGLMatrixStack);
     return d->matrix;
 }
 
@@ -264,6 +268,7 @@ QMatrix4x4 QGLMatrixStack::top() const
 */
 QGLMatrixStack& QGLMatrixStack::operator=(const QMatrix4x4& matrix)
 {
+    Q_D(QGLMatrixStack);
     d->matrix = matrix;
     d->isDirty = true;
     return *this;
@@ -276,6 +281,7 @@ QGLMatrixStack& QGLMatrixStack::operator=(const QMatrix4x4& matrix)
 */
 QGLMatrixStack& QGLMatrixStack::operator*=(const QMatrix4x4& matrix)
 {
+    Q_D(QGLMatrixStack);
     d->matrix *= matrix;
     d->isDirty = true;
     return *this;
@@ -292,6 +298,7 @@ void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
     // which gives the location of a pixel within the rectangle,
     // instead of the extent of the rectangle.  We want the extent.
     // QRectF expresses the extent properly.
+    Q_D(QGLMatrixStack);
     d->matrix.ortho(rect.x(), rect.x() + rect.width(),
                     rect.y() + rect.height(), rect.y(), nearPlane, farPlane);
     d->isDirty = true;
@@ -311,6 +318,7 @@ void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
 */
 void QGLMatrixStack::translate(qreal x, qreal y, qreal z)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.translate(x, y, z);
     d->isDirty = true;
 }
@@ -323,6 +331,7 @@ void QGLMatrixStack::translate(qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::translate(const QVector3D& vector)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.translate(vector);
     d->isDirty = true;
 }
@@ -341,6 +350,7 @@ void QGLMatrixStack::translate(const QVector3D& vector)
 */
 void QGLMatrixStack::scale(qreal x, qreal y, qreal z)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.scale(x, y, z);
     d->isDirty = true;
 }
@@ -359,6 +369,7 @@ void QGLMatrixStack::scale(qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::scale(qreal factor)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.scale(factor);
     d->isDirty = true;
 }
@@ -371,6 +382,7 @@ void QGLMatrixStack::scale(qreal factor)
 */
 void QGLMatrixStack::scale(const QVector3D& vector)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.scale(vector);
     d->isDirty = true;
 }
@@ -390,6 +402,7 @@ void QGLMatrixStack::scale(const QVector3D& vector)
 */
 void QGLMatrixStack::rotate(qreal angle, qreal x, qreal y, qreal z)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.rotate(angle, x, y, z);
     d->isDirty = true;
 }
@@ -402,6 +415,7 @@ void QGLMatrixStack::rotate(qreal angle, qreal x, qreal y, qreal z)
 */
 void QGLMatrixStack::rotate(qreal angle, const QVector3D& vector)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.rotate(angle, vector);
     d->isDirty = true;
 }
@@ -421,6 +435,7 @@ void QGLMatrixStack::rotate(qreal angle, const QVector3D& vector)
 */
 void QGLMatrixStack::rotate(const QQuaternion &quaternion)
 {
+    Q_D(QGLMatrixStack);
     d->matrix.rotate(quaternion);
     d->isDirty = true;
 }
@@ -471,11 +486,13 @@ QMatrix4x4 QGLMatrixStack::readServerMatrix(QGLMatrixStack::Type type)
 
 void QGLMatrixStack::markDirty()
 {
+    Q_D(QGLMatrixStack);
     d->isDirty = true;
 }
 
 bool QGLMatrixStack::updateServer()
 {
+    Q_D(QGLMatrixStack);
     bool dirty = d->isDirty;
 #if !defined(QT_OPENGL_ES_2)
     if (dirty && d->type != UserMatrix) {
@@ -501,8 +518,8 @@ QMatrix4x4 QGLPainter::combinedMatrix() const
     const QGLPainterPrivate *d = d_func();
     if (!d)
         return QMatrix4x4();
-    QGLMatrixStackPrivate *proj = d->projectionMatrix.d;
-    QGLMatrixStackPrivate *mv = d->modelViewMatrix.d;
+    const QGLMatrixStackPrivate *proj = d->projectionMatrix.d_func();
+    const QGLMatrixStackPrivate *mv = d->modelViewMatrix.d_func();
     return proj->matrix * mv->matrix;
 }
 

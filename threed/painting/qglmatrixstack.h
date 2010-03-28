@@ -44,6 +44,7 @@
 
 #include "qglnamespace.h"
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_HEADER
 
@@ -95,10 +96,11 @@ public:
 
 private:
     Q_DISABLE_COPY(QGLMatrixStack)
+    Q_DECLARE_PRIVATE(QGLMatrixStack)
 
     QGLMatrixStack(QGLMatrixStack::Type type);
 
-    QGLMatrixStackPrivate *d;
+    QScopedPointer<QGLMatrixStackPrivate> d_ptr;
 
     friend class QGLPainterPrivate;
     friend class QGLPainter;
