@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = cubeaccel
+TARGET = cubehouse
 CONFIG += qt debug warn_on
 QT += opengl
 SOURCES = cubeview.cpp main.cpp
