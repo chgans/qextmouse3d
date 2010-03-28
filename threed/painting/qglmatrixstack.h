@@ -77,11 +77,6 @@ public:
     void setToIdentity();
 
     void ortho(const QRect& rect, qreal nearPlane = -1.0f, qreal farPlane = 1.0f);
-    void ortho(const QRectF& rect, qreal nearPlane = -1.0f, qreal farPlane = 1.0f);
-    void ortho(qreal left, qreal right, qreal bottom, qreal top, qreal nearPlane, qreal farPlane);
-    void frustum(qreal left, qreal right, qreal bottom, qreal top, qreal nearPlane, qreal farPlane);
-    void perspective(qreal angle, qreal aspect, qreal nearPlane, qreal farPlane);
-    void lookAt(const QVector3D& eye, const QVector3D& center, const QVector3D& up);
 
     void translate(qreal x, qreal y, qreal z);
     void translate(const QVector3D& vector);

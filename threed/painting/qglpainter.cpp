@@ -1059,8 +1059,6 @@ QVector4D QGLPainter::unproject
 /*!
     Returns the aspect ratio of the underlying device (usually a window),
     for adjusting projection transformations.
-
-    \sa QGLMatrixStack::perspective()
 */
 qreal QGLPainter::aspectRatio() const
 {
@@ -1087,8 +1085,6 @@ qreal QGLPainter::aspectRatio() const
 /*!
     Returns the aspect ratio for a viewport of size \a viewportSize,
     accounting for the DPI of the underlying device.
-
-    \sa QGLMatrixStack::perspective()
 */
 qreal QGLPainter::aspectRatio(const QSize& viewportSize) const
 {

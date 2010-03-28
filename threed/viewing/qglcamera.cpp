@@ -322,14 +322,16 @@ QGLCameraPrivate::QGLCameraPrivate()
 void QGLCameraPrivate::lookAt
         (QGLPainter *painter, const QVector3D& adjust) const
 {
+    QMatrix4x4 m;
     if (motionQuaternion.isIdentity()) {
-        painter->modelViewMatrix().lookAt(eye + adjust, center, upVector);
+        m.lookAt(eye + adjust, center, upVector);
     } else {
         QVector3D up = motionQuaternion.rotatedVector(upVector);
         QVector3D view = motionQuaternion.rotatedVector(viewVector - adjust);
         QVector3D eye = center - view;
-        painter->modelViewMatrix().lookAt(eye, center, up);
+        m.lookAt(eye, center, up);
     }
+    painter->modelViewMatrix() *= m;
 }
 
 /*!

@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE
     their own use.  UserMatrix stacks do not have a server-side
     counterpart.
 
-    In the following example, the perspective projection matrix for a
+    In the following example, a standard orthographic projection matrix for a
     view is set via the QGLPainter::projectionMatrix() stack, and
     then a modelview matrix is set via the QGLPainter::modelViewMatrix()
     stack to scale and translate an object prior to drawing:
@@ -81,8 +81,7 @@ QT_BEGIN_NAMESPACE
     QGLPainter painter(this);
 
     painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().perspective
-        (60.0f, painter.aspectRatio(), 5.0f, 1000.0f);
+    painter.projectionMatrix().ortho(window->rect());
 
     painter.modelViewMatrix().setToIdentity();
     painter.modelViewMatrix().translate(-1.0f, 2.0f, 0.0f);
@@ -375,13 +374,9 @@ QGLMatrixStack& QGLMatrixStack::operator*=(const QMatrix4x4& matrix)
 }
 
 /*!
-    \overload
-
     Multiplies the current matrix at the top of this matrix stack by another
     that applies an orthographic projection for a window with boundaries
     specified by \a rect, and clipping planes specified by \a nearPlane and \a farPlane.
-
-    \sa frustum(), perspective()
 */
 void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
 {
@@ -389,92 +384,10 @@ void QGLMatrixStack::ortho(const QRect& rect, qreal nearPlane, qreal farPlane)
     // which gives the location of a pixel within the rectangle,
     // instead of the extent of the rectangle.  We want the extent.
     // QRectF expresses the extent properly.
-    return ortho(rect.x(), rect.x() + rect.width(), rect.y() + rect.height(), rect.y(), nearPlane, farPlane);
-}
-
-/*!
-    \overload
-
-    Multiplies the current matrix at the top of this matrix stack by another
-    that applies an orthographic projection for a window with boundaries
-    specified by \a rect, and clipping planes specified by \a nearPlane and \a farPlane.
-
-    \sa frustum(), perspective()
-*/
-void QGLMatrixStack::ortho(const QRectF& rect, qreal nearPlane, qreal farPlane)
-{
-    return ortho(rect.left(), rect.right(), rect.bottom(), rect.top(), nearPlane, farPlane);
-}
-
-/*!
-    Multiplies the current matrix at the top of this matrix stack by another
-    that applies an orthographic projection for a window with lower-left
-    corner (\a left, \a bottom), upper-right corner (\a right, \a top),
-    and the specified \a nearPlane and \a farPlane clipping planes.
-
-    \sa frustum(), perspective()
-*/
-void QGLMatrixStack::ortho(qreal left, qreal right, qreal bottom, qreal top, qreal nearPlane, qreal farPlane)
-{
     if (!d->haveMatrix)
         this->top();
-    d->matrix.ortho(left, right, bottom, top, nearPlane, farPlane);
-    d->isDirty = true;
-}
-
-/*!
-    Multiplies the current matrix at the top of this matrix stack by another
-    that applies a perspective frustum projection for a window with
-    lower-left corner (\a left, \a bottom), upper-right corner
-    (\a right, \a top), and the specified \a nearPlane and \a farPlane clipping planes.
-
-    \sa ortho(), perspective()
-*/
-void QGLMatrixStack::frustum(qreal left, qreal right, qreal bottom, qreal top, qreal nearPlane, qreal farPlane)
-{
-    if (!d->haveMatrix)
-        this->top();
-    d->matrix.frustum(left, right, bottom, top, nearPlane, farPlane);
-    d->isDirty = true;
-}
-
-/*!
-    Multiplies the current matrix at the top of this matrix stack by another
-    that applies a perspective projection.  The field of view will be
-    \a angle degrees within a window with a given \a aspect ratio.
-    The projection will have the specified \a nearPlane and \a farPlane clipping planes.
-
-    The following example applies a perspective transformation to the
-    projection matrix:
-
-    \code
-    QGLPainter painter(this);
-    painter.projectionMatrix().perspective
-        (60.0f, painter.aspectRatio(), 5.0f, 1000.0f);
-    \endcode
-
-    \sa ortho(), frustum(), QGLPainter::aspectRatio()
-*/
-void QGLMatrixStack::perspective(qreal angle, qreal aspect, qreal nearPlane, qreal farPlane)
-{
-    if (!d->haveMatrix)
-        top();
-    d->matrix.perspective(angle, aspect, nearPlane, farPlane);
-    d->isDirty = true;
-}
-
-/*!
-    Multiplies the current matrix at the top of this matrix stack by another
-    that applies an \a eye position transformation.  The \a center value
-    indicates the center of the view that the \a eye is looking at.
-    The \a up value indicates which direction should be considered up
-    with respect to the \a eye.
-*/
-void QGLMatrixStack::lookAt(const QVector3D& eye, const QVector3D& center, const QVector3D& up)
-{
-    if (!d->haveMatrix)
-        top();
-    d->matrix.lookAt(eye, center, up);
+    d->matrix.ortho(rect.x(), rect.x() + rect.width(),
+                    rect.y() + rect.height(), rect.y(), nearPlane, farPlane);
     d->isDirty = true;
 }
 
