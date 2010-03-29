@@ -293,7 +293,7 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGL::Eye eye,
 
     // Adjust the blend options.  Set this before clearing to the
     // background color in case it involves transparency.
-    d->blendOptions.apply(painter);
+    d->blendOptions.apply();
 
     // Clear the background.
     bool depthCleared = false;
@@ -332,7 +332,7 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGL::Eye eye,
     // Clear the depth buffer and set the depth buffer options.
     if (!depthCleared)
         painter->clear(QGL::ClearDepthBuffer);
-    d->depthBufferOptions.apply(painter);
+    d->depthBufferOptions.apply();
 
     // Disable back face culling.
     painter->setCullFaces(QGL::CullDisabled);

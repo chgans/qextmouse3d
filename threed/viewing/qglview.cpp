@@ -477,8 +477,8 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+    d->depthBufferOptions.apply();
+    d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
     d->logLeave("QGLView::initializeGL");

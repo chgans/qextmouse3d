@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qgldepthbufferoptions.h"
-#include "qglpainter.h"
 #include <QtCore/qatomic.h>
 #include <QtOpenGL/qgl.h>
 
@@ -57,28 +56,24 @@ QT_BEGIN_NAMESPACE
     configuration at startup time that is applied when the application
     wants to change the actual GL depth buffer.
 
-    Options are applied to a QGLPainter using apply().  The following
-    example applies a normal depth buffer configuration with less-than
-    testing:
+    Options are applied to the current GL context using apply().  The
+    following example applies a normal depth buffer configuration with
+    less-than testing:
 
     \code
-    QGLPainter painter;
-
     QGLDepthBufferOptions options;
     options.setEnabled(true);
     options.setFunction(QGLDepthBufferOptions::Less);
-    options.apply(&painter);
+    options.apply();
     \endcode
 
     The standard GL defaults are depth testing off, less-than testing
     function, depth buffer writing enabled, and clipping planes 0 and 1.
-    These defaults can be explicitly set on a QGLPainter as follows:
+    These defaults can be explicitly set on the current GL context as follows:
 
     \code
-    QGLDepthBufferOptions().apply(&painter);
+    QGLDepthBufferOptions().apply();
     \endcode
-
-    \sa QGLPainter
 */
 
 /*!
@@ -369,13 +364,12 @@ bool QGLDepthBufferOptions::operator!=(const QGLDepthBufferOptions& other) const
 }
 
 /*!
-    Applies the depth buffer options in this object to \a painter.
-    This will reconfigure the actual depth buffer to match the
+    Applies the depth buffer options in this object to the current
+    GL context.  This will reconfigure the actual depth buffer to match the
     application's requirements.
 */
-void QGLDepthBufferOptions::apply(QGLPainter *painter) const
+void QGLDepthBufferOptions::apply() const
 {
-    Q_UNUSED(painter);  // Maybe use this to cache previous settings.
     if (d) {
         if (d->isEnabled)
             glEnable(GL_DEPTH_TEST);

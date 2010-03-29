@@ -357,8 +357,8 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     earlyDraw(&painter);
 
     // Set up the scene the way Qml3dView would if we were using it.
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+    d->depthBufferOptions.apply();
+    d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     if (d->camera) {
         painter.setCamera(d->camera);

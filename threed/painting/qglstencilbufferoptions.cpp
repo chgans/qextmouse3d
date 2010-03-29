@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglstencilbufferoptions.h"
-#include "qglpainter_p.h"
+#include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_NAMESPACE
@@ -56,31 +56,27 @@ QT_BEGIN_NAMESPACE
     configuration at startup time that is applied when the application
     wants to change the actual GL stencil buffer.
 
-    Options are applied to a QGLPainter using apply().  The following
-    example applies a stencil buffer configuration with less-than
-    testing on both front and back faces:
+    Options are applied to the current GL context using apply().
+    The following example applies a stencil buffer configuration
+    with less-than testing on both front and back faces:
 
     \code
-    QGLPainter painter;
-
     QGLStencilBufferOptions options;
     options.setEnabled(true);
     options.setFunction(QGLStencilBufferOptions::Less);
-    options.apply(&painter);
+    options.apply();
     \endcode
 
-    The standard GL defaults can be explicitly set on a QGLPainter
-    as follows:
+    The standard GL defaults can be explicitly set on the current
+    GL context as follows:
 
     \code
-    QGLStencilBufferOptions().apply(&painter);
+    QGLStencilBufferOptions().apply();
     \endcode
 
     Stencil properties can be set independently on front and back faces.
     Older systems may not support separated stencil modes.  On such systems,
     the front face properties will be used on both faces.
-
-    \sa QGLPainter
 */
 
 /*!
@@ -862,14 +858,59 @@ bool QGLStencilBufferOptions::operator!=
 #define GL_FRONT_AND_BACK 0x0408
 #endif
 
-/*!
-    Applies the stencil buffer options in this object to \a painter.
-    This will reconfigure the actual stencil buffer to match the
-    application's requirements.
-*/
-void QGLStencilBufferOptions::apply(QGLPainter *painter) const
+#if !defined(QT_OPENGL_ES)
+
+#ifndef Q_WS_MAC
+# ifndef APIENTRYP
+#   ifdef APIENTRY
+#     define APIENTRYP APIENTRY *
+#   else
+#     define APIENTRY
+#     define APIENTRYP *
+#   endif
+# endif
+#else
+# define APIENTRY
+# define APIENTRYP *
+#endif
+
+typedef void (APIENTRYP q_PFNGLSTENCILFUNCSEPARATEPROC) (GLenum face, GLenum func, GLint ref, GLuint mask);
+typedef void (APIENTRYP q_PFNGLSTENCILMASKSEPARATEPROC) (GLenum face, GLuint mask);
+typedef void (APIENTRYP q_PFNGLSTENCILOPSEPARATEPROC) (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
+
+class QGLStencilExtensions
 {
-    Q_UNUSED(painter);
+public:
+    QGLStencilExtensions()
+    {
+        stencilFuncSeparate = 0;
+        stencilMaskSeparate = 0;
+        stencilOpSeparate = 0;
+        stencilResolved = false;
+    }
+
+    q_PFNGLSTENCILFUNCSEPARATEPROC stencilFuncSeparate;
+    q_PFNGLSTENCILMASKSEPARATEPROC stencilMaskSeparate;
+    q_PFNGLSTENCILOPSEPARATEPROC stencilOpSeparate;
+    bool stencilResolved;
+};
+
+static void qt_stencil_funcs_free(void *data)
+{
+    delete reinterpret_cast<QGLStencilExtensions *>(data);
+}
+
+Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_stencil_funcs, (qt_stencil_funcs_free))
+
+#endif
+
+/*!
+    Applies the stencil buffer options in this object to the current
+    GL context.  This will reconfigure the actual stencil buffer to
+    match the application's requirements.
+*/
+void QGLStencilBufferOptions::apply() const
+{
     if (d) {
         if (d->isEnabled)
             glEnable(GL_STENCIL_TEST);
@@ -918,25 +959,31 @@ void QGLStencilBufferOptions::apply(QGLPainter *painter) const
                     (GLenum)(d->frontDepthFailAction),
                     (GLenum)(d->frontPassAction));
 #else
-        QGLPainterPrivate *pd = painter->d_ptr;
-        if (!pd || !pd->context)
+        const QGLContext *ctx = QGLContext::currentContext();
+        if (!ctx)
             return;
-        QGLPainterExtensions *extn = pd->extensions();
+        QGLStencilExtensions *extn =
+            reinterpret_cast<QGLStencilExtensions *>
+                (qt_stencil_funcs()->value(ctx));
+        if (!extn) {
+            extn = new QGLStencilExtensions();
+            qt_stencil_funcs()->insert(ctx, extn);
+        }
         if (!(extn->stencilResolved)) {
             extn->stencilResolved = true;
             if (!extn->stencilFuncSeparate) {
                 extn->stencilFuncSeparate = (q_PFNGLSTENCILFUNCSEPARATEPROC)
-                    pd->context->getProcAddress
+                    ctx->getProcAddress
                         (QLatin1String("glStencilFuncSeparate"));
             }
             if (!extn->stencilMaskSeparate) {
                 extn->stencilMaskSeparate = (q_PFNGLSTENCILMASKSEPARATEPROC)
-                    pd->context->getProcAddress
+                    ctx->getProcAddress
                         (QLatin1String("glStencilMaskSeparate"));
             }
             if (!extn->stencilOpSeparate) {
                 extn->stencilOpSeparate = (q_PFNGLSTENCILOPSEPARATEPROC)
-                    pd->context->getProcAddress
+                    ctx->getProcAddress
                         (QLatin1String("glStencilOpSeparate"));
             }
         }

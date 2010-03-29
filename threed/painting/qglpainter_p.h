@@ -75,15 +75,6 @@ QT_BEGIN_NAMESPACE
 # define APIENTRYP *
 #endif
 
-typedef void (APIENTRYP q_PFNGLSTENCILFUNCSEPARATEPROC) (GLenum face, GLenum func, GLint ref, GLuint mask);
-typedef void (APIENTRYP q_PFNGLSTENCILMASKSEPARATEPROC) (GLenum face, GLuint mask);
-typedef void (APIENTRYP q_PFNGLSTENCILOPSEPARATEPROC) (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
-
-typedef void (APIENTRYP q_PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-typedef void (APIENTRYP q_PFNGLBLENDEQUATIONPROC) (GLenum mode);
-typedef void (APIENTRYP q_PFNGLBLENDFUNCSEPARATEPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
-typedef void (APIENTRYP q_PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
-
 typedef void (APIENTRY *_glActiveTexture) (GLenum);
 typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
 
@@ -94,38 +85,12 @@ class QGLPainterExtensions
 public:
     QGLPainterExtensions()
     {
-#if !defined(QT_OPENGL_ES)
-        stencilFuncSeparate = 0;
-        stencilMaskSeparate = 0;
-        stencilOpSeparate = 0;
-        stencilResolved = false;
-
-        blendColor = 0;
-        blendFuncSeparate = 0;
-        blendEquation = 0;
-        blendEquationSeparate = 0;
-        blendResolved = false;
-#endif
-
         qt_glActiveTexture = 0;
         qt_glClientActiveTexture = 0;
         multiTextureResolved = false;
 
         vertexAttribPointer = 0;
     }
-
-#if !defined(QT_OPENGL_ES)
-    q_PFNGLSTENCILFUNCSEPARATEPROC stencilFuncSeparate;
-    q_PFNGLSTENCILMASKSEPARATEPROC stencilMaskSeparate;
-    q_PFNGLSTENCILOPSEPARATEPROC stencilOpSeparate;
-    bool stencilResolved;
-
-    q_PFNGLBLENDCOLORPROC blendColor;
-    q_PFNGLBLENDFUNCSEPARATEPROC blendFuncSeparate;
-    q_PFNGLBLENDEQUATIONPROC blendEquation;
-    q_PFNGLBLENDEQUATIONSEPARATEPROC blendEquationSeparate;
-    bool blendResolved;
-#endif
 
     _glActiveTexture qt_glActiveTexture;
     _glClientActiveTexture qt_glClientActiveTexture;

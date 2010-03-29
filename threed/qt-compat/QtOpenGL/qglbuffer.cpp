@@ -120,6 +120,20 @@ QT_BEGIN_NAMESPACE
 #define QGL_RESOLVE_BUFFER_FUNCS 1
 #endif
 
+#ifndef Q_WS_MAC
+# ifndef APIENTRYP
+#   ifdef APIENTRY
+#     define APIENTRYP APIENTRY *
+#   else
+#     define APIENTRY
+#     define APIENTRYP *
+#   endif
+# endif
+#else
+# define APIENTRY
+# define APIENTRYP *
+#endif
+
 typedef ptrdiff_t qGLsizeiptr;
 typedef ptrdiff_t qGLintptr;
 

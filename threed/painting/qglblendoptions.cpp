@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglblendoptions.h"
-#include "qglpainter_p.h"
+#include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_NAMESPACE
@@ -54,10 +54,8 @@ QT_BEGIN_NAMESPACE
 
     QGLBlendOptions is typically used to build a blend configuration at
     startup time that is applied when the application wants to change
-    the actual blending modes.  Options are applied to a QGLPainter
-    using apply().
-
-    \sa QGLPainter
+    the actual blending modes.  Options are applied to the current
+    GL context using apply().
 */
 
 /*!
@@ -523,50 +521,92 @@ bool QGLBlendOptions::operator!=(const QGLBlendOptions& other) const
 
 #if !defined(QT_OPENGL_ES)
 
-static QGLPainterExtensions *resolveBlendExtensions(QGLPainterPrivate *pd)
+#ifndef Q_WS_MAC
+# ifndef APIENTRYP
+#   ifdef APIENTRY
+#     define APIENTRYP APIENTRY *
+#   else
+#     define APIENTRY
+#     define APIENTRYP *
+#   endif
+# endif
+#else
+# define APIENTRY
+# define APIENTRYP *
+#endif
+
+typedef void (APIENTRYP q_PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+typedef void (APIENTRYP q_PFNGLBLENDEQUATIONPROC) (GLenum mode);
+typedef void (APIENTRYP q_PFNGLBLENDFUNCSEPARATEPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+typedef void (APIENTRYP q_PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
+
+class QGLBlendExtensions
 {
-    QGLPainterExtensions *extn = pd->extensions();
+public:
+    QGLBlendExtensions()
+    {
+        blendColor = 0;
+        blendFuncSeparate = 0;
+        blendEquation = 0;
+        blendEquationSeparate = 0;
+        blendResolved = false;
+    }
+
+    q_PFNGLBLENDCOLORPROC blendColor;
+    q_PFNGLBLENDFUNCSEPARATEPROC blendFuncSeparate;
+    q_PFNGLBLENDEQUATIONPROC blendEquation;
+    q_PFNGLBLENDEQUATIONSEPARATEPROC blendEquationSeparate;
+    bool blendResolved;
+};
+
+static void qt_blend_funcs_free(void *data)
+{
+    delete reinterpret_cast<QGLBlendExtensions *>(data);
+}
+
+Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_blend_funcs, (qt_blend_funcs_free))
+
+static QGLBlendExtensions *resolveBlendExtensions(const QGLContext *ctx)
+{
+    QGLBlendExtensions *extn =
+        reinterpret_cast<QGLBlendExtensions *>(qt_blend_funcs()->value(ctx));
+    if (!extn) {
+        extn = new QGLBlendExtensions();
+        qt_blend_funcs()->insert(ctx, extn);
+    }
     if (!(extn->blendResolved)) {
         extn->blendResolved = true;
         if (!extn->blendColor) {
             extn->blendColor = (q_PFNGLBLENDCOLORPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendColorEXT"));
+                ctx->getProcAddress(QLatin1String("glBlendColorEXT"));
         }
         if (!extn->blendColor) {
             extn->blendColor = (q_PFNGLBLENDCOLORPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendColor"));
+                ctx->getProcAddress(QLatin1String("glBlendColor"));
         }
         if (!extn->blendFuncSeparate) {
             extn->blendFuncSeparate = (q_PFNGLBLENDFUNCSEPARATEPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendFuncSeparateEXT"));
+                ctx->getProcAddress(QLatin1String("glBlendFuncSeparateEXT"));
         }
         if (!extn->blendFuncSeparate) {
             extn->blendFuncSeparate = (q_PFNGLBLENDFUNCSEPARATEPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendFuncSeparate"));
+                ctx->getProcAddress(QLatin1String("glBlendFuncSeparate"));
         }
         if (!extn->blendEquation) {
             extn->blendEquation = (q_PFNGLBLENDEQUATIONPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendEquationEXT"));
+                ctx->getProcAddress(QLatin1String("glBlendEquationEXT"));
         }
         if (!extn->blendEquation) {
             extn->blendEquation = (q_PFNGLBLENDEQUATIONPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendEquation"));
+                ctx->getProcAddress(QLatin1String("glBlendEquation"));
         }
         if (!extn->blendEquationSeparate) {
             extn->blendEquationSeparate = (q_PFNGLBLENDEQUATIONSEPARATEPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendEquationSeparateEXT"));
+                ctx->getProcAddress(QLatin1String("glBlendEquationSeparateEXT"));
         }
         if (!extn->blendEquationSeparate) {
             extn->blendEquationSeparate = (q_PFNGLBLENDEQUATIONSEPARATEPROC)
-                pd->context->getProcAddress
-                    (QLatin1String("glBlendEquationSeparate"));
+                ctx->getProcAddress(QLatin1String("glBlendEquationSeparate"));
         }
     }
     return extn;
@@ -575,13 +615,12 @@ static QGLPainterExtensions *resolveBlendExtensions(QGLPainterPrivate *pd)
 #endif
 
 /*!
-    Applies the blend options in this object to \a painter.
+    Applies the blend options in this object to the current GL context.
     This will reconfigure the actual blending modes to match the
     application's requirements.
 */
-void QGLBlendOptions::apply(QGLPainter *painter) const
+void QGLBlendOptions::apply() const
 {
-    Q_UNUSED(painter);
     if (d) {
         if (d->isEnabled)
             glEnable(GL_BLEND);
@@ -600,10 +639,10 @@ void QGLBlendOptions::apply(QGLPainter *painter) const
         glBlendFunc((GLenum)(d->sourceColorFactor),
                     (GLenum)(d->destinationColorFactor));
 #else
-        QGLPainterPrivate *pd = painter->d_ptr;
-        if (!pd || !pd->context)
+        const QGLContext *ctx = QGLContext::currentContext();
+        if (!ctx)
             return;
-        QGLPainterExtensions *extn = resolveBlendExtensions(pd);
+        QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
         if (extn->blendColor) {
             (*extn->blendColor)
                 (d->blendColor.redF(), d->blendColor.greenF(),
@@ -634,10 +673,10 @@ void QGLBlendOptions::apply(QGLPainter *painter) const
         glBlendEquation(GL_FUNC_ADD);
         glBlendColor(0.0f, 0.0f, 0.0f, 0.0f);
 #elif !defined(QT_OPENGL_ES)
-        QGLPainterPrivate *pd = painter->d_ptr;
-        if (!pd || !pd->context)
+        const QGLContext *ctx = QGLContext::currentContext();
+        if (!ctx)
             return;
-        QGLPainterExtensions *extn = resolveBlendExtensions(pd);
+        QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
         if (extn->blendEquation)
             (*extn->blendEquation)((GLenum)Add);
         if (extn->blendColor)

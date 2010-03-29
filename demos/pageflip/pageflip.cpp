@@ -180,7 +180,7 @@ void PageFlipView::initializeGL()
     blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
     blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.apply(&painter);
+    blendOptions.apply();
 
     if (vertical)
         pageFlipMath.setStartCorner(PageFlipMath::VerticalBottomRight);
