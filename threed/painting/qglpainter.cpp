@@ -1838,8 +1838,14 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 */
 void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
 {
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     update();
     checkRequiredFields();
+    if (d->boundIndexBuffer) {
+        QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d->boundIndexBuffer = 0;
+    }
     glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
 }
 
