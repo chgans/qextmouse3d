@@ -217,6 +217,18 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QGL::Eye
+    \since 4.7
+    This enum defines the eye that is being rendered by a QGLPainter
+    when stereo rendering is in effect.
+
+    \value NoEye Do not perform an eye adjustment on the camera because
+        stereo rendering is not in effect.
+    \value LeftEye Render the scene from the perspective of the left eye.
+    \value RightEye Render the scene from the perspective of the right eye.
+*/
+
+/*!
     \enum QGL::Smoothing
     \since 4.7
     \relates QGLDisplayList

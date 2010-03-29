@@ -464,7 +464,7 @@ void CubeView::paintGL(QGLPainter *painter)
     //camera.setCenter(sceneOrigin);
     camera.setEye(QVector3D(0.0f, 0.0f, viewDistance));
     camera.rotateCenter(camera.pan(mSpin));
-    camera.apply(painter);
+    painter->setCamera(&camera);
 
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(0.0f, mYax, 0.0f);

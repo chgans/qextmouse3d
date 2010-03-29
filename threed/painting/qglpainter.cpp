@@ -111,6 +111,7 @@ QGLPainterPrivate::QGLPainterPrivate()
       activePaintEngine(0),
       projectionMatrix(QGLMatrixStack::ProjectionMatrix),
       modelViewMatrix(QGLMatrixStack::ModelViewMatrix),
+      eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
       defaultLight0(0),
@@ -855,7 +856,11 @@ void QGLPainter::resetScissor()
 /*!
     Returns a reference to the projection matrix stack.
 
-    \sa modelViewMatrix(), combinedMatrix()
+    It is recommended that setCamera() be used to set the projection
+    matrix at the beginning of a scene rendering pass so that the
+    eye position can be adjusted for stereo.
+
+    \sa modelViewMatrix(), combinedMatrix(), setCamera()
 */
 QGLMatrixStack& QGLPainter::projectionMatrix()
 {
@@ -867,7 +872,7 @@ QGLMatrixStack& QGLPainter::projectionMatrix()
 /*!
     Returns a reference to the modelview matrix stack.
 
-    \sa projectionMatrix(), combinedMatrix(), normalMatrix()
+    \sa projectionMatrix(), combinedMatrix(), normalMatrix(), setCamera()
 */
 QGLMatrixStack& QGLPainter::modelViewMatrix()
 {
@@ -903,6 +908,57 @@ QGLMatrixStack& QGLPainter::modelViewMatrix()
     \sa modelViewMatrix(), combinedMatrix()
 */
 // Implemented in qglmatrixstack.cpp.
+
+/*!
+    Returns the camera eye that is currently being used for stereo
+    rendering.  The default is QGL::NoEye.
+
+    The eye is used to adjust the camera position by a small amount
+    when setCamera() is called.
+
+    \sa setEye(), setCamera()
+*/
+QGL::Eye QGLPainter::eye() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGL::NoEye);
+    return d->eye;
+}
+
+/*!
+    Sets the camera \a eye that is currently being used for stereo
+    rendering.
+
+    The \a eye is used to adjust the camera position by a small amount
+    when setCamera() is called.
+
+    \sa eye(), setCamera()
+*/
+void QGLPainter::setEye(QGL::Eye eye)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->eye = eye;
+}
+
+/*!
+    Sets the modelViewMatrix() and projectionMatrix() to the view
+    defined by \a camera.  If eye() is not QGL::NoEye, then the view
+    will be adjusted for the camera's eye separation.
+
+    This function is typically called at the beginning of a scene rendering
+    pass to initialize the modelview and projection matrices.
+
+    \sa eye(), modelViewMatrix(), projectionMatrix()
+*/
+void QGLPainter::setCamera(QGLCamera *camera)
+{
+    Q_ASSERT(camera);
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->modelViewMatrix = camera->modelViewMatrix(d->eye);
+    d->projectionMatrix = camera->projectionMatrix(aspectRatio());
+}
 
 /*!
     Returns true if \a point is visible within the current viewing volume.

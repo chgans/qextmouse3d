@@ -297,8 +297,6 @@ public:
     QVector3D motionAdjustment;
     QQuaternion motionQuaternion;
     bool adjustForAspectRatio;
-
-    void lookAt(QGLPainter *painter, const QVector3D& adjust) const;
 };
 
 QGLCameraPrivate::QGLCameraPrivate()
@@ -317,21 +315,6 @@ QGLCameraPrivate::QGLCameraPrivate()
       motionAdjustment(0.0f, 0.0f, 1.0f),
       adjustForAspectRatio(true)
 {
-}
-
-void QGLCameraPrivate::lookAt
-        (QGLPainter *painter, const QVector3D& adjust) const
-{
-    QMatrix4x4 m;
-    if (motionQuaternion.isIdentity()) {
-        m.lookAt(eye + adjust, center, upVector);
-    } else {
-        QVector3D up = motionQuaternion.rotatedVector(upVector);
-        QVector3D view = motionQuaternion.rotatedVector(viewVector - adjust);
-        QVector3D eye = center - view;
-        m.lookAt(eye, center, up);
-    }
-    painter->modelViewMatrix() *= m;
 }
 
 /*!
@@ -797,7 +780,7 @@ void QGLCamera::setEyeSeparation(qreal value)
     It is interpreted as a vector from the center of the screen to the
     current position of the viewer.  The angle between the motion
     adjustment vector and the screen center is used to adjust the
-    position of the eye() when apply() is called.
+    position of the eye() when modelViewMatrix() is called.
 
     The default value is (0, 0, 1), which indicates a viewer
     directly in front of the center of the screen.
@@ -814,7 +797,7 @@ void QGLCamera::setEyeSeparation(qreal value)
     cleaning up the signal and removing these fluctuations before
     altering this property.
 
-    \sa eye(), apply()
+    \sa eye(), modelViewMatrix()
 */
 
 QVector3D QGLCamera::motionAdjustment() const
@@ -992,7 +975,7 @@ QVector3D QGLCamera::translation(qreal x, qreal y, qreal z) const
     the window is wider than it is high.  An \a aspectRatio less than 1
     indicates that the window is higher than it is wide.
 
-    \sa apply(), modelViewMatrix()
+    \sa modelViewMatrix()
 */
 QMatrix4x4 QGLCamera::projectionMatrix(qreal aspectRatio) const
 {
@@ -1031,77 +1014,31 @@ QMatrix4x4 QGLCamera::projectionMatrix(qreal aspectRatio) const
 
 /*!
     Returns the transformation to apply to the modelview matrix
-    to present the scene as viewed from the eye() position.
+    to present the scene as viewed from the eye position.
 
-    \sa apply(), projectionMatrix()
+    The \a eye parameter is used to adjust the camera's position
+    horizontally by half of eyeSeparation() if \a eye is QGL::LeftEye
+    or QGL::RightEye.
+
+    \sa projectionMatrix()
 */
-QMatrix4x4 QGLCamera::modelViewMatrix() const
+QMatrix4x4 QGLCamera::modelViewMatrix(QGL::Eye eye) const
 {
     Q_D(const QGLCamera);
     QMatrix4x4 m;
+    QVector3D adjust;
+    if (eye == QGL::LeftEye)
+        adjust = translation(-d->eyeSeparation / 2.0f, 0.0f, 0.0f);
+    else if (eye == QGL::RightEye)
+        adjust = translation(d->eyeSeparation / 2.0f, 0.0f, 0.0f);
     if (d->motionQuaternion.isIdentity()) {
-        m.lookAt(d->eye, d->center, d->upVector);
+        m.lookAt(d->eye + adjust, d->center, d->upVector);
     } else {
         QVector3D up = d->motionQuaternion.rotatedVector(d->upVector);
         QVector3D view = d->motionQuaternion.rotatedVector(d->viewVector);
-        QVector3D eye = d->center - view;
-        m.lookAt(eye, d->center, up);
+        m.lookAt(d->center - view + adjust, d->center, up);
     }
     return m;
-}
-
-/*!
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter.
-
-    \sa projectionMatrix(), modelViewMatrix()
-*/
-void QGLCamera::apply(QGLPainter *painter) const
-{
-    Q_D(const QGLCamera);
-    painter->projectionMatrix() = projectionMatrix(painter->aspectRatio());
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, QVector3D(0, 0, 0));
-}
-
-/*!
-    \overload
-
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter using the aspect ratio of \a viewportSize.
-
-    \sa projectionMatrix(), modelViewMatrix()
-*/
-void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize) const
-{
-    Q_D(const QGLCamera);
-    painter->projectionMatrix() =
-        projectionMatrix(painter->aspectRatio(viewportSize));
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, QVector3D(0, 0, 0));
-}
-
-/*!
-    \overload
-
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter using the aspect ratio of \a viewportSize.
-
-    Before the modelViewMatrix() is applied, the eye() will be temporarily
-    adjusted by \a eyeAdjust.  This is typically used to implement stereo
-    viewing where eye() specifies the center between the actual
-    left and right eye positions.
-
-    \sa projectionMatrix(), modelViewMatrix()
-*/
-void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize,
-                      const QVector3D& eyeAdjust) const
-{
-    Q_D(const QGLCamera);
-    painter->projectionMatrix() =
-        projectionMatrix(painter->aspectRatio(viewportSize));
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, eyeAdjust);
 }
 
 /*!

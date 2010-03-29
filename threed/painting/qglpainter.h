@@ -129,6 +129,11 @@ public:
     QMatrix4x4 combinedMatrix() const;
     QMatrix3x3 normalMatrix() const;
 
+    QGL::Eye eye() const;
+    void setEye(QGL::Eye eye);
+
+    void setCamera(QGLCamera *camera);
+
     bool isVisible(const QVector3D& point) const;
     bool isVisible(const QBox3D& box) const;
 

@@ -286,7 +286,7 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->modelViewMatrix().push();
 
     painter->setViewport(rect);
-    camera.apply(painter, rect.size());
+    painter->setCamera(&camera);
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
     cube.draw(painter);
@@ -307,7 +307,7 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->modelViewMatrix().push();
 
     painter->setViewport(rect);
-    camera.apply(painter, rect.size());
+    painter->setCamera(&camera);
 
     // Need a one-sided lighting model for the teapot.
     painter->setLightModel(&oneSidedModel);

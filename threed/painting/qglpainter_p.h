@@ -208,6 +208,7 @@ public:
     QPaintEngineEx *activePaintEngine;
     QGLMatrixStack projectionMatrix;
     QGLMatrixStack modelViewMatrix;
+    QGL::Eye eye;
     QGLAbstractEffect *effect;
     QGLAbstractEffect *userEffect;
     QGL::StandardEffect standardEffect;

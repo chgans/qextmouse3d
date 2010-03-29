@@ -43,6 +43,7 @@
 #define QGLCAMERA_H
 
 #include "qt3dglobal.h"
+#include "qglnamespace.h"
 #include <QtCore/qobject.h>
 #include <QtCore/qsize.h>
 #include <QtGui/qvector3d.h>
@@ -157,11 +158,7 @@ public:
     void translateCenter(const QVector3D& vector);
 
     QMatrix4x4 projectionMatrix(qreal aspectRatio) const;
-    QMatrix4x4 modelViewMatrix() const;
-
-    void apply(QGLPainter *painter) const;
-    void apply(QGLPainter *painter, const QSize& viewportSize) const;
-    void apply(QGLPainter *painter, const QSize& viewportSize, const QVector3D& eyeAdjust) const;
+    QMatrix4x4 modelViewMatrix(QGL::Eye eye = QGL::NoEye) const;
 
     QVector3D mapPoint
         (const QPoint& point, qreal aspectRatio,

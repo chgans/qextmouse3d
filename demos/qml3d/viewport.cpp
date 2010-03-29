@@ -361,10 +361,10 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     d->blendOptions.apply(&painter);
     painter.setCullFaces(QGL::CullDisabled);
     if (d->camera) {
-        d->camera->apply(&painter, QSize(width(), height()));
+        painter.setCamera(d->camera);
     } else {
         QGLCamera defCamera;
-        defCamera.apply(&painter, QSize(width(), height()));
+        painter.setCamera(&defCamera);
     }
 
     // Draw the Item3d children.

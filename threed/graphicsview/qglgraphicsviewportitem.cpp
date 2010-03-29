@@ -465,7 +465,8 @@ void QGLGraphicsViewportItem::paint
     d->depthBufferOptions.apply(&glpainter);
 
     // Apply the camera.
-    d->camera->apply(&glpainter, viewport.size());
+    glpainter.setEye(QGL::NoEye);
+    glpainter.setCamera(d->camera);
 
     // Paint the GL contents.
     paintGL(&glpainter);

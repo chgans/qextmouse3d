@@ -159,7 +159,7 @@ void CubeView::paintGL(QGLPainter *painter)
 
     painter->setFaceColor(QGL::AllFaces, QColor(255, 0, 0));
     painter->setStandardEffect(QGL::LitMaterial);
-    roomCamera->apply(painter);
+    painter->setCamera(roomCamera);
     painter->setLightModel(roomModel);
     room.draw(painter);
 

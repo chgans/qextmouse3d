@@ -81,14 +81,7 @@ public:
     QColor backgroundColor() const;
     void setBackgroundColor(const QColor& color);
 
-    enum Eye
-    {
-        NoEye,
-        LeftEye,
-        RightEye
-    };
-
-    virtual void prepareGL(QGLPainter *painter, QGLViewport::Eye eye,
+    virtual void prepareGL(QGLPainter *painter, QGL::Eye eye,
                            QPaintDevice *window, const QRect &windowRect);
     virtual void paintGL(QGLPainter *painter) = 0;
     virtual bool needsPickUpdate();
