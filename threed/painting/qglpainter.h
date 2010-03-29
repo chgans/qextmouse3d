@@ -163,7 +163,6 @@ public:
     void setCommonNormal(const QVector3D& value);
 
     int textureUnitCount() const;
-    bool isTextureUnitActive(int unit = 0) const;
 
     void setTexture(int unit, const QGLTexture2D *texture);
     void setTexture(int unit, const QGLTextureCube *texture);

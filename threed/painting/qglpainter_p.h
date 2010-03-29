@@ -55,7 +55,6 @@
 
 #include "qglpainter.h"
 #include <QtCore/qatomic.h>
-#include <QtCore/qbitarray.h>
 #include <QtCore/qmap.h>
 #include <QtGui/private/qpaintengineex_p.h>
 #include <QtOpenGL/private/qglextensions_p.h>
@@ -174,7 +173,6 @@ public:
     QGLPainterExtensions *extensionFuncs;
 #endif
     int textureUnitCount;
-    QBitArray texturesInUse;
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
     const QGLLightParameters *lights[QGL_MAX_LIGHTS];

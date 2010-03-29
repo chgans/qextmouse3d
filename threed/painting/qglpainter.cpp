@@ -141,7 +141,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     extensionFuncs = 0;
 #endif
     textureUnitCount = 0;
-    texturesInUse = QBitArray(8);
 
     memset(lights, 0, sizeof(lights));
     enabledLights = 0;
@@ -1612,7 +1611,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
     Returns the number of texture units associated with the
     current GL context.
 
-    \sa setTexture(), isTextureUnitActive()
+    \sa setTexture()
 */
 int QGLPainter::textureUnitCount() const
 {
@@ -1637,28 +1636,10 @@ int QGLPainter::textureUnitCount() const
 }
 
 /*!
-    Returns true if the specified texture \a unit is active;
-    false otherwise.  To activate a texture unit, call setTexture()
-    with a non-null texture object.  To deactivate a texture unit,
-    call setTexture() with a null texture object.
-
-    \sa setTexture(), textureUnitCount()
-*/
-bool QGLPainter::isTextureUnitActive(int unit) const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    if (unit < 0 || unit >= d->texturesInUse.size())
-        return false;
-    else
-        return d->texturesInUse[unit];
-}
-
-/*!
     Sets a texture \a unit to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 {
@@ -1671,11 +1652,6 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     QGLPAINTER_CHECK_PRIVATE();
     if (unit < 0)
         return;
-
-    // Record whether this texture unit is in use or not.
-    if (unit >= d->texturesInUse.size())
-        d->texturesInUse.resize(unit + 1);
-    d->texturesInUse[unit] = (texture != 0);
 
     // Select the texture unit and bind the texture.
 #if defined(QT_OPENGL_ES)
@@ -1712,7 +1688,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     Sets a texture \a unit to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 {
@@ -1720,11 +1696,6 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     QGLPAINTER_CHECK_PRIVATE();
     if (unit < 0)
         return;
-
-    // Record whether this texture unit is in use or not.
-    if (unit >= d->texturesInUse.size())
-        d->texturesInUse.resize(unit + 1);
-    d->texturesInUse[unit] = (texture != 0);
 
     // Select the texture unit and bind the texture.
 #if defined(QT_OPENGL_ES)
@@ -1763,7 +1734,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     Sets texture unit 0 to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 
 /*!
@@ -1772,7 +1743,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     Sets texture unit 0 to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 
 /*!
