@@ -1130,44 +1130,18 @@ QVector4D QGLPainter::unproject
 }
 
 /*!
-    Returns the aspect ratio of the underlying device (usually a window),
-    for adjusting projection transformations.
+    Returns the aspect ratio of the viewport() for adjusting projection
+    transformations.
 */
 qreal QGLPainter::aspectRatio() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
 
-    // Get the size of the underlying paint device.
-    QPaintDevice *device = d->context->device();
-    int width = device->width();
-    int height = device->height();
-    if (width == 0 || height == 0 || width == height)
-        return 1.0f;
-
-    // Use the device's DPI setting to determine the pixel aspect ratio.
-    int dpiX = device->logicalDpiX();
-    int dpiY = device->logicalDpiY();
-    if (dpiX <= 0 || dpiY <= 0)
-        dpiX = dpiY = 1;
-
-    // Return the final aspect ratio based on window and pixel size.
-    return ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
-}
-
-/*!
-    Returns the aspect ratio for a viewport of size \a viewportSize,
-    accounting for the DPI of the underlying device.
-*/
-qreal QGLPainter::aspectRatio(const QSize& viewportSize) const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
-
-    // Get the size of the underlying paint device.
-    int width = viewportSize.width();
-    int height = viewportSize.height();
-    if (width <= 0 || height <= 0 || width == height)
+    // Get the size of the current viewport.
+    QSize size = viewport().size();
+    if (size.width() == 0 || size.height() == 0 ||
+            size.width() == size.height())
         return 1.0f;
 
     // Use the device's DPI setting to determine the pixel aspect ratio.
@@ -1177,8 +1151,8 @@ qreal QGLPainter::aspectRatio(const QSize& viewportSize) const
     if (dpiX <= 0 || dpiY <= 0)
         dpiX = dpiY = 1;
 
-    // Return the final aspect ratio based on window and pixel size.
-    return ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
+    // Return the final aspect ratio based on viewport and pixel size.
+    return ((qreal)(size.width() * dpiY)) / ((qreal)(size.height() * dpiX));
 }
 
 /*!

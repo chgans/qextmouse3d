@@ -143,7 +143,6 @@ public:
                         qreal farPlane, bool *ok = 0) const;
 
     qreal aspectRatio() const;
-    qreal aspectRatio(const QSize& viewportSize) const;
 
     QGLAbstractEffect *effect() const;
 
