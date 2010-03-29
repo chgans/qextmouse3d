@@ -75,30 +75,9 @@ QT_BEGIN_NAMESPACE
 # define APIENTRYP *
 #endif
 
-typedef void (APIENTRY *_glActiveTexture) (GLenum);
-typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
-
+#if QT_VERSION < 0x040700
 typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
-
-class QGLPainterExtensions
-{
-public:
-    QGLPainterExtensions()
-    {
-        qt_glActiveTexture = 0;
-        qt_glClientActiveTexture = 0;
-        multiTextureResolved = false;
-
-        vertexAttribPointer = 0;
-    }
-
-    _glActiveTexture qt_glActiveTexture;
-    _glClientActiveTexture qt_glClientActiveTexture;
-    bool multiTextureResolved;
-
-    q_glVertexAttribPointer vertexAttribPointer;
-};
-
+#endif
 
 #define QGL_MAX_LIGHTS      32
 #define QGL_MAX_STD_EFFECTS 16
@@ -134,9 +113,6 @@ public:
     QGLAbstractEffect *userEffect;
     QGL::StandardEffect standardEffect;
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
-#ifdef Q_WS_WIN
-    QGLPainterExtensions *extensionFuncs;
-#endif
     int textureUnitCount;
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
@@ -162,37 +138,9 @@ public:
     QList<QGLFramebufferObject *> surfaceStack;
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
-
-    QGLPainterExtensions *extensions();    
-
-    QGLPainterExtensions *resolveMultiTextureExtensions()
-    {
-        QGLPainterExtensions *extn = extensions();
-        if (!(extn->multiTextureResolved)) {
-            extn->multiTextureResolved = true;
-            if (!extn->qt_glActiveTexture) {
-                extn->qt_glActiveTexture = (_glActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glActiveTexture"));
-            }
-            if (!extn->qt_glActiveTexture) {
-                extn->qt_glActiveTexture = (_glActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glActiveTextureARB"));
-            }
-            if (!extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glClientActiveTexture"));
-            }
-            if (!extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glClientActiveTextureARB"));
-            }
-        }
-        return extn;
-    }
+#if QT_VERSION < 0x040700
+    q_glVertexAttribPointer vertexAttribPointer;
+#endif
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }

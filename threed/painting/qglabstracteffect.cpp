@@ -468,9 +468,8 @@ void QGLAbstractEffect::setAttributeArray
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
         return;
-    QGLPainterPrivate *painter =
+    QGLPainterPrivate *extensions =
         QGLPainterPrivateCache::instance()->fromContext(ctx);
-    QGLPainterExtensions *extensions = painter->extensions();
     if (!extensions->vertexAttribPointer) {
         extensions->vertexAttribPointer = (q_glVertexAttribPointer)
             ctx->getProcAddress(QLatin1String("glVertexAttribPointer"));
