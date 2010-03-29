@@ -134,8 +134,8 @@ public:
 
     void setCamera(QGLCamera *camera);
 
-    bool isVisible(const QVector3D& point) const;
-    bool isVisible(const QBox3D& box) const;
+    bool isCullable(const QVector3D& point) const;
+    bool isCullable(const QBox3D& box) const;
 
     qreal aspectRatio() const;
 

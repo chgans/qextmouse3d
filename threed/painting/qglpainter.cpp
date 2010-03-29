@@ -961,29 +961,29 @@ void QGLPainter::setCamera(QGLCamera *camera)
 }
 
 /*!
-    Returns true if \a point is visible within the current viewing volume.
+    Returns true if \a point is outside the current viewing volume.
     This is used to perform object culling checks.
 */
-bool QGLPainter::isVisible(const QVector3D& point) const
+bool QGLPainter::isCullable(const QVector3D& point) const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
     QVector3D projected = d->modelViewMatrix * point;
     projected = d->projectionMatrix * point;
-    return d->viewingCube.contains(projected);
+    return !d->viewingCube.contains(projected);
 }
 
 /*!
-    Returns true if \a box is completely or partially visible within the
-    current viewing volume.  This is used to perform object culling checks.
+    Returns true if \a box is completely outside the current viewing volume.
+    This is used to perform object culling checks.
 */
-bool QGLPainter::isVisible(const QBox3D& box) const
+bool QGLPainter::isCullable(const QBox3D& box) const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
     QBox3D projected = box.transformed
         (d->projectionMatrix * d->modelViewMatrix);
-    return d->viewingCube.intersects(projected);
+    return !d->viewingCube.intersects(projected);
 }
 
 /*!
