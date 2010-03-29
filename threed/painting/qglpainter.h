@@ -137,11 +137,6 @@ public:
     bool isVisible(const QVector3D& point) const;
     bool isVisible(const QBox3D& box) const;
 
-    QVector3D project(const QVector3D& point, bool *ok = 0) const;
-    QVector3D unproject(const QVector3D& point, bool *ok = 0) const;
-    QVector4D unproject(const QVector4D& point, qreal nearPlane,
-                        qreal farPlane, bool *ok = 0) const;
-
     qreal aspectRatio() const;
 
     QGLAbstractEffect *effect() const;
