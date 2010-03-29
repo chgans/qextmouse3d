@@ -139,7 +139,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     memset(stdeffects, 0, sizeof(stdeffects));
 #ifdef Q_WS_WIN
     extensionFuncs = 0;
-    shaderExtensionFuncs = 0;
 #endif
     textureUnitCount = 0;
     texturesInUse = QBitArray(8);
@@ -147,7 +146,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     memset(lights, 0, sizeof(lights));
     enabledLights = 0;
     maxLights = 0;
-    currentBufferId = 0;
 }
 
 QGLPainterPrivate::~QGLPainterPrivate()
@@ -160,7 +158,6 @@ QGLPainterPrivate::~QGLPainterPrivate()
     delete backColorMaterial;
 #ifdef Q_WS_WIN
     delete extensionFuncs;
-    delete shaderExtensionFuncs;
 #endif
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];

@@ -195,8 +195,6 @@ public:
     QGLAbstractEffect *defaultPickEffect;
 };
 
-struct QGLShaderExtensionFuncs;
-
 class QGLPainterPrivate
 {
 public:
@@ -215,7 +213,6 @@ public:
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
 #ifdef Q_WS_WIN
     QGLPainterExtensions *extensionFuncs;
-    QGLShaderExtensionFuncs *shaderExtensionFuncs;
 #endif
     int textureUnitCount;
     QBitArray texturesInUse;
@@ -238,7 +235,6 @@ public:
     QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
-    GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
     QList<QGLFramebufferObject *> surfaceStack;
