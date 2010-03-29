@@ -90,6 +90,8 @@ QT_BEGIN_NAMESPACE
     \value UpdateColor The color has been updated.
     \value UpdateModelViewMatrix The modelview matrix has been updated.
     \value UpdateProjectionMatrix The projection matrix has been updated.
+    \value UpdateMatrices The combination of UpdateModelViewMatrix and
+           UpdateProjectionMatrix.
     \value UpdateLights The lights have been updated.
     \value UpdateMaterials The material parameters have been updated.
     \value UpdateFog The fog parameters have been updated.

@@ -433,10 +433,8 @@ void PageFlipGradientEffect::setActive(QGLPainter *painter, bool flag)
 void PageFlipGradientEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0)
         program->setUniformValue(matrixUniform, painter->combinedMatrix());
-    }
 }
 
 void PageFlipGradientEffect::setVertexAttribute

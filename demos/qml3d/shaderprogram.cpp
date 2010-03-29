@@ -212,8 +212,7 @@ void ShaderProgramEffect::update
     (QGLPainter *painter, QGLPainter::Updates updates)
 {
     // Update the matrix uniforms.
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         if (matrixUniform != -1)
             program->setUniformValue(matrixUniform, painter->combinedMatrix());
         if (modelViewMatrixUniform != -1)

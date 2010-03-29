@@ -251,8 +251,7 @@ void QGLLitMaterialEffect::update
 #else
     Q_D(QGLLitMaterialEffect);
     QGLShaderProgram *program = d->program;
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
         program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
         program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());

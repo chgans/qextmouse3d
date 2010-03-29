@@ -98,6 +98,7 @@ public:
         UpdateColor                 = 0x00000001,
         UpdateModelViewMatrix       = 0x00000002,
         UpdateProjectionMatrix      = 0x00000004,
+        UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
         UpdateFog                   = 0x00000020,

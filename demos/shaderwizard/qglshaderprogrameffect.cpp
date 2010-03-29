@@ -323,8 +323,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         else
             program()->setUniformValue("color", painter->color());
     }
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
         program()->setUniformValue("matrix", proj * mv);

@@ -131,8 +131,7 @@ void PerPixelEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
     // Update the matrix uniforms.
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
         d->program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
         d->program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());

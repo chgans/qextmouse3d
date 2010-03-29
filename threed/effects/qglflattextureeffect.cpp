@@ -198,8 +198,7 @@ void QGLFlatTextureEffect::update
     Q_UNUSED(updates);
 #else
     Q_D(QGLFlatTextureEffect);
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }
@@ -334,8 +333,7 @@ void QGLFlatDecalTextureEffect::update
     Q_D(QGLFlatDecalTextureEffect);
     if ((updates & QGLPainter::UpdateColor) != 0)
         d->program->setUniformValue(d->colorUniform, painter->color());
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }

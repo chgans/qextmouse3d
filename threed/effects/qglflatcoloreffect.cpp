@@ -190,8 +190,7 @@ void QGLFlatColorEffect::update
         else
             d->program->setUniformValue(d->colorUniform, painter->color());
     }
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
         d->program->setUniformValue(d->matrixUniform, proj * mv);
@@ -334,8 +333,7 @@ void QGLPerVertexColorEffect::update
 #else
     Q_UNUSED(painter);
     Q_D(QGLPerVertexColorEffect);
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }
