@@ -63,7 +63,6 @@ PlanetView::PlanetView(QWidget *parent)
 
 void PlanetView::initializeGL(QGLPainter *painter)
 {
-    painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
 
     sun = list.newNode();

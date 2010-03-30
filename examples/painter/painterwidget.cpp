@@ -49,9 +49,6 @@ void PainterWidget::initializeGL()
     // Turn on depth testing.
     painter.setDepthTestingEnabled(true);
 
-    // Turn on a light for LitMaterial effects.
-    painter.setLightEnabled(0, true);
-
     // Create the cube object for later.
     cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);

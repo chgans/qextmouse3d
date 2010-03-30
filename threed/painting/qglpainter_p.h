@@ -116,12 +116,9 @@ public:
     int textureUnitCount;
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
-    const QGLLightParameters *lights[QGL_MAX_LIGHTS];
-    QMatrix4x4 lightTransforms[QGL_MAX_LIGHTS];
-    QGLLightParameters *defaultLight0;
-    QGLLightParameters *defaultLight1;
-    int enabledLights;
-    int maxLights;
+    const QGLLightParameters *mainLight;
+    QMatrix4x4 mainLightTransform;
+    QGLLightParameters *defaultLight;
     const QGLMaterial *frontMaterial;
     const QGLMaterial *backMaterial;
     QGLMaterial *defaultMaterial;

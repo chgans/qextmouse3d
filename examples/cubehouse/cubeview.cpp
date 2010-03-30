@@ -143,10 +143,9 @@ void CubeView::initializeGL(QGLPainter *painter)
 
     normalModel = new QGLLightModel(this);
 
-    painter->setLightEnabled(0, true);
     QGLLightParameters *light = new QGLLightParameters(this);
     light->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
-    painter->setLightParameters(0, light);
+    painter->setMainLight(light);
 
     QImage textureImage(":/qtlogo.png");
     texture.setImage(textureImage);

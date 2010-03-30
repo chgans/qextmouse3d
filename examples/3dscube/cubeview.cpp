@@ -407,8 +407,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     painter->setLightModel(mLightModel);
 
     mLightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
-    painter->setLightParameters(0, mLightParameters);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(mLightParameters);
 
     connect(mTimer, SIGNAL(timeout()), this, SLOT(animate()));
     mTimer->start(25);

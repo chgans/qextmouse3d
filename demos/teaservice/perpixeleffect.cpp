@@ -142,17 +142,8 @@ void PerPixelEffect::update
         return;
 
     // Find the parameters for the single enabled light.
-    const QGLLightParameters *lparams = 0;
-    QMatrix4x4 ltransform;
-    for (int index = 0; index < painter->lightCount(); ++index) {
-        if (painter->isLightEnabled(index)) {
-            lparams = painter->lightParameters(index);
-            ltransform = painter->lightTransform(index);
-            break;
-        }
-    }
-    if (!lparams)
-        lparams = painter->lightParameters(0);
+    const QGLLightParameters *lparams = painter->mainLight();
+    QMatrix4x4 ltransform = painter->mainLightTransform();
 
     // Get the front material parameters.
     const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);

@@ -64,10 +64,9 @@
     \skipuntil [initialize]
     \printto [create-display-list]
 
-    The first line turns on light 0 using the default settings from
-    QGLLightParameters.  The second line selects a standard rendering
+    The first line of the function selects a standard rendering
     effect that lights material colors with the default OpenGL
-    two-sided lighting algorithm.
+    two-sided lighting algorithm and the default light.
 
     The \c{teapot} member variable is an instance of QGLDisplayList.
     We load the standard geometry for the teapot into this display list

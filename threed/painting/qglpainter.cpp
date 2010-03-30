@@ -112,8 +112,8 @@ QGLPainterPrivate::QGLPainterPrivate()
       eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
-      defaultLight0(0),
-      defaultLight1(0),
+      mainLight(0),
+      defaultLight(0),
       frontMaterial(0),
       backMaterial(0),
       defaultMaterial(0),
@@ -140,17 +140,12 @@ QGLPainterPrivate::QGLPainterPrivate()
     extensionFuncs = 0;
 #endif
     textureUnitCount = 0;
-
-    memset(lights, 0, sizeof(lights));
-    enabledLights = 0;
-    maxLights = 0;
 }
 
 QGLPainterPrivate::~QGLPainterPrivate()
 {
     delete defaultLightModel;
-    delete defaultLight0;
-    delete defaultLight1;
+    delete defaultLight;
     delete defaultMaterial;
     delete frontColorMaterial;
     delete backColorMaterial;
@@ -2042,209 +2037,100 @@ void QGLPainter::setLightModel(const QGLLightModel *value)
 }
 
 /*!
-    Returns the total number of lights that are supported by the OpenGL
-    implementation, whether they are enabled or not.  The returned value
-    will be zero before begin() is called.
+    Returns the parameters for the main light in the scene.
 
-    \sa isLightEnabled()
+    The light parameters are specified in world co-ordinates at
+    the point when setMainLight() was called.  The mainLightTransform()
+    must be applied to obtain eye co-ordinates.
+
+    \sa setMainLight(), mainLightTransform()
 */
-int QGLPainter::lightCount() const
+const QGLLightParameters *QGLPainter::mainLight() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    if (!d->maxLights) {
-#if defined(GL_LIGHTING) && defined(GL_MAX_LIGHTS)
-        d->maxLights = 8;
-        glGetIntegerv(GL_MAX_LIGHTS, &d->maxLights);
-        if (d->maxLights >= QGL_MAX_LIGHTS)
-            d->maxLights = QGL_MAX_LIGHTS;
-#else
-        d->maxLights = 8;
-#endif
+    if (!d->mainLight) {
+        if (!d->defaultLight)
+            d->defaultLight = new QGLLightParameters();
+        return d->defaultLight;
+    } else {
+        return d->mainLight;
     }
-    return d->maxLights;
 }
 
 /*!
-    Returns true if there are enabled lights in this painter.
+    Sets the \a parameters for the main light in the scene.
+    The mainLightTransform() is set to the current modelViewMatrix().
 
-    \sa isLightEnabled()
-*/
-bool QGLPainter::hasEnabledLights() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    return (d->enabledLights != 0);
-}
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The mainLightTransform() specifies the transformation to apply to
+    convert the world co-ordinates into eye co-ordinates when the light
+    is used.
 
-/*!
-    Returns true if light \a number has been enabled.
-
-    \sa setLightEnabled(), lightCount(), lightParameters(), hasEnabledLights()
-*/
-bool QGLPainter::isLightEnabled(int number) const
-{
-    Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights)
-        return (d->enabledLights & (1 << number)) != 0;
-    else
-        return false;
-}
-
-/*!
-    Sets the enable state for light \a number to \a value.  The function
-    call will be ignored if \a number is out of range.
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
 
     The light settings in the GL server will not be changed until
-    update() is called.  At that time, the \c{GL_LIGHTn} property
-    will be enabled, but not \c{GL_LIGHTING}.  The effect() is
-    responsible for enabling \c{GL_LIGHTING} if it supports lights.
+    update() is called.
 
-    \sa isLightEnabled(), lightCount(), setLightParameters()
+    If \a parameters is null, then mainLight() will be set to a
+    default internal light object.
+
+    \sa mainLight(), mainLightTransform()
 */
-void QGLPainter::setLightEnabled(int number, bool value) const
+void QGLPainter::setMainLight(QGLLightParameters *parameters)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        if (value)
-            d->enabledLights |= (1 << number);
-        else
-            d->enabledLights &= ~(1 << number);
-        d->updates |= QGLPainter::UpdateLights;
-    }
+    d->mainLight = parameters;
+    d->mainLightTransform = modelViewMatrix();
+    d->updates |= QGLPainter::UpdateLights;
 }
 
 /*!
-    Returns the parameters for light \a number.  If \a number is out
-    of range, a default QGLLightParameters object will be returned.
+    Sets the \a parameters for the main light in the scene, and set
+    mainLightTransform() to \a transform.
 
-    The light parameters are specified in world co-ordinates at
-    the point when setLightParameters() was called for light \a number.
-    The lightTransform() for light \a number must be applied to
-    obtain eye co-ordinates.
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The \a transform specifies the transformation to apply to convert the
+    world co-ordinates into eye co-ordinates when the light is used.
 
-    Note: the default diffuse and specular color for light 0 is
-    white, and the default diffuse and specular color for other
-    lights is black.  All other defaults are as defined in the
-    QGLLightParameters class.
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
 
-    \sa lightTransform(), setLightParameters(), isLightEnabled()
+    The light settings in the GL server will not be changed until
+    update() is called.
+
+    If \a parameters is null, then mainLight() will be set to a
+    default internal light object.
+
+    \sa mainLight(), mainLightTransform()
 */
-const QGLLightParameters *QGLPainter::lightParameters(int number) const
+void QGLPainter::setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform)
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLLightParameters());
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        if (d->lights[number])
-            return d->lights[number];
-    }
-    if (number == 0) {
-        if (!d->defaultLight0)
-            d->defaultLight0 = new QGLLightParameters();
-        return d->defaultLight0;
-    } else {
-        if (!d->defaultLight1) {
-            d->defaultLight1 = new QGLLightParameters();
-            d->defaultLight1->setDiffuseColor(QColor(0, 0, 0, 255));
-            d->defaultLight1->setSpecularColor(QColor(0, 0, 0, 255));
-        }
-        return d->defaultLight1;
-    }
+    QGLPAINTER_CHECK_PRIVATE();
+    d->mainLight = parameters;
+    d->mainLightTransform = transform;
+    d->updates |= QGLPainter::UpdateLights;
 }
 
 /*!
-    Returns the modelview transformation matrix for light \a number that
-    was set at the time setLightParameters() was called.  If \a number is out
-    of range, the identity matrix will be returned.
+    Returns the modelview transformation matrix for the main light that
+    was set at the time setMainLight() was called.
 
     The light transform may be used by later painting operations to
     convert the light from world co-ordinates into eye co-ordinates.
     The eye transformation is set when the light is specified.
 
-    \sa lightParameters(), setLightParameters(), isLightEnabled()
+    \sa mainLight(), setMainLight()
 */
-QMatrix4x4 QGLPainter::lightTransform(int number) const
+QMatrix4x4 QGLPainter::mainLightTransform() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLLightParameters());
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights)
-        return d->lightTransforms[number];
-    else
-        return QMatrix4x4();
-}
-
-/*!
-    Sets the \a parameters for light \a number.  If \a number is out
-    of range, the function call will be ignored.  The lightTransform()
-    for light \a number is set to the current modelViewMatrix().
-
-    Light parameters are stored in world co-ordinates, not eye co-ordinates.
-    The lightTransform() for the light specifies the transformation to
-    apply to convert the world co-ordinates into eye co-ordinates when
-    the light is used.
-
-    Note: the \a parameters may be ignored by effect() if it
-    has some other way to determine the lighting conditions.
-
-    The light settings in the GL server will not be changed until
-    update() is called.
-
-    \sa lightParameters(), lightTransform(), setLightEnabled()
-*/
-void QGLPainter::setLightParameters(int number, const QGLLightParameters *parameters)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        d->lights[number] = parameters;
-        d->lightTransforms[number] = modelViewMatrix();
-        d->updates |= QGLPainter::UpdateLights;
-    }
-}
-
-/*!
-    Sets the \a parameters for light \a number.  If \a number is out
-    of range, the function call will be ignored.  The lightTransform()
-    for light \a number is set to \a transform.
-
-    Light parameters are stored in world co-ordinates, not eye co-ordinates.
-    The lightTransform() for the light specifies the transformation to
-    apply to convert the world co-ordinates into eye co-ordinates when
-    the light is used.
-
-    Note: the \a parameters may be ignored by effect() if it
-    has some other way to determine the lighting conditions.
-
-    The light settings in the GL server will not be changed until
-    update() is called.
-
-    \sa lightParameters(), lightTransform(), setLightEnabled()
-*/
-void QGLPainter::setLightParameters
-    (int number, const QGLLightParameters *parameters,
-     const QMatrix4x4& transform)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        d->lights[number] = parameters;
-        d->lightTransforms[number] = transform;
-        d->updates |= QGLPainter::UpdateLights;
-    }
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QMatrix4x4());
+    return d->mainLightTransform;
 }
 
 /*!

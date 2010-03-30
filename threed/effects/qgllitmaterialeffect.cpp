@@ -178,6 +178,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
     Q_D(QGLLitMaterialEffect);
     if (flag) {
         glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
         glEnableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
         if (d->textureMode) {
@@ -186,6 +187,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         }
     } else {
         glDisable(GL_LIGHTING);
+        glDisable(GL_LIGHT0);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
         if (d->textureMode)
@@ -257,21 +259,8 @@ void QGLLitMaterialEffect::update
         program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
     if ((updates & QGLPainter::UpdateLights) != 0) {
-        // Find the first enabled light.
-        const QGLLightParameters *lparams = 0;
-        QMatrix4x4 ltransform;
-        int count = painter->lightCount();
-        for (int index = 0; index < count; ++index) {
-            if (painter->isLightEnabled(index)) {
-                lparams = painter->lightParameters(index);
-                ltransform = painter->lightTransform(index);
-                break;
-            }
-        }
-
-        // If no lights are enabled, then use the parameters for light 0.
-        if (!lparams)
-            lparams = painter->lightParameters(0);
+        const QGLLightParameters *lparams = painter->mainLight();
+        QMatrix4x4 ltransform = painter->mainLightTransform();
 
         // Set the uniform variables for the light.
         program->setUniformValue("acli", lparams->ambientColor());

@@ -189,16 +189,11 @@ public:
     const QGLLightModel *lightModel() const;
     void setLightModel(const QGLLightModel *value);
 
-    int lightCount() const;
-    bool hasEnabledLights() const;
-    bool isLightEnabled(int number) const;
-    void setLightEnabled(int number, bool value) const;
-
-    const QGLLightParameters *lightParameters(int number) const;
-    QMatrix4x4 lightTransform(int number) const;
-    void setLightParameters(int number, const QGLLightParameters *parameters);
-    void setLightParameters(int number, const QGLLightParameters *parameters,
-                            const QMatrix4x4& transform);
+    const QGLLightParameters *mainLight() const;
+    void setMainLight(QGLLightParameters *parameters);
+    void setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform);
+    QMatrix4x4 mainLightTransform() const;
 
     const QGLMaterial *faceMaterial(QGL::Face face) const;
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);

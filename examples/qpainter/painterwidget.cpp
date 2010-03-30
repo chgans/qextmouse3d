@@ -61,9 +61,6 @@ void PainterWidget::paintGL(QPainter *p)
     // Turn on depth testing.
     painter.setDepthTestingEnabled(true);
 
-    // Turn on a light for LitMaterial effects.
-    painter.setLightEnabled(0, true);
-
     // Set the default viewport.
     painter.setViewport(rect());
 

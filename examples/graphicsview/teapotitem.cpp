@@ -58,6 +58,5 @@ TeapotItem::~TeapotItem()
 void TeapotItem::paintGL(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::LitMaterial);
-    painter->setLightEnabled(0, true);
     teapot.draw(painter);
 }

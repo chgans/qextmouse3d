@@ -119,7 +119,6 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setCamera(innerCamera);
     painter->modelViewMatrix().rotate(tangle, 0.0f, 1.0f, 0.0f);
 
-    painter->setLightEnabled(0, true);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
     painter->setStandardEffect(QGL::LitMaterial);
 

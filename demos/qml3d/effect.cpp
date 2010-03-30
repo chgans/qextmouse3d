@@ -86,6 +86,7 @@ class EffectPrivate
 public:
     EffectPrivate()
         : color(255, 255, 255, 255),
+          useLighting(true),
           textureChanged(false),
           texture2D(0),
           material(0),
@@ -97,6 +98,7 @@ public:
     }
 
     QColor color;
+    bool useLighting;
     bool textureChanged;
     QImage texture;
     QGLTexture2D *texture2D;
@@ -137,6 +139,25 @@ QColor Effect::color() const
 void Effect::setColor(const QColor& value)
 {
     d->color = value;
+    emit effectChanged();
+}
+
+/*!
+    \property Effect::useLighting
+    \brief the lighting control parameter; true if this effect should
+    use lighting or false if this effect should use flat colors and
+    textures.
+
+    The default value for this true.
+*/
+bool Effect::useLighting() const
+{
+    return d->useLighting;
+}
+
+void Effect::setUseLighting(bool value)
+{
+    d->useLighting = value;
     emit effectChanged();
 }
 
@@ -281,7 +302,7 @@ void Effect::setFog(QGLFogParameters *value)
 void Effect::enableEffect(QGLPainter *painter)
 {
     QGLTexture2D *tex = texture2D();
-    if (painter->hasEnabledLights()) {
+    if (d->useLighting) {
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::LitDecalTexture2D);
             painter->setTexture(tex);

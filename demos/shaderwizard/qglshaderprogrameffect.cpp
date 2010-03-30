@@ -331,25 +331,11 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
 
     if ((updates & QGLPainter::UpdateLights) != 0 )
     {
-        // Find the first enabled light.
-        const QGLLightParameters *lparams = 0;
-        QMatrix4x4 ltransform;
-        int count = painter->lightCount();
-
-        for (int index = 0; index < count; ++index) {
-            if (painter->isLightEnabled(index)) {
-                lparams = painter->lightParameters(index);
-                ltransform = painter->lightTransform(index);
-                break;
-            }
-        }
+        const QGLLightParameters *lparams = painter->mainLight();
+        QMatrix4x4 ltransform = painter->mainLightTransform();
 
         // rotate the light for testing purposes
         // ltransform.rotate(time * 30,0.0,1.0,0.0);
-
-        // If no lights are enabled, then use the parameters for light 0.
-        if (!lparams)
-            lparams = painter->lightParameters(0);
 
         // Set the uniform variables for the light.
         program()->setUniformValue("acli", lparams->ambientColor());

@@ -945,8 +945,7 @@ void Item3d::draw(QGLPainter *painter)
     foreach (QObject *child, list) {
         QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
         if (light) {
-            painter->setLightParameters(0, light); // XXX - non-zero lights
-            painter->setLightEnabled(0, true);
+            painter->setMainLight(light);
             haveLights = true;
         }
     }
@@ -996,10 +995,8 @@ void Item3d::draw(QGLPainter *painter)
     if (haveLights) {
         foreach (QObject *child, list) {
             QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
-            if (light) {
-                painter->setLightParameters(0, 0);  // XXX - non-zero lights
-                painter->setLightEnabled(0, false);
-            }
+            if (light)
+                painter->setMainLight(0);
         }
     }
     painter->setObjectPickId(prevId);
