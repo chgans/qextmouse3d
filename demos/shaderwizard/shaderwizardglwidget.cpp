@@ -192,6 +192,8 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     {
         mDefaultSceneObject->draw(painter);
     }
+    // Unset the effect in case it gets deleted
+    painter->setUserEffect(0);
 }
 
 void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
