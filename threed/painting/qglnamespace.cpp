@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \enum QGL::VertexAttribute
     \since 4.7
-    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexArray()
+    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexAttribute()
 
     \value Position The primary position of the vertex.
     \value Normal The normal at each vertex.
