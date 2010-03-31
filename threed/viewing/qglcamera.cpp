@@ -463,10 +463,18 @@ void QGLCamera::setViewSize(const QSizeF& size)
 {
     Q_D(QGLCamera);
     QSizeF sz(size);
-    if (sz.width() < d->minViewSize.width())
-        sz.setWidth(d->minViewSize.width());
-    if (sz.height() < d->minViewSize.height())
-        sz.setHeight(d->minViewSize.height());
+    if (qAbs(sz.width()) < d->minViewSize.width()) {
+        if (sz.width() >= 0.0f)
+            sz.setWidth(d->minViewSize.width());
+        else
+            sz.setWidth(-d->minViewSize.width());
+    }
+    if (qAbs(sz.height()) < d->minViewSize.height()) {
+        if (sz.height() >= 0.0f)
+            sz.setHeight(d->minViewSize.height());
+        else
+            sz.setHeight(-d->minViewSize.height());
+    }
     if (d->viewSize != sz) {
         d->viewSize = sz;
         emit projectionChanged();
