@@ -508,6 +508,7 @@ void QGLView::paintGL()
     // Paint the scene contents.
     QGLPainter painter;
     painter.begin();
+    painter.resetViewport();
     if (d->options & QGLView::ShowPicking) {
         // If showing picking, then render normally.
         painter.setPicking(true);
