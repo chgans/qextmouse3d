@@ -51,6 +51,7 @@
 #include <lib3ds/types.h>
 
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qmath.h>
 
 // Faceted meshes look terrible when they have more than a small number
 // of faces.  Usually if large meshes are faceted its some kind of error
@@ -68,7 +69,8 @@
 // less than this are judged to form a sharp (acute) angle.
 // -ve cosine (less than 0.0f) means 90 degrees or sharper like the sides
 // of a rectangular prism so this is a good value.
-#define ACUTE -0.0001f
+//#define ACUTE -0.0001f
+#define ACUTE 0.7f
 
 
 
@@ -217,19 +219,23 @@ void QGL3dsMesh::initialize()
 }
 
 // Build a linked list.  Use a QArray: the first N*2 entries correspond
-// to the N vertices: n*2 is the face number, n*2+1 is the index of
-// the next entry for that vertex, or -1 if there is no next entry.
-// While on the job find the smoothing keys.
+// to the N vertices: for each n'th vertex, n*2 is the face number,
+// n*2+1is the index of the next entry for that vertex, or -1 if there
+// is no next entry.
+//
+// While on the job find the smoothing keys and store in allKeys.
+//
+// And zero out the user data pointer for each face, and calculate the
+// smoothing group count.
 QArray<int> QGL3dsMesh::mapFacesToVerts(Lib3dsDword *allKeys)
 {
     Lib3dsFace *face;
-    QArray<int> vlist(m_mesh->faces * 2, -1);
-    int nx = 2 * m_mesh->faces;
+    QArray<int> vlist(m_mesh->points * 2, -1);
+    int nx = 2 * m_mesh->points;
     m_smoothingGroupCount = 0;
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         face = &m_mesh->faceL[f];
-        // saveData[f] = face->user;
         face->user.p = 0;
         if (face->smoothing)
         {
@@ -253,8 +259,7 @@ QArray<int> QGL3dsMesh::mapFacesToVerts(Lib3dsDword *allKeys)
                     prv = ptr;
                 }
                 ptr = nx;
-                if (vlist.size() <= ptr+1)
-                    vlist.extend(ptr+1);
+                vlist.extend(2);
                 nx += 2;
             }
             vlist[ptr] = f;
@@ -271,18 +276,29 @@ void QGL3dsMesh::addToAdjacencyMap(Lib3dsFace *face, int *mptr, int *hptr, Lib3d
     AdjListNode *n;
     if (face->user.p == 0)
     {
-        AdjListHead *h = &m_faceMapHeads[*hptr++];
+        Q_ASSERT(*hptr < int(m_mesh->faces));
+        AdjListHead *h = &m_faceMapHeads[(*hptr)++];
         face->user.p = h;
         planeVec(face, m_mesh->pointL, h->planeVector);
         n = reinterpret_cast<AdjListNode*>(h);
+        //qDebug() << "created head:" << h << "at" << (*hptr - 1) << "next is:" << n->next << "for face:" << face;
     }
     else
     {
+        Q_ASSERT(*mptr < int(m_mesh->faces * 2));
         n = reinterpret_cast<AdjListNode*>(face->user.p);
+        int i = 0;
         while (n->next != 0)
+        {
+            i++;
             n = n->next;
-        n->next = &m_faceMap[*mptr++];
+        }
+        n->next = &m_faceMap[(*mptr)++];
+        //AdjListNode *p = n;
+        n = n->next;
+        //qDebug() << "created node:" << n << "at" << (*mptr - 1) << "next is:" << n->next << "prev was:" << p << "number:" << i << "for face:" << face;
     }
+    n->next = 0;
     n->face = neighbour;
 }
 
@@ -300,42 +316,44 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
     int nxh = 0;
     m_faceMap = new AdjListNode[m_mesh->faces * 2];
     m_faceMapHeads = new AdjListHead[m_mesh->faces];
-    qMemSet(m_faceMap, 0, sizeof(m_faceMap));
-    qDebug() << vlist;
-    return;
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         // for each edge (where an edge is a pair of verts) find ones
         // adjacent, ie both verts in edge have same face (which is
         // not this face).
         face = &m_mesh->faceL[f];
-        if (qIsNull(face->normal))
+        //if (qIsNull(face->normal))
             planeVec(face, m_mesh->pointL, face->normal);
         for (int i = 0; i < 3; ++i)
         {
-            int vi = face->points[i];
+            Q_ASSERT(face->points[i] < m_mesh->points);
+            int vi = 2 * face->points[i];
             int neighbouri = -1;
             while (true)
             {
                 neighbouri = vlist[vi];
                 if (neighbouri != (int)f)
                 {
-                    int vj = face->points[i + 1 % 3];
+                    Q_ASSERT(face->points[(i + 1) % 3] < m_mesh->points);
+                    int vj = 2 * face->points[(i + 1) % 3];
                     int neighbourj = -1;
+                    //qDebug() << "starting with:" << vj;
                     while (true)
                     {
                         neighbourj = vlist[vj];
                         if (neighbourj == neighbouri)
                         {
                             nbr = &m_mesh->faceL[neighbouri];
+                            // only add as neighbour if at least one smoothing group
+                            // is shared - still have to test again below for each group
                             if (nbr->smoothing & face->smoothing)
                                 addToAdjacencyMap(face, &nxm, &nxh, nbr);
                             break;
                         }
                         if (vlist[vj+1] == -1)
                             break;
-                        else
-                            vj = vlist[vj+1];
+                        vj = vlist[vj+1];
+                        //qDebug() << "    now:" << vj;
                     }
                 }
                 if (vlist[vi+1] == -1)
@@ -350,7 +368,7 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
 static inline Lib3dsDword nextUnusedKey(Lib3dsDword keys, Lib3dsDword key)
 {
     if (key != 0)
-        ++key;
+        key <<= 1;
     else
         key = 1;
     while (key & keys)
@@ -358,48 +376,129 @@ static inline Lib3dsDword nextUnusedKey(Lib3dsDword keys, Lib3dsDword key)
     return key;
 }
 
+static int numCorrected = 0;
+static int numWindingCorrected = 0;
+
+static inline void doNormalCorrect(Lib3dsFace *face)
+{
+#ifdef DO_NORMAL_CORRECT
+    AdjListHead *header = reinterpret_cast<AdjListHead*>(face->user.p);
+    AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
+    AdjListNode *n;
+    int acnt = 0;
+    Lib3dsVector avgn = { 0 };
+    for (n = neighbours; n; n = n->next)
+    {
+        if (n->face->smoothing & face->smoothing)
+        {
+            lib3ds_vector_add(avgn, avgn, n->face->normal);
+            ++acnt;
+        }
+    }
+    if (acnt >= AVG_CNT)
+    {
+        lib3ds_vector_normalize(avgn);
+        float na = lib3ds_vector_dot(face->normal, avgn);
+        if (na < INVERSE)
+        {
+            //fprintf(stderr, "corrected: %p - %d, %d, %d", face,
+            //        face->points[0], face->points[1], face->points[2]);
+            //lib3ds_vector_dump(face->normal);
+            lib3ds_vector_neg(face->normal);
+            na = lib3ds_vector_dot(header->planeVector, avgn);
+            numCorrected++;
+            if (na < INVERSE)
+            {
+                numWindingCorrected++;
+                //fprintf(stderr, "   and winding");
+                //lib3ds_vector_dump(header->planeVector);
+                lib3ds_vector_neg(header->planeVector);
+                qSwap(face->points[1], face->points[2]);
+            }
+            ::strncpy(face->material, "bright-green", 60);  //debug
+        }
+    }
+#else
+    Q_UNUSED(face);
+#endif
+}
+
+static int numModulated = 0;
+
+static inline bool doModulate(Lib3dsFace *face, Lib3dsDword altKey, Lib3dsDword key)
+{
+    bool keyUsed = false;
+    Q_ASSERT(altKey > key);
+    Q_ASSERT(key > 0);
+#if DO_MODULATE
+    AdjListHead *header = reinterpret_cast<AdjListHead*>(face->user.p);
+    AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
+    AdjListNode *n;
+    for (n = neighbours; n; n = n->next)
+    {
+        if (n->face->smoothing & face->smoothing)
+        {
+            AdjListHead *hn = reinterpret_cast<AdjListHead*>(n->face->user.p);
+            float ca = lib3ds_vector_dot(header->planeVector, hn->planeVector);
+            if (ca < ACUTE)
+            {
+                numModulated++;
+                //qDebug() << "Moved face" << n->face << "from" <<
+                //        n->face->smoothing;
+                n->face->smoothing &= ~key;    // take it out of this group
+                n->face->smoothing |= altKey;  // move it to the alt group
+                ::strncpy(n->face->material, "bright-red", 60);  //debug
+                //qDebug() << "         to" << n->face->smoothing;
+                keyUsed = true;
+            }
+        }
+    }
+#else
+    Q_UNUSED(face);
+    Q_UNUSED(altKey);
+    Q_UNUSED(key);
+#endif
+    return keyUsed;
+}
+
+// Go thru each smoothing group - we don't care about the zero group since
+// they're already faceted.  In each group process all connected faces
+// starting the queue off with a seed face (the first face in the group).
+// Set the alternate group to be the first unused smoothing group key.
+//
+// To process a face: add the face to the processed set; for each adjacent
+// face if its in this same smoothing group, add it to the queue.
+//
+// Modulate smoothing mode: if an adjacent face is at an acute angle to this
+// face, move it to the alternate group.  Note that the alternate groups are
+// not further iterated since they are not in "each smoothing group"
+// (the allKeys variable).
+//
+// When the queue is empty, go to the next smoothing group in the mesh.
+
+// Normal repair mode:  if a face normal is flipped in error, ie a mistake
+// in model building (typically points specified in the wrong order)
+// this can be detected and repaired.  The normal is flipped if the inverse
+// of the normal is at an acute angle to the average of neighbour normals.
+// If detected the normals is corrected and the winding is also checked to
+// see if it needs to be corrected also.
 void QGL3dsMesh::modulateMesh()
 {
 #if !defined(DO_MODULATE) && !defined(DO_NORMAL_CORRECT)
     return;
 #endif
-    // If model turns up that relies on the user data, will need to save and
-    // reinstantiate it.  If that happens uncomment this, and the others lines below.
-    /*
-    Lib3dsUserData saveData[] = new Lib3dsUserData[m_mesh->faces];
-    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
-    {
-        face = &m_mesh->faceL[f];
-        saveData[f] = face->user;
-    }
-    */
     Lib3dsFace *face;
     Lib3dsDword allKeys = 0;
     QArray<int> vlist = mapFacesToVerts(&allKeys);
     buildAdjacencyMap(vlist);
-
-    // Go thru each smoothing group - we don't care about the zero group since
-    // they're already faceted.  In each group process all connected faces
-    // starting the queue off with a seed face (the first face in the group).
-    // Set the alternate group to be the first unused smoothing group key.
-    //
-    // To process a face: add the face to the processed set; for each adjacent
-    // face if its in this same smoothing group, add it to the queue; if the
-    // adjacent face is at an acute angle to this face, move it to the
-    // alternate group.  Note that the alternate groups are not further iterated
-    // since they are not in "each smoothing group" (the allKeys variable).
-    //
-    // When the queue is empty, go to the next smoothing group in the mesh.
-
-    // Normal repair mode:  if a face normal is flipped in error, ie a mistake
-    // in model building (typically points specified in the wrong order)
-    // this can be detected and repaired.  The normal is flipped if the inverse
-    // of the normal is at an acute angle to the average of neighbour normals.
-    // If detected the normals is corrected and the winding is also checked to
-    // see if it needs to be corrected also.
-    QSet<Lib3dsFace*> processed;
+    qDebug() << "Mesh:" << m_mesh->name << "with" << m_mesh->faces << "faces, and" << m_mesh->points << "points" << "in" << m_smoothingGroupCount << "groups.";
     bool keyUsed = true;
     Lib3dsDword altKey = 0;
+    QSet<Lib3dsFace*> processed;
+    int procCnt = 0;
+    int groups = 0;
+    numCorrected = 0;
+    numModulated = 0;
     for (Lib3dsDword key = 1; key; key <<= 1)
     {
         if (!(key & allKeys))
@@ -408,82 +507,36 @@ void QGL3dsMesh::modulateMesh()
             altKey = nextUnusedKey(allKeys, altKey);
         keyUsed = false;
         QArray<Lib3dsFace*> queue;
-        for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
-        {
-            face = &m_mesh->faceL[f];
-            if (face->smoothing)
-            {
-                queue.append(face);
-                break;
-            }
-        }
+        Lib3dsDword fptr = 0;
         int head = 0;
-        while (head < queue.size())
+        groups++;
+        while (true)
         {
+            if (head >= queue.size())  // seed another island of faces
+            {
+                for (  ; fptr < m_mesh->faces; ++fptr)
+                    if ((m_mesh->faceL[fptr].smoothing & key) && !processed.contains(&m_mesh->faceL[fptr]))
+                        break;
+                if (fptr == m_mesh->faces)
+                    break;
+                queue.append(&m_mesh->faceL[fptr]);
+            }
             face = queue.at(head++);
-            if (processed.contains(face))
-                continue;
             processed.insert(face);
-            AdjListHead *header = reinterpret_cast<AdjListHead*>(face->user.p);
+            procCnt++;
             AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
             AdjListNode *n;
             for (n = neighbours; n; n = n->next)
-                if ((n->face->smoothing & face->smoothing) && !processed.contains(n->face))
+                if ((n->face->smoothing & key) && !processed.contains(face))
                     queue.append(n->face);
-#ifdef DO_NORMAL_CORRECT
-            int acnt = 0;
-            Lib3dsVector avgn = { 0 };
-            for (n = neighbours; n; n = n->next)
-            {
-                if (n->face->smoothing & face->smoothing)
-                {
-                    lib3ds_vector_add(avgn, avgn, n->face->normal);
-                    ++acnt;
-                }
-            }
-            if (acnt >= AVG_CNT)
-            {
-                lib3ds_vector_normalize(avgn);
-                float na = lib3ds_vector_dot(face->normal, avgn);
-                if (na < INVERSE)
-                {
-                    lib3ds_vector_neg(face->normal);
-                    na = lib3ds_vector_dot(header->planeVector, avgn);
-                    if (na < INVERSE)
-                    {
-                        lib3ds_vector_neg(header->planeVector);
-                        qSwap(face->points[1], face->points[2]);
-                    }
-                }
-            }
-#endif
-#if DO_MODULATE
-            for (n = neighbours; n; n = n->next)
-            {
-                if (n->face->smoothing & face->smoothing)
-                {
-                    AdjListHead *hn = reinterpret_cast<AdjListHead*>(n->face->user.p);
-                    float ca = lib3ds_vector_dot(header->planeVector, hn->planeVector);
-                    if (ca < ACUTE)
-                    {
-                        n->face->smoothing &= ~key;    // take it out of this group
-                        n->face->smoothing |= altKey;  // move it to the alt group
-                        keyUsed = true;
-                    }
-                }
-            }
-#endif
+            doNormalCorrect(face);
+            if (doModulate(face, altKey, key))
+                keyUsed = true;
         }
+        if (keyUsed)
+            allKeys |= altKey;
     }
-
-    /*
-    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
-    {
-        face = &m_mesh->faceL[f];
-        face->user = saveData[f];
-    }
-    delete[] saveData;
-    */
+    qDebug() << "processed:" << procCnt << "faces in" << groups << "groups -- modulated:" << numModulated << ", corrected:" << numCorrected << "normals, " << numWindingCorrected << "windings.";
 }
 
 /*!
@@ -523,8 +576,8 @@ void QGL3dsMesh::analyzeMesh()
                 m_smoothingGroupCount += 1;
                 if (!m_keys.contains(matIx))
                 {
-                    m_keys.insert(matIx, 0);
-                    m_groupCounts.insert(matIx, 0);
+                    m_keys.insert(matIx, face->smoothing);
+                    m_groupCounts.insert(matIx, 1);
                 }
                 else
                 {

@@ -177,6 +177,25 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
     }
 }
 
+/// DEBUG - REMOVE ME
+static void makeMaterial(Lib3dsMaterial *mat, const char *name, QColor color)
+{
+    mat->ambient[0] = color.redF();
+    mat->ambient[1] = color.greenF();
+    mat->ambient[2] = color.blueF();
+    mat->ambient[3] = color.alphaF();
+    mat->diffuse[0] = color.redF();
+    mat->diffuse[1] = color.greenF();
+    mat->diffuse[2] = color.blueF();
+    mat->diffuse[3] = color.alphaF();
+    mat->specular[0] = color.redF();
+    mat->specular[1] = color.greenF();
+    mat->specular[2] = color.blueF();
+    mat->specular[3] = color.alphaF();
+    ::strncpy(mat->name, name, 60);
+}
+/// DEBUG - REMOVE ME - END
+
 /*!
     \internal
     Loads all the geometry, materials, and texture associations from the assigned
@@ -191,9 +210,20 @@ QGLSceneNode *QGL3dsLoader::loadMeshes()
     Lib3dsMaterial *mat;
     for (mat = mFile->materials; mat != NULL; mat = mat->next)
         loadMaterial(mat);
+    /// DEBUG - REMOVE ME
+    Lib3dsMaterial matSig0;
+    qMemSet(&matSig0, 0, sizeof(struct Lib3dsMaterial));
+    makeMaterial(&matSig0, "bright-red", Qt::red);
+    loadMaterial(&matSig0);
+    Lib3dsMaterial matSig1;
+    qMemSet(&matSig1, 0, sizeof(struct Lib3dsMaterial));
+    makeMaterial(&matSig1, "bright-green", Qt::green);
+    loadMaterial(&matSig1);
+    /// DEBUG - REMOVE ME
     Lib3dsMesh * mesh;
     for (mesh = mFile->meshes; mesh != NULL; mesh = mesh->next)
-        loadMesh(mesh);
+        if (::strncmp(mesh->name, "BatteryCov", 10) == 0)
+            loadMesh(mesh);
     mRootNode->palette()->removeUnusedMaterials();
     loadNodes(mFile->nodes, mRootNode);
     mRootNode->setEffect(mHasTextures ? QGL::LitModulateTexture2D : QGL::LitMaterial);
