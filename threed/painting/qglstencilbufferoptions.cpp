@@ -43,6 +43,9 @@
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 
+// Clean up global namespace polution from qgl_p.h on some systems.
+#undef Always
+
 QT_BEGIN_NAMESPACE
 
 /*!
