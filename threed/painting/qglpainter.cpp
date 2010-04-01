@@ -938,7 +938,10 @@ void QGLPainter::setCamera(QGLCamera *camera)
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     d->modelViewMatrix = camera->modelViewMatrix(d->eye);
-    d->projectionMatrix = camera->projectionMatrix(aspectRatio());
+    if (camera->projectionType() != QGLCamera::Orthographic2D)
+        d->projectionMatrix = camera->projectionMatrix(aspectRatio());
+    else
+        d->projectionMatrix = camera->projectionMatrix2D(viewport(), d->eye);
 }
 
 /*!
