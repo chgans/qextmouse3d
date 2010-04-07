@@ -71,9 +71,9 @@ int main(int argc, char *argv[])
     item2->setZValue(1);
     scene.addItem(item2);
 
-    QGLGraphicsNavigationItem *navigator = new QGLGraphicsNavigationItem();
-    navigator->setViewportItem(item);
-    scene.addItem(navigator);
+    //QGLGraphicsNavigationItem *navigator = new QGLGraphicsNavigationItem();
+    //navigator->setViewportItem(item);
+    //scene.addItem(navigator);
 
     QGLGraphicsNavigationItem *navigator2 = new QGLGraphicsNavigationItem();
     navigator2->setViewportItem(item2);

@@ -74,8 +74,14 @@ private:
     QGLDisplayList cube;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
+    int pressedFace;
+    Qt::MouseButton pressedButton;
+    QPoint pressedPos;
 
-    QVector3D cubeIntersection(const QPoint &point) const;
+    QPoint cubeIntersection(QWidget *widget, const QPoint &point,
+                            int *actualFace) const;
+    void deliverSceneEvent
+        (const QPoint &point, QGraphicsSceneMouseEvent *event);
 };
 
 #endif

@@ -42,12 +42,14 @@
 #include "cubeitem.h"
 #include "qglpainter.h"
 #include "qglcube.h"
-#include "qbox3d.h"
 #include "qline3d.h"
-#include "qtriangle3d.h"
+#include "qplane3d.h"
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/qgraphicsscene.h>
 #include <QtGui/qgraphicssceneevent.h>
+#include <QtGui/qgraphicsview.h>
+#include <QtGui/qpolygon.h>
+#include <QtGui/qapplication.h>
 
 const qreal CubeSize = 2.5f;
 
@@ -55,6 +57,8 @@ CubeItem::CubeItem(QGraphicsItem *parent)
     : QGLGraphicsViewportItem(parent)
     , mScene(0)
     , fbo(0)
+    , pressedFace(-1)
+    , pressedButton(Qt::NoButton)
 {
     setFlag(ItemIsFocusable, true);
 
@@ -128,22 +132,62 @@ void CubeItem::updateScene()
 
 void CubeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    QVector3D pos = cubeIntersection(event->pos().toPoint());
+    int face;
+    QPoint pos = cubeIntersection
+        (event->widget(), event->pos().toPoint(), &face);
+    if (pressedFace == -1 && face != -1) {
+        pressedFace = face;
+        pressedButton = event->button();
+        pressedPos = pos;
+        deliverSceneEvent(pos, event);
+        return;
+    }
     QGraphicsItem::mousePressEvent(event);
 }
 
 void CubeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
+    if (pressedFace != -1) {
+        int face;
+        QPoint pos = cubeIntersection
+            (event->widget(), event->pos().toPoint(), &face);
+        if (face != pressedFace)
+            pos = QPoint(-1, -1);
+        deliverSceneEvent(pos, event);
+        return;
+    }
     QGraphicsItem::mouseMoveEvent(event);
 }
 
 void CubeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    if (pressedFace != -1) {
+        int face;
+        QPoint pos = cubeIntersection
+            (event->widget(), event->pos().toPoint(), &face);
+        if (face != pressedFace)
+            pos = QPoint(-1, -1);
+        if (pressedButton == event->button()) {
+            pressedFace = -1;
+            pressedButton = Qt::NoButton;
+        }
+        deliverSceneEvent(pos, event);
+        return;
+    }
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
 void CubeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 {
+    int face;
+    QPoint pos = cubeIntersection
+        (event->widget(), event->pos().toPoint(), &face);
+    if (pressedFace == -1 && face != -1) {
+        pressedFace = face;
+        pressedButton = event->button();
+        deliverSceneEvent(pos, event);
+        return;
+    }
     QGraphicsItem::mouseDoubleClickEvent(event);
 }
 
@@ -181,59 +225,126 @@ static const float vertexData[vertexDataLen] = {
     -0.5f * CubeSize, 0.5f * CubeSize, -0.5f * CubeSize
 };
 
-QVector3D CubeItem::cubeIntersection(const QPoint &point) const
+QPoint CubeItem::cubeIntersection
+    (QWidget *widget, const QPoint &point, int *actualFace) const
 {
-    // Get the ray from the eye through the point in eye co-ordinates.
-    QRectF bounds = boundingRect();
-    QVector3D v = camera()->mapPoint
-        (point, bounds.width() / bounds.height(), bounds.size().toSize());
-    QLine3D ray(QVector3D(0, 0, 0), v);
-
-    // Get the modelview matrix from the camera.
-    QMatrix4x4 mv = camera()->modelViewMatrix();
-
-    // Determine which face of the cube intersects the ray with
-    // the nearest z value.
-    int closestFace = -1;
-    qreal closestZ = 0.0f;
-    for (int face = 0; face < 6; ++face) {
-        QTriangle3D tri1(QVector3D(vertexData[face * 4 * 3],
-                                   vertexData[face * 4 * 3 + 1],
-                                   vertexData[face * 4 * 3 + 2]),
-                         QVector3D(vertexData[face * 4 * 3 + 3],
-                                   vertexData[face * 4 * 3 + 4],
-                                   vertexData[face * 4 * 3 + 5]),
-                         QVector3D(vertexData[face * 4 * 3 + 6],
-                                   vertexData[face * 4 * 3 + 7],
-                                   vertexData[face * 4 * 3 + 8]));
-        tri1 = tri1.transformed(mv);
-        QResult<QVector3D> result;
-        result = tri1.intersection(ray);
-        if (result.isValid()) {
-            if (closestFace == -1 || closestZ < result.value().z()) {
-                closestFace = face;
-                closestZ = result.value().z(); // z will be -ve.
-            }
-            continue;
-        }
-        QTriangle3D tri2(QVector3D(vertexData[face * 4 * 3],
-                                   vertexData[face * 4 * 3 + 1],
-                                   vertexData[face * 4 * 3 + 2]),
-                         QVector3D(vertexData[face * 4 * 3 + 6],
-                                   vertexData[face * 4 * 3 + 7],
-                                   vertexData[face * 4 * 3 + 8]),
-                         QVector3D(vertexData[face * 4 * 3 + 9],
-                                   vertexData[face * 4 * 3 + 10],
-                                   vertexData[face * 4 * 3 + 11]));
-        tri2 = tri2.transformed(mv);
-        result = tri2.intersection(ray);
-        if (result.isValid()) {
-            if (closestFace == -1 || closestZ < result.value().z()) {
-                closestFace = face;
-                closestZ = result.value().z(); // z will be -ve.
-            }
-        }
+    // Bail out if no scene.
+    if (!mScene) {
+        *actualFace = -1;
+        return QPoint();
     }
 
-    return v;
+    // Get the combined matrix for the projection.
+    int dpiX = widget->logicalDpiX();
+    int dpiY = widget->logicalDpiY();
+    QRectF bounds = boundingRect();
+    qreal aspectRatio = (bounds.width() * dpiY) / (bounds.height() * dpiX);
+    QMatrix4x4 mv = camera()->modelViewMatrix();
+    QMatrix4x4 proj = camera()->projectionMatrix(aspectRatio);
+    QMatrix4x4 combined = proj * mv;
+
+    // Find the relative position of the point within (-1, -1) to (1, 1).
+    QPointF relativePoint =
+        QPointF((point.x() - bounds.center().x()) * 2 / bounds.width(),
+                -(point.y() - bounds.center().y()) * 2 / bounds.height());
+
+    // Determine which face of the cube contains the point.
+    QVector3D pt1, pt2, pt3, pt4;
+    for (int face = 0; face < 6; ++face) {
+        // Create a polygon from the projected version of the face
+        // so that we can test for point membership.
+        pt1 = QVector3D(vertexData[face * 4 * 3],
+                        vertexData[face * 4 * 3 + 1],
+                        vertexData[face * 4 * 3 + 2]);
+        pt2 = QVector3D(vertexData[face * 4 * 3 + 3],
+                        vertexData[face * 4 * 3 + 4],
+                        vertexData[face * 4 * 3 + 5]);
+        pt3 = QVector3D(vertexData[face * 4 * 3 + 6],
+                        vertexData[face * 4 * 3 + 7],
+                        vertexData[face * 4 * 3 + 8]);
+        pt4 = QVector3D(vertexData[face * 4 * 3 + 9],
+                        vertexData[face * 4 * 3 + 10],
+                        vertexData[face * 4 * 3 + 11]);
+        QVector<QPointF> points2d;
+        points2d.append((combined * pt1).toPointF());
+        points2d.append((combined * pt2).toPointF());
+        points2d.append((combined * pt3).toPointF());
+        points2d.append((combined * pt4).toPointF());
+        QPolygonF polygon(points2d);
+        if (!polygon.containsPoint(relativePoint, Qt::OddEvenFill))
+            continue;
+
+        // We want the face that is pointing towards the user.
+        QVector3D v = mv.mapVector
+            (QVector3D::crossProduct(pt2 - pt1, pt3 - pt1));
+        if (v.z() <= 0.0f)
+            continue;
+
+        // Determine the intersection between the cube face and
+        // the ray coming from the eye position.
+        QVector3D eyept = proj.inverted().map
+            (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
+        QLine3D ray(QVector3D(0, 0, 0), eyept);
+        QPlane3D plane(mv * pt1, v);
+        QResult<QVector3D> intersection = plane.intersection(ray);
+        if (!intersection.isValid())
+            continue;
+        QVector3D worldpt = mv.inverted().map(intersection.value());
+
+        // Map the world point to the range 0..1.
+        worldpt = (worldpt / CubeSize) + QVector3D(0.5f, 0.5f, 0.5f);
+
+        // Figure out the texture co-ordinates on the face that
+        // correspond to the point.
+        qreal xtex, ytex;
+        if (face == 0 || face == 2) {
+            xtex = 1.0f - worldpt.y();
+            ytex = 1.0f - worldpt.z();
+        } else if (face == 1 || face == 3) {
+            xtex = 1.0f - worldpt.x();
+            ytex = 1.0f - worldpt.z();
+        } else {
+            xtex = worldpt.x();
+            ytex = 1.0f - worldpt.y();
+        }
+
+        // Turn the texture co-ordinates into scene co-ordinates.
+        bounds = mScene->sceneRect();
+        xtex *= bounds.width();
+        ytex *= bounds.height();
+        int x = qRound(xtex);
+        int y = qRound(ytex);
+        if (x < 0)
+            x = 0;
+        else if (x >= bounds.width())
+            x = qRound(bounds.width() - 1);
+        if (y < 0)
+            y = 0;
+        else if (y >= bounds.height())
+            y = qRound(bounds.height() - 1);
+        *actualFace = face;
+        return QPoint(x, y);
+    }
+
+    *actualFace = -1;
+    return QPoint();
+}
+
+void CubeItem::deliverSceneEvent
+    (const QPoint &point, QGraphicsSceneMouseEvent *event)
+{
+    QRectF srect = mScene->sceneRect();
+    QPointF spoint = QPointF(point.x() + srect.x(), point.y() + srect.y());
+    QGraphicsSceneMouseEvent e(event->type());
+    e.setScenePos(spoint);
+    e.setScreenPos(point);
+    e.setButtonDownScreenPos(event->button(), pressedPos);
+    e.setButtonDownScenePos
+        (event->button(), QPointF(pressedPos.x() + srect.x(),
+                                  pressedPos.y() + srect.y()));
+    e.setButtons(event->buttons());
+    e.setButton(event->button());
+    e.setModifiers(event->modifiers());
+    e.setAccepted(false);
+    QApplication::sendEvent(mScene, &e);
 }
