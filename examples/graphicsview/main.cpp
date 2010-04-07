@@ -43,7 +43,12 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QtOpenGL/qgl.h>
+#include <QtCore/qmath.h>
+#include <QtCore/qdatetime.h>
 #include "teapotitem.h"
+#include "cubeitem.h"
+#include "coloritem.h"
+#include "robot.h"
 #include "qglcamera.h"
 #include "qglgraphicsnavigationitem.h"
 
@@ -54,8 +59,9 @@ int main(int argc, char *argv[])
     QGraphicsScene scene;
     scene.setBackgroundBrush(Qt::black);
 
-    TeapotItem *item = new TeapotItem();
+    CubeItem *item = new CubeItem();
     item->setRect(0, 0, 600, 480);
+    item->camera()->setEye(QVector3D(-6.0f, 6.0f, 6.0f));
     scene.addItem(item);
 
     TeapotItem *item2 = new TeapotItem();
@@ -74,6 +80,25 @@ int main(int argc, char *argv[])
     scene.addItem(navigator2);
 
     item->setFocus();
+
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+
+    QGraphicsScene robotScene(-256, -256, 512, 512);
+
+    for (int i = 0; i < 10; ++i) {
+        ColorItem *item = new ColorItem;
+        item->setPos(qSin((i * 6.28) / 10.0) * 150,
+                     qCos((i * 6.28) / 10.0) * 150);
+
+        robotScene.addItem(item);
+    }
+
+    Robot *robot = new Robot;
+    robot->scale(1.2, 1.2);
+    robot->setPos(0, -20);
+    robotScene.addItem(robot);
+
+    item->setScene(&robotScene);
 
     QGraphicsView view(&scene);
     view.setViewport(new QGLWidget());
