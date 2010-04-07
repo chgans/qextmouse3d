@@ -17,7 +17,7 @@ Viewport {
 				id: rotation
                 NumberAnimation on angle {
                     running: true
-                    repeat: true
+                    loops: Animation.Infinite
                     from: 0
                     to: 360
                     duration: 2000
