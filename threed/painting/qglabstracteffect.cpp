@@ -275,7 +275,7 @@ static void setMaterial(int face, const QGLMaterial *parameters)
     rather than shader programs.
 
     The subclass is responsible for calling \c{glEnable(GL_LIGHTING)}
-    or \c{glDisable(GL_LIGHTING)}, but all other fixed-function lighting
+    and \c{glDisable(GL_LIGHT0)}, but all other fixed-function lighting
     parameters are managed by this function.
 
     This function does not exist on OpenGL/ES 2.0 systems.
@@ -286,7 +286,6 @@ void QGLAbstractEffect::updateLighting
         (const QGLPainter *painter, QGLPainter::Updates updates)
 {
     // Update the lights if they have changegd.
-    bool hasEnabledLights = painter->hasEnabledLights();
     if ((updates & QGLPainter::UpdateLights) != 0) {
         // Save the current modelview matrix and load the identity.
         // We need to apply the light in the modelview transformation
@@ -295,60 +294,49 @@ void QGLAbstractEffect::updateLighting
         glPushMatrix();
         glLoadIdentity();
 
-        // Enable the lights.
-        int count = painter->lightCount();
-        for (int light = 0; light < count; ++light) {
-            if (painter->isLightEnabled(light)) {
-                setLight(GL_LIGHT0 + light, painter->lightParameters(light),
-                         painter->lightTransform(light));
-                glEnable(GL_LIGHT0 + light);
-            } else {
-                glDisable(GL_LIGHT0 + light);
-            }
-        }
+        // Enable the main light.
+        const QGLLightParameters *params = painter->mainLight();
+        setLight(GL_LIGHT0, params, painter->mainLightTransform());
 
         // Restore the previous modelview transformation.
-        if (hasEnabledLights)
-            glPopMatrix();
+        glPopMatrix();
 
         // Set up the light model parameters if at least one light is enabled.
-        if (hasEnabledLights) {
-            const QGLLightModel *lightModel = painter->lightModel();
-            GLfloat values[4];
+        const QGLLightModel *lightModel = painter->lightModel();
+        GLfloat values[4];
 #ifdef GL_LIGHT_MODEL_TWO_SIDE
-            if (lightModel->model() == QGLLightModel::TwoSided)
-                values[0] = 1.0f;
-            else
-                values[0] = 0.0f;
-            glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, values);
+        if (lightModel->model() == QGLLightModel::TwoSided)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, values);
 #endif
 #ifdef GL_LIGHT_MODEL_COLOR_CONTROL
-            if (lightModel->colorControl() == QGLLightModel::SeparateSpecularColor)
-                values[0] = GL_SEPARATE_SPECULAR_COLOR;
-            else
-                values[0] = GL_SINGLE_COLOR;
-            glLightModelfv(GL_LIGHT_MODEL_COLOR_CONTROL, values);
+        if (lightModel->colorControl() == QGLLightModel::SeparateSpecularColor)
+            values[0] = GL_SEPARATE_SPECULAR_COLOR;
+        else
+            values[0] = GL_SINGLE_COLOR;
+        glLightModelfv(GL_LIGHT_MODEL_COLOR_CONTROL, values);
 #endif
 #ifdef GL_LIGHT_MODEL_LOCAL_VIEWER
-            if (lightModel->viewerPosition() == QGLLightModel::LocalViewer)
-                values[0] = 1.0f;
-            else
-                values[0] = 0.0f;
-            glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, values);
+        if (lightModel->viewerPosition() == QGLLightModel::LocalViewer)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, values);
 #endif
 #ifdef GL_LIGHT_MODEL_AMBIENT
-            QColor color = lightModel->ambientSceneColor();
-            values[0] = color.redF();
-            values[1] = color.blueF();
-            values[2] = color.greenF();
-            values[3] = color.alphaF();
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, values);
+        QColor color = lightModel->ambientSceneColor();
+        values[0] = color.redF();
+        values[1] = color.blueF();
+        values[2] = color.greenF();
+        values[3] = color.alphaF();
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, values);
 #endif
-        }
     }
 
     // Update the materials if they have changed.
-    if ((updates & QGLPainter::UpdateMaterials) != 0 && hasEnabledLights) {
+    if ((updates & QGLPainter::UpdateMaterials) != 0) {
         const QGLMaterial *frontMaterial = painter->faceMaterial(QGL::FrontFaces);
         const QGLMaterial *backMaterial = painter->faceMaterial(QGL::BackFaces);
         if (frontMaterial == backMaterial) {
@@ -468,9 +456,8 @@ void QGLAbstractEffect::setAttributeArray
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
         return;
-    QGLPainterPrivate *painter =
+    QGLPainterPrivate *extensions =
         QGLPainterPrivateCache::instance()->fromContext(ctx);
-    QGLPainterExtensions *extensions = painter->extensions();
     if (!extensions->vertexAttribPointer) {
         extensions->vertexAttribPointer = (q_glVertexAttribPointer)
             ctx->getProcAddress(QLatin1String("glVertexAttribPointer"));

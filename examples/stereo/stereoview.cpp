@@ -58,7 +58,6 @@ void StereoView::initializeGL(QGLPainter *painter)
     china->setSpecularColor(QColor(60, 60, 60));
     china->setShininess(128);
 
-    painter->setLightEnabled(0, true);
     painter->setFaceMaterial(QGL::AllFaces, china);
     painter->setStandardEffect(QGL::LitMaterial);
 

@@ -477,8 +477,8 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+    d->depthBufferOptions.apply();
+    d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
     d->logLeave("QGLView::initializeGL");
@@ -508,12 +508,14 @@ void QGLView::paintGL()
     // Paint the scene contents.
     QGLPainter painter;
     painter.begin();
+    painter.resetViewport();
     if (d->options & QGLView::ShowPicking) {
         // If showing picking, then render normally.
         painter.setPicking(true);
         painter.clearPickObjects();
+        painter.setEye(QGL::NoEye);
         earlyPaintGL(&painter);
-        d->camera->apply(&painter);
+        painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
     } else if (d->camera->eyeSeparation() == 0.0f) {
@@ -526,14 +528,16 @@ void QGLView::paintGL()
                 glDrawBuffer(GL_BACK);
             else
                 glDrawBuffer(GL_FRONT);
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         } else
 #endif
         {
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         }
     } else {
@@ -546,16 +550,18 @@ void QGLView::paintGL()
         // In RedCyanAnaglyph mode, the color mask is set each time to only
         // extract the color planes that we want to see through that eye.
         if (d->stereoType == QGLView::RedCyanAnaglyph) {
+            painter.setEye(QGL::LeftEye);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             earlyPaintGL(&painter);
 
             glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
+            painter.setEye(QGL::RightEye);
             glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
             glClear(GL_DEPTH_BUFFER_BIT);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -566,16 +572,18 @@ void QGLView::paintGL()
                 glDrawBuffer(GL_BACK_LEFT);
             else
                 glDrawBuffer(GL_FRONT_LEFT);
+            painter.setEye(QGL::LeftEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             if (doubleBuffered)
                 glDrawBuffer(GL_BACK_RIGHT);
             else
                 glDrawBuffer(GL_FRONT_RIGHT);
+            painter.setEye(QGL::RightEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 #endif
         }
@@ -962,7 +970,8 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // Render the pick version of the scene into the framebuffer object.
         d->fbo->bind();
         painter.clear();
-        d->camera->apply(&painter);
+        painter.setEye(QGL::NoEye);
+        painter.setCamera(d->camera);
         pickGL(&painter);
         painter.setPicking(false);
 

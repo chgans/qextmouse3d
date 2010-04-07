@@ -412,8 +412,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     painter->setLightModel(mLightModel);
 
     mLightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
-    painter->setLightParameters(0, mLightParameters);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(mLightParameters);
 
     connect(mTimer, SIGNAL(timeout()), this, SLOT(animate()));
     mTimer->start(25);
@@ -469,7 +468,7 @@ void CubeView::paintGL(QGLPainter *painter)
     //camera.setCenter(sceneOrigin);
     camera.setEye(QVector3D(0.0f, 0.0f, viewDistance));
     camera.rotateCenter(camera.pan(mSpin));
-    camera.apply(painter);
+    painter->setCamera(&camera);
 
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(0.0f, mYax, 0.0f);

@@ -140,6 +140,13 @@ namespace QGL
     };
     Q_DECLARE_FLAGS(ClearBuffers, ClearBuffer)
 
+    enum Eye
+    {
+        NoEye,
+        LeftEye,
+        RightEye
+    };
+
     enum Smoothing
     {
         NoSmoothing,

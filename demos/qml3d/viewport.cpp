@@ -357,14 +357,14 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     earlyDraw(&painter);
 
     // Set up the scene the way Qml3dView would if we were using it.
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+    d->depthBufferOptions.apply();
+    d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     if (d->camera) {
-        d->camera->apply(&painter, QSize(width(), height()));
+        painter.setCamera(d->camera);
     } else {
         QGLCamera defCamera;
-        defCamera.apply(&painter, QSize(width(), height()));
+        painter.setCamera(&defCamera);
     }
 
     // Draw the Item3d children.
@@ -419,13 +419,12 @@ void Viewport::draw(QGLPainter *painter)
 {
     painter->setObjectPickId(-1);
     QObjectList list = QObject::children();    
-    int lightNumber = 0;
+    bool haveLights = false;
     foreach (QObject *child, list) {
         QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
         if (light) {
-            painter->setLightParameters(lightNumber, light); // XXX - non-zero lights
-            painter->setLightEnabled(lightNumber, true);
-            lightNumber++;
+            painter->setMainLight(light);
+            break;
         }
     }
     painter->setLightModel(d->lightModel);
@@ -435,11 +434,8 @@ void Viewport::draw(QGLPainter *painter)
             item->draw(painter);
     }
     
-    for (int i=0; i<lightNumber; i++)
-    {
-        painter->setLightParameters(i,0);
-        painter->setLightEnabled(i, 0);
-    }
+    if (haveLights)
+        painter->setMainLight(0);
 }
 
 /*!

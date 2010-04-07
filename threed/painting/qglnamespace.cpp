@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \enum QGL::VertexAttribute
     \since 4.7
-    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexArray()
+    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexAttribute()
 
     \value Position The primary position of the vertex.
     \value Normal The normal at each vertex.
@@ -214,6 +214,18 @@ QT_BEGIN_NAMESPACE
     \value ClearDepthBuffer Clears the depth buffer.
     \value ClearStencilBuffer Clears the stencil buffer.
     \value ClearColorBuffer Clears the color buffer.
+*/
+
+/*!
+    \enum QGL::Eye
+    \since 4.7
+    This enum defines the eye that is being rendered by a QGLPainter
+    when stereo rendering is in effect.
+
+    \value NoEye Do not perform an eye adjustment on the camera because
+        stereo rendering is not in effect.
+    \value LeftEye Render the scene from the perspective of the left eye.
+    \value RightEye Render the scene from the perspective of the right eye.
 */
 
 /*!

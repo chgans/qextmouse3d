@@ -98,6 +98,7 @@ public:
         UpdateColor                 = 0x00000001,
         UpdateModelViewMatrix       = 0x00000002,
         UpdateProjectionMatrix      = 0x00000004,
+        UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
         UpdateFog                   = 0x00000020,
@@ -127,17 +128,17 @@ public:
     QGLMatrixStack& projectionMatrix();
     QGLMatrixStack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
+    QMatrix3x3 normalMatrix() const;
 
-    bool isVisible(const QVector3D& point) const;
-    bool isVisible(const QBox3D& box) const;
+    QGL::Eye eye() const;
+    void setEye(QGL::Eye eye);
 
-    QVector3D project(const QVector3D& point, bool *ok = 0) const;
-    QVector3D unproject(const QVector3D& point, bool *ok = 0) const;
-    QVector4D unproject(const QVector4D& point, qreal nearPlane,
-                        qreal farPlane, bool *ok = 0) const;
+    void setCamera(QGLCamera *camera);
+
+    bool isCullable(const QVector3D& point) const;
+    bool isCullable(const QBox3D& box) const;
 
     qreal aspectRatio() const;
-    qreal aspectRatio(const QSize& viewportSize) const;
 
     QGLAbstractEffect *effect() const;
 
@@ -162,7 +163,6 @@ public:
     void setCommonNormal(const QVector3D& value);
 
     int textureUnitCount() const;
-    bool isTextureUnitActive(int unit = 0) const;
 
     void setTexture(int unit, const QGLTexture2D *texture);
     void setTexture(int unit, const QGLTextureCube *texture);
@@ -189,16 +189,11 @@ public:
     const QGLLightModel *lightModel() const;
     void setLightModel(const QGLLightModel *value);
 
-    int lightCount() const;
-    bool hasEnabledLights() const;
-    bool isLightEnabled(int number) const;
-    void setLightEnabled(int number, bool value) const;
-
-    const QGLLightParameters *lightParameters(int number) const;
-    QMatrix4x4 lightTransform(int number) const;
-    void setLightParameters(int number, const QGLLightParameters *parameters);
-    void setLightParameters(int number, const QGLLightParameters *parameters,
-                            const QMatrix4x4& transform);
+    const QGLLightParameters *mainLight() const;
+    void setMainLight(QGLLightParameters *parameters);
+    void setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform);
+    QMatrix4x4 mainLightTransform() const;
 
     const QGLMaterial *faceMaterial(QGL::Face face) const;
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);

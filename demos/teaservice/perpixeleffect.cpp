@@ -131,12 +131,10 @@ void PerPixelEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
     // Update the matrix uniforms.
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
-        QMatrix4x4 mv = painter->modelViewMatrix();
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
-        d->program->setUniformValue(d->modelViewUniform, mv);
-        d->program->setUniformValue(d->normalMatrixUniform, mv.normalMatrix());
+        d->program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
+        d->program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
 
     // Bail out if the lights or materials have not changed.
@@ -144,17 +142,8 @@ void PerPixelEffect::update
         return;
 
     // Find the parameters for the single enabled light.
-    const QGLLightParameters *lparams = 0;
-    QMatrix4x4 ltransform;
-    for (int index = 0; index < painter->lightCount(); ++index) {
-        if (painter->isLightEnabled(index)) {
-            lparams = painter->lightParameters(index);
-            ltransform = painter->lightTransform(index);
-            break;
-        }
-    }
-    if (!lparams)
-        lparams = painter->lightParameters(0);
+    const QGLLightParameters *lparams = painter->mainLight();
+    QMatrix4x4 ltransform = painter->mainLightTransform();
 
     // Get the front material parameters.
     const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);

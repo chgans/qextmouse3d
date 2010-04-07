@@ -51,7 +51,6 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLStencilBufferOptionsPrivate;
-class QGLPainter;
 
 class Q_QT3D_EXPORT QGLStencilBufferOptions
 {
@@ -141,7 +140,7 @@ public:
     bool operator==(const QGLStencilBufferOptions& other) const;
     bool operator!=(const QGLStencilBufferOptions& other) const;
 
-    void apply(QGLPainter *painter) const;
+    void apply() const;
 
 private:
     QGLStencilBufferOptionsPrivate *d;

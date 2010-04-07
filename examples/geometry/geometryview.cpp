@@ -97,8 +97,7 @@ void GeometryView::initializeGL(QGLPainter *painter)
 {
     painter->setLightModel(mdl);
 
-    painter->setLightParameters(0, lp);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(lp);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
     timer->start(25);

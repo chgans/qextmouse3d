@@ -442,7 +442,7 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
-    d->blendOptions.apply(&glpainter);
+    d->blendOptions.apply();
     if (d->backgroundColor.isValid()) {
         // We clear the background by drawing a triangle fan so
         // that the background color will blend with the underlying
@@ -462,10 +462,11 @@ void QGLGraphicsViewportItem::paint
     }
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
-    d->depthBufferOptions.apply(&glpainter);
+    d->depthBufferOptions.apply();
 
     // Apply the camera.
-    d->camera->apply(&glpainter, viewport.size());
+    glpainter.setEye(QGL::NoEye);
+    glpainter.setCamera(d->camera);
 
     // Paint the GL contents.
     paintGL(&glpainter);
@@ -476,8 +477,8 @@ void QGLGraphicsViewportItem::paint
 
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
-    QGLDepthBufferOptions().apply(&glpainter);
-    QGLBlendOptions().apply(&glpainter);
+    QGLDepthBufferOptions().apply();
+    QGLBlendOptions().apply();
 }
 
 /*!

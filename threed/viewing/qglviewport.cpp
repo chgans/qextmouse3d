@@ -53,17 +53,6 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::viewing
 */
 
-/*!
-    \enum QGLViewport::Eye
-    This enum specifies the eye to prepare to draw in QGLViewport::prepareGL().
-
-    \value NoEye Do not use an eye; draw from the center perspective.
-           This is specified when stereo viewing is not in effect, or when
-           refreshing the offscreen object picking buffer.
-    \value LeftEye Draw from the perspective of the left eye.
-    \value RightEye Draw from the perspective of the right eye.
-*/
-
 class QGLViewportPrivate
 {
 public:
@@ -280,7 +269,7 @@ void QGLViewport::setBackgroundColor(const QColor& color)
 
     \sa paintGL()
 */
-void QGLViewport::prepareGL(QGLPainter *painter, QGLViewport::Eye eye,
+void QGLViewport::prepareGL(QGLPainter *painter, QGL::Eye eye,
                             QPaintDevice *window, const QRect &windowRect)
 {
     Q_D(QGLViewport);
@@ -304,7 +293,7 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGLViewport::Eye eye,
 
     // Adjust the blend options.  Set this before clearing to the
     // background color in case it involves transparency.
-    d->blendOptions.apply(painter);
+    d->blendOptions.apply();
 
     // Clear the background.
     bool depthCleared = false;
@@ -343,27 +332,14 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGLViewport::Eye eye,
     // Clear the depth buffer and set the depth buffer options.
     if (!depthCleared)
         painter->clear(QGL::ClearDepthBuffer);
-    d->depthBufferOptions.apply(painter);
+    d->depthBufferOptions.apply();
 
     // Disable back face culling.
     painter->setCullFaces(QGL::CullDisabled);
 
     // Apply the camera modelview and projection matrices for the eye.
-    if (eye == QGLViewport::NoEye) {
-        d->camera->apply(painter, windowRect.size());
-    } else {
-        qreal separation = d->camera->eyeSeparation();
-        if (separation == 0.0f) {
-            d->camera->apply(painter, windowRect.size());
-        } else {
-            QVector3D vector = d->camera->translation
-                (separation / 2.0f, 0.0f, 0.0f);
-            if (eye == QGLViewport::LeftEye)
-                d->camera->apply(painter, windowRect.size(), -vector);
-            else
-                d->camera->apply(painter, windowRect.size(), vector);
-        }
-    }
+    painter->setEye(eye);
+    painter->setCamera(d->camera);
 }
 
 /*!

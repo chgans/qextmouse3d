@@ -238,3 +238,26 @@ bool QTriangle3D::contains(const QVector3D &point) const
   \endlist
   This result may be used to interpolate effects across the triangle.
  */
+
+/*!
+    Transforms the points of this triangle according to \a matrix.
+
+    \sa transformed()
+*/
+void QTriangle3D::transform(const QMatrix4x4 &matrix)
+{
+    m_p = matrix * m_p;
+    m_q = matrix * m_q;
+    m_r = matrix * m_r;
+}
+
+/*!
+    Returns a new triangle that results from transforming this
+    one using \a matrix.
+
+    \sa transform()
+*/
+QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
+{
+    return QTriangle3D(matrix * m_p, matrix * m_q, matrix * m_r);
+}

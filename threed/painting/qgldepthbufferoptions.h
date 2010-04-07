@@ -51,7 +51,6 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLDepthBufferOptionsPrivate;
-class QGLPainter;
 
 class Q_QT3D_EXPORT QGLDepthBufferOptions
 {
@@ -91,7 +90,7 @@ public:
     bool operator==(const QGLDepthBufferOptions& other) const;
     bool operator!=(const QGLDepthBufferOptions& other) const;
 
-    void apply(QGLPainter *painter) const;
+    void apply() const;
 
 private:
     QGLDepthBufferOptionsPrivate *d;

@@ -143,10 +143,9 @@ void CubeView::initializeGL(QGLPainter *painter)
 
     normalModel = new QGLLightModel(this);
 
-    painter->setLightEnabled(0, true);
     QGLLightParameters *light = new QGLLightParameters(this);
     light->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
-    painter->setLightParameters(0, light);
+    painter->setMainLight(light);
 
     QImage textureImage(":/qtlogo.png");
     texture.setImage(textureImage);
@@ -159,7 +158,7 @@ void CubeView::paintGL(QGLPainter *painter)
 
     painter->setFaceColor(QGL::AllFaces, QColor(255, 0, 0));
     painter->setStandardEffect(QGL::LitMaterial);
-    roomCamera->apply(painter);
+    painter->setCamera(roomCamera);
     painter->setLightModel(roomModel);
     room.draw(painter);
 

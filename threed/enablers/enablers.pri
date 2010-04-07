@@ -20,8 +20,11 @@ SOURCES += qglattributevalue.cpp \
     qgltextureutils.cpp \
     qglvertexbuffer.cpp \
     qarray.cpp \
+    qareaallocator.cpp \
     qcustomdataarray.cpp \
     qvectorarray.cpp
 PRIVATE_HEADERS += \
     qgltexture2d_p.h \
-    qgltextureutils_p.h
+    qgltextureutils_p.h \
+    qglvertexbuffer_p.h \
+    qareaallocator_p.h

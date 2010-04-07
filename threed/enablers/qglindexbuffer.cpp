@@ -41,6 +41,7 @@
 
 #include "qglindexbuffer.h"
 #include "qglpainter.h"
+#include "qglpainter_p.h"
 #include <QtOpenGL/qgl.h>
 #include <QtCore/qatomic.h>
 
@@ -462,11 +463,17 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
 #ifndef QT_NO_DEBUG
     checkRequiredFields();
 #endif
+    GLuint id = (d->buffer ? d->buffer->bufferId() : 0);
+    if (id != d_ptr->boundIndexBuffer) {
+        if (id)
+            d->buffer->bind();
+        else
+            QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d_ptr->boundIndexBuffer = id;
+    }
 #ifdef QGL_INT_BUFFERS_SUPPORTED
-    if (d->buffer) {
-        d->buffer->bind();
+    if (id) {
         glDrawElements(GLenum(mode), d->indexCount, d->elementType, 0);
-        d->buffer->release();
     } else if (d->elementType == GL_UNSIGNED_SHORT) {
         glDrawElements(GLenum(mode), d->indexCount, GL_UNSIGNED_SHORT,
                        d->indicesShort.constData());
@@ -475,10 +482,8 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
                        d->indicesInt.constData());
     }
 #else
-    if (d->buffer) {
-        d->buffer->bind();
+    if (id) {
         glDrawElements(GLenum(mode), d->indexCount, GL_UNSIGNED_SHORT, 0);
-        d->buffer->release();
     } else {
         glDrawElements(GLenum(mode), d->indexCount, GL_UNSIGNED_SHORT,
                        d->indicesShort.constData());
@@ -508,9 +513,16 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int 
 #ifndef QT_NO_DEBUG
     checkRequiredFields();
 #endif
+    GLuint id = (d->buffer ? d->buffer->bufferId() : 0);
+    if (id != d_ptr->boundIndexBuffer) {
+        if (id)
+            d->buffer->bind();
+        else
+            QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d_ptr->boundIndexBuffer = id;
+    }
 #ifdef QGL_INT_BUFFERS_SUPPORTED
-    if (d->buffer) {
-        d->buffer->bind();
+    if (id) {
         if (d->elementType == GL_UNSIGNED_SHORT) {
             glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT,
                        reinterpret_cast<const void *>(offset * sizeof(ushort)));
@@ -518,7 +530,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int 
             glDrawElements(GLenum(mode), count, GL_UNSIGNED_INT,
                        reinterpret_cast<const void *>(offset * sizeof(int)));
         }
-        d->buffer->release();
     } else if (d->elementType == GL_UNSIGNED_SHORT) {
         glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT,
                        d->indicesShort.constData() + offset);
@@ -527,11 +538,9 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int 
                        d->indicesInt.constData() + offset);
     }
 #else
-    if (d->buffer) {
-        d->buffer->bind();
+    if (id) {
         glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT,
                        reinterpret_cast<const void *>(offset * sizeof(ushort)));
-        d->buffer->release();
     } else {
         glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT,
                        d->indicesShort.constData() + offset);

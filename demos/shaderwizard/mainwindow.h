@@ -48,6 +48,8 @@
 #include <QModelIndex>
 #include <QMenu>
 
+#include "qglcolladafxeffectloader.h"
+
 class ShaderWizardGLWidget;
 class QAbstractItemModel;
 class QStandardItemModel;
@@ -124,6 +126,7 @@ private:
     QList<QAction *> recentFileActions;
     QStringList recentFiles;
     bool recentFilesSeperatorAdded;
+    QGLColladaFxEffectLoader effectLoader;
 };
 
 #endif // MAINWINDOW_H
