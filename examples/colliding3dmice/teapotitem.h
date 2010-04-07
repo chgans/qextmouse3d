@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,34 +39,41 @@
 **
 ****************************************************************************/
 
-#ifndef MOUSE_H
-#define MOUSE_H
+#ifndef TEAPOTITEM_H
+#define TEAPOTITEM_H
 
-#include <QGraphicsItem>
+#include "qglgraphicsviewportitem.h"
+#include "qgldisplaylist.h"
+#include <QtGui/qbrush.h>
 
-//! [0]
-class Mouse : public QGraphicsItem
+class QGLFramebufferObject;
+
+class TeapotItem : public QObject, public QGLGraphicsViewportItem
 {
+    Q_OBJECT
 public:
-    Mouse(bool redCyanEffect);
+    TeapotItem(QGraphicsItem *parent = 0);
+    ~TeapotItem();
 
-    QRectF boundingRect() const;
-    QPainterPath shape() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
-               QWidget *widget);
+    QGraphicsScene *scene() const { return mScene; }
+    void setScene(QGraphicsScene *scene);
+
+    QBrush backgroundBrush() const { return background; }
+    void setBackgroundBrush(const QBrush &brush) { background = brush; }
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 protected:
-    void advance(int step);
+    void paintGL(QGLPainter *painter);
+
+private Q_SLOTS:
+    void updateScene();
 
 private:
-    qreal angle;
-    qreal speed;
-    qreal mouseEyeDirection;
-    qreal z;
-    QColor color;
-
-    void paintMouse(QPainter *painter, qreal zadjust);
+    QGLDisplayList teapot;
+    QGraphicsScene *mScene;
+    QGLFramebufferObject *fbo;
+    QBrush background;
 };
-//! [0]
 
 #endif

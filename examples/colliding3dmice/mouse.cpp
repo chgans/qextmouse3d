@@ -61,18 +61,25 @@ static qreal normalizeAngle(qreal angle)
 }
 
 //! [0]
-Mouse::Mouse()
+Mouse::Mouse(bool redCyanEffect)
     : angle(0), speed(0), mouseEyeDirection(0)
 {
-    // Use grayscale for the mouse color because it works better
-    // when using red-cyan glasses.
-    int col = qrand() % 256;
-    color = QColor(col, col, col);
+    if (redCyanEffect) {
+        // Use grayscale for the mouse color because it works better
+        // when using red-cyan glasses.
+        int col = qrand() % 256;
+        color = QColor(col, col, col);
+    } else {
+      color = QColor(qrand() % 256, qrand() % 256, qrand() % 256);
+    }
 
     setRotation(qrand() % (360 * 16));
 
     // Pick a random z value for the mouse to be drawn at.
-    z = qrand() % 20;
+    if (redCyanEffect)
+        z = qrand() % 20;
+    else
+        z = 0;
 }
 //! [0]
 
