@@ -93,8 +93,11 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         QRectF rect(0, 0, fbo->size().width(), fbo->size().height());
         QPainter fboPainter(fbo);
         fboPainter.save();
+        QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
+        gradient.setColorAt(0, Qt::white);
+        gradient.setColorAt(1, Qt::lightGray);
         fboPainter.setPen(QPen(Qt::black, 3));
-        fboPainter.setBrush(QBrush(QColor(230, 200, 167)));
+        fboPainter.setBrush(gradient);
         fboPainter.drawRect(rect);
         fboPainter.restore();
         mScene->render(&fboPainter, rect);
@@ -250,7 +253,11 @@ QPoint CubeItem::cubeIntersection
 
     // Determine which face of the cube contains the point.
     QVector3D pt1, pt2, pt3, pt4;
+    bool singleFace = (pressedFace != -1);
     for (int face = 0; face < 6; ++face) {
+        if (singleFace && face != pressedFace)
+            continue;
+
         // Create a polygon from the projected version of the face
         // so that we can test for point membership.
         pt1 = QVector3D(vertexData[face * 4 * 3],
@@ -271,13 +278,15 @@ QPoint CubeItem::cubeIntersection
         points2d.append((combined * pt3).toPointF());
         points2d.append((combined * pt4).toPointF());
         QPolygonF polygon(points2d);
-        if (!polygon.containsPoint(relativePoint, Qt::OddEvenFill))
-            continue;
+        if (!singleFace) {
+            if (!polygon.containsPoint(relativePoint, Qt::OddEvenFill))
+                continue;
+        }
 
         // We want the face that is pointing towards the user.
         QVector3D v = mv.mapVector
             (QVector3D::crossProduct(pt2 - pt1, pt3 - pt1));
-        if (v.z() <= 0.0f)
+        if (!singleFace && v.z() <= 0.0f)
             continue;
 
         // Determine the intersection between the cube face and

@@ -39,72 +39,40 @@
 **
 ****************************************************************************/
 
-#ifndef ROBOT_H
-#define ROBOT_H
+#ifndef EDGE_H
+#define EDGE_H
 
 #include <QGraphicsItem>
 
-QT_BEGIN_NAMESPACE
-class QGraphicsSceneMouseEvent;
-class QTimeLine;
-QT_END_NAMESPACE
+class Node;
 
-class RobotPart : public QGraphicsItem
+class Edge : public QGraphicsItem
 {
 public:
-    RobotPart(QGraphicsItem *parent = 0);
+    Edge(Node *sourceNode, Node *destNode);
+    ~Edge();
 
-protected:
-    void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
-    void dragLeaveEvent(QGraphicsSceneDragDropEvent *event);
-    void dropEvent(QGraphicsSceneDragDropEvent *event);
+    Node *sourceNode() const;
+    void setSourceNode(Node *node);
 
-    QPixmap pixmap;
-    QColor color;
-    bool dragOver;
-};
+    Node *destNode() const;
+    void setDestNode(Node *node);
 
-class RobotHead : public RobotPart
-{
-public:
-    RobotHead(QGraphicsItem *parent = 0);
+    void adjust();
 
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-
-    enum { Type = UserType + 1 };
-    int type() const;
-};
-
-class RobotTorso : public RobotPart
-{
-public:
-    RobotTorso(QGraphicsItem *parent = 0);
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-};
-
-class RobotLimb : public RobotPart
-{
-public:
-    RobotLimb(QGraphicsItem *parent = 0);
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-};
-
-class Robot : public RobotPart
-{
-public:
-    Robot();
-    ~Robot();
+    enum { Type = UserType + 2 };
+    int type() const { return Type; }
     
+protected:
     QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    
 private:
-    QTimeLine *timeLine;    
+    Node *source, *dest;
+
+    QPointF sourcePoint;
+    QPointF destPoint;
+    qreal arrowSize;
 };
 
 #endif

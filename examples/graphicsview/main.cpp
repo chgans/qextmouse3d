@@ -47,8 +47,7 @@
 #include <QtCore/qdatetime.h>
 #include "teapotitem.h"
 #include "cubeitem.h"
-#include "coloritem.h"
-#include "robot.h"
+#include "graph.h"
 #include "qglcamera.h"
 #include "qglgraphicsnavigationitem.h"
 
@@ -81,6 +80,7 @@ int main(int argc, char *argv[])
 
     item->setFocus();
 
+#if 0
     qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 
     QGraphicsScene robotScene(-256, -256, 512, 512);
@@ -99,6 +99,10 @@ int main(int argc, char *argv[])
     robotScene.addItem(robot);
 
     item->setScene(&robotScene);
+#endif
+
+    Graph graph;
+    item->setScene(graph.scene());
 
     QGraphicsView view(&scene);
     view.setViewport(new QGLWidget());

@@ -39,26 +39,30 @@
 **
 ****************************************************************************/
 
-#ifndef COLORITEM_H
-#define COLORITEM_H
+#ifndef GRAPHWIDGET_H
+#define GRAPHWIDGET_H
 
-#include <QGraphicsItem>
+#include <QtGui/QGraphicsScene>
 
-class ColorItem : public QGraphicsItem
+class Node;
+
+class Graph : public QObject
 {
+    Q_OBJECT
 public:
-    ColorItem();
+    Graph();
 
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    QGraphicsScene *scene() const { return sceneObject; }
+
+    void itemMoved();
 
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+    void timerEvent(QTimerEvent *event);
 
 private:
-    QColor color;
+    QGraphicsScene *sceneObject;
+    int timerId;
+    Node *centerNode;
 };
 
 #endif
