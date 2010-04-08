@@ -55,6 +55,7 @@ QT_MODULE(Qt3d)
 #endif
 
 class QGLShaderProgram;
+class QGLVertexBuffer;
 
 class Q_QT3D_EXPORT QGLAbstractEffect
 {
@@ -79,12 +80,14 @@ protected:
 #if !defined(QT_OPENGL_ES_2) || defined(Q_QDOC)
     void updateLighting(const QGLPainter *painter, QGLPainter::Updates updates);
     void updateFog(const QGLPainter *painter);
-    void enableVertexAttribute(QGL::VertexAttribute attribute);
-    void disableVertexAttribute(QGL::VertexAttribute attribute);
+    static void enableVertexAttribute(QGL::VertexAttribute attribute);
+    static void disableVertexAttribute(QGL::VertexAttribute attribute);
 #endif
-    void setAttributeArray
+    static void setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value);
+
+    friend class QGLVertexBuffer;
 };
 
 QT_END_NAMESPACE

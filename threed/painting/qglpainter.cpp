@@ -1396,7 +1396,7 @@ static QGLMultiTextureExtensions *resolveMultiTextureExtensions
 
 #endif
 
-void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
 #if !defined(QT_OPENGL_ES_2)
     switch (attribute) {
@@ -1457,6 +1457,11 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     Q_UNUSED(attribute);
     Q_UNUSED(value);
 #endif
+}
+
+void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+{
+    qt_gl_setVertexAttribute(attribute, value);
 }
 
 #if !defined(QT_OPENGL_ES_2)
