@@ -47,7 +47,6 @@
 
 class QGLColladaFxEffect;
 
-Q_DECLARE_METATYPE(QVector<float>)
 Q_DECLARE_METATYPE(QGLShaderProgramEffect*)
 
 static void cleanupEffectList(QList<QGLColladaFxEffect*> &effects)
@@ -74,6 +73,10 @@ private slots:
     void create();
     void processFloatList_data();
     void processFloatList();
+    void processFloatListArray_data();
+    void processFloatListArray();
+    void processColorElement_data();
+    void processColorElement();
     void processLibraryImagesElement();
     void loadEffectsFromFile();
     void exportImportEffect_data();
@@ -109,25 +112,24 @@ void tst_QGLColladaFxEffectFactory::create()
 void tst_QGLColladaFxEffectFactory::processFloatList_data()
 {
     QTest::addColumn<QString>("xmlString");
-    QTest::addColumn<QVector<float> >("expectedResult");
+    QTest::addColumn<QVariant >("expectedResult");
 
-    QTest::newRow("null") << "" << QVector<float>();
+    QTest::newRow("null") << "" << QVariant();
 
-    QVector<float> expectedSingleResult;
-    expectedSingleResult << 0.456f;
+    QVariant expectedSingleResult = 0.456f;
     QTest::newRow("single_float") << "<floats>0.456</floats>" << expectedSingleResult;
 
-    QVector<float> expectedSimpleResult;
-    expectedSimpleResult << 0.0f << 1.1f << 2.2f << 3.3f;
-    QTest::newRow("simple_floats") << "<floats>0.0 1.1 2.2 3.3</floats>" << expectedSimpleResult;
+    QVariant expectedPrecisionResult = 1.234567f;
+    QTest::newRow("seven digit accuracy") << "<floats>1.234567</floats>" << expectedPrecisionResult;
 
-    QVector<float> expectedColorResult;
-    expectedColorResult << 0.0f << 1.1f << 2.2f << 3.3f;
-    QTest::newRow("color") << "<color>0.0 1.1 2.2 3.3</color>" << expectedColorResult;
+    QVariant expected3Dresult = QVector3D(0.0f, 0.3f, 6.6f);
+    QTest::newRow("3 floats to vector 3D") << "<floats>0.0 0.3 6.6</floats>" << expected3Dresult;
 
-    QVector<float> expectedSevenDigitResult;
-    expectedSevenDigitResult << 1234567.0f << 1.234567f << 76.54321f << 1111.111f << 22222.22f << 7645213.0f;
-    QTest::newRow("seven_digits") << "<floats>1234567.0 1.234567 76.54321 1111.111 22222.22 7645213.0</floats>" << expectedSevenDigitResult;
+    QVariant expected4DResult = QVector4D(0.0f, 1.1f, 2.2f, 3.3f);
+    QTest::newRow("4 floats to vector 4D") << "<floats>0.0 1.1 2.2 3.3</floats>" << expected4DResult;
+
+    QVariant expectedColorResult = QVector4D(0.0f, 1.1f, 2.2f, 3.3f);
+    QTest::newRow("4 float color to vector 4D") << "<color>0.0 1.1 2.2 3.3</color>" << expectedColorResult;
 }
 
 
@@ -135,17 +137,79 @@ void tst_QGLColladaFxEffectFactory::processFloatList_data()
 void tst_QGLColladaFxEffectFactory::processFloatList()
 {
     QFETCH(QString, xmlString);
-    QFETCH(QVector<float>, expectedResult);
+    QFETCH(QVariant, expectedResult);
 
     QXmlStreamReader xml(xmlString);
 
     xml.readNext(); // startDocument
     xml.readNext();
 
-    QVector<float> result = QGLColladaFxEffectFactory::processFloatList( xml );
+    QVariant result = QGLColladaFxEffectFactory::processFloatList( xml );
+
     QCOMPARE(result, expectedResult);
 }
 
+void tst_QGLColladaFxEffectFactory::processFloatListArray_data()
+{
+    QTest::addColumn<QString>("xmlString");
+    QTest::addColumn<QArray<float> >("expectedResult");
+
+    QArray<float> expectedSevenDigitArray;
+    expectedSevenDigitArray << 1234567.0f << 1.234567f << 76.54321f << 1111.111f << 22222.22f << 7645213.0f;
+    QTest::newRow("seven_digits") << "<floats>1234567.0 1.234567 76.54321 1111.111 22222.22 7645213.0</floats>" << expectedSevenDigitArray;
+
+}
+
+void tst_QGLColladaFxEffectFactory::processFloatListArray()
+{
+    QFETCH(QString, xmlString);
+    QFETCH(QArray<float>, expectedResult);
+
+    QXmlStreamReader xml(xmlString);
+
+    xml.readNext(); // startDocument
+    xml.readNext();
+
+    QArray<float> result = QGLColladaFxEffectFactory::processFloatList( xml ).value<QArray<float> >();
+
+    QCOMPARE(result, expectedResult);
+
+}
+
+void tst_QGLColladaFxEffectFactory::processColorElement_data()
+{
+    QTest::addColumn<QString>("xmlString");
+    QTest::addColumn<QColor>("expectedResult");
+
+    QColor errorColor = QColor(0, 0, 0, 255);
+    QTest::newRow("null") << "" << errorColor;
+
+    QColor expectedColor3dResult = QColor::fromRgbF(0.0f, 0.4f, 0.8f);
+    QTest::newRow("color 3 floats") << "<color>0.0 0.4 0.8</color>" << expectedColor3dResult;
+
+    QColor expectedColor4dResult = QColor::fromRgbF(0.0f, 0.2f, 0.4f, 0.8f);
+    QTest::newRow("color 4 floats") << "<color>0.0 0.2 0.4 0.8</color>" << expectedColor4dResult;
+
+    QTest::newRow("malformed color 1 float") << "<color>0.5</color>" << errorColor;
+    QTest::newRow("malformed color 2 float") << "<color>0.1 0.7</color>" << errorColor;
+    QTest::newRow("malformed color 5 float") << "<color>0.1 0.2 0.3 0.4 0.5</color>" << errorColor;
+}
+
+
+
+void tst_QGLColladaFxEffectFactory::processColorElement()
+{
+    QFETCH(QString, xmlString);
+    QFETCH(QColor, expectedResult);
+
+    QXmlStreamReader xml(xmlString);
+
+    xml.readNext(); // startDocument
+    xml.readNext();
+
+    QColor result = QGLColladaFxEffectFactory::processColorElement( xml );
+    QCOMPARE(result, expectedResult);
+}
 
 
 void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
@@ -162,16 +226,16 @@ void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
     xml.readNext(); // startDocument
     xml.readNext();
 
-    StateStack state;
+    ResultState state;
     QGLColladaFxEffectFactory::processLibraryImagesElement( xml, &state );
 
     // The structure is just an implementation detail, but the param and image
     // should be well formed:
-    QGLColladaParam* param = state.at(0)->at(0);
-    QCOMPARE(param->type(), int(QGLColladaParam::ImageType));
-    QGLColladaImageParam* imageParam = static_cast<QGLColladaImageParam*>(param);
-    QCOMPARE(imageParam->name(), QString("Rose"));
-    QCOMPARE(imageParam->image().size(), QSize(50,75));
+    QVariant param = state.paramNames.values().at(0);
+    QCOMPARE(param.type(), QVariant::Image);
+    QCOMPARE(state.paramNames.value("Rose"), param);
+    QImage image = param.value<QImage>();
+    QCOMPARE(image.size(), QSize(50,75));
 }
 
 void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
