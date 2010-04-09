@@ -136,9 +136,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     userEffect = 0;
     standardEffect = QGL::FlatColor;
     memset(stdeffects, 0, sizeof(stdeffects));
-#ifdef Q_WS_WIN
-    extensionFuncs = 0;
-#endif
     textureUnitCount = 0;
 }
 
@@ -149,9 +146,6 @@ QGLPainterPrivate::~QGLPainterPrivate()
     delete defaultMaterial;
     delete frontColorMaterial;
     delete backColorMaterial;
-#ifdef Q_WS_WIN
-    delete extensionFuncs;
-#endif
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];
     delete pick;
