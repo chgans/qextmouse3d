@@ -511,6 +511,7 @@ QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
                             , vector3D.y()
                             , vector3D.z()
                             , 1.0 );
+            return result;
         }
     }
     else if(floatList.type() == QVariant::Vector4D)
@@ -522,6 +523,7 @@ QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
                             , vector4D.y()
                             , vector4D.z()
                             , vector4D.w() );
+            return result;
         }
     }
     qWarning() << "Warning: Malformed color element ( line" << xml.lineNumber() << ")";
