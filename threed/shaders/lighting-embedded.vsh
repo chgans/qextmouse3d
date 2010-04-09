@@ -21,12 +21,6 @@ void qLightVertex(vec4 vertex, vec3 normal)
     vec3 toEye, toLight, h;
     float angle, spot;
     vec4 color, scolor;
-    vec4 adcomponent, scomponent;
-
-    // Start with the material's emissive color and the ambient scene color,
-    // which have been combined into the ecm parameter by the C++ code.
-    color = ecm;
-    scolor = vec4(0, 0, 0, 0);
 
     // Vector from the vertex to the eye position (i.e. the origin).
     if (viewerAtInfinity)
@@ -43,33 +37,32 @@ void qLightVertex(vec4 vertex, vec3 normal)
     angle = max(dot(normal, toLight), 0.0);
 
     // Calculate the ambient and diffuse light components.
-    adcomponent = acm + angle * dcm;
+    color = acm + angle * dcm;
 
     // Calculate the specular light components.
     if (angle != 0.0) {
         h = normalize(toLight + toEye);
         angle = max(dot(normal, h), 0.0);
-        scomponent = pow(angle, srm) * scm;
+        scolor = pow(angle, srm) * scm;
     } else {
-        scomponent = vec4(0, 0, 0, 0);
+        scolor = vec4(0, 0, 0, 0);
     }
 
     // Apply the spotlight angle and exponent.
     if (crli != 180.0) {
         spot = max(dot(normalize(vertex.xyz - pli), sdli), 0.0);
-        if (spot < ccrli)
-            spot = 0.0;
-        else
+        if (spot < ccrli) {
+            color = vec4(0, 0, 0, 0);
+            scolor = vec4(0, 0, 0, 0);
+        } else {
             spot = pow(spot, srli);
-    } else {
-        spot = 1.0;
+            color *= spot;
+            scolor *= spot;
+        }
     }
-    adcomponent *= spot;
-    scomponent *= spot;
 
     // Generate the final output colors.
-    color += adcomponent;
-    scolor += scomponent;
+    color += ecm;
     float alpha = dcm.a;
     qColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
     qSecondaryColor = clamp(scolor, 0.0, 1.0);

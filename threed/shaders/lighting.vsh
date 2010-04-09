@@ -70,15 +70,15 @@ void qLightVertex(vec4 vertex, vec3 normal)
     // Apply the spotlight angle and exponent.
     if (crli != 180.0) {
         spot = max(dot(normalize(vertex.xyz - pli), sdli), 0.0);
-        if (spot < ccrli)
-            spot = 0.0;
-        else
+        if (spot < ccrli) {
+            adcomponent = vec4(0, 0, 0, 0);
+            scomponent = vec4(0, 0, 0, 0);
+        } else {
             spot = pow(spot, srli);
-    } else {
-        spot = 1.0;
+            adcomponent *= spot;
+            scomponent *= spot;
+        }
     }
-    adcomponent *= spot;
-    scomponent *= spot;
 
     // Apply attenuation to the colors.
     if (pliw != 0.0) {
