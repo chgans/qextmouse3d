@@ -108,7 +108,6 @@ static char const litTextureVertexShader[] =
     "uniform mediump mat4 modelView;\n"
     "uniform mediump mat3 normalMatrix;\n"
     "varying highp vec4 qTexCoord;\n"
-    "void qLightVertex(vec4 vertex, vec3 normal);\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"

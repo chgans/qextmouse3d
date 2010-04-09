@@ -160,19 +160,20 @@ QT_BEGIN_NAMESPACE
     \value LitMaterial Material colors specified by
            QGLPainter::setFaceMaterial() with lighting enabled.  It is
            assumed that per-vertex normals are provided.  Under OpenGL/ES 2.0
-           only one light is supported.
+           only one light is supported, with single-sided materials,
+           and no attenuation.
     \value LitDecalTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_DECAL combination rule.  The texture is
            sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
+           supported, with single-sided materials, and no attenuation.
     \value LitModulateTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_MODULATE combination rule.  The texture
            is sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
+           supported, with single-sided materials, and no attenuation.
 */
 
 /*!

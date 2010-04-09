@@ -61,7 +61,6 @@ static char const litMaterialVertexShader[] =
     "uniform mediump mat4 matrix;\n"
     "uniform mediump mat4 modelView;\n"
     "uniform mediump mat3 normalMatrix;\n"
-    "void qLightVertex(vec4 vertex, vec3 normal);\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"
@@ -91,6 +90,16 @@ static inline QVector4D colorToVector4(const QColor& color)
 {
     return QVector4D(color.redF(), color.greenF(),
                      color.blueF(), color.alphaF());
+}
+
+// Combine a material and light color into a single color.
+static inline QVector4D colorToVector4
+    (const QColor &color, const QColor &lightColor)
+{
+    return QVector4D(color.redF() * lightColor.redF(),
+                     color.greenF() * lightColor.greenF(),
+                     color.blueF() * lightColor.blueF(),
+                     color.alphaF() * lightColor.alphaF());
 }
 
 #endif
@@ -201,7 +210,11 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         if (!flag)
             return;
         program = new QGLShaderProgram();
+#if defined(QT_OPENGL_ES)
+        program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(":/QtOpenGL/shaders/lighting-embedded.vsh", d->vertexShader));
+#else
         program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(":/QtOpenGL/shaders/lighting.vsh", d->vertexShader));
+#endif
         program->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
         program->bindAttributeLocation("vertex", 0);
         program->bindAttributeLocation("normal", 1);
@@ -258,52 +271,61 @@ void QGLLitMaterialEffect::update
         program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
         program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
-    if ((updates & QGLPainter::UpdateLights) != 0) {
-        const QGLLightParameters *lparams = painter->mainLight();
-        QMatrix4x4 ltransform = painter->mainLightTransform();
-
+    const QGLLightParameters *lparams = painter->mainLight();
+    QMatrix4x4 ltransform = painter->mainLightTransform();
+    const QGLLightModel *model = painter->lightModel();
+    if ((updates & (QGLPainter::UpdateLights | QGLPainter::UpdateMaterials)) != 0) {
         // Set the uniform variables for the light.
-        program->setUniformValue("acli", lparams->ambientColor());
-        program->setUniformValue("dcli", lparams->diffuseColor());
-        program->setUniformValue("scli", lparams->specularColor());
         program->setUniformValue
-            ("sdli", lparams->eyeSpotDirection(ltransform));
+            ("sdli", lparams->eyeSpotDirection(ltransform).normalized());
         QVector4D pli = lparams->eyePosition(ltransform);
         program->setUniformValue("pli", QVector3D(pli.x(), pli.y(), pli.z()));
         program->setUniformValue("pliw", GLfloat(pli.w()));
         program->setUniformValue("srli", GLfloat(lparams->spotExponent()));
         program->setUniformValue("crli", GLfloat(lparams->spotAngle()));
         program->setUniformValue("ccrli", GLfloat(lparams->spotCosAngle()));
+#if !defined(QT_OPENGL_ES)
+        // Attenuation is not supported under ES, for performance.
         program->setUniformValue("k0", GLfloat(lparams->constantAttenuation()));
         program->setUniformValue("k1", GLfloat(lparams->linearAttenuation()));
         program->setUniformValue("k2", GLfloat(lparams->quadraticAttenuation()));
+#endif
 
         // Set the uniform variables for the light model.
-        const QGLLightModel *model = painter->lightModel();
+#if !defined(QT_OPENGL_ES)
         program->setUniformValue("twoSided", (int)(model->model() == QGLLightModel::TwoSided));
+#endif
         program->setUniformValue("viewerAtInfinity", (int)(model->viewerPosition() == QGLLightModel::ViewerAtInfinity));
-        program->setUniformValue("acs", model->ambientSceneColor());
-    }
-    if ((updates & QGLPainter::UpdateMaterials) != 0) {
+
         // Set the uniform variables for the front and back materials.
+#if defined(QT_OPENGL_ES)
+        static const int MaxMaterials = 1;
+#else
         static const int MaxMaterials = 2;
+#endif
         QVector4D acm[MaxMaterials];
         QVector4D dcm[MaxMaterials];
         QVector4D scm[MaxMaterials];
         QVector4D ecm[MaxMaterials];
         float srm[MaxMaterials];
         const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
-        acm[0] = colorToVector4(mparams->ambientColor());
-        dcm[0] = colorToVector4(mparams->diffuseColor());
-        scm[0] = colorToVector4(mparams->specularColor());
-        ecm[0] = colorToVector4(mparams->emittedLight());
+        acm[0] = colorToVector4(mparams->ambientColor(), lparams->ambientColor());
+        dcm[0] = colorToVector4(mparams->diffuseColor(), lparams->diffuseColor());
+        scm[0] = colorToVector4(mparams->specularColor(), lparams->specularColor());
+        ecm[0] = colorToVector4(mparams->emittedLight()) +
+                 colorToVector4(mparams->ambientColor(),
+                                model->ambientSceneColor());
         srm[0] = (float)(mparams->shininess());
+#if !defined(QT_OPENGL_ES)
         mparams = painter->faceMaterial(QGL::BackFaces);
-        acm[1] = colorToVector4(mparams->ambientColor());
-        dcm[1] = colorToVector4(mparams->diffuseColor());
-        scm[1] = colorToVector4(mparams->specularColor());
-        ecm[1] = colorToVector4(mparams->emittedLight());
+        acm[1] = colorToVector4(mparams->ambientColor(), lparams->ambientColor());
+        dcm[1] = colorToVector4(mparams->diffuseColor(), lparams->diffuseColor());
+        scm[1] = colorToVector4(mparams->specularColor(), lparams->specularColor());
+        ecm[1] = colorToVector4(mparams->emittedLight()) +
+                 colorToVector4(mparams->ambientColor(),
+                                model->ambientSceneColor());
         srm[1] = (float)(mparams->shininess());
+#endif
         program->setUniformValueArray("acm", (const GLfloat *)acm, MaxMaterials, 4);
         program->setUniformValueArray("dcm", (const GLfloat *)dcm, MaxMaterials, 4);
         program->setUniformValueArray("scm", (const GLfloat *)scm, MaxMaterials, 4);
