@@ -97,7 +97,7 @@ void TeapotItem::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().scale(1.5f);
     if (fbo) {
-        painter->setStandardEffect(QGL::FlatReplaceTexture2D);
+        painter->setStandardEffect(QGL::LitModulateTexture2D);
         glBindTexture(GL_TEXTURE_2D, fbo->texture());
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
