@@ -624,9 +624,10 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsEleme
         xml.readNextStartElement();
     }
 
-    while( xml.readNextStartElement() && xml.name() == "extra" )
+    while( xml.name() == "extra" )
     {
         qWarning() << "Warning: extra element not handled in effects library ( line" << xml.lineNumber() << ")";
+        xml.readNextStartElement();
     }
 
     // be sure to exit cleanly
