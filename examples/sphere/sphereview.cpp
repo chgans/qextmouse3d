@@ -56,6 +56,7 @@ SphereView::SphereView(QWidget *parent)
     : QGLView(parent), pointsImage(1, 1, QImage::Format_ARGB32),
     textured(true), timer(new QTimer(this))
 {
+    list.newSection(QGL::Faceted);
     spheres.append(list.newNode());
     list << QGLCubeSphere(1, 1);
     spheres.append(list.newNode());
