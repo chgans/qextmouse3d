@@ -61,6 +61,7 @@ class Viewport : public QDeclarativeItem
     Q_PROPERTY(bool picking READ picking WRITE setPicking)
     Q_PROPERTY(bool showPicking READ showPicking WRITE setShowPicking)
     Q_PROPERTY(bool navigation READ navigation WRITE setNavigation)
+    Q_PROPERTY(bool blending READ blending WRITE setBlending)
     Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera)
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel)
     Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop)
@@ -76,6 +77,9 @@ public:
 
     bool navigation() const;
     void setNavigation(bool value);
+
+    bool blending() const;
+    void setBlending(bool value);
 
     QGLCamera *camera() const;
     void setCamera(QGLCamera *value);

@@ -83,6 +83,7 @@ public:
     bool picking;
     bool showPicking;
     bool navigation;
+    bool blending;
     bool itemsInitialized;
     QGLCamera *camera;
     QGLDepthBufferOptions depthBufferOptions;
@@ -98,6 +99,7 @@ ViewportPrivate::ViewportPrivate()
     : picking(true)
     , showPicking(false)
     , navigation(true)
+    , blending(false)
     , itemsInitialized(false)
     , camera(0)
     , lightModel(0)
@@ -224,6 +226,24 @@ bool Viewport::navigation() const
 void Viewport::setNavigation(bool value)
 {
     d->navigation = value;
+    update3d();
+}
+
+/*!
+    \property Viewport::blending
+    \brief The blending property is used to enable or disable GL_BLEND
+    on the viewport, for alpha blending of drawn objects.
+
+    By default, blending is set to \c false.
+*/
+bool Viewport::blending() const
+{
+    return d->blending;
+}
+
+void Viewport::setBlending(bool value)
+{
+    d->blending = value;
     update3d();
 }
 
@@ -357,7 +377,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     // Set up the scene the way Qml3dView would if we were using it.
     d->depthBufferOptions.apply();
     painter.setDepthTestingEnabled(true);
-    painter.setBlendingEnabled(false);
+    painter.setBlendingEnabled(d->blending);
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     if (d->camera) {
