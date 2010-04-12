@@ -74,9 +74,11 @@ private:
     QGLDisplayList cube;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
+    bool navigating;
     int pressedFace;
     Qt::MouseButton pressedButton;
     QPoint pressedPos;
+    QGLCamera *startNavCamera;
 
     QPoint cubeIntersection(QWidget *widget, const QPoint &point,
                             int *actualFace) const;

@@ -51,15 +51,18 @@
 #include <QtGui/qpolygon.h>
 #include <QtGui/qapplication.h>
 
-const qreal CubeSize = 2.5f;
+const qreal CubeSize = 2.0f;
 
 CubeItem::CubeItem(QGraphicsItem *parent)
     : QGLGraphicsViewportItem(parent)
     , mScene(0)
     , fbo(0)
+    , navigating(false)
     , pressedFace(-1)
     , pressedButton(Qt::NoButton)
 {
+    startNavCamera = new QGLCamera();
+
     setFlag(ItemIsFocusable, true);
 
     cube.newSection(QGL::Faceted);
@@ -68,6 +71,7 @@ CubeItem::CubeItem(QGraphicsItem *parent)
 
 CubeItem::~CubeItem()
 {
+    delete startNavCamera;
 }
 
 void CubeItem::setScene(QGraphicsScene *scene)
@@ -94,8 +98,8 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         QPainter fboPainter(fbo);
         fboPainter.save();
         QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
-        gradient.setColorAt(0, Qt::white);
-        gradient.setColorAt(1, Qt::lightGray);
+        gradient.setColorAt(0, QColor(0, 128, 192, 255));
+        gradient.setColorAt(1, QColor(0, 0, 128, 255));
         fboPainter.setPen(QPen(Qt::black, 3));
         fboPainter.setBrush(gradient);
         fboPainter.drawRect(rect);
@@ -110,13 +114,18 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 void CubeItem::paintGL(QGLPainter *painter)
 {
     if (fbo) {
-        painter->setStandardEffect(QGL::FlatReplaceTexture2D);
+        painter->setDepthTestingEnabled(false);
+        painter->setFaceColor(QGL::AllFaces, QColor(0, 0, 0, 200));
+        painter->setStandardEffect(QGL::LitDecalTexture2D);
         glBindTexture(GL_TEXTURE_2D, fbo->texture());
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #if !defined(QGL_SHADERS_ONLY)
         glEnable(GL_TEXTURE_2D);
 #endif
+        painter->setCullFaces(QGL::CullFrontFaces);
+        cube.draw(painter);
+        painter->setCullFaces(QGL::CullBackFaces);
         cube.draw(painter);
         glBindTexture(GL_TEXTURE_2D, 0);
 #if !defined(QGL_SHADERS_ONLY)
@@ -138,11 +147,22 @@ void CubeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     int face;
     QPoint pos = cubeIntersection
         (event->widget(), event->pos().toPoint(), &face);
-    if (pressedFace == -1 && face != -1) {
+    if (!navigating && pressedFace == -1 && face != -1) {
         pressedFace = face;
         pressedButton = event->button();
         pressedPos = pos;
         deliverSceneEvent(pos, event);
+        return;
+    } else if (!navigating && face == -1) {
+        navigating = true;
+        pressedButton = event->button();
+        pressedPos = event->pos().toPoint();
+        startNavCamera->setEye(camera()->eye());
+        startNavCamera->setCenter(camera()->center());
+        startNavCamera->setUpVector(camera()->upVector());
+#ifndef QT_NO_CURSOR
+        setCursor(Qt::ClosedHandCursor);
+#endif
         return;
     }
     QGraphicsItem::mousePressEvent(event);
@@ -150,7 +170,30 @@ void CubeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void CubeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (pressedFace != -1) {
+    if (navigating) {
+        QPoint delta = event->pos().toPoint() - pressedPos;
+        int deltax = delta.x();
+        int deltay = delta.y();
+        QGLCamera *camera = this->camera();
+        int rotation = camera->screenRotation();
+        if (rotation == 90 || rotation == 270) {
+            qSwap(deltax, deltay);
+        }
+        if (rotation == 90 || rotation == 180) {
+            deltax = -deltax;
+        }
+        if (rotation == 180 || rotation == 270) {
+            deltay = -deltay;
+        }
+        qreal anglex = deltax * 90.0f / rect().width();
+        qreal angley = deltay * 90.0f / rect().height();
+        QQuaternion q = startNavCamera->pan(-anglex);
+        q *= startNavCamera->tilt(-angley);
+        camera->setEye(startNavCamera->eye());
+        camera->setCenter(startNavCamera->center());
+        camera->setUpVector(startNavCamera->upVector());
+        camera->rotateCenter(q);
+    } else if (pressedFace != -1) {
         int face;
         QPoint pos = cubeIntersection
             (event->widget(), event->pos().toPoint(), &face);
@@ -164,7 +207,14 @@ void CubeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
 void CubeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (pressedFace != -1) {
+    if (navigating && pressedButton == event->button()) {
+        navigating = false;
+        pressedButton = Qt::NoButton;
+#ifndef QT_NO_CURSOR
+        unsetCursor();
+#endif
+        return;
+    } else if (pressedFace != -1) {
         int face;
         QPoint pos = cubeIntersection
             (event->widget(), event->pos().toPoint(), &face);
@@ -306,15 +356,31 @@ QPoint CubeItem::cubeIntersection
         // Figure out the texture co-ordinates on the face that
         // correspond to the point.
         qreal xtex, ytex;
-        if (face == 0 || face == 2) {
+        switch (face) {
+        case 0:
             xtex = 1.0f - worldpt.y();
             ytex = 1.0f - worldpt.z();
-        } else if (face == 1 || face == 3) {
+            break;
+        case 1:
             xtex = 1.0f - worldpt.x();
             ytex = 1.0f - worldpt.z();
-        } else {
+            break;
+        case 2:
+            xtex = worldpt.y();
+            ytex = 1.0f - worldpt.z();
+            break;
+        case 3:
+            xtex = worldpt.x();
+            ytex = 1.0f - worldpt.z();
+            break;
+        case 4:
             xtex = worldpt.x();
             ytex = 1.0f - worldpt.y();
+            break;
+        case 5: default:
+            xtex = worldpt.x();
+            ytex = worldpt.y();
+            break;
         }
 
         // Turn the texture co-ordinates into scene co-ordinates.
