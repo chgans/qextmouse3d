@@ -65,6 +65,7 @@ void PlanetView::initializeGL(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::LitMaterial);
 
+    list.newSection(QGL::Faceted);
     sun = list.newNode();
     list << QGLSphere(2.0f, 4);
     planet1 = list.newNode();
