@@ -173,7 +173,7 @@ public:
         depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
+        blendOptions.setEnabled(false);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);

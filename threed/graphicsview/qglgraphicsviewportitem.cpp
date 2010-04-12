@@ -86,7 +86,7 @@ public:
         depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
+        blendOptions.setEnabled(false);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -339,7 +339,7 @@ void QGLGraphicsViewportItem::setDepthBufferOptions(const QGLDepthBufferOptions&
 
 /*!
     Returns the blending options to apply before calling paintGL().
-    The default enables blending of the source against the destination
+    The default specifies blending of the source against the destination
     according to the source alpha.
 
     \sa setBlendOptions()

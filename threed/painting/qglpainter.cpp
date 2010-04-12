@@ -558,6 +558,8 @@ void QGLPainter::setClearStencil(GLint value)
 }
 
 /*!
+    \fn void QGLPainter::setDepthTestingEnabled(bool value)
+
     Enables or disables depth testing according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
@@ -566,13 +568,18 @@ void QGLPainter::setClearStencil(GLint value)
 
     \sa QGLDepthBufferOptions
 */
-void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
+
+/*!
+    \fn void QGLPainter::setBlendingEnabled(bool value)
+
+    Enables or disables blending according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
+
+    For more complex blending configurations, use QGLBlendOptions.
+
+    \sa QGLBlendOptions
+*/
 
 /*!
     Returns the viewport for the active GL context.  The origin for

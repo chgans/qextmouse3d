@@ -70,7 +70,7 @@ public:
         depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
+        blendOptions.setEnabled(false);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -259,8 +259,9 @@ void QGLViewport::setBackgroundColor(const QColor& color)
     \o Disables stencil testing.
     \o Clears the background of the viewport to backgroundColor()
        if it is not null.
-    \o Enables depth testing and blending with the default
-       QGLDepthBufferOptions and QGLBlendOptions.
+    \o Enables depth testing with the default QGLDepthBufferOptions.
+    \o Enables the default QGLBlendOptions, but with blending disabled.
+       Use QGLPainter::setBlendingEnabled() to enable blending.
     \o Clears the depth buffer.
     \o Sets the culling mode to QGL::CullDisabled.
     \o Sets the modelview and projection matrices on \a painter to
