@@ -570,6 +570,18 @@ void QGLPainter::setClearStencil(GLint value)
 */
 
 /*!
+    \fn void QGLPainter::setStencilTestingEnabled(bool value)
+
+    Enables or disables stencil testing according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
+
+    For more complex depth buffer configurations, use QGLStencilBufferOptions.
+
+    \sa QGLStencilBufferOptions
+*/
+
+/*!
     \fn void QGLPainter::setBlendingEnabled(bool value)
 
     Enables or disables blending according to \a value.

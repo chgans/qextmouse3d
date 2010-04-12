@@ -67,10 +67,8 @@ public:
         QObject::connect(camera, SIGNAL(viewChanged()),
                          viewport, SIGNAL(viewportChanged()));
 
-        depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(false);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -315,7 +313,8 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGL::Eye eye,
             // We clear the background by drawing a triangle fan so
             // that the background color will blend with the underlying
             // screen content if it has an alpha component.
-            glDisable(GL_DEPTH_TEST);
+            painter->setBlendingEnabled(true);
+            painter->setDepthTestingEnabled(false);
             QVector2DArray array;
             array.append(-1, -1);
             array.append(1, -1);
@@ -333,7 +332,11 @@ void QGLViewport::prepareGL(QGLPainter *painter, QGL::Eye eye,
     // Clear the depth buffer and set the depth buffer options.
     if (!depthCleared)
         painter->clear(QGL::ClearDepthBuffer);
+    painter->setDepthTestingEnabled(true);
     d->depthBufferOptions.apply();
+
+    // Blending off by default.
+    painter->setBlendingEnabled(false);
 
     // Disable back face culling.
     painter->setCullFaces(QGL::CullDisabled);

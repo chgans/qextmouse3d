@@ -106,10 +106,8 @@ ViewportPrivate::ViewportPrivate()
     , backdropVertices()
     , view(0)
 {
-    depthBufferOptions.setEnabled(true);
     depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-    blendOptions.setEnabled(true);
     blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -358,6 +356,8 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     // Set up the scene the way Qml3dView would if we were using it.
     d->depthBufferOptions.apply();
+    painter.setDepthTestingEnabled(true);
+    painter.setBlendingEnabled(false);
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     if (d->camera) {

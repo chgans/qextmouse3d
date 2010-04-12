@@ -170,10 +170,8 @@ public:
         panning = false;
         startPan = QPoint(-1, -1);
 
-        depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(false);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -477,6 +475,7 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
+    painter.setDepthTestingEnabled(true);
     d->depthBufferOptions.apply();
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);

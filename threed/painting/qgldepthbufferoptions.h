@@ -74,9 +74,6 @@ public:
 
     inline bool isNull() const { return d == 0; }
 
-    bool isEnabled() const;
-    void setEnabled(bool value);
-
     bool isWriteEnabled() const;
     void setWriteEnabled(bool value);
 

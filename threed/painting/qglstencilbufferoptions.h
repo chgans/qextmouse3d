@@ -85,9 +85,6 @@ public:
 
     inline bool isNull() const { return d == 0; }
 
-    bool isEnabled() const;
-    void setEnabled(bool value);
-
     QGLStencilBufferOptions::Function frontFunction() const;
     void setFrontFunction(QGLStencilBufferOptions::Function value);
 

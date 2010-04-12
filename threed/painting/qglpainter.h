@@ -112,6 +112,7 @@ public:
     void setClearStencil(GLint value);
 
     void setDepthTestingEnabled(bool value);
+    void setStencilTestingEnabled(bool value);
     void setBlendingEnabled(bool value);
 
     QRect viewport() const;
@@ -238,6 +239,14 @@ inline void QGLPainter::setDepthTestingEnabled(bool value)
         glEnable(GL_DEPTH_TEST);
     else
         glDisable(GL_DEPTH_TEST);
+}
+
+inline void QGLPainter::setStencilTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_STENCIL_TEST);
+    else
+        glDisable(GL_STENCIL_TEST);
 }
 
 inline void QGLPainter::setBlendingEnabled(bool value)

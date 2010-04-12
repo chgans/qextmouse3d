@@ -92,9 +92,6 @@ public:
 
     inline bool isNull() const { return d == 0; }
 
-    bool isEnabled() const;
-    void setEnabled(bool value);
-
     QColor blendColor() const;
     void setBlendColor(const QColor& value);
 

@@ -175,12 +175,13 @@ void PageFlipView::initializeGL()
     gradientTexture.setImage(QImage(":/gradient.png"));
 
     QGLBlendOptions blendOptions;
-    blendOptions.setEnabled(true);
     blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
     blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
     blendOptions.apply();
+
+    glEnable(GL_BLEND);
 
     if (vertical)
         pageFlipMath.setStartCorner(PageFlipMath::VerticalBottomRight);
