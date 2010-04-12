@@ -44,20 +44,31 @@
 #include "qglteapot.h"
 #include <QtCore/qdebug.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qpropertyanimation.h>
 #include <stdio.h>
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent),
-      sensitivity(0.1f)
+      sensitivity(0.1f),
+      showFrameRate(false),
+      stereo(false),
+      cangle(0.0f)
 {
     setOption(CameraNavigation, false);
 
     roomCamera = new QGLCamera(this);
     roomCamera->setAdjustForAspectRatio(false);
 
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(accelerometerTimeout()));
-    timer->start(100);
+    QPropertyAnimation *animation;
+
+    animation = new QPropertyAnimation(this, "cubeAngle", this);
+    animation->setStartValue(0.0f);
+    animation->setEndValue(360.0f);
+    animation->setDuration(5000);
+    animation->setLoopCount(-1);
+    animation->start();
+
+    time.start();
 }
 
 void CubeView::initializeGL(QGLPainter *painter)
@@ -149,14 +160,23 @@ void CubeView::initializeGL(QGLPainter *painter)
 
     QImage textureImage(":/qtlogo.png");
     texture.setImage(textureImage);
+
+    if (stereo) {
+        camera()->setEyeSeparation(0.4f);
+        roomCamera->setEyeSeparation(0.1f);
+    }
 }
 
 void CubeView::paintGL(QGLPainter *painter)
 {
+    if (showFrameRate)
+        qWarning("time since last frame: %d ms", time.restart());
+
+    glDisable(GL_BLEND);
+
     painter->modelViewMatrix().push();
     painter->projectionMatrix().push();
 
-    painter->setFaceColor(QGL::AllFaces, QColor(255, 0, 0));
     painter->setStandardEffect(QGL::LitMaterial);
     painter->setCamera(roomCamera);
     painter->setLightModel(roomModel);
@@ -166,19 +186,36 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->projectionMatrix().pop();
 
     painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(1.0f, -0.5f, 0.0f);
-    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
-    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
-    painter->setStandardEffect(QGL::LitDecalTexture2D);
-    painter->setTexture(&texture);
-    painter->setLightModel(normalModel);
-    cube.draw(painter);
-    painter->setTexture((QGLTexture2D *)0);
-
-    painter->modelViewMatrix().pop();
     painter->modelViewMatrix().translate(-0.8f, -1.5f, -3.0f);
+    painter->setLightModel(normalModel);
     painter->setStandardEffect(QGL::LitMaterial);
     teapot.draw(painter);
+    painter->modelViewMatrix().pop();
+
+    glEnable(GL_BLEND);
+
+    painter->modelViewMatrix().push();
+    painter->modelViewMatrix().translate(1.0f, -0.5f, 0.0f);
+    painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
+    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
+    painter->setStandardEffect(QGL::LitDecalTexture2D);
+    painter->setTexture(&texture);
+    painter->setDepthTestingEnabled(false);
+    painter->setCullFaces(QGL::CullFrontFaces);
+    cube.draw(painter);
+    painter->setCullFaces(QGL::CullBackFaces);
+    cube.draw(painter);
+    painter->setCullFaces(QGL::CullDisabled);
+    painter->setDepthTestingEnabled(true);
+    painter->setTexture((QGLTexture2D *)0);
+    painter->modelViewMatrix().pop();
+}
+
+void CubeView::setCubeAngle(qreal angle)
+{
+    cangle = angle;
+    accelerometerTimeout();
+    queueUpdate();
 }
 
 void CubeView::accelerometerTimeout()
