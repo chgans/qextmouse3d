@@ -13,7 +13,6 @@ HEADERS = \
     edge.h \
     node.h \
     graph.h
-RESOURCES = graphicsview.qrc
 LIBS += -L../../lib -L../../bin
 DESTDIR = ../../bin
 
