@@ -125,15 +125,15 @@ bool Node::advance()
 
 QRectF Node::boundingRect() const
 {
-    qreal adjust = 2;
+    qreal adjust = 42;
     return QRectF(-10 - adjust, -10 - adjust,
-                  23 + adjust, 23 + adjust);
+                  23 + adjust * 2, 23 + adjust * 2);
 }
 
 QPainterPath Node::shape() const
 {
     QPainterPath path;
-    path.addEllipse(-10, -10, 20, 20);
+    path.addEllipse(-20, -20, 40, 40);
     return path;
 }
 

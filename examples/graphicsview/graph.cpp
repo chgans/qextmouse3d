@@ -54,7 +54,7 @@ Graph::Graph()
     QGraphicsScene *scene = new QGraphicsScene(this);
     sceneObject = scene;
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-    scene->setSceneRect(-256, -256, 512, 512);
+    scene->setSceneRect(-128, -128, 256, 256);
 
     Node *node1 = new Node(this);
     Node *node2 = new Node(this);
