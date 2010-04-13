@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt/3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,31 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef MOUSE_H
-#define MOUSE_H
+#ifndef REDCYANEFFECT_H
+#define REDCYANEFFECT_H
 
-#include <QGraphicsItem>
+#include <QtGui/qgraphicseffect.h>
 
-//! [0]
-class Mouse : public QGraphicsItem
+class RedCyanEffect : public QGraphicsEffect
 {
+    Q_OBJECT
+    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY zChanged)
 public:
-    Mouse(bool redCyanEffect);
+    RedCyanEffect(QObject *parent = 0);
+    ~RedCyanEffect();
 
-    QRectF boundingRect() const;
-    QPainterPath shape() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
-               QWidget *widget);
+    qreal depth() const { return m_depth; }
+
+    QRectF boundingRectFor(const QRectF &sourceRect) const;
+
+public Q_SLOTS:
+    void setDepth(qreal depth);
+
+Q_SIGNALS:
+    void depthChanged(qreal depth);
 
 protected:
-    void advance(int step);
+    void draw(QPainter *painter);
 
 private:
-    qreal angle;
-    qreal speed;
-    qreal mouseEyeDirection;
-    QColor color;
+    qreal m_depth;
 };
-//! [0]
 
 #endif
+

@@ -1,10 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the plugins of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,31 +39,26 @@
 **
 ****************************************************************************/
 
-#ifndef MOUSE_H
-#define MOUSE_H
+#include <QtDeclarative/qdeclarativeextensionplugin.h>
+#include <QtDeclarative/qdeclarative.h>
 
-#include <QGraphicsItem>
+#include "redcyaneffect.h"
 
-//! [0]
-class Mouse : public QGraphicsItem
+QT_BEGIN_NAMESPACE
+
+class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
+    Q_OBJECT
 public:
-    Mouse(bool redCyanEffect);
-
-    QRectF boundingRect() const;
-    QPainterPath shape() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
-               QWidget *widget);
-
-protected:
-    void advance(int step);
-
-private:
-    qreal angle;
-    qreal speed;
-    qreal mouseEyeDirection;
-    QColor color;
+    virtual void registerTypes(const char *uri)
+    {
+        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
+        qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
+    }
 };
-//! [0]
 
-#endif
+QT_END_NAMESPACE
+
+#include "threed.moc"
+
+Q_EXPORT_PLUGIN2(threedqmlmodule, QT_PREPEND_NAMESPACE(QThreedQmlModule));

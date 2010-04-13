@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "mouse.h"
+#include "redcyaneffect.h"
 #include "teapotitem.h"
 #include "qglgraphicsnavigationitem.h"
 
@@ -69,6 +70,14 @@ int main(int argc, char **argv)
         Mouse *mouse = new Mouse(!useTeapot);
         mouse->setPos(::sin((i * 6.28) / MouseCount) * 200,
                       ::cos((i * 6.28) / MouseCount) * 200);
+        if (!useTeapot) {
+            // Pick a random z value for the mouse to be drawn at
+            // and create an effect object for the mouse.
+            qreal z = qrand() % 15;
+            RedCyanEffect *effect = new RedCyanEffect();
+            effect->setZ(z);
+            mouse->setGraphicsEffect(effect);
+        }
         scene.addItem(mouse);
     }
 
