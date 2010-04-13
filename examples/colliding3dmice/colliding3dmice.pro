@@ -1,10 +1,12 @@
 HEADERS += \
 	mouse.h \
-        teapotitem.h
+        teapotitem.h \
+        redcyaneffect.h
 SOURCES += \
 	main.cpp \
         mouse.cpp \
-        teapotitem.cpp
+        teapotitem.cpp \
+        redcyaneffect.cpp
 
 RESOURCES += \
 	mice.qrc
