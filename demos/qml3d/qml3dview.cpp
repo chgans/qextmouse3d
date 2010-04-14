@@ -105,7 +105,6 @@ Qml3dView::Qml3dView(QWidget *parent)
     : QGLView(parent)
 {
     m_viewport = 0;
-    pickId = 0;
     initGLCalled = false;
     setOption(QGLView::ObjectPicking, true);
 }

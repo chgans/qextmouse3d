@@ -58,8 +58,6 @@ public:
 
     void setSource(const QUrl& url);
 
-    int nextPickId() { return pickId++; }
-
 public Q_SLOTS:
     void updateGL();
 
@@ -76,7 +74,6 @@ private:
     QDeclarativeComponent *component;
     QObject *m_viewport;
     bool initGLCalled;
-    int pickId;
 };
 
 QT_END_NAMESPACE
