@@ -515,8 +515,6 @@ void Viewport::initializeGL(QGLPainter *painter)
 
 /*!
   Return the QGLView being used by the viewport.
-
-  \sa initialize()
 */
 QGLView *Viewport::view() const
 {
