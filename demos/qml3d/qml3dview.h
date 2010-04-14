@@ -49,9 +49,6 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Item3d;
-class Viewport;
-
 class Qml3dView : public QGLView
 {
     Q_OBJECT
@@ -60,9 +57,6 @@ public:
     ~Qml3dView();
 
     void setSource(const QUrl& url);
-
-    Viewport *viewport() const { return m_viewport; }
-    void setViewport(Viewport *value) { m_viewport = value; }
 
     int nextPickId() { return pickId++; }
 
@@ -80,7 +74,7 @@ protected:
 private:
     QDeclarativeEngine engine;
     QDeclarativeComponent *component;
-    Viewport *m_viewport;
+    QObject *m_viewport;
     bool initGLCalled;
     int pickId;
 };

@@ -43,10 +43,10 @@
 #include "mesh.h"
 #include "effect.h"
 #include "qgllightparameters.h"
-#include "qml3dview.h"
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
+#include "qglview.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
@@ -1018,10 +1018,10 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     if (d->isInitialized) return;
 
     d->viewport = viewport;
-    Qml3dView *view = viewport->view();
+    QGLView *view = viewport->view();
     
     if (view) {
-        d->objectPickId = view->nextPickId();
+        d->objectPickId = viewport->nextPickId();
         view->registerObject(d->objectPickId, this);        
     }    
 

@@ -60,7 +60,6 @@ QT_BEGIN_NAMESPACE
 
 class Item3dPrivate;
 class Effect;
-class Qml3dView;
 class Viewport;
 class QGLSceneNode;
 

@@ -1,6 +1,8 @@
 import Qt 4.6
+import Qt.labs.threed 1.0
 
 Viewport {
+    width: 640; height: 480
     camera: Camera {
         eye: Qt.vector3d(0, 4, 10)
     }

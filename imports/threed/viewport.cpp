@@ -41,12 +41,12 @@
 
 #include "viewport.h"
 #include "effect.h"
-#include "qml3dview.h"
 #include "qgldepthbufferoptions.h"
 #include "qglblendoptions.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglcamera.h"
+#include "qglview.h"
 #include <QtGui/qpainter.h>
 
 /*!
@@ -92,7 +92,8 @@ public:
     Effect *backdrop;
     //QGLVertexArray backdropVertices;
     QGLVertexBuffer backdropVertices;
-    Qml3dView *view;
+    QGLView *view;
+    int pickId;
 };
 
 ViewportPrivate::ViewportPrivate()
@@ -107,6 +108,7 @@ ViewportPrivate::ViewportPrivate()
     //, backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
     , backdropVertices()
     , view(0)
+    , pickId(1)
 {
     depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
@@ -145,6 +147,8 @@ ViewportPrivate::ViewportPrivate()
     //backdropVertices.append(1.0f, 0.0f);
 }
 
+void qt_gl_set_qml_viewport(QObject *viewport);
+
 /*!
     Construct the class and assign it a \a parent QDeclarativeItem.
 */
@@ -153,6 +157,7 @@ Viewport::Viewport(QDeclarativeItem *parent)
 {
     d = new ViewportPrivate();
     setFlag(QGraphicsItem::ItemHasNoContents, false);
+    qt_gl_set_qml_viewport(this);
 }
 
 /*!
@@ -363,8 +368,10 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     }
 
     // Initialize the objects in the scene if this is the first paint.
-    if (!d->itemsInitialized)
-        initialize(0, &painter);
+    if (!d->itemsInitialized) {
+        initialize(0);
+        initializeGL(&painter);
+    }
 
     // Modify the GL viewport to only cover the extent of this QDeclarativeItem.
     QTransform transform = p->transform();
@@ -374,7 +381,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     // Perform early drawing operations.
     earlyDraw(&painter);
 
-    // Set up the scene the way Qml3dView would if we were using it.
+    // Set up the scene the way QGLView would if we were using it.
     d->depthBufferOptions.apply();
     painter.setDepthTestingEnabled(true);
     painter.setBlendingEnabled(d->blending);
@@ -459,26 +466,43 @@ void Viewport::draw(QGLPainter *painter)
 }
 
 /*!
-  The initialize function, as its name suggests, peforms all top level initialisation for the viewport and
-  sets the \a painter for the viewport.
+  The initialize function, as its name suggests, peforms all top level initialisation for the viewport.
 
   This includes setting up the camera, as well as initialising all of the
 
   If \a view is null, then we are running on a standard QFxView canvas widget.  If \a view is not null,
-  then we are running on a \l Qml3dView canvas widget.
-
-  \sa Qml3dView
+  then we are running on a QGLView canvas widget.
 */
 
-void Viewport::initialize(Qml3dView *view, QGLPainter *painter)
+void Viewport::initialize(QGLView *view)
 {
     // Remember which view we are associated with, if any.
     d->view = view;
 
+    // Set up the QGLView size and properties as requested by the viewport.
+    if (view) {
+        int w = width();
+        if (w > 0)
+            view->setMinimumWidth(w);
+        int h = height();
+        if (h > 0)
+            view->setMinimumHeight(h);
+        view->setOption(QGLView::ObjectPicking, picking());
+        view->setOption(QGLView::ShowPicking, showPicking());
+        view->setOption(QGLView::CameraNavigation, navigation());
+    }
+
     // Apply the camera to the view.
     if (view && d->camera)
         view->setCamera(d->camera);
+}
 
+/*!
+  Initialize the GL viewport for the first time on \a painter.
+*/
+
+void Viewport::initializeGL(QGLPainter *painter)
+{
     // Initialize the Item3d objects attached to this scene.
     QObjectList list = QObject::children();
     foreach (QObject *child, list) {
@@ -490,21 +514,27 @@ void Viewport::initialize(Qml3dView *view, QGLPainter *painter)
 }
 
 /*!
-  Return the \l Qml3dView being used by the viewport.
+  Return the QGLView being used by the viewport.
 
-  \sa Qml3dView, initialize()
+  \sa initialize()
 */
-Qml3dView *Viewport::view() const
+QGLView *Viewport::view() const
 {
     return d->view;
 }
 
 /*!
-  If a Qml3dView is defined for this viewport then this function queues an update for that Qml3dView.
+  Returns the next object picking identifier.
+*/
+int Viewport::nextPickId()
+{
+    return (d->pickId)++;
+}
+
+/*!
+  If a QGLView is defined for this viewport then this function queues an update for that QGLView.
 
   If this is not defined then a normal update is called.
-
-  \sa Qml3dView
 */
 void Viewport::update3d()
 {
@@ -515,7 +545,7 @@ void Viewport::update3d()
 }
 
 /*!
-    The cameraChanged slot updates the camera in the Qml3dView if one exists, or simply calls the
+    The cameraChanged slot updates the camera in the QGLView if one exists, or simply calls the
     \l update() function otherwise.
 
     \sa update()

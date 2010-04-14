@@ -43,6 +43,12 @@
 #include <QtDeclarative/qdeclarative.h>
 
 #include "redcyaneffect.h"
+#include "item3d.h"
+#include "viewport.h"
+#include "effect.h"
+#include "rotation3d.h"
+#include "shaderprogram.h"
+#include "cube.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -54,6 +60,17 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
+        qmlRegisterType<Effect>(uri,1,0,"Effect");
+        qmlRegisterType<Mesh>(uri,1,0,"Mesh");
+        qmlRegisterType<Item3d>(uri,1,0,"Item3d");
+        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
+        qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
+        qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
+        qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
+        qmlRegisterType<Rotation3D>(uri,1,0,"Rotation3D");
+        qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
+        qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
+        qmlRegisterType<Cube>(uri,1,0,"Cube");
     }
 };
 

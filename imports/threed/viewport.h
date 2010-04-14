@@ -54,6 +54,7 @@ class QGLCamera;
 class QGLLightModel;
 class QGLLightParameters;
 class Effect;
+class QGLView;
 
 class Viewport : public QDeclarativeItem
 {
@@ -92,11 +93,14 @@ public:
 
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 
-    void earlyDraw(QGLPainter *painter);
-    void draw(QGLPainter *painter);
-    void initialize(Qml3dView *view, QGLPainter *painter);
+    Q_INVOKABLE void earlyDraw(QGLPainter *painter);
+    Q_INVOKABLE void draw(QGLPainter *painter);
+    Q_INVOKABLE void initialize(QGLView *view);
+    Q_INVOKABLE void initializeGL(QGLPainter *painter);
 
-    Qml3dView *view() const;
+    QGLView *view() const;
+
+    int nextPickId();
 
 public Q_SLOTS:
     void update3d();
