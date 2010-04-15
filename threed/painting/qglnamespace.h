@@ -64,19 +64,9 @@ namespace QGL
         TextureCoord0,
         TextureCoord1,
         TextureCoord2,
-        TextureCoord3,
-        TextureCoord4,
-        TextureCoord5,
-        TextureCoord6,
-        TextureCoord7,
         CustomVertex0,
         CustomVertex1,
-        CustomVertex2,
-        CustomVertex3,
-        CustomVertex4,
-        CustomVertex5,
-        CustomVertex6,
-        CustomVertex7
+        UserVertex
     };
 
     enum Face

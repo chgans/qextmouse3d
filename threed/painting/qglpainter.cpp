@@ -1280,34 +1280,15 @@ void QGLPainter::checkRequiredFields()
             qWarning("Attribute QGL::TextureCoord1 is missing"); break;
         case QGL::TextureCoord2:
             qWarning("Attribute QGL::TextureCoord2 is missing"); break;
-        case QGL::TextureCoord3:
-            qWarning("Attribute QGL::TextureCoord3 is missing"); break;
-        case QGL::TextureCoord4:
-            qWarning("Attribute QGL::TextureCoord4 is missing"); break;
-        case QGL::TextureCoord5:
-            qWarning("Attribute QGL::TextureCoord5 is missing"); break;
-        case QGL::TextureCoord6:
-            qWarning("Attribute QGL::TextureCoord6 is missing"); break;
-        case QGL::TextureCoord7:
-            qWarning("Attribute QGL::TextureCoord7 is missing"); break;
         case QGL::CustomVertex0:
             qWarning("Attribute QGL::CustomVertex0 is missing"); break;
         case QGL::CustomVertex1:
             qWarning("Attribute QGL::CustomVertex1 is missing"); break;
-        case QGL::CustomVertex2:
-            qWarning("Attribute QGL::CustomVertex2 is missing"); break;
-        case QGL::CustomVertex3:
-            qWarning("Attribute QGL::CustomVertex3 is missing"); break;
-        case QGL::CustomVertex4:
-            qWarning("Attribute QGL::CustomVertex4 is missing"); break;
-        case QGL::CustomVertex5:
-            qWarning("Attribute QGL::CustomVertex5 is missing"); break;
-        case QGL::CustomVertex6:
-            qWarning("Attribute QGL::CustomVertex6 is missing"); break;
-        case QGL::CustomVertex7:
-            qWarning("Attribute QGL::CustomVertex7 is missing"); break;
+        case QGL::UserVertex:
+            qWarning("Attribute QGL::UserVertex is missing"); break;
         default:
-            qWarning("Attribute %d is missing", (int)attr); break;
+            qWarning("Attribute UserVertex + %d is missing",
+                     (int)(attr - QGL::UserVertex)); break;
         }
     }
 }
@@ -1432,11 +1413,6 @@ void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttribute
     case QGL::TextureCoord0:
     case QGL::TextureCoord1:
     case QGL::TextureCoord2:
-    case QGL::TextureCoord3:
-    case QGL::TextureCoord4:
-    case QGL::TextureCoord5:
-    case QGL::TextureCoord6:
-    case QGL::TextureCoord7:
     {
         int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)
@@ -1498,11 +1474,6 @@ void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord0:
         case QGL::TextureCoord1:
         case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)
@@ -1552,11 +1523,6 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord0:
         case QGL::TextureCoord1:
         case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)

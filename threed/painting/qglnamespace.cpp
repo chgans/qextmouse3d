@@ -61,19 +61,15 @@ QT_BEGIN_NAMESPACE
     \value TextureCoord0 The texture co-ordinate at each vertex for texture unit 0.
     \value TextureCoord1 The texture co-ordinate at each vertex for texture unit 1.
     \value TextureCoord2 The texture co-ordinate at each vertex for texture unit 2.
-    \value TextureCoord3 The texture co-ordinate at each vertex for texture unit 3.
-    \value TextureCoord4 The texture co-ordinate at each vertex for texture unit 4.
-    \value TextureCoord5 The texture co-ordinate at each vertex for texture unit 5.
-    \value TextureCoord6 The texture co-ordinate at each vertex for texture unit 6.
-    \value TextureCoord7 The texture co-ordinate at each vertex for texture unit 7.
-    \value CustomVertex0 First custom vertex attribute.
+    \value CustomVertex0 First custom vertex attribute.  Custom attributes
+           can be used for any purpose: texture co-ordinates, colors,
+           or other values of interest to shader programs.
     \value CustomVertex1 Second custom vertex attribute.
-    \value CustomVertex2 Third custom vertex attribute.
-    \value CustomVertex3 Fourth custom vertex attribute.
-    \value CustomVertex4 Fifth custom vertex attribute.
-    \value CustomVertex5 Sixth custom vertex attribute.
-    \value CustomVertex6 Seventh custom vertex attribute.
-    \value CustomVertex7 Eighth custom vertex attribute.
+    \value UserVertex First user-assigned vertex attribute.  Additional
+           attributes can be assigned as UserVertex, UserVertex + 1, etc.
+           Note that on OpenGL/ES 2.0 systems, usually the maximum
+           number of vertex attributes is 8, which means that user-assigned
+           vertex attributes will be out of range.
 */
 
 /*!

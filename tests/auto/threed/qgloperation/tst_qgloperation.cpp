@@ -177,18 +177,18 @@ void tst_QGLOperation::itemAdds()
         QGLOperation op(&list, QGL::QUAD);
         p = list.currentPrimitive();
         op << a << b << c << d;
-        op.addTexCoord(t0, QGL::TextureCoord4);
-        op.addTexCoord(t1, QGL::TextureCoord4);
-        op.addTexCoord(t2, QGL::TextureCoord4);
-        op.addTexCoord(t3, QGL::TextureCoord4);
-        QCOMPARE(p->texCoord(0, QGL::TextureCoord4), t0);
-        QCOMPARE(p->texCoord(1, QGL::TextureCoord4), t1);
-        QCOMPARE(p->texCoord(2, QGL::TextureCoord4), t2);
-        QCOMPARE(p->texCoord(3, QGL::TextureCoord4), t3);
+        op.addTexCoord(t0, QGL::TextureCoord2);
+        op.addTexCoord(t1, QGL::TextureCoord2);
+        op.addTexCoord(t2, QGL::TextureCoord2);
+        op.addTexCoord(t3, QGL::TextureCoord2);
+        QCOMPARE(p->texCoord(0, QGL::TextureCoord2), t0);
+        QCOMPARE(p->texCoord(1, QGL::TextureCoord2), t1);
+        QCOMPARE(p->texCoord(2, QGL::TextureCoord2), t2);
+        QCOMPARE(p->texCoord(3, QGL::TextureCoord2), t3);
         QCOMPARE(p->fields(),
-                 QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::TextureCoord4));
+                 QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::TextureCoord2));
         QCOMPARE(p->count(QGL::Position), 4);
-        QCOMPARE(p->count(QGL::TextureCoord4), 4);
+        QCOMPARE(p->count(QGL::TextureCoord2), 4);
     }
 
     list.newSection();
@@ -200,23 +200,23 @@ void tst_QGLOperation::itemAdds()
         op.addAttribute(t1);
         op.addAttribute(t2);
         op.addAttribute(t3);
-        op.addAttribute(n1, QGL::CustomVertex4);
-        op.addAttribute(n2, QGL::CustomVertex4);
-        op.addAttribute(n3, QGL::CustomVertex4);
-        op.addAttribute(n4, QGL::CustomVertex4);
+        op.addAttribute(n1, QGL::CustomVertex1);
+        op.addAttribute(n2, QGL::CustomVertex1);
+        op.addAttribute(n3, QGL::CustomVertex1);
+        op.addAttribute(n4, QGL::CustomVertex1);
         QCOMPARE(p->vector3DAttribute(0), QVector3D(t0));
         QCOMPARE(p->vector3DAttribute(1), QVector3D(t1));
         QCOMPARE(p->vector3DAttribute(2), QVector3D(t2));
         QCOMPARE(p->vector3DAttribute(3), QVector3D(t3));
-        QCOMPARE(p->vector3DAttribute(0, QGL::CustomVertex4), n1);
-        QCOMPARE(p->vector3DAttribute(1, QGL::CustomVertex4), n2);
-        QCOMPARE(p->vector3DAttribute(2, QGL::CustomVertex4), n3);
-        QCOMPARE(p->vector3DAttribute(3, QGL::CustomVertex4), n4);
+        QCOMPARE(p->vector3DAttribute(0, QGL::CustomVertex1), n1);
+        QCOMPARE(p->vector3DAttribute(1, QGL::CustomVertex1), n2);
+        QCOMPARE(p->vector3DAttribute(2, QGL::CustomVertex1), n3);
+        QCOMPARE(p->vector3DAttribute(3, QGL::CustomVertex1), n4);
         QCOMPARE(p->fields(), QGL::fieldMask(QGL::Position) |
-                 QGL::fieldMask(QGL::CustomVertex0) | QGL::fieldMask(QGL::CustomVertex4));
+                 QGL::fieldMask(QGL::CustomVertex0) | QGL::fieldMask(QGL::CustomVertex1));
         QCOMPARE(p->count(QGL::Position), 4);
         QCOMPARE(p->count(QGL::CustomVertex0), 4);
-        QCOMPARE(p->count(QGL::CustomVertex4), 4);
+        QCOMPARE(p->count(QGL::CustomVertex1), 4);
     }
 }
 
