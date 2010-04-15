@@ -937,7 +937,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                     {
                         effect->d->emissiveTexture = processTextureElement( xml, resultState );
 #ifdef DEBUG_MATERIALS
-                        qDebug() << "set emissive texture to " << effect->d->emittedTexture;
+                        qDebug() << "set emissive texture to " << effect->d->emissiveTexture;
 #endif
                     } else if( xml.name() == "param")
                     {
