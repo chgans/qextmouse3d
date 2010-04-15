@@ -256,8 +256,9 @@ void MainWindow::loadEffect(const QString& fileName)
         qWarning() << "Warning: Failed to load effects from file " << fileName;
     else
     {
-        effectLoader[0]->generateShaders();
-        glDisplayWidget->setEffect(effectLoader[0]);
+        // Until we have UI to select an effect, just grab the last one
+        effectLoader[effectLoader.count() - 1]->generateShaders();
+        glDisplayWidget->setEffect(effectLoader[effectLoader.count() - 1]);
 
         ui->textEditVertexShader->setPlainText(effectLoader[0]->vertexShader());
         ui->textEditFragmentShader->setPlainText(effectLoader[0]->fragmentShader());

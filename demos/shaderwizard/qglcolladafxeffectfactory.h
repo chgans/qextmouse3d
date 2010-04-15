@@ -44,6 +44,7 @@
 
 #include <QVector>
 #include <QXmlStreamReader>
+#include <QDir>
 #include "qgl.h"
 #include "qgltexture2d.h"
 
@@ -60,6 +61,8 @@ typedef struct _ResultState
     QMap<QString, QVariant> paramSids;
     QMap<QString, QVariant> paramIds;
     QMap<QString, QVariant> paramNames;
+    QDir sourceDir;
+    QMap<QGLTexture2D*, QString> unresolvedTexture2Ds;
 } ResultState;
 
 
@@ -72,7 +75,7 @@ public:
     static QList<QGLColladaFxEffect*> loadEffectsFromFile(const QString& fileName );
 
 protected:
-    static QList<QGLColladaFxEffect*> loadEffectsFromXml( QXmlStreamReader& xml );
+    static QList<QGLColladaFxEffect*> loadEffectsFromXml( QXmlStreamReader& xml, QDir homeDirectory = QDir());
     static void processLibraryImagesElement( QXmlStreamReader& xml, ResultState* stateStack );
     static QList<QGLColladaFxEffect*> processLibraryEffectsElement( QXmlStreamReader& xml, ResultState* stateStack );
     static QList<QGLColladaFxEffect*> processEffectElement( QXmlStreamReader& xml, ResultState* stateStack );
@@ -83,7 +86,7 @@ protected:
     static QGLColladaParam* processNewparamElement( QXmlStreamReader& xml, ResultState* stateStack );
     static void processImageElement( QXmlStreamReader& xml, ResultState* stateStack );
     static QGLColladaSurfaceParam* processSurfaceElement( QXmlStreamReader& xml, ResultState* stateStack, QString passedInSid = "");
-    static QGLColladaSampler2DParam* processSampler2DElement( QXmlStreamReader& xml, ResultState* stateStack, QString passedInSid );
+    static void processSampler2DElement( QXmlStreamReader& xml, ResultState* stateStack, QString passedInSid );
     static QGLTexture2D* processTextureElement( QXmlStreamReader& xml , ResultState* stateStack );
     static QVariant processFloatList( QXmlStreamReader& xml );
     static QColor processColorElement( QXmlStreamReader& xml );
@@ -104,6 +107,9 @@ protected:
     static QStringList generateBindAttributeElement( QGLShaderProgramEffect* effect );
     static QStringList generateBindUniformElements( QGLShaderProgramEffect* effect );
     static QStringList generateCodeElements( QGLShaderProgramEffect* effect, QString baseSid );
+
+    static QImage resolveImageURI(ResultState *resultState, QString imageFileName);
+    static bool resolveTexture2DImage(QGLTexture2D *result, ResultState *resultState, QString paramName);
 };
 
 

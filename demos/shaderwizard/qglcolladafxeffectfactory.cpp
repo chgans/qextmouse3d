@@ -1,6 +1,8 @@
 #include <QVector>
 #include <QFile>
+#include <QFileInfo>
 #include <QTime>
+#include <QDir>
 #include "qgltexture2d.h"
 #include "qgl.h"
 
@@ -104,13 +106,16 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromFile( const
         return QList<QGLColladaFxEffect*>();
     }
 
+
     QXmlStreamReader xml;
     xml.setDevice( &file );
     if(xml.tokenType() == QXmlStreamReader::Invalid)
         file.readLine();
     xml.setDevice( &file );
 
-    return loadEffectsFromXml( xml );
+    QFileInfo fileInfo(file);
+
+    return loadEffectsFromXml( xml, fileInfo.dir() );
 }
 
 
@@ -153,14 +158,14 @@ QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, 
   \internal
   parse the top level \a xml from a .dae file and process the library_effects elements therein.
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml, QDir homeDirectory )
 {
-    QList<QGLColladaFxEffect*> result;
     ResultState resultState;
+    resultState.sourceDir = homeDirectory;
+    QList<QGLColladaFxEffect*> result;
 
     while( !xml.atEnd() ) {
         xml.readNextStartElement();
-
         if( xml.name() == "library_effects" ) {
             result += processLibraryEffectsElement( xml , &resultState );
         } else if (xml.name() == "library_images")
@@ -169,6 +174,14 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlSt
         }
     }
 
+    // Try and resolve outstanding textures
+    QList<QGLTexture2D*> unresolvedTexturePointers = resultState.unresolvedTexture2Ds.keys();
+    for (int i = 0; i < unresolvedTexturePointers.count(); i++)
+    {
+        QGLTexture2D* texture = unresolvedTexturePointers[i];
+        QString parameterName = resultState.unresolvedTexture2Ds.value(texture);
+        resolveTexture2DImage(texture, &resultState, parameterName);
+    }
     return result;
 }
 
@@ -383,9 +396,8 @@ QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlSt
     Q_UNUSED(resultState);
     QXmlStreamAttributes attributes = xml.attributes();
     QString surfaceSid = attributes.value("sid").toString();
-    // Surfaces are the only children of a newparam, but don't have their own sids.
-    // for simplicity, if the surface doesn't have an sid, but the parent does, use the
-    // parent's sid.
+    // Surfaces are the only children of a newparam, but don't have their own
+    // sids. For simplicity, use the parent's sid.
 
     if(surfaceSid.isEmpty() && !passedInSid.isEmpty())
         surfaceSid = passedInSid;
@@ -395,7 +407,9 @@ QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlSt
     {
         if(xml.name().toString() != "init_from")
             qWarning() << "Warning: only ""init_from"" supported in surface element ( line:" << xml.lineNumber() << ")";
-        result->mInitFrom = xml.readElementText();
+        QString init_from = xml.readElementText();
+        result->mInitFrom =  init_from;
+        resultState->paramSids[surfaceSid] = init_from;
     }
     return result;
 }
@@ -462,10 +476,9 @@ QVariant QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xml )
 /*!
   \internal
 */
-QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, ResultState* resultState, QString passedInSid )
+void QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, ResultState* resultState, QString passedInSid )
 {
     Q_UNUSED(resultState);
-    QGLColladaSampler2DParam* result = 0;
     QXmlStreamAttributes attributes = xml.attributes();
     QString sid = attributes.value("sid").toString();
     if(sid.isEmpty() && !passedInSid.isEmpty())
@@ -478,7 +491,7 @@ QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QX
     {
         // Collada 1.4 Spec
         QString sourceSurfaceSid = xml.readElementText().trimmed();
-        result = new QGLColladaSampler2DParam(sid, sourceSurfaceSid);
+        resultState->paramSids[sid] = sourceSurfaceSid;
     }
 
     if( xml.name() == "instance_image" )
@@ -488,7 +501,7 @@ QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QX
     }
     // exit cleanly, just in case.
     findEndTag( xml, "sampler2D");
-    return result;
+    return;
 }
 
 
@@ -1074,39 +1087,38 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 #endif
                     }
                 }
+                xml.skipCurrentElement();
+                xml.readNextStartElement();
             }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
-        }
 
-        if( xml.name() == "transparency" )
-        {
-            if( xml.readNextStartElement() )
+            if( xml.name() == "transparency" )
             {
-                float transparency = processParamOrFloatElement( xml );
-                if( transparency < 1.0 )
+                if( xml.readNextStartElement() )
                 {
-                    qWarning() << "Warning: transparency not supported";
+                    float transparency = processParamOrFloatElement( xml );
+                    if( transparency < 1.0 )
+                    {
+                        qWarning() << "Warning: transparency not supported";
+                    }
+                    xml.skipCurrentElement();
+                    xml.readNextStartElement();
                 }
             }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
-        }
 
-        if( xml.name() == "index_of_refraction" )
-        {
-            if( xml.readNextStartElement() )
+            if( xml.name() == "index_of_refraction" )
             {
-                float indexOfRefraction = processParamOrFloatElement( xml );
-                Q_UNUSED( indexOfRefraction );
-                qWarning() << "Warning: index_of_refraction not supported ( line" << xml.lineNumber() << ")";
+                if( xml.readNextStartElement() )
+                {
+                    float indexOfRefraction = processParamOrFloatElement( xml );
+                    Q_UNUSED( indexOfRefraction );
+                    qWarning() << "Warning: index_of_refraction not supported ( line" << xml.lineNumber() << ")";
+                    xml.skipCurrentElement();
+                }
                 xml.skipCurrentElement();
+                xml.readNextStartElement();
             }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
         }
-        xml.skipCurrentElement();
-        xml.readNextStartElement();
+        // end of lighting scope
 
         effect->setMaterial( material );
 
@@ -1176,7 +1188,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
             }
         } else if( xml.name() == "sampler2D" )
         {
-            result = processSampler2DElement( xml , resultState, sidString );
+            processSampler2DElement( xml , resultState, sidString );
         } else if( xml.name() == "surface" )
         {
             result = processSurfaceElement( xml, resultState, sidString);
@@ -1188,6 +1200,45 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
     }
     findEndTag(xml, "newparam");
     return result;
+}
+
+
+/*!
+  \internal
+  the library_images can come after the library_effects, so textures referenced
+  in effects might not have been defined when the effect was created.  Try and
+  resolve those images now.  (Other properties - wrap, mipmap and filters etc
+  should have been resolved when the texture was originally parsed).
+  */
+bool QGLColladaFxEffectFactory::resolveTexture2DImage(QGLTexture2D *texture, ResultState *resultState, QString paramName)
+{
+    if(texture == 0)
+    {
+        qWarning() << "Warning: Cannot resolve images for null QGLTexture2D";
+        return false;
+    }
+    QVariant samplerParam = findParameterVariant(resultState, paramName);
+    QString surfaceName = samplerParam.value<QString>();
+    QImage image;
+
+    if(!surfaceName.isEmpty())
+    {
+        QVariant surfaceParam =  findParameterVariant(resultState, surfaceName);
+        QString initFrom = surfaceParam.value<QString>();
+        if(!initFrom.isEmpty())
+        {
+            image = resolveImageURI(resultState, initFrom);
+        }
+    }
+
+    // If that's failed, try again with the passed in paramName
+    if(image.isNull())
+    {
+        image = resolveImageURI(resultState, paramName);
+    }
+
+    texture->setImage(image);
+    return !image.isNull();
 }
 
 
@@ -1209,15 +1260,16 @@ QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader
         {
             QString paramName = attribute.value().toString();
 
-            // in Collada Fx Textures must reference a previously defined sampler2D param
-            QVariant sourceSampler = findParameterVariant(resultState, paramName);
-            if( !sourceSampler.isNull() )
+            // in Collada Fx Textures must reference a previously defined
+            // sampler2D param.
+            // However, this sampler may refer to images in the library_images,
+            // which is parsed after the library_effects, so try and resolve
+            // now, but save failures to try again later.
+
+            if(!resolveTexture2DImage(result, resultState, paramName))
             {
-                result = sourceSampler.value<QGLTexture2D*>();
-            } else
-            {
-                qWarning() << "failed to find a source sampler for texture ( line" << xml.lineNumber() << ")";
-            };
+                resultState->unresolvedTexture2Ds[result] = paramName;
+            }
         } else if( attribute.name() == "texcoord" )
         {
             // TODO: Create a repository for this sort of data, to be used in creating the shader progams later
@@ -1233,7 +1285,45 @@ QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader
     return result;
 }
 
+/*!
+  \internal
+  Try and get an image to attach to a texture.  The URI could be a reference to
+  a param in the collada document (which may in turn be a reference), or
+  file referenced either absolutely or relative to the original dae file.
+  (It could concievably be a web URL, but that is not handled here.)
+  */
+QImage QGLColladaFxEffectFactory::resolveImageURI(ResultState *resultState, QString URI)
+{
+    QImage result;
+    QString imageFileName;
+    QString workingURI = URI;
+    if(workingURI.length() > 0 && workingURI.at(0) == '#')
+    {
+        workingURI = workingURI.right(workingURI.length() - 1);
+    }
 
+    QVariant potentialParameter = findParameterVariant(resultState, workingURI);
+    // Might be parameter itself:
+    if( !potentialParameter.value<QImage>().isNull() )
+        return potentialParameter.value<QImage>();
+    // or might be another URI
+    if(!potentialParameter.value<QString>().isNull())
+    {
+        imageFileName = potentialParameter.value<QString>();
+    } else {
+        imageFileName = workingURI;
+    }
+
+    // First try as a relative path.
+    QString filePath = resultState->sourceDir.path() + "/" + imageFileName;
+    result.load(filePath);
+    if(result.isNull())
+    {
+        // No relative file found, so try as an absolute path
+        result.load(imageFileName);
+    }
+    return result;
+}
 
 /*!
   \internal
@@ -1267,7 +1357,15 @@ void QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, Resu
     if(xml.name() == "init_from")
     {
         QString imageFileName = xml.readElementText().trimmed();
-        result = QImage(imageFileName);
+        QDir sourceDir = resultState->sourceDir;
+        // ignore path information for resources
+        QString filePath = sourceDir.path() + "/" + imageFileName;
+        result.load(filePath);
+        if(result.isNull())
+        {
+            // Catch resources or files with absolute paths
+            result.load(imageFileName);
+        }
         if(!sid.isEmpty())
             resultState->paramSids[sid] = result;
         if(!id.isEmpty())
