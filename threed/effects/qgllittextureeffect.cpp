@@ -152,7 +152,7 @@ QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
 #if !defined(QGL_SHADERS_ONLY)
     : QGLLitTextureEffect(GL_DECAL, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(0, litTextureVertexShader, litDecalFragmentShader,
+    : QGLLitTextureEffect(1, litTextureVertexShader, litDecalFragmentShader,
                           QLatin1String("qt.texture.litdecal"))
 #endif
 {
@@ -172,7 +172,7 @@ QGLLitModulateTextureEffect::QGLLitModulateTextureEffect()
 #if !defined(QGL_SHADERS_ONLY)
     : QGLLitTextureEffect(GL_MODULATE, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(0, litTextureVertexShader, litModulateFragmentShader,
+    : QGLLitTextureEffect(1, litTextureVertexShader, litModulateFragmentShader,
                           QLatin1String("qt.texture.litmodulate"))
 #endif
 {

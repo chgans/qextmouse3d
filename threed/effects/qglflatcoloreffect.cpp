@@ -145,7 +145,7 @@ void QGLFlatColorEffect::setActive(QGLPainter *painter, bool flag)
         program = new QGLShaderProgram();
         program->addShaderFromSourceCode(QGLShader::Vertex, flatColorVertexShader);
         program->addShaderFromSourceCode(QGLShader::Fragment, flatColorFragmentShader);
-        program->bindAttributeLocation("vertex", 0);
+        program->bindAttributeLocation("vertex", QGL::Position);
         if (!program->link()) {
             qWarning("QGLFlatColorEffect::setActive(): could not link shader program");
             delete program;
@@ -156,12 +156,12 @@ void QGLFlatColorEffect::setActive(QGLPainter *painter, bool flag)
         d->colorUniform = program->uniformLocation("color");
         d->matrixUniform = program->uniformLocation("matrix");
         program->bind();
-        program->enableAttributeArray(0);
+        program->enableAttributeArray(QGL::Position);
     } else if (flag) {
         program->bind();
-        program->enableAttributeArray(0);
+        program->enableAttributeArray(QGL::Position);
     } else {
-        program->disableAttributeArray(0);
+        program->disableAttributeArray(QGL::Position);
         program->release();
     }
 #endif
@@ -209,7 +209,7 @@ void QGLFlatColorEffect::setVertexAttribute
 #else
     Q_D(QGLFlatColorEffect);
     if (attribute == QGL::Position)
-        setAttributeArray(d->program, 0, value);
+        setAttributeArray(d->program, QGL::Position, value);
 #endif
 }
 
@@ -295,8 +295,8 @@ void QGLPerVertexColorEffect::setActive(QGLPainter *painter, bool flag)
         program = new QGLShaderProgram();
         program->addShaderFromSourceCode(QGLShader::Vertex, pvColorVertexShader);
         program->addShaderFromSourceCode(QGLShader::Fragment, pvColorFragmentShader);
-        program->bindAttributeLocation("vertex", 0);
-        program->bindAttributeLocation("color", 1);
+        program->bindAttributeLocation("vertex", QGL::Position);
+        program->bindAttributeLocation("color", QGL::Color);
         if (!program->link()) {
             qWarning("QGLPerVertexColorEffect::setActive(): could not link shader program");
             delete program;
@@ -307,15 +307,15 @@ void QGLPerVertexColorEffect::setActive(QGLPainter *painter, bool flag)
         d->program = program;
         d->matrixUniform = program->uniformLocation("matrix");
         program->bind();
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::Color);
     } else if (flag) {
         program->bind();
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::Color);
     } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
+        program->disableAttributeArray(QGL::Position);
+        program->disableAttributeArray(QGL::Color);
         program->release();
     }
 #endif
@@ -351,9 +351,9 @@ void QGLPerVertexColorEffect::setVertexAttribute
 #else
     Q_D(QGLPerVertexColorEffect);
     if (attribute == QGL::Position)
-        setAttributeArray(d->program, 0, value);
+        setAttributeArray(d->program, QGL::Position, value);
     else if (attribute == QGL::Color)
-        setAttributeArray(d->program, 1, value);
+        setAttributeArray(d->program, QGL::Color, value);
 #endif
 }
 

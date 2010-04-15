@@ -112,7 +112,6 @@ public:
         , matrixUniform(-1)
         , modelViewUniform(-1)
         , normalMatrixUniform(-1)
-        , textureCoordsAttribute(-1)
         , textureMode(0)
 #if defined(QGL_SHADERS_ONLY)
         , vertexShader(litMaterialVertexShader)
@@ -129,7 +128,6 @@ public:
     int matrixUniform;
     int modelViewUniform;
     int normalMatrixUniform;
-    int textureCoordsAttribute;
     GLenum textureMode;
     const char *vertexShader;
     const char *fragmentShader;
@@ -216,8 +214,10 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(":/QtOpenGL/shaders/lighting.vsh", d->vertexShader));
 #endif
         program->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
-        program->bindAttributeLocation("vertex", 0);
-        program->bindAttributeLocation("normal", 1);
+        program->bindAttributeLocation("vertex", QGL::Position);
+        program->bindAttributeLocation("normal", QGL::Normal);
+        if (d->textureMode != 0)
+            program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
         if (!program->link()) {
             qWarning("QGLFlatTextureEffect::setActive(): could not link shader program");
             delete program;
@@ -229,27 +229,26 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         d->matrixUniform = program->uniformLocation("matrix");
         d->modelViewUniform = program->uniformLocation("modelView");
         d->normalMatrixUniform = program->uniformLocation("normalMatrix");
-        d->textureCoordsAttribute = program->attributeLocation("texcoord");
         program->bind();
-        if (d->textureCoordsAttribute != -1) {
+        if (d->textureMode != 0) {
             program->setUniformValue("tex", 0);
-            program->enableAttributeArray(d->textureCoordsAttribute);
+            program->enableAttributeArray(QGL::TextureCoord0);
         }
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::Normal);
     } else if (flag) {
         program->bind();
-        if (d->textureCoordsAttribute != -1) {
+        if (d->textureMode != 0) {
             program->setUniformValue("tex", 0);
-            program->enableAttributeArray(d->textureCoordsAttribute);
+            program->enableAttributeArray(QGL::TextureCoord0);
         }
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::Normal);
     } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
-        if (d->textureCoordsAttribute != -1)
-            program->disableAttributeArray(d->textureCoordsAttribute);
+        program->disableAttributeArray(QGL::Position);
+        program->disableAttributeArray(QGL::Normal);
+        if (d->textureMode != 0)
+            program->disableAttributeArray(QGL::TextureCoord0);
         program->release();
     }
 #endif
@@ -354,13 +353,12 @@ void QGLLitMaterialEffect::setVertexAttribute
 #else
     Q_D(QGLLitMaterialEffect);
     if (attribute == QGL::Position) {
-        setAttributeArray(d->program, 0, value);
+        setAttributeArray(d->program, QGL::Position, value);
     } else if (attribute == QGL::Normal) {
-        d->program->enableAttributeArray(1);
-        setAttributeArray(d->program, 1, value);
-    } else if (attribute == QGL::TextureCoord0 &&
-               d->textureCoordsAttribute != -1) {
-        setAttributeArray(d->program, d->textureCoordsAttribute, value);
+        d->program->enableAttributeArray(QGL::Normal);
+        setAttributeArray(d->program, QGL::Normal, value);
+    } else if (attribute == QGL::TextureCoord0 && d->textureMode != 0) {
+        setAttributeArray(d->program, QGL::TextureCoord0, value);
     }
 #endif
 }
@@ -374,8 +372,8 @@ void QGLLitMaterialEffect::setCommonNormal(const QVector3D& value)
     QGLAbstractEffect::setCommonNormal(value);
 #else
     Q_D(QGLLitMaterialEffect);
-    d->program->disableAttributeArray(1);
-    d->program->setAttributeValue(1, value);
+    d->program->disableAttributeArray(QGL::Normal);
+    d->program->setAttributeValue(QGL::Normal, value);
 #endif
 }
 

@@ -96,8 +96,8 @@ void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
     Q_UNUSED(painter);
     if (!flag) {
         if (d->program) {
-            d->program->disableAttributeArray(0);
-            d->program->disableAttributeArray(1);
+            d->program->disableAttributeArray(QGL::Position);
+            d->program->disableAttributeArray(QGL::Normal);
             d->program->release();
         }
         return;
@@ -115,16 +115,16 @@ void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
         d->program->addShader(d->fragmentLighting);
     }
     if (!d->program->isLinked()) {
-        d->program->bindAttributeLocation("vertexAttr", 0);
-        d->program->bindAttributeLocation("normalAttr", 1);
+        d->program->bindAttributeLocation("vertexAttr", QGL::Position);
+        d->program->bindAttributeLocation("normalAttr", QGL::Normal);
         d->program->link();
         d->modelViewUniform = d->program->uniformLocation("modelView");
         d->matrixUniform = d->program->uniformLocation("matrix");
         d->normalMatrixUniform = d->program->uniformLocation("normalMatrix");
     }
     d->program->bind();
-    d->program->enableAttributeArray(0);
-    d->program->enableAttributeArray(1);
+    d->program->enableAttributeArray(QGL::Position);
+    d->program->enableAttributeArray(QGL::Normal);
 }
 
 void PerPixelEffect::update
@@ -171,9 +171,9 @@ void PerPixelEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
     if (attribute == QGL::Position)
-        setAttributeArray(d->program, 0, value);
+        setAttributeArray(d->program, QGL::Position, value);
     else if (attribute == QGL::Normal)
-        setAttributeArray(d->program, 1, value);
+        setAttributeArray(d->program, QGL::Normal, value);
 }
 
 QT_END_NAMESPACE
