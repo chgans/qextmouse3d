@@ -750,64 +750,6 @@ void QGLVertexBuffer::release() const
         d->buffer->release();
 }
 
-/*!
-    Enables the attributes in this vertex buffer on \a program.
-    If \a program is null, then the attributes will be enabled
-    on the fixed-function pipeline.
-
-    It is assumed that this vertex buffer and \a program are bound
-    to the current GL context.
-
-    \sa disableAttributes(), setAttributeArrays(), bind()
-*/
-void QGLVertexBuffer::enableAttributes(QGLShaderProgram *program)
-{
-    Q_D(QGLVertexBuffer);
-    Q_UNUSED(program);
-#if !defined(QT_OPENGL_ES_1)
-    if (program) {
-        for (int index = 0; index < d->attributes.size(); ++index)
-            program->enableAttributeArray(d->attributes[index]->index);
-        return;
-    }
-#endif
-#if !defined(QGL_SHADERS_ONLY)
-    for (int index = 0; index < d->attributes.size(); ++index) {
-        QGLAbstractEffect::enableVertexAttribute
-            (d->attributes[index]->attribute);
-    }
-#endif
-}
-
-/*!
-    Disables the attributes in this vertex buffer on \a program.
-    If \a program is null, then the attributes will be disabled
-    on the fixed-function pipeline.
-
-    It is assumed that this vertex buffer and \a program are bound
-    to the current GL context.
-
-    \sa enableAttributes(), bind()
-*/
-void QGLVertexBuffer::disableAttributes(QGLShaderProgram *program)
-{
-    Q_D(QGLVertexBuffer);
-    Q_UNUSED(program);
-#if !defined(QT_OPENGL_ES_1)
-    if (program) {
-        for (int index = 0; index < d->attributes.size(); ++index)
-            program->disableAttributeArray(d->attributes[index]->index);
-        return;
-    }
-#endif
-#if !defined(QGL_SHADERS_ONLY)
-    for (int index = 0; index < d->attributes.size(); ++index) {
-        QGLAbstractEffect::disableVertexAttribute
-            (d->attributes[index]->attribute);
-    }
-#endif
-}
-
 // Defined in qglpainter.cpp.  Needs to be moved eventually.
 void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
@@ -819,7 +761,7 @@ void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttribute
     It is assumed that this vertex buffer and \a program are bound
     to the current GL context.
 
-    \sa enableAttributes(), renameAttribute(), bind()
+    \sa bind()
 */
 void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
 {
@@ -830,16 +772,17 @@ void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
         for (int index = 0; index < d->attributes.size(); ++index) {
             QGLVertexBufferAttribute *attr = d->attributes[index];
 #if defined(QT_OPENGL_ES_2)
-            glVertexAttribPointer(attr->index, attr->value.tupleSize(),
+            glVertexAttribPointer(GLuint(attr->attribute),
+                                  attr->value.tupleSize(),
                                   attr->value.type(), GL_FALSE,
                                   attr->value.stride(), attr->value.data());
 #elif QT_VERSION >= 0x040700
             program->setAttributeArray
-                (attr->index, attr->value.type(), attr->value.data(),
+                (int(attr->attribute), attr->value.type(), attr->value.data(),
                  attr->value.tupleSize(), attr->value.stride());
 #else
             QGLAbstractEffect::setAttributeArray
-                (program, attr->index, attr->value);
+                (program, int(attr->attribute), attr->value);
 #endif
         }
         return;
@@ -851,42 +794,6 @@ void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
         qt_gl_setVertexAttribute(attr->attribute, attr->value);
     }
 #endif
-}
-
-/*!
-    Renames \a attribute so that it will be set on a shader program
-    by setAttributeArrays() at \a index instead of at the integer
-    value of \a attribute.  The \a attribute must have already been
-    added with addAttribute().
-
-    Normally \a attribute can be used directly as the attribute index
-    for a shader program.  However some systems have a limitation on
-    the number of attributes, which may make it difficult to use
-    high-numbered values like QGL::CustomVertex0.  This problem
-    can be avoided by renaming the attributes to lower index values:
-
-    \code
-    buffer.renameAttribute(QGL::Position, 0);
-    buffer.renameAttribute(QGL::TextureCoord0, 1);
-    buffer.renameAttribute(QGL::CustomVertex0, 2);
-    \endcode
-
-    If two attributes are given the same \a index, the behaviour
-    is undefined.
-
-    \sa setAttributeArrays(), addAttribute()
-*/
-void QGLVertexBuffer::renameAttribute(QGL::VertexAttribute attribute, int index)
-{
-    Q_D(QGLVertexBuffer);
-    int attrIndex;
-    for (attrIndex = 0; attrIndex < d->attributes.size(); ++attrIndex) {
-        QGLVertexBufferAttribute *attr = d->attributes[attrIndex];
-        if (attr->attribute == attribute) {
-            attr->index = index;
-            return;
-        }
-    }
 }
 
 QT_END_NAMESPACE
