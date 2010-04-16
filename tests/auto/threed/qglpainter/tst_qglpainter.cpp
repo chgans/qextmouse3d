@@ -505,7 +505,7 @@ void tst_QGLPainter::projectionMatrixStack()
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateProjectionMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, m));
@@ -552,7 +552,7 @@ void tst_QGLPainter::modelViewMatrixStack()
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateModelViewMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));

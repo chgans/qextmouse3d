@@ -98,7 +98,7 @@ QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
     return fields;
 }
 
-#if defined(QGL_SHADERS_ONLY)
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 static char const litTextureVertexShader[] =
     "attribute highp vec4 vertex;\n"
@@ -145,14 +145,22 @@ static char const litModulateFragmentShader[] =
 
 #endif
 
+#ifndef GL_MODULATE
+#define GL_MODULATE 0x2100
+#endif
+#ifndef GL_DECAL
+#define GL_DECAL 0x2101
+#endif
+
 /*!
     Constructs a new lit decal texture effect.
 */
 QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     : QGLLitTextureEffect(GL_DECAL, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(1, litTextureVertexShader, litDecalFragmentShader,
+    : QGLLitTextureEffect(GL_DECAL,
+                          litTextureVertexShader, litDecalFragmentShader,
                           QLatin1String("qt.texture.litdecal"))
 #endif
 {
@@ -169,10 +177,11 @@ QGLLitDecalTextureEffect::~QGLLitDecalTextureEffect()
     Constructs a new lit modulate texture effect.
 */
 QGLLitModulateTextureEffect::QGLLitModulateTextureEffect()
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     : QGLLitTextureEffect(GL_MODULATE, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(1, litTextureVertexShader, litModulateFragmentShader,
+    : QGLLitTextureEffect(GL_MODULATE,
+                          litTextureVertexShader, litModulateFragmentShader,
                           QLatin1String("qt.texture.litmodulate"))
 #endif
 {

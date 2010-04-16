@@ -106,7 +106,8 @@ private:
     friend class QGLPainter;
 
     void markDirty();
-    bool updateServer();
+    bool needsUpdate();
+    void updateServer();
 };
 
 inline QGLMatrixStack::operator QMatrix4x4() const

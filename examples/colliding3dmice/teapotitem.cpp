@@ -101,14 +101,12 @@ void TeapotItem::paintGL(QGLPainter *painter)
         glBindTexture(GL_TEXTURE_2D, fbo->texture());
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#if !defined(QGL_SHADERS_ONLY)
-        glEnable(GL_TEXTURE_2D);
-#endif
+        if (painter->isFixedFunction())
+            glEnable(GL_TEXTURE_2D);
         teapot.draw(painter);
         glBindTexture(GL_TEXTURE_2D, 0);
-#if !defined(QGL_SHADERS_ONLY)
-        glDisable(GL_TEXTURE_2D);
-#endif
+        if (painter->isFixedFunction())
+            glDisable(GL_TEXTURE_2D);
     } else {
         painter->setStandardEffect(QGL::LitMaterial);
         teapot.draw(painter);

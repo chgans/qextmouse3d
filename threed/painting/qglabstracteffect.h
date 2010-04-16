@@ -53,6 +53,9 @@ QT_MODULE(Qt3d)
 #if defined(QT_OPENGL_ES_2)
 #define QGL_SHADERS_ONLY 1
 #endif
+#if defined(QT_OPENGL_ES_1)
+#define QGL_FIXED_FUNCTION_ONLY 1
+#endif
 
 class QGLShaderProgram;
 class QGLVertexBuffer;
@@ -78,8 +81,6 @@ public:
 
 protected:
 #if !defined(QT_OPENGL_ES_2) || defined(Q_QDOC)
-    void updateLighting(const QGLPainter *painter, QGLPainter::Updates updates);
-    void updateFog(const QGLPainter *painter);
     static void enableVertexAttribute(QGL::VertexAttribute attribute);
     static void disableVertexAttribute(QGL::VertexAttribute attribute);
 #endif
@@ -88,6 +89,7 @@ protected:
          const QGLAttributeValue& value);
 
     friend class QGLVertexBuffer;
+    friend class QGLPainter;
 };
 
 QT_END_NAMESPACE

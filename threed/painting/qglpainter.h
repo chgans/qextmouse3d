@@ -93,6 +93,8 @@ public:
 
     const QGLContext *context() const;
 
+    bool isFixedFunction() const;
+
     enum Update
     {
         UpdateColor                 = 0x00000001,
@@ -172,6 +174,7 @@ public:
     void setTexture(const QGLTextureCube *texture) { setTexture(0, texture); }
 
     void update();
+    void updateFixedFunction(QGLPainter::Updates updates);
 
     void draw(QGL::DrawingMode mode, int count, int index = 0);
     void draw(QGL::DrawingMode mode, const ushort *indices, int count);

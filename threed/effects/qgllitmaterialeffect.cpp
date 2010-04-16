@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::painting
 */
 
-#if defined(QGL_SHADERS_ONLY)
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 static char const litMaterialVertexShader[] =
     "attribute highp vec4 vertex;\n"
@@ -113,7 +113,7 @@ public:
         , modelViewUniform(-1)
         , normalMatrixUniform(-1)
         , textureMode(0)
-#if defined(QGL_SHADERS_ONLY)
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
         , vertexShader(litMaterialVertexShader)
         , fragmentShader(litMaterialFragmentShader)
 #else
@@ -121,6 +121,7 @@ public:
         , fragmentShader(0)
 #endif
         , programName(QLatin1String("qt.color.material"))
+        , isFixedFunction(false)
     {
     }
 
@@ -132,6 +133,7 @@ public:
     const char *vertexShader;
     const char *fragmentShader;
     QString programName;
+    bool isFixedFunction;
 };
 
 /*!
@@ -180,7 +182,7 @@ QList<QGL::VertexAttribute> QGLLitMaterialEffect::requiredFields() const
 */
 void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
 {
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     Q_UNUSED(painter);
     Q_D(QGLLitMaterialEffect);
     if (flag) {
@@ -201,7 +203,31 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             disableVertexAttribute(QGL::TextureCoord0);
     }
 #else
+    Q_UNUSED(painter);
     Q_D(QGLLitMaterialEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (painter->isFixedFunction()) {
+        d->isFixedFunction = true;
+        if (flag) {
+            glEnable(GL_LIGHTING);
+            glEnable(GL_LIGHT0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
+            if (d->textureMode) {
+                enableVertexAttribute(QGL::TextureCoord0);
+                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d->textureMode);
+            }
+        } else {
+            glDisable(GL_LIGHTING);
+            glDisable(GL_LIGHT0);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+            if (d->textureMode)
+                disableVertexAttribute(QGL::TextureCoord0);
+        }
+        return;
+    }
+#endif
     QGLShaderProgram *program = painter->cachedProgram(d->programName);
     d->program = program;
     if (!program) {
@@ -219,7 +245,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         if (d->textureMode != 0)
             program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
         if (!program->link()) {
-            qWarning("QGLFlatTextureEffect::setActive(): could not link shader program");
+            qWarning("QGLLitMaterialEffect::setActive(): could not link shader program");
             delete program;
             program = 0;
             return;
@@ -237,6 +263,9 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         program->enableAttributeArray(QGL::Position);
         program->enableAttributeArray(QGL::Normal);
     } else if (flag) {
+        d->matrixUniform = program->uniformLocation("matrix");
+        d->modelViewUniform = program->uniformLocation("modelView");
+        d->normalMatrixUniform = program->uniformLocation("normalMatrix");
         program->bind();
         if (d->textureMode != 0) {
             program->setUniformValue("tex", 0);
@@ -260,10 +289,22 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
 void QGLLitMaterialEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
-#if !defined(QGL_SHADERS_ONLY)
-    updateLighting(painter, updates);
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    painter->updateFixedFunction
+        (updates & (QGLPainter::UpdateMatrices |
+                    QGLPainter::UpdateLights |
+                    QGLPainter::UpdateMaterials));
 #else
     Q_D(QGLLitMaterialEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        painter->updateFixedFunction
+            (updates & (QGLPainter::UpdateMatrices |
+                        QGLPainter::UpdateLights |
+                        QGLPainter::UpdateMaterials));
+        return;
+    }
+#endif
     QGLShaderProgram *program = d->program;
     if ((updates & QGLPainter::UpdateMatrices) != 0) {
         program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
@@ -340,7 +381,7 @@ void QGLLitMaterialEffect::update
 void QGLLitMaterialEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     if (attribute == QGL::Position) {
         // Disable the normal array when the positions are set because
         // we may need to use the common normal.  Positions always need
@@ -352,6 +393,20 @@ void QGLLitMaterialEffect::setVertexAttribute
     QGLAbstractEffect::setVertexAttribute(attribute, value);
 #else
     Q_D(QGLLitMaterialEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        if (attribute == QGL::Position) {
+            // Disable the normal array when the positions are set because
+            // we may need to use the common normal.  Positions always need
+            // to be specified before an array of normals.
+            glDisableClientState(GL_NORMAL_ARRAY);
+        } else if (attribute == QGL::Normal) {
+            glEnableClientState(GL_NORMAL_ARRAY);
+        }
+        QGLAbstractEffect::setVertexAttribute(attribute, value);
+        return;
+    }
+#endif
     if (attribute == QGL::Position) {
         setAttributeArray(d->program, QGL::Position, value);
     } else if (attribute == QGL::Normal) {
@@ -368,10 +423,16 @@ void QGLLitMaterialEffect::setVertexAttribute
 */
 void QGLLitMaterialEffect::setCommonNormal(const QVector3D& value)
 {
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     QGLAbstractEffect::setCommonNormal(value);
 #else
     Q_D(QGLLitMaterialEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        QGLAbstractEffect::setCommonNormal(value);
+        return;
+    }
+#endif
     d->program->disableAttributeArray(QGL::Normal);
     d->program->setAttributeValue(QGL::Normal, value);
 #endif
