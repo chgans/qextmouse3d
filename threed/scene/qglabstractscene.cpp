@@ -224,13 +224,36 @@ Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, loader,
     extension of \a device.  The \a url specifies the location of
     the data in \a device so that relative resources can be located.
 
+    The \a options string is passed to the underlying format loader
+    and its meaning and format depend on the loader.  For example the
+    format string for the .3ds loader accepts the following options:
+    \list
+    \o ForceSmooth - average normals for a smooth appearance
+    \o ForceFaceted - per face normals for a faceted appearance
+    \o NativeIndices - map native indices for poorly smoothed models
+    \o CorrectNormals - fix inverted normals on models with bad windings
+    \o CorrectAcute - fix normals on models that smooth acute angles
+    \endlist
+
+    The options may be specified globally for the whole model, or just
+    for a particular mesh.
+
+    In this example smoothing is forced on globally, and native indices
+    are used on just the mesh called "BattCoverMesh".
+
+    \code
+    QString op = "ForceSmooth BattCoverMesh=NativeIndices";
+    QString file = "music-player.3ds";
+    QGLAbstractScene *scene = QGLAbstractScene::loadScene(file, QString(), op);
+    \endcode
+
     Returns the scene object, or null if the scene could not be loaded
     or the \a format was not supported by any of the plugins.
 
     \sa QGLSceneFormatPlugin
 */
 QGLAbstractScene *QGLAbstractScene::loadScene
-    (QIODevice *device, const QUrl& url, const QString& format)
+    (QIODevice *device, const QUrl& url, const QString& format, const QString &options)
 {
 #if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
     if (!device)
@@ -263,6 +286,8 @@ QGLAbstractScene *QGLAbstractScene::loadScene
             = qobject_cast<QGLSceneFormatFactoryInterface*>
                 (l->instance(fmt))) {
         QGLSceneFormatHandler *handler = factory->create(device, url, fmt);
+	if (!options.isEmpty())
+            handler->decodeOptions(options);
         if (handler) {
             QGLAbstractScene *scene = handler->read();
             delete handler;
@@ -287,10 +312,15 @@ QGLAbstractScene *QGLAbstractScene::loadScene
 }
 
 /*!
-    Loads a scene from \a fileName in the specified \a format using
-    the registered scene format plugins.  If \a format is an empty
-    string, then the format will be autodetected from the extension
-    of \a fileName.
+    Loads a scene from \a fileName in the specified \a format, with the
+    supplied \a options, and using the registered scene format plugins.
+
+    If \a format is an empty string, then the format will be autodetected
+    from the extension of \a fileName.
+
+    The \a options string is passed to the underlying format loader
+    and its meaning and format depend on the loader.  See the doc above
+    for loadScene() for details on the 3ds format options.
 
     Returns the scene object, or null if the scene could not be loaded
     or the \a format was not supported by any of the plugins.
@@ -298,14 +328,14 @@ QGLAbstractScene *QGLAbstractScene::loadScene
     \sa QGLSceneFormatPlugin
 */
 QGLAbstractScene *QGLAbstractScene::loadScene
-    (const QString& fileName, const QString& format)
+    (const QString& fileName, const QString& format, const QString &options)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
         return 0;
     QFileInfo fi(fileName);
     QUrl url = QUrl::fromLocalFile(fi.absoluteFilePath());
-    return loadScene(&file, url, format);
+    return loadScene(&file, url, format, options);
 }
 
 QT_END_NAMESPACE

@@ -59,13 +59,15 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qfileinfo.h>
 
-QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file)
-     : mRootNode(new QGLSceneNode())
-     , mFile(file)
+QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file, QGL3dsSceneHandler* sh)
+     : mFile(file)
+     , mRootNode(new QGLSceneNode())
+     , mScene(sh)
      , mHasTextures(false)
 {
     mRootNode->setPalette(new QGLMaterialCollection(mRootNode));
     mRootNode->setObjectName(file->name);
+    setUrl(sh->url());
 }
 
 QGL3dsLoader::~QGL3dsLoader()
@@ -92,12 +94,16 @@ void QGL3dsLoader::setUrl(const QUrl &url)
 void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
 {
 #ifndef QT_NO_DEBUG_STREAM
-    if (mesh->points == 0)
+    if (mesh->points == 0 && (mScene->options() & QGL::ShowWarnings))
         qDebug() << "Mesh" << mesh->name << "has zero vertex count";
-    else if (mesh->faces == 0)
+    else if (mesh->faces == 0 && (mScene->options() & QGL::ShowWarnings))
         qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode, mRootNode->palette());
+    QGL::ModelOptions o = mScene->meshOptions(mesh->name);
+    if (o == 0)
+        o = mScene->options();
+    m->setOptions(o);
     mMeshes.insert(mesh->name, m);
     if (mesh->faces == 0 || mesh->points == 0)
         return;
@@ -177,25 +183,6 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
     }
 }
 
-/// DEBUG - REMOVE ME
-static void makeMaterial(Lib3dsMaterial *mat, const char *name, QColor color)
-{
-    mat->ambient[0] = color.redF();
-    mat->ambient[1] = color.greenF();
-    mat->ambient[2] = color.blueF();
-    mat->ambient[3] = color.alphaF();
-    mat->diffuse[0] = color.redF();
-    mat->diffuse[1] = color.greenF();
-    mat->diffuse[2] = color.blueF();
-    mat->diffuse[3] = color.alphaF();
-    mat->specular[0] = color.redF();
-    mat->specular[1] = color.greenF();
-    mat->specular[2] = color.blueF();
-    mat->specular[3] = color.alphaF();
-    ::strncpy(mat->name, name, 60);
-}
-/// DEBUG - REMOVE ME - END
-
 /*!
     \internal
     Loads all the geometry, materials, and texture associations from the assigned
@@ -210,20 +197,17 @@ QGLSceneNode *QGL3dsLoader::loadMeshes()
     Lib3dsMaterial *mat;
     for (mat = mFile->materials; mat != NULL; mat = mat->next)
         loadMaterial(mat);
-    /// DEBUG - REMOVE ME
-    Lib3dsMaterial matSig0;
-    qMemSet(&matSig0, 0, sizeof(struct Lib3dsMaterial));
-    makeMaterial(&matSig0, "bright-red", Qt::red);
-    loadMaterial(&matSig0);
-    Lib3dsMaterial matSig1;
-    qMemSet(&matSig1, 0, sizeof(struct Lib3dsMaterial));
-    makeMaterial(&matSig1, "bright-green", Qt::green);
-    loadMaterial(&matSig1);
-    /// DEBUG - REMOVE ME
     Lib3dsMesh * mesh;
     for (mesh = mFile->meshes; mesh != NULL; mesh = mesh->next)
-        if (::strncmp(mesh->name, "BatteryCov", 10) == 0)
-            loadMesh(mesh);
+        loadMesh(mesh);
+    QGL::MeshOptionMap optList = mScene->meshOptions();
+    QStringList optionedMeshes = optList.keys();
+    QStringList gotMeshes = mMeshes.keys();
+    for (int i = 0; i < gotMeshes.size(); ++i)
+        optionedMeshes.removeAll(gotMeshes.at(i));
+    for (int i = 0; i < optionedMeshes.size(); ++i)
+        qWarning("Option specified, but mesh %s not found",
+                 qPrintable(optionedMeshes.at(i)));
     mRootNode->palette()->removeUnusedMaterials();
     loadNodes(mFile->nodes, mRootNode);
     mRootNode->setEffect(mHasTextures ? QGL::LitModulateTexture2D : QGL::LitMaterial);
@@ -301,7 +285,8 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
         txName = ensureResourceFile(txName);
         if (txName.isEmpty())
         {
-            qWarning("Could not load texture: %s", mat3ds->texture1_map.name);
+            if (mScene->options() & QGL::ShowWarnings)
+                qWarning("Could not load texture: %s", mat3ds->texture1_map.name);
         }
         else
         {

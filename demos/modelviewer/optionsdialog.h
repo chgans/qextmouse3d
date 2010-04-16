@@ -39,43 +39,37 @@
 **
 ****************************************************************************/
 
-#ifndef QGL3DSSCENE_H
-#define QGL3DSSCENE_H
+#ifndef OPTIONSDIALOG_H
+#define OPTIONSDIALOG_H
 
-#include "qglabstractscene.h"
+#include <QDialog>
+#include <QStringList>
 
-QT_BEGIN_HEADER
+namespace Ui {
+    class OptionsDialog;
+}
 
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-#include <QtCore/qurl.h>
-
-class QGLSceneNode;
-class QGLSceneObject;
-class QGL3dsSceneHandler;
-class Lib3dsFile;
-
-class QGL3dsScene : public QGLAbstractScene
-{
+class OptionsDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h);
-    virtual ~QGL3dsScene();
+    OptionsDialog(const QString &name, const QStringList &components, QWidget *parent = 0);
+    ~OptionsDialog();
 
-    QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
+protected:
+    void changeEvent(QEvent *e);
 
-    QUrl url() const { return mUrl; }
+private slots:
+    void toggleCheckBox(bool checked);
+    void on_componentComboBox_currentIndexChanged(QString );
 
 private:
-    Lib3dsFile *mFile;
-    QUrl mUrl;
-    QGLSceneNode *mRootNode;
+    void saveSettings();
+    void loadSettings();
+
+    Ui::OptionsDialog *ui;
+    QString m_name;
+    bool m_modified;
+    QString m_component;
 };
 
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+#endif // OPTIONSDIALOG_H

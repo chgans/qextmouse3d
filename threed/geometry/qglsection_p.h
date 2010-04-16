@@ -80,6 +80,7 @@ public:
     void append(const QLogicalVertex &lv);
     void append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c);
     void appendSmooth(const QLogicalVertex &lv);
+    void appendSmooth(const QLogicalVertex &lv, int index);
     void appendSmooth(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
     {
         appendSmooth(a);

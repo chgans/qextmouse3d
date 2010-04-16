@@ -153,6 +153,61 @@ static Lib3dsFile *qgl3ds_lib3ds_file_load(QIODevice *iod)
     return(file);
 }
 
+void QGL3dsSceneHandler::decodeOptions(const QString &options)
+{
+    static const char *validOptions[] = {
+        "NativeIndices",
+        "CorrectNormals",
+        "CorrectAcute",
+        "ForceSmooth",
+        "ForceFaceted",
+        "ShowWarnings"
+    };
+    static int optionKeys[] = {
+        QGL::NativeIndices,
+        QGL::CorrectNormals,
+        QGL::CorrectAcute,
+        QGL::ForceSmooth,
+        QGL::ForceFaceted,
+        QGL::ShowWarnings,
+        -1
+    };
+
+    // format: "mesh=option mesh=option option option"
+    // mesh: string name of a mesh in the file, with no spaces
+    // standalone option applies to the whole file - all meshes
+    // option: NativeIndices | CorrectNormals | CorrectAcute etc
+    QStringList opList = options.split(' ', QString::SkipEmptyParts);
+    for (int i = 0; i < opList.count(); ++i)
+    {
+        QString op = opList.at(i);
+        QString mdl;
+        if (op.contains('='))
+        {
+            QStringList sl = op.split('=', QString::SkipEmptyParts);
+            mdl = sl[0];
+            op = sl[1];
+        }
+        int k = 0;
+        for ( ; optionKeys[k] != -1; ++k)
+            if (op == validOptions[k])
+                break;
+        if (optionKeys[k] != -1) // found
+        {
+            QGL::ModelOptions o = static_cast<QGL::ModelOptions>(optionKeys[k]);
+            if (!mdl.isEmpty())
+                setMeshOptions(o, mdl);
+            else
+                setOptions(o);
+        }
+        else
+        {
+            qWarning("Bad option: \"%s\" in %s", qPrintable(op),
+                     qPrintable(options));
+        }
+    }
+}
+
 QGLAbstractScene *QGL3dsSceneHandler::read()
 {
     Lib3dsFile *file = qgl3ds_lib3ds_file_load(device());
@@ -176,7 +231,7 @@ QGLAbstractScene *QGL3dsSceneHandler::read()
 
     lib3ds_file_eval(file, 0.0f);
 
-    QGL3dsScene *scene = new QGL3dsScene(file, url());
+    QGL3dsScene *scene = new QGL3dsScene(file, this);
     return scene;
 }
 

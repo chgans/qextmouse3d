@@ -50,17 +50,24 @@ void PieView::initializeGL(QGLPainter *painter)
     const int qNumSlices = 16;
 
     pie.newSection(QGL::Smooth);
+    QVector3D a;
+    QVector3D b;
     QVector3D ap(qRadius, 0.0f, 0.0f);
     QVector3D bp(qRadius + qThickness, 0.0f, qHeight);
     QVector3D anc(qRadius * 2.0f, qRadius *2.0f, qHeight);
+
+    QVector3D topFill(0.0f, qRadius * 2.0f, qHeight);
+    QVector3D sideFill(qRadius * 2.0f, 0.0f, qHeight);
+    QGLPrimitive fillTri;
+    fillTri.appendVertex(bp, sideFill, anc);
     for (int slice = 1; slice < qNumSlices; ++slice)
     {
         const qreal pi2 = 2.0 * M_PI;
         qreal angle = (slice * pi2) / (4 * qNumSlices);
         qreal cs = qCos(angle);
         qreal sn = qSin(angle);
-        QVector3D a(cs * qRadius, sn * qRadius, 0.0f);
-        QVector3D b(cs * (qRadius + qThickness), sn * (qRadius + qThickness), qHeight);
+        a = QVector3D(cs * qRadius, sn * qRadius, 0.0f);
+        b = QVector3D(cs * (qRadius + qThickness), sn * (qRadius + qThickness), qHeight);
         QGLPrimitive quad;
         quad.appendVertex(ap, bp, b, a);
         pie.addQuad(quad);
@@ -70,13 +77,14 @@ void PieView::initializeGL(QGLPainter *painter)
         ap = a;
         bp = b;
     }
-    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
-
+    fillTri.appendVertex(b, anc, topFill);
+    pie.addTriangle(fillTri);
     painter->setStandardEffect(QGL::LitMaterial);
+    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 }
 
 void PieView::paintGL(QGLPainter *painter)
 {
-    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    painter->modelViewMatrix().translate(0.0f, -2.0f, 0.0f);
     pie.draw(painter);
 }

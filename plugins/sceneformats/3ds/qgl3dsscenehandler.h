@@ -43,14 +43,52 @@
 #define QGL3DSSCENEHANDLER_H
 
 #include "qglsceneformatplugin.h"
+#include <QtCore/qmap.h>
 
 QT_BEGIN_NAMESPACE
+
+namespace QGL {
+    enum ModelOption
+    {
+        NativeIndices     = 0x01,
+        CorrectNormals    = 0x02,
+        CorrectAcute      = 0x04,
+        ForceSmooth       = 0x08,
+        ForceFaceted      = 0x10,
+        ShowWarnings      = 0x20
+    };
+    Q_DECLARE_FLAGS(ModelOptions, ModelOption);
+
+    typedef QMap<QString, QGL::ModelOptions> MeshOptionMap;
+};
 
 class QGL3dsSceneHandler : public QGLSceneFormatHandler
 {
 public:
     QGLAbstractScene *read();
+
+    void setOptions(QGL::ModelOptions options) { m_options |= options; }
+    QGL::ModelOptions options() const { return m_options; }
+
+    void setMeshOptions(QGL::ModelOptions options, const QString &meshName)
+    {
+        m_meshOptions[meshName] |= options;
+    }
+    QGL::ModelOptions meshOptions(const QString &meshName) const
+    {
+        if (m_meshOptions.contains(meshName))
+            return m_meshOptions.value(meshName);
+        return 0;
+    }
+    QGL::MeshOptionMap meshOptions() const { return m_meshOptions; }
+    void decodeOptions(const QString &options);
+
+private:
+    QGL::ModelOptions m_options;
+    QGL::MeshOptionMap m_meshOptions;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::ModelOptions);
 
 QT_END_NAMESPACE
 

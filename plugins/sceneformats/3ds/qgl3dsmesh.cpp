@@ -44,6 +44,7 @@
 #include "qgloperation.h"
 #include "qglsection_p.h"
 #include "qarray.h"
+#include "qvector_utils_p.h"
 
 #include <lib3ds/mesh.h>
 #include <lib3ds/material.h>
@@ -59,23 +60,11 @@
 // smoothing when greater than this many faces are detected.
 #define FACETED_THRESHOLD 1000
 
-
-
-// Modulate smoothed vertices to prevent attempts to smooth acute angles
-// comment this out to disable
-#define DO_MODULATE 1
-
 // Two faces that have an angle between their plane vectors with a cosine
 // less than this are judged to form a sharp (acute) angle.
 // -ve cosine (less than 0.0f) means 90 degrees or sharper like the sides
 // of a rectangular prism so this is a good value.
-//#define ACUTE -0.0001f
-#define ACUTE 0.7f
-
-
-
-// Correct flipped normals where possible - comment this out to disable
-#define DO_NORMAL_CORRECT 1
+#define ACUTE -0.0001f
 
 // Two vectors that have an angle between them with a cosine less than this
 // value are judged to be approximately the inverse of each other, for the
@@ -103,6 +92,11 @@ static inline bool qIsNull(const Lib3dsVector &vec)
     return (qIsNull(vec[0]) && qIsNull(vec[1]) && qIsNull(vec[2]));
 }
 
+static inline bool qFskCompare(const Lib3dsVector &a, const Lib3dsVector &b)
+{
+    return (qFskCompare(a[0], b[0]) && qFskCompare(a[1], b[1]) && qFskCompare(a[2], b[2]));
+}
+
 // find the normalized plane vector, that is a unit vector perpendicular
 // to the plane of the face.  this is the same thing as the default normal
 static inline void planeVec(Lib3dsFace *face, Lib3dsPoint *pointList, Lib3dsVector result)
@@ -113,20 +107,15 @@ static inline void planeVec(Lib3dsFace *face, Lib3dsPoint *pointList, Lib3dsVect
     lib3ds_vector_normal(result, l3a, l3b, l3c);
 }
 
-struct AdjListNode
+struct ModulateRecord
 {
-    Lib3dsFace *face;
-    AdjListNode *next;
+    bool disabled;
+    bool keyFresh;
+    int facesProcessed;
+    int numModulated;
+    Lib3dsDword altKey;
+    Lib3dsDword key;
 };
-
-struct AdjListHead
-{
-    Lib3dsFace *face;
-    AdjListNode *next;
-    Lib3dsVector planeVector;
-};
-
-
 
 QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
                        QGLMaterialCollection *materials)
@@ -157,17 +146,39 @@ void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
     palette()->markMaterialAsUsed(matIx);
 }
 
+void QGL3dsMesh::initAdjacencyMap()
+{
+    Lib3dsFace *face;
+    m_faceMap = new FacePtr[m_mesh->faces * 3];
+    qMemSet(m_faceMap, 0, sizeof(m_faceMap));
+    for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+    {
+        face = &m_mesh->faceL[f];
+        planeVec(face, m_mesh->pointL, face->normal);
+        m_mesh->faceL[f].user.p = &m_faceMap[f*3];
+    }
+}
+
 void QGL3dsMesh::initialize()
 {
-    modulateMesh();
+    if ((m_options & QGL::ForceSmooth) && (m_options & QGL::ForceFaceted))
+    {
+        if (m_options & QGL::ShowWarnings)
+            qWarning("Both smooth and faceted forced on for %s: forcing smooth\n", m_mesh->name);
+        m_options &= ~QGL::ForceFaceted;
+    }
+    initAdjacencyMap();
+    if (m_options & (QGL::CorrectNormals | QGL::CorrectAcute))
+        modulateMesh();
     analyzeMesh();
-    if (m_smoothingGroups == 0 && m_mesh->faces > FACETED_THRESHOLD)
+    if (m_smoothingGroups == 0 &&
+        (m_mesh->faces > FACETED_THRESHOLD || m_options & QGL::ForceSmooth))
     {
 #ifndef QT_NO_DEBUG_STREAM
-        qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
-               m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
+        if (m_options & QGL::ShowWarnings)
+            qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
+                   m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
 #endif
-        m_hasZeroSmoothing = false;
         for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             m_mesh->faceL[f].smoothing = 1;
         analyzeMesh();
@@ -204,7 +215,7 @@ void QGL3dsMesh::initialize()
     if (mixedTexturedAndPlain)
     {
         popNode();
-        newNode();
+        node = currentNode();
         node->setEffect(QGL::LitModulateTexture2D);
         node->setObjectName(objectName() + "::Textures");
     }
@@ -218,7 +229,7 @@ void QGL3dsMesh::initialize()
     finalize();
 }
 
-// Build a linked list.  Use a QArray: the first N*2 entries correspond
+// Build a linked list, in a QArray: the first N*2 entries correspond
 // to the N vertices: for each n'th vertex, n*2 is the face number,
 // n*2+1is the index of the next entry for that vertex, or -1 if there
 // is no next entry.
@@ -236,7 +247,6 @@ QArray<int> QGL3dsMesh::mapFacesToVerts(Lib3dsDword *allKeys)
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         face = &m_mesh->faceL[f];
-        face->user.p = 0;
         if (face->smoothing)
         {
             if (!(face->smoothing & *allKeys))
@@ -271,35 +281,15 @@ QArray<int> QGL3dsMesh::mapFacesToVerts(Lib3dsDword *allKeys)
     return vlist;
 }
 
-void QGL3dsMesh::addToAdjacencyMap(Lib3dsFace *face, int *mptr, int *hptr, Lib3dsFace *neighbour)
+void QGL3dsMesh::addToAdjacencyMap(Lib3dsFace *face, Lib3dsFace *neighbour)
 {
-    AdjListNode *n;
-    if (face->user.p == 0)
-    {
-        Q_ASSERT(*hptr < int(m_mesh->faces));
-        AdjListHead *h = &m_faceMapHeads[(*hptr)++];
-        face->user.p = h;
-        planeVec(face, m_mesh->pointL, h->planeVector);
-        n = reinterpret_cast<AdjListNode*>(h);
-        //qDebug() << "created head:" << h << "at" << (*hptr - 1) << "next is:" << n->next << "for face:" << face;
-    }
-    else
-    {
-        Q_ASSERT(*mptr < int(m_mesh->faces * 2));
-        n = reinterpret_cast<AdjListNode*>(face->user.p);
-        int i = 0;
-        while (n->next != 0)
-        {
-            i++;
-            n = n->next;
-        }
-        n->next = &m_faceMap[(*mptr)++];
-        //AdjListNode *p = n;
-        n = n->next;
-        //qDebug() << "created node:" << n << "at" << (*mptr - 1) << "next is:" << n->next << "prev was:" << p << "number:" << i << "for face:" << face;
-    }
-    n->next = 0;
-    n->face = neighbour;
+    Q_ASSERT(face);
+    Q_ASSERT(face->user.p);
+    Q_ASSERT(neighbour);
+    FacePtr *h = static_cast<FacePtr*>(face->user.p);
+    while (*h != 0)
+        ++h;
+    *h = neighbour;
 }
 
 // add to each face a linked list of its <= 3 neighbouring faces
@@ -312,18 +302,12 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
 {
     Lib3dsFace *face;
     Lib3dsFace *nbr;
-    int nxm = 0;
-    int nxh = 0;
-    m_faceMap = new AdjListNode[m_mesh->faces * 2];
-    m_faceMapHeads = new AdjListHead[m_mesh->faces];
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         // for each edge (where an edge is a pair of verts) find ones
         // adjacent, ie both verts in edge have same face (which is
         // not this face).
         face = &m_mesh->faceL[f];
-        //if (qIsNull(face->normal))
-            planeVec(face, m_mesh->pointL, face->normal);
         for (int i = 0; i < 3; ++i)
         {
             Q_ASSERT(face->points[i] < m_mesh->points);
@@ -337,7 +321,6 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
                     Q_ASSERT(face->points[(i + 1) % 3] < m_mesh->points);
                     int vj = 2 * face->points[(i + 1) % 3];
                     int neighbourj = -1;
-                    //qDebug() << "starting with:" << vj;
                     while (true)
                     {
                         neighbourj = vlist[vj];
@@ -347,13 +330,12 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
                             // only add as neighbour if at least one smoothing group
                             // is shared - still have to test again below for each group
                             if (nbr->smoothing & face->smoothing)
-                                addToAdjacencyMap(face, &nxm, &nxh, nbr);
+                                addToAdjacencyMap(face, nbr);
                             break;
                         }
                         if (vlist[vj+1] == -1)
                             break;
                         vj = vlist[vj+1];
-                        //qDebug() << "    now:" << vj;
                     }
                 }
                 if (vlist[vi+1] == -1)
@@ -365,15 +347,35 @@ void QGL3dsMesh::buildAdjacencyMap(const QArray<int> &vlist)
     }
 }
 
-static inline Lib3dsDword nextUnusedKey(Lib3dsDword keys, Lib3dsDword key)
+static inline void incOrWarn(ModulateRecord *mod)
 {
-    if (key != 0)
-        key <<= 1;
+    if (mod->altKey != 0x80000000)
+    {
+        mod->altKey <<= 1;
+    }
     else
-        key = 1;
-    while (key & keys)
-        key <<= 1;
-    return key;
+    {
+        qWarning("Overflowed smoothing keys - modulation disabled.");
+        mod->disabled = true;
+    }
+}
+
+static inline void nextUnusedKey(ModulateRecord *mod, const Lib3dsDword &allKeys)
+{
+    if (!mod->disabled)
+    {
+        if (mod->altKey != 0)
+            incOrWarn(mod);
+        else
+        {
+            mod->altKey = 1;  // initialize
+        }
+        while ((mod->altKey & allKeys) && !mod->disabled)
+        {
+            incOrWarn(mod);
+        }
+        mod->keyFresh = true;
+    }
 }
 
 static int numCorrected = 0;
@@ -381,17 +383,14 @@ static int numWindingCorrected = 0;
 
 static inline void doNormalCorrect(Lib3dsFace *face)
 {
-#ifdef DO_NORMAL_CORRECT
-    AdjListHead *header = reinterpret_cast<AdjListHead*>(face->user.p);
-    AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
-    AdjListNode *n;
+    QGL3dsMesh::FacePtr *n = reinterpret_cast<QGL3dsMesh::FacePtr*>(face->user.p);
     int acnt = 0;
     Lib3dsVector avgn = { 0 };
-    for (n = neighbours; n; n = n->next)
+    for (; *n; ++n)
     {
-        if (n->face->smoothing & face->smoothing)
+        if ((*n)->smoothing & face->smoothing)
         {
-            lib3ds_vector_add(avgn, avgn, n->face->normal);
+            lib3ds_vector_add(avgn, avgn, (*n)->normal);
             ++acnt;
         }
     }
@@ -405,60 +404,63 @@ static inline void doNormalCorrect(Lib3dsFace *face)
             //        face->points[0], face->points[1], face->points[2]);
             //lib3ds_vector_dump(face->normal);
             lib3ds_vector_neg(face->normal);
-            na = lib3ds_vector_dot(header->planeVector, avgn);
-            numCorrected++;
-            if (na < INVERSE)
-            {
-                numWindingCorrected++;
-                //fprintf(stderr, "   and winding");
-                //lib3ds_vector_dump(header->planeVector);
-                lib3ds_vector_neg(header->planeVector);
-                qSwap(face->points[1], face->points[2]);
-            }
-            ::strncpy(face->material, "bright-green", 60);  //debug
+            numWindingCorrected++;
+            qSwap(face->points[1], face->points[2]);
         }
     }
-#else
-    Q_UNUSED(face);
-#endif
 }
 
-static int numModulated = 0;
-
-static inline bool doModulate(Lib3dsFace *face, Lib3dsDword altKey, Lib3dsDword key)
+static inline void modFace(Lib3dsFace *face, ModulateRecord *mod)
 {
-    bool keyUsed = false;
-    Q_ASSERT(altKey > key);
-    Q_ASSERT(key > 0);
-#if DO_MODULATE
-    AdjListHead *header = reinterpret_cast<AdjListHead*>(face->user.p);
-    AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
-    AdjListNode *n;
-    for (n = neighbours; n; n = n->next)
+    ++mod->numModulated;
+    face->smoothing &= ~mod->key;    // remove old key
+    face->smoothing |= mod->altKey;  // add in new key
+    ::strncpy(face->material, "bright-red", 60);  //debug
+}
+
+static inline void doModulate(Lib3dsFace *face, ModulateRecord *mod)
+{
+    QGL3dsMesh::FacePtr *n = reinterpret_cast<QGL3dsMesh::FacePtr*>(face->user.p);
+    ++mod->facesProcessed;
+    for ( ; *n; ++n)
     {
-        if (n->face->smoothing & face->smoothing)
+        QGL3dsMesh::FacePtr neighbour = *n;
+        if (neighbour->smoothing & face->smoothing)
         {
-            AdjListHead *hn = reinterpret_cast<AdjListHead*>(n->face->user.p);
-            float ca = lib3ds_vector_dot(header->planeVector, hn->planeVector);
-            if (ca < ACUTE)
+            if (lib3ds_vector_dot(face->normal, neighbour->normal) < ACUTE)
             {
-                numModulated++;
-                //qDebug() << "Moved face" << n->face << "from" <<
-                //        n->face->smoothing;
-                n->face->smoothing &= ~key;    // take it out of this group
-                n->face->smoothing |= altKey;  // move it to the alt group
-                ::strncpy(n->face->material, "bright-red", 60);  //debug
-                //qDebug() << "         to" << n->face->smoothing;
-                keyUsed = true;
+                fprintf(stderr, "Modulated due to ACUTE\n");
+                modFace(neighbour, mod);
+                mod->keyFresh = false;
             }
         }
     }
-#else
-    Q_UNUSED(face);
-    Q_UNUSED(altKey);
-    Q_UNUSED(key);
-#endif
-    return keyUsed;
+}
+
+bool operator<(const QVector3D &a, const QVector3D &b)
+{
+    if (qFskCompare(a.x(), b.x()))
+    {
+        if (qFskCompare(a.y(), b.y()))
+        {
+            if (qFskCompare(a.z(), b.z()))
+            {
+                return false; // they're equal a is not less than b
+            }
+            else
+            {
+                return a.z() < b.z();
+            }
+        }
+        else
+        {
+            return a.y() < b.y();
+        }
+    }
+    else
+    {
+        return a.x() < b.x();
+    }
 }
 
 // Go thru each smoothing group - we don't care about the zero group since
@@ -484,59 +486,78 @@ static inline bool doModulate(Lib3dsFace *face, Lib3dsDword altKey, Lib3dsDword 
 // see if it needs to be corrected also.
 void QGL3dsMesh::modulateMesh()
 {
-#if !defined(DO_MODULATE) && !defined(DO_NORMAL_CORRECT)
-    return;
-#endif
-    Lib3dsFace *face;
-    Lib3dsDword allKeys = 0;
+    if (!(m_options & (QGL::CorrectNormals | QGL::CorrectAcute)))
+        return;
+    FacePtr face;
+    Lib3dsDword allKeys;
     QArray<int> vlist = mapFacesToVerts(&allKeys);
     buildAdjacencyMap(vlist);
-    qDebug() << "Mesh:" << m_mesh->name << "with" << m_mesh->faces << "faces, and" << m_mesh->points << "points" << "in" << m_smoothingGroupCount << "groups.";
-    bool keyUsed = true;
-    Lib3dsDword altKey = 0;
-    QSet<Lib3dsFace*> processed;
-    int procCnt = 0;
-    int groups = 0;
-    numCorrected = 0;
-    numModulated = 0;
-    for (Lib3dsDword key = 1; key; key <<= 1)
+    QSet<FacePtr> processed;
+    ModulateRecord mod;
+    qMemSet(&mod, 0, sizeof(struct ModulateRecord));
+    mod.key = 1;
+    while ((mod.key < allKeys) && !mod.disabled && mod.key)
     {
-        if (!(key & allKeys))
+        if (!(allKeys & mod.key))
             continue;
-        if (keyUsed)
-            altKey = nextUnusedKey(allKeys, altKey);
-        keyUsed = false;
-        QArray<Lib3dsFace*> queue;
+        QArray<FacePtr> queue;
         Lib3dsDword fptr = 0;
         int head = 0;
-        groups++;
         while (true)
         {
-            if (head >= queue.size())  // seed another island of faces
+            if (head >= queue.size())   // seed another island of faces
             {
+                if (!mod.keyFresh && head > 0)  // if not first time thru, did we use last key?
+                    allKeys = allKeys | mod.altKey;
+                FacePtr qf = 0;
                 for (  ; fptr < m_mesh->faces; ++fptr)
-                    if ((m_mesh->faceL[fptr].smoothing & key) && !processed.contains(&m_mesh->faceL[fptr]))
+                {
+                    qf = &m_mesh->faceL[fptr];
+                    if ((mod.key & qf->smoothing) && !processed.contains(qf))
                         break;
+                }
                 if (fptr == m_mesh->faces)
                     break;
-                queue.append(&m_mesh->faceL[fptr]);
+                queue.append(qf);
+                if (!mod.keyFresh)
+                {
+                    nextUnusedKey(&mod, allKeys);
+                    if (mod.disabled)
+                        break;
+                }
             }
             face = queue.at(head++);
             processed.insert(face);
-            procCnt++;
-            AdjListNode *neighbours = reinterpret_cast<AdjListNode*>(face->user.p);
-            AdjListNode *n;
-            for (n = neighbours; n; n = n->next)
-                if ((n->face->smoothing & key) && !processed.contains(face))
-                    queue.append(n->face);
             doNormalCorrect(face);
-            if (doModulate(face, altKey, key))
-                keyUsed = true;
+            doModulate(face, &mod);
+            FacePtr *n = reinterpret_cast<FacePtr*>(face->user.p);
+            for ( ; *n; ++n)
+                if ((mod.key & (*n)->smoothing) && !processed.contains(*n))
+                    queue.append(*n);
         }
-        if (keyUsed)
-            allKeys |= altKey;
     }
-    qDebug() << "processed:" << procCnt << "faces in" << groups << "groups -- modulated:" << numModulated << ", corrected:" << numCorrected << "normals, " << numWindingCorrected << "windings.";
+    if ((m_options & QGL::CorrectNormals) && (m_options & QGL::ShowWarnings))
+        qDebug() << "CorrectNormals mode:" << numCorrected << "normals corrected.";
+    if ((m_options & QGL::CorrectAcute) && (m_options & QGL::ShowWarnings))
+        qDebug() << "CorrectAcute mode:" << mod.numModulated << "normals corrected";
+}
+
+int QGL3dsMesh::cachedMaterialLookup(const char *material)
+{
+    static bool initialized = false;
+    static int lastLookup = -1;
+    static char lastName[512];
+    if (!initialized)
+    {
+        ::memset(lastName, 0, 512);
+        initialized = true;
+    }
+    if (qstrncmp(lastName, material, 510) != 0)
+    {
+        lastLookup = palette()->indexOf(material);
+        qstrncpy(lastName, material, 510);
+    }
+    return lastLookup;
 }
 
 /*!
@@ -555,37 +576,31 @@ void QGL3dsMesh::analyzeMesh()
     Lib3dsFace *face;
     Lib3dsDword allKeys = 0;
     m_smoothingGroupCount = 0;
-    m_keys.clear();
-    m_groupCounts.clear();
+    m_hasZeroSmoothing = false;
     m_plainMaterials.clear();
     m_textureMaterials.clear();
     for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
     {
         face = &m_mesh->faceL[f];
-        int matIx = pal->indexOf(face->material);
+        int matIx = cachedMaterialLookup(face->material);
 #ifndef QT_NO_DEBUG_STREAM
-        if (matIx == -1 && strlen(face->material) != 0)
+        if (matIx == -1 && strlen(face->material) != 0 && (m_options & QGL::ShowWarnings))
             qDebug("Bad .3ds file: no material %s! (Referenced in mesh %s)\n",
                      face->material, m_mesh->name);
 #endif
         if (face->smoothing)
         {
-            if (!(face->smoothing & allKeys))
+            if ((face->smoothing & allKeys) != face->smoothing)
             {
-                allKeys |= face->smoothing;
-                m_smoothingGroupCount += 1;
-                if (!m_keys.contains(matIx))
+                Lib3dsDword key = 1;
+                while (key)
                 {
-                    m_keys.insert(matIx, face->smoothing);
-                    m_groupCounts.insert(matIx, 1);
-                }
-                else
-                {
-                    if (!(face->smoothing & m_keys[matIx]))
+                    if ((key & face->smoothing) && !(allKeys & key))
                     {
-                        m_keys[matIx] |= face->smoothing;
-                        m_groupCounts[matIx] += 1;
+                        allKeys = allKeys | key;
+                        m_smoothingGroupCount += 1;
                     }
+                    key <<= 1;
                 }
             }
         }
@@ -656,10 +671,8 @@ QMatrix4x4 QGL3dsMesh::meshMatrix() const
     mat = mat.inverted(&invertible);
     if (invertible)
          return mat;
-#ifndef QT_NO_DEBUG_STREAM
-    qWarning("Could not invert matrix for mesh %s", m_mesh->name);
-    qDebug() << mat;
-#endif
+    if (m_options & QGL::ShowWarnings)
+        qWarning("Could not invert matrix for mesh %s", m_mesh->name);
     return QMatrix4x4();
 }
 
@@ -675,13 +688,10 @@ void QGL3dsMesh::generateVertices()
     if (m_hasZeroSmoothing)
         ++keyCount;
     QString baseName = currentNode()->objectName();
-    Lib3dsDword key = m_hasZeroSmoothing ? 0 : 1;
-    int lastLookup = -1;
-    char lastName[512];
-    ::memset(lastName, 0, 512);
-    while(true)
+    Lib3dsDword key = 0;
+    while(key <= m_smoothingGroups)
     {
-        if ((key & m_smoothingGroups) || (key == 0))
+        if ((key & m_smoothingGroups) || ((key == 0) && m_hasZeroSmoothing))
         {
             if (key == 0)
                 currentSection()->setSmoothing(QGL::Faceted);
@@ -689,40 +699,35 @@ void QGL3dsMesh::generateVertices()
             currentNode()->setMaterial(matIx);
             currentNode()->setObjectName(baseName + "::" + QString::number(key));
             QGLPrimitive tri;
+            int cur = 0;
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             {
                 Lib3dsFace *face = &m_mesh->faceL[f];
-                int faceMat = 0;
-                if (qstrncmp(lastName, face->material, 510) != 0)
-                {
-                    lastLookup = palette()->indexOf(face->material);
-                    qstrncpy(lastName, face->material, 510);
-                }
-                faceMat = lastLookup;
+                int faceMat = cachedMaterialLookup(face->material);
                 if (faceMat == matIx &&
                     ((key & face->smoothing) || (key == 0 && face->smoothing == 0)))
                 {
-                    Lib3dsVector &l3a = m_mesh->pointL[face->points[0]].pos;
-                    Lib3dsVector &l3b = m_mesh->pointL[face->points[1]].pos;
-                    Lib3dsVector &l3c = m_mesh->pointL[face->points[2]].pos;
-                    Lib3dsVector &n = face->normal;
-                    QVector3D &vn = l2v(n);
-                    if (vn.isNull())
-                        lib3ds_vector_normal(n, l3a, l3b, l3c);
-                    tri.appendVertex(l2v(l3a), l2v(l3b), l2v(l3c));
-                    tri.appendNormal(l2v(n), l2v(n), l2v(n));
-                    if (m_hasTextures)
+                    QVector3D norm = l2v(face->normal);
+                    for (int i = 0; i < 3; ++i)
                     {
-                        Lib3dsTexel &t0 = m_mesh->texelL[face->points[0]];
-                        Lib3dsTexel &t1 = m_mesh->texelL[face->points[1]];
-                        Lib3dsTexel &t2 = m_mesh->texelL[face->points[2]];
-                        tri.appendTexCoord(QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]));
-                        tri.appendTexCoord(QVector2D(t1[0], m_texFlip ? 1.0f - t1[1] : t1[1]));
-                        tri.appendTexCoord(QVector2D(t2[0], m_texFlip ? 1.0f - t2[1] : t2[1]));
+                        int a = face->points[i];
+                        Lib3dsVector &l3a = m_mesh->pointL[a].pos;
+                        tri.appendVertex(l2v(l3a));
+                        tri.appendNormal(norm);
+                        if (m_hasTextures)
+                        {
+                            Lib3dsTexel &t0 = m_mesh->texelL[a];
+                            tri.appendTexCoord(QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]));
+                        }
+                        if (m_options & QGL::NativeIndices)
+                            currentSection()->appendSmooth(tri.vertexAt(cur++), a);
                     }
                 }
             }
-            addTriangle(tri);
+            if (m_options & QGL::NativeIndices)
+                currentNode()->setCount(cur);
+            else
+                addTriangle(tri);
             if (keyCount > 0)
                 newSection(QGL::Smooth);
             else

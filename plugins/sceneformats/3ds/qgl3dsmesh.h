@@ -43,15 +43,15 @@
 #define QGL3DSMESH_H
 
 #include "qgldisplaylist.h"
+#include "qgl3dsscenehandler.h"
 
 #include <lib3ds/types.h>
-
+#include <lib3ds/mesh.h>
 
 class QGLMaterialCollection;
 class QGL3dsLoader;
 class Lib3dsMesh;
-class AdjListNode;
-class AdjListHead;
+class ModulateRecord;
 
 class QGL3dsMesh : public QGLDisplayList
 {
@@ -61,7 +61,10 @@ public:
                         QGLMaterialCollection *materials = 0);
     virtual ~QGL3dsMesh();
     void initialize();
+    void setOptions(QGL::ModelOptions options) { m_options = options; }
     bool hasTexture() { return m_hasTextures; }
+
+    typedef Lib3dsFace *FacePtr;
 
 protected:
     void analyzeMesh();
@@ -73,8 +76,11 @@ protected:
 private:
     void processNodeForMaterial(int matIx, QGLSceneNode *node);
     QArray<int> mapFacesToVerts(Lib3dsDword *allKeys);
-    void addToAdjacencyMap(Lib3dsFace *face, int *mptr, int *hptr, Lib3dsFace *nbr);
+    void addToAdjacencyMap(Lib3dsFace *face, Lib3dsFace *nbr);
     void buildAdjacencyMap(const QArray<int> &vlist);
+    int cachedMaterialLookup(const char *material);
+    void findCommonNormal(ModulateRecord *mod) const;
+    void initAdjacencyMap();
 
     Lib3dsMesh *m_mesh;
     bool m_hasTextures;
@@ -82,12 +88,10 @@ private:
     int m_smoothingGroupCount;
     QSet<int> m_plainMaterials;
     QSet<int> m_textureMaterials;
-    QMap<int, int> m_groupCounts;
-    QMap<int, Lib3dsDword> m_keys;
     bool m_texFlip;
     bool m_hasZeroSmoothing;
-    AdjListNode *m_faceMap;
-    AdjListHead *m_faceMapHeads;
+    FacePtr *m_faceMap;
+    QGL::ModelOptions m_options;
 };
 
 #endif // QGL3DSMESH_H

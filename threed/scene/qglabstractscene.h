@@ -72,9 +72,11 @@ public:
     virtual QGLSceneObject *defaultObject(QGLSceneObject::Type type);
 
     static QGLAbstractScene *loadScene
-        (QIODevice *device, const QUrl& url, const QString& format = QString());
+        (QIODevice *device, const QUrl& url, const QString& format = QString(),
+	 const QString& options = QString());
     static QGLAbstractScene *loadScene
-        (const QString& fileName, const QString& format = QString());
+        (const QString& fileName, const QString& format = QString(),
+	 const QString& options = QString());
 
 private:
     QGLAbstractScenePrivate *d_ptr;

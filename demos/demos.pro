@@ -7,3 +7,7 @@ SUBDIRS = teaservice shapes
 contains(QT_CONFIG, declarative) {
     SUBDIRS += qml3d
 }
+
+3ds {
+    SUBDIRS += modelviewer
+}

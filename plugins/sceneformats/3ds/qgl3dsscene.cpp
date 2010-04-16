@@ -64,15 +64,15 @@ QT_BEGIN_NAMESPACE
     and setting the given \a parent.  Resources are searched for at the
     given \a url.
 
-    The QGL3dsSceneObject takes ownership of the \a file.
+    The QGL3dsScene object takes ownership of the \a file.
 */
-QGL3dsScene::QGL3dsScene(Lib3dsFile *file, QUrl url, QObject *parent)
-    : QGLAbstractScene(parent)
+QGL3dsScene::QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h)
+    : QGLAbstractScene(0)
     , mFile(file)
-    , mUrl(url)
 {
-    QGL3dsLoader loader(file);
-    loader.setUrl(mUrl);
+    Q_ASSERT(h);
+    Q_ASSERT(file);
+    QGL3dsLoader loader(file, h);
     mRootNode = loader.loadMeshes();
 }
 
