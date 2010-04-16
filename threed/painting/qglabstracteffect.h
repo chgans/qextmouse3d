@@ -73,10 +73,6 @@ public:
     virtual void setCommonNormal(const QVector3D& value);
 
 protected:
-#if !defined(QT_OPENGL_ES_2) || defined(Q_QDOC)
-    static void enableVertexAttribute(QGL::VertexAttribute attribute);
-    static void disableVertexAttribute(QGL::VertexAttribute attribute);
-#endif
     static void setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value);

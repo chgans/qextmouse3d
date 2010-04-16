@@ -1353,8 +1353,6 @@ void QGLPainter::setColor(const QColor& color)
     d->updates |= UpdateColor;
 }
 
-#define QGL_TEXTURE0    0x84C0
-
 #if !defined(QT_OPENGL_ES)
 
 typedef void (APIENTRY *q_PFNGLACTIVETEXTUREPROC) (GLenum);
@@ -1414,6 +1412,26 @@ static QGLMultiTextureExtensions *resolveMultiTextureExtensions
     return extn;
 }
 
+void qt_gl_ClientActiveTexture(GLenum texture)
+{
+    const QGLContext *ctx = QGLContext::currentContext();
+    if (!ctx)
+        return;
+    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
+    if (extn->clientActiveTexture)
+        extn->clientActiveTexture(texture);
+}
+
+void qt_gl_ActiveTexture(GLenum texture)
+{
+    const QGLContext *ctx = QGLContext::currentContext();
+    if (!ctx)
+        return;
+    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
+    if (extn->activeTexture)
+        extn->activeTexture(texture);
+}
+
 #endif
 
 void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
@@ -1441,27 +1459,11 @@ void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttribute
     case QGL::TextureCoord2:
     {
         int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-        glClientActiveTexture(QGL_TEXTURE0 + unit);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0 + unit);
         glTexCoordPointer(value.tupleSize(), value.type(),
                           value.stride(), value.data());
         if (unit != 0)  // Stay on unit 0 between requests.
-            glClientActiveTexture(QGL_TEXTURE0);
-#else
-        const QGLContext *ctx = QGLContext::currentContext();
-        if (!ctx)
-            break;;
-        QGLMultiTextureExtensions *extn =
-            resolveMultiTextureExtensions(ctx);
-        if (extn->clientActiveTexture) {
-            extn->clientActiveTexture(QGL_TEXTURE0 + unit);
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-            if (unit != 0)  // Stay on unit 0 between requests.
-                extn->clientActiveTexture(QGL_TEXTURE0);
-        } else if (unit == 0) {
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-        }
-#endif
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
     }
     break;
 #endif
@@ -1478,108 +1480,6 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 {
     qt_gl_setVertexAttribute(attribute, value);
 }
-
-#if !defined(QT_OPENGL_ES_2)
-
-void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
-{
-    switch (attribute) {
-        case QGL::Position:
-            glEnableClientState(GL_VERTEX_ARRAY);
-            break;
-
-        case QGL::Normal:
-            glEnableClientState(GL_NORMAL_ARRAY);
-            break;
-
-        case QGL::Color:
-            glEnableClientState(GL_COLOR_ARRAY);
-            break;
-
-#ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        {
-            int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
-#else
-            const QGLContext *ctx = QGLContext::currentContext();
-            if (!ctx)
-                break;;
-            QGLMultiTextureExtensions *extn =
-                resolveMultiTextureExtensions(ctx);
-            if (extn->clientActiveTexture) {
-                extn->clientActiveTexture(QGL_TEXTURE0 + unit);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                if (unit != 0)  // Stay on unit 0 between requests.
-                    extn->clientActiveTexture(QGL_TEXTURE0);
-            } else if (unit == 0) {
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-#endif
-        }
-        break;
-#endif
-
-        default: break;
-    }
-}
-
-void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
-{
-    switch (attribute) {
-        case QGL::Position:
-            glDisableClientState(GL_VERTEX_ARRAY);
-            break;
-
-        case QGL::Normal:
-            glDisableClientState(GL_NORMAL_ARRAY);
-            break;
-
-        case QGL::Color:
-            glDisableClientState(GL_COLOR_ARRAY);
-            break;
-
-#ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        {
-            int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
-#else
-            const QGLContext *ctx = QGLContext::currentContext();
-            if (!ctx)
-                break;;
-            QGLMultiTextureExtensions *extn =
-                resolveMultiTextureExtensions(ctx);
-            if (extn->clientActiveTexture) {
-                extn->clientActiveTexture(QGL_TEXTURE0 + unit);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                if (unit != 0)  // Stay on unit 0 between requests.
-                    extn->clientActiveTexture(QGL_TEXTURE0);
-            } else if (unit == 0) {
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-#endif
-        }
-        break;
-#endif
-
-        default: break;
-    }
-}
-
-#endif // !QT_OPENGL_ES_2
 
 /*!
     Sets a vertex \a attribute on the current GL context to \a value.
@@ -1705,13 +1605,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
         return;
 
     // Select the texture unit and bind the texture.
-#if defined(QT_OPENGL_ES)
-    glActiveTexture(QGL_TEXTURE0 + unit);
-#else
-    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(d->context);
-    if (extn->activeTexture)
-        extn->activeTexture(QGL_TEXTURE0 + unit);
-#endif
+    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
 #if !defined(QT_OPENGL_ES_2)
@@ -1726,13 +1620,8 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QT_OPENGL_ES)
     if (unit != 0)
-        glActiveTexture(QGL_TEXTURE0);
-#else
-    if (unit != 0 && extn->activeTexture)
-        extn->activeTexture(QGL_TEXTURE0);
-#endif
+        qt_gl_ActiveTexture(GL_TEXTURE0);
 }
 
 /*!
@@ -1749,13 +1638,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
         return;
 
     // Select the texture unit and bind the texture.
-#if defined(QT_OPENGL_ES)
-    glActiveTexture(QGL_TEXTURE0 + unit);
-#else
-    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(d->context);
-    if (extn->activeTexture)
-        extn->activeTexture(QGL_TEXTURE0 + unit);
-#endif
+    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         QGLTextureCube::release();
 #if !defined(QT_OPENGL_ES_2)
@@ -1770,13 +1653,8 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QT_OPENGL_ES)
     if (unit != 0)
-        glActiveTexture(QGL_TEXTURE0);
-#else
-    if (unit != 0 && extn->activeTexture)
-        extn->activeTexture(QGL_TEXTURE0);
-#endif
+        qt_gl_ActiveTexture(GL_TEXTURE0);
 }
 
 /*!

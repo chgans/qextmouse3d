@@ -144,11 +144,13 @@ void QGLFlatTextureEffect::setActive(QGLPainter *painter, bool flag)
     Q_UNUSED(painter);
     if (flag) {
         glEnableClientState(GL_VERTEX_ARRAY);
-        enableVertexAttribute(QGL::TextureCoord0);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     } else {
         glDisableClientState(GL_VERTEX_ARRAY);
-        disableVertexAttribute(QGL::TextureCoord0);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
 #else
     Q_UNUSED(painter);
@@ -158,11 +160,13 @@ void QGLFlatTextureEffect::setActive(QGLPainter *painter, bool flag)
         d->isFixedFunction = true;
         if (flag) {
             glEnableClientState(GL_VERTEX_ARRAY);
-            enableVertexAttribute(QGL::TextureCoord0);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         } else {
             glDisableClientState(GL_VERTEX_ARRAY);
-            disableVertexAttribute(QGL::TextureCoord0);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
         return;
     }
@@ -303,11 +307,13 @@ void QGLFlatDecalTextureEffect::setActive(QGLPainter *painter, bool flag)
     Q_UNUSED(painter);
     if (flag) {
         glEnableClientState(GL_VERTEX_ARRAY);
-        enableVertexAttribute(QGL::TextureCoord0);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     } else {
         glDisableClientState(GL_VERTEX_ARRAY);
-        disableVertexAttribute(QGL::TextureCoord0);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
 #else
     Q_UNUSED(painter);
@@ -317,11 +323,13 @@ void QGLFlatDecalTextureEffect::setActive(QGLPainter *painter, bool flag)
         d->isFixedFunction = true;
         if (flag) {
             glEnableClientState(GL_VERTEX_ARRAY);
-            enableVertexAttribute(QGL::TextureCoord0);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
         } else {
             glDisableClientState(GL_VERTEX_ARRAY);
-            disableVertexAttribute(QGL::TextureCoord0);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         }
     }
 #endif
