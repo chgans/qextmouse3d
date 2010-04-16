@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "cubeview.h"
+#include "viewer.h"
 
 #include <QTimer>
 #include <QAction>
@@ -48,6 +48,7 @@
 #include <QMessageBox>
 #include <QColorDialog>
 #include <QTime>
+#include <QSettings>
 
 #include <math.h>
 
@@ -65,7 +66,7 @@
 #include "qglmaterialcollection.h"
 #include "qline3d.h"
 
-CubeView::CubeView(QWidget *parent)
+Viewer::Viewer(QWidget *parent)
     : QGLWidget(parent)
     , mTimer(new QTimer(this))
     , mColorTimer(new QTimer(this))
@@ -88,56 +89,103 @@ CubeView::CubeView(QWidget *parent)
     , mSelectColorAnimate(0)
     , mAnimationEnabled(true)
     , mWarningDisplayed(false)
+    , mNewModelLoaded(false)
 {
 }
 
-CubeView::~CubeView()
+Viewer::~Viewer()
 {
     delete mTimer;
     delete mSceneManager;
 }
 
-void CubeView::load()
+void Viewer::load()
 {
     QAction *act = qobject_cast<QAction*>(sender());
     openModelFile(act->text());
 }
 
-void CubeView::openModelFile(const QString &fileName)
+void Viewer::openModelFile(const QString &fileName)
 {
     mWarningDisplayed = false;
     importModel(fileName);
     loadColors();
     loadComponents();
-    emit modelLoaded(fileName);
 }
 
-void CubeView::importModel(const QString &name)
+QString Viewer::getOptions(const QString &name)
+{
+    QSettings settings;
+    settings.beginGroup(name);
+    QString options;
+    QStringList keys = settings.childKeys();
+    QStringList groups = settings.childGroups();
+    QString key;
+    QString group;
+    while (keys.size() > 0 || groups.size() > 0)
+    {
+        if (keys.size() > 0)
+        {
+            key = keys.takeFirst();
+            if (!key.startsWith("UI_"))
+            {
+                bool value = settings.value(key, false).toBool();
+                if (value)
+                {
+                    QString op = group.isEmpty() ? key : QString("%1=%2").arg(group).arg(key);
+                    options = options.isEmpty() ? op : options + " " + op;
+                }
+            }
+        }
+        if (keys.size() == 0 && groups.size() > 0)
+        {
+            if (!group.isEmpty())
+                settings.endGroup();
+            group = groups.takeFirst();
+            settings.beginGroup(group);
+            keys = settings.childKeys();
+        }
+    }
+    return options;
+}
+
+void Viewer::importModel(const QString &name)
 {
     delete mSceneManager;
     mSceneManager = 0;
     mSceneRoot = 0;
     mSelectMaterial = -1;
-    mCurrentModelName = name;
+    QString options = Viewer::getOptions(name);
     QTime time;
     time.start();
-    mSceneManager = QGLAbstractScene::loadScene(mCurrentModelName);
-    qDebug() << "Time to load" << name << time.elapsed() << "ms";
+    mSceneManager = QGLAbstractScene::loadScene(name, QString(), options);
+    int ms = time.elapsed();
+    mPrevFileName = mCurrentModelName;
+    mCurrentModelName = name;
     if (!mSceneManager)
         return;
+    mNewModelLoaded = true;
     QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
+#ifndef QT_NO_DEBUG_STREAM
     //qDumpScene(mSceneRoot);
     int totalIndexes = 0;
     QList<QGLSceneNode *> children = mSceneRoot->allChildren();
     QList<QGLSceneNode*>::const_iterator it(children.begin());
     for ( ; it != children.end(); ++it)
-        totalIndexes += (*it)->count();
-    qDebug() << (totalIndexes / 3) << "triangles";
+    {
+        QGLSceneNode  *n = *it;
+        totalIndexes += n->count();
+        //if (n->objectName().startsWith("BatteryCov"))
+        //    n->setNormalViewEnabled(true);
+    }
+    qDebug() << "Loaded:" << name << "/" << options << "--"
+            << (totalIndexes / 3) << "triangles, in" << ms << "ms";
+#endif
 }
 
-void CubeView::loadColors()
+void Viewer::loadColors()
 {
     if (mColorMenu->actions().count())
         mColorMenu->clear();
@@ -172,7 +220,7 @@ void CubeView::loadColors()
     }
 }
 
-void CubeView::changeColor()
+void Viewer::changeColor()
 {
     if (!mSceneRoot)
         return;
@@ -198,10 +246,10 @@ void CubeView::changeColor()
     QPixmap px(16, 16);
     px.fill(color);
     act->setIcon(QIcon(px));
-    updateGL();
+    update();
 }
 
-void CubeView::loadComponents()
+void Viewer::loadComponents()
 {
     QList<QGLSceneObject*> components;
     if (mSceneManager)
@@ -219,6 +267,7 @@ void CubeView::loadComponents()
     QObject::connect(selectNoneAct, SIGNAL(triggered()), this, SLOT(selectComponent()));
     mComponentMenu->addSeparator();
     QList<QGLSceneObject*>::const_iterator it(components.begin());
+    mComponents.clear();
     for ( ; it != components.end(); ++it)
     {
         QGLSceneNode *nodeObj = qobject_cast<QGLSceneNode *>(*it);
@@ -232,6 +281,12 @@ void CubeView::loadComponents()
         if (!mesh)
             continue;
         QString meshName = nodeObj->objectName();
+        QString componentName = meshName;
+        int pos = componentName.indexOf(":");
+        if (pos != -1)
+            componentName.truncate(pos);
+        if (!mComponents.contains(componentName))
+            mComponents.append(componentName);
         QAction *act = new QAction(meshName, this);
         mComponentMenu->addAction(act);
         QObject::connect(act, SIGNAL(triggered()), this, SLOT(selectComponent()));
@@ -240,7 +295,7 @@ void CubeView::loadComponents()
     makeSelectColor(mSelectColor);
 }
 
-void CubeView::restoreMaterial(QGLSceneNode *root)
+void Viewer::restoreMaterial(QGLSceneNode *root)
 {
     // recurse down from the root node finding all the materials
     // this doesn't go far enough tho' - could go down into the
@@ -260,7 +315,7 @@ void CubeView::restoreMaterial(QGLSceneNode *root)
     }
 }
 
-void CubeView::setMaterial(QGLSceneNode *root, int material)
+void Viewer::setMaterial(QGLSceneNode *root, int material)
 {
     QList<QGLSceneNode *> modList;
     modList.append(root);
@@ -278,7 +333,7 @@ void CubeView::setMaterial(QGLSceneNode *root, int material)
     }
 }
 
-void CubeView::selectComponent()
+void Viewer::selectComponent()
 {
     if (!mSceneManager)
         return;
@@ -301,7 +356,7 @@ void CubeView::selectComponent()
     If there is currently a selection, adjust the colour by the animation
     value to produce a pulsing effect.
 */
-void CubeView::makeSelectColor(QColor color)
+void Viewer::makeSelectColor(QColor color)
 {
     QGLMaterial *mat = 0;
     QGLMaterialCollection *palette = mSceneRoot->palette();
@@ -319,66 +374,64 @@ void CubeView::makeSelectColor(QColor color)
     mat->setSpecularColor(color.lighter(125));  // set specular to 20% x bright
 }
 
-void CubeView::zoomChanged()
+void Viewer::zoomChanged(int value)
 {
-    QSlider *slider = qobject_cast<QSlider *>(sender());
-    if (mZoom != slider->value())
+    if (mZoom != value)
     {
-        mZoom = slider->value();
-        updateGL();
+        mZoom = value;
+        update();
     }
 }
 
-void CubeView::xTiltChanged(int tilt)
+void Viewer::xTiltChanged(int tilt)
 {
     int t = tilt * 45;
     if (t != mXTilt)
     {
         mXTilt = t;
-        updateGL();
+        update();
     }
 }
 
-void CubeView::yTiltChanged(int tilt)
+void Viewer::yTiltChanged(int tilt)
 {
     int t = tilt * 45;
     if (t != mYTilt)
     {
         mYTilt = t;
-        updateGL();
+        update();
     }
 }
 
-void CubeView::zTiltChanged(int tilt)
+void Viewer::zTiltChanged(int tilt)
 {
     int t = tilt * 45;
     if (t != mZTilt)
     {
         mXTilt = t;
-        updateGL();
+        update();
     }
 }
 
-void CubeView::yaxChanged()
+void Viewer::yaxChanged(int value)
 {
-    QSlider *slider = qobject_cast<QSlider *>(sender());
-    if (mYax != slider->value())
+    if (mYax != value)
     {
-        mYax = slider->value();
-        updateGL();
+        mYax = value;
+        update();
     }
 }
 
-void CubeView::selectColorChanged(const QColor &color)
+void Viewer::selectColorChanged(const QColor &color)
 {
     if (mSelectColor != color)
     {
         mSelectColor = color;
-        updateGL();
+        update();
     }
 }
 
-void CubeView::initializeGL()
+void Viewer::initializeGL()
 {
     if (mInitialModel.isEmpty())
     {
@@ -388,16 +441,14 @@ void CubeView::initializeGL()
     }
     else
     {
-        importModel(mInitialModel);
-        loadColors();
-        loadComponents();
+        openModelFile(mInitialModel);
     }
 
     QGLPainter painter(this);
     initializeGL(&painter);
 }
 
-void CubeView::initializeGL(QGLPainter *painter)
+void Viewer::initializeGL(QGLPainter *painter)
 {
     painter->setClearColor(QColor(32, 32, 128));
     painter->setDepthTestingEnabled(true);
@@ -419,24 +470,31 @@ void CubeView::initializeGL(QGLPainter *painter)
 /*!
     \internal
 */
-void CubeView::resizeGL(int w, int h)
+void Viewer::resizeGL(int w, int h)
 {
     // Set up the standard viewport for the new window size.
     glViewport(0, 0, w, h);
-    updateGL();
+    update();
 }
 
-void CubeView::paintGL()
+void Viewer::paintGL()
 {
     QGLPainter painter(this);
     paintGL(&painter);
 }
 
-void CubeView::paintGL(QGLPainter *painter)
+void Viewer::paintGL(QGLPainter *painter)
 {
+    if (mNewModelLoaded)
+    {
+        mNewModelLoaded = false;
+        if (!mPrevFileName.isEmpty())
+            emit modelUnloaded(mPrevFileName);
+        emit modelLoaded(mCurrentModelName);
+    }
+
     if (!mSceneInitialized)
     {
-        //mSceneRoot->apply(painter);
         mSceneInitialized = true;
     }
 
@@ -497,17 +555,17 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().pop();
 }
 
-void CubeView::animate()
+void Viewer::animate()
 {
     if (!mSceneRoot)
         return;
     if (!mAnimationEnabled)
         return;
     mSpin = (mSpin + 1) % 360;
-    updateGL();
+    update();
 }
 
-void CubeView::animateColor()
+void Viewer::animateColor()
 {
     if (mCurrentSelected)
     {
@@ -532,7 +590,7 @@ void CubeView::animateColor()
     }
 }
 
-void CubeView::enableAnimation(bool enabled)
+void Viewer::enableAnimation(bool enabled)
 {
     mAnimationEnabled = enabled;
 }

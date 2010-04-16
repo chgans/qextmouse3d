@@ -39,29 +39,51 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QDir>
-#include <QMainWindow>
-#include <QMenu>
-#include <QMenuBar>
-#include <QSlider>
-#include <QFrame>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
+#ifndef CONTROLS_H
+#define CONTROLS_H
 
-#include "mainwindow.h"
+#include <QtGui/QMainWindow>
 
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
-    MainWindow mw;
-
-    if (QApplication::arguments().contains("-maximize"))
-        mw.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
-        mw.showFullScreen();
-    else
-        mw.show();
-    return app.exec();
+namespace Ui {
+    class Controls;
 }
+
+class Viewer;
+
+class Controls : public QMainWindow {
+    Q_OBJECT
+public:
+    Controls(QWidget *parent = 0);
+    ~Controls();
+
+public slots:
+    void signalColor(const QColor &);
+    void loadModelDefaults(const QString &);
+    void saveModelDefaults(const QString &);
+
+signals:
+    void updateSelectColor(const QColor &);
+    void openFile(const QString &);
+
+protected:
+    void changeEvent(QEvent *e);
+
+private:
+    QString populateModelMenu();
+
+    Ui::Controls *ui;
+    Viewer *mView;
+    QColor mSelectColor;
+
+private slots:
+    void on_actionQuit_triggered();
+    void on_actionComponent_triggered();
+    void on_actionOpen_triggered();
+    void on_spinCheckBox_stateChanged(int );
+    void on_selectColorButton_clicked();
+    void optionMenuToggled(bool);
+    void saveSettings(const QString &);
+    void loadSettings(const QString &);
+};
+
+#endif // CONTROLS_H

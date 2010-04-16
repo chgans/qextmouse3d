@@ -39,44 +39,33 @@
 **
 ****************************************************************************/
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#include <QApplication>
+#include <QDir>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
+#include <QSlider>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
 
-#include <QtGui/QMainWindow>
+#include "controls.h"
 
-namespace Ui {
-    class MainWindow;
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    Controls controls;
+
+    QCoreApplication::setOrganizationName("Nokia");
+    QCoreApplication::setOrganizationDomain("nokia.com");
+    QCoreApplication::setApplicationName("modelviewer");
+
+    if (QApplication::arguments().contains("-maximize"))
+        controls.showMaximized();
+    else if (QApplication::arguments().contains("-fullscreen"))
+        controls.showFullScreen();
+    else
+        controls.show();
+    return app.exec();
 }
-
-class CubeView;
-
-class MainWindow : public QMainWindow {
-    Q_OBJECT
-public:
-    MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-
-public slots:
-    void signalColor(const QColor &);
-
-signals:
-    void updateSelectColor(const QColor &);
-    void openFile(const QString &);
-
-protected:
-    void changeEvent(QEvent *e);
-
-private:
-    QString populateModelMenu();
-
-    Ui::MainWindow *mUi;
-    CubeView *mView;
-    QColor mSelectColor;
-
-private slots:
-    void on_actionOpen_triggered();
-    void on_spinCheckBox_stateChanged(int );
-    void on_selectColorButton_clicked();
-};
-
-#endif // MAINWINDOW_H

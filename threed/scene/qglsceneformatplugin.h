@@ -73,6 +73,8 @@ public:
 
     virtual QGLAbstractScene *read() = 0;
 
+    virtual void decodeOptions(const QString &options);
+
 private:
     QGLSceneFormatHandlerPrivate *d_ptr;
 };

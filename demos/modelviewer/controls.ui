@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>Controls</class>
+ <widget class="QMainWindow" name="Controls">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -346,10 +346,24 @@ Color</string>
     <addaction name="actionOpen"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionForce_Smooth"/>
+    <addaction name="actionForce_Faceted"/>
+    <addaction name="actionNative_Indices"/>
+    <addaction name="actionCorrect_Normals"/>
+    <addaction name="actionCorrect_Acute"/>
+    <addaction name="actionShow_Warnings"/>
+    <addaction name="separator"/>
+    <addaction name="actionComponent"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModels"/>
    <addaction name="menuColors"/>
    <addaction name="menuComponents"/>
+   <addaction name="menuOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
@@ -367,24 +381,60 @@ Color</string>
     <string>Open...</string>
    </property>
   </action>
+  <action name="actionForce_Smooth">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Force Smooth</string>
+   </property>
+  </action>
+  <action name="actionForce_Faceted">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Force Faceted</string>
+   </property>
+  </action>
+  <action name="actionNative_Indices">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Native Indices</string>
+   </property>
+  </action>
+  <action name="actionCorrect_Normals">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Correct Normals</string>
+   </property>
+  </action>
+  <action name="actionCorrect_Acute">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Correct Acute</string>
+   </property>
+  </action>
+  <action name="actionComponent">
+   <property name="text">
+    <string>Component...</string>
+   </property>
+  </action>
+  <action name="actionShow_Warnings">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Warnings</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>actionQuit</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

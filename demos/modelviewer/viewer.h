@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef CUBEVIEW_H
-#define CUBEVIEW_H
+#ifndef VIEWER_H
+#define VIEWER_H
 
 #include <QtOpenGL/qgl.h>
 
@@ -52,23 +52,25 @@ class QGLLightModel;
 class QMenu;
 class QGLSceneNode;
 
-class CubeView : public QGLWidget
+class Viewer : public QGLWidget
 {
     Q_OBJECT
 public:
-    CubeView(QWidget *parent = 0);
-    ~CubeView();
+    Viewer(QWidget *parent = 0);
+    ~Viewer();
     void setColorMenu(QMenu *menu) { mColorMenu = menu; }
     void setComponentMenu(QMenu *menu) { mComponentMenu = menu; }
     void setInitialModel(const QString &model) { mInitialModel = model; }
+    QString currentModel() const { return mCurrentModelName; }
+    QStringList components() const { return mComponents; }
 
 public slots:
     void load();
-    void zoomChanged();
+    void zoomChanged(int);
     void xTiltChanged(int);
     void yTiltChanged(int);
     void zTiltChanged(int);
-    void yaxChanged();
+    void yaxChanged(int);
     void selectColorChanged(const QColor &);
     void enableAnimation(bool);
     void openModelFile(const QString &);
@@ -76,6 +78,7 @@ public slots:
 signals:
     void colorUpdate(const QColor &);
     void modelLoaded(const QString &);
+    void modelUnloaded(const QString &);
 
 protected:
     void initializeGL();
@@ -97,6 +100,8 @@ private:
     void setMaterial(QGLSceneNode *root, int material);
     void restoreMaterial(QGLSceneNode *root);
     void importModel(const QString &name);
+
+    static QString getOptions(const QString &name);
 
     QTimer *mTimer;
     QTimer *mColorTimer;
@@ -121,7 +126,10 @@ private:
     bool mAnimationEnabled;
     QString mInitialModel;
     bool mWarningDisplayed;
+    QStringList mComponents;
+    bool mNewModelLoaded;
+    QString mPrevFileName;
 };
 
 
-#endif // CUBEVIEW_H
+#endif // VIEWER_H
