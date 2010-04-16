@@ -4,16 +4,15 @@ CONFIG += qt debug warn_on
 QT += opengl
 SOURCES = \
     cubeitem.cpp \
-    teapotitem.cpp \
     main.cpp \
-    coloritem.cpp \
-    robot.cpp
+    edge.cpp \
+    node.cpp \
+    graph.cpp
 HEADERS = \
     cubeitem.h \
-    teapotitem.h \
-    coloritem.h \
-    robot.h
-RESOURCES = graphicsview.qrc
+    edge.h \
+    node.h \
+    graph.h
 LIBS += -L../../lib -L../../bin
 DESTDIR = ../../bin
 

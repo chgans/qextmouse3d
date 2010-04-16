@@ -44,6 +44,7 @@
 #include "qglabstracteffect.h"
 #include <QtCore/qlist.h>
 #include <QtCore/qatomic.h>
+#include <QtOpenGL/qglshaderprogram.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -747,6 +748,52 @@ void QGLVertexBuffer::release() const
     Q_D(const QGLVertexBuffer);
     if (d->buffer)
         d->buffer->release();
+}
+
+// Defined in qglpainter.cpp.  Needs to be moved eventually.
+void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
+/*!
+    Sets the attribute arrays in this vertex buffer on \a program.
+    If \a program is null, then the attribute arrays will be
+    set on the fixed-function pipeline.
+
+    It is assumed that this vertex buffer and \a program are bound
+    to the current GL context.
+
+    \sa bind()
+*/
+void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
+{
+    Q_D(QGLVertexBuffer);
+    Q_UNUSED(program);
+#if !defined(QT_OPENGL_ES_1)
+    if (program) {
+        for (int index = 0; index < d->attributes.size(); ++index) {
+            QGLVertexBufferAttribute *attr = d->attributes[index];
+#if defined(QT_OPENGL_ES_2)
+            glVertexAttribPointer(GLuint(attr->attribute),
+                                  attr->value.tupleSize(),
+                                  attr->value.type(), GL_FALSE,
+                                  attr->value.stride(), attr->value.data());
+#elif QT_VERSION >= 0x040700
+            program->setAttributeArray
+                (int(attr->attribute), attr->value.type(), attr->value.data(),
+                 attr->value.tupleSize(), attr->value.stride());
+#else
+            QGLAbstractEffect::setAttributeArray
+                (program, int(attr->attribute), attr->value);
+#endif
+        }
+        return;
+    }
+#endif
+#if !defined(QT_OPENGL_ES_2)
+    for (int index = 0; index < d->attributes.size(); ++index) {
+        QGLVertexBufferAttribute *attr = d->attributes[index];
+        qt_gl_setVertexAttribute(attr->attribute, attr->value);
+    }
+#endif
 }
 
 QT_END_NAMESPACE

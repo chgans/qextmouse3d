@@ -58,7 +58,6 @@ void tst_QGLDepthBufferOptions::defaultOptions()
     {
         QGLDepthBufferOptions opt;
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Less);
         QCOMPARE(opt.isWriteEnabled(), true);
         QCOMPARE(opt.nearRange(), 0.0);
@@ -80,29 +79,25 @@ void tst_QGLDepthBufferOptions::defaultOptions()
 
     {
         QGLDepthBufferOptions opt;
-        opt.setEnabled(true);
-        QCOMPARE(opt.isEnabled(), true);
         // test defaults
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Less);
         QCOMPARE(opt.isWriteEnabled(), true);
         QCOMPARE(opt.nearRange(), 0.0);
         QCOMPARE(opt.farRange(), 1.0);
 
-        QVERIFY(opt != QGLDepthBufferOptions());
-        QVERIFY(!(opt == QGLDepthBufferOptions()));
-        QVERIFY(!opt.isNull());
+        QVERIFY(opt == QGLDepthBufferOptions());
+        QVERIFY(!(opt != QGLDepthBufferOptions()));
+        QVERIFY(opt.isNull());
 
         QGLDepthBufferOptions other = opt;
         QVERIFY(opt == other);
         QVERIFY(other == opt);
-        QCOMPARE(other.isEnabled(), true);
     }
     {
         QGLDepthBufferOptions opt;
         opt.setFunction(QGLDepthBufferOptions::Never);
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Never);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.isWriteEnabled(), true);
         QCOMPARE(opt.nearRange(), 0.0);
         QCOMPARE(opt.farRange(), 1.0);
@@ -121,7 +116,6 @@ void tst_QGLDepthBufferOptions::defaultOptions()
         opt.setWriteEnabled(false);
         QCOMPARE(opt.isWriteEnabled(), false);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Less);
         QCOMPARE(opt.nearRange(), 0.0);
         QCOMPARE(opt.farRange(), 1.0);
@@ -140,7 +134,6 @@ void tst_QGLDepthBufferOptions::defaultOptions()
         opt.setRange(0.3, opt.farRange());
         QCOMPARE(opt.nearRange(), 0.3);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Less);
         QCOMPARE(opt.isWriteEnabled(), true);
         QCOMPARE(opt.farRange(), 1.0);
@@ -159,7 +152,6 @@ void tst_QGLDepthBufferOptions::defaultOptions()
         opt.setRange(opt.nearRange(), 0.8);
         QCOMPARE(opt.farRange(), 0.8);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.function(), QGLDepthBufferOptions::Less);
         QCOMPARE(opt.isWriteEnabled(), true);
         QCOMPARE(opt.nearRange(), 0.0);

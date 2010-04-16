@@ -61,19 +61,15 @@ QT_BEGIN_NAMESPACE
     \value TextureCoord0 The texture co-ordinate at each vertex for texture unit 0.
     \value TextureCoord1 The texture co-ordinate at each vertex for texture unit 1.
     \value TextureCoord2 The texture co-ordinate at each vertex for texture unit 2.
-    \value TextureCoord3 The texture co-ordinate at each vertex for texture unit 3.
-    \value TextureCoord4 The texture co-ordinate at each vertex for texture unit 4.
-    \value TextureCoord5 The texture co-ordinate at each vertex for texture unit 5.
-    \value TextureCoord6 The texture co-ordinate at each vertex for texture unit 6.
-    \value TextureCoord7 The texture co-ordinate at each vertex for texture unit 7.
-    \value CustomVertex0 First custom vertex attribute.
+    \value CustomVertex0 First custom vertex attribute.  Custom attributes
+           can be used for any purpose: texture co-ordinates, colors,
+           or other values of interest to shader programs.
     \value CustomVertex1 Second custom vertex attribute.
-    \value CustomVertex2 Third custom vertex attribute.
-    \value CustomVertex3 Fourth custom vertex attribute.
-    \value CustomVertex4 Fifth custom vertex attribute.
-    \value CustomVertex5 Sixth custom vertex attribute.
-    \value CustomVertex6 Seventh custom vertex attribute.
-    \value CustomVertex7 Eighth custom vertex attribute.
+    \value UserVertex First user-assigned vertex attribute.  Additional
+           attributes can be assigned as UserVertex, UserVertex + 1, etc.
+           Note that on OpenGL/ES 2.0 systems, usually the maximum
+           number of vertex attributes is 8, which means that user-assigned
+           vertex attributes will be out of range.
 */
 
 /*!
@@ -160,19 +156,20 @@ QT_BEGIN_NAMESPACE
     \value LitMaterial Material colors specified by
            QGLPainter::setFaceMaterial() with lighting enabled.  It is
            assumed that per-vertex normals are provided.  Under OpenGL/ES 2.0
-           only one light is supported.
+           only one light is supported, with single-sided materials,
+           and no attenuation.
     \value LitDecalTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_DECAL combination rule.  The texture is
            sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
+           supported, with single-sided materials, and no attenuation.
     \value LitModulateTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_MODULATE combination rule.  The texture
            is sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
+           supported, with single-sided materials, and no attenuation.
 */
 
 /*!

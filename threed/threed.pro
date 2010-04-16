@@ -13,3 +13,5 @@ include(threed.pri)
 RESOURCES += shaders.qrc
 HEADERS += $$PRIVATE_HEADERS
 DEFINES += QT_BUILD_QT3D_LIB
+
+!contains(QT_CONFIG, egl):DEFINES += QT_NO_EGL

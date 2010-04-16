@@ -490,12 +490,19 @@ void QGLMatrixStack::markDirty()
     d->isDirty = true;
 }
 
-bool QGLMatrixStack::updateServer()
+bool QGLMatrixStack::needsUpdate()
 {
     Q_D(QGLMatrixStack);
     bool dirty = d->isDirty;
+    d->isDirty = false;
+    return dirty;
+}
+
+void QGLMatrixStack::updateServer()
+{
 #if !defined(QT_OPENGL_ES_2)
-    if (dirty && d->type != UserMatrix) {
+    Q_D(QGLMatrixStack);
+    if (d->type != UserMatrix) {
         glMatrixMode(d->glType);
         if (sizeof(qreal) == sizeof(GLfloat)) {
             glLoadMatrixf(reinterpret_cast<const GLfloat *>
@@ -509,8 +516,6 @@ bool QGLMatrixStack::updateServer()
         }
     }
 #endif
-    d->isDirty = false;
-    return dirty;
 }
 
 QMatrix4x4 QGLPainter::combinedMatrix() const

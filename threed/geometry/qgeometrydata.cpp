@@ -70,10 +70,10 @@
             \o QGL::Color
             \o appendColor(), colorRef(), colors()
         \row
-            \o QGL::TextureCoord0 - QGL::TextureCoord7
+            \o QGL::TextureCoord0 - QGL::TextureCoord3
             \o appendTexCoord(), texCoordRef(), texCoords()
         \row
-            \o QGL::CustomVertex0 - QGL::CustomVertex7
+            \o QGL::CustomVertex0 - QGL::CustomVertex1, QGL::UserVertex
             \o appendAttribute(), vector3DAttributeRef(), attributes()
      \endtable
 
@@ -1633,25 +1633,14 @@ void QGeometryData::enableField(QGL::VertexAttribute field)
     case QGL::TextureCoord0:
     case QGL::TextureCoord1:
     case QGL::TextureCoord2:
-    case QGL::TextureCoord3:
-    case QGL::TextureCoord4:
-    case QGL::TextureCoord5:
-    case QGL::TextureCoord6:
-    case QGL::TextureCoord7:
         d->textures.append(QVector2DArray());
         d->key[field] = d->textures.count() - 1;
         d->size[field] = 2;
         if (d->reserved > 0)
             d->textures[d->key[field]].reserve(d->reserved);
         break;
-    case QGL::CustomVertex0:
-    case QGL::CustomVertex1:
-    case QGL::CustomVertex2:
-    case QGL::CustomVertex3:
-    case QGL::CustomVertex4:
-    case QGL::CustomVertex5:
-    case QGL::CustomVertex6:
-    case QGL::CustomVertex7:
+    default:
+        // Custom and User vertex attributes.
         d->attributes.append(QCustomDataArray());
         d->key[field] = d->attributes.count() - 1;
         d->size[field] = d->attributes.at(d->key[field]).elementSize();

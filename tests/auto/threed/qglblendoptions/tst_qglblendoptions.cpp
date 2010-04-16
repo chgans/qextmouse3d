@@ -58,7 +58,6 @@ void tst_QGLBlendOptions::defaultOptions()
     {
         QGLBlendOptions opt;
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
@@ -83,8 +82,6 @@ void tst_QGLBlendOptions::defaultOptions()
 
     {
         QGLBlendOptions opt;
-        opt.setEnabled(true);
-        QCOMPARE(opt.isEnabled(), true);
         // test defaults
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
@@ -94,21 +91,19 @@ void tst_QGLBlendOptions::defaultOptions()
         QCOMPARE(opt.colorEquation(), QGLBlendOptions::Add);
         QCOMPARE(opt.alphaEquation(), QGLBlendOptions::Add);
 
-        QVERIFY(opt != QGLBlendOptions());
-        QVERIFY(!(opt == QGLBlendOptions()));
-        QVERIFY(!opt.isNull());
+        QVERIFY(opt == QGLBlendOptions());
+        QVERIFY(!(opt != QGLBlendOptions()));
+        QVERIFY(opt.isNull());
 
         QGLBlendOptions other = opt;
         QVERIFY(opt == other);
         QVERIFY(other == opt);
-        QCOMPARE(other.isEnabled(), true);
     }
     {
         QGLBlendOptions opt;
         opt.setBlendColor(QColor(255,0,0,128));
         QCOMPARE(opt.blendColor(), QColor(255,0,0,128));
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.destinationColorFactor(), QGLBlendOptions::Zero);
@@ -130,7 +125,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::SrcAlpha);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.destinationColorFactor(), QGLBlendOptions::Zero);
@@ -152,7 +146,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setSourceAlphaFactor(QGLBlendOptions::ConstantAlpha);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::ConstantAlpha);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.destinationColorFactor(), QGLBlendOptions::Zero);
@@ -174,7 +167,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setDestinationColorFactor(QGLBlendOptions::One);
         QCOMPARE(opt.destinationColorFactor(), QGLBlendOptions::One);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
@@ -196,7 +188,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setDestinationAlphaFactor(QGLBlendOptions::OneMinusDstAlpha);
         QCOMPARE(opt.destinationAlphaFactor(), QGLBlendOptions::OneMinusDstAlpha);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
@@ -218,7 +209,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setColorEquation(QGLBlendOptions::Maximum);
         QCOMPARE(opt.colorEquation(), QGLBlendOptions::Maximum);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);
@@ -240,7 +230,6 @@ void tst_QGLBlendOptions::defaultOptions()
         opt.setAlphaEquation(QGLBlendOptions::Minimum);
         QCOMPARE(opt.alphaEquation(), QGLBlendOptions::Minimum);
         // test defaults
-        QCOMPARE(opt.isEnabled(), false);
         QCOMPARE(opt.blendColor(), QColor(0,0,0,0));
         QCOMPARE(opt.sourceColorFactor(), QGLBlendOptions::One);
         QCOMPARE(opt.sourceAlphaFactor(), QGLBlendOptions::One);

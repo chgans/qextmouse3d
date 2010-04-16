@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,26 +39,41 @@
 **
 ****************************************************************************/
 
-#ifndef COLORITEM_H
-#define COLORITEM_H
+#ifndef TEAPOTITEM_H
+#define TEAPOTITEM_H
 
-#include <QGraphicsItem>
+#include "qglgraphicsviewportitem.h"
+#include "qgldisplaylist.h"
+#include <QtGui/qbrush.h>
 
-class ColorItem : public QGraphicsItem
+class QGLFramebufferObject;
+
+class TeapotItem : public QObject, public QGLGraphicsViewportItem
 {
+    Q_OBJECT
 public:
-    ColorItem();
+    TeapotItem(QGraphicsItem *parent = 0);
+    ~TeapotItem();
 
-    QRectF boundingRect() const;
+    QGraphicsScene *scene() const { return mScene; }
+    void setScene(QGraphicsScene *scene);
+
+    QBrush backgroundBrush() const { return background; }
+    void setBackgroundBrush(const QBrush &brush) { background = brush; }
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+    void paintGL(QGLPainter *painter);
+
+private Q_SLOTS:
+    void updateScene();
 
 private:
-    QColor color;
+    QGLDisplayList teapot;
+    QGraphicsScene *mScene;
+    QGLFramebufferObject *fbo;
+    QBrush background;
 };
 
 #endif

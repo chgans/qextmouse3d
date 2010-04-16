@@ -198,7 +198,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere)
     // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
     int total = 2*(1 << divisions);
 
-    list.newSection();
     list.begin(QGL::TRIANGLE);
     QGLPrimitive *prim = list.currentPrimitive();
 
@@ -430,7 +429,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
     }
 
     // Add the final vertices to the display list.
-    list.newSection();
     list.begin(QGL::TRIANGLE);
     list.addVertexArray(vertices);
     list.addNormalArray(normals);
@@ -602,7 +600,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere)
     }
 
     // Add the final vertices to the display list.
-    list.newSection();
     list.begin(QGL::QUAD);
     list.addVertexArray(vertices);
     list.addNormalArray(normals);

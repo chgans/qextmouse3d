@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the Qt/3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,23 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef TEAPOTITEM_H
-#define TEAPOTITEM_H
+#ifndef REDCYANEFFECT_H
+#define REDCYANEFFECT_H
 
-#include "qglgraphicsviewportitem.h"
-#include "qgldisplaylist.h"
+#include <QtGui/qgraphicseffect.h>
 
-class TeapotItem : public QGLGraphicsViewportItem
+class RedCyanEffect : public QGraphicsEffect
 {
+    Q_OBJECT
+    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY zChanged)
 public:
-    TeapotItem(QGraphicsItem *parent = 0);
-    ~TeapotItem();
+    RedCyanEffect(QObject *parent = 0);
+    ~RedCyanEffect();
+
+    qreal depth() const { return m_depth; }
+
+    QRectF boundingRectFor(const QRectF &sourceRect) const;
+
+public Q_SLOTS:
+    void setDepth(qreal depth);
+
+Q_SIGNALS:
+    void depthChanged(qreal depth);
 
 protected:
-    void paintGL(QGLPainter *painter);
+    void draw(QPainter *painter);
 
 private:
-    QGLDisplayList teapot;
+    qreal m_depth;
 };
 
 #endif
+

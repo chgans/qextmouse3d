@@ -253,6 +253,8 @@ static inline void qt_gl_byteSwapImage(QImage &img, GLenum pixel_type)
     }
 }
 
+// #define QGL_BIND_TEXTURE_DEBUG
+
 void QGLBoundTexture::uploadFace
     (GLenum target, const QImage &image, const QSize &scaleSize, GLenum format)
 {
@@ -270,8 +272,12 @@ void QGLBoundTexture::uploadFace
                      qt_gl_next_power_of_two(size.height()));
     }
     QImage img(image);
-    if (size != image.size())
+    if (size != image.size()) {
+#ifdef QGL_BIND_TEXTURE_DEBUG
+            printf(" - scaling up to %dx%d (%d ms) \n", size.width(), size.height(), time.elapsed());
+#endif
         img = img.scaled(size);
+    }
     m_size = size;
 
     QImage::Format target_format = img.format();

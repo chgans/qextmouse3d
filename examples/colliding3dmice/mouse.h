@@ -48,7 +48,7 @@
 class Mouse : public QGraphicsItem
 {
 public:
-    Mouse();
+    Mouse(bool redCyanEffect);
 
     QRectF boundingRect() const;
     QPainterPath shape() const;
@@ -62,10 +62,7 @@ private:
     qreal angle;
     qreal speed;
     qreal mouseEyeDirection;
-    qreal z;
     QColor color;
-
-    void paintMouse(QPainter *painter, qreal zadjust);
 };
 //! [0]
 

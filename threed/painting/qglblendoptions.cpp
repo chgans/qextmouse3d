@@ -114,7 +114,6 @@ public:
         : blendColor(0, 0, 0, 0)
     {
         ref = 1;
-        isEnabled = false;
         sourceColorFactor = QGLBlendOptions::One;
         sourceAlphaFactor = QGLBlendOptions::One;
         destinationColorFactor = QGLBlendOptions::Zero;
@@ -126,7 +125,6 @@ public:
         : blendColor(other->blendColor)
     {
         ref = 1;
-        isEnabled = other->isEnabled;
         sourceColorFactor = other->sourceColorFactor;
         sourceAlphaFactor = other->sourceAlphaFactor;
         destinationColorFactor = other->destinationColorFactor;
@@ -137,8 +135,7 @@ public:
 
     inline bool equal(const QGLBlendOptionsPrivate *other) const
     {
-        return isEnabled == other->isEnabled &&
-               blendColor == other->blendColor &&
+        return blendColor == other->blendColor &&
                sourceColorFactor == other->sourceColorFactor &&
                sourceAlphaFactor == other->sourceAlphaFactor &&
                destinationColorFactor == other->destinationColorFactor &&
@@ -149,8 +146,7 @@ public:
 
     inline bool isDefault() const
     {
-        return isEnabled == false &&
-               blendColor.red() == 0 &&
+        return blendColor.red() == 0 &&
                blendColor.green() == 0 &&
                blendColor.blue() == 0 &&
                blendColor.alpha() == 0 &&
@@ -163,7 +159,6 @@ public:
     }
 
     QBasicAtomicInt ref;
-    bool isEnabled;
     QColor blendColor;
     QGLBlendOptions::BlendFactor sourceColorFactor;
     QGLBlendOptions::BlendFactor sourceAlphaFactor;
@@ -238,30 +233,6 @@ QGLBlendOptionsPrivate *QGLBlendOptions::dwrite()
     A blend options object becomes non-null the first time one of
     the set methods is called on a property.
 */
-
-/*!
-    Returns true if blending is enabled; false otherwise.
-    The default value is false.
-
-    \sa setEnabled()
-*/
-bool QGLBlendOptions::isEnabled() const
-{
-    if (d)
-        return d->isEnabled;
-    else
-        return false;
-}
-
-/*!
-    Enables or disables blending according to \a value.
-
-    \sa isEnabled()
-*/
-void QGLBlendOptions::setEnabled(bool value)
-{
-    dwrite()->isEnabled = value;
-}
 
 /*!
     Returns the blending color.  The default value is (0, 0, 0, 0).
@@ -622,10 +593,6 @@ static QGLBlendExtensions *resolveBlendExtensions(const QGLContext *ctx)
 void QGLBlendOptions::apply() const
 {
     if (d) {
-        if (d->isEnabled)
-            glEnable(GL_BLEND);
-        else
-            glDisable(GL_BLEND);
 #if defined(QT_OPENGL_ES_2)
         glBlendColor(d->blendColor.redF(), d->blendColor.greenF(),
                      d->blendColor.blueF(), d->blendColor.alphaF());
@@ -667,7 +634,6 @@ void QGLBlendOptions::apply() const
         }
 #endif
     } else {
-        glDisable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ZERO);
 #if defined(QT_OPENGL_ES_2)
         glBlendEquation(GL_FUNC_ADD);

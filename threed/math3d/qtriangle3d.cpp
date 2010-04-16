@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qtriangle3d.h"
+#include <QtGui/qmatrix4x4.h>
 
 /*!
   \class QTriangle3D

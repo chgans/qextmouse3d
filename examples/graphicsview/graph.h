@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the examples of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,24 +39,30 @@
 **
 ****************************************************************************/
 
-#include "teapotitem.h"
-#include "qglpainter.h"
-#include "qglteapot.h"
+#ifndef GRAPHWIDGET_H
+#define GRAPHWIDGET_H
 
-TeapotItem::TeapotItem(QGraphicsItem *parent)
-    : QGLGraphicsViewportItem(parent)
+#include <QtGui/QGraphicsScene>
+
+class Node;
+
+class Graph : public QObject
 {
-    setFlag(ItemIsFocusable, true);
+    Q_OBJECT
+public:
+    Graph();
 
-    teapot << QGLTeapot();
-}
+    QGraphicsScene *scene() const { return sceneObject; }
 
-TeapotItem::~TeapotItem()
-{
-}
+    void itemMoved();
 
-void TeapotItem::paintGL(QGLPainter *painter)
-{
-    painter->setStandardEffect(QGL::LitMaterial);
-    teapot.draw(painter);
-}
+protected:
+    void timerEvent(QTimerEvent *event);
+
+private:
+    QGraphicsScene *sceneObject;
+    int timerId;
+    Node *centerNode;
+};
+
+#endif

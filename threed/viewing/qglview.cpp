@@ -170,10 +170,8 @@ public:
         panning = false;
         startPan = QPoint(-1, -1);
 
-        depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -477,6 +475,7 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
+    painter.setDepthTestingEnabled(true);
     d->depthBufferOptions.apply();
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
@@ -1122,5 +1121,22 @@ QPointF QGLView::viewDelta(int deltax, int deltay) const
     of the view width and height.  Returns a QPointF containing
     the percentage values, typically between -1 and 1.
 */
+
+
+// The following is a hack to enable the use of QGLView with qml3d
+// and the Qt.labs.threed plugin for QML.  Needs to go away eventually.
+
+static QObject *qmlViewport = 0;
+
+Q_QT3D_EXPORT void qt_gl_set_qml_viewport(QObject *viewport)
+{
+    if (!qmlViewport)
+        qmlViewport = viewport;
+}
+
+Q_QT3D_EXPORT QObject *qt_gl_qml_viewport()
+{
+    return qmlViewport;
+}
 
 QT_END_NAMESPACE

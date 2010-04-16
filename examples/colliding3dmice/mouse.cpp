@@ -44,7 +44,6 @@
 #include <QGraphicsScene>
 #include <QPainter>
 #include <QStyleOption>
-#include <QtOpenGL>
 
 #include <math.h>
 
@@ -61,18 +60,19 @@ static qreal normalizeAngle(qreal angle)
 }
 
 //! [0]
-Mouse::Mouse()
+Mouse::Mouse(bool redCyanEffect)
     : angle(0), speed(0), mouseEyeDirection(0)
 {
-    // Use grayscale for the mouse color because it works better
-    // when using red-cyan glasses.
-    int col = qrand() % 256;
-    color = QColor(col, col, col);
+    if (redCyanEffect) {
+        // Use grayscale for the mouse color because it works better
+        // when using red-cyan glasses.
+        int col = qrand() % 256;
+        color = QColor(col, col, col);
+    } else {
+      color = QColor(qrand() % 256, qrand() % 256, qrand() % 256);
+    }
 
     setRotation(qrand() % (360 * 16));
-
-    // Pick a random z value for the mouse to be drawn at.
-    z = qrand() % 20;
 }
 //! [0]
 
@@ -97,31 +97,6 @@ QPainterPath Mouse::shape() const
 //! [3]
 void Mouse::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    if (z != 0.0f) {
-        // Paint the mouse twice, with the GL color mask set up
-        // to allow through different colors each time.
-        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-        paintMouse(painter, z / 2.0f);
-        glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
-        paintMouse(painter, -z / 2.0f);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    } else {
-        paintMouse(painter, 0.0f);
-    }
-}
-
-void Mouse::paintMouse(QPainter *painter, qreal zadjust)
-{
-    QTransform transform = painter->transform();
-
-    if (zadjust != 0.0f) {
-        // We apply the left/right eye adjustment by shifting the
-        // image left or right in the x direction by the z value.
-        QTransform translation;
-        translation.translate(zadjust, 0);
-        painter->setTransform(transform * translation);
-    }
-
     // Body
     painter->setBrush(color);
     painter->drawEllipse(-10, -20, 20, 40);
@@ -140,7 +115,7 @@ void Mouse::paintMouse(QPainter *painter, qreal zadjust)
     painter->drawEllipse(QRectF(4.0 + mouseEyeDirection, -17, 4, 4));
 
     // Ears
-    painter->setBrush(scene()->collidingItems(this).isEmpty() ? Qt::darkYellow : Qt::yellow);
+    painter->setBrush(scene()->collidingItems(this).isEmpty() ? Qt::darkYellow : Qt::red);
     painter->drawEllipse(-17, -12, 16, 16);
     painter->drawEllipse(1, -12, 16, 16);
 
@@ -151,8 +126,6 @@ void Mouse::paintMouse(QPainter *painter, qreal zadjust)
     path.cubicTo(-5, 32, -5, 42, 0, 35);
     painter->setBrush(Qt::NoBrush);
     painter->drawPath(path);
-
-    painter->setTransform(transform);
 }
 //! [3]
 

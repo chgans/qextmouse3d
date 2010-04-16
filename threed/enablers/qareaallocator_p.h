@@ -45,6 +45,7 @@
 #include "qt3dglobal.h"
 #include <QtCore/qsize.h>
 #include <QtCore/qrect.h>
+#include <QtCore/qlist.h>
 
 QT_BEGIN_HEADER
 
@@ -70,7 +71,9 @@ public:
     void expandBy(const QSize &size);
 
     virtual QRect allocate(const QSize &size) = 0;
+    virtual QList<QRect> allocate(const QList<QSize> &sizes);
     virtual void release(const QRect &rect);
+    virtual void release(const QList<QRect> &rects);
 
     virtual int overhead() const;
 

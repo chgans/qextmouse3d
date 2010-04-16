@@ -136,9 +136,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     userEffect = 0;
     standardEffect = QGL::FlatColor;
     memset(stdeffects, 0, sizeof(stdeffects));
-#ifdef Q_WS_WIN
-    extensionFuncs = 0;
-#endif
     textureUnitCount = 0;
 }
 
@@ -149,9 +146,6 @@ QGLPainterPrivate::~QGLPainterPrivate()
     delete defaultMaterial;
     delete frontColorMaterial;
     delete backColorMaterial;
-#ifdef Q_WS_WIN
-    delete extensionFuncs;
-#endif
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];
     delete pick;
@@ -515,6 +509,31 @@ const QGLContext *QGLPainter::context() const
 }
 
 /*!
+    Returns true if the underlying OpenGL implementation is OpenGL 1.x
+    or OpenGL/ES 1.x and only supports fixed-function OpenGL operations.
+    Returns false if the underlying OpenGL implementation is using
+    GLSL or GLSL/ES shaders.
+
+    If this function returns false, then the built-in effects will
+    use shaders and QGLPainter will not update the fixed-function
+    matrices in the OpenGL context when update() is called.
+    User-supplied effects will need to use shaders also or update
+    the fixed-function matrices themselves or call updateFixedFunction().
+
+    \sa update(), updateFixedFunction()
+*/
+bool QGLPainter::isFixedFunction() const
+{
+#if defined(QT_OPENGL_ES_2)
+    return false;
+#elif defined(QT_OPENGL_ES_1)
+    return true;
+#else
+    return !QGLShaderProgram::hasOpenGLShaderPrograms();
+#endif
+}
+
+/*!
     Clears the specified rendering \a buffers.  The default \a buffers
     value is QGL::ClearColorBuffer | QGL::ClearDepthBuffer, which
     indicates that the color and depth buffers should be cleared.
@@ -564,6 +583,8 @@ void QGLPainter::setClearStencil(GLint value)
 }
 
 /*!
+    \fn void QGLPainter::setDepthTestingEnabled(bool value)
+
     Enables or disables depth testing according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
@@ -572,13 +593,30 @@ void QGLPainter::setClearStencil(GLint value)
 
     \sa QGLDepthBufferOptions
 */
-void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
+
+/*!
+    \fn void QGLPainter::setStencilTestingEnabled(bool value)
+
+    Enables or disables stencil testing according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
+
+    For more complex depth buffer configurations, use QGLStencilBufferOptions.
+
+    \sa QGLStencilBufferOptions
+*/
+
+/*!
+    \fn void QGLPainter::setBlendingEnabled(bool value)
+
+    Enables or disables blending according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
+
+    For more complex blending configurations, use QGLBlendOptions.
+
+    \sa QGLBlendOptions
+*/
 
 /*!
     Returns the viewport for the active GL context.  The origin for
@@ -1050,6 +1088,7 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
     if (effect && (!d->pick || !d->pick->isPicking)) {
         d->effect = effect;
         d->effect->setActive(this, true);
+        d->setRequiredFields(effect->requiredFields());
         d->updates = UpdateAll;
     } else {
         // Revert to the effect associated with standardEffect().
@@ -1267,34 +1306,15 @@ void QGLPainter::checkRequiredFields()
             qWarning("Attribute QGL::TextureCoord1 is missing"); break;
         case QGL::TextureCoord2:
             qWarning("Attribute QGL::TextureCoord2 is missing"); break;
-        case QGL::TextureCoord3:
-            qWarning("Attribute QGL::TextureCoord3 is missing"); break;
-        case QGL::TextureCoord4:
-            qWarning("Attribute QGL::TextureCoord4 is missing"); break;
-        case QGL::TextureCoord5:
-            qWarning("Attribute QGL::TextureCoord5 is missing"); break;
-        case QGL::TextureCoord6:
-            qWarning("Attribute QGL::TextureCoord6 is missing"); break;
-        case QGL::TextureCoord7:
-            qWarning("Attribute QGL::TextureCoord7 is missing"); break;
         case QGL::CustomVertex0:
             qWarning("Attribute QGL::CustomVertex0 is missing"); break;
         case QGL::CustomVertex1:
             qWarning("Attribute QGL::CustomVertex1 is missing"); break;
-        case QGL::CustomVertex2:
-            qWarning("Attribute QGL::CustomVertex2 is missing"); break;
-        case QGL::CustomVertex3:
-            qWarning("Attribute QGL::CustomVertex3 is missing"); break;
-        case QGL::CustomVertex4:
-            qWarning("Attribute QGL::CustomVertex4 is missing"); break;
-        case QGL::CustomVertex5:
-            qWarning("Attribute QGL::CustomVertex5 is missing"); break;
-        case QGL::CustomVertex6:
-            qWarning("Attribute QGL::CustomVertex6 is missing"); break;
-        case QGL::CustomVertex7:
-            qWarning("Attribute QGL::CustomVertex7 is missing"); break;
+        case QGL::UserVertex:
+            qWarning("Attribute QGL::UserVertex is missing"); break;
         default:
-            qWarning("Attribute %d is missing", (int)attr); break;
+            qWarning("Attribute UserVertex + %d is missing",
+                     (int)(attr - QGL::UserVertex)); break;
         }
     }
 }
@@ -1396,7 +1416,7 @@ static QGLMultiTextureExtensions *resolveMultiTextureExtensions
 
 #endif
 
-void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
 #if !defined(QT_OPENGL_ES_2)
     switch (attribute) {
@@ -1419,11 +1439,6 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     case QGL::TextureCoord0:
     case QGL::TextureCoord1:
     case QGL::TextureCoord2:
-    case QGL::TextureCoord3:
-    case QGL::TextureCoord4:
-    case QGL::TextureCoord5:
-    case QGL::TextureCoord6:
-    case QGL::TextureCoord7:
     {
         int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)
@@ -1459,6 +1474,11 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 #endif
 }
 
+void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+{
+    qt_gl_setVertexAttribute(attribute, value);
+}
+
 #if !defined(QT_OPENGL_ES_2)
 
 void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
@@ -1480,11 +1500,6 @@ void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord0:
         case QGL::TextureCoord1:
         case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)
@@ -1534,11 +1549,6 @@ void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
         case QGL::TextureCoord0:
         case QGL::TextureCoord1:
         case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
         {
             int unit = (int)(attribute - QGL::TextureCoord0);
 #if defined(QT_OPENGL_ES)
@@ -1704,12 +1714,12 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 #endif
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_2D);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_2D);
 #endif
     }
@@ -1748,12 +1758,12 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 #endif
     if (!texture) {
         QGLTextureCube::release();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_CUBE_MAP);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_CUBE_MAP);
 #endif
     }
@@ -1798,8 +1808,14 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     the matrix state and lighting conditions have been set on the
     active effect().
 
+    Note that this function informs the effect that an update is needed.
+    It does not change the GL state itself.  In particular, the
+    modelview and projection matrices in the fixed-function pipeline
+    are not changed unless the effect or application calls
+    updateFixedFunction().
+
     \sa setUserEffect(), projectionMatrix(), modelViewMatrix()
-    \sa draw()
+    \sa draw(), updateFixedFunction()
 */
 void QGLPainter::update()
 {
@@ -1808,12 +1824,232 @@ void QGLPainter::update()
     d->ensureEffect(this);
     QGLPainter::Updates updates = d->updates;
     d->updates = 0;
-    if (d->modelViewMatrix.updateServer())
+    if (d->modelViewMatrix.needsUpdate())
         updates |= UpdateModelViewMatrix;
-    if (d->projectionMatrix.updateServer())
+    if (d->projectionMatrix.needsUpdate())
         updates |= UpdateProjectionMatrix;
     if (updates != 0)
         d->effect->update(this, updates);
+}
+
+#if !defined(QT_OPENGL_ES_2)
+
+static void setLight(int light, const QGLLightParameters *parameters,
+                     const QMatrix4x4& transform)
+{
+    GLfloat params[4];
+
+    QColor color = parameters->ambientColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_AMBIENT, params);
+
+    color = parameters->diffuseColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_DIFFUSE, params);
+
+    color = parameters->specularColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_SPECULAR, params);
+
+    QVector4D vector = parameters->eyePosition(transform);
+    params[0] = vector.x();
+    params[1] = vector.y();
+    params[2] = vector.z();
+    params[3] = vector.w();
+    glLightfv(light, GL_POSITION, params);
+
+    QVector3D spotDirection = parameters->eyeSpotDirection(transform);
+    params[0] = spotDirection.x();
+    params[1] = spotDirection.y();
+    params[2] = spotDirection.z();
+    glLightfv(light, GL_SPOT_DIRECTION, params);
+
+    params[0] = parameters->spotExponent();
+    glLightfv(light, GL_SPOT_EXPONENT, params);
+
+    params[0] = parameters->spotAngle();
+    glLightfv(light, GL_SPOT_CUTOFF, params);
+
+    params[0] = parameters->constantAttenuation();
+    glLightfv(light, GL_CONSTANT_ATTENUATION, params);
+
+    params[0] = parameters->linearAttenuation();
+    glLightfv(light, GL_LINEAR_ATTENUATION, params);
+
+    params[0] = parameters->quadraticAttenuation();
+    glLightfv(light, GL_QUADRATIC_ATTENUATION, params);
+}
+
+static void setMaterial(int face, const QGLMaterial *parameters)
+{
+    GLfloat params[17];
+
+    QColor mcolor = parameters->ambientColor();
+    params[0] = mcolor.redF();
+    params[1] = mcolor.greenF();
+    params[2] = mcolor.blueF();
+    params[3] = mcolor.alphaF();
+
+    mcolor = parameters->diffuseColor();
+    params[4] = mcolor.redF();
+    params[5] = mcolor.greenF();
+    params[6] = mcolor.blueF();
+    params[7] = mcolor.alphaF();
+
+    mcolor = parameters->specularColor();
+    params[8] = mcolor.redF();
+    params[9] = mcolor.greenF();
+    params[10] = mcolor.blueF();
+    params[11] = mcolor.alphaF();
+
+    mcolor = parameters->emittedLight();
+    params[12] = mcolor.redF();
+    params[13] = mcolor.greenF();
+    params[14] = mcolor.blueF();
+    params[15] = mcolor.alphaF();
+
+    params[16] = parameters->shininess();
+
+    glMaterialfv(face, GL_AMBIENT, params);
+    glMaterialfv(face, GL_DIFFUSE, params + 4);
+    glMaterialfv(face, GL_SPECULAR, params + 8);
+    glMaterialfv(face, GL_EMISSION, params + 12);
+    glMaterialfv(face, GL_SHININESS, params + 16);
+}
+
+#endif // !QT_OPENGL_ES_2
+
+/*!
+    Updates the fixed-function pipeline with the current painting
+    state according to the flags in \a updates.
+
+    This function is intended for use by effects in their
+    QGLAbstractEffect::update() override if they are using the
+    fixed-function pipeline.  It can also be used by user
+    applications if they need the QGLPainter state to be
+    set in the fixed-function pipeline.
+
+    If the OpenGL implementation does not have a fixed-function
+    pipeline, e.g. OpenGL/ES 2.0, this function does nothing.
+
+    \sa update()
+*/
+void QGLPainter::updateFixedFunction(QGLPainter::Updates updates)
+{
+#if defined(QT_OPENGL_ES_2)
+    Q_UNUSED(updates);
+#else
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if ((updates & QGLPainter::UpdateColor) != 0) {
+        QColor color;
+        if (isPicking())
+            color = pickColor();
+        else
+            color = this->color();
+        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    }
+    if ((updates & QGLPainter::UpdateModelViewMatrix) != 0)
+        d->modelViewMatrix.updateServer();
+    if ((updates & QGLPainter::UpdateProjectionMatrix) != 0)
+        d->projectionMatrix.updateServer();
+    if ((updates & QGLPainter::UpdateLights) != 0) {
+        // Save the current modelview matrix and load the identity.
+        // We need to apply the light in the modelview transformation
+        // that was active when the light was specified.
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        // Enable the main light.
+        const QGLLightParameters *params = mainLight();
+        setLight(GL_LIGHT0, params, mainLightTransform());
+
+        // Restore the previous modelview transformation.
+        glPopMatrix();
+
+        // Set up the light model parameters if at least one light is enabled.
+        const QGLLightModel *lightModel = this->lightModel();
+        GLfloat values[4];
+#ifdef GL_LIGHT_MODEL_TWO_SIDE
+        if (lightModel->model() == QGLLightModel::TwoSided)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, values);
+#endif
+#ifdef GL_LIGHT_MODEL_COLOR_CONTROL
+        if (lightModel->colorControl() == QGLLightModel::SeparateSpecularColor)
+            values[0] = GL_SEPARATE_SPECULAR_COLOR;
+        else
+            values[0] = GL_SINGLE_COLOR;
+        glLightModelfv(GL_LIGHT_MODEL_COLOR_CONTROL, values);
+#endif
+#ifdef GL_LIGHT_MODEL_LOCAL_VIEWER
+        if (lightModel->viewerPosition() == QGLLightModel::LocalViewer)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, values);
+#endif
+#ifdef GL_LIGHT_MODEL_AMBIENT
+        QColor color = lightModel->ambientSceneColor();
+        values[0] = color.redF();
+        values[1] = color.blueF();
+        values[2] = color.greenF();
+        values[3] = color.alphaF();
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, values);
+#endif
+    }
+    if ((updates & QGLPainter::UpdateMaterials) != 0) {
+        const QGLMaterial *frontMaterial = faceMaterial(QGL::FrontFaces);
+        const QGLMaterial *backMaterial = faceMaterial(QGL::BackFaces);
+        if (frontMaterial == backMaterial) {
+            setMaterial(GL_FRONT_AND_BACK, frontMaterial);
+        } else {
+            setMaterial(GL_FRONT, frontMaterial);
+            setMaterial(GL_BACK, backMaterial);
+        }
+    }
+    if ((updates & QGLPainter::UpdateFog) != 0) {
+        const QGLFogParameters *fog = fogParameters();
+        if (!fog) {
+            glDisable(GL_FOG);
+        } else {
+            GLfloat color[4];
+            QColor col = fog->color();
+            color[0] = col.redF();
+            color[1] = col.greenF();
+            color[2] = col.blueF();
+            color[3] = col.alphaF();
+            int fmode;
+            QGLFogParameters::Mode mode = fog->mode();
+            if (mode == QGLFogParameters::Linear)
+                fmode = GL_LINEAR;
+            else if (mode == QGLFogParameters::Exponential)
+                fmode = GL_EXP;
+            else if (mode == QGLFogParameters::Exponential2)
+                fmode = GL_EXP2;
+            else
+                fmode = GL_LINEAR;  // Just in case.
+            glFogf(GL_FOG_MODE, fmode);
+            glFogf(GL_FOG_DENSITY, fog->density());
+            glFogf(GL_FOG_START, fog->nearDistance());
+            glFogf(GL_FOG_END, fog->farDistance());
+            glFogfv(GL_FOG_COLOR, color);
+            glEnable(GL_FOG);
+        }
+    }
+#endif
 }
 
 /*!

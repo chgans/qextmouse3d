@@ -1,9 +1,6 @@
 // Algorithm from section 2.14.1 of OpenGL 2.1 specification.
 
-uniform mediump vec4 acli;      // Ambient intensity of the light
-uniform mediump vec4 dcli;      // Diffuse intensity of the light
-uniform mediump vec4 scli;      // Specular intensity of the light
-uniform mediump vec3 sdli;      // Direction of the light
+uniform mediump vec3 sdli;      // Direction of the light (must be normalized).
 uniform mediump vec3 pli;       // Position of the light
 uniform mediump float pliw;     // 0 for directional, 1 for positional.
 uniform mediump float srli;     // Spotlight exponent for the light
@@ -12,12 +9,11 @@ uniform mediump float ccrli;    // Cosine of spotlight cutoff for the light
 uniform mediump float k0;       // Constant attentuation factor for the light
 uniform mediump float k1;       // Linear attentuation factor for the light
 uniform mediump float k2;       // Quadratic attentuation factor for the light
-uniform mediump vec4 acm[2];    // Ambient color of the material
-uniform mediump vec4 dcm[2];    // Diffuse color of the material
-uniform mediump vec4 scm[2];    // Specular color of the material
-uniform mediump vec4 ecm[2];    // Emissive color of the material
+uniform mediump vec4 acm[2];    // Ambient color of the material and light
+uniform mediump vec4 dcm[2];    // Diffuse color of the material and light
+uniform mediump vec4 scm[2];    // Specular color of the material and light
+uniform mediump vec4 ecm[2];    // Emissive color and ambient scene color
 uniform mediump float srm[2];   // Specular exponent of the material
-uniform mediump vec4 acs;       // Light model's ambient color of the scene
 uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
 uniform bool twoSided;          // Light model indicates two-sided lighting
 
@@ -40,8 +36,9 @@ void qLightVertex(vec4 vertex, vec3 normal)
         normal = -normal;
     }
 
-    // Start with the material's emissive color and the ambient scene color.
-    color = ecm[material] + acm[material] * acs;
+    // Start with the material's emissive color and the ambient scene color,
+    // which have been combined into the ecm parameter by the C++ code.
+    color = ecm[material];
     scolor = vec4(0, 0, 0, 0);
 
     // Vector from the vertex to the eye position (i.e. the origin).
@@ -59,29 +56,29 @@ void qLightVertex(vec4 vertex, vec3 normal)
     angle = max(dot(normal, toLight), 0.0);
 
     // Calculate the ambient and diffuse light components.
-    adcomponent = acm[material] * acli + angle * dcm[material] * dcli;
+    adcomponent = acm[material] + angle * dcm[material];
 
     // Calculate the specular light components.
     if (angle != 0.0) {
         h = normalize(toLight + toEye);
         angle = max(dot(normal, h), 0.0);
-        scomponent = pow(angle, srm[material]) * scm[material] * scli;
+        scomponent = pow(angle, srm[material]) * scm[material];
     } else {
         scomponent = vec4(0, 0, 0, 0);
     }
 
     // Apply the spotlight angle and exponent.
     if (crli != 180.0) {
-        spot = max(dot(normalize(vertex.xyz - pli), normalize(sdli)), 0.0);
-        if (spot < ccrli)
-            spot = 0.0;
-        else
+        spot = max(dot(normalize(vertex.xyz - pli), sdli), 0.0);
+        if (spot < ccrli) {
+            adcomponent = vec4(0, 0, 0, 0);
+            scomponent = vec4(0, 0, 0, 0);
+        } else {
             spot = pow(spot, srli);
-    } else {
-        spot = 1.0;
+            adcomponent *= spot;
+            scomponent *= spot;
+        }
     }
-    adcomponent *= spot;
-    scomponent *= spot;
 
     // Apply attenuation to the colors.
     if (pliw != 0.0) {

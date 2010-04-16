@@ -65,7 +65,6 @@ QT_BEGIN_NAMESPACE
 
     \code
     QGLStencilBufferOptions options;
-    options.setEnabled(true);
     options.setFunction(QGLStencilBufferOptions::Less);
     options.apply();
     \endcode
@@ -129,7 +128,6 @@ public:
     QGLStencilBufferOptionsPrivate()
     {
         ref = 1;
-        isEnabled = false;
         sameFunctions = true;
         sameWriteMasks = true;
         sameActions = true;
@@ -151,7 +149,6 @@ public:
     QGLStencilBufferOptionsPrivate(const QGLStencilBufferOptionsPrivate *other)
     {
         ref = 1;
-        isEnabled = other->isEnabled;
         sameFunctions = other->sameFunctions;
         sameWriteMasks = other->sameWriteMasks;
         sameActions = other->sameActions;
@@ -173,8 +170,7 @@ public:
 
     inline bool equal(const QGLStencilBufferOptionsPrivate *other) const
     {
-        return isEnabled == other->isEnabled &&
-               frontFunction == other->frontFunction &&
+        return frontFunction == other->frontFunction &&
                frontReferenceValue == other->frontReferenceValue &&
                frontReferenceMask == other->frontReferenceMask &&
                frontWriteMask == other->frontWriteMask &&
@@ -192,8 +188,7 @@ public:
 
     inline bool isDefault() const
     {
-        return !isEnabled &&
-               frontFunction == QGLStencilBufferOptions::Always &&
+        return frontFunction == QGLStencilBufferOptions::Always &&
                frontReferenceValue == 0 &&
                frontReferenceMask == -1 &&
                frontWriteMask == -1 &&
@@ -229,7 +224,6 @@ public:
     }
 
     QBasicAtomicInt ref;
-    bool isEnabled;
     bool sameFunctions;
     bool sameWriteMasks;
     bool sameActions;
@@ -316,30 +310,6 @@ QGLStencilBufferOptionsPrivate *QGLStencilBufferOptions::dwrite()
     non-null the first time one of the set methods is called
     on a property.
 */
-
-/*!
-    Returns true if stencil testing is enabled; false otherwise.
-    The default value is false.
-
-    \sa setEnabled(), frontFunction()
-*/
-bool QGLStencilBufferOptions::isEnabled() const
-{
-    if (d)
-        return d->isEnabled;
-    else
-        return false;
-}
-
-/*!
-    Enables or disables stencil testing according to \a value.
-
-    \sa isEnabled(), setFrontFunction()
-*/
-void QGLStencilBufferOptions::setEnabled(bool value)
-{
-    dwrite()->isEnabled = value;
-}
 
 /*!
     Returns the stencil test function for front faces.  The default
@@ -915,10 +885,6 @@ Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_stencil_funcs, (qt_stencil_func
 void QGLStencilBufferOptions::apply() const
 {
     if (d) {
-        if (d->isEnabled)
-            glEnable(GL_STENCIL_TEST);
-        else
-            glDisable(GL_STENCIL_TEST);
 #if defined(QT_OPENGL_ES_2)
         if (d->sameFunctions) {
             glStencilFuncSeparate(GL_FRONT_AND_BACK,
@@ -1026,7 +992,6 @@ void QGLStencilBufferOptions::apply() const
         }
 #endif
     } else {
-        glDisable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 0, (GLuint)(-1));
         glStencilMask((GLuint)(-1));
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);

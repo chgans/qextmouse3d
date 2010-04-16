@@ -49,11 +49,19 @@
 
 #include "qglcolladafxeffect.h"
 
-typedef QStack< QList<QGLColladaParam*>* > StateStack;
-
 class QGLColladaImageParam;
 class QGLColladaSurfaceParam;
 class QGLColladaSampler2DParam;
+
+Q_DECLARE_METATYPE(QArray<float>)
+
+typedef struct _ResultState
+{
+    QMap<QString, QVariant> paramSids;
+    QMap<QString, QVariant> paramIds;
+    QMap<QString, QVariant> paramNames;
+} ResultState;
+
 
 
 
@@ -65,24 +73,24 @@ public:
 
 protected:
     static QList<QGLColladaFxEffect*> loadEffectsFromXml( QXmlStreamReader& xml );
-    static void processLibraryImagesElement( QXmlStreamReader& xml, StateStack* stateStack );
-    static QList<QGLColladaFxEffect*> processLibraryEffectsElement( QXmlStreamReader& xml, StateStack* stateStack );
-    static QList<QGLColladaFxEffect*> processEffectElement( QXmlStreamReader& xml, StateStack* stateStack );
-    static QList<QGLColladaFxEffect*> processProfileElement( QXmlStreamReader& xml, StateStack* stateStack );
+    static void processLibraryImagesElement( QXmlStreamReader& xml, ResultState* stateStack );
+    static QList<QGLColladaFxEffect*> processLibraryEffectsElement( QXmlStreamReader& xml, ResultState* stateStack );
+    static QList<QGLColladaFxEffect*> processEffectElement( QXmlStreamReader& xml, ResultState* stateStack );
+    static QList<QGLColladaFxEffect*> processProfileElement( QXmlStreamReader& xml, ResultState* stateStack );
 
-    static QGLColladaParam* processPassElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect );
-    static QGLColladaFxEffect* processTechniqueElement( QXmlStreamReader& xml, StateStack* stateStack, QString &profileName );
-    static QGLColladaParam* processNewparamElement( QXmlStreamReader& xml, StateStack* stateStack );
-    static QGLColladaImageParam* processImageElement( QXmlStreamReader& xml, StateStack* stateStack );
-    static QGLColladaSurfaceParam* processSurfaceElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid = "");
-    static QGLColladaSampler2DParam* processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid );
-    static QGLTexture2D* processTextureElement( QXmlStreamReader& xml , StateStack* stateStack );
-    static QVector<float> processFloatList( QXmlStreamReader& xml );
+    static QGLColladaParam* processPassElement( QXmlStreamReader& xml, ResultState* stateStack, QGLColladaFxEffect* effect );
+    static QGLColladaFxEffect* processTechniqueElement( QXmlStreamReader& xml, ResultState* stateStack, QString &profileName );
+    static QGLColladaParam* processNewparamElement( QXmlStreamReader& xml, ResultState* stateStack );
+    static void processImageElement( QXmlStreamReader& xml, ResultState* stateStack );
+    static QGLColladaSurfaceParam* processSurfaceElement( QXmlStreamReader& xml, ResultState* stateStack, QString passedInSid = "");
+    static QGLColladaSampler2DParam* processSampler2DElement( QXmlStreamReader& xml, ResultState* stateStack, QString passedInSid );
+    static QGLTexture2D* processTextureElement( QXmlStreamReader& xml , ResultState* stateStack );
+    static QVariant processFloatList( QXmlStreamReader& xml );
     static QColor processColorElement( QXmlStreamReader& xml );
     static float processParamOrFloatElement( QXmlStreamReader& xml );
-    static QColor processColorOrTextureElement( QXmlStreamReader& xml );
+    static QVariant processColorOrTextureElement( QXmlStreamReader& xml );
     QGLColladaFxEffectFactory();
-    static void processProgramElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect );
+    static void processProgramElement( QXmlStreamReader& xml, ResultState* stateStack, QGLColladaFxEffect* effect );
 
     // Collada generation functions
 public:
@@ -106,22 +114,13 @@ class QGLColladaParam
 public:
     enum {
         UnknownType = 0,
-        floatType,
-        float2Type,
-        float3Type,
-        float4Type,
         Sampler2DType,
         Texture2DType,
         SurfaceType,
         ImageType,
-        CodeType,
         UserDefinedType = 100
     };
 
-    QGLColladaParam( QString sid, float f );
-    QGLColladaParam( QString sid, float x, float y );
-    QGLColladaParam( QString sid, float x, float y, float z );
-    QGLColladaParam( QString sid, float x, float y, float z, float w);
     virtual ~QGLColladaParam();
 
     int type();
@@ -203,18 +202,6 @@ public:
 protected:
     QImage mImage;
     QString mName;
-};
-
-
-
-class QGLColladaCodeParam : public QGLColladaParam
-{
-    friend class QGLColladaFxEffectFactory;
-public:
-    QGLColladaCodeParam(QString sid, QString codeText);
-    const QString& code();
-protected:
-    const QString mCodeText;
 };
 
 #endif // QGLCOLLADAFXEFFECTFACTORY_H

@@ -241,6 +241,36 @@ void QAreaAllocator::expandBy(const QSize &size)
 /*!
     \internal
 
+    Allocates and returns a list of rectangles corresponding to the
+    elements of \a sizes.  The returned list will have less elements
+    than \a sizes if there is insufficient space to accomodate
+    all of the allocation requests.  The values that are in the returned
+    list will be allocated and need to be passed to release() to
+    deallocate them.
+
+    The default implementation will call the subclass allocate() once
+    for each size until all \a sizes have been allocated or an
+    allocation fails.  Subclasses may override this method to
+    reorder the allocations for best-fit.
+
+    \sa release()
+*/
+QList<QRect> QAreaAllocator::allocate(const QList<QSize> &sizes)
+{
+    QList<QRect> rects;
+    QRect rect;
+    for (int index = 0; index < sizes.count(); ++index) {
+        rect = allocate(sizes[index]);
+        if (rect.isNull())
+            break;
+        rects.append(rect);
+    }
+    return rects;
+}
+
+/*!
+    \internal
+
     Releases the space occupied by \a rect back to the allocator.
     The default implementation does nothing.
 
@@ -252,6 +282,24 @@ void QAreaAllocator::expandBy(const QSize &size)
 void QAreaAllocator::release(const QRect &rect)
 {
     Q_UNUSED(rect);
+}
+
+/*!
+    \internal
+
+    Releases the space occupied by the members of \a rects back to
+    the allocator.  The default implementation calls release() for
+    each rectangle in the list.
+
+    The members of \a rects must have been returned by previous calls
+    to allocate().  Otherwise the behaviour is undefined.
+
+    \sa allocate()
+*/
+void QAreaAllocator::release(const QList<QRect> &rects)
+{
+    for (int index = 0; index < rects.count(); ++index)
+        release(rects[index]);
 }
 
 /*!

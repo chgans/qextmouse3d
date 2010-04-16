@@ -45,13 +45,21 @@
 #include "qglview.h"
 #include "qgldisplaylist.h"
 #include "qgltexture2d.h"
+#include <QtCore/qdatetime.h>
 
 class CubeView : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal cubeAngle READ cubeAngle WRITE setCubeAngle)
 public:
     CubeView(QWidget *parent = 0);
     ~CubeView() {}
+
+    void setShowFrameRate(bool value) { showFrameRate = value; }
+    void setStereo(bool value) { stereo = value; }
+
+    qreal cubeAngle() const { return cangle; }
+    void setCubeAngle(qreal angle);
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -69,6 +77,10 @@ private:
     qreal sensitivity;
     QGLLightModel *roomModel;
     QGLLightModel *normalModel;
+    bool showFrameRate;
+    bool stereo;
+    QTime time;
+    qreal cangle;
 
     QVector3D gravity() const;
 };

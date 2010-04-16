@@ -46,6 +46,7 @@
 #include "fbovideosurface.h"
 #include "qglview.h"
 #include "qglteapot.h"
+#include "qgldisplaylist.h"
 
 class QTimer;
 
@@ -63,7 +64,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLTeapot teapot;
+    QGLDisplayList teapot;
     FBOVideoSurface *fboSurface;
 };
 

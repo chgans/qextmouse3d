@@ -93,6 +93,8 @@ public:
 
     const QGLContext *context() const;
 
+    bool isFixedFunction() const;
+
     enum Update
     {
         UpdateColor                 = 0x00000001,
@@ -112,6 +114,8 @@ public:
     void setClearStencil(GLint value);
 
     void setDepthTestingEnabled(bool value);
+    void setStencilTestingEnabled(bool value);
+    void setBlendingEnabled(bool value);
 
     QRect viewport() const;
     void setViewport(const QRect& rect);
@@ -170,6 +174,7 @@ public:
     void setTexture(const QGLTextureCube *texture) { setTexture(0, texture); }
 
     void update();
+    void updateFixedFunction(QGLPainter::Updates updates);
 
     void draw(QGL::DrawingMode mode, int count, int index = 0);
     void draw(QGL::DrawingMode mode, const ushort *indices, int count);
@@ -230,6 +235,30 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
+
+inline void QGLPainter::setDepthTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+}
+
+inline void QGLPainter::setStencilTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_STENCIL_TEST);
+    else
+        glDisable(GL_STENCIL_TEST);
+}
+
+inline void QGLPainter::setBlendingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_BLEND);
+    else
+        glDisable(GL_BLEND);
+}
 
 QT_END_NAMESPACE
 

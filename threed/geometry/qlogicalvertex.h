@@ -268,7 +268,7 @@ inline const QVector2D &QLogicalVertex::texCoord(QGL::VertexAttribute attr) cons
 
 inline void QLogicalVertex::setTexCoord(const QVector2D &t, QGL::VertexAttribute attr)
 {
-    Q_ASSERT(attr >= QGL::TextureCoord0 && attr <= QGL::TextureCoord7);
+    Q_ASSERT(attr >= QGL::TextureCoord0 && attr <= QGL::TextureCoord2);
     if (m_index == -1)
         m_index = 0;
     if (m_index == m_data.count(attr))

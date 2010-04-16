@@ -78,7 +78,10 @@ public:
     FBOVideoSurface(QGLWidget *widget);
     virtual ~FBOVideoSurface();
 
-    virtual bool start(const QVideoFormat &format);
+    QList<QVideoFrame::PixelFormat> supportedPixelFormats
+        (QAbstractVideoBuffer::HandleType handleType) const;
+
+    virtual bool start(const QVideoSurfaceFormat &format);
     virtual bool present(const QVideoFrame &frame);
     virtual void stop();
 

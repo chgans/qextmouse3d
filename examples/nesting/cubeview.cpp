@@ -92,7 +92,7 @@ void CubeView::performUpdate()
     }
 }
 
-void CubeView::initializeGL(QGLPainter *)
+void CubeView::initializeGL(QGLPainter *painter)
 {
     cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
@@ -105,6 +105,8 @@ void CubeView::initializeGL(QGLPainter *)
 
     QImage textureImage(":/qtlogo.png");
     qtlogo.setImage(textureImage);
+
+    painter->setBlendingEnabled(true);
 }
 
 void CubeView::paintGL(QGLPainter *painter)

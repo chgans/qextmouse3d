@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,72 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef ROBOT_H
-#define ROBOT_H
+#ifndef QGLABSTRACTEFFECT_P_H
+#define QGLABSTRACTEFFECT_P_H
 
-#include <QGraphicsItem>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include "qglabstracteffect.h"
+
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
-class QGraphicsSceneMouseEvent;
-class QTimeLine;
+
+#if defined(QT_OPENGL_ES_2)
+#define QGL_SHADERS_ONLY 1
+#endif
+#if defined(QT_OPENGL_ES_1)
+#define QGL_FIXED_FUNCTION_ONLY 1
+#endif
+
 QT_END_NAMESPACE
 
-class RobotPart : public QGraphicsItem
-{
-public:
-    RobotPart(QGraphicsItem *parent = 0);
-
-protected:
-    void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
-    void dragLeaveEvent(QGraphicsSceneDragDropEvent *event);
-    void dropEvent(QGraphicsSceneDragDropEvent *event);
-
-    QPixmap pixmap;
-    QColor color;
-    bool dragOver;
-};
-
-class RobotHead : public RobotPart
-{
-public:
-    RobotHead(QGraphicsItem *parent = 0);
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-
-    enum { Type = UserType + 1 };
-    int type() const;
-};
-
-class RobotTorso : public RobotPart
-{
-public:
-    RobotTorso(QGraphicsItem *parent = 0);
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-};
-
-class RobotLimb : public RobotPart
-{
-public:
-    RobotLimb(QGraphicsItem *parent = 0);
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-};
-
-class Robot : public RobotPart
-{
-public:
-    Robot();
-    ~Robot();
-    
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
-
-private:
-    QTimeLine *timeLine;    
-};
+QT_END_HEADER
 
 #endif
