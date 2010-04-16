@@ -788,7 +788,7 @@ void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
         return;
     }
 #endif
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
     for (int index = 0; index < d->attributes.size(); ++index) {
         QGLVertexBufferAttribute *attr = d->attributes[index];
         qt_gl_setVertexAttribute(attr->attribute, attr->value);

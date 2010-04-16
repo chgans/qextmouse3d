@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qgllitmaterialeffect.h"
+#include "qglabstracteffect_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
 #include <QtCore/qfile.h>
 

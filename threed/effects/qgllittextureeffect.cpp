@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qgllittextureeffect.h"
+#include "qglabstracteffect_p.h"
 
 QT_BEGIN_NAMESPACE
 

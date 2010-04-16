@@ -1714,12 +1714,12 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 #endif
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_2D);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_2D);
 #endif
     }
@@ -1758,12 +1758,12 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 #endif
     if (!texture) {
         QGLTextureCube::release();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_CUBE_MAP);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_CUBE_MAP);
 #endif
     }

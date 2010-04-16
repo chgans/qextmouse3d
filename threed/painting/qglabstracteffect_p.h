@@ -39,51 +39,32 @@
 **
 ****************************************************************************/
 
-#ifndef QGLABSTRACTEFFECT_H
-#define QGLABSTRACTEFFECT_H
+#ifndef QGLABSTRACTEFFECT_P_H
+#define QGLABSTRACTEFFECT_P_H
 
-#include "qglpainter.h"
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include "qglabstracteffect.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-class QGLShaderProgram;
-class QGLVertexBuffer;
-
-class Q_QT3D_EXPORT QGLAbstractEffect
-{
-public:
-    QGLAbstractEffect();
-    virtual ~QGLAbstractEffect();
-
-    virtual QList<QGL::VertexAttribute> requiredFields() const = 0;
-
-    virtual bool supportsPicking() const;
-
-    virtual void setActive(QGLPainter *painter, bool flag) = 0;
-
-    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    virtual void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
-    virtual void setCommonNormal(const QVector3D& value);
-
-protected:
-#if !defined(QT_OPENGL_ES_2) || defined(Q_QDOC)
-    static void enableVertexAttribute(QGL::VertexAttribute attribute);
-    static void disableVertexAttribute(QGL::VertexAttribute attribute);
+#if defined(QT_OPENGL_ES_2)
+#define QGL_SHADERS_ONLY 1
 #endif
-    static void setAttributeArray
-        (QGLShaderProgram *program, int location,
-         const QGLAttributeValue& value);
-
-    friend class QGLVertexBuffer;
-    friend class QGLPainter;
-};
+#if defined(QT_OPENGL_ES_1)
+#define QGL_FIXED_FUNCTION_ONLY 1
+#endif
 
 QT_END_NAMESPACE
 
