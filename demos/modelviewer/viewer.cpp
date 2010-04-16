@@ -169,7 +169,7 @@ void Viewer::importModel(const QString &name)
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
 #ifndef QT_NO_DEBUG_STREAM
-    qDumpScene(mSceneRoot);
+    //qDumpScene(mSceneRoot);
     int totalIndexes = 0;
     QList<QGLSceneNode *> children = mSceneRoot->allChildren();
     QList<QGLSceneNode*>::const_iterator it(children.begin());
