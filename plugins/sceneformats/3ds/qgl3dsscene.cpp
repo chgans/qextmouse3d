@@ -101,27 +101,10 @@ QList<QGLSceneObject *> QGL3dsScene::objects(QGLSceneObject::Type type) const
         return objs;
     }
 
-    QList<QGLSceneObject *> nodes;
-
-    nodes.append(mRootNode);
-    while (!nodes.isEmpty())
-    {
-        QGLSceneObject *o = nodes.takeFirst();
-        if (o->type() == type)
-            objs.append(o);
-        QObjectList children = o->children();
-        QObjectList::iterator it(children.begin());
-        for ( ; it != children.end(); ++it)
-        {
-            QGLSceneObject *c = qobject_cast<QGLSceneObject *>(*it);
-            if (c)
-            {
-                nodes.append(c);
-                if (c->type() == type)
-                    objs.append(c);
-            }
-        }
-    }
+    QList<QGLSceneNode*> children = mRootNode->allChildren();
+    QList<QGLSceneNode*>::const_iterator it = children.constBegin();
+    for ( ; it != children.constEnd(); ++it)
+        objs.append(*it);
     return objs;
 }
 

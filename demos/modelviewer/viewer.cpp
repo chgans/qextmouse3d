@@ -169,7 +169,7 @@ void Viewer::importModel(const QString &name)
     mSceneInitialized = false;
     mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
 #ifndef QT_NO_DEBUG_STREAM
-    //qDumpScene(mSceneRoot);
+    qDumpScene(mSceneRoot);
     int totalIndexes = 0;
     QList<QGLSceneNode *> children = mSceneRoot->allChildren();
     QList<QGLSceneNode*>::const_iterator it(children.begin());
@@ -190,7 +190,7 @@ void Viewer::loadColors()
     if (mColorMenu->actions().count())
         mColorMenu->clear();
     QGLMaterialCollection *materials = 0;
-    if (mSceneRoot && mSceneRoot->geometry())
+    if (mSceneRoot)
         materials = mSceneRoot->palette();
     QStringList names;
     if (materials)
@@ -286,10 +286,12 @@ void Viewer::loadComponents()
         if (pos != -1)
             componentName.truncate(pos);
         if (!mComponents.contains(componentName))
+        {
             mComponents.append(componentName);
-        QAction *act = new QAction(meshName, this);
-        mComponentMenu->addAction(act);
-        QObject::connect(act, SIGNAL(triggered()), this, SLOT(selectComponent()));
+            QAction *act = new QAction(componentName, this);
+            mComponentMenu->addAction(act);
+            QObject::connect(act, SIGNAL(triggered()), this, SLOT(selectComponent()));
+        }
     }
     mCurrentSelected = 0;
     makeSelectColor(mSelectColor);
