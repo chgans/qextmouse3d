@@ -192,7 +192,8 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         glEnableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
         if (d->textureMode) {
-            enableVertexAttribute(QGL::TextureCoord0);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d->textureMode);
         }
     } else {
@@ -200,8 +201,10 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         glDisable(GL_LIGHT0);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
-        if (d->textureMode)
-            disableVertexAttribute(QGL::TextureCoord0);
+        if (d->textureMode) {
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
     }
 #else
     Q_UNUSED(painter);
@@ -215,7 +218,8 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             glEnableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
             if (d->textureMode) {
-                enableVertexAttribute(QGL::TextureCoord0);
+                qt_gl_ClientActiveTexture(GL_TEXTURE0);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d->textureMode);
             }
         } else {
@@ -223,8 +227,10 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             glDisable(GL_LIGHT0);
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
-            if (d->textureMode)
-                disableVertexAttribute(QGL::TextureCoord0);
+            if (d->textureMode) {
+                qt_gl_ClientActiveTexture(GL_TEXTURE0);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
         }
         return;
     }

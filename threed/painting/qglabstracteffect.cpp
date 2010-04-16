@@ -170,44 +170,6 @@ void QGLAbstractEffect::setCommonNormal(const QVector3D& value)
 #endif
 }
 
-#if !defined(QT_OPENGL_ES_2) || defined(Q_QDOC)
-
-/*!
-    \fn void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
-
-    Enables the vertex array specified by \a attribute on the fixed-function
-    pipeline using \c{glEnableClientState()}.
-
-    This function is provided as a convenience for use by subclasses
-    that want to implement an effect using the fixed-function pipeline
-    rather than shader programs.  It is called from the subclass
-    setActive() override.
-
-    This function does not exist on OpenGL/ES 2.0 systems.
-
-    \sa setActive(), setVertexAttribute(), disableVertexAttribute()
-*/
-// Implemented in qglpainter.cpp.
-
-/*!
-    \fn void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
-
-    Disables the vertex array specified by \a attribute on the fixed-function
-    pipeline using \c{glDisableClientState()}.
-
-    This function is provided as a convenience for use by subclasses
-    that want to implement an effect using the fixed-function pipeline
-    rather than shader programs.  It is called from the subclass
-    setActive() override.
-
-    This function does not exist on OpenGL/ES 2.0 systems.
-
-    \sa setActive(), setVertexAttribute(), enableVertexAttribute()
-*/
-// Implemented in qglpainter.cpp.
-
-#endif // !QT_OPENGL_ES_2 || Q_QDOC
-
 /*!
     Sets the vertex attribute at \a location on \a program to \a value.
     It is assumed that \a program is bound to the current context.
