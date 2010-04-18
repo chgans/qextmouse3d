@@ -85,12 +85,12 @@ void RedCyanEffect::draw(QPainter *painter)
 
         glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
         translationRed.translate(m_depth / 2.0f, 0);
-        painter->setTransform(transform * translationRed);
+        painter->setTransform(translationRed * transform);
         painter->drawPixmap(offset, pixmap);
 
         glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
         translationCyan.translate(-m_depth / 2.0f, 0);
-        painter->setTransform(transform * translationCyan);
+        painter->setTransform(translationCyan * transform);
         painter->drawPixmap(offset, pixmap);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
