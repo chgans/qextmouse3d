@@ -55,6 +55,7 @@ class ShaderProgram : public Effect
     Q_OBJECT
     Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY effectChanged)
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY effectChanged)
+    Q_PROPERTY(float customValue READ customValue WRITE setCustomValue NOTIFY effectChanged)
 public:
     ShaderProgram(QObject *parent = 0);
     ~ShaderProgram();
@@ -65,8 +66,10 @@ public:
     QString fragmentShader() const;
     void setFragmentShader(const QString& value);
 
-    void enableEffect(QGLPainter *painter);
+    float customValue() const;
+    void setCustomValue(float value);
 
+    void enableEffect(QGLPainter *painter);
 private:
     ShaderProgramPrivate *d;
 };

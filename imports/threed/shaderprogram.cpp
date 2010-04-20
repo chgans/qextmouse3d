@@ -88,6 +88,8 @@ public:
 
     void setCommonNormal(const QVector3D& value);
 
+    void setCustomValue(float value);
+
 private:
     QGLShaderProgram *program;
     int vertexAttr;
@@ -101,6 +103,8 @@ private:
     int texture0;
     int texture1;
     int colorUniform;
+    int customUniform;
+    float customValue;
 };
 
 /*
@@ -122,6 +126,8 @@ ShaderProgramEffect::ShaderProgramEffect()
     texture0 = -1;
     texture1 = -1;
     colorUniform = -1;
+    customUniform = -1;
+    customValue = 0.0;
 }
 
 /*
@@ -163,6 +169,7 @@ void ShaderProgramEffect::create
     texture0 = program->uniformLocation("qgl_Texture0");
     texture1 = program->uniformLocation("qgl_Texture1");
     colorUniform = program->uniformLocation("qgl_Color");
+    customUniform = program->uniformLocation("qgl_Custom");
 }
 
 /*
@@ -227,6 +234,12 @@ void ShaderProgramEffect::update
     }
 
     // TODO: lighting and material parameters.
+
+    // No custom updates flag, so always update custom value:
+    if(customUniform != -1)
+    {
+        program->setUniformValue(customUniform, customValue);
+    }
 }
 
 /*
@@ -282,6 +295,11 @@ void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
     }
 }
 
+void ShaderProgramEffect::setCustomValue(float value)
+{
+    customValue = value;
+}
+
 class ShaderProgramPrivate
 {
 public:
@@ -291,6 +309,7 @@ public:
     QString fragmentShader;
     bool regenerate;
     ShaderProgramEffect *effect;
+    float customValue;
 };
 
 /*!
@@ -351,6 +370,21 @@ void ShaderProgram::setFragmentShader(const QString& value)
     emit effectChanged();
 }
 
+float ShaderProgram::customValue() const
+{
+    return d->customValue;
+}
+
+void ShaderProgram::setCustomValue(float value)
+{
+    d->customValue = value;
+    // If the custom value can't be set here, it will be set on creation 
+    // instead.
+    if(d->effect)
+        d->effect->setCustomValue(value);
+    emit effectChanged();
+}
+
 /*!
   Enables the effect for a given \a painter.  If the effect has not been created yet, this function will
   attempt to do so.
@@ -363,6 +397,7 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     } else if (d->regenerate) {
         d->effect->create(d->vertexShader, d->fragmentShader);
     }
+    d->effect->setCustomValue(d->customValue);
     d->regenerate = false;
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
