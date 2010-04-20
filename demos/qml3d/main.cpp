@@ -61,9 +61,12 @@ int main(int argc, char *argv[])
 
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
+    bool glViewport = false;
     if (QApplicationPrivate::graphics_system_name.compare
             (QLatin1String("opengl"), Qt::CaseInsensitive) == 0)
         mixed = true;
+    if (QApplication::arguments().contains(QLatin1String("-opengl")))
+        glViewport = true;
 
     QString source;
     for (int index = 1; index < argc; ++index) {
@@ -82,8 +85,10 @@ int main(int argc, char *argv[])
     if (fi.exists())
         url = QUrl::fromLocalFile(fi.absoluteFilePath());
 
-    if (mixed) {
+    if (mixed || glViewport) {
         QDeclarativeView view;
+        if (glViewport)
+            view.setViewport(new QGLWidget());
         view.setSource(url);        
         view.show();
 
