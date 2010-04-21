@@ -128,7 +128,7 @@ ShaderProgramEffect::ShaderProgramEffect()
     colorUniform = -1;
     customUniform = -1;
     customValue = 0.0;
-}
+    }
 
 /*
   Destruction entails deletion of the underlying \l QGLShaderProgram which forms the functional core of the
@@ -370,6 +370,12 @@ void ShaderProgram::setFragmentShader(const QString& value)
     emit effectChanged();
 }
 
+/*!
+  \property ShaderProgram::customValue
+  \brief The customValue provides a qml variable that is bound to the "qgl_Custom" uniform float in the shader programs, allowing for animation of effects.
+
+  \sa vertexShader(), fragmentShader()
+*/
 float ShaderProgram::customValue() const
 {
     return d->customValue;
@@ -402,6 +408,9 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
     painter->setColor(color());
+    const QMetaObject* metaObject = this->metaObject();
+    for( int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); i++)
+    qDebug() << "property[ " << i << " is " << metaObject->property(i).name();
 }
 
 QT_END_NAMESPACE
