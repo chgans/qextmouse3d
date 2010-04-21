@@ -81,6 +81,8 @@ private:
     bool stereo;
     QTime time;
     qreal cangle;
+    mutable qreal prevX, prevY, prevZ;
+    mutable bool havePrev;
 
     QVector3D gravity() const;
 };

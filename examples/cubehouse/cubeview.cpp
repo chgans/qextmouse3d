@@ -52,7 +52,11 @@ CubeView::CubeView(QWidget *parent)
       sensitivity(0.1f),
       showFrameRate(false),
       stereo(false),
-      cangle(0.0f)
+      cangle(0.0f),
+      prevX(0),
+      prevY(0),
+      prevZ(0),
+      havePrev(false)
 {
     setOption(CameraNavigation, false);
 
@@ -232,13 +236,29 @@ QVector3D CubeView::gravity() const
     FILE *file = fopen("/sys/class/i2c-adapter/i2c-3/3-001d/coord", "r");
     if (!file)
         return QVector3D(0, 0, -1);
-    int x = 0;
-    int y = 0;
-    int z = 0;
-    fscanf(file, "%d %d %d", &x, &y, &z);
+    float x = 0;
+    float y = 0;
+    float z = 0;
+    fscanf(file, "%f %f %f", &x, &y, &z);
     fclose(file);
 
-    // Note: x seems to be wired in reverse on the N900.
-    return QVector3D((-x / 1000.0f) * sensitivity,
-                     (y / 1000.0f) * sensitivity, z / 1000.0f);
+    // Smooth out the reported values.  Large changes are applied as-is,
+    // and small jitters smooth to the rest position.
+    if (havePrev) {
+        qreal xdiff = x - prevX;
+        qreal ydiff = y - prevY;
+        qreal zdiff = z - prevZ;
+        if (qAbs(xdiff) < 20.0f && qAbs(ydiff) < 20.0f && qAbs(zdiff) < 20.0f) {
+            x = prevX + xdiff * 0.1f;
+            y = prevY + ydiff * 0.1f;
+            z = prevZ + zdiff * 0.1f;
+        }
+    }
+    prevX = x;
+    prevY = y;
+    prevZ = z;
+    havePrev = true;
+
+    return QVector3D((x / 1000.0f) * sensitivity,
+                     (-y / 1000.0f) * sensitivity, -z / 1000.0f);
 }
