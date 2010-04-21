@@ -21,13 +21,14 @@ Item3d {
 
     ShaderProgram {
         id: program
-        SequentialAnimation on customValue {
+        property real qgl_Custom : 1.0
+        SequentialAnimation on qgl_Custom {
             running: true
             loops: Animation.Infinite
             PauseAnimation { duration: 700 }
-            NumberAnimation { from: 0.0; to: 1.0; duration: 1500; easing.type:"OutBounce" }
+            NumberAnimation { from: 1.0; to: 0.001; duration: 1500; easing.type:"OutBounce" }
             PauseAnimation { duration: 700 }
-            NumberAnimation { from: 1.0; to: 0.0; duration: 1500; easing.type:"OutBounce" }
+            NumberAnimation { from: 0.001; to: 1.0; duration: 1500; easing.type:"OutBounce" }
         }
 
         texture: "textures/qtlogo.png"
@@ -56,10 +57,8 @@ Item3d {
 
             void main(void)
             {
-                // add a small amount because multiplying a dimension by
-                // zero is very ugly
                 gl_Position = qgl_ModelViewProjectionMatrix * (qgl_Vertex *
-                                   vec4(1.0, qgl_Custom + 0.001, 1.0, 1.0));
+                                   vec4(1.0, qgl_Custom, 1.0, 1.0));
                 texCoord =  -qgl_TexCoord0 + vec4(qgl_Custom, 0.0, 0.0, 0.0);
 
             }

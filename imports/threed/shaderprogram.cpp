@@ -42,6 +42,7 @@
 #include "shaderprogram.h"
 #include "qglabstracteffect.h"
 #include <QtOpenGL/qglshaderprogram.h>
+#include <QWeakPointer>
 
 /*!
     \class ShaderProgram
@@ -54,6 +55,11 @@
 
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
+
+    Any numerical or boolean properties defined on the ShaderProgram are
+    automatically exposed as uniforms for the shader programs under the
+    same name.  As QML and shader types do not match exactly, real and double
+    properties are converted to float uniforms.
 
     \sa QGLGraphicsViewportItem
 */
@@ -72,7 +78,7 @@ QT_BEGIN_NAMESPACE
 class ShaderProgramEffect : public QGLAbstractEffect
 {
 public:
-    ShaderProgramEffect();
+    ShaderProgramEffect(ShaderProgram* parent);
     ~ShaderProgramEffect();
 
     void create(const QString& vertexShader, const QString& fragmentShader);
@@ -88,9 +94,10 @@ public:
 
     void setCommonNormal(const QVector3D& value);
 
-    void setCustomValue(float value);
-
 private:
+    void setUniformLocationsFromParentProperties();
+
+    QWeakPointer<ShaderProgram> parent;
     QGLShaderProgram *program;
     int vertexAttr;
     int normalAttr;
@@ -103,8 +110,7 @@ private:
     int texture0;
     int texture1;
     int colorUniform;
-    int customUniform;
-    float customValue;
+    QMap<int, int> propertyIdsToUniformLocations;
 };
 
 /*
@@ -112,8 +118,9 @@ private:
   class to undefined.  As such, a shader program effect with no further initialisation will do nothing at all
   until further creation of shader programs for it has been carried out.
 */
-ShaderProgramEffect::ShaderProgramEffect()
+ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 {
+    this->parent = parent;
     program = 0;
     vertexAttr = -1;
     normalAttr = -1;
@@ -126,9 +133,7 @@ ShaderProgramEffect::ShaderProgramEffect()
     texture0 = -1;
     texture1 = -1;
     colorUniform = -1;
-    customUniform = -1;
-    customValue = 0.0;
-    }
+}
 
 /*
   Destruction entails deletion of the underlying \l QGLShaderProgram which forms the functional core of the
@@ -169,7 +174,34 @@ void ShaderProgramEffect::create
     texture0 = program->uniformLocation("qgl_Texture0");
     texture1 = program->uniformLocation("qgl_Texture1");
     colorUniform = program->uniformLocation("qgl_Color");
-    customUniform = program->uniformLocation("qgl_Custom");
+    setUniformLocationsFromParentProperties();
+}
+
+/*!
+  \internal
+  Convenience function to setup the relationship between object properties
+  and shader uniforms for later use.
+  */
+inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
+{
+    propertyIdsToUniformLocations.clear();
+    if (parent.data() == 0)
+    {
+        return;
+    }
+
+    const QMetaObject* parentMetaObject = parent.data()->metaObject();
+
+    for(int i = parentMetaObject->propertyOffset();
+    i < parentMetaObject->propertyCount(); i++)
+    {
+        QString propertyName = parentMetaObject->property(i).name();
+        int location = program->uniformLocation(propertyName);
+        // -1 indicates that the program does not use the variable,
+        // so ignore those variables.
+        if(location != -1)
+            propertyIdsToUniformLocations[i] = location;
+    }
 }
 
 /*
@@ -235,11 +267,47 @@ void ShaderProgramEffect::update
 
     // TODO: lighting and material parameters.
 
-    // No custom updates flag, so always update custom value:
-    if(customUniform != -1)
+    // Assign custom properties if they exist
+    if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
+        return;
+    int propertyIndex;
+    int uniformLocation;
+    foreach (propertyIndex, propertyIdsToUniformLocations.keys())
     {
-        program->setUniformValue(customUniform, customValue);
+        uniformLocation = propertyIdsToUniformLocations[propertyIndex];
+
+        QVariant value =
+                parent.data()->metaObject()->property(propertyIndex).read(parent.data());
+
+        switch(value.type())
+        {
+        case QVariant::Double:
+        case QMetaType::Float:
+            program->setUniformValue(uniformLocation, value.toFloat());
+            break;
+        case QVariant::Int:
+        case QVariant::UInt:
+            program->setUniformValue(uniformLocation, value.toInt());
+            break;
+        case QVariant::Bool:
+            program->setUniformValue(uniformLocation, value.toBool());
+            break;
+            // TODO:
+            // QVariant::Color
+            // QVariant::Matrix4x4
+            // QMetaType::QMatrix4x4
+            // QVariant::Vector2D
+            // QVariant::Vector3D
+            // QVariant::Vector4D
+            // QVariant::UserType
+            // image/texture
+
+        default:
+            ;
+        }
     }
+
+
 }
 
 /*
@@ -295,11 +363,6 @@ void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
     }
 }
 
-void ShaderProgramEffect::setCustomValue(float value)
-{
-    customValue = value;
-}
-
 class ShaderProgramPrivate
 {
 public:
@@ -309,7 +372,6 @@ public:
     QString fragmentShader;
     bool regenerate;
     ShaderProgramEffect *effect;
-    float customValue;
 };
 
 /*!
@@ -371,46 +433,23 @@ void ShaderProgram::setFragmentShader(const QString& value)
 }
 
 /*!
-  \property ShaderProgram::customValue
-  \brief The customValue provides a qml variable that is bound to the "qgl_Custom" uniform float in the shader programs, allowing for animation of effects.
-
-  \sa vertexShader(), fragmentShader()
-*/
-float ShaderProgram::customValue() const
-{
-    return d->customValue;
-}
-
-void ShaderProgram::setCustomValue(float value)
-{
-    d->customValue = value;
-    // If the custom value can't be set here, it will be set on creation 
-    // instead.
-    if(d->effect)
-        d->effect->setCustomValue(value);
-    emit effectChanged();
-}
-
-/*!
   Enables the effect for a given \a painter.  If the effect has not been created yet, this function will
   attempt to do so.
 */
 void ShaderProgram::enableEffect(QGLPainter *painter)
 {
     if (!d->effect) {
-        d->effect = new ShaderProgramEffect();
+        d->effect = new ShaderProgramEffect(this);
         d->effect->create(d->vertexShader, d->fragmentShader);
     } else if (d->regenerate) {
         d->effect->create(d->vertexShader, d->fragmentShader);
     }
-    d->effect->setCustomValue(d->customValue);
     d->regenerate = false;
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
     painter->setColor(color());
     const QMetaObject* metaObject = this->metaObject();
     for( int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); i++)
-    qDebug() << "property[ " << i << " is " << metaObject->property(i).name();
 }
 
 QT_END_NAMESPACE

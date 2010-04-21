@@ -21,7 +21,9 @@ Item3d {
 
     ShaderProgram {
         id: program
-        SequentialAnimation on customValue {
+        property real collapseFactor : 0.0
+
+        SequentialAnimation on collapseFactor {
             running: true
             loops: Animation.Infinite
             PauseAnimation { duration: 700 }
@@ -29,7 +31,6 @@ Item3d {
             PauseAnimation { duration: 700 }
             NumberAnimation { from: 1.0; to: 0.0; duration: 1500; easing.type:"OutBounce" }
         }
-
         texture: "textures/qtlogo.png"
 
         SequentialAnimation on color{
@@ -52,18 +53,16 @@ Item3d {
             attribute highp vec4 qgl_TexCoord0;
             uniform mediump mat4 qgl_ModelViewProjectionMatrix;
             varying highp vec4 texCoord;
-            uniform highp float qgl_Custom;
+            uniform highp float collapseFactor;
 
             void main(void)
             {
                 // Interpolate between the actual position of the input vertex
                 // and treating the tex-coordinates as vertex positions to
                 // create a neat collapsing effect.
-                vec4 workingPosition = mix( qgl_Vertex, vec4(-qgl_TexCoord0.xyz, 1.0) , qgl_Custom);
-                gl_Position = qgl_ModelViewProjectionMatrix * workingPosition
-                ;
+                vec4 workingPosition = mix( qgl_Vertex, vec4(-qgl_TexCoord0.xyz, 1.0) , collapseFactor);
+                gl_Position = qgl_ModelViewProjectionMatrix * workingPosition;
                 texCoord =  -qgl_TexCoord0;
-
             }
         "
         fragmentShader: "
@@ -78,7 +77,6 @@ Item3d {
                                           col.rgb, 0.0, 1.0), 1.0);
             }
         "
+        }
     }
-}
-
 }
