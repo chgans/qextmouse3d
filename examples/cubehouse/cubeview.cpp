@@ -225,7 +225,6 @@ void CubeView::setCubeAngle(qreal angle)
 void CubeView::accelerometerTimeout()
 {
     QVector3D g = gravity();
-    //qDebug() << g;
     camera()->setMotionAdjustment(g);
     roomCamera->setMotionAdjustment(g);
 }
