@@ -332,7 +332,11 @@ QGLAbstractScene *QGLAbstractScene::loadScene
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
+    {
+        if (options.contains("ShowWarnings"))
+            qWarning("Could not read %s", qPrintable(fileName));
         return 0;
+    }
     QFileInfo fi(fileName);
     QUrl url = QUrl::fromLocalFile(fi.absoluteFilePath());
     return loadScene(&file, url, format, options);
