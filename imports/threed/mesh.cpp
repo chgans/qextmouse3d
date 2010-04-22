@@ -127,6 +127,7 @@ public:
     int refCount;
     bool completed;
     bool loaded;
+    QString options;
 };
 
 /*!
@@ -217,6 +218,28 @@ void Mesh::setMeshName(const QString& value)
     }
 }
 
+/*!
+    \property Mesh::options
+    \brief The behaviour of the underlying file loader can be controlled by
+    string encoded options.  Consult the documentation for each loader for
+    the options available.
+
+    Specifies the current \a options for loading this mesh.  The default value
+    is the null string, meaning no options are applied.
+*/
+QString Mesh::options() const
+{
+    return d->options;
+}
+
+void Mesh::setOptions(const QString &options)
+{
+    if (options != d->options)
+    {
+        d->options = options;
+        emit optionsChanged();
+    }
+}
 
 /*!
   Once the request for data has been finished the \l Mesh class is now free to load
@@ -224,7 +247,8 @@ void Mesh::setMeshName(const QString& value)
 */
 void Mesh::dataRequestFinished()
 {
-    setScene(QGLAbstractScene::loadScene(d->dataReply, d->data));
+    qDebug() << "about to load scene with:" << d->options;
+    setScene(QGLAbstractScene::loadScene(d->dataReply, d->data, d->options));
     d->dataReply->deleteLater();
     d->dataReply = 0;
 }

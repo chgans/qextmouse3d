@@ -65,6 +65,7 @@ class Mesh : public QObject, public QDeclarativeParserStatus
     Q_INTERFACES(QDeclarativeParserStatus)
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY dataChanged)
     Q_PROPERTY(QString meshName READ meshName WRITE setMeshName NOTIFY dataChanged)
+    Q_PROPERTY(QString options READ options WRITE setOptions NOTIFY optionsChanged)
 
 public:
     Mesh(QObject *parent = 0);
@@ -75,6 +76,9 @@ public:
 
     QString meshName() const;    
     void setMeshName(const QString& value);
+
+    QString options() const;
+    void setOptions(const QString &);
 
     virtual void draw(QGLPainter *painter, int branchId);
 
@@ -106,6 +110,7 @@ public:
 Q_SIGNALS:
     void dataChanged();
     void loaded();
+    void optionsChanged();
 
 private Q_SLOTS:
     void dataRequestFinished();
