@@ -171,7 +171,7 @@ void Mesh::setSource(const QUrl& value)
 //#define QT_NO_LOCALFILE_OPTIMIZED_QML
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
     if (d->data.scheme() == QLatin1String("file")) {
-        setScene(QGLAbstractScene::loadScene(d->data.toLocalFile()));
+        setScene(QGLAbstractScene::loadScene(d->data.toLocalFile(), QString(), d->options));
     } else
 #endif
     {
