@@ -247,7 +247,6 @@ void Mesh::setOptions(const QString &options)
 */
 void Mesh::dataRequestFinished()
 {
-    qDebug() << "about to load scene with:" << d->options;
     setScene(QGLAbstractScene::loadScene(d->dataReply, d->data, d->options));
     d->dataReply->deleteLater();
     d->dataReply = 0;
@@ -301,7 +300,7 @@ QGLSceneObject *Mesh::getSceneObject(const QString &name)
         initSceneObjectList();
 
     foreach (QGLSceneObject *object, d->sceneObjects) {
-        if (object && object->objectName()==name)
+        if (object && object->objectName().startsWith(name))
         {
             return object;
         }
@@ -620,6 +619,12 @@ void Mesh::componentComplete()
 
   Signals a change to one of the properties of the class, or the scene represented  by the class.
 
+*/
+
+/*!
+    \fn void Mesh::optionsChanged()
+
+    Signals a change to the string options to be processed by the loader for this mesh.
 */
 
 /*!
