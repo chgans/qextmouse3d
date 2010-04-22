@@ -1,7 +1,9 @@
 This implementation of 3D studio max file import relies on the library
-lib3ds available from http://lib3ds.org/
+lib3ds available from http://lib3ds.org/.  A copy of this library is
+included with Qt/3D, or you can download and build your own version
+as described below.
 
-To enable building and use of the plugin, pass CONFIG+=3ds to qmake
+To enable building and use of the plugin, pass CONFIG+=system_3ds to qmake
 
 Currently version 1.3 is required.  Do not use version 2.0 or later as it is incompatible.
 

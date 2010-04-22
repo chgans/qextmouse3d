@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 
+/*!
 #ifdef _MSC_VER
 #ifdef LIB3DS_EXPORTS
 #define LIB3DSAPI __declspec(dllexport)
@@ -35,6 +36,8 @@ extern "C" {
 #else
 #define LIB3DSAPI
 #endif
+*/
+#define LIB3DSAPI
 
 #define LIB3DS_TRUE 1
 #define LIB3DS_FALSE 0
