@@ -538,10 +538,21 @@ bool QGLTexture2DPrivate::bind(GLenum target)
 
 void QGLTexture2DPrivate::bindImages(QGLTexture2DTextureInfo *info)
 {
+    QSize scaledSize(size);
+#if defined(QT_OPENGL_ES_2)
+    if ((bindOptions & QGLContext::MipmapBindOption) ||
+            horizontalWrap != QGL::ClampToEdge ||
+            verticalWrap != QGL::ClampToEdge) {
+        // ES 2.0 does not support NPOT textures when mipmaps are in use,
+        // or if the wrap mode isn't ClampToEdge.
+        scaledSize = QSize(qt_gl_next_power_of_two(scaledSize.width()),
+                           qt_gl_next_power_of_two(scaledSize.height()));
+    }
+#endif
     if (!image.isNull())
-        info->tex.uploadFace(GL_TEXTURE_2D, image, size);
+        info->tex.uploadFace(GL_TEXTURE_2D, image, scaledSize);
     else if (size.isValid())
-        info->tex.createFace(GL_TEXTURE_2D, size);
+        info->tex.createFace(GL_TEXTURE_2D, scaledSize);
 }
 
 /*!
