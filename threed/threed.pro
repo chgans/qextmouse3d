@@ -15,3 +15,6 @@ HEADERS += $$PRIVATE_HEADERS
 DEFINES += QT_BUILD_QT3D_LIB
 
 !contains(QT_CONFIG, egl):DEFINES += QT_NO_EGL
+
+target.path += $$[QT_INSTALL_LIBS]
+INSTALLS += target
