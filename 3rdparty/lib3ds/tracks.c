@@ -1411,6 +1411,8 @@ lib3ds_morph_track_write(Lib3dsMorphTrack *track, Lib3dsIo *io)
 {
   /* FIXME: */
   ASSERT(0);
+  LIB3DS_UNUSED(track);
+  LIB3DS_UNUSED(io);
   return(LIB3DS_FALSE);
 }
 
@@ -1547,6 +1549,8 @@ lib3ds_dump_tracks(Lib3dsNode *node)
     case LIB3DS_SPOT_NODE:
       printf("pos: ");
       lib3ds_lin3Track_dump(&node->data.spot.pos_track);
+      break;
+    default:
       break;
   }
 }

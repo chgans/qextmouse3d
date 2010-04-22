@@ -38,6 +38,7 @@ extern "C" {
 #endif
 */
 #define LIB3DSAPI
+#define LIB3DS_UNUSED(x)     (void)x
 
 #define LIB3DS_TRUE 1
 #define LIB3DS_FALSE 0
