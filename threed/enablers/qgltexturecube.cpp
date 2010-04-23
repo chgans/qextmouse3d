@@ -116,19 +116,31 @@ QGLTextureCubePrivate::~QGLTextureCubePrivate()
 
 void QGLTextureCubePrivate::bindImages(QGLTexture2DTextureInfo *info)
 {
+    QSize scaledSize(size);
+#if defined(QT_OPENGL_ES_2)
+    if ((bindOptions & QGLContext::MipmapBindOption) ||
+            horizontalWrap != QGL::ClampToEdge ||
+            verticalWrap != QGL::ClampToEdge) {
+        // ES 2.0 does not support NPOT textures when mipmaps are in use,
+        // or if the wrap mode isn't ClampToEdge.
+        scaledSize = QSize(qt_gl_next_power_of_two(scaledSize.width()),
+                           qt_gl_next_power_of_two(scaledSize.height()));
+    }
+#endif
+
     // Handle the first face.
     if (!image.isNull())
-        info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, image, size);
+        info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, image, scaledSize);
     else if (size.isValid())
-        info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, size);
+        info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, scaledSize);
 
     // Handle the other faces.
     for (int face = 1; face < 6; ++face) {
         if (!otherImages[face - 1].isNull()) {
             info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-                                 otherImages[face - 1], size);
+                                 otherImages[face - 1], scaledSize);
         } else {
-            info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, size);
+            info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, scaledSize);
         }
     }
 }
