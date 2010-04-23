@@ -102,8 +102,16 @@ QT_BEGIN_NAMESPACE
 class MeshPrivate
 {
 public:
-    MeshPrivate() : dataReply(0), scene(0), nextSceneBranchId(0),
-                    mainSceneObject(NULL), refCount(1), completed(false), loaded(false){}
+    MeshPrivate()
+        : dataReply(0)
+        , scene(0)
+        , nextSceneBranchId(0)
+        , mainSceneObject(NULL)
+        , refCount(1)
+        , completed(false)
+        , loaded(false)
+        , dumpInfo(false)
+    {}
     ~MeshPrivate()
     {
         delete scene;
@@ -128,6 +136,7 @@ public:
     bool completed;
     bool loaded;
     QString options;
+    bool dumpInfo;
 };
 
 /*!
@@ -351,6 +360,28 @@ QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& n
 }
 
 /*!
+    \property Mesh::dumpInfo
+    \brief Flag set to true if the description of the item will be dumped to the console.
+
+    When this flag is true, useful debugging and diagnostic information, for example the
+    names of all the subnodes of the mesh, materials and geometry parameters, will be
+    dumped to the console during the loading of the model.
+*/
+bool Mesh::dumpInfo() const
+{
+    return d->dumpInfo;
+}
+
+void Mesh::setDumpInfo(bool enable)
+{
+    if (enable != d->dumpInfo)
+    {
+        d->dumpInfo = enable;
+        emit dumpInfoChanged();
+    }
+}
+
+/*!
     Set the \a scene associated with this mesh.
 
     The function attempts to load a meaningful scene if one exists, and will attempt to
@@ -390,8 +421,14 @@ void Mesh::setScene(QGLAbstractScene *scene)
         }
         //in either case we still need to add an object to the scene, so if we fail
         //we simply add a null value to indicate that this object is non-drawable 
-        addSceneBranch(insertObject);        
+        addSceneBranch(insertObject);
 
+        if (insertObject && d->dumpInfo)
+        {
+            QGLSceneNode *node = qobject_cast<QGLSceneNode*>(insertObject);
+            if (node)
+                qDumpScene(node);
+        }
     }
     emit dataChanged(); 
     d->loaded = true;
@@ -625,6 +662,12 @@ void Mesh::componentComplete()
     \fn void Mesh::optionsChanged()
 
     Signals a change to the string options to be processed by the loader for this mesh.
+*/
+
+/*!
+    \fn void Mesh::dumpInfoChanged()
+
+    Signals a change to the state of the dumpInfo flag for this mesh.
 */
 
 /*!
