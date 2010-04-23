@@ -44,6 +44,7 @@
 
 #include "qglsceneformatplugin.h"
 #include <QtCore/qmap.h>
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -65,6 +66,9 @@ namespace QGL {
 class QGL3dsSceneHandler : public QGLSceneFormatHandler
 {
 public:
+    QGL3dsSceneHandler();
+    ~QGL3dsSceneHandler();
+
     QGLAbstractScene *read();
 
     void setOptions(QGL::ModelOptions options) { m_options |= options; }

@@ -13,3 +13,4 @@ LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin
 include(../../threed/threed_dep.pri)
+OTHER_FILES += ../declarative/button.qml

@@ -302,6 +302,8 @@ void Effect::setFog(QGLFogParameters *value)
 void Effect::enableEffect(QGLPainter *painter)
 {
     QGLTexture2D *tex = texture2D();
+    if (tex == NULL && d->material)
+        tex = d->material->texture();
     if (d->useLighting) {
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::LitDecalTexture2D);

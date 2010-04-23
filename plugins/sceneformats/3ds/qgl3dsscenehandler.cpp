@@ -48,6 +48,7 @@
 #include <lib3ds/node.h>
 
 #include <QtCore/qdir.h>
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -151,6 +152,16 @@ static Lib3dsFile *qgl3ds_lib3ds_file_load(QIODevice *iod)
     lib3ds_io_free(io);
     iod->close();
     return(file);
+}
+
+QGL3dsSceneHandler::QGL3dsSceneHandler()
+    : m_options(0)
+{
+}
+
+QGL3dsSceneHandler::~QGL3dsSceneHandler()
+{
+    // nothing to do
 }
 
 void QGL3dsSceneHandler::decodeOptions(const QString &options)

@@ -171,18 +171,26 @@ void QGL3dsMesh::initialize()
     if (m_options & (QGL::CorrectNormals | QGL::CorrectAcute))
         modulateMesh();
     analyzeMesh();
-    if (m_smoothingGroups == 0 &&
-        (m_mesh->faces > FACETED_THRESHOLD || m_options & QGL::ForceSmooth))
+
+    if (m_smoothingGroups == 0)
     {
-#ifndef QT_NO_DEBUG_STREAM
-        if (m_options & QGL::ShowWarnings)
-            qDebug("Mesh %s has %d faces (threshold is %d): forcing smooth render",
-                   m_mesh->name, m_mesh->faces, FACETED_THRESHOLD);
-#endif
-        for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
-            m_mesh->faceL[f].smoothing = 1;
-        analyzeMesh();
+        bool forceSmooth = (m_options & QGL::ForceSmooth);
+        if (!forceSmooth && m_mesh->faces > FACETED_THRESHOLD)
+        {
+            if (m_options & QGL::ShowWarnings)
+                fprintf(stderr, "Mesh %s has %d faces (threshold is %d):"
+                        "forcing smooth render", m_mesh->name, m_mesh->faces,
+                        FACETED_THRESHOLD);
+            forceSmooth = true;
+        }
+        if (forceSmooth)
+        {
+            for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
+                m_mesh->faceL[f].smoothing = 1;
+            analyzeMesh();
+        }
     }
+
     bool mixedTexturedAndPlain = m_plainMaterials.count() > 0 &&
                                  m_textureMaterials.count() > 0;
 

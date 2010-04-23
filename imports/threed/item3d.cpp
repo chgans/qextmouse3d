@@ -895,6 +895,8 @@ QString Item3d::name() const
 void Item3d::setName(QString nameString)
 {
     d->name = nameString;
+    if (objectName().isEmpty())
+        setObjectName(nameString);
 }
 
 /*!
@@ -947,6 +949,8 @@ void Item3d::draw(QGLPainter *painter)
         if (light) {
             painter->setMainLight(light);
             haveLights = true;
+            break;
+            // TODO: only one light supported right now
         }
     }
 
@@ -1026,7 +1030,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     }    
 
     if (mesh() && !meshNode().isEmpty()) {
-        int branchNumber = mesh()->createSceneBranch(meshNode());    
+        int branchNumber = mesh()->createSceneBranch(meshNode());
         if (branchNumber>=0) {
             d->mainBranchId = branchNumber;
         }

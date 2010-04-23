@@ -302,12 +302,11 @@ bool QGLTexture2D::setCompressedFile(const QString &path)
 {
     Q_D(QGLTexture2D);
     d->image = QImage();
-
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly))
     {
         qWarning("QGLTexture2D::setCompressedFile(%s): File could not be read",
-                 path.toLocal8Bit().constData());
+                 qPrintable(path));
         return false;
     }
     QByteArray data = f.readAll();
@@ -321,7 +320,10 @@ bool QGLTexture2D::setCompressedFile(const QString &path)
         return false;
     }
 
-    // The 3DS loader expects the flip state to be set before bind(). 
+    QFileInfo fi(path);
+    d->url = QUrl::fromLocalFile(fi.absoluteFilePath());
+
+    // The 3DS loader expects the flip state to be set before bind().
     if (isFlipped)
         d->bindOptions &= ~QGLContext::InvertedYBindOption;
     else
@@ -330,6 +332,62 @@ bool QGLTexture2D::setCompressedFile(const QString &path)
     d->compressedData = data;
     ++(d->imageGeneration);
     return true;
+}
+
+/*!
+    Returns the url that was last set with setUrl.
+*/
+QUrl QGLTexture2D::url() const
+{
+    Q_D(const QGLTexture2D);
+    return d->url;
+}
+
+/*!
+    Sets this texture to have the contents of the image stored at \a url.
+*/
+void QGLTexture2D::setUrl(const QUrl &url)
+{
+    Q_D(QGLTexture2D);
+    if (d->url == url)
+        return;
+
+    if (url.isEmpty())
+    {
+        d->image = QImage();
+    }
+    else
+    {
+        if (url.scheme() == QLatin1String("file"))
+        {
+            QString fileName = url.path();
+            if (fileName.endsWith(".dds", Qt::CaseInsensitive))
+            {
+                setCompressedFile(fileName);
+            }
+            else
+            {
+                QImage im(fileName);
+                if (im.isNull())
+                    qWarning("Could not load texture: %s", qPrintable(fileName));
+                setImage(im);
+                d->url = url;
+            }
+        }
+        else
+        {
+            qWarning("Network URLs not yet supported\n");
+            /*
+            if (d->textureReply)
+                d->textureReply->deleteLater();
+            QNetworkRequest req(d->textureUrl);
+            req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+            d->textureReply = qmlEngine(this)->networkAccessManager()->get(req);
+            QObject::connect(d->textureReply, SIGNAL(finished()),
+                             this, SLOT(textureRequestFinished()));
+                             */
+        }
+    }
 }
 
 /*!

@@ -65,7 +65,7 @@ private:
     void loadMesh(Lib3dsMesh *);
     void loadNodes(Lib3dsNode *, QGLSceneNode *);
     void loadMaterial(Lib3dsMaterial *);
-    QString ensureResourceFile(const QString &);
+    QUrl ensureResource(const QString &);
     void setUrl(const QUrl &url);
 
     Lib3dsFile *mFile;
