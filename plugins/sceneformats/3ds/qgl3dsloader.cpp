@@ -275,7 +275,7 @@ QUrl QGL3dsLoader::ensureResource(const QString &path)
             if (caseInsensitive)
                 break;
             caseInsensitive = true;
-        } while(res.isEmpty());
+        } while(true);
     }
     else
     {
