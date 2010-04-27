@@ -90,7 +90,7 @@ public:
     QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
-    //QGLVertexArray backdropVertices;
+    QColor backgroundColor;
     QGLVertexBuffer backdropVertices;
     QGLView *view;
     int pickId;
@@ -105,8 +105,7 @@ ViewportPrivate::ViewportPrivate()
     , camera(0)
     , lightModel(0)
     , backdrop(0)
-    //, backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
-    , backdropVertices()
+    , backgroundColor(Qt::black)
     , view(0)
     , pickId(1)
 {
@@ -325,7 +324,7 @@ void Viewport::setLightModel(QGLLightModel *value)
 
     By default no backdrop effect is defined.
 
-    \sa Effect
+    \sa Effect, backgroundColor()
 */
 Effect *Viewport::backdrop() const
 {
@@ -345,6 +344,30 @@ void Viewport::setBackdrop(Effect *value)
                     this, SLOT(update3d()));
             d->backdrop->setUseLighting(false);
         }
+        update3d();
+    }
+}
+
+/*!
+    \property Viewport::backgroundColor
+    \brief the background color for the viewport, which is used if
+    backdrop is not specified.  The default color is black.
+
+    Setting this property to \c{"transparent"} will result in no
+    background color being set, so that items behind this viewport
+    will be visible through the viewport.
+
+    \sa backdrop()
+*/
+QColor Viewport::backgroundColor() const
+{
+    return d->backgroundColor;
+}
+
+void Viewport::setBackgroundColor(const QColor &value)
+{
+    if (d->backgroundColor != value) {
+        d->backgroundColor = value;
         update3d();
     }
 }
@@ -425,6 +448,20 @@ void Viewport::earlyDraw(QGLPainter *painter)
         painter->setVertexBuffer(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
+
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+    } else if (d->backgroundColor.alpha() != 0 || !parentItem()) {
+        painter->projectionMatrix().setToIdentity();
+        painter->modelViewMatrix().setToIdentity();
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDepthMask(GL_FALSE);
+
+        painter->setStandardEffect(QGL::FlatColor);
+        painter->setColor(d->backgroundColor);
+        painter->setVertexBuffer(d->backdropVertices);
+        painter->draw(QGL::TriangleFan, 4);
 
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
