@@ -343,6 +343,7 @@ void Viewport::setBackdrop(Effect *value)
         if (d->backdrop) {
             connect(d->backdrop, SIGNAL(effectChanged()),
                     this, SLOT(update3d()));
+            d->backdrop->setUseLighting(false);
         }
         update3d();
     }
@@ -421,7 +422,6 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
-        //painter->setVertexArray(d->backdropVertices);
         painter->setVertexBuffer(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
