@@ -1,10 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the plugins of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,47 +39,52 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarativeextensionplugin.h>
+#ifndef TRANSLATION3D_H
+#define TRANSLATION3D_H
+
+#include <QtGui/QGraphicsTransform>
 #include <QtDeclarative/qdeclarative.h>
 
-#include "redcyaneffect.h"
-#include "item3d.h"
-#include "viewport.h"
-#include "effect.h"
-#include "rotation3d.h"
-#include "translation3d.h"
-#include "scale3d.h"
-#include "shaderprogram.h"
-#include "cube.h"
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QThreedQmlModule : public QDeclarativeExtensionPlugin
+class Translation3D : public QGraphicsTransform
 {
     Q_OBJECT
+    Q_PROPERTY(QVector3D translate READ translate WRITE setTranslate NOTIFY translateChanged)
+    Q_PROPERTY(qreal xTranslate READ xTranslate WRITE setXTranslate NOTIFY translateChanged)
+    Q_PROPERTY(qreal yTranslate READ yTranslate WRITE setYTranslate NOTIFY translateChanged)
+    Q_PROPERTY(qreal zTranslate READ zTranslate WRITE setZTranslate NOTIFY translateChanged)
 public:
-    virtual void registerTypes(const char *uri)
-    {
-        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
-        qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
-        qmlRegisterType<Effect>(uri,1,0,"Effect");
-        qmlRegisterType<Mesh>(uri,1,0,"Mesh");
-        qmlRegisterType<Item3d>(uri,1,0,"Item3d");
-        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
-        qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
-        qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
-        qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
-        qmlRegisterType<Rotation3D>(uri,1,0,"Rotation3D");
-        qmlRegisterType<Translation3D>(uri,1,0,"Translation3D");
-        qmlRegisterType<Scale3D>(uri,1,0,"Scale3D");
-        qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
-        qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
-        qmlRegisterType<Cube>(uri,1,0,"Cube");
-    }
+    Translation3D(QObject *parent = 0);
+    ~Translation3D();
+
+    QVector3D translate() const { return m_translate; }
+    void setTranslate(const QVector3D &value);
+
+    qreal xTranslate() const { return m_translate.x(); }
+    void setXTranslate(qreal value);
+
+    qreal yTranslate() const { return m_translate.y(); }
+    void setYTranslate(qreal value);
+
+    qreal zTranslate() const { return m_translate.z(); }
+    void setZTranslate(qreal value);
+
+    void applyTo(QMatrix4x4 *matrix) const;
+
+Q_SIGNALS:
+    void translateChanged();
+
+private:
+    QVector3D m_translate;
 };
+
+QML_DECLARE_TYPE(Translation3D)
 
 QT_END_NAMESPACE
 
-#include "threed.moc"
+QT_END_HEADER
 
-Q_EXPORT_PLUGIN2(threedqmlmodule, QT_PREPEND_NAMESPACE(QThreedQmlModule));
+#endif // TRANSLATION3D_H

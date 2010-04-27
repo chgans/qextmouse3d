@@ -13,7 +13,9 @@ SOURCES += \
     item3d.cpp \
     mesh.cpp \
     rotation3d.cpp \
+    scale3d.cpp \
     shaderprogram.cpp \
+    translation3d.cpp \
     viewport.cpp
 HEADERS += \
     redcyaneffect.h \
@@ -22,7 +24,9 @@ HEADERS += \
     item3d.h \
     mesh.h \
     rotation3d.h \
+    scale3d.h \
     shaderprogram.h \
+    translation3d.h \
     viewport.h
 
 qdeclarativesources.files += \
