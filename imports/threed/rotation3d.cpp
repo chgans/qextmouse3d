@@ -104,6 +104,8 @@
 
     By giving each rotation a unique \c id users can then refer to these rotations in the QML
     source in order to perform rotational animations.
+
+    \sa Translation3D, Scale3D
 */
 
 QT_BEGIN_NAMESPACE
@@ -126,9 +128,7 @@ Rotation3D::~Rotation3D()
 }
 
 /*!
-  Application of the rotation to a given 4x4 \a matrix is performed by this function.  The rotation
-  is performed by translating the contents of the matrix to the origin, performing the individual
-  axial rotations, then translating back to the original position.
+    \internal
 */
 void Rotation3D::applyTo(QMatrix4x4 *matrix) const
 {

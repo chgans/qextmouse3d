@@ -47,6 +47,8 @@
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
 #include "qglview.h"
+#include "scale3d.h"
+#include "translation3d.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
@@ -285,15 +287,20 @@ public:
     QList<QGraphicsTransform *> transforms;
 
 
+    // pretransform property
+    static int pretransform_count(QDeclarativeListProperty<QGraphicsTransform> *list);
+    static void pretransform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
+    static QGraphicsTransform *pretransform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
+    static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
+    QList<QGraphicsTransform *> pretransforms;
 };
 
 
 int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
 {  
-    QGraphicsObject *object = qobject_cast<QGraphicsObject *>(list->object);
+    Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
-        QGraphicsItemPrivate *d = QGraphicsItemPrivate::get(object);
-        return d->transformData ? d->transformData->graphicsTransforms.size() : 0;
+        return object->d->transforms.count();
     } else {
         qWarning()<<"Warning: could not find Item3d to query for transformation count.";
         return 0;
@@ -323,6 +330,14 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(axisChanged()),
                                  object, SLOT(update()));
+            } else if (qobject_cast<Scale3D *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(scaleChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<Translation3D *>(item)) {
+                QObject::connect(item, SIGNAL(translateChanged()),
+                                 object, SLOT(update()));
             }
         }
     }
@@ -348,6 +363,79 @@ void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform>
     Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
         object->d->transforms.clear();
+        object->update();
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to clear of transformations";
+}
+
+int Item3dPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
+{  
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        return object->d->pretransforms.count();
+    } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
+        return 0;
+    }
+}
+
+void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
+{
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    QList<QGraphicsTransform *> *ptrans;
+    if (object)
+    {
+        ptrans = &object->d->pretransforms;
+
+        //We now need to connect the underlying transform so that any change will update the graphical item.
+        if (!ptrans->contains(item)) {
+            ptrans->append(item);            
+            if (qobject_cast<QGraphicsScale *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(scaleChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsRotation *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(angleChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(axisChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<Scale3D *>(item)) {
+                QObject::connect(item, SIGNAL(originChanged()),
+                                 object, SLOT(update()));
+                QObject::connect(item, SIGNAL(scaleChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<Translation3D *>(item)) {
+                QObject::connect(item, SIGNAL(translateChanged()),
+                                 object, SLOT(update()));
+            }
+        }
+    }
+    else
+        qWarning()<<"Warning: could not find Item3d to add transformation to.";
+}
+
+QGraphicsTransform *Item3dPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
+{    
+   Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        return object->d->pretransforms.at(idx);
+    } else {
+        qWarning()<<"Warning: could not find Item3d to query for transformations";
+        return 0;
+    }
+    return 0;
+}
+
+void Item3dPrivate::pretransform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
+{
+
+    Item3d *object = qobject_cast<Item3d *>(list->object);
+    if (object) {
+        object->d->pretransforms.clear();
         object->update();
     }
     else
@@ -595,6 +683,29 @@ QDeclarativeListProperty<QGraphicsTransform> Item3d::transform()
 {
     return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->transform_append, d->transform_count,
                                                d->transform_at, d->transform_clear);
+}
+
+/*!
+    \property Item3d::pretransform
+    \brief the transformation to apply before all others.
+
+    When a model is loaded from an external source such as a 3D
+    modeling package, it is usually in an unconventional orientation
+    and position.  The first step is to rotate, scale, and translate
+    it to make it suitable for use as a QML/3D object.
+
+    The purpose of the \c pretransform property is to perform such
+    "model correction" transformations before \c scale, \c transform,
+    and \c position are applied to place the model in its final
+    orientation and position in the QML/3D application.
+
+    By default this list of transformations is empty.
+*/
+
+QDeclarativeListProperty<QGraphicsTransform> Item3d::pretransform()
+{
+    return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->pretransform_append, d->pretransform_count,
+                                               d->pretransform_at, d->pretransform_clear);
 }
 
 /*!
@@ -980,7 +1091,17 @@ void Item3d::draw(QGLPainter *painter)
     }
     if (d->scale != 1.0f)
         painter->modelViewMatrix().scale(d->scale);
-	
+    transformCount = d->pretransforms.count();
+    if (transformCount>0) {
+        // Pre-transforms for orienting the model.
+        QMatrix4x4 m = painter->modelViewMatrix();
+        for (int index = transformCount - 1; index >= 0; --index) {
+            
+            d->pretransforms.at(index)->applyTo(&m);
+        }
+        painter->modelViewMatrix() = m;
+    }
+
     //Drawing
     if (d->isVisible ) drawItem(painter);
     foreach (QObject *child, list) {

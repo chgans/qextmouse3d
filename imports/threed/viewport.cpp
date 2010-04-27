@@ -404,9 +404,9 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 */
 void Viewport::earlyDraw(QGLPainter *painter)
 {
-    // If we have a QDeclarativeItem parent, then assume that it has cleared
-    // the screen (e.g. Rect::color), and just clear the depth buffer.
-    if (parentItem())
+    // If are running with the regular qml viewer, then assume that it
+    // has cleared the background for us, and just clear the depth buffer.
+    if (!d->view)
         painter->clear(QGL::ClearDepthBuffer);
     else
         painter->clear();
