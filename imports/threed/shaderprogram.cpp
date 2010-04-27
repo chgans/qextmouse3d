@@ -448,9 +448,6 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
     painter->setColor(color());
-    // FIXME
-    //const QMetaObject* metaObject = this->metaObject();
-    //for( int i = metaObject->propertyOffset(); i < metaObject->propertyCount(); i++)
 }
 
 QT_END_NAMESPACE
