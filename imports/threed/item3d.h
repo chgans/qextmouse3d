@@ -76,6 +76,7 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)   
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> transform READ transform DESIGNABLE false FINAL)
+    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> pretransform READ pretransform DESIGNABLE false FINAL)
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
@@ -132,6 +133,7 @@ public:
     QDeclarativeListProperty<Item3d> fxChildren();    
 
     QDeclarativeListProperty<QGraphicsTransform> transform();
+    QDeclarativeListProperty<QGraphicsTransform> pretransform();
 
     QDeclarativeListProperty<QDeclarativeState> states();
     QDeclarativeState *findState(const QString &name) const;
