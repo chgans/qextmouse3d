@@ -157,6 +157,8 @@ Viewport::Viewport(QDeclarativeItem *parent)
     d = new ViewportPrivate();
     setFlag(QGraphicsItem::ItemHasNoContents, false);
     qt_gl_set_qml_viewport(this);
+
+    connect(this, SIGNAL(viewportChanged()), this, SLOT(update3d()));
 }
 
 /*!
@@ -188,7 +190,7 @@ bool Viewport::picking() const
 void Viewport::setPicking(bool value)
 {
     d->picking = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -212,7 +214,7 @@ bool Viewport::showPicking() const
 void Viewport::setShowPicking(bool value)
 {
     d->showPicking = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -230,7 +232,7 @@ bool Viewport::navigation() const
 void Viewport::setNavigation(bool value)
 {
     d->navigation = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -248,7 +250,7 @@ bool Viewport::blending() const
 void Viewport::setBlending(bool value)
 {
     d->blending = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -305,14 +307,14 @@ void Viewport::setLightModel(QGLLightModel *value)
     if (d->lightModel != value) {
         if (d->lightModel) {
             disconnect(d->lightModel, SIGNAL(lightModelChanged()),
-                       this, SLOT(update3d()));
+                       this, SIGNAL(update3d()));
         }
         d->lightModel = value;
         if (d->lightModel) {
             connect(d->lightModel, SIGNAL(lightModelChanged()),
-                    this, SLOT(update3d()));
+                    this, SIGNAL(update3d()));
         }
-        update3d();
+        emit viewportChanged();
     }
 }
 
@@ -344,7 +346,7 @@ void Viewport::setBackdrop(Effect *value)
                     this, SLOT(update3d()));
             d->backdrop->setUseLighting(false);
         }
-        update3d();
+        emit viewportChanged();
     }
 }
 
@@ -368,7 +370,7 @@ void Viewport::setBackgroundColor(const QColor &value)
 {
     if (d->backgroundColor != value) {
         d->backgroundColor = value;
-        update3d();
+        emit viewportChanged();
     }
 }
 
@@ -565,6 +567,12 @@ int Viewport::nextPickId()
 {
     return (d->pickId)++;
 }
+
+/*!
+    \fn void Viewport::viewportChanged()
+
+    Signal that is emitted when the parameters on this viewport change.
+*/
 
 /*!
   If a QGLView is defined for this viewport then this function queues an update for that QGLView.

@@ -59,14 +59,14 @@ class QGLView;
 class Viewport : public QDeclarativeItem
 {
     Q_OBJECT
-    Q_PROPERTY(bool picking READ picking WRITE setPicking)
-    Q_PROPERTY(bool showPicking READ showPicking WRITE setShowPicking)
-    Q_PROPERTY(bool navigation READ navigation WRITE setNavigation)
-    Q_PROPERTY(bool blending READ blending WRITE setBlending)
+    Q_PROPERTY(bool picking READ picking WRITE setPicking NOTIFY viewportChanged)
+    Q_PROPERTY(bool showPicking READ showPicking WRITE setShowPicking NOTIFY viewportChanged)
+    Q_PROPERTY(bool navigation READ navigation WRITE setNavigation NOTIFY viewportChanged)
+    Q_PROPERTY(bool blending READ blending WRITE setBlending NOTIFY viewportChanged)
     Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera)
-    Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel)
-    Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
+    Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel NOTIFY viewportChanged)
+    Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop NOTIFY viewportChanged)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY viewportChanged)
 public:
     Viewport(QDeclarativeItem *parent = 0);
     ~Viewport();
@@ -105,6 +105,9 @@ public:
     QGLView *view() const;
 
     int nextPickId();
+
+Q_SIGNALS:
+    void viewportChanged();
 
 public Q_SLOTS:
     void update3d();
