@@ -64,6 +64,8 @@ public:
     QString currentModel() const { return mCurrentModelName; }
     QStringList components() const { return mComponents; }
 
+    static QString getOptions(const QString &name);
+
 public slots:
     void load();
     void zoomChanged(int);
@@ -100,8 +102,6 @@ private:
     void setMaterial(QGLSceneNode *root, int material);
     void restoreMaterial(QGLSceneNode *root);
     void importModel(const QString &name);
-
-    static QString getOptions(const QString &name);
 
     QTimer *mTimer;
     QTimer *mColorTimer;

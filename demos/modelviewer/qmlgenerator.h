@@ -39,52 +39,34 @@
 **
 ****************************************************************************/
 
-#ifndef CONTROLS_H
-#define CONTROLS_H
+#ifndef QMLGENERATOR_H
+#define QMLGENERATOR_H
 
-#include <QtGui/QMainWindow>
+#include <QtCore/qstring.h>
+#include <QtCore/qmap.h>
 
-namespace Ui {
-    class Controls;
-}
-
-class Viewer;
-
-class Controls : public QMainWindow {
-    Q_OBJECT
+class QmlGenerator
+{
 public:
-    Controls(QWidget *parent = 0);
-    ~Controls();
-
-public slots:
-    void signalColor(const QColor &);
-    void loadModelDefaults(const QString &);
-    void saveModelDefaults(const QString &);
-
-signals:
-    void updateSelectColor(const QColor &);
-    void openFile(const QString &);
-
-protected:
-    void changeEvent(QEvent *e);
+    explicit QmlGenerator(const QString &filePath);
+    void save() const;
+    bool hasError() const { return m_hasError; }
+    void setProperty(const QString &key, const QString &value)
+    {
+        m_content.insert(key, value);
+    }
 
 private:
-    QString populateModelMenu();
+    enum OptionStatus {
+        Required,
+        Optional
+    };
+    QString property(const char *propertyName, OptionStatus status = Required) const;
 
-    Ui::Controls *ui;
-    Viewer *mView;
-    QColor mSelectColor;
-
-private slots:
-    void on_actionSave_QML_triggered();
-    void on_actionQuit_triggered();
-    void on_actionComponent_triggered();
-    void on_actionOpen_triggered();
-    void on_spinCheckBox_stateChanged(int );
-    void on_selectColorButton_clicked();
-    void optionMenuToggled(bool);
-    void saveSettings(const QString &);
-    void loadSettings(const QString &);
+    QString m_filePath;
+    QMap<QString, QString> m_content;
+    mutable QString m_errorString;
+    mutable bool m_hasError;
 };
 
-#endif // CONTROLS_H
+#endif // QMLGENERATOR_H

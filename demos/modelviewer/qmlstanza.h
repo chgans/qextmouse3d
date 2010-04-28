@@ -39,52 +39,28 @@
 **
 ****************************************************************************/
 
-#ifndef CONTROLS_H
-#define CONTROLS_H
+#ifndef QMLSTANZA_H
+#define QMLSTANZA_H
 
-#include <QtGui/QMainWindow>
+#include <QtCore/qtextstream.h>
+#include <QtCore/qmap.h>
+#include <QtCore/qobject.h>
 
-namespace Ui {
-    class Controls;
-}
-
-class Viewer;
-
-class Controls : public QMainWindow {
-    Q_OBJECT
+class QmlStanza : public QObject
+{
+Q_OBJECT
 public:
-    Controls(QWidget *parent = 0);
-    ~Controls();
-
-public slots:
-    void signalColor(const QColor &);
-    void loadModelDefaults(const QString &);
-    void saveModelDefaults(const QString &);
-
-signals:
-    void updateSelectColor(const QColor &);
-    void openFile(const QString &);
-
-protected:
-    void changeEvent(QEvent *e);
-
+    explicit QmlStanza(const QString &name, QObject *parent = 0);
+    QString toString() const;
+    void addProperty(const QString &name, QmlStanza *subItem);
+    void addProperty(const QString &name, const QString &value);
+    void setIndent(int indent) { m_indent = indent; }
 private:
-    QString populateModelMenu();
-
-    Ui::Controls *ui;
-    Viewer *mView;
-    QColor mSelectColor;
-
-private slots:
-    void on_actionSave_QML_triggered();
-    void on_actionQuit_triggered();
-    void on_actionComponent_triggered();
-    void on_actionOpen_triggered();
-    void on_spinCheckBox_stateChanged(int );
-    void on_selectColorButton_clicked();
-    void optionMenuToggled(bool);
-    void saveSettings(const QString &);
-    void loadSettings(const QString &);
+    QString m_name;
+    int m_indent;
+    QMap<QString, QmlStanza *> m_content;
 };
 
-#endif // CONTROLS_H
+QTextStream &operator<<(QTextStream &, const QmlStanza &);
+
+#endif // QMLSTANZA_H

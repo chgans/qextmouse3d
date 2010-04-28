@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>901</width>
+    <height>641</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,6 +29,13 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QPushButton" name="generateQmlPushButton">
+          <property name="text">
+           <string>Save QML...</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
@@ -318,7 +325,7 @@ Color</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>901</width>
      <height>22</height>
     </rect>
    </property>
@@ -345,6 +352,7 @@ Color</string>
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionQuit"/>
+    <addaction name="actionSave_QML"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
     <property name="title">
@@ -432,6 +440,11 @@ Color</string>
    </property>
    <property name="text">
     <string>Show Warnings</string>
+   </property>
+  </action>
+  <action name="actionSave_QML">
+   <property name="text">
+    <string>Save QML...</string>
    </property>
   </action>
  </widget>
