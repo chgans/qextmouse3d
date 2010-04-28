@@ -30,7 +30,8 @@ HEADERS += \
     viewport.h
 
 qdeclarativesources.files += \
-    qmldir
+    qmldir \
+    DefaultNavigator.qml
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
 

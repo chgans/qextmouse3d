@@ -1036,8 +1036,8 @@ void QGLView::pan(int deltax, int deltay)
     // actually thinks they are picking up the object and dragging it rather
     // than moving the eye.  We therefore apply the inverse of the translation
     // to make it "look right".
-    d->camera->translateEye(-t);
-    d->camera->translateCenter(-t);
+    d->camera->setEye(d->camera->eye() - t);
+    d->camera->setCenter(d->camera->center() - t);
 }
 
 // Rotate about the object being viewed.
