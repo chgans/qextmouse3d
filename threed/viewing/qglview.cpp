@@ -169,6 +169,8 @@ public:
 
         panning = false;
         startPan = QPoint(-1, -1);
+        lastPan = QPoint(-1, -1);
+        panModifiers = Qt::NoModifier;
 
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
@@ -207,6 +209,11 @@ public:
     QGLCamera *camera;
     bool panning;
     QPoint startPan;
+    QPoint lastPan;
+    QVector3D startEye;
+    QVector3D startCenter;
+    QVector3D startUpVector;
+    Qt::KeyboardModifiers panModifiers;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QTime logTime;
@@ -705,7 +712,11 @@ void QGLView::mousePressEvent(QMouseEvent *e)
     } else if ((d->options & QGLView::CameraNavigation) != 0 &&
                     e->button() == Qt::LeftButton) {
         d->panning = true;
-        d->startPan = e->pos();
+        d->lastPan = d->startPan = e->pos();
+        d->startEye = d->camera->eye();
+        d->startCenter = d->camera->center();
+        d->startUpVector = d->camera->upVector();
+        d->panModifiers = e->modifiers();
 #ifndef QT_NO_CURSOR
         setCursor(Qt::ClosedHandCursor);
 #endif
@@ -786,7 +797,19 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
 {
     if (d->panning) {
         QPoint delta = e->pos() - d->startPan;
-        d->startPan = e->pos();
+        if (e->modifiers() == d->panModifiers) {
+            d->camera->setEye(d->startEye);
+            d->camera->setCenter(d->startCenter);
+            d->camera->setUpVector(d->startUpVector);
+        } else {
+            d->startPan = d->lastPan;
+            delta = e->pos() - d->startPan;
+            d->startEye = d->camera->eye();
+            d->startCenter = d->camera->center();
+            d->startUpVector = d->camera->upVector();
+            d->panModifiers = e->modifiers();
+        }
+        d->lastPan = e->pos();
         if ((e->modifiers() & Qt::ControlModifier) != 0)
             wheel(delta.y() * -60);
         else if ((e->modifiers() & Qt::ShiftModifier) != 0)
