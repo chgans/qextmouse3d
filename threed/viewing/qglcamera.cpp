@@ -665,15 +665,19 @@ void QGLCamera::setEye(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the position of the viewer's eye by the components of \a vector.
-    The final position is eye() + \a vector.
+    Adjusts the position of the viewer's eye by the components
+    (\a x, \a y, \a z), where the components are interpreted relative
+    to the viewer's current orientation.  See translation() for more
+    information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa eye(), setEye(), translateCenter()
 */
-void QGLCamera::translateEye(const QVector3D& vector)
+void QGLCamera::translateEye(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->eye += vector;
+    d->eye += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -790,15 +794,18 @@ void QGLCamera::setCenter(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the center of the view by the components of \a vector.
-    The final position is center() + \a vector.
+    Adjusts the center of the view by the components (\a x, \a y, \a z),
+    where the components are interpreted relative to the viewer's current
+    orientation.  See translation() for more information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa center(), setCenter(), translateEye()
 */
-void QGLCamera::translateCenter(const QVector3D& vector)
+void QGLCamera::translateCenter(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->center += vector;
+    d->center += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -1003,10 +1010,14 @@ void QGLCamera::rotateCenter(const QQuaternion& q)
     This function is useful when implementing operations such as
     "step left", "jump up", and so on where the movement should be
     interpreted relative to the viewer's current orientation, not the
-    world co-ordinate axes,
+    world co-ordinate axes.
 
-    The translation vector can be applied to eye() or center() by
-    calling translateEye() or translateCenter() respectively.
+    The following example moves the eye() 2 units to the right of the
+    current eye position while keeping the same center() of interest:
+
+    \code
+    camera.setEye(camera.eye() + camera.translation(2, 0, 0));
+    \endcode
 
     \sa translateEye(), translateCenter()
 */

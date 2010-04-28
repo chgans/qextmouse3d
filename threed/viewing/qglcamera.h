@@ -155,9 +155,6 @@ public:
 
     QVector3D translation(qreal x, qreal y, qreal z) const;
 
-    void translateEye(const QVector3D& vector);
-    void translateCenter(const QVector3D& vector);
-
     QMatrix4x4 projectionMatrix(qreal aspectRatio) const;
     QMatrix4x4 projectionMatrix2D
         (const QRect& rect, QGL::Eye eye = QGL::NoEye) const;
@@ -179,6 +176,9 @@ public:
     };
 
 public Q_SLOTS:
+    void translateEye(qreal x, qreal y, qreal z);
+    void translateCenter(qreal x, qreal y, qreal z);
+
     void tiltCenter(qreal angle);
     void panCenter(qreal angle);
     void rollCenter(qreal angle);

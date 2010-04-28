@@ -560,8 +560,8 @@ void QGLGraphicsNavigationItemPrivate::pan(qreal deltax, qreal deltay)
     // actually thinks they are picking up the object and dragging it rather
     // than moving the eye.  We therefore apply the inverse of the translation
     // to make it "look right".
-    camera->translateEye(-t);
-    camera->translateCenter(-t);
+    camera->setEye(camera->eye() - t);
+    camera->setCenter(camera->center() - t);
 }
 
 // Rotate about the object being viewed.
