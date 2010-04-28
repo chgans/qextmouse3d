@@ -326,7 +326,7 @@ void Controls::on_actionSave_QML_triggered()
     QFileInfo fi(modelFileName);
     QString qmlName = fi.baseName();
     qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + ".qml";
-    QString path = QDir::homePath() + "/" + qmlName;
+    QString path = fi.absoluteDir().absoluteFilePath(qmlName);
     QString file = QFileDialog::getSaveFileName(this, tr("Save QML file"), path,
                                                 tr("QML files (*.qml)"));
     if (!file.isEmpty())
