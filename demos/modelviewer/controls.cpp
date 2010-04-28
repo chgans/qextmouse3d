@@ -43,11 +43,14 @@
 #include "ui_controls.h"
 #include "optionsdialog.h"
 #include "viewer.h"
+#include "qmlgenerator.h"
 
-#include <QDir>
-#include <QColorDialog>
-#include <QFileDialog>
-#include <QSettings>
+#include <QtCore/qdir.h>
+#include <QtGui/qcolordialog.h>
+#include <QtGui/qfiledialog.h>
+#include <QtCore/qsettings.h>
+
+#include <QtCore/qdebug.h>
 
 Controls::Controls(QWidget *parent)
     : QMainWindow(parent)
@@ -109,6 +112,8 @@ Controls::Controls(QWidget *parent)
             this, SLOT(optionMenuToggled(bool)));
     connect(ui->actionShow_Warnings, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
+    connect(ui->generateQmlPushButton, SIGNAL(clicked()),
+            ui->actionSave_QML, SIGNAL(triggered()));
 }
 
 Controls::~Controls()
@@ -313,4 +318,29 @@ void Controls::on_actionQuit_triggered()
     saveSettings(model);
     saveModelDefaults(model);
     close();
+}
+
+void Controls::on_actionSave_QML_triggered()
+{
+    QString modelFileName = mView->currentModel();
+    QFileInfo fi(modelFileName);
+    QString qmlName = fi.baseName();
+    qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + ".qml";
+    QString path = QDir::homePath() + "/" + qmlName;
+    QString file = QFileDialog::getSaveFileName(this, tr("Save QML file"), path,
+                                                tr("QML files (*.qml)"));
+    if (!file.isEmpty())
+    {
+        QFileInfo fi2(file);
+        QString n2 = fi2.baseName();
+        n2 = n2.mid(1).prepend((n2[0].toUpper())) + ".qml";
+        file = fi2.absolutePath() + "/" + n2;
+        QmlGenerator gen(file);
+        gen.setProperty("modelFileName", modelFileName);
+        saveSettings(modelFileName);
+        QString options = Viewer::getOptions(mView->currentModel());
+        if (!options.isEmpty())
+            gen.setProperty("options", options);
+        gen.save();
+    }
 }

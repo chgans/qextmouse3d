@@ -39,52 +39,49 @@
 **
 ****************************************************************************/
 
-#ifndef CONTROLS_H
-#define CONTROLS_H
 
-#include <QtGui/QMainWindow>
+#include "qmlstanza.h"
 
-namespace Ui {
-    class Controls;
+QmlStanza::QmlStanza(const QString &name, QObject *parent)
+    : QObject(parent)
+    , m_name(name)
+    , m_indent(0)
+{
 }
 
-class Viewer;
+QString QmlStanza::toString() const
+{
+    static QString indent("    ");
 
-class Controls : public QMainWindow {
-    Q_OBJECT
-public:
-    Controls(QWidget *parent = 0);
-    ~Controls();
+    QString result = m_name;
+    if (m_content.size() > 0)
+    {
+        result += " {\n";
+        QMap<QString, QmlStanza *>::const_iterator it = m_content.constBegin();
+        for ( ; it != m_content.constEnd(); ++it)
+        {
+            result += indent.repeated(m_indent + 1);
+            result += it.key() + ": ";
+            result += it.value()->toString() + "\n";
+        }
+        result += indent.repeated(m_indent) + "}";
+    }
+    return result;
+}
 
-public slots:
-    void signalColor(const QColor &);
-    void loadModelDefaults(const QString &);
-    void saveModelDefaults(const QString &);
+void QmlStanza::addProperty(const QString &name, const QString &value)
+{
+    addProperty(name, new QmlStanza(value, this));
+}
 
-signals:
-    void updateSelectColor(const QColor &);
-    void openFile(const QString &);
+void QmlStanza::addProperty(const QString &name, QmlStanza *subItem)
+{
+    subItem->setIndent(m_indent + 1);
+    m_content.insertMulti(name, subItem);
+}
 
-protected:
-    void changeEvent(QEvent *e);
-
-private:
-    QString populateModelMenu();
-
-    Ui::Controls *ui;
-    Viewer *mView;
-    QColor mSelectColor;
-
-private slots:
-    void on_actionSave_QML_triggered();
-    void on_actionQuit_triggered();
-    void on_actionComponent_triggered();
-    void on_actionOpen_triggered();
-    void on_spinCheckBox_stateChanged(int );
-    void on_selectColorButton_clicked();
-    void optionMenuToggled(bool);
-    void saveSettings(const QString &);
-    void loadSettings(const QString &);
-};
-
-#endif // CONTROLS_H
+QTextStream &operator<<(QTextStream &s, const QmlStanza &q)
+{
+    s << q.toString() << endl;
+    return s;
+}
