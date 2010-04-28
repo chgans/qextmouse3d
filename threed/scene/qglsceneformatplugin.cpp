@@ -154,9 +154,9 @@ void QGLSceneFormatHandler::setUrl(const QUrl& url)
 
 /*!
     Decodes and applies \a options to this handler.  Generally this will be
-    called by the loadScene() method prior to actually processing the model
-    data.  Exactly what the string value may contain and the meaning of the
-    encoded options depends on each individual plugin.
+    called by the QGLAbstractScene::loadScene() method prior to reading
+    the model data with read().  Exactly what the string value may contain
+    and the meaning of the encoded options depends on each individual plugin.
 
     This default implementation simply does nothing.
 */

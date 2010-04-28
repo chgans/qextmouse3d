@@ -286,9 +286,12 @@ QGLAbstractScene *QGLAbstractScene::loadScene
             = qobject_cast<QGLSceneFormatFactoryInterface*>
                 (l->instance(fmt))) {
         QGLSceneFormatHandler *handler = factory->create(device, url, fmt);
-	if (!options.isEmpty())
-            handler->decodeOptions(options);
         if (handler) {
+            handler->setDevice(device);
+            handler->setUrl(url);
+            handler->setFormat(format);
+            if (!options.isEmpty())
+                handler->decodeOptions(options);
             QGLAbstractScene *scene = handler->read();
             delete handler;
             return scene;

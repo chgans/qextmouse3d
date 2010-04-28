@@ -90,6 +90,7 @@
         <li><a href="qt3d-tutorials.html">Tutorials</a></li>
         <li><a href="qt3d-examples.html">Examples</a></li>
         <li><a href="qt3d-demos.html">Demos</a></li>
+        <li><a href="sceneformats-obj.html">Scene format plug-ins</a></li>
         <li><a href="qt3d-contrib.html">Contributing</a></li>
         </ul>
         </td>
