@@ -96,7 +96,7 @@ Viewport {
                         texture2D(qgl_Texture0, texCoord.st);
                 gl_FragColor = clamp(vec4(
                         customColor.rgb * (1.0 - textureColor.a) +
-                        textureColor.rgb, 0.0, 1.0, 1.0));
+                        textureColor.rgb, 1.0), 0.0, 1.0);
             }
             "
         }
