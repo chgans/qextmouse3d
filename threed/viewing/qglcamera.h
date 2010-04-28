@@ -62,7 +62,7 @@ class QGLPainter;
 class Q_QT3D_EXPORT QGLCamera : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ProjectionType)
+    Q_ENUMS(ProjectionType RotateOrder)
     Q_PROPERTY(ProjectionType projectionType READ projectionType WRITE setProjectionType NOTIFY projectionChanged)
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY projectionChanged)
     Q_PROPERTY(qreal nearPlane READ nearPlane WRITE setNearPlane NOTIFY projectionChanged)
@@ -167,6 +167,29 @@ public:
     QVector3D mapPoint
         (const QPoint& point, qreal aspectRatio,
          const QSize& viewportSize) const;
+
+    enum RotateOrder
+    {
+        TiltPanRoll,
+        TiltRollPan,
+        PanTiltRoll,
+        PanRollTilt,
+        RollTiltPan,
+        RollPanTilt
+    };
+
+public Q_SLOTS:
+    void tiltCenter(qreal angle);
+    void panCenter(qreal angle);
+    void rollCenter(qreal angle);
+    void tiltPanRollCenter(qreal tiltAngle, qreal panAngle, qreal rollAngle,
+                           QGLCamera::RotateOrder order = TiltPanRoll);
+
+    void tiltEye(qreal angle);
+    void panEye(qreal angle);
+    void rollEye(qreal angle);
+    void tiltPanRollEye(qreal tiltAngle, qreal panAngle, qreal rollAngle,
+                        QGLCamera::RotateOrder order = TiltPanRoll);
 
 Q_SIGNALS:
     void projectionChanged();
