@@ -49,23 +49,29 @@ QT_BEGIN_NAMESPACE
 class QGLDisplayList;
 class QGLSceneNode;
 
+//! [1]
 class QGLObjScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
+//! [1]
     explicit QGLObjScene(QGLDisplayList *list,
                          QGLSceneObject *defaultNode,
                          const QList<QGLSceneObject *>& otherNodes,
                          QObject *parent = 0);
     virtual ~QGLObjScene();
 
+//! [2]
     QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
+//! [2]
 
 private:
     QGLDisplayList *displayList;
     QGLSceneObject *mainObject;
     QList<QGLSceneObject *> meshes;
+//! [3]
 };
+//! [3]
 
 QT_END_NAMESPACE
 
