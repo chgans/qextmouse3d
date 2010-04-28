@@ -55,9 +55,12 @@ public:
     void addProperty(const QString &name, QmlStanza *subItem);
     void addProperty(const QString &name, const QString &value);
     void setIndent(int indent) { m_indent = indent; }
+    void setQuoted(bool enable) { m_quoted = enable; }
+    bool isQuoted() const { return m_quoted; }
 private:
     QString m_name;
     int m_indent;
+    bool m_quoted;
     QMap<QString, QmlStanza *> m_content;
 };
 
