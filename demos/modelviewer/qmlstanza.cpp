@@ -46,6 +46,7 @@ QmlStanza::QmlStanza(const QString &name, QObject *parent)
     : QObject(parent)
     , m_name(name)
     , m_indent(0)
+    , m_quoted(false)
 {
 }
 
@@ -60,9 +61,13 @@ QString QmlStanza::toString() const
         QMap<QString, QmlStanza *>::const_iterator it = m_content.constBegin();
         for ( ; it != m_content.constEnd(); ++it)
         {
+            QmlStanza *s = it.value();
             result += indent.repeated(m_indent + 1);
             result += it.key() + ": ";
-            result += it.value()->toString() + "\n";
+            if (s->isQuoted())
+                result += QString("\"%1\"\n").arg(s->toString());
+            else
+                result += s->toString() + "\n";
         }
         result += indent.repeated(m_indent) + "}";
     }
@@ -71,7 +76,12 @@ QString QmlStanza::toString() const
 
 void QmlStanza::addProperty(const QString &name, const QString &value)
 {
-    addProperty(name, new QmlStanza(value, this));
+    if (!name.isEmpty() && !value.isEmpty())
+    {
+        QmlStanza *s = new QmlStanza(value, this);
+        s->setQuoted(true);
+        addProperty(name, s);
+    }
 }
 
 void QmlStanza::addProperty(const QString &name, QmlStanza *subItem)

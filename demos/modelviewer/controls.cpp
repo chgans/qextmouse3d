@@ -332,11 +332,13 @@ void Controls::on_actionSave_QML_triggered()
     if (!file.isEmpty())
     {
         QFileInfo fi2(file);
+        QDir d = fi2.absoluteDir();
+        QString relName = d.relativeFilePath(modelFileName);
         QString n2 = fi2.baseName();
         n2 = n2.mid(1).prepend((n2[0].toUpper())) + ".qml";
         file = fi2.absolutePath() + "/" + n2;
         QmlGenerator gen(file);
-        gen.setProperty("modelFileName", modelFileName);
+        gen.setProperty("modelFileName", relName);
         saveSettings(modelFileName);
         QString options = Viewer::getOptions(mView->currentModel());
         if (!options.isEmpty())

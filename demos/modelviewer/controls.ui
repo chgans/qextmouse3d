@@ -351,8 +351,9 @@ Color</string>
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
-    <addaction name="actionQuit"/>
     <addaction name="actionSave_QML"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
     <property name="title">
