@@ -120,11 +120,13 @@ public:
     void setActive(QGLPainter *painter, bool flag);
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
+    void setUniformForPropertyIndex(int propertyIndex);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
     void setCommonNormal(const QVector3D& value);
+    void setPropertiesDirty();
 
 private:
     void setUniformLocationsFromParentProperties();
@@ -143,6 +145,8 @@ private:
     int texture1;
     int colorUniform;
     QMap<int, int> propertyIdsToUniformLocations;
+    QList<int> dirtyProperties;
+    QList<int> propertiesWithoutNotifications;
 };
 
 /*
@@ -223,16 +227,29 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
     }
 
     const QMetaObject* parentMetaObject = parent.data()->metaObject();
+    int dirtyMethodIndex  = parentMetaObject->indexOfMethod("markPropertyDirty()");
 
     for(int i = parentMetaObject->propertyOffset();
     i < parentMetaObject->propertyCount(); i++)
     {
-        QString propertyName = parentMetaObject->property(i).name();
+        QMetaProperty metaProperty = parentMetaObject->property(i);
+        QString propertyName = metaProperty.name();
         int location = program->uniformLocation(propertyName);
         // -1 indicates that the program does not use the variable,
         // so ignore those variables.
         if(location != -1)
+        {
+            dirtyProperties.append(i);
             propertyIdsToUniformLocations[i] = location;
+            if(metaProperty.hasNotifySignal())
+            {
+                QMetaMethod notifySignal = metaProperty.notifySignal();
+                parentMetaObject->connect(parent.data(), notifySignal.methodIndex(), parent.data(), dirtyMethodIndex );
+            } else {
+                qWarning() << "Warning: No notification signal found for property: " << propertyName;
+                propertiesWithoutNotifications.append(i);
+            }
+        }
     }
 }
 
@@ -358,70 +375,80 @@ void ShaderProgramEffect::update
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
         return;
     int propertyIndex;
-    int uniformLocation;
-    foreach (propertyIndex, propertyIdsToUniformLocations.keys())
+    // update dirty properties
+    foreach (propertyIndex, dirtyProperties)
     {
-        uniformLocation = propertyIdsToUniformLocations[propertyIndex];
-
-        QVariant value =
-                parent.data()->metaObject()->property(propertyIndex).read(parent.data());
-
-        switch(value.type())
-        {
-        case QVariant::Double:
-            // Convert double to float to pass to shader program
-        case QMetaType::Float:
-            program->setUniformValue(uniformLocation, value.toFloat());
-            break;
-        case QVariant::Int:
-            program->setUniformValue(uniformLocation, value.toInt());
-            break;
-        case QVariant::UInt:
-            program->setUniformValue(uniformLocation, value.toUInt());
-            break;
-        case QVariant::Bool:
-            program->setUniformValue(uniformLocation, value.toBool());
-            break;
-        case QVariant::Color:
-            program->setUniformValue(uniformLocation, value.value<QColor>());
-            break;
-        case QVariant::List:
-            setUniformFromFloatList(program, uniformLocation, value.toList());
-            break;
-        case QVariant::Point:
-            program->setUniformValue(uniformLocation, value.toPoint());
-            break;
-        case QVariant::PointF:
-            program->setUniformValue(uniformLocation, value.toPointF());
-            break;
-        case QVariant::Size:
-            program->setUniformValue(uniformLocation, value.toSize());
-            break;
-        case QVariant::SizeF:
-            program->setUniformValue(uniformLocation, value.toSizeF());
-            break;
-        case QVariant::Matrix4x4:
-            program->setUniformValue(uniformLocation, value.value<QMatrix4x4>());
-            break;
-        case QVariant::Vector2D:
-            program->setUniformValue(uniformLocation, value.value<QVector2D>());
-            break;
-        case QVariant::Vector3D:
-            program->setUniformValue(uniformLocation, value.value<QVector3D>());
-            break;
-        case QVariant::Vector4D:
-            program->setUniformValue(uniformLocation, value.value<QVector4D>());
-            break;
-
-            // TODO: image/texture
-
-        default:
-            qWarning() << "Unrecognized variant for property " << parent.data()->metaObject()->property(propertyIndex).name() << " of type " << value.typeName() << ", could not set corresponding shader variable";
-            ;
-        }
+        setUniformForPropertyIndex(propertyIndex);
     }
+    dirtyProperties.clear();
 
+    // always update the properties we can't track
+    foreach (propertyIndex, propertiesWithoutNotifications)
+    {
+        setUniformForPropertyIndex(propertyIndex);
+    }
+}
 
+inline void ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex)
+{
+    int uniformLocation = propertyIdsToUniformLocations[propertyIndex];
+
+QVariant value =
+        parent.data()->metaObject()->property(propertyIndex).read(parent.data());
+
+switch(value.type())
+{
+case QVariant::Double:
+    // Convert double to float to pass to shader program
+case QMetaType::Float:
+    program->setUniformValue(uniformLocation, value.toFloat());
+    break;
+case QVariant::Int:
+    program->setUniformValue(uniformLocation, value.toInt());
+    break;
+case QVariant::UInt:
+    program->setUniformValue(uniformLocation, value.toUInt());
+    break;
+case QVariant::Bool:
+    program->setUniformValue(uniformLocation, value.toBool());
+    break;
+case QVariant::Color:
+    program->setUniformValue(uniformLocation, value.value<QColor>());
+    break;
+case QVariant::List:
+    setUniformFromFloatList(program, uniformLocation, value.toList());
+    break;
+case QVariant::Point:
+    program->setUniformValue(uniformLocation, value.toPoint());
+    break;
+case QVariant::PointF:
+    program->setUniformValue(uniformLocation, value.toPointF());
+    break;
+case QVariant::Size:
+    program->setUniformValue(uniformLocation, value.toSize());
+    break;
+case QVariant::SizeF:
+    program->setUniformValue(uniformLocation, value.toSizeF());
+    break;
+case QVariant::Matrix4x4:
+    program->setUniformValue(uniformLocation, value.value<QMatrix4x4>());
+    break;
+case QVariant::Vector2D:
+    program->setUniformValue(uniformLocation, value.value<QVector2D>());
+    break;
+case QVariant::Vector3D:
+    program->setUniformValue(uniformLocation, value.value<QVector3D>());
+    break;
+case QVariant::Vector4D:
+    program->setUniformValue(uniformLocation, value.value<QVector4D>());
+    break;
+
+    // TODO: image/texture
+
+default:
+    qWarning() << "Unrecognized variant for property " << parent.data()->metaObject()->property(propertyIndex).name() << " of type " << value.typeName() << ", could not set corresponding shader variable";
+    ;
+}
 }
 
 /*
@@ -475,6 +502,12 @@ void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
         program->disableAttributeArray(normalAttr);
         program->setAttributeValue(normalAttr, value);
     }
+}
+
+void ShaderProgramEffect::setPropertiesDirty()
+{
+    // TODO: identify which property has changed
+    dirtyProperties = this->propertyIdsToUniformLocations.keys();
 }
 
 class ShaderProgramPrivate
@@ -562,6 +595,14 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
     painter->setColor(color());
+}
+
+/*!
+  Mark a property as dirty to change the uniform in the next update
+*/
+void ShaderProgram::markPropertyDirty()
+{
+    d->effect->setPropertiesDirty();
 }
 
 QT_END_NAMESPACE

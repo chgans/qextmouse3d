@@ -66,6 +66,8 @@ public:
     void setFragmentShader(const QString& value);
 
     void enableEffect(QGLPainter *painter);
+public slots:
+    void markPropertyDirty();
 private:
     ShaderProgramPrivate *d;
 };
