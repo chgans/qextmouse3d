@@ -70,6 +70,7 @@ public:
     void setRotY(int ry);
     int rotZ() const { return m_rotZ; }
     void setRotZ(int rz);
+    void reset();
 
 public slots:
     void enableAnimation(bool enable);

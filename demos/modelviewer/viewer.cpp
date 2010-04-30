@@ -61,7 +61,7 @@ Viewer::Viewer(QWidget *parent)
     , m_lightParameters(0)
     , m_x(0)
     , m_y(0)
-    , m_z(0)
+    , m_z(10)
     , m_rotX(0)
     , m_rotY(0)
     , m_rotZ(0)
@@ -101,6 +101,7 @@ void Viewer::setZ(int z)
 {
     if (m_z != z)
     {
+        qDebug() << "settig z:" << z;
         m_z = z;
         update();
     }
@@ -131,6 +132,16 @@ void Viewer::setRotZ(int rz)
         m_rotZ = rz;
         update();
     }
+}
+
+void Viewer::reset()
+{
+    setX(0);
+    setY(0);
+    setZ(0);
+    setRotX(0);
+    setRotY(0);
+    setRotZ(0);
 }
 
 void Viewer::mouseDrag(QMouseEvent *e)
@@ -171,10 +182,11 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 
 void Viewer::wheelEvent(QWheelEvent *e)
 {
+    qDebug() << "wheelEvent" << e->delta();
     if (e->modifiers() & Qt::ShiftModifier)
-        m_rotZ += e->delta();
+        setRotZ(m_rotZ + e->delta() / 25);
     else
-        m_z += + e->delta();
+        setZ(m_z + e->delta() / 25);
     update();
 }
 
@@ -262,9 +274,22 @@ void Viewer::paintGL(QGLPainter *painter)
     }
 
     QGLCamera camera;
-    camera.setEye(QVector3D(m_x, m_y, m_z));
-    camera.rotateCenter(camera.pan(m_spin));
+    QVector3D eye(-m_x, -m_y, -m_z);
+    if (!qFuzzyCompare(eye, camera.eye()))
+        camera.setEye(eye);
+    if (m_spin != 0)
+        camera.rotateCenter(camera.pan(m_spin));
+    camera.setFarPlane(qMax(m_z + 1000, 1000));
     painter->setCamera(&camera);
+
+    static QVector3D eyeLast;
+    static qreal farLast = 0.0f;
+    if (eye != eyeLast || camera.farPlane() != farLast)
+    {
+        qDebug() << "eye:" << eye << "far plane:" << camera.farPlane();
+        eyeLast = eye;
+        farLast = camera.farPlane();
+    }
 
     painter->modelViewMatrix().push();
 
@@ -295,4 +320,5 @@ void Viewer::animate()
 void Viewer::enableAnimation(bool enabled)
 {
     m_animate = enabled;
+    m_spin = 0;
 }

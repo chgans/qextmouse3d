@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>900</width>
-    <height>668</height>
+    <width>850</width>
+    <height>591</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -132,6 +132,121 @@
       <item>
        <widget class="QTreeView" name="treeView"/>
       </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Axis</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Rotate</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Translate</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>X:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="xRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QSpinBox" name="xTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Y:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="yRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QSpinBox" name="yTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Z:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QSpinBox" name="zRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QSpinBox" name="zTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
      </layout>
     </item>
    </layout>
@@ -141,7 +256,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>900</width>
+     <width>850</width>
      <height>22</height>
     </rect>
    </property>

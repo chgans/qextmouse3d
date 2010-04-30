@@ -67,6 +67,7 @@ signals:
 
 protected:
     void changeEvent(QEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 
 private slots:
     void on_actionComponent_triggered();

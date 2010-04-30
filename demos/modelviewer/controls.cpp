@@ -50,7 +50,7 @@
 #include <QtGui/qcolordialog.h>
 #include <QtGui/qfiledialog.h>
 #include <QtCore/qsettings.h>
-
+#include <QtGui/qevent.h>
 #include <QtCore/qdebug.h>
 
 Controls::Controls(QWidget *parent)
@@ -77,6 +77,9 @@ Controls::Controls(QWidget *parent)
             this, SLOT(loadSettings(QString)));
     connect(m_model, SIGNAL(modelLoaded(QString)),
             this, SLOT(setWindowTitle(QString)));
+    connect(m_model, SIGNAL(modelLoaded(QString)),
+            this, SLOT(addRecentFiles(QString)));
+
     connect(m_model, SIGNAL(modelUnloaded(QString)),
             this, SLOT(saveModelDefaults(QString)));
     connect(m_model, SIGNAL(modelUnloaded(QString)),
@@ -122,6 +125,23 @@ void Controls::changeEvent(QEvent *e)
         break;
     default:
         break;
+    }
+}
+
+void Controls::keyPressEvent(QKeyEvent *e)
+{
+    if (e->key() == Qt::Key_Space)
+    {
+        m_ui->spinCheckBox->toggle();
+    }
+    else if (e->key() == Qt::Key_Escape)
+    {
+        m_view->reset();
+    }
+    if (e->modifiers() & Qt::ShiftModifier)
+    {
+        // rotate
+
     }
 }
 
@@ -293,9 +313,11 @@ void Controls::loadSettings(const QString &model)
 
 void Controls::addRecentFiles(const QString &fileName)
 {
+    qDebug() << "addRecentFiles(" << fileName << ")";
     QMenu *rf = m_ui->menuRecent_Models;
     QSettings settings;
     QStringList files = settings.value("RecentFiles", QStringList()).toStringList();
+    qDebug() << "current files:" << files;
     files.removeAll(fileName);
     files.push_front(fileName);
     if (files.size() > 10)
@@ -314,6 +336,7 @@ void Controls::addRecentFiles(const QString &fileName)
                 this, SLOT(load()));
         rf->addAction(act);
     }
+    settings.setValue("RecentFiles", files);
 }
 
 void Controls::on_actionQuit_triggered()

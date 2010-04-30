@@ -115,6 +115,7 @@ void Model::setFullPath(const QString &path)
         importModel();
         if (m_sceneRoot)
             emit modelLoaded(m_fullPath);
+        reset();
     }
 }
 
@@ -149,9 +150,10 @@ void Model::importModel()
 QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
 {
     QModelIndex result;
+    QGLSceneNode *p = 0;
     if (parent.isValid())
     {
-        QGLSceneNode *p = static_cast<QGLSceneNode*>(parent.internalPointer());
+        p = static_cast<QGLSceneNode*>(parent.internalPointer());
         QList<QGLSceneNode*> c = p->childNodes();
         if (column == 0 && row < c.count())
         {
@@ -165,6 +167,7 @@ QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
         if (row == 0 || column == 0)
             result = createIndex(row, column, m_sceneRoot);
     }
+    qDebug() << "index(" << row << "," << column << "parent" << p << ") -- :" << result.internalPointer();
     return result;
 }
 
