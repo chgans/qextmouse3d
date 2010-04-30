@@ -12,6 +12,7 @@ SOURCES += \
     effect.cpp \
     item3d.cpp \
     mesh.cpp \
+    qt3dnamespace.cpp \
     rotation3d.cpp \
     scale3d.cpp \
     shaderprogram.cpp \
@@ -23,6 +24,7 @@ HEADERS += \
     effect.h \
     item3d.h \
     mesh.h \
+    qt3dnamespace.h \
     rotation3d.h \
     scale3d.h \
     shaderprogram.h \
