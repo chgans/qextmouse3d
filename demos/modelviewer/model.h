@@ -39,74 +39,47 @@
 **
 ****************************************************************************/
 
-#ifndef VIEWER_H
-#define VIEWER_H
 
-#include <QtOpenGL/qgl.h>
+#ifndef MODEL_H
+#define MODEL_H
 
-class Model;
-class QGLPainter;
-class QGLLightModel;
-class QGLLightParameters;
-class QTimer;
+#include <QtCore/qabstractitemmodel.h>
+#include <QtCore/qstringlist.h>
 
-class Viewer : public QGLWidget
+class QGLAbstractScene;
+class QGLSceneNode;
+
+class Model : public QAbstractItemModel
 {
-    Q_OBJECT
+Q_OBJECT
 public:
-    Viewer(QWidget *parent = 0);
-    ~Viewer();
-    void setModel(Model *model) { m_model = model; }
+    explicit Model(QObject *parent = 0);
+    QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const;
+    QModelIndex parent(const QModelIndex & index) const;
+    int rowCount(const QModelIndex & parent = QModelIndex()) const;
+    int columnCount(const QModelIndex & parent = QModelIndex()) const;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+    QString fullPath() const { return m_fullPath; }
+    QGLSceneNode *scene() const { return m_sceneRoot; }
+    QString getOptions() const;
+    QStringList components() const;
 
-    int x() const { return m_x; }
-    void setX(int x);
-    int y() { return m_y; }
-    void setY(int y);
-    int z() const { return m_z; }
-    void setZ(int z);
-    int rotX() const { return m_rotX; }
-    void setRotX(int rx);
-    int rotY() const { return m_rotY; }
-    void setRotY(int ry);
-    int rotZ() const { return m_rotZ; }
-    void setRotZ(int rz);
+signals:
+    void modelLoaded(const QString &path);
+    void modelUnloaded(const QString &path);
+    void modelLoadTime(int ms);
+    void modelTriangles(int triangles);
 
 public slots:
-    void enableAnimation(bool enable);
-
-protected:
-    void initializeGL();
-    void paintGL();
-    void resizeGL(int, int);
-    void wheelEvent(QWheelEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
-
-private slots:
-    void animate();
+    void setFullPath(const QString &path);
 
 private:
-    void paintGL(QGLPainter *painter);
-    void initializeGL(QGLPainter *painter);
-    void mouseDrag(QMouseEvent *e);
+    void importModel();
 
-    QTimer *m_timer;
-    Model *m_model;
-    QGLLightModel *m_lightModel;
-    QGLLightParameters *m_lightParameters;
-    int m_x;
-    int m_y;
-    int m_z;
-    int m_rotX;
-    int m_rotY;
-    int m_rotZ;
-    int m_spin;
-    bool m_animate;
-    bool m_warningDisplayed;
-    bool m_dragging;
-    QPoint m_dragStart;
+    QString m_fullPath;
+    QGLAbstractScene *m_sceneManager;
+    QGLSceneNode *m_sceneRoot;
+    mutable QStringList m_components;
 };
 
-
-#endif // VIEWER_H
+#endif // MODEL_H

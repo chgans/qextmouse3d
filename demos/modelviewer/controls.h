@@ -49,6 +49,8 @@ namespace Ui {
 }
 
 class Viewer;
+class Model;
+class QLabel;
 
 class Controls : public QMainWindow {
     Q_OBJECT
@@ -57,34 +59,36 @@ public:
     ~Controls();
 
 public slots:
-    void signalColor(const QColor &);
     void loadModelDefaults(const QString &);
     void saveModelDefaults(const QString &);
 
 signals:
-    void updateSelectColor(const QColor &);
     void openFile(const QString &);
 
 protected:
     void changeEvent(QEvent *e);
 
-private:
-    QString populateModelMenu();
-
-    Ui::Controls *ui;
-    Viewer *mView;
-    QColor mSelectColor;
-
 private slots:
+    void on_actionComponent_triggered();
     void on_actionSave_QML_triggered();
     void on_actionQuit_triggered();
-    void on_actionComponent_triggered();
     void on_actionOpen_triggered();
     void on_spinCheckBox_stateChanged(int );
-    void on_selectColorButton_clicked();
     void optionMenuToggled(bool);
     void saveSettings(const QString &);
     void loadSettings(const QString &);
+    void triangleCountUpdated(int);
+    void fileLoadTimeNotified(int);
+    void addRecentFiles(const QString &);
+    void load();
+
+private:
+    QString populateModelMenu();
+
+    Ui::Controls *m_ui;
+    Viewer *m_view;
+    Model *m_model;
+    QLabel *m_triangleCount;
 };
 
 #endif // CONTROLS_H

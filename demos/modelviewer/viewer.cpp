@@ -40,414 +40,158 @@
 ****************************************************************************/
 
 #include "viewer.h"
+#include "model.h"
+#include "qglscenenode.h"
+#include "qglcamera.h"
+#include "qglpainter.h"
 
-#include <QTimer>
-#include <QAction>
-#include <QSlider>
-#include <QMenu>
-#include <QMessageBox>
-#include <QColorDialog>
-#include <QTime>
-#include <QSettings>
+#include <QtGui/qmessagebox.h>
+#include <QtGui/qevent.h>
+
+#include <QtCore/qtimer.h>
+#include <QtCore/qdatetime.h>
 
 #include <math.h>
 
- #ifndef M_PI
- #define M_PI 3.14159265358979323846
- #endif
-
-
-#include "qglabstractscene.h"
-#include "qglscenenode.h"
-#include "qglpainter.h"
-#include "qglcamera.h"
-#include "qgeometrydata.h"
-#include "qglmaterial.h"
-#include "qglmaterialcollection.h"
-#include "qline3d.h"
-
 Viewer::Viewer(QWidget *parent)
     : QGLWidget(parent)
-    , mTimer(new QTimer(this))
-    , mColorTimer(new QTimer(this))
-    , mSpin(0)
-    , mXTilt(270)
-    , mYTilt(0)
-    , mZTilt(0)
-    , mZoom(15)
-    , mYax(0)
-    , mSceneManager(0)
-    , mSceneRoot(0)
-    , mSceneInitialized(false)
-    , mLightParameters(new QGLLightParameters(this))
-    , mLightModel(new QGLLightModel(this))
-    , mSelectColor(QColor(Qt::red))
-    , mColorMenu(0)
-    , mComponentMenu(0)
-    , mSelectMaterial(-1)
-    , mCurrentSelected(0)
-    , mSelectColorAnimate(0)
-    , mAnimationEnabled(true)
-    , mWarningDisplayed(false)
-    , mNewModelLoaded(false)
+    , m_timer(new QTimer(this))
+    , m_model(0)
+    , m_lightModel(0)
+    , m_lightParameters(0)
+    , m_x(0)
+    , m_y(0)
+    , m_z(0)
+    , m_rotX(0)
+    , m_rotY(0)
+    , m_rotZ(0)
+    , m_animate(true)
+    , m_warningDisplayed(false)
+    , m_dragging(false)
 {
+    setToolTip(tr("Drag the mouse to slide the object left-right & up-down\n"
+                  "or use the mouse-wheel to push-pull the object.  Use\n"
+                  "shift drag or shift-mouse-wheel to rotate."));
 }
 
 Viewer::~Viewer()
 {
-    delete mTimer;
-    delete mSceneManager;
+    // nothing to do here
 }
 
-void Viewer::load()
+void Viewer::setX(int x)
 {
-    QAction *act = qobject_cast<QAction*>(sender());
-    openModelFile(act->text());
-}
-
-void Viewer::openModelFile(const QString &fileName)
-{
-    mWarningDisplayed = false;
-    importModel(fileName);
-    loadColors();
-    loadComponents();
-}
-
-QString Viewer::getOptions(const QString &name)
-{
-    QSettings settings;
-    settings.beginGroup(name);
-    QString options;
-    QStringList keys = settings.childKeys();
-    QStringList groups = settings.childGroups();
-    QString key;
-    QString group;
-    while (keys.size() > 0 || groups.size() > 0)
+    if (m_x != x)
     {
-        if (keys.size() > 0)
-        {
-            key = keys.takeFirst();
-            if (!key.startsWith("UI_"))
-            {
-                bool value = settings.value(key, false).toBool();
-                if (value)
-                {
-                    QString op = group.isEmpty() ? key : QString("%1=%2").arg(group).arg(key);
-                    options = options.isEmpty() ? op : options + " " + op;
-                }
-            }
-        }
-        if (keys.size() == 0 && groups.size() > 0)
-        {
-            if (!group.isEmpty())
-                settings.endGroup();
-            group = groups.takeFirst();
-            settings.beginGroup(group);
-            keys = settings.childKeys();
-        }
+        m_x = x;
+        update();
     }
-    return options;
 }
 
-void Viewer::importModel(const QString &name)
+void Viewer::setY(int y)
 {
-    delete mSceneManager;
-    mSceneManager = 0;
-    mSceneRoot = 0;
-    mSelectMaterial = -1;
-    QString options = Viewer::getOptions(name);
-    QTime time;
-    time.start();
-    mSceneManager = QGLAbstractScene::loadScene(name, QString(), options);
-    int ms = time.elapsed();
-    mPrevFileName = mCurrentModelName;
-    mCurrentModelName = name;
-    if (!mSceneManager)
-        return;
-    mNewModelLoaded = true;
-    QGLSceneObject *obj = mSceneManager->defaultObject(QGLSceneObject::Main);
-    mSceneInitialized = false;
-    mSceneRoot = qobject_cast<QGLSceneNode *>(obj);
-#ifndef QT_NO_DEBUG_STREAM
-    //qDumpScene(mSceneRoot);
-    int totalIndexes = 0;
-    QList<QGLSceneNode *> children = mSceneRoot->allChildren();
-    QList<QGLSceneNode*>::const_iterator it(children.begin());
-    for ( ; it != children.end(); ++it)
+    if (m_y != y)
     {
-        QGLSceneNode  *n = *it;
-        totalIndexes += n->count();
-        //if (n->objectName().startsWith("BatteryCov"))
-        //    n->setNormalViewEnabled(true);
+        m_y = y;
+        update();
     }
-    qDebug() << "Loaded:" << name << "/" << options << "--"
-            << (totalIndexes / 3) << "triangles, in" << ms << "ms";
-#endif
 }
 
-void Viewer::loadColors()
+void Viewer::setZ(int z)
 {
-    if (mColorMenu->actions().count())
-        mColorMenu->clear();
-    QGLMaterialCollection *materials = 0;
-    if (mSceneRoot)
-        materials = mSceneRoot->palette();
-    QStringList names;
-    if (materials)
+    if (m_z != z)
     {
-        for (int i = 0; i < materials->size(); ++i)
+        m_z = z;
+        update();
+    }
+}
+
+void Viewer::setRotX(int rx)
+{
+    if (m_rotX != rx)
+    {
+        m_rotX = rx;
+        update();
+    }
+}
+
+void Viewer::setRotY(int ry)
+{
+    if (m_rotY != ry)
+    {
+        m_rotY = ry;
+        update();
+    }
+}
+
+void Viewer::setRotZ(int rz)
+{
+    if (m_rotZ != rz)
+    {
+        m_rotZ = rz;
+        update();
+    }
+}
+
+void Viewer::mouseDrag(QMouseEvent *e)
+{
+    if (e->button() == Qt::LeftButton && m_dragging && m_dragStart != e->pos())
+    {
+        QPoint d = m_dragStart - e->pos();
+        m_dragStart = e->pos();
+        if (e->modifiers() & Qt::ShiftModifier)
         {
-            QString name = materials->materialName(i);
-            if (!name.isEmpty())
-                names.append(name);
+            m_rotY += d.y();
+            m_rotX += d.x();
+        }
+        else
+        {
+            m_x += d.x();
+            m_y += d.y();
         }
     }
-    if (names.count() == 0)
-    {
-        QAction *act = new QAction(tr("No materials"), this);
-        act->setDisabled(true);
-        mColorMenu->addAction(act);
-        return;
-    }
-    for (int index = 0; index < materials->size(); ++index)
-    {
-        QGLMaterial *mat = materials->material(index);
-        QPixmap px(16, 16);
-        px.fill(mat->diffuseColor());
-        QAction *act = new QAction(QIcon(px), materials->materialName(index), this);
-        mColorMenu->addAction(act);
-        QObject::connect(act, SIGNAL(triggered()), this, SLOT(changeColor()));
-    }
 }
 
-void Viewer::changeColor()
+void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!mSceneRoot)
-        return;
-    QAction *act = qobject_cast<QAction*>(sender());
-    if (!act)
-        return;
-    QGLMaterialCollection *materials = mSceneRoot->palette();
-    int index = materials->indexOf(act->text());
-    if (index == -1)
-    {
-        QMessageBox::warning(this, "Material Invalid", tr("Material %1 not found").arg(act->text()));
-        return;
-    }
-    QGLMaterial *mat = materials->material(index);
-    QColor color;
-    if (mat)
-        color = QColorDialog::getColor(mat->diffuseColor(), this);
-    if (!color.isValid())
-        return;
-    mat->setDiffuseColor(color.darker(125));
-    mat->setAmbientColor(color.darker(500));
-    mat->setSpecularColor(color.lighter(125));
-    QPixmap px(16, 16);
-    px.fill(color);
-    act->setIcon(QIcon(px));
-    update();
+    mouseDrag(e);
 }
 
-void Viewer::loadComponents()
+void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    QList<QGLSceneObject*> components;
-    if (mSceneManager)
-        components = mSceneManager->objects(QGLSceneObject::Mesh);
-    mComponentMenu->clear();
-    if (components.count() == 0)
-    {
-        QAction *act = new QAction(tr("No components"), this);
-        act->setDisabled(true);
-        mComponentMenu->addAction(act);
-        return;
-    }
-    QAction *selectNoneAct = new QAction(tr("Select None"), this);
-    mComponentMenu->addAction(selectNoneAct);
-    QObject::connect(selectNoneAct, SIGNAL(triggered()), this, SLOT(selectComponent()));
-    mComponentMenu->addSeparator();
-    QList<QGLSceneObject*>::const_iterator it(components.begin());
-    mComponents.clear();
-    for ( ; it != components.end(); ++it)
-    {
-        QGLSceneNode *nodeObj = qobject_cast<QGLSceneNode *>(*it);
-        if (!nodeObj)
-        {
-            qWarning("Could not make scene node from scene object %s",
-                     qPrintable((*it)->objectName()));
-            continue;
-        }
-        QGeometryData *mesh = nodeObj->geometry();
-        if (!mesh)
-            continue;
-        QString meshName = nodeObj->objectName();
-        QString componentName = meshName;
-        int pos = componentName.indexOf(":");
-        if (pos != -1)
-            componentName.truncate(pos);
-        if (!mComponents.contains(componentName))
-        {
-            mComponents.append(componentName);
-            QAction *act = new QAction(componentName, this);
-            mComponentMenu->addAction(act);
-            QObject::connect(act, SIGNAL(triggered()), this, SLOT(selectComponent()));
-        }
-    }
-    mCurrentSelected = 0;
-    makeSelectColor(mSelectColor);
+    m_dragStart = e->pos();
+    m_dragging = true;
 }
 
-void Viewer::restoreMaterial(QGLSceneNode *root)
+void Viewer::mouseReleaseEvent(QMouseEvent *e)
 {
-    // recurse down from the root node finding all the materials
-    // this doesn't go far enough tho' - could go down into the
-    // faces which may have materials individually assigned
-    QList<QGLSceneNode *> modList;
-    modList.append(root);
-    while (modList.count() > 0)
-    {
-        QGLSceneNode *mod = modList.takeFirst();
-        Q_ASSERT(mSaveMaterials.contains(mod));
-        mod->setMaterial(mSaveMaterials[mod]);
-        QList<QGLSceneNode*> ch = mod->childNodes();
-        QList<QGLSceneNode*>::const_iterator it = ch.begin();
-        for ( ; it != ch.end(); ++it)
-            if (!modList.contains(*it))
-                modList.append(*it);
-    }
+    mouseDrag(e);
+    m_dragging = false;
 }
 
-void Viewer::setMaterial(QGLSceneNode *root, int material)
+void Viewer::wheelEvent(QWheelEvent *e)
 {
-    QList<QGLSceneNode *> modList;
-    modList.append(root);
-    mSaveMaterials.clear();
-    while (modList.count() > 0)
-    {
-        QGLSceneNode *mod = modList.takeFirst();
-        mSaveMaterials.insert(mod, mod->material());
-        mod->setMaterial(material);
-        QList<QGLSceneNode*> ch = mod->childNodes();
-        QList<QGLSceneNode*>::const_iterator it = ch.begin();
-        for ( ; it != ch.end(); ++it)
-            if (!modList.contains(*it))
-                modList.append(*it);
-    }
-}
-
-void Viewer::selectComponent()
-{
-    if (!mSceneManager)
-        return;
-    QAction *act = qobject_cast<QAction*>(sender());
-    QGLSceneObject *component = mSceneManager->object(QGLSceneObject::Mesh, act->text());
-    QGLSceneNode *nodeObj = qobject_cast<QGLSceneNode *>(component);
-    if (mCurrentSelected)
-        restoreMaterial(mCurrentSelected);
-    mCurrentSelected = NULL;
-    if (nodeObj == NULL) // not found or "Select none"
-        return;
-    mCurrentSelected = nodeObj;
-    setMaterial(mCurrentSelected, mSelectMaterial);
-}
-
-/*!
-    Ensure the model knows about the material color used to indicate
-    a selection, by adding it to the scene palette.
-
-    If there is currently a selection, adjust the colour by the animation
-    value to produce a pulsing effect.
-*/
-void Viewer::makeSelectColor(QColor color)
-{
-    QGLMaterial *mat = 0;
-    QGLMaterialCollection *palette = mSceneRoot->palette();
-    if (mSelectMaterial == -1)
-    {
-        mat = new QGLMaterial();
-        mSelectMaterial = palette->addMaterial(mat);
-    }
+    if (e->modifiers() & Qt::ShiftModifier)
+        m_rotZ += e->delta();
     else
-    {
-        mat = palette->material(mSelectMaterial);
-    }
-    mat->setAmbientColor(color.darker(500));  // set ambient to 20%
-    mat->setDiffuseColor(color.darker(125));  // set diffuse to 80%
-    mat->setSpecularColor(color.lighter(125));  // set specular to 20% x bright
-}
-
-void Viewer::zoomChanged(int value)
-{
-    if (mZoom != value)
-    {
-        mZoom = value;
-        update();
-    }
-}
-
-void Viewer::xTiltChanged(int tilt)
-{
-    int t = tilt * 45;
-    if (t != mXTilt)
-    {
-        mXTilt = t;
-        update();
-    }
-}
-
-void Viewer::yTiltChanged(int tilt)
-{
-    int t = tilt * 45;
-    if (t != mYTilt)
-    {
-        mYTilt = t;
-        update();
-    }
-}
-
-void Viewer::zTiltChanged(int tilt)
-{
-    int t = tilt * 45;
-    if (t != mZTilt)
-    {
-        mXTilt = t;
-        update();
-    }
-}
-
-void Viewer::yaxChanged(int value)
-{
-    if (mYax != value)
-    {
-        mYax = value;
-        update();
-    }
-}
-
-void Viewer::selectColorChanged(const QColor &color)
-{
-    if (mSelectColor != color)
-    {
-        mSelectColor = color;
-        update();
-    }
+        m_z += + e->delta();
+    update();
 }
 
 void Viewer::initializeGL()
 {
-    if (mInitialModel.isEmpty())
+    if (m_model->scene() == 0)
     {
         QMessageBox::warning(this, tr("No Models Found"),
                              tr("Could not find any model to load.  Select "
                                 "Open from the File menu to navigate to a model file."));
+        m_warningDisplayed = true;
     }
     else
     {
-        openModelFile(mInitialModel);
+        QGLPainter painter(this);
+        initializeGL(&painter);
     }
-
-    QGLPainter painter(this);
-    initializeGL(&painter);
 }
 
 void Viewer::initializeGL(QGLPainter *painter)
@@ -456,17 +200,18 @@ void Viewer::initializeGL(QGLPainter *painter)
     painter->setDepthTestingEnabled(true);
     painter->setCullFaces(QGL::CullBackFaces);
 
-    mLightModel->setAmbientSceneColor(QColor(196, 196, 196));
-    painter->setLightModel(mLightModel);
+    if (!m_lightModel)
+        m_lightModel = new QGLLightModel(this);
+    m_lightModel->setAmbientSceneColor(QColor(196, 196, 196));
+    painter->setLightModel(m_lightModel);
 
-    mLightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
-    painter->setMainLight(mLightParameters);
+    if (!m_lightParameters)
+        m_lightParameters = new QGLLightParameters(this);
+    m_lightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
+    painter->setMainLight(m_lightParameters);
 
-    connect(mTimer, SIGNAL(timeout()), this, SLOT(animate()));
-    mTimer->start(25);
-
-    connect(mColorTimer, SIGNAL(timeout()), this, SLOT(animateColor()));
-    mColorTimer->start(50);
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+    m_timer->start(25);
 }
 
 /*!
@@ -481,118 +226,73 @@ void Viewer::resizeGL(int w, int h)
 
 void Viewer::paintGL()
 {
-    QGLPainter painter(this);
-    paintGL(&painter);
+    if (m_model->scene())
+    {
+        QGLPainter painter(this);
+        paintGL(&painter);
+    }
+    else
+    {
+        if (!m_warningDisplayed)
+        {
+            QMessageBox::warning(this,
+                                 tr("Model Error"),
+                                 tr("Could not load file %1").arg(m_model->fullPath()));
+            m_warningDisplayed = true;
+        }
+    }
 }
 
 void Viewer::paintGL(QGLPainter *painter)
 {
-    if (mNewModelLoaded)
-    {
-        mNewModelLoaded = false;
-        if (!mPrevFileName.isEmpty())
-            emit modelUnloaded(mPrevFileName);
-        emit modelLoaded(mCurrentModelName);
-    }
-
-    if (!mSceneInitialized)
-    {
-        mSceneInitialized = true;
-    }
-
     painter->clear();
 
     // Set perspective transformation and position model-view matrix
     QVector3D sceneOrigin;
-    qreal viewDistance = mZoom;
     qreal maxDimension = 2.0f;
-    if (mSceneRoot && mSceneRoot->geometry())
+
+    QBox3D box = m_model->scene()->boundingBox();
+    if (!box.isNull())
+        sceneOrigin = box.center();
+    if (box.isFinite())
     {
-        QBox3D box = mSceneRoot->geometry()->boundingBox();
-        if (!box.isNull())
-            sceneOrigin = box.center();
-        if (box.isFinite())
-        {
-            QVector3D ext = box.size();
-            maxDimension = qMax(ext.x(), qMax(ext.y(), ext.z()));
-            viewDistance = viewDistance + maxDimension;
-        }
+        QVector3D ext = box.size();
+        maxDimension = qMax(ext.x(), qMax(ext.y(), ext.z()));
+        m_z += maxDimension;
     }
 
     QGLCamera camera;
-    //camera.setCenter(sceneOrigin);
-    camera.setEye(QVector3D(0.0f, 0.0f, viewDistance));
-    camera.rotateCenter(camera.pan(mSpin));
+    camera.setEye(QVector3D(m_x, m_y, m_z));
+    camera.rotateCenter(camera.pan(m_spin));
     painter->setCamera(&camera);
 
     painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(0.0f, mYax, 0.0f);
 
-    QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, mXTilt);
-    QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, mYTilt);
-    QQuaternion zt = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, mZTilt);
+    QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, m_rotX);
+    QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, m_rotY);
+    QQuaternion zt = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, m_rotZ);
     painter->modelViewMatrix().rotate(xt * yt * zt);
 
     painter->modelViewMatrix().translate(-sceneOrigin);
 
-    if (mSceneRoot)
-    {
-        mSceneRoot->draw(painter);
-    }
-    else
-    {
-        if (!mWarningDisplayed)
-        {
-            QMessageBox::warning(this,
-                                 tr("Unable to load model"),
-                                 (mSceneManager ?
-                                  tr("Could not find main scene") :
-                                  tr("Could not load file %1").arg(mCurrentModelName))
-                                  + tr(".  Check console output for more details.")
-                                 );
-            mWarningDisplayed = true;
-        }
-    }
+    m_model->scene()->draw(painter);
 
     painter->modelViewMatrix().pop();
 }
 
 void Viewer::animate()
 {
-    if (!mSceneRoot)
-        return;
-    if (!mAnimationEnabled)
-        return;
-    mSpin = (mSpin + 1) % 360;
-    update();
-}
-
-void Viewer::animateColor()
-{
-    if (mCurrentSelected)
+    if (m_model->scene())
     {
-        mSelectColorAnimate = (mSelectColorAnimate + 5) % 180;
-        float colorMod = sin(((float)mSelectColorAnimate / 180.0f) * M_PI);
-        // colorMod ranges sinusoidally from 0.5 to 1.0 and back
-        if (colorMod < 1.0f)
+        if (m_animate)
         {
-            mPulse = QColor::fromRgbF(mSelectColor.redF() * colorMod,
-                                            mSelectColor.greenF() * colorMod,
-                                            mSelectColor.blueF() * colorMod);
-            makeSelectColor(mPulse);
+            m_spin = (m_spin + 1) % 360;
         }
-        else
-        {
-            if (mPulse != mSelectColor)
-            {
-                mPulse = mSelectColor;
-                makeSelectColor(mPulse);
-            }
-        }
+        update();
     }
 }
 
 void Viewer::enableAnimation(bool enabled)
 {
-    mAnimationEnabled = enabled;
+    m_animate = enabled;
 }

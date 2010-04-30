@@ -44,6 +44,7 @@
 #include "optionsdialog.h"
 #include "viewer.h"
 #include "qmlgenerator.h"
+#include "model.h"
 
 #include <QtCore/qdir.h>
 #include <QtGui/qcolordialog.h>
@@ -54,71 +55,62 @@
 
 Controls::Controls(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::Controls)
-    , mView(0)
-    , mSelectColor(QColor(Qt::blue))
+    , m_ui(new Ui::Controls)
+    , m_view(0)
 {
-    ui->setupUi(this);
-    mView = new Viewer(ui->frame);
+    m_ui->setupUi(this);
+    m_view = new Viewer(m_ui->frame);
     QHBoxLayout *lay = new QHBoxLayout();
-    lay->addWidget(mView);
-    ui->frame->setLayout(lay);
-    connect(ui->xTiltComboBox, SIGNAL(currentIndexChanged(int)),
-            mView, SLOT(xTiltChanged(int)));
-    connect(ui->yTiltComboBox, SIGNAL(currentIndexChanged(int)),
-            mView, SLOT(yTiltChanged(int)));
-    connect(ui->zTiltComboBox, SIGNAL(currentIndexChanged(int)),
-            mView, SLOT(zTiltChanged(int)));
-    connect(ui->zoomSlider, SIGNAL(valueChanged(int)),
-            mView, SLOT(zoomChanged(int)));
-    connect(ui->yaxSlider, SIGNAL(valueChanged(int)),
-            mView, SLOT(yaxChanged(int)));
-    mView->setColorMenu(ui->menuColors);
-    mView->setComponentMenu(ui->menuComponents);
-    connect(ui->actionQuit, SIGNAL(triggered()),
-            this, SLOT(close()));
-    connect(ui->actionSelect_None, SIGNAL(triggered()),
-            mView, SLOT(selectComponent()));
-    connect(mView, SIGNAL(colorUpdate(QColor)),
-            this, SLOT(signalColor(QColor)));
-    connect(this, SIGNAL(updateSelectColor(QColor)),
-            mView, SLOT(selectColorChanged(QColor)));
-    connect(this, SIGNAL(openFile(QString)),
-            mView, SLOT(openModelFile(QString)));
-    connect(mView, SIGNAL(modelLoaded(QString)),
-            this, SLOT(loadModelDefaults(QString)));
-    connect(mView, SIGNAL(modelLoaded(QString)),
-            this, SLOT(loadSettings(QString)));
-    connect(mView, SIGNAL(modelLoaded(QString)),
-            this, SLOT(setWindowTitle(QString)));
-    connect(mView, SIGNAL(modelUnloaded(QString)),
-            this, SLOT(saveModelDefaults(QString)));
-    connect(mView, SIGNAL(modelUnloaded(QString)),
-            this, SLOT(saveSettings(QString)));
-    QPixmap px(32, 32);
-    px.fill(QColor(mSelectColor));
-    ui->selectColorButton->setIcon(QIcon(px));
+    lay->addWidget(m_view);
+    m_ui->frame->setLayout(lay);
     QString initialModel = populateModelMenu();
-    mView->setInitialModel(initialModel);
-    connect(ui->actionForce_Smooth, SIGNAL(triggered(bool)),
+    qDebug() << "Initial model:" << initialModel << "!!";
+    m_model = new Model(this);
+    connect(m_ui->actionQuit, SIGNAL(triggered()),
+            this, SLOT(close()));
+
+    connect(this, SIGNAL(openFile(QString)),
+            m_model, SLOT(setFullPath(QString)));
+    connect(m_model, SIGNAL(modelLoaded(QString)),
+            this, SLOT(loadModelDefaults(QString)));
+    connect(m_model, SIGNAL(modelLoaded(QString)),
+            this, SLOT(loadSettings(QString)));
+    connect(m_model, SIGNAL(modelLoaded(QString)),
+            this, SLOT(setWindowTitle(QString)));
+    connect(m_model, SIGNAL(modelUnloaded(QString)),
+            this, SLOT(saveModelDefaults(QString)));
+    connect(m_model, SIGNAL(modelUnloaded(QString)),
+            this, SLOT(saveSettings(QString)));
+    connect(m_model, SIGNAL(modelLoadTime(int)),
+            this , SLOT(fileLoadTimeNotified(int)));
+    connect(m_model, SIGNAL(modelTriangles(int)),
+            this, SLOT(triangleCountUpdated(int)));
+
+    m_triangleCount = new QLabel(tr("0 triangles"));
+    m_ui->statusbar->addPermanentWidget(m_triangleCount);
+    m_model->setFullPath(initialModel);
+    m_view->setModel(m_model);
+    m_ui->treeView->setModel(m_model);
+
+    connect(m_ui->actionForce_Smooth, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->actionForce_Faceted, SIGNAL(triggered(bool)),
+    connect(m_ui->actionForce_Faceted, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->actionNative_Indices, SIGNAL(triggered(bool)),
+    connect(m_ui->actionNative_Indices, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->actionCorrect_Normals, SIGNAL(triggered(bool)),
+    connect(m_ui->actionCorrect_Normals, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->actionCorrect_Acute, SIGNAL(triggered(bool)),
+    connect(m_ui->actionCorrect_Acute, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->actionShow_Warnings, SIGNAL(triggered(bool)),
+    connect(m_ui->actionShow_Warnings, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(ui->generateQmlPushButton, SIGNAL(clicked()),
-            ui->actionSave_QML, SIGNAL(triggered()));
+    connect(m_ui->generateQmlPushButton, SIGNAL(clicked()),
+            m_ui->actionSave_QML, SIGNAL(triggered()));
 }
 
 Controls::~Controls()
 {
-    delete ui;
+    delete m_ui;
 }
 
 void Controls::changeEvent(QEvent *e)
@@ -126,17 +118,26 @@ void Controls::changeEvent(QEvent *e)
     QMainWindow::changeEvent(e);
     switch (e->type()) {
     case QEvent::LanguageChange:
-        ui->retranslateUi(this);
+        m_ui->retranslateUi(this);
         break;
     default:
         break;
     }
 }
 
+void Controls::load()
+{
+    QAction *act = qobject_cast<QAction*>(sender());
+    if (act)
+    {
+        m_model->setFullPath(act->text());
+    }
+}
+
 QString Controls::populateModelMenu()
 {
     QString first;
-    QMenu *menu = ui->menuModels;
+    QMenu *menu = m_ui->menuModels;
     QStringList searchDirs;
     searchDirs << ":/" << "./";
     QStringList::const_iterator it = searchDirs.begin();
@@ -157,7 +158,7 @@ QString Controls::populateModelMenu()
             QAction *act = new QAction(name, this);
             menu->addAction(act);
             QObject::connect(act, SIGNAL(triggered()),
-                             mView, SLOT(load()));
+                             this, SLOT(load()));
         }
     }
     QString cmdlineModel;
@@ -185,56 +186,39 @@ QString Controls::populateModelMenu()
     return first;
 }
 
-void Controls::signalColor(const QColor &color)
-{
-    QPixmap px(32, 32);
-    px.fill(color);
-    ui->selectColorButton->setIcon(QIcon(px));
-}
-
 void Controls::loadModelDefaults(const QString &model)
 {
     QSettings settings;
     settings.beginGroup(model);
-    int x = settings.value("UI_XTiltComboBox", 0).toInt();
-    int y = settings.value("UI_YTiltComboBox", 0).toInt();
-    int z = settings.value("UI_ZTiltComboBox", 0).toInt();
-    int zoom = settings.value("UI_ZoomSlider", 10).toInt();
-    int yax = settings.value("UI_YAxSlider", 0).toInt();
-    ui->xTiltComboBox->setCurrentIndex(x);
-    ui->yTiltComboBox->setCurrentIndex(y);
-    ui->zTiltComboBox->setCurrentIndex(z);
-    ui->zoomSlider->setValue(zoom);
-    ui->yaxSlider->setValue(yax);
+    int x = settings.value("UI_x", 0).toInt();
+    int y = settings.value("UI_y", 0).toInt();
+    int z = settings.value("UI_z", 0).toInt();
+    int rotX = settings.value("UI_rotX", 0).toInt();
+    int rotY = settings.value("UI_rotY", 0).toInt();
+    int rotZ = settings.value("UI_rotZ", 0).toInt();
+    m_view->setX(x);
+    m_view->setY(y);
+    m_view->setZ(z);
+    m_view->setRotX(rotX);
+    m_view->setRotY(rotY);
+    m_view->setRotZ(rotZ);
 }
 
 void Controls::saveModelDefaults(const QString &model)
 {
     QSettings settings;
     settings.beginGroup(model);
-    settings.setValue("UI_XTiltComboBox", ui->xTiltComboBox->currentIndex());
-    settings.setValue("UI_YTiltComboBox", ui->yTiltComboBox->currentIndex());
-    settings.setValue("UI_ZTiltComboBox", ui->zTiltComboBox->currentIndex());
-    settings.setValue("UI_ZoomSlider", ui->zoomSlider->value());
-    settings.setValue("UI_YAxSlider", ui->yaxSlider->value());
-}
-
-void Controls::on_selectColorButton_clicked()
-{
-    QColor color = QColorDialog::getColor(mSelectColor, this);
-    if (color.isValid() && color != mSelectColor)
-    {
-        mSelectColor = color;
-        emit updateSelectColor(color);
-        QPixmap px(32, 32);
-        px.fill(color);
-        ui->selectColorButton->setIcon(QIcon(px));
-    }
+    settings.setValue("UI_x", m_view->x());
+    settings.setValue("UI_y", m_view->y());
+    settings.setValue("UI_z", m_view->z());
+    settings.setValue("UI_rotX", m_view->rotX());
+    settings.setValue("UI_rotY", m_view->rotY());
+    settings.setValue("UI_rotZ", m_view->rotZ());
 }
 
 void Controls::on_spinCheckBox_stateChanged(int state)
 {
-    mView->enableAnimation(state == Qt::Checked);
+    m_view->enableAnimation(state == Qt::Checked);
 }
 
 void Controls::on_actionOpen_triggered()
@@ -245,22 +229,17 @@ void Controls::on_actionOpen_triggered()
     if (fileName.isEmpty())
         return;
     setWindowTitle(fileName);
-    ui->yaxSlider->setValue(0);
-    ui->zoomSlider->setValue(15);
-    ui->xTiltComboBox->setCurrentIndex(6);
-    ui->yTiltComboBox->setCurrentIndex(0);
-    ui->zTiltComboBox->setCurrentIndex(0);
     emit openFile(fileName);
 }
 
 void Controls::on_actionComponent_triggered()
 {
-    OptionsDialog *od = new OptionsDialog(mView->currentModel(), mView->components(), this);
+    OptionsDialog *od = new OptionsDialog(m_model->fullPath(), m_model->components(), this);
     od->setAttribute(Qt::WA_DeleteOnClose);
     int result = od->exec();
     if (result == QDialog::Accepted)
     {
-        emit openFile(mView->currentModel());
+        emit openFile(m_model->fullPath());
     }
 }
 
@@ -268,29 +247,29 @@ void Controls::optionMenuToggled(bool checked)
 {
     QAction *act = qobject_cast<QAction *>(sender());
     Q_ASSERT(act);
-    if (act == ui->actionForce_Smooth && checked && ui->actionForce_Faceted->isChecked())
-        ui->actionForce_Faceted->setChecked(false);
-    if (act == ui->actionForce_Faceted && checked && ui->actionForce_Smooth->isChecked())
-        ui->actionForce_Smooth->setChecked(false);
-    saveSettings(mView->currentModel());
-    emit openFile(mView->currentModel());
+    if (act == m_ui->actionForce_Smooth && checked && m_ui->actionForce_Faceted->isChecked())
+        m_ui->actionForce_Faceted->setChecked(false);
+    if (act == m_ui->actionForce_Faceted && checked && m_ui->actionForce_Smooth->isChecked())
+        m_ui->actionForce_Smooth->setChecked(false);
+    saveSettings(m_model->fullPath());
+    emit openFile(m_model->fullPath());
 }
 
 void Controls::saveSettings(const QString &model)
 {
     QSettings settings;
     settings.beginGroup(model);
-    bool forceSmooth = ui->actionForce_Smooth->isChecked();
+    bool forceSmooth = m_ui->actionForce_Smooth->isChecked();
     settings.setValue("ForceSmooth", forceSmooth);
-    bool forceFaceted = ui->actionForce_Faceted->isChecked();
+    bool forceFaceted = m_ui->actionForce_Faceted->isChecked();
     settings.setValue("ForceFaceted", forceFaceted);
-    bool nativeIndices = ui->actionNative_Indices->isChecked();
+    bool nativeIndices = m_ui->actionNative_Indices->isChecked();
     settings.setValue("NativeIndices", nativeIndices);
-    bool correctNormals = ui->actionCorrect_Normals->isChecked();
+    bool correctNormals = m_ui->actionCorrect_Normals->isChecked();
     settings.setValue("CorrectNormals", correctNormals);
-    bool correctAcute = ui->actionCorrect_Acute->isChecked();
+    bool correctAcute = m_ui->actionCorrect_Acute->isChecked();
     settings.setValue("CorrectAcute", correctAcute);
-    bool showWarnings = ui->actionShow_Warnings->isChecked();
+    bool showWarnings = m_ui->actionShow_Warnings->isChecked();
     settings.setValue("ShowWarnings", showWarnings);
 }
 
@@ -299,22 +278,47 @@ void Controls::loadSettings(const QString &model)
     QSettings settings;
     settings.beginGroup(model);
     bool forceSmooth = settings.value("ForceSmooth", false).toBool();
-    ui->actionForce_Smooth->setChecked(forceSmooth);
+    m_ui->actionForce_Smooth->setChecked(forceSmooth);
     bool forceFaceted = settings.value("ForceFaceted", false).toBool();
-    ui->actionForce_Faceted->setChecked(forceFaceted);
+    m_ui->actionForce_Faceted->setChecked(forceFaceted);
     bool nativeIndices = settings.value("NativeIndices", false).toBool();
-    ui->actionNative_Indices->setChecked(nativeIndices);
+    m_ui->actionNative_Indices->setChecked(nativeIndices);
     bool correctNormals = settings.value("CorrectNormals", false).toBool();
-    ui->actionCorrect_Normals->setChecked(correctNormals);
+    m_ui->actionCorrect_Normals->setChecked(correctNormals);
     bool correctAcute = settings.value("CorrectAcute", false).toBool();
-    ui->actionCorrect_Acute->setChecked(correctAcute);
+    m_ui->actionCorrect_Acute->setChecked(correctAcute);
     bool showWarnings = settings.value("ShowWarnings", false).toBool();
-    ui->actionShow_Warnings->setChecked(showWarnings);
+    m_ui->actionShow_Warnings->setChecked(showWarnings);
+}
+
+void Controls::addRecentFiles(const QString &fileName)
+{
+    QMenu *rf = m_ui->menuRecent_Models;
+    QSettings settings;
+    QStringList files = settings.value("RecentFiles", QStringList()).toStringList();
+    files.removeAll(fileName);
+    files.push_front(fileName);
+    if (files.size() > 10)
+        files.pop_back();
+    QAction *act;
+    while (rf->actions().count() > 0)
+    {
+        act = rf->actions().at(0);
+        rf->removeAction(act);
+        delete act;
+    }
+    for (int i = 0; i < files.count(); ++i)
+    {
+        act = new QAction(files.at(i), this);
+        connect(act, SIGNAL(triggered()),
+                this, SLOT(load()));
+        rf->addAction(act);
+    }
 }
 
 void Controls::on_actionQuit_triggered()
 {
-    QString model = mView->currentModel();
+    QString model = m_model->fullPath();
     saveSettings(model);
     saveModelDefaults(model);
     close();
@@ -322,7 +326,7 @@ void Controls::on_actionQuit_triggered()
 
 void Controls::on_actionSave_QML_triggered()
 {
-    QString modelFileName = mView->currentModel();
+    QString modelFileName = m_model->fullPath();
     QFileInfo fi(modelFileName);
     QString qmlName = fi.baseName();
     qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + ".qml";
@@ -340,9 +344,19 @@ void Controls::on_actionSave_QML_triggered()
         QmlGenerator gen(file);
         gen.setProperty("modelFileName", relName);
         saveSettings(modelFileName);
-        QString options = Viewer::getOptions(mView->currentModel());
+        QString options = m_model->getOptions();
         if (!options.isEmpty())
             gen.setProperty("options", options);
         gen.save();
     }
+}
+
+void Controls::triangleCountUpdated(int count)
+{
+    m_triangleCount->setText(tr("%1 triangles").arg(count));
+}
+
+void Controls::fileLoadTimeNotified(int time)
+{
+    m_ui->statusbar->showMessage(tr("file loaded in %1 ms").arg(time), 30000);
 }
