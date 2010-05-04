@@ -61,9 +61,9 @@ VideoView::~VideoView()
 
 void VideoView::initializeGL(QGLPainter *painter)
 {
-    painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
-    teapot.upload();
+    teapot << QGLTeapot();
+    teapot.finalize();
 }
 
 void VideoView::paintGL(QGLPainter *painter)

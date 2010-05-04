@@ -70,6 +70,8 @@ public:
     QImage image() const;
     void setImage(const QImage& image);
     bool setCompressedFile(const QString &path);
+    QUrl url() const;
+    void setUrl(const QUrl &url);
 
     void setPixmap(const QPixmap& pixmap);
 

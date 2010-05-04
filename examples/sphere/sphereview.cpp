@@ -56,6 +56,7 @@ SphereView::SphereView(QWidget *parent)
     : QGLView(parent), pointsImage(1, 1, QImage::Format_ARGB32),
     textured(true), timer(new QTimer(this))
 {
+    list.newSection(QGL::Faceted);
     spheres.append(list.newNode());
     list << QGLCubeSphere(1, 1);
     spheres.append(list.newNode());
@@ -124,11 +125,12 @@ void SphereView::initializeGL(QGLPainter *painter)
 
     painter->setLightModel(mdl);
 
-    painter->setLightParameters(0, lp);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(lp);
 
     connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
     timer->start(25);
+
+    painter->setBlendingEnabled(true);
 }
 
 void SphereView::paintGL(QGLPainter *painter)

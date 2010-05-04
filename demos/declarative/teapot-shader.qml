@@ -1,4 +1,5 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Viewport {
     width: 640; height: 480
@@ -10,7 +11,7 @@ Item3d {
     transform: Rotation3D {
         NumberAnimation on angle{
             running: true
-            repeat: true
+            loops: Animation.Infinite
             from: 0
             to: 360
             duration: 2000
@@ -20,7 +21,7 @@ Item3d {
 
     SequentialAnimation on y{
         running: true
-        repeat: true
+        loops: Animation.Infinite
         PauseAnimation { duration: 500 }
         NumberAnimation { to : 1.0; duration: 300; easing.type:"OutQuad" }
         NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
@@ -31,7 +32,7 @@ Item3d {
         texture: "textures/qtlogo.png"
         SequentialAnimation on color{
             running: true
-            repeat: true
+            loops: Animation.Infinite
             ColorAnimation {
                 from: "#aaca00"
                 to: "#0033ca"

@@ -47,7 +47,6 @@ void CubeView::initializeGL(QGLPainter *painter)
     cube.newSection();
     cube << QGLCube();
 
-    painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
 }
 

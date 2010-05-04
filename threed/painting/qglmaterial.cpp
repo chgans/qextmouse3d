@@ -42,6 +42,11 @@
 #include "qglmaterial.h"
 #include "qglmaterial_p.h"
 #include "qglpainter.h"
+#include "qgltexture2d.h"
+#include "qglmaterialcollection.h"
+#include "qfileinfo.h"
+
+#include <QtCore/qurl.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -290,9 +295,52 @@ void QGLMaterial::setTexture(QGLTexture2D *value, int layer)
     Q_D(QGLMaterial);
     QGLTexture2D *prev = d->textures.value(layer, 0);
     if (prev != value) {
+        delete prev;
         d->textures[layer] = value;
         emit texturesChanged();
         emit materialChanged();
+    }
+}
+
+/*!
+    \property QGLMaterial::textureUrl
+    \brief URL of the 2D texture associated with \a layer on this material.
+
+    By default \a layer is 0, the primary texture.
+
+    If the URL has not been specified, then this property is a null QUrl.
+
+    Setting this property to a non-empty URL will replace any existing texture
+    with a new texture based on the image at the given \a url.  If that
+    image is not a valid texture then the new texture will be a null texture.
+
+    If an empty url is set, this has the same effect as \c{setTexture(0)}.
+
+    \sa texture(), setTexture()
+*/
+QUrl QGLMaterial::textureUrl(int layer) const
+{
+    Q_D(const QGLMaterial);
+    QUrl u;
+    QGLTexture2D *tex = d->textures.value(layer, 0);
+    if (tex)
+        u = tex->url();
+    return u;
+}
+
+void QGLMaterial::setTextureUrl(const QUrl &url, int layer)
+{
+    Q_ASSERT(layer >= 0);
+    Q_D(QGLMaterial);
+    if (textureUrl() != url)
+    {
+        QGLTexture2D *tex = 0;
+        if (!url.isEmpty())
+        {
+            tex = new QGLTexture2D(d->collection);
+            tex->setUrl(url);
+        }
+        setTexture(tex);
     }
 }
 

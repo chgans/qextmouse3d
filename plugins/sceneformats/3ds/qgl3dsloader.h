@@ -52,23 +52,25 @@ class Lib3dsMaterial;
 class Lib3dsNode;
 class QGL3dsMesh;
 class QGLSceneNode;
+class QGL3dsSceneHandler;
 
 class QGL3dsLoader
 {
 public:
-    QGL3dsLoader(Lib3dsFile *file);
+    QGL3dsLoader(Lib3dsFile *file, QGL3dsSceneHandler* sh);
     ~QGL3dsLoader();
-    void setUrl(const QUrl &);
     QGLSceneNode *loadMeshes();
 
 private:
     void loadMesh(Lib3dsMesh *);
     void loadNodes(Lib3dsNode *, QGLSceneNode *);
     void loadMaterial(Lib3dsMaterial *);
-    QString ensureResourceFile(const QString &);
+    QUrl ensureResource(const QString &);
+    void setUrl(const QUrl &url);
 
-    QGLSceneNode *mRootNode;
     Lib3dsFile *mFile;
+    QGLSceneNode *mRootNode;
+    QGL3dsSceneHandler *mScene;
     QList<QGLSceneNode *> mNodes;
     QMap<QString, QGL3dsMesh *> mMeshes;
     QUrl mUrl;

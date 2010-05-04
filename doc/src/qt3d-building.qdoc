@@ -141,16 +141,21 @@
     \section1 Installing plugins
 
     Qt/3D has support for loading 3D model files.  This is enabled via
-    plugins for the various formats.  To build and install the 3ds plugin
-    which uses the open source \l{http://lib3ds.org}{lib3ds} library
-    you'll need to first download and install \bold{v1.3} of that library.  See the
-    instructions in \c{plugins/sceneformats/3ds/README.txt}.  Once lib3ds
-    is installed on your system, build and install Qt/3D and the plugins
-    like this:
+    plugins for the various formats.
+
+    3DS files are supported using the open source
+    \l{http://lib3ds.org}{lib3ds} library.  A copy of version 1.3 of this
+    library is included with the Qt/3D sources under the \c{3rdparty}
+    directory.
+
+    If you already have lib3ds installed on your system and you wish to use
+    that instead of the version included with Qt/3D, you can pass the
+    \c{system_3ds} option to qmake:
+
     \code
-    $ $HOME/build/qt/4.6/bin/qmake $HOME/depot/qt-labs/qt3d/opengl.pro CONFIG+=3ds
+    $ $HOME/build/qt/4.6/bin/qmake $HOME/depot/qt-labs/qt3d/opengl.pro CONFIG+=system_3ds
     $ make
-    $ make -C plugins install
+    $ make install
     \endcode
 
     The last step above will install the plugins into Qt's plugin
@@ -160,6 +165,9 @@
     format reader which is required for many model files that use TGA for
     textures.  If you know for sure that your model files don't use TGA
     then this step can be skipped.
+
+    See the instructions in \c{plugins/sceneformats/3ds/README.txt} for
+    more information on using the system lib3ds.
 
     \section1 Building Qt/3D Using QtCreator
 
@@ -187,13 +195,14 @@
     functionality is available in later QtCreator versions, even if the
     screen appears different.
 
-    \bold{Step 3} - Add the 3ds switch to qmake
+    \bold{Step 3} - Add the system_3ds switch to qmake
 
     Only do this step if you have lib3ds installed on your system, as
-    described above.
+    described above, and you want to use the system lib3ds instead of
+    the one included with Qt/3D.
 
     Do this in QtCreator from the \c{Projects} mode, under the
-    \c{Build Steps} category.  Add \c{CONFIG+=3ds} to the "Additional arguments"
+    \c{Build Steps} category.  Add \c{CONFIG+=system_3ds} to the "Additional arguments"
     for the "QMake build configuration".
 
     \image qt-creator-config-3ds.png

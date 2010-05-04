@@ -233,14 +233,14 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
         }
 
         program()->bind();
-        program()->enableAttributeArray(0);
-        program()->enableAttributeArray(1);
-        program()->enableAttributeArray(2);
+        program()->enableAttributeArray(QGL::Position);
+        program()->enableAttributeArray(QGL::Normal);
+        program()->enableAttributeArray(QGL::TextureCoord0);
         currentlyActive = true;
     } else {
-        program()->disableAttributeArray(0);
-        program()->disableAttributeArray(1);
-        program()->disableAttributeArray(2);
+        program()->disableAttributeArray(QGL::Position);
+        program()->disableAttributeArray(QGL::Normal);
+        program()->disableAttributeArray(QGL::TextureCoord0);
         program()->release();
         currentlyActive = false;
     }
@@ -293,9 +293,9 @@ void QGLShaderProgramEffect::bindProgramAttributes()
 {
     if(program() == 0)
         return;
-    program()->bindAttributeLocation("vertex", 0);
-    program()->bindAttributeLocation("normal", 1);
-    program()->bindAttributeLocation("texCoords", 2);
+    program()->bindAttributeLocation("vertex", QGL::Position);
+    program()->bindAttributeLocation("normal", QGL::Normal);
+    program()->bindAttributeLocation("texCoords", QGL::TextureCoord0);
 }
 
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
@@ -323,8 +323,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         else
             program()->setUniformValue("color", painter->color());
     }
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         QMatrix4x4 proj = painter->projectionMatrix();
         QMatrix4x4 mv = painter->modelViewMatrix();
         program()->setUniformValue("matrix", proj * mv);
@@ -332,25 +331,11 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
 
     if ((updates & QGLPainter::UpdateLights) != 0 )
     {
-        // Find the first enabled light.
-        const QGLLightParameters *lparams = 0;
-        QMatrix4x4 ltransform;
-        int count = painter->lightCount();
-
-        for (int index = 0; index < count; ++index) {
-            if (painter->isLightEnabled(index)) {
-                lparams = painter->lightParameters(index);
-                ltransform = painter->lightTransform(index);
-                break;
-            }
-        }
+        const QGLLightParameters *lparams = painter->mainLight();
+        QMatrix4x4 ltransform = painter->mainLightTransform();
 
         // rotate the light for testing purposes
         // ltransform.rotate(time * 30,0.0,1.0,0.0);
-
-        // If no lights are enabled, then use the parameters for light 0.
-        if (!lparams)
-            lparams = painter->lightParameters(0);
 
         // Set the uniform variables for the light.
         program()->setUniformValue("acli", lparams->ambientColor());
@@ -397,11 +382,11 @@ void QGLShaderProgramEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
     if (attribute == QGL::Position)
-        setAttributeArray(program(), 0, value);
+        setAttributeArray(program(), QGL::Position, value);
     else if (attribute == QGL::Normal)
-        setAttributeArray(program(), 1, value);
+        setAttributeArray(program(), QGL::Normal, value);
     else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(program(), 2, value);
+        setAttributeArray(program(), QGL::TextureCoord0, value);
 }
 
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)

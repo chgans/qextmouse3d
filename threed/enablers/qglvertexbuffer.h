@@ -57,6 +57,7 @@ QT_MODULE(Qt3d)
 class QGLVertexBufferPrivate;
 class QGLPainter;
 class QGLAbstractEffect;
+class QGLShaderProgram;
 
 class Q_QT3D_EXPORT QGLVertexBuffer
 {
@@ -108,6 +109,8 @@ public:
 
     bool bind() const;
     void release() const;
+
+    void setAttributeArrays(QGLShaderProgram *program);
 
 private:
     QGLVertexBufferPrivate *d_ptr;

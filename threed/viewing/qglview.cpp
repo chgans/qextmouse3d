@@ -169,11 +169,11 @@ public:
 
         panning = false;
         startPan = QPoint(-1, -1);
+        lastPan = QPoint(-1, -1);
+        panModifiers = Qt::NoModifier;
 
-        depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -209,6 +209,11 @@ public:
     QGLCamera *camera;
     bool panning;
     QPoint startPan;
+    QPoint lastPan;
+    QVector3D startEye;
+    QVector3D startCenter;
+    QVector3D startUpVector;
+    Qt::KeyboardModifiers panModifiers;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QTime logTime;
@@ -477,8 +482,9 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+    painter.setDepthTestingEnabled(true);
+    d->depthBufferOptions.apply();
+    d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
     d->logLeave("QGLView::initializeGL");
@@ -508,12 +514,14 @@ void QGLView::paintGL()
     // Paint the scene contents.
     QGLPainter painter;
     painter.begin();
+    painter.resetViewport();
     if (d->options & QGLView::ShowPicking) {
         // If showing picking, then render normally.
         painter.setPicking(true);
         painter.clearPickObjects();
+        painter.setEye(QGL::NoEye);
         earlyPaintGL(&painter);
-        d->camera->apply(&painter);
+        painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
     } else if (d->camera->eyeSeparation() == 0.0f) {
@@ -526,14 +534,16 @@ void QGLView::paintGL()
                 glDrawBuffer(GL_BACK);
             else
                 glDrawBuffer(GL_FRONT);
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         } else
 #endif
         {
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         }
     } else {
@@ -546,16 +556,18 @@ void QGLView::paintGL()
         // In RedCyanAnaglyph mode, the color mask is set each time to only
         // extract the color planes that we want to see through that eye.
         if (d->stereoType == QGLView::RedCyanAnaglyph) {
+            painter.setEye(QGL::LeftEye);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             earlyPaintGL(&painter);
 
             glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
+            painter.setEye(QGL::RightEye);
             glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
             glClear(GL_DEPTH_BUFFER_BIT);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -566,16 +578,18 @@ void QGLView::paintGL()
                 glDrawBuffer(GL_BACK_LEFT);
             else
                 glDrawBuffer(GL_FRONT_LEFT);
+            painter.setEye(QGL::LeftEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             if (doubleBuffered)
                 glDrawBuffer(GL_BACK_RIGHT);
             else
                 glDrawBuffer(GL_FRONT_RIGHT);
+            painter.setEye(QGL::RightEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 #endif
         }
@@ -698,7 +712,11 @@ void QGLView::mousePressEvent(QMouseEvent *e)
     } else if ((d->options & QGLView::CameraNavigation) != 0 &&
                     e->button() == Qt::LeftButton) {
         d->panning = true;
-        d->startPan = e->pos();
+        d->lastPan = d->startPan = e->pos();
+        d->startEye = d->camera->eye();
+        d->startCenter = d->camera->center();
+        d->startUpVector = d->camera->upVector();
+        d->panModifiers = e->modifiers();
 #ifndef QT_NO_CURSOR
         setCursor(Qt::ClosedHandCursor);
 #endif
@@ -779,7 +797,19 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
 {
     if (d->panning) {
         QPoint delta = e->pos() - d->startPan;
-        d->startPan = e->pos();
+        if (e->modifiers() == d->panModifiers) {
+            d->camera->setEye(d->startEye);
+            d->camera->setCenter(d->startCenter);
+            d->camera->setUpVector(d->startUpVector);
+        } else {
+            d->startPan = d->lastPan;
+            delta = e->pos() - d->startPan;
+            d->startEye = d->camera->eye();
+            d->startCenter = d->camera->center();
+            d->startUpVector = d->camera->upVector();
+            d->panModifiers = e->modifiers();
+        }
+        d->lastPan = e->pos();
         if ((e->modifiers() & Qt::ControlModifier) != 0)
             wheel(delta.y() * -60);
         else if ((e->modifiers() & Qt::ShiftModifier) != 0)
@@ -962,7 +992,8 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // Render the pick version of the scene into the framebuffer object.
         d->fbo->bind();
         painter.clear();
-        d->camera->apply(&painter);
+        painter.setEye(QGL::NoEye);
+        painter.setCamera(d->camera);
         pickGL(&painter);
         painter.setPicking(false);
 
@@ -1028,8 +1059,8 @@ void QGLView::pan(int deltax, int deltay)
     // actually thinks they are picking up the object and dragging it rather
     // than moving the eye.  We therefore apply the inverse of the translation
     // to make it "look right".
-    d->camera->translateEye(-t);
-    d->camera->translateCenter(-t);
+    d->camera->setEye(d->camera->eye() - t);
+    d->camera->setCenter(d->camera->center() - t);
 }
 
 // Rotate about the object being viewed.
@@ -1113,5 +1144,22 @@ QPointF QGLView::viewDelta(int deltax, int deltay) const
     of the view width and height.  Returns a QPointF containing
     the percentage values, typically between -1 and 1.
 */
+
+
+// The following is a hack to enable the use of QGLView with qml3d
+// and the Qt.labs.threed plugin for QML.  Needs to go away eventually.
+
+static QObject *qmlViewport = 0;
+
+Q_QT3D_EXPORT void qt_gl_set_qml_viewport(QObject *viewport)
+{
+    if (!qmlViewport)
+        qmlViewport = viewport;
+}
+
+Q_QT3D_EXPORT QObject *qt_gl_qml_viewport()
+{
+    return qmlViewport;
+}
 
 QT_END_NAMESPACE

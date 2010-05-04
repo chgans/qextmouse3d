@@ -1,4 +1,5 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Item3d {
     id: top

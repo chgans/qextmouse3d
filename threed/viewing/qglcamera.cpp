@@ -67,7 +67,8 @@ QT_BEGIN_NAMESPACE
     to define a viewing volume as a 4x4 transformation matrix.
 
     The modelview transformation matrix is returned by modelViewMatrix().
-    The projection transformation matrix is returned by projectionMatrix().
+    The projection transformation matrix is returned by projectionMatrix()
+    (or projectionMatrix2D() in the case of Orthographic2D projections).
 
     \section1 Positioning and orienting the view
 
@@ -275,6 +276,36 @@ QT_BEGIN_NAMESPACE
     environmental factors.  The application is responsible for
     cleaning up the signal and removing these fluctuations before
     setMotionAdjustment() is called.
+
+    \section1 Regular 2D projections
+
+    The Orthographic2D projectionType() can be used to set up a
+    regular 2D projection where x and y world co-ordinates are
+    mapped directly to pixel co-ordinates in the view.  The origin
+    will be at the top-left of the view, as for QPainter.
+
+    \section1 Stereo projections
+
+    QGLCamera can adjust the camera position for rendering separate left
+    and right eye images by setting eyeSeparation() to a non-zero value.
+    The eyeSeparation() is in world co-ordinates for Perspective
+    and Orthographic projections, and screen pixels for Orthographic2D
+    projections.
+
+    Objects that are placed at center() will coincide in the left and
+    right eye images, establishing the logical center of the stereo
+    effect.  Objects that are closer to the eye() will be rendered
+    to appear closer in the stereo effect, and objects that are further
+    away from eye() than center() will be rendered to appear further away.
+
+    Perspective and Orthographic projections incorporate the
+    eyeSeparation() into the modelViewMatrix() by altering the
+    eye() position.  Orthographic2D projections incorporate the
+    eyeSeparation() into the projectionMatrix2D() by shifting the
+    view left or right by an amount determined by the z component
+    of the drawn objects.
+
+    \sa QGLView, QGLPainter
 */
 
 class QGLCameraPrivate
@@ -297,8 +328,6 @@ public:
     QVector3D motionAdjustment;
     QQuaternion motionQuaternion;
     bool adjustForAspectRatio;
-
-    void lookAt(QGLPainter *painter, const QVector3D& adjust) const;
 };
 
 QGLCameraPrivate::QGLCameraPrivate()
@@ -317,19 +346,6 @@ QGLCameraPrivate::QGLCameraPrivate()
       motionAdjustment(0.0f, 0.0f, 1.0f),
       adjustForAspectRatio(true)
 {
-}
-
-void QGLCameraPrivate::lookAt
-        (QGLPainter *painter, const QVector3D& adjust) const
-{
-    if (motionQuaternion.isIdentity()) {
-        painter->modelViewMatrix().lookAt(eye + adjust, center, upVector);
-    } else {
-        QVector3D up = motionQuaternion.rotatedVector(upVector);
-        QVector3D view = motionQuaternion.rotatedVector(viewVector - adjust);
-        QVector3D eye = center - view;
-        painter->modelViewMatrix().lookAt(eye, center, up);
-    }
 }
 
 /*!
@@ -354,7 +370,10 @@ QGLCamera::~QGLCamera()
     This enum defines the type of view projection to use for a QGLCamera.
 
     \value Perspective Use a perspective view.
-    \value Orthographic Use an ortographic view.
+    \value Orthographic Use an orthographic view.
+    \value Orthographic2D Use a 2D orthographic view that directly maps
+        x and y world co-ordinates to pixel co-ordinates.  The origin
+        will be at the top-left of the view.
 */
 
 /*!
@@ -384,7 +403,7 @@ void QGLCamera::setProjectionType(QGLCamera::ProjectionType value)
     frustum view volume of viewSize() in size.  If the value is not
     zero, then viewSize() is ignored.
 
-    This value is ignored if projectionType() is Orthographic.
+    This value is ignored if projectionType() is not Perspective.
 
     \sa viewSize()
 */
@@ -466,6 +485,8 @@ void QGLCamera::setFarPlane(qreal value)
     viewing volume, which is then extended to the final viewing volume
     width and height based on the window's aspect ratio.
 
+    This value is ignored if projectionType() is Orthographic2D.
+
     \sa projectionMatrix(), minViewSize()
 */
 QSizeF QGLCamera::viewSize() const
@@ -478,10 +499,18 @@ void QGLCamera::setViewSize(const QSizeF& size)
 {
     Q_D(QGLCamera);
     QSizeF sz(size);
-    if (sz.width() < d->minViewSize.width())
-        sz.setWidth(d->minViewSize.width());
-    if (sz.height() < d->minViewSize.height())
-        sz.setHeight(d->minViewSize.height());
+    if (qAbs(sz.width()) < d->minViewSize.width()) {
+        if (sz.width() >= 0.0f)
+            sz.setWidth(d->minViewSize.width());
+        else
+            sz.setWidth(-d->minViewSize.width());
+    }
+    if (qAbs(sz.height()) < d->minViewSize.height()) {
+        if (sz.height() >= 0.0f)
+            sz.setHeight(d->minViewSize.height());
+        else
+            sz.setHeight(-d->minViewSize.height());
+    }
     if (d->viewSize != sz) {
         d->viewSize = sz;
         emit projectionChanged();
@@ -497,6 +526,8 @@ void QGLCamera::setViewSize(const QSizeF& size)
     the object and causing the scale factor to become infinite.
 
     The default value is (0.0001, 0.0001).
+
+    This value is ignored if projectionType() is Orthographic2D.
 
     \sa projectionMatrix(), viewSize()
 */
@@ -610,6 +641,10 @@ void QGLCamera::setZEye(qreal value)
     \property QGLCamera::eye
     \brief the position of the viewer's eye.  The default value is (0, 0, 10).
 
+    If the projectionType() is Orthographic2D, then the x and y
+    components of eye() are ignored: only the z component is used
+    to determine the eye position.
+
     \sa translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
@@ -630,15 +665,19 @@ void QGLCamera::setEye(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the position of the viewer's eye by the components of \a vector.
-    The final position is eye() + \a vector.
+    Adjusts the position of the viewer's eye by the components
+    (\a x, \a y, \a z), where the components are interpreted relative
+    to the viewer's current orientation.  See translation() for more
+    information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa eye(), setEye(), translateCenter()
 */
-void QGLCamera::translateEye(const QVector3D& vector)
+void QGLCamera::translateEye(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->eye += vector;
+    d->eye += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -732,6 +771,10 @@ void QGLCamera::setZCentre(qreal value)
     \brief the center of the view visible from the viewer's position.
     The default value is (0, 0, 0).
 
+    If the projectionType() is Orthographic2D, then the x and y
+    components of center() are ignored: only the z component is used
+    to determine the center position.
+
     \sa translateCenter(), eye(), upVector()
 */
 QVector3D QGLCamera::center() const
@@ -751,15 +794,18 @@ void QGLCamera::setCenter(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the center of the view by the components of \a vector.
-    The final position is center() + \a vector.
+    Adjusts the center of the view by the components (\a x, \a y, \a z),
+    where the components are interpreted relative to the viewer's current
+    orientation.  See translation() for more information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa center(), setCenter(), translateEye()
 */
-void QGLCamera::translateCenter(const QVector3D& vector)
+void QGLCamera::translateCenter(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->center += vector;
+    d->center += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -795,7 +841,7 @@ void QGLCamera::setEyeSeparation(qreal value)
     It is interpreted as a vector from the center of the screen to the
     current position of the viewer.  The angle between the motion
     adjustment vector and the screen center is used to adjust the
-    position of the eye() when apply() is called.
+    position of the eye() when modelViewMatrix() is called.
 
     The default value is (0, 0, 1), which indicates a viewer
     directly in front of the center of the screen.
@@ -812,7 +858,9 @@ void QGLCamera::setEyeSeparation(qreal value)
     cleaning up the signal and removing these fluctuations before
     altering this property.
 
-    \sa eye(), apply()
+    This value is ignored if projectionType() is Orthographic2D.
+
+    \sa eye(), modelViewMatrix()
 */
 
 QVector3D QGLCamera::motionAdjustment() const
@@ -859,6 +907,8 @@ void QGLCamera::setMotionAdjustment(const QVector3D& vector)
 
     If this property is false, then the aspect ratio adjustment is
     not performed.
+
+    This value is ignored if projectionType() is Orthographic2D.
 */
 
 bool QGLCamera::adjustForAspectRatio() const
@@ -960,10 +1010,14 @@ void QGLCamera::rotateCenter(const QQuaternion& q)
     This function is useful when implementing operations such as
     "step left", "jump up", and so on where the movement should be
     interpreted relative to the viewer's current orientation, not the
-    world co-ordinate axes,
+    world co-ordinate axes.
 
-    The translation vector can be applied to eye() or center() by
-    calling translateEye() or translateCenter() respectively.
+    The following example moves the eye() 2 units to the right of the
+    current eye position while keeping the same center() of interest:
+
+    \code
+    camera.setEye(camera.eye() + camera.translation(2, 0, 0));
+    \endcode
 
     \sa translateEye(), translateCenter()
 */
@@ -990,7 +1044,9 @@ QVector3D QGLCamera::translation(qreal x, qreal y, qreal z) const
     the window is wider than it is high.  An \a aspectRatio less than 1
     indicates that the window is higher than it is wide.
 
-    \sa apply(), modelViewMatrix()
+    For Orthographic2D projections, use projectionMatrix2D() instead.
+
+    \sa modelViewMatrix(), projectionMatrix2D()
 */
 QMatrix4x4 QGLCamera::projectionMatrix(qreal aspectRatio) const
 {
@@ -1022,84 +1078,108 @@ QMatrix4x4 QGLCamera::projectionMatrix(qreal aspectRatio) const
         } else {
             m.ortho(-halfWidth, halfWidth, -halfHeight, halfHeight,
                     d->nearPlane, d->farPlane);
+            if (d->projectionType == Orthographic2D)
+                qWarning("Use QGLCamera::projectionMatrix2D() instead");
         }
     }
     return m;
 }
 
 /*!
-    Returns the transformation to apply to the modelview matrix
-    to present the scene as viewed from the eye() position.
+    Returns the transformation matrix to apply to the projection matrix
+    to create a regular 2D orthographic view in \a rect.
 
-    \sa apply(), projectionMatrix()
+    The \a eye parameter is used to adjust the viewpoint horizontally by
+    half of eyeSeparation() if \a eye is QGL::LeftEye or QGL::RightEye,
+    according to the z values used to draw objects in the view.
+
+    The projection is applied so that when z is the same as the z
+    component of center(), the left and right eye images will coincide
+    for the "center of the view".  Values for z that are closer to
+    the z component of eye() will appear closer to the viewer.
+
+    This function is intended for use with the Orthographic2D
+    projectionType().
+
+    \sa modelViewMatrix(), projectionMatrix()
 */
-QMatrix4x4 QGLCamera::modelViewMatrix() const
+QMatrix4x4 QGLCamera::projectionMatrix2D(const QRect& rect, QGL::Eye eye) const
 {
     Q_D(const QGLCamera);
+
+    // Calculate the basic 2D orthographic matrix first.
     QMatrix4x4 m;
-    if (d->motionQuaternion.isIdentity()) {
-        m.lookAt(d->eye, d->center, d->upVector);
-    } else {
-        QVector3D up = d->motionQuaternion.rotatedVector(d->upVector);
-        QVector3D view = d->motionQuaternion.rotatedVector(d->viewVector);
-        QVector3D eye = d->center - view;
-        m.lookAt(eye, d->center, up);
-    }
+    m.ortho(rect.x(), rect.x() + rect.width(),
+            rect.y() + rect.height(), rect.y(),
+            d->nearPlane, d->farPlane);
+
+    // To perform a stereo eye adjustment, we need to alter the final
+    // x value left or right by a small amount based on the z value of
+    // the incoming vertex (z will typically be in the negative z axis):
+    //
+    //      (z + distanceToCenter) * eyesep / distanceToCenter
+    //
+    // where distanceToCenter is the distance from the eye() to the
+    // center() of the view, and eyesep is eyeSeparation() / 2,
+    // negative for the left eye and positive for the right eye.
+    // Rearranging the equation, we get:
+    //
+    //      (z * eyesep + distanceToCenter * eyesep) / distanceToCenter
+    //    = (z * eyesep / distanceToCenter) + eyesep
+    //
+    // The two terms are then placed into the first row of the orthographic
+    // matrix to adjust the x position.
+    qreal eyesep;
+    if (d->eyeSeparation == 0.0f)
+        return m;
+    if (eye == QGL::LeftEye)
+        eyesep = -d->eyeSeparation / 2.0f;
+    else if (eye == QGL::RightEye)
+        eyesep = d->eyeSeparation / 2.0f;
+    else
+        return m;
+    qreal distanceToCenter = d->viewVector.z();
+    if (distanceToCenter == 0.0f)
+        return m;
+    m(0, 2) = eyesep / distanceToCenter;
+    m(0, 3) += eyesep;
     return m;
 }
 
 /*!
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter.
+    Returns the transformation to apply to the modelview matrix
+    to present the scene as viewed from the eye position.
 
-    \sa projectionMatrix(), modelViewMatrix()
+    The \a eye parameter is used to adjust the camera's position
+    horizontally by half of eyeSeparation() if \a eye is QGL::LeftEye
+    or QGL::RightEye.
+
+    \sa projectionMatrix()
 */
-void QGLCamera::apply(QGLPainter *painter) const
+QMatrix4x4 QGLCamera::modelViewMatrix(QGL::Eye eye) const
 {
     Q_D(const QGLCamera);
-    painter->projectionMatrix() = projectionMatrix(painter->aspectRatio());
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, QVector3D(0, 0, 0));
-}
-
-/*!
-    \overload
-
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter using the aspect ratio of \a viewportSize.
-
-    \sa projectionMatrix(), modelViewMatrix()
-*/
-void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize) const
-{
-    Q_D(const QGLCamera);
-    painter->projectionMatrix() =
-        projectionMatrix(painter->aspectRatio(viewportSize));
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, QVector3D(0, 0, 0));
-}
-
-/*!
-    \overload
-
-    Applies the projectionMatrix() and modelViewMatrix() transformations
-    for this camera to \a painter using the aspect ratio of \a viewportSize.
-
-    Before the modelViewMatrix() is applied, the eye() will be temporarily
-    adjusted by \a eyeAdjust.  This is typically used to implement stereo
-    viewing where eye() specifies the center between the actual
-    left and right eye positions.
-
-    \sa projectionMatrix(), modelViewMatrix()
-*/
-void QGLCamera::apply(QGLPainter *painter, const QSize& viewportSize,
-                      const QVector3D& eyeAdjust) const
-{
-    Q_D(const QGLCamera);
-    painter->projectionMatrix() =
-        projectionMatrix(painter->aspectRatio(viewportSize));
-    painter->modelViewMatrix().setToIdentity();
-    d->lookAt(painter, eyeAdjust);
+    QMatrix4x4 m;
+    if (d->projectionType == Orthographic2D) {
+        // The eye adjustment for 2D views is done by projectionMatrix2D().
+        // All we have to do here is translate the eye() to the origin.
+        // We ignore everything except the z component.
+        m.translate(0, 0, -d->eye.z());
+        return m;
+    }
+    QVector3D adjust;
+    if (eye == QGL::LeftEye)
+        adjust = translation(-d->eyeSeparation / 2.0f, 0.0f, 0.0f);
+    else if (eye == QGL::RightEye)
+        adjust = translation(d->eyeSeparation / 2.0f, 0.0f, 0.0f);
+    if (d->motionQuaternion.isIdentity()) {
+        m.lookAt(d->eye + adjust, d->center, d->upVector);
+    } else {
+        QVector3D up = d->motionQuaternion.rotatedVector(d->upVector);
+        QVector3D view = d->motionQuaternion.rotatedVector(d->viewVector);
+        m.lookAt(d->center - view + adjust, d->center, up);
+    }
+    return m;
 }
 
 /*!
@@ -1183,5 +1263,176 @@ QVector3D QGLCamera::mapPoint
 
     \sa projectionChanged()
 */
+
+/*!
+    Tilts the center() up or down by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(tilt(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa tilt(), panCenter(), rollCenter()
+*/
+void QGLCamera::tiltCenter(qreal angle)
+{
+    rotateCenter(tilt(angle));
+}
+
+/*!
+    Pans the center() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(pan(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa pan(), tiltCenter(), rollCenter()
+*/
+void QGLCamera::panCenter(qreal angle)
+{
+    rotateCenter(pan(angle));
+}
+
+/*!
+    Rolls the center() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(roll(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa roll(), tiltCenter(), panCenter()
+*/
+void QGLCamera::rollCenter(qreal angle)
+{
+    rotateCenter(roll(angle));
+}
+
+/*!
+    \enum QGLCamera::RotateOrder
+    This enum defines the order to perform a tilt, pan, and roll
+    of a QGLCamera eye or center.
+
+    \value TiltPanRoll Tilt, then pan, then roll.
+    \value TiltRollPan Tilt, then roll, then pan.
+    \value PanTiltRoll Pan, then tilt, then roll.
+    \value PanRollTilt Pan, then roll, then tilt.
+    \value RollTiltPan Roll, then tilt, then pan.
+    \value RollPanTilt Roll, then pan, then tilt.
+*/
+
+/*!
+    Tilts the center() up or down by \a tiltAngle degrees,
+    pans the center() left or right by \a panAngle degrees,
+    and rolls the center() left or right by \a rollAngle degrees,
+    all in a single fluid movement.  The \a order parameter
+    indicates the order in which to perform the rotations.
+
+    This function is accessible to QML on the Camera item.
+    It is provided as a convenience for navigation items that
+    rotate the center in multiple directions at the same time
+    based on mouse movements.
+
+    \sa tiltCenter(), panCenter(), rollCenter(), tiltPanRollEye()
+*/
+void QGLCamera::tiltPanRollCenter
+    (qreal tiltAngle, qreal panAngle, qreal rollAngle,
+     QGLCamera::RotateOrder order)
+{
+    switch (order) {
+    case QGLCamera::TiltPanRoll:
+        rotateCenter(roll(rollAngle) * pan(panAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::TiltRollPan:
+        rotateCenter(pan(panAngle) * roll(rollAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::PanTiltRoll:
+        rotateCenter(roll(rollAngle) * tilt(tiltAngle) * pan(panAngle));
+        break;
+    case QGLCamera::PanRollTilt:
+        rotateCenter(tilt(tiltAngle) * roll(rollAngle) * pan(panAngle));
+        break;
+    case QGLCamera::RollTiltPan:
+        rotateCenter(pan(panAngle) * tilt(tiltAngle) * roll(rollAngle));
+        break;
+    case QGLCamera::RollPanTilt:
+        rotateCenter(tilt(tiltAngle) * pan(panAngle) * roll(rollAngle));
+        break;
+    }
+}
+
+/*!
+    Tilts the eye() up or down by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(tilt(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa tilt(), panEye(), rollEye()
+*/
+void QGLCamera::tiltEye(qreal angle)
+{
+    rotateEye(tilt(angle));
+}
+
+/*!
+    Pans the eye() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(pan(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa pan(), tiltEye(), rollEye()
+*/
+void QGLCamera::panEye(qreal angle)
+{
+    rotateEye(pan(angle));
+}
+
+/*!
+    Rolls the eye() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(roll(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa roll(), tiltEye(), panEye()
+*/
+void QGLCamera::rollEye(qreal angle)
+{
+    rotateEye(roll(angle));
+}
+
+/*!
+    Tilts the eye() up or down by \a tiltAngle degrees,
+    pans the eye() left or right by \a panAngle degrees,
+    and rolls the eye() left or right by \a rollAngle degrees,
+    all in a single fluid movement.  The \a order parameter
+    indicates the order in which to perform the rotations.
+
+    This function is accessible to QML on the Camera item.
+    It is provided as a convenience for navigation items that
+    rotate the eye in multiple directions at the same time
+    based on mouse movements.
+
+    \sa tiltEye(), panEye(), rollEye(), tiltPanRollCenter()
+*/
+void QGLCamera::tiltPanRollEye
+    (qreal tiltAngle, qreal panAngle, qreal rollAngle,
+     QGLCamera::RotateOrder order)
+{
+    switch (order) {
+    case QGLCamera::TiltPanRoll:
+        rotateEye(roll(rollAngle) * pan(panAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::TiltRollPan:
+        rotateEye(pan(panAngle) * roll(rollAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::PanTiltRoll:
+        rotateEye(roll(rollAngle) * tilt(tiltAngle) * pan(panAngle));
+        break;
+    case QGLCamera::PanRollTilt:
+        rotateEye(tilt(tiltAngle) * roll(rollAngle) * pan(panAngle));
+        break;
+    case QGLCamera::RollTiltPan:
+        rotateEye(pan(panAngle) * tilt(tiltAngle) * roll(rollAngle));
+        break;
+    case QGLCamera::RollPanTilt:
+        rotateEye(tilt(tiltAngle) * pan(panAngle) * roll(rollAngle));
+        break;
+    }
+}
 
 QT_END_NAMESPACE

@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qgldepthbufferoptions.h"
-#include "qglpainter.h"
 #include <QtCore/qatomic.h>
 #include <QtOpenGL/qgl.h>
 
@@ -57,28 +56,23 @@ QT_BEGIN_NAMESPACE
     configuration at startup time that is applied when the application
     wants to change the actual GL depth buffer.
 
-    Options are applied to a QGLPainter using apply().  The following
-    example applies a normal depth buffer configuration with less-than
-    testing:
+    Options are applied to the current GL context using apply().  The
+    following example applies a normal depth buffer configuration with
+    less-than testing:
 
     \code
-    QGLPainter painter;
-
     QGLDepthBufferOptions options;
-    options.setEnabled(true);
     options.setFunction(QGLDepthBufferOptions::Less);
-    options.apply(&painter);
+    options.apply();
     \endcode
 
-    The standard GL defaults are depth testing off, less-than testing
-    function, depth buffer writing enabled, and clipping planes 0 and 1.
-    These defaults can be explicitly set on a QGLPainter as follows:
+    The standard GL defaults are less-than testing function, depth buffer
+    writing enabled, and clipping planes 0 and 1.  These defaults can be
+    explicitly set on the current GL context as follows:
 
     \code
-    QGLDepthBufferOptions().apply(&painter);
+    QGLDepthBufferOptions().apply();
     \endcode
-
-    \sa QGLPainter
 */
 
 /*!
@@ -107,7 +101,6 @@ public:
     QGLDepthBufferOptionsPrivate()
     {
         ref = 1;
-        isEnabled = false;
         isWriteEnabled = true;
         function = QGLDepthBufferOptions::Less;
         nearRange = 0.0f;
@@ -116,7 +109,6 @@ public:
     QGLDepthBufferOptionsPrivate(const QGLDepthBufferOptionsPrivate *other)
     {
         ref = 1;
-        isEnabled = other->isEnabled;
         isWriteEnabled = other->isWriteEnabled;
         function = other->function;
         nearRange = other->nearRange;
@@ -125,8 +117,7 @@ public:
 
     inline bool equal(const QGLDepthBufferOptionsPrivate *other) const
     {
-        return isEnabled == other->isEnabled &&
-               isWriteEnabled == other->isWriteEnabled &&
+        return isWriteEnabled == other->isWriteEnabled &&
                function == other->function &&
                nearRange == other->nearRange &&
                farRange == other->farRange;
@@ -134,13 +125,12 @@ public:
 
     inline bool isDefault() const
     {
-        return !isEnabled && isWriteEnabled &&
+        return isWriteEnabled &&
                function == QGLDepthBufferOptions::Less &&
                nearRange == 0.0f && farRange == 1.0f;
     }
 
     QBasicAtomicInt ref;
-    bool isEnabled;
     bool isWriteEnabled;
     QGLDepthBufferOptions::Function function;
     qreal nearRange;
@@ -215,30 +205,6 @@ QGLDepthBufferOptionsPrivate *QGLDepthBufferOptions::dwrite()
 */
 
 /*!
-    Returns true if depth testing is enabled; false otherwise.
-    The default value is false.
-
-    \sa setEnabled(), function()
-*/
-bool QGLDepthBufferOptions::isEnabled() const
-{
-    if (d)
-        return d->isEnabled;
-    else
-        return false;
-}
-
-/*!
-    Enables or disables depth testing according to \a value.
-
-    \sa isEnabled(), setFunction()
-*/
-void QGLDepthBufferOptions::setEnabled(bool value)
-{
-    dwrite()->isEnabled = value;
-}
-
-/*!
     Returns true if writing to the depth buffer is enabled; false otherwise.
     The default value is true.
 
@@ -265,9 +231,9 @@ void QGLDepthBufferOptions::setWriteEnabled(bool value)
 /*!
     Returns the depth testing function.  The default is Less.
     Depth testing according to this function will only be performed if
-    isEnabled() returns true.
+    QGLPainter::setDepthTestingEnabled() has been specified as true.
 
-    \sa setFunction(), isEnabled()
+    \sa setFunction(), QGLPainter::setDepthTestingEnabled()
 */
 QGLDepthBufferOptions::Function QGLDepthBufferOptions::function() const
 {
@@ -279,9 +245,10 @@ QGLDepthBufferOptions::Function QGLDepthBufferOptions::function() const
 
 /*!
     Sets the depth testing function to \a value.  Depth testing according
-    to \a value will only be performed if isEnabled() returns true.
+    to \a value will only be performed if QGLPainter::setDepthTestingEnabled()
+    has been specified as true.
 
-    \sa function(), isEnabled()
+    \sa function(), QGLPainter::setDepthTestingEnabled()
 */
 void QGLDepthBufferOptions::setFunction(QGLDepthBufferOptions::Function value)
 {
@@ -369,18 +336,13 @@ bool QGLDepthBufferOptions::operator!=(const QGLDepthBufferOptions& other) const
 }
 
 /*!
-    Applies the depth buffer options in this object to \a painter.
-    This will reconfigure the actual depth buffer to match the
+    Applies the depth buffer options in this object to the current
+    GL context.  This will reconfigure the actual depth buffer to match the
     application's requirements.
 */
-void QGLDepthBufferOptions::apply(QGLPainter *painter) const
+void QGLDepthBufferOptions::apply() const
 {
-    Q_UNUSED(painter);  // Maybe use this to cache previous settings.
     if (d) {
-        if (d->isEnabled)
-            glEnable(GL_DEPTH_TEST);
-        else
-            glDisable(GL_DEPTH_TEST);
         glDepthFunc((GLenum)(d->function));
         glDepthMask(d->isWriteEnabled);
 #if defined(QT_OPENGL_ES)
@@ -389,7 +351,6 @@ void QGLDepthBufferOptions::apply(QGLPainter *painter) const
         glDepthRange(d->nearRange, d->farRange);
 #endif
     } else {
-        glDisable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
 #if defined(QT_OPENGL_ES)

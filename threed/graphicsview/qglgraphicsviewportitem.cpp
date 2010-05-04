@@ -83,10 +83,8 @@ public:
         clearDepthBuffer = true;
         cullFaces = QGL::CullBackFaces;
 
-        depthBufferOptions.setEnabled(true);
         depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
-        blendOptions.setEnabled(true);
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -315,8 +313,7 @@ void QGLGraphicsViewportItem::setClearDepthBuffer(bool value)
 
 /*!
     Returns the depth buffer options to apply before calling paintGL().
-    The default enables depth testing and uses QGLDepthBufferOptions::Less
-    as the testing mode.
+    The default uses QGLDepthBufferOptions::Less as the testing mode.
 
     \sa setDepthBufferOptions(), clearDepthBuffer()
 */
@@ -339,7 +336,7 @@ void QGLGraphicsViewportItem::setDepthBufferOptions(const QGLDepthBufferOptions&
 
 /*!
     Returns the blending options to apply before calling paintGL().
-    The default enables blending of the source against the destination
+    The default specifies blending of the source against the destination
     according to the source alpha.
 
     \sa setBlendOptions()
@@ -442,12 +439,13 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
-    d->blendOptions.apply(&glpainter);
+    d->blendOptions.apply();
     if (d->backgroundColor.isValid()) {
         // We clear the background by drawing a triangle fan so
         // that the background color will blend with the underlying
         // screen content if it has an alpha component.
-        glDisable(GL_DEPTH_TEST);
+        glpainter.setDepthTestingEnabled(false);
+        glpainter.setBlendingEnabled(d->backgroundColor.alpha() != 255);
         QVector2DArray array;
         array.append(-1, -1);
         array.append(1, -1);
@@ -462,10 +460,13 @@ void QGLGraphicsViewportItem::paint
     }
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
-    d->depthBufferOptions.apply(&glpainter);
+    d->depthBufferOptions.apply();
+    glpainter.setDepthTestingEnabled(true);
+    glpainter.setBlendingEnabled(false);
 
     // Apply the camera.
-    d->camera->apply(&glpainter, viewport.size());
+    glpainter.setEye(QGL::NoEye);
+    glpainter.setCamera(d->camera);
 
     // Paint the GL contents.
     paintGL(&glpainter);
@@ -476,8 +477,8 @@ void QGLGraphicsViewportItem::paint
 
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
-    QGLDepthBufferOptions().apply(&glpainter);
-    QGLBlendOptions().apply(&glpainter);
+    QGLDepthBufferOptions().apply();
+    QGLBlendOptions().apply();
 }
 
 /*!

@@ -93,11 +93,14 @@ public:
 
     const QGLContext *context() const;
 
+    bool isFixedFunction() const;
+
     enum Update
     {
         UpdateColor                 = 0x00000001,
         UpdateModelViewMatrix       = 0x00000002,
         UpdateProjectionMatrix      = 0x00000004,
+        UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
         UpdateFog                   = 0x00000020,
@@ -111,6 +114,8 @@ public:
     void setClearStencil(GLint value);
 
     void setDepthTestingEnabled(bool value);
+    void setStencilTestingEnabled(bool value);
+    void setBlendingEnabled(bool value);
 
     QRect viewport() const;
     void setViewport(const QRect& rect);
@@ -127,17 +132,17 @@ public:
     QGLMatrixStack& projectionMatrix();
     QGLMatrixStack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
+    QMatrix3x3 normalMatrix() const;
 
-    bool isVisible(const QVector3D& point) const;
-    bool isVisible(const QBox3D& box) const;
+    QGL::Eye eye() const;
+    void setEye(QGL::Eye eye);
 
-    QVector3D project(const QVector3D& point, bool *ok = 0) const;
-    QVector3D unproject(const QVector3D& point, bool *ok = 0) const;
-    QVector4D unproject(const QVector4D& point, qreal nearPlane,
-                        qreal farPlane, bool *ok = 0) const;
+    void setCamera(QGLCamera *camera);
+
+    bool isCullable(const QVector3D& point) const;
+    bool isCullable(const QBox3D& box) const;
 
     qreal aspectRatio() const;
-    qreal aspectRatio(const QSize& viewportSize) const;
 
     QGLAbstractEffect *effect() const;
 
@@ -162,7 +167,6 @@ public:
     void setCommonNormal(const QVector3D& value);
 
     int textureUnitCount() const;
-    bool isTextureUnitActive(int unit = 0) const;
 
     void setTexture(int unit, const QGLTexture2D *texture);
     void setTexture(int unit, const QGLTextureCube *texture);
@@ -170,6 +174,7 @@ public:
     void setTexture(const QGLTextureCube *texture) { setTexture(0, texture); }
 
     void update();
+    void updateFixedFunction(QGLPainter::Updates updates);
 
     void draw(QGL::DrawingMode mode, int count, int index = 0);
     void draw(QGL::DrawingMode mode, const ushort *indices, int count);
@@ -189,16 +194,11 @@ public:
     const QGLLightModel *lightModel() const;
     void setLightModel(const QGLLightModel *value);
 
-    int lightCount() const;
-    bool hasEnabledLights() const;
-    bool isLightEnabled(int number) const;
-    void setLightEnabled(int number, bool value) const;
-
-    const QGLLightParameters *lightParameters(int number) const;
-    QMatrix4x4 lightTransform(int number) const;
-    void setLightParameters(int number, const QGLLightParameters *parameters);
-    void setLightParameters(int number, const QGLLightParameters *parameters,
-                            const QMatrix4x4& transform);
+    const QGLLightParameters *mainLight() const;
+    void setMainLight(QGLLightParameters *parameters);
+    void setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform);
+    QMatrix4x4 mainLightTransform() const;
 
     const QGLMaterial *faceMaterial(QGL::Face face) const;
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
@@ -235,6 +235,72 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
+
+inline void QGLPainter::setDepthTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+}
+
+inline void QGLPainter::setStencilTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_STENCIL_TEST);
+    else
+        glDisable(GL_STENCIL_TEST);
+}
+
+inline void QGLPainter::setBlendingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_BLEND);
+    else
+        glDisable(GL_BLEND);
+}
+
+// Provide some useful OpenGL extension definitions.
+#if !defined(QT_OPENGL_ES)
+
+extern void Q_QT3D_EXPORT qt_gl_ClientActiveTexture(GLenum texture);
+extern void Q_QT3D_EXPORT qt_gl_ActiveTexture(GLenum texture);
+
+#elif defined(QT_OPENGL_ES_2)
+
+#define qt_gl_ActiveTexture         glActiveTexture
+
+#else
+
+#define qt_gl_ClientActiveTexture   glClientActiveTexture
+#define qt_gl_ActiveTexture         glActiveTexture
+
+#endif
+
+#ifndef GL_TEXTURE0
+#define GL_TEXTURE0 0x84C0
+#endif
+#ifndef GL_TEXTURE1
+#define GL_TEXTURE1 0x84C1
+#endif
+#ifndef GL_TEXTURE2
+#define GL_TEXTURE2 0x84C2
+#endif
+#ifndef GL_TEXTURE3
+#define GL_TEXTURE3 0x84C3
+#endif
+#ifndef GL_TEXTURE4
+#define GL_TEXTURE4 0x84C4
+#endif
+#ifndef GL_TEXTURE5
+#define GL_TEXTURE5 0x84C5
+#endif
+#ifndef GL_TEXTURE6
+#define GL_TEXTURE6 0x84C6
+#endif
+#ifndef GL_TEXTURE7
+#define GL_TEXTURE7 0x84C7
+#endif
 
 QT_END_NAMESPACE
 

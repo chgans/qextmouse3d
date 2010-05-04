@@ -102,8 +102,7 @@ void DisplayListView::initializeGL(QGLPainter *painter)
     light0->setAmbientColor(Qt::white);
     light0->setDiffuseColor(Qt::white);
     light0->setDirection(QVector3D(0.0f, 0.2f, 2.0f));
-    painter->setLightParameters(0, light0);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(light0);
     QGLLightModel *model = new QGLLightModel(this);
     model->setAmbientSceneColor(Qt::white);
     painter->setLightModel(model);

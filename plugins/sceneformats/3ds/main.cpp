@@ -58,11 +58,10 @@ QStringList QGL3dsScenePlugin::keys() const
 
 QGLSceneFormatHandler *QGL3dsScenePlugin::create(QIODevice *device, const QUrl& url, const QString &format) const
 {
-    QGL3dsSceneHandler *handler = new QGL3dsSceneHandler;
-    handler->setDevice(device);
-    handler->setUrl(url);
-    handler->setFormat(format);
-    return handler;
+    Q_UNUSED(device);
+    Q_UNUSED(url);
+    Q_UNUSED(format);
+    return new QGL3dsSceneHandler;
 }
 
 Q_EXPORT_STATIC_PLUGIN(QGL3dsScenePlugin)

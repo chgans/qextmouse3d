@@ -52,7 +52,6 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLBlendOptionsPrivate;
-class QGLPainter;
 
 class Q_QT3D_EXPORT QGLBlendOptions
 {
@@ -93,9 +92,6 @@ public:
 
     inline bool isNull() const { return d == 0; }
 
-    bool isEnabled() const;
-    void setEnabled(bool value);
-
     QColor blendColor() const;
     void setBlendColor(const QColor& value);
 
@@ -120,7 +116,7 @@ public:
     bool operator==(const QGLBlendOptions& other) const;
     bool operator!=(const QGLBlendOptions& other) const;
 
-    void apply(QGLPainter *painter) const;
+    void apply() const;
 
 private:
     QGLBlendOptionsPrivate *d;

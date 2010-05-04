@@ -298,7 +298,6 @@ public:
     TeaServiceView(QWidget *parent=0);
 
 public slots:
-    void turnOffLighting();
     void standardLighting();
     void perPixelLighting();
 
@@ -309,14 +308,12 @@ protected:
 
 private:
     TeaService *teaService;
-    bool lightActive;
 };
 
 TeaServiceView::TeaServiceView(QWidget *parent)
     : QGLView(parent)
 {
     teaService = new TeaService(this);
-    lightActive = true;
 
     setOption(QGLView::ObjectPicking, true);
 
@@ -330,27 +327,17 @@ void TeaServiceView::initializeGL(QGLPainter *painter)
 
 void TeaServiceView::paintGL(QGLPainter *painter)
 {
-    painter->setLightEnabled(0, lightActive);
     teaService->service->draw(painter);
-}
-
-void TeaServiceView::turnOffLighting()
-{
-    lightActive = false;
-    teaService->changeMaterials(false);
-    updateGL();
 }
 
 void TeaServiceView::standardLighting()
 {
-    lightActive = true;
     teaService->changeMaterials(false);
     updateGL();
 }
 
 void TeaServiceView::perPixelLighting()
 {
-    lightActive = true;
     teaService->changeMaterials(true);
     updateGL();
 }
@@ -380,10 +367,6 @@ int main(int argc, char *argv[])
     view.camera()->setEye(QVector3D(0, 3, 10));
 
     QMenu *menu = mainw.menuBar()->addMenu("Effects");
-
-    QAction *turnOffLighting = new QAction("Turn off lighting", &mainw);
-    menu->addAction(turnOffLighting);
-    QObject::connect(turnOffLighting, SIGNAL(triggered()), &view, SLOT(turnOffLighting()));
 
     QAction *standardLighting = new QAction("Standard lighting", &mainw);
     menu->addAction(standardLighting);

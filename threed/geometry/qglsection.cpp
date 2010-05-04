@@ -137,7 +137,7 @@ inline bool operator<(const QVector3D &a, const QVector3D &b)
     }
 }
 
-inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
+static inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
 {
     bool res = false;
     if (!a.isNull() && !b.isNull())
@@ -173,8 +173,8 @@ public:
         while (ptr != -1)
         {
             int val_ptr = normPtrs.at(ptr);
-            if (normValues.at(val_ptr) == norm)
-            //if (qSameDirection(normValues.at(val_ptr), norm))
+            //if (normValues.at(val_ptr) == norm)
+            if (qSameDirection(normValues.at(val_ptr), norm))
                 return true;
             ptr = normPtrs.at(ptr+1);
         }
@@ -292,6 +292,7 @@ public:
     QVector3D target;
     const QVector3DArray *vec_data;
     QMap<QVector3D, int> vec_map;
+    QMap<int, int> index_map;
     QMap<QVector3D,int>::const_iterator it;
     int map_threshold;   // if more than this is unmapped, do a mapping run
     int number_mapped;    // how many vertices have been mapped
@@ -543,6 +544,36 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
                 }
                 found_index = d->nextIndex();
             }
+        }
+    }
+    d->finalized = false;
+    m_displayList->setDirty(true);
+}
+
+
+void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
+{
+    Q_ASSERT(lv.hasField(QGL::Position));
+    Q_ASSERT(lv.hasField(QGL::Normal));
+
+    int found_index = -1;
+    QMap<int, int>::const_iterator it = d->index_map.constFind(index);
+    if (it != d->index_map.constEnd())
+        found_index = it.value();
+    if (found_index == -1)
+    {
+        int newIndex = appendVertex(lv);
+        d->index_map.insert(index, newIndex);
+        appendIndex(newIndex);
+        d->accumulateNormal(newIndex, lv.normal());
+    }
+    else
+    {
+        appendIndex(found_index);
+        if (!d->normalAccumulated(found_index, lv.normal()))
+        {
+            normalRef(found_index) += lv.normal();
+            d->accumulateNormal(found_index, lv.normal());
         }
     }
     d->finalized = false;

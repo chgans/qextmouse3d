@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = teaservice shapes
+SUBDIRS = teaservice shapes modelviewer
 !contains(QT_CONFIG, opengles1cl):!contains(QT_CONFIG, opengles1) {
     SUBDIRS += pageflip shaderwizard
 }

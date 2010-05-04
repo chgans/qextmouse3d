@@ -59,6 +59,8 @@
 #include "shaderwizardglwidget.h"
 #include "qglslsyntaxhighlighter.h"
 #include "qglcolladafxeffectfactory.h"
+#include "qglcolladafxeffectloader.h"
+#include "qglcolladafxeffect.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -248,16 +250,18 @@ void MainWindow::loadScene(const QString& fileName)
 
 void MainWindow::loadEffect(const QString& fileName)
 {
-    QList<QGLColladaFxEffect*> loadedEffects = QGLColladaFxEffectFactory::loadEffectsFromFile(fileName);
-    if(loadedEffects.count() == 0)
+    effectLoader.load(fileName);
+
+    if(effectLoader.count() == 0)
         qWarning() << "Warning: Failed to load effects from file " << fileName;
     else
     {
-        loadedEffects[0]->generateShaders();
-        glDisplayWidget->setEffect(loadedEffects[0]);
+        // Until we have UI to select an effect, just grab the last one
+        effectLoader[effectLoader.count() - 1]->generateShaders();
+        glDisplayWidget->setEffect(effectLoader[effectLoader.count() - 1]);
 
-        ui->textEditVertexShader->setPlainText(loadedEffects[0]->vertexShader());
-        ui->textEditFragmentShader->setPlainText(loadedEffects[0]->fragmentShader());
+        ui->textEditVertexShader->setPlainText(effectLoader[0]->vertexShader());
+        ui->textEditFragmentShader->setPlainText(effectLoader[0]->fragmentShader());
         update();
     }
 }

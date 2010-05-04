@@ -117,14 +117,10 @@ void MeshObject::draw(QGLPainter *painter)
         material = m_material;
     painter->setColor(material->diffuseColor());
     painter->setFaceMaterial(QGL::AllFaces, material);
-    if (!painter->hasEnabledLights()) {
-        painter->setStandardEffect(QGL::FlatColor);
-        painter->setColor(material->ambientColor());
-    } else if (m_effect) {
+    if (m_effect)
         painter->setUserEffect(m_effect);
-    } else {
+    else
         painter->setStandardEffect(QGL::LitMaterial);
-    }
 
     // Mark the object for object picking purposes.
     int prevObjectId = painter->objectPickId();

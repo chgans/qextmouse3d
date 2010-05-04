@@ -53,6 +53,9 @@
 
 #include <limits>
 
+// uncomment this to be warned when meshes are empty of geometry
+// #define Q_WARN_EMPTY_MESH 1
+
 /*!
     \class QGLDisplayList
     \brief The QGLDisplayList class accumulates geometry for efficient display.
@@ -495,6 +498,7 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
         norm.setY(0.0f);
     if (qFskIsNull(norm.z()))
         norm.setZ(0.0f);
+    norm *= 5.0f;
     // if the normal was calculated, and it was null, then this is a null
     // triangle - don't add it, it just wastes space - see class doco
     if (!calcNormal || !norm.isNull())
@@ -861,12 +865,14 @@ static int nodeCount(const QList<QGLSceneNode*> &list)
     return total;
 }
 
-static inline void warnIgnore(int secCount, int vertCount, int nodeCount,
+#ifdef Q_WARN_EMPTY_MESH
+static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int nodeCount,
                               const char *msg)
 {
-    qWarning("Ignoring section %d with %d vertices and"
-             " %d indexes - %s", secCount, vertCount, nodeCount, msg);
+    qWarning("Ignoring section %d (%p) with %d vertices and"
+             " %d indexes - %s", secCount, s, vertCount, nodeCount, msg);
 }
+#endif
 
 /*!
     Finish the building of this display list and optimize it for
@@ -907,13 +913,15 @@ void QGLDisplayList::finalize()
             int scnt = s->count();
             if (scnt == 0 || icnt == 0 || ncnt == 0)
             {
+#ifdef Q_WARN_EMPTY_MESH
 #ifndef QT_NO_DEBUG
                     if (ncnt == 0)
-                        warnIgnore(scnt, icnt, ncnt, "nodes empty");
+                        warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
                     else if (scnt == 0)
-                        warnIgnore(scnt, icnt, ncnt, "geometry count zero");
+                        warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
                     else
-                        warnIgnore(scnt, icnt, ncnt, "index count zero");
+                        warnIgnore(scnt, s, icnt, ncnt, "index count zero");
+#endif
 #endif
                 continue;
             }

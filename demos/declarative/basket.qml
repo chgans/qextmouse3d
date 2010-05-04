@@ -1,6 +1,8 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Viewport {
+    width: 640; height: 480
     camera: Camera {
         eye: Qt.vector3d(0, 4, 10)
     }
@@ -17,7 +19,7 @@ Viewport {
 				id: rotation
                 NumberAnimation on angle {
                     running: true
-                    repeat: true
+                    loops: Animation.Infinite
                     from: 0
                     to: 360
                     duration: 2000

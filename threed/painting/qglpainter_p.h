@@ -55,7 +55,6 @@
 
 #include "qglpainter.h"
 #include <QtCore/qatomic.h>
-#include <QtCore/qbitarray.h>
 #include <QtCore/qmap.h>
 #include <QtGui/private/qpaintengineex_p.h>
 #include <QtOpenGL/private/qglextensions_p.h>
@@ -76,106 +75,9 @@ QT_BEGIN_NAMESPACE
 # define APIENTRYP *
 #endif
 
-typedef ptrdiff_t qGLsizeiptr;
-typedef ptrdiff_t qGLintptr;
-
-typedef void (APIENTRYP q_PFNGLSTENCILFUNCSEPARATEPROC) (GLenum face, GLenum func, GLint ref, GLuint mask);
-typedef void (APIENTRYP q_PFNGLSTENCILMASKSEPARATEPROC) (GLenum face, GLuint mask);
-typedef void (APIENTRYP q_PFNGLSTENCILOPSEPARATEPROC) (GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass);
-
-typedef void (APIENTRYP q_PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-typedef void (APIENTRYP q_PFNGLBLENDEQUATIONPROC) (GLenum mode);
-typedef void (APIENTRYP q_PFNGLBLENDFUNCSEPARATEPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
-typedef void (APIENTRYP q_PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
-
-typedef void (APIENTRYP q_PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
-typedef void (APIENTRYP q_PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
-typedef void (APIENTRYP q_PFNGLGENBUFFERSPROC) (GLsizei n, GLuint *buffers);
-typedef void (APIENTRYP q_PFNGLBUFFERDATAPROC) (GLenum target, qGLsizeiptr size, const GLvoid *data, GLenum usage);
-typedef void (APIENTRYP q_PFNGLBUFFERSUBDATAPROC) (GLenum target, qGLintptr offset, qGLsizeiptr size, const GLvoid *data);
-typedef void (APIENTRYP q_PFNGLGETBUFFERSUBDATAPROC) (GLenum target, qGLintptr offset, qGLsizeiptr size, GLvoid *data);
-typedef void (APIENTRYP q_PFNGLGETBUFFERPARAMETERIVPROC) (GLenum target, GLenum pname, GLint *params);
-typedef GLvoid* (APIENTRYP q_PFNGLMAPBUFFERPROC) (GLenum target, GLenum access);
-typedef GLboolean (APIENTRYP q_PFNGLUNMAPBUFFERPROC) (GLenum target);
-
-typedef void (APIENTRY *_glActiveTexture) (GLenum);
-typedef void (APIENTRY *_glClientActiveTexture) (GLenum);
-
+#if QT_VERSION < 0x040700
 typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
-
-// We can call the buffer functions directly in OpenGL/ES,
-// but all other platforms need to resolve the extensions.
-#if !defined(QT_OPENGL_ES)
-#define QGL_RESOLVE_BUFFER_FUNCS 1
 #endif
-
-class QGLPainterExtensions
-{
-public:
-    QGLPainterExtensions()
-    {
-#if !defined(QT_OPENGL_ES)
-        stencilFuncSeparate = 0;
-        stencilMaskSeparate = 0;
-        stencilOpSeparate = 0;
-        stencilResolved = false;
-
-        blendColor = 0;
-        blendFuncSeparate = 0;
-        blendEquation = 0;
-        blendEquationSeparate = 0;
-        blendResolved = false;
-#endif
-
-#if defined(QGL_RESOLVE_BUFFER_FUNCS)
-        bindBuffer = 0;
-        deleteBuffers = 0;
-        genBuffers = 0;
-        bufferData = 0;
-        bufferSubData = 0;
-        getBufferSubData = 0;
-        getBufferParameteriv = 0;
-#endif
-        mapBuffer = 0;
-        unmapBuffer = 0;
-        qt_glActiveTexture = 0;
-        qt_glClientActiveTexture = 0;
-        multiTextureResolved = false;
-
-        vertexAttribPointer = 0;
-    }
-
-#if !defined(QT_OPENGL_ES)
-    q_PFNGLSTENCILFUNCSEPARATEPROC stencilFuncSeparate;
-    q_PFNGLSTENCILMASKSEPARATEPROC stencilMaskSeparate;
-    q_PFNGLSTENCILOPSEPARATEPROC stencilOpSeparate;
-    bool stencilResolved;
-
-    q_PFNGLBLENDCOLORPROC blendColor;
-    q_PFNGLBLENDFUNCSEPARATEPROC blendFuncSeparate;
-    q_PFNGLBLENDEQUATIONPROC blendEquation;
-    q_PFNGLBLENDEQUATIONSEPARATEPROC blendEquationSeparate;
-    bool blendResolved;
-#endif
-
-#if defined(QGL_RESOLVE_BUFFER_FUNCS)
-    q_PFNGLBINDBUFFERPROC bindBuffer;
-    q_PFNGLDELETEBUFFERSPROC deleteBuffers;
-    q_PFNGLGENBUFFERSPROC genBuffers;
-    q_PFNGLBUFFERDATAPROC bufferData;
-    q_PFNGLBUFFERSUBDATAPROC bufferSubData;
-    q_PFNGLGETBUFFERSUBDATAPROC getBufferSubData;
-    q_PFNGLGETBUFFERPARAMETERIVPROC getBufferParameteriv;
-#endif
-    q_PFNGLMAPBUFFERPROC mapBuffer;
-    q_PFNGLUNMAPBUFFERPROC unmapBuffer;
-    _glActiveTexture qt_glActiveTexture;
-    _glClientActiveTexture qt_glClientActiveTexture;
-    bool multiTextureResolved;
-
-    q_glVertexAttribPointer vertexAttribPointer;
-};
-
 
 #define QGL_MAX_LIGHTS      32
 #define QGL_MAX_STD_EFFECTS 16
@@ -195,8 +97,6 @@ public:
     QGLAbstractEffect *defaultPickEffect;
 };
 
-struct QGLShaderExtensionFuncs;
-
 class QGLPainterPrivate
 {
 public:
@@ -208,24 +108,17 @@ public:
     QPaintEngineEx *activePaintEngine;
     QGLMatrixStack projectionMatrix;
     QGLMatrixStack modelViewMatrix;
+    QGL::Eye eye;
     QGLAbstractEffect *effect;
     QGLAbstractEffect *userEffect;
     QGL::StandardEffect standardEffect;
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
-#ifdef Q_WS_WIN
-    QGLPainterExtensions *extensionFuncs;
-    QGLShaderExtensionFuncs *shaderExtensionFuncs;
-#endif
     int textureUnitCount;
-    QBitArray texturesInUse;
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
-    const QGLLightParameters *lights[QGL_MAX_LIGHTS];
-    QMatrix4x4 lightTransforms[QGL_MAX_LIGHTS];
-    QGLLightParameters *defaultLight0;
-    QGLLightParameters *defaultLight1;
-    int enabledLights;
-    int maxLights;
+    const QGLLightParameters *mainLight;
+    QMatrix4x4 mainLightTransform;
+    QGLLightParameters *defaultLight;
     const QGLMaterial *frontMaterial;
     const QGLMaterial *backMaterial;
     QGLMaterial *defaultMaterial;
@@ -237,43 +130,14 @@ public:
     QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
-    GLuint currentBufferId;
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
     QList<QGLFramebufferObject *> surfaceStack;
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
-
-    QGLPainterExtensions *extensions();    
-
-    QGLPainterExtensions *resolveMultiTextureExtensions()
-    {
-        QGLPainterExtensions *extn = extensions();
-        if (!(extn->multiTextureResolved)) {
-            extn->multiTextureResolved = true;
-            if (!extn->qt_glActiveTexture) {
-                extn->qt_glActiveTexture = (_glActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glActiveTexture"));
-            }
-            if (!extn->qt_glActiveTexture) {
-                extn->qt_glActiveTexture = (_glActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glActiveTextureARB"));
-            }
-            if (!extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glClientActiveTexture"));
-            }
-            if (!extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture = (_glClientActiveTexture)
-                    this->context->getProcAddress
-                        (QLatin1String("glClientActiveTextureARB"));
-            }
-        }
-        return extn;
-    }
+#if QT_VERSION < 0x040700
+    q_glVertexAttribPointer vertexAttribPointer;
+#endif
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }

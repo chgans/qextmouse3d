@@ -64,15 +64,15 @@ QT_BEGIN_NAMESPACE
     and setting the given \a parent.  Resources are searched for at the
     given \a url.
 
-    The QGL3dsSceneObject takes ownership of the \a file.
+    The QGL3dsScene object takes ownership of the \a file.
 */
-QGL3dsScene::QGL3dsScene(Lib3dsFile *file, QUrl url, QObject *parent)
-    : QGLAbstractScene(parent)
+QGL3dsScene::QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h)
+    : QGLAbstractScene(0)
     , mFile(file)
-    , mUrl(url)
 {
-    QGL3dsLoader loader(file);
-    loader.setUrl(mUrl);
+    Q_ASSERT(h);
+    Q_ASSERT(file);
+    QGL3dsLoader loader(file, h);
     mRootNode = loader.loadMeshes();
 }
 
@@ -101,27 +101,10 @@ QList<QGLSceneObject *> QGL3dsScene::objects(QGLSceneObject::Type type) const
         return objs;
     }
 
-    QList<QGLSceneObject *> nodes;
-
-    nodes.append(mRootNode);
-    while (!nodes.isEmpty())
-    {
-        QGLSceneObject *o = nodes.takeFirst();
-        if (o->type() == type)
-            objs.append(o);
-        QObjectList children = o->children();
-        QObjectList::iterator it(children.begin());
-        for ( ; it != children.end(); ++it)
-        {
-            QGLSceneObject *c = qobject_cast<QGLSceneObject *>(*it);
-            if (c)
-            {
-                nodes.append(c);
-                if (c->type() == type)
-                    objs.append(c);
-            }
-        }
-    }
+    QList<QGLSceneNode*> children = mRootNode->allChildren();
+    QList<QGLSceneNode*>::const_iterator it = children.constBegin();
+    for ( ; it != children.constEnd(); ++it)
+        objs.append(*it);
     return objs;
 }
 

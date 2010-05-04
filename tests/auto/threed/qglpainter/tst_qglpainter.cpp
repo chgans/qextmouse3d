@@ -410,44 +410,9 @@ void tst_QGLPainter::userMatrixStack()
     QMatrix4x4 m4;
 
     m4.setToIdentity();
-    m4.ortho(2, 4, 1, 3, 10, 50);
-    stack.setToIdentity();
-    stack.ortho(2, 4, 1, 3, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
     m4.ortho(QRect(2, 3, 4, 5));
     stack.setToIdentity();
     stack.ortho(QRect(2, 3, 4, 5));
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.ortho(QRectF(2, 3, 4, 5));
-    stack.setToIdentity();
-    stack.ortho(QRectF(2, 3, 4, 5));
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.frustum(2, 4, 1, 3, 10, 50);
-    stack.setToIdentity();
-    stack.frustum(2, 4, 1, 3, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.perspective(60, 1.5, 10, 50);
-    stack.setToIdentity();
-    stack.perspective(60, 1.5, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.lookAt(QVector3D(0, 0, -10), QVector3D(1, 1, 3), QVector3D(0, 1, 0));
-    stack.setToIdentity();
-    stack.lookAt(QVector3D(0, 0, -10), QVector3D(1, 1, 3), QVector3D(0, 1, 0));
     QVERIFY(qFuzzyCompare(m4, stack.top()));
     QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
 }
@@ -531,8 +496,8 @@ void tst_QGLPainter::projectionMatrixStack()
     clearGLMatrix(GL_PROJECTION);
 
     QMatrix4x4 m;
-    m.frustum(2, 4, 1, 3, 10, 50);
-    painter.projectionMatrix().frustum(2, 4, 1, 3, 10, 50);
+    m.ortho(2, 4, 3, 1, 10, 50);
+    painter.projectionMatrix().ortho(QRect(2, 1, 2, 2), 10, 50);
     QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
     QVERIFY(qFuzzyCompare(m, QMatrix4x4(painter.projectionMatrix())));
 
@@ -540,22 +505,23 @@ void tst_QGLPainter::projectionMatrixStack()
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateProjectionMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, m));
 
-    // Write an explict value to the GL server and reset the client-side copy.
+    // Write an explict value to the GL server and read it back.
     QMatrix4x4 m2;
     m2.ortho(widget->rect());
     setGLMatrix(GL_PROJECTION, m2);
-    painter.projectionMatrix().reset();
+    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
+        (QGLMatrixStack::ProjectionMatrix);
 
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
+    QVERIFY(qFuzzyCompare(m, m3));
 #else
-    QVERIFY(qFuzzyCompare(m2, painter.projectionMatrix().top()));
+    QVERIFY(qFuzzyCompare(m2, m3));
 #endif
 }
 
@@ -586,22 +552,23 @@ void tst_QGLPainter::modelViewMatrixStack()
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateModelViewMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));
 
-    // Write an explict value to the GL server and reset the client-side copy.
+    // Write an explict value to the GL server and read it back.
     QMatrix4x4 m2;
     m2.translate(5, 6, 7);
     setGLMatrix(GL_MODELVIEW, m2);
-    painter.modelViewMatrix().reset();
+    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
+        (QGLMatrixStack::ModelViewMatrix);
 
     // Read back the explicitly set value from the GL server.
 #if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.modelViewMatrix().top()));
+    QVERIFY(qFuzzyCompare(m, m3));
 #else
-    QVERIFY(qFuzzyCompare(m2, painter.modelViewMatrix().top()));
+    QVERIFY(qFuzzyCompare(m2, m3));
 #endif
 }
 

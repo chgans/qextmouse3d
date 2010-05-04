@@ -49,62 +49,24 @@
 //#include <QtDeclarative/qdeclarativecomponentview.h>
 #include "qglview.h"
 #include "qml3dview.h"
-#include "item3d.h"
 //#include <QtDeclarative/qdeclarativemetatype.h>
 #include <QtGui/qvector3d.h>
 #include <QtCore/qfile.h>
 #include <QtCore/qvariantanimation.h>
 #include <QFileInfo>
-#include "viewport.h"
-#include "effect.h"
-#include "rotation3d.h"
-#include "shaderprogram.h"
-#include "cube.h"
 
-static QVariant interpolateVector3D
-    (const QVector3D &f, const QVector3D &t, qreal progress)
-{
-    return qVariantFromValue(f + (t - f) * progress);
-}
-	
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    //We now have to register types at runtime rather than globally in the .cpp file.
-    
-    
-    qmlRegisterType<Effect>("Qt",4,6,"Effect");
-    qmlRegisterType<Mesh>("Qt",4,6,"Mesh");
-    qmlRegisterType<Item3d>("Qt",4,6,"Item3d");
-    qmlRegisterType<Viewport>("Qt",4,6,"Viewport");
-    qmlRegisterType<QGLLightModel>("Qt",4,6,"LightModel");
-    qmlRegisterType<QGLLightParameters>("Qt",4,6,"Light");
-    qmlRegisterType<QGLCamera>("Qt",4,6,"Camera");
-    qmlRegisterType<Rotation3D>("Qt",4,6,"Rotation3D");
-    qmlRegisterType<QGLMaterial>("Qt",4,6,"Material");
-    qmlRegisterType<ShaderProgram>("Qt",4,6,"ShaderProgram");
-    qmlRegisterType<Cube>("Qt",4,6,"Cube");
-
-
-/*  //Uncomment this section if you are not using the 4.7 branch (eg. you are using master, oslo staging 2, etc).
-    QML_REGISTER_TYPE(Qt,4,6,Effect,Effect);
-    QML_REGISTER_TYPE(Qt,4,6,Mesh,Mesh);
-    QML_REGISTER_TYPE(Qt,4,6,Item3d,Item3d);
-    QML_REGISTER_TYPE(Qt,4,6,Viewport,Viewport);
-    QML_REGISTER_TYPE(Qt,4,6,LightModel,QGLLightModel);
-    QML_REGISTER_TYPE(Qt,4,6,Light,QGLLightParameters);
-    QML_REGISTER_TYPE(Qt,4,6,Camera,QGLCamera);
-    QML_REGISTER_TYPE(Qt,4,6,Rotation3D,Rotation3D);
-    QML_REGISTER_TYPE(Qt,4,6,Material,QGLMaterial);
-    QML_REGISTER_TYPE(Qt,4,6,ShaderProgram,ShaderProgram);
-    QML_REGISTER_TYPE(Qt,4,6,Cube,Cube);
-*/
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
+    bool glViewport = false;
     if (QApplicationPrivate::graphics_system_name.compare
             (QLatin1String("opengl"), Qt::CaseInsensitive) == 0)
         mixed = true;
+    if (QApplication::arguments().contains(QLatin1String("-opengl")))
+        glViewport = true;
 
     QString source;
     for (int index = 1; index < argc; ++index) {
@@ -123,11 +85,10 @@ int main(int argc, char *argv[])
     if (fi.exists())
         url = QUrl::fromLocalFile(fi.absoluteFilePath());
 
-    // Register an interpolator for linear movement along vector paths.
-    qRegisterAnimationInterpolator<QVector3D>(interpolateVector3D);
-
-    if (mixed) {
+    if (mixed || glViewport) {
         QDeclarativeView view;
+        if (glViewport)
+            view.setViewport(new QGLWidget());
         view.setSource(url);        
         view.show();
 

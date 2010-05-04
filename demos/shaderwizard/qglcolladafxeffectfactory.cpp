@@ -1,6 +1,8 @@
 #include <QVector>
 #include <QFile>
+#include <QFileInfo>
 #include <QTime>
+#include <QDir>
 #include "qgltexture2d.h"
 #include "qgl.h"
 
@@ -8,7 +10,6 @@
 #include "qglcolladafxeffectfactory.h"
 //#include "qglcolladafxeffectfactory_p.h"
 #include "qglcolladafxeffect_p.h"
-
 
 // The QGLColladaFxFactory class creates a list of QGLColladaFx objects from
 // COLLADA FX information according to the 1.4.1 March 2008 Release from
@@ -58,7 +59,6 @@ static inline void findEndTag( QXmlStreamReader& xml, QString tagName )
 {
     while( !xml.atEnd() && !( xml.tokenType() == xml.EndElement && xml.name() == tagName))
     {
-
         xml.readNext();
     }
 }
@@ -67,39 +67,23 @@ static inline void findEndTag( QXmlStreamReader& xml, QString tagName )
 
 /*!
     \internal
-    Convenince function to find paramaters in \a stateStack that have an id, sid,
-    or name that is equal to \a stringToMatch
-    Note that this using this is not in line with the Collada specification.
+    Convenience function to find paramaters in \a resultState that have an id,
+    sid, or name that is equal to \a stringToMatch
+    Note that this using this is not in line with the Collada specification,
+    and that non-unique sids will always return the last parameter parsed.
   */
-static inline QGLColladaParam* findParameterGenerous(StateStack* stateStack, QString stringToMatch)
+static inline QVariant findParameterVariant(ResultState* resultState, QString stringToMatch)
 {
-    for ( int i = stateStack->count() - 1 ; 0 <= i; i-- )
-    {
-        QList<QGLColladaParam*> *params = stateStack->at( i );
-        foreach( QGLColladaParam* param, *params )
-        {
-            if( param == 0 )
-            {
-                static bool warned = false;
-                if( !warned )
-                {
-                    qWarning() << "Warning: null param in state stack while parsing collada.";
-                    warned = true;
-                }
-                continue;
-            }
+    QVariant result = resultState->paramSids.value(stringToMatch);
 
-            if(param->sid() == stringToMatch
-               || param->id() == stringToMatch
-               || (param->type() == QGLColladaParam::ImageType
-                   && static_cast<QGLColladaImageParam*>(param)->name() == stringToMatch ))
-                return param;
-        }
-    }
-    return 0;
+    if( result.isNull() )
+        result = resultState->paramIds.value(stringToMatch);
+
+    if( result.isNull() )
+        result = resultState->paramNames.value(stringToMatch);
+
+    return result;
 }
-
-
 
 /*!
     Parse a collada 1.4 or 1.5 .dae file \a fileName, find the effects in the
@@ -122,13 +106,16 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromFile( const
         return QList<QGLColladaFxEffect*>();
     }
 
+
     QXmlStreamReader xml;
     xml.setDevice( &file );
     if(xml.tokenType() == QXmlStreamReader::Invalid)
         file.readLine();
     xml.setDevice( &file );
 
-    return loadEffectsFromXml( xml );
+    QFileInfo fileInfo(file);
+
+    return loadEffectsFromXml( xml, fileInfo.dir() );
 }
 
 
@@ -171,80 +158,38 @@ QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, 
   \internal
   parse the top level \a xml from a .dae file and process the library_effects elements therein.
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromXml( QXmlStreamReader& xml, QDir homeDirectory )
 {
+    ResultState resultState;
+    resultState.sourceDir = homeDirectory;
     QList<QGLColladaFxEffect*> result;
-    StateStack stateStack;
 
     while( !xml.atEnd() ) {
         xml.readNextStartElement();
-
         if( xml.name() == "library_effects" ) {
-            result += processLibraryEffectsElement( xml , &stateStack );
+            result += processLibraryEffectsElement( xml , &resultState );
         } else if (xml.name() == "library_images")
         {
-            processLibraryImagesElement( xml, &stateStack );
+            processLibraryImagesElement( xml, &resultState );
         }
     }
 
+    // Try and resolve outstanding textures
+    QList<QGLTexture2D*> unresolvedTexturePointers = resultState.unresolvedTexture2Ds.keys();
+    for (int i = 0; i < unresolvedTexturePointers.count(); i++)
+    {
+        QGLTexture2D* texture = unresolvedTexturePointers[i];
+        QString parameterName = resultState.unresolvedTexture2Ds.value(texture);
+        resolveTexture2DImage(texture, &resultState, parameterName);
+    }
     return result;
 }
 
 
 
-/*!
-  \internal
-*/
-QGLColladaParam::QGLColladaParam(QString sid, float f) : mSid(sid)
-        , mType(floatType)
-        , mValue(1, f)
-{
-}
-
-
-
-/*!
-  \internal
-*/
-QGLColladaParam::QGLColladaParam( QString sid, float x, float y) : mSid(sid)
-        , mType(float2Type)
-        , mValue(2)
-{
-    mValue[0] = x;
-    mValue[1] = y;
-}
-
-
-
-/*!
-  \internal
-*/
-QGLColladaParam::QGLColladaParam( QString sid, float x, float y, float z ) : mSid(sid)
-        , mType(float3Type)
-        , mValue(3)
-{
-    mValue[0] = x;
-    mValue[1] = y;
-    mValue[2] = z;
-}
-
-
 QGLColladaParam::~QGLColladaParam()
 {
 
-}
-
-/*!
-  \internal
-*/
-QGLColladaParam::QGLColladaParam(QString sid, float x, float y, float z, float w) : mSid(sid)
-        , mType(float4Type)
-        , mValue(4)
-{
-    mValue[0] = x;
-    mValue[1] = y;
-    mValue[2] = z;
-    mValue[3] = w;
 }
 
 
@@ -305,19 +250,15 @@ QString QGLColladaParam::typeString(int type)
 {
     const char* typeStringArray[] = {
         "UnkownType",
-        "floatType",
-        "float2Type",
-        "float3Type",
-        "float4Type",
         "Sampler2DType",
         "Texture2DType",
         "SurfaceType",
         "ImageType"};
 
-    if( type < 0 || type > UserDefinedType)
-        return("Unrecognized Type");
-    else if (type >= UserDefinedType)
+    if (type >= UserDefinedType)
         return("UserDefinedType");
+    else if( type < 0 || type > ImageType)
+        return("Unrecognized Type");
     else
         return typeStringArray[type];
 }
@@ -445,29 +386,18 @@ QString QGLColladaImageParam::name()
     return mName;
 }
 
-QGLColladaCodeParam::QGLColladaCodeParam(QString sid, QString codeText)
-    : QGLColladaParam(sid, QGLColladaParam::CodeType)
-    , mCodeText(codeText)
-{
-}
-
-const QString& QGLColladaCodeParam::code()
-{
-    return mCodeText;
-};
 
 
 /*!
   \internal
 */
-QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlStreamReader& xml , StateStack* stateStack, QString passedInSid)
+QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlStreamReader& xml , ResultState* resultState, QString passedInSid)
 {
-    Q_UNUSED(stateStack);
+    Q_UNUSED(resultState);
     QXmlStreamAttributes attributes = xml.attributes();
     QString surfaceSid = attributes.value("sid").toString();
-    // Surfaces are the only children of a newparam, but don't have their own sids.
-    // for simplicity, if the surface doesn't have an sid, but the parent does, use the
-    // parent's sid.
+    // Surfaces are the only children of a newparam, but don't have their own
+    // sids. For simplicity, use the parent's sid.
 
     if(surfaceSid.isEmpty() && !passedInSid.isEmpty())
         surfaceSid = passedInSid;
@@ -477,7 +407,9 @@ QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlSt
     {
         if(xml.name().toString() != "init_from")
             qWarning() << "Warning: only ""init_from"" supported in surface element ( line:" << xml.lineNumber() << ")";
-        result->mInitFrom = xml.readElementText();
+        QString init_from = xml.readElementText();
+        result->mInitFrom =  init_from;
+        resultState->paramSids[surfaceSid] = init_from;
     }
     return result;
 }
@@ -486,10 +418,17 @@ QGLColladaSurfaceParam* QGLColladaFxEffectFactory::processSurfaceElement( QXmlSt
 
 /*!
   \internal
+    Processes a list of floating point numbers.  If the list contains only 1
+    element, a QVariant<float> is returned.  If the list containst 2, 3 or 4
+    elements, they are converted into a QVariant containing a QVector2D,
+    QVector3D, or QVector4D respectively.
+    If the list containst more elements than that, they are returned as a
+    QArray<float>.
+
 */
-QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xml )
+QVariant QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xml )
 {
-    QVector<float> result;
+    QArray<float> floats;
     QString elementString = xml.readElementText();
     QStringList list = elementString.split( QRegExp( "\\s+" ), QString::SkipEmptyParts );
     bool ok;
@@ -498,11 +437,38 @@ QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xm
     {
         f = string.toFloat( &ok );
         if( ok )
-            result.append(string.toFloat());
+            floats.append(string.toFloat());
         else
+        {
             qWarning() << "Warning: malformed float ( line" << xml.lineNumber() << ")";
+        }
     }
-    return result;
+
+    switch(floats.count())
+    {
+    case 0:
+        return QVariant();
+        // no break necessary
+    case 1:
+        return QVariant(floats[0]);
+        // no break necessary
+    case 2:
+        return QVariant(QVector2D(floats[0], floats[1]));
+        // no break necessary
+    case 3:
+        return QVariant(QVector3D(floats[0], floats[1], floats[2]));
+        // no break necessary
+    case 4:
+        return QVariant(QVector4D(floats[0], floats[1], floats[2], floats[3]));
+        // no break necessary
+    default:
+        {
+            QVariant result;
+            result.setValue(floats);
+            return result;
+        }
+    }
+    // Function should always return out of switch statement
 }
 
 
@@ -510,10 +476,9 @@ QVector<float> QGLColladaFxEffectFactory::processFloatList( QXmlStreamReader& xm
 /*!
   \internal
 */
-QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, StateStack* stateStack, QString passedInSid )
+void QGLColladaFxEffectFactory::processSampler2DElement( QXmlStreamReader& xml, ResultState* resultState, QString passedInSid )
 {
-    Q_UNUSED(stateStack);
-    QGLColladaSampler2DParam* result = 0;
+    Q_UNUSED(resultState);
     QXmlStreamAttributes attributes = xml.attributes();
     QString sid = attributes.value("sid").toString();
     if(sid.isEmpty() && !passedInSid.isEmpty())
@@ -526,7 +491,7 @@ QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QX
     {
         // Collada 1.4 Spec
         QString sourceSurfaceSid = xml.readElementText().trimmed();
-        result = new QGLColladaSampler2DParam(sid, sourceSurfaceSid);
+        resultState->paramSids[sid] = sourceSurfaceSid;
     }
 
     if( xml.name() == "instance_image" )
@@ -536,7 +501,7 @@ QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QX
     }
     // exit cleanly, just in case.
     findEndTag( xml, "sampler2D");
-    return result;
+    return;
 }
 
 
@@ -547,18 +512,34 @@ QGLColladaSampler2DParam* QGLColladaFxEffectFactory::processSampler2DElement( QX
 */
 QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
 {
+    QVariant floatList = processFloatList( xml );
 
-    QVector<float> floatList = processFloatList( xml );
-    if( floatList.size() < 4 )
+    QColor result( 0, 0, 0, 255 );
+    if(floatList.type() == QVariant::Vector3D)
     {
-        qWarning() << "Warning: Malformed color element ( line" << xml.lineNumber() << ")";
-        return QColor( 0, 0, 0, 255 );
+        QVector3D vector3D = floatList.value<QVector3D>();
+        if( !vector3D.isNull())
+        {
+            result.setRgbF( vector3D.x()
+                            , vector3D.y()
+                            , vector3D.z()
+                            , 1.0 );
+            return result;
+        }
     }
-    QColor result;
-    result.setRgbF( floatList.at( 0 )
-                    , floatList.at( 1 )
-                    , floatList.at( 2 )
-                    , floatList.at( 3 ) );
+    else if(floatList.type() == QVariant::Vector4D)
+    {
+        QVector4D vector4D = floatList.value<QVector4D>();
+        if(!vector4D.isNull())
+        {
+            result.setRgbF( vector4D.x()
+                            , vector4D.y()
+                            , vector4D.z()
+                            , vector4D.w() );
+            return result;
+        }
+    }
+    qWarning() << "Warning: Malformed color element ( line" << xml.lineNumber() << ")";
     return result;
 }
 
@@ -568,7 +549,7 @@ QColor QGLColladaFxEffectFactory::processColorElement( QXmlStreamReader& xml )
     \internal
     Parses and consumes an fx_common_color_or_texture_type collada element from \a xml.
 */
-QColor QGLColladaFxEffectFactory::processColorOrTextureElement( QXmlStreamReader& xml )
+QVariant QGLColladaFxEffectFactory::processColorOrTextureElement( QXmlStreamReader& xml )
 {
     if( xml.name() == "color")
     {
@@ -608,12 +589,11 @@ float QGLColladaFxEffectFactory::processParamOrFloatElement( QXmlStreamReader& x
 
 /*!
     Parses and consumes a library_images collada element pointed to by \a xml,
-    and pushes any images found onto the \a stateStack for use in resolving
+    and pushes any images found onto the \a resultState for use in resolving
     elements later.
 */
-void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& xml, StateStack* stateStack )
+void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& xml, ResultState* resultState )
 {
-    QList<QGLColladaParam*>* list = new QList<QGLColladaParam*>;
     xml.readNextStartElement();
 
     if( xml.name() == "asset" )
@@ -625,20 +605,17 @@ void QGLColladaFxEffectFactory::processLibraryImagesElement( QXmlStreamReader& x
 
     while( xml.name() == "image" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        QGLColladaParam* imageParam = processImageElement( xml , stateStack );
-        list->append( imageParam );
+        processImageElement( xml , resultState );
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
-
-    stateStack->push_back(list);
 }
 
 
 /*!
   \internal
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsElement( QXmlStreamReader& xml, StateStack* stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsElement( QXmlStreamReader& xml, ResultState* resultState )
 {
     QList<QGLColladaFxEffect*> result;
     // A collada library_effects is
@@ -656,13 +633,14 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsEleme
 
     while( xml.name() == "effect" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        result += processEffectElement( xml , stateStack );
+        result += processEffectElement( xml , resultState );
         xml.readNextStartElement();
     }
 
-    while( xml.readNextStartElement() && xml.name() == "extra" )
+    while( xml.name() == "extra" )
     {
         qWarning() << "Warning: extra element not handled in effects library ( line" << xml.lineNumber() << ")";
+        xml.readNextStartElement();
     }
 
     // be sure to exit cleanly
@@ -676,9 +654,8 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processLibraryEffectsEleme
   \internal
   Parses and consumes an effect element from \a xml.
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXmlStreamReader& xml, StateStack* stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXmlStreamReader& xml, ResultState* resultState )
 {
-    Q_UNUSED(stateStack);
     //    An effect element is:
     //    0 or 1 <annotate>
     //    0 or more newparam
@@ -695,22 +672,17 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
         xml.readNextStartElement();
     }
 
-    QList<QGLColladaParam*>* params = new QList<QGLColladaParam*>;
     while( xml.name() == "newparam" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        QGLColladaParam* result = processNewparamElement( xml , stateStack );
-        if( result != 0 )
-            params->append( result );
-
+        processNewparamElement( xml , resultState );
         xml.readNextStartElement();
     }
-    stateStack->push_back( params );
 
     // find any of the profile_* elements defined in the spec
     QRegExp profileRegExp( "profile_(BRIDGE|CG|GLES2?|GLSL|COMMON)" );
     while( profileRegExp.indexIn( xml.name().toString() ) == 0 && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        result += processProfileElement( xml, stateStack );
+        result += processProfileElement( xml, resultState );
         xml.readNextStartElement();
     }
 
@@ -723,7 +695,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processEffectElement( QXml
 /*!
   \internal
 */
-QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXmlStreamReader& xml, StateStack* stateStack )
+QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXmlStreamReader& xml, ResultState* resultState )
 {
     // A profile_GLES2 element is:
     // 0 or 1 <asset>
@@ -750,8 +722,6 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
 
     QString rootNodeString = xml.name().toString();
     QList<QGLColladaFxEffect*> result;
-    QList<QGLColladaParam*>* params = new QList<QGLColladaParam*>;
-    stateStack->push_back(params);
 
     xml.readNextStartElement();
     if( xml.name() == "asset" )
@@ -767,13 +737,11 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
         {
             QString codeSid = xml.attributes().value("sid").toString();
             QString codeText = xml.readElementText();
-
-            params->append(new QGLColladaCodeParam(codeSid, codeText));
+            resultState->paramSids[codeSid] = codeText;
 
             findEndTag(xml, "code");
             xml.readNextStartElement();
         }
-
 
         while ( xml.name() == "include" )
         {
@@ -793,9 +761,9 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
            ( xml.name() == "newparam" || xml.name() == "image" ))
     {
         if( xml.name() == "newparam" )
-            params->append( processNewparamElement( xml , stateStack ));
+            processNewparamElement( xml , resultState );
         else if( xml.name() == "image" )
-            params->append( processImageElement( xml , stateStack ));
+            processImageElement( xml , resultState );
 
         xml.readNextStartElement();
     }
@@ -804,7 +772,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
     while ( xml.name() == "technique" )
     {
         result.append(
-                processTechniqueElement( xml, stateStack, rootNodeString ));
+                processTechniqueElement( xml, resultState, rootNodeString ));
         xml.readNextStartElement();
         // only 1 technique in profile_COMMON
         if( rootNodeString == "profile_COMMON")
@@ -820,13 +788,12 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::processProfileElement( QXm
         xml.readNextStartElement();
     };
 
-    stateStack->pop_back();
     findEndTag( xml, rootNodeString );
     return result;
 }
 
 
-QGLColladaParam* QGLColladaFxEffectFactory::processPassElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect )
+QGLColladaParam* QGLColladaFxEffectFactory::processPassElement( QXmlStreamReader& xml, ResultState* resultState, QGLColladaFxEffect* effect )
 {
     QGLColladaParam* result = 0;
     // a profile_GLSL pass is:
@@ -855,7 +822,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processPassElement( QXmlStreamReader
     // 0 or 1 <program> (CG, GLES2 or GLSL only)
     if( xml.name() == "program" )
     {
-        processProgramElement( xml, stateStack, effect );
+        processProgramElement( xml, resultState, effect );
         findEndTag( xml, "program" );
         xml.readNextStartElement();
     }
@@ -880,7 +847,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processPassElement( QXmlStreamReader
     return result;
 }
 
-QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStreamReader& xml, StateStack* stateStack, QString &profileName )
+QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStreamReader& xml, ResultState* resultState, QString &profileName )
 {
     // A 1.4 technique is:
     // 0 or 1 <asset>
@@ -968,9 +935,9 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                     }
                     else if( xml.name() == "texture")
                     {
-                        effect->d->emissiveTexture = processTextureElement( xml, stateStack );
+                        effect->d->emissiveTexture = processTextureElement( xml, resultState );
 #ifdef DEBUG_MATERIALS
-                        qDebug() << "set emissive texture to " << effect->d->emittedTexture;
+                        qDebug() << "set emissive texture to " << effect->d->emissiveTexture;
 #endif
                     } else if( xml.name() == "param")
                     {
@@ -995,7 +962,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                     }
                     else if( xml.name() == "texture")
                     {
-                        effect->d->ambientTexture = processTextureElement( xml, stateStack );
+                        effect->d->ambientTexture = processTextureElement( xml, resultState );
 #ifdef DEBUG_MATERIALS
                         qDebug() << "set ambient texture to " << effect->d->ambientTexture;
 #endif
@@ -1022,7 +989,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                     }
                     else if( xml.name() == "texture")
                     {
-                        effect->d->diffuseTexture = processTextureElement( xml, stateStack );
+                        effect->d->diffuseTexture = processTextureElement( xml, resultState );
 #ifdef DEBUG_MATERIALS
                         qDebug() << "set diffuse texture to " << effect->d->diffuseTexture;
 #endif
@@ -1049,7 +1016,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                     }
                     else if( xml.name() == "texture")
                     {
-                        effect->d->specularTexture = processTextureElement( xml, stateStack );
+                        effect->d->specularTexture = processTextureElement( xml, resultState );
 #ifdef DEBUG_MATERIALS
                         qDebug() << "set specular texture to " << effect->d->specularTexture;
 #endif
@@ -1099,12 +1066,11 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
             if( xml.name() == "transparent" )
             {
-                // TODO: color or texture
                 if( xml.readNextStartElement() )
                 {
                     if(xml.name() == "texture")
                     {
-                        QGLTexture2D* transparentTexture = processTextureElement( xml , stateStack );
+                        QGLTexture2D* transparentTexture = processTextureElement( xml , resultState );
                         Q_UNUSED(transparentTexture);
                         qWarning() << "Warning: transparent not supported ( line" << xml.lineNumber() << ")";
 #ifdef DEBUG_MATERIALS
@@ -1120,41 +1086,39 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
                         qDebug() << "unused transparent color of " << transparent;
 #endif
                     }
-
                 }
-            }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
-        }
-
-        if( xml.name() == "transparency" )
-        {
-            if( xml.readNextStartElement() )
-            {
-                float transparency = processParamOrFloatElement( xml );
-                if( transparency < 1.0 )
-                {
-                    qWarning() << "Warning: transparency not supported";
-                }
-            }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
-        }
-
-        if( xml.name() == "index_of_refraction" )
-        {
-            if( xml.readNextStartElement() )
-            {
-                float indexOfRefraction = processParamOrFloatElement( xml );
-                Q_UNUSED( indexOfRefraction );
-                qWarning() << "Warning: index_of_refraction not supported ( line" << xml.lineNumber() << ")";
                 xml.skipCurrentElement();
+                xml.readNextStartElement();
             }
-            xml.skipCurrentElement();
-            xml.readNextStartElement();
+
+            if( xml.name() == "transparency" )
+            {
+                if( xml.readNextStartElement() )
+                {
+                    float transparency = processParamOrFloatElement( xml );
+                    if( transparency < 1.0 )
+                    {
+                        qWarning() << "Warning: transparency not supported";
+                    }
+                    xml.skipCurrentElement();
+                    xml.readNextStartElement();
+                }
+            }
+
+            if( xml.name() == "index_of_refraction" )
+            {
+                if( xml.readNextStartElement() )
+                {
+                    float indexOfRefraction = processParamOrFloatElement( xml );
+                    Q_UNUSED( indexOfRefraction );
+                    qWarning() << "Warning: index_of_refraction not supported ( line" << xml.lineNumber() << ")";
+                    xml.skipCurrentElement();
+                }
+                xml.skipCurrentElement();
+                xml.readNextStartElement();
+            }
         }
-        xml.skipCurrentElement();
-        xml.readNextStartElement();
+        // end of lighting scope
 
         effect->setMaterial( material );
 
@@ -1174,7 +1138,7 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
     while( xml.name() == "pass" && xml.tokenType() == QXmlStreamReader::StartElement )
     {
-        processPassElement( xml, stateStack, effect);
+        processPassElement( xml, resultState, effect);
         xml.skipCurrentElement();
         xml.readNextStartElement();
     }
@@ -1187,50 +1151,47 @@ QGLColladaFxEffect* QGLColladaFxEffectFactory::processTechniqueElement( QXmlStre
 
 
 
-QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamReader& xml, StateStack* stateStack)
+QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamReader& xml, ResultState* resultState)
 {
     QXmlStreamAttributes attributes = xml.attributes();
+    QString sidString = attributes.value("sid").toString();
     QGLColladaParam* result = 0;
     if(xml.readNextStartElement())
     {
         if(xml.name().toString().left(5) == "float")
         {
 
-            QVector<float> floatValues = processFloatList( xml )            ;
+            QVariant floatValues = processFloatList( xml );
+            resultState->paramSids[sidString] = floatValues;
 
-            if( xml.name() == "float" && floatValues.count() > 0 )
+            if( xml.name() == "float"
+                && ( floatValues.type() !=
+                     static_cast<QVariant::Type>(QMetaType::Float )))
             {
-                new QGLColladaParam(attributes.value("sid").toString()
-                                    , floatValues.at(0) );
+                qWarning() << "Warning: parsed type incorrectly, expected float ( line" << xml.lineNumber() << ")";
+                resultState->paramSids[sidString] = floatValues.value<float>();
             }
-            else if( xml.name() == "float2" && floatValues.count() > 1 )
+            else if( xml.name() == "float2"
+                     && floatValues.type() != QVariant::Vector2D )
             {
-                new QGLColladaParam(attributes.value("sid").toString()
-                                    , floatValues.at(0)
-                                    , floatValues.at(1));
-
+                qWarning() << "Warning: parsed type incorrectly, expected float2 ( line" << xml.lineNumber() << ")";
             }
-            else if( xml.name() == "float3" && floatValues.count() > 2 )
+            else if( xml.name() == "float3"
+                     && floatValues.type() != QVariant::Vector3D )
             {
-                new QGLColladaParam(attributes.value("sid").toString()
-                                    , floatValues.at(0)
-                                    , floatValues.at(1)
-                                    , floatValues.at(2) );
+                qWarning() << "Warning: parsed type incorrectly, expected float3 ( line" << xml.lineNumber() << ")";
             }
-            else if( xml.name() == "float4" && floatValues.count() > 3 )
+            else if( xml.name() == "float4"
+                     && floatValues.type() != QVariant::Vector4D)
             {
-                new QGLColladaParam(attributes.value("sid").toString()
-                                    , floatValues.at(0)
-                                    , floatValues.at(1)
-                                    , floatValues.at(2)
-                                    , floatValues.at(3) );
+                qWarning() << "Warning: parsed type incorrectly, expected float4 ( line" << xml.lineNumber() << ")";
             }
         } else if( xml.name() == "sampler2D" )
         {
-            result = processSampler2DElement( xml , stateStack, attributes.value("sid").toString() );
+            processSampler2DElement( xml , resultState, sidString );
         } else if( xml.name() == "surface" )
         {
-            result = processSurfaceElement( xml, stateStack, attributes.value("sid").toString());
+            result = processSurfaceElement( xml, resultState, sidString);
         } else {
             qWarning() << "unrecognized paramter type ( line:" << xml.lineNumber() << ")";
             findEndTag( xml, "newparam" );
@@ -1242,13 +1203,53 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
 }
 
 
+/*!
+  \internal
+  the library_images can come after the library_effects, so textures referenced
+  in effects might not have been defined when the effect was created.  Try and
+  resolve those images now.  (Other properties - wrap, mipmap and filters etc
+  should have been resolved when the texture was originally parsed).
+  */
+bool QGLColladaFxEffectFactory::resolveTexture2DImage(QGLTexture2D *texture, ResultState *resultState, QString paramName)
+{
+    if(texture == 0)
+    {
+        qWarning() << "Warning: Cannot resolve images for null QGLTexture2D";
+        return false;
+    }
+    QVariant samplerParam = findParameterVariant(resultState, paramName);
+    QString surfaceName = samplerParam.value<QString>();
+    QImage image;
+
+    if(!surfaceName.isEmpty())
+    {
+        QVariant surfaceParam =  findParameterVariant(resultState, surfaceName);
+        QString initFrom = surfaceParam.value<QString>();
+        if(!initFrom.isEmpty())
+        {
+            image = resolveImageURI(resultState, initFrom);
+        }
+    }
+
+    // If that's failed, try again with the passed in paramName
+    if(image.isNull())
+    {
+        image = resolveImageURI(resultState, paramName);
+    }
+
+    texture->setImage(image);
+    return !image.isNull();
+}
 
 
+
+
+Q_DECLARE_METATYPE(QGLTexture2D*);
 /*!
     \internal
     Parses and consumes a texture collada element from \a xml.
 */
-QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , StateStack* stateStack)
+QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader& xml , ResultState* resultState )
 {
     QGLTexture2D* result = new QGLTexture2D();
     QXmlStreamAttributes attributes = xml.attributes();
@@ -1259,31 +1260,15 @@ QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader
         {
             QString paramName = attribute.value().toString();
 
-            // in Collada Fx Textures must reference a previously defined sampler2D param
-            QGLColladaParam* sourceParam = findParameterGenerous(stateStack, paramName);
-            if(sourceParam != 0 && sourceParam->type() == QGLColladaParam::Sampler2DType)
-            {
-                QGLColladaSampler2DParam* sourceSamplerParam = static_cast<QGLColladaSampler2DParam*>( sourceParam );
+            // in Collada Fx Textures must reference a previously defined
+            // sampler2D param.
+            // However, this sampler may refer to images in the library_images,
+            // which is parsed after the library_effects, so try and resolve
+            // now, but save failures to try again later.
 
-                // in Collada Fx 1.4, a sampler must have a source surface, so find this now.
-                QGLColladaParam* sourceParamForSampler = findParameterGenerous(stateStack, sourceSamplerParam->sourceSid());
-                if( sourceParamForSampler != 0 && sourceParamForSampler->type() == QGLColladaParam::SurfaceType)
-                {
-                    QGLColladaSurfaceParam* sourceSurface = static_cast<QGLColladaSurfaceParam*> (sourceParamForSampler);
-                    QString sourceImageName = sourceSurface->mInitFrom;
-
-                    // Look for a source file:
-                    QGLColladaParam* sourceParamForSurface = findParameterGenerous(stateStack, sourceImageName);
-                    if(sourceParamForSurface != 0 && sourceParamForSurface->type() == QGLColladaParam::ImageType)
-                    {
-                        QGLColladaImageParam* sourceImageParam= static_cast<QGLColladaImageParam*>( sourceParamForSurface );
-                        result->setImage( sourceImageParam->image() );
-                    }
-                }
-            }
-            else
+            if(!resolveTexture2DImage(result, resultState, paramName))
             {
-                qWarning() << "failed to find a source sampler for texture ( line" << xml.lineNumber() << ")";
+                resultState->unresolvedTexture2Ds[result] = paramName;
             }
         } else if( attribute.name() == "texcoord" )
         {
@@ -1300,15 +1285,52 @@ QGLTexture2D* QGLColladaFxEffectFactory::processTextureElement( QXmlStreamReader
     return result;
 }
 
+/*!
+  \internal
+  Try and get an image to attach to a texture.  The URI could be a reference to
+  a param in the collada document (which may in turn be a reference), or
+  file referenced either absolutely or relative to the original dae file.
+  (It could concievably be a web URL, but that is not handled here.)
+  */
+QImage QGLColladaFxEffectFactory::resolveImageURI(ResultState *resultState, QString URI)
+{
+    QImage result;
+    QString imageFileName;
+    QString workingURI = URI;
+    if(workingURI.length() > 0 && workingURI.at(0) == '#')
+    {
+        workingURI = workingURI.right(workingURI.length() - 1);
+    }
 
+    QVariant potentialParameter = findParameterVariant(resultState, workingURI);
+    // Might be parameter itself:
+    if( !potentialParameter.value<QImage>().isNull() )
+        return potentialParameter.value<QImage>();
+    // or might be another URI
+    if(!potentialParameter.value<QString>().isNull())
+    {
+        imageFileName = potentialParameter.value<QString>();
+    } else {
+        imageFileName = workingURI;
+    }
+
+    // First try as a relative path.
+    QString filePath = resultState->sourceDir.path() + "/" + imageFileName;
+    result.load(filePath);
+    if(result.isNull())
+    {
+        // No relative file found, so try as an absolute path
+        result.load(imageFileName);
+    }
+    return result;
+}
 
 /*!
   \internal
   Parses and consumes an image element from \a xml.
 */
-QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, StateStack* stateStack )
+void QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, ResultState* resultState )
 {
-    Q_UNUSED(stateStack);
     // 1.4 has a bunch of optional values in the attributes:
     QString sid = xml.attributes().value("sid").toString();
     QString id = xml.attributes().value("id").toString();
@@ -1322,7 +1344,7 @@ QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStream
     Q_UNUSED(width);
     Q_UNUSED(depth);
 
-    QGLColladaImageParam* result = 0;
+    QImage result;
 
     xml.readNextStartElement();
     if(xml.name() == "asset")
@@ -1335,19 +1357,25 @@ QGLColladaImageParam* QGLColladaFxEffectFactory::processImageElement( QXmlStream
     if(xml.name() == "init_from")
     {
         QString imageFileName = xml.readElementText().trimmed();
-        QImage image(imageFileName);
-        result = new QGLColladaImageParam( sid, image );
+        QDir sourceDir = resultState->sourceDir;
+        // ignore path information for resources
+        QString filePath = sourceDir.path() + "/" + imageFileName;
+        result.load(filePath);
+        if(result.isNull())
+        {
+            // Catch resources or files with absolute paths
+            result.load(imageFileName);
+        }
+        if(!sid.isEmpty())
+            resultState->paramSids[sid] = result;
+        if(!id.isEmpty())
+            resultState->paramIds[id] = result;
+        if(!name.isEmpty())
+            resultState->paramNames[name] = result;
     }
 
     // exit cleanly
     findEndTag( xml, "image");
-
-    if(result != 0)
-    {
-        result->mId = id;
-        result->mName = name;
-    }
-    return result;
 }
 
 QStringList QGLColladaFxEffectFactory::glslProfileFromEffect(QGLShaderProgramEffect* effect, QString sid)
@@ -1485,11 +1513,15 @@ QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderPro
     if(effect->material() != 0)
     {
         QGLMaterial* material = effect->material();
-        result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
+        // Example uniforms
+//        result += generateBindUniformParamElement( "exampleRefSymbol", QString("exampleRef"));
+//        result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
+
+        // Actual uniforms:
         result += generateBindUniformParamElement( "ambientColor", material->ambientColor());
         result += generateBindUniformParamElement( "diffuseColor", material->diffuseColor());
         result += generateBindUniformParamElement( "emittedLight", material->emittedLight());
-        result += generateBindUniformParamElement( "objectName", material->objectName()); // ?
+        result += generateBindUniformParamElement( "objectName", material->objectName());
         result += generateBindUniformParamElement( "shininess", material->shininess());
         result += generateBindUniformParamElement( "specularColor", material->specularColor());
     }
@@ -1498,9 +1530,6 @@ QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderPro
     // TODO: Find and store effect uniforms
 //    effect->bindProgramUniforms();
 
-    // Example uniforms
-//    result += generateBindUniformParamElement( "exampleRefSymbol", QString("exampleRef"));
-//    result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
     return result;
 }
 
@@ -1521,7 +1550,7 @@ QStringList QGLColladaFxEffectFactory::generateCodeElements( QGLShaderProgramEff
     return result;
 }
 
-void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, StateStack* stateStack, QGLColladaFxEffect* effect )
+void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, ResultState* resultState, QGLColladaFxEffect* effect )
 {
     // A profile_GLSL shader element is
     // 0 or more <shader>
@@ -1557,22 +1586,22 @@ void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, St
                     {
                         attr = xml.attributes().first();
                     }
-                    QGLColladaParam* param = findParameterGenerous(stateStack, ref);
-                    if(param  == 0 || param->type() != QGLColladaParam::CodeType)
+
+                    QVariant param = findParameterVariant(resultState, ref);
+                    if(param.isNull() || param.type() != QVariant::String)
                     {
                         qWarning() << "null or unexpected parameter found in import element ( line"
                                 <<  xml.lineNumber()<<")";
                     }
                     else
                     {
-                        QGLColladaCodeParam* codeParam = static_cast<QGLColladaCodeParam*>(param);
                         if(stage == "VERTEX")
                         {
-                            effect->setVertexShader( codeParam->code() );
+                            effect->setVertexShader( param.value<QString>() );
                         }
                         else if (stage == "FRAGMENT")
                         {
-                            effect->setFragmentShader( codeParam->code() );
+                            effect->setFragmentShader( param.value<QString>() );
                         } else
                         {
                             qWarning() << "unrecognized shader stage: "

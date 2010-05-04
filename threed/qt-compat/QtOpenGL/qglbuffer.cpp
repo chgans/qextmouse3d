@@ -44,7 +44,6 @@
 #include <QtCore/qatomic.h>
 #include "qglbuffer.h"
 #include "qglcontextscope.h"
-#include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -115,7 +114,78 @@ QT_BEGIN_NAMESPACE
     \value ReadWrite The buffer will be mapped for reading and writing.
 */
 
-static QGLPainterExtensions *loadBufferFunctions(const QGLContext *sameAs = 0)
+// We can call the buffer functions directly in OpenGL/ES,
+// but all other platforms need to resolve the extensions.
+#if !defined(QT_OPENGL_ES)
+#define QGL_RESOLVE_BUFFER_FUNCS 1
+#endif
+
+#ifndef Q_WS_MAC
+# ifndef APIENTRYP
+#   ifdef APIENTRY
+#     define APIENTRYP APIENTRY *
+#   else
+#     define APIENTRY
+#     define APIENTRYP *
+#   endif
+# endif
+#else
+# define APIENTRY
+# define APIENTRYP *
+#endif
+
+typedef ptrdiff_t qGLsizeiptr;
+typedef ptrdiff_t qGLintptr;
+
+typedef void (APIENTRYP q_PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
+typedef void (APIENTRYP q_PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint *buffers);
+typedef void (APIENTRYP q_PFNGLGENBUFFERSPROC) (GLsizei n, GLuint *buffers);
+typedef void (APIENTRYP q_PFNGLBUFFERDATAPROC) (GLenum target, qGLsizeiptr size, const GLvoid *data, GLenum usage);
+typedef void (APIENTRYP q_PFNGLBUFFERSUBDATAPROC) (GLenum target, qGLintptr offset, qGLsizeiptr size, const GLvoid *data);
+typedef void (APIENTRYP q_PFNGLGETBUFFERSUBDATAPROC) (GLenum target, qGLintptr offset, qGLsizeiptr size, GLvoid *data);
+typedef void (APIENTRYP q_PFNGLGETBUFFERPARAMETERIVPROC) (GLenum target, GLenum pname, GLint *params);
+typedef GLvoid* (APIENTRYP q_PFNGLMAPBUFFERPROC) (GLenum target, GLenum access);
+typedef GLboolean (APIENTRYP q_PFNGLUNMAPBUFFERPROC) (GLenum target);
+
+class QGLBufferExtensions
+{
+public:
+    QGLBufferExtensions()
+    {
+#if defined(QGL_RESOLVE_BUFFER_FUNCS)
+        bindBuffer = 0;
+        deleteBuffers = 0;
+        genBuffers = 0;
+        bufferData = 0;
+        bufferSubData = 0;
+        getBufferSubData = 0;
+        getBufferParameteriv = 0;
+#endif
+        mapBuffer = 0;
+        unmapBuffer = 0;
+    }
+
+#if defined(QGL_RESOLVE_BUFFER_FUNCS)
+    q_PFNGLBINDBUFFERPROC bindBuffer;
+    q_PFNGLDELETEBUFFERSPROC deleteBuffers;
+    q_PFNGLGENBUFFERSPROC genBuffers;
+    q_PFNGLBUFFERDATAPROC bufferData;
+    q_PFNGLBUFFERSUBDATAPROC bufferSubData;
+    q_PFNGLGETBUFFERSUBDATAPROC getBufferSubData;
+    q_PFNGLGETBUFFERPARAMETERIVPROC getBufferParameteriv;
+#endif
+    q_PFNGLMAPBUFFERPROC mapBuffer;
+    q_PFNGLUNMAPBUFFERPROC unmapBuffer;
+};
+
+static void qt_buffer_funcs_free(void *data)
+{
+    delete reinterpret_cast<QGLBufferExtensions *>(data);
+}
+
+Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_buffer_funcs, (qt_buffer_funcs_free))
+
+static QGLBufferExtensions *loadBufferFunctions(const QGLContext *sameAs = 0)
 {
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
@@ -123,8 +193,12 @@ static QGLPainterExtensions *loadBufferFunctions(const QGLContext *sameAs = 0)
     if (sameAs && !QGLContext::areSharing(ctx, sameAs))
         return 0;
 
-    QGLPainterExtensions *extensions =
-        QGLPainterPrivateCache::instance()->fromContext(ctx)->extensions();
+    QGLBufferExtensions *extensions =
+        reinterpret_cast<QGLBufferExtensions *>(qt_buffer_funcs()->value(ctx));
+    if (!extensions) {
+        extensions = new QGLBufferExtensions();
+        qt_buffer_funcs()->insert(ctx, extensions);
+    }
 
 #if defined(QGL_RESOLVE_BUFFER_FUNCS)
     if (extensions->genBuffers != 0)
@@ -232,7 +306,7 @@ QGLBuffer::~QGLBuffer()
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glDeleteBuffers(1, &bufferId);
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
         if (extensions)
             extensions->deleteBuffers(1, &bufferId);
 #endif
@@ -306,7 +380,7 @@ bool QGLBuffer::create()
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glGenBuffers(1, &bufferId);
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions();
+        QGLBufferExtensions *extensions = loadBufferFunctions();
         if (extensions)
             extensions->genBuffers(1, &bufferId);
 #endif
@@ -350,7 +424,7 @@ bool QGLBuffer::read(int offset, void *data, int size)
     return glGetError() == GL_NO_ERROR;
 #else
     Q_D(QGLBuffer);
-    QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+    QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
     if (!extensions || !extensions->getBufferSubData)
         return false;
     while (glGetError() != GL_NO_ERROR) ; // Clear error state.
@@ -383,7 +457,7 @@ void QGLBuffer::write(int offset, const void *data, int size)
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glBufferSubData(d->type, offset, size, data);
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
         if (!extensions)
             return;
         extensions->bufferSubData(d->type, offset, size, data);
@@ -407,7 +481,7 @@ void QGLBuffer::allocate(const void *data, int size)
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glBufferData(d->type, size, data, d->actualUsagePattern);
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
         if (!extensions)
             return;
         extensions->bufferData(d->type, size, data, d->actualUsagePattern);
@@ -455,7 +529,7 @@ bool QGLBuffer::bind() const
         glBindBuffer(d->type, bufferId);
         return true;
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
         if (!extensions)
             return false;
         extensions->bindBuffer(d->type, bufferId);
@@ -482,7 +556,7 @@ void QGLBuffer::release() const
 #if !defined(QGL_RESOLVE_BUFFER_FUNCS)
         glBindBuffer(d->type, 0);
 #else
-        QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
         if (extensions)
             extensions->bindBuffer(d->type, 0);
 #endif
@@ -510,7 +584,7 @@ void QGLBuffer::release(QGLBuffer::Type type)
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
         return;
-    QGLPainterExtensions *extensions = loadBufferFunctions(ctx);
+    QGLBufferExtensions *extensions = loadBufferFunctions(ctx);
     if (extensions)
         extensions->bindBuffer(GLenum(type), 0);
 #endif
@@ -553,7 +627,7 @@ int QGLBuffer::size() const
 #else
     if (!d->guard.id())
         return -1;
-    QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+    QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
     if (!extensions || !extensions->getBufferParameteriv)
         return -1;
     GLint value = -1;
@@ -581,7 +655,7 @@ void *QGLBuffer::map(QGLBuffer::Access access)
     Q_D(QGLBuffer);
     if (!d->guard.id())
         return 0;
-    QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+    QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
     if (!extensions || !extensions->mapBuffer)
         return 0;
     return extensions->mapBuffer(d->type, access);
@@ -605,7 +679,7 @@ bool QGLBuffer::unmap()
     Q_D(QGLBuffer);
     if (!d->guard.id())
         return false;
-    QGLPainterExtensions *extensions = loadBufferFunctions(d->guard.context());
+    QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
     if (!extensions || !extensions->unmapBuffer)
         return false;
     return extensions->unmapBuffer(d->type) == GL_TRUE;

@@ -55,6 +55,8 @@
 
 #include "qgltexture2d.h"
 #include "qgltextureutils_p.h"
+#include "qurl.h"
+
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_NAMESPACE
@@ -94,6 +96,7 @@ public:
     QSize size;
     QSize requestedSize;
     QImage image;
+    QUrl url;
     QByteArray compressedData;
     QGLContext::BindOptions bindOptions;
     QGL::TextureWrap horizontalWrap;

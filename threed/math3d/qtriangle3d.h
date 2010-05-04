@@ -54,6 +54,8 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
+class QMatrix4x4;
+
 class Q_QT3D_EXPORT QTriangle3D
 {
 public:
@@ -86,6 +88,9 @@ public:
     QResult<QVector3D> intersection(const QLine3D &line) const;
 
     QVector3D interpolate(qreal s, qreal t) const;
+
+    void transform(const QMatrix4x4 &matrix);
+    QTriangle3D transformed(const QMatrix4x4 &matrix) const;
 
 private:
     QVector3D m_p, m_q, m_r;   // vertex points of a triangle in 3D space

@@ -1555,11 +1555,9 @@ QDebug operator<<(QDebug dbg, const QArray<T, PreallocSize>& array)
     dbg.nospace() << "QArray(\n";
     int size = array.size();
     for (int index = 0; index < size; ++index) {
-        if (index)
-            dbg << ",\n";
-        dbg << "   " << array.at(index);
+        dbg << "   " << index << ":  " << array.at(index) << "\n";
     }
-    dbg << ')';
+    dbg << ")\n";
     return dbg.space();
 }
 

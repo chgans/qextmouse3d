@@ -144,7 +144,6 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
 void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
 {
     painter->setClearColor(QColor(0, 0, 0, 255));
-    painter->setLightEnabled(0, true);
     d->painterColor = QColor(17, 68, 221, 255);
 
     mLightParameters = new QGLLightParameters;
@@ -152,7 +151,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     mLightParameters->setAmbientColor(QColor(255 *0.2, 255 *0.2, 255 *0.2));
     mLightParameters->setDiffuseColor(QColor(255 * 0.8, 255 * 0.8, 255 * 0.8));
     mLightParameters->setSpecularColor(QColor(255, 255, 255));
-    painter->setLightParameters(0, mLightParameters);
+    painter->setMainLight(mLightParameters);
     painter->setFaceColor(QGL::AllFaces, d->painterColor);
 
     mTexture->setImage(QImage (":/qtlogo.png"));
@@ -176,7 +175,6 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     painter->setTexture(0, mTexture);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
-    painter->setLightEnabled(0, true);
 
     if( d->effect )
     {
@@ -194,6 +192,8 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     {
         mDefaultSceneObject->draw(painter);
     }
+    // Unset the effect in case it gets deleted
+    painter->setUserEffect(0);
 }
 
 void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)

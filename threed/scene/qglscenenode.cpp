@@ -587,7 +587,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         // If this node only references a small section of the geometry, then
         // this bounding-box test may draw something that didn't need to be.
         QBox3D bb = d->geometry->boundingBox();
-        if (bb.isFinite() && !painter->isVisible(bb))
+        if (bb.isFinite() && painter->isCullable(bb))
         {
             if (wasTransformed)
                 painter->modelViewMatrix().pop();

@@ -46,6 +46,7 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qscopedpointer.h>
 #include <QtGui/qcolor.h>
+#include <QtCore/qurl.h>
 
 QT_BEGIN_HEADER
 
@@ -72,6 +73,7 @@ class Q_QT3D_EXPORT QGLMaterial : public QObject
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY basicColorChanged)
     Q_PROPERTY(qreal shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
     Q_PROPERTY(QGLTexture2D *texture READ texture WRITE setTexture NOTIFY texturesChanged)
+    Q_PROPERTY(QUrl textureUrl READ textureUrl WRITE setTextureUrl NOTIFY texturesChanged)
 public:
     explicit QGLMaterial(QObject *parent = 0);
     ~QGLMaterial();
@@ -99,6 +101,9 @@ public:
 
     QGLTexture2D *texture(int layer = 0) const;
     void setTexture(QGLTexture2D *value, int layer = 0);
+
+    QUrl textureUrl(int layer = 0) const;
+    void setTextureUrl(const QUrl &url, int layer = 0);
 
     int textureLayerCount() const;
 

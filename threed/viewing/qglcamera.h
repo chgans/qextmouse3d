@@ -43,6 +43,7 @@
 #define QGLCAMERA_H
 
 #include "qt3dglobal.h"
+#include "qglnamespace.h"
 #include <QtCore/qobject.h>
 #include <QtCore/qsize.h>
 #include <QtGui/qvector3d.h>
@@ -61,7 +62,7 @@ class QGLPainter;
 class Q_QT3D_EXPORT QGLCamera : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ProjectionType)
+    Q_ENUMS(ProjectionType RotateOrder)
     Q_PROPERTY(ProjectionType projectionType READ projectionType WRITE setProjectionType NOTIFY projectionChanged)
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY projectionChanged)
     Q_PROPERTY(qreal nearPlane READ nearPlane WRITE setNearPlane NOTIFY projectionChanged)
@@ -88,7 +89,8 @@ public:
     enum ProjectionType
     {
         Perspective,
-        Orthographic
+        Orthographic,
+        Orthographic2D
     };
 
     QGLCamera::ProjectionType projectionType() const;
@@ -153,19 +155,41 @@ public:
 
     QVector3D translation(qreal x, qreal y, qreal z) const;
 
-    void translateEye(const QVector3D& vector);
-    void translateCenter(const QVector3D& vector);
-
     QMatrix4x4 projectionMatrix(qreal aspectRatio) const;
-    QMatrix4x4 modelViewMatrix() const;
+    QMatrix4x4 projectionMatrix2D
+        (const QRect& rect, QGL::Eye eye = QGL::NoEye) const;
 
-    void apply(QGLPainter *painter) const;
-    void apply(QGLPainter *painter, const QSize& viewportSize) const;
-    void apply(QGLPainter *painter, const QSize& viewportSize, const QVector3D& eyeAdjust) const;
+    QMatrix4x4 modelViewMatrix(QGL::Eye eye = QGL::NoEye) const;
 
     QVector3D mapPoint
         (const QPoint& point, qreal aspectRatio,
          const QSize& viewportSize) const;
+
+    enum RotateOrder
+    {
+        TiltPanRoll,
+        TiltRollPan,
+        PanTiltRoll,
+        PanRollTilt,
+        RollTiltPan,
+        RollPanTilt
+    };
+
+public Q_SLOTS:
+    void translateEye(qreal x, qreal y, qreal z);
+    void translateCenter(qreal x, qreal y, qreal z);
+
+    void tiltCenter(qreal angle);
+    void panCenter(qreal angle);
+    void rollCenter(qreal angle);
+    void tiltPanRollCenter(qreal tiltAngle, qreal panAngle, qreal rollAngle,
+                           QGLCamera::RotateOrder order = TiltPanRoll);
+
+    void tiltEye(qreal angle);
+    void panEye(qreal angle);
+    void rollEye(qreal angle);
+    void tiltPanRollEye(qreal tiltAngle, qreal panAngle, qreal rollAngle,
+                        QGLCamera::RotateOrder order = TiltPanRoll);
 
 Q_SIGNALS:
     void projectionChanged();

@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qgllittextureeffect.h"
+#include "qglabstracteffect_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -98,7 +99,7 @@ QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
     return fields;
 }
 
-#if defined(QGL_SHADERS_ONLY)
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 static char const litTextureVertexShader[] =
     "attribute highp vec4 vertex;\n"
@@ -108,7 +109,6 @@ static char const litTextureVertexShader[] =
     "uniform mediump mat4 modelView;\n"
     "uniform mediump mat3 normalMatrix;\n"
     "varying highp vec4 qTexCoord;\n"
-    "void qLightVertex(vec4 vertex, vec3 normal);\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"
@@ -146,14 +146,22 @@ static char const litModulateFragmentShader[] =
 
 #endif
 
+#ifndef GL_MODULATE
+#define GL_MODULATE 0x2100
+#endif
+#ifndef GL_DECAL
+#define GL_DECAL 0x2101
+#endif
+
 /*!
     Constructs a new lit decal texture effect.
 */
 QGLLitDecalTextureEffect::QGLLitDecalTextureEffect()
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     : QGLLitTextureEffect(GL_DECAL, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(0, litTextureVertexShader, litDecalFragmentShader,
+    : QGLLitTextureEffect(GL_DECAL,
+                          litTextureVertexShader, litDecalFragmentShader,
                           QLatin1String("qt.texture.litdecal"))
 #endif
 {
@@ -170,10 +178,11 @@ QGLLitDecalTextureEffect::~QGLLitDecalTextureEffect()
     Constructs a new lit modulate texture effect.
 */
 QGLLitModulateTextureEffect::QGLLitModulateTextureEffect()
-#if !defined(QGL_SHADERS_ONLY)
+#if defined(QGL_FIXED_FUNCTION_ONLY)
     : QGLLitTextureEffect(GL_MODULATE, 0, 0, QString())
 #else
-    : QGLLitTextureEffect(0, litTextureVertexShader, litModulateFragmentShader,
+    : QGLLitTextureEffect(GL_MODULATE,
+                          litTextureVertexShader, litModulateFragmentShader,
                           QLatin1String("qt.texture.litmodulate"))
 #endif
 {
