@@ -63,6 +63,7 @@ private slots:
     void userMatrixStack();
     void projectionMatrixStack();
     void modelViewMatrixStack();
+    void isCullable();
 
 public slots:
     void clearPaint();
@@ -570,6 +571,17 @@ void tst_QGLPainter::modelViewMatrixStack()
 #else
     QVERIFY(qFuzzyCompare(m2, m3));
 #endif
+}
+
+void tst_QGLPainter::isCullable()
+{
+    QGLPainter painter(widget);
+
+    QGLCamera camera;
+    painter.setCamera(&camera);
+    QVERIFY(!painter.isCullable(QVector3D(0, 0, 0)));
+    QVERIFY(!painter.isCullable(QVector3D(0, 0, -10)));
+    QVERIFY(painter.isCullable(QVector3D(0, 0, 10)));
 }
 
 QTEST_MAIN(tst_QGLPainter)
