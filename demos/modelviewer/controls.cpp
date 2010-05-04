@@ -45,6 +45,7 @@
 #include "viewer.h"
 #include "qmlgenerator.h"
 #include "model.h"
+#include "qglscenenode.h"
 
 #include <QtCore/qdir.h>
 #include <QtGui/qcolordialog.h>
@@ -71,6 +72,7 @@ Controls::Controls(QWidget *parent)
 
     connect(this, SIGNAL(openFile(QString)),
             m_model, SLOT(setFullPath(QString)));
+
     connect(m_model, SIGNAL(modelLoaded(QString)),
             this, SLOT(loadModelDefaults(QString)));
     connect(m_model, SIGNAL(modelLoaded(QString)),
@@ -79,6 +81,8 @@ Controls::Controls(QWidget *parent)
             this, SLOT(setWindowTitle(QString)));
     connect(m_model, SIGNAL(modelLoaded(QString)),
             this, SLOT(addRecentFiles(QString)));
+    connect(m_model, SIGNAL(modelLoaded(QString)),
+            m_ui->treeView, SLOT(expandAll()));
 
     connect(m_model, SIGNAL(modelUnloaded(QString)),
             this, SLOT(saveModelDefaults(QString)));
@@ -125,23 +129,6 @@ void Controls::changeEvent(QEvent *e)
         break;
     default:
         break;
-    }
-}
-
-void Controls::keyPressEvent(QKeyEvent *e)
-{
-    if (e->key() == Qt::Key_Space)
-    {
-        m_ui->spinCheckBox->toggle();
-    }
-    else if (e->key() == Qt::Key_Escape)
-    {
-        m_view->reset();
-    }
-    if (e->modifiers() & Qt::ShiftModifier)
-    {
-        // rotate
-
     }
 }
 
@@ -208,20 +195,40 @@ QString Controls::populateModelMenu()
 
 void Controls::loadModelDefaults(const QString &model)
 {
+    m_view->reset();
     QSettings settings;
-    settings.beginGroup(model);
-    int x = settings.value("UI_x", 0).toInt();
-    int y = settings.value("UI_y", 0).toInt();
-    int z = settings.value("UI_z", 0).toInt();
-    int rotX = settings.value("UI_rotX", 0).toInt();
-    int rotY = settings.value("UI_rotY", 0).toInt();
-    int rotZ = settings.value("UI_rotZ", 0).toInt();
-    m_view->setX(x);
-    m_view->setY(y);
-    m_view->setZ(z);
-    m_view->setRotX(rotX);
-    m_view->setRotY(rotY);
-    m_view->setRotZ(rotZ);
+    if (settings.childGroups().contains(model))
+    {
+        settings.beginGroup(model);
+        int x = settings.value("UI_x", 0).toInt();
+        int y = settings.value("UI_y", 0).toInt();
+        int z = settings.value("UI_z", 0).toInt();
+        int rotX = settings.value("UI_rotX", 0).toInt();
+        int rotY = settings.value("UI_rotY", 0).toInt();
+        int rotZ = settings.value("UI_rotZ", 0).toInt();
+        m_view->setX(x);
+        m_view->setY(y);
+        m_view->setZ(z);
+        m_view->setRotX(rotX);
+        m_view->setRotY(rotY);
+        m_view->setRotZ(rotZ);
+    }
+    else
+    {
+        QBox3D box = m_model->scene()->boundingBox();
+        QVector3D sceneOrigin = box.center();
+        QVector3D ext = box.size();
+        qreal maxDimension = qMax(ext.x(), qMax(ext.y(), ext.z()));
+        m_view->setX(sceneOrigin.x());
+        m_view->setY(sceneOrigin.y());
+        m_view->setZ(qMax(sceneOrigin.z(), maxDimension));
+    }
+    m_ui->xTranSpin->setValue(m_view->x());
+    m_ui->yTranSpin->setValue(m_view->y());
+    m_ui->zTranSpin->setValue(m_view->z());
+    m_ui->xRotSpin->setValue(m_view->rotX());
+    m_ui->yRotSpin->setValue(m_view->rotY());
+    m_ui->zRotSpin->setValue(m_view->rotZ());
 }
 
 void Controls::saveModelDefaults(const QString &model)
@@ -382,4 +389,54 @@ void Controls::triangleCountUpdated(int count)
 void Controls::fileLoadTimeNotified(int time)
 {
     m_ui->statusbar->showMessage(tr("file loaded in %1 ms").arg(time), 30000);
+}
+
+void Controls::on_viewComboBox_currentIndexChanged(int view)
+{
+    m_view->setView(static_cast<Viewer::View>(view));
+}
+
+void Controls::on_actionSpin_triggered()
+{
+    m_ui->spinCheckBox->setChecked(m_ui->actionSpin->isChecked());
+}
+
+void Controls::on_actionShow_Floor_triggered()
+{
+    m_ui->floorCheckBox->setChecked(m_ui->actionShow_Floor->isChecked());
+}
+
+void Controls::on_xRotSpin_editingFinished()
+{
+    m_view->setRotX(m_ui->xRotSpin->value());
+}
+
+void Controls::on_yRotSpin_editingFinished()
+{
+    m_view->setRotY(m_ui->yRotSpin->value());
+}
+
+void Controls::on_zRotSpin_editingFinished()
+{
+    m_view->setRotZ(m_ui->zRotSpin->value());
+}
+
+void Controls::on_xTranSpin_editingFinished()
+{
+    m_view->setX(m_ui->xTranSpin->value());
+}
+
+void Controls::on_yTranSpin_editingFinished()
+{
+    m_view->setY(m_ui->yTranSpin->value());
+}
+
+void Controls::on_zTranSpin_editingFinished()
+{
+    m_view->setZ(m_ui->zTranSpin->value());
+}
+
+void Controls::on_floorCheckBox_toggled(bool checked)
+{
+    m_view->setFloorEnabled(checked);
 }

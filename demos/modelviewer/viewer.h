@@ -49,11 +49,19 @@ class QGLPainter;
 class QGLLightModel;
 class QGLLightParameters;
 class QTimer;
+class QGLDisplayList;
+class WheelData;
 
 class Viewer : public QGLWidget
 {
     Q_OBJECT
 public:
+    enum View
+    {
+        TopView,
+        FrontView
+    };
+
     Viewer(QWidget *parent = 0);
     ~Viewer();
     void setModel(Model *model) { m_model = model; }
@@ -70,7 +78,13 @@ public:
     void setRotY(int ry);
     int rotZ() const { return m_rotZ; }
     void setRotZ(int rz);
+    int zoom() const { return m_zoom; }
+    void setZoom(int zoom);
     void reset();
+    View view() const { return m_view; }
+    void setView(View view);
+    bool floorEnabled() const { return m_drawFloor; }
+    void setFloorEnabled(bool enabled);
 
 public slots:
     void enableAnimation(bool enable);
@@ -83,6 +97,7 @@ protected:
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 
 private slots:
     void animate();
@@ -91,6 +106,7 @@ private:
     void paintGL(QGLPainter *painter);
     void initializeGL(QGLPainter *painter);
     void mouseDrag(QMouseEvent *e);
+    void buildFloor();
 
     QTimer *m_timer;
     Model *m_model;
@@ -103,10 +119,15 @@ private:
     int m_rotY;
     int m_rotZ;
     int m_spin;
+    float m_zoom;
+    WheelData *m_wd;
+    View m_view;
     bool m_animate;
     bool m_warningDisplayed;
     bool m_dragging;
     QPoint m_dragStart;
+    QGLDisplayList *m_floor;
+    bool m_drawFloor;
 };
 
 

@@ -67,9 +67,18 @@ signals:
 
 protected:
     void changeEvent(QEvent *e);
-    void keyPressEvent(QKeyEvent *e);
 
 private slots:
+    void on_floorCheckBox_toggled(bool checked);
+    void on_zTranSpin_editingFinished();
+    void on_yTranSpin_editingFinished();
+    void on_xTranSpin_editingFinished();
+    void on_zRotSpin_editingFinished();
+    void on_yRotSpin_editingFinished();
+    void on_xRotSpin_editingFinished();
+    void on_actionShow_Floor_triggered();
+    void on_actionSpin_triggered();
+    void on_viewComboBox_currentIndexChanged(int);
     void on_actionComponent_triggered();
     void on_actionSave_QML_triggered();
     void on_actionQuit_triggered();

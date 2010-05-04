@@ -134,6 +134,7 @@ void Model::importModel()
         return;
     QGLSceneObject *obj = m_sceneManager->defaultObject(QGLSceneObject::Main);
     m_sceneRoot = qobject_cast<QGLSceneNode *>(obj);
+    qDumpScene(m_sceneRoot);
 #ifndef QT_NO_DEBUG_STREAM
     int totalIndexes = 0;
     QList<QGLSceneNode *> children = m_sceneRoot->allChildren();
@@ -151,58 +152,90 @@ QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
 {
     QModelIndex result;
     QGLSceneNode *p = 0;
-    if (parent.isValid())
+    if (m_sceneRoot)
     {
-        p = static_cast<QGLSceneNode*>(parent.internalPointer());
-        QList<QGLSceneNode*> c = p->childNodes();
-        if (column == 0 && row < c.count())
+        if (parent.isValid())
         {
-            QGLSceneNode *node = c.at(row);
-            node->setProperty("row", row);
-            result = createIndex(row, column, c.at(row));
+            Q_ASSERT(parent.internalPointer());
+            p = static_cast<QGLSceneNode*>(parent.internalPointer());
+            Q_ASSERT(p);
+            QList<QGLSceneNode*> c = p->childNodes();
+            if (column == 0 && row < c.count())
+            {
+                QGLSceneNode *node = c.at(row);
+                node->setProperty("row", row);
+                result = createIndex(row, column, c.at(row));
+            }
+        }
+        else
+        {
+            Q_ASSERT(row == 0 && column == 0);
+            m_sceneRoot->setProperty("row", 0);
+            result = createIndex(row, column, m_sceneRoot);
         }
     }
-    else
-    {
-        if (row == 0 || column == 0)
-            result = createIndex(row, column, m_sceneRoot);
-    }
-    qDebug() << "index(" << row << "," << column << "parent" << p << ") -- :" << result.internalPointer();
+    qDebug() << "index(" << row << "," << column << ", parent:" << p << ") -- :" << result.internalPointer();
     return result;
 }
 
 QModelIndex Model::parent(const QModelIndex & index) const
 {
     QModelIndex result;
+    QGLSceneNode *node = 0;
     if (index.isValid())
     {
-        QGLSceneNode *node = static_cast<QGLSceneNode*>(index.internalPointer());
+        node = static_cast<QGLSceneNode*>(index.internalPointer());
         QGLSceneNode *parent = qobject_cast<QGLSceneNode*>(node->parent());
-        bool ok = false;
-        int row = parent->property("row").toInt(&ok);
-        if (!ok)
-            qDebug() << "could not get row:" << *parent;
-        result = createIndex(row, 0, parent);
+        if (parent)
+        {
+            bool ok = false;
+            int row = parent ? parent->property("row").toInt(&ok) : 0;
+            if (!ok)
+                qDebug() << "could not get row:" << parent;
+            result = createIndex(row, 0, parent);
+        }
     }
+    qDebug() << "parent(" << index.row() << "," << index.column() << ", index:" << node << ") -- :" << result.internalPointer();
     return result;
 }
 
 int Model::rowCount(const QModelIndex & parent) const
 {
     int count = 0;
-    if (parent.isValid())
+    if (m_sceneRoot)
     {
-        QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
-        count = node->childNodes().count();
+        if (parent.isValid())
+        {
+            QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
+            count = node->childNodes().count();
+            qDebug() << "nodes for parent" << node << "is" << count;
+        }
+        else
+        {
+            count = 1;
+        }
     }
+    qDebug() << "rowCount:" << count;
     return count;
 }
 
-int Model::columnCount(const QModelIndex & parent) const
+int Model::columnCount(const QModelIndex &parent) const
 {
     int count = 0;
-    if (parent.isValid())
-        count = 1;
+    if (m_sceneRoot)
+    {
+        if (parent.isValid())
+        {
+            QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
+            if (node->childNodes().count())
+                count = 1;
+        }
+        else
+        {
+            count = 1;
+        }
+    }
+    qDebug() << "columnCount:" << count;
     return count;
 }
 
