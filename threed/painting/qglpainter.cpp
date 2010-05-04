@@ -991,7 +991,7 @@ bool QGLPainter::isCullable(const QVector3D& point) const
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
     QVector3D projected = d->modelViewMatrix * point;
-    projected = d->projectionMatrix * point;
+    projected = d->projectionMatrix * projected;
     return !d->viewingCube.contains(projected);
 }
 
