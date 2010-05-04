@@ -127,6 +127,7 @@ public:
 
     void setCommonNormal(const QVector3D& value);
     void setPropertiesDirty();
+    void setPropertyDirty(int property);
 
 private:
     void setUniformLocationsFromParentProperties();
@@ -228,6 +229,7 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 
     const QMetaObject* parentMetaObject = parent.data()->metaObject();
     int dirtyMethodIndex  = parentMetaObject->indexOfMethod("markPropertyDirty()");
+    int parentMethodCount = parentMetaObject->methodCount();
 
     for(int i = parentMetaObject->propertyOffset();
     i < parentMetaObject->propertyCount(); i++)
@@ -244,7 +246,20 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
             if(metaProperty.hasNotifySignal())
             {
                 QMetaMethod notifySignal = metaProperty.notifySignal();
-                parentMetaObject->connect(parent.data(), notifySignal.methodIndex(), parent.data(), dirtyMethodIndex );
+
+                QObject* fromTo = parent.data();
+                int signalIndex = notifySignal.methodIndex();
+                int slotIndex;
+                slotIndex = dirtyMethodIndex;
+                // TEMP: mark all properties as dirty when this one changes
+                QMetaObject::connect(fromTo, signalIndex, fromTo, slotIndex);
+
+                // connect the notification signal to an imaginary slot to mark
+                // this one dirty.
+                // Use methodCount() to find unused slots, and the property
+                // Id to differentiate the individual properties.
+                slotIndex = parentMetaObject->methodCount() + i;
+                QMetaObject::connect(fromTo, signalIndex, fromTo, slotIndex);
             } else {
                 qWarning() << "Warning: No notification signal found for property: " << propertyName;
                 propertiesWithoutNotifications.append(i);
@@ -504,10 +519,25 @@ void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
     }
 }
 
+/*!
+  \internal set all properties dirty so they are reuploaded
+  next update()
+  */
 void ShaderProgramEffect::setPropertiesDirty()
 {
-    // TODO: identify which property has changed
     dirtyProperties = this->propertyIdsToUniformLocations.keys();
+}
+
+/*!
+  \internal Set a specific property as dirty so that it is reuploaded
+  next update()
+  */
+void ShaderProgramEffect::setPropertyDirty(int property)
+{
+    if(dirtyProperties.indexOf(property) == -1)
+    {
+        dirtyProperties.append(property);
+    }
 }
 
 class ShaderProgramPrivate
@@ -528,6 +558,7 @@ ShaderProgram::ShaderProgram(QObject *parent)
     : Effect(parent)
 {
     d = new ShaderProgramPrivate();
+    updateMethodCount();
 }
 
 /*!
@@ -603,6 +634,42 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
 void ShaderProgram::markPropertyDirty()
 {
     d->effect->setPropertiesDirty();
+}
+
+void ShaderProgram::markPropertyDirty(int property)
+{
+    d->effect->setPropertyDirty(property);
+}
+
+void ShaderProgram::updateMethodCount()
+{
+    methodCount = metaObject()->methodCount();
+}
+
+
+/*! \internal
+    A subclass without the Q_OBJECT macro in order to use the qt_metacall trick to track property changes
+  */
+ShaderProgramEx::ShaderProgramEx(QObject *parent) : ShaderProgram(parent)
+{
+
+}
+
+ShaderProgramEx::~ShaderProgramEx()
+{
+}
+
+int ShaderProgramEx::qt_metacall(QMetaObject::Call c, int id, void **a)
+{
+    if (c == QMetaObject::InvokeMetaMethod )
+    {
+        if( id >= methodCount) {
+            markPropertyDirty(id - methodCount);
+        }
+        // return?
+    }
+
+    return ShaderProgram::qt_metacall(c, id, a);
 }
 
 QT_END_NAMESPACE

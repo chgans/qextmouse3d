@@ -57,7 +57,7 @@ class ShaderProgram : public Effect
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY effectChanged)
 public:
     ShaderProgram(QObject *parent = 0);
-    ~ShaderProgram();
+    virtual ~ShaderProgram();
 
     QString vertexShader() const;
     void setVertexShader(const QString& value);
@@ -68,8 +68,21 @@ public:
     void enableEffect(QGLPainter *painter);
 public slots:
     void markPropertyDirty();
+    void markPropertyDirty(int property);
+    void updateMethodCount();
+protected:
+    int methodCount;
 private:
     ShaderProgramPrivate *d;
+};
+
+class ShaderProgramEx : public ShaderProgram
+{
+public:
+    ShaderProgramEx(QObject *parent = 0);
+    ~ShaderProgramEx();
+protected:
+    virtual int qt_metacall(QMetaObject::Call c, int id, void **a);
 };
 
 QML_DECLARE_TYPE(ShaderProgram)
