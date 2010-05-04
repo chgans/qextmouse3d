@@ -167,6 +167,12 @@ public:
 
 public Q_SLOTS:
     void update();
+    void sendPressed();
+    void sendReleasedInside();
+    void sendReleasedOutside();
+    void sendDoubleClick();
+    void sendHoverEnter();
+    void sendHoverLeave();
 
 protected:
     virtual void drawItem(QGLPainter *painter);

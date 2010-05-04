@@ -48,6 +48,7 @@
 #include "qglcamera.h"
 #include "qglview.h"
 #include <QtGui/qpainter.h>
+#include <QtOpenGL/qglframebufferobject.h>
 
 /*!
     \class Viewport
@@ -79,12 +80,14 @@ class ViewportPrivate
 {
 public:
     ViewportPrivate();
+    ~ViewportPrivate();
 
     bool picking;
     bool showPicking;
     bool navigation;
     bool blending;
     bool itemsInitialized;
+    bool needsPick;
     QGLCamera *camera;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
@@ -93,7 +96,10 @@ public:
     QColor backgroundColor;
     QGLVertexBuffer backdropVertices;
     QGLView *view;
+    QWidget *viewWidget;
     int pickId;
+    QGLFramebufferObject *pickFbo;
+    QMap<int, QObject *> objects;
 };
 
 ViewportPrivate::ViewportPrivate()
@@ -102,12 +108,15 @@ ViewportPrivate::ViewportPrivate()
     , navigation(true)
     , blending(false)
     , itemsInitialized(false)
+    , needsPick(true)
     , camera(0)
     , lightModel(0)
     , backdrop(0)
     , backgroundColor(Qt::black)
     , view(0)
+    , viewWidget(0)
     , pickId(1)
+    , pickFbo(0)
 {
     depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
@@ -146,6 +155,11 @@ ViewportPrivate::ViewportPrivate()
     //backdropVertices.append(1.0f, 0.0f);
 }
 
+ViewportPrivate::~ViewportPrivate()
+{
+    delete pickFbo;
+}
+
 void qt_gl_set_qml_viewport(QObject *viewport);
 
 /*!
@@ -159,6 +173,8 @@ Viewport::Viewport(QDeclarativeItem *parent)
     qt_gl_set_qml_viewport(this);
 
     connect(this, SIGNAL(viewportChanged()), this, SLOT(update3d()));
+
+    setCamera(new QGLCamera(this));
 }
 
 /*!
@@ -386,7 +402,11 @@ void Viewport::setBackgroundColor(const QColor &value)
 void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidget *widget)
 {
     Q_UNUSED(style);
-    Q_UNUSED(widget);
+
+    if (!d->viewWidget)
+        d->viewWidget = widget;
+    d->needsPick = true;
+
     QGLPainter painter;
     if (!painter.begin(p)) {
         qDebug("GL graphics system is not active; cannot use 3D items");
@@ -413,6 +433,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     painter.setBlendingEnabled(d->blending);
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
+    painter.setPicking(d->showPicking);
     if (d->camera) {
         painter.setCamera(d->camera);
     } else {
@@ -422,6 +443,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     // Draw the Item3d children.
     draw(&painter);
+    painter.setPicking(false);
 }
 
 /*!
@@ -432,10 +454,15 @@ void Viewport::earlyDraw(QGLPainter *painter)
 {
     // If are running with the regular qml viewer, then assume that it
     // has cleared the background for us, and just clear the depth buffer.
-    if (!d->view && parentItem())
+    if (!d->view && parentItem() && !d->showPicking) {
         painter->clear(QGL::ClearDepthBuffer);
-    else
+    } else {
+        if (d->showPicking)
+            painter->setClearColor(Qt::black);
+        else
+            painter->setClearColor(d->backgroundColor);
         painter->clear();
+    }
 
     // If we have a scene backdrop, then draw it now.
     if (d->backdrop) {
@@ -561,11 +588,89 @@ QGLView *Viewport::view() const
 }
 
 /*!
-  Returns the next object picking identifier.
+    Registers \a obj with this viewport as a pickable object and
+    return its pick identifier.
 */
-int Viewport::nextPickId()
+int Viewport::registerPickableObject(QObject *obj)
 {
-    return (d->pickId)++;
+    int id = (d->pickId)++;
+    if (d->view)
+        d->view->registerObject(id, obj);
+    else
+        d->objects[id] = obj;
+    return id;
+}
+
+// Find the next power of 2 which is "value" or greater.
+static inline int powerOfTwo(int value)
+{
+    int p = 1;
+    while (p < value)
+        p <<= 1;
+    return p;
+}
+
+/*!
+    Returns the registered object that is under the mouse position
+    specified by (\a x, \a y).  This function may need to regenerate
+    the contents of the pick buffer by repainting the scene.
+*/
+QObject *Viewport::objectForPoint(int x, int y)
+{
+    if (d->view)
+        return d->view->objectForPoint(QPoint(x, y));
+    if (!d->viewWidget)
+        return 0;
+
+    QGLPainter painter;
+    if (!painter.begin(d->viewWidget))
+        return 0;
+
+    int objectId = 0;
+
+    QSize size(width(), height());
+    QSize fbosize(powerOfTwo(size.width()), powerOfTwo(size.height()));
+    if (!d->needsPick && d->pickFbo && d->pickFbo->size() == fbosize) {
+        // The previous pick fbo contents should still be valid.
+        d->pickFbo->bind();
+        objectId = painter.pickObject(x, height() - 1 - y);
+        d->pickFbo->release();
+    } else {
+        // Regenerate the pick fbo contents.
+        if (d->pickFbo && d->pickFbo->size() != fbosize) {
+            delete d->pickFbo;
+            d->pickFbo = 0;
+        }
+        if (!d->pickFbo) {
+            d->pickFbo = new QGLFramebufferObject
+                (fbosize, QGLFramebufferObject::CombinedDepthStencil);
+        }
+        d->pickFbo->bind();
+        painter.setViewport(size);
+        painter.setPicking(true);
+        painter.clearPickObjects();
+        painter.setClearColor(Qt::black);
+        painter.clear();
+        painter.setEye(QGL::NoEye);
+        d->depthBufferOptions.apply();
+        painter.setDepthTestingEnabled(true);
+        painter.setBlendingEnabled(false);
+        d->blendOptions.apply();
+        painter.setCullFaces(QGL::CullDisabled);
+        if (d->camera) {
+            painter.setCamera(d->camera);
+        } else {
+            QGLCamera defCamera;
+            painter.setCamera(&defCamera);
+        }
+        draw(&painter);
+        painter.setPicking(false);
+        objectId = painter.pickObject(x, height() - 1 - y);
+        d->pickFbo->release();
+    }
+
+    d->needsPick = false;
+    return d->objects.value(objectId, 0);
 }
 
 /*!

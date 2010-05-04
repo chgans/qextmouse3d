@@ -1143,12 +1143,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     if (d->isInitialized) return;
 
     d->viewport = viewport;
-    QGLView *view = viewport->view();
-    
-    if (view) {
-        d->objectPickId = viewport->nextPickId();
-        view->registerObject(d->objectPickId, this);        
-    }    
+    d->objectPickId = viewport->registerPickableObject(this);
 
     if (mesh() && !meshNode().isEmpty()) {
         int branchNumber = mesh()->createSceneBranch(meshNode());
@@ -1291,6 +1286,56 @@ void Item3d::update()
         d->viewport->update3d();
 }
 
+/*!
+    \internal
+
+    Needs work - not a very good interface yet.
+*/
+void Item3d::sendPressed()
+{
+    emit pressed();
+}
+
+/*!
+    \internal
+*/
+void Item3d::sendReleasedInside()
+{
+    emit released();
+    emit clicked();
+}
+
+/*!
+    \internal
+*/
+void Item3d::sendReleasedOutside()
+{
+    emit released();
+}
+
+/*!
+    \internal
+*/
+void Item3d::sendDoubleClick()
+{
+    emit doubleClicked();
+}
+
+/*!
+    \internal
+*/
+void Item3d::sendHoverEnter()
+{
+    emit hoverEnter();
+}
+
+/*!
+    \internal
+*/
+void Item3d::sendHoverLeave()
+{
+    emit hoverLeave();
+}
 
 /*!
     \property Item3d::isVisible

@@ -9,9 +9,6 @@ MouseArea {
     // The navigator fills the entire viewport.
     anchors.fill: viewport
 
-    // Use hover if the viewport supports picking.
-    hoverEnabled: viewport.picking
-
     // Private variables.
     QtObject {
         id: d_ptr
@@ -22,7 +19,8 @@ MouseArea {
         property variant startCenter
         property variant startUpVector
         property variant pressedObject: null
-        property int pressedButton: 0
+        property variant enteredObject: null
+        property bool sawDoubleClick: false
     }
 
     // Handle mouse press events.
@@ -30,17 +28,19 @@ MouseArea {
         // Determine which object was pressed in the viewport.
         var objectUnderMouse;
         if (!d_ptr.panning && viewport.picking)
-            objectUnderMouse = null;
+            objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
         else
             objectUnderMouse = null;
         if (d_ptr.pressedObject) {
-            // Send the press event to the pressed object.  Use a position
-            // of (0, 0) if the mouse is still within the pressed object,
-            // or (-1, -1) if the mouse is no longer within the pressed object.
-            // TODO
-        } else if (objectUnderMouse) {
+            // We already have a pressed object, so nothing to do.
+            mouse.accepted = true;
+        } else if (Qt.isQtObject(objectUnderMouse)) {
             // Mouse press on a new object.
-            // TODO
+            d_ptr.pressedObject = objectUnderMouse;
+            d_ptr.enteredObject = null;
+            d_ptr.sawDoubleClick = false;
+            objectUnderMouse.sendPressed();
+            mouse.accepted = true;
         } else if (viewport.navigation && mouse.button == Qt.LeftButton) {
             // Start panning the view.
             d_ptr.panning = true;
@@ -55,17 +55,43 @@ MouseArea {
 
     // Handle mouse release events.
     onReleased: {
-        if (d_ptr.panning && mouse.button == Qt.LeftButton)
+        if (d_ptr.panning && mouse.button == Qt.LeftButton) {
             d_ptr.panning = false;
-        if (pressedObject) {
+            mouse.accepted = true;
+        }
+        if (d_ptr.pressedObject && mouse.button == Qt.LeftButton) {
             // Deliver the release event to the pressed object.
-            // TODO
+            var objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
+            if (objectUnderMouse == d_ptr.pressedObject && !d_ptr.sawDoubleClick)
+                d_ptr.pressedObject.sendReleasedInside();
+            else
+                d_ptr.pressedObject.sendReleasedOutside();
+            if (hoverEnabled) {
+                if (Qt.isQtObject(objectUnderMouse))
+                    d_ptr.enteredObject = objectUnderMouse;
+                else
+                    d_ptr.enteredObject = null;
+                if (d_ptr.enteredObject != d_ptr.pressedObject) {
+                    d_ptr.pressedObject.sendHoverLeave();
+                    if (d_ptr.enteredObject)
+                        d_ptr.enteredObject.sendHoverEnter();
+                }
+            }
+            d_ptr.pressedObject = null;
+            mouse.accepted = true;
         }
     }
 
     // Handle mouse double click events.
     onDoubleClicked: {
-        // TODO
+        if (d_ptr.pressedObject) {
+            var objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
+            if (objectUnderMouse == d_ptr.pressedObject) {
+                d_ptr.pressedObject.sendDoubleClick();
+                d_ptr.sawDoubleClick = true;
+                mouse.accepted = true;
+            }
+        }
     }
 
     // Handle mouse move events.
@@ -81,9 +107,30 @@ MouseArea {
             viewport.camera.upVector = d_ptr.startUpVector;
             viewport.camera.tiltPanRollCenter
                 (-angleAroundX, -angleAroundY, 0, "TiltPanRoll");
-        } else if (viewport.picking) {
-            // Handle object enter/leave events.
-            // TODO
+        } else if (viewport.picking && hoverEnabled) {
+            // Handle object enter/leave events when mouse hover is enabled.
+            var objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
+            if (!d_ptr.pressedObject) {
+                if (Qt.isQtObject(objectUnderMouse)) {
+                    if (d_ptr.enteredObject != objectUnderMouse) {
+                        if (d_ptr.enteredObject)
+                            d_ptr.enteredObject.sendHoverLeave();
+                        d_ptr.enteredObject = objectUnderMouse;
+                        d_ptr.enteredObject.sendHoverEnter();
+                    }
+                } else if (d_ptr.enteredObject) {
+                    d_ptr.enteredObject.sendHoverLeave();
+                    d_ptr.enteredObject = null;
+                }
+            }
+        }
+    }
+
+    // Handle leave events.
+    onExited: {
+        if (hoverEnabled && !d_ptr.pressedObject && d_ptr.enteredObject) {
+            d_ptr.enteredObject.sendHoverLeave();
+            d_ptr.enteredObject = null;
         }
     }
 }
