@@ -43,19 +43,19 @@
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
 
+//! [initialize]
 void ModelView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
 
     m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
 }
+//! [initialize]
 
+//! [paint]
 void ModelView::paintGL(QGLPainter *painter)
 {
-    if (m_scene)
-    {
-        QGLSceneObject *o = m_scene->defaultObject(QGLSceneObject::Main);
-        if (o)
-            o->draw(painter);
-    }
+    QGLSceneObject *o = m_scene->defaultObject(QGLSceneObject::Main);
+    o->draw(painter);
 }
+//! [paint]

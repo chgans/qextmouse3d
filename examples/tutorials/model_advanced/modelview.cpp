@@ -43,24 +43,35 @@
 #include "qglabstractscene.h"
 #include "qglsceneobject.h"
 
+ModelView::ModelView(QWidget *parent)
+    : QGLView(parent)
+    , m_scene(0)
+    , m_main(0)
+{
+}
+
+//! [initialize]
 void ModelView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
     camera()->setEye(QVector3D(0.0f, 2.0f, 25.0f));
 
     m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
-}
+    if (m_scene)
+        m_main = m_scene->defaultObject(QGLSceneObject::Main);
 
-void ModelView::paintGL(QGLPainter *painter)
-{
     QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, -90.0f);
     QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 30.0f);
-    painter->modelViewMatrix().rotate(yt * xt);
-
-    if (m_scene)
-    {
-        QGLSceneObject *o = m_scene->defaultObject(QGLSceneObject::Main);
-        if (o)
-            o->draw(painter);
-    }
+    m_pose = yt * xt;
 }
+//! [initialize]
+
+//! [paint]
+void ModelView::paintGL(QGLPainter *painter)
+{
+    painter->modelViewMatrix().rotate(m_pose);
+
+    if (m_main)
+        m_main->draw(painter);
+}
+//! [paint]

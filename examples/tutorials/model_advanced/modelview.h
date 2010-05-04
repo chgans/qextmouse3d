@@ -45,12 +45,13 @@
 #include "qglview.h"
 
 class QGLAbstractScene;
+class QGLSceneObject;
 
 class ModelView : public QGLView
 {
     Q_OBJECT
 public:
-    ModelView(QWidget *parent = 0) : QGLView(parent) {}
+    ModelView(QWidget *parent = 0);
     ~ModelView() {}
 
 protected:
@@ -59,6 +60,8 @@ protected:
 
 private:
     QGLAbstractScene *m_scene;
+    QGLSceneObject *m_main;
+    QQuaternion m_pose;
 };
 
 #endif

@@ -42,6 +42,7 @@
 #ifndef MODELVIEW_H
 #define MODELVIEW_H
 
+//! [class-defn]
 #include "qglview.h"
 
 class QGLAbstractScene;
@@ -60,5 +61,6 @@ protected:
 private:
     QGLAbstractScene *m_scene;
 };
+//! [class-defn]
 
 #endif
