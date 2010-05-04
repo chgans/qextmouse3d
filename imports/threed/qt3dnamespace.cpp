@@ -39,56 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef SHADERPROGRAM_H
-#define SHADERPROGRAM_H
-
-#include "effect.h"
-
-QT_BEGIN_HEADER
+#include "qt3dnamespace.h"
 
 QT_BEGIN_NAMESPACE
 
-class ShaderProgramPrivate;
-
-class ShaderProgram : public Effect
+QVector2D Qt3dNamespace::vector2d(qreal x, qreal y)
 {
-    Q_OBJECT
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY effectChanged)
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY effectChanged)
-public:
-    ShaderProgram(QObject *parent = 0);
-    virtual ~ShaderProgram();
+    return QVector2D(x, y);
+}
 
-    QString vertexShader() const;
-    void setVertexShader(const QString& value);
-
-    QString fragmentShader() const;
-    void setFragmentShader(const QString& value);
-
-    void enableEffect(QGLPainter *painter);
-public slots:
-    void markPropertyDirty();
-    void markPropertyDirty(int property);
-    void updateMethodCount();
-protected:
-    int methodCount;
-private:
-    ShaderProgramPrivate *d;
-};
-
-class ShaderProgramEx : public ShaderProgram
+QVector4D Qt3dNamespace::vector4d(qreal x, qreal y, qreal z, qreal w)
 {
-public:
-    ShaderProgramEx(QObject *parent = 0);
-    ~ShaderProgramEx();
-protected:
-    virtual int qt_metacall(QMetaObject::Call c, int id, void **a);
-};
+    return QVector4D(x, y, z, w);
+}
 
-QML_DECLARE_TYPE(ShaderProgram)
+QQuaternion Qt3dNamespace::quaternion(qreal scalar, qreal x, qreal y, qreal z)
+{
+    return QQuaternion(scalar, x, y, z);
+}
+
+QMatrix4x4 Qt3dNamespace::matrix4x4
+    (qreal m11, qreal m12, qreal m13, qreal m14,
+     qreal m21, qreal m22, qreal m23, qreal m24,
+     qreal m31, qreal m32, qreal m33, qreal m34,
+     qreal m41, qreal m42, qreal m43, qreal m44)
+{
+    return QMatrix4x4(m11, m12, m13, m14,
+                      m21, m22, m23, m24,
+                      m31, m32, m33, m34,
+                      m41, m42, m43, m44);
+}
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif

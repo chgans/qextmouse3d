@@ -432,7 +432,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 {
     // If are running with the regular qml viewer, then assume that it
     // has cleared the background for us, and just clear the depth buffer.
-    if (!d->view)
+    if (!d->view && parentItem())
         painter->clear(QGL::ClearDepthBuffer);
     else
         painter->clear();

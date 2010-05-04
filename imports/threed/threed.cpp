@@ -40,6 +40,8 @@
 ****************************************************************************/
 
 #include <QtDeclarative/qdeclarativeextensionplugin.h>
+#include <QtDeclarative/qdeclarativeengine.h>
+#include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/qdeclarative.h>
 
 #include "redcyaneffect.h"
@@ -51,6 +53,7 @@
 #include "scale3d.h"
 #include "shaderprogram.h"
 #include "cube.h"
+#include "qt3dnamespace.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -73,8 +76,14 @@ public:
         qmlRegisterType<Translation3D>(uri,1,0,"Translation3D");
         qmlRegisterType<Scale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
-        qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
+        qmlRegisterType<ShaderProgramEx>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");
+    }
+    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    {
+        Q_UNUSED(uri);
+        QDeclarativeContext *context = engine->rootContext();
+        context->setContextProperty("Qt3d", new Qt3dNamespace);
     }
 };
 

@@ -39,56 +39,40 @@
 **
 ****************************************************************************/
 
-#ifndef SHADERPROGRAM_H
-#define SHADERPROGRAM_H
+#ifndef QT3DNAMESPACE_H
+#define QT3DNAMESPACE_H
 
-#include "effect.h"
+#include <QtCore/qobject.h>
+#include <QtCore/qvariant.h>
+#include <QtGui/qvector2d.h>
+#include <QtGui/qvector3d.h>
+#include <QtGui/qvector4d.h>
+#include <QtGui/qmatrix4x4.h>
+#include <QtGui/qquaternion.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class ShaderProgramPrivate;
-
-class ShaderProgram : public Effect
+class Qt3dNamespace : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY effectChanged)
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY effectChanged)
 public:
-    ShaderProgram(QObject *parent = 0);
-    virtual ~ShaderProgram();
+    Qt3dNamespace(QObject *parent = 0) : QObject(parent) {}
+    ~Qt3dNamespace() {}
 
-    QString vertexShader() const;
-    void setVertexShader(const QString& value);
-
-    QString fragmentShader() const;
-    void setFragmentShader(const QString& value);
-
-    void enableEffect(QGLPainter *painter);
-public slots:
-    void markPropertyDirty();
-    void markPropertyDirty(int property);
-    void updateMethodCount();
-protected:
-    int methodCount;
-private:
-    ShaderProgramPrivate *d;
+public Q_SLOTS:
+    QVector2D vector2d(qreal x, qreal y);
+    QVector4D vector4d(qreal x, qreal y, qreal z, qreal w);
+    QQuaternion quaternion(qreal scalar, qreal x, qreal y, qreal z);
+    QMatrix4x4 matrix4x4(qreal m11, qreal m12, qreal m13, qreal m14,
+                         qreal m21, qreal m22, qreal m23, qreal m24,
+                         qreal m31, qreal m32, qreal m33, qreal m34,
+                         qreal m41, qreal m42, qreal m43, qreal m44);
 };
-
-class ShaderProgramEx : public ShaderProgram
-{
-public:
-    ShaderProgramEx(QObject *parent = 0);
-    ~ShaderProgramEx();
-protected:
-    virtual int qt_metacall(QMetaObject::Call c, int id, void **a);
-};
-
-QML_DECLARE_TYPE(ShaderProgram)
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif
+#endif // QT3DNAMESPACE_H
