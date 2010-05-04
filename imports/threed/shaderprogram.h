@@ -69,20 +69,21 @@ public:
 public slots:
     void markPropertyDirty();
     void markPropertyDirty(int property);
-    void updateMethodCount();
-protected:
-    int methodCount;
 private:
     ShaderProgramPrivate *d;
 };
 
-class ShaderProgramEx : public ShaderProgram
+class ShaderProgramPropertyListener : public QObject
 {
+    Q_OBJECT
 public:
-    ShaderProgramEx(QObject *parent = 0);
-    ~ShaderProgramEx();
-protected:
-    virtual int qt_metacall(QMetaObject::Call c, int id, void **a);
+    ShaderProgramPropertyListener(QObject* parent = 0)
+        : QObject(parent)
+    {
+    }
+    virtual ~ShaderProgramPropertyListener()
+    {
+    }
 };
 
 QML_DECLARE_TYPE(ShaderProgram)
