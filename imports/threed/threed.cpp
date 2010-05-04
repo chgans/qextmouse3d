@@ -76,7 +76,7 @@ public:
         qmlRegisterType<Translation3D>(uri,1,0,"Translation3D");
         qmlRegisterType<Scale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
-        qmlRegisterType<ShaderProgramEx>(uri,1,0,"ShaderProgram");
+        qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
