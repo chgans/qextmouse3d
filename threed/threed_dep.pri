@@ -14,4 +14,9 @@ contains(QT_MAJOR_VERSION,4):!contains(QT_MINOR_VERSION,7) {
     INCLUDEPATH += $$PWD/qt-compat
 }
 
-LIBS += -lQt3d
+win32:CONFIG(debug, debug|release) {
+    LIBS += -lQt3Dd
+} else {
+    LIBS += -lQt3D
+}
+
