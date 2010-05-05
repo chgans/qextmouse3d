@@ -1287,57 +1287,6 @@ void Item3d::update()
 }
 
 /*!
-    \internal
-
-    Needs work - not a very good interface yet.
-*/
-void Item3d::sendPressed()
-{
-    emit pressed();
-}
-
-/*!
-    \internal
-*/
-void Item3d::sendReleasedInside()
-{
-    emit released();
-    emit clicked();
-}
-
-/*!
-    \internal
-*/
-void Item3d::sendReleasedOutside()
-{
-    emit released();
-}
-
-/*!
-    \internal
-*/
-void Item3d::sendDoubleClick()
-{
-    emit doubleClicked();
-}
-
-/*!
-    \internal
-*/
-void Item3d::sendHoverEnter()
-{
-    emit hoverEnter();
-}
-
-/*!
-    \internal
-*/
-void Item3d::sendHoverLeave()
-{
-    emit hoverLeave();
-}
-
-/*!
     \property Item3d::isVisible
     \brief A simple boolean property indicating whether the item is visible (and so should be 
     drawn), or not visible.

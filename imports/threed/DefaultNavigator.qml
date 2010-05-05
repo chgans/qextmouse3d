@@ -39,7 +39,7 @@ MouseArea {
             d_ptr.pressedObject = objectUnderMouse;
             d_ptr.enteredObject = null;
             d_ptr.sawDoubleClick = false;
-            objectUnderMouse.sendPressed();
+            objectUnderMouse.pressed();
             mouse.accepted = true;
         } else if (viewport.navigation && mouse.button == Qt.LeftButton) {
             // Start panning the view.
@@ -62,19 +62,21 @@ MouseArea {
         if (d_ptr.pressedObject && mouse.button == Qt.LeftButton) {
             // Deliver the release event to the pressed object.
             var objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
-            if (objectUnderMouse == d_ptr.pressedObject && !d_ptr.sawDoubleClick)
-                d_ptr.pressedObject.sendReleasedInside();
-            else
-                d_ptr.pressedObject.sendReleasedOutside();
+            if (objectUnderMouse == d_ptr.pressedObject && !d_ptr.sawDoubleClick) {
+                d_ptr.pressedObject.released();
+                d_ptr.pressedObject.clicked();
+            } else {
+                d_ptr.pressedObject.released();
+            }
             if (hoverEnabled) {
                 if (Qt.isQtObject(objectUnderMouse))
                     d_ptr.enteredObject = objectUnderMouse;
                 else
                     d_ptr.enteredObject = null;
                 if (d_ptr.enteredObject != d_ptr.pressedObject) {
-                    d_ptr.pressedObject.sendHoverLeave();
+                    d_ptr.pressedObject.hoverLeave();
                     if (d_ptr.enteredObject)
-                        d_ptr.enteredObject.sendHoverEnter();
+                        d_ptr.enteredObject.hoverEnter();
                 }
             }
             d_ptr.pressedObject = null;
@@ -87,7 +89,7 @@ MouseArea {
         if (d_ptr.pressedObject) {
             var objectUnderMouse = viewport.objectForPoint(mouse.x, mouse.y);
             if (objectUnderMouse == d_ptr.pressedObject) {
-                d_ptr.pressedObject.sendDoubleClick();
+                d_ptr.pressedObject.doubleClicked();
                 d_ptr.sawDoubleClick = true;
                 mouse.accepted = true;
             }
@@ -114,12 +116,12 @@ MouseArea {
                 if (Qt.isQtObject(objectUnderMouse)) {
                     if (d_ptr.enteredObject != objectUnderMouse) {
                         if (d_ptr.enteredObject)
-                            d_ptr.enteredObject.sendHoverLeave();
+                            d_ptr.enteredObject.hoverLeave();
                         d_ptr.enteredObject = objectUnderMouse;
-                        d_ptr.enteredObject.sendHoverEnter();
+                        d_ptr.enteredObject.hoverEnter();
                     }
                 } else if (d_ptr.enteredObject) {
-                    d_ptr.enteredObject.sendHoverLeave();
+                    d_ptr.enteredObject.hoverLeave();
                     d_ptr.enteredObject = null;
                 }
             }
@@ -129,7 +131,7 @@ MouseArea {
     // Handle leave events.
     onExited: {
         if (hoverEnabled && !d_ptr.pressedObject && d_ptr.enteredObject) {
-            d_ptr.enteredObject.sendHoverLeave();
+            d_ptr.enteredObject.hoverLeave();
             d_ptr.enteredObject = null;
         }
     }
