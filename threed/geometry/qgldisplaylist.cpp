@@ -669,7 +669,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
-    for (int i = 0; i < s.count(); i += 2)
+    for (int i = 0; i < s.count() - 3; i += 2)
     {
         d->addTriangle(i, i+2, i+3, s);
         d->addTriangle(i, i+3, i+1, s);

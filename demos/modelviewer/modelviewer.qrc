@@ -1,8 +1,11 @@
 <RCC>
-    <qresource prefix="/" >
+    <qresource prefix="/">
         <file>cube.3ds</file>
         <file>penguin.3ds</file>
         <file>trolltech-q.3ds</file>
         <file>basic-cube.3ds</file>
+        <file>images/file16x16.png</file>
+        <file>images/mesh16x16.png</file>
+        <file>images/red-dot.png</file>
     </qresource>
 </RCC>

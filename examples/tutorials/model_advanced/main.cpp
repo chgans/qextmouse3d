@@ -39,28 +39,14 @@
 **
 ****************************************************************************/
 
-#ifndef MODELVIEW_H
-#define MODELVIEW_H
+#include <QApplication>
 
-//! [class-defn]
-#include "qglview.h"
+#include "modelview.h"
 
-class QGLAbstractScene;
-
-class ModelView : public QGLView
+int main(int argc, char *argv[])
 {
-    Q_OBJECT
-public:
-    ModelView(QWidget *parent = 0) : QGLView(parent) {}
-    ~ModelView() {}
-
-protected:
-    void initializeGL(QGLPainter *painter);
-    void paintGL(QGLPainter *painter);
-
-private:
-    QGLAbstractScene *m_scene;
-};
-//! [class-defn]
-
-#endif
+    QApplication app(argc, argv);
+    ModelView view;
+    view.show();
+    return app.exec();
+}

@@ -44,91 +44,90 @@
 
 #include <QtOpenGL/qgl.h>
 
+class Model;
 class QGLPainter;
-class QTimer;
-class QGLAbstractScene;
-class QGLLightParameters;
 class QGLLightModel;
-class QMenu;
-class QGLSceneNode;
+class QGLLightParameters;
+class QTimer;
+class QGLDisplayList;
+class WheelData;
 
 class Viewer : public QGLWidget
 {
     Q_OBJECT
 public:
+    enum View
+    {
+        TopView,
+        FrontView
+    };
+
     Viewer(QWidget *parent = 0);
     ~Viewer();
-    void setColorMenu(QMenu *menu) { mColorMenu = menu; }
-    void setComponentMenu(QMenu *menu) { mComponentMenu = menu; }
-    void setInitialModel(const QString &model) { mInitialModel = model; }
-    QString currentModel() const { return mCurrentModelName; }
-    QStringList components() const { return mComponents; }
+    void setModel(Model *model) { m_model = model; }
 
-    static QString getOptions(const QString &name);
+    int x() const { return m_x; }
+    void setX(int x);
+    int y() { return m_y; }
+    void setY(int y);
+    int z() const { return m_z; }
+    void setZ(int z);
+    int rotX() const { return m_rotX; }
+    void setRotX(int rx);
+    int rotY() const { return m_rotY; }
+    void setRotY(int ry);
+    int rotZ() const { return m_rotZ; }
+    void setRotZ(int rz);
+    int zoom() const { return m_zoom; }
+    void setZoom(int zoom);
+    void reset();
+    View view() const { return m_view; }
+    void setView(View view);
+    bool floorEnabled() const { return m_drawFloor; }
+    void setFloorEnabled(bool enabled);
 
 public slots:
-    void load();
-    void zoomChanged(int);
-    void xTiltChanged(int);
-    void yTiltChanged(int);
-    void zTiltChanged(int);
-    void yaxChanged(int);
-    void selectColorChanged(const QColor &);
-    void enableAnimation(bool);
-    void openModelFile(const QString &);
-
-signals:
-    void colorUpdate(const QColor &);
-    void modelLoaded(const QString &);
-    void modelUnloaded(const QString &);
+    void enableAnimation(bool enable);
 
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int, int);
+    void wheelEvent(QWheelEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 
 private slots:
     void animate();
-    void animateColor();
-    void changeColor();
-    void selectComponent();
 
 private:
     void paintGL(QGLPainter *painter);
     void initializeGL(QGLPainter *painter);
-    void loadColors();
-    void loadComponents();
-    void makeSelectColor(QColor color = QColor());
-    void setMaterial(QGLSceneNode *root, int material);
-    void restoreMaterial(QGLSceneNode *root);
-    void importModel(const QString &name);
+    void mouseDrag(QMouseEvent *e);
+    void buildFloor();
 
-    QTimer *mTimer;
-    QTimer *mColorTimer;
-    int mSpin;
-    int mXTilt, mYTilt, mZTilt;
-    int mZoom;
-    int mYax;
-    QString mCurrentModelName;
-    QGLAbstractScene *mSceneManager;
-    QGLSceneNode *mSceneRoot;
-    bool mSceneInitialized;
-    QGLLightParameters *mLightParameters;
-    QGLLightModel *mLightModel;
-    QColor mSelectColor;
-    QColor mPulse;
-    QMenu *mColorMenu;
-    QMenu *mComponentMenu;
-    int mSelectMaterial;
-    QGLSceneNode *mCurrentSelected;
-    int mSelectColorAnimate;
-    QMap<QGLSceneNode *, int> mSaveMaterials;
-    bool mAnimationEnabled;
-    QString mInitialModel;
-    bool mWarningDisplayed;
-    QStringList mComponents;
-    bool mNewModelLoaded;
-    QString mPrevFileName;
+    QTimer *m_timer;
+    Model *m_model;
+    QGLLightModel *m_lightModel;
+    QGLLightParameters *m_lightParameters;
+    int m_x;
+    int m_y;
+    int m_z;
+    int m_rotX;
+    int m_rotY;
+    int m_rotZ;
+    int m_spin;
+    float m_zoom;
+    WheelData *m_wd;
+    View m_view;
+    bool m_animate;
+    bool m_warningDisplayed;
+    bool m_dragging;
+    QPoint m_dragStart;
+    QGLDisplayList *m_floor;
+    bool m_drawFloor;
 };
 
 

@@ -39,28 +39,39 @@
 **
 ****************************************************************************/
 
-#ifndef MODELVIEW_H
-#define MODELVIEW_H
+#include "modelview.h"
+#include "qglabstractscene.h"
+#include "qglsceneobject.h"
 
-//! [class-defn]
-#include "qglview.h"
-
-class QGLAbstractScene;
-
-class ModelView : public QGLView
+ModelView::ModelView(QWidget *parent)
+    : QGLView(parent)
+    , m_scene(0)
+    , m_main(0)
 {
-    Q_OBJECT
-public:
-    ModelView(QWidget *parent = 0) : QGLView(parent) {}
-    ~ModelView() {}
+}
 
-protected:
-    void initializeGL(QGLPainter *painter);
-    void paintGL(QGLPainter *painter);
+//! [initialize]
+void ModelView::initializeGL(QGLPainter *painter)
+{
+    Q_UNUSED(painter);
+    camera()->setEye(QVector3D(0.0f, 2.0f, 25.0f));
 
-private:
-    QGLAbstractScene *m_scene;
-};
-//! [class-defn]
+    m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
+    if (m_scene)
+        m_main = m_scene->defaultObject(QGLSceneObject::Main);
 
-#endif
+    QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, -90.0f);
+    QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 30.0f);
+    m_pose = yt * xt;
+}
+//! [initialize]
+
+//! [paint]
+void ModelView::paintGL(QGLPainter *painter)
+{
+    painter->modelViewMatrix().rotate(m_pose);
+
+    if (m_main)
+        m_main->draw(painter);
+}
+//! [paint]

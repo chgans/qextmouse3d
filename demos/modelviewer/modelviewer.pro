@@ -9,12 +9,14 @@ SOURCES += main.cpp \
     controls.cpp \
     optionsdialog.cpp \
     qmlgenerator.cpp \
-    qmlstanza.cpp
+    qmlstanza.cpp \
+    model.cpp
 HEADERS += viewer.h \
     controls.h \
     optionsdialog.h \
     qmlgenerator.h \
-    qmlstanza.h
+    qmlstanza.h \
+    model.h
 LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin

@@ -39,28 +39,47 @@
 **
 ****************************************************************************/
 
-#ifndef MODELVIEW_H
-#define MODELVIEW_H
 
-//! [class-defn]
-#include "qglview.h"
+#ifndef MODEL_H
+#define MODEL_H
+
+#include <QtCore/qabstractitemmodel.h>
+#include <QtCore/qstringlist.h>
 
 class QGLAbstractScene;
+class QGLSceneNode;
 
-class ModelView : public QGLView
+class Model : public QAbstractItemModel
 {
-    Q_OBJECT
+Q_OBJECT
 public:
-    ModelView(QWidget *parent = 0) : QGLView(parent) {}
-    ~ModelView() {}
+    explicit Model(QObject *parent = 0);
+    QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const;
+    QModelIndex parent(const QModelIndex & index) const;
+    int rowCount(const QModelIndex & parent = QModelIndex()) const;
+    int columnCount(const QModelIndex & parent = QModelIndex()) const;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+    QString fullPath() const { return m_fullPath; }
+    QGLSceneNode *scene() const { return m_sceneRoot; }
+    QString getOptions() const;
+    QStringList components() const;
 
-protected:
-    void initializeGL(QGLPainter *painter);
-    void paintGL(QGLPainter *painter);
+signals:
+    void modelLoaded(const QString &path);
+    void modelUnloaded(const QString &path);
+    void modelLoadTime(int ms);
+    void modelTriangles(int triangles);
+
+public slots:
+    void setFullPath(const QString &path);
 
 private:
-    QGLAbstractScene *m_scene;
-};
-//! [class-defn]
+    void importModel();
 
-#endif
+    QString m_fullPath;
+    QGLAbstractScene *m_sceneManager;
+    QGLSceneNode *m_sceneRoot;
+    mutable QStringList m_components;
+};
+
+#endif // MODEL_H
