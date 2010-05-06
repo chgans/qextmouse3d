@@ -59,9 +59,9 @@ QT_BEGIN_NAMESPACE
 static char const litMaterialVertexShader[] =
     "attribute highp vec4 vertex;\n"
     "attribute highp vec3 normal;\n"
-    "uniform mediump mat4 matrix;\n"
-    "uniform mediump mat4 modelView;\n"
-    "uniform mediump mat3 normalMatrix;\n"
+    "uniform highp mat4 matrix;\n"
+    "uniform highp mat4 modelView;\n"
+    "uniform highp mat3 normalMatrix;\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"

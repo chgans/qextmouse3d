@@ -145,7 +145,7 @@ void tst_QGLDisplayList::newNode()
     QCOMPARE(node->parent(), &displayList);
     QCOMPARE(node->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node->userEffect(), (QGLAbstractEffect *)0);
-    QCOMPARE(node->material(), -1);
+    QCOMPARE(node->materialIndex(), -1);
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 0);
 
@@ -153,7 +153,7 @@ void tst_QGLDisplayList::newNode()
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
-    node->setMaterial(5);
+    node->setMaterialIndex(5);
     QGLPrimitive p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     displayList.addTriangle(p);
@@ -171,7 +171,7 @@ void tst_QGLDisplayList::newNode()
     QCOMPARE(node2->parent(), &displayList);
     QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
-    QCOMPARE(node2->material(), -1);
+    QCOMPARE(node2->materialIndex(), -1);
 
     displayList.addTriangle(p);
     displayList.newNode();
@@ -195,7 +195,7 @@ void tst_QGLDisplayList::pushNode()
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
-    node->setMaterial(5);
+    node->setMaterialIndex(5);
     QGLPrimitive p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     displayList.addTriangle(p);
@@ -209,7 +209,7 @@ void tst_QGLDisplayList::pushNode()
     QCOMPARE(node2->parent(), node);
     QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
-    QCOMPARE(node2->material(), -1);
+    QCOMPARE(node2->materialIndex(), -1);
 }
 
 void tst_QGLDisplayList::popNode()
@@ -223,7 +223,7 @@ void tst_QGLDisplayList::popNode()
     mat.rotate(45.0f, 0.0f, 1.0f, 0.0f);
     node->setLocalTransform(mat);
     node->setUserEffect(eff);
-    node->setMaterial(5);
+    node->setMaterialIndex(5);
     QGLPrimitive p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     displayList.addTriangle(p);
@@ -238,7 +238,7 @@ void tst_QGLDisplayList::popNode()
 
     QCOMPARE(node3->effect(), QGL::LitDecalTexture2D);
     QCOMPARE(node3->userEffect(), eff);
-    QCOMPARE(node3->material(), 5);
+    QCOMPARE(node3->materialIndex(), 5);
     QCOMPARE(node3->localTransform(), mat);
     QCOMPARE(node3->start(), 6);
     QCOMPARE(node3->count(), 0);

@@ -136,7 +136,7 @@ QGL3dsMesh::~QGL3dsMesh()
 void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
 {
     QString baseName = objectName();
-    node->setMaterial(matIx);
+    node->setMaterialIndex(matIx);
     node->setObjectName(baseName + QLatin1String("::") +
                         ((matIx == -1)
                          ? QString("No_Material")
@@ -691,7 +691,7 @@ QMatrix4x4 QGL3dsMesh::meshMatrix() const
 */
 void QGL3dsMesh::generateVertices()
 {
-    int matIx = currentNode()->material();
+    int matIx = currentNode()->materialIndex();
     int keyCount = m_smoothingGroupCount;
     if (m_hasZeroSmoothing)
         ++keyCount;
@@ -704,7 +704,7 @@ void QGL3dsMesh::generateVertices()
             if (key == 0)
                 currentSection()->setSmoothing(QGL::Faceted);
             keyCount -= 1;
-            currentNode()->setMaterial(matIx);
+            currentNode()->setMaterialIndex(matIx);
             currentNode()->setObjectName(baseName + "::" + QString::number(key));
             QGLPrimitive tri;
             int cur = 0;

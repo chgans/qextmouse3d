@@ -53,6 +53,9 @@
 
 #include <limits>
 
+// uncomment this to be warned when meshes are empty of geometry
+// #define Q_WARN_EMPTY_MESH 1
+
 /*!
     \class QGLDisplayList
     \brief The QGLDisplayList class accumulates geometry for efficient display.
@@ -666,7 +669,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     Q_D(QGLDisplayList);
     QGLPrimitive s = strip;
     QVector3D save = s.commonNormal();
-    for (int i = 0; i < s.count(); i += 2)
+    for (int i = 0; i < s.count() - 3; i += 2)
     {
         d->addTriangle(i, i+2, i+3, s);
         d->addTriangle(i, i+3, i+1, s);
@@ -818,7 +821,7 @@ int QGLDisplayListPrivate::adjustNodeTree(QGLSceneNode *top,
         top->setStart(top->start() + offset);
         top->setGeometry(geom);
         totalItems = top->count();
-        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*> children = top->childNodeList();
         QList<QGLSceneNode*>::iterator it = children.begin();
         for ( ; it != children.end(); ++it)
         {
@@ -845,7 +848,7 @@ static int recursiveCount(QGLSceneNode *top)
     if (top)
     {
         totalItems = top->count();
-        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*> children = top->childNodeList();
         QList<QGLSceneNode*>::const_iterator it = children.constBegin();
         for ( ; it != children.constEnd(); ++it)
             totalItems += recursiveCount(*it);
@@ -862,12 +865,14 @@ static int nodeCount(const QList<QGLSceneNode*> &list)
     return total;
 }
 
+#ifdef Q_WARN_EMPTY_MESH
 static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int nodeCount,
                               const char *msg)
 {
     qWarning("Ignoring section %d (%p) with %d vertices and"
              " %d indexes - %s", secCount, s, vertCount, nodeCount, msg);
 }
+#endif
 
 /*!
     Finish the building of this display list and optimize it for
@@ -908,6 +913,7 @@ void QGLDisplayList::finalize()
             int scnt = s->count();
             if (scnt == 0 || icnt == 0 || ncnt == 0)
             {
+#ifdef Q_WARN_EMPTY_MESH
 #ifndef QT_NO_DEBUG
                     if (ncnt == 0)
                         warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
@@ -915,6 +921,7 @@ void QGLDisplayList::finalize()
                         warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
                     else
                         warnIgnore(scnt, s, icnt, ncnt, "index count zero");
+#endif
 #endif
                 continue;
             }
@@ -1122,7 +1129,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = s->clone(parentNode);
-    d->currentNode->setChildNodes(QList<QGLSceneNode*>());
+    d->currentNode->setChildNodeList(QList<QGLSceneNode*>());
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
     d->currentNode->setPalette(parentNode->palette());

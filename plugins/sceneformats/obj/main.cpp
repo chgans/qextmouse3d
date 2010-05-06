@@ -44,28 +44,35 @@
 
 QT_BEGIN_NAMESPACE
 
+//! [1]
 class QGLObjScenePlugin : public QGLSceneFormatPlugin
 {
 public:
     QStringList keys() const;
     virtual QGLSceneFormatHandler *create(QIODevice *device, const QUrl& url, const QString &format) const;
 };
+//! [1]
 
+//! [2]
 QStringList QGLObjScenePlugin::keys() const
 {
-    return QStringList() << QLatin1String("obj");
+    return QStringList() << QLatin1String("obj") << QLatin1String("model/obj");
 }
+//! [2]
 
+//! [3]
 QGLSceneFormatHandler *QGLObjScenePlugin::create(QIODevice *device, const QUrl& url, const QString &format) const
 {
-    QGLObjSceneHandler *handler = new QGLObjSceneHandler;
-    handler->setDevice(device);
-    handler->setUrl(url);
-    handler->setFormat(format);
-    return handler;
+    Q_UNUSED(device);
+    Q_UNUSED(url);
+    Q_UNUSED(format);
+    return new QGLObjSceneHandler;
 }
+//! [3]
 
+//! [4]
 Q_EXPORT_STATIC_PLUGIN(QGLObjScenePlugin)
 Q_EXPORT_PLUGIN2(qsceneobj, QGLObjScenePlugin)
+//! [4]
 
 QT_END_NAMESPACE

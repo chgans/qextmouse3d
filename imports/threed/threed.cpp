@@ -40,6 +40,8 @@
 ****************************************************************************/
 
 #include <QtDeclarative/qdeclarativeextensionplugin.h>
+#include <QtDeclarative/qdeclarativeengine.h>
+#include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/qdeclarative.h>
 
 #include "redcyaneffect.h"
@@ -51,6 +53,8 @@
 #include "scale3d.h"
 #include "shaderprogram.h"
 #include "cube.h"
+#include "qt3dnamespace.h"
+#include "qglscenenode.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -61,6 +65,7 @@ public:
     virtual void registerTypes(const char *uri)
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
+        qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");
@@ -75,6 +80,12 @@ public:
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");
+    }
+    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    {
+        Q_UNUSED(uri);
+        QDeclarativeContext *context = engine->rootContext();
+        context->setContextProperty("Qt3d", new Qt3dNamespace);
     }
 };
 

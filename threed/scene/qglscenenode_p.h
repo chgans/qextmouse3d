@@ -59,6 +59,10 @@
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
+#include <QtCore/qstringlist.h>
+#include <QtCore/qset.h>
+
+#include <QtDeclarative/qdeclarativelist.h>
 
 class QGLAbstractEffect;
 
@@ -80,9 +84,17 @@ public:
     {
     }
 
+    static void appendFunc(QDeclarativeListProperty<QGLSceneNode> *list, QGLSceneNode*node);
+    static int countFunc(QDeclarativeListProperty<QGLSceneNode> *list);
+    static QGLSceneNode *atFunc(QDeclarativeListProperty<QGLSceneNode> *list, int index);
+    static void clearFunc(QDeclarativeListProperty<QGLSceneNode> *list);
+
     QGeometryData *geometry;
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
+    QVector3D translate;
+    QVector3D rotate;
+    QVector3D scale;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     QList<QGLSceneNode*> childNodes;

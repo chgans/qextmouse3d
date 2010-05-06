@@ -665,15 +665,19 @@ void QGLCamera::setEye(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the position of the viewer's eye by the components of \a vector.
-    The final position is eye() + \a vector.
+    Adjusts the position of the viewer's eye by the components
+    (\a x, \a y, \a z), where the components are interpreted relative
+    to the viewer's current orientation.  See translation() for more
+    information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa eye(), setEye(), translateCenter()
 */
-void QGLCamera::translateEye(const QVector3D& vector)
+void QGLCamera::translateEye(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->eye += vector;
+    d->eye += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -790,15 +794,18 @@ void QGLCamera::setCenter(const QVector3D& vertex)
 }
 
 /*!
-    Adjusts the center of the view by the components of \a vector.
-    The final position is center() + \a vector.
+    Adjusts the center of the view by the components (\a x, \a y, \a z),
+    where the components are interpreted relative to the viewer's current
+    orientation.  See translation() for more information.
+
+    This function is accessible to QML on the Camera item.
 
     \sa center(), setCenter(), translateEye()
 */
-void QGLCamera::translateCenter(const QVector3D& vector)
+void QGLCamera::translateCenter(qreal x, qreal y, qreal z)
 {
     Q_D(QGLCamera);
-    d->center += vector;
+    d->center += translation(x, y, z);
     d->viewVector = d->center - d->eye;
     emit viewChanged();
 }
@@ -1003,10 +1010,14 @@ void QGLCamera::rotateCenter(const QQuaternion& q)
     This function is useful when implementing operations such as
     "step left", "jump up", and so on where the movement should be
     interpreted relative to the viewer's current orientation, not the
-    world co-ordinate axes,
+    world co-ordinate axes.
 
-    The translation vector can be applied to eye() or center() by
-    calling translateEye() or translateCenter() respectively.
+    The following example moves the eye() 2 units to the right of the
+    current eye position while keeping the same center() of interest:
+
+    \code
+    camera.setEye(camera.eye() + camera.translation(2, 0, 0));
+    \endcode
 
     \sa translateEye(), translateCenter()
 */
@@ -1252,5 +1263,176 @@ QVector3D QGLCamera::mapPoint
 
     \sa projectionChanged()
 */
+
+/*!
+    Tilts the center() up or down by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(tilt(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa tilt(), panCenter(), rollCenter()
+*/
+void QGLCamera::tiltCenter(qreal angle)
+{
+    rotateCenter(tilt(angle));
+}
+
+/*!
+    Pans the center() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(pan(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa pan(), tiltCenter(), rollCenter()
+*/
+void QGLCamera::panCenter(qreal angle)
+{
+    rotateCenter(pan(angle));
+}
+
+/*!
+    Rolls the center() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateCenter(roll(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa roll(), tiltCenter(), panCenter()
+*/
+void QGLCamera::rollCenter(qreal angle)
+{
+    rotateCenter(roll(angle));
+}
+
+/*!
+    \enum QGLCamera::RotateOrder
+    This enum defines the order to perform a tilt, pan, and roll
+    of a QGLCamera eye or center.
+
+    \value TiltPanRoll Tilt, then pan, then roll.
+    \value TiltRollPan Tilt, then roll, then pan.
+    \value PanTiltRoll Pan, then tilt, then roll.
+    \value PanRollTilt Pan, then roll, then tilt.
+    \value RollTiltPan Roll, then tilt, then pan.
+    \value RollPanTilt Roll, then pan, then tilt.
+*/
+
+/*!
+    Tilts the center() up or down by \a tiltAngle degrees,
+    pans the center() left or right by \a panAngle degrees,
+    and rolls the center() left or right by \a rollAngle degrees,
+    all in a single fluid movement.  The \a order parameter
+    indicates the order in which to perform the rotations.
+
+    This function is accessible to QML on the Camera item.
+    It is provided as a convenience for navigation items that
+    rotate the center in multiple directions at the same time
+    based on mouse movements.
+
+    \sa tiltCenter(), panCenter(), rollCenter(), tiltPanRollEye()
+*/
+void QGLCamera::tiltPanRollCenter
+    (qreal tiltAngle, qreal panAngle, qreal rollAngle,
+     QGLCamera::RotateOrder order)
+{
+    switch (order) {
+    case QGLCamera::TiltPanRoll:
+        rotateCenter(roll(rollAngle) * pan(panAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::TiltRollPan:
+        rotateCenter(pan(panAngle) * roll(rollAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::PanTiltRoll:
+        rotateCenter(roll(rollAngle) * tilt(tiltAngle) * pan(panAngle));
+        break;
+    case QGLCamera::PanRollTilt:
+        rotateCenter(tilt(tiltAngle) * roll(rollAngle) * pan(panAngle));
+        break;
+    case QGLCamera::RollTiltPan:
+        rotateCenter(pan(panAngle) * tilt(tiltAngle) * roll(rollAngle));
+        break;
+    case QGLCamera::RollPanTilt:
+        rotateCenter(tilt(tiltAngle) * pan(panAngle) * roll(rollAngle));
+        break;
+    }
+}
+
+/*!
+    Tilts the eye() up or down by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(tilt(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa tilt(), panEye(), rollEye()
+*/
+void QGLCamera::tiltEye(qreal angle)
+{
+    rotateEye(tilt(angle));
+}
+
+/*!
+    Pans the eye() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(pan(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa pan(), tiltEye(), rollEye()
+*/
+void QGLCamera::panEye(qreal angle)
+{
+    rotateEye(pan(angle));
+}
+
+/*!
+    Rolls the eye() left or right by \a angle degrees.  This is
+    equivalent to calling \c{rotateEye(roll(angle))}.
+
+    This function is accessible to QML on the Camera item.
+
+    \sa roll(), tiltEye(), panEye()
+*/
+void QGLCamera::rollEye(qreal angle)
+{
+    rotateEye(roll(angle));
+}
+
+/*!
+    Tilts the eye() up or down by \a tiltAngle degrees,
+    pans the eye() left or right by \a panAngle degrees,
+    and rolls the eye() left or right by \a rollAngle degrees,
+    all in a single fluid movement.  The \a order parameter
+    indicates the order in which to perform the rotations.
+
+    This function is accessible to QML on the Camera item.
+    It is provided as a convenience for navigation items that
+    rotate the eye in multiple directions at the same time
+    based on mouse movements.
+
+    \sa tiltEye(), panEye(), rollEye(), tiltPanRollCenter()
+*/
+void QGLCamera::tiltPanRollEye
+    (qreal tiltAngle, qreal panAngle, qreal rollAngle,
+     QGLCamera::RotateOrder order)
+{
+    switch (order) {
+    case QGLCamera::TiltPanRoll:
+        rotateEye(roll(rollAngle) * pan(panAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::TiltRollPan:
+        rotateEye(pan(panAngle) * roll(rollAngle) * tilt(tiltAngle));
+        break;
+    case QGLCamera::PanTiltRoll:
+        rotateEye(roll(rollAngle) * tilt(tiltAngle) * pan(panAngle));
+        break;
+    case QGLCamera::PanRollTilt:
+        rotateEye(tilt(tiltAngle) * roll(rollAngle) * pan(panAngle));
+        break;
+    case QGLCamera::RollTiltPan:
+        rotateEye(pan(panAngle) * tilt(tiltAngle) * roll(rollAngle));
+        break;
+    case QGLCamera::RollPanTilt:
+        rotateEye(tilt(tiltAngle) * pan(panAngle) * roll(rollAngle));
+        break;
+    }
+}
 
 QT_END_NAMESPACE

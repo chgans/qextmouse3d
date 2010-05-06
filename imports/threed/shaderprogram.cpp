@@ -56,14 +56,47 @@
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
 
-    Any numerical or boolean properties defined on the ShaderProgram are
-    automatically exposed as uniforms for the shader programs under the
-    same name.  As QML and shader types do not match exactly, real and double
-    properties are converted to float uniforms.
+    Many properties defined on the ShaderProgram are automatically exposed as
+    uniforms for the fragment and vertex shaders under the same name.
+
+    QML and shader types do not match exactly, so the following table shows
+    how QML properties should be declared in qml compared to shader programs:
+
+    \table
+    \header \o QML Property \o Shader Program Variable
+\row \o \code property double myDouble : 1.0 \endcode \o uniform highp float myDouble;
+    \row \o \code property real myReal : 1.0 \endcode \o uniform mediump float myReal;
+    \row \o \code property bool myBoolean : true \endcode \o uniform bool myBoolean;
+    \row \o \code property int myInt : 1 \endcode \o uniform int myInt;
+    \row \o \code property variant myPoint : Qt.point(1, 1) \endcode \o uniform mediump vec2 myPoint;
+    \row \o \code property variant myPointF : Qt.point(1.0, 1.0) \endcode \o uniform mediump vec2 myPointF;
+    \row \o \code property variant mySize : Qt.size(1.0, 1.0) \endcode \o uniform mediump vec2 mySize;
+    \row \o \code property color myColor : "#80c342" \endcode \o uniform lowp vec4 myColor;
+    \row \o \code property variant myMatrix3x3 :
+            [1.0, 0.0, 0.0,
+             0.0, 1.0, 0.0,
+             0.0, 0.0, 1.0] \endcode \o uniform mat3 myMatrix3x3;
+    \row \o \code property variant myMatrix4x4 :
+        [1.0 , 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0 ]\endcode \o uniform mat4 myMatrix4x4;
+    \endtable
+
+    Note: The precision hints in this table are just examples.  highp,
+    mediump, and lowp do not map directly onto floats, doubles, colors etc.
+    Choose the most appropriate variable type for your qml or javascript, and
+    the most appropriate precision for your shader program.
+
+    Be aware that variant properties in general and matrices in particular
+    can have significant performance implications.  Conversion from variants
+    can be slow, and matrices can consume multiple slots for uniforms, which
+    are usually limited by hardware.
 
     \sa QGLGraphicsViewportItem
 */
 
+class ShaderProgramEffect;
 QT_BEGIN_NAMESPACE
 
 //QML_DEFINE_TYPE(Qt,4,6,ShaderProgram,ShaderProgram)
@@ -75,6 +108,19 @@ QT_BEGIN_NAMESPACE
   An instance of the ShaderProgramEffect class can be found in the private part of the ShaderProgram
   class, thus abstracting much of the complexity away from the user.
 */
+class ShaderProgramPropertyListenerEx : public ShaderProgramPropertyListener
+{
+public:
+    ShaderProgramPropertyListenerEx(ShaderProgram* parent, ShaderProgramEffect* effect);
+    ~ShaderProgramPropertyListenerEx();
+
+protected:
+    virtual int qt_metacall(QMetaObject::Call c, int id, void **a);
+    ShaderProgramEffect* effect;
+private:
+    int shaderProgramMethodCount;
+};
+
 class ShaderProgramEffect : public QGLAbstractEffect
 {
 public:
@@ -88,11 +134,14 @@ public:
     void setActive(QGLPainter *painter, bool flag);
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
+    void setUniformForPropertyIndex(int propertyIndex);
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
     void setCommonNormal(const QVector3D& value);
+    void setPropertiesDirty();
+    void setPropertyDirty(int property);
 
 private:
     void setUniformLocationsFromParentProperties();
@@ -111,6 +160,9 @@ private:
     int texture1;
     int colorUniform;
     QMap<int, int> propertyIdsToUniformLocations;
+    QList<int> dirtyProperties;
+    QList<int> propertiesWithoutNotifications;
+    ShaderProgramPropertyListener* propertyListener;
 };
 
 /*
@@ -133,6 +185,7 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
     texture0 = -1;
     texture1 = -1;
     colorUniform = -1;
+    propertyListener = new ShaderProgramPropertyListenerEx(parent, this);
 }
 
 /*
@@ -191,16 +244,41 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
     }
 
     const QMetaObject* parentMetaObject = parent.data()->metaObject();
+    int parentMethodCount = parentMetaObject->methodCount();
 
     for(int i = parentMetaObject->propertyOffset();
     i < parentMetaObject->propertyCount(); i++)
     {
-        QString propertyName = parentMetaObject->property(i).name();
+        QMetaProperty metaProperty = parentMetaObject->property(i);
+        QString propertyName = metaProperty.name();
         int location = program->uniformLocation(propertyName);
         // -1 indicates that the program does not use the variable,
         // so ignore those variables.
         if(location != -1)
+        {
+            dirtyProperties.append(i);
             propertyIdsToUniformLocations[i] = location;
+            if(metaProperty.hasNotifySignal())
+            {
+                QMetaMethod notifySignal = metaProperty.notifySignal();
+
+                int signalIndex = notifySignal.methodIndex();
+
+                // Connect the myFooChanged() signal from the ShaderProgram
+                // to the corresponding imaginary slot on the listener
+                // Use the method count to make sure that we don't stomp on
+                // real methods and add the property index to tell the
+                // properties apart.
+                // Warning: Subclasses of ShaderProgramPropertyListener will
+                // generate spurious property updates and lots of warnings
+                // and might even crash
+                QMetaObject::connect(parent.data(), signalIndex,
+                                     propertyListener,  parentMethodCount + i);
+            } else {
+                qWarning() << "Warning: No notification signal found for property: " << propertyName;
+                propertiesWithoutNotifications.append(i);
+            }
+        }
     }
 }
 
@@ -243,7 +321,62 @@ void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
     }
 }
 
-/*
+/*!
+  \internal
+  Precondition: list is a list of floats
+ */
+static inline void setUniformFromFloatList(QGLShaderProgram *program, int uniformLocation, QList<QVariant> list)
+{
+    switch(list.length())
+    {
+    case 1:
+        program->setUniformValue(uniformLocation, list.at(0).toFloat());
+        break;
+    case 2:
+        program->setUniformValue(uniformLocation,
+                                 list.at(0).toFloat(),
+                                 list.at(1).toFloat());
+        break;
+    case 3:
+        program->setUniformValue(uniformLocation,
+                                 list.at(0).toFloat(),
+                                 list.at(1).toFloat(),
+                                 list.at(2).toFloat());
+        break;
+    case 4:
+        program->setUniformValue(uniformLocation,
+                                 list.at(0).toFloat(),
+                                 list.at(1).toFloat(),
+                                 list.at(2).toFloat(),
+                                 list.at(3).toFloat());
+        break;
+    case 9:
+        {
+            QMatrix3x3 matrix;
+            for(int i = 0; i < 9; i++)
+            {
+                matrix(i / 3, i % 3) = list.at(i).toFloat();
+            }
+            program->setUniformValue(uniformLocation, matrix);
+        }
+        break;
+    case 16:
+        {
+            QMatrix4x4 matrix;
+            for(int i = 0; i < 16; i++)
+            {
+                matrix( i / 4, i % 4) = list.at(i).toFloat();
+            }
+            program->setUniformValue(uniformLocation, matrix);
+        }
+        break;
+    default:
+        // Very little information available to make this warning any more helpful
+        qWarning() << "Warning: unexpected list size: " << list.size() << ", only 1-4, 9 and 16 supported";
+    }
+}
+
+/*!
   This performs all updates for the shader program given a QGLPainter \a painter, and the type of update
   being carried out based on the \a updates field, which is an enumeration of the possible painter updates.
 */
@@ -271,43 +404,80 @@ void ShaderProgramEffect::update
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
         return;
     int propertyIndex;
-    int uniformLocation;
-    foreach (propertyIndex, propertyIdsToUniformLocations.keys())
+    // update dirty properties
+    foreach (propertyIndex, dirtyProperties)
     {
-        uniformLocation = propertyIdsToUniformLocations[propertyIndex];
-
-        QVariant value =
-                parent.data()->metaObject()->property(propertyIndex).read(parent.data());
-
-        switch(value.type())
-        {
-        case QVariant::Double:
-        case QMetaType::Float:
-            program->setUniformValue(uniformLocation, value.toFloat());
-            break;
-        case QVariant::Int:
-        case QVariant::UInt:
-            program->setUniformValue(uniformLocation, value.toInt());
-            break;
-        case QVariant::Bool:
-            program->setUniformValue(uniformLocation, value.toBool());
-            break;
-            // TODO:
-            // QVariant::Color
-            // QVariant::Matrix4x4
-            // QMetaType::QMatrix4x4
-            // QVariant::Vector2D
-            // QVariant::Vector3D
-            // QVariant::Vector4D
-            // QVariant::UserType
-            // image/texture
-
-        default:
-            ;
-        }
+        setUniformForPropertyIndex(propertyIndex);
     }
+    dirtyProperties.clear();
 
+    // always update the properties we can't track
+    foreach (propertyIndex, propertiesWithoutNotifications)
+    {
+        setUniformForPropertyIndex(propertyIndex);
+    }
+}
 
+inline void ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex)
+{
+    int uniformLocation = propertyIdsToUniformLocations[propertyIndex];
+
+QVariant value =
+        parent.data()->metaObject()->property(propertyIndex).read(parent.data());
+
+switch(value.type())
+{
+case QVariant::Double:
+    // Convert double to float to pass to shader program
+case QMetaType::Float:
+    program->setUniformValue(uniformLocation, value.toFloat());
+    break;
+case QVariant::Int:
+    program->setUniformValue(uniformLocation, value.toInt());
+    break;
+case QVariant::UInt:
+    program->setUniformValue(uniformLocation, value.toUInt());
+    break;
+case QVariant::Bool:
+    program->setUniformValue(uniformLocation, value.toBool());
+    break;
+case QVariant::Color:
+    program->setUniformValue(uniformLocation, value.value<QColor>());
+    break;
+case QVariant::List:
+    setUniformFromFloatList(program, uniformLocation, value.toList());
+    break;
+case QVariant::Point:
+    program->setUniformValue(uniformLocation, value.toPoint());
+    break;
+case QVariant::PointF:
+    program->setUniformValue(uniformLocation, value.toPointF());
+    break;
+case QVariant::Size:
+    program->setUniformValue(uniformLocation, value.toSize());
+    break;
+case QVariant::SizeF:
+    program->setUniformValue(uniformLocation, value.toSizeF());
+    break;
+case QVariant::Matrix4x4:
+    program->setUniformValue(uniformLocation, value.value<QMatrix4x4>());
+    break;
+case QVariant::Vector2D:
+    program->setUniformValue(uniformLocation, value.value<QVector2D>());
+    break;
+case QVariant::Vector3D:
+    program->setUniformValue(uniformLocation, value.value<QVector3D>());
+    break;
+case QVariant::Vector4D:
+    program->setUniformValue(uniformLocation, value.value<QVector4D>());
+    break;
+
+    // TODO: image/texture
+
+default:
+    qWarning() << "Unrecognized variant for property " << parent.data()->metaObject()->property(propertyIndex).name() << " of type " << value.typeName() << ", could not set corresponding shader variable";
+    ;
+}
 }
 
 /*
@@ -360,6 +530,27 @@ void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
     if (normalAttr != -1) {
         program->disableAttributeArray(normalAttr);
         program->setAttributeValue(normalAttr, value);
+    }
+}
+
+/*!
+  \internal set all properties dirty so they are reuploaded
+  next update()
+  */
+void ShaderProgramEffect::setPropertiesDirty()
+{
+    dirtyProperties = this->propertyIdsToUniformLocations.keys();
+}
+
+/*!
+  \internal Set a specific property as dirty so that it is reuploaded
+  next update()
+  */
+void ShaderProgramEffect::setPropertyDirty(int property)
+{
+    if(dirtyProperties.indexOf(property) == -1)
+    {
+        dirtyProperties.append(property);
     }
 }
 
@@ -448,6 +639,58 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     painter->setUserEffect(d->effect);
     painter->setTexture(texture2D());
     painter->setColor(color());
+}
+
+/*!
+  Mark all properties as dirty to be re-uploaded in the next update
+*/
+void ShaderProgram::markPropertyDirty()
+{
+    d->effect->setPropertiesDirty();
+}
+
+/*!
+  Mark a \a property as dirty to be re-uploaded in the next update
+  */
+void ShaderProgram::markPropertyDirty(int property)
+{
+    d->effect->setPropertyDirty(property);
+}
+
+/*!
+    \internal
+    A subclass without the Q_OBJECT macro in order to use the qt_metacall trick to track property changes
+  */
+ShaderProgramPropertyListenerEx::ShaderProgramPropertyListenerEx(ShaderProgram *parent, ShaderProgramEffect* effect)
+    : ShaderProgramPropertyListener(parent), effect(effect)
+{
+    shaderProgramMethodCount = parent->metaObject()->methodCount();
+}
+
+/*!
+    \internal
+*/
+ShaderProgramPropertyListenerEx::~ShaderProgramPropertyListenerEx()
+{
+}
+
+/*!
+    \internal
+    Find calls to the "imaginary" slots, and mark the appropriate property
+    as dirty.
+*/
+int ShaderProgramPropertyListenerEx::qt_metacall(QMetaObject::Call c, int id, void **a)
+{
+    if (c == QMetaObject::InvokeMetaMethod )
+    {
+        if(id >= shaderProgramMethodCount) {
+            effect->setPropertyDirty(id - shaderProgramMethodCount);
+        }
+        // Consume the metacall
+        return -1;
+    }
+
+    return ShaderProgramPropertyListener::qt_metacall(c, id, a);
 }
 
 QT_END_NAMESPACE

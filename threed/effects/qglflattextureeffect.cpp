@@ -107,7 +107,7 @@ QList<QGL::VertexAttribute> QGLFlatTextureEffect::requiredFields() const
 static char const flatTexVertexShader[] =
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 texcoord;\n"
-    "uniform mediump mat4 matrix;\n"
+    "uniform highp mat4 matrix;\n"
     "varying highp vec4 qTexCoord;\n"
     "void main(void)\n"
     "{\n"

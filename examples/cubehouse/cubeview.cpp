@@ -127,19 +127,19 @@ void CubeView::initializeGL(QGLPainter *painter)
     QGLMaterial *mat1 = new QGLMaterial();
     mat1->setDiffuseColor(QColor(128, 100, 0));
     index = room.palette()->addMaterial(mat1);
-    back->setMaterial(index);
+    back->setMaterialIndex(index);
 
     QGLMaterial *mat2 = new QGLMaterial();
     mat2->setDiffuseColor(Qt::cyan);
     index = room.palette()->addMaterial(mat2);
-    left->setMaterial(index);
-    right->setMaterial(index);
+    left->setMaterialIndex(index);
+    right->setMaterialIndex(index);
 
     QGLMaterial *mat3 = new QGLMaterial();
     mat3->setDiffuseColor(Qt::yellow);
     index = room.palette()->addMaterial(mat3);
-    top->setMaterial(index);
-    bottom->setMaterial(index);
+    top->setMaterialIndex(index);
+    bottom->setMaterialIndex(index);
 
     room.finalize();
     //qDumpScene(&room);
@@ -149,7 +149,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     china->setAmbientColor(QColor(192, 150, 128));
     china->setSpecularColor(QColor(60, 60, 60));
     china->setShininess(128);
-    teapot.currentNode()->setMaterial(teapot.palette()->addMaterial(china));
+    teapot.currentNode()->setMaterial(china);
     teapot.finalize();
 
     roomModel = new QGLLightModel(this);

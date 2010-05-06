@@ -1,14 +1,20 @@
 TEMPLATE = lib
-TARGET = Qt3d
+TARGET = Qt3D
 CONFIG += dll \
     warn_on
 QT += opengl \
     network
-win32 { 
-    DESTDIR = ../bin
+DESTDIR = ../lib
+win32 {
+    CONFIG += debug_and_release debug_and_release_config
+    DLLDESTDIR = ../bin
     !static:DEFINES += QT_MAKEDLL
+
+    CONFIG(debug, debug|release) {
+        TARGET = $$member(TARGET, 0)d
+    }
+
 }
-else:DESTDIR = ../lib
 include(threed.pri)
 RESOURCES += shaders.qrc
 HEADERS += $$PRIVATE_HEADERS

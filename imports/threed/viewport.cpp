@@ -48,6 +48,7 @@
 #include "qglcamera.h"
 #include "qglview.h"
 #include <QtGui/qpainter.h>
+#include <QtOpenGL/qglframebufferobject.h>
 
 /*!
     \class Viewport
@@ -79,21 +80,26 @@ class ViewportPrivate
 {
 public:
     ViewportPrivate();
+    ~ViewportPrivate();
 
     bool picking;
     bool showPicking;
     bool navigation;
     bool blending;
     bool itemsInitialized;
+    bool needsPick;
     QGLCamera *camera;
     QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
-    //QGLVertexArray backdropVertices;
+    QColor backgroundColor;
     QGLVertexBuffer backdropVertices;
     QGLView *view;
+    QWidget *viewWidget;
     int pickId;
+    QGLFramebufferObject *pickFbo;
+    QMap<int, QObject *> objects;
 };
 
 ViewportPrivate::ViewportPrivate()
@@ -102,13 +108,15 @@ ViewportPrivate::ViewportPrivate()
     , navigation(true)
     , blending(false)
     , itemsInitialized(false)
+    , needsPick(true)
     , camera(0)
     , lightModel(0)
     , backdrop(0)
-    //, backdropVertices(QGL::Position, 2, QGL::TextureCoord0, 2)
-    , backdropVertices()
+    , backgroundColor(Qt::black)
     , view(0)
+    , viewWidget(0)
     , pickId(1)
+    , pickFbo(0)
 {
     depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
 
@@ -147,6 +155,11 @@ ViewportPrivate::ViewportPrivate()
     //backdropVertices.append(1.0f, 0.0f);
 }
 
+ViewportPrivate::~ViewportPrivate()
+{
+    delete pickFbo;
+}
+
 void qt_gl_set_qml_viewport(QObject *viewport);
 
 /*!
@@ -158,6 +171,10 @@ Viewport::Viewport(QDeclarativeItem *parent)
     d = new ViewportPrivate();
     setFlag(QGraphicsItem::ItemHasNoContents, false);
     qt_gl_set_qml_viewport(this);
+
+    connect(this, SIGNAL(viewportChanged()), this, SLOT(update3d()));
+
+    setCamera(new QGLCamera(this));
 }
 
 /*!
@@ -189,7 +206,7 @@ bool Viewport::picking() const
 void Viewport::setPicking(bool value)
 {
     d->picking = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -213,7 +230,7 @@ bool Viewport::showPicking() const
 void Viewport::setShowPicking(bool value)
 {
     d->showPicking = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -231,7 +248,7 @@ bool Viewport::navigation() const
 void Viewport::setNavigation(bool value)
 {
     d->navigation = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -249,7 +266,7 @@ bool Viewport::blending() const
 void Viewport::setBlending(bool value)
 {
     d->blending = value;
-    update3d();
+    emit viewportChanged();
 }
 
 /*!
@@ -306,14 +323,14 @@ void Viewport::setLightModel(QGLLightModel *value)
     if (d->lightModel != value) {
         if (d->lightModel) {
             disconnect(d->lightModel, SIGNAL(lightModelChanged()),
-                       this, SLOT(update3d()));
+                       this, SIGNAL(update3d()));
         }
         d->lightModel = value;
         if (d->lightModel) {
             connect(d->lightModel, SIGNAL(lightModelChanged()),
-                    this, SLOT(update3d()));
+                    this, SIGNAL(update3d()));
         }
-        update3d();
+        emit viewportChanged();
     }
 }
 
@@ -325,7 +342,7 @@ void Viewport::setLightModel(QGLLightModel *value)
 
     By default no backdrop effect is defined.
 
-    \sa Effect
+    \sa Effect, backgroundColor()
 */
 Effect *Viewport::backdrop() const
 {
@@ -343,8 +360,33 @@ void Viewport::setBackdrop(Effect *value)
         if (d->backdrop) {
             connect(d->backdrop, SIGNAL(effectChanged()),
                     this, SLOT(update3d()));
+            d->backdrop->setUseLighting(false);
         }
-        update3d();
+        emit viewportChanged();
+    }
+}
+
+/*!
+    \property Viewport::backgroundColor
+    \brief the background color for the viewport, which is used if
+    backdrop is not specified.  The default color is black.
+
+    Setting this property to \c{"transparent"} will result in no
+    background color being set, so that items behind this viewport
+    will be visible through the viewport.
+
+    \sa backdrop()
+*/
+QColor Viewport::backgroundColor() const
+{
+    return d->backgroundColor;
+}
+
+void Viewport::setBackgroundColor(const QColor &value)
+{
+    if (d->backgroundColor != value) {
+        d->backgroundColor = value;
+        emit viewportChanged();
     }
 }
 
@@ -360,7 +402,11 @@ void Viewport::setBackdrop(Effect *value)
 void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidget *widget)
 {
     Q_UNUSED(style);
-    Q_UNUSED(widget);
+
+    if (!d->viewWidget)
+        d->viewWidget = widget;
+    d->needsPick = true;
+
     QGLPainter painter;
     if (!painter.begin(p)) {
         qDebug("GL graphics system is not active; cannot use 3D items");
@@ -387,6 +433,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     painter.setBlendingEnabled(d->blending);
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
+    painter.setPicking(d->showPicking);
     if (d->camera) {
         painter.setCamera(d->camera);
     } else {
@@ -396,6 +443,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     // Draw the Item3d children.
     draw(&painter);
+    painter.setPicking(false);
 }
 
 /*!
@@ -406,10 +454,15 @@ void Viewport::earlyDraw(QGLPainter *painter)
 {
     // If are running with the regular qml viewer, then assume that it
     // has cleared the background for us, and just clear the depth buffer.
-    if (!d->view)
+    if (!d->view && parentItem() && !d->showPicking) {
         painter->clear(QGL::ClearDepthBuffer);
-    else
+    } else {
+        if (d->showPicking)
+            painter->setClearColor(Qt::black);
+        else
+            painter->setClearColor(d->backgroundColor);
         painter->clear();
+    }
 
     // If we have a scene backdrop, then draw it now.
     if (d->backdrop) {
@@ -421,10 +474,23 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
-        //painter->setVertexArray(d->backdropVertices);
         painter->setVertexBuffer(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
+
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+    } else if (d->backgroundColor.alpha() != 0 || !parentItem()) {
+        painter->projectionMatrix().setToIdentity();
+        painter->modelViewMatrix().setToIdentity();
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDepthMask(GL_FALSE);
+
+        painter->setStandardEffect(QGL::FlatColor);
+        painter->setColor(d->backgroundColor);
+        painter->setVertexBuffer(d->backdropVertices);
+        painter->draw(QGL::TriangleFan, 4);
 
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -522,12 +588,96 @@ QGLView *Viewport::view() const
 }
 
 /*!
-  Returns the next object picking identifier.
+    Registers \a obj with this viewport as a pickable object and
+    return its pick identifier.
 */
-int Viewport::nextPickId()
+int Viewport::registerPickableObject(QObject *obj)
 {
-    return (d->pickId)++;
+    int id = (d->pickId)++;
+    if (d->view)
+        d->view->registerObject(id, obj);
+    else
+        d->objects[id] = obj;
+    return id;
 }
+
+// Find the next power of 2 which is "value" or greater.
+static inline int powerOfTwo(int value)
+{
+    int p = 1;
+    while (p < value)
+        p <<= 1;
+    return p;
+}
+
+/*!
+    Returns the registered object that is under the mouse position
+    specified by (\a x, \a y).  This function may need to regenerate
+    the contents of the pick buffer by repainting the scene.
+*/
+QObject *Viewport::objectForPoint(int x, int y)
+{
+    if (d->view)
+        return d->view->objectForPoint(QPoint(x, y));
+    if (!d->viewWidget)
+        return 0;
+
+    QGLPainter painter;
+    if (!painter.begin(d->viewWidget))
+        return 0;
+
+    int objectId = 0;
+
+    QSize size(width(), height());
+    QSize fbosize(powerOfTwo(size.width()), powerOfTwo(size.height()));
+    if (!d->needsPick && d->pickFbo && d->pickFbo->size() == fbosize) {
+        // The previous pick fbo contents should still be valid.
+        d->pickFbo->bind();
+        objectId = painter.pickObject(x, height() - 1 - y);
+        d->pickFbo->release();
+    } else {
+        // Regenerate the pick fbo contents.
+        if (d->pickFbo && d->pickFbo->size() != fbosize) {
+            delete d->pickFbo;
+            d->pickFbo = 0;
+        }
+        if (!d->pickFbo) {
+            d->pickFbo = new QGLFramebufferObject
+                (fbosize, QGLFramebufferObject::CombinedDepthStencil);
+        }
+        d->pickFbo->bind();
+        painter.setViewport(size);
+        painter.setPicking(true);
+        painter.clearPickObjects();
+        painter.setClearColor(Qt::black);
+        painter.clear();
+        painter.setEye(QGL::NoEye);
+        d->depthBufferOptions.apply();
+        painter.setDepthTestingEnabled(true);
+        painter.setBlendingEnabled(false);
+        d->blendOptions.apply();
+        painter.setCullFaces(QGL::CullDisabled);
+        if (d->camera) {
+            painter.setCamera(d->camera);
+        } else {
+            QGLCamera defCamera;
+            painter.setCamera(&defCamera);
+        }
+        draw(&painter);
+        painter.setPicking(false);
+        objectId = painter.pickObject(x, height() - 1 - y);
+        d->pickFbo->release();
+    }
+
+    d->needsPick = false;
+    return d->objects.value(objectId, 0);
+}
+
+/*!
+    \fn void Viewport::viewportChanged()
+
+    Signal that is emitted when the parameters on this viewport change.
+*/
 
 /*!
   If a QGLView is defined for this viewport then this function queues an update for that QGLView.

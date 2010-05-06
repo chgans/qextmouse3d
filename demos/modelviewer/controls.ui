@@ -6,19 +6,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>850</width>
+    <height>591</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Model Viewer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QFrame" name="frame">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>640</width>
+          <height>480</height>
+         </size>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -28,43 +40,15 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Select&lt;br&gt;
-Color</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="selectColorButton">
-          <property name="text">
-           <string/>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="default">
-           <bool>false</bool>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="Line" name="line">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QCheckBox" name="spinCheckBox">
+          <property name="toolTip">
+           <string>Spin the model to show all sides</string>
+          </property>
+          <property name="statusTip">
+           <string>Spin the model around Y, to show all sides</string>
+          </property>
           <property name="text">
            <string>Spin</string>
           </property>
@@ -77,37 +61,71 @@ Color</string>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="yaxLabel">
+         <widget class="QCheckBox" name="floorCheckBox">
+          <property name="statusTip">
+           <string>Draw a reference floor plane in y=0</string>
+          </property>
           <property name="text">
-           <string>Y Axis &lt;br&gt;Adjust</string>
+           <string>Floor</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="yaxSlider">
-          <property name="minimum">
-           <number>-30</number>
-          </property>
-          <property name="maximum">
-           <number>30</number>
-          </property>
-          <property name="pageStep">
-           <number>5</number>
-          </property>
+         <spacer name="horizontalSpacer_2">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="invertedAppearance">
-           <bool>true</bool>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
           </property>
-          <property name="invertedControls">
-           <bool>true</bool>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QComboBox" name="viewComboBox">
+          <property name="toolTip">
+           <string>Choose view, or use tab key</string>
           </property>
-          <property name="tickPosition">
-           <enum>QSlider::NoTicks</enum>
+          <property name="statusTip">
+           <string>Use tab; or select the view</string>
           </property>
-          <property name="tickInterval">
-           <number>20</number>
+          <item>
+           <property name="text">
+            <string>Front View</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Top View</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="generateQmlPushButton">
+          <property name="toolTip">
+           <string>Generate a QML file to display this model with current settings</string>
+          </property>
+          <property name="text">
+           <string>Save QML...</string>
           </property>
          </widget>
         </item>
@@ -116,198 +134,131 @@ Color</string>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QLabel" name="xTiltLabel">
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>X Tilt (Pitch):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <string>Components</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="xTiltComboBox">
-        <property name="currentIndex">
-         <number>6</number>
-        </property>
-        <item>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>45</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>90</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>135</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>180</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>225</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>270</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>315</string>
-         </property>
-        </item>
-       </widget>
+       <widget class="QTreeView" name="treeView"/>
       </item>
       <item>
-       <widget class="QLabel" name="yTiltLabel">
-        <property name="text">
-         <string>Y Tilt (Yaw):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="yTiltComboBox">
-        <item>
-         <property name="text">
-          <string>0</string>
-         </property>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Axis</string>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>45</string>
-         </property>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Rotate</string>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>90</string>
-         </property>
+        <item row="0" column="2">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>Translate</string>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>135</string>
-         </property>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>X:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>180</string>
-         </property>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="xRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>225</string>
-         </property>
+        <item row="1" column="2">
+         <widget class="QSpinBox" name="xTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>270</string>
-         </property>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Y:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>315</string>
-         </property>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="yRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
         </item>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Z Tilt (Roll):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="zTiltComboBox">
-        <item>
-         <property name="text">
-          <string>0</string>
-         </property>
+        <item row="2" column="2">
+         <widget class="QSpinBox" name="yTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>45</string>
-         </property>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Z:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>90</string>
-         </property>
+        <item row="3" column="1">
+         <widget class="QSpinBox" name="zRotSpin">
+          <property name="minimum">
+           <number>-180</number>
+          </property>
+          <property name="maximum">
+           <number>180</number>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>135</string>
-         </property>
+        <item row="3" column="2">
+         <widget class="QSpinBox" name="zTranSpin">
+          <property name="minimum">
+           <number>-100</number>
+          </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>180</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>225</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>270</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>315</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QLabel" name="zoomLabel">
-        <property name="text">
-         <string>Zoom</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSlider" name="zoomSlider">
-        <property name="minimum">
-         <number>0</number>
-        </property>
-        <property name="maximum">
-         <number>399</number>
-        </property>
-        <property name="value">
-         <number>15</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
+       </layout>
       </item>
      </layout>
     </item>
@@ -318,7 +269,7 @@ Color</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>850</width>
      <height>22</height>
     </rect>
    </property>
@@ -327,23 +278,20 @@ Color</string>
      <string>Models</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuColors">
-    <property name="title">
-     <string>Colors</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuComponents">
-    <property name="title">
-     <string>Components</string>
-    </property>
-    <addaction name="actionSelect_None"/>
-    <addaction name="separator"/>
-   </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuRecent_Models">
+     <property name="title">
+      <string>Recent Models</string>
+     </property>
+     <addaction name="actionEmpty"/>
+    </widget>
     <addaction name="actionOpen"/>
+    <addaction name="menuRecent_Models"/>
+    <addaction name="actionSave_QML"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
@@ -358,11 +306,11 @@ Color</string>
     <addaction name="actionShow_Warnings"/>
     <addaction name="separator"/>
     <addaction name="actionComponent"/>
+    <addaction name="actionShow_Floor"/>
+    <addaction name="actionSpin"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModels"/>
-   <addaction name="menuColors"/>
-   <addaction name="menuComponents"/>
    <addaction name="menuOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -370,15 +318,16 @@ Color</string>
    <property name="text">
     <string>Quit</string>
    </property>
-  </action>
-  <action name="actionSelect_None">
-   <property name="text">
-    <string>Select None</string>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionOpen">
    <property name="text">
     <string>Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionForce_Smooth">
@@ -434,7 +383,54 @@ Color</string>
     <string>Show Warnings</string>
    </property>
   </action>
+  <action name="actionSave_QML">
+   <property name="text">
+    <string>Save QML...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionEmpty">
+   <property name="text">
+    <string>Empty</string>
+   </property>
+  </action>
+  <action name="actionShow_Floor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Floor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionSpin">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Spin</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
  </widget>
+ <tabstops>
+  <tabstop>xRotSpin</tabstop>
+  <tabstop>treeView</tabstop>
+  <tabstop>spinCheckBox</tabstop>
+  <tabstop>generateQmlPushButton</tabstop>
+  <tabstop>viewComboBox</tabstop>
+  <tabstop>yRotSpin</tabstop>
+  <tabstop>zRotSpin</tabstop>
+  <tabstop>yTranSpin</tabstop>
+  <tabstop>xTranSpin</tabstop>
+  <tabstop>zTranSpin</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
