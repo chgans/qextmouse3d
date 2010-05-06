@@ -161,7 +161,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
 
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
-    soupCan->currentNode()->setMaterial(canMat);
+    soupCan->currentNode()->setMaterialIndex(canMat);
     soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
     QGLPrimitive canTop = canRim;
     canTop.appendVertex(canTop.vertexRef(0));       // doubled vert for texture seam

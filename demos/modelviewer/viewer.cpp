@@ -348,8 +348,7 @@ void Viewer::buildFloor()
     QGLTexture2D *tex = new QGLTexture2D(mat);
     tex->setImage(uv);
     mat->setTexture(tex);
-    int m = m_floor->palette()->addMaterial(mat);
-    m_floor->setMaterial(m);
+    m_floor->setMaterial(mat);
 }
 
 void Viewer::initializeGL()

@@ -54,6 +54,7 @@
 #include "shaderprogram.h"
 #include "cube.h"
 #include "qt3dnamespace.h"
+#include "qglscenenode.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -64,6 +65,7 @@ public:
     virtual void registerTypes(const char *uri)
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
+        qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");

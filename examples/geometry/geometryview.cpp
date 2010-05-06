@@ -76,8 +76,9 @@ GeometryView::GeometryView(QWidget *parent)
     parms->setAmbientColor(Qt::darkGray);
     parms->setDiffuseColor(Qt::gray);
     int m = palette->addMaterial(parms);
-    parms->setTexture(palette->material(icosahedron->material())->texture());
-    floor->setMaterial(m);
+    QGLTexture2D *tex = icosahedron->material()->texture();
+    parms->setTexture(tex);
+    floor->setMaterialIndex(m);
     QMatrix4x4 mat;
     mat.translate(0.0f, 0.0f, -5.0f);
     floor->setLocalTransform(mat);

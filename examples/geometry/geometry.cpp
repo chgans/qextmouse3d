@@ -192,7 +192,7 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
     texture->setImage(uv);
     mat->setTexture(texture);
 
-    setMaterial(m);
+    setMaterialIndex(m);
 
     painter.end();
     finalize();

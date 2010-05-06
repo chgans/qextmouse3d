@@ -238,7 +238,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 index = palette->indexOf(materialName);
                 if (index != -1) {
                     QGLSceneNode *node = dlist->newNode();
-                    node->setMaterial(index);
+                    node->setMaterialIndex(index);
                     QGLMaterial *material = palette->material(index);
                     if (material->texture())
                         node->setEffect(QGL::LitDecalTexture2D);

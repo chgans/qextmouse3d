@@ -821,7 +821,7 @@ int QGLDisplayListPrivate::adjustNodeTree(QGLSceneNode *top,
         top->setStart(top->start() + offset);
         top->setGeometry(geom);
         totalItems = top->count();
-        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*> children = top->childNodeList();
         QList<QGLSceneNode*>::iterator it = children.begin();
         for ( ; it != children.end(); ++it)
         {
@@ -848,7 +848,7 @@ static int recursiveCount(QGLSceneNode *top)
     if (top)
     {
         totalItems = top->count();
-        QList<QGLSceneNode*> children = top->childNodes();
+        QList<QGLSceneNode*> children = top->childNodeList();
         QList<QGLSceneNode*>::const_iterator it = children.constBegin();
         for ( ; it != children.constEnd(); ++it)
             totalItems += recursiveCount(*it);
@@ -1129,7 +1129,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = s->clone(parentNode);
-    d->currentNode->setChildNodes(QList<QGLSceneNode*>());
+    d->currentNode->setChildNodeList(QList<QGLSceneNode*>());
     d->currentNode->setStart(cnt);
     d->currentNode->setCount(0);
     d->currentNode->setPalette(parentNode->palette());

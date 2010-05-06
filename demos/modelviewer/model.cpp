@@ -159,7 +159,7 @@ QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
             Q_ASSERT(parent.internalPointer());
             p = static_cast<QGLSceneNode*>(parent.internalPointer());
             Q_ASSERT(p);
-            QList<QGLSceneNode*> c = p->childNodes();
+            QList<QGLSceneNode*> c = p->childNodeList();
             if (column == 0 && row < c.count())
             {
                 QGLSceneNode *node = c.at(row);
@@ -207,7 +207,7 @@ int Model::rowCount(const QModelIndex & parent) const
         if (parent.isValid())
         {
             QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
-            count = node->childNodes().count();
+            count = node->childNodeList().count();
             qDebug() << "nodes for parent" << node << "is" << count;
         }
         else
@@ -227,7 +227,7 @@ int Model::columnCount(const QModelIndex &parent) const
         if (parent.isValid())
         {
             QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
-            if (node->childNodes().count())
+            if (node->childNodeList().count())
                 count = 1;
         }
         else
@@ -251,7 +251,7 @@ QVariant Model::data(const QModelIndex & index, int role) const
     {
         if (node == m_sceneRoot)
             result = QPixmap(":/images/file16x16.png");
-        else if (node->childNodes().count() > 0)
+        else if (node->childNodeList().count() > 0)
             result = QPixmap(":/images/mesh16x16.png");
         else
             result = QPixmap(":/images/red-dot.png");

@@ -46,6 +46,8 @@
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
 
+#include <QtDeclarative/qdeclarativelist.h>
+
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
@@ -59,6 +61,20 @@ class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLSceneNode);
+    Q_PROPERTY(QDeclarativeListProperty<QGLSceneNode> childNodes READ childNodes DESIGNABLE false NOTIFY childNodesChanged)
+    Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged)
+    Q_PROPERTY(qreal rotX READ rotX WRITE setRotX NOTIFY rotationChanged)
+    Q_PROPERTY(qreal rotY READ rotY WRITE setRotY NOTIFY rotationChanged)
+    Q_PROPERTY(qreal rotZ READ rotZ WRITE setRotZ NOTIFY rotationChanged)
+    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
+    Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
+    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
+    Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY materialChanged)
+    Q_PROPERTY(int start READ start WRITE setStart NOTIFY startChanged)
+    Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
+    Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
 public:
     explicit QGLSceneNode(QObject *parent = 0);
     explicit QGLSceneNode(QGeometryData *geometry, QObject *parent = 0);
@@ -72,6 +88,24 @@ public:
 
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &);
+    QVector3D rotation() const;
+    void setRotation(const QVector3D &r);
+    qreal rotX() const;
+    void setRotX(qreal rx);
+    qreal rotY() const;
+    void setRotY(qreal ry);
+    qreal rotZ() const;
+    void setRotZ(qreal rz);
+    QVector3D position() const;
+    void setPosition(const QVector3D &p);
+    qreal x() const;
+    void setX(qreal x);
+    qreal y() const;
+    void setY(qreal y);
+    qreal z() const;
+    void setZ(qreal z);
+    QVector3D scale() const;
+    void setScale(const QVector3D &scale);
 
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
@@ -88,25 +122,43 @@ public:
     int count() const;
     void setCount(int count);
 
-    int material() const;
-    void setMaterial(int material);
+    int materialIndex() const;
+    void setMaterialIndex(int material);
+    QGLMaterial *material() const;
+    void setMaterial(QGLMaterial *material);
 
     QGLMaterialCollection *palette() const;
     void setPalette(QGLMaterialCollection *palette);
 
-    QList<QGLSceneNode*> childNodes() const;
+    QDeclarativeListProperty<QGLSceneNode> childNodes();
+
     QList<QGLSceneNode*> allChildren() const;
-    void setChildNodes(const QList<QGLSceneNode*> &children);
+    QList<QGLSceneNode *> childNodeList() const;
+    void setChildNodeList(const QList<QGLSceneNode*> &children);
     void addNode(QGLSceneNode *node);
     void removeNode(QGLSceneNode *node);
     void setParent(QObject *);
 
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
-    virtual QGLSceneNode *clone(QObject *parent = 0) const;
+
+    Q_INVOKABLE QGLSceneNode *clone(QObject *parent = 0) const;
+    Q_INVOKABLE QGLSceneNode *allExcept(const QString &name, QObject *parent = 0) const;
+    Q_INVOKABLE QGLSceneNode *only(const QString &name, QObject *parent = 0) const;
+    Q_INVOKABLE QGLSceneNode *allExcept(const QStringList &names, QObject *parent = 0) const;
+    Q_INVOKABLE QGLSceneNode *only(const QStringList &names, QObject *parent = 0) const;
 
     void setNormalViewEnabled(bool enabled);
     bool normalViewEnabled() const;
+
+Q_SIGNALS:
+    void childNodesChanged();
+    void rotationChanged();
+    void positionChanged();
+    void scaleChanged();
+    void materialChanged();
+    void startChanged();
+    void countChanged();
 
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
