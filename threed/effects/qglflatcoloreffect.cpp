@@ -137,7 +137,7 @@ void QGLFlatColorEffect::setActive(QGLPainter *painter, bool flag)
 #endif
     static char const flatColorVertexShader[] =
         "attribute highp vec4 vertex;\n"
-        "uniform mediump mat4 matrix;\n"
+        "uniform highp mat4 matrix;\n"
         "void main(void)\n"
         "{\n"
         "    gl_Position = matrix * vertex;\n"
@@ -312,7 +312,7 @@ void QGLPerVertexColorEffect::setActive(QGLPainter *painter, bool flag)
     static char const pvColorVertexShader[] =
         "attribute highp vec4 vertex;\n"
         "attribute mediump vec4 color;\n"
-        "uniform mediump mat4 matrix;\n"
+        "uniform highp mat4 matrix;\n"
         "varying mediump vec4 qColor;\n"
         "void main(void)\n"
         "{\n"

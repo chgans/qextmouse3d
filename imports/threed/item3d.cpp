@@ -1143,12 +1143,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
     if (d->isInitialized) return;
 
     d->viewport = viewport;
-    QGLView *view = viewport->view();
-    
-    if (view) {
-        d->objectPickId = viewport->nextPickId();
-        view->registerObject(d->objectPickId, this);        
-    }    
+    d->objectPickId = viewport->registerPickableObject(this);
 
     if (mesh() && !meshNode().isEmpty()) {
         int branchNumber = mesh()->createSceneBranch(meshNode());
@@ -1290,7 +1285,6 @@ void Item3d::update()
     if (d->viewport)
         d->viewport->update3d();
 }
-
 
 /*!
     \property Item3d::isVisible

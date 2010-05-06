@@ -104,7 +104,9 @@ public:
 
     QGLView *view() const;
 
-    int nextPickId();
+    int registerPickableObject(QObject *obj);
+
+    Q_INVOKABLE QObject *objectForPoint(int x, int y);
 
 Q_SIGNALS:
     void viewportChanged();
