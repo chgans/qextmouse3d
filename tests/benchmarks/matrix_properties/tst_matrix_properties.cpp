@@ -63,9 +63,12 @@ private slots:
 
     void modify_data();
     void modify();
+
+    void boundVariableChange_data();
+    void boundVariableChange();
+
 //    TODO:
 //    void assign();
-//    void boundVariableChange();
 
 private:
 };
@@ -140,6 +143,36 @@ void tst_matrix_properties::modify()
 
     QBENCHMARK {
         method.invoke(item, Qt::DirectConnection);
+    }
+
+    delete item;
+}
+
+void tst_matrix_properties::boundVariableChange_data()
+{
+    QTest::addColumn<QString>("propertyName");
+    QTest::newRow("UnboundVariable")
+            << "unboundReal";
+    QTest::newRow("BoundOnMatrix")
+            << "variableBoundToMatrix";
+    QTest::newRow("BoundOnVariantList")
+            << "variableBoundToVariantList";
+}
+
+void tst_matrix_properties::boundVariableChange()
+{
+    QFETCH(QString, propertyName);
+    QDeclarativeEngine engine;
+    QDeclarativeComponent component(&engine, TEST_FILE("matrix_component.qml"));
+    QObject *item = component.create();
+
+    QVERIFY(item != 0);
+
+    QByteArray propertyNameByteArray = propertyName.toUtf8();
+    qreal value = 1.0;
+
+    QBENCHMARK {
+        item->setProperty(propertyNameByteArray, (value += 0.1));
     }
 
     delete item;
