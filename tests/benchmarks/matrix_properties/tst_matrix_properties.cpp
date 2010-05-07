@@ -61,6 +61,8 @@ private slots:
     void create_data();
     void create();
 
+    void modify_data();
+    void modify();
 //    TODO:
 //    void assign();
 //    void boundVariableChange();
@@ -98,6 +100,43 @@ void tst_matrix_properties::create()
     int index = item->metaObject()->indexOfMethod(methodName.toUtf8());
     QVERIFY(index != -1);
     QMetaMethod method = item->metaObject()->method(index);
+
+    QBENCHMARK {
+        method.invoke(item, Qt::DirectConnection);
+    }
+
+    delete item;
+}
+
+void tst_matrix_properties::modify_data()
+{
+    QTest::addColumn<QString>("initMethodName");
+    QTest::addColumn<QString>("methodName");
+    QTest::newRow("modifyMatrix4x4") << "createOneMatrix4x4WithConstants()"
+            << "modifyMatrix4x4()";
+    QTest::newRow("modifyVariantList") << "createOneVariantListWithConstants()"
+            << "modifyVariantList()";
+}
+
+void tst_matrix_properties::modify()
+{
+    QFETCH(QString, initMethodName);
+    QFETCH(QString, methodName);
+    QDeclarativeEngine engine;
+    QDeclarativeComponent component(&engine, TEST_FILE("matrix_component.qml"));
+    QObject *item = component.create();
+
+    QVERIFY(item != 0);
+
+    // Set the test property to a matrix or variantlist as appropriate.
+    int index = item->metaObject()->indexOfMethod(initMethodName.toUtf8());
+    QVERIFY(index != -1);
+    QMetaMethod method = item->metaObject()->method(index);
+    method.invoke(item, Qt::DirectConnection);
+
+    index = item->metaObject()->indexOfMethod(methodName.toUtf8());
+    QVERIFY(index != -1);
+    method = item->metaObject()->method(index);
 
     QBENCHMARK {
         method.invoke(item, Qt::DirectConnection);
