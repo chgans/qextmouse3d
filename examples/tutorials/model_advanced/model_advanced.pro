@@ -7,6 +7,7 @@ QT += opengl
 SOURCES = modelview.cpp \
     main.cpp
 HEADERS = modelview.h
+VPATH += ../model
 RESOURCES = model.qrc
 LIBS += -L../../../lib \
     -L../../../bin
