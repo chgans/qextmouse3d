@@ -41,10 +41,11 @@
 
 /*!
     \example tutorials/model
-    \title Model Example
+    \title Loading a 3DS model with Qt/3D
 
-    The Model example shows how Qt/3D can be used to load a simple
-    model object with a perspective camera view.
+    This tutorial shows how Qt/3D can be used to load a simple
+    model object in 3D Studio Max (3DS) format with a perspective
+    camera view.
 
     We start by defining a class that inherits from QGLView, which
     provides some basic scene setup logic and 3D camera navigation:
@@ -115,6 +116,5 @@
 
     \image model-example-2.png
 
-    \l{qt3d-examples.html}{Return to Examples},
     \l{qt3d-tutorials.html}{Return to Tutorials}.
 */
