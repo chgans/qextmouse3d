@@ -1,2 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = qarray qgldisplaylist_perf
+SUBDIRS = qarray \
+    matrix_properties \
+    qgldisplaylist_perf
