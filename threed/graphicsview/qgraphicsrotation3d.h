@@ -39,30 +39,28 @@
 **
 ****************************************************************************/
 
-#ifndef ROTATION3D_H
-#define ROTATION3D_H
+#ifndef QGRAPHICSROTATION3D_H
+#define QGRAPHICSROTATION3D_H
 
 #include <QtGui/QGraphicsTransform>
-#include <QtDeclarative/qdeclarative.h>
+#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Rotation3D : public QGraphicsRotation
+class Q_QT3D_EXPORT QGraphicsRotation3D : public QGraphicsRotation
 {
     Q_OBJECT
 public:
-    Rotation3D(QObject *parent = 0);
-    ~Rotation3D();
+    QGraphicsRotation3D(QObject *parent = 0);
+    ~QGraphicsRotation3D();
 
     void applyTo(QMatrix4x4 *matrix) const;
 };
-
-QML_DECLARE_TYPE(Rotation3D)
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // ROTATION3D_H
+#endif

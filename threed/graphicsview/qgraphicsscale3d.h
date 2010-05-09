@@ -39,52 +39,60 @@
 **
 ****************************************************************************/
 
-#ifndef TRANSLATION3D_H
-#define TRANSLATION3D_H
+#ifndef QGRAPHICSSCALE3D_H
+#define QGRAPHICSSCALE3D_H
 
 #include <QtGui/QGraphicsTransform>
-#include <QtDeclarative/qdeclarative.h>
+#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Translation3D : public QGraphicsTransform
+class Q_QT3D_EXPORT QGraphicsScale3D : public QGraphicsTransform
 {
     Q_OBJECT
-    Q_PROPERTY(QVector3D translate READ translate WRITE setTranslate NOTIFY translateChanged)
-    Q_PROPERTY(qreal xTranslate READ xTranslate WRITE setXTranslate NOTIFY translateChanged)
-    Q_PROPERTY(qreal yTranslate READ yTranslate WRITE setYTranslate NOTIFY translateChanged)
-    Q_PROPERTY(qreal zTranslate READ zTranslate WRITE setZTranslate NOTIFY translateChanged)
+    Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)
+    Q_PROPERTY(qreal xScale READ xScale WRITE setXScale NOTIFY scaleChanged)
+    Q_PROPERTY(qreal yScale READ yScale WRITE setYScale NOTIFY scaleChanged)
+    Q_PROPERTY(qreal zScale READ zScale WRITE setZScale NOTIFY scaleChanged)
+    Q_PROPERTY(QVector3D scaleVector READ scaleVector WRITE setScaleVector NOTIFY scaleChanged)
+    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
 public:
-    Translation3D(QObject *parent = 0);
-    ~Translation3D();
+    QGraphicsScale3D(QObject *parent = 0);
+    ~QGraphicsScale3D();
 
-    QVector3D translate() const { return m_translate; }
-    void setTranslate(const QVector3D &value);
+    QVector3D origin() const { return m_origin; }
+    void setOrigin(const QVector3D &value);
 
-    qreal xTranslate() const { return m_translate.x(); }
-    void setXTranslate(qreal value);
+    qreal xScale() const { return m_scale.x(); }
+    void setXScale(qreal value);
 
-    qreal yTranslate() const { return m_translate.y(); }
-    void setYTranslate(qreal value);
+    qreal yScale() const { return m_scale.y(); }
+    void setYScale(qreal value);
 
-    qreal zTranslate() const { return m_translate.z(); }
-    void setZTranslate(qreal value);
+    qreal zScale() const { return m_scale.z(); }
+    void setZScale(qreal value);
+
+    QVector3D scaleVector() const { return m_scale; }
+    void setScaleVector(const QVector3D &value);
+
+    qreal scale() const;
+    void setScale(qreal value);
 
     void applyTo(QMatrix4x4 *matrix) const;
 
 Q_SIGNALS:
-    void translateChanged();
+    void originChanged();
+    void scaleChanged();
 
 private:
-    QVector3D m_translate;
+    QVector3D m_origin;
+    QVector3D m_scale;
 };
-
-QML_DECLARE_TYPE(Translation3D)
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // TRANSLATION3D_H
+#endif

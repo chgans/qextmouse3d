@@ -39,24 +39,24 @@
 **
 ****************************************************************************/
 
-#include "scale3d.h"
+#include "qgraphicsscale3d.h"
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class Scale3D
-    \brief The Scale3D class contains parameters and functions required to support 3d scaling of items in the QML/3D environment.
+    \class QGraphicsScale3D
+    \brief The QGraphicsScale3D class supports scaling of items in 3D.
     \since 4.7
     \ingroup qt3d
-    \ingroup qt3d::qml3d
+    \ingroup qt3d::graphicsview
 
-    \sa Rotation3D, Translation3D
+    \sa QGraphicsRotation3D, QGraphicsTranslation3D
 */
 
 /*!
     Construct a 3D scale transform and attach it to \a parent.
 */
-Scale3D::Scale3D(QObject *parent)
+QGraphicsScale3D::QGraphicsScale3D(QObject *parent)
     : QGraphicsTransform(parent)
     , m_scale(1.0f, 1.0f, 1.0f)
 {
@@ -65,18 +65,18 @@ Scale3D::Scale3D(QObject *parent)
 /*!
     Destroy this 3D scale transform.
 */
-Scale3D::~Scale3D()
+QGraphicsScale3D::~QGraphicsScale3D()
 {
 }
 
 /*!
-    \property Scale3D::origin
+    \property QGraphicsScale3D::origin
     \brief the origin about which to scale.
 
     The default value for this property is (0, 0, 0).
 */
 
-void Scale3D::setOrigin(const QVector3D &value)
+void QGraphicsScale3D::setOrigin(const QVector3D &value)
 {
     if (m_origin != value) {
         m_origin = value;
@@ -86,13 +86,13 @@ void Scale3D::setOrigin(const QVector3D &value)
 }
 
 /*!
-    \property Scale3D::xScale
+    \property QGraphicsScale3D::xScale
     \brief the amount with which to scale to x component.
 
     The default value for this property is 1.
 */
 
-void Scale3D::setXScale(qreal value)
+void QGraphicsScale3D::setXScale(qreal value)
 {
     if (m_scale.x() != value) {
         m_scale.setX(value);
@@ -102,13 +102,13 @@ void Scale3D::setXScale(qreal value)
 }
 
 /*!
-    \property Scale3D::yScale
+    \property QGraphicsScale3D::yScale
     \brief the amount with which to scale to y component.
 
     The default value for this property is 1.
 */
 
-void Scale3D::setYScale(qreal value)
+void QGraphicsScale3D::setYScale(qreal value)
 {
     if (m_scale.y() != value) {
         m_scale.setY(value);
@@ -118,13 +118,13 @@ void Scale3D::setYScale(qreal value)
 }
 
 /*!
-    \property Scale3D::zScale
+    \property QGraphicsScale3D::zScale
     \brief the amount with which to scale to z component.
 
     The default value for this property is 1.
 */
 
-void Scale3D::setZScale(qreal value)
+void QGraphicsScale3D::setZScale(qreal value)
 {
     if (m_scale.z() != value) {
         m_scale.setZ(value);
@@ -134,13 +134,13 @@ void Scale3D::setZScale(qreal value)
 }
 
 /*!
-    \property Scale3D::scaleVector
+    \property QGraphicsScale3D::scaleVector
     \brief the amount with which to scale each component.
 
     The default value for this property is (1, 1, 1).
 */
 
-void Scale3D::setScaleVector(const QVector3D &value)
+void QGraphicsScale3D::setScaleVector(const QVector3D &value)
 {
     if (m_scale != value) {
         m_scale = value;
@@ -150,7 +150,7 @@ void Scale3D::setScaleVector(const QVector3D &value)
 }
 
 /*!
-    \property Scale3D::scale
+    \property QGraphicsScale3D::scale
     \brief the amount with which to scale.
 
     When read, this property returns the average of xScale,
@@ -160,12 +160,12 @@ void Scale3D::setScaleVector(const QVector3D &value)
     The default value for this property is 1.
 */
 
-qreal Scale3D::scale() const
+qreal QGraphicsScale3D::scale() const
 {
     return (m_scale.x() + m_scale.y() + m_scale.z()) / 3.0f;
 }
 
-void Scale3D::setScale(qreal value)
+void QGraphicsScale3D::setScale(qreal value)
 {
     if (m_scale.x() != value || m_scale.y() != value || m_scale.z() != value) {
         m_scale = QVector3D(value, value, value);
@@ -177,7 +177,7 @@ void Scale3D::setScale(qreal value)
 /*!
     \internal
 */
-void Scale3D::applyTo(QMatrix4x4 *matrix) const
+void QGraphicsScale3D::applyTo(QMatrix4x4 *matrix) const
 {
     matrix->translate(-m_origin);
     matrix->scale(m_scale);
@@ -185,13 +185,13 @@ void Scale3D::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
-    \fn void Scale3D::originChanged()
+    \fn void QGraphicsScale3D::originChanged()
 
     Signal that is emitted when origin() changes.
 */
 
 /*!
-    \fn void Scale3D::scaleChanged()
+    \fn void QGraphicsScale3D::scaleChanged()
 
     Signal that is emitted when scaleVector() changes.
 */

@@ -47,8 +47,8 @@
 #include "qglsceneobject.h"
 #include "qglscenenode.h"
 #include "qglview.h"
-#include "scale3d.h"
-#include "translation3d.h"
+#include "qgraphicsscale3d.h"
+#include "qgraphicstranslation3d.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
@@ -330,12 +330,12 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(axisChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<Scale3D *>(item)) {
+            } else if (qobject_cast<QGraphicsScale3D *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(scaleChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<Translation3D *>(item)) {
+            } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
                 QObject::connect(item, SIGNAL(translateChanged()),
                                  object, SLOT(update()));
             }
@@ -403,12 +403,12 @@ void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransf
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(axisChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<Scale3D *>(item)) {
+            } else if (qobject_cast<QGraphicsScale3D *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(scaleChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<Translation3D *>(item)) {
+            } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
                 QObject::connect(item, SIGNAL(translateChanged()),
                                  object, SLOT(update()));
             }

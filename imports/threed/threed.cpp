@@ -48,15 +48,19 @@
 #include "item3d.h"
 #include "viewport.h"
 #include "effect.h"
-#include "rotation3d.h"
-#include "translation3d.h"
-#include "scale3d.h"
+#include "qgraphicsrotation3d.h"
+#include "qgraphicstranslation3d.h"
+#include "qgraphicsscale3d.h"
 #include "shaderprogram.h"
 #include "cube.h"
 #include "qt3dnamespace.h"
 #include "qglscenenode.h"
 
 QT_BEGIN_NAMESPACE
+
+QML_DECLARE_TYPE(QGraphicsRotation3D)
+QML_DECLARE_TYPE(QGraphicsTranslation3D)
+QML_DECLARE_TYPE(QGraphicsScale3D)
 
 class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
@@ -74,9 +78,9 @@ public:
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
         qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
-        qmlRegisterType<Rotation3D>(uri,1,0,"Rotation3D");
-        qmlRegisterType<Translation3D>(uri,1,0,"Translation3D");
-        qmlRegisterType<Scale3D>(uri,1,0,"Scale3D");
+        qmlRegisterType<QGraphicsRotation3D>(uri,1,0,"Rotation3D");
+        qmlRegisterType<QGraphicsTranslation3D>(uri,1,0,"Translation3D");
+        qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");

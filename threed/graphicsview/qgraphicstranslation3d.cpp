@@ -39,30 +39,30 @@
 **
 ****************************************************************************/
 
-#include "translation3d.h"
+#include "qgraphicstranslation3d.h"
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class Translation3D
-    \brief The Translation3D class contains parameters and functions required to support 3d translation of items in the QML/3D environment.
+    \class QGraphicsTranslation3D
+    \brief The QGraphicsTranslation3D class supports translation of 3D items.
     \since 4.7
     \ingroup qt3d
-    \ingroup qt3d::qml3d
+    \ingroup qt3d::graphicsview
 
     \section1 Properties
 
-    Translation3D is derived directly from QGraphicsTransform, and
+    QGraphicsTranslation3D is derived directly from QGraphicsTransform, and
     provides a \c translate property to specify the 3D vector to
     apply to transform incoming co-ordinates.
 
-    \sa Rotation3D, Scale3D
+    \sa QGraphicsRotation3D, QGraphicsScale3D
 */
 
 /*!
     Constructs a new translation and attaches it to \a parent.
 */
-Translation3D::Translation3D(QObject *parent)
+QGraphicsTranslation3D::QGraphicsTranslation3D(QObject *parent)
     : QGraphicsTransform(parent)
 {
 }
@@ -70,18 +70,18 @@ Translation3D::Translation3D(QObject *parent)
 /*!
     Destroys this translation.
 */
-Translation3D::~Translation3D()
+QGraphicsTranslation3D::~QGraphicsTranslation3D()
 {
 }
 
 /*!
-    \property Translation3D::translate
+    \property QGraphicsTranslation3D::translate
     \brief the translation to apply to incoming co-ordinates.
 
     The default value for this property is (0, 0, 0).
 */
 
-void Translation3D::setTranslate(const QVector3D &value)
+void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
 {
     if (m_translate != value) {
         m_translate = value;
@@ -91,14 +91,14 @@ void Translation3D::setTranslate(const QVector3D &value)
 }
 
 /*!
-    \property Translation3D::xTranslate
+    \property QGraphicsTranslation3D::xTranslate
     \brief the x component of the translation to apply to
     incoming co-ordinates.
 
     The default value for this property is 0.
 */
 
-void Translation3D::setXTranslate(qreal value)
+void QGraphicsTranslation3D::setXTranslate(qreal value)
 {
     if (m_translate.x() != value) {
         m_translate.setX(value);
@@ -108,14 +108,14 @@ void Translation3D::setXTranslate(qreal value)
 }
 
 /*!
-    \property Translation3D::yTranslate
+    \property QGraphicsTranslation3D::yTranslate
     \brief the y component of the translation to apply to
     incoming co-ordinates.
 
     The default value for this property is 0.
 */
 
-void Translation3D::setYTranslate(qreal value)
+void QGraphicsTranslation3D::setYTranslate(qreal value)
 {
     if (m_translate.y() != value) {
         m_translate.setY(value);
@@ -125,14 +125,14 @@ void Translation3D::setYTranslate(qreal value)
 }
 
 /*!
-    \property Translation3D::zTranslate
+    \property QGraphicsTranslation3D::zTranslate
     \brief the z component of the translation to apply to
     incoming co-ordinates.
 
     The default value for this property is 0.
 */
 
-void Translation3D::setZTranslate(qreal value)
+void QGraphicsTranslation3D::setZTranslate(qreal value)
 {
     if (m_translate.z() != value) {
         m_translate.setZ(value);
@@ -144,13 +144,13 @@ void Translation3D::setZTranslate(qreal value)
 /*!
     \internal
 */
-void Translation3D::applyTo(QMatrix4x4 *matrix) const
+void QGraphicsTranslation3D::applyTo(QMatrix4x4 *matrix) const
 {
     matrix->translate(m_translate);
 }
 
 /*!
-    \fn void Translation3D::translateChanged()
+    \fn void QGraphicsTranslation3D::translateChanged()
 
     Signal that is emitted when translate() changes.
 */
