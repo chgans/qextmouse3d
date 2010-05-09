@@ -57,6 +57,7 @@ QT_BEGIN_NAMESPACE
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::scene
+    \ingroup qt3d::qml3d
 
     QGLSceneNode is a convenience class that makes it easier for
     applications to extract the interesting properties of a mesh or

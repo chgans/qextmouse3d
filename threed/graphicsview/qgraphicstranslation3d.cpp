@@ -49,6 +49,7 @@ QT_BEGIN_NAMESPACE
     \since 4.7
     \ingroup qt3d
     \ingroup qt3d::graphicsview
+    \ingroup qt3d::qml3d
 
     \section1 Properties
 
