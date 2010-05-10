@@ -1,7 +1,6 @@
-load(qttest_p4)
 TEMPLATE = app
 TARGET = tst_matrix_properties
-QT += declarative script
+QT += declarative script testlib
 macx:CONFIG -= app_bundle
 CONFIG += release
 

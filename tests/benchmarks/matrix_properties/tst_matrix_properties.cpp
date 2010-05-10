@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include <qtest.h>
+#include <QtTest/QtTest>
 #include <QDeclarativeEngine>
 #include <QDeclarativeComponent>
 
