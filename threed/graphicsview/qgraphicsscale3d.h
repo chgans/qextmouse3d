@@ -43,11 +43,14 @@
 #define QGRAPHICSSCALE3D_H
 
 #include <QtGui/QGraphicsTransform>
+#include <QtCore/qscopedpointer.h>
 #include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
+
+class QGraphicsScale3DPrivate;
 
 class Q_QT3D_EXPORT QGraphicsScale3D : public QGraphicsTransform
 {
@@ -62,19 +65,19 @@ public:
     QGraphicsScale3D(QObject *parent = 0);
     ~QGraphicsScale3D();
 
-    QVector3D origin() const { return m_origin; }
+    QVector3D origin() const;
     void setOrigin(const QVector3D &value);
 
-    qreal xScale() const { return m_scale.x(); }
+    qreal xScale() const;
     void setXScale(qreal value);
 
-    qreal yScale() const { return m_scale.y(); }
+    qreal yScale() const;
     void setYScale(qreal value);
 
-    qreal zScale() const { return m_scale.z(); }
+    qreal zScale() const;
     void setZScale(qreal value);
 
-    QVector3D scaleVector() const { return m_scale; }
+    QVector3D scaleVector() const;
     void setScaleVector(const QVector3D &value);
 
     qreal scale() const;
@@ -87,8 +90,10 @@ Q_SIGNALS:
     void scaleChanged();
 
 private:
-    QVector3D m_origin;
-    QVector3D m_scale;
+    QScopedPointer<QGraphicsScale3DPrivate> d_ptr;
+
+    Q_DISABLE_COPY(QGraphicsScale3D)
+    Q_DECLARE_PRIVATE(QGraphicsScale3D)
 };
 
 QT_END_NAMESPACE

@@ -57,6 +57,9 @@ public:
     ~QGraphicsRotation3D();
 
     void applyTo(QMatrix4x4 *matrix) const;
+
+private:
+    Q_DISABLE_COPY(QGraphicsRotation3D)
 };
 
 QT_END_NAMESPACE

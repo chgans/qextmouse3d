@@ -66,12 +66,20 @@ QT_BEGIN_NAMESPACE
     \sa QGraphicsRotation3D, QGraphicsScale3D
 */
 
+class QGraphicsTranslation3DPrivate
+{
+public:
+    QGraphicsTranslation3DPrivate() : progress(1.0f) {}
+
+    QVector3D translate;
+    qreal progress;
+};
+
 /*!
     Constructs a new translation and attaches it to \a parent.
 */
 QGraphicsTranslation3D::QGraphicsTranslation3D(QObject *parent)
-    : QGraphicsTransform(parent)
-    , m_progress(1.0f)
+    : QGraphicsTransform(parent), d_ptr(new QGraphicsTranslation3DPrivate)
 {
 }
 
@@ -89,10 +97,17 @@ QGraphicsTranslation3D::~QGraphicsTranslation3D()
     The default value for this property is (0, 0, 0).
 */
 
+QVector3D QGraphicsTranslation3D::translate() const
+{
+    Q_D(const QGraphicsTranslation3D);
+    return d->translate;
+}
+
 void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
 {
-    if (m_translate != value) {
-        m_translate = value;
+    Q_D(QGraphicsTranslation3D);
+    if (d->translate != value) {
+        d->translate = value;
         update();
         emit translateChanged();
     }
@@ -106,10 +121,17 @@ void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
     The default value for this property is 0.
 */
 
+qreal QGraphicsTranslation3D::xTranslate() const
+{
+    Q_D(const QGraphicsTranslation3D);
+    return d->translate.x();
+}
+
 void QGraphicsTranslation3D::setXTranslate(qreal value)
 {
-    if (m_translate.x() != value) {
-        m_translate.setX(value);
+    Q_D(QGraphicsTranslation3D);
+    if (d->translate.x() != value) {
+        d->translate.setX(value);
         update();
         emit translateChanged();
     }
@@ -123,10 +145,17 @@ void QGraphicsTranslation3D::setXTranslate(qreal value)
     The default value for this property is 0.
 */
 
+qreal QGraphicsTranslation3D::yTranslate() const
+{
+    Q_D(const QGraphicsTranslation3D);
+    return d->translate.y();
+}
+
 void QGraphicsTranslation3D::setYTranslate(qreal value)
 {
-    if (m_translate.y() != value) {
-        m_translate.setY(value);
+    Q_D(QGraphicsTranslation3D);
+    if (d->translate.y() != value) {
+        d->translate.setY(value);
         update();
         emit translateChanged();
     }
@@ -140,10 +169,17 @@ void QGraphicsTranslation3D::setYTranslate(qreal value)
     The default value for this property is 0.
 */
 
+qreal QGraphicsTranslation3D::zTranslate() const
+{
+    Q_D(const QGraphicsTranslation3D);
+    return d->translate.z();
+}
+
 void QGraphicsTranslation3D::setZTranslate(qreal value)
 {
-    if (m_translate.z() != value) {
-        m_translate.setZ(value);
+    Q_D(QGraphicsTranslation3D);
+    if (d->translate.z() != value) {
+        d->translate.setZ(value);
         update();
         emit translateChanged();
     }
@@ -160,10 +196,17 @@ void QGraphicsTranslation3D::setZTranslate(qreal value)
     are also possible by setting the value to something outside this range.
 */
 
+qreal QGraphicsTranslation3D::progress() const
+{
+    Q_D(const QGraphicsTranslation3D);
+    return d->progress;
+}
+
 void QGraphicsTranslation3D::setProgress(qreal value)
 {
-    if (m_progress != value) {
-        m_progress = value;
+    Q_D(QGraphicsTranslation3D);
+    if (d->progress != value) {
+        d->progress = value;
         update();
         emit progressChanged();
     }
@@ -174,7 +217,8 @@ void QGraphicsTranslation3D::setProgress(qreal value)
 */
 void QGraphicsTranslation3D::applyTo(QMatrix4x4 *matrix) const
 {
-    matrix->translate(m_translate * m_progress);
+    Q_D(const QGraphicsTranslation3D);
+    matrix->translate(d->translate * d->progress);
 }
 
 /*!

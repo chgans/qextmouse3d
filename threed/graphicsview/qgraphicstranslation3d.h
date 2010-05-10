@@ -43,11 +43,14 @@
 #define QGRAPHICSTRANSLATION3D_H
 
 #include <QtGui/QGraphicsTransform>
+#include <QtCore/qscopedpointer.h>
 #include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
+
+class QGraphicsTranslation3DPrivate;
 
 class Q_QT3D_EXPORT QGraphicsTranslation3D : public QGraphicsTransform
 {
@@ -61,19 +64,19 @@ public:
     QGraphicsTranslation3D(QObject *parent = 0);
     ~QGraphicsTranslation3D();
 
-    QVector3D translate() const { return m_translate; }
+    QVector3D translate() const;
     void setTranslate(const QVector3D &value);
 
-    qreal xTranslate() const { return m_translate.x(); }
+    qreal xTranslate() const;
     void setXTranslate(qreal value);
 
-    qreal yTranslate() const { return m_translate.y(); }
+    qreal yTranslate() const;
     void setYTranslate(qreal value);
 
-    qreal zTranslate() const { return m_translate.z(); }
+    qreal zTranslate() const;
     void setZTranslate(qreal value);
 
-    qreal progress() const { return m_progress; }
+    qreal progress() const;
     void setProgress(qreal value);
 
     void applyTo(QMatrix4x4 *matrix) const;
@@ -83,8 +86,10 @@ Q_SIGNALS:
     void progressChanged();
 
 private:
-    QVector3D m_translate;
-    qreal m_progress;
+    QScopedPointer<QGraphicsTranslation3DPrivate> d_ptr;
+
+    Q_DISABLE_COPY(QGraphicsTranslation3D)
+    Q_DECLARE_PRIVATE(QGraphicsTranslation3D)
 };
 
 QT_END_NAMESPACE

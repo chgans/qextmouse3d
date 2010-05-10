@@ -54,12 +54,20 @@ QT_BEGIN_NAMESPACE
     \sa QGraphicsRotation3D, QGraphicsTranslation3D
 */
 
+class QGraphicsScale3DPrivate
+{
+public:
+    QGraphicsScale3DPrivate() : scale(1, 1, 1) {}
+
+    QVector3D origin;
+    QVector3D scale;
+};
+
 /*!
     Construct a 3D scale transform and attach it to \a parent.
 */
 QGraphicsScale3D::QGraphicsScale3D(QObject *parent)
-    : QGraphicsTransform(parent)
-    , m_scale(1.0f, 1.0f, 1.0f)
+    : QGraphicsTransform(parent), d_ptr(new QGraphicsScale3DPrivate)
 {
 }
 
@@ -77,10 +85,17 @@ QGraphicsScale3D::~QGraphicsScale3D()
     The default value for this property is (0, 0, 0).
 */
 
+QVector3D QGraphicsScale3D::origin() const
+{
+    Q_D(const QGraphicsScale3D);
+    return d->origin;
+}
+
 void QGraphicsScale3D::setOrigin(const QVector3D &value)
 {
-    if (m_origin != value) {
-        m_origin = value;
+    Q_D(QGraphicsScale3D);
+    if (d->origin != value) {
+        d->origin = value;
         update();
         emit originChanged();
     }
@@ -93,10 +108,17 @@ void QGraphicsScale3D::setOrigin(const QVector3D &value)
     The default value for this property is 1.
 */
 
+qreal QGraphicsScale3D::xScale() const
+{
+    Q_D(const QGraphicsScale3D);
+    return d->scale.x();
+}
+
 void QGraphicsScale3D::setXScale(qreal value)
 {
-    if (m_scale.x() != value) {
-        m_scale.setX(value);
+    Q_D(QGraphicsScale3D);
+    if (d->scale.x() != value) {
+        d->scale.setX(value);
         update();
         emit scaleChanged();
     }
@@ -109,10 +131,17 @@ void QGraphicsScale3D::setXScale(qreal value)
     The default value for this property is 1.
 */
 
+qreal QGraphicsScale3D::yScale() const
+{
+    Q_D(const QGraphicsScale3D);
+    return d->scale.y();
+}
+
 void QGraphicsScale3D::setYScale(qreal value)
 {
-    if (m_scale.y() != value) {
-        m_scale.setY(value);
+    Q_D(QGraphicsScale3D);
+    if (d->scale.y() != value) {
+        d->scale.setY(value);
         update();
         emit scaleChanged();
     }
@@ -125,10 +154,17 @@ void QGraphicsScale3D::setYScale(qreal value)
     The default value for this property is 1.
 */
 
+qreal QGraphicsScale3D::zScale() const
+{
+    Q_D(const QGraphicsScale3D);
+    return d->scale.z();
+}
+
 void QGraphicsScale3D::setZScale(qreal value)
 {
-    if (m_scale.z() != value) {
-        m_scale.setZ(value);
+    Q_D(QGraphicsScale3D);
+    if (d->scale.z() != value) {
+        d->scale.setZ(value);
         update();
         emit scaleChanged();
     }
@@ -141,10 +177,17 @@ void QGraphicsScale3D::setZScale(qreal value)
     The default value for this property is (1, 1, 1).
 */
 
+QVector3D QGraphicsScale3D::scaleVector() const
+{
+    Q_D(const QGraphicsScale3D);
+    return d->scale;
+}
+
 void QGraphicsScale3D::setScaleVector(const QVector3D &value)
 {
-    if (m_scale != value) {
-        m_scale = value;
+    Q_D(QGraphicsScale3D);
+    if (d->scale != value) {
+        d->scale = value;
         update();
         emit scaleChanged();
     }
@@ -163,13 +206,15 @@ void QGraphicsScale3D::setScaleVector(const QVector3D &value)
 
 qreal QGraphicsScale3D::scale() const
 {
-    return (m_scale.x() + m_scale.y() + m_scale.z()) / 3.0f;
+    Q_D(const QGraphicsScale3D);
+    return (d->scale.x() + d->scale.y() + d->scale.z()) / 3.0f;
 }
 
 void QGraphicsScale3D::setScale(qreal value)
 {
-    if (m_scale.x() != value || m_scale.y() != value || m_scale.z() != value) {
-        m_scale = QVector3D(value, value, value);
+    Q_D(QGraphicsScale3D);
+    if (d->scale.x() != value || d->scale.y() != value || d->scale.z() != value) {
+        d->scale = QVector3D(value, value, value);
         update();
         emit scaleChanged();
     }
@@ -180,9 +225,10 @@ void QGraphicsScale3D::setScale(qreal value)
 */
 void QGraphicsScale3D::applyTo(QMatrix4x4 *matrix) const
 {
-    matrix->translate(m_origin);
-    matrix->scale(m_scale);
-    matrix->translate(-m_origin);
+    Q_D(const QGraphicsScale3D);
+    matrix->translate(d->origin);
+    matrix->scale(d->scale);
+    matrix->translate(-d->origin);
 }
 
 /*!
