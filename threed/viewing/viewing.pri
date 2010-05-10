@@ -4,10 +4,8 @@ VPATH += $$PWD
 
 HEADERS += \
     qglcamera.h \
-    qglview.h \
-    qglviewport.h
+    qglview.h
 
 SOURCES += \
     qglcamera.cpp \
-    qglview.cpp \
-    qglviewport.cpp
+    qglview.cpp
