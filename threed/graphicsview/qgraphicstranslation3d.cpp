@@ -55,7 +55,13 @@ QT_BEGIN_NAMESPACE
 
     QGraphicsTranslation3D is derived directly from QGraphicsTransform, and
     provides a \c translate property to specify the 3D vector to
-    apply to transform incoming co-ordinates.
+    apply to the incoming co-ordinates.
+
+    The \a progress property can be used to perform animation along a
+    translation vector by varying the progress value between 0 and 1.
+    Overshoot animations are also possible by setting the progress
+    value to something outside this range.  The default progress
+    value is 1.
 
     \sa QGraphicsRotation3D, QGraphicsScale3D
 */
@@ -65,6 +71,7 @@ QT_BEGIN_NAMESPACE
 */
 QGraphicsTranslation3D::QGraphicsTranslation3D(QObject *parent)
     : QGraphicsTransform(parent)
+    , m_progress(1.0f)
 {
 }
 
@@ -143,11 +150,31 @@ void QGraphicsTranslation3D::setZTranslate(qreal value)
 }
 
 /*!
+    \property QGraphicsTranslation3D::progress
+    \brief the progress along the translation vector, from 0 to 1.
+
+    The default value for this property is 1.
+
+    This property can be used to perform animation along a translation
+    vector by varying the progress between 0 and 1.  Overshoot animations
+    are also possible by setting the value to something outside this range.
+*/
+
+void QGraphicsTranslation3D::setProgress(qreal value)
+{
+    if (m_progress != value) {
+        m_progress = value;
+        update();
+        emit progressChanged();
+    }
+}
+
+/*!
     \internal
 */
 void QGraphicsTranslation3D::applyTo(QMatrix4x4 *matrix) const
 {
-    matrix->translate(m_translate);
+    matrix->translate(m_translate * m_progress);
 }
 
 /*!
@@ -155,3 +182,11 @@ void QGraphicsTranslation3D::applyTo(QMatrix4x4 *matrix) const
 
     Signal that is emitted when translate() changes.
 */
+
+/*!
+    \fn void QGraphicsTranslation3D::progressChanged()
+
+    Signal that is emitted when progress() changes.
+*/
+
+QT_END_NAMESPACE

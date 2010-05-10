@@ -180,9 +180,9 @@ void QGraphicsScale3D::setScale(qreal value)
 */
 void QGraphicsScale3D::applyTo(QMatrix4x4 *matrix) const
 {
-    matrix->translate(-m_origin);
-    matrix->scale(m_scale);
     matrix->translate(m_origin);
+    matrix->scale(m_scale);
+    matrix->translate(-m_origin);
 }
 
 /*!

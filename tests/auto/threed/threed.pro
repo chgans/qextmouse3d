@@ -3,6 +3,7 @@ SUBDIRS = \
     qareaallocator \
     qarray \
     qcustomdataarray \
+    qgraphicstransform3d \
     qvectorarray \
     qglblendoptions \
     qglcamera \

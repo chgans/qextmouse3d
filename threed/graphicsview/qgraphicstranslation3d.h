@@ -56,6 +56,7 @@ class Q_QT3D_EXPORT QGraphicsTranslation3D : public QGraphicsTransform
     Q_PROPERTY(qreal xTranslate READ xTranslate WRITE setXTranslate NOTIFY translateChanged)
     Q_PROPERTY(qreal yTranslate READ yTranslate WRITE setYTranslate NOTIFY translateChanged)
     Q_PROPERTY(qreal zTranslate READ zTranslate WRITE setZTranslate NOTIFY translateChanged)
+    Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
 public:
     QGraphicsTranslation3D(QObject *parent = 0);
     ~QGraphicsTranslation3D();
@@ -72,13 +73,18 @@ public:
     qreal zTranslate() const { return m_translate.z(); }
     void setZTranslate(qreal value);
 
+    qreal progress() const { return m_progress; }
+    void setProgress(qreal value);
+
     void applyTo(QMatrix4x4 *matrix) const;
 
 Q_SIGNALS:
     void translateChanged();
+    void progressChanged();
 
 private:
     QVector3D m_translate;
+    qreal m_progress;
 };
 
 QT_END_NAMESPACE
