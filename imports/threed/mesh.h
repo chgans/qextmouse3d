@@ -108,6 +108,7 @@ public:
 
     Q_INVOKABLE QObject *material(const QString& nodeName, const QString& materialName);
 
+    void classBegin();
     void componentComplete();
 
 
