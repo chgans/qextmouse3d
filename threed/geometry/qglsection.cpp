@@ -103,11 +103,6 @@
     calls virtual protected functions appendSmooth() (for smoothed vertices)
     and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
     discussion of smoothing.
-
-    Note that after initialization of the display list, the QGLSection
-    instances are destroyed.  To access the geometry data during the run-time
-    of the application, if needed, call the geometry() method on the
-    display list and its child nodes.
 */
 
 // allow QVector3D's to be stored in a QMap

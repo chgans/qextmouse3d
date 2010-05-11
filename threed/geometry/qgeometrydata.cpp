@@ -1707,6 +1707,89 @@ int QGeometryData::count(QGL::VertexAttribute field) const
 }
 
 /*!
+    Returns true if this geometry is identical to the \a other; and false otherwise.
+*/
+bool QGeometryData::operator==(const QGeometryData &other) const
+{
+    bool isEqual = false;
+    if (d)
+    {
+        if (d == other.d)
+        {
+            isEqual = true;
+        }
+        else
+        {
+            if (other.d && d->fields == other.d->fields && d->count == other.d->count)
+            {
+                const quint32 mask = 0x01;
+                quint32 fields = d->fields;
+                isEqual = true;
+                for (int field = 0; fields && isEqual; ++field, fields >>= 1)
+                {
+                    if (mask & fields)
+                    {
+                        QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                        if (attr < QGL::TextureCoord0)
+                        {
+                            if (attr == QGL::Position)
+                                isEqual = (d->vertices == other.d->vertices);
+                            else if (attr == QGL::Normal)
+                                isEqual = (d->normals == other.d->normals);
+                            else  // colors
+                                isEqual = (d->colors == other.d->colors);
+                        }
+                        else if (attr < QGL::CustomVertex0)
+                        {
+                            isEqual = (d->textures.at(d->key[attr]) == other.d->textures.at(d->key[attr]));
+                        }
+                        else
+                        {
+                            QArray<float> me = d->attributes.at(d->key[attr]).toFloatArray();
+                            QArray<float> him = other.d->attributes.at(d->key[attr]).toFloatArray();
+                            isEqual = (me == him);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        isEqual = other.isNull();
+    }
+    return isEqual;
+}
+
+/*!
+    Returns true if this geometry is empty - that is it contains no vertices
+    or other data - and returns false otherwise.  If an existing geometry has
+    been made empty by a call to clear() then this will be true (but isNull()
+    will be false).
+
+    \sa isNull()
+*/
+bool QGeometryData::isEmpty() const
+{
+    bool empty = true;
+    if (d)
+        empty = d->count == 0;
+    return empty;
+}
+
+/*!
+    Returns true if this geometry is uninitialized - that is it contains no
+    internal data structures.  A newly constructed QGeometryData object is
+    null until some data is added or changed.
+
+    \sa isEmpty()
+*/
+bool QGeometryData::isNull() const
+{
+    return d == NULL;
+}
+
+/*!
     Returns the number of index values stored in this geometry data.
 
     This value is exactly the same as indices().size() (but does not
@@ -1834,6 +1917,10 @@ QDebug operator<<(QDebug dbg, const QGeometryData &vertices)
                 dbg << vertices.texCoords(attr);
             }
         }
+    }
+    if (vertices.indexCount() > 0)
+    {
+        dbg << "    indices:" << vertices.indices();
     }
     return dbg;
 }

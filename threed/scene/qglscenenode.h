@@ -77,11 +77,11 @@ class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
     Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
 public:
     explicit QGLSceneNode(QObject *parent = 0);
-    explicit QGLSceneNode(QGeometryData *geometry, QObject *parent = 0);
+    explicit QGLSceneNode(const QGeometryData &geometry, QObject *parent = 0);
     virtual ~QGLSceneNode();
 
-    QGeometryData *geometry() const;
-    void setGeometry(QGeometryData *);
+    QGeometryData geometry() const;
+    void setGeometry(QGeometryData);
 
     QBox3D boundingBox() const;
     QVector3D center() const;
