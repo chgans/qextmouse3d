@@ -91,7 +91,7 @@ void tst_QGLDisplayList::createDefault()
     QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
     QCOMPARE(displayList0.sections().size(), 0);
     QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
-    QCOMPARE(displayList0.geometry(), (QGeometryData*)0);
+    QVERIFY(displayList0.geometry().isEmpty());
     QVERIFY(displayList0.palette() != 0);
 
     QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
@@ -870,27 +870,30 @@ void tst_QGLDisplayList::finalize()
 
     QCOMPARE(displayList.sections().count(), 0);
 
-    QGeometryData *geom = node->geometry();
-    QGL::IndexArray ids = geom->indices();
+    QGeometryData geom = node->geometry();
+    QGL::IndexArray ids = geom.indices();
 
-    QCOMPARE(geom->count(QGL::Position), 13);
+    QCOMPARE(geom.count(QGL::Position), 13);
     QCOMPARE(ids.size(), 36);
 
     // triangulated face
     int tf = ids[node->start()]; // beginning of triangulated face
     QCOMPARE(node->count(), 12);
-    QCOMPARE(geom->vertex(tf), center);
-    QCOMPARE(geom->vertex(tf + 2), b);
-    QCOMPARE(geom->normal(tf), n0);
-    QCOMPARE(geom->normal(tf + 2), n0);
+    QCOMPARE(geom.vertex(tf), center);
+    QCOMPARE(geom.vertex(tf + 2), b);
+    QCOMPARE(geom.normal(tf), n0);
+    QCOMPARE(geom.normal(tf + 2), n0);
+
+    geom = node2->geometry();
+    ids = geom.indices();
 
     int ext = ids[node2->start()]; // beginning of extrude
     int last = ids[node2->start() + (node2->count() - 1)];
     QCOMPARE(node2->count(), 24);
-    QCOMPARE(geom->vertex(ext), a - n);
-    QCOMPARE(geom->normal(ext), n1);
-    QCOMPARE(geom->vertex(last), d);
-    QCOMPARE(geom->normal(last), n4);
+    QCOMPARE(geom.vertex(ext), a - n);
+    QCOMPARE(geom.normal(ext), n1);
+    QCOMPARE(geom.vertex(last), d);
+    QCOMPARE(geom.normal(last), n4);
 
 #ifndef QT_NO_MEMBER_TEMPLATES
     QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
@@ -904,17 +907,17 @@ void tst_QGLDisplayList::finalize()
     // geometry object, since they all have the same types: just vertices
     // and normals.  the last node has geometry with textures, so its in
     // a different geometry object.
-    QCOMPARE(node->geometry(), geom);
-    QCOMPARE(node2->geometry(), geom);
-    QVERIFY(node3->geometry() != geom);
+    QVERIFY(node->geometry() == geom);
+    QVERIFY(node2->geometry() == geom);
+    QVERIFY(!(node3->geometry() == geom));
 
     geom = node3->geometry();
-    QGL::IndexArray ids2 = geom->indices();
+    QGL::IndexArray ids2 = geom.indices();
 
     int tri = ids2[node->start()];
-    QCOMPARE(geom->vertex(tri), e);
-    QCOMPARE(geom->normal(tri), n10);
-    QCOMPARE(geom->texCoord(tri), ta);
+    QCOMPARE(geom.vertex(tri), e);
+    QCOMPARE(geom.normal(tri), n10);
+    QCOMPARE(geom.texCoord(tri), ta);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLDisplayList)

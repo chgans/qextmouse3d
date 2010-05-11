@@ -189,7 +189,7 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
     \a parent.    If parent is a QGLSceneNode then this node is added to it
     as a child.
 */
-QGLSceneNode::QGLSceneNode(QGeometryData *geometry, QObject *parent)
+QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
     : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
 {
     Q_D(QGLSceneNode);
@@ -222,15 +222,29 @@ QGLSceneNode::~QGLSceneNode()
 }
 
 /*!
-    Returns the geometry associated with this node, or NULL if no
-    geometry has been associated with it.
+    Returns the geometry associated with this node, or a null QGeometryData
+    if no geometry has been associated with it.
 
     \sa setGeometry()
 */
-QGeometryData *QGLSceneNode::geometry() const
+QGeometryData QGLSceneNode::geometry() const
 {
     Q_D(const QGLSceneNode);
     return d->geometry;
+}
+
+/*!
+    Sets the geometry associated with this node to be \a geometry.
+    Typically the \a geometry will be some type of mesh object.  The
+    default implementation of the QGLSceneNode::draw() method will call
+    the geometry's draw() method.
+
+    \sa geometry()
+*/
+void QGLSceneNode::setGeometry(QGeometryData geometry)
+{
+    Q_D(QGLSceneNode);
+    d->geometry = geometry;
 }
 
 /*!
@@ -244,16 +258,16 @@ QBox3D QGLSceneNode::boundingBox() const
 {
     Q_D(const QGLSceneNode);
     QBox3D bb;
-    if (d->geometry)
+    if (d->geometry.count() > 0)
     {
-        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        if (d->start == 0 && (d->count == d->geometry.count() || d->count == 0))
         {
-            bb = d->geometry->boundingBox();
+            bb = d->geometry.boundingBox();
         }
         else
         {
             for (int i = d->start; i < d->count; ++i)
-                bb.expand(d->geometry->vertex(i));
+                bb.expand(d->geometry.vertex(i));
         }
     }
     return bb;
@@ -280,34 +294,20 @@ QVector3D QGLSceneNode::center() const
 {
     Q_D(const QGLSceneNode);
     QVector3D center;
-    if (d->geometry)
+    if (d->geometry.count() > 0)
     {
-        if (d->start == 0 && (d->count == d->geometry->count() || d->count == 0))
+        if (d->start == 0 && (d->count == d->geometry.count() || d->count == 0))
         {
-            center = d->geometry->center();
+            center = d->geometry.center();
         }
         else
         {
-            for (int i = 0; i < d->geometry->count(); ++i)
-                center += d->geometry->vertex(i);
-            center /= (float)d->geometry->count();
+            for (int i = 0; i < d->geometry.count(); ++i)
+                center += d->geometry.vertex(i);
+            center /= (float)d->geometry.count();
         }
     }
     return center;
-}
-
-/*!
-    Sets the geometry associated with this node to be \a geometry.
-    Typically the \a geometry will be some type of mesh object.  The
-    default implementation of the QGLSceneNode::draw() method will call
-    the geometry's draw() method.
-
-    \sa geometry()
-*/
-void QGLSceneNode::setGeometry(QGeometryData *geometry)
-{
-    Q_D(QGLSceneNode);
-    d->geometry = geometry;
 }
 
 /*!
@@ -937,11 +937,11 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    if (d->geometry)
+    if (d->geometry.count() > 0)
     {
         // If this node only references a small section of the geometry, then
         // this bounding-box test may draw something that didn't need to be.
-        QBox3D bb = d->geometry->boundingBox();
+        QBox3D bb = d->geometry.boundingBox();
         if (bb.isFinite() && painter->isCullable(bb))
         {
             if (wasTransformed)
@@ -990,19 +990,19 @@ void QGLSceneNode::draw(QGLPainter *painter)
     for ( ; cit != d->childNodes.end(); ++cit)
         (*cit)->draw(painter);
 
-    if (d->count && d->geometry && d->geometry->count() > 0)
+    if (d->count && d->geometry.count() > 0)
     {
-        d->geometry->draw(painter, d->start, d->count);
+        d->geometry.draw(painter, d->start, d->count);
 
         if (d->viewNormals)
         {
             QVector3DArray verts;
-            QGL::IndexArray indices = d->geometry->indices();
+            QGL::IndexArray indices = d->geometry.indices();
             for (int i = d->start; i < d->start + d->count; ++i)
             {
                 int ix = indices[i];
-                QVector3D a = d->geometry->vertex(ix);
-                QVector3D b = a + d->geometry->normal(ix);
+                QVector3D a = d->geometry.vertex(ix);
+                QVector3D b = a + d->geometry.normal(ix);
                 verts.append(a, b);
             }
             painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
@@ -1288,9 +1288,16 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-    if (node->geometry())
+    if (!node->geometry().isNull())
     {
-        fprintf(stderr, "%s geometry: %p\n", qPrintable(ind), node->geometry());
+        fprintf(stderr, "%s geometry: %d verts\n", qPrintable(ind), node->geometry().count());
+    }
+    else
+    {
+        fprintf(stderr, "%s geometry: NULL\n", qPrintable(ind));
+    }
+    if (node->materialIndex() != -1)
+    {
         fprintf(stderr, "%s material: %d", qPrintable(ind), node->materialIndex());
         QGLMaterial *mat = node->material();
         if (mat)
@@ -1323,8 +1330,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     }
     else
     {
-        fprintf(stderr, "%s geometry: NULL\n", qPrintable(ind));
-        fprintf(stderr, "%s material: %d\n", qPrintable(ind), node->materialIndex());
+        fprintf(stderr, "%s material: NONE\n", qPrintable(ind));
     }
 
     if (node->hasEffect())
@@ -1371,7 +1377,7 @@ QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
     else
         dbg << "\n    local transform:\n" << node.localTransform();
 
-    if (node.geometry())
+    if (node.geometry().count() > 0)
     {
         QGLMaterial *mat = node.material();
         QString mdesc;

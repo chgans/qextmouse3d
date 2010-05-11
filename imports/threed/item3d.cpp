@@ -514,7 +514,6 @@ QDeclarativeStateGroup *Item3dPrivate::states()
 {
     if (!_stateGroup) {
         _stateGroup = new QDeclarativeStateGroup(item);
-        _stateGroup->classBegin();
         QObject::connect(_stateGroup, SIGNAL(stateChanged(QString)),
                          item, SIGNAL(stateChanged(QString)));
     }
@@ -1212,8 +1211,15 @@ void Item3d::setMainBranchId(int objectID)
 }
 
 /*!
-    The loading and instanciation of components in QML is not necessarily a directly linear 
-    process.  As such the \c componentComplete() function allows update/handling of this value.
+    \internal
+*/
+void Item3d::classBegin()
+{
+    d->states()->classBegin();
+}
+
+/*!
+    \internal
 */
 void Item3d::componentComplete()
 {

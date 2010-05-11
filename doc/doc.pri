@@ -12,23 +12,21 @@ win32:!win32-g++ {
 } else {
     unixstyle = true
 }
+
 $$unixstyle {
     exists($$[QT_INSTALL_BINS]/qdoc3) {
         QDOC = $$[QT_INSTALL_BINS]/qdoc3
     } else {
         QDOC = qdoc3
     }
-	docs.commands = (TOPSRC=$$TOPSRC DESTDIR=$$DESTDIR $$QDOC $$QDOCCONF_FILE)
+    docs.commands = (TOPSRC=$$TOPSRC DESTDIR=$$DESTDIR $$QDOC $$QDOCCONF_FILE)
 } else {
     exists($$[QT_INSTALL_BINS]\\qdoc3.exe) {
         QDOC = $$[QT_INSTALL_BINS]\\qdoc3
     } else {
         QDOC = qdoc3
     }
-	docs.commands = (set TOPSRC=$$TOPSRC&set DESTDIR=$$DESTDIR&$$QDOC $$QDOCCONF_FILE)
+    docs.commands = (set TOPSRC=$$TOPSRC&set DESTDIR=$$DESTDIR&$$QDOC $$QDOCCONF_FILE)
 }
-
-
-
 
 QMAKE_EXTRA_TARGETS += docs

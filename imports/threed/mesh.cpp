@@ -639,6 +639,13 @@ QObject *Mesh::material(const QString& nodeName, const QString& materialName)
 }
 
 /*!
+    \internal
+*/
+void Mesh::classBegin()
+{
+}
+
+/*!
     Checks that all loading and initialisation has been finished, and emits the  loaded() signal if
     the component is complete.
 

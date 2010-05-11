@@ -56,7 +56,7 @@
 #include <math.h>
 
 Viewer::Viewer(QWidget *parent)
-    : QGLWidget(parent)
+    : QGLView(parent)
     , m_timer(new QTimer(this))
     , m_model(0)
     , m_lightModel(0)
@@ -169,6 +169,8 @@ void Viewer::setView(View view)
     if (m_view != view)
     {
         m_view = view;
+        QVector3D eye = camera()->eye();
+        camera()->setEye(QVector3D(eye.x(), eye.z(), eye.y()));
         update();
     }
 }
@@ -184,38 +186,42 @@ void Viewer::setFloorEnabled(bool enable)
 
 void Viewer::mouseDrag(QMouseEvent *e)
 {
-    if (e->button() == Qt::LeftButton && m_dragging && m_dragStart != e->pos())
+    QPointF d = (m_dragStart - e->posF()) / 100.0f;
+    qDebug() << "      mouseDrag()" << d;
+    if (e->modifiers() & Qt::ShiftModifier)
     {
-        QPoint d = m_dragStart - e->pos();
-        m_dragStart = e->pos();
-        if (e->modifiers() & Qt::ShiftModifier)
-        {
-            m_rotY += d.y();
-            m_rotX += d.x();
-        }
-        else
-        {
-            m_x += d.x();
-            m_y += d.y();
-        }
+        m_rotY += d.y();
+        m_rotX += d.x();
+    }
+    else
+    {
+        m_x += d.x();
+        m_y += d.y();
     }
 }
 
+/*
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    mouseDrag(e);
+    qDebug() << "mouseMoveEvent" << e->posF();
+    if (m_dragging)
+        mouseDrag(e);
+    e->accept();
 }
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    m_dragStart = e->pos();
+    m_dragStart = e->posF();
     m_dragging = true;
+    e->accept();
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent *e)
 {
-    mouseDrag(e);
+    if (m_dragging)
+        mouseDrag(e);
     m_dragging = false;
+    e->accept();
 }
 
 struct WheelData
@@ -259,6 +265,7 @@ void Viewer::wheelEvent(QWheelEvent *e)
         setZoom(zoom() + d / m_wd->factor());
     update();
 }
+*/
 
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
@@ -317,22 +324,25 @@ void Viewer::buildFloor()
 {
     m_floor = new QGLDisplayList(this);
     m_floor->newSection();
+    QGLSceneNode *node = m_floor->currentNode();
     for (int z = -5; z < 5; ++z)
     {
         QGLOperation op(m_floor, QGL::QUAD_STRIP);
         for (int x = -5; x <= 5; ++x)
         {
-            op << QVector3D(x, 0, z);
-            op << QVector2D(float(x+5) / 10.0f, float(z) / 10.0f);
             op << QVector3D(x, 0, z+1);
             op << QVector2D(float(x+5) / 10.0f, float(z+6) / 10.0f);
+            op << QVector3D(x, 0, z);
+            op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
         }
     }
     m_floor->finalize();
+    qDebug() << "floor";
+    qDebug() << node->geometry();
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);
     QPoint ctr(sz/2, sz/2);
-    uv.fill(qRgba(196, 196, 196, 0));
+    uv.fill(qRgba(196, 212, 212, 0));
     QPainter painter;
     painter.begin(&uv);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -343,6 +353,8 @@ void Viewer::buildFloor()
     painter.drawEllipse(ctr, sz/2, sz/2);
     painter.drawEllipse(ctr, sz/4, sz/4);
     painter.drawEllipse(ctr, 3*sz/4, 3*sz/4);
+    painter.drawLine(QPointF(0, sz/2), QPointF(sz, sz/2));
+    painter.drawLine(QPointF(sz/2, 0), QPointF(sz/2, sz));
     painter.end();
     QGLMaterial *mat = new QGLMaterial(m_floor);
     QGLTexture2D *tex = new QGLTexture2D(mat);
@@ -351,25 +363,9 @@ void Viewer::buildFloor()
     m_floor->setMaterial(mat);
 }
 
-void Viewer::initializeGL()
-{
-    setFocus();
-    if (m_model->scene() == 0)
-    {
-        QMessageBox::warning(this, tr("No Models Found"),
-                             tr("Could not find any model to load.  Select "
-                                "Open from the File menu to navigate to a model file."));
-        m_warningDisplayed = true;
-    }
-    else
-    {
-        QGLPainter painter(this);
-        initializeGL(&painter);
-    }
-}
-
 void Viewer::initializeGL(QGLPainter *painter)
 {
+    setFocus();
     painter->setClearColor(QColor(32, 32, 128));
     painter->setDepthTestingEnabled(true);
     painter->setCullFaces(QGL::CullBackFaces);
@@ -393,19 +389,37 @@ void Viewer::initializeGL(QGLPainter *painter)
 /*!
     \internal
 */
+/*
 void Viewer::resizeGL(int w, int h)
 {
     // Set up the standard viewport for the new window size.
     glViewport(0, 0, w, h);
     update();
 }
+*/
 
-void Viewer::paintGL()
+void Viewer::paintGL(QGLPainter *painter)
 {
     if (m_model->scene())
     {
-        QGLPainter painter(this);
-        paintGL(&painter);
+        painter->clear();
+
+        if (m_drawFloor)
+            m_floor->draw(painter);
+
+        painter->modelViewMatrix().push();
+
+        QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, m_rotX);
+        QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, m_rotY);
+        QQuaternion zt = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, m_rotZ);
+        painter->modelViewMatrix().rotate(xt * yt * zt);
+
+        QVector3D sceneOrigin(m_x, m_y, m_z);
+        painter->modelViewMatrix().translate(sceneOrigin);
+
+        m_model->scene()->draw(painter);
+
+        painter->modelViewMatrix().pop();
     }
     else
     {
@@ -417,38 +431,6 @@ void Viewer::paintGL()
             m_warningDisplayed = true;
         }
     }
-}
-
-void Viewer::paintGL(QGLPainter *painter)
-{
-    painter->clear();
-
-    QGLCamera camera;
-    QVector3D eye(0, m_zoom/3, -m_zoom);
-    if (!qFuzzyCompare(eye, camera.eye()))
-        camera.setEye(eye);
-    if (m_spin != 0)
-        camera.rotateCenter(camera.pan(m_spin));
-    camera.setNearPlane(qMin(m_zoom-1.0f, 5.0f));
-    camera.setFarPlane(qMax(m_zoom + 100.0f, 100.0f));
-    painter->setCamera(&camera);
-
-    if (m_drawFloor)
-        m_floor->draw(painter);
-
-    painter->modelViewMatrix().push();
-
-    QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, m_rotX);
-    QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, m_rotY);
-    QQuaternion zt = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, m_rotZ);
-    painter->modelViewMatrix().rotate(xt * yt * zt);
-
-    QVector3D sceneOrigin(m_x, m_y, m_z);
-    painter->modelViewMatrix().translate(sceneOrigin);
-
-    m_model->scene()->draw(painter);
-
-    painter->modelViewMatrix().pop();
 }
 
 void Viewer::animate()

@@ -174,7 +174,6 @@ QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
             result = createIndex(row, column, m_sceneRoot);
         }
     }
-    qDebug() << "index(" << row << "," << column << ", parent:" << p << ") -- :" << result.internalPointer();
     return result;
 }
 
@@ -190,12 +189,9 @@ QModelIndex Model::parent(const QModelIndex & index) const
         {
             bool ok = false;
             int row = parent ? parent->property("row").toInt(&ok) : 0;
-            if (!ok)
-                qDebug() << "could not get row:" << parent;
             result = createIndex(row, 0, parent);
         }
     }
-    qDebug() << "parent(" << index.row() << "," << index.column() << ", index:" << node << ") -- :" << result.internalPointer();
     return result;
 }
 
@@ -208,14 +204,12 @@ int Model::rowCount(const QModelIndex & parent) const
         {
             QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
             count = node->childNodeList().count();
-            qDebug() << "nodes for parent" << node << "is" << count;
         }
         else
         {
             count = 1;
         }
     }
-    qDebug() << "rowCount:" << count;
     return count;
 }
 
@@ -235,7 +229,6 @@ int Model::columnCount(const QModelIndex &parent) const
             count = 1;
         }
     }
-    qDebug() << "columnCount:" << count;
     return count;
 }
 

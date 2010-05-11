@@ -389,7 +389,7 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     setSceneObject(mDefaultSceneObject);
 
     // Point camera at the new model
-    if (mSceneRoot && mSceneRoot->geometry())
+    if (mSceneRoot && mSceneRoot->geometry().count() > 0)
     {
         setDefaultCamera(mSceneRoot);
     }
@@ -410,9 +410,9 @@ void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* sceneNode)
     qreal maxDimension = 2.0f;
 
     QBox3D box;
-    if(sceneNode && sceneNode->geometry())
+    if(sceneNode && sceneNode->geometry().count() > 0)
     {
-        box = sceneNode->geometry()->boundingBox();
+        box = sceneNode->geometry().boundingBox();
     }
 
     if (!box.isNull())

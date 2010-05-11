@@ -384,27 +384,26 @@ void tst_QGLSection::accumNormals()
     for (int i = 0; i < 12; ++i)
         expected[i].normalize();
 
-    QGeometryData *res = node->geometry();
-    QVERIFY(res != (QGeometryData*)0);
-    QCOMPARE(res->count(QGL::Position), 12);
-    QCOMPARE(res->count(QGL::Normal), 12);
-    QCOMPARE(res->indexCount(), 14 * 3);
-    QCOMPARE(res->vertex(0), v[0]);
-    QCOMPARE(res->vertex(4), v[2]);
-    QCOMPARE(res->vertex(7), v[8]);
-    QCOMPARE(res->vertex(11), v[10]);
-    QCOMPARE(res->normal(0), expected.at(0));
-    QCOMPARE(res->normal(1), expected.at(1));
-    QCOMPARE(res->normal(2), expected.at(2));
-    QCOMPARE(res->normal(3), expected.at(3));
-    QCOMPARE(res->normal(4), expected.at(4));
-    QCOMPARE(res->normal(5), expected.at(5));
-    QCOMPARE(res->normal(6), expected.at(6));
-    QCOMPARE(res->normal(7), expected.at(7));
-    QCOMPARE(res->normal(8), expected.at(8));
-    QCOMPARE(res->normal(9), expected.at(9));
-    QCOMPARE(res->normal(10), expected.at(10));
-    QCOMPARE(res->normal(11), expected.at(11));
+    QGeometryData res = node->geometry();
+    QCOMPARE(res.count(QGL::Position), 12);
+    QCOMPARE(res.count(QGL::Normal), 12);
+    QCOMPARE(res.indexCount(), 14 * 3);
+    QCOMPARE(res.vertex(0), v[0]);
+    QCOMPARE(res.vertex(4), v[2]);
+    QCOMPARE(res.vertex(7), v[8]);
+    QCOMPARE(res.vertex(11), v[10]);
+    QCOMPARE(res.normal(0), expected.at(0));
+    QCOMPARE(res.normal(1), expected.at(1));
+    QCOMPARE(res.normal(2), expected.at(2));
+    QCOMPARE(res.normal(3), expected.at(3));
+    QCOMPARE(res.normal(4), expected.at(4));
+    QCOMPARE(res.normal(5), expected.at(5));
+    QCOMPARE(res.normal(6), expected.at(6));
+    QCOMPARE(res.normal(7), expected.at(7));
+    QCOMPARE(res.normal(8), expected.at(8));
+    QCOMPARE(res.normal(9), expected.at(9));
+    QCOMPARE(res.normal(10), expected.at(10));
+    QCOMPARE(res.normal(11), expected.at(11));
 }
 
 void tst_QGLSection::normalizedNormals()
@@ -444,10 +443,10 @@ void tst_QGLSection::normalizedNormals()
         bp = b;
     }
     list.finalize();
-    QGeometryData *data = node->geometry();
-    QVERIFY(data != (QGeometryData*)0);
+    QGeometryData data = node->geometry();
+    QVERIFY(!data.isNull());
     //qDebug() << "#############" << *data;
-    QCOMPARE(data->count(QGL::Position), 33);
+    QCOMPARE(data.count(QGL::Position), 33);
 }
 
 void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)

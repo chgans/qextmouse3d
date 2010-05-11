@@ -72,8 +72,8 @@ public:
     ~QGLDisplayListPrivate();
     inline void setDirty(bool dirty = true);
     void addTriangle(int a, int b, int c, QGLPrimitive &p);
-    void adjustSectionNodes(QGLSection *sec, int offset, QGeometryData *geom);
-    int adjustNodeTree(QGLSceneNode *top, int offset, QGeometryData *geom,
+    void adjustSectionNodes(QGLSection *sec, int offset, const QGeometryData &geom);
+    int adjustNodeTree(QGLSceneNode *top, int offset, const QGeometryData &geom,
                        QList<QGLSceneNode*> &deleted);
 
     bool finalizeNeeded;

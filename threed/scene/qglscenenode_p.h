@@ -89,7 +89,7 @@ public:
     static QGLSceneNode *atFunc(QDeclarativeListProperty<QGLSceneNode> *list, int index);
     static void clearFunc(QDeclarativeListProperty<QGLSceneNode> *list);
 
-    QGeometryData *geometry;
+    QGeometryData geometry;
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
     QVector3D translate;

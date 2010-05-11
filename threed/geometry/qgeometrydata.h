@@ -178,6 +178,9 @@ public:
     int count() const;
     int count(QGL::VertexAttribute field) const;
     int indexCount() const;
+    bool operator==(const QGeometryData &other) const;
+    bool isEmpty() const;
+    bool isNull() const;
 protected:
     const QVector3DArray *vertexData() const;
 private:

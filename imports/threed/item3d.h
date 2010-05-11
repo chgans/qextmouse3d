@@ -163,6 +163,7 @@ public:
 
     QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
 
+    void classBegin();   
     void componentComplete();   
 
 public Q_SLOTS:
