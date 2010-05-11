@@ -1172,10 +1172,10 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
                 QObject::connect(item, SIGNAL(hoverLeave()), this, SIGNAL(hoverLeave()));
             }
             //if the item has no mesh of its own and no meshnode is declared we give it the mesh from the current item.
-             if (!item->mesh()) {
+             if (!item->mesh() && !item->meshNode().isEmpty()) {				 
                 item->setMesh(mesh());
-            }
-
+			 }
+		
             item->initialize(viewport, painter);
         }
     }
