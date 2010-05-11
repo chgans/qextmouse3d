@@ -1003,8 +1003,22 @@ bool QGLPainter::isCullable(const QBox3D& box) const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    QBox3D projected = box.transformed
-        (d->projectionMatrix * d->modelViewMatrix);
+    QBox3D projected = box.transformed(d->modelViewMatrix);
+    if (projected.minimum().z() >= 0.0f || projected.maximum().z() >= 0.0f) {
+        // The box crosses the eye line in the view.  Don't do the
+        // projection or the math will go all strange with a
+        // perspective projection.  Just assume that it is cullable
+        // if it passes the eye line, and hence is definitely outside
+        // the viewing volume.  Note that it is possible that the box is
+        // half in front of the eye and half behind, which we handle now
+        // by truncating the box at the eye plane.
+        if (projected.minimum().z() >= 0.0f)
+            return true;
+        projected.setExtents(projected.minimum(),
+                             QVector3D(projected.maximum().x(),
+                                       projected.maximum().y(), 0.0f));
+    }
+    projected.transform(d->projectionMatrix);
     return !d->viewingCube.intersects(projected);
 }
 

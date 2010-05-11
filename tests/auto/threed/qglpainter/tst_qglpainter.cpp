@@ -582,6 +582,61 @@ void tst_QGLPainter::isCullable()
     QVERIFY(!painter.isCullable(QVector3D(0, 0, 0)));
     QVERIFY(!painter.isCullable(QVector3D(0, 0, -10)));
     QVERIFY(painter.isCullable(QVector3D(0, 0, 10)));
+
+    // Check the cullability of a box at 10 degree increments of rotation.
+    // It should be visible between -20 and 20 degrees but otherwise not.
+    // Also check the center point of the box.
+    QBox3D box1(QVector3D(-1, -1, -1), QVector3D(1, 1, 1));
+    for (int angle = 0; angle <= 360; angle += 10) {
+        if (angle <= 20 || angle >= 340) {
+            QVERIFY(!painter.isCullable(box1));
+            if (angle < 20 || angle > 340) {
+                QVERIFY(!painter.isCullable(QVector3D(0, 0, 0)));
+            } else {
+                // Box intersects, but center point is now outside.
+                QVERIFY(painter.isCullable(QVector3D(0, 0, 0)));
+            }
+        } else {
+            QVERIFY(painter.isCullable(box1));
+            QVERIFY(painter.isCullable(QVector3D(0, 0, 0)));
+        }
+        camera.rotateEye(camera.pan(10.0f));
+        painter.setCamera(&camera);
+    }
+
+    // Reset the camera and then check boxes in front of the camera
+    // that are close to the near and far planes and the eye.
+    QGLCamera camera2;
+    painter.setCamera(&camera2);
+
+    // Box around the eye, but in front of the near plane.
+    QBox3D box2(QVector3D(-1, -1, 11), QVector3D(1, 1, 9));
+    QVERIFY(painter.isCullable(box2));
+
+    // Box that surrounds the near plane.
+    QBox3D box3(QVector3D(-1, -1, 6), QVector3D(1, 1, 4));
+    QVERIFY(!painter.isCullable(box3));
+
+    // Box between the near plane and the eye.
+    QBox3D box4(QVector3D(-1, -1, 7), QVector3D(1, 1, 6));
+    QVERIFY(painter.isCullable(box4));
+
+    // Box extending from behind the eye to inside the viewing cube.
+    // Not cullable because it is partially visible.
+    QBox3D box5(QVector3D(-1, -1, 11), QVector3D(1, 1, 0));
+    QVERIFY(!painter.isCullable(box5));
+
+    // Box that surrounds the far plane.
+    QBox3D box6(QVector3D(-1, -1, -989), QVector3D(1, 1, -991));
+    QVERIFY(!painter.isCullable(box6));
+
+    // Box that is between the near and far planes, but close to far plane.
+    QBox3D box7(QVector3D(-1, -1, -988), QVector3D(1, 1, -989));
+    QVERIFY(!painter.isCullable(box7));
+
+    // Box that is beyond the far plane.
+    QBox3D box8(QVector3D(-1, -1, -1000), QVector3D(1, 1, -1001));
+    QVERIFY(painter.isCullable(box8));
 }
 
 QTEST_MAIN(tst_QGLPainter)
