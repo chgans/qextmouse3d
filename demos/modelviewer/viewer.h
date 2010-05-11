@@ -44,6 +44,8 @@
 
 #include <QtOpenGL/qgl.h>
 
+#include "qglview.h"
+
 class Model;
 class QGLPainter;
 class QGLLightModel;
@@ -52,7 +54,7 @@ class QTimer;
 class QGLDisplayList;
 class WheelData;
 
-class Viewer : public QGLWidget
+class Viewer : public QGLView
 {
     Q_OBJECT
 public:
@@ -90,21 +92,21 @@ public slots:
     void enableAnimation(bool enable);
 
 protected:
-    void initializeGL();
-    void paintGL();
-    void resizeGL(int, int);
-    void wheelEvent(QWheelEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
+    void paintGL(QGLPainter *painter);
+    void initializeGL(QGLPainter *painter);
+    //void initializeGL();
+    //void paintGL();
+    //void resizeGL(int, int);
+    //void wheelEvent(QWheelEvent *e);
+    //void mousePressEvent(QMouseEvent *e);
+    //void mouseMoveEvent(QMouseEvent *e);
+    //void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
 
 private slots:
     void animate();
 
 private:
-    void paintGL(QGLPainter *painter);
-    void initializeGL(QGLPainter *painter);
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
 
@@ -125,7 +127,7 @@ private:
     bool m_animate;
     bool m_warningDisplayed;
     bool m_dragging;
-    QPoint m_dragStart;
+    QPointF m_dragStart;
     QGLDisplayList *m_floor;
     bool m_drawFloor;
 };
