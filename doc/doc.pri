@@ -25,7 +25,7 @@ $$unixstyle {
     } else {
         QDOC = qdoc3
     }
-	docs.commands = (TOPSRC=$$TOPSRC&DESTDIR=$$DESTDIR&$$QDOC $$QDOCCONF_FILE)
+	docs.commands = (set TOPSRC=$$TOPSRC&set DESTDIR=$$DESTDIR&$$QDOC $$QDOCCONF_FILE)
 }
 
 
