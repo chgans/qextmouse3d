@@ -141,7 +141,7 @@ void tst_QArray::append()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<float> buffer;
+        QDataBuffer<float> buffer(64);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.add(float(i));
@@ -198,7 +198,7 @@ void tst_QArray::appendReserved()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<float> buffer;
+        QDataBuffer<float> buffer(64);
         buffer.reserve(size);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
@@ -261,7 +261,7 @@ void tst_QArray::appendVector3D()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<QVector3D> buffer;
+        QDataBuffer<QVector3D> buffer(64);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.add(QVector3D(i, i + 1, i + 2));
@@ -366,7 +366,7 @@ void tst_QArray::appendFourAtATime()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<float> buffer;
+        QDataBuffer<float> buffer(64);
         QBENCHMARK {
             for (int i = 0; i < size; i += 4) {
                 buffer.add(float(i));
@@ -447,7 +447,7 @@ void tst_QArray::clear()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<float> buffer;
+        QDataBuffer<float> buffer(64);
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.add(float(i));
@@ -539,7 +539,7 @@ void tst_QArray::randomAccess()
     QFETCH(int, type);
 
     if (type == Test_DataBuffer) {
-        QDataBuffer<int> buffer;
+        QDataBuffer<int> buffer(64);
         for (int i = 0; i < 10000; ++i)
             buffer.add(i);
         QBENCHMARK {
