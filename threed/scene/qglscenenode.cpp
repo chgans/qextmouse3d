@@ -809,8 +809,6 @@ QList<QGLSceneNode*> QGLSceneNode::childNodeList() const
     Returns a list including recursively all child nodes under
     this node.  Each child node only appears once, even if it is included
     multiple times in the scene graph.
-
-    \sa childNodes()
 */
 QList<QGLSceneNode*> QGLSceneNode::allChildren() const
 {
