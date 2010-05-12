@@ -46,7 +46,7 @@
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
 #include <QtDeclarative/qdeclarativelist.h>
 #endif
 
@@ -63,7 +63,7 @@ class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLSceneNode);
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
     Q_PROPERTY(QDeclarativeListProperty<QGLSceneNode> childNodes READ childNodes DESIGNABLE false NOTIFY childNodesChanged)
 #endif
     Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged)
@@ -134,7 +134,7 @@ public:
     QGLMaterialCollection *palette() const;
     void setPalette(QGLMaterialCollection *palette);
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
     QDeclarativeListProperty<QGLSceneNode> childNodes();
 #endif
 

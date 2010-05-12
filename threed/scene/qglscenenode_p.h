@@ -86,7 +86,7 @@ public:
     {
     }
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
     static void appendFunc(QDeclarativeListProperty<QGLSceneNode> *list, QGLSceneNode*node);
     static int countFunc(QDeclarativeListProperty<QGLSceneNode> *list);
     static QGLSceneNode *atFunc(QDeclarativeListProperty<QGLSceneNode> *list, int index);

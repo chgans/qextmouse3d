@@ -139,7 +139,7 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
 
 void QGLSceneNodePrivate::appendFunc(QDeclarativeListProperty<QGLSceneNode> *list,
                                              QGLSceneNode *node)
@@ -843,7 +843,7 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
     emit childNodesChanged();
 }
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+#if 0
 
 /*!
     \property QGLSceneNode::childNodes
