@@ -594,8 +594,11 @@ qreal QGLCamera::xEye() const
 void QGLCamera::setXEye(qreal value)
 {
     Q_D(QGLCamera);
-    d->eye.setX(value);
-    emit viewChanged();
+    if (d->eye.x() != value) {
+        d->eye.setX(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
@@ -614,8 +617,11 @@ qreal QGLCamera::yEye() const
 void QGLCamera::setYEye(qreal value)
 {
     Q_D(QGLCamera);
-    d->eye.setY(value);
-    emit viewChanged();
+    if (d->eye.y() != value) {
+        d->eye.setY(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
@@ -634,8 +640,11 @@ qreal QGLCamera::zEye() const
 void QGLCamera::setZEye(qreal value)
 {
     Q_D(QGLCamera);
-	d->eye.setZ(value);
-    emit viewChanged();
+    if (d->eye.z() != value) {
+        d->eye.setZ(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
@@ -714,15 +723,18 @@ void QGLCamera::setUpVector(const QVector3D& vector)
 */
 qreal QGLCamera::xCentre() const
 {
-	Q_D(QGLCamera);
-	return d->center.x();
+    Q_D(QGLCamera);
+    return d->center.x();
 }
 
 void QGLCamera::setXCentre(qreal value)
 {
     Q_D(QGLCamera);
-	d->center.setX(value);
-    emit viewChanged();
+    if (d->center.x() != value) {
+        d->center.setX(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
@@ -736,14 +748,17 @@ void QGLCamera::setXCentre(qreal value)
 qreal QGLCamera::yCentre() const
 {
     Q_D(QGLCamera);
-	return d->center.y();
+    return d->center.y();
 }
 
 void QGLCamera::setYCentre(qreal value)
 {
     Q_D(QGLCamera);
-	d->center.setY(value);
-    emit viewChanged();
+    if (d->center.y() != value) {
+        d->center.setY(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
@@ -757,14 +772,17 @@ void QGLCamera::setYCentre(qreal value)
 qreal QGLCamera::zCentre() const
 {
     Q_D(QGLCamera);
-	return d->center.z();
+    return d->center.z();
 }
 
 void QGLCamera::setZCentre(qreal value)
 {
     Q_D(QGLCamera);
-	d->center.setZ(value);
-    emit viewChanged();
+    if (d->center.z() != value) {
+        d->center.setZ(value);
+        d->viewVector = d->center - d->eye;
+        emit viewChanged();
+    }
 }
 
 /*!
