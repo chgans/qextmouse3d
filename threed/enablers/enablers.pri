@@ -10,7 +10,8 @@ HEADERS += \
     qglvertexbuffer.h \
     qarray.h \
     qcustomdataarray.h \
-    qvectorarray.h
+    qvectorarray.h \
+    qt3dglobal.h
 SOURCES += qglattributevalue.cpp \
     qglcontextscope.cpp \
     qglcontextwatcher.cpp \

@@ -17,6 +17,7 @@ win32 {
 }
 include(threed.pri)
 RESOURCES += shaders.qrc
+PUBLIC_HEADERS = $$HEADERS
 HEADERS += $$PRIVATE_HEADERS
 DEFINES += QT_BUILD_QT3D_LIB
 
@@ -24,3 +25,7 @@ DEFINES += QT_BUILD_QT3D_LIB
 
 target.path += $$[QT_INSTALL_LIBS]
 INSTALLS += target
+
+install_headers.path = $$[QT_INSTALL_HEADERS]/Qt3D
+install_headers.files = $$PUBLIC_HEADERS
+INSTALLS += install_headers
