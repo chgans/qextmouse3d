@@ -139,6 +139,8 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
+#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+
 void QGLSceneNodePrivate::appendFunc(QDeclarativeListProperty<QGLSceneNode> *list,
                                              QGLSceneNode *node)
 {
@@ -171,6 +173,8 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
     Q_ASSERT(parent);
     parent->childNodesChanged();
 }
+
+#endif
 
 /*!
     Constructs a new scene node and attaches it to \a parent.  If parent is
@@ -839,6 +843,8 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
     emit childNodesChanged();
 }
 
+#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
+
 /*!
     \property QGLSceneNode::childNodes
     \brief A list of all child nodes directly under this node.
@@ -854,6 +860,8 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
                                                   QGLSceneNodePrivate::atFunc,
                                                   QGLSceneNodePrivate::clearFunc);
 }
+
+#endif
 
 /*!
     Adds the \a node to the list of child nodes for this node.
