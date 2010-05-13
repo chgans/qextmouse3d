@@ -76,6 +76,8 @@ Controls::Controls(QWidget *parent)
 
     connect(this, SIGNAL(openFile(QString)),
             m_model, SLOT(setFullPath(QString)));
+    connect(this, SIGNAL(openFile(QString)),
+            this, SLOT(addRecentFiles(QString)));
 
     connect(m_model, SIGNAL(modelLoaded(QString)),
             this, SLOT(loadModelDefaults(QString)));
@@ -83,8 +85,6 @@ Controls::Controls(QWidget *parent)
             this, SLOT(loadSettings(QString)));
     connect(m_model, SIGNAL(modelLoaded(QString)),
             this, SLOT(setWindowTitle(QString)));
-    connect(m_model, SIGNAL(modelLoaded(QString)),
-            this, SLOT(addRecentFiles(QString)));
     connect(m_model, SIGNAL(modelLoaded(QString)),
             m_ui->treeView, SLOT(expandAll()));
 
@@ -99,9 +99,11 @@ Controls::Controls(QWidget *parent)
 
     m_triangleCount = new QLabel(tr("0 triangles"));
     m_ui->statusbar->addPermanentWidget(m_triangleCount);
-    m_model->setFullPath(initialModel);
+
     m_view->setModel(m_model);
     m_ui->treeView->setModel(m_model);
+
+    emit openFile(initialModel);
 
     connect(m_ui->actionForce_Smooth, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
@@ -325,20 +327,22 @@ void Controls::loadSettings(const QString &model)
 
 void Controls::addRecentFiles(const QString &fileName)
 {
-    //qDebug() << "addRecentFiles(" << fileName << ")";
+    qDebug() << "addRecentFiles(" << fileName << ")";
     QMenu *rf = m_ui->menuRecent_Models;
     QSettings settings;
     QStringList files = settings.value("RecentFiles", QStringList()).toStringList();
-    //qDebug() << "current files:" << files;
+    qDebug() << "current files:" << files;
     files.removeAll(fileName);
     files.push_front(fileName);
     if (files.size() > 10)
         files.pop_back();
+    qDebug() << "     now:" << files;
     QAction *act;
     while (rf->actions().count() > 0)
     {
         act = rf->actions().at(0);
         rf->removeAction(act);
+        qDebug() << "    removing act:" << act->text();
         delete act;
     }
     for (int i = 0; i < files.count(); ++i)
@@ -347,6 +351,7 @@ void Controls::addRecentFiles(const QString &fileName)
         connect(act, SIGNAL(triggered()),
                 this, SLOT(load()));
         rf->addAction(act);
+        qDebug() << "adding act:" << act->text();
     }
     settings.setValue("RecentFiles", files);
 }
@@ -461,4 +466,9 @@ void Controls::on_zTranSpin_editingFinished()
 void Controls::on_floorCheckBox_toggled(bool checked)
 {
     m_view->setFloorEnabled(checked);
+}
+
+void Controls::on_zoomSlider_valueChanged(int value)
+{
+    m_view->setZoomScale(value);
 }

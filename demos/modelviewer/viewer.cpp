@@ -65,6 +65,7 @@ Viewer::Viewer(QWidget *parent)
     , m_warningDisplayed(false)
     , m_floor(0)
     , m_drawFloor(true)
+    , m_zoomScale(1)
 {
     setToolTip(tr("Drag the mouse to slide the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
@@ -74,6 +75,14 @@ Viewer::Viewer(QWidget *parent)
 Viewer::~Viewer()
 {
     // nothing to do here
+}
+
+void Viewer::setZoomScale(int scale)
+{
+    if (scale != m_zoomScale)
+    {
+        m_zoomScale = scale;
+    }
 }
 
 void Viewer::setModel(Model *model)
@@ -133,7 +142,6 @@ void Viewer::setFloorEnabled(bool enable)
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
     QGLView::mouseMoveEvent(e);
 }
 
@@ -152,7 +160,14 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 void Viewer::wheelEvent(QWheelEvent *e)
 {
     emit manualControlEngaged();
-    QGLView::wheelEvent(e);
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal viewDistance = viewVec.length();
+    QVector3D viewDir = viewVec.normalized();
+    qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
+    viewDistance += inc;
+    viewVec = viewDir * viewDistance;
+    camera()->setEye(viewVec + camera()->center());
+    e->accept();
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -188,10 +203,11 @@ void Viewer::buildFloor()
         }
     }
     m_floor->finalize();
+    m_floor->setEffect(QGL::FlatDecalTexture2D);
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);
     QPoint ctr(sz/2, sz/2);
-    uv.fill(qRgba(196, 212, 212, 0));
+    uv.fill(qRgba(128, 128, 96, 0));
     QPainter painter;
     painter.begin(&uv);
     painter.setRenderHint(QPainter::Antialiasing);

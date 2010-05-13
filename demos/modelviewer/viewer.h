@@ -78,12 +78,14 @@ public:
     QVector3D orientation() const;
     void setOrientation(const QVector3D &r);
     void resetView();
+    int zoomScale() { return m_zoomScale; }
 
 signals:
     void manualControlEngaged();
 
 public slots:
     void enableAnimation(bool enable);
+    void setZoomScale(int scale);
 
 protected:
     void paintGL(QGLPainter *painter);
@@ -112,6 +114,7 @@ private:
     bool m_warningDisplayed;
     QGLDisplayList *m_floor;
     bool m_drawFloor;
+    int m_zoomScale;
 };
 
 

@@ -69,6 +69,7 @@ protected:
     void changeEvent(QEvent *e);
 
 private slots:
+    void on_zoomSlider_valueChanged(int value);
     void setManualControl();
     void on_floorCheckBox_toggled(bool checked);
     void on_zTranSpin_editingFinished();

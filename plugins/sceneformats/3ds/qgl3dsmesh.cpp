@@ -206,12 +206,15 @@ void QGL3dsMesh::initialize()
     {
         node->setEffect(QGL::LitMaterial);
         node->setObjectName(objectName() + "::Materials");
+        qDebug() << ">>> mixed:" << node;
         pushNode();
+        qDebug() << "   pushed - current now:" << currentNode();
     }
     else
     {
         setEffect(m_textureMaterials.count() > 0 ? QGL::LitModulateTexture2D : QGL::LitMaterial);
     }
+    qDebug() << "processing:" << matList.count() << "materials";
     while (matList.count() > 0)
     {
         int matIx = matList.takeFirst();
@@ -222,7 +225,9 @@ void QGL3dsMesh::initialize()
     matList = m_textureMaterials.toList();
     if (mixedTexturedAndPlain)
     {
+        qDebug() << "<<< mixed:" << currentNode();
         popNode();
+        qDebug() << "   popped - current now:" << currentNode();
         node = currentNode();
         node->setEffect(QGL::LitModulateTexture2D);
         node->setObjectName(objectName() + "::Textures");
@@ -235,6 +240,7 @@ void QGL3dsMesh::initialize()
             node = newNode();
     }
     finalize();
+    qDebug() << "######## finalized & out\n\n";
 }
 
 // Build a linked list, in a QArray: the first N*2 entries correspond
