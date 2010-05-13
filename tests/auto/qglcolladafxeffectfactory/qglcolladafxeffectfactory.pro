@@ -6,10 +6,7 @@ CONFIG += unittest \
 LIBS += -L../../../lib \
     -L../../../bin
 include(../../../threed/threed_dep.pri)
-SOURCES += tst_qglcolladafxeffectfactory.cpp \
-    ../../../demos/shaderwizard/qglcolladafxeffectfactory.cpp \
-    ../../../demos/shaderwizard/qglcolladafxeffect.cpp \
-    ../../../demos/shaderwizard/qglshaderprogrameffect.cpp
+SOURCES += tst_qglcolladafxeffectfactory.cpp 
 INCLUDEPATH += ../../../demos/shaderwizard/
 OTHER_FILES += collada_cube.xml
 RESOURCES += tst_qglcolladafxeffectfactory.qrc
