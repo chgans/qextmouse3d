@@ -65,25 +65,12 @@ public:
     QString fragmentShader() const;
     void setFragmentShader(const QString& value);
 
-    void enableEffect(QGLPainter *painter);
+    virtual void enableEffect(QGLPainter *painter);
 public slots:
     void markPropertyDirty();
     void markPropertyDirty(int property);
 private:
     ShaderProgramPrivate *d;
-};
-
-class ShaderProgramPropertyListener : public QObject
-{
-    Q_OBJECT
-public:
-    ShaderProgramPropertyListener(QObject* parent = 0)
-        : QObject(parent)
-    {
-    }
-    virtual ~ShaderProgramPropertyListener()
-    {
-    }
 };
 
 QML_DECLARE_TYPE(ShaderProgram)
