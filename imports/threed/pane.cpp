@@ -67,6 +67,7 @@ Pane::Pane(QObject *parent)
     , m_width(1.0f)
     , m_height(1.0f)
     , m_twoSided(true)
+    , m_orientation(Pane::Normal)
 {
 }
 
@@ -143,17 +144,71 @@ void Pane::setTwoSided(bool value)
 }
 
 /*!
+    \enum Pane::Orientation
+    This enum defines the orientation of the texture co-ordinates
+    for the image displayed on a pane.
+
+    \value Normal Normal orientation with (0, 0) at the bottom-left.
+    \value Rot90 Rotate 90 degrees anti-clockwise.
+    \value Rot180 Rotate 180 degrees.
+    \value Rot270 Rotate 270 degrees anti-clockwise.
+*/
+
+/*!
+    \property Pane::orientation
+    \brief the orientation of the texture co-ordinates for the
+    image displayed on the pane.  The default value is Normal.
+*/
+
+Pane::Orientation Pane::orientation() const
+{
+    return m_orientation;
+}
+
+void Pane::setOrientation(Pane::Orientation value)
+{
+    if (m_orientation != value) {
+        m_orientation = value;
+        emit orientationChanged();
+    }
+}
+
+/*!
     \internal
 */
 void Pane::drawItem(QGLPainter *painter)
 {
-    static float const texCoords[] = {
+    static float const texCoordsNormal[] = {
         0.0f, 0.0f,
         0.0f, 1.0f,
         1.0f, 1.0f,
         0.0f, 0.0f,
         1.0f, 1.0f,
         1.0f, 0.0f
+    };
+    static float const texCoordsRot90[] = {
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        0.0f, 0.0f
+    };
+    static float const texCoordsRot180[] = {
+        1.0f, 1.0f,
+        1.0f, 0.0f,
+        0.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f
+    };
+    static float const texCoordsRot270[] = {
+        1.0f, 0.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f
     };
     static float const normalsTowards[] = {
         0.0f, 0.0f, 1.0f,
@@ -200,8 +255,28 @@ void Pane::drawItem(QGLPainter *painter)
                 (QGL::Normal, QGLAttributeValue(3, GL_FLOAT, 0, normalsAway));
         }
     }
-    painter->setVertexAttribute
-        (QGL::TextureCoord0, QGLAttributeValue(2, GL_FLOAT, 0, texCoords));
+    switch (m_orientation) {
+    case Rot90:
+        painter->setVertexAttribute
+            (QGL::TextureCoord0,
+             QGLAttributeValue(2, GL_FLOAT, 0, texCoordsRot90));
+        break;
+    case Rot180:
+        painter->setVertexAttribute
+            (QGL::TextureCoord0,
+             QGLAttributeValue(2, GL_FLOAT, 0, texCoordsRot180));
+        break;
+    case Rot270:
+        painter->setVertexAttribute
+            (QGL::TextureCoord0,
+             QGLAttributeValue(2, GL_FLOAT, 0, texCoordsRot270));
+        break;
+    default:
+        painter->setVertexAttribute
+            (QGL::TextureCoord0,
+             QGLAttributeValue(2, GL_FLOAT, 0, texCoordsNormal));
+        break;
+    }
     painter->draw(QGL::Triangles, 6);
 }
 
@@ -221,6 +296,12 @@ void Pane::drawItem(QGLPainter *painter)
     \fn void Pane::twoSidedChanged()
 
     Signal that is emitted when twoSided() changes.
+*/
+
+/*!
+    \fn void Pane::orientationChanged()
+
+    Signal that is emitted when orientation() changes.
 */
 
 QT_END_NAMESPACE

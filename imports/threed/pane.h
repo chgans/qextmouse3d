@@ -51,9 +51,11 @@ QT_BEGIN_NAMESPACE
 class Pane : public Item3d
 {
     Q_OBJECT
+    Q_ENUMS(Orientation)
     Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
     Q_PROPERTY(bool twoSided READ twoSided WRITE setTwoSided NOTIFY twoSidedChanged)
+    Q_PROPERTY(Orientation orientation READ orientation WRITE setOrientation NOTIFY orientationChanged)
 public:
     Pane(QObject *parent = 0);
     ~Pane();
@@ -67,6 +69,17 @@ public:
     bool twoSided() const;
     void setTwoSided(bool value);
 
+    enum Orientation
+    {
+        Normal,
+        Rot90,
+        Rot180,
+        Rot270
+    };
+
+    Orientation orientation() const;
+    void setOrientation(Orientation value);
+
 protected:
     void drawItem(QGLPainter *painter);
 
@@ -74,11 +87,13 @@ Q_SIGNALS:
     void widthChanged();
     void heightChanged();
     void twoSidedChanged();
+    void orientationChanged();
 
 private:
     qreal m_width;
     qreal m_height;
     bool m_twoSided;
+    Orientation m_orientation;
 };
 
 QML_DECLARE_TYPE(Pane)
