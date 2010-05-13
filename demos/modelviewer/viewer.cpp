@@ -61,24 +61,14 @@ Viewer::Viewer(QWidget *parent)
     , m_model(0)
     , m_lightModel(0)
     , m_lightParameters(0)
-    , m_x(0)
-    , m_y(0)
-    , m_z(10)
-    , m_rotX(0)
-    , m_rotY(0)
-    , m_rotZ(0)
-    , m_spin(0)
-    , m_zoom(10.0f)
-    , m_wd(0)
     , m_animate(true)
     , m_warningDisplayed(false)
-    , m_dragging(false)
     , m_floor(0)
     , m_drawFloor(true)
 {
     setToolTip(tr("Drag the mouse to slide the object left-right & up-down\n"
-                  "or use the mouse-wheel to push-pull the object.  Use\n"
-                  "shift drag or shift-mouse-wheel to rotate."));
+                  "or use the mouse-wheel to move the camera nearer/farther.\n"
+                  "Use shift-drag or shift-mouse-wheel to rotate."));
 }
 
 Viewer::~Viewer()
@@ -86,82 +76,41 @@ Viewer::~Viewer()
     // nothing to do here
 }
 
-void Viewer::setX(int x)
+void Viewer::setModel(Model *model)
 {
-    if (m_x != x)
+    if (m_model != model)
     {
-        m_x = x;
+        m_model = model;
         update();
     }
 }
 
-void Viewer::setY(int y)
+QVector3D Viewer::position() const
 {
-    if (m_y != y)
+    return m_position;
+}
+
+void Viewer::setPosition(const QVector3D &t)
+{
+    if (!qFuzzyCompare(t, m_position))
     {
-        m_y = y;
+        m_position = t;
         update();
     }
 }
 
-void Viewer::setZ(int z)
+QVector3D Viewer::orientation() const
 {
-    if (m_z != z)
-    {
-        qDebug() << "setting z:" << z;
-        m_z = z;
-        update();
-    }
+    return m_orientation;
 }
 
-void Viewer::setRotX(int rx)
+void Viewer::setOrientation(const QVector3D &r)
 {
-    if (m_rotX != rx)
+    if (!qFuzzyCompare(r, m_orientation))
     {
-        m_rotX = rx;
+        m_orientation = r;
         update();
     }
-}
-
-void Viewer::setRotY(int ry)
-{
-    if (m_rotY != ry)
-    {
-        m_rotY = ry;
-        update();
-    }
-}
-
-void Viewer::setRotZ(int rz)
-{
-    if (m_rotZ != rz)
-    {
-        m_rotZ = rz;
-        update();
-    }
-}
-
-void Viewer::setZoom(int zoom)
-{
-    qDebug() << "setZoom(" << zoom << ")";
-    if (zoom < 2)
-        zoom = 2;
-    if (m_zoom != zoom)
-    {
-        m_zoom = zoom;
-        qDebug() << "zoom:" << m_zoom;
-        update();
-    }
-}
-
-void Viewer::reset()
-{
-    setX(0);
-    setY(0);
-    setZ(0);
-    setRotX(0);
-    setRotY(0);
-    setRotZ(0);
 }
 
 void Viewer::setView(View view)
@@ -169,9 +118,7 @@ void Viewer::setView(View view)
     if (m_view != view)
     {
         m_view = view;
-        QVector3D eye = camera()->eye();
-        camera()->setEye(QVector3D(eye.x(), eye.z(), eye.y()));
-        update();
+        resetView();
     }
 }
 
@@ -184,139 +131,44 @@ void Viewer::setFloorEnabled(bool enable)
     }
 }
 
-void Viewer::mouseDrag(QMouseEvent *e)
-{
-    QPointF d = (m_dragStart - e->posF()) / 100.0f;
-    qDebug() << "      mouseDrag()" << d;
-    if (e->modifiers() & Qt::ShiftModifier)
-    {
-        m_rotY += d.y();
-        m_rotX += d.x();
-    }
-    else
-    {
-        m_x += d.x();
-        m_y += d.y();
-    }
-}
-
-/*
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    qDebug() << "mouseMoveEvent" << e->posF();
-    if (m_dragging)
-        mouseDrag(e);
-    e->accept();
+    emit manualControlEngaged();
+    QGLView::mouseMoveEvent(e);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    m_dragStart = e->posF();
-    m_dragging = true;
-    e->accept();
+    emit manualControlEngaged();
+    QGLView::mousePressEvent(e);
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent *e)
 {
-    if (m_dragging)
-        mouseDrag(e);
-    m_dragging = false;
-    e->accept();
+    emit manualControlEngaged();
+    QGLView::mouseReleaseEvent(e);
 }
-
-struct WheelData
-{
-    int samples[10];
-    int s;
-    float factor()
-    {
-        int sum;
-        int k = 0;
-        for (int i = 0; i < 10; ++i)
-        {
-            if (samples[i])
-            {
-                ++k;
-                sum += samples[i];
-            }
-        }
-        return float(sum) / float(k) / 2.0f;
-    }
-    void addSample(int v)
-    {
-        samples[s] = v;
-        s = (s + 1) % 10;
-    }
-};
 
 void Viewer::wheelEvent(QWheelEvent *e)
 {
-    if (!m_wd)
-    {
-        m_wd = new WheelData;
-        qMemSet(m_wd, 0, sizeof(struct WheelData));
-    }
-    int d = e->delta();
-    m_wd->addSample(qAbs(d));
-    qDebug() << "wheelEvent" << d;
-    if (e->modifiers() & Qt::ShiftModifier)
-        setZ(z() + d / m_wd->factor());
-    else
-        setZoom(zoom() + d / m_wd->factor());
-    update();
+    emit manualControlEngaged();
+    QGLView::wheelEvent(e);
 }
-*/
 
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Space)
     {
-        //m_ui->spinCheckBox->toggle();
+        emit manualControlEngaged();
     }
     else if (e->key() == Qt::Key_Escape)
     {
-        reset();
+        resetView();
+        emit manualControlEngaged();
     }
     else
     {
-        if (e->modifiers() & Qt::ShiftModifier)
-        {
-            if (e->key() == Qt::Key_Left)
-            {
-                setRotX(rotX() - 5);
-            }
-            else if (e->key() == Qt::Key_Right)
-            {
-                setRotX(rotX() + 5);
-            }
-            else if (e->key() == Qt::Key_Up)
-            {
-                setRotY(rotY() - 5);
-            }
-            else if (e->key() == Qt::Key_Down)
-            {
-                setRotY(rotY() + 5);
-            }
-        }
-        else
-        {
-            if (e->key() == Qt::Key_Left)
-            {
-                setX(x() - 5);
-            }
-            else if (e->key() == Qt::Key_Right)
-            {
-                setX(x() + 5);
-            }
-            else if (e->key() == Qt::Key_Up)
-            {
-                setY(y() - 5);
-            }
-            else if (e->key() == Qt::Key_Down)
-            {
-                setY(y() + 5);
-            }
-        }
+        QGLView::keyPressEvent(e);
     }
 }
 
@@ -324,7 +176,6 @@ void Viewer::buildFloor()
 {
     m_floor = new QGLDisplayList(this);
     m_floor->newSection();
-    QGLSceneNode *node = m_floor->currentNode();
     for (int z = -5; z < 5; ++z)
     {
         QGLOperation op(m_floor, QGL::QUAD_STRIP);
@@ -337,8 +188,6 @@ void Viewer::buildFloor()
         }
     }
     m_floor->finalize();
-    qDebug() << "floor";
-    qDebug() << node->geometry();
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);
     QPoint ctr(sz/2, sz/2);
@@ -386,36 +235,18 @@ void Viewer::initializeGL(QGLPainter *painter)
     m_timer->start(25);
 }
 
-/*!
-    \internal
-*/
-/*
-void Viewer::resizeGL(int w, int h)
-{
-    // Set up the standard viewport for the new window size.
-    glViewport(0, 0, w, h);
-    update();
-}
-*/
-
 void Viewer::paintGL(QGLPainter *painter)
 {
     if (m_model->scene())
     {
         painter->clear();
 
+        painter->modelViewMatrix().push();
+
         if (m_drawFloor)
             m_floor->draw(painter);
 
-        painter->modelViewMatrix().push();
-
-        QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, m_rotX);
-        QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, m_rotY);
-        QQuaternion zt = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, m_rotZ);
-        painter->modelViewMatrix().rotate(xt * yt * zt);
-
-        QVector3D sceneOrigin(m_x, m_y, m_z);
-        painter->modelViewMatrix().translate(sceneOrigin);
+        painter->modelViewMatrix().translate(m_position);
 
         m_model->scene()->draw(painter);
 
@@ -438,15 +269,22 @@ void Viewer::animate()
     if (m_model->scene())
     {
         if (m_animate)
-        {
-            m_spin = (m_spin + 1) % 360;
-        }
-        update();
+            camera()->panCenter(0.5f);
     }
 }
 
 void Viewer::enableAnimation(bool enabled)
 {
     m_animate = enabled;
-    m_spin = 0;
+}
+
+void Viewer::resetView()
+{
+    QVector3D e = camera()->eye();
+    QVector3D c = camera()->center();
+    qreal z = (e - c).length();
+    camera()->setEye(QVector3D(0.0f, 0.0f, -z));
+    qreal tilt = (m_view == Viewer::TopView) ? 90.0 : 15.0;
+    camera()->tiltCenter(tilt);
+    update();
 }

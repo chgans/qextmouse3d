@@ -60,15 +60,19 @@ Controls::Controls(QWidget *parent)
     , m_view(0)
 {
     m_ui->setupUi(this);
+    connect(m_ui->actionQuit, SIGNAL(triggered()),
+            this, SLOT(close()));
+
     m_view = new Viewer(m_ui->frame);
     QHBoxLayout *lay = new QHBoxLayout();
     lay->addWidget(m_view);
     m_ui->frame->setLayout(lay);
+    connect(m_view, SIGNAL(manualControlEngaged()),
+            this, SLOT(setManualControl()));
+
     QString initialModel = populateModelMenu();
-    qDebug() << "Initial model:" << initialModel << "!!";
+
     m_model = new Model(this);
-    connect(m_ui->actionQuit, SIGNAL(triggered()),
-            this, SLOT(close()));
 
     connect(this, SIGNAL(openFile(QString)),
             m_model, SLOT(setFullPath(QString)));
@@ -195,57 +199,58 @@ QString Controls::populateModelMenu()
 
 void Controls::loadModelDefaults(const QString &model)
 {
-    m_view->reset();
     QSettings settings;
+    QVector3D p, o, e;
     if (settings.childGroups().contains(model))
     {
         settings.beginGroup(model);
-        int x = settings.value("UI_x", 0).toInt();
-        int y = settings.value("UI_y", 0).toInt();
-        int z = settings.value("UI_z", 0).toInt();
-        int rotX = settings.value("UI_rotX", 0).toInt();
-        int rotY = settings.value("UI_rotY", 0).toInt();
-        int rotZ = settings.value("UI_rotZ", 0).toInt();
-        m_view->setX(x);
-        m_view->setY(y);
-        m_view->setZ(z);
-        m_view->setRotX(rotX);
-        m_view->setRotY(rotY);
-        m_view->setRotZ(rotZ);
+        p = qvariant_cast<QVector3D>(settings.value("position", QVector3D()));
+        m_view->setPosition(p);
+        o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
+        m_view->setOrientation(o);
+        e = QVector3D(0.0f, 2.0f, -10.0f);
+        QVector3D e = qvariant_cast<QVector3D>(settings.value("eye", e));
+        m_view->camera()->setEye(e);
     }
     else
     {
         QBox3D box = m_model->scene()->boundingBox();
-        QVector3D sceneOrigin = box.center();
+        m_view->setPosition(-box.center());
         QVector3D ext = box.size();
         qreal maxDimension = qMax(ext.x(), qMax(ext.y(), ext.z()));
-        m_view->setX(sceneOrigin.x());
-        m_view->setY(sceneOrigin.y());
-        m_view->setZ(qMax(sceneOrigin.z(), maxDimension));
+        e.setZ(-qMax(qreal(10.0f), maxDimension));
+        e.setY(qAbs(e.z()) / 5.0f);
+        m_view->camera()->setEye(e);
     }
-    m_ui->xTranSpin->setValue(m_view->x());
-    m_ui->yTranSpin->setValue(m_view->y());
-    m_ui->zTranSpin->setValue(m_view->z());
-    m_ui->xRotSpin->setValue(m_view->rotX());
-    m_ui->yRotSpin->setValue(m_view->rotY());
-    m_ui->zRotSpin->setValue(m_view->rotZ());
+    m_ui->xTranSpin->setValue(p.x());
+    m_ui->yTranSpin->setValue(p.y());
+    m_ui->zTranSpin->setValue(p.z());
+    m_ui->xRotSpin->setValue(o.x());
+    m_ui->yRotSpin->setValue(o.y());
+    m_ui->zRotSpin->setValue(o.z());
 }
 
 void Controls::saveModelDefaults(const QString &model)
 {
     QSettings settings;
+    QVector3D p = m_view->position();
+    QVector3D o = m_view->orientation();
+    QVector3D e = m_view->camera()->eye();
     settings.beginGroup(model);
-    settings.setValue("UI_x", m_view->x());
-    settings.setValue("UI_y", m_view->y());
-    settings.setValue("UI_z", m_view->z());
-    settings.setValue("UI_rotX", m_view->rotX());
-    settings.setValue("UI_rotY", m_view->rotY());
-    settings.setValue("UI_rotZ", m_view->rotZ());
+    settings.setValue("position", p);
+    settings.setValue("orientation", o);
+    settings.setValue("eye", e);
 }
 
 void Controls::on_spinCheckBox_stateChanged(int state)
 {
     m_view->enableAnimation(state == Qt::Checked);
+    if (m_ui->actionSpin->isChecked() != (state == Qt::Checked))
+    {
+        m_ui->actionSpin->blockSignals(true);
+        m_ui->actionSpin->setChecked(state == Qt::Checked);
+        m_ui->actionSpin->blockSignals(false);
+    }
 }
 
 void Controls::on_actionOpen_triggered()
@@ -320,11 +325,11 @@ void Controls::loadSettings(const QString &model)
 
 void Controls::addRecentFiles(const QString &fileName)
 {
-    qDebug() << "addRecentFiles(" << fileName << ")";
+    //qDebug() << "addRecentFiles(" << fileName << ")";
     QMenu *rf = m_ui->menuRecent_Models;
     QSettings settings;
     QStringList files = settings.value("RecentFiles", QStringList()).toStringList();
-    qDebug() << "current files:" << files;
+    //qDebug() << "current files:" << files;
     files.removeAll(fileName);
     files.push_front(fileName);
     if (files.size() > 10)
@@ -391,6 +396,11 @@ void Controls::fileLoadTimeNotified(int time)
     m_ui->statusbar->showMessage(tr("file loaded in %1 ms").arg(time), 30000);
 }
 
+void Controls::setManualControl()
+{
+    m_ui->spinCheckBox->setChecked(false);
+}
+
 void Controls::on_viewComboBox_currentIndexChanged(int view)
 {
     m_view->setView(static_cast<Viewer::View>(view));
@@ -408,32 +418,44 @@ void Controls::on_actionShow_Floor_triggered()
 
 void Controls::on_xRotSpin_editingFinished()
 {
-    m_view->setRotX(m_ui->xRotSpin->value());
+    QVector3D o = m_view->orientation();
+    o.setX(m_ui->xRotSpin->value());
+    m_view->setPosition(o);
 }
 
 void Controls::on_yRotSpin_editingFinished()
 {
-    m_view->setRotY(m_ui->yRotSpin->value());
+    QVector3D o = m_view->orientation();
+    o.setY(m_ui->yRotSpin->value());
+    m_view->setPosition(o);
 }
 
 void Controls::on_zRotSpin_editingFinished()
 {
-    m_view->setRotZ(m_ui->zRotSpin->value());
+    QVector3D o = m_view->orientation();
+    o.setZ(m_ui->zRotSpin->value());
+    m_view->setPosition(o);
 }
 
 void Controls::on_xTranSpin_editingFinished()
 {
-    m_view->setX(m_ui->xTranSpin->value());
+    QVector3D p = m_view->position();
+    p.setX(m_ui->xTranSpin->value());
+    m_view->setPosition(p);
 }
 
 void Controls::on_yTranSpin_editingFinished()
 {
-    m_view->setY(m_ui->yTranSpin->value());
+    QVector3D p = m_view->position();
+    p.setY(m_ui->yTranSpin->value());
+    m_view->setPosition(p);
 }
 
 void Controls::on_zTranSpin_editingFinished()
 {
-    m_view->setZ(m_ui->zTranSpin->value());
+    QVector3D p = m_view->position();
+    p.setZ(m_ui->zTranSpin->value());
+    m_view->setPosition(p);
 }
 
 void Controls::on_floorCheckBox_toggled(bool checked)

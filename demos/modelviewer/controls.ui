@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>850</width>
-    <height>591</height>
+    <width>888</width>
+    <height>664</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,26 +178,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QSpinBox" name="xRotSpin">
-          <property name="minimum">
-           <number>-180</number>
-          </property>
-          <property name="maximum">
-           <number>180</number>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QSpinBox" name="xTranSpin">
-          <property name="minimum">
-           <number>-100</number>
-          </property>
-          <property name="maximum">
-           <number>100</number>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
@@ -205,26 +185,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QSpinBox" name="yRotSpin">
-          <property name="minimum">
-           <number>-180</number>
-          </property>
-          <property name="maximum">
-           <number>180</number>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QSpinBox" name="yTranSpin">
-          <property name="minimum">
-           <number>-100</number>
-          </property>
-          <property name="maximum">
-           <number>100</number>
           </property>
          </widget>
         </item>
@@ -238,23 +198,72 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QSpinBox" name="zRotSpin">
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="xRotSpin">
           <property name="minimum">
-           <number>-180</number>
+           <double>-180.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>180</number>
+           <double>180.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>30.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="yRotSpin">
+          <property name="minimum">
+           <double>-180.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>180.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>30.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="zRotSpin">
+          <property name="minimum">
+           <double>-180.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>180.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>30.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="3" column="2">
-         <widget class="QSpinBox" name="zTranSpin">
+         <widget class="QDoubleSpinBox" name="zTranSpin">
           <property name="minimum">
-           <number>-100</number>
+           <double>-100.000000000000000</double>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QDoubleSpinBox" name="yTranSpin">
+          <property name="minimum">
+           <double>-100.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QDoubleSpinBox" name="xTranSpin">
+          <property name="minimum">
+           <double>-100.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -269,7 +278,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>850</width>
+     <width>888</width>
      <height>22</height>
     </rect>
    </property>
@@ -289,6 +298,7 @@
      <addaction name="actionEmpty"/>
     </widget>
     <addaction name="actionOpen"/>
+    <addaction name="actionRevert"/>
     <addaction name="menuRecent_Models"/>
     <addaction name="actionSave_QML"/>
     <addaction name="separator"/>
@@ -416,6 +426,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionRevert">
+   <property name="text">
+    <string>Revert</string>
+   </property>
+   <property name="toolTip">
+    <string>Revert to last saved view settings</string>
    </property>
   </action>
  </widget>

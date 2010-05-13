@@ -66,27 +66,21 @@ public:
 
     Viewer(QWidget *parent = 0);
     ~Viewer();
-    void setModel(Model *model) { m_model = model; }
+    void setModel(Model *model);
 
-    int x() const { return m_x; }
-    void setX(int x);
-    int y() { return m_y; }
-    void setY(int y);
-    int z() const { return m_z; }
-    void setZ(int z);
-    int rotX() const { return m_rotX; }
-    void setRotX(int rx);
-    int rotY() const { return m_rotY; }
-    void setRotY(int ry);
-    int rotZ() const { return m_rotZ; }
-    void setRotZ(int rz);
-    int zoom() const { return m_zoom; }
-    void setZoom(int zoom);
-    void reset();
     View view() const { return m_view; }
     void setView(View view);
     bool floorEnabled() const { return m_drawFloor; }
     void setFloorEnabled(bool enabled);
+
+    QVector3D position() const;
+    void setPosition(const QVector3D &t);
+    QVector3D orientation() const;
+    void setOrientation(const QVector3D &r);
+    void resetView();
+
+signals:
+    void manualControlEngaged();
 
 public slots:
     void enableAnimation(bool enable);
@@ -94,13 +88,10 @@ public slots:
 protected:
     void paintGL(QGLPainter *painter);
     void initializeGL(QGLPainter *painter);
-    //void initializeGL();
-    //void paintGL();
-    //void resizeGL(int, int);
-    //void wheelEvent(QWheelEvent *e);
-    //void mousePressEvent(QMouseEvent *e);
-    //void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
+    void wheelEvent(QWheelEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
 
 private slots:
@@ -110,24 +101,15 @@ private:
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
 
+    QVector3D m_orientation;
+    QVector3D m_position;
     QTimer *m_timer;
     Model *m_model;
     QGLLightModel *m_lightModel;
     QGLLightParameters *m_lightParameters;
-    int m_x;
-    int m_y;
-    int m_z;
-    int m_rotX;
-    int m_rotY;
-    int m_rotZ;
-    int m_spin;
-    float m_zoom;
-    WheelData *m_wd;
     View m_view;
     bool m_animate;
     bool m_warningDisplayed;
-    bool m_dragging;
-    QPointF m_dragStart;
     QGLDisplayList *m_floor;
     bool m_drawFloor;
 };

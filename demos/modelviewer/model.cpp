@@ -49,6 +49,8 @@
 
 Model::Model(QObject *parent)
     : QAbstractItemModel(parent)
+    , m_sceneManager(0)
+    , m_sceneRoot(0)
 {
 }
 
@@ -106,7 +108,7 @@ QStringList Model::components() const
 
 void Model::setFullPath(const QString &path)
 {
-    Q_ASSERT(!path.isEmpty());
+    qDebug() << path;
     if (path != m_fullPath)
     {
         if (!m_fullPath.isEmpty())
@@ -134,7 +136,6 @@ void Model::importModel()
         return;
     QGLSceneObject *obj = m_sceneManager->defaultObject(QGLSceneObject::Main);
     m_sceneRoot = qobject_cast<QGLSceneNode *>(obj);
-    qDumpScene(m_sceneRoot);
 #ifndef QT_NO_DEBUG_STREAM
     int totalIndexes = 0;
     QList<QGLSceneNode *> children = m_sceneRoot->allChildren();
