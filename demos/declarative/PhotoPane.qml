@@ -7,7 +7,8 @@ Pane {
     property real offset
     property real layer
     property variant image
-
+	property bool bounce: false
+	
     width: 4
     height: 3
     position: Qt.vector3d(offset, 0, -layer)
@@ -20,7 +21,17 @@ Pane {
             photo.state = "pulled_out";
     }
 
+	onHoverEnter: { photo.state = "pop_up" }
+    onHoverLeave: { photo.state = "returned" }
+
     states: [
+		State {
+			name: "pop_up"
+			PropertyChanges {
+				target: photo
+				y: 1.0
+			}
+		},
         State {
             name: "pulled_out"
             PropertyChanges {
@@ -67,7 +78,7 @@ Pane {
             to: "*"
             NumberAnimation {
                 targets: photo
-                properties: "x,scale,z"
+                properties: "x,scale,z,y"
                 easing.type: "OutBounce"
                 duration: 700
             }
