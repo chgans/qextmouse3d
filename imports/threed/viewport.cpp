@@ -510,7 +510,8 @@ void Viewport::draw(QGLPainter *painter)
     painter->setBlendingEnabled(d->blending);
     d->blendOptions.apply();
     painter->setCullFaces(QGL::CullDisabled);
-    painter->setPicking(d->showPicking);
+    if (!d->view)
+        painter->setPicking(d->showPicking);
 
     painter->setObjectPickId(-1);
     QObjectList list = QObject::children();    
