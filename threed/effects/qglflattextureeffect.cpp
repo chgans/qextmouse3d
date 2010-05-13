@@ -277,6 +277,7 @@ public:
     Constructs a new flat decal texture effect.
 */
 QGLFlatDecalTextureEffect::QGLFlatDecalTextureEffect()
+    : d_ptr(new QGLFlatDecalTextureEffectPrivate)
 {
 }
 
