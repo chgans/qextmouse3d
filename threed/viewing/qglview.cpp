@@ -979,26 +979,32 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         painter.clearPickObjects();
 
         // Create a framebuffer object as big as the window to act
-        // as the pick buffer.  TODO: use the window back buffer if no fbo's.
-        QSize fbosize = size();
-        fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
-        if (!d->fbo) {
-            d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
-        } else if (d->fbo->size() != fbosize) {
-            delete d->fbo;
-            d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+        // as the pick buffer if we are single buffered.  If we are
+        // double-buffered, then use the window back buffer.
+        bool useBackBuffer = doubleBuffer();
+        if (!useBackBuffer) {
+            QSize fbosize = size();
+            fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
+            if (!d->fbo) {
+                d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+            } else if (d->fbo->size() != fbosize) {
+                delete d->fbo;
+                d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+            }
         }
 
         // Render the pick version of the scene into the framebuffer object.
-        d->fbo->bind();
+        if (d->fbo)
+            d->fbo->bind();
         painter.clear();
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
         pickGL(&painter);
         painter.setPicking(false);
 
-        // The pick buffer contents are now valid.
-        d->pickBufferForceUpdate = false;
+        // The pick buffer contents are now valid, unless we are using
+        // the back buffer - we cannot rely upon it being valid next time.
+        d->pickBufferForceUpdate = useBackBuffer;
         d->pickBufferMaybeInvalid = false;
     } else {
         // Bind the framebuffer object to the window's context.
