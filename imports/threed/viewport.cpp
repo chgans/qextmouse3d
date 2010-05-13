@@ -427,13 +427,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     // Perform early drawing operations.
     earlyDraw(&painter);
 
-    // Set up the scene the way QGLView would if we were using it.
-    d->depthBufferOptions.apply();
-    painter.setDepthTestingEnabled(true);
-    painter.setBlendingEnabled(d->blending);
-    d->blendOptions.apply();
-    painter.setCullFaces(QGL::CullDisabled);
-    painter.setPicking(d->showPicking);
+    // Set up the camera the way QGLView would if we were using it.
     if (d->camera) {
         painter.setCamera(d->camera);
     } else {
@@ -510,6 +504,14 @@ void Viewport::earlyDraw(QGLPainter *painter)
 */
 void Viewport::draw(QGLPainter *painter)
 {
+    // Set up the initial depth, blend, and other options.
+    d->depthBufferOptions.apply();
+    painter->setDepthTestingEnabled(true);
+    painter->setBlendingEnabled(d->blending);
+    d->blendOptions.apply();
+    painter->setCullFaces(QGL::CullDisabled);
+    painter->setPicking(d->showPicking);
+
     painter->setObjectPickId(-1);
     QObjectList list = QObject::children();    
     bool haveLights = false;
