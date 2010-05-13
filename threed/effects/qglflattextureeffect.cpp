@@ -130,7 +130,7 @@ static char const flatDecalFragmentShader[] =
     "void main(void)\n"
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
-    "    gl_FragColor = vec4(clamp(color.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), 1.0);\n"
+    "    gl_FragColor = vec4(clamp(color.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), color.a);\n"
     "}\n";
 
 #endif
