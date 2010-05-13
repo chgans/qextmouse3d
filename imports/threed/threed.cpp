@@ -53,6 +53,7 @@
 #include "qgraphicsscale3d.h"
 #include "shaderprogram.h"
 #include "cube.h"
+#include "pane.h"
 #include "qt3dnamespace.h"
 #include "qglscenenode.h"
 
@@ -84,6 +85,7 @@ public:
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");
+        qmlRegisterType<Pane>(uri,1,0,"Pane");
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {

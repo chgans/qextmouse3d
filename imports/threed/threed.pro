@@ -12,6 +12,7 @@ SOURCES += \
     effect.cpp \
     item3d.cpp \
     mesh.cpp \
+    pane.cpp \
     qt3dnamespace.cpp \
     shaderprogram.cpp \
     viewport.cpp
@@ -21,8 +22,10 @@ HEADERS += \
     effect.h \
     item3d.h \
     mesh.h \
+    pane.h \
     qt3dnamespace.h \
     shaderprogram.h \
+    shaderprogram_p.h \
     viewport.h
 
 qdeclarativesources.files += \
