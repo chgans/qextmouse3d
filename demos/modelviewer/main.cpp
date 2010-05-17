@@ -49,23 +49,32 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QSettings>
+#include <QDateTime>
+#include <QDebug>
 
 #include "controls.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    Controls controls;
 
+    // for QSettings
     QCoreApplication::setOrganizationName("Nokia");
     QCoreApplication::setOrganizationDomain("nokia.com");
     QCoreApplication::setApplicationName("modelviewer");
 
-    if (QApplication::arguments().contains("-maximize"))
-        controls.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
-        controls.showFullScreen();
-    else
-        controls.show();
-    return app.exec();
+    int result = 0;
+    {
+        Controls controls;
+
+        if (QApplication::arguments().contains("-maximize"))
+            controls.showMaximized();
+        else if (QApplication::arguments().contains("-fullscreen"))
+            controls.showFullScreen();
+        else
+            controls.show();
+        result = app.exec();
+    }
+    return result;
 }

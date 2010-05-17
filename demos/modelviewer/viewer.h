@@ -52,7 +52,6 @@ class QGLLightModel;
 class QGLLightParameters;
 class QTimer;
 class QGLDisplayList;
-class WheelData;
 
 class Viewer : public QGLView
 {
@@ -78,6 +77,8 @@ public:
     QVector3D orientation() const;
     void setOrientation(const QVector3D &r);
     void resetView();
+    int zoomScale() { return m_zoomScale; }
+    void setZoomScale(int scale);
 
 signals:
     void manualControlEngaged();
@@ -112,6 +113,7 @@ private:
     bool m_warningDisplayed;
     QGLDisplayList *m_floor;
     bool m_drawFloor;
+    int m_zoomScale;
 };
 
 

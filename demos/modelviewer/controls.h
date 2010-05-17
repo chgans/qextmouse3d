@@ -69,6 +69,9 @@ protected:
     void changeEvent(QEvent *e);
 
 private slots:
+    void on_action100_x_triggered(bool checked);
+    void on_action10_x_triggered(bool checked);
+    void on_action1_x_triggered(bool checked);
     void setManualControl();
     void on_floorCheckBox_toggled(bool checked);
     void on_zTranSpin_editingFinished();

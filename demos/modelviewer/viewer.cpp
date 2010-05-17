@@ -65,6 +65,7 @@ Viewer::Viewer(QWidget *parent)
     , m_warningDisplayed(false)
     , m_floor(0)
     , m_drawFloor(true)
+    , m_zoomScale(1)
 {
     setToolTip(tr("Drag the mouse to slide the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
@@ -74,6 +75,14 @@ Viewer::Viewer(QWidget *parent)
 Viewer::~Viewer()
 {
     // nothing to do here
+}
+
+void Viewer::setZoomScale(int scale)
+{
+    if (scale != m_zoomScale)
+    {
+        m_zoomScale = scale;
+    }
 }
 
 void Viewer::setModel(Model *model)
@@ -133,7 +142,6 @@ void Viewer::setFloorEnabled(bool enable)
 
 void Viewer::mouseMoveEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
     QGLView::mouseMoveEvent(e);
 }
 
@@ -152,7 +160,15 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 void Viewer::wheelEvent(QWheelEvent *e)
 {
     emit manualControlEngaged();
-    QGLView::wheelEvent(e);
+    e->accept();
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal zoomMag = viewVec.length();
+    qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
+    zoomMag += inc;
+    if (zoomMag < 5.0f)
+        zoomMag = 5.0f;
+    QLine3D viewLine(camera()->center(), viewVec);
+    camera()->setEye(viewLine.point(zoomMag));
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -187,17 +203,29 @@ void Viewer::buildFloor()
             op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
         }
     }
+    for (int z = -5; z < 5; ++z)
+    {
+        QGLOperation op(m_floor, QGL::QUAD_STRIP);
+        for (int x = -5; x <= 5; ++x)
+        {
+            op << QVector3D(x, -0.01, z);
+            op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
+            op << QVector3D(x, -0.01, z+1);
+            op << QVector2D(float(x+5) / 10.0f, float(z+6) / 10.0f);
+        }
+    }
     m_floor->finalize();
+    m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);
     QPoint ctr(sz/2, sz/2);
-    uv.fill(qRgba(196, 212, 212, 0));
+    uv.fill(qRgba(128, 128, 96, 1));
     QPainter painter;
     painter.begin(&uv);
     painter.setRenderHint(QPainter::Antialiasing);
     QPen pen = painter.pen();
     pen.setWidth(2.0);
-    pen.setColor(qRgba(128,16,16,0));
+    pen.setColor(qRgba(128,16,16,1));
     painter.setPen(pen);
     painter.drawEllipse(ctr, sz/2, sz/2);
     painter.drawEllipse(ctr, sz/4, sz/4);
