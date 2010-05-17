@@ -44,6 +44,7 @@
 #include <QtDeclarative/qdeclarativeitem.h>
 #include <QtDeclarative/qdeclarativecomponent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
+#include <QtGui/qapplication.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -107,6 +108,7 @@ Qml3dView::Qml3dView(QWidget *parent)
     m_viewport = 0;
     initGLCalled = false;
     setOption(QGLView::ObjectPicking, true);
+    connect(&engine, SIGNAL(quit()), qApp, SLOT(quit()));
 }
 
 /*!
