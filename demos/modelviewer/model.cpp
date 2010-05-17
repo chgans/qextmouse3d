@@ -110,7 +110,6 @@ QStringList Model::components() const
 
 void Model::setFullPath(const QString &path)
 {
-    qDebug() << path;
     if (path != m_fullPath)
     {
         if (!m_fullPath.isEmpty())

@@ -217,15 +217,11 @@ void Viewer::buildFloor()
     m_floor->finalize();
     m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
-    qDebug() << "buildFloor: create image";
     QImage uv(sz, sz, QImage::Format_ARGB32);
-    qDebug() << "buildFloor: done create image";
     QPoint ctr(sz/2, sz/2);
     uv.fill(qRgba(128, 128, 96, 1));
-    qDebug() << "buildFloor: fill with colour";
     QPainter painter;
     painter.begin(&uv);
-    qDebug() << "buildFloor: begin paint";
     painter.setRenderHint(QPainter::Antialiasing);
     QPen pen = painter.pen();
     pen.setWidth(2.0);
@@ -318,6 +314,5 @@ void Viewer::resetView()
     camera()->setEye(QVector3D(0.0f, 0.0f, -z));
     qreal tilt = (m_view == Viewer::TopView) ? 90.0 : 15.0;
     camera()->tiltCenter(tilt);
-    qDebug() << "resetView - eye:" << camera()->eye() << "- center:" << camera()->center();
     update();
 }
