@@ -967,7 +967,7 @@ void QGLDisplayList::addSection(QGLSection *sec)
     d->currentSection = sec;
     sec->setMapThreshold(d->defThreshold);
     d->sections.append(sec);
-    qDebug() << "Adding section - clear node stack:" << sec;
+    //qDebug() << "Adding section - clear node stack:" << sec;
     d->nodeStack.clear();
     newNode();
 }
@@ -1030,10 +1030,10 @@ QGLSceneNode *QGLDisplayList::newNode()
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
     d->currentNode = new QGLSceneNode(parentNode);
-    qDebug() << "newNode()" << d->currentNode << "parent:" << parentNode
-            << "--- nodestack count:" << d->nodeStack.count();
-    if (d->nodeStack.count() > 0)
-            qDebug() << "--- last:" << d->nodeStack.last();
+    //qDebug() << "newNode()" << d->currentNode << "parent:" << parentNode
+    //        << "--- nodestack count:" << d->nodeStack.count();
+    //if (d->nodeStack.count() > 0)
+    //        qDebug() << "--- last:" << d->nodeStack.last();
     d->currentNode->setPalette(parentNode->palette());
     d->currentNode->setStart(d->currentSection->indexCount());
     connect(d->currentNode, SIGNAL(destroyed(QObject*)),
@@ -1095,11 +1095,11 @@ QGLSceneNode *QGLDisplayList::pushNode()
 {
     Q_D(QGLDisplayList);
     Q_ASSERT(d->currentSection);
-    qDebug() << "pushNode() - current:" << d->currentNode;
+    //qDebug() << "pushNode() - current:" << d->currentNode;
     QGLSceneNode *parentNode = d->currentNode;
     d->nodeStack.append(parentNode);
-    qDebug() << "    currentNode:" << d->currentNode <<
-            "--- nodeStack:" << d->nodeStack.count();
+    //qDebug() << "    currentNode:" << d->currentNode <<
+    //        "--- nodeStack:" << d->nodeStack.count();
     d->currentNode = new QGLSceneNode(parentNode);
     d->currentNode->setStart(d->currentSection->indexCount());
     d->currentNode->setPalette(parentNode->palette());
@@ -1126,7 +1126,7 @@ QGLSceneNode *QGLDisplayList::popNode()
     Q_D(QGLDisplayList);
     int cnt = d->currentSection->indexCount();
     QGLSceneNode *s = d->nodeStack.takeLast();
-    qDebug() << "popNode()" << s;
+    //qDebug() << "popNode()" << s;
     QGLSceneNode *parentNode = this;
     if (d->nodeStack.count() > 0)
         parentNode = d->nodeStack.last();
