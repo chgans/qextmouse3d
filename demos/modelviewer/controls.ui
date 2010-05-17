@@ -14,9 +14,9 @@
    <string>Model Viewer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QFrame" name="frame">
         <property name="sizePolicy">
@@ -131,43 +131,10 @@
         </item>
        </layout>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>Zoom scale:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSlider" name="zoomSlider">
-          <property name="toolTip">
-           <string>Adjust how much scroll wheel affects zoom</string>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>20</number>
-          </property>
-          <property name="value">
-           <number>1</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::NoTicks</enum>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
@@ -211,26 +178,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Y:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Z:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="xRotSpin">
           <property name="minimum">
@@ -244,6 +191,26 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="2">
+         <widget class="QDoubleSpinBox" name="xTranSpin">
+          <property name="minimum">
+           <double>-100.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Y:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="yRotSpin">
           <property name="minimum">
@@ -254,6 +221,26 @@
           </property>
           <property name="singleStep">
            <double>30.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QDoubleSpinBox" name="yTranSpin">
+          <property name="minimum">
+           <double>-100.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Z:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -280,26 +267,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QDoubleSpinBox" name="yTranSpin">
-          <property name="minimum">
-           <double>-100.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QDoubleSpinBox" name="xTranSpin">
-          <property name="minimum">
-           <double>-100.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-         </widget>
-        </item>
        </layout>
       </item>
      </layout>
@@ -312,7 +279,7 @@
      <x>0</x>
      <y>0</y>
      <width>934</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuModels">
@@ -341,6 +308,14 @@
     <property name="title">
      <string>Options</string>
     </property>
+    <widget class="QMenu" name="menuZoom_Scale">
+     <property name="title">
+      <string>Zoom Scale</string>
+     </property>
+     <addaction name="action1_x"/>
+     <addaction name="action10_x"/>
+     <addaction name="action100_x"/>
+    </widget>
     <addaction name="actionForce_Smooth"/>
     <addaction name="actionForce_Faceted"/>
     <addaction name="actionNative_Indices"/>
@@ -351,6 +326,7 @@
     <addaction name="actionComponent"/>
     <addaction name="actionShow_Floor"/>
     <addaction name="actionSpin"/>
+    <addaction name="menuZoom_Scale"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModels"/>
@@ -457,6 +433,9 @@
    <property name="text">
     <string>Spin</string>
    </property>
+   <property name="toolTip">
+    <string>Spin model to show all sides</string>
+   </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
    </property>
@@ -467,6 +446,48 @@
    </property>
    <property name="toolTip">
     <string>Revert to last saved view settings</string>
+   </property>
+  </action>
+  <action name="action1_x">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>1 x</string>
+   </property>
+   <property name="toolTip">
+    <string>Scroll wheel zooms x 1</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="action10_x">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>10 x</string>
+   </property>
+   <property name="toolTip">
+    <string>Scroll wheel zooms x 10</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
+   </property>
+  </action>
+  <action name="action100_x">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>100 x</string>
+   </property>
+   <property name="toolTip">
+    <string>Scroll wheel zooms x 100</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+9</string>
    </property>
   </action>
  </widget>

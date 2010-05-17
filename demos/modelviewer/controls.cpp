@@ -202,10 +202,15 @@ QString Controls::populateModelMenu()
 void Controls::loadModelDefaults(const QString &model)
 {
     QSettings settings;
+    settings.beginGroup("ModelDefaults");
+
+    QByteArray coded = QUrl::toPercentEncoding(model);
+    QString modelEncoded(coded);
+
     QVector3D p, o, e;
-    if (settings.childGroups().contains(model))
+    if (settings.childGroups().contains(modelEncoded))
     {
-        settings.beginGroup(model);
+        settings.beginGroup(modelEncoded);
         p = qvariant_cast<QVector3D>(settings.value("position", QVector3D()));
         m_view->setPosition(p);
         o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
@@ -235,10 +240,15 @@ void Controls::loadModelDefaults(const QString &model)
 void Controls::saveModelDefaults(const QString &model)
 {
     QSettings settings;
+    settings.beginGroup("ModelDefaults");
+
+    QByteArray coded = QUrl::toPercentEncoding(model);
+    QString modelEncoded(coded);
+    settings.beginGroup(modelEncoded);
+
     QVector3D p = m_view->position();
     QVector3D o = m_view->orientation();
     QVector3D e = m_view->camera()->eye();
-    settings.beginGroup(model);
     settings.setValue("position", p);
     settings.setValue("orientation", o);
     settings.setValue("eye", e);
@@ -257,9 +267,14 @@ void Controls::on_spinCheckBox_stateChanged(int state)
 
 void Controls::on_actionOpen_triggered()
 {
+    QFileDialog::Options options = 0;
+#ifdef Q_OS_LINUX
+    // work around data loss bug with KDE: https://bugs.kde.org/show_bug.cgi?id=210904
+    options = QFileDialog::DontUseNativeDialog;
+#endif
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                  QDir::homePath(),
-                                                 tr("Models (*.3ds *.obj)"));
+                                                 tr("Models (*.3ds *.obj)"), 0, options);
     if (fileName.isEmpty())
         return;
     setWindowTitle(fileName);
@@ -292,7 +307,12 @@ void Controls::optionMenuToggled(bool checked)
 void Controls::saveSettings(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup(model);
+    settings.beginGroup("ModelSettings");
+
+    QByteArray coded = QUrl::toPercentEncoding(model);
+    QString modelEncoded(coded);
+    settings.beginGroup(modelEncoded);
+
     bool forceSmooth = m_ui->actionForce_Smooth->isChecked();
     settings.setValue("ForceSmooth", forceSmooth);
     bool forceFaceted = m_ui->actionForce_Faceted->isChecked();
@@ -310,7 +330,12 @@ void Controls::saveSettings(const QString &model)
 void Controls::loadSettings(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup(model);
+    settings.beginGroup("ModelSettings");
+
+    QByteArray coded = QUrl::toPercentEncoding(model);
+    QString modelEncoded(coded);
+    settings.beginGroup(modelEncoded);
+
     bool forceSmooth = settings.value("ForceSmooth", false).toBool();
     m_ui->actionForce_Smooth->setChecked(forceSmooth);
     bool forceFaceted = settings.value("ForceFaceted", false).toBool();
@@ -327,22 +352,28 @@ void Controls::loadSettings(const QString &model)
 
 void Controls::addRecentFiles(const QString &fileName)
 {
-    qDebug() << "addRecentFiles(" << fileName << ")";
     QMenu *rf = m_ui->menuRecent_Models;
-    QSettings settings;
-    QStringList files = settings.value("RecentFiles", QStringList()).toStringList();
-    qDebug() << "current files:" << files;
+    QStringList files;
+    {
+        QSettings settings;
+        settings.beginGroup("General");
+        int numFiles = settings.beginReadArray("RecentFiles");
+        for (int i = 0; i < numFiles; ++i)
+        {
+            settings.setArrayIndex(i);
+            QByteArray coded = settings.value("file").toByteArray();
+            files.append(QUrl::fromPercentEncoding(coded));
+        }
+    }
     files.removeAll(fileName);
     files.push_front(fileName);
     if (files.size() > 10)
         files.pop_back();
-    qDebug() << "     now:" << files;
     QAction *act;
     while (rf->actions().count() > 0)
     {
         act = rf->actions().at(0);
         rf->removeAction(act);
-        qDebug() << "    removing act:" << act->text();
         delete act;
     }
     for (int i = 0; i < files.count(); ++i)
@@ -351,9 +382,21 @@ void Controls::addRecentFiles(const QString &fileName)
         connect(act, SIGNAL(triggered()),
                 this, SLOT(load()));
         rf->addAction(act);
-        qDebug() << "adding act:" << act->text();
     }
-    settings.setValue("RecentFiles", files);
+    {
+        QSettings settings;
+        settings.beginGroup("General");
+        settings.beginWriteArray("RecentFiles", files.count());
+        for (int i = 0; i < files.count(); ++i)
+        {
+            settings.setArrayIndex(i);
+            QByteArray coded = QUrl::toPercentEncoding(files.at(i));
+            settings.setValue("file", coded);
+        }
+        settings.endArray();
+        settings.endGroup();
+        settings.sync();
+    }
 }
 
 void Controls::on_actionQuit_triggered()
@@ -371,8 +414,13 @@ void Controls::on_actionSave_QML_triggered()
     QString qmlName = fi.baseName();
     qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + ".qml";
     QString path = fi.absoluteDir().absoluteFilePath(qmlName);
+    QFileDialog::Options options = 0;
+#ifdef Q_OS_LINUX
+    // work around data loss bug with KDE: https://bugs.kde.org/show_bug.cgi?id=210904
+    options = QFileDialog::DontUseNativeDialog;
+#endif
     QString file = QFileDialog::getSaveFileName(this, tr("Save QML file"), path,
-                                                tr("QML files (*.qml)"));
+                                                tr("QML files (*.qml)"), 0, options);
     if (!file.isEmpty())
     {
         QFileInfo fi2(file);
@@ -468,7 +516,26 @@ void Controls::on_floorCheckBox_toggled(bool checked)
     m_view->setFloorEnabled(checked);
 }
 
-void Controls::on_zoomSlider_valueChanged(int value)
+void Controls::on_action1_x_triggered(bool checked)
 {
-    m_view->setZoomScale(value);
+    if (checked)
+    {
+        m_view->setZoomScale(1);
+    }
+}
+
+void Controls::on_action10_x_triggered(bool checked)
+{
+    if (checked)
+    {
+        m_view->setZoomScale(10);
+    }
+}
+
+void Controls::on_action100_x_triggered(bool checked)
+{
+    if (checked)
+    {
+        m_view->setZoomScale(100);
+    }
 }

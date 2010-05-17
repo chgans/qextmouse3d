@@ -160,14 +160,15 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 void Viewer::wheelEvent(QWheelEvent *e)
 {
     emit manualControlEngaged();
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal viewDistance = viewVec.length();
-    QVector3D viewDir = viewVec.normalized();
-    qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
-    viewDistance += inc;
-    viewVec = viewDir * viewDistance;
-    camera()->setEye(viewVec + camera()->center());
     e->accept();
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal zoomMag = viewVec.length();
+    qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
+    zoomMag += inc;
+    if (zoomMag < 5.0f)
+        zoomMag = 5.0f;
+    QLine3D viewLine(camera()->center(), viewVec);
+    camera()->setEye(viewLine.point(zoomMag));
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -202,18 +203,33 @@ void Viewer::buildFloor()
             op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
         }
     }
+    for (int z = -5; z < 5; ++z)
+    {
+        QGLOperation op(m_floor, QGL::QUAD_STRIP);
+        for (int x = -5; x <= 5; ++x)
+        {
+            op << QVector3D(x, -0.01, z);
+            op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
+            op << QVector3D(x, -0.01, z+1);
+            op << QVector2D(float(x+5) / 10.0f, float(z+6) / 10.0f);
+        }
+    }
     m_floor->finalize();
-    m_floor->setEffect(QGL::FlatDecalTexture2D);
+    m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
+    qDebug() << "buildFloor: create image";
     QImage uv(sz, sz, QImage::Format_ARGB32);
+    qDebug() << "buildFloor: done create image";
     QPoint ctr(sz/2, sz/2);
-    uv.fill(qRgba(128, 128, 96, 0));
+    uv.fill(qRgba(128, 128, 96, 1));
+    qDebug() << "buildFloor: fill with colour";
     QPainter painter;
     painter.begin(&uv);
+    qDebug() << "buildFloor: begin paint";
     painter.setRenderHint(QPainter::Antialiasing);
     QPen pen = painter.pen();
     pen.setWidth(2.0);
-    pen.setColor(qRgba(128,16,16,0));
+    pen.setColor(qRgba(128,16,16,1));
     painter.setPen(pen);
     painter.drawEllipse(ctr, sz/2, sz/2);
     painter.drawEllipse(ctr, sz/4, sz/4);
@@ -302,5 +318,6 @@ void Viewer::resetView()
     camera()->setEye(QVector3D(0.0f, 0.0f, -z));
     qreal tilt = (m_view == Viewer::TopView) ? 90.0 : 15.0;
     camera()->tiltCenter(tilt);
+    qDebug() << "resetView - eye:" << camera()->eye() << "- center:" << camera()->center();
     update();
 }

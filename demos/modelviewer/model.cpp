@@ -47,6 +47,8 @@
 #include <QtCore/qsettings.h>
 #include <QtCore/qdatetime.h>
 
+#include <QIcon>
+
 Model::Model(QObject *parent)
     : QAbstractItemModel(parent)
     , m_sceneManager(0)
@@ -244,11 +246,11 @@ QVariant Model::data(const QModelIndex & index, int role) const
     else if (role == Qt::DecorationRole)
     {
         if (node == m_sceneRoot)
-            result = QPixmap(":/images/file16x16.png");
+            result = QIcon(":/images/file16x16.png");
         else if (node->childNodeList().count() > 0)
-            result = QPixmap(":/images/mesh16x16.png");
+            result = QIcon(":/images/mesh16x16.png");
         else
-            result = QPixmap(":/images/red-dot.png");
+            result = QIcon(":/images/red-dot.png");
     }
     return result;
 }
