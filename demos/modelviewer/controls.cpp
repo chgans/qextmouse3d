@@ -221,6 +221,7 @@ void Controls::loadModelDefaults(const QString &model)
         o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
         m_view->setOrientation(o);
         s = qvariant_cast<QVector3D>(settings.value("scale", QVector3D()));
+        qDebug() << "restoring scale at:" << s;
         m_view->setScale(s);
         e = QVector3D(0.0f, 2.0f, -10.0f);
         QVector3D e = qvariant_cast<QVector3D>(settings.value("eye", e));
@@ -243,9 +244,9 @@ void Controls::loadModelDefaults(const QString &model)
     m_ui->xRotSpin->setValue(o.x());
     m_ui->yRotSpin->setValue(o.y());
     m_ui->zRotSpin->setValue(o.z());
-    m_ui->xScaleSpin->setValue(s.x() < 0.0f ? (1.0f / s.x()) : s.x());
-    m_ui->yScaleSpin->setValue(s.y() < 0.0f ? (1.0f / s.y()) : s.y());
-    m_ui->zScaleSpin->setValue(s.z() < 0.0f ? (1.0f / s.z()) : s.z());
+    m_ui->xScaleSpin->setValue(s.x());
+    m_ui->yScaleSpin->setValue(s.y());
+    m_ui->zScaleSpin->setValue(s.z());
 }
 
 void Controls::saveModelDefaults(const QString &model)
@@ -263,6 +264,7 @@ void Controls::saveModelDefaults(const QString &model)
     QVector3D p = m_view->position();
     QVector3D o = m_view->orientation();
     QVector3D s = m_view->scale();
+    qDebug() << "saving scale as:" << s;
     QVector3D e = m_view->camera()->eye();
     settings.setValue("position", p);
     settings.setValue("orientation", o);
@@ -566,11 +568,16 @@ void Controls::on_xScaleSpin_valueChanged(QString )
     {
         if (m_scaleLinked)
         {
+            s = QVector3D(value, value, value);
+            m_view->setScale(s);
             m_ui->yScaleSpin->setValue(value);
             m_ui->zScaleSpin->setValue(value);
         }
-        s.setX(value);
-        m_view->setScale(s);
+        else
+        {
+            s.setX(value);
+            m_view->setScale(s);
+        }
     }
 }
 
@@ -582,11 +589,16 @@ void Controls::on_yScaleSpin_valueChanged(QString )
     {
         if (m_scaleLinked)
         {
+            s = QVector3D(value, value, value);
+            m_view->setScale(s);
             m_ui->xScaleSpin->setValue(value);
             m_ui->zScaleSpin->setValue(value);
         }
-        s.setY(value);
-        m_view->setScale(s);
+        else
+        {
+            s.setY(value);
+            m_view->setScale(s);
+        }
     }
 }
 
@@ -598,11 +610,16 @@ void Controls::on_zScaleSpin_valueChanged(QString )
     {
         if (m_scaleLinked)
         {
+            s = QVector3D(value, value, value);
+            m_view->setScale(s);
             m_ui->xScaleSpin->setValue(value);
             m_ui->yScaleSpin->setValue(value);
         }
-        s.setZ(value);
-        m_view->setScale(s);
+        else
+        {
+            s.setZ(value);
+            m_view->setScale(s);
+        }
     }
 }
 

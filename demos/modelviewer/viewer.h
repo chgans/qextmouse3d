@@ -59,8 +59,8 @@ class Viewer : public QGLView
 public:
     enum View
     {
-        TopView,
-        FrontView
+        FrontView,
+        TopView
     };
 
     Viewer(QWidget *parent = 0);

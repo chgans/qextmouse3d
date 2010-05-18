@@ -53,6 +53,7 @@
 
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
+#include <QtCore/qmath.h>
 
 #include <math.h>
 
@@ -133,7 +134,7 @@ void Viewer::setScale(const QVector3D &s)
     if (!qFuzzyCompare(s, m_scale))
     {
         m_scale = s;
-        qDebug() << "Scale set to:" << s;
+        qDebug() << "scale set to:" << s;
         update();
     }
 }
@@ -340,7 +341,7 @@ void Viewer::paintGL(QGLPainter *painter)
                 s.setZ(1.0f);
             else if (s.z() < 0.0f)
                 s.setZ(1.0f / qAbs(s.z()));
-            painter->modelViewMatrix().scale(m_scale);
+            painter->modelViewMatrix().scale(s);
         }
 
         m_model->scene()->draw(painter);
@@ -370,18 +371,33 @@ void Viewer::animate()
 
 void Viewer::enableAnimation(bool enabled)
 {
+    resetView();
     m_animate = enabled;
 }
 
 void Viewer::resetView()
 {
-    qDebug() << "resetting view - FROM eye:" << camera()->eye() << "-- center:" << camera()->center();
-    QVector3D e = camera()->eye();
-    QVector3D c = camera()->center();
-    qreal z = (e - c).length();
-    camera()->setEye(QVector3D(0.0f, 0.0f, -z));
-    qreal tilt = (m_view == Viewer::TopView) ? 90.0 : 15.0;
-    camera()->tiltCenter(tilt);
-    qDebug() << "                 TO eye:" << camera()->eye() << "-- center:" << camera()->center();
+    QVector3D origin = camera()->center();
+    QVector3D eye = camera()->eye();
+    QVector3D up = camera()->upVector();
+    QVector3D viewVec = eye - origin;
+    qreal zoomMag = qAbs(viewVec.length());
+    eye = origin;
+    if (m_view == TopView)
+    {
+        eye.setY(eye.y() + zoomMag);
+        up = QVector3D(0.0f, 0.0f, 1.0f);
+    }
+    else
+    {
+        const qreal FRONT_VIEW_ANGLE = (M_PI / 12.0f);
+        qreal y = zoomMag * qSin(FRONT_VIEW_ANGLE);
+        qreal z = zoomMag * qCos(FRONT_VIEW_ANGLE);
+        eye = QVector3D(0.0f, y, z);
+        up = QVector3D(0.0f, z, y);
+    }
+    camera()->setEye(eye);
+    camera()->setCenter(QVector3D());
+    camera()->setUpVector(up);
     update();
 }
