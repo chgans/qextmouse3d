@@ -58,6 +58,7 @@ Controls::Controls(QWidget *parent)
     : QMainWindow(parent)
     , m_ui(new Ui::Controls)
     , m_view(0)
+    , m_scaleLinked(true)
 {
     m_ui->setupUi(this);
     connect(m_ui->actionQuit, SIGNAL(triggered()),
@@ -175,6 +176,9 @@ QString Controls::populateModelMenu()
         }
     }
     QString cmdlineModel;
+    QSettings settings;
+    settings.beginGroup("General");
+    cmdlineModel = settings.value("LastModel").toString();
     QStringList args = qApp->arguments();
     int ix = args.indexOf(QLatin1String("--model"));
     if (ix == -1)
@@ -207,7 +211,8 @@ void Controls::loadModelDefaults(const QString &model)
     QByteArray coded = QUrl::toPercentEncoding(model);
     QString modelEncoded(coded);
 
-    QVector3D p, o, e;
+    QVector3D p, o, s, e;
+    bool spin = false;
     if (settings.childGroups().contains(modelEncoded))
     {
         settings.beginGroup(modelEncoded);
@@ -215,9 +220,12 @@ void Controls::loadModelDefaults(const QString &model)
         m_view->setPosition(p);
         o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
         m_view->setOrientation(o);
+        s = qvariant_cast<QVector3D>(settings.value("scale", QVector3D()));
+        m_view->setScale(s);
         e = QVector3D(0.0f, 2.0f, -10.0f);
         QVector3D e = qvariant_cast<QVector3D>(settings.value("eye", e));
         m_view->camera()->setEye(e);
+        spin = settings.value("spin", false).toBool();
     }
     else
     {
@@ -235,11 +243,17 @@ void Controls::loadModelDefaults(const QString &model)
     m_ui->xRotSpin->setValue(o.x());
     m_ui->yRotSpin->setValue(o.y());
     m_ui->zRotSpin->setValue(o.z());
+    m_ui->xScaleSpin->setValue(s.x() < 0.0f ? (1.0f / s.x()) : s.x());
+    m_ui->yScaleSpin->setValue(s.y() < 0.0f ? (1.0f / s.y()) : s.y());
+    m_ui->zScaleSpin->setValue(s.z() < 0.0f ? (1.0f / s.z()) : s.z());
 }
 
 void Controls::saveModelDefaults(const QString &model)
 {
     QSettings settings;
+    settings.beginGroup("General");
+    settings.setValue("LastModel", model);
+    settings.endGroup();
     settings.beginGroup("ModelDefaults");
 
     QByteArray coded = QUrl::toPercentEncoding(model);
@@ -248,10 +262,13 @@ void Controls::saveModelDefaults(const QString &model)
 
     QVector3D p = m_view->position();
     QVector3D o = m_view->orientation();
+    QVector3D s = m_view->scale();
     QVector3D e = m_view->camera()->eye();
     settings.setValue("position", p);
     settings.setValue("orientation", o);
+    settings.setValue("scale", s);
     settings.setValue("eye", e);
+    settings.setValue("spin", m_ui->spinCheckBox->isChecked());
 }
 
 void Controls::on_spinCheckBox_stateChanged(int state)
@@ -469,48 +486,6 @@ void Controls::on_actionShow_Floor_triggered()
     m_ui->floorCheckBox->setChecked(m_ui->actionShow_Floor->isChecked());
 }
 
-void Controls::on_xRotSpin_editingFinished()
-{
-    QVector3D o = m_view->orientation();
-    o.setX(m_ui->xRotSpin->value());
-    m_view->setPosition(o);
-}
-
-void Controls::on_yRotSpin_editingFinished()
-{
-    QVector3D o = m_view->orientation();
-    o.setY(m_ui->yRotSpin->value());
-    m_view->setPosition(o);
-}
-
-void Controls::on_zRotSpin_editingFinished()
-{
-    QVector3D o = m_view->orientation();
-    o.setZ(m_ui->zRotSpin->value());
-    m_view->setPosition(o);
-}
-
-void Controls::on_xTranSpin_editingFinished()
-{
-    QVector3D p = m_view->position();
-    p.setX(m_ui->xTranSpin->value());
-    m_view->setPosition(p);
-}
-
-void Controls::on_yTranSpin_editingFinished()
-{
-    QVector3D p = m_view->position();
-    p.setY(m_ui->yTranSpin->value());
-    m_view->setPosition(p);
-}
-
-void Controls::on_zTranSpin_editingFinished()
-{
-    QVector3D p = m_view->position();
-    p.setZ(m_ui->zTranSpin->value());
-    m_view->setPosition(p);
-}
-
 void Controls::on_floorCheckBox_toggled(bool checked)
 {
     m_view->setFloorEnabled(checked);
@@ -537,5 +512,114 @@ void Controls::on_action100_x_triggered(bool checked)
     if (checked)
     {
         m_view->setZoomScale(100);
+    }
+}
+
+void Controls::on_xRotSpin_valueChanged(QString value)
+{
+    Q_UNUSED(value);
+    QVector3D o = m_view->orientation();
+    o.setX(m_ui->xRotSpin->value());
+    m_view->setOrientation(o);
+}
+
+void Controls::on_yRotSpin_valueChanged(QString )
+{
+    QVector3D o = m_view->orientation();
+    o.setY(m_ui->yRotSpin->value());
+    m_view->setOrientation(o);
+}
+
+void Controls::on_zRotSpin_valueChanged(QString )
+{
+    QVector3D o = m_view->orientation();
+    o.setZ(m_ui->zRotSpin->value());
+    m_view->setOrientation(o);
+}
+
+void Controls::on_xTranSpin_valueChanged(QString )
+{
+    QVector3D p = m_view->position();
+    p.setX(m_ui->xTranSpin->value());
+    m_view->setPosition(p);
+}
+
+void Controls::on_yTranSpin_valueChanged(QString )
+{
+    QVector3D p = m_view->position();
+    p.setY(m_ui->yTranSpin->value());
+    m_view->setPosition(p);
+}
+
+void Controls::on_zTranSpin_valueChanged(QString )
+{
+    QVector3D p = m_view->position();
+    p.setZ(m_ui->zTranSpin->value());
+    m_view->setPosition(p);
+}
+
+void Controls::on_xScaleSpin_valueChanged(QString )
+{
+    QVector3D s = m_view->scale();
+    qreal value = m_ui->xScaleSpin->value();
+    if (s.x() != value)
+    {
+        if (m_scaleLinked)
+        {
+            m_ui->yScaleSpin->setValue(value);
+            m_ui->zScaleSpin->setValue(value);
+        }
+        s.setX(value);
+        m_view->setScale(s);
+    }
+}
+
+void Controls::on_yScaleSpin_valueChanged(QString )
+{
+    QVector3D s = m_view->scale();
+    qreal value = m_ui->yScaleSpin->value();
+    if (s.y() != value)
+    {
+        if (m_scaleLinked)
+        {
+            m_ui->xScaleSpin->setValue(value);
+            m_ui->zScaleSpin->setValue(value);
+        }
+        s.setY(value);
+        m_view->setScale(s);
+    }
+}
+
+void Controls::on_zScaleSpin_valueChanged(QString )
+{
+    QVector3D s = m_view->scale();
+    qreal value = m_ui->zScaleSpin->value();
+    if (s.z() != value)
+    {
+        if (m_scaleLinked)
+        {
+            m_ui->xScaleSpin->setValue(value);
+            m_ui->yScaleSpin->setValue(value);
+        }
+        s.setZ(value);
+        m_view->setScale(s);
+    }
+}
+
+void Controls::on_lockButton_clicked()
+{
+    if (m_scaleLinked)
+    {
+        m_ui->lockButton->setIcon(QIcon(":/images/linked-broken-32x32.png"));
+        m_ui->lockButton->setToolTip(tr("Click to link X, Y & Z scale values"));
+        m_scaleLinked = false;
+    }
+    else
+    {
+        m_ui->lockButton->setIcon(QIcon(":/images/linked-32x32.png"));
+        m_ui->lockButton->setToolTip(tr("Click to unlink X, Y & Z scale values"));
+        m_scaleLinked = true;
+        m_ui->yScaleSpin->setValue(m_ui->xScaleSpin->value());
+        m_ui->zScaleSpin->setValue(m_ui->xScaleSpin->value());
     }
 }

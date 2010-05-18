@@ -49,6 +49,7 @@
 
 #include <QtGui/qmessagebox.h>
 #include <QtGui/qevent.h>
+#include <QTextItem>
 
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
@@ -61,7 +62,7 @@ Viewer::Viewer(QWidget *parent)
     , m_model(0)
     , m_lightModel(0)
     , m_lightParameters(0)
-    , m_animate(true)
+    , m_animate(false)
     , m_warningDisplayed(false)
     , m_floor(0)
     , m_drawFloor(true)
@@ -118,6 +119,21 @@ void Viewer::setOrientation(const QVector3D &r)
     if (!qFuzzyCompare(r, m_orientation))
     {
         m_orientation = r;
+        update();
+    }
+}
+
+QVector3D Viewer::scale() const
+{
+    return m_scale;
+}
+
+void Viewer::setScale(const QVector3D &s)
+{
+    if (!qFuzzyCompare(s, m_scale))
+    {
+        m_scale = s;
+        qDebug() << "Scale set to:" << s;
         update();
     }
 }
@@ -192,15 +208,15 @@ void Viewer::buildFloor()
 {
     m_floor = new QGLDisplayList(this);
     m_floor->newSection();
-    for (int z = -5; z < 5; ++z)
+    for (int x = -5; x < 5; ++x)
     {
         QGLOperation op(m_floor, QGL::QUAD_STRIP);
-        for (int x = -5; x <= 5; ++x)
+        for (int z = -5; z <= 5; ++z)
         {
-            op << QVector3D(x, 0, z+1);
-            op << QVector2D(float(x+5) / 10.0f, float(z+6) / 10.0f);
             op << QVector3D(x, 0, z);
-            op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
+            op << QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f);
+            op << QVector3D(x + 1, 0, z);
+            op << QVector2D(float(-x - 6) / 10.0f, float(z + 5) / 10.0f);
         }
     }
     for (int z = -5; z < 5; ++z)
@@ -209,9 +225,9 @@ void Viewer::buildFloor()
         for (int x = -5; x <= 5; ++x)
         {
             op << QVector3D(x, -0.01, z);
-            op << QVector2D(float(x+5) / 10.0f, float(z+5) / 10.0f);
-            op << QVector3D(x, -0.01, z+1);
-            op << QVector2D(float(x+5) / 10.0f, float(z+6) / 10.0f);
+            op << QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f);
+            op << QVector3D(x, -0.01, z + 1);
+            op << QVector2D(float(-x - 5) / 10.0f, float(z + 6) / 10.0f);
         }
     }
     m_floor->finalize();
@@ -230,8 +246,30 @@ void Viewer::buildFloor()
     painter.drawEllipse(ctr, sz/2, sz/2);
     painter.drawEllipse(ctr, sz/4, sz/4);
     painter.drawEllipse(ctr, 3*sz/4, 3*sz/4);
-    painter.drawLine(QPointF(0, sz/2), QPointF(sz, sz/2));
-    painter.drawLine(QPointF(sz/2, 0), QPointF(sz/2, sz));
+    QPointF leftMiddle(0, sz/2);
+    QPointF rightMiddle(sz, sz/2);
+    painter.drawLine(leftMiddle, rightMiddle);
+    QPointF bottomMiddle(sz/2, 0);
+    QPointF topMiddle(sz/2, sz);
+    painter.drawLine(bottomMiddle, topMiddle);
+    QFont font = painter.font();
+    font.setBold(true);
+    font.setPixelSize(font.pixelSize() * 1.5);
+    QFontMetrics fm = painter.fontMetrics();
+    QRectF rmx = fm.boundingRect("-X");
+    QRectF rx = fm.boundingRect("X");
+    topMiddle.setX(topMiddle.x() + 2);
+    topMiddle.setY(topMiddle.y() - rmx.height());
+    bottomMiddle.setX(bottomMiddle.x() + 2);
+    bottomMiddle.setY(bottomMiddle.y() + rx.height() + 2);
+    leftMiddle.setX(leftMiddle.x() + 2);
+    leftMiddle.setY(leftMiddle.y() + rx.height() + 2);
+    rightMiddle.setX(rightMiddle.x() - rx.width() - 2);
+    rightMiddle.setY(rightMiddle.y() + rx.height() + 2);
+    painter.drawText(topMiddle, "-Z");
+    painter.drawText(bottomMiddle, "Z");
+    painter.drawText(leftMiddle, "-X");
+    painter.drawText(rightMiddle, "X");
     painter.end();
     QGLMaterial *mat = new QGLMaterial(m_floor);
     QGLTexture2D *tex = new QGLTexture2D(mat);
@@ -276,6 +314,35 @@ void Viewer::paintGL(QGLPainter *painter)
 
         painter->modelViewMatrix().translate(m_position);
 
+        if (!m_orientation.isNull())
+        {
+            QQuaternion xt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(1.0f, 0.0f, 0.0f), m_orientation.x());
+            QQuaternion yt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(0.0f, 1.0f, 0.0f), m_orientation.y());
+            QQuaternion zt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(0.0f, 0.0f, 1.0f), m_orientation.z());
+            painter->modelViewMatrix().rotate(zt * yt * xt);
+        }
+
+        if (!m_scale.isNull())
+        {
+            QVector3D s = m_scale;
+            if (qFuzzyIsNull(s.x()))
+                s.setX(1.0f);
+            else if (s.x() < 0.0f)
+                s.setX(1.0f / qAbs(s.x()));
+            if (qFuzzyIsNull(s.y()))
+                s.setY(1.0f);
+            else if (s.y() < 0.0f)
+                s.setY(1.0f / qAbs(s.y()));
+            if (qFuzzyIsNull(s.z()))
+                s.setZ(1.0f);
+            else if (s.z() < 0.0f)
+                s.setZ(1.0f / qAbs(s.z()));
+            painter->modelViewMatrix().scale(m_scale);
+        }
+
         m_model->scene()->draw(painter);
 
         painter->modelViewMatrix().pop();
@@ -308,11 +375,13 @@ void Viewer::enableAnimation(bool enabled)
 
 void Viewer::resetView()
 {
+    qDebug() << "resetting view - FROM eye:" << camera()->eye() << "-- center:" << camera()->center();
     QVector3D e = camera()->eye();
     QVector3D c = camera()->center();
     qreal z = (e - c).length();
     camera()->setEye(QVector3D(0.0f, 0.0f, -z));
     qreal tilt = (m_view == Viewer::TopView) ? 90.0 : 15.0;
     camera()->tiltCenter(tilt);
+    qDebug() << "                 TO eye:" << camera()->eye() << "-- center:" << camera()->center();
     update();
 }

@@ -7,5 +7,7 @@
         <file>images/file16x16.png</file>
         <file>images/mesh16x16.png</file>
         <file>images/red-dot.png</file>
+        <file>images/linked-32x32.png</file>
+        <file>images/linked-broken-32x32.png</file>
     </qresource>
 </RCC>

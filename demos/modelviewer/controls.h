@@ -69,17 +69,21 @@ protected:
     void changeEvent(QEvent *e);
 
 private slots:
+    void on_lockButton_clicked();
+    void on_zScaleSpin_valueChanged(QString );
+    void on_yScaleSpin_valueChanged(QString );
+    void on_xScaleSpin_valueChanged(QString );
+    void on_zTranSpin_valueChanged(QString );
+    void on_yTranSpin_valueChanged(QString );
+    void on_xTranSpin_valueChanged(QString );
+    void on_zRotSpin_valueChanged(QString );
+    void on_yRotSpin_valueChanged(QString );
+    void on_xRotSpin_valueChanged(QString );
     void on_action100_x_triggered(bool checked);
     void on_action10_x_triggered(bool checked);
     void on_action1_x_triggered(bool checked);
     void setManualControl();
     void on_floorCheckBox_toggled(bool checked);
-    void on_zTranSpin_editingFinished();
-    void on_yTranSpin_editingFinished();
-    void on_xTranSpin_editingFinished();
-    void on_zRotSpin_editingFinished();
-    void on_yRotSpin_editingFinished();
-    void on_xRotSpin_editingFinished();
     void on_actionShow_Floor_triggered();
     void on_actionSpin_triggered();
     void on_viewComboBox_currentIndexChanged(int);
@@ -103,6 +107,7 @@ private:
     Viewer *m_view;
     Model *m_model;
     QLabel *m_triangleCount;
+    bool m_scaleLinked;
 };
 
 #endif // CONTROLS_H

@@ -76,6 +76,8 @@ public:
     void setPosition(const QVector3D &t);
     QVector3D orientation() const;
     void setOrientation(const QVector3D &r);
+    QVector3D scale() const;
+    void setScale(const QVector3D &s);
     void resetView();
     int zoomScale() { return m_zoomScale; }
     void setZoomScale(int scale);
@@ -104,6 +106,7 @@ private:
 
     QVector3D m_orientation;
     QVector3D m_position;
+    QVector3D m_scale;
     QTimer *m_timer;
     Model *m_model;
     QGLLightModel *m_lightModel;
