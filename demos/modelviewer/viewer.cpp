@@ -134,7 +134,6 @@ void Viewer::setScale(const QVector3D &s)
     if (!qFuzzyCompare(s, m_scale))
     {
         m_scale = s;
-        qDebug() << "scale set to:" << s;
         update();
     }
 }

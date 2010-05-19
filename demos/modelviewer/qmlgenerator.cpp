@@ -69,7 +69,82 @@ void QmlGenerator::save() const
         item3d.addProperty("mesh", &mesh);
 
         mesh.addProperty("source", property("modelFileName"));
-        mesh.addProperty("options", property("options", QmlGenerator::Optional));
+        mesh.addProperty("options", property("options", Optional));
+
+        QmlStanza xtq("Translation3D");
+        QString x_t = property("x_translation", Optional);
+        if (!x_t.isEmpty())
+        {
+            xtq.addProperty("xTranslate", x_t);
+            item3d.addProperty("transform", &xtq);
+        }
+
+        QmlStanza ytq("Translation3D");
+        QString y_t = property("y_translation", Optional);
+        if (!y_t.isEmpty())
+        {
+            ytq.addProperty("yTranslate", y_t);
+            item3d.addProperty("transform", &ytq);
+        }
+
+        QmlStanza ztq("Translation3D");
+        QString z_t = property("z_translation", Optional);
+        if (!z_t.isEmpty())
+        {
+            ztq.addProperty("zTranslate", z_t);
+            item3d.addProperty("transform", &ztq);
+        }
+
+        QmlStanza xrq("Rotation3D");
+        QString x_r = property("x_rotation", Optional);
+        if (!x_r.isEmpty())
+        {
+            xrq.addProperty("angle", x_r);
+            xrq.addProperty("axis", "Qt.vector3d(1, 0, 0)");
+            item3d.addProperty("transform", &xrq);
+        }
+
+        QmlStanza yrq("Rotation3D");
+        QString y_r = property("y_rotation", Optional);
+        if (!y_r.isEmpty())
+        {
+            yrq.addProperty("angle", y_r);
+            yrq.addProperty("axis", "Qt.vector3d(0, 1, 0)");
+            item3d.addProperty("transform", &yrq);
+        }
+
+        QmlStanza zrq("Rotation3D");
+        QString z_r = property("z_rotation", Optional);
+        if (!z_r.isEmpty())
+        {
+            zrq.addProperty("angle", z_r);
+            zrq.addProperty("axis", "Qt.vector3d(0, 0, 1)");
+            item3d.addProperty("transform", &xrq);
+        }
+
+        QmlStanza xsq("Scale3D");
+        QString x_s = property("x_scale", Optional);
+        if (!x_s.isEmpty())
+        {
+            xsq.addProperty("xScale", x_s);
+            item3d.addProperty("transform", &xsq);
+        }
+
+        QmlStanza ysq("Scale3D");
+        QString y_s = property("y_scale", Optional);
+        if (!y_s.isEmpty())
+        {
+            ysq.addProperty("yScale", y_s);
+            item3d.addProperty("transform", &ysq);
+        }
+
+        QmlStanza zsq("Scale3D");
+        QString z_s = property("z_scale", Optional);
+        if (!z_s.isEmpty())
+        {
+            zsq.addProperty("zScale", z_s);
+            item3d.addProperty("transform", &zsq);
+        }
 
         os << item3d;
     }

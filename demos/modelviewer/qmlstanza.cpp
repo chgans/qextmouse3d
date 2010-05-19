@@ -42,6 +42,8 @@
 
 #include "qmlstanza.h"
 
+#include <QtCore/qdebug.h>
+
 QmlStanza::QmlStanza(const QString &name, QObject *parent)
     : QObject(parent)
     , m_name(name)
@@ -58,18 +60,43 @@ QString QmlStanza::toString() const
     if (m_content.size() > 0)
     {
         result += " {\n";
-        QMap<QString, QmlStanza *>::const_iterator it = m_content.constBegin();
-        for ( ; it != m_content.constEnd(); ++it)
+        QStringList::const_iterator kit = m_keys.constBegin();
+        for ( ; kit != m_keys.constEnd(); ++kit)
         {
-            QmlStanza *s = it.value();
+            QString k = *kit;
             result += indent.repeated(m_indent + 1);
-            result += it.key() + ": ";
-            if (s->isQuoted())
-                result += QString("\"%1\"\n").arg(s->toString());
+            result += k + ": ";
+            QList<QmlStanza*> values;
+            QMap<QString, QmlStanza *>::const_iterator it = m_content.constFind(k);
+            for ( ; it != m_content.constEnd() && it.key() == k; ++it)
+                values.append(it.value());
+            if (values.count() > 1)
+            {
+                result += "[\n";
+                int ind = m_indent + 1;
+                QList<QmlStanza*>::const_iterator qit = values.constBegin();
+                for ( ; qit != values.constEnd(); ++qit)
+                {
+                    QmlStanza *s = *qit;
+                    s->setIndent(ind+1);
+                    result += indent.repeated(ind + 1);
+                    if (s->isQuoted())
+                        result += QString("\"%1\",\n").arg(s->toString());
+                    else
+                        result += s->toString() + ",\n";
+                }
+                result += indent.repeated(m_indent + 1) + "]\n";
+            }
             else
-                result += s->toString() + "\n";
+            {
+                QmlStanza *s = values.at(0);
+                if (s->isQuoted())
+                    result += QString("\"%1\"\n").arg(s->toString());
+                else
+                    result += s->toString() + "\n";
+            }
         }
-        result += indent.repeated(m_indent) + "}";
+        result += indent.repeated(m_indent + 1) + "}";
     }
     return result;
 }
@@ -88,6 +115,8 @@ void QmlStanza::addProperty(const QString &name, QmlStanza *subItem)
 {
     subItem->setIndent(m_indent + 1);
     m_content.insertMulti(name, subItem);
+    if (!m_keys.contains(name))
+        m_keys.append(name);
 }
 
 QTextStream &operator<<(QTextStream &s, const QmlStanza &q)

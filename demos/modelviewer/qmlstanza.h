@@ -45,6 +45,7 @@
 #include <QtCore/qtextstream.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qobject.h>
+#include <QtCore/qstringlist.h>
 
 class QmlStanza : public QObject
 {
@@ -62,6 +63,7 @@ private:
     int m_indent;
     bool m_quoted;
     QMap<QString, QmlStanza *> m_content;
+    QStringList m_keys;
 };
 
 QTextStream &operator<<(QTextStream &, const QmlStanza &);

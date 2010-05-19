@@ -59,7 +59,11 @@ Model::Model(QObject *parent)
 QString Model::getOptions() const
 {
     QSettings settings;
-    settings.beginGroup(m_fullPath);
+    settings.beginGroup("ModelSettings");
+    QByteArray coded = QUrl::toPercentEncoding(m_fullPath);
+    QString modelEncoded(coded);
+    settings.beginGroup(modelEncoded);
+
     QString options;
     QStringList keys = settings.childKeys();
     QStringList groups = settings.childGroups();
@@ -110,16 +114,13 @@ QStringList Model::components() const
 
 void Model::setFullPath(const QString &path)
 {
-    if (path != m_fullPath)
-    {
-        if (!m_fullPath.isEmpty())
-            emit modelUnloaded(m_fullPath);
-        m_fullPath = path;
-        importModel();
-        if (m_sceneRoot)
-            emit modelLoaded(m_fullPath);
-        reset();
-    }
+    if (!m_fullPath.isEmpty())
+        emit modelUnloaded(m_fullPath);
+    m_fullPath = path;
+    importModel();
+    if (m_sceneRoot)
+        emit modelLoaded(m_fullPath);
+    reset();
 }
 
 void Model::importModel()

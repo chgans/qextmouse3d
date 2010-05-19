@@ -221,7 +221,6 @@ void Controls::loadModelDefaults(const QString &model)
         o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
         m_view->setOrientation(o);
         s = qvariant_cast<QVector3D>(settings.value("scale", QVector3D()));
-        qDebug() << "restoring scale at:" << s;
         m_view->setScale(s);
         e = QVector3D(0.0f, 2.0f, -10.0f);
         QVector3D e = qvariant_cast<QVector3D>(settings.value("eye", e));
@@ -264,7 +263,6 @@ void Controls::saveModelDefaults(const QString &model)
     QVector3D p = m_view->position();
     QVector3D o = m_view->orientation();
     QVector3D s = m_view->scale();
-    qDebug() << "saving scale as:" << s;
     QVector3D e = m_view->camera()->eye();
     settings.setValue("position", p);
     settings.setValue("orientation", o);
@@ -454,6 +452,27 @@ void Controls::on_actionSave_QML_triggered()
         QString options = m_model->getOptions();
         if (!options.isEmpty())
             gen.setProperty("options", options);
+        QVector3D p = m_view->position();
+        if (!qFuzzyIsNull(p.x()))
+            gen.setProperty("x_translation", QString::number(p.x()));
+        if (!qFuzzyIsNull(p.y()))
+            gen.setProperty("y_translation", QString::number(p.y()));
+        if (!qFuzzyIsNull(p.z()))
+            gen.setProperty("z_translation", QString::number(p.z()));
+        QVector3D o = m_view->orientation();
+        if (!qFuzzyIsNull(o.x()))
+            gen.setProperty("x_rotation", QString::number(o.x()));
+        if (!qFuzzyIsNull(o.y()))
+            gen.setProperty("y_rotation", QString::number(o.y()));
+        if (!qFuzzyIsNull(o.z()))
+            gen.setProperty("z_rotation", QString::number(o.z()));
+        QVector3D s = m_view->scale();
+        if (!qFuzzyIsNull(s.x()))
+            gen.setProperty("x_scale", QString::number(s.x()));
+        if (!qFuzzyIsNull(s.y()))
+            gen.setProperty("y_scale", QString::number(s.y()));
+        if (!qFuzzyIsNull(s.z()))
+            gen.setProperty("z_scale", QString::number(s.z()));
         gen.save();
     }
 }
