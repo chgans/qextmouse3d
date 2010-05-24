@@ -39,61 +39,39 @@
 **
 ****************************************************************************/
 
-#ifndef QGLSCENEOBJECT_H
-#define QGLSCENEOBJECT_H
+#ifndef QGLPICKNODE_H
+#define QGLPICKNODE_H
 
-#include "qt3dglobal.h"
 #include <QtCore/qobject.h>
 
-QT_BEGIN_HEADER
+class QGLAbstractScene;
+class QGLSceneObject;
+class QEvent;
 
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-class QGLSceneObjectPrivate;
-class QGLPainter;
-class QGLPickNode;
-
-class Q_QT3D_EXPORT QGLSceneObject : public QObject
+class QGLPickNode : public QObject
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLSceneObject);
 public:
-    virtual ~QGLSceneObject();
+    explicit QGLPickNode(QGLAbstractScene *parent = 0);
+    int id() const { return m_id; }
+    void setId(int id) { m_id = id; }
 
-    enum Type
-    {
-        Camera,
-        Effect,
-        Light,
-        Main,
-        Mesh,
-        World
-    };
+    QGLSceneObject *target() const { return m_target; }
+    void setTarget(QGLSceneObject *target) { m_target = target; }
 
-    QGLSceneObject::Type type() const;
+signals:
+    void pressed();
+    void released();
+    void clicked();
+    void doubleClicked();
+    void hoverChanged();
 
-    virtual void apply(QGLPainter *painter);
-    virtual void draw(QGLPainter *painter);
-    virtual void cleanup(QGLPainter *painter);
-
-    virtual QGLPickNode *pickNode() const;
-    virtual void setPickNode(QGLPickNode *node);
-
-Q_SIGNALS:
-    void changed();
+public slots:
 
 protected:
-    QGLSceneObject(QGLSceneObjectPrivate &dd, QObject *parent = 0);
-    explicit QGLSceneObject(QGLSceneObject::Type type, QObject *parent = 0);
-
-private:
-    Q_DISABLE_COPY(QGLSceneObject)
+    bool event(QEvent *e);
+    int m_id;
+    QGLSceneObject *m_target;
 };
 
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+#endif // QGLPICKNODE_H

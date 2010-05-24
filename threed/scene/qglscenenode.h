@@ -148,6 +148,9 @@ public:
     virtual void draw(QGLPainter *painter);
     virtual void apply(QGLPainter *painter);
 
+    virtual QGLPickNode *pickNode() const;
+    virtual void setPickNode(QGLPickNode *node);
+
     Q_INVOKABLE QGLSceneNode *clone(QObject *parent = 0) const;
     Q_INVOKABLE QGLSceneNode *allExcept(const QString &name, QObject *parent = 0) const;
     Q_INVOKABLE QGLSceneNode *only(const QString &name, QObject *parent = 0) const;
