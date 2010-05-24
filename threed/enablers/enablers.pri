@@ -10,6 +10,7 @@ HEADERS += \
     qglvertexbuffer.h \
     qarray.h \
     qcustomdataarray.h \
+    qstereoimage.h \
     qvectorarray.h \
     qt3dglobal.h
 SOURCES += qglattributevalue.cpp \
@@ -23,6 +24,7 @@ SOURCES += qglattributevalue.cpp \
     qarray.cpp \
     qareaallocator.cpp \
     qcustomdataarray.cpp \
+    qstereoimage.cpp \
     qvectorarray.cpp
 PRIVATE_HEADERS += \
     qgltexture2d_p.h \

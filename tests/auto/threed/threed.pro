@@ -18,7 +18,8 @@ SUBDIRS = \
     qgldisplaylist \
     qglsection \
     qgeometrydata \
-    qgloperation
+    qgloperation \
+    qstereoimage
 
 TO_BE_PORTED = \
     qglcube
