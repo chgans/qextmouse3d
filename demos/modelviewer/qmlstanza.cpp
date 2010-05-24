@@ -96,17 +96,17 @@ QString QmlStanza::toString() const
                     result += s->toString() + "\n";
             }
         }
-        result += indent.repeated(m_indent + 1) + "}";
+        result += indent.repeated(m_indent) + "}";
     }
     return result;
 }
 
-void QmlStanza::addProperty(const QString &name, const QString &value)
+void QmlStanza::addProperty(const QString &name, const QString &value, bool quoted)
 {
     if (!name.isEmpty() && !value.isEmpty())
     {
         QmlStanza *s = new QmlStanza(value, this);
-        s->setQuoted(true);
+        s->setQuoted(quoted);
         addProperty(name, s);
     }
 }

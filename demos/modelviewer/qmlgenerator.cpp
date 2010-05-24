@@ -61,15 +61,15 @@ void QmlGenerator::save() const
     {
         QTextStream os(&f);
         os << "import Qt 4.7" << endl;
-        os << "import Qt.labs.threed 1.0" << endl;
+        os << "import Qt.labs.threed 1.0" << endl << endl;
 
         QmlStanza item3d("Item3d");
 
         QmlStanza mesh("Mesh");
         item3d.addProperty("mesh", &mesh);
 
-        mesh.addProperty("source", property("modelFileName"));
-        mesh.addProperty("options", property("options", Optional));
+        mesh.addProperty("source", property("modelFileName"), true);
+        mesh.addProperty("options", property("options", Optional), true);
 
         QmlStanza xtq("Translation3D");
         QString x_t = property("x_translation", Optional);

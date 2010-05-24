@@ -67,6 +67,7 @@
 #endif
 
 class QGLAbstractEffect;
+class QGLPickNode;
 
 class QGLSceneNodePrivate : public QGLSceneObjectPrivate
 {
@@ -83,6 +84,7 @@ public:
         , count(0)
         , isVisible(true)
         , viewNormals(false)
+        , pickNode(0)
     {
     }
 
@@ -108,6 +110,7 @@ public:
     int count;
     bool isVisible;
     bool viewNormals;
+    QGLPickNode *pickNode;
 };
 
 #endif // QGLSCENENODE_P_H

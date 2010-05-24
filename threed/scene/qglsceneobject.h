@@ -53,6 +53,7 @@ QT_MODULE(Qt3d)
 
 class QGLSceneObjectPrivate;
 class QGLPainter;
+class QGLPickNode;
 
 class Q_QT3D_EXPORT QGLSceneObject : public QObject
 {
@@ -76,6 +77,9 @@ public:
     virtual void apply(QGLPainter *painter);
     virtual void draw(QGLPainter *painter);
     virtual void cleanup(QGLPainter *painter);
+
+    virtual QGLPickNode *pickNode() const;
+    virtual void setPickNode(QGLPickNode *node);
 
 Q_SIGNALS:
     void changed();

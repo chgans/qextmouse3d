@@ -39,33 +39,39 @@
 **
 ****************************************************************************/
 
-#ifndef QMLSTANZA_H
-#define QMLSTANZA_H
+#ifndef QGLPICKNODE_H
+#define QGLPICKNODE_H
 
-#include <QtCore/qtextstream.h>
-#include <QtCore/qmap.h>
 #include <QtCore/qobject.h>
-#include <QtCore/qstringlist.h>
 
-class QmlStanza : public QObject
+class QGLAbstractScene;
+class QGLSceneObject;
+class QEvent;
+
+class QGLPickNode : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 public:
-    explicit QmlStanza(const QString &name, QObject *parent = 0);
-    QString toString() const;
-    void addProperty(const QString &name, QmlStanza *subItem);
-    void addProperty(const QString &name, const QString &value, bool quoted = false);
-    void setIndent(int indent) { m_indent = indent; }
-    void setQuoted(bool enable) { m_quoted = enable; }
-    bool isQuoted() const { return m_quoted; }
-private:
-    QString m_name;
-    int m_indent;
-    bool m_quoted;
-    QMap<QString, QmlStanza *> m_content;
-    QStringList m_keys;
+    explicit QGLPickNode(QGLAbstractScene *parent = 0);
+    int id() const { return m_id; }
+    void setId(int id) { m_id = id; }
+
+    QGLSceneObject *target() const { return m_target; }
+    void setTarget(QGLSceneObject *target) { m_target = target; }
+
+signals:
+    void pressed();
+    void released();
+    void clicked();
+    void doubleClicked();
+    void hoverChanged();
+
+public slots:
+
+protected:
+    bool event(QEvent *e);
+    int m_id;
+    QGLSceneObject *m_target;
 };
 
-QTextStream &operator<<(QTextStream &, const QmlStanza &);
-
-#endif // QMLSTANZA_H
+#endif // QGLPICKNODE_H

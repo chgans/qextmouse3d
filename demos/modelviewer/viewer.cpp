@@ -46,6 +46,8 @@
 #include "qglpainter.h"
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
+#include "qglpicknode.h"
+#include "qglabstractscene.h"
 
 #include <QtGui/qmessagebox.h>
 #include <QtGui/qevent.h>
@@ -68,10 +70,12 @@ Viewer::Viewer(QWidget *parent)
     , m_floor(0)
     , m_drawFloor(true)
     , m_zoomScale(1)
+    , m_pickDirty(true)
 {
-    setToolTip(tr("Drag the mouse to slide the object left-right & up-down\n"
+    setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
-                  "Use shift-drag or shift-mouse-wheel to rotate."));
+                  "Use shift-drag to slide."));
+    setOption(QGLView::ObjectPicking, true);
 }
 
 Viewer::~Viewer()
@@ -92,7 +96,12 @@ void Viewer::setModel(Model *model)
     if (m_model != model)
     {
         m_model = model;
+        connect(model, SIGNAL(modelLoaded(QString)),
+                this, SLOT(registerPicking()));
+        connect(model, SIGNAL(modelUnloaded(QString)),
+                this, SLOT(unregisterPicking()));
         update();
+        m_pickDirty = true;
     }
 }
 
@@ -107,6 +116,7 @@ void Viewer::setPosition(const QVector3D &t)
     {
         m_position = t;
         update();
+        m_pickDirty = true;
     }
 }
 
@@ -121,6 +131,7 @@ void Viewer::setOrientation(const QVector3D &r)
     {
         m_orientation = r;
         update();
+        m_pickDirty = true;
     }
 }
 
@@ -135,6 +146,7 @@ void Viewer::setScale(const QVector3D &s)
     {
         m_scale = s;
         update();
+        m_pickDirty = true;
     }
 }
 
@@ -180,11 +192,15 @@ void Viewer::wheelEvent(QWheelEvent *e)
     QVector3D viewVec = camera()->eye() - camera()->center();
     qreal zoomMag = viewVec.length();
     qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
-    zoomMag += inc;
-    if (zoomMag < 5.0f)
-        zoomMag = 5.0f;
-    QLine3D viewLine(camera()->center(), viewVec);
-    camera()->setEye(viewLine.point(zoomMag));
+    if (!qFuzzyIsNull(inc))
+    {
+        zoomMag += inc;
+        if (zoomMag < 5.0f)
+            zoomMag = 5.0f;
+        QLine3D viewLine(camera()->center(), viewVec);
+        camera()->setEye(viewLine.point(zoomMag));
+        update();
+    }
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -254,7 +270,8 @@ void Viewer::buildFloor()
     painter.drawLine(bottomMiddle, topMiddle);
     QFont font = painter.font();
     font.setBold(true);
-    font.setPixelSize(font.pixelSize() * 1.5);
+    font.setPixelSize(sz / 20);
+    painter.setFont(font);
     QFontMetrics fm = painter.fontMetrics();
     QRectF rmx = fm.boundingRect("-X");
     QRectF rx = fm.boundingRect("X");
@@ -262,9 +279,9 @@ void Viewer::buildFloor()
     topMiddle.setY(topMiddle.y() - rmx.height());
     bottomMiddle.setX(bottomMiddle.x() + 2);
     bottomMiddle.setY(bottomMiddle.y() + rx.height() + 2);
-    leftMiddle.setX(leftMiddle.x() + 2);
+    leftMiddle.setX(leftMiddle.x() + 4);
     leftMiddle.setY(leftMiddle.y() + rx.height() + 2);
-    rightMiddle.setX(rightMiddle.x() - rx.width() - 2);
+    rightMiddle.setX(rightMiddle.x() - rx.width() - 4);
     rightMiddle.setY(rightMiddle.y() + rx.height() + 2);
     painter.drawText(topMiddle, "-Z");
     painter.drawText(bottomMiddle, "Z");
@@ -306,7 +323,6 @@ void Viewer::paintGL(QGLPainter *painter)
     if (m_model->scene())
     {
         painter->clear();
-
         painter->modelViewMatrix().push();
 
         if (m_drawFloor)
@@ -359,6 +375,57 @@ void Viewer::paintGL(QGLPainter *painter)
     }
 }
 
+/*
+void Viewer::pickGL(QGLPainter *painter)
+{
+    if (m_model->scene())
+    {
+        painter->clear();
+        painter->modelViewMatrix().push();
+        painter->modelViewMatrix().translate(m_position);
+
+        if (!m_orientation.isNull())
+        {
+            QQuaternion xt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(1.0f, 0.0f, 0.0f), m_orientation.x());
+            QQuaternion yt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(0.0f, 1.0f, 0.0f), m_orientation.y());
+            QQuaternion zt = QQuaternion::fromAxisAndAngle(
+                    QVector3D(0.0f, 0.0f, 1.0f), m_orientation.z());
+            painter->modelViewMatrix().rotate(zt * yt * xt);
+        }
+
+        if (!m_scale.isNull())
+        {
+            QVector3D s = m_scale;
+            if (qFuzzyIsNull(s.x()))
+                s.setX(1.0f);
+            else if (s.x() < 0.0f)
+                s.setX(1.0f / qAbs(s.x()));
+            if (qFuzzyIsNull(s.y()))
+                s.setY(1.0f);
+            else if (s.y() < 0.0f)
+                s.setY(1.0f / qAbs(s.y()));
+            if (qFuzzyIsNull(s.z()))
+                s.setZ(1.0f);
+            else if (s.z() < 0.0f)
+                s.setZ(1.0f / qAbs(s.z()));
+            painter->modelViewMatrix().scale(s);
+        }
+
+        m_model->scene()->draw(painter);
+
+        painter->modelViewMatrix().pop();
+    }
+    m_pickDirty = false;
+}
+
+bool Viewer::needsPickGL()
+{
+    return m_pickDirty;
+}
+*/
+
 void Viewer::animate()
 {
     if (m_model->scene())
@@ -392,11 +459,44 @@ void Viewer::resetView()
         const qreal FRONT_VIEW_ANGLE = (M_PI / 12.0f);
         qreal y = zoomMag * qSin(FRONT_VIEW_ANGLE);
         qreal z = zoomMag * qCos(FRONT_VIEW_ANGLE);
-        eye = QVector3D(0.0f, y, z);
+        eye = QVector3D(0.0f, y, -z);
         up = QVector3D(0.0f, z, y);
     }
     camera()->setEye(eye);
     camera()->setCenter(QVector3D());
     camera()->setUpVector(up);
     update();
+}
+
+void Viewer::registerPicking()
+{
+    QGLAbstractScene *manager = m_model->manager();
+    QList<QGLPickNode *>nodes = manager->pickNodes();
+    QList<QGLPickNode *>::const_iterator it = nodes.constBegin();
+    for ( ; it != nodes.constEnd(); ++it)
+    {
+        QGLPickNode *node = *it;
+        registerObject(node->id(), node);
+        connect(node, SIGNAL(clicked()),
+                this, SLOT(objectPicked()));
+    }
+}
+
+void Viewer::unregisterPicking()
+{
+    QGLAbstractScene *manager = m_model->manager();
+    QList<QGLPickNode *>nodes = manager->pickNodes();
+    QList<QGLPickNode *>::const_iterator it = nodes.constBegin();
+    for ( ; it != nodes.constEnd(); ++it)
+    {
+        QGLPickNode *node = *it;
+        deregisterObject(node->id());
+    }
+}
+
+void Viewer::objectPicked()
+{
+    QGLPickNode *node = qobject_cast<QGLPickNode*>(sender());
+    Q_ASSERT(node);
+    qDebug() << "Picked:" << node->target();
 }

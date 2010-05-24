@@ -468,11 +468,11 @@ void Controls::on_actionSave_QML_triggered()
             gen.setProperty("z_rotation", QString::number(o.z()));
         QVector3D s = m_view->scale();
         if (!qFuzzyIsNull(s.x()))
-            gen.setProperty("x_scale", QString::number(s.x()));
+            gen.setProperty("x_scale", ((s.x() < 0.0f) ? QString::number(1.0f / qAbs(s.x())) : QString::number(s.x())));
         if (!qFuzzyIsNull(s.y()))
-            gen.setProperty("y_scale", QString::number(s.y()));
+            gen.setProperty("y_scale", ((s.y() < 0.0f) ? QString::number(1.0f / qAbs(s.y())) : QString::number(s.y())));
         if (!qFuzzyIsNull(s.z()))
-            gen.setProperty("z_scale", QString::number(s.z()));
+            gen.setProperty("z_scale", ((s.z() < 0.0f) ? QString::number(1.0f / qAbs(s.z())) : QString::number(s.z())));
         gen.save();
     }
 }

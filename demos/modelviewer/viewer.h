@@ -87,10 +87,15 @@ signals:
 
 public slots:
     void enableAnimation(bool enable);
+    void registerPicking();
+    void unregisterPicking();
+    void objectPicked();
 
 protected:
     void paintGL(QGLPainter *painter);
     void initializeGL(QGLPainter *painter);
+    //void pickGL(QGLPainter *painter);
+    //bool needsPickGL();
     void wheelEvent(QWheelEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
@@ -117,6 +122,8 @@ private:
     QGLDisplayList *m_floor;
     bool m_drawFloor;
     int m_zoomScale;
+    bool m_pickDirty;
+    QVector3D m_lastEye;
 };
 
 
