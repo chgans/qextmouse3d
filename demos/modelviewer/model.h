@@ -61,6 +61,7 @@ public:
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     QString fullPath() const { return m_fullPath; }
     QGLSceneNode *scene() const { return m_sceneRoot; }
+    QGLAbstractScene *manager() const { return m_sceneManager; }
     QString getOptions() const;
     QStringList components() const;
 

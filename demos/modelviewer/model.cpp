@@ -136,6 +136,7 @@ void Model::importModel()
     emit modelLoadTime(ms);
     if (!m_sceneManager)
         return;
+    m_sceneManager->setPickable(true);
     QGLSceneObject *obj = m_sceneManager->defaultObject(QGLSceneObject::Main);
     m_sceneRoot = qobject_cast<QGLSceneNode *>(obj);
 #ifndef QT_NO_DEBUG_STREAM
