@@ -276,6 +276,12 @@ QStereoImage::QStereoImage(int width, int height, QImage::Format format,
     in the specified image \a format.  If the \a fileName could not be
     loaded, then the stereo image will be set to null.
 
+    The image is assumed to contain the left and right halves side
+    by side according to \a layout in the same image unless the
+    \a format specifies a known multi-image format such as MPO.
+    The \a layout is ignored if the image data contains explicit
+    information about layout.
+
     \sa load(), isNull()
 */
 QStereoImage::QStereoImage(const QString &fileName, const char *format,
