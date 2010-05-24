@@ -113,6 +113,8 @@ public:
                    const QRectF &sourceRect = QRectF(),
                    Qt::ImageConversionFlags flags = Qt::AutoColor);
 
+    QImage toAnaglyph();
+
 private:
     mutable QStereoImagePrivate *d_ptr;
 

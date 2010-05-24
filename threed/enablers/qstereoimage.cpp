@@ -142,7 +142,8 @@ public:
         , leftOffset(other->leftOffset)
         , rightOffset(other->rightOffset)
         , leftImage(other->leftImage)
-        , rightImage(other->rightImage) {}
+        , rightImage(other->rightImage)
+        , anaglyph(other->anaglyph) {}
 
     QAtomicInt ref;
     QStereoImage::Layout layout;
@@ -152,6 +153,7 @@ public:
     QPoint rightOffset;
     QImage leftImage;
     QImage rightImage;
+    QImage anaglyph;
 
     // Work around lack of QImage::constBits() in Qt 4.6.
     const uchar *wholeImageBits() const { return wholeImage.bits(); }
@@ -434,6 +436,7 @@ void QStereoImage::setLeftImage(const QImage &image)
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         painter.drawImage(d->leftOffset, image);
     }
+    d->anaglyph = QImage();
 }
 
 /*!
@@ -472,6 +475,7 @@ void QStereoImage::setRightImage(const QImage &image)
         painter.setCompositionMode(QPainter::CompositionMode_Source);
         painter.drawImage(d->rightOffset, image);
     }
+    d->anaglyph = QImage();
 }
 
 /*!
@@ -511,6 +515,7 @@ void QStereoImage::setWholeImage
     d->wholeImage = image;
     d->leftImage = QImage();
     d->rightImage = QImage();
+    d->anaglyph = QImage();
     d->layout = layout;
     d->size = unadjustSizeForStereo(image.width(), image.height(), layout);
     d->calculateOffsets();
@@ -529,6 +534,7 @@ void QStereoImage::setWholeImage
 bool QStereoImage::beginPaintingLeft(QPainter *painter)
 {
     Q_D(QStereoImage);
+    d->anaglyph = QImage();
     if (d->layout == QStereoImage::Separate)
         return painter->begin(&d->leftImage);
     if (!painter->begin(&d->wholeImage))
@@ -551,6 +557,7 @@ bool QStereoImage::beginPaintingLeft(QPainter *painter)
 bool QStereoImage::beginPaintingRight(QPainter *painter)
 {
     Q_D(QStereoImage);
+    d->anaglyph = QImage();
     if (d->layout == QStereoImage::Separate)
         return painter->begin(&d->rightImage);
     if (!painter->begin(&d->wholeImage))
@@ -611,6 +618,7 @@ bool QStereoImage::load(QIODevice *device, const char *format,
             d->leftImage = d->wholeImage;
             d->rightImage = right;
             d->wholeImage = QImage();
+            d->anaglyph = QImage();
             d->size = d->leftImage.size();
             d->layout = QStereoImage::Separate;
             d->calculateOffsets();
@@ -628,6 +636,7 @@ bool QStereoImage::load(QIODevice *device, const char *format,
     d->layout = layout;
     d->leftImage = QImage();
     d->rightImage = QImage();
+    d->anaglyph = QImage();
     d->calculateOffsets();
     return true;
 }
@@ -822,6 +831,87 @@ void QStereoImage::drawRight
         sr.translate(d->rightOffset.x(), d->rightOffset.y());
     }
     painter->drawImage(targetRect, d->wholeImage, sr, flags);
+}
+
+/*!
+    Converts this stereo image into a red-cyan anaglyph where the
+    left image is passed through a red filter, and the right image
+    is passed through a cyan filter, to produce a single image.
+
+    The returned image will be suitable for display on non-stereoscopic
+    screens through the use of red-cyan anaglyph glasses.
+
+    The anaglyph will be cached inside the stereo image object until
+    the image is next modified.
+*/
+QImage QStereoImage::toAnaglyph()
+{
+    Q_D(QStereoImage);
+
+    // Return the cached anaglyph is we have one.
+    if (!d->anaglyph.isNull())
+        return d->anaglyph;
+
+    // Convert the left and right images into ARGB pixels of the same format.
+    QImage left(leftImage());
+    QImage right(rightImage());
+    if (left.format() <= QImage::Format_Indexed8 ||
+            left.format() > QImage::Format_RGB16)
+        left = left.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    if (right.format() != left.format())
+        right = right.convertToFormat(left.format());
+
+    // Combine the two images into an anaglyph.
+    int width = qMin(left.width(), right.width());
+    int height = qMin(left.height(), right.height());
+    d->anaglyph = QImage(width, height, left.format());
+    switch (left.format()) {
+    case QImage::Format_RGB32:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied: {
+        for (int y = 0; y < height; ++y) {
+            const quint32 *leftScan =
+                reinterpret_cast<const quint32 *>
+                    (((const QImage *)&left)->scanLine(y));
+            const quint32 *rightScan =
+                reinterpret_cast<const quint32 *>
+                    (((const QImage *)&right)->scanLine(y));
+            quint32 *anaScan =
+                reinterpret_cast<quint32 *>(d->anaglyph.scanLine(y));
+            for (int x = 0; x < width; ++x) {
+                // Take alpha and red from left, green and blue from right.
+                // This assumes that alpha is fairly uniform locally.
+                // If the alpha mask has hard edges, the result will
+                // probably not be what the user expected.
+                *anaScan++ = (*leftScan++ & quint32(0xFFFF0000)) |
+                             (*rightScan++ & quint32(0x0000FFFF));
+            }
+        }
+    }
+    break;
+
+    case QImage::Format_RGB16: {
+        for (int y = 0; y < height; ++y) {
+            const quint16 *leftScan =
+                reinterpret_cast<const quint16 *>
+                    (((const QImage *)&left)->scanLine(y));
+            const quint16 *rightScan =
+                reinterpret_cast<const quint16 *>
+                    (((const QImage *)&right)->scanLine(y));
+            quint16 *anaScan =
+                reinterpret_cast<quint16 *>(d->anaglyph.scanLine(y));
+            for (int x = 0; x < width; ++x) {
+                *anaScan++ = (*leftScan++ & quint16(0xF800)) |
+                             (*rightScan++ & quint16(0x07FF));
+            }
+        }
+    }
+    break;
+
+    default: d->anaglyph = QImage(); break; // Shouldn't happen.
+    }
+
+    return d->anaglyph;
 }
 
 /*!
