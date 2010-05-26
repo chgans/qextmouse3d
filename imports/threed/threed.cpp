@@ -51,6 +51,7 @@
 #include "qgraphicsrotation3d.h"
 #include "qgraphicstranslation3d.h"
 #include "qgraphicsscale3d.h"
+#include "qgraphicsfacecamera.h"
 #include "shaderprogram.h"
 #include "cube.h"
 #include "pane.h"
@@ -62,6 +63,7 @@ QT_BEGIN_NAMESPACE
 QML_DECLARE_TYPE(QGraphicsRotation3D)
 QML_DECLARE_TYPE(QGraphicsTranslation3D)
 QML_DECLARE_TYPE(QGraphicsScale3D)
+QML_DECLARE_TYPE(QGraphicsFaceCamera)
 
 class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
@@ -82,6 +84,7 @@ public:
         qmlRegisterType<QGraphicsRotation3D>(uri,1,0,"Rotation3D");
         qmlRegisterType<QGraphicsTranslation3D>(uri,1,0,"Translation3D");
         qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
+        qmlRegisterType<QGraphicsFaceCamera>(uri,1,0,"FaceCamera");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
         qmlRegisterType<Cube>(uri,1,0,"Cube");
