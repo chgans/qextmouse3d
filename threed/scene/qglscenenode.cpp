@@ -272,7 +272,7 @@ QBox3D QGLSceneNode::boundingBox() const
         else
         {
             for (int i = d->start; i < d->count; ++i)
-                bb.expand(d->geometry.vertex(i));
+                bb.unite(d->geometry.vertex(i));
         }
     }
     return bb;

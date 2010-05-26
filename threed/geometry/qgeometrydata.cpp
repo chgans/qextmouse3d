@@ -339,7 +339,7 @@ int QGeometryData::appendVertex(const QLogicalVertex &v)
     detach();
     d->modified = true;
     if (d->boxValid)
-        d->bb.expand(v.vertex());
+        d->bb.unite(v.vertex());
     quint32 fields = v.fields();
     const quint32 mask = 0x01;
     for (int field = 0; fields; ++field, fields >>= 1)
@@ -411,7 +411,7 @@ QBox3D QGeometryData::boundingBox() const
         else
         {
             for (int i = 0; i < d->count; ++i)
-                box.expand(d->vertices.at(i));
+                box.unite(d->vertices.at(i));
             d->bb = box;
         }
     }
@@ -974,7 +974,7 @@ void QGeometryData::appendVertex(const QVector3D &v0)
     enableField(QGL::Position);
     d->vertices.append(v0);
     if (d->boxValid)
-        d->bb.expand(v0);
+        d->bb.unite(v0);
     d->count = qMax(d->count, d->vertices.count());
 }
 
@@ -989,8 +989,8 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1)
     d->vertices.append(v0, v1);
     if (d->boxValid)
     {
-        d->bb.expand(v0);
-        d->bb.expand(v1);
+        d->bb.unite(v0);
+        d->bb.unite(v1);
     }
     d->count = qMax(d->count, d->vertices.count());
 }
@@ -1006,9 +1006,9 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const
     d->vertices.append(v0, v1, v2);
     if (d->boxValid)
     {
-        d->bb.expand(v0);
-        d->bb.expand(v1);
-        d->bb.expand(v2);
+        d->bb.unite(v0);
+        d->bb.unite(v1);
+        d->bb.unite(v2);
     }
     d->count = qMax(d->count, d->vertices.count());
 }
@@ -1024,10 +1024,10 @@ void QGeometryData::appendVertex(const QVector3D &v0, const QVector3D &v1, const
     d->vertices.append(v0, v1, v2, v3);
     if (d->boxValid)
     {
-        d->bb.expand(v0);
-        d->bb.expand(v1);
-        d->bb.expand(v2);
-        d->bb.expand(v3);
+        d->bb.unite(v0);
+        d->bb.unite(v1);
+        d->bb.unite(v2);
+        d->bb.unite(v3);
     }
     d->count = qMax(d->count, d->vertices.count());
 }

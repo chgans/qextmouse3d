@@ -71,15 +71,15 @@ private slots:
     void intersect();
     void intersected_data();
     void intersected();
-    void expandPoint_data();
-    void expandPoint();
-    void expandBox_data();
-    void expandBox();
-    void expandedPoint_data();
-    void expandedPoint();
-    void expandedBox_data();
-    void expandedBox();
-    void expandPoints();
+    void unitePoint_data();
+    void unitePoint();
+    void uniteBox_data();
+    void uniteBox();
+    void unitedPoint_data();
+    void unitedPoint();
+    void unitedBox_data();
+    void unitedBox();
+    void unitePoints();
     void translate();
     void translated();
     void scale();
@@ -98,7 +98,7 @@ void tst_QBox3D::create()
     QVERIFY(box1.maximum() == QVector3D(0, 0, 0));
 
     QBox3D box2;
-    box2.setInfinite();
+    box2.setToInfinite();
     QVERIFY(!box2.isNull());
     QVERIFY(!box2.isFinite());
     QVERIFY(box2.isInfinite());
@@ -175,7 +175,7 @@ void tst_QBox3D::modify()
     QVERIFY(box.minimum() == QVector3D(1, 2, 3));
     QVERIFY(box.maximum() == QVector3D(4, 5, 6));
 
-    box.setNull();
+    box.setToNull();
     QVERIFY(box.isNull());
     QVERIFY(!box.isFinite());
     QVERIFY(!box.isInfinite());
@@ -190,7 +190,7 @@ void tst_QBox3D::modify()
     QVERIFY(box.minimum() == QVector3D(-5, -6, -7));
     QVERIFY(box.maximum() == QVector3D(-1, -2, -3));
 
-    box.setInfinite();
+    box.setToInfinite();
     QVERIFY(!box.isNull());
     QVERIFY(!box.isFinite());
     QVERIFY(box.isInfinite());
@@ -213,8 +213,8 @@ void tst_QBox3D::compare()
     QBox3D box3(QVector3D(0, -2, -3), QVector3D(-5, -6, -7));
     QBox3D null1, null2;
     QBox3D infinite1, infinite2;
-    infinite1.setInfinite();
-    infinite2.setInfinite();
+    infinite1.setToInfinite();
+    infinite2.setToInfinite();
 
     QVERIFY(box1 == box2);
     QVERIFY(box1 != box3);
@@ -237,8 +237,8 @@ void tst_QBox3D::fuzzyCompare()
     QBox3D box3(QVector3D(0, -2, -3), QVector3D(-5, -6, -7));
     QBox3D null1, null2;
     QBox3D infinite1, infinite2;
-    infinite1.setInfinite();
-    infinite2.setInfinite();
+    infinite1.setToInfinite();
+    infinite2.setToInfinite();
 
     QVERIFY(qFuzzyCompare(box1, box2));
     QVERIFY(!qFuzzyCompare(box1, box3));
@@ -295,10 +295,10 @@ void tst_QBox3D::size()
     QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
     QVERIFY(box.size() == QVector3D(sizex, sizey, sizez));
 
-    box.setNull();
+    box.setToNull();
     QVERIFY(box.size() == QVector3D(0, 0, 0));
 
-    box.setInfinite();
+    box.setToInfinite();
     QVERIFY(box.size() == QVector3D(0, 0, 0));
 }
 
@@ -323,10 +323,10 @@ void tst_QBox3D::center()
     QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
     QVERIFY(box.center() == QVector3D(centerx, centery, centerz));
 
-    box.setNull();
+    box.setToNull();
     QVERIFY(box.center() == QVector3D(0, 0, 0));
 
-    box.setInfinite();
+    box.setToInfinite();
     QVERIFY(box.center() == QVector3D(0, 0, 0));
 }
 
@@ -351,10 +351,10 @@ void tst_QBox3D::volume()
     QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
     QCOMPARE(box.volume(), sizex * sizey * sizez);
 
-    box.setNull();
+    box.setToNull();
     QCOMPARE(box.volume(), (qreal)0.0);
 
-    box.setInfinite();
+    box.setToInfinite();
     QCOMPARE(box.volume(), (qreal)0.0);
 }
 
@@ -420,7 +420,7 @@ void tst_QBox3D::containsPoint()
     QVERIFY(!null.contains(QVector3D(x, y, z)));
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     QVERIFY(infinite.contains(QVector3D(x, y, z)));
 }
 
@@ -634,7 +634,7 @@ void tst_QBox3D::containsBox()
     QVERIFY(!null.contains(other));
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     QVERIFY(infinite.contains(other));
 
     QVERIFY(!box.contains(null));
@@ -671,7 +671,7 @@ void tst_QBox3D::intersects()
     QVERIFY(!null.intersects(other));
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     QVERIFY(infinite.intersects(other));
 
     QVERIFY(!box.intersects(null));
@@ -718,7 +718,7 @@ void tst_QBox3D::intersect()
     QVERIFY(null.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     infinite.intersect(other);
     QVERIFY(infinite == other);
 
@@ -729,7 +729,7 @@ void tst_QBox3D::intersect()
 
     QBox3D ibox3(box);
     QBox3D infinite2;
-    infinite2.setInfinite();
+    infinite2.setToInfinite();
     ibox3.intersect(infinite2);
     QVERIFY(ibox3 == box);
 }
@@ -773,7 +773,7 @@ void tst_QBox3D::intersected()
     QVERIFY(ibox.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     ibox = infinite.intersected(other);
     QVERIFY(ibox == other);
 
@@ -781,12 +781,12 @@ void tst_QBox3D::intersected()
     QVERIFY(box.intersected(infinite) == box);
 }
 
-void tst_QBox3D::expandPoint_data()
+void tst_QBox3D::unitePoint_data()
 {
     // Use the same test data as containsPoint().
     containsPoint_data();
 }
-void tst_QBox3D::expandPoint()
+void tst_QBox3D::unitePoint()
 {
     QFETCH(qreal, x);
     QFETCH(qreal, y);
@@ -796,7 +796,7 @@ void tst_QBox3D::expandPoint()
     QBox3D box(QVector3D(-1, -2, -3), QVector3D(4, 5, 6));
 
     QBox3D result(box);
-    result.expand(QVector3D(x, y, z));
+    result.unite(QVector3D(x, y, z));
 
     if (contained) {
         QVERIFY(result == box);
@@ -812,21 +812,21 @@ void tst_QBox3D::expandPoint()
     }
 
     QBox3D null;
-    null.expand(QVector3D(x, y, z));
+    null.unite(QVector3D(x, y, z));
     QVERIFY(null == QBox3D(QVector3D(x, y, z), QVector3D(x, y, z)));
 
     QBox3D infinite;
-    infinite.setInfinite();
-    infinite.expand(QVector3D(x, y, z));
+    infinite.setToInfinite();
+    infinite.unite(QVector3D(x, y, z));
     QVERIFY(infinite.isInfinite());
 }
 
-void tst_QBox3D::expandBox_data()
+void tst_QBox3D::uniteBox_data()
 {
     // Use the same test data as containsBox().
     containsBox_data();
 }
-void tst_QBox3D::expandBox()
+void tst_QBox3D::uniteBox()
 {
     QFETCH(qreal, x1);
     QFETCH(qreal, y1);
@@ -863,36 +863,36 @@ void tst_QBox3D::expandBox()
     QBox3D result(QVector3D(ex1, ey1, ez1), QVector3D(ex2, ey2, ez2));
 
     QBox3D ibox(box);
-    ibox.expand(other);
+    ibox.unite(other);
     QVERIFY(ibox == result);
 
     QBox3D null;
-    null.expand(other);
+    null.unite(other);
     QVERIFY(null == other);
 
     QBox3D infinite;
-    infinite.setInfinite();
-    infinite.expand(other);
+    infinite.setToInfinite();
+    infinite.unite(other);
     QVERIFY(infinite.isInfinite());
 
     QBox3D ibox2(box);
     QBox3D null2;
-    ibox2.expand(null2);
+    ibox2.unite(null2);
     QVERIFY(ibox2 == box);
 
     QBox3D ibox3(box);
     QBox3D infinite2;
-    infinite2.setInfinite();
-    ibox3.expand(infinite2);
+    infinite2.setToInfinite();
+    ibox3.unite(infinite2);
     QVERIFY(ibox3.isInfinite());
 }
 
-void tst_QBox3D::expandedPoint_data()
+void tst_QBox3D::unitedPoint_data()
 {
     // Use the same test data as containsPoint().
     containsPoint_data();
 }
-void tst_QBox3D::expandedPoint()
+void tst_QBox3D::unitedPoint()
 {
     QFETCH(qreal, x);
     QFETCH(qreal, y);
@@ -901,7 +901,7 @@ void tst_QBox3D::expandedPoint()
 
     QBox3D box(QVector3D(-1, -2, -3), QVector3D(4, 5, 6));
 
-    QBox3D result = box.expanded(QVector3D(x, y, z));
+    QBox3D result = box.united(QVector3D(x, y, z));
 
     if (contained) {
         QVERIFY(result == box);
@@ -917,21 +917,21 @@ void tst_QBox3D::expandedPoint()
     }
 
     QBox3D null;
-    result = null.expanded(QVector3D(x, y, z));
+    result = null.united(QVector3D(x, y, z));
     QVERIFY(result == QBox3D(QVector3D(x, y, z), QVector3D(x, y, z)));
 
     QBox3D infinite;
-    infinite.setInfinite();
-    result = infinite.expanded(QVector3D(x, y, z));
+    infinite.setToInfinite();
+    result = infinite.united(QVector3D(x, y, z));
     QVERIFY(result.isInfinite());
 }
 
-void tst_QBox3D::expandedBox_data()
+void tst_QBox3D::unitedBox_data()
 {
     // Use the same test data as containsBox().
     containsBox_data();
 }
-void tst_QBox3D::expandedBox()
+void tst_QBox3D::unitedBox()
 {
     QFETCH(qreal, x1);
     QFETCH(qreal, y1);
@@ -967,31 +967,31 @@ void tst_QBox3D::expandedBox()
     QBox3D other(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
     QBox3D result(QVector3D(ex1, ey1, ez1), QVector3D(ex2, ey2, ez2));
 
-    QBox3D ibox = box.expanded(other);
+    QBox3D ibox = box.united(other);
     QVERIFY(ibox == result);
 
     QBox3D null;
-    ibox = null.expanded(other);
+    ibox = null.united(other);
     QVERIFY(ibox == other);
 
     QBox3D infinite;
-    infinite.setInfinite();
-    ibox = infinite.expanded(other);
+    infinite.setToInfinite();
+    ibox = infinite.united(other);
     QVERIFY(ibox.isInfinite());
 
     QBox3D ibox2(box);
     QBox3D null2;
-    ibox = ibox2.expanded(null2);
+    ibox = ibox2.united(null2);
     QVERIFY(ibox == box);
 
     QBox3D ibox3(box);
     QBox3D infinite2;
-    infinite2.setInfinite();
-    ibox = ibox3.expanded(infinite2);
+    infinite2.setToInfinite();
+    ibox = ibox3.united(infinite2);
     QVERIFY(ibox.isInfinite());
 }
 
-void tst_QBox3D::expandPoints()
+void tst_QBox3D::unitePoints()
 {
     QArray<QVector3D> points;
     points << QVector3D(1, 2, 3);
@@ -1004,14 +1004,14 @@ void tst_QBox3D::expandPoints()
     points2 << QVector3D(-10, 0, -30);
 
     QBox3D box1;
-    box1.expand(points);
+    box1.unite(points);
     QVERIFY(!box1.isNull());
     QVERIFY(box1.isFinite());
     QVERIFY(!box1.isInfinite());
     QVERIFY(box1.minimum() == QVector3D(-1, -2, -3));
     QVERIFY(box1.maximum() == QVector3D(1, 2, 3));
 
-    box1.expand(points2);
+    box1.unite(points2);
     QVERIFY(!box1.isNull());
     QVERIFY(box1.isFinite());
     QVERIFY(!box1.isInfinite());
@@ -1019,14 +1019,14 @@ void tst_QBox3D::expandPoints()
     QVERIFY(box1.maximum() == QVector3D(10, 20, 30));
 
     QBox3D box2;
-    box2.expand(points.mid(1));
+    box2.unite(points.mid(1));
     QVERIFY(!box2.isNull());
     QVERIFY(box2.isFinite());
     QVERIFY(!box2.isInfinite());
     QVERIFY(box2.minimum() == QVector3D(-1, -2, -3));
     QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
 
-    box2.expand(points2.mid(1));
+    box2.unite(points2.mid(1));
     QVERIFY(!box2.isNull());
     QVERIFY(box2.isFinite());
     QVERIFY(!box2.isInfinite());
@@ -1034,21 +1034,21 @@ void tst_QBox3D::expandPoints()
     QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
 
     QBox3D box3;
-    box3.setInfinite();
-    box3.expand(points);
+    box3.setToInfinite();
+    box3.unite(points);
     QVERIFY(box3.isInfinite());
     QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
     QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
-    box3.expand(points.mid(1));
+    box3.unite(points.mid(1));
     QVERIFY(box3.isInfinite());
     QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
     QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
 
     QBox3D box4;
-    QBox3D box5 = box4.expanded(points).expanded(points2);
+    QBox3D box5 = box4.united(points).united(points2);
     QVERIFY(box5 == box1);
 
-    box5 = box4.expanded(points.mid(1)).expanded(points2.mid(1));
+    box5 = box4.united(points.mid(1)).united(points2.mid(1));
     QVERIFY(box5 == box2);
 }
 
@@ -1064,7 +1064,7 @@ void tst_QBox3D::translate()
     QVERIFY(null.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     infinite.translate(QVector3D(10, -3, 56));
     QVERIFY(infinite.isInfinite());
 }
@@ -1081,7 +1081,7 @@ void tst_QBox3D::translated()
     QVERIFY(box2.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     box2 = infinite.translated(QVector3D(10, -3, 56));
     QVERIFY(box2.isInfinite());
 }
@@ -1109,7 +1109,7 @@ void tst_QBox3D::scale()
     QVERIFY(null.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     infinite.scale(QVector3D(2, -3, 4));
     QVERIFY(infinite.isInfinite());
 
@@ -1140,7 +1140,7 @@ void tst_QBox3D::scaled()
     QVERIFY(box2.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     box2 = infinite.scaled(QVector3D(2, -3, 4));
     QVERIFY(box2.isInfinite());
 
@@ -1162,7 +1162,7 @@ void tst_QBox3D::transform()
     QVERIFY(null.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     infinite.transform(m);
     QVERIFY(infinite.isInfinite());
 }
@@ -1181,7 +1181,7 @@ void tst_QBox3D::transformed()
     QVERIFY(box2.isNull());
 
     QBox3D infinite;
-    infinite.setInfinite();
+    infinite.setToInfinite();
     box2 = infinite.transformed(m);
     QVERIFY(box2.isInfinite());
 }
