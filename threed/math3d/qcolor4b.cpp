@@ -86,9 +86,10 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QColor4B::QColor4B(QRgb rgb)
+    \fn QColor4B::QColor4B(QRgb rgba)
 
-    Constructs a four-byte color value from \a rgb.
+    Constructs a four-byte color value from the red, green, blue, and
+    alpha components of \a rgba.
 */
 
 /*!

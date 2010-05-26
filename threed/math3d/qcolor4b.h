@@ -59,7 +59,7 @@ public:
     QColor4B(int red, int green, int blue, int alpha = 255);
     QColor4B(const QColor& color);
     QColor4B(Qt::GlobalColor color);
-    QColor4B(QRgb rgb);
+    QColor4B(QRgb rgba);
 
     QColor4B& operator=(const QColor& color);
     QColor4B& operator=(Qt::GlobalColor color);
@@ -125,9 +125,9 @@ inline QColor4B::QColor4B(Qt::GlobalColor color)
     m_alpha = uchar(c.alpha());
 }
 
-inline QColor4B::QColor4B(QRgb rgb)
-    : m_red(uchar(qRed(rgb))), m_green(uchar(qGreen(rgb))),
-      m_blue(uchar(qBlue(rgb))), m_alpha(uchar(qAlpha(rgb))) {}
+inline QColor4B::QColor4B(QRgb rgba)
+    : m_red(uchar(qRed(rgba))), m_green(uchar(qGreen(rgba))),
+      m_blue(uchar(qBlue(rgba))), m_alpha(uchar(qAlpha(rgba))) {}
 
 inline QColor4B::QColor4B(const uchar *data)
     : m_red(data[0]), m_green(data[1]), m_blue(data[2]), m_alpha(data[3]) {}
