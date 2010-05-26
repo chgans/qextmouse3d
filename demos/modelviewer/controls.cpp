@@ -103,6 +103,7 @@ Controls::Controls(QWidget *parent)
 
     m_view->setModel(m_model);
     m_ui->treeView->setModel(m_model);
+    m_view->setTreeView(m_ui->treeView);
 
     emit openFile(initialModel);
 
@@ -658,4 +659,9 @@ void Controls::on_lockButton_clicked()
         m_ui->yScaleSpin->setValue(m_ui->xScaleSpin->value());
         m_ui->zScaleSpin->setValue(m_ui->xScaleSpin->value());
     }
+}
+
+void Controls::on_actionShow_Picking_triggered()
+{
+    m_view->setOption(QGLView::ShowPicking, m_ui->actionShow_Picking->isChecked());
 }

@@ -63,6 +63,7 @@ Viewer::Viewer(QWidget *parent)
     : QGLView(parent)
     , m_timer(new QTimer(this))
     , m_model(0)
+    , m_treeView(0)
     , m_lightModel(0)
     , m_lightParameters(0)
     , m_animate(false)
@@ -496,7 +497,13 @@ void Viewer::unregisterPicking()
 
 void Viewer::objectPicked()
 {
+    Q_ASSERT(m_treeView);
     QGLPickNode *node = qobject_cast<QGLPickNode*>(sender());
     Q_ASSERT(node);
+    QGLSceneNode *target = qobject_cast<QGLSceneNode*>(node->target());
+    QModelIndex ix = m_model->selectNode(target);
+    m_treeView->expand(ix);
+    m_treeView->selectionModel()->clearSelection();
+    m_treeView->selectionModel()->select(ix, QItemSelectionModel::Select);
     qDebug() << "Picked:" << node->target();
 }

@@ -43,6 +43,7 @@
 #define VIEWER_H
 
 #include <QtOpenGL/qgl.h>
+#include <QtGui/qtreeview.h>
 
 #include "qglview.h"
 
@@ -69,6 +70,7 @@ public:
 
     View view() const { return m_view; }
     void setView(View view);
+    void setTreeView(QTreeView *view) { m_treeView = view; }
     bool floorEnabled() const { return m_drawFloor; }
     void setFloorEnabled(bool enabled);
 
@@ -114,6 +116,7 @@ private:
     QVector3D m_scale;
     QTimer *m_timer;
     Model *m_model;
+    QTreeView *m_treeView;
     QGLLightModel *m_lightModel;
     QGLLightParameters *m_lightParameters;
     View m_view;

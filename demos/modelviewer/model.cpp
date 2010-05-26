@@ -46,13 +46,42 @@
 
 #include <QtCore/qsettings.h>
 #include <QtCore/qdatetime.h>
+#include <QtGui/qitemselectionmodel.h>
 
 #include <QIcon>
+
+struct MVCNode
+{
+    MVCNode(QGLSceneNode *_n, Model *_m)
+        : node(_n), model(_m), parent(0), row(0), col(0) {}
+    ~MVCNode() { qDeleteAll(rows); }
+    void addMVCChildren(QGLSceneNode *node)
+    {
+        QList<QGLSceneNode*> ch = node->childNodeList();
+        for (int row = 0; row < ch.size(); ++row)
+        {
+            QGLSceneNode *c = ch.at(row);
+            MVCNode *n = new MVCNode(c, model);
+            model->m_selectionMap.insert(c, n);
+            n->row = row;
+            n->parent = this;
+            rows.append(n);
+            n->addMVCChildren(c);
+        }
+    }
+    QGLSceneNode *node;
+    Model *model;
+    QList<MVCNode*> rows;
+    MVCNode *parent;
+    int row;
+    int col;
+};
 
 Model::Model(QObject *parent)
     : QAbstractItemModel(parent)
     , m_sceneManager(0)
     , m_sceneRoot(0)
+    , m_modelRoot(0)
 {
 }
 
@@ -118,10 +147,21 @@ void Model::setFullPath(const QString &path)
         emit modelUnloaded(m_fullPath);
     m_fullPath = path;
     importModel();
+    buildModel();
     if (m_sceneRoot)
         emit modelLoaded(m_fullPath);
     reset();
 }
+
+QModelIndex Model::selectNode(QGLSceneNode *node) const
+{
+    MVCNode *n = m_selectionMap.value(node, 0);
+    Q_ASSERT(n);
+    QModelIndex parent = createIndex(n->parent->row, n->parent->col, n->parent);
+    QModelIndex ix = index(n->row, n->col, parent);
+    return ix;
+}
+
 
 void Model::importModel()
 {
@@ -152,49 +192,50 @@ void Model::importModel()
 #endif
 }
 
+void Model::buildModel()
+{
+    delete m_modelRoot;
+    m_selectionMap.clear();
+    m_modelRoot = new MVCNode(m_sceneRoot, this);
+    m_selectionMap.insert(m_sceneRoot, m_modelRoot);
+    m_modelRoot->addMVCChildren(m_sceneRoot);
+}
+
 QModelIndex Model::index(int row, int column, const QModelIndex & parent) const
 {
     QModelIndex result;
-    QGLSceneNode *p = 0;
-    if (m_sceneRoot)
+    MVCNode *p = 0;
+    if (m_modelRoot)
     {
         if (parent.isValid())
         {
-            Q_ASSERT(parent.internalPointer());
-            p = static_cast<QGLSceneNode*>(parent.internalPointer());
+            p = static_cast<MVCNode*>(parent.internalPointer());
             Q_ASSERT(p);
-            QList<QGLSceneNode*> c = p->childNodeList();
-            if (column == 0 && row < c.count())
+            if (column == 0 && row < p->rows.count())
             {
-                QGLSceneNode *node = c.at(row);
-                node->setProperty("row", row);
-                result = createIndex(row, column, c.at(row));
+                MVCNode *node = p->rows.at(row);
+                result = createIndex(row, column, node);
             }
         }
         else
         {
             Q_ASSERT(row == 0 && column == 0);
-            m_sceneRoot->setProperty("row", 0);
-            result = createIndex(row, column, m_sceneRoot);
+            result = createIndex(row, column, m_modelRoot);
         }
     }
     return result;
 }
 
-QModelIndex Model::parent(const QModelIndex & index) const
+QModelIndex Model::parent(const QModelIndex &index) const
 {
     QModelIndex result;
-    QGLSceneNode *node = 0;
+    MVCNode *node = 0;
     if (index.isValid())
     {
-        node = static_cast<QGLSceneNode*>(index.internalPointer());
-        QGLSceneNode *parent = qobject_cast<QGLSceneNode*>(node->parent());
+        node = static_cast<MVCNode*>(index.internalPointer());
+        MVCNode *parent = node->parent;
         if (parent)
-        {
-            bool ok = false;
-            int row = parent ? parent->property("row").toInt(&ok) : 0;
-            result = createIndex(row, 0, parent);
-        }
+            result = createIndex(parent->row, parent->col, parent);
     }
     return result;
 }
@@ -206,8 +247,8 @@ int Model::rowCount(const QModelIndex & parent) const
     {
         if (parent.isValid())
         {
-            QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
-            count = node->childNodeList().count();
+            MVCNode *node = static_cast<MVCNode*>(parent.internalPointer());
+            count = node->rows.size();
         }
         else
         {
@@ -220,12 +261,12 @@ int Model::rowCount(const QModelIndex & parent) const
 int Model::columnCount(const QModelIndex &parent) const
 {
     int count = 0;
-    if (m_sceneRoot)
+    if (m_modelRoot)
     {
         if (parent.isValid())
         {
-            QGLSceneNode *node = static_cast<QGLSceneNode*>(parent.internalPointer());
-            if (node->childNodeList().count())
+            MVCNode *node = static_cast<MVCNode*>(parent.internalPointer());
+            if (node->rows.size() > 0)
                 count = 1;
         }
         else
@@ -239,16 +280,16 @@ int Model::columnCount(const QModelIndex &parent) const
 QVariant Model::data(const QModelIndex & index, int role) const
 {
     QVariant result;
-    QGLSceneNode *node = static_cast<QGLSceneNode*>(index.internalPointer());
+    MVCNode *d = static_cast<MVCNode*>(index.internalPointer());
     if (role == Qt::DisplayRole)
     {
-        return node->objectName();
+        return d->node->objectName();
     }
     else if (role == Qt::DecorationRole)
     {
-        if (node == m_sceneRoot)
+        if (d->node == m_sceneRoot)
             result = QIcon(":/images/file16x16.png");
-        else if (node->childNodeList().count() > 0)
+        else if (d->node->childNodeList().count() > 0)
             result = QIcon(":/images/mesh16x16.png");
         else
             result = QIcon(":/images/red-dot.png");
