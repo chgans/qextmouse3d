@@ -2,8 +2,6 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += \
     qglattributevalue.h \
-    qglcontextscope.h \
-    qglcontextwatcher.h \
     qglindexbuffer.h \
     qgltexture2d.h \
     qgltexturecube.h \
@@ -15,8 +13,6 @@ HEADERS += \
     qvectorarray.h \
     qt3dglobal.h
 SOURCES += qglattributevalue.cpp \
-    qglcontextscope.cpp \
-    qglcontextwatcher.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
