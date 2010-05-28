@@ -96,8 +96,6 @@ public slots:
 protected:
     void paintGL(QGLPainter *painter);
     void initializeGL(QGLPainter *painter);
-    //void pickGL(QGLPainter *painter);
-    //bool needsPickGL();
     void wheelEvent(QWheelEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
