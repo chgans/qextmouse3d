@@ -3,7 +3,7 @@
 
 #include <QWeakPointer>
 #include <QGLShaderProgram>
-#include <effect.h>
+#include "effect.h"
 #include "qglabstracteffect.h"
 
 class ShaderProgram;

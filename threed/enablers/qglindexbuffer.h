@@ -86,10 +86,13 @@ public:
     bool upload();
     bool isUploaded() const;
 
-    QGLBuffer *buffer() const;
+    QGLBuffer buffer() const;
 
     bool bind() const;
     void release() const;
+
+    void append(const QGLIndexBuffer &buffer, int offset);
+    void append(const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode);
 
 private:
     QGLIndexBufferPrivate *d_ptr;

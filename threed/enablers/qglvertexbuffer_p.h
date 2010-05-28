@@ -200,8 +200,7 @@ class QGLVertexBufferPrivate
 {
 public:
     QGLVertexBufferPrivate()
-        : buffer(0),
-          usagePattern(QGLBuffer::StaticDraw),
+        : buffer(QGLBuffer::VertexBuffer),
           packingHint(QGLVertexBuffer::Interleave),
           actualPackingHint(QGLVertexBuffer::Interleave),
           vertexCount(0)
@@ -211,12 +210,10 @@ public:
     ~QGLVertexBufferPrivate()
     {
         qDeleteAll(attributes);
-        delete buffer;
     }
 
     QBasicAtomicInt ref;
-    QGLBuffer *buffer;
-    QGLBuffer::UsagePattern usagePattern;
+    QGLBuffer buffer;
     QGLVertexBuffer::PackingHint packingHint;
     QGLVertexBuffer::PackingHint actualPackingHint;
     QList<QGLVertexBufferAttribute *> attributes;

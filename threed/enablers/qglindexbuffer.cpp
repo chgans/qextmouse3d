@@ -63,29 +63,27 @@ class QGLIndexBufferPrivate
 {
 public:
     QGLIndexBufferPrivate()
-        : usagePattern(QGLBuffer::StaticDraw)
-        , indexCount(0)
+        : indexCount(0)
 #ifdef QGL_INT_BUFFERS_SUPPORTED
         , elementType(GL_UNSIGNED_SHORT)
 #endif
-        , buffer(0)
+        , buffer(QGLBuffer::IndexBuffer)
     {
         ref = 1;
     }
-    ~QGLIndexBufferPrivate()
-    {
-        delete buffer;
-    }
 
     QBasicAtomicInt ref;
-    QGLBuffer::UsagePattern usagePattern;
     int indexCount;
     QArray<ushort> indicesShort;
 #ifdef QGL_INT_BUFFERS_SUPPORTED
     QArray<int> indicesInt;
     GLenum elementType;
 #endif
-    QGLBuffer *buffer;
+    QGLBuffer buffer;
+
+    void append(const QGLIndexBufferPrivate *other, int offset, int start);
+    int headIndex(int posn) const;
+    int tailIndex(int posn) const;
 };
 
 /*!
@@ -149,7 +147,7 @@ QGLIndexBuffer& QGLIndexBuffer::operator=(const QGLIndexBuffer& other)
 QGLBuffer::UsagePattern QGLIndexBuffer::usagePattern() const
 {
     Q_D(const QGLIndexBuffer);
-    return d->usagePattern;
+    return d->buffer.usagePattern();
 }
 
 /*!
@@ -162,7 +160,7 @@ QGLBuffer::UsagePattern QGLIndexBuffer::usagePattern() const
 void QGLIndexBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
 {
     Q_D(QGLIndexBuffer);
-    d->usagePattern = value;
+    d->buffer.setUsagePattern(value);
 }
 
 /*!
@@ -178,10 +176,10 @@ void QGLIndexBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
 void QGLIndexBuffer::setIndices(const QArray<ushort>& values)
 {
     Q_D(QGLIndexBuffer);
-    if (d->buffer) {
-        d->buffer->bind();
-        d->buffer->allocate(values.constData(), values.size() * sizeof(ushort));
-        d->buffer->release();
+    if (d->buffer.isCreated()) {
+        d->buffer.bind();
+        d->buffer.allocate(values.constData(), values.size() * sizeof(ushort));
+        d->buffer.release();
 #ifdef QGL_INT_BUFFERS_SUPPORTED
         // The element type may have changed from int to ushort.
         d->elementType = GL_UNSIGNED_SHORT;
@@ -220,11 +218,11 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<ushort>& values)
     if (d->elementType != GL_UNSIGNED_SHORT)
         return;
 #endif
-    if (d->buffer) {
-        d->buffer->bind();
-        d->buffer->write(index * sizeof(ushort),
-                         values.constData(), values.size() * sizeof(ushort));
-        d->buffer->release();
+    if (d->buffer.isCreated()) {
+        d->buffer.bind();
+        d->buffer.write(index * sizeof(ushort),
+                        values.constData(), values.size() * sizeof(ushort));
+        d->buffer.release();
     } else {
         d->indicesShort.replace(index, values.constData(), values.size());
         d->indexCount = d->indicesShort.size();
@@ -251,10 +249,10 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<ushort>& values)
 void QGLIndexBuffer::setIndices(const QArray<int>& values)
 {
     Q_D(QGLIndexBuffer);
-    if (d->buffer) {
-        d->buffer->bind();
-        d->buffer->allocate(values.constData(), values.size() * sizeof(int));
-        d->buffer->release();
+    if (d->buffer.isCreated()) {
+        d->buffer.bind();
+        d->buffer.allocate(values.constData(), values.size() * sizeof(int));
+        d->buffer.release();
         // The element type may have changed from ushort to int.
         d->elementType = GL_UNSIGNED_INT;
     } else {
@@ -292,11 +290,11 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<int>& values)
                "buffer created with ushort element type, replacing with int");
     if (d->elementType != GL_UNSIGNED_INT)
         return;
-    if (d->buffer) {
-        d->buffer->bind();
-        d->buffer->write(index * sizeof(int),
-                         values.constData(), values.size() * sizeof(int));
-        d->buffer->release();
+    if (d->buffer.isCreated()) {
+        d->buffer.bind();
+        d->buffer.write(index * sizeof(int),
+                        values.constData(), values.size() * sizeof(int));
+        d->buffer.release();
     } else {
         d->indicesInt.replace(index, values.constData(), values.size());
         d->indexCount = d->indicesInt.size();
@@ -353,32 +351,27 @@ int QGLIndexBuffer::indexCount() const
 bool QGLIndexBuffer::upload()
 {
     Q_D(QGLIndexBuffer);
-    if (d->buffer)
+    if (d->buffer.isCreated())
         return true;
-    d->buffer = new QGLBuffer(QGLBuffer::IndexBuffer);
-    d->buffer->setUsagePattern(d->usagePattern);
-    if (!d->buffer->create()) {
-        delete d->buffer;
-        d->buffer = 0;
+    if (!d->buffer.create())
         return false;
-    }
-    d->buffer->bind();
+    d->buffer.bind();
 #ifdef QGL_INT_BUFFERS_SUPPORTED
     if (d->elementType == GL_UNSIGNED_SHORT) {
-        d->buffer->allocate(d->indicesShort.constData(),
-                            d->indicesShort.size() * sizeof(ushort));
+        d->buffer.allocate(d->indicesShort.constData(),
+                           d->indicesShort.size() * sizeof(ushort));
         d->indicesShort = QArray<ushort>();
     } else {
-        d->buffer->allocate(d->indicesInt.constData(),
-                            d->indicesInt.size() * sizeof(int));
+        d->buffer.allocate(d->indicesInt.constData(),
+                           d->indicesInt.size() * sizeof(int));
         d->indicesInt = QArray<int>();
     }
 #else
-    d->buffer->allocate(d->indicesShort.constData(),
-                        d->indicesShort.size() * sizeof(ushort));
+    d->buffer.allocate(d->indicesShort.constData(),
+                       d->indicesShort.size() * sizeof(ushort));
     d->indicesShort = QArray<ushort>();
 #endif
-    d->buffer->release();
+    d->buffer.release();
     return true;
 }
 
@@ -391,17 +384,16 @@ bool QGLIndexBuffer::upload()
 bool QGLIndexBuffer::isUploaded() const
 {
     Q_D(const QGLIndexBuffer);
-    return d->buffer != 0;
+    return d->buffer.isCreated();
 }
 
 /*!
     Returns the QGLBuffer in use by this index buffer object,
     so that its properties or contents can be modified directly.
-    Returns null if the index buffer has not been uploaded.
 
     \sa isUploaded()
 */
-QGLBuffer *QGLIndexBuffer::buffer() const
+QGLBuffer QGLIndexBuffer::buffer() const
 {
     Q_D(const QGLIndexBuffer);
     return d->buffer;
@@ -420,10 +412,7 @@ QGLBuffer *QGLIndexBuffer::buffer() const
 bool QGLIndexBuffer::bind() const
 {
     Q_D(const QGLIndexBuffer);
-    if (d->buffer)
-        return d->buffer->bind();
-    else
-        return false;
+    return d->buffer.bind();
 }
 
 /*!
@@ -437,8 +426,239 @@ bool QGLIndexBuffer::bind() const
 void QGLIndexBuffer::release() const
 {
     Q_D(const QGLIndexBuffer);
-    if (d->buffer)
-        d->buffer->release();
+    d->buffer.release();
+}
+
+void QGLIndexBufferPrivate::append
+    (const QGLIndexBufferPrivate *other, int offset, int start)
+{
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT &&
+            other->elementType == GL_UNSIGNED_SHORT) {
+        // Both buffers are ushort.
+        const ushort *data = other->indicesShort.constData() + start;
+        int count = other->indicesShort.count() - start;
+        indicesShort.reserve(indicesShort.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesShort.append(ushort(*data++ + offset));
+    } if (elementType == GL_UNSIGNED_SHORT) {
+        // Only first buffer is ushort: convert it to int first.
+        const ushort *indices = indicesShort.constData();
+        int count = indicesShort.count();
+        indicesInt.reserve(count + other->indicesInt.count());
+        while (count-- > 0)
+            indicesInt.append(*indices++);
+        indicesShort = QArray<ushort>();
+        elementType = GL_UNSIGNED_INT;
+        const int *data = other->indicesInt.constData() + start;
+        count = other->indicesInt.count() - start;
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    } if (other->elementType == GL_UNSIGNED_SHORT) {
+        // Only second buffer is ushort.
+        const ushort *data = other->indicesShort.constData() + start;
+        int count = other->indicesShort.count() - start;
+        indicesInt.reserve(indicesInt.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    } else {
+        // Neither buffer is ushort.
+        const int *data = other->indicesInt.constData() + start;
+        int count = other->indicesInt.count() - start;
+        indicesInt.reserve(indicesInt.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    }
+#else
+    const ushort *data = other->indicesShort.constData() + start;
+    int count = other->indicesShort.count() - start;
+    indicesShort.reserve(indicesShort.count() + count);
+    indexCount += count;
+    while (count-- > 0)
+        indicesShort.append(ushort(*data++ + offset));
+#endif
+}
+
+int QGLIndexBufferPrivate::headIndex(int posn) const
+{
+    if (indexCount <= posn)
+        return -1;
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT)
+        return indicesShort[posn];
+    else
+        return indicesInt[posn];
+#else
+    return indicesShort[posn];
+#endif
+}
+
+int QGLIndexBufferPrivate::tailIndex(int posn) const
+{
+    if (indexCount <= posn)
+        return -1;
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT)
+        return indicesShort[indexCount - posn - 1];
+    else
+        return indicesInt[indexCount - posn - 1];
+#else
+    return indicesShort[indexCount - posn - 1];
+#endif
+}
+
+/*!
+    Appends the contents of \a buffer to this index buffer and adds
+    \a offset to all of the entries in \a buffer.
+
+    This function is typically used to combine multiple geometry meshes
+    into a single mesh that can be bound as a single buffer.
+
+    The request is ignored if this index buffer or \a buffer have already
+    been uploaded, or \a buffer is this index buffer.
+
+    \sa isUploaded(), setIndices()
+*/
+void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
+{
+    Q_D(QGLIndexBuffer);
+    const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
+
+    // Bail out if the buffers are uploaded or identical.
+    if (d->buffer.isCreated() || dbuf->buffer.isCreated())
+        return;
+    if (d == dbuf)
+        return;
+
+    // Append the two index arrays.
+    d->append(dbuf, offset, 0);
+}
+
+/*!
+    Appends the contents of \a buffer to this index buffer and adds
+    \a offset to all of the entries in \a buffer.
+
+    The two buffers will be merged at the join point according to
+    \a combineMode.  For example, if \a combineMode is QGL::TriangleStrip,
+    then the result will be a single triangle strip.  Indices are
+    dropped from the front of \a buffer as necessary to correctly
+    merge the buffers.
+
+    This function is typically used to combine multiple geometry meshes
+    into a single mesh that can be bound as a single buffer.
+
+    The request is ignored if this index buffer or \a buffer have already
+    been uploaded, or \a buffer is this index buffer.
+
+    \sa isUploaded(), setIndices()
+*/
+void QGLIndexBuffer::append
+    (const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode)
+{
+    Q_D(QGLIndexBuffer);
+    const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
+
+    // Bail out if the buffers are uploaded or identical.
+    if (d->buffer.isCreated() || dbuf->buffer.isCreated())
+        return;
+    if (d == dbuf)
+        return;
+
+    // Determine how to combine the buffers.
+    switch (int(combineMode)) {
+    case QGL::Points:
+    case QGL::Lines:
+    case QGL::Triangles:
+    case QGL::LinesAdjacency:
+    case QGL::TrianglesAdjacency:
+    case 0x0007:            // GL_QUADS
+        // These can be done by just appending the raw data with no changes.
+        d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::LineLoop:
+    case QGL::LineStrip:
+    case 0x0009:            // GL_POLYGON
+        // Join the last index of the first buffer to the first
+        // index of the second buffer to continue the loop or strip.
+        if (d->tailIndex(0) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 1);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleStrip:
+        // Join the last two indexes of the first buffer to the first
+        // two indexes of the second buffer to continue the strip.
+        // It is possible that the first two indexes of the second
+        // buffer may be reversed for strip continuation depending
+        // upon whether the first strip is odd or even in length.
+        if (d->tailIndex(1) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else if (d->tailIndex(1) == (dbuf->headIndex(1) + offset) &&
+                 d->tailIndex(0) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case 0x0008:            // GL_QUAD_STRIP
+        // Join the last two indexes of the first buffer to the first
+        // two indexes of the second buffer to continue the strip.
+        if (d->tailIndex(1) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleFan:
+        // The first index of both buffers should be the same, and the
+        // last index of the first buffer should be the same as the second
+        // index of the second buffer.
+        if (d->headIndex(0) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::LineStripAdjacency:
+        // Join the last three indexes of the first buffer to the first
+        // three indexes of the second buffer to continue the strip.
+        if (d->tailIndex(2) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(1) == (dbuf->headIndex(1) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(2) + offset))
+            d->append(dbuf, offset, 3);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleStripAdjacency:
+        // Fourth last and second last of first buffer need to be the
+        // same as the first and third of the second buffer.
+        // Also handle the reversed case for odd/even strip lengths.
+        // FIXME: may still not be quite right yet.
+        if (d->tailIndex(3) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(1) == (dbuf->headIndex(2) + offset))
+            d->append(dbuf, offset, 4);
+        else if (d->tailIndex(3) == (dbuf->headIndex(2) + offset) &&
+                 d->tailIndex(1) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 4);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    default:
+        qWarning("QGLIndexBuffer::append: unknown drawing mode %d",
+                 int(combineMode));
+        break;
+    }
 }
 
 /*!
@@ -463,10 +683,10 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
 #ifndef QT_NO_DEBUG
     checkRequiredFields();
 #endif
-    GLuint id = (d->buffer ? d->buffer->bufferId() : 0);
+    GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)
-            d->buffer->bind();
+            d->buffer.bind();
         else
             QGLBuffer::release(QGLBuffer::IndexBuffer);
         d_ptr->boundIndexBuffer = id;
@@ -513,10 +733,10 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int 
 #ifndef QT_NO_DEBUG
     checkRequiredFields();
 #endif
-    GLuint id = (d->buffer ? d->buffer->bufferId() : 0);
+    GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)
-            d->buffer->bind();
+            d->buffer.bind();
         else
             QGLBuffer::release(QGLBuffer::IndexBuffer);
         d_ptr->boundIndexBuffer = id;

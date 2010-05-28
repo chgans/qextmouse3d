@@ -1536,10 +1536,10 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
     QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(this);
     const QGLVertexBufferPrivate *bd = buffer.d_func();
-    if (bd->buffer) {
-        GLuint id = bd->buffer->bufferId();
+    if (bd->buffer.isCreated()) {
+        GLuint id = bd->buffer.bufferId();
         if (id != d->boundVertexBuffer) {
-            bd->buffer->bind();
+            bd->buffer.bind();
             d->boundVertexBuffer = id;
         }
     } else if (d->boundVertexBuffer) {
