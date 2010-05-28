@@ -96,9 +96,9 @@ void tst_QGLVertexBuffer::create()
 
     // Verify the contents of the buffer in the GL server if we can map it.
     QVERIFY(buffer.bind());
-    QCOMPARE(buffer.buffer()->size(), int(sizeof(float) * 20));
+    QCOMPARE(buffer.buffer().size(), int(sizeof(float) * 20));
     float *mapped = reinterpret_cast<float *>
-        (buffer.buffer()->map(QGLBuffer::ReadOnly));
+        (buffer.buffer().map(QGLBuffer::ReadOnly));
     if (mapped) {
         for (int index = 0; index < 20; ++index)
             QCOMPARE(mapped[index], float(index + 1));
