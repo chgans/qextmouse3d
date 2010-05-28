@@ -474,8 +474,8 @@ void QGLIndexBufferPrivate::append
             indicesInt.append(*data++ + offset);
     }
 #else
-    const ushort *data = other->indicesShort.constData();
-    int count = other->indicesShort.count();
+    const ushort *data = other->indicesShort.constData() + start;
+    int count = other->indicesShort.count() - start;
     indicesShort.reserve(indicesShort.count() + count);
     indexCount += count;
     while (count-- > 0)
@@ -493,7 +493,7 @@ int QGLIndexBufferPrivate::headIndex(int posn) const
     else
         return indicesInt[posn];
 #else
-    return indicesInt[posn];
+    return indicesShort[posn];
 #endif
 }
 
@@ -507,7 +507,7 @@ int QGLIndexBufferPrivate::tailIndex(int posn) const
     else
         return indicesInt[indexCount - posn - 1];
 #else
-    return indicesInt[indexCount - posn - 1];
+    return indicesShort[indexCount - posn - 1];
 #endif
 }
 
