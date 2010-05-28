@@ -43,12 +43,13 @@
 #define QGLPICKNODE_H
 
 #include <QtCore/qobject.h>
+#include "qt3dglobal.h"
 
 class QGLAbstractScene;
 class QGLSceneObject;
 class QEvent;
 
-class QGLPickNode : public QObject
+class Q_QT3D_EXPORT QGLPickNode : public QObject
 {
     Q_OBJECT
 public:
