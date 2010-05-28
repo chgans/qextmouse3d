@@ -80,6 +80,10 @@ public:
     GLenum elementType;
 #endif
     QGLBuffer buffer;
+
+    void append(const QGLIndexBufferPrivate *other, int offset, int start);
+    int headIndex(int posn) const;
+    int tailIndex(int posn) const;
 };
 
 /*!
@@ -423,6 +427,238 @@ void QGLIndexBuffer::release() const
 {
     Q_D(const QGLIndexBuffer);
     d->buffer.release();
+}
+
+void QGLIndexBufferPrivate::append
+    (const QGLIndexBufferPrivate *other, int offset, int start)
+{
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT &&
+            other->elementType == GL_UNSIGNED_SHORT) {
+        // Both buffers are ushort.
+        const ushort *data = other->indicesShort.constData() + start;
+        int count = other->indicesShort.count() - start;
+        indicesShort.reserve(indicesShort.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesShort.append(ushort(*data++ + offset));
+    } if (elementType == GL_UNSIGNED_SHORT) {
+        // Only first buffer is ushort: convert it to int first.
+        const ushort *indices = indicesShort.constData();
+        int count = indicesShort.count();
+        indicesInt.reserve(count + other->indicesInt.count());
+        while (count-- > 0)
+            indicesInt.append(*indices++);
+        indicesShort = QArray<ushort>();
+        elementType = GL_UNSIGNED_INT;
+        const int *data = other->indicesInt.constData() + start;
+        count = other->indicesInt.count() - start;
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    } if (other->elementType == GL_UNSIGNED_SHORT) {
+        // Only second buffer is ushort.
+        const ushort *data = other->indicesShort.constData() + start;
+        int count = other->indicesShort.count() - start;
+        indicesInt.reserve(indicesInt.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    } else {
+        // Neither buffer is ushort.
+        const int *data = other->indicesInt.constData() + start;
+        int count = other->indicesInt.count() - start;
+        indicesInt.reserve(indicesInt.count() + count);
+        indexCount += count;
+        while (count-- > 0)
+            indicesInt.append(*data++ + offset);
+    }
+#else
+    const ushort *data = other->indicesShort.constData();
+    int count = other->indicesShort.count();
+    indicesShort.reserve(indicesShort.count() + count);
+    indexCount += count;
+    while (count-- > 0)
+        indicesShort.append(ushort(*data++ + offset));
+#endif
+}
+
+int QGLIndexBufferPrivate::headIndex(int posn) const
+{
+    if (indexCount <= posn)
+        return -1;
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT)
+        return indicesShort[posn];
+    else
+        return indicesInt[posn];
+#else
+    return indicesInt[posn];
+#endif
+}
+
+int QGLIndexBufferPrivate::tailIndex(int posn) const
+{
+    if (indexCount <= posn)
+        return -1;
+#ifdef QGL_INT_BUFFERS_SUPPORTED
+    if (elementType == GL_UNSIGNED_SHORT)
+        return indicesShort[indexCount - posn - 1];
+    else
+        return indicesInt[indexCount - posn - 1];
+#else
+    return indicesInt[indexCount - posn - 1];
+#endif
+}
+
+/*!
+    Appends the contents of \a buffer to this index buffer and adds
+    \a offset to all of the entries in \a buffer.
+
+    This function is typically used to combine multiple geometry meshes
+    into a single mesh that can be bound as a single buffer.
+
+    The request is ignored if this index buffer or \a buffer have already
+    been uploaded, or \a buffer is this index buffer.
+
+    \sa isUploaded(), setIndices()
+*/
+void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
+{
+    Q_D(QGLIndexBuffer);
+    const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
+
+    // Bail out if the buffers are uploaded or identical.
+    if (d->buffer.isCreated() || dbuf->buffer.isCreated())
+        return;
+    if (d == dbuf)
+        return;
+
+    // Append the two index arrays.
+    d->append(dbuf, offset, 0);
+}
+
+/*!
+    Appends the contents of \a buffer to this index buffer and adds
+    \a offset to all of the entries in \a buffer.
+
+    The two buffers will be merged at the join point according to
+    \a combineMode.  For example, if \a combineMode is QGL::TriangleStrip,
+    then the result will be a single triangle strip.  Indices are
+    dropped from the front of \a buffer as necessary to correctly
+    merge the buffers.
+
+    This function is typically used to combine multiple geometry meshes
+    into a single mesh that can be bound as a single buffer.
+
+    The request is ignored if this index buffer or \a buffer have already
+    been uploaded, or \a buffer is this index buffer.
+
+    \sa isUploaded(), setIndices()
+*/
+void QGLIndexBuffer::append
+    (const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode)
+{
+    Q_D(QGLIndexBuffer);
+    const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
+
+    // Bail out if the buffers are uploaded or identical.
+    if (d->buffer.isCreated() || dbuf->buffer.isCreated())
+        return;
+    if (d == dbuf)
+        return;
+
+    // Determine how to combine the buffers.
+    switch (int(combineMode)) {
+    case QGL::Points:
+    case QGL::Lines:
+    case QGL::Triangles:
+    case QGL::LinesAdjacency:
+    case QGL::TrianglesAdjacency:
+    case 0x0007:            // GL_QUADS
+        // These can be done by just appending the raw data with no changes.
+        d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::LineLoop:
+    case QGL::LineStrip:
+    case 0x0009:            // GL_POLYGON
+        // Join the last index of the first buffer to the first
+        // index of the second buffer to continue the loop or strip.
+        if (d->tailIndex(0) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 1);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleStrip:
+        // Join the last two indexes of the first buffer to the first
+        // two indexes of the second buffer to continue the strip.
+        // It is possible that the first two indexes of the second
+        // buffer may be reversed for strip continuation depending
+        // upon whether the first strip is odd or even in length.
+        if (d->tailIndex(1) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else if (d->tailIndex(1) == (dbuf->headIndex(1) + offset) &&
+                 d->tailIndex(0) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case 0x0008:            // GL_QUAD_STRIP
+        // Join the last two indexes of the first buffer to the first
+        // two indexes of the second buffer to continue the strip.
+        if (d->tailIndex(1) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleFan:
+        // The first index of both buffers should be the same, and the
+        // last index of the first buffer should be the same as the second
+        // index of the second buffer.
+        if (d->headIndex(0) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(1) + offset))
+            d->append(dbuf, offset, 2);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::LineStripAdjacency:
+        // Join the last three indexes of the first buffer to the first
+        // three indexes of the second buffer to continue the strip.
+        if (d->tailIndex(2) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(1) == (dbuf->headIndex(1) + offset) &&
+                d->tailIndex(0) == (dbuf->headIndex(2) + offset))
+            d->append(dbuf, offset, 3);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    case QGL::TriangleStripAdjacency:
+        // Fourth last and second last of first buffer need to be the
+        // same as the first and third of the second buffer.
+        // Also handle the reversed case for odd/even strip lengths.
+        // FIXME: may still not be quite right yet.
+        if (d->tailIndex(3) == (dbuf->headIndex(0) + offset) &&
+                d->tailIndex(1) == (dbuf->headIndex(2) + offset))
+            d->append(dbuf, offset, 4);
+        else if (d->tailIndex(3) == (dbuf->headIndex(2) + offset) &&
+                 d->tailIndex(1) == (dbuf->headIndex(0) + offset))
+            d->append(dbuf, offset, 4);
+        else
+            d->append(dbuf, offset, 0);
+        break;
+
+    default:
+        qWarning("QGLIndexBuffer::append: unknown drawing mode %d",
+                 int(combineMode));
+        break;
+    }
 }
 
 /*!
