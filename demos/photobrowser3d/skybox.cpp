@@ -54,18 +54,16 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     , m_view(view)
 {
     m_list->newSection(QGL::Faceted);
-    m_list->setEffect(QGL::LitModulateTexture2D);
+    m_list->setEffect(QGL::FlatReplaceTexture2D);
     m_list->setEffectEnabled(true);
-    // TODO - this is not right - should be able to use transforms
-    // and turning off depth testing so a 1 x 1 x 1 box works
-    QVector3D blb(-10.0, -10.0, -10.0);
-    QVector3D blf(-10.0, -10.0, 10.0);
-    QVector3D tlf(-10.0, 10.0, 10.0);
-    QVector3D tlb(-10.0, 10.0, -10.0);
-    QVector3D brb(10.0, -10.0, -10.0);
-    QVector3D brf(10.0, -10.0, 10.0);
-    QVector3D trf(10.0, 10.0, 10.0);
-    QVector3D trb(10.0, 10.0, -10.0);
+    QVector3D blb(-1.0, -1.0, -1.0);
+    QVector3D blf(-1.0, -1.0, 1.0);
+    QVector3D tlf(-1.0, 1.0, 1.0);
+    QVector3D tlb(-1.0, 1.0, -1.0);
+    QVector3D brb(1.0, -1.0, -1.0);
+    QVector3D brf(1.0, -1.0, 1.0);
+    QVector3D trf(1.0, 1.0, 1.0);
+    QVector3D trb(1.0, 1.0, -1.0);
     QVector2D bl(0.0f, 0.0f);
     QVector2D br(1.0f, 0.0f);
     QVector2D tr(1.0f, 1.0f);
@@ -81,7 +79,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();   // top
         QGLPrimitive q;
-        q.appendVertex(tlb, trb, trf, tlf);
+        q.appendVertex(trf, tlf, tlb, trb);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
         m_faces[1] = m_list->currentNode();
@@ -134,11 +132,10 @@ void SkyBox::setImagePath(const QString &imagePath)
     static QStringList expected2;
     static QStringList expected;
 
-    // Faces ordering is dictated by QGLCubeFace::Face enum
     if (expected.isEmpty())
-        expected << "west" << "up" << "east" << "down" << "south" << "north";
+        expected << "east" << "up" << "west" << "down" << "south" << "north";
     if (expected2.isEmpty())
-        expected2 << "left" << "top" << "right" << "bottom" << "front" << "back";
+        expected2 << "right" << "top" << "left" << "bottom" << "front" << "back";
     if (imagePath != m_imagePath)
     {
         m_imagePath = imagePath;
@@ -164,8 +161,12 @@ void SkyBox::setImagePath(const QString &imagePath)
             if (ix != 6)
             {
                 notFound.removeOne(expected.at(ix));
-                QString url = QString("file://%1").arg(ent.absoluteFilePath());
+                QUrl url;
+                url.setScheme("file");
+                url.setPath(ent.absoluteFilePath());
                 m_faces[ix]->material()->setTextureUrl(url);
+                m_faces[ix]->material()->texture()->setHorizontalWrap(QGL::Clamp);
+                m_faces[ix]->material()->texture()->setVerticalWrap(QGL::Clamp);
             }
         }
         if (notFound.size() > 2)
@@ -180,24 +181,29 @@ void SkyBox::setImagePath(const QString &imagePath)
 void SkyBox::draw(QGLPainter *painter) const
 {
     painter->modelViewMatrix().push();
-    //painter->modelViewMatrix().setToIdentity();
+    painter->modelViewMatrix().setToIdentity();
 
     QGLCamera *cam = m_view->camera();
     QVector3D eye = cam->eye();
     QVector3D center = cam->center();
+    qreal near = cam->nearPlane();
+    QSizeF size = cam->viewSize();
     cam->setCenter(-eye);
     cam->setEye(QVector3D());
-    //painter->setCamera(cam);
+    cam->setNearPlane(0.3f);
+    cam->setViewSize(QSizeF(0.3f, 0.3f));
+    painter->setCamera(cam);
 
-    glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT);
-    //glDisable(GL_DEPTH_TEST);
-    //glDisable(GL_LIGHTING);
-    //glDisable(GL_BLEND);
+    painter->setDepthTestingEnabled(false);
 
     m_list->draw(painter);
 
+    painter->setDepthTestingEnabled(true);
+
     cam->setCenter(center);
     cam->setEye(eye);
+    cam->setNearPlane(near);
+    cam->setViewSize(size);
     painter->setCamera(cam);
 
     glPopAttrib();

@@ -56,7 +56,7 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_cube = new Cube3DNode(this, m_palette);
     m_cube->setPosition(QVector3D(2.5f, 0.0f, 0.0f));
 
-    QString path = ":/";
+    QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
     if (ix != -1)
     {
