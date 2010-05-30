@@ -940,7 +940,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
     if (!m.isIdentity())
     {
          painter->modelViewMatrix().push();
-         painter->modelViewMatrix() *= d->localTransform;
+         painter->modelViewMatrix() *= m;
          wasTransformed = true;
     }
 
@@ -1090,6 +1090,8 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
     node->setLocalTransform(d->localTransform);
+    node->setPosition(d->translate);
+    node->setRotation(d->rotate);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);
@@ -1316,6 +1318,18 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
             fprintf(stderr, "%d: %p  ", i, *it);
     }
     fprintf(stderr, "\n");
+    if (!node->position().isNull())
+    {
+        QVector3D p = node->position();
+        fprintf(stderr, "%s position: (%0.4f, %0.4f, %0.4f)\n", qPrintable(ind),
+                p.x(), p.y(), p.z());
+    }
+    if (!node->rotation().isNull())
+    {
+        QVector3D r = node->rotation();
+        fprintf(stderr, "%s rotation: (%0.4f, %0.4f, %0.4f)\n", qPrintable(ind),
+                r.x(), r.y(), r.z());
+    }
     if (node->localTransform().isIdentity())
     {
         fprintf(stderr, "%s local transform: identity\n", qPrintable(ind));
