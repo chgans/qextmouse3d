@@ -47,6 +47,7 @@
 class Cube3DNode;
 class SkyBox;
 class QGLMaterialCollection;
+class QGLSceneNode;
 
 class PhotoBrowser3DView : public QGLView
 {
@@ -65,6 +66,7 @@ protected:
     void keyPressEvent(QKeyEvent *e);
 private:
     Cube3DNode *m_cube;
+    QGLSceneNode *m_cubeScene;
     SkyBox *m_skybox;
     QGLMaterialCollection *m_palette;
 };
