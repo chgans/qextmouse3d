@@ -586,10 +586,6 @@ void QGLPainter::setClearStencil(GLint value)
     Enables or disables depth testing according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
-
-    For more complex depth buffer configurations, use QGLDepthBufferOptions.
-
-    \sa QGLDepthBufferOptions
 */
 
 /*!
@@ -598,10 +594,6 @@ void QGLPainter::setClearStencil(GLint value)
     Enables or disables stencil testing according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
-
-    For more complex depth buffer configurations, use QGLStencilBufferOptions.
-
-    \sa QGLStencilBufferOptions
 */
 
 /*!

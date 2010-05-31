@@ -66,7 +66,6 @@ QT_MODULE(Qt3d)
 
 class QGLAbstractEffect;
 class QGLPainterPrivate;
-class QGLStencilBufferOptions;
 class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
@@ -220,7 +219,6 @@ private:
 
     QGLPainterPrivate *d_func() const { return d_ptr; }
 
-    friend class QGLStencilBufferOptions;
     friend class QGLBlendOptions;
     friend class QGLAbstractEffect;
 

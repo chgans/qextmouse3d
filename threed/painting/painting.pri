@@ -5,27 +5,23 @@ VPATH += $$PWD
 HEADERS += \
     qglabstracteffect.h \
     qglblendoptions.h \
-    qgldepthbufferoptions.h \
     qgllightmodel.h \
     qgllightparameters.h \
     qglmaterial.h \
     qglmatrixstack.h \
     qglnamespace.h \
-    qglpainter.h \
-    qglstencilbufferoptions.h
+    qglpainter.h
 
 SOURCES += \
     qglabstracteffect.cpp \
     qglblendoptions.cpp \
-    qgldepthbufferoptions.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
     qglmaterial.cpp \
     qglmatrixstack.cpp \
     qglnamespace.cpp \
     qglpainter.cpp \
-    qglpickcolors.cpp \
-    qglstencilbufferoptions.cpp
+    qglpickcolors.cpp
 
 PRIVATE_HEADERS += \
     qglpainter_p.h \
