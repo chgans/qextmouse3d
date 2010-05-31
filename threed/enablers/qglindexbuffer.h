@@ -71,12 +71,10 @@ public:
     const QArray<ushort> &indices() const;
 
     void setIndices(const QArray<ushort>& values);
-    void replaceIndices(int index, const QArray<ushort>& values);
-
-#if !defined(QT_OPENGL_ES) || defined(qdoc)
     void setIndices(const QArray<int>& values);
+
+    void replaceIndices(int index, const QArray<ushort>& values);
     void replaceIndices(int index, const QArray<int>& values);
-#endif
 
     GLenum elementType() const;
 
