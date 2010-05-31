@@ -68,13 +68,14 @@ public:
     QGLBuffer::UsagePattern usagePattern() const;
     void setUsagePattern(QGLBuffer::UsagePattern value);
 
-    const QArray<ushort> &indices() const;
+    QArray<ushort> indicesUShort() const;
+    QArray<uint> indicesUInt() const;
 
     void setIndices(const QArray<ushort>& values);
-    void setIndices(const QArray<int>& values);
+    void setIndices(const QArray<uint>& values);
 
     void replaceIndices(int index, const QArray<ushort>& values);
-    void replaceIndices(int index, const QArray<int>& values);
+    void replaceIndices(int index, const QArray<uint>& values);
 
     GLenum elementType() const;
 

@@ -65,7 +65,7 @@ namespace QGL
 #if defined(QT_OPENGL_ES)
     typedef QArray<ushort> IndexArray;
 #else
-    typedef QArray<int> IndexArray;
+    typedef QArray<uint> IndexArray;
 #endif
 };
 
