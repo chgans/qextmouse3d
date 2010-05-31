@@ -69,7 +69,7 @@ public:
 
     QGLMatrixStack::Type type() const;
 
-    QMatrix4x4 top() const;
+    const QMatrix4x4 &top() const;
 
     void push();
     void pop();
@@ -90,7 +90,7 @@ public:
     QGLMatrixStack& operator=(const QMatrix4x4& matrix);
     QGLMatrixStack& operator*=(const QMatrix4x4& matrix);
 
-    operator QMatrix4x4() const;
+    operator const QMatrix4x4 &() const;
 
     static QMatrix4x4 readServerMatrix(QGLMatrixStack::Type type);
 
@@ -110,7 +110,7 @@ private:
     void updateServer();
 };
 
-inline QGLMatrixStack::operator QMatrix4x4() const
+inline QGLMatrixStack::operator const QMatrix4x4 &() const
 {
     return top();
 }

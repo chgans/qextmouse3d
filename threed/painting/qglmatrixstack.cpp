@@ -241,22 +241,23 @@ void QGLMatrixStack::setToIdentity()
 }
 
 /*!
-    Returns the current matrix at the top of this matrix stack.
-    This is typically used to fetch the matrix so it can be set on
-    user-defined shader programs.
+    Returns a const reference to the current matrix at the top of this
+    matrix stack.  This is typically used to fetch the matrix so it can
+    be set on user-defined shader programs.
 
     \sa operator=(), readServerMatrix()
 */
-QMatrix4x4 QGLMatrixStack::top() const
+const QMatrix4x4 &QGLMatrixStack::top() const
 {
     Q_D(const QGLMatrixStack);
     return d->matrix;
 }
 
 /*!
-    \fn QGLMatrixStack::operator QMatrix4x4() const
+    \fn QGLMatrixStack::operator const QMatrix4x4 &() const
 
-    Returns the current matrix at the top of this matrix stack.
+    Returns a const reference to the current matrix at the top of
+    this matrix stack.
 
     \sa top()
 */
