@@ -42,7 +42,6 @@
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
 #include "qgltextureutils_p.h"
-#include "qglcontextscope.h"
 #include "qglpainter_p.h"
 
 #include <QtCore/qfile.h>
@@ -105,15 +104,29 @@ QGLTexture2DPrivate::~QGLTexture2DPrivate()
     // Destroy the texture id's in the GL server in their original contexts.
     QGLTexture2DTextureInfo *current = infos;
     QGLTexture2DTextureInfo *next;
+    const QGLContext *currentContext =
+        const_cast<QGLContext *>(QGLContext::currentContext());
+    const QGLContext *firstContext = currentContext;
     while (current != 0) {
         next = current->next;
         if (!current->isLiteral && current->tex.textureId()) {
-            QGLContextScope scope(current->tex.context());
+            const QGLContext *context = current->tex.context();
+            if (context && context != currentContext &&
+                    !QGLContext::areSharing(context, currentContext)) {
+                const_cast<QGLContext *>(context)->makeCurrent();
+                currentContext = context;
+            }
             GLuint textureId = current->tex.textureId();
             glDeleteTextures(1, &textureId);
         }
         delete current;
         current = next;
+    }
+    if (firstContext != currentContext) {
+        if (firstContext)
+            const_cast<QGLContext *>(firstContext)->makeCurrent();
+        else if (currentContext)
+            const_cast<QGLContext *>(currentContext)->doneCurrent();
     }
 }
 

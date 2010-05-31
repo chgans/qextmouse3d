@@ -43,6 +43,7 @@
 #define VIEWER_H
 
 #include <QtOpenGL/qgl.h>
+#include <QtGui/qtreeview.h>
 
 #include "qglview.h"
 
@@ -69,6 +70,7 @@ public:
 
     View view() const { return m_view; }
     void setView(View view);
+    void setTreeView(QTreeView *view) { m_treeView = view; }
     bool floorEnabled() const { return m_drawFloor; }
     void setFloorEnabled(bool enabled);
 
@@ -87,6 +89,9 @@ signals:
 
 public slots:
     void enableAnimation(bool enable);
+    void registerPicking();
+    void unregisterPicking();
+    void objectPicked();
 
 protected:
     void paintGL(QGLPainter *painter);
@@ -109,6 +114,7 @@ private:
     QVector3D m_scale;
     QTimer *m_timer;
     Model *m_model;
+    QTreeView *m_treeView;
     QGLLightModel *m_lightModel;
     QGLLightParameters *m_lightParameters;
     View m_view;
@@ -117,6 +123,8 @@ private:
     QGLDisplayList *m_floor;
     bool m_drawFloor;
     int m_zoomScale;
+    bool m_pickDirty;
+    QVector3D m_lastEye;
 };
 
 

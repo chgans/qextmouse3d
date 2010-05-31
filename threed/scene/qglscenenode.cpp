@@ -42,6 +42,7 @@
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglscenenode_p.h"
+#include "qglpicknode.h"
 #include "qglpainter.h"
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
@@ -271,7 +272,7 @@ QBox3D QGLSceneNode::boundingBox() const
         else
         {
             for (int i = d->start; i < d->count; ++i)
-                bb.expand(d->geometry.vertex(i));
+                bb.unite(d->geometry.vertex(i));
         }
     }
     return bb;
@@ -955,7 +956,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
             return;
         }
     }
-    if (d->hasEffect)
+    if (d->hasEffect && !painter->isPicking())
     {
         if (d->customEffect)
         {
@@ -971,7 +972,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
 
     const QGLMaterial *saveMat = 0;
     bool changedTex = false;
-    if (d->palette && d->material != -1)
+    if (d->palette && d->material != -1 && !painter->isPicking())
     {
         QGLMaterial *mat = d->palette->material(d->material);
         if (painter->faceMaterial(QGL::FrontFaces) != mat)
@@ -998,7 +999,19 @@ void QGLSceneNode::draw(QGLPainter *painter)
 
     if (d->count && d->geometry.count() > 0)
     {
+        bool idSaved = false;
+        int id = -1;
+        if (d->pickNode && painter->isPicking())
+        {
+            idSaved = true;
+            id = painter->objectPickId();
+            painter->setObjectPickId(d->pickNode->id());
+        }
+
         d->geometry.draw(painter, d->start, d->count);
+
+        if (idSaved)
+            painter->setObjectPickId(id);
 
         if (d->viewNormals)
         {
@@ -1040,6 +1053,27 @@ void QGLSceneNode::apply(QGLPainter *painter)
     QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
     for ( ; cit != d->childNodes.end(); ++cit)
         (*cit)->apply(painter);
+}
+
+/*!
+    \reimp
+*/
+QGLPickNode *QGLSceneNode::pickNode() const
+{
+    Q_D(const QGLSceneNode);
+    return d->pickNode;
+}
+
+/*!
+    \reimp
+*/
+void QGLSceneNode::setPickNode(QGLPickNode *node)
+{
+    Q_D(QGLSceneNode);
+    // TODO - resolve recursive picking - not supported by
+    // color based pick AFAICT
+    d->pickNode = node;
+    node->setTarget(this);
 }
 
 /*!

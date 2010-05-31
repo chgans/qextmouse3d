@@ -2,19 +2,17 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += \
     qglattributevalue.h \
-    qglcontextscope.h \
-    qglcontextwatcher.h \
     qglindexbuffer.h \
     qgltexture2d.h \
     qgltexturecube.h \
     qglvertexbuffer.h \
     qarray.h \
     qcustomdataarray.h \
+    qstereoimage.h \
+    qstereopixmap.h \
     qvectorarray.h \
     qt3dglobal.h
 SOURCES += qglattributevalue.cpp \
-    qglcontextscope.cpp \
-    qglcontextwatcher.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
@@ -23,6 +21,8 @@ SOURCES += qglattributevalue.cpp \
     qarray.cpp \
     qareaallocator.cpp \
     qcustomdataarray.cpp \
+    qstereoimage.cpp \
+    qstereopixmap.cpp \
     qvectorarray.cpp
 PRIVATE_HEADERS += \
     qgltexture2d_p.h \

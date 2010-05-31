@@ -71,6 +71,7 @@ public:
     bool isNull() const;
 
     GLenum type() const;
+    int sizeOfType() const;
     int tupleSize() const;
     int stride() const;
     int offset() const;

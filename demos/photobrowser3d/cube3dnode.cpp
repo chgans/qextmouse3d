@@ -39,52 +39,39 @@
 **
 ****************************************************************************/
 
-#ifndef QGLCONTEXTWATCHER_H
-#define QGLCONTEXTWATCHER_H
 
-#include "qt3dglobal.h"
-#include <QtCore/qobject.h>
+#include "cube3dnode.h"
 
-QT_BEGIN_HEADER
+#include "qgldisplaylist.h"
+#include "qglcube.h"
 
-QT_BEGIN_NAMESPACE
+#include <QUrl>
 
-QT_MODULE(Qt3d)
-
-class QGLContext;
-
-class QGLContextWatcherPrivate;
-
-class Q_QT3D_EXPORT QGLContextWatcher : public QObject
+Cube3DNode::Cube3DNode(QObject *parent, QGLMaterialCollection *materials)
+    : QGLDisplayList(parent, materials)
 {
-    Q_OBJECT
-public:
-    explicit QGLContextWatcher(QObject *parent = 0);
-    explicit QGLContextWatcher(const QGLContext *context, QObject *parent = 0);
-    ~QGLContextWatcher();
+    setEffect(QGL::LitModulateTexture2D);
+    setEffectEnabled(true);
+    newSection(QGL::Faceted);
+    QGLSceneNode *node = currentNode();
+    *this << QGLCube();
+    finalize();
 
-    const QGLContext *context() const;
-    void setContext(const QGLContext *context);
+    QGLMaterial *mat = new QGLMaterial();
+    mat->setAmbientColor(Qt::green);
+    mat->setSpecularColor(Qt::white);
+    QUrl url;
+    url.setScheme("file");
+    url.setPath(":/res/images/sample_image.jpg");
+    mat->setTextureUrl(url);
+    node->setMaterial(mat);
 
-    bool trackResourceTransfer() const;
-    void setTrackResourceTransfer(bool enable);
+    m_tex = mat->texture();
+}
 
-Q_SIGNALS:
-    void contextDestroyed();
-    void resourcesTransferred(const QGLContext *shareContext);
 
-private Q_SLOTS:
-    void aboutToDestroyContext(const QGLContext *context);
-
-private:
-    QScopedPointer<QGLContextWatcherPrivate> d_ptr;
-
-    Q_DECLARE_PRIVATE(QGLContextWatcher)
-    Q_DISABLE_COPY(QGLContextWatcher)
-};
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+void Cube3DNode::setImagePath(const QString &path)
+{
+    QString url = QString("file://%1").arg(path);
+    m_tex->setUrl(url);
+}

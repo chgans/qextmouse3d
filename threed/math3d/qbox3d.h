@@ -73,8 +73,8 @@ public:
     QVector3D maximum() const;
     void setExtents(const QVector3D& corner1, const QVector3D& corner2);
 
-    void setNull();
-    void setInfinite();
+    void setToNull();
+    void setToInfinite();
 
     QVector3D size() const;
     QVector3D center() const;
@@ -91,15 +91,15 @@ public:
     void intersect(const QBox3D& box);
     QBox3D intersected(const QBox3D& box) const;
 
-    void expand(const QVector3D& point);
-    void expand(const QBox3D& box);
-    void expand(const QArray<QVector3D>& points);
-    void expand(const QArrayRef<QVector3D>& points);
+    void unite(const QVector3D& point);
+    void unite(const QBox3D& box);
+    void unite(const QArray<QVector3D>& points);
+    void unite(const QArrayRef<QVector3D>& points);
 
-    QBox3D expanded(const QVector3D& point) const;
-    QBox3D expanded(const QBox3D& box) const;
-    QBox3D expanded(const QArray<QVector3D>& points) const;
-    QBox3D expanded(const QArrayRef<QVector3D>& points) const;
+    QBox3D united(const QVector3D& point) const;
+    QBox3D united(const QBox3D& box) const;
+    QBox3D united(const QArray<QVector3D>& points) const;
+    QBox3D united(const QArrayRef<QVector3D>& points) const;
 
     void translate(const QVector3D& vector);
     QBox3D translated(const QVector3D& vector) const;
@@ -139,7 +139,7 @@ private:
     QBox3D::Type boxtype;
     QVector3D mincorner, maxcorner;
 
-    void expand(const QVector3D *points, int count);
+    void unite(const QVector3D *points, int count);
 };
 
 inline QBox3D::QBox3D() : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0) {}
@@ -156,13 +156,13 @@ inline QBox3D::QBox3D(const QVector3D& corner1, const QVector3D& corner2)
 inline QBox3D::QBox3D(const QArray<QVector3D>& points)
     : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
 {
-    expand(points.constData(), points.size());
+    unite(points.constData(), points.size());
 }
 
 inline QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
     : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
 {
-    expand(points.constData(), points.size());
+    unite(points.constData(), points.size());
 }
 
 inline bool QBox3D::isNull() const { return (boxtype == Null); }
@@ -183,14 +183,14 @@ inline void QBox3D::setExtents(const QVector3D& corner1, const QVector3D& corner
                           qMax(corner1.z(), corner2.z()));
 }
 
-inline void QBox3D::setNull()
+inline void QBox3D::setToNull()
 {
     boxtype = Null;
     mincorner = QVector3D(0, 0, 0);
     maxcorner = QVector3D(0, 0, 0);
 }
 
-inline void QBox3D::setInfinite()
+inline void QBox3D::setToInfinite()
 {
     boxtype = Infinite;
     mincorner = QVector3D(0, 0, 0);
@@ -250,27 +250,27 @@ inline bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2)
            qFuzzyCompare(box1.maxcorner, box2.maxcorner);
 }
 
-inline void QBox3D::expand(const QArray<QVector3D>& points)
+inline void QBox3D::unite(const QArray<QVector3D>& points)
 {
-    expand(points.constData(), points.size());
+    unite(points.constData(), points.size());
 }
 
-inline void QBox3D::expand(const QArrayRef<QVector3D>& points)
+inline void QBox3D::unite(const QArrayRef<QVector3D>& points)
 {
-    expand(points.constData(), points.size());
+    unite(points.constData(), points.size());
 }
 
-inline QBox3D QBox3D::expanded(const QArray<QVector3D>& points) const
+inline QBox3D QBox3D::united(const QArray<QVector3D>& points) const
 {
     QBox3D box(*this);
-    box.expand(points.constData(), points.size());
+    box.unite(points.constData(), points.size());
     return box;
 }
 
-inline QBox3D QBox3D::expanded(const QArrayRef<QVector3D>& points) const
+inline QBox3D QBox3D::united(const QArrayRef<QVector3D>& points) const
 {
     QBox3D box(*this);
-    box.expand(points.constData(), points.size());
+    box.unite(points.constData(), points.size());
     return box;
 }
 

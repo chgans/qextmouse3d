@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the Qt scene graph research project.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,31 +39,34 @@
 **
 ****************************************************************************/
 
-#ifndef QGLCONTEXTSCOPE_H
-#define QGLCONTEXTSCOPE_H
+#ifndef PHOTOBROWSER3DVIEW_H
+#define PHOTOBROWSER3DVIEW_H
 
-#include "qt3dglobal.h"
+#include "qglview.h"
 
-QT_BEGIN_HEADER
+class Cube3DNode;
+class SkyBox;
+class QGLMaterialCollection;
 
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-class QGLContext;
-
-class Q_QT3D_EXPORT QGLContextScope
+class PhotoBrowser3DView : public QGLView
 {
-public:
-    explicit QGLContextScope(const QGLContext *context);
-    ~QGLContextScope();
+    Q_OBJECT
 
+public:
+    PhotoBrowser3DView();
+    ~PhotoBrowser3DView();
+    void initializeGL(QGLPainter *);
+protected:
+    void paintGL(QGLPainter *);
+    void wheelEvent(QWheelEvent *e);
+    //void mousePressEvent(QMouseEvent *e);
+    //void mouseMoveEvent(QMouseEvent *e);
+    //void mouseReleaseEvent(QMouseEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 private:
-    QGLContext *m_restoreContext;
+    Cube3DNode *m_cube;
+    SkyBox *m_skybox;
+    QGLMaterialCollection *m_palette;
 };
 
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+#endif // PHOTOBROWSER3DVIEW_H

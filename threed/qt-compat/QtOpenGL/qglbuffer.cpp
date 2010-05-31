@@ -43,7 +43,6 @@
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 #include "qglbuffer.h"
-#include "qglcontextscope.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -57,6 +56,20 @@ QT_BEGIN_NAMESPACE
     Buffer objects are created in the GL server so that the
     client application can avoid uploading vertices, indices,
     texture image data, etc every time they are needed.
+
+    QGLBuffer objects can be copied around as a reference to the
+    underlying GL buffer object:
+
+    \code
+    QGLBuffer buffer1(QGLBuffer::IndexBuffer);
+    buffer1.create();
+
+    QGLBuffer buffer2 = buffer1;
+    \endcode
+
+    QGLBuffer performs a shallow copy when objects are copied in this
+    manner, but does not implement copy-on-write semantics.  The original
+    object will be affected whenever the copy is modified.
 */
 
 /*!
@@ -266,18 +279,33 @@ class QGLBufferPrivate
 {
 public:
     QGLBufferPrivate(QGLBuffer::Type t)
-        : type(t),
+        : ref(1),
+          type(t),
           guard(0),
           usagePattern(QGLBuffer::StaticDraw),
           actualUsagePattern(QGLBuffer::StaticDraw)
     {
     }
 
+    QAtomicInt ref;
     QGLBuffer::Type type;
     QGLSharedResourceGuard guard;
     QGLBuffer::UsagePattern usagePattern;
     QGLBuffer::UsagePattern actualUsagePattern;
 };
+
+/*!
+    Constructs a new buffer object of type QGLBuffer::VertexBuffer.
+
+    Note: this constructor just creates the QGLBuffer instance.  The actual
+    buffer object in the GL server is not created until create() is called.
+
+    \sa create()
+*/
+QGLBuffer::QGLBuffer()
+    : d_ptr(new QGLBufferPrivate(QGLBuffer::VertexBuffer))
+{
+}
 
 /*!
     Constructs a new buffer object of \a type.
@@ -293,24 +321,44 @@ QGLBuffer::QGLBuffer(QGLBuffer::Type type)
 }
 
 /*!
+    Constructs a shallow copy of \a other.
+
+    Note: QGLBuffer does not implement copy-on-write semantics,
+    so \a other will be affected whenever the copy is modified.
+*/
+QGLBuffer::QGLBuffer(const QGLBuffer &other)
+    : d_ptr(other.d_ptr)
+{
+    d_ptr->ref.ref();
+}
+
+/*!
     Destroys this buffer object, including the storage being
     used in the GL server.
 */
 QGLBuffer::~QGLBuffer()
 {
-    Q_D(QGLBuffer);
-    GLuint bufferId = d->guard.id();
-    if (bufferId) {
-        // Switch to the original creating context to destroy it.
-        QGLContextScope scope(d->guard.context());
-#if !defined(QGL_RESOLVE_BUFFER_FUNCS)
-        glDeleteBuffers(1, &bufferId);
-#else
-        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
-        if (extensions)
-            extensions->deleteBuffers(1, &bufferId);
-#endif
+    if (!d_ptr->ref.deref()) {
+        destroy();
+        delete d_ptr;
     }
+}
+
+/*!
+    Assigns a shallow copy of \a other to this object.
+
+    Note: QGLBuffer does not implement copy-on-write semantics,
+    so \a other will be affected whenever the copy is modified.
+*/
+QGLBuffer &QGLBuffer::operator=(const QGLBuffer &other)
+{
+    if (d_ptr != other.d_ptr) {
+        other.d_ptr->ref.ref();
+        if (!d_ptr->ref.deref())
+            destroy();
+        d_ptr = other.d_ptr;
+    }
+    return *this;
 }
 
 /*!
@@ -367,7 +415,7 @@ void QGLBuffer::setUsagePattern(QGLBuffer::UsagePattern value)
     This function will return false if the GL implementation
     does not support buffers, or there is no current QGLContext.
 
-    \sa isCreated(), allocate(), write()
+    \sa isCreated(), allocate(), write(), destroy()
 */
 bool QGLBuffer::create()
 {
@@ -396,12 +444,48 @@ bool QGLBuffer::create()
 /*!
     Returns true if this buffer has been created; false otherwise.
 
-    \sa create()
+    \sa create(), destroy()
 */
 bool QGLBuffer::isCreated() const
 {
     Q_D(const QGLBuffer);
     return d->guard.id() != 0;
+}
+
+/*!
+    Destroys this buffer object, including the storage being
+    used in the GL server.  All references to the buffer will
+    become invalid.
+*/
+void QGLBuffer::destroy()
+{
+    Q_D(QGLBuffer);
+    GLuint bufferId = d->guard.id();
+    if (bufferId) {
+        // Switch to the original creating context to destroy it.
+        const QGLContext *context = d->guard.context();
+        const QGLContext *current =
+            const_cast<QGLContext *>(QGLContext::currentContext());
+        if (context && context != current &&
+                !QGLContext::areSharing(context, current)) {
+            const_cast<QGLContext *>(context)->makeCurrent();
+        }
+#if !defined(QGL_RESOLVE_BUFFER_FUNCS)
+        glDeleteBuffers(1, &bufferId);
+#else
+        QGLBufferExtensions *extensions = loadBufferFunctions(d->guard.context());
+        if (extensions)
+            extensions->deleteBuffers(1, &bufferId);
+#endif
+        if (current) {
+            if (current != context)
+                const_cast<QGLContext *>(current)->makeCurrent();
+        } else if (context) {
+            const_cast<QGLContext *>(context)->doneCurrent();
+        }
+    }
+    d->guard.setId(0);
+    d->guard.setContext(0);
 }
 
 /*!

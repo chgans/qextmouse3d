@@ -48,6 +48,7 @@
 
 class QGLAbstractScene;
 class QGLSceneNode;
+class MVCNode;
 
 class Model : public QAbstractItemModel
 {
@@ -56,13 +57,16 @@ public:
     explicit Model(QObject *parent = 0);
     QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const;
     QModelIndex parent(const QModelIndex & index) const;
+    QModelIndex selectNode(QGLSceneNode *node) const;
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     int columnCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     QString fullPath() const { return m_fullPath; }
     QGLSceneNode *scene() const { return m_sceneRoot; }
+    QGLAbstractScene *manager() const { return m_sceneManager; }
     QString getOptions() const;
     QStringList components() const;
+
 
 signals:
     void modelLoaded(const QString &path);
@@ -75,11 +79,17 @@ public slots:
 
 private:
     void importModel();
+    void buildModel();
+    QModelIndex getParent(MVCNode *);
+
+    friend class MVCNode;
 
     QString m_fullPath;
     QGLAbstractScene *m_sceneManager;
     QGLSceneNode *m_sceneRoot;
+    MVCNode *m_modelRoot;
     mutable QStringList m_components;
+    QMap<QGLSceneNode*,MVCNode*> m_selectionMap;
 };
 
 #endif // MODEL_H

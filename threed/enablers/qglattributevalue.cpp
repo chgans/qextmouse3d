@@ -204,7 +204,31 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 
     Returns the component type for this attribute value.  The default
     value is GL_FLOAT.
+
+    \sa sizeOfType()
 */
+
+/*!
+    Returns the size in bytes of type().
+
+    \sa type(), tupleSize()
+*/
+int QGLAttributeValue::sizeOfType() const
+{
+    switch (m_type) {
+    case GL_BYTE:           return int(sizeof(GLbyte));
+    case GL_UNSIGNED_BYTE:  return int(sizeof(GLubyte));
+    case GL_SHORT:          return int(sizeof(GLshort));
+    case GL_UNSIGNED_SHORT: return int(sizeof(GLushort));
+    case GL_INT:            return int(sizeof(GLint));
+    case GL_UNSIGNED_INT:   return int(sizeof(GLuint));
+    case GL_FLOAT:          return int(sizeof(GLfloat));
+#if defined(GL_DOUBLE) && !defined(QT_OPENGL_ES)
+    case GL_DOUBLE:         return int(sizeof(GLdouble));
+#endif
+    default:                return 0;
+    }
+}
 
 /*!
     \fn int QGLAttributeValue::tupleSize() const
@@ -213,7 +237,7 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
     a return value of 3 indicates a vector of 3-dimensional values.
     If tupleSize() is zero, then this attribute value is null.
 
-    \sa isNull()
+    \sa isNull(), sizeOfType()
 */
 
 /*!

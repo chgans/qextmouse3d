@@ -105,7 +105,7 @@ public:
     bool upload();
     bool isUploaded() const;
 
-    QGLBuffer *buffer() const;
+    QGLBuffer buffer() const;
 
     bool bind() const;
     void release() const;

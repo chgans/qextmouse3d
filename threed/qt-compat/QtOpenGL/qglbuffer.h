@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the QtOpenGL module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -65,8 +65,12 @@ public:
         PixelUnpackBuffer   = 0x88EC  // GL_PIXEL_UNPACK_BUFFER
     };
 
+    QGLBuffer();
     explicit QGLBuffer(QGLBuffer::Type type);
+    QGLBuffer(const QGLBuffer &other);
     ~QGLBuffer();
+
+    QGLBuffer &operator=(const QGLBuffer &other);
 
     enum UsagePattern
     {
@@ -96,6 +100,8 @@ public:
     bool create();
     bool isCreated() const;
 
+    void destroy();
+
     bool bind() const;
     void release() const;
 
@@ -105,19 +111,18 @@ public:
 
     int size() const;
 
-    bool read(int offset, void *data, int size);
-    void write(int offset, const void *data, int size);
+    bool read(int offset, void *data, int count);
+    void write(int offset, const void *data, int count);
 
-    void allocate(const void *data, int size);
-    inline void allocate(int size) { allocate(0, size); }
+    void allocate(const void *data, int count);
+    inline void allocate(int count) { allocate(0, count); }
 
     void *map(QGLBuffer::Access access);
     bool unmap();
 
 private:
-    QScopedPointer<QGLBufferPrivate> d_ptr;
+    QGLBufferPrivate *d_ptr;
 
-    Q_DISABLE_COPY(QGLBuffer)
     Q_DECLARE_PRIVATE(QGLBuffer)
 };
 

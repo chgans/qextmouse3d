@@ -381,7 +381,7 @@ scale values</string>
      <x>0</x>
      <y>0</y>
      <width>1202</width>
-     <height>25</height>
+     <height>32</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuModels">
@@ -427,6 +427,7 @@ scale values</string>
     <addaction name="separator"/>
     <addaction name="actionComponent"/>
     <addaction name="actionShow_Floor"/>
+    <addaction name="actionShow_Picking"/>
     <addaction name="actionSpin"/>
     <addaction name="menuZoom_Scale"/>
    </widget>
@@ -590,6 +591,14 @@ scale values</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+9</string>
+   </property>
+  </action>
+  <action name="actionShow_Picking">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Picking</string>
    </property>
   </action>
  </widget>

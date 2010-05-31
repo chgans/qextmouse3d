@@ -75,9 +75,9 @@ class Q_QT3D_EXPORT QGLCamera : public QObject
     Q_PROPERTY(qreal zEye READ zEye WRITE setZEye NOTIFY viewChanged)
     Q_PROPERTY(QVector3D eye READ eye WRITE setEye NOTIFY viewChanged)
     Q_PROPERTY(QVector3D upVector READ upVector WRITE setUpVector NOTIFY viewChanged)
-    Q_PROPERTY(qreal xCentre READ xCentre WRITE setXCentre NOTIFY viewChanged)
-    Q_PROPERTY(qreal yCentre READ yCentre WRITE setYCentre NOTIFY viewChanged)
-    Q_PROPERTY(qreal zCentre READ zCentre WRITE setZCentre NOTIFY viewChanged)
+    Q_PROPERTY(qreal xCenter READ xCenter WRITE setXCenter NOTIFY viewChanged)
+    Q_PROPERTY(qreal yCenter READ yCenter WRITE setYCenter NOTIFY viewChanged)
+    Q_PROPERTY(qreal zCenter READ zCenter WRITE setZCenter NOTIFY viewChanged)
     Q_PROPERTY(QVector3D center READ center WRITE setCenter NOTIFY viewChanged)
     Q_PROPERTY(qreal eyeSeparation READ eyeSeparation WRITE setEyeSeparation NOTIFY viewChanged)
     Q_PROPERTY(QVector3D motionAdjustment READ motionAdjustment WRITE setMotionAdjustment DESIGNABLE false NOTIFY viewChanged)
@@ -127,12 +127,12 @@ public:
     QVector3D upVector() const;
     void setUpVector(const QVector3D& vector);
 
-    qreal xCentre() const;
-    void setXCentre(qreal value);
-    qreal yCentre() const;
-    void setYCentre(qreal value);
-    qreal zCentre() const;
-    void setZCentre(qreal value);
+    qreal xCenter() const;
+    void setXCenter(qreal value);
+    qreal yCenter() const;
+    void setYCenter(qreal value);
+    qreal zCenter() const;
+    void setZCenter(qreal value);
 
     QVector3D center() const;
     void setCenter(const QVector3D& vertex);

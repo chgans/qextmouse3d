@@ -153,6 +153,26 @@ void QGLSceneObject::cleanup(QGLPainter *painter)
 }
 
 /*!
+    Returns a pointer to the pick node for this scene object, if picking is
+    supported by this object, otherwise returns NULL.  The default
+    implementation always returns NULL.
+*/
+QGLPickNode *QGLSceneObject::pickNode() const
+{
+    return 0;
+}
+
+/*!
+    Sets the pick \a node for this scene object, if picking is supported by
+    this object, otherwise it does nothing.  The default implementation
+    does nothing.
+*/
+void QGLSceneObject::setPickNode(QGLPickNode *node)
+{
+    Q_UNUSED(node);
+}
+
+/*!
     \fn void QGLSceneObject::changed()
 
     Signal that is emitted when this object changes in a manner that

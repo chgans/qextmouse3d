@@ -103,6 +103,7 @@ Controls::Controls(QWidget *parent)
 
     m_view->setModel(m_model);
     m_ui->treeView->setModel(m_model);
+    m_view->setTreeView(m_ui->treeView);
 
     emit openFile(initialModel);
 
@@ -468,11 +469,11 @@ void Controls::on_actionSave_QML_triggered()
             gen.setProperty("z_rotation", QString::number(o.z()));
         QVector3D s = m_view->scale();
         if (!qFuzzyIsNull(s.x()))
-            gen.setProperty("x_scale", QString::number(s.x()));
+            gen.setProperty("x_scale", ((s.x() < 0.0f) ? QString::number(1.0f / qAbs(s.x())) : QString::number(s.x())));
         if (!qFuzzyIsNull(s.y()))
-            gen.setProperty("y_scale", QString::number(s.y()));
+            gen.setProperty("y_scale", ((s.y() < 0.0f) ? QString::number(1.0f / qAbs(s.y())) : QString::number(s.y())));
         if (!qFuzzyIsNull(s.z()))
-            gen.setProperty("z_scale", QString::number(s.z()));
+            gen.setProperty("z_scale", ((s.z() < 0.0f) ? QString::number(1.0f / qAbs(s.z())) : QString::number(s.z())));
         gen.save();
     }
 }
@@ -658,4 +659,9 @@ void Controls::on_lockButton_clicked()
         m_ui->yScaleSpin->setValue(m_ui->xScaleSpin->value());
         m_ui->zScaleSpin->setValue(m_ui->xScaleSpin->value());
     }
+}
+
+void Controls::on_actionShow_Picking_triggered()
+{
+    m_view->setOption(QGLView::ShowPicking, m_ui->actionShow_Picking->isChecked());
 }

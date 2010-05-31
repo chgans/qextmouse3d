@@ -49,6 +49,7 @@
 #include "qglview.h"
 #include "qgraphicsscale3d.h"
 #include "qgraphicstranslation3d.h"
+#include "qgraphicsfacecamera.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
@@ -338,6 +339,9 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
             } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
                 QObject::connect(item, SIGNAL(translateChanged()),
                                  object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsFaceCamera *>(item)) {
+                QObject::connect(item, SIGNAL(preserveUpVectorChanged()),
+                                 object, SLOT(update()));
             }
         }
     }
@@ -410,6 +414,9 @@ void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransf
                                  object, SLOT(update()));
             } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
                 QObject::connect(item, SIGNAL(translateChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsFaceCamera *>(item)) {
+                QObject::connect(item, SIGNAL(preserveUpVectorChanged()),
                                  object, SLOT(update()));
             }
         }

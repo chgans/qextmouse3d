@@ -69,6 +69,7 @@ protected:
     void changeEvent(QEvent *e);
 
 private slots:
+    void on_actionShow_Picking_triggered();
     void on_lockButton_clicked();
     void on_zScaleSpin_valueChanged(QString );
     void on_yScaleSpin_valueChanged(QString );
