@@ -84,8 +84,8 @@ public:
 
     QBasicAtomicInt ref;
     int indexCount;
-    QArray<ushort> indicesShort;
-    QArray<uint> indicesInt;
+    QArray<ushort> indexesShort;
+    QArray<uint> indexesInt;
     GLenum elementType;
     QGLBuffer buffer;
     bool hasIntBuffers;
@@ -140,27 +140,27 @@ QGLIndexBuffer& QGLIndexBuffer::operator=(const QGLIndexBuffer& other)
 }
 
 /*!
-    Returns the indices in this buffer as an array of ushort values.
+    Returns the indexes in this buffer as an array of ushort values.
 
     Returns an empty array if type() is not \c GL_UNSIGNED_SHORT or the
     buffer has already been uploaded.
 */
-QArray<ushort> QGLIndexBuffer::indicesUShort() const
+QArray<ushort> QGLIndexBuffer::indexesUShort() const
 {
     Q_D(const QGLIndexBuffer);
-    return d->indicesShort;
+    return d->indexesShort;
 }
 
 /*!
-    Returns the indices in this buffer as an array of uint values.
+    Returns the indexes in this buffer as an array of uint values.
 
     Returns an empty array if type() is not \c GL_UNSIGNED_INT or the
     buffer has already been uploaded.
 */
-QArray<uint> QGLIndexBuffer::indicesUInt() const
+QArray<uint> QGLIndexBuffer::indexesUInt() const
 {
     Q_D(const QGLIndexBuffer);
-    return d->indicesInt;
+    return d->indexesInt;
 }
 
 /*!
@@ -202,7 +202,7 @@ static QArray<ushort> qt_qarray_uint_to_ushort(const QArray<uint> &array)
         result.append(ushort(value));
     }
     if (largeValue)
-        qWarning("QGLIndexBuffer::setIndices: large 32-bit value provided to a 16-bit only buffer");
+        qWarning("QGLIndexBuffer::setIndexes: large 32-bit value provided to a 16-bit only buffer");
     return result;
 }
 
@@ -214,9 +214,9 @@ static QArray<ushort> qt_qarray_uint_to_ushort(const QArray<uint> &array)
     function must be called with a current GL context that is compatible
     with the uploaded buffer.
 
-    \sa replaceIndices()
+    \sa replaceIndexes()
 */
-void QGLIndexBuffer::setIndices(const QArray<ushort>& values)
+void QGLIndexBuffer::setIndexes(const QArray<ushort>& values)
 {
     Q_D(QGLIndexBuffer);
     if (d->buffer.isCreated()) {
@@ -226,9 +226,9 @@ void QGLIndexBuffer::setIndices(const QArray<ushort>& values)
         // The element type may have changed from int to ushort.
         d->elementType = GL_UNSIGNED_SHORT;
     } else {
-        d->indicesShort = values;
+        d->indexesShort = values;
         d->elementType = GL_UNSIGNED_SHORT;
-        d->indicesInt = QArray<uint>();
+        d->indexesInt = QArray<uint>();
     }
     d->indexCount = values.size();
 }
@@ -246,9 +246,9 @@ void QGLIndexBuffer::setIndices(const QArray<ushort>& values)
     32-bit index values, this function will need to convert all values
     to 16-bit which may incur a performance penalty and lose information.
 
-    \sa replaceIndices()
+    \sa replaceIndexes()
 */
-void QGLIndexBuffer::setIndices(const QArray<uint>& values)
+void QGLIndexBuffer::setIndexes(const QArray<uint>& values)
 {
     Q_D(QGLIndexBuffer);
     if (d->buffer.isCreated()) {
@@ -265,13 +265,13 @@ void QGLIndexBuffer::setIndices(const QArray<uint>& values)
             d->buffer.release();
         }
     } else if (d->hasIntBuffers) {
-        d->indicesInt = values;
+        d->indexesInt = values;
         d->elementType = GL_UNSIGNED_INT;
-        d->indicesShort = QArray<ushort>();
+        d->indexesShort = QArray<ushort>();
     } else {
-        d->indicesShort = qt_qarray_uint_to_ushort(values);
+        d->indexesShort = qt_qarray_uint_to_ushort(values);
         d->elementType = GL_UNSIGNED_SHORT;
-        d->indicesInt = QArray<uint>();
+        d->indexesInt = QArray<uint>();
     }
     d->indexCount = values.size();
 }
@@ -288,13 +288,13 @@ void QGLIndexBuffer::setIndices(const QArray<uint>& values)
     The index buffer must have been originally created with the
     ushort element type.
 
-    \sa setIndices()
+    \sa setIndexes()
 */
-void QGLIndexBuffer::replaceIndices(int index, const QArray<ushort>& values)
+void QGLIndexBuffer::replaceIndexes(int index, const QArray<ushort>& values)
 {
     Q_D(QGLIndexBuffer);
     Q_ASSERT_X(d->elementType == GL_UNSIGNED_SHORT,
-               "QGLIndexBuffer::replaceIndices()",
+               "QGLIndexBuffer::replaceIndexes()",
                "buffer created with int element type, replacing with ushort");
     if (d->elementType != GL_UNSIGNED_SHORT)
         return;
@@ -304,8 +304,8 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<ushort>& values)
                         values.constData(), values.size() * sizeof(ushort));
         d->buffer.release();
     } else {
-        d->indicesShort.replace(index, values.constData(), values.size());
-        d->indexCount = d->indicesShort.size();
+        d->indexesShort.replace(index, values.constData(), values.size());
+        d->indexCount = d->indexesShort.size();
     }
 }
 
@@ -326,13 +326,13 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<ushort>& values)
     32-bit index values, this function will need to convert all values
     to 16-bit which may incur a performance penalty and lose information.
 
-    \sa setIndices()
+    \sa setIndexes()
 */
-void QGLIndexBuffer::replaceIndices(int index, const QArray<uint>& values)
+void QGLIndexBuffer::replaceIndexes(int index, const QArray<uint>& values)
 {
     Q_D(QGLIndexBuffer);
     Q_ASSERT_X(d->elementType == GL_UNSIGNED_INT || !d->hasIntBuffers,
-               "QGLIndexBuffer::replaceIndices()",
+               "QGLIndexBuffer::replaceIndexes()",
                "buffer created with ushort element type, replacing with int");
     if (d->elementType != GL_UNSIGNED_INT && d->hasIntBuffers)
         return;
@@ -351,12 +351,12 @@ void QGLIndexBuffer::replaceIndices(int index, const QArray<uint>& values)
             d->buffer.release();
         }
     } else if (d->elementType == GL_UNSIGNED_INT) {
-        d->indicesInt.replace(index, values.constData(), values.size());
-        d->indexCount = d->indicesInt.size();
+        d->indexesInt.replace(index, values.constData(), values.size());
+        d->indexCount = d->indexesInt.size();
     } else {
         QArray<ushort> svalues = qt_qarray_uint_to_ushort(values);
-        d->indicesShort.replace(index, svalues.constData(), svalues.size());
-        d->indexCount = d->indicesShort.size();
+        d->indexesShort.replace(index, svalues.constData(), svalues.size());
+        d->indexCount = d->indexesShort.size();
     }
 }
 
@@ -371,7 +371,7 @@ GLenum QGLIndexBuffer::elementType() const
 }
 
 /*!
-    Returns the number of indices in this index buffer.
+    Returns the number of indexes in this index buffer.
 */
 int QGLIndexBuffer::indexCount() const
 {
@@ -386,7 +386,7 @@ int QGLIndexBuffer::indexCount() const
 */
 
 /*!
-    Uploads the index data specified by a previous setIndices()
+    Uploads the index data specified by a previous setIndexes()
     call into the GL server as an index buffer object.
 
     Returns true if the data could be uploaded; false if index buffer
@@ -399,7 +399,7 @@ int QGLIndexBuffer::indexCount() const
     whether the data could be uploaded or not, QGLPainter::draw() can
     be used to support drawing of primitives using this object.
 
-    \sa isUploaded(), setIndices(), QGLPainter::draw()
+    \sa isUploaded(), setIndexes(), QGLPainter::draw()
 */
 bool QGLIndexBuffer::upload()
 {
@@ -410,23 +410,23 @@ bool QGLIndexBuffer::upload()
         return false;
     d->buffer.bind();
     if (d->elementType == GL_UNSIGNED_SHORT) {
-        d->buffer.allocate(d->indicesShort.constData(),
-                           d->indicesShort.size() * sizeof(ushort));
-        d->indicesShort = QArray<ushort>();
+        d->buffer.allocate(d->indexesShort.constData(),
+                           d->indexesShort.size() * sizeof(ushort));
+        d->indexesShort = QArray<ushort>();
     } else {
-        d->buffer.allocate(d->indicesInt.constData(),
-                           d->indicesInt.size() * sizeof(int));
-        d->indicesInt = QArray<uint>();
+        d->buffer.allocate(d->indexesInt.constData(),
+                           d->indexesInt.size() * sizeof(int));
+        d->indexesInt = QArray<uint>();
     }
     d->buffer.release();
     return true;
 }
 
 /*!
-    Returns true if the index data specified by previous a setIndices()
+    Returns true if the index data specified by previous a setIndexes()
     call has been uploaded into the GL server; false otherwise.
 
-    \sa upload(), setIndices()
+    \sa upload(), setIndexes()
 */
 bool QGLIndexBuffer::isUploaded() const
 {
@@ -482,42 +482,42 @@ void QGLIndexBufferPrivate::append
     if (elementType == GL_UNSIGNED_SHORT &&
             other->elementType == GL_UNSIGNED_SHORT) {
         // Both buffers are ushort.
-        const ushort *data = other->indicesShort.constData() + start;
-        int count = other->indicesShort.count() - start;
-        indicesShort.reserve(indicesShort.count() + count);
+        const ushort *data = other->indexesShort.constData() + start;
+        int count = other->indexesShort.count() - start;
+        indexesShort.reserve(indexesShort.count() + count);
         indexCount += count;
         while (count-- > 0)
-            indicesShort.append(ushort(*data++ + offset));
+            indexesShort.append(ushort(*data++ + offset));
     } if (elementType == GL_UNSIGNED_SHORT) {
         // Only first buffer is ushort: convert it to int first.
-        const ushort *indices = indicesShort.constData();
-        int count = indicesShort.count();
-        indicesInt.reserve(count + other->indicesInt.count());
+        const ushort *indexes = indexesShort.constData();
+        int count = indexesShort.count();
+        indexesInt.reserve(count + other->indexesInt.count());
         while (count-- > 0)
-            indicesInt.append(*indices++);
-        indicesShort = QArray<ushort>();
+            indexesInt.append(*indexes++);
+        indexesShort = QArray<ushort>();
         elementType = GL_UNSIGNED_INT;
-        const uint *data = other->indicesInt.constData() + start;
-        count = other->indicesInt.count() - start;
+        const uint *data = other->indexesInt.constData() + start;
+        count = other->indexesInt.count() - start;
         indexCount += count;
         while (count-- > 0)
-            indicesInt.append(*data++ + offset);
+            indexesInt.append(*data++ + offset);
     } if (other->elementType == GL_UNSIGNED_SHORT) {
         // Only second buffer is ushort.
-        const ushort *data = other->indicesShort.constData() + start;
-        int count = other->indicesShort.count() - start;
-        indicesInt.reserve(indicesInt.count() + count);
+        const ushort *data = other->indexesShort.constData() + start;
+        int count = other->indexesShort.count() - start;
+        indexesInt.reserve(indexesInt.count() + count);
         indexCount += count;
         while (count-- > 0)
-            indicesInt.append(*data++ + offset);
+            indexesInt.append(*data++ + offset);
     } else {
         // Neither buffer is ushort.
-        const uint *data = other->indicesInt.constData() + start;
-        int count = other->indicesInt.count() - start;
-        indicesInt.reserve(indicesInt.count() + count);
+        const uint *data = other->indexesInt.constData() + start;
+        int count = other->indexesInt.count() - start;
+        indexesInt.reserve(indexesInt.count() + count);
         indexCount += count;
         while (count-- > 0)
-            indicesInt.append(*data++ + offset);
+            indexesInt.append(*data++ + offset);
     }
 }
 
@@ -526,9 +526,9 @@ int QGLIndexBufferPrivate::headIndex(int posn) const
     if (indexCount <= posn)
         return -1;
     if (elementType == GL_UNSIGNED_SHORT)
-        return indicesShort[posn];
+        return indexesShort[posn];
     else
-        return indicesInt[posn];
+        return indexesInt[posn];
 }
 
 int QGLIndexBufferPrivate::tailIndex(int posn) const
@@ -536,9 +536,9 @@ int QGLIndexBufferPrivate::tailIndex(int posn) const
     if (indexCount <= posn)
         return -1;
     if (elementType == GL_UNSIGNED_SHORT)
-        return indicesShort[indexCount - posn - 1];
+        return indexesShort[indexCount - posn - 1];
     else
-        return indicesInt[indexCount - posn - 1];
+        return indexesInt[indexCount - posn - 1];
 }
 
 /*!
@@ -551,7 +551,7 @@ int QGLIndexBufferPrivate::tailIndex(int posn) const
     The request is ignored if this index buffer or \a buffer have already
     been uploaded, or \a buffer is this index buffer.
 
-    \sa isUploaded(), setIndices()
+    \sa isUploaded(), setIndexes()
 */
 void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
 {
@@ -574,7 +574,7 @@ void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
 
     The two buffers will be merged at the join point according to
     \a combineMode.  For example, if \a combineMode is QGL::TriangleStrip,
-    then the result will be a single triangle strip.  Indices are
+    then the result will be a single triangle strip.  Indexes are
     dropped from the front of \a buffer as necessary to correctly
     merge the buffers.
 
@@ -584,7 +584,7 @@ void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
     The request is ignored if this index buffer or \a buffer have already
     been uploaded, or \a buffer is this index buffer.
 
-    \sa isUploaded(), setIndices()
+    \sa isUploaded(), setIndexes()
 */
 void QGLIndexBuffer::append
     (const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode)
@@ -698,17 +698,17 @@ void QGLIndexBuffer::append
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
-    This operation will consume all of the elements of \a indices,
+    This operation will consume all of the elements of \a indexes,
     which are used to index into the enabled arrays.
 
-    If \a indices has not been uploaded to the GL server as an index
+    If \a indexes has not been uploaded to the GL server as an index
     buffer, then this function will draw using a client-side array.
 
     \sa update(), QGLIndexBuffer::upload()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes)
 {
-    const QGLIndexBufferPrivate *d = indices.d_func();
+    const QGLIndexBufferPrivate *d = indexes.d_func();
     update();
 #ifndef QT_NO_DEBUG
     // FIXME
@@ -726,10 +726,10 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
         glDrawElements(GLenum(mode), d->indexCount, d->elementType, 0);
     } else if (d->elementType == GL_UNSIGNED_SHORT) {
         glDrawElements(GLenum(mode), d->indexCount, GL_UNSIGNED_SHORT,
-                       d->indicesShort.constData());
+                       d->indexesShort.constData());
     } else {
         glDrawElements(GLenum(mode), d->indexCount, GL_UNSIGNED_INT,
-                       d->indicesInt.constData());
+                       d->indexesInt.constData());
     }
 }
 
@@ -740,17 +740,17 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices)
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
-    This operation will consume \a count elements of \a indices,
+    This operation will consume \a count elements of \a indexes,
     starting at \a offset, which are used to index into the enabled arrays.
 
-    If \a indices has not been uploaded to the GL server as an index
+    If \a indexes has not been uploaded to the GL server as an index
     buffer, then this function will draw using a client-side array.
 
     \sa update(), QGLIndexBuffer::upload()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count)
+void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes, int offset, int count)
 {
-    const QGLIndexBufferPrivate *d = indices.d_func();
+    const QGLIndexBufferPrivate *d = indexes.d_func();
     update();
 #ifndef QT_NO_DEBUG
     // FIXME
@@ -774,10 +774,10 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int 
         }
     } else if (d->elementType == GL_UNSIGNED_SHORT) {
         glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT,
-                       d->indicesShort.constData() + offset);
+                       d->indexesShort.constData() + offset);
     } else {
         glDrawElements(GLenum(mode), count, GL_UNSIGNED_INT,
-                       d->indicesInt.constData() + offset);
+                       d->indexesInt.constData() + offset);
     }
 }
 
