@@ -42,7 +42,6 @@
 #include "effect.h"
 #include "qglpainter.h"
 #include "qglmaterial.h"
-#include "qglfogparameters.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QtDeclarative/qdeclarativeengine.h>
@@ -50,7 +49,7 @@
 /*!
     \class Effect
     \brief The Effect class defines simple effects within the QML/3d environment.  Examples 
-    of such effects include fog effects, simple material and lighting effects, and so on.
+    of such effects include textures, simple material and lighting effects, and so on.
     \since 4.6.?
     \ingroup qt3d
     \ingroup qt3d::qml3d
@@ -90,7 +89,6 @@ public:
           textureChanged(false),
           texture2D(0),
           material(0),
-          fog(0),
           textureReply(0) {}
     ~EffectPrivate()
     {
@@ -104,7 +102,6 @@ public:
     QGLTexture2D *texture2D;
     QUrl textureUrl;
     QGLMaterial *material;
-    QGLFogParameters *fog;
     QNetworkReply *textureReply;
 };
 
@@ -270,33 +267,6 @@ void Effect::setMaterial(QGLMaterial *value)
 }
 
 /*!
-    \property Effect::fog
-    \brief fog effects can be achieved using the \c fog property of the \l Effect class.
-
-    They are specified using the standard \l QGLFogParameters class.
-*/
-QGLFogParameters *Effect::fog() const
-{
-    return d->fog;
-}
-
-void Effect::setFog(QGLFogParameters *value)
-{
-    if (d->fog != value) {
-        if (d->fog) {
-            disconnect(d->fog, SIGNAL(fogChanged()),
-                       this, SIGNAL(effectChanged()));
-        }
-        d->fog = value;
-        if (d->fog) {
-            connect(d->fog, SIGNAL(fogChanged()),
-                    this, SIGNAL(effectChanged()));
-        }
-        emit effectChanged();
-    }
-}
-
-/*!
     Enable the effect on for a given \a painter.
 */
 void Effect::enableEffect(QGLPainter *painter)
@@ -325,7 +295,6 @@ void Effect::enableEffect(QGLPainter *painter)
             painter->setColor(d->color);
         }
     }
-    painter->setFogParameters(d->fog);
 }
 
 /*!
@@ -336,13 +305,12 @@ void Effect::disableEffect(QGLPainter *painter)
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(Qt::white);
     painter->setTexture((QGLTexture2D *)0);
-    painter->setFogParameters(0);
 }
 
 /*! \fn void Effect::effectChanged();
 
   Signals that a preoperty of the Effect has changed in some way, this may be a texture, material,
-  fog, or other parameter.
+  or other parameter.
 */
 
 /*!

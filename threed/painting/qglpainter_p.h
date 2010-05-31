@@ -124,7 +124,6 @@ public:
     QGLMaterial *defaultMaterial;
     QGLMaterial *frontColorMaterial;
     QGLMaterial *backColorMaterial;
-    const QGLFogParameters *fogParameters;
     QBox3D viewingCube;
     QRect viewport; // GL co-ordinates - origin bottom-left.
     QRect scissor;  // Qt co-ordinates - origin top-left.

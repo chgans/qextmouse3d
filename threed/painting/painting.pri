@@ -6,7 +6,6 @@ HEADERS += \
     qglabstracteffect.h \
     qglblendoptions.h \
     qgldepthbufferoptions.h \
-    qglfogparameters.h \
     qgllightmodel.h \
     qgllightparameters.h \
     qglmaterial.h \
@@ -19,7 +18,6 @@ SOURCES += \
     qglabstracteffect.cpp \
     qglblendoptions.cpp \
     qgldepthbufferoptions.cpp \
-    qglfogparameters.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
     qglmaterial.cpp \

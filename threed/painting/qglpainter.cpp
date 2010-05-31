@@ -94,7 +94,6 @@ QT_BEGIN_NAMESPACE
            UpdateProjectionMatrix.
     \value UpdateLights The lights have been updated.
     \value UpdateMaterials The material parameters have been updated.
-    \value UpdateFog The fog parameters have been updated.
     \value UpdateAll All values have been updated.  This is specified
            when an effect is activated.
 */
@@ -119,7 +118,6 @@ QGLPainterPrivate::QGLPainterPrivate()
       defaultMaterial(0),
       frontColorMaterial(0),
       backColorMaterial(0),
-      fogParameters(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
       scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
@@ -1912,35 +1910,6 @@ void QGLPainter::updateFixedFunction(QGLPainter::Updates updates)
             setMaterial(GL_BACK, backMaterial);
         }
     }
-    if ((updates & QGLPainter::UpdateFog) != 0) {
-        const QGLFogParameters *fog = fogParameters();
-        if (!fog) {
-            glDisable(GL_FOG);
-        } else {
-            GLfloat color[4];
-            QColor col = fog->color();
-            color[0] = col.redF();
-            color[1] = col.greenF();
-            color[2] = col.blueF();
-            color[3] = col.alphaF();
-            int fmode;
-            QGLFogParameters::Mode mode = fog->mode();
-            if (mode == QGLFogParameters::Linear)
-                fmode = GL_LINEAR;
-            else if (mode == QGLFogParameters::Exponential)
-                fmode = GL_EXP;
-            else if (mode == QGLFogParameters::Exponential2)
-                fmode = GL_EXP2;
-            else
-                fmode = GL_LINEAR;  // Just in case.
-            glFogf(GL_FOG_MODE, fmode);
-            glFogf(GL_FOG_DENSITY, fog->density());
-            glFogf(GL_FOG_START, fog->nearDistance());
-            glFogf(GL_FOG_END, fog->farDistance());
-            glFogfv(GL_FOG_COLOR, color);
-            glEnable(GL_FOG);
-        }
-    }
 #endif
 }
 
@@ -2384,40 +2353,6 @@ void QGLPainter::setFaceColor(QGL::Face face, const QColor& color)
         d->backMaterial = d->backColorMaterial;
     }
     d->updates |= QGLPainter::UpdateMaterials;
-}
-
-/*!
-    Returns the current fog parameters; or null if fog has been disabled.
-    The default is that fog is disabled.
-
-    \sa setFogParameters()
-*/
-const QGLFogParameters *QGLPainter::fogParameters() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    return d->fogParameters;
-}
-
-/*!
-    Sets the current fog parameters to \a value.  If \a value is
-    null, then fog will be disabled.
-
-    The fog settings in the GL server will not be changed until
-    update() is called, and if the effect() supports fogging.
-
-    All standard effects support fogging on systems with fixed-function
-    pipelines.  Under OpenGL/ES 2.0, fogging is not supported by the
-    standard effects, but it can be implemented by user-defined effects.
-
-    \sa fogParameters()
-*/
-void QGLPainter::setFogParameters(const QGLFogParameters *value)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->fogParameters = value;
-    d->updates |= QGLPainter::UpdateFog;
 }
 
 /*!

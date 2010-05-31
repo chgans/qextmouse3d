@@ -8,7 +8,6 @@ SUBDIRS = \
     qglblendoptions \
     qglcamera \
     qgldepthbufferoptions \
-    qglfogparameters \
     qgllightmodel \
     qgllightparameters \
     qglmaterial \
