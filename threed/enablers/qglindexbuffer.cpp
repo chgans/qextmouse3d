@@ -60,8 +60,14 @@ QT_BEGIN_NAMESPACE
 
 static bool qt_has_uint_buffers()
 {
-    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-    return extensions.match("GL_OES_element_index_uint");
+    static bool done = false;
+    static bool answer = false;
+    if (!done) {
+        QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+        answer = extensions.match("GL_OES_element_index_uint");
+        done = true;
+    }
+    return answer;
 }
 
 #endif
@@ -488,7 +494,7 @@ void QGLIndexBufferPrivate::append
         indexCount += count;
         while (count-- > 0)
             indexesShort.append(ushort(*data++ + offset));
-    } if (elementType == GL_UNSIGNED_SHORT) {
+    } else if (elementType == GL_UNSIGNED_SHORT) {
         // Only first buffer is ushort: convert it to int first.
         const ushort *indexes = indexesShort.constData();
         int count = indexesShort.count();
@@ -502,7 +508,7 @@ void QGLIndexBufferPrivate::append
         indexCount += count;
         while (count-- > 0)
             indexesInt.append(*data++ + offset);
-    } if (other->elementType == GL_UNSIGNED_SHORT) {
+    } else if (other->elementType == GL_UNSIGNED_SHORT) {
         // Only second buffer is ushort.
         const ushort *data = other->indexesShort.constData() + start;
         int count = other->indexesShort.count() - start;
@@ -672,20 +678,15 @@ void QGLIndexBuffer::append
     case QGL::TriangleStripAdjacency:
         // Fourth last and second last of first buffer need to be the
         // same as the first and third of the second buffer.
-        // Also handle the reversed case for odd/even strip lengths.
-        // FIXME: may still not be quite right yet.
         if (d->tailIndex(3) == (dbuf->headIndex(0) + offset) &&
                 d->tailIndex(1) == (dbuf->headIndex(2) + offset))
-            d->append(dbuf, offset, 4);
-        else if (d->tailIndex(3) == (dbuf->headIndex(2) + offset) &&
-                 d->tailIndex(1) == (dbuf->headIndex(0) + offset))
             d->append(dbuf, offset, 4);
         else
             d->append(dbuf, offset, 0);
         break;
 
     default:
-        qWarning("QGLIndexBuffer::append: unknown drawing mode %d",
+        qWarning("QGLIndexBuffer::append: unknown drawing mode 0x%04x",
                  int(combineMode));
         break;
     }
