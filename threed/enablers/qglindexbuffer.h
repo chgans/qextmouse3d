@@ -90,8 +90,8 @@ public:
     bool bind() const;
     void release() const;
 
-    void append(const QGLIndexBuffer &buffer, int offset);
-    void append(const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode);
+    void append(const QGLIndexBuffer &buffer, uint offset);
+    void append(const QGLIndexBuffer &buffer, uint offset, QGL::DrawingMode combineMode);
 
 private:
     QGLIndexBufferPrivate *d_ptr;

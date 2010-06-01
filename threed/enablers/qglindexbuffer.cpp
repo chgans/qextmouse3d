@@ -90,9 +90,9 @@ public:
     QGLBuffer buffer;
     bool hasIntBuffers;
 
-    void append(const QGLIndexBufferPrivate *other, int offset, int start);
-    int headIndex(int posn) const;
-    int tailIndex(int posn) const;
+    void append(const QGLIndexBufferPrivate *other, uint offset, int start);
+    uint headIndex(int posn) const;
+    uint tailIndex(int posn) const;
 };
 
 /*!
@@ -477,7 +477,7 @@ void QGLIndexBuffer::release() const
 }
 
 void QGLIndexBufferPrivate::append
-    (const QGLIndexBufferPrivate *other, int offset, int start)
+    (const QGLIndexBufferPrivate *other, uint offset, int start)
 {
     if (elementType == GL_UNSIGNED_SHORT &&
             other->elementType == GL_UNSIGNED_SHORT) {
@@ -521,20 +521,20 @@ void QGLIndexBufferPrivate::append
     }
 }
 
-int QGLIndexBufferPrivate::headIndex(int posn) const
+uint QGLIndexBufferPrivate::headIndex(int posn) const
 {
     if (indexCount <= posn)
-        return -1;
+        return uint(-1);
     if (elementType == GL_UNSIGNED_SHORT)
         return indexesShort[posn];
     else
         return indexesInt[posn];
 }
 
-int QGLIndexBufferPrivate::tailIndex(int posn) const
+uint QGLIndexBufferPrivate::tailIndex(int posn) const
 {
     if (indexCount <= posn)
-        return -1;
+        return uint(-1);
     if (elementType == GL_UNSIGNED_SHORT)
         return indexesShort[indexCount - posn - 1];
     else
@@ -553,7 +553,7 @@ int QGLIndexBufferPrivate::tailIndex(int posn) const
 
     \sa isUploaded(), setIndexes()
 */
-void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
+void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, uint offset)
 {
     Q_D(QGLIndexBuffer);
     const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
@@ -587,7 +587,7 @@ void QGLIndexBuffer::append(const QGLIndexBuffer &buffer, int offset)
     \sa isUploaded(), setIndexes()
 */
 void QGLIndexBuffer::append
-    (const QGLIndexBuffer &buffer, int offset, QGL::DrawingMode combineMode)
+    (const QGLIndexBuffer &buffer, uint offset, QGL::DrawingMode combineMode)
 {
     Q_D(QGLIndexBuffer);
     const QGLIndexBufferPrivate *dbuf = buffer.d_ptr;
