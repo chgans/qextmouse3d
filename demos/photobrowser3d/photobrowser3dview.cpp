@@ -118,9 +118,23 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     {
         close();
     }
-    else if (e->key() == Qt::Key_Up)
+    else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
     {
-        QGLView::keyPressEvent(e);
+        if (e->modifiers() & Qt::ControlModifier)
+        {
+            QVector3D viewVec = camera()->eye() - camera()->center();
+            qreal zoomMag = viewVec.length();
+            zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
+            if (zoomMag < 5.0f)
+                zoomMag = 5.0f;
+            QLine3D viewLine(camera()->center(), viewVec);
+            camera()->setEye(viewLine.point(zoomMag));
+            update();
+        }
+        else
+        {
+            QGLView::keyPressEvent(e);
+        }
     }
     else if (e->key() == Qt::Key_Escape)
     {
@@ -136,6 +150,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
+    camera()->translateEye(1.2f, 0.0f, 0.0f);
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)

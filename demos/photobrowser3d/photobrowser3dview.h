@@ -69,6 +69,7 @@ private:
     QGLSceneNode *m_cubeScene;
     SkyBox *m_skybox;
     QGLMaterialCollection *m_palette;
+    qreal m_velocity;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H
