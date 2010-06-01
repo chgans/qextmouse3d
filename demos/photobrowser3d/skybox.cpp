@@ -186,7 +186,7 @@ void SkyBox::draw(QGLPainter *painter) const
     QGLCamera *cam = m_view->camera();
     QVector3D eye = cam->eye();
     QVector3D center = cam->center();
-    qreal near = cam->nearPlane();
+    qreal nearPlane = cam->nearPlane();
     QSizeF size = cam->viewSize();
     cam->setCenter(-eye);
     cam->setEye(QVector3D());
@@ -202,7 +202,7 @@ void SkyBox::draw(QGLPainter *painter) const
 
     cam->setCenter(center);
     cam->setEye(eye);
-    cam->setNearPlane(near);
+    cam->setNearPlane(nearPlane);
     cam->setViewSize(size);
     painter->setCamera(cam);
 
