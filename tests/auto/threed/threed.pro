@@ -7,8 +7,6 @@ SUBDIRS = \
     qvectorarray \
     qglblendoptions \
     qglcamera \
-    qgldepthbufferoptions \
-    qglfogparameters \
     qgllightmodel \
     qgllightparameters \
     qglmaterial \

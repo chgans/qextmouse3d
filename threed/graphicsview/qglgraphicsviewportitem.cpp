@@ -83,8 +83,6 @@ public:
         clearDepthBuffer = true;
         cullFaces = QGL::CullBackFaces;
 
-        depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
-
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -92,6 +90,7 @@ public:
     }
 
     void changeCamera(QGLCamera *c);
+    void setDefaults();
 
     QGLGraphicsViewportItem *q;
     QGLGraphicsViewportItem::Options options;
@@ -100,7 +99,6 @@ public:
     QGLCamera *defaultCamera;
     bool clearDepthBuffer;
     QGL::CullFaces cullFaces;
-    QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QColor backgroundColor;
 
@@ -124,6 +122,19 @@ void QGLGraphicsViewportItemPrivate::changeCamera(QGLCamera *c)
 void QGLGraphicsViewportItemPrivate::cameraChanged()
 {
     q->update();
+}
+
+void QGLGraphicsViewportItemPrivate::setDefaults()
+{
+    // Set the default depth buffer options.
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+    glDepthRangef(0.0f, 1.0f);
+#else
+    glDepthRange(0.0f, 1.0f);
+#endif
 }
 
 /*!
@@ -292,7 +303,7 @@ void QGLGraphicsViewportItem::setCamera(QGLCamera *camera)
     Returns true if the depth buffer should be cleared before paintGL()
     is called; false otherwise.  The default is true.
 
-    \sa setClearDepthBuffer(), depthBufferOptions()
+    \sa setClearDepthBuffer()
 */
 bool QGLGraphicsViewportItem::clearDepthBuffer() const
 {
@@ -303,35 +314,12 @@ bool QGLGraphicsViewportItem::clearDepthBuffer() const
 /*!
     Sets the depth buffer clearing mode according to \a value.
 
-    \sa clearDepthBuffer(), depthBufferOptions()
+    \sa clearDepthBuffer()
 */
 void QGLGraphicsViewportItem::setClearDepthBuffer(bool value)
 {
     Q_D(QGLGraphicsViewportItem);
     d->clearDepthBuffer = value;
-}
-
-/*!
-    Returns the depth buffer options to apply before calling paintGL().
-    The default uses QGLDepthBufferOptions::Less as the testing mode.
-
-    \sa setDepthBufferOptions(), clearDepthBuffer()
-*/
-QGLDepthBufferOptions QGLGraphicsViewportItem::depthBufferOptions() const
-{
-    Q_D(const QGLGraphicsViewportItem);
-    return d->depthBufferOptions;
-}
-
-/*!
-    Sets the depth buffer \a options to apply before calling paintGL().
-
-    \sa depthBufferOptions(), clearDepthBuffer()
-*/
-void QGLGraphicsViewportItem::setDepthBufferOptions(const QGLDepthBufferOptions& options)
-{
-    Q_D(QGLGraphicsViewportItem);
-    d->depthBufferOptions = options;
 }
 
 /*!
@@ -460,8 +448,7 @@ void QGLGraphicsViewportItem::paint
     }
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
-    d->depthBufferOptions.apply();
-    glpainter.setDepthTestingEnabled(true);
+    d->setDefaults();
     glpainter.setBlendingEnabled(false);
 
     // Apply the camera.
@@ -477,7 +464,7 @@ void QGLGraphicsViewportItem::paint
 
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
-    QGLDepthBufferOptions().apply();
+    d->setDefaults();
     QGLBlendOptions().apply();
 }
 

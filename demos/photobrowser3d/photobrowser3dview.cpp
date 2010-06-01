@@ -46,15 +46,32 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QWheelEvent>
+#include <QDir>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
     , m_cube(0)
+    , m_cubeScene(0)
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
 {
-    m_cube = new Cube3DNode(this, m_palette);
-    m_cube->setPosition(QVector3D(2.5f, 0.0f, 0.0f));
+    m_cubeScene = new QGLSceneNode(this);
+    m_cube = new Cube3DNode(m_cubeScene, m_palette);
+    m_cube->setPosition(QVector3D(0.0f, 0.0f, 20.0f));
+    m_cube->setObjectName("orig");
+    QDir pics(QDir::homePath() + "/Pictures");
+    QStringList ents = pics.entryList(QDir::Files);
+    for (int i = 0; i < 20; ++i)
+    {
+        QGLSceneNode *s = m_cube->clone(m_cubeScene);
+        QGLMaterial *mat = new QGLMaterial(m_palette);
+        mat->setTextureUrl(pics.absoluteFilePath(ents[i]));
+        qreal zOff = (2.0f * float(i)) - 20.0f;
+        s->setPosition(QVector3D(0.0f, 0.0f, zOff));
+        s->setObjectName(QString("obj %1").arg(i));
+    }
+
+    qDumpScene(m_cubeScene);
 
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
@@ -97,6 +114,28 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     {
         //emit manualControlEngaged();
     }
+    else if (e->key() == Qt::Key_Q)
+    {
+        close();
+    }
+    else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
+    {
+        if (e->modifiers() & Qt::ControlModifier)
+        {
+            QVector3D viewVec = camera()->eye() - camera()->center();
+            qreal zoomMag = viewVec.length();
+            zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
+            if (zoomMag < 5.0f)
+                zoomMag = 5.0f;
+            QLine3D viewLine(camera()->center(), viewVec);
+            camera()->setEye(viewLine.point(zoomMag));
+            update();
+        }
+        else
+        {
+            QGLView::keyPressEvent(e);
+        }
+    }
     else if (e->key() == Qt::Key_Escape)
     {
         //resetView();
@@ -111,6 +150,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
+    camera()->translateEye(1.2f, 0.0f, 0.0f);
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
@@ -118,7 +158,7 @@ void PhotoBrowser3DView::paintGL(QGLPainter *painter)
     painter->setClearColor(Qt::blue);
     painter->clear();
     m_skybox->draw(painter);
-    m_cube->draw(painter);
+    m_cubeScene->draw(painter);
 }
 
 /*

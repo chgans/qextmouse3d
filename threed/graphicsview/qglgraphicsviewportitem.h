@@ -43,7 +43,6 @@
 #define QGLGRAPHICSVIEWPORTITEM_H
 
 #include "qglnamespace.h"
-#include "qgldepthbufferoptions.h"
 #include "qglblendoptions.h"
 #include <QtGui/qgraphicsitem.h>
 
@@ -89,9 +88,6 @@ public:
 
     bool clearDepthBuffer() const;
     void setClearDepthBuffer(bool value);
-
-    QGLDepthBufferOptions depthBufferOptions() const;
-    void setDepthBufferOptions(const QGLDepthBufferOptions& options);
 
     QGLBlendOptions blendOptions() const;
     void setBlendOptions(const QGLBlendOptions& options);

@@ -54,7 +54,6 @@
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglmaterial.h"
-#include "qglfogparameters.h"
 #include "qglmatrixstack.h"
 #include "qglcamera.h"
 #include "qvectorarray.h"
@@ -67,7 +66,6 @@ QT_MODULE(Qt3d)
 
 class QGLAbstractEffect;
 class QGLPainterPrivate;
-class QGLStencilBufferOptions;
 class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
@@ -103,7 +101,6 @@ public:
         UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
-        UpdateFog                   = 0x00000020,
         UpdateAll                   = 0x7FFFFFFF
     };
     Q_DECLARE_FLAGS(Updates, Update);
@@ -204,9 +201,6 @@ public:
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
     void setFaceColor(QGL::Face face, const QColor& color);
 
-    const QGLFogParameters *fogParameters() const;
-    void setFogParameters(const QGLFogParameters *value);
-
     bool isPicking() const;
     void setPicking(bool value);
 
@@ -225,7 +219,6 @@ private:
 
     QGLPainterPrivate *d_func() const { return d_ptr; }
 
-    friend class QGLStencilBufferOptions;
     friend class QGLBlendOptions;
     friend class QGLAbstractEffect;
 
