@@ -41,7 +41,6 @@
 
 #include "viewport.h"
 #include "effect.h"
-#include "qgldepthbufferoptions.h"
 #include "qglblendoptions.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
@@ -89,7 +88,6 @@ public:
     bool itemsInitialized;
     bool needsPick;
     QGLCamera *camera;
-    QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
@@ -118,8 +116,6 @@ ViewportPrivate::ViewportPrivate()
     , pickId(1)
     , pickFbo(0)
 {
-    depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
-
     blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
     blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -505,8 +501,14 @@ void Viewport::earlyDraw(QGLPainter *painter)
 void Viewport::draw(QGLPainter *painter)
 {
     // Set up the initial depth, blend, and other options.
-    d->depthBufferOptions.apply();
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+    glDepthRangef(0.0f, 1.0f);
+#else
+    glDepthRange(0.0f, 1.0f);
+#endif
     painter->setBlendingEnabled(d->blending);
     d->blendOptions.apply();
     painter->setCullFaces(QGL::CullDisabled);
@@ -655,8 +657,14 @@ QObject *Viewport::objectForPoint(int x, int y)
         painter.setClearColor(Qt::black);
         painter.clear();
         painter.setEye(QGL::NoEye);
-        d->depthBufferOptions.apply();
-        painter.setDepthTestingEnabled(true);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+        glDepthRangef(0.0f, 1.0f);
+#else
+        glDepthRange(0.0f, 1.0f);
+#endif
         painter.setBlendingEnabled(false);
         d->blendOptions.apply();
         painter.setCullFaces(QGL::CullDisabled);

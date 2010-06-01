@@ -56,7 +56,6 @@ QT_BEGIN_NAMESPACE
 class EffectPrivate;
 class QGLPainter;
 class QGLMaterial;
-class QGLFogParameters;
 
 class Effect : public QObject
 {
@@ -66,7 +65,6 @@ class Effect : public QObject
     Q_PROPERTY(QUrl texture READ texture WRITE setTexture NOTIFY effectChanged)
     Q_PROPERTY(QImage textureImage READ textureImage WRITE setTextureImage NOTIFY effectChanged)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
-    Q_PROPERTY(QGLFogParameters *fog READ fog WRITE setFog NOTIFY effectChanged)
 public:
     Effect(QObject *parent = 0);
     ~Effect();
@@ -86,9 +84,6 @@ public:
     QGLMaterial *material() const;
     void setMaterial(QGLMaterial *value);
 
-    QGLFogParameters *fog() const;
-    void setFog(QGLFogParameters *value);
-
     virtual void enableEffect(QGLPainter *painter);
     virtual void disableEffect(QGLPainter *painter);
 
@@ -107,7 +102,6 @@ private:
 
 QML_DECLARE_TYPE(Effect)
 QML_DECLARE_TYPE(QGLMaterial)
-QML_DECLARE_TYPE(QGLFogParameters)
 
 QT_END_NAMESPACE
 

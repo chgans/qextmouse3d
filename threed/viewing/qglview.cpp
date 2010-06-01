@@ -41,7 +41,6 @@
 
 #include "qglview.h"
 #include "qglframebufferobject.h"
-#include "qgldepthbufferoptions.h"
 #include "qglblendoptions.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
@@ -172,8 +171,6 @@ public:
         lastPan = QPoint(-1, -1);
         panModifiers = Qt::NoModifier;
 
-        depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
-
         blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
         blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
@@ -214,7 +211,6 @@ public:
     QVector3D startCenter;
     QVector3D startUpVector;
     Qt::KeyboardModifiers panModifiers;
-    QGLDepthBufferOptions depthBufferOptions;
     QGLBlendOptions blendOptions;
     QTime logTime;
     QTime enterTime;
@@ -482,8 +478,17 @@ void QGLView::initializeGL()
     d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
-    painter.setDepthTestingEnabled(true);
-    d->depthBufferOptions.apply();
+
+    // Set the default depth buffer options.
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+    glDepthRangef(0.0f, 1.0f);
+#else
+    glDepthRange(0.0f, 1.0f);
+#endif
+
     d->blendOptions.apply();
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);

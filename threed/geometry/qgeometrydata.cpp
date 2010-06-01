@@ -853,7 +853,7 @@ bool QGeometryData::upload()
     }
 
     // Copy the geometry data to the index buffer and upload if requested.
-    d->indexBuffer.setIndices(d->indices);
+    d->indexBuffer.setIndexes(d->indices);
     if ((d->bufferStrategy & BufferIfPossible) != 0)
     {
         if (d->indexBuffer.upload())
