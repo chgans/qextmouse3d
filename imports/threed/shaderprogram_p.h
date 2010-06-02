@@ -9,6 +9,7 @@
 class ShaderProgram;
 
 class ShaderProgramEffect;
+class QDeclarativePixmapReply;
 
 class ShaderProgramPropertyListener : public QObject
 {
@@ -23,13 +24,6 @@ public:
     }
 };
 
-/*
-  The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.  It contains the actual
-  QGLShaderProgram along with all of the necessary parameters to use that program.
-
-  An instance of the ShaderProgramEffect class can be found in the private part of the ShaderProgram
-  class, thus abstracting much of the complexity away from the user.
-*/
 class ShaderProgramPropertyListenerEx : public ShaderProgramPropertyListener
 {
 public:
@@ -44,6 +38,10 @@ private:
 };
 
 
+/*
+  The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.  It contains the actual
+  QGLShaderProgram along with all of the necessary parameters to use that program.
+*/
 class ShaderProgramEffect : public QGLAbstractEffect
 {
 public:
@@ -57,7 +55,8 @@ public:
     void setActive(QGLPainter *painter, bool flag);
 
     void update(QGLPainter *painter, QGLPainter::Updates updates);
-    void setUniformForPropertyIndex(int propertyIndex);
+    bool setUniformForPropertyIndex(int propertyIndex, QGLPainter *painter);
+
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
@@ -66,8 +65,14 @@ public:
     void setPropertiesDirty();
     void setPropertyDirty(int property);
 
+    void processFinishedRequest(QDeclarativePixmapReply* reply);
 private:
     void setUniformLocationsFromParentProperties();
+    void setUniform(int uniformValue, const QImage& image,
+                             QGLPainter* painter);
+    void setUniform(int uniformValue, const QPixmap* pixmap,
+                             QGLPainter* painter);
+    QGLTexture2D* textureForUniformValue(int uniformLocation);
 
     QWeakPointer<ShaderProgram> parent;
     QGLShaderProgram *program;
@@ -84,8 +89,15 @@ private:
     int colorUniform;
     QMap<int, int> propertyIdsToUniformLocations;
     QList<int> dirtyProperties;
-    QList<int> propertiesWithoutNotifications;
+    QArray<int> propertiesWithoutNotificationSignal;
     ShaderProgramPropertyListener* propertyListener;
+
+    QMap<int, QGLTexture2D*> texture2DsByUniformValue;
+    QMap <int, QPixmap*> pendingPixmapsByUniformLocations;
+    QMap <QDeclarativePixmapReply*, int> pendingPixmapRequestsWithUniformLocations;
+    QMap <int, QDeclarativePixmapReply*> pendingPixmapRequests;
+    QMap <int, QString> urls;
+    QArray<int> dirtyTextureUniforms;
 };
 
 #endif // SHADERPROGRAM_P_H

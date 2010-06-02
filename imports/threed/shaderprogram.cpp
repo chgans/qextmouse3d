@@ -45,6 +45,10 @@
 #include <QtOpenGL/qglshaderprogram.h>
 #include <QWeakPointer>
 
+#include "private/qdeclarativepixmapcache_p.h"
+#include <QDeclarativeEngine>
+#include <QDeclarativeContext>
+
 /*!
     \class ShaderProgram
     \brief The ShaderProgram class is derivative class of the more general \l Effect class in Qml/3d.
@@ -93,7 +97,6 @@
     can have significant performance implications.  Conversion from variants
     can be slow, and matrices can consume multiple slots for uniforms, which
     are usually limited by hardware.
-
     \sa QGLGraphicsViewportItem
 */
 
@@ -133,6 +136,10 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 ShaderProgramEffect::~ShaderProgramEffect()
 {
     delete program;
+    QList<QGLTexture2D*> textures = texture2DsByUniformValue.values();
+    QGLTexture2D* texture;
+    foreach(texture, textures)
+        delete texture;
 }
 
 /*
@@ -214,10 +221,13 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
                                      propertyListener,  parentMethodCount + i);
             } else {
                 qWarning() << "Warning: No notification signal found for property: " << propertyName;
-                propertiesWithoutNotifications.append(i);
+                propertiesWithoutNotificationSignal.append(i);
             }
         }
     }
+
+    // Refresh everything
+    this->setPropertiesDirty();
 }
 
 /*
@@ -321,6 +331,15 @@ static inline void setUniformFromFloatList(QGLShaderProgram *program, int unifor
 void ShaderProgramEffect::update
     (QGLPainter *painter, QGLPainter::Updates updates)
 {
+    if( pendingPixmapsByUniformLocations.count() > 0 )
+    {
+        foreach (int i, pendingPixmapsByUniformLocations.keys())
+        {
+            setUniform(i, pendingPixmapsByUniformLocations.value(i), painter);
+        }
+        pendingPixmapsByUniformLocations.clear();
+    }
+
     // Update the matrix uniforms.
     if ((updates & QGLPainter::UpdateMatrices) != 0) {
         if (matrixUniform != -1)
@@ -341,81 +360,211 @@ void ShaderProgramEffect::update
     // Assign custom properties if they exist
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
         return;
+
+    // update dirty properties and remove them from the list
     int propertyIndex;
-    // update dirty properties
+    QList<int> propertiesNotUpdated;
     foreach (propertyIndex, dirtyProperties)
     {
-        setUniformForPropertyIndex(propertyIndex);
+        if(!setUniformForPropertyIndex(propertyIndex, painter))
+        {
+            propertiesNotUpdated.append(propertyIndex);
+        };
     }
     dirtyProperties.clear();
+    dirtyProperties.append(propertiesNotUpdated);
 
     // always update the properties we can't track
-    foreach (propertyIndex, propertiesWithoutNotifications)
+    foreach (propertyIndex, propertiesWithoutNotificationSignal)
     {
-        setUniformForPropertyIndex(propertyIndex);
+        setUniformForPropertyIndex(propertyIndex, painter);
     }
 }
 
-inline void ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex)
+inline QGLTexture2D* ShaderProgramEffect::textureForUniformValue(int uniformLocation)
+{
+    QGLTexture2D* result = texture2DsByUniformValue.value(uniformLocation);
+    if(result == 0)
+    {
+        result = new QGLTexture2D();
+        texture2DsByUniformValue[uniformLocation] = result;
+    }
+    return result;
+}
+
+inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, QGLPainter *painter)
 {
     int uniformLocation = propertyIdsToUniformLocations[propertyIndex];
 
-QVariant value =
-        parent.data()->metaObject()->property(propertyIndex).read(parent.data());
+    QVariant value =
+            parent.data()->metaObject()->property(propertyIndex).read(parent.data());
 
-switch(value.type())
-{
-case QVariant::Double:
-    // Convert double to float to pass to shader program
-case QMetaType::Float:
-    program->setUniformValue(uniformLocation, value.toFloat());
-    break;
-case QVariant::Int:
-    program->setUniformValue(uniformLocation, value.toInt());
-    break;
-case QVariant::UInt:
-    program->setUniformValue(uniformLocation, value.toUInt());
-    break;
-case QVariant::Bool:
-    program->setUniformValue(uniformLocation, value.toBool());
-    break;
-case QVariant::Color:
-    program->setUniformValue(uniformLocation, value.value<QColor>());
-    break;
-case QVariant::List:
-    setUniformFromFloatList(program, uniformLocation, value.toList());
-    break;
-case QVariant::Point:
-    program->setUniformValue(uniformLocation, value.toPoint());
-    break;
-case QVariant::PointF:
-    program->setUniformValue(uniformLocation, value.toPointF());
-    break;
-case QVariant::Size:
-    program->setUniformValue(uniformLocation, value.toSize());
-    break;
-case QVariant::SizeF:
-    program->setUniformValue(uniformLocation, value.toSizeF());
-    break;
-case QVariant::Matrix4x4:
-    program->setUniformValue(uniformLocation, value.value<QMatrix4x4>());
-    break;
-case QVariant::Vector2D:
-    program->setUniformValue(uniformLocation, value.value<QVector2D>());
-    break;
-case QVariant::Vector3D:
-    program->setUniformValue(uniformLocation, value.value<QVector3D>());
-    break;
-case QVariant::Vector4D:
-    program->setUniformValue(uniformLocation, value.value<QVector4D>());
-    break;
+    switch(value.type())
+    {
+    case QVariant::Double:
+        // Convert double to float to pass to shader program
+    case QMetaType::Float:
+        program->setUniformValue(uniformLocation, value.toFloat());
+        break;
+    case QVariant::Int:
+        program->setUniformValue(uniformLocation, value.toInt());
+        break;
+    case QVariant::UInt:
+        program->setUniformValue(uniformLocation, value.toUInt());
+        break;
+    case QVariant::Bool:
+        program->setUniformValue(uniformLocation, value.toBool());
+        break;
+    case QVariant::Color:
+        program->setUniformValue(uniformLocation, value.value<QColor>());
+        break;
+    case QVariant::List:
+        setUniformFromFloatList(program, uniformLocation, value.toList());
+        break;
+    case QVariant::Point:
+        program->setUniformValue(uniformLocation, value.toPoint());
+        break;
+    case QVariant::PointF:
+        program->setUniformValue(uniformLocation, value.toPointF());
+        break;
+    case QVariant::Size:
+        program->setUniformValue(uniformLocation, value.toSize());
+        break;
+    case QVariant::SizeF:
+        program->setUniformValue(uniformLocation, value.toSizeF());
+        break;
+    case QVariant::Matrix4x4:
+        program->setUniformValue(uniformLocation, value.value<QMatrix4x4>());
+        break;
+    case QVariant::Vector2D:
+        program->setUniformValue(uniformLocation, value.value<QVector2D>());
+        break;
+    case QVariant::Vector3D:
+        program->setUniformValue(uniformLocation, value.value<QVector3D>());
+        break;
+    case QVariant::Vector4D:
+        program->setUniformValue(uniformLocation, value.value<QVector4D>());
+        break;
+    case QVariant::String:
+        {
+            // We assume strings are URLs to images for textures
+            QString urlString = value.toString();
+            QUrl url(urlString);
+            if(urlString.isEmpty())
+            {
+                QDeclarativePixmapReply* pendingRequest = pendingPixmapRequests.value(uniformLocation, 0);
+                if(pendingRequest != 0)
+                {
+                    QDeclarativePixmapCache::cancel(urls[uniformLocation], parent.data());
+                    pendingPixmapRequests.remove(uniformLocation);
+                    urls.remove(uniformLocation);
+                }
+                break;
+            };
 
-    // TODO: image/texture
+            // Try to make path absolute:
+            if (url.isRelative())
+            {
+                // Get the baseUrl from the declarative engine
+                QDeclarativeContext *context =
+                        QDeclarativeEngine::contextForObject(parent.data());
 
-default:
-    qWarning() << "Unrecognized variant for property " << parent.data()->metaObject()->property(propertyIndex).name() << " of type " << value.typeName() << ", could not set corresponding shader variable";
-    ;
+                if(context)
+                {
+                    QUrl baseurl = context->baseUrl();
+                    QUrl absolute =  baseurl.resolved(urlString);
+
+                    if(absolute.isValid())
+                    {
+                        url = absolute;
+                        urlString = absolute.toString();
+                    } else {
+                        qWarning() << "Warning: failed to resolve relative path for property"
+                                << parent.data()->metaObject()->property(propertyIndex).name();
+                    }
+                }
+            };
+
+            if (urlString != urls[uniformLocation])
+            {
+                QPixmap pixmap;
+                QString errorString;
+                QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(urlString, &pixmap, &errorString);
+
+                if (status == QDeclarativePixmapReply::Error)
+                {
+                    qWarning() << "Error getting resource for property"
+                            << parent.data()->metaObject()->property(propertyIndex).name()
+                            << ":" << errorString;
+                    return false;
+                } else
+                {
+                    urls[uniformLocation] = urlString;
+                    QDeclarativeEngine *engine = qmlEngine(parent.data());
+                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
+                    pendingPixmapRequests[uniformLocation] = reply;
+                    if (status == QDeclarativePixmapReply::Ready)
+                    {
+                        processFinishedRequest(reply);
+                    }
+                    else if(status == QDeclarativePixmapReply::Loading)
+                    {
+                        QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
+                    }
+                }
+            }
+        }
+        break;
+    case QVariant::Image:
+        {
+            QImage image(value.toString());
+            setUniform(uniformLocation, image, painter);
+        }
+        break;
+    default:
+        qWarning() << "Unrecognized variant for property " << parent.data()->metaObject()->property(propertyIndex).name() << " of type " << value.typeName() << ", could not set corresponding shader variable";
+    }
+    return true;
 }
+
+/*!
+  \internal Helper function for applying a \a pixmap to a texture for a shader program.  This function should be called from within update() in order to have access to the right GL context through the \a painter.
+  */
+void ShaderProgramEffect::setUniform
+        (int uniformLocation, const QPixmap* pixmap, QGLPainter* painter)
+{
+    // TODO: Perspective correction
+    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    if(texture != 0)
+    {
+        texture->setPixmap(*pixmap);
+        if(texture->textureId() == 0)
+        {
+            texture->bind();
+        }
+        painter->setTexture(texture->textureId(), texture);
+        program->setUniformValue(uniformLocation, texture->textureId());
+    }
+}
+
+/*!
+  \internal Helper function for applying an \a images to a texture for a shader program.  This function should be called from within update() in order to have access to the right GL context through the \a painter.
+  */
+void ShaderProgramEffect::setUniform
+        (int uniformLocation, const QImage& image, QGLPainter* painter)
+{
+    // TODO: Perspective correction
+    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    if(texture != 0)
+    {
+        texture->setImage(image);
+        if(texture->textureId() == 0)
+        {
+            texture->bind();
+        }
+        painter->setTexture(texture->textureId(), texture);
+        program->setUniformValue(uniformLocation, texture->textureId());
+    }
 }
 
 /*
@@ -490,6 +639,35 @@ void ShaderProgramEffect::setPropertyDirty(int property)
     {
         dirtyProperties.append(property);
     }
+}
+
+/*!
+  \internal Notification recieved via parent ShaderProgram parent that
+  a requested network resource is ready.
+*/
+void ShaderProgramEffect::processFinishedRequest(QDeclarativePixmapReply* reply)
+{
+    QUrl url = reply->url();
+    QPixmap* pixmap = new QPixmap;
+    QString errorString;
+    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, pixmap, &errorString);
+
+    int uniformLocation = pendingPixmapRequests.key(reply, -1);
+    if(uniformLocation == -1)
+    {
+        // Unknown uniform, most likely because the uniform was changed before
+        // this pixmap has finished loading.
+        // The pixmap should have been cached, and should be ready if
+        // it's needed again later.
+        return;
+    }
+
+    // Add update information to be process next update()
+    pendingPixmapsByUniformLocations[uniformLocation] = pixmap;
+//    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+//    texture->setPixmap(*pixmap);
+
+    dirtyTextureUniforms.append(uniformLocation);
 }
 
 class ShaderProgramPrivate
@@ -582,7 +760,7 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
 /*!
   Mark all properties as dirty to be re-uploaded in the next update
 */
-void ShaderProgram::markPropertyDirty()
+void ShaderProgram::markAllPropertiesDirty()
 {
     d->effect->setPropertiesDirty();
 }
@@ -593,6 +771,24 @@ void ShaderProgram::markPropertyDirty()
 void ShaderProgram::markPropertyDirty(int property)
 {
     d->effect->setPropertyDirty(property);
+}
+
+/*!
+ \internal Proxy the signal for the ShaderProgramEffect class
+ */
+void ShaderProgram::pixmapRequestFinished()
+{
+    QObject *sender = QObject::sender();
+    QDeclarativePixmapReply* reply =
+            qobject_cast<QDeclarativePixmapReply*>(sender);
+
+    if(reply == 0)
+    {
+        qWarning() << "Warning: received pixmapRequestFinished() signal from unexpected object, unable to process requested pixmap" << sender;
+        return;
+    }
+
+    d->effect->processFinishedRequest(reply);
 }
 
 /*!

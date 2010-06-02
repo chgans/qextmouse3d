@@ -67,8 +67,10 @@ public:
 
     virtual void enableEffect(QGLPainter *painter);
 public slots:
-    void markPropertyDirty();
+    void markAllPropertiesDirty();
     void markPropertyDirty(int property);
+private slots:
+    void pixmapRequestFinished();
 private:
     ShaderProgramPrivate *d;
 };
