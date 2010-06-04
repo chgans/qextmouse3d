@@ -123,8 +123,8 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     "};\n";
 /*!
     \class QGLShaderProgramEffect
-    \brief The QGLShaderProgram is a convenience class for managing and displaying GLSL shader based
-    effects.
+    \brief The QGLShaderProgramEffect class is a convenience class for
+    managing and displaying GLSL shader based effects.
     \since 4.7
     \ingroup qt3d
 
@@ -207,9 +207,13 @@ bool QGLShaderProgramEffect::supportsPicking() const
 }
 
 /*!
-    Activates or deactiviates , according to \a flag.
+    Activates or deactiviates the effect on \a painter, according to \a flag.
     If \a flag is true, creates the default program if no program currently
     exists.
+
+    QGLPainter deactivates effects automatically when a different or null
+    effect is set, so calling setActive() directly with \a flag false should
+    most likely only only occur as part of error handling.
 */
 void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 {
@@ -244,6 +248,15 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
         program()->release();
         currentlyActive = false;
     }
+}
+
+/*!
+  Returns true if the effect is currently active (applied to a QGLPainter)
+  and false if it is not.
+  */
+bool QGLShaderProgramEffect::isActive()
+{
+    return currentlyActive;
 }
 
 /*!
@@ -298,6 +311,14 @@ void QGLShaderProgramEffect::bindProgramAttributes()
     program()->bindAttributeLocation("texCoords", QGL::TextureCoord0);
 }
 
+/*!
+  \internal
+  This function reapplies any changes relevant to the \a updates flags and
+  updates some uniforms and internal variables.
+
+  This function is usually called automatically by the \a painter before
+  rendering.
+  */
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     // update the projection, modelview, texture matrices and lighting conditions
@@ -378,6 +399,12 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
     }
 }
 
+/*!
+    Sets the vertex attribute \a attribute to \a value for this shader program.
+    It is assumed that this effect is bound to the current context.
+
+    \sa QGL::VertexAttribute
+  */
 void QGLShaderProgramEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
@@ -389,6 +416,11 @@ void QGLShaderProgramEffect::setVertexAttribute
         setAttributeArray(program(), QGL::TextureCoord0, value);
 }
 
+/*!
+  Sets the vertex shader for this effect to \a shader, and rebuilds all
+  shaders for this effect.  If \a shader is empty, the effect will use a
+  fall-back vertex shader.
+  */
 void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 {
     d->vertexShader = shader;
@@ -397,6 +429,11 @@ void QGLShaderProgramEffect::setVertexShader(QString const &shader)
 
 }
 
+/*!
+  Sets the fragment shader for this effect to \a shader, and rebuilds all
+  shaders for this effect. If \a shader is empty, the effect will use a
+  fall-back fragment shader.
+  */
 void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
 {
     d->fragmentShader = shader;
@@ -450,11 +487,17 @@ void QGLShaderProgramEffect::setProgram(QGLShaderProgram* program)
     d->program = program;
 }
 
+/*!
+  Returns the vertex shader used by this effect.
+  */
 QString QGLShaderProgramEffect::vertexShader()
 {
     return d->vertexShader;
 }
 
+/*!
+  Returns the fragment shader used by this effect.
+  */
 QString QGLShaderProgramEffect::fragmentShader()
 {
     return d->fragmentShader;

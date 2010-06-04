@@ -55,7 +55,7 @@ public:
     virtual QList<QGL::VertexAttribute> requiredFields() const;
     virtual bool supportsPicking() const;
     virtual void setActive(QGLPainter *painter, bool flag);
-    virtual bool isActive() { return currentlyActive;}
+    virtual bool isActive();
     virtual void setVertexAttribute(QGL::VertexAttribute attribute,
                             const QGLAttributeValue& value);
     virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
