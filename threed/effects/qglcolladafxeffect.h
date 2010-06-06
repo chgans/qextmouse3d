@@ -3,14 +3,13 @@
 #include <QStack>
 #include <QList>
 #include <QGLShaderProgram>
-#include "qglcolladafxeffect_p.h"
 #include "qglshaderprogrameffect.h"
 
 class QXmlStreamReader;
 class QGLColladaParam;
 class QGLColladaFxEffectPrivate;
 
-class QGLColladaFxEffect : public QGLShaderProgramEffect
+class Q_QT3D_EXPORT QGLColladaFxEffect : public QGLShaderProgramEffect
 {
     friend class QGLColladaFxEffectFactory;
 

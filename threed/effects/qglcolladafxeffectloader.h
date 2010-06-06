@@ -46,11 +46,12 @@
 #include <QString>
 #include <QStringList>
 #include <QtCore/qscopedpointer.h>
+#include "qt3dglobal.h"
 
 class QGLColladaFxEffect;
 class QGLColladaFxEffectLoaderPrivate;
 
-class QGLColladaFxEffectLoader
+class Q_QT3D_EXPORT QGLColladaFxEffectLoader
 {
 public:
     QGLColladaFxEffectLoader();

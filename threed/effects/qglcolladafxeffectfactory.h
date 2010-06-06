@@ -68,7 +68,7 @@ typedef struct _ResultState
 
 
 
-class QGLColladaFxEffectFactory
+class Q_QT3D_EXPORT QGLColladaFxEffectFactory
 {
 public:
     // Collada parsing functions

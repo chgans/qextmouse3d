@@ -47,7 +47,7 @@
 class QGLShaderProgramEffectPrivate;
 class QGLShaderProgram;
 
-class QGLShaderProgramEffect : public QGLAbstractEffect
+class Q_QT3D_EXPORT QGLShaderProgramEffect : public QGLAbstractEffect
 {
 public:
     QGLShaderProgramEffect();
