@@ -66,6 +66,6 @@ private:
     QGL::Smoothing m_Smoothing;
 };
 
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& cube);
+QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& cube);
 
 #endif // QGLHEIGHTMAP_H
