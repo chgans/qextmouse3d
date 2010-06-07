@@ -1,6 +1,7 @@
 INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += \
+    qglattributedescription.h \
     qglattributevalue.h \
     qglindexbuffer.h \
     qgltexture2d.h \
@@ -12,7 +13,9 @@ HEADERS += \
     qstereopixmap.h \
     qvectorarray.h \
     qt3dglobal.h
-SOURCES += qglattributevalue.cpp \
+SOURCES += \
+    qglattributedescription.cpp \
+    qglattributevalue.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \

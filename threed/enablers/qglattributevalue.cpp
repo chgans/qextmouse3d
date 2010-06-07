@@ -68,7 +68,7 @@ QT_BEGIN_NAMESPACE
     care should be taken that the memory remains valid until the
     QGLAttributeValue is no longer required.
 
-    \sa QArray, QCustomDataArray
+    \sa QGLAttributeDescription, QArray, QCustomDataArray
 */
 
 /*!
@@ -140,50 +140,64 @@ QT_BEGIN_NAMESPACE
     value is no longer required.
 */
 QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
-    : m_stride(0), m_data(array.data())
+    : m_data(array.data()), m_count(0)
 {
     switch (array.elementType()) {
     case QCustomDataArray::Float:
-        m_tupleSize = 1;
-        m_type = GL_FLOAT;
+        m_description.setTupleSize(1);
+        m_description.setType(GL_FLOAT);
         break;
     case QCustomDataArray::Vector2D:
-        m_tupleSize = 2;
-        m_type = GL_FLOAT;
+        m_description.setTupleSize(2);
+        m_description.setType(GL_FLOAT);
         break;
     case QCustomDataArray::Vector3D:
-        m_tupleSize = 3;
-        m_type = GL_FLOAT;
+        m_description.setTupleSize(3);
+        m_description.setType(GL_FLOAT);
         break;
     case QCustomDataArray::Vector4D:
-        m_tupleSize = 4;
-        m_type = GL_FLOAT;
+        m_description.setTupleSize(4);
+        m_description.setType(GL_FLOAT);
         break;
     case QCustomDataArray::Color:
-        m_tupleSize = 4;
-        m_type = GL_UNSIGNED_BYTE;
+        m_description.setTupleSize(4);
+        m_description.setType(GL_UNSIGNED_BYTE);
         break;
     default:
         // Just in case: set the object to null.
-        m_tupleSize = 0;
-        m_type = GL_FLOAT;
+        m_description.setTupleSize(0);
+        m_description.setType(GL_FLOAT);
         m_data = 0;
         break;
     }
 }
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data)
+    \fn QGLAttributeValue::QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data, int count)
 
     Constructs an attribute value with the fields \a tupleSize, \a type,
-    \a stride, and \a data.
+    \a stride, \a data, and \a count.
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset)
+    \fn QGLAttributeValue::QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset, int count)
 
     Constructs an attribute value with the fields \a tupleSize, \a type,
-    \a stride, and \a offset.
+    \a stride, \a offset, and \a count.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QGLAttributeDescription& description, const void *data, int count)
+
+    Constructs an attribute value with the supplied \a description,
+    \a data, and \a count.
+*/
+
+/*!
+    \fn QGLAttributeValue::QGLAttributeValue(const QGLAttributeDescription& description, int offset, int count)
+
+    Constructs an attribute value with the supplied \a description,
+    \a offset, and \a count.
 */
 
 /*!
@@ -200,12 +214,20 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 */
 
 /*!
+    \fn const QGLAttributeDescription &QGLAttributeValue::description() const
+
+    Returns a reference to the description of this attribute.
+
+    \sa type()
+*/
+
+/*!
     \fn GLenum QGLAttributeValue::type() const
 
     Returns the component type for this attribute value.  The default
     value is GL_FLOAT.
 
-    \sa sizeOfType()
+    \sa sizeOfType(), description()
 */
 
 /*!
@@ -215,7 +237,7 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 */
 int QGLAttributeValue::sizeOfType() const
 {
-    switch (m_type) {
+    switch (m_description.type()) {
     case GL_BYTE:           return int(sizeof(GLbyte));
     case GL_UNSIGNED_BYTE:  return int(sizeof(GLubyte));
     case GL_SHORT:          return int(sizeof(GLshort));
@@ -277,6 +299,13 @@ int QGLAttributeValue::sizeOfType() const
     function that expects a GLfloat * argument.
 
     \sa data()
+*/
+
+/*!
+    \fn int QGLAttributeValue::count() const
+
+    Returns the count of vertex elements in this attribute value;
+    zero if the count is unknown.
 */
 
 QT_END_NAMESPACE
