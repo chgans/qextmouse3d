@@ -271,8 +271,12 @@ QBox3D QGLSceneNode::boundingBox() const
         }
         else
         {
+            QGL::IndexArray indices = d->geometry.indices();
             for (int i = d->start; i < d->count; ++i)
-                bb.unite(d->geometry.vertex(i));
+            {
+                int ix = indices.at(i);
+                bb.unite(d->geometry.vertex(ix));
+            }
         }
     }
     return bb;
@@ -1089,9 +1093,11 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     Q_D(const QGLSceneNode);
     QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
     node->setGeometry(d->geometry);
+    node->setPalette(d->palette);
     node->setLocalTransform(d->localTransform);
     node->setPosition(d->translate);
     node->setRotation(d->rotate);
+    node->setScale(d->scale);
     node->setEffect(d->localEffect);
     node->setUserEffect(d->customEffect);
     node->setEffectEnabled(d->hasEffect);

@@ -82,7 +82,6 @@ public:
         , material(-1)
         , start(0)
         , count(0)
-        , isVisible(true)
         , viewNormals(false)
         , pickNode(0)
     {
@@ -108,7 +107,6 @@ public:
     int material;
     int start;
     int count;
-    bool isVisible;
     bool viewNormals;
     QGLPickNode *pickNode;
 };
