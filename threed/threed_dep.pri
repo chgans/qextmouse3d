@@ -10,7 +10,7 @@ INCLUDEPATH += $$PWD/scene
 INCLUDEPATH += $$PWD/graphicsview
 INCLUDEPATH += $$PWD/animation
 
-contains(QT_MAJOR_VERSION,4):!contains(QT_MINOR_VERSION,7) {
+contains(QT_MAJOR_VERSION,4):!contains(QT_MINOR_VERSION,7):!contains(QT_MINOR_VERSION,8) {
     INCLUDEPATH += $$PWD/qt-compat
 }
 

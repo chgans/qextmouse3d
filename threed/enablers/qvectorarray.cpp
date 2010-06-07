@@ -236,7 +236,7 @@ QArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
     int size = count();
     QVector2D *dst = result.extend(size);
     const QVector2D *src = constData();
-    for (int index; index < size; ++index)
+    for (int index = 0; index < size; ++index)
         *dst++ = *src++ + value;
     return result;
 }
