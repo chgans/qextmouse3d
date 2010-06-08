@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt scene graph research project.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,40 +39,30 @@
 **
 ****************************************************************************/
 
-#ifndef PHOTOBROWSER3DVIEW_H
-#define PHOTOBROWSER3DVIEW_H
+#ifndef IMAGEDISPLAY_H
+#define IMAGEDISPLAY_H
 
-#include "qglview.h"
+#include "qgldisplaylist.h"
+#include "qglmaterialcollection.h"
 
-class ImageDisplay;
-class SkyBox;
-class QGLMaterialCollection;
-class QGLSceneNode;
-class ImageManager;
+#include <QString>
 
-class PhotoBrowser3DView : public QGLView
+class QGLDisplayList;
+class QGLTexture2D;
+
+class ImageDisplay : public QGLDisplayList
 {
     Q_OBJECT
 public:
-    PhotoBrowser3DView();
-    ~PhotoBrowser3DView();
-    void initializeGL(QGLPainter *);
-protected:
-    void paintGL(QGLPainter *);
-    void wheelEvent(QWheelEvent *e);
-    //void mousePressEvent(QMouseEvent *e);
-    //void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
-    void keyPressEvent(QKeyEvent *e);
-    void closeEvent(QCloseEvent *e);
-private slots:
-    void initialise();
+    ImageDisplay(QObject *parent, QGLMaterialCollection *materials);
+public slots:
+    void addImage(const QImage &image);
 private:
-    ImageDisplay *m_scene;
-    ImageManager *m_images;
-    SkyBox *m_skybox;
-    QGLMaterialCollection *m_palette;
-    qreal m_velocity;
+    QGLSceneNode *m_wall;
+    QGLSceneNode *m_frames;
+    QGLSceneNode *m_currentWall;
+    QGLSceneNode *m_currentFrame;
+    bool m_imageSetToDefault;
 };
 
-#endif // PHOTOBROWSER3DVIEW_H
+#endif // IMAGEDISPLAY_H

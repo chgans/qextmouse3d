@@ -39,24 +39,31 @@
 **
 ****************************************************************************/
 
-#ifndef CUBE3DNODE_H
-#define CUBE3DNODE_H
 
-#include "qgldisplaylist.h"
-#include "qglmaterialcollection.h"
+#ifndef IMAGELOADER_H
+#define IMAGELOADER_H
 
-#include <QString>
+#include <QThread>
+#include <QSemaphore>
+#include <QUrl>
+#include <QImage>
 
-class QGLDisplayList;
-class QGLTexture2D;
+class ImageManager;
 
-class Cube3DNode : public QGLDisplayList
+class ImageLoader : public QThread
 {
+    Q_OBJECT
 public:
-    Cube3DNode(QObject *parent, QGLMaterialCollection *materials);
-    void setImagePath(const QString &);
+    explicit ImageLoader(ImageManager *manager);
+    ~ImageLoader();
+    void run();
+    void setUrl(const QUrl &url) { m_url = url; }
+    QUrl url() const { return m_url; }
+signals:
+    void imageLoaded(const QImage &image);
+    void errorOccurred(const QString &error);
 private:
-    QGLTexture2D *m_tex;
+    QUrl m_url;
 };
 
-#endif // CUBE3DNODE_H
+#endif // IMAGELOADER_H

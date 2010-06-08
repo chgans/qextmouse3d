@@ -97,7 +97,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();    // bottom
         QGLPrimitive q;
-        q.appendVertex(blf, brf, brb, blb);
+        q.appendVertex(brb, blb, blf, brf);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
         m_faces[3] = m_list->currentNode();
@@ -140,40 +140,49 @@ void SkyBox::setImagePath(const QString &imagePath)
     {
         m_imagePath = imagePath;
         QStringList notFound = expected;
-        QDir imDir(m_imagePath);
-        QFileInfoList files = imDir.entryInfoList(QDir::Files);
-        QFileInfoList::const_iterator it = files.constBegin();
-        for ( ; it != files.constEnd() && notFound.size() > 0; ++it)
+        QFileInfo info(m_imagePath);
+        if (info.exists() && info.isDir())
         {
-            QFileInfo ent = *it;
-            QString tok = ent.baseName().toLower();
-            int ix = 0;
-            for ( ; ix < 6; ++ix)
-                if (tok.contains(expected.at(ix)))
-                    break;
-            if (ix == 6)
+            QDir imDir(imagePath);
+            QFileInfoList files = imDir.entryInfoList(QDir::Files);
+            QFileInfoList::const_iterator it = files.constBegin();
+            for ( ; it != files.constEnd() && notFound.size() > 0; ++it)
             {
-                ix = 0;
+                QFileInfo ent = *it;
+                QString tok = ent.baseName().toLower();
+                int ix = 0;
                 for ( ; ix < 6; ++ix)
-                    if (tok.contains(expected2.at(ix)))
+                    if (tok.contains(expected.at(ix)))
                         break;
+                if (ix == 6)
+                {
+                    ix = 0;
+                    for ( ; ix < 6; ++ix)
+                        if (tok.contains(expected2.at(ix)))
+                            break;
+                }
+                if (ix != 6)
+                {
+                    notFound.removeOne(expected.at(ix));
+                    QUrl url;
+                    url.setScheme("file");
+                    url.setPath(ent.absoluteFilePath());
+                    m_faces[ix]->material()->setTextureUrl(url);
+                    m_faces[ix]->material()->texture()->setHorizontalWrap(QGL::ClampToEdge);
+                    m_faces[ix]->material()->texture()->setVerticalWrap(QGL::ClampToEdge);
+                }
             }
-            if (ix != 6)
+            if (notFound.size() > 2)
             {
-                notFound.removeOne(expected.at(ix));
-                QUrl url;
-                url.setScheme("file");
-                url.setPath(ent.absoluteFilePath());
-                m_faces[ix]->material()->setTextureUrl(url);
-                m_faces[ix]->material()->texture()->setHorizontalWrap(QGL::Clamp);
-                m_faces[ix]->material()->texture()->setVerticalWrap(QGL::Clamp);
+                qWarning("Could not load textures for");
+                for (int i = 0; i < notFound.size(); ++i)
+                    qWarning("\t%s", qPrintable(notFound.at(i)));
             }
         }
-        if (notFound.size() > 2)
+        else
         {
-            qWarning("Could not load textures for");
-            for (int i = 0; i < notFound.size(); ++i)
-                qWarning("\t%s", qPrintable(notFound.at(i)));
+            qWarning("SkyBox::setImagePath: Not an existing directory %s",
+                     qPrintable(m_imagePath));
         }
     }
 }

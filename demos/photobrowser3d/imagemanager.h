@@ -40,38 +40,37 @@
 ****************************************************************************/
 
 
-#include "cube3dnode.h"
+#ifndef IMAGEMANAGER_H
+#define IMAGEMANAGER_H
 
-#include "qgldisplaylist.h"
-#include "qglcube.h"
-
+#include <QThread>
 #include <QUrl>
+#include <QImage>
 
-Cube3DNode::Cube3DNode(QObject *parent, QGLMaterialCollection *materials)
-    : QGLDisplayList(parent, materials)
+class Launcher;
+class QSemaphore;
+
+class ImageManager : public QThread
 {
-    setEffect(QGL::LitModulateTexture2D);
-    setEffectEnabled(true);
-    newSection(QGL::Faceted);
-    QGLSceneNode *node = currentNode();
-    *this << QGLCube();
-    finalize();
+    Q_OBJECT
+public:
+    explicit ImageManager(QObject *parent = 0);
+    void run();
+    void setImageUrl(QUrl url) { m_url = url; }
+    QUrl imageUrl() const { return m_url; }
+signals:
+    void imageReady(const QImage &);
+    void errorOccurred(const QString &);
+    void done();
+public slots:
+    void acquire();
+    void release();
+    void createLoader(const QUrl &);
+private:
+    QUrl m_url;
+    QSemaphore *m_sem;
+    int m_threadPoolSize;
+    QList<Launcher*>m_launchQueue;
+};
 
-    QGLMaterial *mat = new QGLMaterial();
-    mat->setAmbientColor(Qt::green);
-    mat->setSpecularColor(Qt::white);
-    QUrl url;
-    url.setScheme("file");
-    url.setPath(":/res/images/sample_image.jpg");
-    mat->setTextureUrl(url);
-    node->setMaterial(mat);
-
-    m_tex = mat->texture();
-}
-
-
-void Cube3DNode::setImagePath(const QString &path)
-{
-    QString url = QString("file://%1").arg(path);
-    m_tex->setUrl(url);
-}
+#endif // IMAGEMANAGER_H

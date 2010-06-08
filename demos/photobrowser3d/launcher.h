@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt scene graph research project.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,40 +39,31 @@
 **
 ****************************************************************************/
 
-#ifndef PHOTOBROWSER3DVIEW_H
-#define PHOTOBROWSER3DVIEW_H
 
-#include "qglview.h"
+#ifndef LAUNCHER_H
+#define LAUNCHER_H
 
-class ImageDisplay;
-class SkyBox;
-class QGLMaterialCollection;
-class QGLSceneNode;
+#include <QObject>
+#include <QUrl>
+#include <QThread>
+
 class ImageManager;
 
-class PhotoBrowser3DView : public QGLView
+class Launcher : public QThread
 {
     Q_OBJECT
 public:
-    PhotoBrowser3DView();
-    ~PhotoBrowser3DView();
-    void initializeGL(QGLPainter *);
-protected:
-    void paintGL(QGLPainter *);
-    void wheelEvent(QWheelEvent *e);
-    //void mousePressEvent(QMouseEvent *e);
-    //void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
-    void keyPressEvent(QKeyEvent *e);
-    void closeEvent(QCloseEvent *e);
-private slots:
-    void initialise();
+    explicit Launcher(QObject *parent = 0);
+    ~Launcher() {}
+    void run();
+    void setUrl(const QUrl &url) { m_url = url; }
+signals:
+    void done();
+    void imageUrl(const QUrl &url);
 private:
-    ImageDisplay *m_scene;
-    ImageManager *m_images;
-    SkyBox *m_skybox;
-    QGLMaterialCollection *m_palette;
-    qreal m_velocity;
+    ImageManager *m_manager;
+    QUrl m_url;
 };
 
-#endif // PHOTOBROWSER3DVIEW_H
+
+#endif // LAUNCHER_H

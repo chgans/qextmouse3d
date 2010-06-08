@@ -6,12 +6,18 @@ CONFIG += qt \
 QT += opengl
 SOURCES += main.cpp\
         photobrowser3dview.cpp \
-    cube3dnode.cpp \
-    skybox.cpp
+    imagedisplay.cpp \
+    skybox.cpp \
+    imagemanager.cpp \
+    imageloader.cpp \
+    launcher.cpp
 
 HEADERS  += photobrowser3dview.h \
-    cube3dnode.h \
-    skybox.h
+    imagedisplay.h \
+    skybox.h \
+    imagemanager.h \
+    imageloader.h \
+    launcher.h
 
 RESOURCES += \
     photobrowser3d.qrc

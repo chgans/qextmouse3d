@@ -40,39 +40,24 @@
 ****************************************************************************/
 
 #include "photobrowser3dview.h"
-#include "cube3dnode.h"
+#include "imagemanager.h"
+#include "imagedisplay.h"
 #include "skybox.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QWheelEvent>
 #include <QDir>
+#include <QTimer>
+#include <QTime>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
-    , m_cube(0)
-    , m_cubeScene(0)
+    , m_scene(0)
+    , m_images(new ImageManager(this))
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
 {
-    m_cubeScene = new QGLSceneNode(this);
-    m_cube = new Cube3DNode(m_cubeScene, m_palette);
-    m_cube->setPosition(QVector3D(0.0f, 0.0f, 20.0f));
-    m_cube->setObjectName("orig");
-    QDir pics(QDir::homePath() + "/Pictures");
-    QStringList ents = pics.entryList(QDir::Files);
-    for (int i = 0; i < 20; ++i)
-    {
-        QGLSceneNode *s = m_cube->clone(m_cubeScene);
-        QGLMaterial *mat = new QGLMaterial(m_palette);
-        mat->setTextureUrl(pics.absoluteFilePath(ents[i]));
-        qreal zOff = (2.0f * float(i)) - 20.0f;
-        s->setPosition(QVector3D(0.0f, 0.0f, zOff));
-        s->setObjectName(QString("obj %1").arg(i));
-    }
-
-    qDumpScene(m_cubeScene);
-
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
     if (ix != -1)
@@ -82,13 +67,35 @@ PhotoBrowser3DView::PhotoBrowser3DView()
         else
             qWarning("Expected path/to/skybox/files after \"--skybox\" switch\n");
     }
+
     m_skybox = new SkyBox(this, path);
+    m_scene = new ImageDisplay(this, m_palette);
+
+    QTimer::singleShot(0, this, SLOT(initialise()));
 }
 
 PhotoBrowser3DView::~PhotoBrowser3DView()
 {
-    delete m_cube;
-    delete m_skybox;
+}
+
+void PhotoBrowser3DView::initialise()
+{
+    QString path = QDir::home().absoluteFilePath("Pictures");
+    int ix = qApp->arguments().indexOf("--pictures");
+    if (ix != -1)
+    {
+        if (qApp->arguments().size() > ix+1)
+            path = qApp->arguments().at(ix+1);
+        else
+            qWarning("Expected path/to/image/files after \"--pictures\" switch\n");
+    }
+    connect(m_images, SIGNAL(imageReady(QImage)),
+            m_scene, SLOT(addImage(QImage)));
+    QUrl url;
+    url.setScheme("file");
+    url.setPath(path);
+    m_images->setImageUrl(url);
+    m_images->run();
 }
 
 void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
@@ -147,10 +154,19 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     }
 }
 
+void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
+{
+    m_images->quit();
+    qDebug() << "ImageManager thread told to quit:" << QTime::currentTime();
+    m_images->wait();
+    qDebug() << "....quit occurred:" << QTime::currentTime();
+    QWidget::closeEvent(e);
+}
+
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
-    camera()->translateEye(1.2f, 0.0f, 0.0f);
+    camera()->setEye(QVector3D(0.0f, 0.0f, -10.0f));
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
@@ -158,7 +174,7 @@ void PhotoBrowser3DView::paintGL(QGLPainter *painter)
     painter->setClearColor(Qt::blue);
     painter->clear();
     m_skybox->draw(painter);
-    m_cubeScene->draw(painter);
+    m_scene->draw(painter);
 }
 
 /*
