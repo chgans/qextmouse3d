@@ -651,6 +651,7 @@ void ShaderProgramEffect::processFinishedRequest(QDeclarativePixmapReply* reply)
     QPixmap* pixmap = new QPixmap;
     QString errorString;
     QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, pixmap, &errorString);
+    Q_UNUSED(status);
 
     int uniformLocation = pendingPixmapRequests.key(reply, -1);
     if(uniformLocation == -1)
