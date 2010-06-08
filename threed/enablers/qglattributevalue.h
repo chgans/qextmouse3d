@@ -42,9 +42,7 @@
 #ifndef QGLATTRIBUTEVALUE_H
 #define QGLATTRIBUTEVALUE_H
 
-#include <QtOpenGL/qgl.h>
-#include "qt3dglobal.h"
-#include "qarray.h"
+#include "qglattributedescription.h"
 #include "qcustomdataarray.h"
 
 QT_BEGIN_HEADER
@@ -65,11 +63,14 @@ public:
     QGLAttributeValue(const QArray<QVector4D>& array);
     QGLAttributeValue(const QArray<QColor4B>& array);
     QGLAttributeValue(const QCustomDataArray& array);
-    QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data);
-    QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset);
+    QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data, int count = 0);
+    QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset, int count = 0);
+    QGLAttributeValue(const QGLAttributeDescription& description, const void *data, int count = 0);
+    QGLAttributeValue(const QGLAttributeDescription& description, int offset, int count = 0);
 
     bool isNull() const;
 
+    const QGLAttributeDescription &description() const;
     GLenum type() const;
     int sizeOfType() const;
     int tupleSize() const;
@@ -77,14 +78,14 @@ public:
     int offset() const;
     const void *data() const;
     const float *floatData() const;
+    int count() const;
 
 private:
-    int m_tupleSize;
-    GLenum m_type;
-    int m_stride;
+    QGLAttributeDescription m_description;
     const void *m_data;
+    int m_count;
 
-    void setStride(int stride) { m_stride = stride; }
+    void setStride(int stride) { m_description.setStride(stride); }
     void setOffset(int offset)
         { m_data = reinterpret_cast<const void *>(offset); }
 
@@ -92,68 +93,84 @@ private:
 };
 
 inline QGLAttributeValue::QGLAttributeValue()
-    : m_tupleSize(0), m_type(GL_FLOAT), m_stride(0), m_data(0)
+    : m_data(0), m_count(0)
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<float>& array)
-    : m_tupleSize(1), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
+    : m_description(QGL::Position, 1, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector2D>& array)
-    : m_tupleSize(2), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
+    : m_description(QGL::Position, 2, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector3D>& array)
-    : m_tupleSize(3), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
+    : m_description(QGL::Position, 3, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
-    : m_tupleSize(4), m_type(GL_FLOAT), m_stride(0), m_data(array.constData())
+    : m_description(QGL::Position, 4, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4B>& array)
-    : m_tupleSize(4), m_type(GL_UNSIGNED_BYTE), m_stride(0), m_data(array.constData())
+    : m_description(QGL::Position, 4, GL_UNSIGNED_BYTE, 0), m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue
-        (int tupleSize, GLenum type, int stride, const void *data)
-    : m_tupleSize(tupleSize), m_type(type), m_stride(stride), m_data(data)
+        (int tupleSize, GLenum type, int stride, const void *data, int count)
+    : m_description(QGL::Position, tupleSize, type, stride), m_data(data), m_count(count)
 {
-    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
 }
 
 inline QGLAttributeValue::QGLAttributeValue
-        (int tupleSize, GLenum type, int stride, int offset)
-    : m_tupleSize(tupleSize), m_type(type), m_stride(stride),
-      m_data(reinterpret_cast<const void *>(offset))
+        (int tupleSize, GLenum type, int stride, int offset, int count)
+    : m_description(QGL::Position, tupleSize, type, stride),
+      m_data(reinterpret_cast<const void *>(offset)), m_count(count)
 {
-    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
+}
+
+inline QGLAttributeValue::QGLAttributeValue
+        (const QGLAttributeDescription& description, const void *data, int count)
+    : m_description(description), m_data(data), m_count(count)
+{
+}
+
+inline QGLAttributeValue::QGLAttributeValue
+        (const QGLAttributeDescription& description, int offset, int count)
+    : m_description(description),
+      m_data(reinterpret_cast<const void *>(offset)), m_count(count)
+{
 }
 
 inline bool QGLAttributeValue::isNull() const
 {
-    return m_tupleSize == 0;
+    return m_description.isNull();
+}
+
+inline const QGLAttributeDescription &QGLAttributeValue::description() const
+{
+    return m_description;
 }
 
 inline GLenum QGLAttributeValue::type() const
 {
-    return m_type;
+    return m_description.type();
 }
 
 inline int QGLAttributeValue::tupleSize() const
 {
-    return m_tupleSize;
+    return m_description.tupleSize();
 }
 
 inline int QGLAttributeValue::stride() const
 {
-    return m_stride;
+    return m_description.stride();
 }
 
 inline int QGLAttributeValue::offset() const
@@ -169,6 +186,11 @@ inline const void *QGLAttributeValue::data() const
 inline const float *QGLAttributeValue::floatData() const
 {
     return reinterpret_cast<const float *>(m_data);
+}
+
+inline int QGLAttributeValue::count() const
+{
+    return m_count;
 }
 
 QT_END_NAMESPACE
