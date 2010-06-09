@@ -46,7 +46,6 @@
 
 #include <QSemaphore>
 #include <QTime>
-#include <QDebug>
 #include <QFileInfo>
 #include <QDir>
 #include <QStringList>
@@ -62,7 +61,6 @@ Launcher::Launcher(QObject *parent)
 
 void Launcher::run()
 {
-    qDebug() << "Launcher::processUrl" << m_url;
     if (m_url.isEmpty())
     {
         qWarning("Launcher::run - empty URL!");
@@ -98,13 +96,6 @@ void Launcher::run()
                     queue.append(dir.absoluteFilePath(*it));
                 }
             }
-            else
-            {
-                qDebug() << "Loop detected - dropping path:"
-                        << u.absoluteFilePath()
-                        << "which links to already processed directory"
-                        << path;
-            }
         }
         else
         {
@@ -122,5 +113,4 @@ void Launcher::run()
             }
         }
     }
-    qDebug() << "done processing:" << this;
 }

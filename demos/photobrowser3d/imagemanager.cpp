@@ -47,8 +47,6 @@
 #include <QSemaphore>
 #include <QDir>
 #include <QTime>
-#include <QDebug>
-
 #include <QTimer>
 
 #ifndef Q_MAX_CONCURRENT_LOADERS
@@ -59,9 +57,9 @@ ImageManager::ImageManager(QObject *parent)
     : QThread(parent)
     , m_sem(0)
     , m_threadPoolSize(0)
+    , m_count(0)
 {
     m_threadPoolSize = QThread::idealThreadCount();
-    qDebug() << "System reported ideal thread count:" << m_threadPoolSize;
     if (m_threadPoolSize == -1)
         m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS + 2;
     // need at least 3 threads - manager, launcher & one loader
@@ -74,12 +72,10 @@ ImageManager::ImageManager(QObject *parent)
 
 void ImageManager::acquire()
 {
-    // block if threads running > m_maxThreads
+    // block if threads running > m_threadPoolSize
     QTime time;
     time.start();
     m_sem->acquire();
-    qDebug() << "ImageManager::acquire took:" << time.elapsed() << " - now:"
-            << (m_threadPoolSize - m_sem->available()) << "threads running";
 }
 
 void ImageManager::release()
@@ -91,13 +87,8 @@ void ImageManager::release()
         loader->deleteLater();  // delete on return to event loop
     }
     m_sem->release();
-    qDebug() << "ImageManager::release - now:"
-            << (m_threadPoolSize - m_sem->available()) << "threads running";
     if (m_sem->available() == m_threadPoolSize)
-    {
-        qDebug() << "Calling quit - in thread:" << QThread::currentThreadId();
         emit done();
-    }
 }
 
 void ImageManager::createLoader(const QUrl &url)
@@ -108,12 +99,18 @@ void ImageManager::createLoader(const QUrl &url)
             this, SLOT(release()), Qt::QueuedConnection);
     connect(loader, SIGNAL(imageLoaded(QImage)),
             this, SIGNAL(imageReady(QImage)), Qt::QueuedConnection);
+    connect(loader, SIGNAL(imageLoaded(QImage)),
+            this, SLOT(incrementCount()), Qt::QueuedConnection);
     loader->start();
+}
+
+void ImageManager::incrementCount()
+{
+    ++m_count;
 }
 
 void ImageManager::run()
 {
-    qDebug() << "starting ImageManager" << m_url << "in thread:" << QThread::currentThreadId();
     Launcher launcher(this);
     launcher.setUrl(m_url);
     connect(&launcher, SIGNAL(imageUrl(QUrl)),
@@ -122,6 +119,10 @@ void ImageManager::run()
             this, SLOT(release()));
     acquire();   // grab a thread for the launcher
     launcher.start();
+    fprintf(stderr, "ImageManager::run - start");
+    QTime timer;
+    timer.start();
     exec();
-    qDebug() << "exiting ImageManager" << m_url;
+    fprintf(stderr, "ImageManager::run - generated %d images from %s in %d ms\n",
+            m_count, qPrintable(m_url.path()), timer.elapsed());
 }

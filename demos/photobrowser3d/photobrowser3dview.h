@@ -58,21 +58,22 @@ public:
     ~PhotoBrowser3DView();
     void initializeGL(QGLPainter *);
 protected:
+    void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
     void wheelEvent(QWheelEvent *e);
-    //void mousePressEvent(QMouseEvent *e);
-    //void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void closeEvent(QCloseEvent *e);
 private slots:
     void initialise();
+    void keyTimeOut();
 private:
     ImageDisplay *m_scene;
     ImageManager *m_images;
     SkyBox *m_skybox;
     QGLMaterialCollection *m_palette;
     qreal m_velocity;
+    QTimer *m_keyTimer;
+    QTime *m_panTime;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H

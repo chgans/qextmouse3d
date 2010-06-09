@@ -57,6 +57,9 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_images(new ImageManager(this))
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
+    , m_velocity(0.0f)
+    , m_keyTimer(new QTimer(this))
+    , m_panTime(new QTime())
 {
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
@@ -72,10 +75,15 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_scene = new ImageDisplay(this, m_palette);
 
     QTimer::singleShot(0, this, SLOT(initialise()));
+
+    m_keyTimer->setInterval(100);
+    connect(m_keyTimer, SIGNAL(timeout()),
+            this, SLOT(keyTimeOut()));
 }
 
 PhotoBrowser3DView::~PhotoBrowser3DView()
 {
+    delete m_panTime;
 }
 
 void PhotoBrowser3DView::initialise()
@@ -115,6 +123,13 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
     }
 }
 
+void PhotoBrowser3DView::keyTimeOut()
+{
+    m_velocity = 0.0f;
+    m_keyTimer->stop();
+    qDebug() << "Key timed out - setting velocity to:" << m_velocity;
+}
+
 void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Space)
@@ -124,6 +139,14 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     else if (e->key() == Qt::Key_Q)
     {
         close();
+    }
+    else if (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right)
+    {
+        m_velocity = (e->key() == Qt::Key_Left) ? -2.0f : 2.0f;
+        m_panTime->start();
+        m_keyTimer->start();
+        update();
+        qDebug() << "Key detected - setting velocity to:" << m_velocity;
     }
     else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
     {
@@ -157,9 +180,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
 {
     m_images->quit();
-    qDebug() << "ImageManager thread told to quit:" << QTime::currentTime();
     m_images->wait();
-    qDebug() << "....quit occurred:" << QTime::currentTime();
     QWidget::closeEvent(e);
 }
 
@@ -169,8 +190,17 @@ void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
     camera()->setEye(QVector3D(0.0f, 0.0f, -10.0f));
 }
 
-void PhotoBrowser3DView::paintGL(QGLPainter *painter)
+void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 {
+    qreal t = m_panTime->restart();
+    qreal distance = t * m_velocity / 1000.0f;
+    QVector3D tx = camera()->translation(distance, 0.0f, 0.0f);
+    camera()->setEye(camera()->eye() + tx);
+    camera()->setCenter(camera()->center() + tx);
+}
+
+void PhotoBrowser3DView::paintGL(QGLPainter *painter)
+{    
     painter->setClearColor(Qt::blue);
     painter->clear();
     m_skybox->draw(painter);

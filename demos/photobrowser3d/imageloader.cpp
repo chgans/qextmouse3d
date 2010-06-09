@@ -53,22 +53,15 @@
 ImageLoader::ImageLoader(ImageManager *manager)
     : QThread(manager)
 {
-    // qDebug() << ">>>>>>>>> created:" << this << "in thread" << QThread::currentThreadId();
 }
 
 ImageLoader::~ImageLoader()
 {
-    // qDebug() << "<<<<<<<<< destroyed:" << this << "in thread" << QThread::currentThreadId();
 }
 
 void ImageLoader::run()
 {
-    QTime time;
-    time.start();
     QImage im(m_url.path());
     if (!im.isNull())
         emit imageLoaded(im);
-    if (time.elapsed() > 5)
-        qDebug() << m_url.path() << "loader done:" << this << "in thread" << QThread::currentThreadId()
-        << "time taken:" << time.elapsed();
 }
