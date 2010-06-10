@@ -341,7 +341,7 @@ QGLView::StereoType QGLView::stereoType() const
     persist for the lifetime of the QGLView, or until
     deregisterObject() is called for \a objectId.
 
-    \sa deregisterObject(), pickGL(), objectForPoint()
+    \sa deregisterObject(), objectForPoint()
 */
 void QGLView::registerObject(int objectId, QObject *object)
 {
@@ -351,7 +351,7 @@ void QGLView::registerObject(int objectId, QObject *object)
 /*!
     Deregisters the object associated with \a objectId.
 
-    \sa registerObject(), pickGL()
+    \sa registerObject()
 */
 void QGLView::deregisterObject(int objectId)
 {
@@ -634,55 +634,19 @@ void QGLView::earlyPaintGL(QGLPainter *painter)
     Paints the scene onto \a painter.  The color and depth buffers
     will have already been cleared, and the camera() position set.
 
-    \sa pickGL(), earlyPaintGL()
+    If QGLPainter::isPicking() is set for \a painter, then the
+    function should paint the scene onto \a painter in
+    "object picking mode".  The scene will be rendered into a
+    background buffer using flat colors so that mouse events
+    can determine which object lies under the mouse pointer.
+
+    The default implementation of picking will typically just
+    render the scene normally.  However, some applications
+    may wish to render a simpler scene that omits unselectable
+    objects and uses simpler meshes for the selectable objects.
+
+    \sa earlyPaintGL()
 */
-
-/*!
-    Paints the scene onto \a painter in "object picking mode".
-    The scene is rendered into a background buffer using flat
-    colors so that mouse events can determine which object lies
-    under the mouse pointer.
-
-    The default implementation calls paintGL().  Subclasses may
-    override the default implementation of pickGL() to draw a
-    simpler version of the scene.
-
-    \sa needsPickGL(), paintGL(), QGLPainter::setPicking()
-*/
-void QGLView::pickGL(QGLPainter *painter)
-{
-    paintGL(painter);
-}
-
-/*!
-    Returns true if pickGL() needs to be called to refresh
-    the contents of the pick buffer; false otherwise.
-
-    The default implementation returns true if paintGL() has
-    been called since the last call to pickGL().  This can cause
-    the pick buffer to be regenerated very often if the scene
-    is animated.
-
-    If the animations are limited to objects bouncing in place,
-    rotating on an axis, or moving along a short path, the pick
-    buffer probably does not need to be regenerated every time
-    paintGL() is called.
-
-    Subclasses can override needsPickGL() and return false if
-    the scene has not changed substantially enough to require a
-    pick buffer change.  Subclasses will usually also override
-    pickGL() and render an elongated version of the object into
-    the pick buffer that covers the complete animation path.
-    This way, the user can click anywhere along the animation
-    path to select the object rather than having to hit a
-    moving object exactly to select it.
-
-    \sa pickGL()
-*/
-bool QGLView::needsPickGL()
-{
-    return d->pickBufferMaybeInvalid;
-}
 
 /*!
     Processes the mouse press event \a e.
@@ -965,7 +929,7 @@ static inline int powerOfTwo(int value)
     Returns the registered object that is under the mouse position
     specified by \a point.  This function may need to regenerate
     the contents of the pick buffer by repainting the scene
-    with pickGL().
+    with paintGL().
 
     \sa registerObject()
 */
@@ -978,7 +942,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
 
     // Do we need to refresh the pick buffer contents?
     QGLPainter painter(this);
-    if (d->pickBufferForceUpdate || needsPickGL()) {
+    if (d->pickBufferForceUpdate) {
         // Initialize the painter, which will make the window context current.
         painter.setPicking(true);
         painter.clearPickObjects();
@@ -1004,7 +968,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         painter.clear();
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
-        pickGL(&painter);
+        paintGL(&painter);
         painter.setPicking(false);
 
         // The pick buffer contents are now valid, unless we are using

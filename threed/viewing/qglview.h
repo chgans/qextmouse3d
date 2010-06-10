@@ -101,8 +101,6 @@ protected:
     virtual void initializeGL(QGLPainter *painter);
     virtual void earlyPaintGL(QGLPainter *painter);
     virtual void paintGL(QGLPainter *painter) = 0;
-    virtual void pickGL(QGLPainter *painter);
-    virtual bool needsPickGL();
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
