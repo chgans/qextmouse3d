@@ -65,6 +65,7 @@
 #include "qgltexturecube.h"
 #include "qgeometrydata.h"
 #include "qglvertexbuffer_p.h"
+#include "qmatrix4x4stack_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -106,8 +107,6 @@ QT_BEGIN_NAMESPACE
 QGLPainterPrivate::QGLPainterPrivate()
     : ref(1),
       activePaintEngine(0),
-      projectionMatrix(QGLMatrixStack::ProjectionMatrix),
-      modelViewMatrix(QGLMatrixStack::ModelViewMatrix),
       eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
@@ -334,8 +333,8 @@ bool QGLPainter::begin(const QGLContext *context)
     d_ptr->ref.ref();
 
     // Force the matrices to be updated the first time we use them.
-    d_ptr->modelViewMatrix.markDirty();
-    d_ptr->projectionMatrix.markDirty();
+    d_ptr->modelViewMatrix.setDirty(true);
+    d_ptr->projectionMatrix.setDirty(true);
 
     return true;
 }
@@ -871,10 +870,10 @@ void QGLPainter::resetScissor()
 
     \sa modelViewMatrix(), combinedMatrix(), setCamera()
 */
-QGLMatrixStack& QGLPainter::projectionMatrix()
+QMatrix4x4Stack& QGLPainter::projectionMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QGLMatrixStack *)0));
+    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
     return d->projectionMatrix;
 }
 
@@ -883,10 +882,10 @@ QGLMatrixStack& QGLPainter::projectionMatrix()
 
     \sa projectionMatrix(), combinedMatrix(), normalMatrix(), setCamera()
 */
-QGLMatrixStack& QGLPainter::modelViewMatrix()
+QMatrix4x4Stack& QGLPainter::modelViewMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QGLMatrixStack *)0));
+    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
     return d->modelViewMatrix;
 }
 
@@ -903,7 +902,15 @@ QGLMatrixStack& QGLPainter::modelViewMatrix()
 
     \sa projectionMatrix(), modelViewMatrix(), normalMatrix()
 */
-// Implemented in qglmatrixstack.cpp.
+QMatrix4x4 QGLPainter::combinedMatrix() const
+{
+    const QGLPainterPrivate *d = d_func();
+    if (!d)
+        return QMatrix4x4();
+    const QMatrix4x4StackPrivate *proj = d->projectionMatrix.d_func();
+    const QMatrix4x4StackPrivate *mv = d->modelViewMatrix.d_func();
+    return proj->matrix * mv->matrix;
+}
 
 /*!
     \fn QMatrix3x3 QGLPainter::normalMatrix() const
@@ -916,7 +923,14 @@ QGLMatrixStack& QGLPainter::modelViewMatrix()
 
     \sa modelViewMatrix(), combinedMatrix()
 */
-// Implemented in qglmatrixstack.cpp.
+QMatrix3x3 QGLPainter::normalMatrix() const
+{
+    const QGLPainterPrivate *d = d_func();
+    if (!d)
+        return QMatrix3x3();
+    const QMatrix4x4StackPrivate *mv = d->modelViewMatrix.d_func();
+    return mv->matrix.normalMatrix();
+}
 
 /*!
     Returns the camera eye that is currently being used for stereo
@@ -1706,10 +1720,14 @@ void QGLPainter::update()
     d->ensureEffect(this);
     QGLPainter::Updates updates = d->updates;
     d->updates = 0;
-    if (d->modelViewMatrix.needsUpdate())
+    if (d->modelViewMatrix.isDirty()) {
         updates |= UpdateModelViewMatrix;
-    if (d->projectionMatrix.needsUpdate())
+        d->modelViewMatrix.setDirty(false);
+    }
+    if (d->projectionMatrix.isDirty()) {
         updates |= UpdateProjectionMatrix;
+        d->projectionMatrix.setDirty(false);
+    }
     if (updates != 0)
         d->effect->update(this, updates);
 }
@@ -1840,10 +1858,34 @@ void QGLPainter::updateFixedFunction(QGLPainter::Updates updates)
             color = this->color();
         glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     }
-    if ((updates & QGLPainter::UpdateModelViewMatrix) != 0)
-        d->modelViewMatrix.updateServer();
-    if ((updates & QGLPainter::UpdateProjectionMatrix) != 0)
-        d->projectionMatrix.updateServer();
+    if ((updates & QGLPainter::UpdateModelViewMatrix) != 0) {
+        const QMatrix4x4 &matrix = d->modelViewMatrix.top();
+        glMatrixMode(GL_MODELVIEW);
+        if (sizeof(qreal) == sizeof(GLfloat)) {
+            glLoadMatrixf(reinterpret_cast<const GLfloat *>
+                (matrix.constData()));
+        } else {
+            GLfloat mat[16];
+            const qreal *m = matrix.constData();
+            for (int index = 0; index < 16; ++index)
+                mat[index] = m[index];
+            glLoadMatrixf(mat);
+        }
+    }
+    if ((updates & QGLPainter::UpdateProjectionMatrix) != 0) {
+        const QMatrix4x4 &matrix = d->projectionMatrix.top();
+        glMatrixMode(GL_PROJECTION);
+        if (sizeof(qreal) == sizeof(GLfloat)) {
+            glLoadMatrixf(reinterpret_cast<const GLfloat *>
+                (matrix.constData()));
+        } else {
+            GLfloat mat[16];
+            const qreal *m = matrix.constData();
+            for (int index = 0; index < 16; ++index)
+                mat[index] = m[index];
+            glLoadMatrixf(mat);
+        }
+    }
     if ((updates & QGLPainter::UpdateLights) != 0) {
         // Save the current modelview matrix and load the identity.
         // We need to apply the light in the modelview transformation

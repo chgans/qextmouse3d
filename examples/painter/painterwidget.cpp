@@ -69,8 +69,9 @@ void PainterWidget::paintGL()
     painter.clear();
 
     // Draw a triangle in an orthographic projection.
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect());
+    QMatrix4x4 projm;
+    projm.ortho(rect());
+    painter.projectionMatrix() = projm;
 
     painter.modelViewMatrix().setToIdentity();
 

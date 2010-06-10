@@ -198,8 +198,9 @@ void PageFlipView::paintGL()
     int topy = (rect.height() - pageSize.height()) / 2;
 
     painter.clear();
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect);
+    QMatrix4x4 projm;
+    projm.ortho(rect);
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
 #if !defined(QT_OPENGL_ES_1)

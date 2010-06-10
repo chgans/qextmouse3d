@@ -106,8 +106,8 @@ public:
     QAtomicInt ref;
     const QGLContext *context;
     QPaintEngineEx *activePaintEngine;
-    QGLMatrixStack projectionMatrix;
-    QGLMatrixStack modelViewMatrix;
+    QMatrix4x4Stack projectionMatrix;
+    QMatrix4x4Stack modelViewMatrix;
     QGL::Eye eye;
     QGLAbstractEffect *effect;
     QGLAbstractEffect *userEffect;

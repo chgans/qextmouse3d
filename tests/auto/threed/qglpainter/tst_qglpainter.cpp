@@ -119,8 +119,9 @@ void tst_QGLPainter::drawTrianglePaint()
     painter.setClearColor(Qt::black);
     painter.clear();
 
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(widget->rect());
+    QMatrix4x4 projm;
+    projm.ortho(widget->rect());
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
     QVector2DArray vertices;
@@ -247,8 +248,9 @@ void tst_QGLPainter::scissorPaint()
     painter.setClearColor(Qt::black);
     painter.clear();
 
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(widget->rect());
+    QMatrix4x4 projm;
+    projm.ortho(widget->rect());
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
     QVector2DArray vertices;
@@ -346,9 +348,8 @@ void tst_QGLPainter::scissorPaintQ(QPainter *painter, const QSize& size)
 // We assume that QMatrix4x4 works and we can use it as an oracle.
 void tst_QGLPainter::userMatrixStack()
 {
-    QGLMatrixStack stack;
+    QMatrix4x4Stack stack;
 
-    QVERIFY(stack.type() == QGLMatrixStack::UserMatrix);
     QVERIFY(stack.top().isIdentity());
     QVERIFY(QMatrix4x4(stack).isIdentity());
 
@@ -413,14 +414,15 @@ void tst_QGLPainter::userMatrixStack()
     m4.setToIdentity();
     m4.ortho(QRect(2, 3, 4, 5));
     stack.setToIdentity();
-    stack.ortho(QRect(2, 3, 4, 5));
+    QMatrix4x4 projm;
+    projm.ortho(QRect(2, 3, 4, 5));
+    stack = projm;
     QVERIFY(qFuzzyCompare(m4, stack.top()));
     QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
 }
 
 #if defined(QT_OPENGL_ES_2)
 #define QGL_NO_MATRIX_FETCH 1
-#define QGL_NO_MATRIX_RESET 1
 #endif
 
 #ifndef QGL_NO_MATRIX_FETCH
@@ -450,16 +452,6 @@ static bool checkGLMatrix(GLenum type, const QMatrix4x4& expected)
     return true;
 }
 
-static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
-{
-    glMatrixMode(type);
-    GLfloat mat[16];
-    const qreal *m = matrix.constData();
-    for (int index = 0; index < 16; ++index)
-        mat[index] = m[index];
-    glLoadMatrixf(mat);
-}
-
 #else
 
 #ifndef GL_PROJECTION
@@ -479,7 +471,6 @@ static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
 // For such platforms, we stub out the checks and just hope that they work.
 static void clearGLMatrix(GLenum) {}
 static bool checkGLMatrix(GLenum, const QMatrix4x4&) { return true; }
-static void setGLMatrix(GLenum, const QMatrix4x4&) {}
 
 #endif
 
@@ -488,8 +479,6 @@ void tst_QGLPainter::projectionMatrixStack()
     QGLPainter painter(widget);
 
     painter.projectionMatrix().setToIdentity();
-    QVERIFY(painter.projectionMatrix().type() ==
-                QGLMatrixStack::ProjectionMatrix);
     QVERIFY(painter.projectionMatrix().top().isIdentity());
     QVERIFY(QMatrix4x4(painter.projectionMatrix()).isIdentity());
 
@@ -498,7 +487,7 @@ void tst_QGLPainter::projectionMatrixStack()
 
     QMatrix4x4 m;
     m.ortho(2, 4, 3, 1, 10, 50);
-    painter.projectionMatrix().ortho(QRect(2, 1, 2, 2), 10, 50);
+    painter.projectionMatrix() = m;
     QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
     QVERIFY(qFuzzyCompare(m, QMatrix4x4(painter.projectionMatrix())));
 
@@ -510,20 +499,6 @@ void tst_QGLPainter::projectionMatrixStack()
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, m));
-
-    // Write an explict value to the GL server and read it back.
-    QMatrix4x4 m2;
-    m2.ortho(widget->rect());
-    setGLMatrix(GL_PROJECTION, m2);
-    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
-        (QGLMatrixStack::ProjectionMatrix);
-
-    // Read back the explicitly set value from the GL server.
-#if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, m3));
-#else
-    QVERIFY(qFuzzyCompare(m2, m3));
-#endif
 }
 
 void tst_QGLPainter::modelViewMatrixStack()
@@ -531,8 +506,6 @@ void tst_QGLPainter::modelViewMatrixStack()
     QGLPainter painter(widget);
 
     painter.modelViewMatrix().setToIdentity();
-    QVERIFY(painter.modelViewMatrix().type() ==
-                QGLMatrixStack::ModelViewMatrix);
     QVERIFY(painter.modelViewMatrix().top().isIdentity());
     QVERIFY(QMatrix4x4(painter.modelViewMatrix()).isIdentity());
 
@@ -557,20 +530,6 @@ void tst_QGLPainter::modelViewMatrixStack()
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));
-
-    // Write an explict value to the GL server and read it back.
-    QMatrix4x4 m2;
-    m2.translate(5, 6, 7);
-    setGLMatrix(GL_MODELVIEW, m2);
-    QMatrix4x4 m3 = QGLMatrixStack::readServerMatrix
-        (QGLMatrixStack::ModelViewMatrix);
-
-    // Read back the explicitly set value from the GL server.
-#if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, m3));
-#else
-    QVERIFY(qFuzzyCompare(m2, m3));
-#endif
 }
 
 void tst_QGLPainter::isCullable()

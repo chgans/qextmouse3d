@@ -77,8 +77,9 @@ void TutorialWidget::paintGL()
 //! [clear-window]
 
 //! [set-matrices]
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect());
+    QMatrix4x4 projm;
+    projm.ortho(rect());
+    painter.projectionMatrix() = projm;
 
     painter.modelViewMatrix().setToIdentity();
 //! [set-matrices]

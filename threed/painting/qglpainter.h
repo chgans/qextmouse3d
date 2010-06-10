@@ -54,7 +54,7 @@
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglmaterial.h"
-#include "qglmatrixstack.h"
+#include "qmatrix4x4stack.h"
 #include "qglcamera.h"
 #include "qvectorarray.h"
 
@@ -126,8 +126,8 @@ public:
     void expandScissor(const QRect& rect);
     void resetScissor();
 
-    QGLMatrixStack& projectionMatrix();
-    QGLMatrixStack& modelViewMatrix();
+    QMatrix4x4Stack& projectionMatrix();
+    QMatrix4x4Stack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
     QMatrix3x3 normalMatrix() const;
 

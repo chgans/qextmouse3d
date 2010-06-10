@@ -118,8 +118,9 @@ void ShapesWidget::paintGL()
 
     painter.setDepthTestingEnabled(false);
 
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect());
+    QMatrix4x4 projm;
+    projm.ortho(rect());
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
     QRect wrect = rect();
