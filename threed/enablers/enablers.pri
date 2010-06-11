@@ -8,6 +8,7 @@ HEADERS += \
     qgltexturecube.h \
     qglvertexbuffer.h \
     qarray.h \
+    qcolor4ub.h \
     qcustomdataarray.h \
     qmatrix4x4stack.h \
     qvectorarray.h \
@@ -21,6 +22,7 @@ SOURCES += \
     qgltextureutils.cpp \
     qglvertexbuffer.cpp \
     qarray.cpp \
+    qcolor4ub.cpp \
     qmatrix4x4stack.cpp \
     qcustomdataarray.cpp \
     qvectorarray.cpp

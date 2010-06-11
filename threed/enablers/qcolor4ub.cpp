@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
     \brief The QColor4ub class represents a color by four unsigned byte components.
     \since 4.7
     \ingroup qt3d
-    \ingroup qt3d::math
+    \ingroup qt3d::enablers
 
     OpenGL applications commonly use four unsigned byte values to compactly
     represent a color value.  QColor4ub provides a convenience

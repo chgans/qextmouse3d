@@ -2,6 +2,7 @@ TEMPLATE = subdirs
 SUBDIRS = \
     qareaallocator \
     qarray \
+    qcolor4ub \
     qcustomdataarray \
     qgraphicstransform3d \
     qvectorarray \
