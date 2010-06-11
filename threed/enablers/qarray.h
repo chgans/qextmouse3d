@@ -336,7 +336,7 @@ private:
     Data *copyData(const T *src, int size, int capacity);
     void reallocate(int capacity);
     void detach_helper();
-    void assign(const QArray<T, PreallocSize> &other, bool isUnshared);
+    void assign(const QArray<T, PreallocSize> &other);
     void grow(int needed);
     void setSize(int size);
 };
@@ -502,7 +502,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::detach_helper()
 }
 
 template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, PreallocSize> &other, bool isUnshared)
+Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, PreallocSize> &other)
 {
     if (other.m_data) {
         m_start = other.m_start;
@@ -510,16 +510,11 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::assign(const QArray<T, Preall
         m_data = other.m_data;
         m_data->ref.ref();
 
-        if (isUnshared) {
-            // One of the objects cannot be shared, so force a copy.
-            detach_helper();
-        } else {
-            // We set the append limit of both objects to m_start, which forces
-            // the next append() or data() in either object to copy-on-write.
-            other.m_limit = m_limit = m_start;
-        }
-    } else if (other.isPrealloc(other.m_start) || isUnshared) {
-        // Make a deep copy of preallocated or unsharable raw data.
+        // We set the append limit of both objects to m_start, which forces
+        // the next append() or data() in either object to copy-on-write.
+        other.m_limit = m_limit = m_start;
+    } else if (other.isPrealloc(other.m_start)) {
+        // Make a deep copy of preallocated data.
         initPrealloc();
         m_data = 0;
         append(other.constData(), other.size());
@@ -613,7 +608,7 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const T *values, int size)
 template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArray<T, PreallocSize> &other)
 {
-    assign(other, false);
+    assign(other);
 }
 
 template <typename T, int PreallocSize>
@@ -653,7 +648,7 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(co
     if (other.m_data && m_data == other.m_data)
         return *this;
     release();
-    assign(other, false);
+    assign(other);
     return *this;
 }
 
