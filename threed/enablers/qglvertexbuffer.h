@@ -44,7 +44,6 @@
 
 #include <QtOpenGL/qglbuffer.h>
 #include "qcustomdataarray.h"
-#include "qglnamespace.h"
 #include "qglattributevalue.h"
 #include <QtCore/qlist.h>
 

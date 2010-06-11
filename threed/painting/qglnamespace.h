@@ -44,11 +44,6 @@
 
 #include "qt3dglobal.h"
 
-#include <QtCore/qvector.h>
-#include <QtGui/qvector3d.h>
-#include <QtGui/qvector2d.h>
-#include "qcolor4ub.h"
-
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
