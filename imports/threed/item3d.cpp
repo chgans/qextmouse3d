@@ -60,7 +60,7 @@
     \brief The Item3d class encapsulates 3d objects or \i items, as they are known.
     It contains all of the properties and methods needed for simple 3d operations.
     part of a QML/3d script.
-    \since 4.6.q
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::qml3d
 
@@ -223,8 +223,6 @@
 
 
 QT_BEGIN_NAMESPACE
-
-//QML_DEFINE_TYPE(Qt,4,6,Item3d,Item3d)
 
 class Item3dPrivate
 {

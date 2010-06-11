@@ -155,9 +155,6 @@ public:
     QImage rightImage;
     QImage anaglyph;
 
-    // Work around lack of QImage::constBits() in Qt 4.6.
-    const uchar *wholeImageBits() const { return wholeImage.bits(); }
-
     void calculateOffsets();
     QStereoImagePrivate *changeLayout(QStereoImage::Layout layout);
 };
@@ -414,7 +411,7 @@ QImage QStereoImage::leftImage() const
         return d->leftImage;
     int offset = d->leftOffset.y() * d->wholeImage.bytesPerLine() +
                  d->leftOffset.x() * d->wholeImage.depth() / 8;
-    return QImage(d->wholeImageBits() + offset,
+    return QImage(d->wholeImage.constBits() + offset,
                   d->size.width(), d->size.height(),
                   d->wholeImage.bytesPerLine(), d->wholeImage.format());
 }
@@ -453,7 +450,7 @@ QImage QStereoImage::rightImage() const
         return d->rightImage;
     int offset = d->rightOffset.y() * d->wholeImage.bytesPerLine() +
                  d->rightOffset.x() * d->wholeImage.depth() / 8;
-    return QImage(d->wholeImageBits() + offset,
+    return QImage(d->wholeImage.constBits() + offset,
                   d->size.width(), d->size.height(),
                   d->wholeImage.bytesPerLine(), d->wholeImage.format());
 }

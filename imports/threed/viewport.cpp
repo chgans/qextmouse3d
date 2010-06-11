@@ -53,7 +53,7 @@
     \class Viewport
     \brief The Viewport class defines the logical viewport for the 3d scene.  It includes all necessary
     references and parameters for the contents of the scene, as well as drawing and painting functions
-    \since 4.6.q
+    \since 4.7
     \ingroup qt3d
     \ingroup qt3d::qml3d
 
@@ -68,12 +68,6 @@
 
 
 QT_BEGIN_NAMESPACE
-
-//QML_DEFINE_TYPE(Qt,4,6,Viewport,Viewport)
-//QML_DEFINE_TYPE(Qt,4,6,LightModel,QGLLightModel)
-//QML_DEFINE_TYPE(Qt,4,6,Light,QGLLightParameters)
-//QML_DEFINE_TYPE(Qt,4,6,Camera,QGLCamera)
-
 
 class ViewportPrivate
 {
