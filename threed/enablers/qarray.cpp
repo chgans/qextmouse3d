@@ -72,8 +72,6 @@ QT_BEGIN_NAMESPACE
     constructing an array by calling append().  It has a slight
     performance penalty for random access using the non-const
     version of operator[]().
-
-    \sa QArrayRef
 */
 
 /*!
@@ -116,14 +114,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArray::QArray(const QArrayRef<T, PreallocSize> &other)
-
-    Constructs a copy of \a other.
-
-    \sa operator=()
-*/
-
-/*!
     \fn QArray::~QArray()
 
     Destroys the array.
@@ -131,13 +121,6 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn QArray<T, PreallocSize> &QArray::operator=(const QArray<T, PreallocSize> &other)
-
-    Assigns \a other to this array and returns a reference
-    to this array.
-*/
-
-/*!
-    \fn QArray<T, PreallocSize> &QArray::operator=(const QArrayRef<T, PreallocSize> &other)
 
     Assigns \a other to this array and returns a reference
     to this array.
@@ -332,12 +315,6 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::append(const QArray<T, PreallocSize> &other)
-
-    Appends the elements of \a other to this array.
-*/
-
-/*!
-    \fn void QArray::append(const QArrayRef<T, PreallocSize> &other)
 
     Appends the elements of \a other to this array.
 */
@@ -585,35 +562,35 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArrayRef<T, PreallocSize> QArray::mid(int index, int length) const
+    \fn QArray<T, PreallocSize> QArray::mid(int index, int length) const
 
-    Returns a QArrayRef that refers to the \a length elements of
+    Returns an array containing the \a length elements of
     this array, starting at \a index.  If \a length is less
     than zero, or extends further than the end of the array, then all
     elements extending from \a index to the end of the array will be
-    included in the returned reference.
+    included in the return value.
 
     \sa left(), right()
 */
 
 /*!
-    \fn QArrayRef<T, PreallocSize> QArray::left(int length) const;
+    \fn QArray<T, PreallocSize> QArray::left(int length) const;
 
-    Returns a QArrayRef that refers to the first \a length
+    Returns an array containing the first \a length
     elements of this array.  If \a length is less than zero,
     or greater than size(), then all elements in this array will
-    be included in the returned reference.
+    be included in the return value.
 
     \sa mid(), right()
 */
 
 /*!
-    \fn QArrayRef<T, PreallocSize> QArray::right(int length) const;
+    \fn QArray<T, PreallocSize> QArray::right(int length) const;
 
-    Returns a QArrayRef that refers to the last \a length
+    Returns an array containing the last \a length
     elements of this array.  If \a length is less than zero,
     or greater than size(), then all elements in this array
-    will be included in the returned reference.
+    will be included in the return value.
 
     \sa mid(), left()
 */
@@ -757,16 +734,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArray<T, PreallocSize> &QArray::operator+=(const QArrayRef<T, PreallocSize> &other)
-    \overload
-
-    Appends the elements of the \a other array to this array
-    and returns a reference to this array.
-
-    \sa operator<<(), append()
-*/
-
-/*!
     \fn QArray<T, PreallocSize> &QArray::operator<<(const T &value)
 
     \overload
@@ -779,16 +746,6 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn QArray<T, PreallocSize> &QArray::operator<<(const QArray<T, PreallocSize> &other)
-
-    Appends the elements of the \a other array to this array
-    and returns a reference to this array.
-
-    \sa operator+=(), append()
-*/
-
-/*!
-    \fn QArray<T, PreallocSize> &QArray::operator<<(const QArrayRef<T, PreallocSize> &other)
-    \overload
 
     Appends the elements of the \a other array to this array
     and returns a reference to this array.
@@ -1041,339 +998,6 @@ QT_BEGIN_NAMESPACE
 */
 
 #endif
-
-/*!
-    \class QArrayRef
-    \brief The QArrayRef class is a template class for referring to a subset of a QArray.
-    \since 4.7
-    \ingroup qt3d
-    \ingroup qt3d::enablers
-
-    \sa QArray
-*/
-
-/*!
-    \fn QArrayRef::QArrayRef()
-
-    Constructs a null array reference.
-
-    \sa isNull()
-*/
-
-/*!
-    \fn QArrayRef::QArrayRef(QArray<T, PreallocSize> *array)
-
-    Constructs a referenct to all of the elements of \a array.
-
-    If \a array is destroyed before this reference, then this
-    reference will be pointing at invalid memory.  If the size
-    of \a array is decreased by QArray::resize(), then
-    elements beyond that point that are within the range
-    of this reference will become undefined.
-*/
-
-/*!
-    \fn QArrayRef::QArrayRef(QArray<T, PreallocSize> *array, int offset, int size)
-
-    Constructs a reference to the \a size elements starting at
-    \a offset in \a array.
-
-    If \a size is less than zero or \a offset + \a size is
-    greater than the size of \a array, then \a size will be
-    adjusted to extend no further than the end of \a array.
-
-    The \a offset must be between 0 and the size of \a array.
-
-    If \a array is destroyed before this reference, then this
-    reference will be pointing at invalid memory.  If the size
-    of \a array is decreased by QArray::resize(), then
-    elements beyond that point that are within the range
-    of this reference will become undefined.
-*/
-
-/*!
-    \fn bool QArrayRef::isNull() const
-
-    Returns true if array() is null; false otherwise.
-
-    \sa array()
-*/
-
-/*!
-    \fn int QArrayRef::size() const
-
-    Returns the number of elements in this reference.
-
-    If array() has been resized since the reference was
-    constructed, it is possible for size() to refer to beyond
-    the end of array().  The extra elements of such a
-    reference are undefined.
-
-    \sa isEmpty(), offset()
-*/
-
-/*!
-    \fn int QArrayRef::count() const
-
-    Same as size(), provided for convenience.
-*/
-
-/*!
-    \fn bool QArrayRef::isEmpty() const
-
-    Returns true if this reference has a size() of zero;
-    false otherwise.
-
-    \sa size()
-*/
-
-/*!
-    \fn const T &QArrayRef::at(int index) const
-
-    Returns the item at position \a index in the array.
-
-    \a index must be a valid index position in the reference
-    (i.e., 0 <= \a index < size()).  If array() has been
-    resized since the reference was constructed, then
-    \a index + offset() must be a valid index position in
-    array().
-
-    \sa operator[](), constData()
-*/
-
-/*!
-    \fn const T &QArrayRef::operator[](int index) const
-
-    Returns the item at position \a index in the array.
-
-    \a index must be a valid index position in the reference
-    (i.e., 0 <= \a index < size()).  If array() has been
-    resized since the reference was constructed, then
-    \a index + offset() must be a valid index position in
-    array().
-
-    \sa at(), constData()
-*/
-
-/*!
-    \fn T &QArrayRef::operator[](int index)
-
-    Returns the item at position \a index in the array.
-
-    \a index must be a valid index position in the reference
-    (i.e., 0 <= \a index < size()).  If array() has been
-    resized since the reference was constructed, then
-    \a index + offset() must be a valid index position in
-    array().
-
-    Note that using non-const operators can cause array()
-    to do a deep copy.
-
-    \sa at(), data()
-*/
-
-/*!
-    \fn T *QArrayRef::data()
-
-    Returns a pointer to the data stored at offset() in array().
-    The pointer can be used to access and modify the items in the
-    array.
-
-    The pointer remains valid as long as the array isn't
-    reallocated.
-
-    This function is mostly useful to pass an array to a function
-    that accepts a plain C++ array.  It may make a deep copy of the
-    array's elements if the array is implicitly shared.
-
-    \sa constData(), operator[]()
-*/
-
-/*!
-    \fn const T *QArrayRef::data() const
-
-    \overload
-*/
-
-/*!
-    \fn const T *QArrayRef::constData() const;
-
-    Returns a const pointer to the data stored at offset()
-    in array().  The pointer can be used to access the
-    items in the array.  The pointer remains valid as
-    long as the array isn't reallocated.
-
-    This function is mostly useful to pass an array to a function
-    that accepts a plain C++ array.
-
-    \sa data(), operator[]()
-*/
-
-/*!
-    \fn QArray<T, PreallocSize> *QArrayRef::array() const
-
-    Returns the QArray that this reference was constructed from.
-
-    \sa offset(), size()
-*/
-
-/*!
-    \fn int QArrayRef::offset() const
-
-    Returns the offset into array() where the data referred
-    to by this reference is located.
-
-    If array() has been resized since the reference was
-    constructed, it is possible for offset() to refer to beyond
-    the end of array().  The elements of such a reference
-    are undefined.
-
-    \sa array(), size()
-*/
-
-/*!
-    \fn QArray<T, PreallocSize> QArrayRef::toArray() const
-
-    Returns the elements of this reference as a new QArray.
-*/
-
-/*!
-    \fn bool QArrayRef::operator==(const QArrayRef<T, PreallocSize> &other) const
-
-    Returns true if \a other has the same size and elements
-    as this reference; false otherwise.
-
-    \sa operator!=()
-*/
-
-/*!
-    \fn bool QArrayRef::operator!=(const QArrayRef<T, PreallocSize> &other) const
-
-    Returns true if \a other does not have the same size or elements
-    as this reference; false otherwise.
-
-    \sa operator==()
-*/
-
-/*!
-    \typedef QArrayRef::iterator
-
-    The QArrayRef::iterator typedef provides an STL-style non-const
-    iterator for QArrayRef.  The iterator is simply a typedef
-    for "T *" (pointer to T).
-
-    \sa QArrayRef::begin(), QArrayRef::const_iterator
-*/
-
-/*!
-    \typedef QArrayRef::const_iterator
-
-    The QArrayRef::iterator typedef provides an STL-style const
-    iterator for QArrayRef.  The iterator is simply a typedef
-    for "const T *" (pointer to const T).
-
-    \sa QArrayRef::constBegin(), QArrayRef::iterator
-*/
-
-/*!
-    \typedef QArrayRef::Iterator
-
-    Qt-style synonym for QArrayRef::iterator.
-*/
-
-/*!
-    \typedef QArrayRef::ConstIterator
-
-    Qt-style synonym for QArrayRef::const_iterator.
-*/
-
-/*!
-    \typedef QArrayRef::const_pointer
-
-    Typedef for const T *. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::const_reference
-
-    Typedef for T &. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::difference_type
-
-    Typedef for ptrdiff_t. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::pointer
-
-    Typedef for T *. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::reference
-
-    Typedef for T &. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::size_type
-
-    Typedef for int. Provided for STL compatibility.
-*/
-
-/*!
-    \typedef QArrayRef::value_type
-
-    Typedef for T. Provided for STL compatibility.
-*/
-
-/*!
-    \fn QArrayRef::iterator QArrayRef::begin()
-
-    Returns an STL-style iterator pointing to the first item
-    in the array reference.
-
-    \sa end(), constBegin(), QArrayRef::iterator
-*/
-
-/*!
-    \fn QArrayRef::const_iterator QArrayRef::begin() const
-    \overload
-*/
-
-/*!
-    \fn QArrayRef::const_iterator QArrayRef::constBegin() const
-
-    Returns a const STL-style iterator pointing to the first item
-    in the array reference.
-
-    \sa constEnd(), begin(), QArrayRef::const_iterator
-*/
-
-/*!
-    \fn QArrayRef::iterator QArrayRef::end()
-
-    Returns an STL-style iterator pointing to the imaginary item
-    after the last item in the array reference.
-
-    \sa begin(), constEnd(), QArrayRef::iterator
-*/
-
-/*!
-    \fn QArrayRef::const_iterator QArrayRef::end() const
-    \overload
-*/
-
-/*!
-    \fn QArrayRef::const_iterator QArrayRef::constEnd() const
-
-    Returns a const STL-style iterator pointing to the imaginary item
-    after the last item in the array reference.
-
-    \sa constBegin(), end(), QArrayRef::const_iterator
-*/
 
 int qArrayAllocMore(int alloc, int extra, int sizeOfT)
 {
