@@ -63,7 +63,6 @@ public:
     QBox3D();
     QBox3D(const QVector3D& corner1, const QVector3D& corner2);
     explicit QBox3D(const QArray<QVector3D>& points);
-    explicit QBox3D(const QArrayRef<QVector3D>& points);
 
     bool isNull() const;
     bool isFinite() const;
@@ -94,12 +93,10 @@ public:
     void unite(const QVector3D& point);
     void unite(const QBox3D& box);
     void unite(const QArray<QVector3D>& points);
-    void unite(const QArrayRef<QVector3D>& points);
 
     QBox3D united(const QVector3D& point) const;
     QBox3D united(const QBox3D& box) const;
     QBox3D united(const QArray<QVector3D>& points) const;
-    QBox3D united(const QArrayRef<QVector3D>& points) const;
 
     void translate(const QVector3D& vector);
     QBox3D translated(const QVector3D& vector) const;
@@ -154,12 +151,6 @@ inline QBox3D::QBox3D(const QVector3D& corner1, const QVector3D& corner2)
                 qMax(corner1.z(), corner2.z())) {}
 
 inline QBox3D::QBox3D(const QArray<QVector3D>& points)
-    : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
-{
-    unite(points.constData(), points.size());
-}
-
-inline QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
     : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
 {
     unite(points.constData(), points.size());
@@ -255,19 +246,7 @@ inline void QBox3D::unite(const QArray<QVector3D>& points)
     unite(points.constData(), points.size());
 }
 
-inline void QBox3D::unite(const QArrayRef<QVector3D>& points)
-{
-    unite(points.constData(), points.size());
-}
-
 inline QBox3D QBox3D::united(const QArray<QVector3D>& points) const
-{
-    QBox3D box(*this);
-    box.unite(points.constData(), points.size());
-    return box;
-}
-
-inline QBox3D QBox3D::united(const QArrayRef<QVector3D>& points) const
 {
     QBox3D box(*this);
     box.unite(points.constData(), points.size());

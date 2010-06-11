@@ -8,7 +8,6 @@ HEADERS += \
     qgllightmodel.h \
     qgllightparameters.h \
     qglmaterial.h \
-    qglmatrixstack.h \
     qglnamespace.h \
     qglpainter.h
 
@@ -18,7 +17,6 @@ SOURCES += \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
     qglmaterial.cpp \
-    qglmatrixstack.cpp \
     qglnamespace.cpp \
     qglpainter.cpp \
     qglpickcolors.cpp

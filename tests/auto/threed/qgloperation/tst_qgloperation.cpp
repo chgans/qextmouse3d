@@ -140,10 +140,10 @@ void tst_QGLOperation::itemAdds()
         op.addColor(Qt::green);
         op.addColor(Qt::blue);
         op.addColor(Qt::yellow);
-        QCOMPARE(p->color(0), QColor4B(Qt::red));
-        QCOMPARE(p->color(1), QColor4B(Qt::green));
-        QCOMPARE(p->color(2), QColor4B(Qt::blue));
-        QCOMPARE(p->color(3), QColor4B(Qt::yellow));
+        QCOMPARE(p->color(0), QColor4ub(Qt::red));
+        QCOMPARE(p->color(1), QColor4ub(Qt::green));
+        QCOMPARE(p->color(2), QColor4ub(Qt::blue));
+        QCOMPARE(p->color(3), QColor4ub(Qt::yellow));
         QCOMPARE(p->fields(),
                  QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Color));
         QCOMPARE(p->count(QGL::Position), 4);

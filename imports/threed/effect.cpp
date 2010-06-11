@@ -50,7 +50,7 @@
     \class Effect
     \brief The Effect class defines simple effects within the QML/3d environment.  Examples 
     of such effects include textures, simple material and lighting effects, and so on.
-    \since 4.6.?
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 
@@ -75,10 +75,6 @@
 */
 
 QT_BEGIN_NAMESPACE
-
-//QML_DEFINE_TYPE(Qt,4,6,Effect,Effect)
-//QML_DEFINE_TYPE(Qt,4,6,Material,QGLMaterial)
-//QML_DEFINE_TYPE(Qt,4,6,Fog,QGLFogParameters)
 
 class EffectPrivate
 {

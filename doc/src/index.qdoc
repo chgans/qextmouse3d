@@ -45,7 +45,7 @@
     \keyword Qt/3D Reference Documentation
 
     Qt/3D is a set of extension classes for the Qt OpenGL module to
-    enhance the use of OpenGL in Qt 4.6 and higher.  There are a number
+    enhance the use of OpenGL in Qt 4.7 and higher.  There are a number
     of aspects to the library:
 
     \list

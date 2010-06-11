@@ -48,8 +48,6 @@
 class QGLColladaFxEffect;
 
 Q_DECLARE_METATYPE(QGLShaderProgramEffect*)
-// for 4.6
-Q_DECLARE_METATYPE(QVariant)
 
 static void cleanupEffectList(QList<QGLColladaFxEffect*> &effects)
 {

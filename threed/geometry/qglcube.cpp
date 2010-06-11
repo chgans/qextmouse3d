@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLCube
     \brief The QGLCube class represents the geometry of simple six-sided cube in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -104,7 +104,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLCubeFace
     \brief The QGLCubeFace class represents the geometry of one face of a simple six-sided cube in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -361,10 +361,11 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
     QGLOperation op(&list, QGL::QUAD);
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
-            reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
+            reinterpret_cast<const QVector3D *>
+                (vertexData + face.face() * 4 * 3), 4);
     vrts.scale(face.size());
 
-    op << vrts.mid(face.face() * 4, 4);
+    op << vrts;
 
     op << face.textureCoords();
 

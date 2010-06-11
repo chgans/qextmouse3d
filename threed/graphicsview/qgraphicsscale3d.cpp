@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGraphicsScale3D
     \brief The QGraphicsScale3D class supports scaling of items in 3D.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
     \ingroup qt3d::qml3d

@@ -39,55 +39,39 @@
 **
 ****************************************************************************/
 
-#include "cube.h"
-#include "qgldisplaylist.h"
-#include "qglcube.h"
+#ifndef QMATRIX4X4STACK_P_H
+#define QMATRIX4X4STACK_P_H
+
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include <QtGui/qmatrix4x4.h>
+#include <QtCore/qstack.h>
+
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class CubePrivate
+class QMatrix4x4StackPrivate
 {
 public:
-    CubePrivate() : size(1.0f) {}
-    ~CubePrivate() { delete cube; }
+    QMatrix4x4StackPrivate() : isDirty(true) {}
 
-    qreal size;
-    QGLDisplayList *cube;
+    QMatrix4x4 matrix;
+    QStack<QMatrix4x4> stack;
+    bool isDirty;
 };
 
-Cube::Cube(QObject *parent)
-    : Item3d(parent)
-{
-    d = new CubePrivate();
-}
-
-Cube::~Cube()
-{
-    delete d;
-}
-
-qreal Cube::size() const
-{
-    return d->size;
-}
-
-void Cube::setSize(qreal value)
-{
-    d->size = value;
-    //        delete d->cube;
-    d->cube = 0;
-    emit sizeChanged();
-    update();
-}
-
-void Cube::drawItem(QGLPainter *painter)
-{
-    if (!d->cube) {
-        d->cube = new QGLDisplayList();
-        d->cube->newSection(QGL::Faceted);
-        (*d->cube) << QGLCube(d->size);
-    }
-    d->cube->draw(painter);
-}
-
 QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

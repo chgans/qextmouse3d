@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QCOLOR4B_H
-#define QCOLOR4B_H
+#ifndef QCOLOR4UB_H
+#define QCOLOR4UB_H
 
 #include "qt3dglobal.h"
 #include <QtGui/qcolor.h>
@@ -52,17 +52,17 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QColor4B
+class Q_QT3D_EXPORT QColor4ub
 {
 public:
-    QColor4B();
-    QColor4B(int red, int green, int blue, int alpha = 255);
-    QColor4B(const QColor& color);
-    QColor4B(Qt::GlobalColor color);
-    QColor4B(QRgb rgba);
+    QColor4ub();
+    QColor4ub(int red, int green, int blue, int alpha = 255);
+    QColor4ub(const QColor& color);
+    QColor4ub(Qt::GlobalColor color);
+    QColor4ub(QRgb rgba);
 
-    QColor4B& operator=(const QColor& color);
-    QColor4B& operator=(Qt::GlobalColor color);
+    QColor4ub& operator=(const QColor& color);
+    QColor4ub& operator=(Qt::GlobalColor color);
 
     int red() const { return m_red; }
     int green() const { return m_green; }
@@ -87,18 +87,18 @@ public:
     void setRgb(int red, int green, int blue, int alpha = 255);
     void setRgbF(qreal red, qreal green, qreal blue, qreal alpha = 1.0f);
 
-    static QColor4B fromRgb(int red, int green, int blue, int alpha = 255);
-    static QColor4B fromRgbF
+    static QColor4ub fromRgb(int red, int green, int blue, int alpha = 255);
+    static QColor4ub fromRgbF
         (qreal red, qreal green, qreal blue, qreal alpha = 1.0f);
-    static QColor4B fromRaw(const uchar *data);
+    static QColor4ub fromRaw(const uchar *data);
 
     QColor toColor() const;
 
-    bool operator==(const QColor4B& other) const;
-    bool operator!=(const QColor4B& other) const;
+    bool operator==(const QColor4ub& other) const;
+    bool operator!=(const QColor4ub& other) const;
 
 private:
-    QColor4B(const uchar *data);
+    QColor4ub(const uchar *data);
 
     uchar m_red;
     uchar m_green;
@@ -106,17 +106,17 @@ private:
     uchar m_alpha;
 };
 
-inline QColor4B::QColor4B() : m_red(0), m_green(0), m_blue(0), m_alpha(255) {}
+inline QColor4ub::QColor4ub() : m_red(0), m_green(0), m_blue(0), m_alpha(255) {}
 
-inline QColor4B::QColor4B(int red, int green, int blue, int alpha)
+inline QColor4ub::QColor4ub(int red, int green, int blue, int alpha)
     : m_red(uchar(red)), m_green(uchar(green)),
       m_blue(uchar(blue)), m_alpha(uchar(alpha)) {}
 
-inline QColor4B::QColor4B(const QColor& color)
+inline QColor4ub::QColor4ub(const QColor& color)
     : m_red(uchar(color.red())), m_green(uchar(color.green())),
       m_blue(uchar(color.blue())), m_alpha(uchar(color.alpha())) {}
 
-inline QColor4B::QColor4B(Qt::GlobalColor color)
+inline QColor4ub::QColor4ub(Qt::GlobalColor color)
 {
     QColor c(color);
     m_red = uchar(c.red());
@@ -125,14 +125,14 @@ inline QColor4B::QColor4B(Qt::GlobalColor color)
     m_alpha = uchar(c.alpha());
 }
 
-inline QColor4B::QColor4B(QRgb rgba)
+inline QColor4ub::QColor4ub(QRgb rgba)
     : m_red(uchar(qRed(rgba))), m_green(uchar(qGreen(rgba))),
       m_blue(uchar(qBlue(rgba))), m_alpha(uchar(qAlpha(rgba))) {}
 
-inline QColor4B::QColor4B(const uchar *data)
+inline QColor4ub::QColor4ub(const uchar *data)
     : m_red(data[0]), m_green(data[1]), m_blue(data[2]), m_alpha(data[3]) {}
 
-inline QColor4B& QColor4B::operator=(const QColor& color)
+inline QColor4ub& QColor4ub::operator=(const QColor& color)
 {
     m_red = uchar(color.red());
     m_green = uchar(color.green());
@@ -141,7 +141,7 @@ inline QColor4B& QColor4B::operator=(const QColor& color)
     return *this;
 }
 
-inline QColor4B& QColor4B::operator=(Qt::GlobalColor color)
+inline QColor4ub& QColor4ub::operator=(Qt::GlobalColor color)
 {
     QColor c(color);
     m_red = uchar(c.red());
@@ -151,7 +151,7 @@ inline QColor4B& QColor4B::operator=(Qt::GlobalColor color)
     return *this;
 }
 
-inline void QColor4B::setRgb(int red, int green, int blue, int alpha)
+inline void QColor4ub::setRgb(int red, int green, int blue, int alpha)
 {
     m_red = uchar(red);
     m_green = uchar(green);
@@ -159,7 +159,7 @@ inline void QColor4B::setRgb(int red, int green, int blue, int alpha)
     m_alpha = uchar(alpha);
 }
 
-inline void QColor4B::setRgbF(qreal red, qreal green, qreal blue, qreal alpha)
+inline void QColor4ub::setRgbF(qreal red, qreal green, qreal blue, qreal alpha)
 {
     m_red = uchar(qRound(red * 255.0f));
     m_green = uchar(qRound(green * 255.0f));
@@ -167,49 +167,49 @@ inline void QColor4B::setRgbF(qreal red, qreal green, qreal blue, qreal alpha)
     m_alpha = uchar(qRound(alpha * 255.0f));
 }
 
-inline QColor4B QColor4B::fromRgb(int red, int green, int blue, int alpha)
+inline QColor4ub QColor4ub::fromRgb(int red, int green, int blue, int alpha)
 {
-    return QColor4B(red, green, blue, alpha);
+    return QColor4ub(red, green, blue, alpha);
 }
 
-inline QColor4B QColor4B::fromRgbF
+inline QColor4ub QColor4ub::fromRgbF
     (qreal red, qreal green, qreal blue, qreal alpha)
 {
-    return QColor4B(qRound(red * 255.0f), qRound(green * 255.0f),
+    return QColor4ub(qRound(red * 255.0f), qRound(green * 255.0f),
                     qRound(blue * 255.0f), qRound(alpha * 255.0f));
 }
 
-inline QColor4B QColor4B::fromRaw(const uchar *data)
+inline QColor4ub QColor4ub::fromRaw(const uchar *data)
 {
-    return QColor4B(data);
+    return QColor4ub(data);
 }
 
-inline QColor QColor4B::toColor() const
+inline QColor QColor4ub::toColor() const
 {
     return QColor(m_red, m_green, m_blue, m_alpha);
 }
 
-inline bool QColor4B::operator==(const QColor4B& other) const
+inline bool QColor4ub::operator==(const QColor4ub& other) const
 {
     return m_red == other.m_red && m_green == other.m_green &&
            m_blue == other.m_blue && m_alpha == other.m_alpha;
 }
 
-inline bool QColor4B::operator!=(const QColor4B& other) const
+inline bool QColor4ub::operator!=(const QColor4ub& other) const
 {
     return m_red != other.m_red || m_green != other.m_green ||
            m_blue != other.m_blue || m_alpha != other.m_alpha;
 }
 
 #ifndef QT_NO_DEBUG_STREAM
-Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QColor4B &color);
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QColor4ub &color);
 #endif
 
-Q_DECLARE_TYPEINFO(QColor4B, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(QColor4ub, Q_MOVABLE_TYPE);
 
 QT_END_NAMESPACE
 
-Q_DECLARE_METATYPE(QColor4B)
+Q_DECLARE_METATYPE(QColor4ub)
 
 QT_END_HEADER
 

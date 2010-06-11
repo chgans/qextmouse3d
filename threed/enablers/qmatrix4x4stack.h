@@ -39,10 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QGLMATRIXSTACK_H
-#define QGLMATRIXSTACK_H
+#ifndef QMATRIX4X4STACK_H
+#define QMATRIX4X4STACK_H
 
-#include "qglnamespace.h"
+#include "qt3dglobal.h"
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qscopedpointer.h>
 
@@ -52,22 +52,13 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLMatrixStackPrivate;
+class QMatrix4x4StackPrivate;
 
-class Q_QT3D_EXPORT QGLMatrixStack
+class Q_QT3D_EXPORT QMatrix4x4Stack
 {
 public:
-    QGLMatrixStack();
-    ~QGLMatrixStack();
-
-    enum Type
-    {
-        ProjectionMatrix,
-        ModelViewMatrix,
-        UserMatrix
-    };
-
-    QGLMatrixStack::Type type() const;
+    QMatrix4x4Stack();
+    ~QMatrix4x4Stack();
 
     const QMatrix4x4 &top() const;
 
@@ -75,8 +66,6 @@ public:
     void pop();
 
     void setToIdentity();
-
-    void ortho(const QRect& rect, qreal nearPlane = -1.0f, qreal farPlane = 1.0f);
 
     void translate(qreal x, qreal y, qreal z);
     void translate(const QVector3D& vector);
@@ -87,30 +76,24 @@ public:
     void rotate(qreal angle, const QVector3D& vector);
     void rotate(const QQuaternion &quaternion);
 
-    QGLMatrixStack& operator=(const QMatrix4x4& matrix);
-    QGLMatrixStack& operator*=(const QMatrix4x4& matrix);
+    QMatrix4x4Stack& operator=(const QMatrix4x4& matrix);
+    QMatrix4x4Stack& operator*=(const QMatrix4x4& matrix);
 
     operator const QMatrix4x4 &() const;
 
-    static QMatrix4x4 readServerMatrix(QGLMatrixStack::Type type);
+    bool isDirty() const;
+    void setDirty(bool dirty);
 
 private:
-    Q_DISABLE_COPY(QGLMatrixStack)
-    Q_DECLARE_PRIVATE(QGLMatrixStack)
+    Q_DISABLE_COPY(QMatrix4x4Stack)
+    Q_DECLARE_PRIVATE(QMatrix4x4Stack)
 
-    QGLMatrixStack(QGLMatrixStack::Type type);
+    QScopedPointer<QMatrix4x4StackPrivate> d_ptr;
 
-    QScopedPointer<QGLMatrixStackPrivate> d_ptr;
-
-    friend class QGLPainterPrivate;
     friend class QGLPainter;
-
-    void markDirty();
-    bool needsUpdate();
-    void updateServer();
 };
 
-inline QGLMatrixStack::operator const QMatrix4x4 &() const
+inline QMatrix4x4Stack::operator const QMatrix4x4 &() const
 {
     return top();
 }

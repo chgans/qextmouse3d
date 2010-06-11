@@ -61,7 +61,7 @@ public:
     QGLAttributeValue(const QArray<QVector2D>& array);
     QGLAttributeValue(const QArray<QVector3D>& array);
     QGLAttributeValue(const QArray<QVector4D>& array);
-    QGLAttributeValue(const QArray<QColor4B>& array);
+    QGLAttributeValue(const QArray<QColor4ub>& array);
     QGLAttributeValue(const QCustomDataArray& array);
     QGLAttributeValue(int tupleSize, GLenum type, int stride, const void *data, int count = 0);
     QGLAttributeValue(int tupleSize, GLenum type, int stride, int offset, int count = 0);
@@ -117,7 +117,7 @@ inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
 {
 }
 
-inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4B>& array)
+inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4ub>& array)
     : m_description(QGL::Position, 4, GL_UNSIGNED_BYTE, 0), m_data(array.constData()), m_count(array.count())
 {
 }

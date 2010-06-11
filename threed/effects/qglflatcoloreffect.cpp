@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLFlatColorEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLFlatColorEffect class provides a standard effect that draws fragments with a flat unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLPerVertexColorEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLPerVertexColorEffect class provides a standard effect that draws fragments with a per-vertex unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting

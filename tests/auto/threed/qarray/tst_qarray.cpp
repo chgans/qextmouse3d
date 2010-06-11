@@ -81,7 +81,6 @@ private slots:
     void mid();
     void left();
     void right();
-    void arrayRef();
     void iterate();
     void copyPrealloc();
     void insert();
@@ -89,7 +88,6 @@ private slots:
     void fromWritableRawData();
     void search();
     void fill();
-    void unsharedArray();
     void zeroPrealloc();
     void exceptions();
     void dataStream();
@@ -1226,69 +1224,37 @@ void tst_QArray::mid()
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    // Check the null case.
-    QArrayRef<float> mid;
-    QCOMPARE(mid.size(), 0);
-    QCOMPARE(mid.count(), 0);
-    QCOMPARE(mid.offset(), 0);
-    QVERIFY(mid.isEmpty());
-    QVERIFY(mid.isNull());
-    QVERIFY(mid.data() == 0);
-    QVERIFY(mid.constData() == 0);
-
-    QArray<float> midarray = mid.toArray();
-    QVERIFY(midarray.isEmpty());
-
-    mid = array.mid(0);
-    QCOMPARE(mid.offset(), 0);
+    QArray<float> mid = array.mid(0);
     QCOMPARE(mid.size(), array.size());
     QVERIFY(!mid.isEmpty());
-    QVERIFY(!mid.isNull());
-    QVERIFY(mid.data() == array.data());
     QVERIFY(mid.constData() == array.constData());
-    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 1024; ++index) {
         QCOMPARE(mid.at(index), float(index));
         QCOMPARE(mid[index], float(index));
     }
 
-    midarray = mid.toArray();
-    QCOMPARE(midarray.size(), mid.size());
-    for (int index = 0; index < mid.size(); ++index)
-        QCOMPARE(midarray[index], mid[index]);
-
     mid = array.mid(500, 20);
-    QCOMPARE(mid.offset(), 500);
     QCOMPARE(mid.size(), 20);
     QVERIFY(!mid.isEmpty());
-    QVERIFY(!mid.isNull());
-    QVERIFY(mid.data() == (array.data() + 500));
-    QVERIFY(mid.constData() == (array.constData() + 500));
-    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 20; ++index) {
         QCOMPARE(mid.at(index), float(index + 500));
         QCOMPARE(mid[index], float(index + 500));
     }
 
-    mid[10] = 0.0f;
-    QCOMPARE(array.at(510), float(0.0f));
-    mid[10] = 510.0f;
-    QCOMPARE(array.at(510), float(510.0f));
-
-    QArrayRef<float> mid2(&array, 500, 20);
+    QArray<float> mid2 = array.mid(500, 20);
     QVERIFY(mid == mid2);
     QVERIFY(!(mid != mid2));
 
-    QArrayRef<float> mid3(&array, 500, 21);
+    QArray<float> mid3 = array.mid(500, 21);
     QVERIFY(mid != mid3);
     QVERIFY(!(mid == mid3));
 
-    QArrayRef<float> mid4(&array, 400, 20);
+    QArray<float> mid4 = array.mid(400, 20);
     QVERIFY(mid != mid4);
     QVERIFY(!(mid == mid4));
 
-    QArrayRef<float> mid5;
-    QArrayRef<float> mid6;
+    QArray<float> mid5;
+    QArray<float> mid6;
     QVERIFY(mid != mid5);
     QVERIFY(!(mid == mid5));
     QVERIFY(mid5 != mid);
@@ -1296,70 +1262,17 @@ void tst_QArray::mid()
     QVERIFY(mid5 == mid6);
     QVERIFY(!(mid5 != mid6));
 
-    midarray = mid.toArray();
-    QCOMPARE(midarray.size(), mid.size());
-    for (int index = 0; index < mid.size(); ++index)
-        QCOMPARE(midarray[index], mid[index]);
-
-    QArray<float> midarray2(mid.toArray());
-    QVERIFY(midarray == midarray2);
-
     mid = array.mid(500, 0);
-    QCOMPARE(mid.offset(), 500);
     QCOMPARE(mid.size(), 0);
     QVERIFY(mid.isEmpty());
 
-    midarray = mid.toArray();
-    QVERIFY(midarray.isEmpty());
-
     mid = array.mid(1000, 30);
-    QCOMPARE(mid.offset(), 1000);
     QCOMPARE(mid.size(), 24);
     QVERIFY(!mid.isEmpty());
-    QVERIFY(!mid.isNull());
-    QVERIFY(mid.data() == (array.data() + 1000));
-    QVERIFY(mid.constData() == (array.constData() + 1000));
-    QVERIFY(mid.array() == &array);
     for (int index = 0; index < 24; ++index) {
         QCOMPARE(mid.at(index), float(index + 1000));
         QCOMPARE(mid[index], float(index + 1000));
     }
-
-    // Constructor should act like mid().
-    QArrayRef<float> mid7(&array, 1000, 30);
-    QCOMPARE(mid7.offset(), 1000);
-    QCOMPARE(mid7.size(), 24);
-    QVERIFY(!mid7.isEmpty());
-    QVERIFY(!mid7.isNull());
-    QVERIFY(mid7.data() == (array.data() + 1000));
-    QVERIFY(mid7.constData() == (array.constData() + 1000));
-    QVERIFY(mid7.array() == &array);
-    for (int index = 0; index < 24; ++index) {
-        QCOMPARE(mid7.at(index), float(index + 1000));
-        QCOMPARE(mid7[index], float(index + 1000));
-    }
-
-    QArrayRef<float> mid8(&array);
-    QCOMPARE(mid8.offset(), 0);
-    QCOMPARE(mid8.size(), array.size());
-    QVERIFY(!mid8.isEmpty());
-    QVERIFY(!mid8.isNull());
-    QVERIFY(mid8.data() == array.data());
-    QVERIFY(mid8.constData() == array.constData());
-    QVERIFY(mid8.array() == &array);
-    for (int index = 0; index < 1024; ++index) {
-        QCOMPARE(mid8.at(index), float(index));
-        QCOMPARE(mid8[index], float(index));
-    }
-
-    QArrayRef<float> mid9(0);
-    QCOMPARE(mid9.offset(), 0);
-    QCOMPARE(mid9.size(), 0);
-    QVERIFY(mid9.isEmpty());
-    QVERIFY(mid9.isNull());
-    QVERIFY(mid9.data() == 0);
-    QVERIFY(mid9.constData() == 0);
-    QVERIFY(mid9.array() == 0);
 }
 
 void tst_QArray::left()
@@ -1368,25 +1281,18 @@ void tst_QArray::left()
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    QArrayRef<float> left = array.left(-1);
-    QCOMPARE(left.offset(), 0);
-    QCOMPARE(left.size(), 1024);
-    QVERIFY(left.array() == &array);
+    QArray<float> left = array.left(-1);
+    QVERIFY(left == array);
 
     left = array.left(0);
-    QCOMPARE(left.offset(), 0);
-    QCOMPARE(left.size(), 0);
-    QVERIFY(left.array() == &array);
+    QVERIFY(left.isEmpty());
 
     left = array.left(500);
-    QCOMPARE(left.offset(), 0);
     QCOMPARE(left.size(), 500);
-    QVERIFY(left.array() == &array);
+    QVERIFY(left == array.mid(0, 500));
 
     left = array.left(2048);
-    QCOMPARE(left.offset(), 0);
-    QCOMPARE(left.size(), 1024);
-    QVERIFY(left.array() == &array);
+    QVERIFY(left == array);
 }
 
 void tst_QArray::right()
@@ -1395,72 +1301,18 @@ void tst_QArray::right()
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
 
-    QArrayRef<float> right = array.right(-1);
-    QCOMPARE(right.offset(), 0);
-    QCOMPARE(right.size(), 1024);
-    QVERIFY(right.array() == &array);
+    QArray<float> right = array.right(-1);
+    QVERIFY(right == array);
 
     right = array.right(0);
-    QCOMPARE(right.offset(), 1024);
-    QCOMPARE(right.size(), 0);
-    QVERIFY(right.array() == &array);
+    QVERIFY(right.isEmpty());
 
     right = array.right(500);
-    QCOMPARE(right.offset(), 1024 - 500);
     QCOMPARE(right.size(), 500);
-    QVERIFY(right.array() == &array);
+    QVERIFY(right == array.mid(1024 - 500, 500));
 
     right = array.right(2048);
-    QCOMPARE(right.offset(), 0);
-    QCOMPARE(right.size(), 1024);
-    QVERIFY(right.array() == &array);
-}
-
-void tst_QArray::arrayRef()
-{
-    QArray<float> array;
-    QArray<float> array3;
-    for (int index = 0; index < 1024; ++index) {
-        array.append(float(index));
-        array3.append(float(index));
-    }
-
-    QArrayRef<float> ref = array.mid(100, 50);
-    QVERIFY(ref.array() == &array);
-    QCOMPARE(ref.offset(), 100);
-    QCOMPARE(ref.size(), 50);
-
-    QArray<float> array2(ref);
-    QCOMPARE(array2.size(), 50);
-    for (int index = 0; index < array2.size(); ++index)
-        QCOMPARE(array2[index], array[index + 100]);
-
-    array2 = array.mid(50, 100);
-    QCOMPARE(array2.size(), 100);
-    for (int index = 0; index < array2.size(); ++index)
-        QCOMPARE(array2[index], array[index + 50]);
-
-    array2 += array.mid(150, 20);
-    QCOMPARE(array2.size(), 120);
-    for (int index = 0; index < array2.size(); ++index)
-        QCOMPARE(array2[index], array[index + 50]);
-
-    array2 << array3.mid(170, 30);
-    QCOMPARE(array2.size(), 150);
-    for (int index = 0; index < array2.size(); ++index)
-        QCOMPARE(array2[index], array[index + 50]);
-
-    array2 = array2.mid(10);
-    QCOMPARE(array2.size(), 140);
-    for (int index = 0; index < array2.size(); ++index)
-        QCOMPARE(array2[index], array[index + 60]);
-
-    array2.append(array2.mid(0));
-    QCOMPARE(array2.size(), 280);
-    for (int index = 0; index < 140; ++index) {
-        QCOMPARE(array2[index], array[index + 60]);
-        QCOMPARE(array2[index + 140], array[index + 60]);
-    }
+    QVERIFY(right == array);
 }
 
 void tst_QArray::iterate()
@@ -1493,24 +1345,6 @@ void tst_QArray::iterate()
 
     for (int index = 0; index < 1024; ++index)
         array[index] = float(index);
-
-    QArrayRef<float> mid = array.mid(512, 256);
-    QArrayRef<float>::Iterator it3;
-    value = 512;
-    for (it3 = mid.begin(); it3 != mid.end(); ++it3)
-        QCOMPARE(*it3, float(value++));
-    QCOMPARE(value - 512, mid.size());
-
-    QArrayRef<float>::Iterator it4;
-    value = 512;
-    for (it4 = mid.begin(); it4 != mid.end(); ++it4)
-        *it4 = float(1024 - value++);
-
-    QArrayRef<float>::ConstIterator it5;
-    value = 512;
-    for (it5 = mid.constBegin(); it5 != mid.constEnd(); ++it5)
-        QCOMPARE(*it5, float(1024 - value++));
-    QCOMPARE(value - 512, mid.size());
 }
 
 // Verify that when the data is in the preallocated section, it is
@@ -1856,42 +1690,6 @@ void tst_QArray::fill()
     QCOMPARE(array.size(), 20);
     for (int index = 0; index < 20; ++index)
         QCOMPARE(array.at(index), 3.0f);
-}
-
-void tst_QArray::unsharedArray()
-{
-    QUnsharedArray<float> array;
-    array.append(1.0f);
-    array.append(2.0f);
-
-    QArray<float> array2(array);
-    QVERIFY(array.constData() != array2.constData());
-
-    array = array2;
-    QVERIFY(array.constData() != array2.constData());
-
-    QCOMPARE(array.size(), 2);
-    QCOMPARE(array2.size(), 2);
-
-    QCOMPARE(array[0], 1.0f);
-    QCOMPARE(array[1], 2.0f);
-    array[1] = 3.0f;
-    QCOMPARE(array[0], 1.0f);
-    QCOMPARE(array[1], 3.0f);
-
-    // Raw data will be forcibly copied with QUnsharedArray.
-    float contents[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
-    array = QArray<float>::fromRawData(contents, 6);
-    QVERIFY(array.constData() != contents);
-
-    QUnsharedArray<float> array3;
-    for (int index = 0; index < 100; ++index)
-        array3.append(float(index));
-    QArray<float> array4(array3);
-    QVERIFY(array3.constData() != array4.constData());
-
-    array3.clear();
-    QVERIFY(array3.isEmpty());
 }
 
 void tst_QArray::zeroPrealloc()

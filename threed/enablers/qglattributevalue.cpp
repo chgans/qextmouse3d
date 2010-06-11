@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAttributeValue
     \brief The QGLAttributeValue class encapsulates information about an OpenGL attribute value.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -122,7 +122,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QColor4B>& array)
+    \fn QGLAttributeValue::QGLAttributeValue(const QArray<QColor4ub>& array)
 
     Constructs an attribute value that refers to the contents of \a array,
     setting tupleSize() to 4, type() to GL_UNSIGNED_BYTE, and stride() to zero.

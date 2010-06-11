@@ -42,7 +42,7 @@
 #ifndef QGEOMETRYDATA_H
 #define QGEOMETRYDATA_H
 
-#include "qcolor4b.h"
+#include "qcolor4ub.h"
 #include "qglnamespace.h"
 #include "qglindexbuffer.h"
 #include "qglvertexbuffer.h"
@@ -136,16 +136,16 @@ public:
     void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, QGL::VertexAttribute field = QGL::TextureCoord0);
     void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, const QVector2D &t3, QGL::VertexAttribute field = QGL::TextureCoord0);
 
-    void appendColor(const QColor4B &c0);
-    void appendColor(const QColor4B &c0, const QColor4B &c1);
-    void appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2);
-    void appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2, const QColor4B &c3);
+    void appendColor(const QColor4ub &c0);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2, const QColor4ub &c3);
 
     void appendVertexArray(const QVector3DArray &ary);
     void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
-    void appendColorArray(const QArray<QColor4B> &ary);
+    void appendColorArray(const QArray<QColor4ub> &ary);
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
@@ -155,9 +155,9 @@ public:
     QVector3DArray normals() const;
     const QVector3D &normal(int i) const;
 
-    QColor4B &colorRef(int i);
-    QArray<QColor4B> colors() const;
-    const QColor4B &color(int i) const;
+    QColor4ub &colorRef(int i);
+    QArray<QColor4ub> colors() const;
+    const QColor4ub &color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;

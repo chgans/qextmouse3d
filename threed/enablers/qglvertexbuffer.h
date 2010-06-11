@@ -44,7 +44,6 @@
 
 #include <QtOpenGL/qglbuffer.h>
 #include "qcustomdataarray.h"
-#include "qglnamespace.h"
 #include "qglattributevalue.h"
 #include <QtCore/qlist.h>
 
@@ -89,7 +88,7 @@ public:
     void addAttribute(QGL::VertexAttribute attribute,
                       const QArray<QVector4D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QArray<QColor4B>& value);
+                      const QArray<QColor4ub>& value);
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
 

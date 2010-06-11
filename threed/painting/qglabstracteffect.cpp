@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLAbstractEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLAbstractEffect class provides a standard interface for rendering surface material effects with GL.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -182,34 +182,10 @@ void QGLAbstractEffect::setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value)
 {
-    // This function is working around a wart in the Qt 4.6 QGLShaderProgram
-    // API that doesn't allow the vertex attribute type (GL_FLOAT, etc) to
-    // be specified via the public API.  XXX - Need to fix this in 4.7.
-#if defined(QT_OPENGL_ES_2)
-    Q_UNUSED(program);
-    glVertexAttribPointer(GLuint(location), value.tupleSize(),
-                          GLenum(value.type()), GL_FALSE,
-                          value.stride(), value.data());
-#elif QT_VERSION >= 0x040700
+#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
     program->setAttributeArray
         (location, value.type(), value.data(),
          value.tupleSize(), value.stride());
-#elif !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
-    Q_UNUSED(program);
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLPainterPrivate *extensions =
-        QGLPainterPrivateCache::instance()->fromContext(ctx);
-    if (!extensions->vertexAttribPointer) {
-        extensions->vertexAttribPointer = (q_glVertexAttribPointer)
-            ctx->getProcAddress(QLatin1String("glVertexAttribPointer"));
-        if (!extensions->vertexAttribPointer)
-            return;
-    }
-    (*extensions->vertexAttribPointer)
-        (GLuint(location), value.tupleSize(), GLenum(value.type()), GL_FALSE,
-         value.stride(), value.data());
 #else
     Q_UNUSED(program);
     Q_UNUSED(location);

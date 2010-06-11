@@ -48,7 +48,7 @@
 /*!
     \class QGeometryData
     \brief The QGeometryData class encapsulates sets of geometry data.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -130,7 +130,7 @@ public:
 
     QVector3DArray vertices;
     QVector3DArray normals;
-    QArray<QColor4B> colors;
+    QArray<QColor4ub> colors;
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
     QGL::IndexArray indices;
@@ -509,7 +509,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
                     }
                     else  // colors
                     {
-                        QArray<QColor4B> tmp;
+                        QArray<QColor4ub> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -596,7 +596,7 @@ void QGeometryData::zipWith(const QGeometryData &other)
                     }
                     else  // colors
                     {
-                        QArray<QColor4B> tmp;
+                        QArray<QColor4ub> tmp;
                         for (int i = 0; i < cnt; ++i)
                         {
                             tmp.append(d->colors.at(i));
@@ -1233,7 +1233,7 @@ void QGeometryData::appendTexCoord(const QVector2D &t0, const QVector2D &t1, con
 /*!
     Append the color \a c0 to this geometry data, as an color field.
 */
-void QGeometryData::appendColor(const QColor4B &c0)
+void QGeometryData::appendColor(const QColor4ub &c0)
 {
     detach();
     d->modified = true;
@@ -1245,7 +1245,7 @@ void QGeometryData::appendColor(const QColor4B &c0)
 /*!
     Append the color \a c0 and \a c1 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1)
+void QGeometryData::appendColor(const QColor4ub &c0, const QColor4ub &c1)
 {
     detach();
     d->modified = true;
@@ -1257,7 +1257,7 @@ void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1)
 /*!
     Append the color \a c0, \a c1 and \a c2 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2)
+void QGeometryData::appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2)
 {
     detach();
     d->modified = true;
@@ -1269,7 +1269,7 @@ void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QC
 /*!
     Append the color \a c0, \a c1, \a c2  and \a c3 to this geometry data, as color fields.
 */
-void QGeometryData::appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2, const QColor4B &c3)
+void QGeometryData::appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2, const QColor4ub &c3)
 {
     detach();
     d->modified = true;
@@ -1342,7 +1342,7 @@ void QGeometryData::appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAt
 /*!
     Append the colors in \a ary to this geometry data, as color fields.
 */
-void QGeometryData::appendColorArray(const QArray<QColor4B> &ary)
+void QGeometryData::appendColorArray(const QArray<QColor4ub> &ary)
 {
     if (ary.count())
     {
@@ -1428,7 +1428,7 @@ QVector3DArray QGeometryData::normals() const
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-QColor4B &QGeometryData::colorRef(int i)
+QColor4ub &QGeometryData::colorRef(int i)
 {
     detach();
     d->modified = true;
@@ -1438,7 +1438,7 @@ QColor4B &QGeometryData::colorRef(int i)
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-const QColor4B &QGeometryData::color(int i) const
+const QColor4ub &QGeometryData::color(int i) const
 {
     Q_ASSERT(hasField(QGL::Color));
     return d->colors.at(i);
@@ -1447,11 +1447,11 @@ const QColor4B &QGeometryData::color(int i) const
 /*!
     Returns a copy of the color data.
 */
-QArray<QColor4B> QGeometryData::colors() const
+QArray<QColor4ub> QGeometryData::colors() const
 {
     if (d)
         return d->colors;
-    return QArray<QColor4B>();
+    return QArray<QColor4ub>();
 }
 
 /*!

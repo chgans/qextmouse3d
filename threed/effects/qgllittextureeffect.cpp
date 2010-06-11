@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLLitTextureEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLLitTextureEffect class provides a standard effect base class for drawing fragments with a lit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLLitDecalTextureEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLLitDecalTextureEffect class provides a standard effect for drawing fragments with a texture decaled over a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -64,7 +64,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLLitModulateTextureEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLLitModulateTextureEffect class provides a standard effect for drawing fragments with a texture modulated with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting

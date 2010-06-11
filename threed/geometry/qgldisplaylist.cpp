@@ -59,7 +59,7 @@
 /*!
     \class QGLDisplayList
     \brief The QGLDisplayList class accumulates geometry for efficient display.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -1306,7 +1306,7 @@ void QGLDisplayList::addNormal(const QVector3D &normal)
 /*!
     Adds the \a color to the current operation.
 */
-void QGLDisplayList::addColor(const QColor4B &color)
+void QGLDisplayList::addColor(const QColor4ub &color)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)
@@ -1362,7 +1362,7 @@ void QGLDisplayList::addNormalArray(const QVector3DArray &normals)
 /*!
     Adds all the \a colors to the current operation.
 */
-void QGLDisplayList::addColorArray(const QArray<QColor4B> &colors)
+void QGLDisplayList::addColorArray(const QArray<QColor4ub> &colors)
 {
     Q_D(QGLDisplayList);
     if (d->currentOperation)

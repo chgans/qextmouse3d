@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLVertexBuffer
     \brief The QGLVertexBuffer class manages uploading of vertex attribute arrays into a GL server.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 */
@@ -108,11 +108,11 @@ void QGLVertexBufferColorAttribute::replace
 {
     Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
     Q_ASSERT(value.tupleSize() == 4);
-    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
+    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4ub));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= colorArray.size());
     colorArray.replace
-        (index, reinterpret_cast<const QColor4B *>(value.data()), count);
+        (index, reinterpret_cast<const QColor4ub *>(value.data()), count);
 }
 
 void QGLVertexBufferCustomAttribute::replace
@@ -156,7 +156,7 @@ void QGLVertexBufferCustomAttribute::replace
     case QCustomDataArray::Color: {
         Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
         Q_ASSERT(value.tupleSize() == 4);
-        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
+        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4ub));
         customArray.m_array.replace(index, value.floatData(), count);
     }
     break;
@@ -357,7 +357,7 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QArray<QColor4B>& value)
+    (QGL::VertexAttribute attribute, const QArray<QColor4ub>& value)
 {
     Q_D(QGLVertexBuffer);
     if (!d->buffer.isCreated()) {

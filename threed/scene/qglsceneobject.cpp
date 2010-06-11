@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSceneObject
     \brief The QGLSceneObject class represents a 3D object within a scene.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::scene
 
@@ -111,10 +111,10 @@ QGLSceneObject::Type QGLSceneObject::type() const
     cleanup() after the entire scene is drawn.  Effects are applied just
     before a geometry mesh is drawn, and then cleaned up afterwards.
 
-    Mesh objects will typically call QGLMatrixStack::push() to save
+    Mesh objects will typically call QMatrix4x4Stack::push() to save
     the QGLPainter::modelViewMatrix() and then adjust the modelview for
     the object's scale, orientation, and position.  In cleanup(), the
-    original modelview is restored with QGLMatrixStack::pop().
+    original modelview is restored with QMatrix4x4Stack::pop().
 
     \sa draw(), cleanup()
 */

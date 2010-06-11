@@ -50,7 +50,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLMaterialCollection
     \brief The QGLMaterialCollection class manages groups of materials.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

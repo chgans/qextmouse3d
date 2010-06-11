@@ -8,9 +8,9 @@ HEADERS += \
     qgltexturecube.h \
     qglvertexbuffer.h \
     qarray.h \
+    qcolor4ub.h \
     qcustomdataarray.h \
-    qstereoimage.h \
-    qstereopixmap.h \
+    qmatrix4x4stack.h \
     qvectorarray.h \
     qt3dglobal.h
 SOURCES += \
@@ -22,13 +22,12 @@ SOURCES += \
     qgltextureutils.cpp \
     qglvertexbuffer.cpp \
     qarray.cpp \
-    qareaallocator.cpp \
+    qcolor4ub.cpp \
+    qmatrix4x4stack.cpp \
     qcustomdataarray.cpp \
-    qstereoimage.cpp \
-    qstereopixmap.cpp \
     qvectorarray.cpp
 PRIVATE_HEADERS += \
     qgltexture2d_p.h \
     qgltextureutils_p.h \
     qglvertexbuffer_p.h \
-    qareaallocator_p.h
+    qmatrix4x4stack_p.h

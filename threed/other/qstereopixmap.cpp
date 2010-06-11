@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QStereoPixmap
     \brief The QStereoPixmap class manages stereo image pairs using a QPixmap representation.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
