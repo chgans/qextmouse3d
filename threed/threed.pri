@@ -7,6 +7,7 @@ include(math3d/math3d.pri)
 include(scene/scene.pri)
 include(graphicsview/graphicsview.pri)
 include(animation/animation.pri)
+include(other/other.pri)
 
 contains(QT_MAJOR_VERSION,4):!contains(QT_MINOR_VERSION,7):!contains(QT_MINOR_VERSION,8) {
     include(qt-compat/qt-compat.pri)
