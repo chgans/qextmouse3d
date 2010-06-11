@@ -48,6 +48,7 @@
 #include <QDir>
 #include <QTime>
 #include <QTimer>
+#include <QDebug>
 
 #ifndef Q_MAX_CONCURRENT_LOADERS
 #define Q_MAX_CONCURRENT_LOADERS 8
@@ -57,7 +58,7 @@ ImageManager::ImageManager(QObject *parent)
     : QThread(parent)
     , m_sem(0)
     , m_threadPoolSize(0)
-    , m_count(0)
+    , m_launcher(0)
 {
     m_threadPoolSize = QThread::idealThreadCount();
     if (m_threadPoolSize == -1)
@@ -88,7 +89,7 @@ void ImageManager::release()
     }
     m_sem->release();
     if (m_sem->available() == m_threadPoolSize)
-        emit done();
+        quit();
 }
 
 void ImageManager::createLoader(const QUrl &url)
@@ -99,30 +100,27 @@ void ImageManager::createLoader(const QUrl &url)
             this, SLOT(release()), Qt::QueuedConnection);
     connect(loader, SIGNAL(imageLoaded(QImage)),
             this, SIGNAL(imageReady(QImage)), Qt::QueuedConnection);
-    connect(loader, SIGNAL(imageLoaded(QImage)),
-            this, SLOT(incrementCount()), Qt::QueuedConnection);
     loader->start();
-}
-
-void ImageManager::incrementCount()
-{
-    ++m_count;
 }
 
 void ImageManager::run()
 {
-    Launcher launcher(this);
-    launcher.setUrl(m_url);
-    connect(&launcher, SIGNAL(imageUrl(QUrl)),
+    m_launcher = new Launcher(this);
+    m_launcher->setUrl(m_url);
+    connect(m_launcher, SIGNAL(imageUrl(QUrl)),
             this, SLOT(createLoader(QUrl)));
-    connect(&launcher, SIGNAL(finished()),
+    connect(m_launcher, SIGNAL(finished()),
             this, SLOT(release()));
+    connect(this, SIGNAL(done()),
+            this, SLOT(quit()), Qt::QueuedConnection);
     acquire();   // grab a thread for the launcher
-    launcher.start();
-    fprintf(stderr, "ImageManager::run - start");
+    m_launcher->start();
+    //fprintf(stderr, "ImageManager::run - start %p\n", this);
     QTime timer;
     timer.start();
     exec();
-    fprintf(stderr, "ImageManager::run - generated %d images from %s in %d ms\n",
-            m_count, qPrintable(m_url.path()), timer.elapsed());
+    fprintf(stderr, "ImageManager::run - images generated from %s in %d ms\n",
+            qPrintable(m_url.path()), timer.elapsed());
+    delete m_launcher;
+    m_launcher = 0;
 }

@@ -50,10 +50,12 @@
 #include <QDir>
 #include <QStringList>
 #include <QSet>
+#include <QDebug>
 
 Launcher::Launcher(QObject *parent)
     : QThread(parent)
     , m_manager(0)
+    , m_stop(false)
 {
     m_manager = qobject_cast<ImageManager*>(parent);
     Q_ASSERT(m_manager);
@@ -74,7 +76,7 @@ void Launcher::run()
     QStringList queue;
     queue.append(m_url.path());
     QSet<QString> loopProtect;
-    while (queue.size() > 0)
+    while (queue.size() > 0 && !m_stop)
     {
         QString path = queue.takeFirst();
         QFileInfo u(path);
@@ -113,4 +115,5 @@ void Launcher::run()
             }
         }
     }
+    qDebug() << "exiting Launcher::run";
 }

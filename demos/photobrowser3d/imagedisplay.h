@@ -63,6 +63,7 @@ private:
     QGLSceneNode *m_currentWall;
     QGLSceneNode *m_currentFrame;
     bool m_imageSetToDefault;
+    int m_count;
 };
 
 #endif // IMAGEDISPLAY_H

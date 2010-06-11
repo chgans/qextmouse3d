@@ -49,6 +49,8 @@
 #include <QTime>
 #include <QDir>
 #include <QStringList>
+#include <QPixmap>
+#include <QPainter>
 
 ImageLoader::ImageLoader(ImageManager *manager)
     : QThread(manager)
@@ -62,6 +64,48 @@ ImageLoader::~ImageLoader()
 void ImageLoader::run()
 {
     QImage im(m_url.path());
-    if (!im.isNull())
-        emit imageLoaded(im);
+    if (im.isNull())
+        return;
+    // temporary hack - image sizing is not working
+    emit imageLoaded(im);
+    return;
+    int max = qMax(im.width(), im.height());
+    QImage frm;
+    if (max <= 64)
+        frm = QImage(QSize(64, 64), QImage::Format_ARGB32);
+    else if (max <= 128)
+        frm = QImage(QSize(128, 128), QImage::Format_ARGB32);
+    else if (max <= 256)
+        frm = QImage(QSize(256, 256), QImage::Format_ARGB32);
+    else if (max <= 512)
+        frm = QImage(QSize(512, 512), QImage::Format_ARGB32);
+    else
+        frm = QImage(QSize(1024, 1024), QImage::Format_ARGB32);
+    frm.fill(qRgba(0, 0, 0, 0));
+    QPainter ptr;
+    ptr.begin(&frm);
+    ptr.setBackgroundMode(Qt::TransparentMode);
+    QRect r;
+    if (max > 1024)
+    {
+        if (max == im.width())
+        {
+            float h = float(1024) * float(im.height()) / float(im.width());
+            r.setSize(QSize(1024, h));
+        }
+        else
+        {
+            float w = float(1024) * float(im.width()) / float(im.height());
+            r.setSize(QSize(w, 1024));
+        }
+    }
+    else
+    {
+        r.setSize(im.size());
+    }
+    r.setTopLeft(QPoint(frm.width() - r.width() / 2,
+                        frm.height() - r.height() / 2));
+    ptr.drawImage(r, im);
+    ptr.end();
+    emit imageLoaded(frm);
 }

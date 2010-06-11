@@ -55,14 +55,17 @@ class Launcher : public QThread
 public:
     explicit Launcher(QObject *parent = 0);
     ~Launcher() {}
-    void run();
     void setUrl(const QUrl &url) { m_url = url; }
+    void stop() { m_stop = true; }
 signals:
     void done();
     void imageUrl(const QUrl &url);
+protected:
+    void run();
 private:
     ImageManager *m_manager;
     QUrl m_url;
+    bool m_stop;
 };
 
 

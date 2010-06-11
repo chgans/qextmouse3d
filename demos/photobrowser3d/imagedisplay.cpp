@@ -55,20 +55,26 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     , m_currentWall(0)
     , m_currentFrame(0)
     , m_imageSetToDefault(false)
+    , m_count(0)
 {
+    setObjectName("ImageDisplay");
     newSection(QGL::Faceted);
 
     // build the wall
     m_wall = currentNode();
+    m_wall->setObjectName("Wall");
     pushNode();
     m_currentWall = currentNode();
+    m_currentWall->setObjectName("wall 0");
     *this << QGLCubeFace(QGLCubeFace::Front, 2.0f);
     popNode();
 
     // build the frames
     m_frames = currentNode();
+    m_frames->setObjectName("Frames");
     pushNode();
     m_currentFrame = newNode();
+    m_currentFrame->setObjectName("frame 0");
     *this << QGLCubeFace(QGLCubeFace::Front, 1.0f);
     popNode();
 
@@ -80,7 +86,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     mat->setAmbientColor(Qt::darkGray);
     mat->setDiffuseColor(Qt::darkGray);
     m_wall->setMaterial(mat);
-    m_wall->setPosition(QVector3D(0.0f, 0.0f, -0.3f));
+    m_wall->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
 
     // paint the frames
     m_frames->setEffect(QGL::FlatReplaceTexture2D);
@@ -103,11 +109,15 @@ void ImageDisplay::addImage(const QImage &image)
     if (!m_imageSetToDefault)
     {
         s = m_currentFrame->clone(m_frames);
+        ++m_count;
+        s->setObjectName(QString("frame %1").arg(m_count));
         QVector3D p = s->position();
         p.setX(p.x() - 2.0f);
         s->setPosition(p);
         m_currentFrame = s;
+
         s = m_currentWall->clone(m_wall);
+        s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
         p.setX(p.x() - 2.0f);
         s->setPosition(p);
@@ -118,6 +128,7 @@ void ImageDisplay::addImage(const QImage &image)
     // load the image as a new material into the current frame
     QGLMaterial *mat = new QGLMaterial();
     QGLTexture2D *tex = new QGLTexture2D(mat);
+    tex->setHorizontalWrap(QGL::Clamp);
     tex->setImage(image);
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);

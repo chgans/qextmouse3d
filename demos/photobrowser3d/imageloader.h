@@ -56,12 +56,13 @@ class ImageLoader : public QThread
 public:
     explicit ImageLoader(ImageManager *manager);
     ~ImageLoader();
-    void run();
     void setUrl(const QUrl &url) { m_url = url; }
     QUrl url() const { return m_url; }
 signals:
     void imageLoaded(const QImage &image);
     void errorOccurred(const QString &error);
+protected:
+    void run();
 private:
     QUrl m_url;
 };

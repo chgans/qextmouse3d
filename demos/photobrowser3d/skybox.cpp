@@ -53,6 +53,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     : m_list(new QGLDisplayList)
     , m_view(view)
 {
+    m_list->setObjectName("SkyboxList");
     m_list->newSection(QGL::Faceted);
     m_list->setEffect(QGL::FlatReplaceTexture2D);
     m_list->setEffectEnabled(true);
@@ -70,6 +71,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     QVector2D tl(0.0f, 1.0f);
     {
         QGLPrimitive q;   // left
+        m_list->currentNode()->setObjectName("left");
         q.appendVertex(blf, blb, tlb, tlf);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
@@ -78,6 +80,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         m_list->newNode();   // top
+        m_list->currentNode()->setObjectName("top");
         QGLPrimitive q;
         q.appendVertex(trf, tlf, tlb, trb);
         q.appendTexCoord(bl, br, tr, tl);
@@ -87,6 +90,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         m_list->newNode();    // right
+        m_list->currentNode()->setObjectName("right");
         QGLPrimitive q;
         q.appendVertex(brb, brf, trf, trb);
         q.appendTexCoord(bl, br, tr, tl);
@@ -96,6 +100,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         m_list->newNode();    // bottom
+        m_list->currentNode()->setObjectName("bottom");
         QGLPrimitive q;
         q.appendVertex(brb, blb, blf, brf);
         q.appendTexCoord(bl, br, tr, tl);
@@ -105,6 +110,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         m_list->newNode();    // front
+        m_list->currentNode()->setObjectName("front");
         QGLPrimitive q;
         q.appendVertex(brf, blf, tlf, trf);
         q.appendTexCoord(bl, br, tr, tl);
@@ -114,6 +120,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         m_list->newNode();    // back
+        m_list->currentNode()->setObjectName("back");
         QGLPrimitive q;
         q.appendVertex(blb, brb, trb, tlb);
         q.appendTexCoord(bl, br, tr, tl);

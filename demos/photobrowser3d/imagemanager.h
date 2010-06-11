@@ -55,24 +55,22 @@ class ImageManager : public QThread
     Q_OBJECT
 public:
     explicit ImageManager(QObject *parent = 0);
-    void run();
     void setImageUrl(QUrl url) { m_url = url; }
     QUrl imageUrl() const { return m_url; }
 signals:
     void imageReady(const QImage &);
     void errorOccurred(const QString &);
-    void done();
 public slots:
     void acquire();
     void release();
     void createLoader(const QUrl &);
-private slots:
-    void incrementCount();
+protected:
+    void run();
 private:
     QUrl m_url;
     QSemaphore *m_sem;
     int m_threadPoolSize;
-    int m_count;
+    Launcher *m_launcher;
 };
 
 #endif // IMAGEMANAGER_H
