@@ -56,7 +56,6 @@ Q_DECLARE_TYPEINFO(QVector3D, Q_MOVABLE_TYPE);
 #endif
 
 //#define TEST_QLIST 1
-//#define TEST_UNSHAREDARRAY 1
 
 class tst_QArray : public QObject
 {
@@ -88,7 +87,6 @@ enum {
     Test_List,
     Test_VarLengthArray,
     Test_Array,
-    Test_UnsharedArray,
     Test_STLVector
 };
 
@@ -120,12 +118,6 @@ void tst_QArray::append_data()
         name = "QArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Array);
-
-#if TEST_UNSHAREDARRAY
-        name = "QUnsharedArray--";
-        name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_UnsharedArray);
-#endif
 
 #ifndef QT_NO_STL
         name = "std::vector--";
@@ -166,12 +158,6 @@ void tst_QArray::append()
         }
     } else if (type == Test_Array) {
         QArray<float> buffer;
-        QBENCHMARK {
-            for (int i = 0; i < size; ++i)
-                buffer.append(float(i));
-        }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
@@ -231,13 +217,6 @@ void tst_QArray::appendReserved()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<float> buffer;
-        buffer.reserve(size);
-        QBENCHMARK {
-            for (int i = 0; i < size; ++i)
-                buffer.append(float(i));
-        }
 #ifndef QT_NO_STL
     } else if (type == Test_STLVector) {
         std::vector<float> buffer;
@@ -290,12 +269,6 @@ void tst_QArray::appendVector3D()
             for (int i = 0; i < size; ++i)
                 buffer.append(QVector3D(i, i + 1, i + 2));
         }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<QVector3D> buffer;
-        QBENCHMARK {
-            for (int i = 0; i < size; ++i)
-                buffer.append(QVector3D(i, i + 1, i + 2));
-        }
 #ifndef QT_NO_STL
     } else if (type == Test_STLVector) {
         std::vector<QVector3D> buffer;
@@ -335,12 +308,6 @@ void tst_QArray::appendSmall_data()
         name = "QArray--";
         name += QString::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Array);
-
-#if TEST_UNSHAREDARRAY
-        name = "QUnsharedArray--";
-        name += QString::number(size);
-        QTest::newRow(name.constData()) << size << int(Test_UnsharedArray);
-#endif
 
 #ifndef QT_NO_STL
         name = "std::vector--";
@@ -407,14 +374,6 @@ void tst_QArray::appendFourAtATime()
         }
     } else if (type == Test_Array) {
         QArray<float> buffer;
-        QBENCHMARK {
-            for (int i = 0; i < size; i += 4) {
-                buffer.append(float(i), float(i + 1),
-                              float(i + 2), float(i + 3));
-            }
-        }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<float> buffer;
         QBENCHMARK {
             for (int i = 0; i < size; i += 4) {
                 buffer.append(float(i), float(i + 1),
@@ -491,15 +450,6 @@ void tst_QArray::clear()
             for (int i = 0; i < size; ++i)
                 buffer.append(float(i));
         }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<float> buffer;
-        QBENCHMARK {
-            for (int i = 0; i < size; ++i)
-                buffer.append(float(i));
-            buffer.resize(0);
-            for (int i = 0; i < size; ++i)
-                buffer.append(float(i));
-        }
 #ifndef QT_NO_STL
     } else if (type == Test_STLVector) {
         std::vector<float> buffer;
@@ -525,7 +475,6 @@ void tst_QArray::randomAccess_data()
 #endif
     QTest::newRow("QVarLengthArray") << int(Test_VarLengthArray);
     QTest::newRow("QArray") << int(Test_Array);
-    QTest::newRow("QUnsharedArray") << int(Test_UnsharedArray);
 #ifndef QT_NO_STL
     QTest::newRow("std::vector") << int(Test_STLVector);
 #endif
@@ -596,18 +545,6 @@ void tst_QArray::randomAccess()
             int sum = 0;
             for (int i = 0; i < 10000; ++i)
                 sum += buffer.at(i);
-            finalSum = sum;
-        }
-    } else if (type == Test_UnsharedArray) {
-        QUnsharedArray<int> buffer;
-        for (int i = 0; i < 10000; ++i)
-            buffer.append(i);
-        QBENCHMARK {
-            for (int i = 10; i < 10000; ++i)
-                buffer[i] = buffer[i - 10] + buffer[i - 4] * 2;
-            int sum = 0;
-            for (int i = 0; i < 10000; ++i)
-                sum += buffer[i];
             finalSum = sum;
         }
 #ifndef QT_NO_STL

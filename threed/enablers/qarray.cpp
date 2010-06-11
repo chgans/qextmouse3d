@@ -71,11 +71,9 @@ QT_BEGIN_NAMESPACE
     QArray is heavily optimized for copy-on-write and the case of
     constructing an array by calling append().  It has a slight
     performance penalty for random access using the non-const
-    version of operator[]().  QUnsharedArray provides an alternative
-    that has both fast append() and fast operator[](), but which
-    does not support implicit sharing.
+    version of operator[]().
 
-    \sa QArrayRef, QUnsharedArray
+    \sa QArrayRef
 */
 
 /*!
@@ -118,15 +116,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QArray::QArray(const QUnsharedArray<T, PreallocSize> &other)
-    \overload
-
-    Constructs a deep copy of \a other.
-
-    \sa operator=()
-*/
-
-/*!
     \fn QArray::QArray(const QArrayRef<T, PreallocSize> &other)
 
     Constructs a copy of \a other.
@@ -144,14 +133,6 @@ QT_BEGIN_NAMESPACE
     \fn QArray<T, PreallocSize> &QArray::operator=(const QArray<T, PreallocSize> &other)
 
     Assigns \a other to this array and returns a reference
-    to this array.
-*/
-
-/*!
-    \fn QArray<T, PreallocSize> &QArray::operator=(const QUnsharedArray<T, PreallocSize> &other)
-    \overload
-
-    Assigns a deep copy of \a other to this array and returns a reference
     to this array.
 */
 
@@ -351,13 +332,6 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \fn void QArray::append(const QArray<T, PreallocSize> &other)
-
-    Appends the elements of \a other to this array.
-*/
-
-/*!
-    \fn void QArray::append(const QUnsharedArray<T, PreallocSize> &other)
-    \overload
 
     Appends the elements of \a other to this array.
 */
@@ -1067,111 +1041,6 @@ QT_BEGIN_NAMESPACE
 */
 
 #endif
-
-/*!
-    \class QUnsharedArray
-    \brief The QUnsharedArray class is a template class for an unshared array.
-    \since 4.7
-    \ingroup qt3d
-    \ingroup qt3d::enablers
-
-    The difference between QUnsharedArray and QArray is that
-    operator[]() and data() are more efficient in QUnsharedArray
-    because they do not need to check for sharing before
-    accessing the array's contents.  This makes QUnsharedArray
-    more suitable for algorithms that require fast random
-    access to the array.
-
-    \sa QArray
-*/
-
-/*!
-    \fn QUnsharedArray::QUnsharedArray()
-
-    Constructs an empty unshared array.
-*/
-
-/*!
-    \fn QUnsharedArray::QUnsharedArray(int size, const T &value)
-
-    Constructs an unshared array of \a size elements, all initialized
-    to \a value.
-*/
-
-/*!
-    \fn QUnsharedArray::QUnsharedArray(int size)
-
-    Constructs an unshared array of \a size elements, all initialized
-    to their default-constructed values.
-*/
-
-/*!
-    \fn QUnsharedArray::QUnsharedArray(const T *values, int size)
-
-    Constructs an unshared array of \a size elements, initialized
-    from \a values.
-*/
-
-/*!
-    \fn QUnsharedArray::QUnsharedArray(const QArray<T, PreallocSize> &other)
-
-    Constructs a deep copy of \a other.
-*/
-
-/*!
-    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArray<T, PreallocSize> &other)
-
-    Assigns a deep copy of \a other to this array and returns a reference
-    to this array.
-*/
-
-/*!
-    \fn QUnsharedArray<T, PreallocSize> &QUnsharedArray::operator=(const QArrayRef<T, PreallocSize> &other)
-
-    Assigns a deep copy of \a other to this array and returns a reference
-    to this array.
-*/
-
-/*!
-    \fn T &QUnsharedArray::operator[](int index)
-
-    Returns the item at position \a index as a modifiable reference.
-
-    \a index must be a valid index position in the vector (i.e., 0 <= \a index
-    < size()).
-
-    \sa at()
-*/
-
-/*!
-    \fn const T &QUnsharedArray::operator[](int index) const
-
-    \overload
-
-    Same as at(\a index).
-*/
-
-/*!
-    \fn T *QUnsharedArray::data()
-
-    Returns a pointer to the data stored at offset() in array().
-    The pointer can be used to access and modify the items in the
-    array.
-
-    The pointer remains valid as long as the array isn't
-    reallocated.
-
-    This function is mostly useful to pass an array to a function
-    that accepts a plain C++ array.
-
-    \sa constData(), operator[]()
-*/
-
-/*!
-    \fn const T *QUnsharedArray::data() const
-
-    \overload
-*/
 
 /*!
     \class QArrayRef

@@ -60,9 +60,6 @@ QT_MODULE(Qt3d)
 template <typename T, int PreallocSize>
 class QArrayRef;
 
-template <typename T, int PreallocSize>
-class QUnsharedArray;
-
 #if defined(Q_DECL_ALIGN) && defined(Q_ALIGNOF)
 
 #if defined(Q_CC_GNU) && (__GNUC__ >= 4 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3))
@@ -170,7 +167,6 @@ public:
     QArray(int size, const T &value);
     QArray(const T *values, int size);
     QArray(const QArray<T, PreallocSize> &other);
-    QArray(const QUnsharedArray<T, PreallocSize> &other);
     QArray(const QArrayRef<T, PreallocSize> &other);
     ~QArray();
 
@@ -179,8 +175,6 @@ public:
 
     QArray<T, PreallocSize> &operator=
         (const QArray<T, PreallocSize> &other);
-    QArray<T, PreallocSize> &operator=
-        (const QUnsharedArray<T, PreallocSize> &other);
     QArray<T, PreallocSize> &operator=
         (const QArrayRef<T, PreallocSize> &other);
 
@@ -210,7 +204,6 @@ public:
     void append(const T &value1, const T &value2, const T &value3, const T &value4);
     void append(const T *values, int count);
     void append(const QArray<T, PreallocSize> &other);
-    void append(const QUnsharedArray<T, PreallocSize> &other);
     void append(const QArrayRef<T, PreallocSize> &other);
 
     void prepend(const T &value);
@@ -346,30 +339,6 @@ private:
     void assign(const QArray<T, PreallocSize> &other, bool isUnshared);
     void grow(int needed);
     void setSize(int size);
-
-    friend class QUnsharedArray<T, PreallocSize>;
-};
-
-template <typename T, int PreallocSize = 8>
-class QUnsharedArray : public QArray<T, PreallocSize>
-{
-public:
-    QUnsharedArray();
-    explicit QUnsharedArray(int size);
-    QUnsharedArray(int size, const T &value);
-    QUnsharedArray(const T *values, int size);
-    QUnsharedArray(const QArray<T, PreallocSize> &other);
-
-    QUnsharedArray<T, PreallocSize> &operator=
-        (const QArray<T, PreallocSize> &other);
-    QUnsharedArray<T, PreallocSize> &operator=
-        (const QArrayRef<T, PreallocSize> &other);
-
-    const T &operator[](int index) const;
-    T &operator[](int index);
-
-    T *data();
-    const T *data() const;
 };
 
 template <typename T, int PreallocSize = 8>
@@ -648,12 +617,6 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArray<T, PreallocSize> 
 }
 
 template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QUnsharedArray<T, PreallocSize> &other)
-{
-    assign(other, true);
-}
-
-template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE QArray<T, PreallocSize>::QArray(const QArrayRef<T, PreallocSize> &other)
 {
     int size = other.size();
@@ -691,16 +654,6 @@ Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(co
         return *this;
     release();
     assign(other, false);
-    return *this;
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QArray<T, PreallocSize> &QArray<T, PreallocSize>::operator=(const QUnsharedArray<T, PreallocSize> &other)
-{
-    if (this == &other)
-        return *this;
-    release();
-    assign(other, true);
     return *this;
 }
 
@@ -892,14 +845,6 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QArray<T, Preall
             grow(size());   // Appending to ourselves: make some room.
         append(other.constData(), other.size());
     }
-}
-
-template <typename T, int PreallocSize>
-Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::append(const QUnsharedArray<T, PreallocSize> &other)
-{
-    if (&other == this || (m_data && other.m_data == m_data))
-        grow(size());   // Appending to ourselves: make some room.
-    append(other.constData(), other.size());
 }
 
 template <typename T, int PreallocSize>
@@ -1434,86 +1379,6 @@ template <typename T, int PreallocSize>
 Q_INLINE_TEMPLATE bool QArrayRef<T, PreallocSize>::operator!=(const QArrayRef<T, PreallocSize> &other) const
 {
     return !(*this == other);
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray()
-    : QArray<T, PreallocSize>()
-{
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(int size)
-    : QArray<T, PreallocSize>(size)
-{
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(int size, const T &value)
-    : QArray<T, PreallocSize>(size, value)
-{
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(const T *values, int size)
-    : QArray<T, PreallocSize>(values, size)
-{
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize>::QUnsharedArray(const QArray<T, PreallocSize> &other)
-{
-    append(other.constData(), other.size());
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize> &QUnsharedArray<T, PreallocSize>::operator=(const QArray<T, PreallocSize> &other)
-{
-    if (this == &other)
-        return *this;
-    QArray<T, PreallocSize>::release();
-    assign(other, true);
-    return *this;
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE QUnsharedArray<T, PreallocSize> &QUnsharedArray<T, PreallocSize>::operator=(const QArrayRef<T, PreallocSize> &other)
-{
-    if (other.array() == this) {
-        *this = other.toArray();
-    } else {
-        QArray<T, PreallocSize>::clear();
-        append(other.constData(), other.size());
-    }
-    return *this;
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE T &QUnsharedArray<T, PreallocSize>::operator[](int index)
-{
-    Q_ASSERT_X(index >= 0 && index < (QArray<T, PreallocSize>::size()),
-               "QUnsharedArray<T>::operator[]", "index out of range");
-    return QArray<T, PreallocSize>::m_start[index];
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T &QUnsharedArray<T, PreallocSize>::operator[](int index) const
-{
-    Q_ASSERT_X(index >= 0 && index < (QArray<T, PreallocSize>::size()),
-               "QUnsharedArray<T>::operator[]", "index out of range");
-    return QArray<T, PreallocSize>::m_start[index];
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE T *QUnsharedArray<T, PreallocSize>::data()
-{
-    return QArray<T, PreallocSize>::m_start;
-}
-
-template <typename T, int PreallocSize>
-Q_INLINE_TEMPLATE const T *QUnsharedArray<T, PreallocSize>::data() const
-{
-    return QArray<T, PreallocSize>::m_start;
 }
 
 #ifndef QT_NO_DATASTREAM

@@ -89,7 +89,6 @@ private slots:
     void fromWritableRawData();
     void search();
     void fill();
-    void unsharedArray();
     void zeroPrealloc();
     void exceptions();
     void dataStream();
@@ -1856,42 +1855,6 @@ void tst_QArray::fill()
     QCOMPARE(array.size(), 20);
     for (int index = 0; index < 20; ++index)
         QCOMPARE(array.at(index), 3.0f);
-}
-
-void tst_QArray::unsharedArray()
-{
-    QUnsharedArray<float> array;
-    array.append(1.0f);
-    array.append(2.0f);
-
-    QArray<float> array2(array);
-    QVERIFY(array.constData() != array2.constData());
-
-    array = array2;
-    QVERIFY(array.constData() != array2.constData());
-
-    QCOMPARE(array.size(), 2);
-    QCOMPARE(array2.size(), 2);
-
-    QCOMPARE(array[0], 1.0f);
-    QCOMPARE(array[1], 2.0f);
-    array[1] = 3.0f;
-    QCOMPARE(array[0], 1.0f);
-    QCOMPARE(array[1], 3.0f);
-
-    // Raw data will be forcibly copied with QUnsharedArray.
-    float contents[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
-    array = QArray<float>::fromRawData(contents, 6);
-    QVERIFY(array.constData() != contents);
-
-    QUnsharedArray<float> array3;
-    for (int index = 0; index < 100; ++index)
-        array3.append(float(index));
-    QArray<float> array4(array3);
-    QVERIFY(array3.constData() != array4.constData());
-
-    array3.clear();
-    QVERIFY(array3.isEmpty());
 }
 
 void tst_QArray::zeroPrealloc()
