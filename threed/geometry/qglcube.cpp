@@ -361,10 +361,11 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
     QGLOperation op(&list, QGL::QUAD);
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
-            reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
+            reinterpret_cast<const QVector3D *>
+                (vertexData + face.face() * 4 * 3), 4);
     vrts.scale(face.size());
 
-    op << vrts.mid(face.face() * 4, 4);
+    op << vrts;
 
     op << face.textureCoords();
 

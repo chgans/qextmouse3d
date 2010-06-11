@@ -167,30 +167,6 @@ inline QGLOperation &operator<<(QGLOperation &op, const QArray<QColor4B> &ary)
     return op;
 }
 
-inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector3D> &ary)
-{
-    QArrayRef<QVector3D>::const_iterator it = ary.constBegin();
-    for ( ; it != ary.constEnd(); ++it)
-        op.addVertex(*it);
-    return op;
-}
-
-inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector2D> &ary)
-{
-    QArrayRef<QVector2D>::const_iterator it = ary.constBegin();
-    for ( ; it != ary.constEnd(); ++it)
-        op.addTexCoord(*it, QGL::TextureCoord0);
-    return op;
-}
-
-inline QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QColor4B> &ary)
-{
-    QArrayRef<QColor4B>::const_iterator it = ary.constBegin();
-    for ( ; it != ary.constEnd(); ++it)
-        op.addColor(*it);
-    return op;
-}
-
 inline QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
 {
     op.addVertex(vertex);

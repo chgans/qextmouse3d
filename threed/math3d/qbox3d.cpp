@@ -99,12 +99,6 @@ QT_BEGIN_NAMESPACE
     Constructs a finite box that encloses all of the specified \a points.
 */
 
-/*!
-    \fn QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
-
-    Constructs a finite box that encloses all of the specified \a points.
-*/
-
 void QBox3D::unite(const QVector3D *points, int count)
 {
     if (count <= 0 || boxtype == Infinite)
@@ -522,14 +516,6 @@ void QBox3D::unite(const QBox3D& box)
 */
 
 /*!
-    \fn void QBox3D::unite(const QArrayRef<QVector3D>& points)
-
-    Unites this box with all of the elements of \a points.
-
-    \sa united(), intersect()
-*/
-
-/*!
     Returns a new box which unites this box with \a point.  The returned
     value will be the smallest box that contains both this box and \a point.
 
@@ -569,16 +555,6 @@ QBox3D QBox3D::united(const QBox3D& box) const
 
 /*!
     \fn QBox3D QBox3D::united(const QArray<QVector3D>& points) const
-
-    Returns a new box which unites this box with all of the elements of
-    \a points.  The returned value will be the smallest box that contains
-    both this box and all of the \a points.
-
-    \sa unite(), intersected()
-*/
-
-/*!
-    \fn QBox3D QBox3D::united(const QArrayRef<QVector3D>& points) const
 
     Returns a new box which unites this box with all of the elements of
     \a points.  The returned value will be the smallest box that contains

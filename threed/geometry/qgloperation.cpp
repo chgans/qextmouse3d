@@ -239,24 +239,6 @@
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector3D> &array)
-    Calls QGLOperation::addColorArray() on \a op with argument \a array.
-    \relates QGLOperation
-*/
-
-/*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QVector2D> &array)
-    Calls QGLOperation::addTexCoord() on \a op for all items in \a array.
-    \relates QGLOperation
-*/
-
-/*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QArrayRef<QColor4B> &array)
-    Calls QGLOperation::addColor() on \a op for all items in \a array.
-    \relates QGLOperation
-*/
-
-/*!
     \fn QGLOperation &operator<<(QGLOperation &op, const QVector3D &vertex)
     Calls QGLOperation::addVertex() on \a op with \a vertex as an argument.
     \relates QGLOperation
