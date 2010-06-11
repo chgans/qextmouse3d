@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLAbstractEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLAbstractEffect class provides a standard interface for rendering surface material effects with GL.
     \ingroup qt3d
     \ingroup qt3d::painting

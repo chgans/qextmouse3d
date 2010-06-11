@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLLitMaterialEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLLitMaterialEffect class provides a standard effect that draws fragments with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting

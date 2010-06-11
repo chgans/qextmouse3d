@@ -45,7 +45,7 @@
 /*!
     \class QGLPrimitive
     \brief The QGLPrimitive class is a data container for QGLDisplayList operations.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 

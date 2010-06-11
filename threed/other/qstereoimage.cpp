@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QStereoImage
     \brief The QStereoImage class manages stereo image pairs.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

@@ -44,7 +44,7 @@
 /*!
     \class QGLOperation
     \brief The QGLOperation class provides an OO interface to QGLDisplayList
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 

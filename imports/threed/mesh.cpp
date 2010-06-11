@@ -55,7 +55,7 @@
     \brief The Mesh class provides a means of abstracting 3d mesh mesh/geometry representations in
     a way that can be used in QML.  The Mesh class contains necessary properties and methods for
     display and manipulation of 3d objects of this type.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 

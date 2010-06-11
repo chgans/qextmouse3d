@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLGraphicsNavigationItem
     \brief The QGLGraphicsNavigationItem class provides navigation logic for a QGLGraphicsViewportItem
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
 

@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QSphericalAnimation
     \brief The QSphericalAnimation class animates objects rotating around a point on the surface of a sphere.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

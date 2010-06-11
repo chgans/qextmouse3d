@@ -46,7 +46,7 @@
 /*!
   \class QPlane3D
   \brief The QPlane3D class models the mathematics of planes in 3D space.
-  \since 4.7
+  \since 4.8
   \ingroup qt3d
   \ingroup qt3d::math
 

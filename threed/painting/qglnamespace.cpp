@@ -52,7 +52,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::VertexAttribute
-    \since 4.7
+    \since 4.8
     This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexAttribute()
 
     \value Position The primary position of the vertex.
@@ -74,7 +74,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::Face
-    \since 4.7
+    \since 4.8
     This enum defines the faces to apply an operation to.
 
     \value FrontFaces Apply the operation to front faces only.
@@ -84,7 +84,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::CullFace
-    \since 4.7
+    \since 4.8
     This enum defines the face culling mode to use with QGLPainter::setCullFaces().
 
     \value CullDisabled Face culling is disabled.
@@ -98,7 +98,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::DrawingMode
-    \since 4.7
+    \since 4.8
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
     \value Points Draws a point at each of the specified vertices.
@@ -140,7 +140,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::StandardEffect
-    \since 4.7
+    \since 4.8
     This enum defines a standard drawing effect for use with QGLPainter.
 
     \value FlatColor Single flat color specified by QGLPainter::setColor()
@@ -174,7 +174,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::TextureWrap
-    \since 4.7
+    \since 4.8
     This enum defines the wrapping mode for texture co-ordinates.
 
     \value Repeat Ignore the integer part of the texture co-ordinate and
@@ -204,7 +204,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::ClearBuffer
-    \since 4.7
+    \since 4.8
     This enum defines a buffer to be cleared with glClear().
 
     \value NoClearBuffers No buffers should be cleared.
@@ -215,7 +215,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::Eye
-    \since 4.7
+    \since 4.8
     This enum defines the eye that is being rendered by a QGLPainter
     when stereo rendering is in effect.
 
@@ -227,7 +227,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::Smoothing
-    \since 4.7
+    \since 4.8
     \relates QGLDisplayList
 
     This enum defines vertex smoothing treatments.

@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLFlatTextureEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLFlatTextureEffect class provides a standard effect that draws fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLFlatDecalTextureEffect
-    \since 4.7
+    \since 4.8
     \brief The QGLFlatDecalTextureEffect class provides a standard effect that decals fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting

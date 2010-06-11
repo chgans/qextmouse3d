@@ -54,7 +54,7 @@
     \brief The ShaderProgram class is derivative class of the more general \l Effect class in Qml/3d.
     Whereas the Effect class provides support for standard effects under OpenGL, the ShaderProgramEffect class
     provides a more specific effects capability based on custom shader programs for the GPU.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 

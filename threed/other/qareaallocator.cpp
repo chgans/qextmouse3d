@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QAreaAllocator
     \brief The QAreaAllocator class provides facilities for allocating sub-regions from a rectangular image.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
     \internal
@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QSimpleAreaAllocator
     \brief The QSimpleAreaAllocator class provides a simple allocation policy for simple-sized sub-allocations.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
     \internal
@@ -93,7 +93,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGeneralAreaAllocator
     \brief The QGeneralAreaAllocator class provides a general allocation policy for sub-regions in an image.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
     \internal

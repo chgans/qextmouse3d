@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QVector2DArray
     \brief The QVector2DArray class is a convenience for wrapping a QArray of QVector2D values.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -368,7 +368,7 @@ QArray<QVector2D> QVector2DArray::transformed(const QMatrix4x4& matrix) const
 /*!
     \class QVector3DArray
     \brief The QVector3DArray class is a convenience for wrapping a QArray of QVector3D values.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -586,7 +586,7 @@ QArray<QVector3D> QVector3DArray::transformed(const QMatrix4x4& matrix) const
 /*!
     \class QVector4DArray
     \brief The QVector4DArray class is a convenience for wrapping a QArray of QVector4D values.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

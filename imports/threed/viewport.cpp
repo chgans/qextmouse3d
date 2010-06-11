@@ -53,7 +53,7 @@
     \class Viewport
     \brief The Viewport class defines the logical viewport for the 3d scene.  It includes all necessary
     references and parameters for the contents of the scene, as well as drawing and painting functions
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 

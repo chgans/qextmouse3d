@@ -44,7 +44,7 @@
 /*!
     \class QGraphicsRotation3D
     \brief The QGraphicsRotation3D class supports arbitrary rotation around an axis in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
     \ingroup qt3d::qml3d

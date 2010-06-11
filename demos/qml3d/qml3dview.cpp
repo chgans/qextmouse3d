@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE
     display of 3d imagery specified in QML/3d.  The Qml3dView takes the place of its parent class
     and contains provisions for display and management of \l Item3d objects, as well as \l Effect
     objects and related classes.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 

@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLAttributeDescription
     \brief The QGLAttributeDescription class encapsulates information about an OpenGL attribute value's layout and type.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

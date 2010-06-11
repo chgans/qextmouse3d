@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QCustomDataArray
     \brief The QCustomDataArray class is a polymorphic array of data values suitable for use in 3D applications.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 

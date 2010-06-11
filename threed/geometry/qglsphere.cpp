@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSphere
     \brief The QGLSphere class represents the geometry of a simple sphere in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -137,7 +137,7 @@ QGLSphere::~QGLSphere()
 /*!
     \class QGLIcoSphere
     \brief The QGLIcoSphere class represents the geometry of a simple sphere in 3D space derived from an icosahedron.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -162,7 +162,7 @@ QGLSphere::~QGLSphere()
 /*!
     \class QGLCubeSphere
     \brief The QGLCubeSphere class represents the geometry of a simple sphere in 3D space derived by subdividing a cube.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 

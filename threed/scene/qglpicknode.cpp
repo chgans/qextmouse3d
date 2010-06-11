@@ -47,7 +47,7 @@
 /*!
     \class QGLPickNode
     \brief The QGLPickNode class enables picking for objects in a 3D scene.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::scene
 

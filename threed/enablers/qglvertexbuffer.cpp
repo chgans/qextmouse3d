@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLVertexBuffer
     \brief The QGLVertexBuffer class manages uploading of vertex attribute arrays into a GL server.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 */

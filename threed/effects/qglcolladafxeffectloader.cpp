@@ -12,7 +12,7 @@ Q_DECLARE_METATYPE(QGLColladaFxEffect)
     \class QGLColladaFxEffectLoader
     \brief The QGLColladaFxEffectLoader class is a convenient way to load
     effects from collada files for use with Qt3D.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
 
     QGLColladaFxEffectLoader provides a simple class to create and store

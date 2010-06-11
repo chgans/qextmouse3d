@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QMatrix4x4Stack
     \brief The QMatrix4x4Stack class manages stacks of transformation matrices in GL applications.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
