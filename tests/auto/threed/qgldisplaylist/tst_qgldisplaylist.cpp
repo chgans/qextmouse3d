@@ -359,32 +359,32 @@ void tst_QGLDisplayList::geometryBuild()
     displayList.addVertex(a);
     displayList.addColor(Qt::red);
     displayList.addVertex(b);
-    displayList.addColor(QColor4B(Qt::green));
+    displayList.addColor(QColor4ub(Qt::green));
     displayList.addVertex(c);
     displayList.addVertex(d);
     displayList.addVertex(e);
-    QArray<QColor4B> cdata;
+    QArray<QColor4ub> cdata;
     cdata.append(Qt::blue, Qt::yellow, Qt::black);
     displayList.addColorArray(cdata);
     QCOMPARE(p->count(), 5);
     QCOMPARE(p->vertex(0), a);
     QCOMPARE(p->vertex(4), e);
-    QCOMPARE(p->color(0), QColor4B(Qt::red));
-    QCOMPARE(p->color(1), QColor4B(Qt::green));
-    QCOMPARE(p->color(2), QColor4B(Qt::blue));
-    QCOMPARE(p->color(3), QColor4B(Qt::yellow));
-    QCOMPARE(p->color(4), QColor4B(Qt::black));
+    QCOMPARE(p->color(0), QColor4ub(Qt::red));
+    QCOMPARE(p->color(1), QColor4ub(Qt::green));
+    QCOMPARE(p->color(2), QColor4ub(Qt::blue));
+    QCOMPARE(p->color(3), QColor4ub(Qt::yellow));
+    QCOMPARE(p->color(4), QColor4ub(Qt::black));
     displayList.setFlags(QGL::USE_VERTEX_0_AS_CTR);
     QVERIFY(p->flags() == QGL::USE_VERTEX_0_AS_CTR);
     displayList.end();
     QCOMPARE(sec->count(), 5);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(4), e);
-    QCOMPARE(p->color(0), QColor4B(Qt::red));
-    QCOMPARE(p->color(1), QColor4B(Qt::green));
-    QCOMPARE(p->color(2), QColor4B(Qt::blue));
-    QCOMPARE(p->color(3), QColor4B(Qt::yellow));
-    QCOMPARE(p->color(4), QColor4B(Qt::black));
+    QCOMPARE(p->color(0), QColor4ub(Qt::red));
+    QCOMPARE(p->color(1), QColor4ub(Qt::green));
+    QCOMPARE(p->color(2), QColor4ub(Qt::blue));
+    QCOMPARE(p->color(3), QColor4ub(Qt::yellow));
+    QCOMPARE(p->color(4), QColor4ub(Qt::black));
     QCOMPARE(node->count(), 12); // TRIANGLE_FAN will here draw 4 triangles = 12 indices
 }
 

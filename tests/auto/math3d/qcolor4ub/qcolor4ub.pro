@@ -7,4 +7,4 @@ LIBS += -L../../../../lib -L../../../../bin
 
 include(../../../../threed/threed_dep.pri)
 
-SOURCES += tst_qcolor4b.cpp
+SOURCES += tst_qcolor4ub.cpp

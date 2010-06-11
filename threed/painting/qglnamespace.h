@@ -47,7 +47,7 @@
 #include <QtCore/qvector.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector2d.h>
-#include "qcolor4b.h"
+#include "qcolor4ub.h"
 
 QT_BEGIN_HEADER
 

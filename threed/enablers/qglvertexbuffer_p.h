@@ -160,7 +160,7 @@ class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
 {
 public:
     QGLVertexBufferColorAttribute
-            (QGL::VertexAttribute attr, const QArray<QColor4B>& array)
+            (QGL::VertexAttribute attr, const QArray<QColor4ub>& array)
         : QGLVertexBufferAttribute(attr), colorArray(array)
     {
         value = QGLAttributeValue(colorArray);
@@ -170,10 +170,10 @@ public:
     QGLAttributeValue uploadValue()
         { return QGLAttributeValue(colorArray); }
     int count() { return colorArray.count(); }
-    int elementSize() { return sizeof(QColor4B); }
+    int elementSize() { return sizeof(QColor4ub); }
     void replace(int index, int count, const QGLAttributeValue& value);
 
-    QArray<QColor4B> colorArray;
+    QArray<QColor4ub> colorArray;
 };
 
 class QGLVertexBufferCustomAttribute : public QGLVertexBufferAttribute

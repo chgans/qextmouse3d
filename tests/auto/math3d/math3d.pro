@@ -6,4 +6,4 @@ SUBDIRS = \
     qlinesegment3d \
     qresult \
     qtriangle3d \
-    qcolor4b
+    qcolor4ub

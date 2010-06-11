@@ -43,7 +43,7 @@
 #define QCUSTOMDATAARRAY_H
 
 #include "qarray.h"
-#include "qcolor4b.h"
+#include "qcolor4ub.h"
 #include <QtCore/qvariant.h>
 #include <QtGui/qvector2d.h>
 #include <QtGui/qvector3d.h>
@@ -78,7 +78,7 @@ public:
     QCustomDataArray(const QArray<QVector2D>& other);
     QCustomDataArray(const QArray<QVector3D>& other);
     QCustomDataArray(const QArray<QVector4D>& other);
-    QCustomDataArray(const QArray<QColor4B>& other);
+    QCustomDataArray(const QArray<QColor4ub>& other);
     ~QCustomDataArray();
 
     QCustomDataArray& operator=(const QCustomDataArray& other);
@@ -109,14 +109,14 @@ public:
     void setAt(int index, const QVector2D& value);
     void setAt(int index, const QVector3D& value);
     void setAt(int index, const QVector4D& value);
-    void setAt(int index, const QColor4B& value);
+    void setAt(int index, const QColor4ub& value);
     void setAt(int index, Qt::GlobalColor value);
 
     qreal floatAt(int index) const;
     QVector2D vector2DAt(int index) const;
     QVector3D vector3DAt(int index) const;
     QVector4D vector4DAt(int index) const;
-    QColor4B colorAt(int index) const;
+    QColor4ub colorAt(int index) const;
 
     void append(qreal x);
     void append(qreal x, qreal y);
@@ -125,7 +125,7 @@ public:
     void append(const QVector2D& value);
     void append(const QVector3D& value);
     void append(const QVector4D& value);
-    void append(const QColor4B& value);
+    void append(const QColor4ub& value);
     void append(const QVariant& value);
     void append(Qt::GlobalColor value);
     void append(const QCustomDataArray &array);
@@ -134,7 +134,7 @@ public:
     QArray<QVector2D> toVector2DArray() const;
     QArray<QVector3D> toVector3DArray() const;
     QArray<QVector4D> toVector4DArray() const;
-    QArray<QColor4B> toColorArray() const;
+    QArray<QColor4ub> toColorArray() const;
 
     const void *data() const;
 
@@ -289,18 +289,18 @@ inline void QCustomDataArray::setAt(int index, const QVector4D& value)
     data[3] = float(value.w());
 }
 
-inline void QCustomDataArray::setAt(int index, const QColor4B& value)
+inline void QCustomDataArray::setAt(int index, const QColor4ub& value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     Q_ASSERT(index >= 0 && index < size());
-    *(reinterpret_cast<QColor4B *>(m_array.data() + index)) = value;
+    *(reinterpret_cast<QColor4ub *>(m_array.data() + index)) = value;
 }
 
 inline void QCustomDataArray::setAt(int index, Qt::GlobalColor value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     Q_ASSERT(index >= 0 && index < size());
-    *(reinterpret_cast<QColor4B *>(m_array.data() + index)) = QColor4B(value);
+    *(reinterpret_cast<QColor4ub *>(m_array.data() + index)) = QColor4ub(value);
 }
 
 inline qreal QCustomDataArray::floatAt(int index) const
@@ -334,11 +334,11 @@ inline QVector4D QCustomDataArray::vector4DAt(int index) const
     return QVector4D(data[0], data[1], data[2], data[3]);
 }
 
-inline QColor4B QCustomDataArray::colorAt(int index) const
+inline QColor4ub QCustomDataArray::colorAt(int index) const
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
     Q_ASSERT(index >= 0 && index < size());
-    return *(reinterpret_cast<const QColor4B *>(m_array.constData() + index));
+    return *(reinterpret_cast<const QColor4ub *>(m_array.constData() + index));
 }
 
 inline void QCustomDataArray::append(qreal x)
@@ -384,16 +384,16 @@ inline void QCustomDataArray::append(const QVector4D& value)
                    float(value.z()), float(value.w()));
 }
 
-inline void QCustomDataArray::append(const QColor4B& value)
+inline void QCustomDataArray::append(const QColor4ub& value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
-    *(reinterpret_cast<QColor4B *>(m_array.extend(1))) = value;
+    *(reinterpret_cast<QColor4ub *>(m_array.extend(1))) = value;
 }
 
 inline void QCustomDataArray::append(Qt::GlobalColor value)
 {
     Q_ASSERT(m_elementType == QCustomDataArray::Color);
-    *(reinterpret_cast<QColor4B *>(m_array.extend(1))) = QColor4B(value);
+    *(reinterpret_cast<QColor4ub *>(m_array.extend(1))) = QColor4ub(value);
 }
 
 inline void QCustomDataArray::append(const QCustomDataArray &array)

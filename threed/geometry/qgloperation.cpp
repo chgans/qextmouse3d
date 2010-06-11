@@ -102,7 +102,7 @@
             \o \c{const QVector2D &d}
             \o \c{op.addTexCoord(d, QGL::TextureCoord0)}
         \row
-            \o \c{const QColor4B &d}
+            \o \c{const QColor4ub &d}
             \o \c{op.addColor(d)}
         \row
             \o \c{const QArray<QVector3D> &d}
@@ -111,7 +111,7 @@
             \o \c{const QArray<QVector2D> &d}
             \o \c{op.addTexCoordArray(d, QGL::TextureCoord0)}
         \row
-            \o \c{const QArray<QColor4B> &d}
+            \o \c{const QArray<QColor4ub> &d}
             \o \c{op.addColorArray(d)}
         \row
             \o \c{const QGL::OperationFlags &d}
@@ -166,7 +166,7 @@
 */
 
 /*!
-    \fn void QGLOperation::addColor(const QColor4B &color)
+    \fn void QGLOperation::addColor(const QColor4ub &color)
     Adds a \a color to this operation by calling
     QGLDisplayList::addColor()
 */
@@ -195,7 +195,7 @@
 */
 
 /*!
-    \fn void QGLOperation::addColorArray(const QArray<QColor4B> &colorArray)
+    \fn void QGLOperation::addColorArray(const QArray<QColor4ub> &colorArray)
     Adds \a colorArray to this operation by calling
     QGLDisplayList::addColorArray(colorArray)
 */
@@ -233,7 +233,7 @@
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QArray<QColor4B> &array)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QArray<QColor4ub> &array)
     Calls QGLOperation::addColorArray() on \a op with argument \a array.
     \relates QGLOperation
 */
@@ -251,7 +251,7 @@
 */
 
 /*!
-    \fn QGLOperation &operator<<(QGLOperation &op, const QColor4B &color)
+    \fn QGLOperation &operator<<(QGLOperation &op, const QColor4ub &color)
     Calls QGLOperation::addColor() on \a op with \a color as an argument.
     \relates QGLOperation
 */

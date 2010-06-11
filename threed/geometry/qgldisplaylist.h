@@ -102,7 +102,7 @@ public:
     void addVertex(qreal x, qreal y, qreal z) { addVertex(QVector3D(x, y, z)); }
 
     void addNormal(const QVector3D &);
-    void addColor(const QColor4B &);
+    void addColor(const QColor4ub &);
 
     void addTexCoord(const QVector2D &, QGL::VertexAttribute attr = QGL::TextureCoord0);
     void addTexCoord(qreal s, qreal t, QGL::VertexAttribute attr = QGL::TextureCoord0)
@@ -114,7 +114,7 @@ public:
 
     void addVertexArray(const QVector3DArray &);
     void addNormalArray(const QVector3DArray &);
-    void addColorArray(const QArray<QColor4B> &);
+    void addColorArray(const QArray<QColor4ub> &);
     void addTexCoordArray(const QVector2DArray &,
                           QGL::VertexAttribute attr = QGL::TextureCoord0);
     void addAttributeArray(const QCustomDataArray &,
