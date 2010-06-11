@@ -411,7 +411,6 @@ inline const void *QCustomDataArray::data() const
 }
 
 #ifndef QT_NO_DEBUG_STREAM
-#include <QtCore/qdebug.h>
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QCustomDataArray &array);
 #endif
 

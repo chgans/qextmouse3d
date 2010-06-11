@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qcustomdataarray.h"
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
