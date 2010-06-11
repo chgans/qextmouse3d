@@ -176,6 +176,10 @@ private Q_SLOTS:
     void deleteChild(QObject *object);
 
 private:
+    QMatrix4x4 transform() const;
+    void invalidateBoundingBox() const;
+    void invalidateTransform() const;
+
     Q_DISABLE_COPY(QGLSceneNode)
 };
 

@@ -258,28 +258,46 @@ void QGLSceneNode::setGeometry(QGeometryData geometry)
     as geometry()->size() then the bounding box will be the same as
     geometry()->boundingBox().  However if the scene node only references
     some part of the geometry, a bounding box for this section is calculated.
+
+    If this scene node has child nodes then the bounding box will be the
+    calculated union of the bounding box for this nodes geometry (if any) and
+    the bounding boxes of the children.
+
+    The calculated value is cached and returned on subsequent calls, but
+    could be expensive to calculate initially.
 */
 QBox3D QGLSceneNode::boundingBox() const
 {
     Q_D(const QGLSceneNode);
-    QBox3D bb;
+    if (d->boxValid)
+        return d->bb;
+    d->bb = QBox3D();
     if (d->geometry.count() > 0)
     {
         if (d->start == 0 && (d->count == d->geometry.count() || d->count == 0))
         {
-            bb = d->geometry.boundingBox();
+            d->bb = d->geometry.boundingBox();
         }
         else
         {
             QGL::IndexArray indices = d->geometry.indices();
-            for (int i = d->start; i < d->count; ++i)
+            for (int i = d->start; i < (d->start + d->count); ++i)
             {
                 int ix = indices.at(i);
-                bb.unite(d->geometry.vertex(ix));
+                d->bb.unite(d->geometry.vertex(ix));
             }
         }
     }
-    return bb;
+    QList<QGLSceneNode*>::const_iterator it = d->childNodes.constBegin();
+    for ( ; it != d->childNodes.constEnd(); ++it)
+    {
+        QGLSceneNode *n = *it;
+        QBox3D b = n->boundingBox();
+        b.transform(n->transform());
+        d->bb.unite(b);
+    }
+    d->boxValid = true;
+    return d->bb;
 }
 
 /*!
@@ -311,12 +329,38 @@ QVector3D QGLSceneNode::center() const
         }
         else
         {
-            for (int i = 0; i < d->geometry.count(); ++i)
+            for (int i = d->start; i < (d->start + d->count); ++i)
                 center += d->geometry.vertex(i);
             center /= (float)d->geometry.count();
         }
     }
     return center;
+}
+
+// Calculate the resulting matrix from the position, rotation, scale and
+// local transform.  Cache the result for future calls.
+QMatrix4x4 QGLSceneNode::transform() const
+{
+    Q_D(const QGLSceneNode);
+    if (d->transformValid)
+        return d->transform;
+    d->transform = QMatrix4x4();
+    if (!d->translate.isNull())
+        d->transform.translate(d->translate);
+    if (!d->rotate.isNull())
+    {
+        QQuaternion rx = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, d->rotate.x());
+        QQuaternion ry = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, d->rotate.y());
+        QQuaternion rz = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, d->rotate.z());
+        QQuaternion res = rz * ry * rx;
+        d->transform.rotate(res);
+    }
+    if (!d->scale.isNull())
+        d->transform.scale(d->scale);
+    if (!d->localTransform.isIdentity())
+        d->transform *= d->localTransform;
+    d->transformValid = true;
+    return d->transform;
 }
 
 /*!
@@ -349,7 +393,12 @@ QMatrix4x4 QGLSceneNode::localTransform() const
 void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
 {
     Q_D(QGLSceneNode);
-    d->localTransform = transform;
+    if (d->localTransform != transform)
+    {
+        d->localTransform = transform;
+        invalidateTransform();
+        d->invalidateParentBoundingBox();
+    }
 }
 
 /*!
@@ -379,6 +428,7 @@ void QGLSceneNode::setRotation(const QVector3D &r)
     {
         d->rotate = r;
         emit rotationChanged();
+        invalidateTransform();
     }
 }
 
@@ -401,6 +451,7 @@ void QGLSceneNode::setRotX(qreal rx)
     {
         d->rotate.setX(rx);
         emit rotationChanged();
+        invalidateTransform();
     }
 }
 
@@ -423,6 +474,7 @@ void QGLSceneNode::setRotY(qreal ry)
     {
         d->rotate.setY(ry);
         emit rotationChanged();
+        invalidateTransform();
     }
 }
 
@@ -445,6 +497,7 @@ void QGLSceneNode::setRotZ(qreal rz)
     {
         d->rotate.setZ(rz);
         emit rotationChanged();
+        invalidateTransform();
     }
 }
 
@@ -474,6 +527,7 @@ void QGLSceneNode::setPosition(const QVector3D &p)
     {
         d->translate = p;
         emit positionChanged();
+        invalidateTransform();
     }
 }
 
@@ -496,6 +550,7 @@ void QGLSceneNode::setX(qreal x)
     {
         d->translate.setX(x);
         emit positionChanged();
+        invalidateTransform();
     }
 }
 
@@ -518,6 +573,7 @@ void QGLSceneNode::setY(qreal y)
     {
         d->translate.setY(y);
         emit positionChanged();
+        invalidateTransform();
     }
 }
 
@@ -540,6 +596,7 @@ void QGLSceneNode::setZ(qreal z)
     {
         d->translate.setZ(z);
         emit positionChanged();
+        invalidateTransform();
     }
 }
 
@@ -566,6 +623,7 @@ void QGLSceneNode::setScale(const QVector3D &scale)
     {
         d->scale = scale;
         emit scaleChanged();
+        invalidateTransform();
     }
 }
 
@@ -685,6 +743,7 @@ void QGLSceneNode::setStart(int start)
     {
         d->start = start;
         emit startChanged();
+        invalidateBoundingBox();
     }
 }
 
@@ -710,6 +769,7 @@ void QGLSceneNode::setCount(int count)
     {
         d->count = count;
         emit countChanged();
+        invalidateBoundingBox();
     }
 }
 
@@ -842,6 +902,13 @@ QList<QGLSceneNode*> QGLSceneNode::allChildren() const
 void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
 {
     Q_D(QGLSceneNode);
+    invalidateBoundingBox();
+    QList<QGLSceneNode*>::iterator it = d->childNodes.begin();
+    for ( ; it != d->childNodes.end(); ++it)
+    {
+        QGLSceneNode *node = *it;
+        node->d_func()->parentNodes.removeOne(this);
+    }
     d->childNodes = children;
     emit childNodesChanged();
 }
@@ -868,28 +935,63 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
 
 /*!
     Adds the \a node to the list of child nodes for this node.
+
+    Adding a the same child node more than once is not supported, and will
+    lead to undefined results.
+
+    It usually makes no sense to add a node as a child to another node
+    more than once, since it would appear in the same place and overdraw
+    with no perceptible result.
+
+    If the aim is to have the same geometry displayed several times under a
+    given node, each time with different transformations, use the clone()
+    call to create copies of the node and then apply the transformations to
+    the copies.
+
+    \sa clone(), removeNode()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
+    invalidateBoundingBox();
     d->childNodes.append(node);
+    node->d_func()->parentNodes.append(this);
     connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
     emit childNodesChanged();
 }
 
 /*!
-    Removes the first child node matching \a node.
+    Removes the child node matching \a node.
 */
 void QGLSceneNode::removeNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
+    // we always remove the correct node here because each node is unique
+    // under a given parent due to the requirement that no node be addNode()'ed
+    // more than once.
     d->childNodes.removeOne(node);
+    node->d_func()->parentNodes.removeOne(this);
     emit childNodesChanged();
+    invalidateBoundingBox();
 }
 
 void QGLSceneNode::deleteChild(QObject *object)
 {
     removeNode(reinterpret_cast<QGLSceneNode*>(object));
+}
+
+void QGLSceneNode::invalidateBoundingBox() const
+{
+    Q_D(const QGLSceneNode);
+    d->boxValid = false;
+    d->invalidateParentBoundingBox();
+}
+
+void QGLSceneNode::invalidateTransform() const
+{
+    Q_D(const QGLSceneNode);
+    d->transformValid = false;
+    d->invalidateParentBoundingBox();
 }
 
 /*!
@@ -926,21 +1028,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
 
-    QMatrix4x4 m;
-    if (!d->translate.isNull())
-        m.translate(d->translate);
-    if (!d->rotate.isNull())
-    {
-        QQuaternion rx = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, d->rotate.x());
-        QQuaternion ry = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, d->rotate.y());
-        QQuaternion rz = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, d->rotate.z());
-        QQuaternion res = rz * ry * rx;
-        m.rotate(res);
-    }
-    if (!d->scale.isNull())
-        m.scale(d->scale);
-    if (!d->localTransform.isIdentity())
-        m *= d->localTransform;
+    QMatrix4x4 m = transform();
+
     if (!m.isIdentity())
     {
          painter->modelViewMatrix().push();
@@ -948,18 +1037,16 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    if (d->geometry.count() > 0)
+    // If this node only references a small section of the geometry, then
+    // this bounding-box test may draw something that didn't need to be.
+    QBox3D bb = boundingBox();
+    if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
     {
-        // If this node only references a small section of the geometry, then
-        // this bounding-box test may draw something that didn't need to be.
-        QBox3D bb = d->geometry.boundingBox();
-        if (bb.isFinite() && painter->isCullable(bb))
-        {
-            if (wasTransformed)
-                painter->modelViewMatrix().pop();
-            return;
-        }
+        if (wasTransformed)
+            painter->modelViewMatrix().pop();
+        return;
     }
+
     if (d->hasEffect && !painter->isPicking())
     {
         if (d->customEffect)
@@ -1021,7 +1108,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         {
             QVector3DArray verts;
             QGL::IndexArray indices = d->geometry.indices();
-            for (int i = d->start; i < d->start + d->count; ++i)
+            for (int i = d->start; i < (d->start + d->count); ++i)
             {
                 int ix = indices[i];
                 QVector3D a = d->geometry.vertex(ix);
@@ -1105,6 +1192,8 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     node->setStart(d->start);
     node->setCount(d->count);
     node->setChildNodeList(d->childNodes);
+    node->d_func()->bb = d->bb;
+    node->d_func()->boxValid = d->boxValid;
     return node;
 }
 

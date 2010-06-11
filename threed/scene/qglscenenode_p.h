@@ -84,6 +84,8 @@ public:
         , count(0)
         , viewNormals(false)
         , pickNode(0)
+        , boxValid(false)
+        , transformValid(false)
     {
     }
 
@@ -93,6 +95,12 @@ public:
     static QGLSceneNode *atFunc(QDeclarativeListProperty<QGLSceneNode> *list, int index);
     static void clearFunc(QDeclarativeListProperty<QGLSceneNode> *list);
 #endif
+    void invalidateParentBoundingBox() const
+    {
+        QList<QGLSceneNode*>::const_iterator it = parentNodes.constBegin();
+        for ( ; it != parentNodes.constEnd(); ++it)
+            (*it)->invalidateBoundingBox();
+    }
 
     QGeometryData geometry;
     QGLMaterialCollection *palette;
@@ -103,12 +111,17 @@ public:
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     QList<QGLSceneNode*> childNodes;
+    QList<QGLSceneNode*> parentNodes;
     bool hasEffect;
     int material;
     int start;
     int count;
     bool viewNormals;
     QGLPickNode *pickNode;
+    mutable QBox3D bb;
+    mutable bool boxValid;
+    mutable QMatrix4x4 transform;
+    mutable bool transformValid;
 };
 
 #endif // QGLSCENENODE_P_H
