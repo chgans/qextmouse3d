@@ -41,7 +41,7 @@
 
 #include "qglview.h"
 #include "qglframebufferobject.h"
-#include "qglblendoptions.h"
+#include "qglext.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qcoreapplication.h>
@@ -171,11 +171,6 @@ public:
         lastPan = QPoint(-1, -1);
         panModifiers = Qt::NoModifier;
 
-        blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-        blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
-
         QObject::connect(defaultCamera, SIGNAL(projectionChanged()),
                          parent, SLOT(cameraChanged()));
         QObject::connect(defaultCamera, SIGNAL(viewChanged()),
@@ -211,7 +206,6 @@ public:
     QVector3D startCenter;
     QVector3D startUpVector;
     Qt::KeyboardModifiers panModifiers;
-    QGLBlendOptions blendOptions;
     QTime logTime;
     QTime enterTime;
     QTime lastFrameTime;
@@ -489,7 +483,11 @@ void QGLView::initializeGL()
     glDepthRange(0.0f, 1.0f);
 #endif
 
-    d->blendOptions.apply();
+    // Set the default blend options.
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
+
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
     d->logLeave("QGLView::initializeGL");

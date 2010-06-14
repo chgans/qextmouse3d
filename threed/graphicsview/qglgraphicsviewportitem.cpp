@@ -41,6 +41,7 @@
 
 #include "qglgraphicsviewportitem.h"
 #include "qglpainter.h"
+#include "qglext.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsscene.h>
 
@@ -82,11 +83,6 @@ public:
         options = QGLGraphicsViewportItem::CameraNavigation;
         clearDepthBuffer = true;
         cullFaces = QGL::CullBackFaces;
-
-        blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-        blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
     }
 
     void changeCamera(QGLCamera *c);
@@ -99,7 +95,6 @@ public:
     QGLCamera *defaultCamera;
     bool clearDepthBuffer;
     QGL::CullFaces cullFaces;
-    QGLBlendOptions blendOptions;
     QColor backgroundColor;
 
 private Q_SLOTS:
@@ -135,6 +130,12 @@ void QGLGraphicsViewportItemPrivate::setDefaults()
 #else
     glDepthRange(0.0f, 1.0f);
 #endif
+
+    // Set the default blend options.
+    glDisable(GL_BLEND);
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
 }
 
 /*!
@@ -323,30 +324,6 @@ void QGLGraphicsViewportItem::setClearDepthBuffer(bool value)
 }
 
 /*!
-    Returns the blending options to apply before calling paintGL().
-    The default specifies blending of the source against the destination
-    according to the source alpha.
-
-    \sa setBlendOptions()
-*/
-QGLBlendOptions QGLGraphicsViewportItem::blendOptions() const
-{
-    Q_D(const QGLGraphicsViewportItem);
-    return d->blendOptions;
-}
-
-/*!
-    Sets the blending \a options to apply before calling paintGL().
-
-    \sa blendOptions()
-*/
-void QGLGraphicsViewportItem::setBlendOptions(const QGLBlendOptions& options)
-{
-    Q_D(QGLGraphicsViewportItem);
-    d->blendOptions = options;
-}
-
-/*!
     Returns the face culling mode to set before calling paintGL().
     The default value is QGL::CullBackFaces.
 
@@ -427,7 +404,9 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
-    d->blendOptions.apply();
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
     if (d->backgroundColor.isValid()) {
         // We clear the background by drawing a triangle fan so
         // that the background color will blend with the underlying
@@ -465,7 +444,6 @@ void QGLGraphicsViewportItem::paint
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
     d->setDefaults();
-    QGLBlendOptions().apply();
 }
 
 /*!

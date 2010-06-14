@@ -6,7 +6,6 @@ SUBDIRS = \
     qcustomdataarray \
     qgraphicstransform3d \
     qvectorarray \
-    qglblendoptions \
     qglcamera \
     qglindexbuffer \
     qgllightmodel \

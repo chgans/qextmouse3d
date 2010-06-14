@@ -44,8 +44,8 @@
 #include <QMouseEvent>
 #include "qglpainter.h"
 #include "qglabstracteffect.h"
-#include "qglblendoptions.h"
 #include "qgltexture2d.h"
+#include "qglext.h"
 
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
@@ -174,12 +174,9 @@ void PageFlipView::initializeGL()
 
     gradientTexture.setImage(QImage(":/gradient.png"));
 
-    QGLBlendOptions blendOptions;
-    blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.apply();
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
 
     glEnable(GL_BLEND);
 

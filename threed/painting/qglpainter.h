@@ -66,7 +66,6 @@ QT_MODULE(Qt3d)
 
 class QGLAbstractEffect;
 class QGLPainterPrivate;
-class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
@@ -219,7 +218,6 @@ private:
 
     QGLPainterPrivate *d_func() const { return d_ptr; }
 
-    friend class QGLBlendOptions;
     friend class QGLAbstractEffect;
 
 #ifndef QT_NO_DEBUG

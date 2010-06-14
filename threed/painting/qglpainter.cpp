@@ -602,10 +602,6 @@ void QGLPainter::setClearStencil(GLint value)
     Enables or disables blending according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
-
-    For more complex blending configurations, use QGLBlendOptions.
-
-    \sa QGLBlendOptions
 */
 
 /*!

@@ -4,7 +4,6 @@ VPATH += $$PWD
 
 HEADERS += \
     qglabstracteffect.h \
-    qglblendoptions.h \
     qgllightmodel.h \
     qgllightparameters.h \
     qglmaterial.h \
@@ -13,7 +12,6 @@ HEADERS += \
 
 SOURCES += \
     qglabstracteffect.cpp \
-    qglblendoptions.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
     qglmaterial.cpp \

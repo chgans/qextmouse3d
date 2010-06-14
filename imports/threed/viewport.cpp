@@ -41,11 +41,11 @@
 
 #include "viewport.h"
 #include "effect.h"
-#include "qglblendoptions.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglcamera.h"
 #include "qglview.h"
+#include "qglext.h"
 #include <QtGui/qpainter.h>
 #include <QtOpenGL/qglframebufferobject.h>
 
@@ -82,7 +82,6 @@ public:
     bool itemsInitialized;
     bool needsPick;
     QGLCamera *camera;
-    QGLBlendOptions blendOptions;
     QGLLightModel *lightModel;
     Effect *backdrop;
     QColor backgroundColor;
@@ -110,11 +109,6 @@ ViewportPrivate::ViewportPrivate()
     , pickId(1)
     , pickFbo(0)
 {
-    blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
-
     // Construct the vertices for a quad with (0, 0) as the
     // texture co-ordinate for the bottom-left of the screen
     // and (1, 1) as the texture co-ordinate for the top-right.
@@ -504,7 +498,9 @@ void Viewport::draw(QGLPainter *painter)
     glDepthRange(0.0f, 1.0f);
 #endif
     painter->setBlendingEnabled(d->blending);
-    d->blendOptions.apply();
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
     painter->setCullFaces(QGL::CullDisabled);
     if (!d->view)
         painter->setPicking(d->showPicking);
@@ -660,7 +656,9 @@ QObject *Viewport::objectForPoint(int x, int y)
         glDepthRange(0.0f, 1.0f);
 #endif
         painter.setBlendingEnabled(false);
-        d->blendOptions.apply();
+        qt_gl_BlendColor(0, 0, 0, 0);
+        qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        qt_gl_BlendEquation(GL_FUNC_ADD);
         painter.setCullFaces(QGL::CullDisabled);
         if (d->camera) {
             painter.setCamera(d->camera);
