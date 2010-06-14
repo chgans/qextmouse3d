@@ -42,6 +42,7 @@
 #include "qglpainter.h"
 #include "qglpainter_p.h"
 #include "qglabstracteffect.h"
+#include "qglext.h"
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
@@ -1370,87 +1371,6 @@ void QGLPainter::setColor(const QColor& color)
     d->color = color;
     d->updates |= UpdateColor;
 }
-
-#if !defined(QT_OPENGL_ES)
-
-typedef void (APIENTRY *q_PFNGLACTIVETEXTUREPROC) (GLenum);
-typedef void (APIENTRY *q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
-
-class QGLMultiTextureExtensions
-{
-public:
-    QGLMultiTextureExtensions()
-    {
-        activeTexture = 0;
-        clientActiveTexture = 0;
-        multiTextureResolved = false;
-    }
-
-    q_PFNGLACTIVETEXTUREPROC activeTexture;
-    q_PFNGLCLIENTACTIVETEXTUREPROC clientActiveTexture;
-    bool multiTextureResolved;
-};
-
-static void qt_multitexture_funcs_free(void *data)
-{
-    delete reinterpret_cast<QGLMultiTextureExtensions *>(data);
-}
-
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_multitexture_funcs, (qt_multitexture_funcs_free))
-
-static QGLMultiTextureExtensions *resolveMultiTextureExtensions
-    (const QGLContext *ctx)
-{
-    QGLMultiTextureExtensions *extn =
-        reinterpret_cast<QGLMultiTextureExtensions *>
-            (qt_multitexture_funcs()->value(ctx));
-    if (!extn) {
-        extn = new QGLMultiTextureExtensions();
-        qt_multitexture_funcs()->insert(ctx, extn);
-    }
-    if (!(extn->multiTextureResolved)) {
-        extn->multiTextureResolved = true;
-        if (!extn->activeTexture) {
-            extn->activeTexture = (q_PFNGLACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glActiveTexture"));
-        }
-        if (!extn->activeTexture) {
-            extn->activeTexture = (q_PFNGLACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glActiveTextureARB"));
-        }
-        if (!extn->clientActiveTexture) {
-            extn->clientActiveTexture = (q_PFNGLCLIENTACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glClientActiveTexture"));
-        }
-        if (!extn->clientActiveTexture) {
-            extn->clientActiveTexture = (q_PFNGLCLIENTACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glClientActiveTextureARB"));
-        }
-    }
-    return extn;
-}
-
-void qt_gl_ClientActiveTexture(GLenum texture)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
-    if (extn->clientActiveTexture)
-        extn->clientActiveTexture(texture);
-}
-
-void qt_gl_ActiveTexture(GLenum texture)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
-    if (extn->activeTexture)
-        extn->activeTexture(texture);
-}
-
-#endif
 
 void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {

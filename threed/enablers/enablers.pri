@@ -3,6 +3,7 @@ VPATH += $$PWD
 HEADERS += \
     qglattributedescription.h \
     qglattributevalue.h \
+    qglext.h \
     qglindexbuffer.h \
     qgltexture2d.h \
     qgltexturecube.h \
@@ -16,6 +17,7 @@ HEADERS += \
 SOURCES += \
     qglattributedescription.cpp \
     qglattributevalue.cpp \
+    qglext.cpp \
     qglindexbuffer.cpp \
     qgltexture2d.cpp \
     qgltexturecube.cpp \

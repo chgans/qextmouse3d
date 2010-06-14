@@ -253,48 +253,6 @@ inline void QGLPainter::setBlendingEnabled(bool value)
         glDisable(GL_BLEND);
 }
 
-// Provide some useful OpenGL extension definitions.
-#if !defined(QT_OPENGL_ES)
-
-extern void Q_QT3D_EXPORT qt_gl_ClientActiveTexture(GLenum texture);
-extern void Q_QT3D_EXPORT qt_gl_ActiveTexture(GLenum texture);
-
-#elif defined(QT_OPENGL_ES_2)
-
-#define qt_gl_ActiveTexture         glActiveTexture
-
-#else
-
-#define qt_gl_ClientActiveTexture   glClientActiveTexture
-#define qt_gl_ActiveTexture         glActiveTexture
-
-#endif
-
-#ifndef GL_TEXTURE0
-#define GL_TEXTURE0 0x84C0
-#endif
-#ifndef GL_TEXTURE1
-#define GL_TEXTURE1 0x84C1
-#endif
-#ifndef GL_TEXTURE2
-#define GL_TEXTURE2 0x84C2
-#endif
-#ifndef GL_TEXTURE3
-#define GL_TEXTURE3 0x84C3
-#endif
-#ifndef GL_TEXTURE4
-#define GL_TEXTURE4 0x84C4
-#endif
-#ifndef GL_TEXTURE5
-#define GL_TEXTURE5 0x84C5
-#endif
-#ifndef GL_TEXTURE6
-#define GL_TEXTURE6 0x84C6
-#endif
-#ifndef GL_TEXTURE7
-#define GL_TEXTURE7 0x84C7
-#endif
-
 QT_END_NAMESPACE
 
 QT_END_HEADER

@@ -41,6 +41,7 @@
 
 #include "qglflattextureeffect.h"
 #include "qglabstracteffect_p.h"
+#include "qglext.h"
 #include <QtOpenGL/qglshaderprogram.h>
 
 QT_BEGIN_NAMESPACE
