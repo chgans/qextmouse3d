@@ -1,4 +1,5 @@
 Cpp.ignoretokens        = QAXFACTORY_EXPORT \
+                          Q_INVOKABLE \
                           QDESIGNER_COMPONENTS_LIBRARY \
                           QDESIGNER_EXTENSION_LIBRARY \
                           QDESIGNER_SDK_LIBRARY \

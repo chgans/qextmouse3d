@@ -604,7 +604,11 @@ bool Mesh::deref()
 
 
 /*!
-    Assign the mesh the material \a name from the \l QGLMaterialCollection class.
+    Assign the mesh the material \a materialName from the \l QGLMaterialCollection class,
+    and bind to the node identified by \a nodeName.
+
+    Returns a pointer to the QGLMaterial material object \a materialName; or NULL if
+    either there is no current scene, or if the scene does not contain such a material.
 */
 QObject *Mesh::material(const QString& nodeName, const QString& materialName)
 {    
