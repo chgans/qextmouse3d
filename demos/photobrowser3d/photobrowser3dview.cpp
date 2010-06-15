@@ -50,6 +50,9 @@
 #include <QDir>
 #include <QTimer>
 #include <QTime>
+#include <QStateMachine>
+#include <QState>
+#include <QFinalState>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
@@ -60,6 +63,11 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_velocity(0.0f)
     , m_keyTimer(new QTimer(this))
     , m_panTime(new QTime())
+    , m_state(0)
+    , m_app(0)
+    , m_zoomed(0)
+    , m_browse(0)
+    , m_pan(0)
 {
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
@@ -79,6 +87,18 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_keyTimer->setInterval(100);
     connect(m_keyTimer, SIGNAL(timeout()),
             this, SLOT(keyTimeOut()));
+
+    m_state = new QStateMachine(this);
+    m_app = new QState;
+    m_zoomed = new QState(m_app);
+    m_browse = new QState(m_app);
+    m_pan = new QState(m_app);
+    m_app->setInitialState(m_browse);
+    m_state->addState(m_app);
+    QFinalState *end_state = new QFinalState;
+    m_app->addTransition(this, SIGNAL(done()), end_state);
+    m_state->addState(end_state);
+    connect(m_state, SIGNAL(finished()), this, SLOT(close()));
 }
 
 PhotoBrowser3DView::~PhotoBrowser3DView()

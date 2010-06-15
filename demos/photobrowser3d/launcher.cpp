@@ -52,12 +52,10 @@
 #include <QSet>
 #include <QDebug>
 
-Launcher::Launcher(QObject *parent)
-    : QThread(parent)
-    , m_manager(0)
+Launcher::Launcher(ImageManager *manager)
+    : m_manager(manager)
     , m_stop(false)
 {
-    m_manager = qobject_cast<ImageManager*>(parent);
     Q_ASSERT(m_manager);
 }
 

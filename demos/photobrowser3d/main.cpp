@@ -45,6 +45,8 @@
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(photobrowser3d);
+
     QApplication app(argc, argv);
 
     // for QSettings

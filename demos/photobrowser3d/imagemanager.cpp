@@ -67,8 +67,6 @@ ImageManager::ImageManager(QObject *parent)
     Q_ASSERT(m_threadPoolSize > 2);
     --m_sem;  // take one thread out for this manager objects run()
     m_sem = new QSemaphore(m_threadPoolSize);
-    connect(this, SIGNAL(done()),
-            this, SLOT(quit()), Qt::QueuedConnection);
 }
 
 void ImageManager::acquire()
@@ -111,8 +109,6 @@ void ImageManager::run()
             this, SLOT(createLoader(QUrl)));
     connect(m_launcher, SIGNAL(finished()),
             this, SLOT(release()));
-    connect(this, SIGNAL(done()),
-            this, SLOT(quit()), Qt::QueuedConnection);
     acquire();   // grab a thread for the launcher
     m_launcher->start();
     //fprintf(stderr, "ImageManager::run - start %p\n", this);

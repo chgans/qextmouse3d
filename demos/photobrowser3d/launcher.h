@@ -53,7 +53,7 @@ class Launcher : public QThread
 {
     Q_OBJECT
 public:
-    explicit Launcher(QObject *parent = 0);
+    explicit Launcher(ImageManager *manager);
     ~Launcher() {}
     void setUrl(const QUrl &url) { m_url = url; }
     void stop() { m_stop = true; }

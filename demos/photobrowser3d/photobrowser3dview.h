@@ -49,6 +49,8 @@ class SkyBox;
 class QGLMaterialCollection;
 class QGLSceneNode;
 class ImageManager;
+class QState;
+class QStateMachine;
 
 class PhotoBrowser3DView : public QGLView
 {
@@ -57,6 +59,8 @@ public:
     PhotoBrowser3DView();
     ~PhotoBrowser3DView();
     void initializeGL(QGLPainter *);
+signals:
+    void done();
 protected:
     void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
@@ -74,6 +78,11 @@ private:
     qreal m_velocity;
     QTimer *m_keyTimer;
     QTime *m_panTime;
+    QStateMachine *m_state;
+    QState *m_app;
+    QState *m_zoomed;
+    QState *m_browse;
+    QState *m_pan;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H
