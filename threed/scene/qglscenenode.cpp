@@ -948,7 +948,7 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
     call to create copies of the node and then apply the transformations to
     the copies.
 
-    \sa removeNode()
+    \sa removeNode(), clone()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
