@@ -40,7 +40,9 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include "qvector4darray.h"
 
 #include "qtest_helpers_p.h"
 

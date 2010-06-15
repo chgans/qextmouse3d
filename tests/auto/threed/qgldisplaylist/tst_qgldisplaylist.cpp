@@ -42,7 +42,8 @@
 #include <QtTest/QtTest>
 #include <QtCore/qpointer.h>
 #include "qgldisplaylist.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 #include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"

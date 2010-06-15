@@ -56,7 +56,9 @@
 #include "qglmaterial.h"
 #include "qmatrix4x4stack.h"
 #include "qglcamera.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include "qvector4darray.h"
 
 QT_BEGIN_HEADER
 

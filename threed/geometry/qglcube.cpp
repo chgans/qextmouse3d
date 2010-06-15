@@ -42,7 +42,7 @@
 #include "qglcube.h"
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
-#include "qvectorarray.h"
+#include "qvector3darray.h"
 
 QT_BEGIN_NAMESPACE
 

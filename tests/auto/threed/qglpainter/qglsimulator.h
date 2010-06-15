@@ -46,7 +46,8 @@
 #include <QtGui/qcolor.h>
 #include <QtGui/qmatrix4x4.h>
 #include <QtGui/qvector3d.h>
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 
 class QGLSimulator
 {

@@ -42,7 +42,7 @@
 #include "qglbezierscenehandler.h"
 #include "qglbezierscene.h"
 #include "qglbezierpatches.h"
-#include "qvectorarray.h"
+#include "qvector3darray.h"
 #include <QtCore/qtextstream.h>
 
 QT_BEGIN_NAMESPACE

@@ -45,7 +45,7 @@
 #include "qt3dglobal.h"
 
 #include <QtGui/qvector2d.h>
-#include "qvectorarray.h"
+#include "qvector2darray.h"
 
 QT_BEGIN_HEADER
 

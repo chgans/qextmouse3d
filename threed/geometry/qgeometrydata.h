@@ -50,7 +50,8 @@
 #include "qcustomdataarray.h"
 #include "qbox3d.h"
 #include "qarray.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 
 QT_BEGIN_NAMESPACE
 
