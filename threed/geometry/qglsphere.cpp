@@ -41,7 +41,9 @@
 
 #include "qglsphere.h"
 #include "qgldisplaylist.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include <QtGui/qquaternion.h>
 
 QT_BEGIN_NAMESPACE
 

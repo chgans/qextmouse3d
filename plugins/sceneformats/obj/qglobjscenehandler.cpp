@@ -41,7 +41,8 @@
 
 #include "qglobjscenehandler.h"
 #include "qglobjscene.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 #include "qgldisplaylist.h"
 #include "qgloperation.h"
 #include <QtCore/qiodevice.h>

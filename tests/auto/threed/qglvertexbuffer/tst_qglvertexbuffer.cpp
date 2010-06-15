@@ -42,7 +42,8 @@
 #include <QtTest/QtTest>
 #include <QtOpenGL/qgl.h>
 #include "qglvertexbuffer.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 
 class tst_QGLVertexBuffer : public QObject
 {

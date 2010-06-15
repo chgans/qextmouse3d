@@ -12,7 +12,9 @@ HEADERS += \
     qcolor4ub.h \
     qcustomdataarray.h \
     qmatrix4x4stack.h \
-    qvectorarray.h \
+    qvector2darray.h \
+    qvector3darray.h \
+    qvector4darray.h \
     qt3dglobal.h
 SOURCES += \
     qglattributedescription.cpp \
@@ -27,7 +29,9 @@ SOURCES += \
     qcolor4ub.cpp \
     qmatrix4x4stack.cpp \
     qcustomdataarray.cpp \
-    qvectorarray.cpp
+    qvector2darray.cpp \
+    qvector3darray.cpp \
+    qvector4darray.cpp
 PRIVATE_HEADERS += \
     qgltexture2d_p.h \
     qgltextureutils_p.h \

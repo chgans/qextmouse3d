@@ -44,7 +44,7 @@
 #include "qgldisplaylist.h"
 #include "qgeometrydata.h"
 #include "qtest_helpers_p.h"
-#include "qvectorarray.h"
+#include "qvector3darray.h"
 
 class tst_QGLSection : public QObject
 {
