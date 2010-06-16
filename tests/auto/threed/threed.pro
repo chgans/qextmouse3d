@@ -18,6 +18,7 @@ SUBDIRS = \
     qglsection \
     qgeometrydata \
     qgloperation \
+    qglpickcolors \
     qstereoimage
 
 TO_BE_PORTED = \
