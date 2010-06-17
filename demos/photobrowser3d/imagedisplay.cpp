@@ -115,6 +115,9 @@ void ImageDisplay::addImage(const QImage &image)
         p.setX(p.x() - 2.0f);
         s->setPosition(p);
         m_currentFrame = s;
+        int scale = image.width() / 1024;
+        if (scale != 1)
+            s->setScale(QVector3D(scale, scale, scale));
 
         s = m_currentWall->clone(m_wall);
         s->setObjectName(QString("wall %1").arg(m_count));

@@ -66,11 +66,14 @@ public slots:
     void createLoader(const QUrl &);
 protected:
     void run();
+private slots:
+    void incrementCounter();
 private:
     QUrl m_url;
     QSemaphore *m_sem;
     int m_threadPoolSize;
     Launcher *m_launcher;
+    int m_count;
 };
 
 #endif // IMAGEMANAGER_H

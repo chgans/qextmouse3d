@@ -113,5 +113,4 @@ void Launcher::run()
             }
         }
     }
-    qDebug() << "exiting Launcher::run";
 }
