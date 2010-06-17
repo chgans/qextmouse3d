@@ -123,7 +123,7 @@ void PhotoBrowser3DView::initialise()
     url.setScheme("file");
     url.setPath(path);
     m_images->setImageUrl(url);
-    m_images->start();
+    m_images->start(QThread::IdlePriority);
 }
 
 void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
@@ -135,8 +135,8 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
     if (!qFuzzyIsNull(inc))
     {
         zoomMag += inc;
-        if (zoomMag < 5.0f)
-            zoomMag = 5.0f;
+        if (zoomMag < 2.0f)
+            zoomMag = 2.0f;
         QLine3D viewLine(camera()->center(), viewVec);
         camera()->setEye(viewLine.point(zoomMag));
         update();

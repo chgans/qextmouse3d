@@ -65,6 +65,8 @@ ImageManager::ImageManager(QObject *parent)
         m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS + 2;
     // need at least 3 threads - manager, launcher & one loader
     Q_ASSERT(m_threadPoolSize > 2);
+    // debug ---- remove me
+    m_threadPoolSize = 3;
     --m_sem;  // take one thread out for this manager objects run()
     m_sem = new QSemaphore(m_threadPoolSize);
 }
@@ -94,15 +96,20 @@ void ImageManager::createLoader(const QUrl &url)
 {
     ImageLoader *loader = new ImageLoader(this);
     loader->setUrl(url);
-    connect(loader, SIGNAL(finished()),
-            this, SLOT(release()), Qt::QueuedConnection);
-    connect(loader, SIGNAL(imageLoaded(QImage)),
-            this, SIGNAL(imageReady(QImage)), Qt::QueuedConnection);
-    loader->start();
+    connect(loader, SIGNAL(finished()), this, SLOT(release()));
+    connect(loader, SIGNAL(imageLoaded(QImage)), this, SIGNAL(imageReady(QImage)));
+    connect(loader, SIGNAL(imageLoaded(QImage)), this, SLOT(incrementCounter()));
+    loader->start(QThread::IdlePriority);
+}
+
+void ImageManager::incrementCounter()
+{
+    m_count++;
 }
 
 void ImageManager::run()
 {
+    m_count = 0;
     m_launcher = new Launcher(this);
     m_launcher->setUrl(m_url);
     connect(m_launcher, SIGNAL(imageUrl(QUrl)),
@@ -110,13 +117,13 @@ void ImageManager::run()
     connect(m_launcher, SIGNAL(finished()),
             this, SLOT(release()));
     acquire();   // grab a thread for the launcher
-    m_launcher->start();
+    m_launcher->start(QThread::IdlePriority);
     //fprintf(stderr, "ImageManager::run - start %p\n", this);
     QTime timer;
     timer.start();
     exec();
-    fprintf(stderr, "ImageManager::run - images generated from %s in %d ms\n",
-            qPrintable(m_url.path()), timer.elapsed());
+    fprintf(stderr, "ImageManager::run - %d images loaded from %s in %d ms\n",
+            m_count, qPrintable(m_url.path()), timer.elapsed());
     delete m_launcher;
     m_launcher = 0;
 }

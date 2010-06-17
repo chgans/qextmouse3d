@@ -51,6 +51,10 @@
 #include <QStringList>
 #include <QPixmap>
 #include <QPainter>
+#include <QBuffer>
+#include <QImageReader>
+#include <QMutex>
+#include <QMutexLocker>
 
 ImageLoader::ImageLoader(ImageManager *manager)
     : QThread(manager)
@@ -63,12 +67,33 @@ ImageLoader::~ImageLoader()
 
 void ImageLoader::run()
 {
-    QImage im(m_url.path());
+    QString fn = m_url.toLocalFile();
+    int pos = fn.lastIndexOf('.');
+    QString ext;
+    if (pos != -1)
+        ext = fn.mid(pos).toUpper();
+    if (ext.isEmpty() ||
+        !QImageReader::supportedImageFormats().contains(ext.toLocal8Bit()))
+        ext = QString();
+    QFile f(fn);
+    if (!f.open(QIODevice::ReadOnly))
+    {
+        qWarning("Could not read: %s", qPrintable(m_url.path()));
+        return;
+    }
+    QByteArray bytes;
+    while (!f.atEnd())
+    {
+        QThread::yieldCurrentThread();
+        bytes.append(f.read(1024));
+    }
+    QThread::yieldCurrentThread();
+    QImage im = ext.isEmpty() ? QImage::fromData(bytes)
+        : QImage::fromData(bytes, qPrintable(ext));
     if (im.isNull())
         return;
-    // temporary hack - image sizing is not working
-    emit imageLoaded(im);
-    return;
+    QString p = m_url.path();
+    p = p.section("/", -1);
     int max = qMax(im.width(), im.height());
     QImage frm;
     if (max <= 64)
@@ -103,8 +128,10 @@ void ImageLoader::run()
     {
         r.setSize(im.size());
     }
-    r.setTopLeft(QPoint(frm.width() - r.width() / 2,
-                        frm.height() - r.height() / 2));
+    int left = (frm.width() - r.width()) / 2;
+    int top = (frm.height() - r.height()) / 2;
+    r.moveTopLeft(QPoint(left, top));
+    QThread::yieldCurrentThread();
     ptr.drawImage(r, im);
     ptr.end();
     emit imageLoaded(frm);
