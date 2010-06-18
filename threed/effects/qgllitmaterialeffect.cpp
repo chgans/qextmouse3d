@@ -72,6 +72,7 @@ static char const litMaterialVertexShader[] =
     "}\n";
 
 static char const litMaterialFragmentShader[] =
+#if !defined(QT_OPENGL_ES)
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
     "\n"
@@ -79,6 +80,14 @@ static char const litMaterialFragmentShader[] =
     "{\n"
     "    gl_FragColor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
     "}\n";
+#else
+    "varying mediump vec4 qCombinedColor;\n"
+    "\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_FragColor = qCombinedColor;\n"
+    "}\n";
+#endif
 
 static QByteArray createVertexSource(const QString& fileName, const char *extra)
 {
