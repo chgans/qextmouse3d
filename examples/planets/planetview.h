@@ -50,6 +50,8 @@ class PlanetView : public QGLView
 {
     Q_OBJECT
     Q_PROPERTY(QVector3D planet1Pos READ planet1Pos WRITE setPlanet1Pos)
+    Q_PROPERTY(QVector3D planet2Pos READ planet2Pos WRITE setPlanet2Pos)
+    Q_PROPERTY(QVector3D planet3Pos READ planet3Pos WRITE setPlanet3Pos)
 public:
     PlanetView(QWidget *parent = 0);
     ~PlanetView() {}
@@ -57,6 +59,14 @@ public:
     QVector3D planet1Pos() const { return planet1Posn; }
     void setPlanet1Pos(const QVector3D& value)
         { planet1Posn = value; updateGL(); }
+
+    QVector3D planet2Pos() const { return planet2Posn; }
+    void setPlanet2Pos(const QVector3D& value)
+        { planet2Posn = value; updateGL(); }
+
+    QVector3D planet3Pos() const { return planet3Posn; }
+    void setPlanet3Pos(const QVector3D& value)
+        { planet3Posn = value; updateGL(); }
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -66,8 +76,14 @@ private:
     QGLDisplayList list;
     QGLSceneNode *sun;
     QGLSceneNode *planet1;
+    QGLSceneNode *planet2;
+    QGLSceneNode *planet3;
     QVector3D planet1Posn;
     QSphericalAnimation *animPlanet1;
+    QVector3D planet2Posn;
+    QSphericalAnimation *animPlanet2;
+    QVector3D planet3Posn;
+    QSphericalAnimation *animPlanet3;
 };
 
 #endif
