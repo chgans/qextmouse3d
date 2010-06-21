@@ -44,7 +44,7 @@
 #include "qglext.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
-#include <QtCore/qcoreapplication.h>
+#include <QtGui/qapplication.h>
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 #include <QtCore/qdebug.h>
@@ -88,8 +88,8 @@ QT_BEGIN_NAMESPACE
     then stereo viewing is disabled and only a single image will
     be rendered per frame.
 
-    Two kinds of stereo viewing are possible: hardware stereo
-    and simulated stereo.
+    Three kinds of stereo viewing are possible: hardware stereo,
+    anaglyph stereo, and double image stereo.
 
     Hardware stereo relies upon specialized hardware that can render
     the left and right eye images into separate buffers and then show
@@ -97,8 +97,8 @@ QT_BEGIN_NAMESPACE
     or similar technology.  Hardware stereo is the default if the
     hardware supports it.
 
-    Simulated stereo is used when the hardware doesn't have specialized
-    stereo buffer tracking support.  The left image is masked by a red
+    Anaglyph stereo is used when the hardware doesn't have specialized
+    stereo buffer support.  The left image is masked by a red
     filter and the right image is masked by a cyan filter.  This makes
     the resulting images suitable for viewing with standard red-cyan
     anaglyph glasses.
@@ -113,6 +113,15 @@ QT_BEGIN_NAMESPACE
     stereo is not available and stereo viewing is not critical to
     the application, then stereo can be disabled by setting
     QGLCamera::eyeSeparation() to zero.
+
+    Double image stereo involves drawing the left and right eye
+    images in a double-wide or double-high window, with the hardware
+    combining the images.  Four different configurations are available:
+    DoubleWideLeftRight, DoubleWideRightLeft, DoubleHighLeftRight,
+    and DoubleHighRightLeft, according to the layout of the eye images.
+    Double image stereo is selected by calling setStereoType().  It is
+    the responsibility of the application to resize the window to
+    twice its normal size to accomodate the images.
 
     Ctrl-Left and Ctrl-Right can be used to make the eye separation
     smaller or larger under keyboard control.
@@ -140,6 +149,14 @@ QT_BEGIN_NAMESPACE
     \value Hardware Specialized stereo hardware is being used.
     \value RedCyanAnaglyph Stereo is being simulated for viewing by
         red-cyan anaglyph classes.
+    \value DoubleWideLeftRight The view is double-wide with the left eye
+        image on the left of the window.
+    \value DoubleWideRightLeft The view is double-wide with the left eye
+        image on the right of the window.
+    \value DoubleHighLeftRight The view is double-high with the left eye
+        image on the top of the window.
+    \value DoubleHighRightLeft The view is double-high with the left eye
+        image on the bottom of the window.
 */
 
 class QGLViewPrivate
@@ -212,6 +229,8 @@ public:
 
     inline void logEnter(const char *message);
     inline void logLeave(const char *message);
+
+    void processStereoOptions(QGLView *view);
 };
 
 inline void QGLViewPrivate::logEnter(const char *message)
@@ -235,6 +254,54 @@ inline void QGLViewPrivate::logLeave(const char *message)
     qDebug("LOG[%d:%02d:%02d.%03d]: LEAVE: %s (%d ms elapsed)",
            ms / 3600000, (ms / 60000) % 60,
            (ms / 1000) % 60, ms % 1000, message, duration);
+}
+
+void QGLViewPrivate::processStereoOptions(QGLView *view)
+{
+    if (stereoType == QGLView::Hardware)
+        return;
+
+    // If the command-line contains an option that starts with "-stereo-",
+    // then convert it into options that define the size and type of
+    // stereo window to use for a top-level QGLView.  Possible options:
+    //
+    //      nhd, vga, wvga, 720p - define the screen resolution
+    //      wide - use double-wide instead of double-high
+    //      rl - use right-left eye order instead of left-right
+    //
+    QStringList args = QApplication::arguments();
+    foreach (QString arg, args) {
+        if (!arg.startsWith(QLatin1String("-stereo-")))
+            continue;
+        QStringList opts = arg.mid(8).split(QLatin1Char('-'));
+        QGLView::StereoType stereoType;
+        QSize size(0, 0);
+        if (opts.contains(QLatin1String("nhd")))
+            size = QSize(640, 360);
+        else if (opts.contains(QLatin1String("vga")))
+            size = QSize(640, 480);
+        else if (opts.contains(QLatin1String("wvga")))
+            size = QSize(800, 480);
+        else if (opts.contains(QLatin1String("720p")))
+            size = QSize(1280, 720);
+        if (opts.contains(QLatin1String("wide"))) {
+            size = QSize(size.width() * 2, size.height());
+            if (opts.contains(QLatin1String("rl")))
+                stereoType = QGLView::DoubleWideRightLeft;
+            else
+                stereoType = QGLView::DoubleWideLeftRight;
+        } else {
+            size = QSize(size.width(), size.height() * 2);
+            if (opts.contains(QLatin1String("rl")))
+                stereoType = QGLView::DoubleHighRightLeft;
+            else
+                stereoType = QGLView::DoubleHighLeftRight;
+        }
+        if (size.width() > 0 && size.height() > 0)
+            view->resize(size);
+        view->setStereoType(stereoType);
+        break;
+    }
 }
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
@@ -261,6 +328,8 @@ QGLView::QGLView(QWidget *parent)
 {
     d = new QGLViewPrivate(this);
     setMouseTracking(true);
+    if (!parent)
+        d->processStereoOptions(this);
 }
 
 /*!
@@ -276,6 +345,8 @@ QGLView::QGLView(const QGLFormat& format, QWidget *parent)
 {
     d = new QGLViewPrivate(this);
     setMouseTracking(true);
+    if (!parent)
+        d->processStereoOptions(this);
 }
 
 /*!
@@ -321,12 +392,32 @@ void QGLView::setOption(QGLView::Option option, bool value)
 }
 
 /*!
-    Returns the type of stereo viewing technology that is in use:
-    Hardware or RedCyanAnaglyph.
+    Returns the type of stereo viewing technology that is in use.
+
+    \sa setStereoType()
 */
 QGLView::StereoType QGLView::stereoType() const
 {
     return d->stereoType;
+}
+
+/*!
+    Sets the \a type of stereo viewing technology that is in use.
+    The request takes effect at the next repaint.
+
+    The request is ignored stereoType() or \a type is Hardware,
+    because hardware stereo can only be enabled if the hardware
+    supports it, and then it can never be disabled.
+
+    \sa stereoType()
+*/
+void QGLView::setStereoType(QGLView::StereoType type)
+{
+    if (d->stereoType == Hardware || type == Hardware)
+        return;
+    if (d->stereoType == type)
+        return;
+    d->stereoType = type;
 }
 
 /*!
@@ -505,6 +596,50 @@ void QGLView::resizeGL(int w, int h)
     d->pickBufferForceUpdate = true;
 }
 
+static void qt_qglview_left_viewport
+    (const QSize &size, QGLView::StereoType type)
+{
+    switch (type) {
+    case QGLView::DoubleWideLeftRight:
+        glViewport(0, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        glViewport(size.width() / 2, 0,
+                   size.width() - size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        glViewport(0, size.height() / 2, size.width(),
+                   size.height() - size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        glViewport(0, 0, size.width(), size.height() / 2);
+        break;
+    default: break;
+    }
+}
+
+static void qt_qglview_right_viewport
+    (const QSize &size, QGLView::StereoType type)
+{
+    switch (type) {
+    case QGLView::DoubleWideLeftRight:
+        glViewport(size.width() / 2, 0,
+                   size.width() - size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        glViewport(0, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        glViewport(0, 0, size.width(), size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        glViewport(0, size.height() / 2, size.width(),
+                   size.height() - size.height() / 2);
+        break;
+    default: break;
+    }
+}
+
 /*!
     \internal
 */
@@ -518,8 +653,10 @@ void QGLView::paintGL()
     QGLPainter painter;
     painter.begin();
     painter.resetViewport();
-    if (d->options & QGLView::ShowPicking) {
-        // If showing picking, then render normally.
+    if (d->options & QGLView::ShowPicking &&
+            d->stereoType == QGLView::RedCyanAnaglyph) {
+        // If showing picking, then render normally.  This really
+        // only works if we aren't using hardware or double stereo.
         painter.setPicking(true);
         painter.clearPickObjects();
         painter.setEye(QGL::NoEye);
@@ -527,7 +664,9 @@ void QGLView::paintGL()
         painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
-    } else if (d->camera->eyeSeparation() == 0.0f) {
+    } else if (d->camera->eyeSeparation() == 0.0f &&
+                    (d->stereoType == QGLView::Hardware ||
+                     d->stereoType == QGLView::RedCyanAnaglyph)) {
         // No camera separation, so draw without stereo.  If the hardware
         // has stereo buffers, then render the same image into both buffers.
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
@@ -550,11 +689,6 @@ void QGLView::paintGL()
             paintGL(&painter);
         }
     } else {
-        // Determine the left and right camera positions and the viewport size.
-        QVector3D vector = d->camera->translation
-            (d->camera->eyeSeparation() / 2.0f, 0.0f, 0.0f);
-        QSize viewportSize = QSize(width(), height());
-
         // Paint the scene twice, from the perspective of each camera.
         // In RedCyanAnaglyph mode, the color mask is set each time to only
         // extract the color planes that we want to see through that eye.
@@ -574,8 +708,21 @@ void QGLView::paintGL()
             paintGL(&painter);
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        } else if (d->stereoType != QGLView::Hardware) {
+            // Render the stereo images into the two halves of the window.
+            QSize sz = size();
+            painter.setEye(QGL::LeftEye);
+            qt_qglview_left_viewport(sz, d->stereoType);
+            earlyPaintGL(&painter);
+            painter.setCamera(d->camera);
+            paintGL(&painter);
+            painter.setEye(QGL::RightEye);
+            qt_qglview_right_viewport(sz, d->stereoType);
+            painter.setCamera(d->camera);
+            paintGL(&painter);
+        }
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
-        } else {
+        else {
             bool doubleBuffered = doubleBuffer();
             if (doubleBuffered)
                 glDrawBuffer(GL_BACK_LEFT);
