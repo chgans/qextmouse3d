@@ -40,7 +40,8 @@
 ****************************************************************************/
 
 #include "mouse.h"
-#include "redcyaneffect.h"
+#include "stereoeffect.h"
+#include "stereographicsview.h"
 #include "teapotitem.h"
 #include "qglgraphicsnavigationitem.h"
 
@@ -56,6 +57,7 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
 
     bool useTeapot = QApplication::arguments().contains(QLatin1String("-teapot"));
+    bool useStereo = StereoGraphicsView::useStereo();
 
     qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
 
@@ -67,14 +69,14 @@ int main(int argc, char **argv)
     scene.setItemIndexMethod(QGraphicsScene::NoIndex);
 
     for (int i = 0; i < MouseCount; ++i) {
-        Mouse *mouse = new Mouse(!useTeapot);
+        Mouse *mouse = new Mouse(!useTeapot && !useStereo);
         mouse->setPos(::sin((i * 6.28) / MouseCount) * 200,
                       ::cos((i * 6.28) / MouseCount) * 200);
         if (!useTeapot) {
             // Pick a random z value for the mouse to be drawn at
             // and create an effect object for the mouse.
             qreal z = qrand() % 15;
-            RedCyanEffect *effect = new RedCyanEffect();
+            StereoEffect *effect = new StereoEffect();
             effect->setZ(z);
             mouse->setGraphicsEffect(effect);
         }
@@ -85,7 +87,19 @@ int main(int argc, char **argv)
     QObject::connect(&timer, SIGNAL(timeout()), &scene, SLOT(advance()));
     timer.start(1000 / 33);
 
-    if (useTeapot) {
+    if (!useTeapot && useStereo) {
+        // Create two QGraphicsView's showing the left and right eyes.
+        StereoGraphicsView view;
+        view.setScene(&scene);
+        QPixmap cheese(":/images/cheese.jpg");
+        view.leftEye()->setBackgroundBrush(cheese);
+        view.rightEye()->setBackgroundBrush(cheese);
+        QSize size = view.leftEye()->size();
+        scene.setSceneRect(-size.width() / 2, -size.height() / 2,
+                           size.width(), size.height());
+        view.show();
+        return app.exec();
+    } else if (useTeapot) {
         // Create an outer scene containing the teapot item and
         // set the mouse scene on it as its inner scene.
         QGraphicsScene outerScene;

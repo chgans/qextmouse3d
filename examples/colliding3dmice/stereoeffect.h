@@ -39,18 +39,18 @@
 **
 ****************************************************************************/
 
-#ifndef REDCYANEFFECT_H
-#define REDCYANEFFECT_H
+#ifndef STEREOEFFECT_H
+#define STEREOEFFECT_H
 
 #include <QtGui/qgraphicseffect.h>
 
-class RedCyanEffect : public QGraphicsEffect
+class StereoEffect : public QGraphicsEffect
 {
     Q_OBJECT
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY zChanged)
 public:
-    RedCyanEffect(QObject *parent = 0);
-    ~RedCyanEffect();
+    StereoEffect(QObject *parent = 0);
+    ~StereoEffect();
 
     qreal z() const { return m_z; }
 
@@ -70,4 +70,3 @@ private:
 };
 
 #endif
-
