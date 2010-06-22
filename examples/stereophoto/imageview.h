@@ -38,37 +38,28 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
+#ifndef IMAGEVIEW_H
+#define IMAGEVIEW_H
 
-#include "imageviewer.h"
-#include "imageview.h"
+#include "qglview.h"
+#include "qstereoimage.h"
+#include "qgltexture2d.h"
 
-int main(int argc, char *argv[])
+class ImageView : public QGLView
 {
-    QApplication app(argc, argv);
-    QString filename;
-    bool singleView = false;
-    QStringList args = QApplication::arguments().mid(1);
-    foreach (QString arg, args) {
-        if (arg.startsWith(QLatin1Char('-'))) {
-            if (arg.startsWith(QLatin1String("-stereo-")))
-                singleView = true;
-        } else {
-            if (filename.isEmpty())
-                filename = arg;
-        }
-    }
-    if (filename.isEmpty())
-        filename = QLatin1String(":images/TwnPks_RkGdn_sm.jps");
-    if (singleView) {
-        ImageView imageView;
-        imageView.load(filename);
-        imageView.show();
-        return app.exec();
-    } else {
-        ImageViewer imageViewer;
-        imageViewer.load(filename);
-        imageViewer.show();
-        return app.exec();
-    }
-}
+    Q_OBJECT
+public:
+    ImageView(QWidget *parent = 0);
+
+    void load(const QString &fileName);
+
+protected:
+    void paintGL(QGLPainter *painter);
+
+private:
+    QStereoImage m_image;
+    QGLTexture2D *m_leftTexture;
+    QGLTexture2D *m_rightTexture;
+};
+
+#endif
