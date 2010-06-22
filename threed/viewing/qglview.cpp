@@ -597,44 +597,48 @@ void QGLView::resizeGL(int w, int h)
 }
 
 static void qt_qglview_left_viewport
-    (const QSize &size, QGLView::StereoType type)
+    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
 {
     switch (type) {
     case QGLView::DoubleWideLeftRight:
-        glViewport(0, 0, size.width() / 2, size.height());
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width() / 2, size.height());
         break;
     case QGLView::DoubleWideRightLeft:
-        glViewport(size.width() / 2, 0,
-                   size.width() - size.width() / 2, size.height());
+        painter->setViewportOffset(QPoint(size.width() / 2, 0));
+        painter->setViewport(size.width() / 2, size.height());
         break;
     case QGLView::DoubleHighLeftRight:
-        glViewport(0, size.height() / 2, size.width(),
-                   size.height() - size.height() / 2);
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width(), size.height() / 2);
         break;
     case QGLView::DoubleHighRightLeft:
-        glViewport(0, 0, size.width(), size.height() / 2);
+        painter->setViewportOffset(QPoint(0, size.height() / 2));
+        painter->setViewport(size.width(), size.height() / 2);
         break;
     default: break;
     }
 }
 
 static void qt_qglview_right_viewport
-    (const QSize &size, QGLView::StereoType type)
+    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
 {
     switch (type) {
     case QGLView::DoubleWideLeftRight:
-        glViewport(size.width() / 2, 0,
-                   size.width() - size.width() / 2, size.height());
+        painter->setViewportOffset(QPoint(size.width() / 2, 0));
+        painter->setViewport(size.width() / 2, size.height());
         break;
     case QGLView::DoubleWideRightLeft:
-        glViewport(0, 0, size.width() / 2, size.height());
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width() / 2, size.height());
         break;
     case QGLView::DoubleHighLeftRight:
-        glViewport(0, 0, size.width(), size.height() / 2);
+        painter->setViewportOffset(QPoint(0, size.height() / 2));
+        painter->setViewport(size.width(), size.height() / 2);
         break;
     case QGLView::DoubleHighRightLeft:
-        glViewport(0, size.height() / 2, size.width(),
-                   size.height() - size.height() / 2);
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width(), size.height() / 2);
         break;
     default: break;
     }
@@ -712,14 +716,15 @@ void QGLView::paintGL()
             // Render the stereo images into the two halves of the window.
             QSize sz = size();
             painter.setEye(QGL::LeftEye);
-            qt_qglview_left_viewport(sz, d->stereoType);
+            qt_qglview_left_viewport(&painter, sz, d->stereoType);
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
             painter.setEye(QGL::RightEye);
-            qt_qglview_right_viewport(sz, d->stereoType);
+            qt_qglview_right_viewport(&painter, sz, d->stereoType);
             painter.setCamera(d->camera);
             paintGL(&painter);
+            painter.setViewportOffset(QPoint(0, 0));
         }
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         else {

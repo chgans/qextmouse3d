@@ -608,7 +608,7 @@ void QGLPainter::setClearStencil(GLint value)
     Returns the viewport for the active GL context.  The origin for
     the returned rectangle is the top-left of the drawing surface.
 
-    \sa setViewport(), resetViewport()
+    \sa setViewport(), resetViewport(), viewportOffset()
 */
 QRect QGLPainter::viewport() const
 {
@@ -619,26 +619,45 @@ QRect QGLPainter::viewport() const
         glGetIntegerv(GL_VIEWPORT, view);
         d->viewport = QRect(view[0], view[1], view[2], view[3]);
     }
-    // Convert the GL viewport into standard Qt co-ordinates.
-    return QRect(d->viewport.x(),
-                 d->context->device()->height() -
-                        (d->viewport.y() + d->viewport.height()),
-                 d->viewport.width(), d->viewport.height());
+    // Convert the GL viewport into standard Qt co-ordinates
+    // and adjust for the surface size and offset.
+    QRect rect;
+    if (d->surfaceStack.isEmpty()) {
+        rect = QRect(d->viewport.x(),
+                     d->context->device()->height() -
+                            (d->viewport.y() + d->viewport.height()),
+                     d->viewport.width(), d->viewport.height());
+        rect.translate(-d->viewportOffset);
+    } else {
+        QSize size = surfaceSize();
+        rect = QRect(d->viewport.x(),
+                     size.height() - (d->viewport.y() + d->viewport.height()),
+                     d->viewport.width(), d->viewport.height());
+    }
+    return rect;
 }
 
 /*!
     Sets the viewport for the active GL context to \a rect.
     The origin for \a rect is the top-left of the drawing surface.
 
-    \sa viewport(), resetViewport()
+    \sa viewport(), resetViewport(), viewportOffset()
 */
 void QGLPainter::setViewport(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    int y = d->context->device()->height() - (rect.y() + rect.height());
-    glViewport(rect.x(), y, rect.width(), rect.height());
-    d->viewport = QRect(rect.x(), y, rect.width(), rect.height());
+    int x, y;
+    if (d->surfaceStack.isEmpty()) {
+        x = rect.x() + d->viewportOffset.x();
+        y = d->context->device()->height() -
+                (rect.y() + d->viewportOffset.y() + rect.height());
+    } else {
+        x = rect.x();
+        y = surfaceSize().height() - (rect.y() + rect.height());
+    }
+    glViewport(x, y, rect.width(), rect.height());
+    d->viewport = QRect(x, y, rect.width(), rect.height());
 }
 
 /*!
@@ -649,10 +668,7 @@ void QGLPainter::setViewport(const QRect& rect)
 */
 void QGLPainter::setViewport(const QSize& size)
 {
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    glViewport(0, 0, size.width(), size.height());
-    d->viewport = QRect(0, 0, size.width(), size.height());
+    setViewport(QRect(QPoint(0, 0), size));
 }
 
 /*!
@@ -663,10 +679,7 @@ void QGLPainter::setViewport(const QSize& size)
 */
 void QGLPainter::setViewport(int width, int height)
 {
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    glViewport(0, 0, width, height);
-    d->viewport = QRect(0, 0, width, height);
+    setViewport(QRect(0, 0, width, height));
 }
 
 /*!
@@ -685,6 +698,35 @@ void QGLPainter::resetViewport()
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     d->viewport = QRect();
+}
+
+/*!
+    Returns the viewport offset that will be added to the top-left
+    corner of viewport() when calling \c{glViewport()} on the
+    window.  The default value is (0, 0).
+
+    \sa setViewportOffset(), setViewport()
+*/
+QPoint QGLPainter::viewportOffset() const
+{
+    Q_D(const QGLPainter);
+    return d->viewportOffset;
+}
+
+/*!
+    Sets the viewport offset that will be added to the top-left
+    corner of viewport() when calling \c{glViewport()} to \a point.
+
+    This function can be used to shift the logical viewport to a
+    different part of the window, usually for drawing left and right
+    stereo images side by side.
+
+    \sa viewportOffset(), setViewport()
+*/
+void QGLPainter::setViewportOffset(const QPoint& point)
+{
+    Q_D(QGLPainter);
+    d->viewportOffset = point;
 }
 
 /*!
