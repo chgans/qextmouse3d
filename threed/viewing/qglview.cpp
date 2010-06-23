@@ -1005,6 +1005,13 @@ void QGLView::keyPressEvent(QKeyEvent *e)
     }
     switch (e->key()) {
 
+        case Qt::Key_Escape:
+        case Qt::Key_Q:
+        {
+            if (parentWidget() == 0)
+                close();
+        }
+
         case Qt::Key_Left:
         {
             if ((e->modifiers() & Qt::ShiftModifier) != 0) {
