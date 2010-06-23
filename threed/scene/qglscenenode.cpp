@@ -329,8 +329,11 @@ QVector3D QGLSceneNode::center() const
         }
         else
         {
+            QGL::IndexArray ix = d->geometry.indices();
             for (int i = d->start; i < (d->start + d->count); ++i)
-                center += d->geometry.vertex(i);
+            {
+                center += d->geometry.vertex(ix[i]);
+            }
             center /= (float)d->geometry.count();
         }
     }
