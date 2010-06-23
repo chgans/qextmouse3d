@@ -64,9 +64,9 @@ PVColorView::PVColorView(QWidget *parent)
     QGLPrimitive p;
     dl2->newSection();
     p.appendVertex(QVector3D(1, 1, -3), QVector3D(-1, 1, -3),
-                   QVector3D(-1, -1, -3), QVector3D(1, -1, -3));
-    p.appendColor(Qt::red, Qt::blue, Qt::yellow, Qt::green);
-    dl2->addQuad(p);
+                   QVector3D(-1, -1, -3));
+    p.appendColor(Qt::red, Qt::blue, Qt::yellow);
+    dl2->addTriangle(p);
     dl2->setEffect(QGL::FlatPerVertexColor);
 
     QGLDisplayList *displayList = buildGeometry();
