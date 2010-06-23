@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the examples of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,20 +39,50 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include "basketview.h"
+#ifndef STEREOGRAPHICSVIEW_H
+#define STEREOGRAPHICSVIEW_H
 
-int main(int argc, char *argv[])
+#include <QtGui>
+
+class StereoGraphicsViewEye : public QGraphicsView
 {
-    QApplication app(argc, argv);
-    BasketView view;
-    if (view.stereoType() != QGLView::RedCyanAnaglyph)
-        view.camera()->setEyeSeparation(0.3f);
-    if (QApplication::arguments().contains("-maximize"))
-        view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
-        view.showFullScreen();
-    else
-        view.show();
-    return app.exec();
-}
+    Q_OBJECT
+public:
+    enum Eye
+    {
+        NoEye,
+        LeftEye,
+        RightEye
+    };
+
+    StereoGraphicsViewEye(Eye eye, QWidget *parent)
+        : QGraphicsView(parent), m_eye(eye) {}
+
+    Eye eye() const { return m_eye; }
+
+private:
+    Eye m_eye;
+};
+
+class StereoGraphicsView : public QWidget
+{
+    Q_OBJECT
+public:
+    StereoGraphicsView(QWidget *parent = 0);
+    ~StereoGraphicsView();
+
+    static bool useStereo();
+
+    QGraphicsScene *scene() const { return m_scene; }
+    void setScene(QGraphicsScene *scene);
+
+    QGraphicsView *leftEye() const { return m_leftEye; }
+    QGraphicsView *rightEye() const { return m_rightEye; }
+
+private:
+    QGraphicsScene *m_scene;
+    QGraphicsView *m_leftEye;
+    QGraphicsView *m_rightEye;
+};
+
+#endif

@@ -121,6 +121,9 @@ public:
     void setViewport(int width, int height);
     void resetViewport();
 
+    QPoint viewportOffset() const;
+    void setViewportOffset(const QPoint& point);
+
     QRect scissor() const;
     void setScissor(const QRect& rect);
     void intersectScissor(const QRect& rect);

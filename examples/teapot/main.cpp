@@ -48,6 +48,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     TeapotView view;
 //! [main-args]
+    if (view.stereoType() != QGLView::RedCyanAnaglyph)
+        view.camera()->setEyeSeparation(0.3f);
     if (QApplication::arguments().contains("-maximize"))
         view.showMaximized();
     else if (QApplication::arguments().contains("-fullscreen"))

@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     PlanetView view;
+    if (view.stereoType() != QGLView::RedCyanAnaglyph)
+        view.camera()->setEyeSeparation(0.3f);
     view.show();
     return app.exec();
 }

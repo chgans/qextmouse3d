@@ -113,6 +113,8 @@ void CubeView::paintGL(QGLPainter *painter)
 {
     needsUpdate = false;
 
+    QRect windowViewport = painter->viewport();
+
     painter->modelViewMatrix().push();
     painter->projectionMatrix().push();
     painter->pushSurface(fbo);
@@ -132,7 +134,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->popSurface();
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
-    painter->setViewport(painter->surfaceSize());
+    painter->setViewport(windowViewport);
 
     painter->setDepthTestingEnabled(false);
 

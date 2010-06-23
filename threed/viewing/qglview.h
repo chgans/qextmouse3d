@@ -77,10 +77,15 @@ public:
     enum StereoType
     {
         Hardware,
-        RedCyanAnaglyph
+        RedCyanAnaglyph,
+        DoubleWideLeftRight,
+        DoubleWideRightLeft,
+        DoubleHighLeftRight,
+        DoubleHighRightLeft
     };
 
     QGLView::StereoType stereoType() const;
+    void setStereoType(QGLView::StereoType type);
 
     void registerObject(int objectId, QObject *object);
     void deregisterObject(int objectId);
