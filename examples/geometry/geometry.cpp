@@ -132,8 +132,8 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         { { u4, v7 }, { u5, v8 }, { u5, v6 } }, // B-G-E
         { { u4, v9 }, { u5, v8 }, { u4, v7 } }  // L-G-B
     };
-    QImage uv(512, 512, QImage::Format_ARGB32);
-    uv.fill(qRgba(196, 196, 196, 0));
+    QImage uv(1024, 1024, QImage::Format_ARGB32);
+    uv.fill(qRgba(196, 196, 196, 196));
     QPainter painter;
     painter.begin(&uv);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -141,7 +141,7 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
     pen.setWidth(2.0);
     painter.setPen(pen);
     QFont font = painter.font();
-    font.setPointSize(18);
+    font.setPointSize(36);
     painter.setFont(font);
     QFontMetrics metrics = painter.fontMetrics();
 
@@ -158,11 +158,11 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         QVector2D t2(tex[ix][2][0], tex[ix][2][1]);
 
         // scale up and flip to draw the texture
-        QVector2D tv0 = t0 * 512.0;
-        QVector2D tv1 = t1 * 512.0;
-        QVector2D tv2 = t2 * 512.0;
+        QVector2D tv0 = t0 * 1024.0;
+        QVector2D tv1 = t1 * 1024.0;
+        QVector2D tv2 = t2 * 1024.0;
 
-        painter.setPen(QColor("darkgrey"));
+        painter.setPen(QColor("darkblue"));
         painter.drawLine(tv0.toPointF(), tv1.toPointF());
         painter.drawLine(tv1.toPointF(), tv2.toPointF());
         painter.drawLine(tv2.toPointF(), tv0.toPointF());
@@ -170,7 +170,7 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         QVector3D cen = tri.center();
         QString n = QString::number(ix+1);
 
-        painter.setPen(QColor("green"));
+        painter.setPen(QColor("darkgreen"));
         painter.drawText(QPointF(cen.x() - metrics.width(n) / 2.0, cen.y() + 3.0), n);
 
         // Qt's coordinate system is upside down.  I'm ok with that.

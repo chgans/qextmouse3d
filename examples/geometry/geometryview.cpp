@@ -45,6 +45,7 @@
 #include <QPainter>
 #include <QDir>
 #include <QTimer>
+#include <QWheelEvent>
 
 #include <math.h>
 
@@ -79,9 +80,8 @@ GeometryView::GeometryView(QWidget *parent)
     QGLTexture2D *tex = icosahedron->material()->texture();
     parms->setTexture(tex);
     floor->setMaterialIndex(m);
-    QMatrix4x4 mat;
-    mat.translate(0.0f, 0.0f, -5.0f);
-    floor->setLocalTransform(mat);
+    floor->setPosition(QVector3D(0, 0, -5));
+    floor->setScale(QVector3D(0.2, 0.2, 0.1));
 
     mdl = new QGLLightModel(this);
     mdl->setAmbientSceneColor(QColor(196,196,196));
@@ -92,6 +92,23 @@ GeometryView::~GeometryView()
     delete icosahedron;
     delete floor;
     delete timer;
+}
+
+void GeometryView::wheelEvent(QWheelEvent *e)
+{
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal zoomMag = viewVec.length();
+    qreal inc = float(0.3 * e->delta()) / 50.0f;
+    if (!qFuzzyIsNull(inc))
+    {
+        zoomMag += inc;
+        if (zoomMag < 5.0f)
+            zoomMag = 5.0f;
+        QLine3D viewLine(camera()->center(), viewVec);
+        camera()->setEye(viewLine.point(zoomMag));
+        update();
+    }
+    e->accept();
 }
 
 void GeometryView::initializeGL(QGLPainter *painter)
@@ -106,7 +123,6 @@ void GeometryView::initializeGL(QGLPainter *painter)
 
 void GeometryView::paintGL(QGLPainter *painter)
 {
-    painter->modelViewMatrix().scale(0.7f);
     floor->draw(painter);
     painter->modelViewMatrix().rotate(angle, 0.10f, 1.0f, 0.0f);
     icosahedron->draw(painter);
