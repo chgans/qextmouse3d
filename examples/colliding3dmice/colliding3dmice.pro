@@ -1,12 +1,14 @@
 HEADERS += \
 	mouse.h \
         teapotitem.h \
-        redcyaneffect.h
+        stereoeffect.h \
+        stereographicsview.h
 SOURCES += \
 	main.cpp \
         mouse.cpp \
         teapotitem.cpp \
-        redcyaneffect.cpp
+        stereoeffect.cpp \
+        stereographicsview.cpp
 
 RESOURCES += \
 	mice.qrc

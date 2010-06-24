@@ -15,6 +15,7 @@ uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
 
 varying mediump vec4 qColor;
 varying mediump vec4 qSecondaryColor;
+varying mediump vec4 qCombinedColor;
 
 void qLightVertex(vec4 vertex, vec3 normal)
 {
@@ -64,6 +65,11 @@ void qLightVertex(vec4 vertex, vec3 normal)
     // Generate the final output colors.
     color += ecm;
     float alpha = dcm.a;
+    // Note: Normally, the qCombinedColor is ignored, and per-pixel
+    // value is calculated.
+    // If OPENGL_ES is defined, qColor and qSecondaryColor are ignored,
+    // and qCombinedColor is calculated here to speed up the fragment shader.
     qColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
     qSecondaryColor = clamp(scolor, 0.0, 1.0);
+    qCombinedColor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);
 }

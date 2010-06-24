@@ -53,9 +53,6 @@
 
 #include <limits>
 
-// uncomment this to be warned when meshes are empty of geometry
-// #define Q_WARN_EMPTY_MESH 1
-
 /*!
     \class QGLDisplayList
     \brief The QGLDisplayList class accumulates geometry for efficient display.
@@ -854,14 +851,12 @@ static int nodeCount(const QList<QGLSceneNode*> &list)
     return total;
 }
 
-#ifdef Q_WARN_EMPTY_MESH
 static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int nodeCount,
                               const char *msg)
 {
     qWarning("Ignoring section %d (%p) with %d vertices and"
              " %d indexes - %s", secCount, s, vertCount, nodeCount, msg);
 }
-#endif
 
 /*!
     Finish the building of this display list and optimize it for
@@ -903,16 +898,15 @@ void QGLDisplayList::finalize()
             int scnt = s->count();
             if (scnt == 0 || icnt == 0 || ncnt == 0)
             {
-#ifdef Q_WARN_EMPTY_MESH
-#ifndef QT_NO_DEBUG
+                if (!qgetenv("Q_WARN_EMPTY_MESH").isEmpty())
+                {
                     if (ncnt == 0)
                         warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
                     else if (scnt == 0)
                         warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
                     else
                         warnIgnore(scnt, s, icnt, ncnt, "index count zero");
-#endif
-#endif
+                }
                 continue;
             }
             s->normalizeNormals();

@@ -125,6 +125,7 @@ public:
     QGLMaterial *frontColorMaterial;
     QGLMaterial *backColorMaterial;
     QBox3D viewingCube;
+    QPoint viewportOffset;
     QRect viewport; // GL co-ordinates - origin bottom-left.
     QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;

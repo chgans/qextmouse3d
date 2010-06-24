@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the examples of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,25 +39,50 @@
 **
 ****************************************************************************/
 
-#ifndef PIEVIEW_H
-#define PIEVIEW_H
+#ifndef STEREOGRAPHICSVIEW_H
+#define STEREOGRAPHICSVIEW_H
 
-#include "qglview.h"
-#include "qgldisplaylist.h"
+#include <QtGui>
 
-class PieView : public QGLView
+class StereoGraphicsViewEye : public QGraphicsView
 {
     Q_OBJECT
 public:
-    PieView(QWidget *parent = 0) : QGLView(parent) {}
-    ~PieView() {}
+    enum Eye
+    {
+        NoEye,
+        LeftEye,
+        RightEye
+    };
 
-protected:
-    void initializeGL(QGLPainter *painter);
-    void paintGL(QGLPainter *painter);
+    StereoGraphicsViewEye(Eye eye, QWidget *parent)
+        : QGraphicsView(parent), m_eye(eye) {}
+
+    Eye eye() const { return m_eye; }
 
 private:
-    QGLDisplayList pie;
+    Eye m_eye;
+};
+
+class StereoGraphicsView : public QWidget
+{
+    Q_OBJECT
+public:
+    StereoGraphicsView(QWidget *parent = 0);
+    ~StereoGraphicsView();
+
+    static bool useStereo();
+
+    QGraphicsScene *scene() const { return m_scene; }
+    void setScene(QGraphicsScene *scene);
+
+    QGraphicsView *leftEye() const { return m_leftEye; }
+    QGraphicsView *rightEye() const { return m_rightEye; }
+
+private:
+    QGraphicsScene *m_scene;
+    QGraphicsView *m_leftEye;
+    QGraphicsView *m_rightEye;
 };
 
 #endif

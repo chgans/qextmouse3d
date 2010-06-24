@@ -120,27 +120,43 @@ static char const litTextureVertexShader[] =
 
 static char const litDecalFragmentShader[] =
     "uniform sampler2D tex;\n"
+#if defined(QT_OPENGL_ES)
+    "varying mediump vec4 qCombinedColor;\n"
+#else
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
+#endif
     "varying highp vec4 qTexCoord;\n"
     "\n"
     "void main(void)\n"
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
+#if defined(QT_OPENGL_ES)
+    "    mediump vec4 lcolor = qCombinedColor;\n"
+#else
     "    mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+#endif
     "    gl_FragColor = vec4(clamp(lcolor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), lcolor.a);\n"
     "}\n";
 
 static char const litModulateFragmentShader[] =
     "uniform sampler2D tex;\n"
+#if defined(QT_OPENGL_ES)
+    "varying mediump vec4 qCombinedColor;\n"
+#else
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
+#endif
     "varying highp vec4 qTexCoord;\n"
     "\n"
     "void main(void)\n"
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
+#if defined(QT_OPENGL_ES)
+    "    mediump vec4 lcolor = qCombinedColor;\n"
+#else
     "    mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+#endif
     "    gl_FragColor = col * lcolor;\n"
     "}\n";
 

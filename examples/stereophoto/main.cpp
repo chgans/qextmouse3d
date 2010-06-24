@@ -41,12 +41,34 @@
 #include <QApplication>
 
 #include "imageviewer.h"
+#include "imageview.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    ImageViewer imageViewer;
-    imageViewer.load(QLatin1String(":images/TwnPks_RkGdn_sm.jps"));
-    imageViewer.show();
-    return app.exec();
+    QString filename;
+    bool singleView = false;
+    QStringList args = QApplication::arguments().mid(1);
+    foreach (QString arg, args) {
+        if (arg.startsWith(QLatin1Char('-'))) {
+            if (arg.startsWith(QLatin1String("-stereo-")))
+                singleView = true;
+        } else {
+            if (filename.isEmpty())
+                filename = arg;
+        }
+    }
+    if (filename.isEmpty())
+        filename = QLatin1String(":images/TwnPks_RkGdn_sm.jps");
+    if (singleView) {
+        ImageView imageView;
+        imageView.load(filename);
+        imageView.show();
+        return app.exec();
+    } else {
+        ImageViewer imageViewer;
+        imageViewer.load(filename);
+        imageViewer.show();
+        return app.exec();
+    }
 }

@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the Qt/3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -39,18 +39,34 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include "pieview.h"
+#ifndef STEREOEFFECT_H
+#define STEREOEFFECT_H
 
-int main(int argc, char *argv[])
+#include <QtGui/qgraphicseffect.h>
+
+class StereoEffect : public QGraphicsEffect
 {
-    QApplication app(argc, argv);
-    PieView view;
-    if (QApplication::arguments().contains("-maximize"))
-        view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
-        view.showFullScreen();
-    else
-        view.show();
-    return app.exec();
-}
+    Q_OBJECT
+    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY zChanged)
+public:
+    StereoEffect(QObject *parent = 0);
+    ~StereoEffect();
+
+    qreal z() const { return m_z; }
+
+    QRectF boundingRectFor(const QRectF &sourceRect) const;
+
+public Q_SLOTS:
+    void setZ(qreal z);
+
+Q_SIGNALS:
+    void zChanged(qreal z);
+
+protected:
+    void draw(QPainter *painter);
+
+private:
+    qreal m_z;
+};
+
+#endif

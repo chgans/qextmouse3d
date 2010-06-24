@@ -62,6 +62,7 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
                      QSizeF size, int level)
                          : QGLDisplayList(parent, materials)
 {
+    setObjectName("QuadPlane");
     if (level > 8)
         level = 8;
     if (level < 1)
@@ -71,21 +72,22 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
     QSizeF div = size / float(divisions);
     QSizeF half = size / 2.0f;
     newSection();
+    QGLPrimitive zip;
+    QGLPrimitive zip2;
     for (int yy = 0; yy <= divisions; ++yy)
     {
         qreal y = half.height() - float(yy) * div.height();
         qreal texY = float(yy) / divisions;
-        begin(QGL::QUADS_ZIPPED);
-        setFlags(flags() | QGL::RETAIN_PRIMITIVE);
         for (int xx = 0; xx <= divisions; ++xx)
         {
             qreal x = half.width() - float(xx) * div.width();
             qreal texX = float(xx) / divisions;
-            addVertex(x, y);
-            addTexCoord(texX, texY);
+            zip.appendVertex(QVector3D(x, y, 0));
+            zip.appendTexCoord(QVector2D(1.0f - texX, 1.0f - texY));
         }
-        if (flags() & QGL::NEXT_PRIMITIVE)
-            end();
-        setFlags(flags() | QGL::NEXT_PRIMITIVE);
+        if (yy > 0)
+            addQuadsZipped(zip, zip2);
+        zip2 = zip;
+        zip.clear();
     }
 }

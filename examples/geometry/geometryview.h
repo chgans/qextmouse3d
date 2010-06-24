@@ -52,6 +52,7 @@ class QGLLightParameters;
 class QGLMaterial;
 class QGLLightModel;
 class QGLMaterialCollection;
+class QWheelEvent;
 
 class GeometryView : public QGLView
 {
@@ -63,6 +64,7 @@ public:
 protected:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
+    void wheelEvent(QWheelEvent *e);
 
 private slots:
     void rotate();
