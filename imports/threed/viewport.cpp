@@ -511,7 +511,7 @@ void Viewport::draw(QGLPainter *painter)
     foreach (QObject *child, list) {
         QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
         if (light) {
-            painter->setMainLight(light);
+            painter->setMainLight(light, QMatrix4x4());
             break;
         }
     }
