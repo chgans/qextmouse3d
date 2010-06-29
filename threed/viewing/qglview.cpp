@@ -746,8 +746,8 @@ void QGLView::paintGL()
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
-#endif
         }
+#endif
     }
     d->logLeave("QGLView::paintGL");
 }
