@@ -46,7 +46,7 @@ class ShaderProgramEffect : public QGLAbstractEffect
 {
 public:
     ShaderProgramEffect(ShaderProgram* parent);
-    ~ShaderProgramEffect();
+    virtual ~ShaderProgramEffect();
 
     void create(const QString& vertexShader, const QString& fragmentShader);
 
@@ -66,11 +66,14 @@ public:
     void setPropertyDirty(int property);
 
     void processFinishedRequest(QDeclarativePixmapReply* reply);
+protected:
+    void updatePixmap(int uniformLocation, QPixmap pixmap);
+
 private:
     void setUniformLocationsFromParentProperties();
     void setUniform(int uniformValue, const QImage& image,
                              QGLPainter* painter);
-    void setUniform(int uniformValue, const QPixmap* pixmap,
+    void setUniform(int uniformValue, const QPixmap pixmap,
                              QGLPainter* painter);
     QGLTexture2D* textureForUniformValue(int uniformLocation);
 
@@ -93,11 +96,10 @@ private:
     ShaderProgramPropertyListener* propertyListener;
 
     QMap<int, QGLTexture2D*> texture2DsByUniformValue;
-    QMap <int, QPixmap*> pendingPixmapsByUniformLocations;
+    QMap <int, QPixmap> pendingPixmapsByUniformLocations;
     QMap <QDeclarativePixmapReply*, int> pendingPixmapRequestsWithUniformLocations;
     QMap <int, QDeclarativePixmapReply*> pendingPixmapRequests;
     QMap <int, QString> urls;
-    QArray<int> dirtyTextureUniforms;
 };
 
 #endif // SHADERPROGRAM_P_H
