@@ -3,6 +3,8 @@ import Qt.labs.threed 1.0
 
 Viewport {
     width: 640; height: 480
+    Light {}
+
     Item3d {
         id: teapot
         mesh: Mesh { source: "meshes/teapot.bez" }
@@ -17,8 +19,6 @@ Viewport {
             NumberAnimation { to : 1.0; duration: 300; easing.type:"OutQuad" }
             NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
         }
-
-        Light {}
 
         Material {
             id: china
