@@ -71,28 +71,19 @@ void QmlGenerator::save() const
         mesh.addProperty("source", property("modelFileName"), true);
         mesh.addProperty("options", property("options", Optional), true);
 
-        QmlStanza xtq("Translation3D");
         QString x_t = property("x_translation", Optional);
-        if (!x_t.isEmpty())
-        {
-            xtq.addProperty("xTranslate", x_t);
-            item3d.addProperty("transform", &xtq);
-        }
-
-        QmlStanza ytq("Translation3D");
         QString y_t = property("y_translation", Optional);
-        if (!y_t.isEmpty())
-        {
-            ytq.addProperty("yTranslate", y_t);
-            item3d.addProperty("transform", &ytq);
-        }
-
-        QmlStanza ztq("Translation3D");
         QString z_t = property("z_translation", Optional);
-        if (!z_t.isEmpty())
+        QmlStanza tq("Translation3D");
+        if (!x_t.isEmpty() || !y_t.isEmpty() || !z_t.isEmpty())
         {
-            ztq.addProperty("zTranslate", z_t);
-            item3d.addProperty("transform", &ztq);
+            x_t = x_t.isEmpty() ? QString("0") : x_t;
+            y_t = y_t.isEmpty() ? QString("0") : y_t;
+            z_t = z_t.isEmpty() ? QString("0") : z_t;
+            QString vec = QString("Qt.vector3d(%1, %2, %3)"
+                                  ).arg(x_t).arg(y_t).arg(z_t);
+            tq.addProperty("translate", vec);
+            item3d.addProperty("transform", &tq);
         }
 
         QmlStanza xrq("Rotation3D");
