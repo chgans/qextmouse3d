@@ -49,6 +49,8 @@
 #include "qmatrix4x4.h"
 
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qthread.h>
+#include <QtGui/qapplication.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -1404,12 +1406,15 @@ bool QGLSceneNode::normalViewEnabled() const
 */
 void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop)
 {
+    QThread *appThread = QApplication::instance()->thread();
     QSet<QGLSceneNode *> lp = loop;
     lp.insert(node);
     QString ind;
     ind.fill(' ', indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
+    if (appThread != node->thread())
+        fprintf(stderr, "\n%s        from thread: %p\n", qPrintable(ind), node->thread());
     fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
     {
         QList<QGLSceneNode*> children = node->childNodeList();
