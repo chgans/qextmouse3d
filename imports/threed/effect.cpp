@@ -229,6 +229,10 @@ void Effect::setTexture(const QUrl& value)
     }
 }
 
+/*!
+  \internal
+  Cancel any earlier network requests.
+  */
 void Effect::cancelLoadingTexture()
 {
     if (d->pendingPixmapCache) {
