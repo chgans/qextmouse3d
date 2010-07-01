@@ -444,6 +444,7 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
         break;
     case QVariant::String:
         {
+            qWarning() << "%%%string";
             // We assume strings are URLs to images for textures
             QString urlString = value.toString();
             QUrl url(urlString);
@@ -456,6 +457,7 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
                     pendingPixmapRequests.remove(uniformLocation);
                     urls.remove(uniformLocation);
                 }
+                urls[uniformLocation] = urlString;
                 break;
             };
 
@@ -484,30 +486,42 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
 
             if (urlString != urls[uniformLocation])
             {
+                qDebug() << "acting on new url";
                 QPixmap pixmap;
                 QString errorString;
+
                 QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(urlString, &pixmap, &errorString);
 
-                if (status == QDeclarativePixmapReply::Error)
+
+                if (status != QDeclarativePixmapReply::Ready &&
+                    status != QDeclarativePixmapReply::Error)
+                {
+                    qDebug() << "pixmap was unrequested, requesting now";
+                    urls[uniformLocation] = urlString;
+                    QDeclarativeEngine *engine = qmlEngine(parent.data());
+                    QSize impsize;
+
+                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
+                    pendingPixmapRequests[uniformLocation] = reply;
+                    if(status != QDeclarativePixmapReply::Loading)
+                    {
+                        qDebug() << "Warning, image not loading";
+                    }
+                    QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
+                }
+                else if (status == QDeclarativePixmapReply::Error)
                 {
                     qWarning() << "Error getting resource for property"
                             << parent.data()->metaObject()->property(propertyIndex).name()
                             << ":" << errorString;
                     return false;
-                } else
+                } else if (status == QDeclarativePixmapReply::Ready)
                 {
-                    urls[uniformLocation] = urlString;
-                    QDeclarativeEngine *engine = qmlEngine(parent.data());
-                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
-                    pendingPixmapRequests[uniformLocation] = reply;
-                    if (status == QDeclarativePixmapReply::Ready)
-                    {
-                        processFinishedRequest(reply);
-                    }
-                    else if(status == QDeclarativePixmapReply::Loading)
-                    {
-                        QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
-                    }
+                    qDebug() << "pixmap was ready, applying immediately:";
+                    updatePixmap(uniformLocation, pixmap);
+                }  else {
+                    qDebug() << "unhandled case? status: " << status;
+
                 }
             }
         }
@@ -528,13 +542,13 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
   \internal Helper function for applying a \a pixmap to a texture for a shader program.  This function should be called from within update() in order to have access to the right GL context through the \a painter.
   */
 void ShaderProgramEffect::setUniform
-        (int uniformLocation, const QPixmap* pixmap, QGLPainter* painter)
+        (int uniformLocation, const QPixmap pixmap, QGLPainter* painter)
 {
     // TODO: Perspective correction
     QGLTexture2D* texture = textureForUniformValue(uniformLocation);
     if(texture != 0)
     {
-        texture->setPixmap(*pixmap);
+        texture->setPixmap(pixmap);
         if(texture->textureId() == 0)
         {
             texture->bind();
@@ -640,17 +654,23 @@ void ShaderProgramEffect::setPropertyDirty(int property)
 
 /*!
   \internal Notification recieved via parent ShaderProgram parent that
-  a requested network resource is ready.
+  a requested network resource is ready, so load the pixmap and get
+  ready for painting with it
 */
 void ShaderProgramEffect::processFinishedRequest(QDeclarativePixmapReply* reply)
 {
+    qDebug() << "processFinishedRequest";
     QUrl url = reply->url();
-    QPixmap* pixmap = new QPixmap;
+    QPixmap pixmap;
     QString errorString;
-    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, pixmap, &errorString);
+    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, &pixmap, &errorString);
     Q_UNUSED(status);
-
     int uniformLocation = pendingPixmapRequests.key(reply, -1);
+    updatePixmap(uniformLocation, pixmap);
+}
+
+void ShaderProgramEffect::updatePixmap(int uniformLocation, QPixmap pixmap)
+{
     if(uniformLocation == -1)
     {
         // Unknown uniform, most likely because the uniform was changed before
@@ -660,12 +680,15 @@ void ShaderProgramEffect::processFinishedRequest(QDeclarativePixmapReply* reply)
         return;
     }
 
-    // Add update information to be process next update()
+    // Add update information to be process next update() and make sure that
+    // pixmap is not deleted prematurely
     pendingPixmapsByUniformLocations[uniformLocation] = pixmap;
-//    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
-//    texture->setPixmap(*pixmap);
+    //    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    //    texture->setPixmap(*pixmap);
 
-    dirtyTextureUniforms.append(uniformLocation);
+    // The pixmap will be set on the painter at the next update(),
+    // and can be considered clean
+    dirtyProperties.removeAll(uniformLocation);
 }
 
 class ShaderProgramPrivate
@@ -776,6 +799,7 @@ void ShaderProgram::markPropertyDirty(int property)
  */
 void ShaderProgram::pixmapRequestFinished()
 {
+    qDebug() << "void ShaderProgram::pixmapRequestFinished()";
     QObject *sender = QObject::sender();
     QDeclarativePixmapReply* reply =
             qobject_cast<QDeclarativePixmapReply*>(sender);
