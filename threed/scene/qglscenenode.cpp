@@ -607,9 +607,15 @@ void QGLSceneNode::setZ(qreal z)
     \property QGLSceneNode::scale
     \brief The amounts of x, y and z axis scaling for this node.
 
+    If the scale vector is all zeroes (it is equal to the null vector)
+    then no scaling is applied.
+
     Use of the scale property is more advanced than both the position()
     and rotation() properties, since scale changes effect lighting normals
     and change the magnitude of other transformations.
+
+    The default value of scale is the null vector, \c{(0, 0, 0)} meaning
+    that no scale is applied.
 
     \sa position(), rotation()
 */
