@@ -238,10 +238,10 @@ void Effect::cancelLoadingTexture()
     if (d->pendingPixmapCache) {
         QDeclarativePixmapCache::cancel(d->textureUrl, this);
         d->pendingPixmapCache = false;
-        // cancel invalidates our reply as well, so delete that
+        // cancel invalidates our reply as well, which should be deleted by
+        // the cache
         if(d->pixmapCacheReply != 0)
         {
-            d->pixmapCacheReply->deleteLater();
             d->pixmapCacheReply = 0;
         }
     }
