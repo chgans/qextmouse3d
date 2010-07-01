@@ -259,6 +259,7 @@ void Effect::textureRequestFinished()
         QPixmap pixmap;
         QString errorString;
         QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString);
+        Q_UNUSED(status);
         setTextureImage(pixmap.toImage());
         d->pixmapCacheReply = 0;
         d->pendingPixmapCache = false;
