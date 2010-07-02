@@ -50,7 +50,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLDisplayList;
+class QGLBuilder;
 
 class Q_QT3D_EXPORT QGLSphere
 {
@@ -84,9 +84,9 @@ public:
         : QGLSphere(diameter, depth) {}
 };
 
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere);
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere);
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLIcoSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere);
 
 QT_END_NAMESPACE
 

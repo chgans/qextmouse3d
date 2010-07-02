@@ -39,77 +39,52 @@
 **
 ****************************************************************************/
 
-#include "qgldisplaylist.h"
-#include "qgldisplaylist_p.h"
+#include "qglbuilder.h"
+#include "qglbuilder_p.h"
 #include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
-#include "qglprimitive.h"
+#include "qgeometrydata.h"
+#include "qvector_utils_p.h"
 
-#include <QtCore/qvarlengtharray.h>
 #include <QtGui/qvector2d.h>
 
 #include <QtCore/qdebug.h>
 
-#include <limits>
-
 /*!
-    \class QGLDisplayList
-    \brief The QGLDisplayList class accumulates geometry for efficient display.
+    \class QGLBuilder
+    \brief The QGLBuilder class accumulates geometry for efficient display.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
     \tableofcontents
 
-    Use a QGLDisplayList to build up vertex, index, texture and other data
+    Use a QGLBuilder to build up vertex, index, texture and other data
     when an application starts up, then it can be efficiently and flexibly
-    displayed during frames of rendering.
-
-    Traditional OpenGL programming uses
-    \l{http://www.opengl.org/documentation/specs/version1.1/glspec1.1/node123.html}{display lists}
-    to build geometry once during an initialization phase, and then efficiently
-    display that geometry each frame of rendering.
-
-    While the underlying implementation of QGLDisplayList does not use the same
-    OpenGL calls (since those calls are not implemented on all platforms) it
-    provides convenience and improved performance, and can be utilized in
-    the same paradigm as the OpenGL display list with an initial setup phase
-    and subsequent cheap drawing operations.
+    displayed during frames of rendering.  It is suited to writing loaders
+    for 3D models, and also for programatically creating geometry.
 
     \section1 Comparison with OpenGL fixed-functions
 
-    QGLDisplayList contains functions which provide similar functionality to
+    QGLBuilder contains functions which provide similar functionality to
     OpenGL modes GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There
     is currently no support for GL_LINES or GL_POINTS.
 
-    It is an important difference that QGLDisplayList builds quads, and all
-    other structures out of triangles, since many systems do not support
-    quads natively.
-
-    Also, with regard to the ordering and winding of vertices, QGLDisplayList
-    always starts at the origin, with (0, 0) being the bottom-left, since it
-    is the bottom-left of the positive quadrant.
+    Also, with regard to the ordering and winding of vertices, QGLBuilder
+    always starts at the origin, with (0, 0) being the bottom-left.
 
     The order follows with (1, 0) bottom-right, (1, 1) top-right and
-    lastly (1, 0) top-left - this gives an anti-clockwise wound face,
-    as required by 3D graphics systems.  See the addQuadStrip() documentation
-    for details on how this makes vertex ordering different from GL_QUAD_STRIP.
+    lastly (1, 0) top-left - this gives an anti-clockwise wound face.
 
-    So, while remembering that QGLDisplayList does not attempt to exactly
-    replicate OpenGL, these are QGLDisplayLists geometry functions and the
+    So, while remembering that QGLBuilder does not attempt to exactly
+    replicate OpenGL, these are QGLBuilders geometry functions and the
     OpenGL mode/function they most resemble:
 
     \table
         \header
-            \o QGLDisplayList function
+            \o QGLBuilder function
             \o Similar to OpenGL mode/function
-        \row
-            \o begin()
-            \o glBegin()
-        \row
-            \o end()
-            \o glEnd()
         \row
             \o addVertex()
             \o glVertex()
@@ -143,20 +118,11 @@
         \row
             \o addQuadStrip(), addQuadsZipped()
             \o GL_QUAD_STRIP
-        \row
-            \o finalize()
-            \o glEndList()
-        \row
-            \o glCallList()
-            \o draw(QGLPainter *)            
     \endtable
-
-    In addition to this function based API, you can also use the QGLOperation
-    class, which provides an object based API.
 
     \section1 Index and Normal Generation
 
-    QGLDisplayList automatically generates index values and normals
+    QGLBuilder automatically generates index values and normals
     on-the-fly during geometry building.  During building, simply send
     primitives to the display list as a sequence of vertices, and
     vertices that are the same will be referenced by a single index
@@ -194,7 +160,7 @@
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
     \endcode
 
-    With QGLDisplayList this code becomes:
+    With QGLBuilder this code becomes:
 
     \code
     float vertices[12] =
@@ -204,18 +170,16 @@
         1.0, 1.0, 1.0,      // C
         -1.0, 1.0, 1.0      // D
     };
-    QGLDisplayList quad;
-    {
-        QGLOperation op(&quad, QGL::QUAD);
-        for (int i = 0; i < 12; i += 3)
-            op << QVector3D(vertices[i], vertices[i+1], vertices[i+2]);
-    }
+    QGLBuilder quad;
+    QGeometryData op;
+    for (int i = 0; i < 12; i += 3)
+        op.appendVertex(QVector3D(vertices[i], vertices[i+1], vertices[i+2]));
+    quad.addQuad(op);
     \endcode
 
-    When the \c{op} variable goes out of scope it adds the
-    quad primitive to the list, as two triangles, indexed to
-    removed the redundant double storage of B & C - just the
-    same as the OpenGL code.
+    The quad primitive is added to the list, as two triangles, indexed to
+    removed the redundant double storage of B & C - just the same as the
+    OpenGL code.
 
     It will also calculate a normal for the quad and apply it
     to the vertices.
@@ -246,21 +210,21 @@
     sections out and back can all introduce these types of epsilon
     errors, resulting in "cracks" or artifacts on display.
 
-    QGLDisplayList's index generation process uses a fuzzy match that
+    QGLBuilder's index generation process uses a fuzzy match that
     coalesces all vertex values at a point - even if they are out by
     a tiny amount - and references them with a single index.
 
     \section2 Lighting Normals and Null Triangles
 
-    QGLDisplayList functions calculate lighting normals, when building
+    QGLBuilder functions calculate lighting normals, when building
     geometry.  This saves the application programmer from having to write
     code to calculate them.  Normals for each triangle (a, b, c) are
     calculated as the QVector3D::normal(a, b, c).
 
-    If lighting normals are explicitly supplied when using QGLDisplayList,
+    If lighting normals are explicitly supplied when using QGLBuilder,
     then this calculation is not done.  This may save on build time.
 
-    As an optimization, QGLDisplayList skips null triangles, that is ones
+    As an optimization, QGLBuilder skips null triangles, that is ones
     with zero area, where it can.  Such triangles generate no fragments on
     the GPU, and thus do not display but nonetheless can take up space
     and processing power.
@@ -284,49 +248,49 @@
     Where generation of indices and normals is not needed - for example if
     porting an existing application, or where indices and normals result
     naturally; it is possible to do a very fast add of triangles, without
-    using any of QGLDisplayList's processing.
+    using any of QGLBuilder's processing.
 
-    Simply ensure that indices are created in the QGLPrimitive passed to
+    Simply ensure that indices are placed in the QGeometryData passed to
     the addTriangle() function, and this will trigger "raw triangle" mode.
 
     When adding triangles in this way ensure that all appropriate values
     have been correctly set, and that the normals, indices and other data
     are correctly calculated, since no checking is done.
 
-    \section1 Display Lists and Scene Nodes
+    \section1 Rendering and QGLSceneNode items.
 
     QGLSceneNodes are used to manage application of local transformations,
-    materials and effects, similar to how glRotate() or glMaterial()
-    might be used.
+    materials and effects.
 
-    Since QGLDisplayList is itself a (sub-class of) QGLSceneNode, materials
-    and effects may be applied to the whole list, or to parts of it.  This
-    is demonstrated in the displaylist example application.
+    QGLBuilder generates a root level QGLSceneNode, which can be accessed
+    with the rootNode() function.  Under this a new node is created for
+    each section of geometry, and also by using pushNode() and popNode().
 
     \image soup.png
 
-    Here the front can is a display list and the other two are scene nodes
-    that simply reference it, without copying any geometry.
+    Here the front can is a set of built geometry and the other two are
+    scene nodes that reference it, without copying any geometry.
 
     \snippet displaylist/displaylist.cpp 0
 
     QGLSceneNodes can be used after the display list is created to cheaply
     copy and redisplay the whole list.  Or to reference parts of the list
     use the functions newNode() or pushNode() and popNode() to manage
-    QGLSceneNode generation inside a display list.
+    QGLSceneNode generation while building geometry.
 
-    To draw a display list, simply call its draw function as for any
-    QGLSceneNode:
+    To draw the resulting built geometry simply call the draw method of the
+    build geometry.
 
     \snippet displaylist/displaylist.cpp 1
 
-    Call the \l{QGLSceneNode::palette()}{palette()} function on the scene node's
-    geometry to get the QGLMaterialCollection for the node, and record textures
-    and materials into it.  Typically a display lists nodes, and usually the
-    whole application will share the one palette, so if you have a top-level
-    palette, you can pass it to the \l{QGLDisplayList::QGLDisplayList()}{constructor}.
-    Normally, pass no arguments to the constructor and the QGLDisplayList
-    will create its own internal palette:
+    Call the \l{QGLSceneNode::palette()}{palette()} function on the rootNode()
+    to get the QGLMaterialCollection for the node, and place textures
+    and materials into it.
+
+    Built geometry will typically share the one palette.  Either create a
+    palette, and pass it to the \l{QGLBuilder::QGLBuilder()}{constructor};
+    or pass no arguments to the constructor and the QGLBuilder
+    will create a palette:
 
     \snippet displaylist/displaylist.cpp 2
 
@@ -335,19 +299,18 @@
 
     \section1 Using Sections
 
-    During initialization of the QGLDisplayList, while accumulating
-    geometry, the geometry data in a QGLDisplayList is placed into
+    During initialization of the QGLBuilder, while accumulating
+    geometry, the geometry data in a QGLBuilder is placed into
     sections - there must be at least one section.
 
-    Call the newSection() function to create a new section, before putting
-    any geometry into a display list.
+    Call the newSection() function to create a new section:
 
     \snippet displaylist/displaylist.cpp 3
 
     Here seperate sections for the rounded outside cylinder and flat top and
     bottom of the soup can model makes for the appearance of a sharp edge
     between them.  If the sides and top and bottom were in the same section
-    QGLDisplayList would attempt to average the normals around the edge resulting
+    QGLBuilder would attempt to average the normals around the edge resulting
     in an unrealistic effect.
 
     In 3D applications this concept is referred to as
@@ -386,79 +349,61 @@
     Coalescing has the effect of packing geometry data into the
     smallest space possible thus improving cache coherence and performance.
 
-    Again all this is managed automatically by QGLDisplayList and all
+    Again all this is managed automatically by QGLBuilder and all
     that is required is to create smooth or faceted sections, and add
     geometry to them.
 
     Each QGLSection references a contiguous range of vertices in a
-    QGLDisplayList.
+    QGLBuilder.
 
-    \section1 Finalizing a QGLDisplayList
+    \section1 Finalizing a QGLBuilder
 
-    Once the geometry has been accumulated in the display list,  the
+    Once the geometry has been accumulated in the QGLBuilder instance,  the
     finalize() method must be called to normalize the geometry and optimize
     it for display.  The finalize() method makes passes through the data of
     each section, normalizing and then optimizing and preparing the data for
     display.  Thus it may be expensive for large geometry.
 
     The finalize() function only needs to be called once in the application
-    lifetime, and since QGLDisplayList reimplements QGLSceneNode's draw
-    function to simply call finalize() and then QGLSceneNode::draw(), you do
-    not need to remember to explicitly call it, unless you want to control
-    when the overhead of the finalize() function is incurred.
+    lifetime.  It is automatically called by the QGLBuilder's destructor.
 */
 
-QGLDisplayListPrivate::QGLDisplayListPrivate(int version)
-    : QGLSceneNodePrivate(QGLSceneObject::Main, version)
-    , finalizeNeeded(true)
+QGLBuilderPrivate::QGLBuilderPrivate(QGLBuilder *parent)
+    : finalizeNeeded(true)
     , currentSection(0)
     , currentNode(0)
-    , currentOperation(0)
-    , operation(QGL::NO_OP)
     , defThreshold(5)
+    , q(parent)
 {
 }
 
-QGLDisplayListPrivate::~QGLDisplayListPrivate()
+QGLBuilderPrivate::~QGLBuilderPrivate()
 {
     qDeleteAll(sections);
 }
 
 /*!
-    Construct a new QGLDisplayList with \a materials and \a parent.  If the
-    \a materials argument is null, then a new collection is created internally.
+    Construct a new QGLBuilder using \a materials for the palette.  If the
+    \a materials argument is null, then a new palette is created.
 */
-QGLDisplayList::QGLDisplayList(QObject *parent, QGLMaterialCollection *materials)
-    : QGLSceneNode(*new QGLDisplayListPrivate, parent)
+QGLBuilder::QGLBuilder(QGLMaterialCollection *materials)
+    : dptr(new QGLBuilderPrivate(this))
 {
     if (!materials)
         materials = new QGLMaterialCollection(this);
-    setPalette(materials);
+    dptr->rootNode = new QGLSceneNode;
+    dptr->rootNode->setPalette(materials);
 }
 
 /*!
-    Destroys this QGLDisplayList recovering any resources.
+    Destroys this QGLBuilder recovering any resources.
 */
-QGLDisplayList::~QGLDisplayList()
+QGLBuilder::~QGLBuilder()
 {
+    delete dptr;
+    finalize();
 }
 
-/*!
-    \fn void QGLDisplayList::draw(QGLPainter *painter)
-    Draws the display list on the given \a painter.
-*/
-
-/*!
-    Returns the QGLPrimitive for the current operation.  All add functions
-    such as addVertex() and addNormal() accumulate data into this instance.
-    Note that the pointer is only valid during the current operation.
-*/
-QGLPrimitive *QGLDisplayList::currentPrimitive()
-{
-    Q_D(QGLDisplayList);
-    return d->currentOperation;
-}
-#include "qvector_utils_p.h"
 /*!
     \internal
     Helper function to calculate normal if required, and actually
@@ -468,10 +413,10 @@ QGLPrimitive *QGLDisplayList::currentPrimitive()
     stored in here, and needs to be restored unless persisting it
     to the next iteration.
 */
-void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
+void QGLBuilderPrivate::addTriangle(int i, int j, int k, QGeometryData &p)
 {
-    Q_ASSERT(currentSection);
-    Q_ASSERT(currentNode);
+    if (currentSection == 0)
+        q->newSection();
     bool calcNormal = !p.hasField(QGL::Normal) && p.commonNormal().isNull();
     QLogicalVertex a(p, i);
     QLogicalVertex b(p, j);
@@ -527,22 +472,22 @@ void QGLDisplayListPrivate::addTriangle(int i, int j, int k, QGLPrimitive &p)
 
     \sa addQuad()
 */
-void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
+void QGLBuilder::addTriangle(const QGeometryData &triangle)
 {
-    Q_D(QGLDisplayList);
     if (triangle.indexCount() > 0)
     {
-        d->currentSection->appendGeometry(triangle);
-        d->currentSection->appendIndices(triangle.indices());
-        d->currentNode->setCount(d->currentNode->count() + triangle.indexCount());
+        // raw triangle mode
+        dptr->currentSection->appendGeometry(triangle);
+        dptr->currentSection->appendIndices(triangle.indices());
+        dptr->currentNode->setCount(dptr->currentNode->count() + triangle.indexCount());
     }
     else
     {
-        QGLPrimitive t = triangle;
+        QGeometryData t = triangle;
         QVector3D save = t.commonNormal();
         for (int i = 0; i < t.count() - 2; i += 3)
         {
-            d->addTriangle(i, i+1, i+2, t);
+            dptr->addTriangle(i, i+1, i+2, t);
             t.setCommonNormal(save);
         }
     }
@@ -559,15 +504,14 @@ void QGLDisplayList::addTriangle(const QGLPrimitive &triangle)
 
     \sa addTriangle()
 */
-void QGLDisplayList::addQuad(const QGLPrimitive &quad)
+void QGLBuilder::addQuad(const QGeometryData &quad)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive q = quad;
+    QGeometryData q = quad;
     QVector3D save = q.commonNormal();
     for (int i = 0; i < q.count(); i += 4)
     {
-        d->addTriangle(i, i+1, i+2, q);
-        d->addTriangle(i, i+2, i+3, q);
+        dptr->addTriangle(i, i+1, i+2, q);
+        dptr->addTriangle(i, i+2, i+3, q);
         q.setCommonNormal(save);
     }
 }
@@ -582,7 +526,7 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
     If \a fan has less than three vertices this function exits without
     doing anything.
 
-    This function is very similar to the OpenGL mode GL_TRIANGLE_FAN.  It
+    This function is similar to the OpenGL mode GL_TRIANGLE_FAN.  It
     generates a number of triangles all sharing one common vertex, which
     is the 0'th vertex of the \a fan.
 
@@ -591,14 +535,13 @@ void QGLDisplayList::addQuad(const QGLPrimitive &quad)
 
     \sa addTriangulatedFace()
 */
-void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
+void QGLBuilder::addTriangleFan(const QGeometryData &fan)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive f = fan;
+    QGeometryData f = fan;
     QVector3D save = f.commonNormal();
     for (int i = 1; i < f.count() - 1; ++i)
     {
-        d->addTriangle(0, i, i+1, f);
+        dptr->addTriangle(0, i, i+1, f);
         f.setCommonNormal(save);
     }
 }
@@ -623,17 +566,16 @@ void QGLDisplayList::addTriangleFan(const QGLPrimitive &fan)
 
     \sa addTriangulatedFace()
 */
-void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
+void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive s = strip;
+    QGeometryData s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
-            d->addTriangle(i+1, i, i+2, s);
+            dptr->addTriangle(i+1, i, i+2, s);
         else
-            d->addTriangle(i, i+1, i+2, s);
+            dptr->addTriangle(i, i+1, i+2, s);
         s.setCommonNormal(save);
     }
 }
@@ -647,19 +589,15 @@ void QGLDisplayList::addTriangleStrip(const QGLPrimitive &strip)
 
     \image quads.png
 
-    This is consistent with all the other QGLDisplayList functions, as
-    described above, but different from the order used by OpenGL's
-    GL_QUAD_STRIP mode.
 */
-void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
+void QGLBuilder::addQuadStrip(const QGeometryData &strip)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive s = strip;
+    QGeometryData s = strip;
     QVector3D save = s.commonNormal();
     for (int i = 0; i < s.count() - 3; i += 2)
     {
-        d->addTriangle(i, i+2, i+3, s);
-        d->addTriangle(i, i+3, i+1, s);
+        dptr->addTriangle(i, i+2, i+3, s);
+        dptr->addTriangle(i, i+3, i+1, s);
         s.setCommonNormal(save);
     }
 }
@@ -668,12 +606,7 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     Adds to this section a polygonal face, made of triangular sub-faces
     defined by \a face.  This function provides functionality similar to the
     OpenGL mode GL_POLYGON, except it divides the face into sub-faces
-    around a \bold{central point}.
-
-    As a convenience the central point is by default set to the return
-    value of \l{QGLPrimitive::center()}{face.center()}.  If \a face has texture
-    coordinates or other data, set the QGL::USE_VERTEX_0_AS_CTR flag, in which
-    case the 0'th vertex is used for the center.
+    around a \bold{central point}.  The 0'th vertex is used for the center.
 
     \image triangulated-face.png
 
@@ -681,13 +614,20 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     function handles some re-entrant (non-convex) polygons, whereas
     addTriangleFan will not support such polygons.
 
+    If required, the center point can be calculated using the center() function
+    of QGeometryData:
+
+    \code
+    QGeometryData face;
+    face.appendVertex(perimeter.center()); // perimeter is a QGeometryData
+    face.appendVertices(perimeter);
+    builder.addTriangulatedFace(face);
+    \endcode
+
     N sub-faces are generated where \c{N == face.count() - 1}.
     Each triangular sub-face consists the center; followed by the \c{i'th}
     and \c{((i + 1) % N)'th} vertex.  The last face generated then is
     \c{(center, face[N - 1], face[0]}, the closing face.
-
-    To supress the closing face, use \c{face.setFlags(QGL::NO_CLOSE_PATH)}
-    in which case \c{N == face.count() - 2}.
 
     If N is 0, this function exits without doing anything.
 
@@ -695,19 +635,12 @@ void QGLDisplayList::addQuadStrip(const QGLPrimitive &strip)
     calculated as per addTriangle().  One normal is calculated, since a
     faces vertices lie in the same plane.
 */
-void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
+void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive f;
-    if (!(face.flags() & QGL::USE_VERTEX_0_AS_CTR))
-    {
-        f.appendVertex(face.vertexAt(0));
-        f.vertexRef(0) = f.center();
-    }
+    Q_D(QGLBuilder);
+    QGeometryData f;
     f.appendGeometry(face);
     int cnt = f.count();
-    if (f.flags() & QGL::NO_CLOSE_PATH)
-        cnt = f.count() - 1;
     if (cnt > 1)
     {
         for (int i = 1; i < cnt; ++i)
@@ -715,7 +648,7 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
             int n = i + 1;
             if (n == cnt)
                 n = 1;
-            d->addTriangle(0, i, n, f);
+            dptr->addTriangle(0, i, n, f);
         }
     }
 }
@@ -740,10 +673,6 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
     vertices of \a bottom, followed by the \c{(i + 1)'th} and \c{i'th}
     vertices of \a top.
 
-    If \a top or \a bottom has the QGL::FACE_SENSE_REVERSED flag set then
-    vertices are treated as being in clockwise order for the purpose of
-    generating the winding and face normals.
-
     \image quad-extrude.png
 
     In the diagram above, the \a top is shown in orange, and the \a bottom in
@@ -752,26 +681,25 @@ void QGLDisplayList::addTriangulatedFace(const QGLPrimitive &face)
 
     To create a complete prismatic solid given the top edge do this:
     \code
-    QGLPrimitive top = generateEdge();
-    QGLPrimitive bottom = top.translated(QVector3D(0, 0, -1));
+    QGeometryData top = generateEdge();
+    QGeometryData bottom = top.translated(QVector3D(0, 0, -1));
     displayList->addQuadsZipped(top, bottom);
     displayList->addTriangulatedFace(top);
     displayList->addTriangulatedFace(bottom.reversed());
     \endcode
-    The \a bottom QGLPrimitive must be \bold{reversed} so that the correct
+    The \a bottom QGeometryData must be \bold{reversed} so that the correct
     winding for an outward facing polygon is obtained.
 */
-void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
-                                    const QGLPrimitive &bottom)
+void QGLBuilder::addQuadsZipped(const QGeometryData &top,
+                                const QGeometryData &bottom)
 {
-    Q_D(QGLDisplayList);
-    QGLPrimitive zipped = bottom.zippedWith(top);
+    QGeometryData zipped = bottom.zippedWith(top);
     QVector3D norm = top.commonNormal() + bottom.commonNormal();
     zipped.setCommonNormal(norm);
     for (int i = 0; i < zipped.count() - 2; i += 2)
     {
-        d->addTriangle(i, i+2, i+3, zipped);
-        d->addTriangle(i, i+3, i+1, zipped);
+        dptr->addTriangle(i, i+2, i+3, zipped);
+        dptr->addTriangle(i, i+3, i+1, zipped);
         zipped.setCommonNormal(norm);
     }
 }
@@ -779,7 +707,7 @@ void QGLDisplayList::addQuadsZipped(const QGLPrimitive &top,
 /*!
     \internal
 */
-void QGLDisplayListPrivate::adjustSectionNodes(QGLSection *sec,
+void QGLBuilderPrivate::adjustSectionNodes(QGLSection *sec,
                                        int offset, const QGeometryData &geom)
 {
     QList<QGLSceneNode*> children = sec->nodes();
@@ -796,11 +724,10 @@ void QGLDisplayListPrivate::adjustSectionNodes(QGLSection *sec,
     QGLSceneNode::count() - for \a top and all its children.  If this total is
     equal to zero, then delete that node.
 */
-int QGLDisplayListPrivate::adjustNodeTree(QGLSceneNode *top,
+int QGLBuilderPrivate::adjustNodeTree(QGLSceneNode *top,
                                    int offset, const QGeometryData &geom,
                                    QList<QGLSceneNode*> &deleted)
 {
-    Q_Q(QGLDisplayList);
     int totalItems = 0;
     if (top && !deleted.contains(top))
     {
@@ -859,7 +786,7 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
 }
 
 /*!
-    Finish the building of this display list and optimize it for
+    Finish the building of this geometry and optimize it for
     rendering.  This method must be called once after building the
     scene, or after modifying the geometry.
 
@@ -867,31 +794,23 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
     \list
         \o packs all geometry data from sections into QGLSceneNode instances
         \o references this data via QGLSceneNode start() and count()
-        \o uploads the data to the graphics hardware, if possible
         \o deletes all QGLSection instances in this list
     \endlist
-
-    This function may be expensive.  This function is called by the
-    default implementation of draw, so you don't have to remember to call
-    it, unless you explicitly want to control when the finalize cost is
-    incurred.
 
     Finalize will exit quickly without doing anything if no modifications
     have been made to any data since the last time finalize was called.
 */
-void QGLDisplayList::finalize()
+void QGLBuilder::finalize()
 {
-    Q_D(QGLDisplayList);
-    if (d->finalizeNeeded)
+    if (dptr->finalizeNeeded)
     {
-        end();
         QGeometryData g;
         QMap<quint32, QGeometryData> geos;
         QMap<QGLSection*, int> offsets;
-        for (int i = 0; i < d->sections.count(); ++i)
+        for (int i = 0; i < dptr->sections.count(); ++i)
         {
             // pack sections that have the same fields into one geometry
-            QGLSection *s = d->sections.at(i);
+            QGLSection *s = dptr->sections.at(i);
             QGL::IndexArray indices = s->indices();
             int icnt = indices.size();
             int ncnt = nodeCount(s->nodes());
@@ -929,40 +848,43 @@ void QGLDisplayList::finalize()
                 geos.insert(s->fields(), g);
             }
         }
-        while (d->sections.count() > 0)
+        while (dptr->sections.count() > 0)
         {
-            QGLSection *s = d->sections.takeFirst();
-            d->adjustSectionNodes(s, offsets[s], geos[s->fields()]);
+            QGLSection *s = dptr->sections.takeFirst();
+            dptr->adjustSectionNodes(s, offsets[s], geos[s->fields()]);
             delete s;
         }
-        d->finalizeNeeded = false;
+        dptr->finalizeNeeded = false;
     }
 }
 
 /*!
     Creates a new section with smoothing mode set to \a smooth.  By default
-    \a smooth is QGL::Smooth.  The new section is made
-    current on this QGLDisplayList.  A section must be created before
-    any geometry or new nodes can be added to the displaylist.
+    \a smooth is QGL::Smooth.
 
-    The internal node stack is cleared, a section-level QGLSceneNode is
-    created for this section by calling newNode().
+    A section must be created before any geometry or new nodes can be added
+    to the builder.  However one is created automatically by addTriangle()
+    and the other add functions; and also by newNode(), pushNode() or popNode()
+    if needed.
+
+    The internal node stack - see pushNode() and popNode() - is cleared,
+    and a new top-level QGLSceneNode is created for this section by calling
+    newNode().
 
     \sa newNode(), pushNode()
 */
-void QGLDisplayList::newSection(QGL::Smoothing smooth)
+void QGLBuilder::newSection(QGL::Smoothing smooth)
 {
     new QGLSection(this, smooth);  // calls addSection
 }
 
-void QGLDisplayList::addSection(QGLSection *sec)
+void QGLBuilder::addSection(QGLSection *sec)
 {
-    Q_D(QGLDisplayList);
-    d->currentSection = sec;
-    sec->setMapThreshold(d->defThreshold);
-    d->sections.append(sec);
+    dptr->currentSection = sec;
+    sec->setMapThreshold(dptr->defThreshold);
+    dptr->sections.append(sec);
     //qDebug() << "Adding section - clear node stack:" << sec;
-    d->nodeStack.clear();
+    dptr->nodeStack.clear();
     newNode();
 }
 
@@ -970,30 +892,57 @@ void QGLDisplayList::addSection(QGLSection *sec)
     \internal
     Returns the current section, in which new geometry is being added.
 */
-QGLSection *QGLDisplayList::currentSection() const
+QGLSection *QGLBuilder::currentSection() const
 {
-    Q_D(const QGLDisplayList);
-    return d->currentSection;
+    return dptr->currentSection;
 }
 
 /*!
     \internal
-    Returns a list of the sections of the geometry in this display list.
+    Returns a list of the sections of the geometry in this builder.
 */
-QList<QGLSection*> QGLDisplayList::sections() const
+QList<QGLSection*> QGLBuilder::sections() const
 {
-    Q_D(const QGLDisplayList);
-    return d->sections;
+    return dptr->sections;
 }
 
 /*!
     \internal
     Test function only.
 */
-void QGLDisplayList::setDefaultThreshold(int t)
+void QGLBuilder::setDefaultThreshold(int t)
 {
-    Q_D(QGLDisplayList);
-    d->defThreshold = t;
+    dptr->defThreshold = t;
+}
+
+/*!
+    Returns the root node of the geometry created by this builder.
+
+    Calling code should take ownership of this root node, whilst the
+    builder object itself may be deleted or go out of scope:
+
+    \code
+    void initializeGL()
+    {
+        QGLBuilder builder;
+        // construct geometry
+        m_thing = builder.rootNode();
+    }
+
+    void paintGL()
+    {
+        m_thing->draw(painter);
+    }
+    \endcode
+
+    The root node will have a child node for each section that was created
+    during geometry building.
+
+    \sa newNode(), newSection()
+*/
+void QGLBuilder::rootNode()
+{
+    return dptr->rootNode;
 }
 
 /*!
@@ -1005,99 +954,65 @@ void QGLDisplayList::setDefaultThreshold(int t)
     vertex created, such that currentNode()->start() will return the
     index of this next vertex.
 
-    Note: the display list is designed to handle deletion of the resulting
-    QGLSceneNode instances by client code as gracefully as possible.
-
-    Nonetheless the deletion of nodes in this way will have a performance
-    impact and generally should be avoided.
-
-    It is not necessary to clean up empty or unused nodes since these
-    will be removed from the final scene during the finalize() function.
-
-    newSection()
+    \sa newSection()
 */
-QGLSceneNode *QGLDisplayList::newNode()
+QGLSceneNode *QGLBuilder::newNode()
 {
-    Q_D(QGLDisplayList);
-    Q_ASSERT(d->currentSection);
-    QGLSceneNode *parentNode = this;
-    if (d->nodeStack.count() > 0)
-        parentNode = d->nodeStack.last();
-    d->currentNode = new QGLSceneNode(parentNode);
-    //qDebug() << "newNode()" << d->currentNode << "parent:" << parentNode
-    //        << "--- nodestack count:" << d->nodeStack.count();
-    //if (d->nodeStack.count() > 0)
-    //        qDebug() << "--- last:" << d->nodeStack.last();
-    d->currentNode->setPalette(parentNode->palette());
-    d->currentNode->setStart(d->currentSection->indexCount());
-    connect(d->currentNode, SIGNAL(destroyed(QObject*)),
-            this, SLOT(deleteNode(QObject*)));
-    if (d->nodeStack.count() == 0)
-        d->currentSection->addNode(d->currentNode);
-    return d->currentNode;
-}
-
-/*!
-    \internal
-    Private slot for handling nodes deleted externally.  This is done
-    in a fairly naive inefficient way, but the assumption is that this
-    is a very rare thing to happen, and this is really here just to
-    make sure nothing crashes if nodes are deleted.
-*/
-void QGLDisplayList::deleteNode(QObject *object)
-{
-    QGLSceneNode *node = qobject_cast<QGLSceneNode*>(object);
-    if (node)
+    if (dptr->currentSection == 0)
     {
-        Q_D(QGLDisplayList);
-        d->nodeStack.removeOne(node);
-        QList<QGLSection*>::iterator sx = d->sections.begin();
-        for ( ; sx != d->sections.end(); ++sx)
-        {
-            QGLSection *s = *sx;
-            if (s->deleteNode(node))
-                break;
-        }
+        newSection();  // calls newNode()
+        return;
     }
+    QGLSceneNode *parentNode = dptr->rootNode;
+    if (dptr->nodeStack.count() > 0)
+        parentNode = dptr->nodeStack.last();
+    dptr->currentNode = new QGLSceneNode(parentNode);
+    //qDebug() << "newNode()" << dptr->currentNode << "parent:" << parentNode
+    //        << "--- nodestack count:" << dptr->nodeStack.count();
+    //if (dptr->nodeStack.count() > 0)
+    //        qDebug() << "--- last:" << dptr->nodeStack.last();
+    dptr->currentNode->setPalette(parentNode->palette());
+    dptr->currentNode->setStart(dptr->currentSection->indexCount());
+    connect(dptr->currentNode, SIGNAL(destroyed(QObject*)),
+            this, SLOT(deleteNode(QObject*)));
+    if (dptr->nodeStack.count() == 0)
+        dptr->currentSection->addNode(dptr->currentNode);
+    return dptr->currentNode;
 }
 
 /*!
-    Returns a pointer to the current scene node, if one exists; otherwise
-    returns null.
+    Returns a pointer to the current scene node.
 
     \sa newNode(), newSection()
 */
-QGLSceneNode *QGLDisplayList::currentNode()
+QGLSceneNode *QGLBuilder::currentNode()
 {
-    Q_D(QGLDisplayList);
-    return d->currentNode;
+    if (dptr->currentSection == 0)
+        newSection();  // calls newNode()
+    return dptr->currentNode;
 }
 
 /*!
     Creates a new scene node that is a child of the current node and,
     makes it the current node.  A pointer to the new node is returned.
-    The previous current node is saved on a stack and its settings may
+    The previous current node is saved on a stack and it may
     be made current again by calling popNode().
-
-    As a child of the current node, the new node will be affected by any
-    transformations and effects or materials on its parent.  The new child
-    has no current effects or materials set on itself.
 
     \sa popNode(), newNode()
 */
-QGLSceneNode *QGLDisplayList::pushNode()
+QGLSceneNode *QGLBuilder::pushNode()
 {
-    Q_D(QGLDisplayList);
-    Q_ASSERT(d->currentSection);
-    //qDebug() << "pushNode() - current:" << d->currentNode;
-    QGLSceneNode *parentNode = d->currentNode;
-    d->nodeStack.append(parentNode);
-    //qDebug() << "    currentNode:" << d->currentNode <<
-    //        "--- nodeStack:" << d->nodeStack.count();
-    d->currentNode = new QGLSceneNode(parentNode);
-    d->currentNode->setStart(d->currentSection->indexCount());
-    d->currentNode->setPalette(parentNode->palette());
-    return d->currentNode;
+    if (dptr->currentSection == 0)
+        newSection();  // calls newNode()
+    //qDebug() << "pushNode() - current:" << dptr->currentNode;
+    QGLSceneNode *parentNode = dptr->currentNode;
+    dptr->nodeStack.append(parentNode);
+    //qDebug() << "    currentNode:" << dptr->currentNode <<
+    //        "--- nodeStack:" << dptr->nodeStack.count();
+    dptr->currentNode = new QGLSceneNode(parentNode);
+    dptr->currentNode->setStart(dptr->currentSection->indexCount());
+    dptr->currentNode->setPalette(parentNode->palette());
+    return dptr->currentNode;
 }
 
 /*!
@@ -1115,271 +1030,31 @@ QGLSceneNode *QGLDisplayList::pushNode()
 
     \sa pushNode(), newNode()
 */
-QGLSceneNode *QGLDisplayList::popNode()
+QGLSceneNode *QGLBuilder::popNode()
 {
-    Q_D(QGLDisplayList);
-    int cnt = d->currentSection->indexCount();
-    QGLSceneNode *s = d->nodeStack.takeLast();
+    if (dptr->currentSection == 0)
+        newSection();  // calls newNode()
+    int cnt = dptr->currentSection->indexCount();
+    QGLSceneNode *s = dptr->nodeStack.takeLast();  // assert here
     //qDebug() << "popNode()" << s;
     QGLSceneNode *parentNode = this;
-    if (d->nodeStack.count() > 0)
-        parentNode = d->nodeStack.last();
-    d->currentNode = s->clone(parentNode);
-    d->currentNode->setChildNodeList(QList<QGLSceneNode*>());
-    d->currentNode->setStart(cnt);
-    d->currentNode->setCount(0);
-    d->currentNode->setPalette(parentNode->palette());
-    if (d->nodeStack.count() == 0)
-        d->currentSection->addNode(d->currentNode);
-    return d->currentNode;
+    if (dptr->nodeStack.count() > 0)
+        parentNode = dptr->nodeStack.last();
+    dptr->currentNode = s->clone(parentNode);
+    dptr->currentNode->setChildNodeList(QList<QGLSceneNode*>());
+    dptr->currentNode->setStart(cnt);
+    dptr->currentNode->setCount(0);
+    dptr->currentNode->setPalette(parentNode->palette());
+    if (dptr->nodeStack.count() == 0)
+        dptr->currentSection->addNode(dptr->currentNode);
+    return dptr->currentNode;
 }
 
 /*!
     \internal
     Mark the data as dirty and in need of loading/finalizing.
 */
-void QGLDisplayList::setDirty(bool dirty)
+void QGLBuilder::setDirty(bool dirty)
 {
-    Q_D(QGLDisplayList);
-    d->finalizeNeeded = dirty;
-}
-
-/*!
-    Returns the current operation, as set by begin().  Data added
-    for example by addVertex() will be accumulated for use in this
-    operation.
-*/
-QGL::Operation QGLDisplayList::currentOperation() const
-{
-    Q_D(const QGLDisplayList);
-    return d->operation;
-}
-
-/*!
-    Sets the current \a operation.  After this call all displaylist data
-    add functions, for example addVertex(), will accumulate data for that
-    \a operation.  Any previous operation is ended.
-
-    \sa end()
-*/
-void QGLDisplayList::begin(QGL::Operation operation)
-{
-    Q_D(QGLDisplayList);
-    end();
-    d->currentOperation = new QGLPrimitive();
-    d->operation = operation;
-}
-
-/*!
-    Completes the current operation set with begin(), posting the data
-    to the display lists internal store and clearing the operation's
-    data structures.
-*/
-void QGLDisplayList::end()
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-    {
-        switch (d->operation)
-        {
-        case QGL::NO_OP:
-            break;
-        case QGL::TRIANGLE:
-            addTriangle(*d->currentOperation); break;
-        case QGL::TRIANGLE_STRIP:
-            addTriangleStrip(*d->currentOperation); break;
-        case QGL::QUAD:
-            addQuad(*d->currentOperation); break;
-        case QGL::QUAD_STRIP:
-            addQuadStrip(*d->currentOperation); break;
-        case QGL::TRIANGLE_FAN:
-            addTriangleFan(*d->currentOperation); break;
-        case QGL::TRIANGULATED_FACE:
-            addTriangulatedFace(*d->currentOperation); break;
-        case QGL::QUADS_ZIPPED:
-            if (d->primitiveQueue.count() < 1)
-            {
-                qWarning("QUADS_ZIPPED mode - use QGL::NEXT_PRIMITIVE flag"
-                         " to specify bottom array");
-            }
-            else
-            {
-                addQuadsZipped(*d->primitiveQueue.last(), *d->currentOperation);
-            }
-        }
-        if (d->primitiveQueue.count())
-        {
-            qDeleteAll(d->primitiveQueue);
-            d->primitiveQueue.clear();
-        }
-        if (!(d->currentOperation->flags() & QGL::RETAIN_PRIMITIVE))
-        {
-            delete d->currentOperation;
-            d->currentOperation = 0;
-            d->operation = QGL::NO_OP;
-        }
-    }
-}
-
-/*!
-    Sets the the current operation's internal QGLPrimitive to have \a flags.
-    Also, if \a flags is QGL::NEXT_PRIMITIVE creates a new internal QGLPrimitive
-    for a multi-primitve operation, such QGL::QUADS_ZIPPED.
-
-    \sa QGLPrimitive::setFlags(), flags()
-*/
-void QGLDisplayList::setFlags(QGL::OperationFlags flags)
-{
-    Q_D(QGLDisplayList);
-    if (flags & QGL::NEXT_PRIMITIVE)
-    {
-        if (d->currentOperation)
-        {
-            QGLPrimitive *next = new QGLPrimitive();
-            next->setFlags(flags);
-            d->primitiveQueue.append(d->currentOperation);
-            d->currentOperation = next;
-        }
-#ifndef QT_NO_DEBUG
-        else
-        {
-            qWarning("Add data to the first primitive before QGL::NEXT_PRIMITIVE");
-        }
-#endif
-    }
-    else
-    {
-        if (d->currentOperation)
-            d->currentOperation->setFlags(flags);
-    }
-}
-
-/*!
-    Returns the current operation primitives flags.
-
-    \sa QGLPrimitive::flags(), setFlags()
-*/
-QGL::OperationFlags QGLDisplayList::flags() const
-{
-    Q_D(const QGLDisplayList);
-    if (d->currentOperation)
-        return d->currentOperation->flags();
-    return 0;
-}
-
-/*!
-    Adds the \a vertex to the current operation.
-*/
-void QGLDisplayList::addVertex(const QVector3D &vertex)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendVertex(vertex);
-}
-
-/*!
-    \fn void QGLDisplayList::addVertex(qreal x, qreal y)
-    Adds the vertex (\a x, \a y, 0) to the current operation.
-*/
-
-/*!
-    \fn void QGLDisplayList::addVertex(qreal x, qreal y, qreal z)
-    Adds the vertex (\a x, \a y, \a z) to the current operation.
-*/
-
-/*!
-    Adds the \a normal to the current operation.
-*/
-void QGLDisplayList::addNormal(const QVector3D &normal)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendNormal(normal);
-}
-
-/*!
-    Adds the \a color to the current operation.
-*/
-void QGLDisplayList::addColor(const QColor4ub &color)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendColor(color);
-}
-
-/*!
-    Adds the texture coordinate \a texCoord into the field \a attr for the current operation.
-*/
-void QGLDisplayList::addTexCoord(const QVector2D &texCoord, QGL::VertexAttribute attr)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendTexCoord(texCoord, attr);
-}
-
-/*!
-    \fn void QGLDisplayList::addTexCoord(qreal s, qreal t, QGL::VertexAttribute attr)
-    \overload
-    Adds the texture coordinate \a s, \a t into the field \a attr for the current operation.
-*/
-
-/*!
-    Adds the attribute \a value into the field \a attr for the current operation.
-*/
-void QGLDisplayList::addAttribute(const QVector3D &value, QGL::VertexAttribute attr)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendAttribute(value, attr);
-}
-
-/*!
-    Adds all the \a vertices to the current operation.
-*/
-void QGLDisplayList::addVertexArray(const QVector3DArray &vertices)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendVertexArray(vertices);
-}
-
-/*!
-    Adds all the \a normals to the current operation.
-*/
-void QGLDisplayList::addNormalArray(const QVector3DArray &normals)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendNormalArray(normals);
-}
-
-/*!
-    Adds all the \a colors to the current operation.
-*/
-void QGLDisplayList::addColorArray(const QArray<QColor4ub> &colors)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendColorArray(colors);
-}
-
-/*!
-    Adds all the texture coordinates in \a texCoords to the field \a attr for the current operation.
-*/
-void QGLDisplayList::addTexCoordArray(const QVector2DArray &texCoords, QGL::VertexAttribute attr)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendTexCoordArray(texCoords, attr);
-}
-
-/*!
-    Adds all the attribute \a values to the field \a attr for the current operation.
-
-*/
-void QGLDisplayList::addAttributeArray(const QCustomDataArray &values, QGL::VertexAttribute attr)
-{
-    Q_D(QGLDisplayList);
-    if (d->currentOperation)
-        d->currentOperation->appendAttributeArray(values, attr);
+    dptr->finalizeNeeded = dirty;
 }

@@ -43,7 +43,7 @@
 #define QGLBEZIERSCENE_H
 
 #include "qglabstractscene.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -51,13 +51,13 @@ class QGLBezierScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit QGLBezierScene(QGLDisplayList *geometry, QObject *parent = 0);
+    explicit QGLBezierScene(QGLBuilder *geometry, QObject *parent = 0);
     virtual ~QGLBezierScene();
 
     QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
 
 private:
-    QGLDisplayList *mainObject;
+    QGLBuilder *mainObject;
 };
 
 QT_END_NAMESPACE

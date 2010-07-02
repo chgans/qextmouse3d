@@ -306,7 +306,7 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 void ShaderWizardGLWidget::setSquareGeometry()
 {
     if (square == 0) {
-        square = new QGLDisplayList(this);
+        square = new QGLBuilder(this);
         *square << QGLHeightMap(101, 101);
         square->finalize();
     }
@@ -316,7 +316,7 @@ void ShaderWizardGLWidget::setSquareGeometry()
 void ShaderWizardGLWidget::setCubeGeometry()
 {
     if (cube == 0) {
-        cube = new QGLDisplayList(this);
+        cube = new QGLBuilder(this);
         cube->newSection(QGL::Faceted);
         *cube << QGLCube();
         cube->finalize();
@@ -327,7 +327,7 @@ void ShaderWizardGLWidget::setCubeGeometry()
 void ShaderWizardGLWidget::setSphereGeometry()
 {
     if (sphere == 0) {
-        sphere = new QGLDisplayList(this);
+        sphere = new QGLBuilder(this);
         *sphere << QGLSphere(2.0, 3);
         sphere->finalize();
     }
@@ -337,7 +337,7 @@ void ShaderWizardGLWidget::setSphereGeometry()
 void ShaderWizardGLWidget::setTeapotGeometry()
 {
     if (teapot == 0) {
-        teapot = new QGLDisplayList(this);
+        teapot = new QGLBuilder(this);
         *teapot << QGLTeapot();
         teapot->finalize();
     }
@@ -347,7 +347,7 @@ void ShaderWizardGLWidget::setTeapotGeometry()
 void ShaderWizardGLWidget::setHeightMapGeometry()
 {
     if (ripple == 0) {
-        ripple = new QGLDisplayList(this);
+        ripple = new QGLBuilder(this);
         *ripple << RippleHeightMap(101,101);
         ripple->finalize();
     }

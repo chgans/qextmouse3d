@@ -42,7 +42,7 @@
 #ifndef QGLHEIGHTMAP_H
 #define QGLHEIGHTMAP_H
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QGLHeightMap
 {
@@ -66,6 +66,6 @@ private:
     QGL::Smoothing m_Smoothing;
 };
 
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& cube);
+QGLBuilder& operator<<(QGLBuilder& list, const QGLHeightMap& cube);
 
 #endif // QGLHEIGHTMAP_H

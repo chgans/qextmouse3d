@@ -40,8 +40,7 @@
 ****************************************************************************/
 
 #include "pvcolor.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 
@@ -60,7 +59,7 @@ PVColorView::PVColorView(QWidget *parent)
     , pvScene(new QGLSceneNode(this))
 {
     //! [0]
-    QGLDisplayList *displayList = buildGeometry();
+    QGLBuilder *displayList = buildGeometry();
     displayList->setParent(pvScene);
 
     // display a copy of the q to the left
@@ -72,8 +71,8 @@ PVColorView::PVColorView(QWidget *parent)
     node->setPosition(QVector3D(2.0f, 0.0f, -2.0f));
 
     // Make a nice p. v. color triangle as a back drop
-    QGLDisplayList *dl2 = new QGLDisplayList(pvScene);
-    QGLPrimitive p;
+    QGLBuilder *dl2 = new QGLBuilder(pvScene);
+    QGeometryData p;
     dl2->newSection();
     p.appendVertex(QVector3D(3, 3, -3), QVector3D(-3, 3, -3),
                    QVector3D(0, -3, -3));
@@ -144,10 +143,10 @@ inline static void calculateSlice(int slice, const QBox3D &box,
         inner << ipt;
 }
 
-QGLDisplayList *PVColorView::buildGeometry()
+QGLBuilder *PVColorView::buildGeometry()
 {
     //! [2]
-    QGLDisplayList *qList = new QGLDisplayList();
+    QGLBuilder *qList = new QGLBuilder();
 
     // default effect for q where no other effect set
     qList->setEffect(QGL::FlatPerVertexColor);
@@ -208,7 +207,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     Q_ASSERT(olap % 2 == 0);  // this should be even
     int lap = olap / 2;
     {
-        QGLPrimitive top;
+        QGeometryData top;
         // create the top face of the tail of the Q - its a quad
         top.appendVertexArray(topTailEdge);
         top.appendColorArray(QArray<QColor4ub>(tailCnt, tailColor));
@@ -219,7 +218,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     {
         // if there is an overlap between outer over the inner, draw those
         // points as a fan from the first inner to the outer overlap points
-        QGLPrimitive top;
+        QGeometryData top;
         top.appendVertex(topQIEdge.at(0));
         top.appendColor(innerColor);
         top.appendVertexArray(topQOEdge.left(lap));
@@ -228,8 +227,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
     {
         // now draw all the quads making up the rest of the face of the Q
-        QGLPrimitive in;
-        QGLPrimitive out;
+        QGeometryData in;
+        QGeometryData out;
         out.appendVertexArray(topQOEdge.mid(lap, icnt));
         out.appendColorArray(QArray<QColor4ub>(icnt, outerColor));
         in.appendVertexArray(topQIEdge);
@@ -238,7 +237,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
     if (lap)
     {
-        QGLPrimitive top;
+        QGeometryData top;
         top.appendVertex(topQIEdge.at(icnt - 1));
         top.appendColor(innerColor);
         top.appendVertexArray(topQOEdge.right(lap));
@@ -251,8 +250,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     qList->newSection();
     {
         // outside sides
-        QGLPrimitive top;
-        QGLPrimitive bottom;
+        QGeometryData top;
+        QGeometryData bottom;
         bottomQOEdge = topQOEdge.translated(extrudeVec);
         top.appendVertexArray(topQOEdge);
         top.appendColorArray(QArray<QColor4ub>(ocnt, outerColor));
@@ -262,8 +261,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
     {
         // inside sides
-        QGLPrimitive top;
-        QGLPrimitive bottom;
+        QGeometryData top;
+        QGeometryData bottom;
         //! [translated]
         bottomQIEdge = topQIEdge.translated(extrudeVec);
         //! [translated]
@@ -276,8 +275,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
     {
         // tail sides
-        QGLPrimitive top;
-        QGLPrimitive bottom;
+        QGeometryData top;
+        QGeometryData bottom;
         bottomTailEdge = topTailEdge.translated(extrudeVec);
         QVector3DArray t1 = topTailEdge;
         t1.append(t1.first());
@@ -299,7 +298,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     qList->newSection();
     {
         // create the bottom face of the tail of the Q
-        QGLPrimitive bottom;
+        QGeometryData bottom;
         bottom.appendVertexArray(bottomTailEdge);
         bottom.appendColorArray(QArray<QColor4ub>(tailCnt, tailColor));
         qList->addQuad(bottom);
@@ -307,7 +306,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     if (lap)
     {
         // draw the outer-over-inner overlap
-        QGLPrimitive bottom;
+        QGeometryData bottom;
         bottom.appendVertex(bottomQIEdge.at(0));
         bottom.appendColor(innerColor);
         bottom.appendVertexArray(bottomQOEdge.left(lap));
@@ -317,8 +316,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     //! [3]
     {
         // now draw all the quads of the bottom of the Q
-        QGLPrimitive in;
-        QGLPrimitive out;
+        QGeometryData in;
+        QGeometryData out;
         out.appendVertexArray(bottomQOEdge.mid(lap, icnt));
         out.appendColorArray(QArray<QColor4ub>(icnt, outerColor));
         in.appendVertexArray(bottomQIEdge);
@@ -329,7 +328,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     if (lap)
     {
         // now draw the overlap points at the other end
-        QGLPrimitive bottom;
+        QGeometryData bottom;
         bottom.appendVertex(bottomQIEdge.at(icnt - 1));
         bottom.appendColor(innerColor);
         bottom.appendVertexArray(bottomQOEdge.right(lap));

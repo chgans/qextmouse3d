@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglsection_p.h"
-#include "qgldisplaylist_p.h"
+#include "qglbuilder_p.h"
 #include "qarray.h"
 #include "qvector_utils_p.h"
 
@@ -55,19 +55,19 @@
 /*!
     \internal
     \class QGLSection
-    \brief The QGLSection class clusters like geometry in a QGLDisplayList.
+    \brief The QGLSection class clusters like geometry in a QGLBuilder.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
-    QGLSection instances partition a QGLDisplayList into related sections,
+    QGLSection instances partition a QGLBuilder into related sections,
     while the display list is being initialized with geometry data.
 
     Once the display list is initialized, and geometry building is complete
     the QGLSection instances are destroyed and the data is uploaded to the
     graphics hardware.
 
-    The QGLSection class is a work horse for the QGLDisplayList, and it
+    The QGLSection class is a work horse for the QGLBuilder, and it
     takes care of automatically managing vertex data.  As such
     for usual use cases, its functionality will not need to be referenced
     directly.  For low-level access to geometry, QGLSection provides a
@@ -88,12 +88,12 @@
     \l{QLogicalVertex::Type}{data types}.
 
     Each QGLSection references a contiguous range of vertices in a
-    QGLDisplayList.
+    QGLBuilder.
 
-    A QGLDisplayList instance has the \l{QGLDisplayList::newSection()}{newSection()}
+    A QGLBuilder instance has the \l{QGLBuilder::newSection()}{newSection()}
     function which creates a new QGLSection to reference its data.  Use this
     to construct new QGLSection instances, or alternatively construct
-    a new QGLSection() and pass a non-null QGLDisplayList pointer.
+    a new QGLSection() and pass a non-null QGLBuilder pointer.
 
     These functions all return QVector values. QVector instances are
     implicitly shared, thus the copies are inexpensive unless a
@@ -101,7 +101,7 @@
 
     Generally for adding geometry, use append().  This function simply
     calls virtual protected functions appendSmooth() (for smoothed vertices)
-    and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
+    and appendFaceted() (for faceted vertices).  See QGLBuilder for a
     discussion of smoothing.
 */
 
@@ -307,7 +307,7 @@ public:
     Construct a new QGLSection on the display list \a list, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
-    See QGLDisplayList for a discussion of smoothing.
+    See QGLBuilder for a discussion of smoothing.
 
     The pointer \a list must be non-null, and in debug mode, unless QT_NO_DEBUG is
     defined, this function will assert if \a list is null.
@@ -318,7 +318,7 @@ public:
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
 */
-QGLSection::QGLSection(QGLDisplayList *list, QGL::Smoothing s)
+QGLSection::QGLSection(QGLBuilder *list, QGL::Smoothing s)
     : m_smoothing(s)
     , m_displayList(list)
     , d(0)
@@ -491,7 +491,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
     of a display list, or use:
 
     \code
-    myDisplayList->newSection(QGLDisplayList::Smooth);
+    myDisplayList->newSection(QGLBuilder::Smooth);
     myDisplayList->addTriangle(a, b, c);
     \endcode
 
@@ -499,7 +499,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
     graphics hardware once (not once per face), thus smooth geometry may
     consume fewer resources.
 
-    \sa appendFaceted(), updateTexCoord(), QGLDisplayList::newSection()
+    \sa appendFaceted(), updateTexCoord(), QGLBuilder::newSection()
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
@@ -591,14 +591,14 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
     This function is used to add the vertices of a faceted face to the list:
 
     \code
-    myDisplayList->newSection(QGLDisplayList::Faceted);
+    myDisplayList->newSection(QGLBuilder::Faceted);
     myDisplayList->addVertex(lv);
     \endcode
 
     In faceted surfaces, the vertex is sent to the graphics hardware once for
     each normal it has, and thus may consume more resources.
 
-    \sa appendSmooth(), updateTexCoord(), QGLDisplayList::newSection()
+    \sa appendSmooth(), updateTexCoord(), QGLBuilder::newSection()
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
@@ -669,7 +669,7 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
 
 /*!
     \internal
-    \fn QGLDisplayList *QGLSection::displayList() const
+    \fn QGLBuilder *QGLSection::displayList() const
 
     Returns the display list associated with this section.
 */

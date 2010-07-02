@@ -40,17 +40,16 @@
 ****************************************************************************/
 
 #include "skybox.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
 #include "qglpainter.h"
 #include "qglview.h"
-#include "qgloperation.h"
 
 #include <QDir>
 #include <QFileInfo>
 
 SkyBox::SkyBox(QGLView *view, const QString &imagePath)
-    : m_list(new QGLDisplayList)
+    : m_list(new QGLBuilder)
     , m_view(view)
 {
     m_list->setObjectName("SkyboxList");
@@ -70,7 +69,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     QVector2D tr(1.0f, 1.0f);
     QVector2D tl(0.0f, 1.0f);
     {
-        QGLPrimitive q;   // left
+        QGeometryData q;   // left
         m_list->currentNode()->setObjectName("left");
         q.appendVertex(blf, blb, tlb, tlf);
         q.appendTexCoord(bl, br, tr, tl);
@@ -81,7 +80,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();   // top
         m_list->currentNode()->setObjectName("top");
-        QGLPrimitive q;
+        QGeometryData q;
         q.appendVertex(trf, tlf, tlb, trb);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
@@ -91,7 +90,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();    // right
         m_list->currentNode()->setObjectName("right");
-        QGLPrimitive q;
+        QGeometryData q;
         q.appendVertex(brb, brf, trf, trb);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
@@ -101,7 +100,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();    // bottom
         m_list->currentNode()->setObjectName("bottom");
-        QGLPrimitive q;
+        QGeometryData q;
         q.appendVertex(brb, blb, blf, brf);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
@@ -111,7 +110,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();    // front
         m_list->currentNode()->setObjectName("front");
-        QGLPrimitive q;
+        QGeometryData q;
         q.appendVertex(brf, blf, tlf, trf);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);
@@ -121,7 +120,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     {
         m_list->newNode();    // back
         m_list->currentNode()->setObjectName("back");
-        QGLPrimitive q;
+        QGeometryData q;
         q.appendVertex(blb, brb, trb, tlb);
         q.appendTexCoord(bl, br, tr, tl);
         m_list->addQuad(q);

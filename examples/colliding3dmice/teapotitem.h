@@ -43,7 +43,7 @@
 #define TEAPOTITEM_H
 
 #include "qglgraphicsviewportitem.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include <QtGui/qbrush.h>
 
 class QGLFramebufferObject;
@@ -70,7 +70,7 @@ private Q_SLOTS:
     void updateScene();
 
 private:
-    QGLDisplayList teapot;
+    QGLBuilder teapot;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
     QBrush background;

@@ -41,8 +41,6 @@
 
 #include "quadplane.h"
 
-#include "qgloperation.h"
-
 /*!
     \class QuadPlane
     \brief The QuadPlane class holds a 3D model of a large flat plane.
@@ -60,7 +58,7 @@
 */
 QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
                      QSizeF size, int level)
-                         : QGLDisplayList(parent, materials)
+                         : QGLBuilder(parent, materials)
 {
     setObjectName("QuadPlane");
     if (level > 8)
@@ -72,8 +70,8 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
     QSizeF div = size / float(divisions);
     QSizeF half = size / 2.0f;
     newSection();
-    QGLPrimitive zip;
-    QGLPrimitive zip2;
+    QGeometryData zip;
+    QGeometryData zip2;
     for (int yy = 0; yy <= divisions; ++yy)
     {
         qreal y = half.height() - float(yy) * div.height();

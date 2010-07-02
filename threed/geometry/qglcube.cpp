@@ -40,8 +40,7 @@
 ****************************************************************************/
 
 #include "qglcube.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
 #include "qvector3darray.h"
 
 QT_BEGIN_NAMESPACE
@@ -57,7 +56,7 @@ QT_BEGIN_NAMESPACE
     display list, and draws it at (10, 25, 0) in a QGLPainter:
 
     \code
-    QGLDisplayList list;
+    QGLBuilder list;
     list.newSection(QGL::Faceted);
     list << QGLCube(2);
     painter->translate(10, 25, 0);
@@ -115,7 +114,7 @@ QT_BEGIN_NAMESPACE
     from the cube example program.
 
     \code
-    QGLDisplayList list;
+    QGLBuilder list;
     list << QGLCubeFace(QGLCubeFace::Top, 2);
     list << QGLCubeFace(QGLCubeFace::Front, 2);
     list << QGLCubeFace(QGLCubeFace::Right, 2);
@@ -138,7 +137,7 @@ QT_BEGIN_NAMESPACE
     quadrant of the texture is addressed:
 
     \code
-    QGLDisplayList list;
+    QGLBuilder list;
     QGLCubeFace left(QGLCubeFace::Left, 2);
     left.setTextureCoord(QGLCubeFace::BottomLeft, 0.0f, 0.5f);
     left.setTextureCoord(QGLCubeFace::BottomRight, 0.5f, 0.5f);
@@ -328,22 +327,23 @@ QGLCubeFace::QGLCubeFace(QGLCubeFace::Face face, qreal size)
     See the documentation for QGLCubeFace to determine the orientation
     of the faces with respect to texture coordinates.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLCube& cube)
 {
-    QGLOperation op(&list, QGL::QUAD);
+    QGeometryData op;
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
     vrts.scale(cube.size());
 
-    op << vrts;
+    op.appendVertexArray(vrts);
 
     QVector2DArray texx = QVector2DArray::fromRawData(
             reinterpret_cast<const QVector2D *>(texCoordData), texCoordDataLen / 2);
 
     for (int i = 0; i < 6; ++i)
-        op << texx;
+        op.appendTexCoordArray(texx);
 
+    list.addQuad(op);
     return list;
 }
 
@@ -356,19 +356,20 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube)
     This operator specifies the positions, normals, and 2D texture
     co-ordinates for all of the vertices that make up the cube face.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeFace& face)
 {
-    QGLOperation op(&list, QGL::QUAD);
+    QGeometryData op;
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>
                 (vertexData + face.face() * 4 * 3), 4);
     vrts.scale(face.size());
 
-    op << vrts;
+    op.appendVertexArray(vrts);
 
-    op << face.textureCoords();
+    op.appendTexCoordArray(face.textureCoords());
 
+    list.addQuad(op);
     return list;
 }
 

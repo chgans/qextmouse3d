@@ -43,8 +43,8 @@
 #include "qglobjscene.h"
 #include "qvector2darray.h"
 #include "qvector3darray.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
+
 #include <QtCore/qiodevice.h>
 #include <QtCore/qfile.h>
 #include <QtGui/qimage.h>
@@ -142,7 +142,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QList<QGLSceneObject *> groups;
 
     // Create the display list and start an initial Faceted section.
-    QGLDisplayList *dlist = new QGLDisplayList();
+    QGLBuilder *dlist = new QGLBuilder();
     dlist->newSection(smoothing);
     palette = dlist->palette();
     defaultNode = dlist;
@@ -186,7 +186,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
         } else if (keyword == "f") {
             posn = objSkipWS(line, posn);
             count = 0;
-            QGLOperation op(dlist, QGL::TRIANGLE_FAN);
+            QGeometryData op; //(dlist, QGL::TRIANGLE_FAN);
             while (posn < line.size()) {
                 // Note: we currently only read the initial vertex
                 // index and also use it for texture co-ordinates
@@ -200,7 +200,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else if (index > 0)
                     --index;        // Indices in obj are 1-based.
                 if (index >= 0 && index < positions.count())
-                    op << positions[index];
+                    op.appendVertex(positions[index]);
                 if (tindex < 0)
                     tindex = texCoords.count() + tindex;
                 else if (tindex > 0)
@@ -208,7 +208,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else
                     tindex = -1;
                 if (tindex >= 0 && tindex < texCoords.count())
-                    op << texCoords[tindex];
+                    op.appendTexCoord(texCoords[tindex]);
                 if (nindex < 0)
                     nindex = normals.count() + nindex;
                 else if (nindex > 0)
@@ -229,7 +229,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                     dlist->newSection(smoothing);
                 fields = dlist->currentPrimitive()->fields();
             }
-            op.end();
+            dlist->addTriangleFan(op);
         } else if (keyword == "usemtl") {
             // Specify a material for the faces that follow.
             posn = objSkipWS(line, posn);

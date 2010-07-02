@@ -39,53 +39,57 @@
 **
 ****************************************************************************/
 
-#ifndef QGLPRIMITIVE_H
-#define QGLPRIMITIVE_H
+#ifndef QGLBuilder_P_H
+#define QGLBuilder_P_H
 
-#include "qglnamespace.h"
-#include "qgeometrydata.h"
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
 
-namespace QGL
-{
-    enum Operation
-    {
-        NO_OP,
-        TRIANGLE,
-        TRIANGLE_STRIP,
-        TRIANGLE_FAN,
-        TRIANGULATED_FACE,
-        QUAD,
-        QUAD_STRIP,
-        QUADS_ZIPPED
-    };
+#include "qglbuilder.h"
 
-    enum OperationFlag
-    {
-        NO_FLAG               = 0X00,
-        FACE_SENSE_REVERSED   = 0x01,
-        NO_CLOSE_PATH         = 0x02,
-        NEXT_PRIMITIVE        = 0x04,
-        RETAIN_PRIMITIVE      = 0x08,
-        USE_VERTEX_0_AS_CTR   = 0x10
-    };
-    Q_DECLARE_FLAGS(OperationFlags, OperationFlag);
-}
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::OperationFlags);
+#include <QtCore/qmap.h>
+#include <QPointer>
 
-class Q_QT3D_EXPORT QGLPrimitive : public QGeometryData
+QT_BEGIN_NAMESPACE
+
+class QGLBuilder;
+class QGLSection;
+class QGeometryData;
+
+class QGLBuilderPrivate
 {
 public:
-    QGLPrimitive();
-    virtual ~QGLPrimitive() {}
-    void setFlags(QGL::OperationFlags flags) { m_flags = flags; }
-    QGL::OperationFlags flags() const { return m_flags; }
-    QGLPrimitive reversed() const;
-    QGLPrimitive translated(const QVector3D &) const;
-    QGLPrimitive zippedWith(const QGLPrimitive &other) const;
-    void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
-                                    QGL::VertexAttribute attribute = QGL::TextureCoord0);
-protected:
-    QGL::OperationFlags m_flags;
+    QGLBuilderPrivate(QGLBuilder *parent);
+    ~QGLBuilderPrivate();
+    inline void setDirty(bool dirty = true);
+    void addTriangle(int a, int b, int c, QGeometryData &p);
+    void adjustSectionNodes(QGLSection *sec, int offset, const QGeometryData &geom);
+    int adjustNodeTree(QGLSceneNode *top, int offset, const QGeometryData &geom,
+                       QList<QGLSceneNode*> &deleted);
+
+    bool finalizeNeeded;
+    QList<QGLSection*> sections;
+    QGLSection *currentSection;
+    QList<QGLSceneNode*> nodeStack;
+    QPointer<QGLSceneNode> currentNode;
+    QPointer<QGLSceneNode> rootNode;
+    int defThreshold;
+    QGLBuilder *q;
 };
 
-#endif // QGLPRIMITIVE_H
+inline void QGLBuilderPrivate::setDirty(bool dirty)
+{
+    finalizeNeeded = dirty;
+}
+
+QT_END_NAMESPACE
+
+#endif // QGLBuilder_P_H

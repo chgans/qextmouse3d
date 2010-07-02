@@ -44,8 +44,7 @@
 #include "qglscenenode.h"
 #include "qglcamera.h"
 #include "qglpainter.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
 #include "qglpicknode.h"
 #include "qglabstractscene.h"
 
@@ -223,29 +222,31 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::buildFloor()
 {
-    m_floor = new QGLDisplayList(this);
+    m_floor = new QGLBuilder(this);
     m_floor->newSection();
     for (int x = -5; x < 5; ++x)
     {
-        QGLOperation op(m_floor, QGL::QUAD_STRIP);
+        QGeometryData op;
         for (int z = -5; z <= 5; ++z)
         {
-            op << QVector3D(x, 0, z);
-            op << QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f);
-            op << QVector3D(x + 1, 0, z);
-            op << QVector2D(float(-x - 6) / 10.0f, float(z + 5) / 10.0f);
+            op.appendVertex(QVector3D(x, 0, z));
+            op.appendTexCoord(QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f));
+            op.appendVertex(QVector3D(x + 1, 0, z));
+            op.appendTexCoord(QVector2D(float(-x - 6) / 10.0f, float(z + 5) / 10.0f));
         }
+        m_floor->addQuadStrip(op);
     }
     for (int z = -5; z < 5; ++z)
     {
-        QGLOperation op(m_floor, QGL::QUAD_STRIP);
+        QGeometryData op;
         for (int x = -5; x <= 5; ++x)
         {
-            op << QVector3D(x, -0.01, z);
-            op << QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f);
-            op << QVector3D(x, -0.01, z + 1);
-            op << QVector2D(float(-x - 5) / 10.0f, float(z + 6) / 10.0f);
+            op.appendVertex(QVector3D(x, -0.01, z));
+            op.appendTexCoord(QVector2D(float(-x - 5) / 10.0f, float(z + 5) / 10.0f));
+            op.appendVertex(QVector3D(x, -0.01, z + 1));
+            op.appendTexCoord(QVector2D(float(-x - 5) / 10.0f, float(z + 6) / 10.0f));
         }
+        m_floor->addQuadStrip(op);
     }
     m_floor->finalize();
     m_floor->setEffect(QGL::LitDecalTexture2D);

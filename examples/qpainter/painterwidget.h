@@ -43,7 +43,7 @@
 #define PAINTERWIDGET_H
 
 #include "qglpainter.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class PainterWidget : public QWidget
 {
@@ -56,7 +56,7 @@ protected:
     void paintEvent(QPaintEvent *);
 
 private:
-    QGLDisplayList cube;
+    QGLBuilder cube;
 };
 
 #endif

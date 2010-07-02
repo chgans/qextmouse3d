@@ -43,7 +43,7 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QGLFramebufferObject;
 class QGLCamera;
@@ -72,8 +72,8 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLDisplayList cube;
-    QGLDisplayList teapot;
+    QGLBuilder cube;
+    QGLBuilder teapot;
     QGLTexture2D qtlogo;
     QGLFramebufferObject *fbo;
     QGLCamera *innerCamera;

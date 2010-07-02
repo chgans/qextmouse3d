@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglpainter.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglcamera.h"
@@ -76,8 +76,8 @@ private:
     static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
-    QGLDisplayList cube;
-    QGLDisplayList teapot;
+    QGLBuilder cube;
+    QGLBuilder teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
 };

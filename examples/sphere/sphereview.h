@@ -44,7 +44,7 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QTimer;
 class QGLSphere;
@@ -71,7 +71,7 @@ private:
     QImage pointsImage;
     bool textured;
     QGLTexture2D cubeTexture, icoTexture, uvTexture;
-    QGLDisplayList list;
+    QGLBuilder list;
     QVector<QGLSceneNode *> spheres;
     QTimer *timer;
     int angle;

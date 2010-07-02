@@ -46,7 +46,7 @@
 #include <QtGui/qevent.h>
 #include "qglpainter.h"
 #include "qglsceneobject.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglabstractscene.h"
 
 class QGLView;
@@ -55,7 +55,7 @@ class MeshObject : public QObject
 {
     Q_OBJECT
 public:
-    explicit MeshObject(QGLDisplayList *mesh, QObject *parent=0);
+    explicit MeshObject(QGLBuilder *mesh, QObject *parent=0);
     explicit MeshObject(QGLSceneObject *meshObject, QObject *parent=0);
     explicit MeshObject(QGLAbstractScene *scene, QObject *parent=0);
     virtual ~MeshObject();
@@ -99,7 +99,7 @@ protected:
     bool event(QEvent *e);
 
 private:
-    QGLDisplayList *m_mesh;
+    QGLBuilder *m_mesh;
     QGLSceneObject *m_meshObject;
     QGLAbstractScene *m_scene;
     QVector3D m_position;

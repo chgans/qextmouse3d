@@ -46,7 +46,7 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qgltexture2d.h"
 
 class ShaderWizardGLWidgetPrivate;
@@ -135,11 +135,11 @@ private:
     QGLTexture2D *mTexture;
 
     // Models
-    QGLDisplayList* cube;
-    QGLDisplayList* teapot;
-    QGLDisplayList* square;
-    QGLDisplayList* ripple;
-    QGLDisplayList* sphere;
+    QGLBuilder* cube;
+    QGLBuilder* teapot;
+    QGLBuilder* square;
+    QGLBuilder* ripple;
+    QGLBuilder* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

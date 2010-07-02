@@ -42,15 +42,15 @@
 #ifndef IMAGEDISPLAY_H
 #define IMAGEDISPLAY_H
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglmaterialcollection.h"
 
 #include <QString>
 
-class QGLDisplayList;
+class QGLBuilder;
 class QGLTexture2D;
 
-class ImageDisplay : public QGLDisplayList
+class ImageDisplay : public QGLBuilder
 {
     Q_OBJECT
 public:

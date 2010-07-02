@@ -45,7 +45,7 @@
 #include "qglview.h"
 
 class QGLSceneNode;
-class QGLDisplayList;
+class QGLBuilder;
 
 class PVColorView : public QGLView
 {
@@ -60,7 +60,7 @@ protected:
     void wheelEvent(QWheelEvent *e);
 
 private:
-    QGLDisplayList *buildGeometry();
+    QGLBuilder *buildGeometry();
 
     QGLSceneNode *pvScene;
 };

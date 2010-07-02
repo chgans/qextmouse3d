@@ -185,7 +185,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
         patches.setSubdivisionDepth(depth);
     patches.setPositions(vertices);
     patches.setIndices(indices);
-    QGLDisplayList *geometry = new QGLDisplayList();
+    QGLBuilder *geometry = new QGLBuilder();
     (*geometry) << patches;
 
     // Create a scene with a single object containing the geometry.

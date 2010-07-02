@@ -52,7 +52,7 @@
     \ingroup qt3d::geometry
 
     QLogicalVertex instances are a convenience class for use with
-    QGLDisplayList.  A QLogicalVertex simply references through to the data
+    QGLBuilder.  A QLogicalVertex simply references through to the data
     in a QGeometryData for a particular vertex, providing accessors to fetch
     position, texture coordinates, and other values.
 
@@ -111,7 +111,7 @@
     If using common normals, generally do not store normal data as well,
     since it will be ignored.
 
-    \sa QGeometryData, QGLDisplayList
+    \sa QGeometryData, QGLBuilder
 */
 
 /*!

@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLDISPLAYLIST_H
-#define QGLDISPLAYLIST_H
+#ifndef QGLBuilder_H
+#define QGLBuilder_H
 
 #include <QtCore/qvector.h>
 #include <QtCore/qlist.h>
@@ -51,7 +51,7 @@
 #include "qglscenenode.h"
 #include "qlogicalvertex.h"
 #include "qglattributevalue.h"
-#include "qglprimitive.h"
+#include "qgeometrydata.h"
 
 QT_BEGIN_HEADER
 
@@ -61,27 +61,20 @@ QT_MODULE(Qt3d)
 
 class QGLSection;
 class QGLMaterialCollection;
-class QGLDisplayListPrivate;
+class QGLBuilderPrivate;
 class QGLPainter;
 
-class Q_QT3D_EXPORT QGLDisplayList : public QGLSceneNode
+class Q_QT3D_EXPORT QGLBuilder
 {
-    Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLDisplayList);
 public:
-    QGLDisplayList(QObject *parent = 0, QGLMaterialCollection *materials = 0);
-    virtual ~QGLDisplayList();
-
-    void draw(QGLPainter *painter)
-    {
-        finalize();
-        QGLSceneNode::draw(painter);
-    }
+    explicit QGLBuilder(QGLMaterialCollection *materials = 0);
+    virtual ~QGLBuilder();
 
     // section management
     void newSection(QGL::Smoothing sm = QGL::Smooth);
 
     // scene management
+    QGLSceneNode *rootNode();
     QGLSceneNode *currentNode();
     QGLSceneNode *newNode();
     QGLSceneNode *pushNode();
@@ -89,47 +82,15 @@ public:
 
     void finalize();
 
-    // geometry building by begin() / end()
-    void begin(QGL::Operation);
-    void end();
-    QGL::Operation currentOperation() const;
-
-    void setFlags(QGL::OperationFlags flag);
-    QGL::OperationFlags flags() const;
-
-    void addVertex(const QVector3D &);
-    void addVertex(qreal x, qreal y) { addVertex(QVector3D(x, y, 0.0)); }
-    void addVertex(qreal x, qreal y, qreal z) { addVertex(QVector3D(x, y, z)); }
-
-    void addNormal(const QVector3D &);
-    void addColor(const QColor4ub &);
-
-    void addTexCoord(const QVector2D &, QGL::VertexAttribute attr = QGL::TextureCoord0);
-    void addTexCoord(qreal s, qreal t, QGL::VertexAttribute attr = QGL::TextureCoord0)
-    {
-        addTexCoord(QVector2D(s, t), attr);
-    }
-
-    void addAttribute(const QVector3D &, QGL::VertexAttribute = QGL::CustomVertex0);
-
-    void addVertexArray(const QVector3DArray &);
-    void addNormalArray(const QVector3DArray &);
-    void addColorArray(const QArray<QColor4ub> &);
-    void addTexCoordArray(const QVector2DArray &,
-                          QGL::VertexAttribute attr = QGL::TextureCoord0);
-    void addAttributeArray(const QCustomDataArray &,
-                           QGL::VertexAttribute attr = QGL::CustomVertex0);
-
     // geometry building by primitive
-    QGLPrimitive *currentPrimitive();
-    void addTriangle(const QGLPrimitive &triangle);
-    void addQuad(const QGLPrimitive &quad);
-    void addTriangleFan(const QGLPrimitive &fan);
-    void addTriangleStrip(const QGLPrimitive &strip);
-    void addTriangulatedFace(const QGLPrimitive &face);
-    void addQuadStrip(const QGLPrimitive &strip);
-    void addQuadsZipped(const QGLPrimitive &top,
-                        const QGLPrimitive &bottom);
+    void addTriangle(const QGeometryData &triangle);
+    void addQuad(const QGeometryData &quad);
+    void addTriangleFan(const QGeometryData &fan);
+    void addTriangleStrip(const QGeometryData &strip);
+    void addTriangulatedFace(const QGeometryData &face);
+    void addQuadStrip(const QGeometryData &strip);
+    void addQuadsZipped(const QGeometryData &top,
+                        const QGeometryData &bottom);
 
 protected:
     // internal and test functions
@@ -137,24 +98,18 @@ protected:
     QList<QGLSection*> sections() const;
     void setDefaultThreshold(int);
 
-private slots:
-    void deleteNode(QObject *);
-
 private:
-    Q_DISABLE_COPY(QGLDisplayList);
+    Q_DISABLE_COPY(QGLBuilder);
     void addSection(QGLSection *section);
+    void setDirty(bool dirty);
 
     friend class QGLSection;
 
-    void setDirty(bool dirty);
-
-#ifndef QT_NO_DEBUG_STREAM
-    friend QDebug operator<<(QDebug, const QGLSection &);
-#endif
+    QGLBuilderPrivate *dptr;
 };
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // QGLDISPLAYLIST_H
+#endif // QGLBuilder_H

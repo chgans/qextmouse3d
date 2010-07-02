@@ -52,7 +52,7 @@ class QGLPainter;
 class QGLLightModel;
 class QGLLightParameters;
 class QTimer;
-class QGLDisplayList;
+class QGLBuilder;
 
 class Viewer : public QGLView
 {
@@ -120,7 +120,7 @@ private:
     View m_view;
     bool m_animate;
     bool m_warningDisplayed;
-    QGLDisplayList *m_floor;
+    QGLBuilder *m_floor;
     bool m_drawFloor;
     int m_zoomScale;
     bool m_pickDirty;

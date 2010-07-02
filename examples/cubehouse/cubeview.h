@@ -43,7 +43,7 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qgltexture2d.h"
 #include <QtCore/qdatetime.h>
 
@@ -70,9 +70,9 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLDisplayList cube;
-    QGLDisplayList room;
-    QGLDisplayList teapot;
+    QGLBuilder cube;
+    QGLBuilder room;
+    QGLBuilder teapot;
     QGLCamera *roomCamera;
     qreal sensitivity;
     QGLLightModel *roomModel;

@@ -41,7 +41,6 @@
 
 #include "qgl3dsmesh.h"
 #include "qglmaterialcollection.h"
-#include "qgloperation.h"
 #include "qglsection_p.h"
 #include "qarray.h"
 #include "qvector_utils_p.h"
@@ -119,7 +118,7 @@ struct ModulateRecord
 
 QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
                        QGLMaterialCollection *materials)
-    : QGLDisplayList(parent, materials)
+    : QGLBuilder(parent, materials)
     , m_mesh(mesh)
     , m_texFlip(false)
     , m_hasZeroSmoothing(false)
@@ -715,7 +714,7 @@ void QGL3dsMesh::generateVertices()
             keyCount -= 1;
             currentNode()->setMaterialIndex(matIx);
             currentNode()->setObjectName(baseName + "::" + QString::number(key));
-            QGLPrimitive tri;
+            QGeometryData tri;
             int cur = 0;
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)
             {

@@ -42,13 +42,13 @@
 #ifndef QUADPLANE_H
 #define QUADPLANE_H
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 #include <QSizeF>
 
 class QPlane3D;
 
-class QuadPlane : public QGLDisplayList
+class QuadPlane : public QGLBuilder
 {
 public:
     QuadPlane(QObject *parent = 0, QGLMaterialCollection *materials = 0,

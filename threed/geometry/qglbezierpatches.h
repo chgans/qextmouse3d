@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLBezierPatchesPrivate;
-class QGLDisplayList;
+class QGLBuilder;
 
 class Q_QT3D_EXPORT QGLBezierPatches
 {
@@ -91,10 +91,10 @@ private:
 
     Q_DECLARE_PRIVATE(QGLBezierPatches)
 
-    friend Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
+    friend Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLBezierPatches& patches);
 };
 
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLBezierPatches& patches);
 
 QT_END_NAMESPACE
 

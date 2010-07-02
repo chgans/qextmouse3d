@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "cube.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
 
 QT_BEGIN_NAMESPACE
@@ -52,7 +52,7 @@ public:
     ~CubePrivate() { delete cube; }
 
     qreal size;
-    QGLDisplayList *cube;
+    QGLBuilder *cube;
 };
 
 Cube::Cube(QObject *parent)
@@ -83,7 +83,7 @@ void Cube::setSize(qreal value)
 void Cube::drawItem(QGLPainter *painter)
 {
     if (!d->cube) {
-        d->cube = new QGLDisplayList();
+        d->cube = new QGLBuilder();
         d->cube->newSection(QGL::Faceted);
         (*d->cube) << QGLCube(d->size);
     }

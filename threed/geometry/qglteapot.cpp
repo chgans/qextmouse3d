@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE
     0.5 at the origin:
 
     \code
-    QGLDisplayList teapot;
+    QGLBuilder teapot;
     teapot << QGLTeapot();
 
     painter.modelViewMatrix().scale(0.5f);

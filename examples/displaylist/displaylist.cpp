@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "displaylist.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
 #include "qglmaterial.h"
@@ -56,7 +56,7 @@ DisplayListView::DisplayListView(QWidget *parent)
     , canScene(new QGLSceneNode(this))
 {
     //! [0]
-    QGLDisplayList *displayList = buildGeometry();
+    QGLBuilder *displayList = buildGeometry();
     displayList->setParent(canScene);
     {
         // rotate the can around so its label shows; and down
@@ -115,10 +115,10 @@ void DisplayListView::paintGL(QGLPainter *painter)
 }
 //! [1]
 
-QGLDisplayList *DisplayListView::buildGeometry()
+QGLBuilder *DisplayListView::buildGeometry()
 {
     //! [2]
-    QGLDisplayList *soupCan = new QGLDisplayList();
+    QGLBuilder *soupCan = new QGLBuilder();
     QGLMaterialCollection *mats = soupCan->palette();
 
     QGLMaterial *parms = new QGLMaterial(mats);
@@ -142,7 +142,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
     const qreal canHeight = 2.5f;
     const int numSlices = 32;
 
-    QGLPrimitive canRim;
+    QGeometryData canRim;
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
 
     // do the math for the defining points
@@ -163,17 +163,17 @@ QGLDisplayList *DisplayListView::buildGeometry()
     soupCan->newSection();
     soupCan->currentNode()->setMaterialIndex(canMat);
     soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
-    QGLPrimitive canTop = canRim;
+    QGeometryData canTop = canRim;
     canTop.appendVertex(canTop.vertexRef(0));       // doubled vert for texture seam
     canTop.generateTextureCoordinates();            // generate x texture coords
-    QGLPrimitive canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
+    QGeometryData canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
     for (int i = 0; i < canTop.count(); ++i)
         canTop.texCoordRef(i).setY(1.0);                      // top has tex.y == 1
     soupCan->addQuadsZipped(canTop, canBase);
 
     // create the flat bottom lid of the can
     soupCan->newSection();
-    QGLPrimitive canBottom = canRim.translated(canExtrudeVec).reversed();
+    QGeometryData canBottom = canRim.translated(canExtrudeVec).reversed();
     soupCan->addTriangulatedFace(canBottom);
 
     soupCan->finalize();

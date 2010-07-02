@@ -43,7 +43,7 @@
 #define CUBEITEM_H
 
 #include "qglgraphicsviewportitem.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QGraphicsScene;
 class QGLFramebufferObject;
@@ -71,7 +71,7 @@ private Q_SLOTS:
     void updateScene();
 
 private:
-    QGLDisplayList cube;
+    QGLBuilder cube;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
     bool navigating;

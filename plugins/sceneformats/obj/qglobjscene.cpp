@@ -40,12 +40,12 @@
 ****************************************************************************/
 
 #include "qglobjscene.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglsceneobject.h"
 
 QT_BEGIN_NAMESPACE
 
-QGLObjScene::QGLObjScene(QGLDisplayList *list,
+QGLObjScene::QGLObjScene(QGLBuilder *list,
                          QGLSceneObject *defaultNode,
                          const QList<QGLSceneObject *>& otherNodes,
                          QObject *parent)

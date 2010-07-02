@@ -108,8 +108,6 @@
      is very inexpensive, since the first declaration and initialization
      does not cause internal data to be created (only to be overwritten by the
      assignment operation).
-
-     \sa QGLPrimitive
 */
 
 /*!
@@ -462,6 +460,105 @@ const QVector3D &QGeometryData::commonNormal() const
     if (d)
         return d->commonNormal;
     return def;
+}
+
+/*!
+    Returns a copy of this geometry data with elements in reverse order.
+*/
+QGeometryData QGeometryData::reversed() const
+{
+    QGeometryData r;
+    for (int i = count() - 1; i >= 0; --i)
+        r.appendVertex(vertexAt(i));
+    return r;
+}
+
+/*!
+    Returns a copy of this primitive with QGL::Position data translated by
+    the vector \a t.  The other fields are unchanged.
+*/
+QGeometryData QGeometryData::translated(const QVector3D &t) const
+{
+    QGeometryData r;
+    QArray<QVector3D> v = vertices();
+    for (int i = 0; i < count(); ++i)
+    {
+        r.appendVertex(vertexAt(i));
+        r.vertexRef(i) = v[i] + t;
+    }
+    return r;
+}
+
+/*!
+    Modifies this primitive by generating texture data based on QGL::Position
+    values.  If \a orientation is Qt::Horizontal (the default) then x-coordinate
+    values are generated, and y-coordinate values are set to 0.0; otherwise
+    y-coordinate values are generated and x-coordinate values are set to 0.0.
+    The values are appended to the texture coordinate \a field.
+
+    The method of calculation is based on the assumption that the vertex data
+    is a list of extents which span across the texture space horizontally, from
+    x = 0.0 to x = 1.0, in the case of Qt::Horizontal; or vertically in the
+    case of Qt::Vertical.  The texture space of 1.0 is divided up proportionately
+    by the length of each extent.
+
+    \image texture-coords-gen.png
+
+    In this diagram the large blue numbers are the lengths of each extent, and
+    the texture coordinates generated are shown as \c{t(7/16, 1)} and so on.
+
+    Thus the texture coordinate t0 for vertex v0, is 0.0; t1 for vertex v1 is
+    \c{(v1 - v0).length() / totalLength} and so on.
+
+    The code to produce the texture coordinates for the quads in the image is:
+    \code
+    QGeometryData top;
+
+    // add data to the primitive
+    top.appendVertex(QVector3D(0.0, 0.0, 0.0));
+    top.appendVertex(QVector3D(6.0, 3.6, 0.0));    // (v1 - v0).length() = 7.0
+    top.appendVertex(QVector3D(10.0, 0.6, 0.0));   // (v2 - v1).length() = 5.0
+    top.appendVertex(QVector3D(13.0, 3.24, 0.0));  // (v3 - v2).length() = 4.0
+
+    // generate x (Qt::Horizontal) texture coordinates over the primitive
+    top.generateTextureCoordinates();              // spread over 7 + 5 + 4 = 16
+
+    // make a copy translated down, the copy has y texture coordinates all 0
+    QGeometryData bottom = top.translated(QVector3D(0, 0, -1));
+
+    // now modify the top so its y texture coordinates are all 1
+    for (int i = 0; i < top.count(); ++i)
+        top.texCoordRef(QGL::TextureCoord0).setY(1.0);
+
+    displayList->addQuadsZipped(top, bottom);
+    \endcode
+*/
+void QGeometryData::generateTextureCoordinates(Qt::Orientation orientation, QGL::VertexAttribute field)
+{
+    QArray<qreal> extents;
+    extents.append(0.0);
+    qreal totalExtents = 0.0;
+    QArray<QVector3D> v = vertices();
+    for (int i = 0; i < v.count() - 1; ++i)
+    {
+        int n = (i + 1) % v.count();
+        QVector3D e = v[n] - v[i];
+        qreal extent = e.length();
+        totalExtents += extent;
+        extents.append(totalExtents);
+    }
+    if (hasField(field))
+        clear(field);
+    if (orientation == Qt::Horizontal)
+    {
+        for (int i = 0; i < v.count(); ++i)
+            appendTexCoord(QVector2D(extents[i] / totalExtents, 0.0), field);
+    }
+    else
+    {
+        for (int i = 0; i < v.count(); ++i)
+            appendTexCoord(QVector2D(0.0, extents[i] / totalExtents), field);
+    }
 }
 
 /*!

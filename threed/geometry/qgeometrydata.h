@@ -90,6 +90,10 @@ public:
     void setCommonNormal(const QVector3D &n);
     const QVector3D &commonNormal() const;
 
+    QGeometryData reversed() const;
+    QGeometryData translated(const QVector3D &) const;
+    void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
+                                    QGL::VertexAttribute attribute = QGL::TextureCoord0);
     QGeometryData zippedWith(const QGeometryData &other) const;
     void zipWith(const QGeometryData &other);
     void clear();

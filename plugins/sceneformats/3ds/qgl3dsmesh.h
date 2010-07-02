@@ -42,7 +42,7 @@
 #ifndef QGL3DSMESH_H
 #define QGL3DSMESH_H
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qgl3dsscenehandler.h"
 
 #include <lib3ds/types.h>
@@ -53,7 +53,7 @@ class QGL3dsLoader;
 class Lib3dsMesh;
 class ModulateRecord;
 
-class QGL3dsMesh : public QGLDisplayList
+class QGL3dsMesh : public QGLBuilder
 {
 Q_OBJECT
 public:

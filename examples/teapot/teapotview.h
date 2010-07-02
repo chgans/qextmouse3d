@@ -44,7 +44,7 @@
 
 //! [class-defn]
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglteapot.h"
 
 class TeapotView : public QGLView
@@ -59,7 +59,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLDisplayList teapot;
+    QGLBuilder teapot;
 };
 //! [class-defn]
 

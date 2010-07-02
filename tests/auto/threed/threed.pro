@@ -14,10 +14,9 @@ SUBDIRS = \
     qglmaterialcollection \
     qglvertexbuffer \
     qglpainter \
-    qgldisplaylist \
+    qglbuilder \
     qglsection \
     qgeometrydata \
-    qgloperation \
     qglpickcolors \
     qstereoimage
 

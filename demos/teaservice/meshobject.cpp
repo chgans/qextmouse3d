@@ -42,7 +42,7 @@
 #include "meshobject.h"
 #include "qglview.h"
 
-MeshObject::MeshObject(QGLDisplayList *mesh, QObject *parent)
+MeshObject::MeshObject(QGLBuilder *mesh, QObject *parent)
     : QObject(parent)
 {
     m_mesh = mesh;

@@ -43,7 +43,6 @@
 #include "qgltexture2d.h"
 #include "qglmaterialcollection.h"
 #include "qtriangle3d.h"
-#include "qgloperation.h"
 
 #include <QImage>
 #include <QPainter>
@@ -53,7 +52,7 @@
 const qreal phi = 1.618033988749894848f;
 
 Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
-    : QGLDisplayList(parent, materials)
+    : QGLBuilder(parent, materials)
 {
     float ico[12][3] = {
         { 0.0f, 1.0f, phi },    // A - 0
@@ -178,9 +177,10 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         t1.setY(1.0f - t1.y());
         t2.setY(1.0f - t2.y());
 
-        QGLOperation op(this, QGL::TRIANGLE);
-        op << v0 << v1 << v2;
-        op << t0 << t1 << t2;
+        QGeometryData op;
+        op.appendVertex(v0, v1, v2);
+        op.appendTexCoord(t0, t1, t2);
+        addTriangle(op);
     }
 
     QGLMaterial *mat = new QGLMaterial;

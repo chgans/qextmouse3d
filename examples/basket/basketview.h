@@ -44,7 +44,7 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QTimer;
 
@@ -64,7 +64,7 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLDisplayList basket;
+    QGLBuilder basket;
     int angle;
     QTimer *timer;
 };

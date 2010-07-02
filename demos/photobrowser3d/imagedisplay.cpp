@@ -42,14 +42,14 @@
 
 #include "imagedisplay.h"
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
 
 #include <QUrl>
 #include <QImage>
 
 ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
-    : QGLDisplayList(parent, materials)
+    : QGLBuilder(parent, materials)
     , m_wall(0)
     , m_frames(0)
     , m_currentWall(0)

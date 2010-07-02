@@ -228,7 +228,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \enum QGL::Smoothing
     \since 4.8
-    \relates QGLDisplayList
+    \relates QGLBuilder
 
     This enum defines vertex smoothing treatments.
     \value NoSmoothing No smoothing processing is performed.

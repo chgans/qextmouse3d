@@ -41,23 +41,22 @@
 
 #include <QtTest/QtTest>
 #include <QtCore/qpointer.h>
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qvector2darray.h"
 #include "qvector3darray.h"
 #include "qglsection_p.h"
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"
 #include "qglabstracteffect.h"
-#include "qgloperation.h"
 #include "qtest_helpers_p.h"
 #include "qgeometrydata.h"
 
-class tst_QGLDisplayList : public QObject
+class tst_QGLBuilder : public QObject
 {
     Q_OBJECT
 public:
-    tst_QGLDisplayList() {}
-    ~tst_QGLDisplayList() {}
+    tst_QGLBuilder() {}
+    ~tst_QGLBuilder() {}
 
 private slots:
     void createDefault();
@@ -78,17 +77,17 @@ private slots:
 // This macro works around the discrepancy to avoid confusing QCOMPARE.
 #define QCOMPARE_INDEX(x,y)     QCOMPARE(int(x), int(y))
 
-class TestQGLDisplayList : public QGLDisplayList
+class TestQGLBuilder : public QGLBuilder
 {
 public:
-    QGLSection *currentSection() { return QGLDisplayList::currentSection(); }
-    QList<QGLSection*> sections() { return QGLDisplayList::sections(); }
+    QGLSection *currentSection() { return QGLBuilder::currentSection(); }
+    QList<QGLSection*> sections() { return QGLBuilder::sections(); }
 };
 
-void tst_QGLDisplayList::createDefault()
+void tst_QGLBuilder::createDefault()
 {
     // Test that a newly created list works with no defaults
-    TestQGLDisplayList displayList0;
+    TestQGLBuilder displayList0;
     QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
     QCOMPARE(displayList0.sections().size(), 0);
     QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
@@ -96,11 +95,11 @@ void tst_QGLDisplayList::createDefault()
     QVERIFY(displayList0.palette() != 0);
 
     QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
-    QGLDisplayList displayList1(0, palette);
+    QGLBuilder displayList1(0, palette);
     QCOMPARE(displayList1.palette(), palette.data());
 
     QObject *obj = new QObject();
-    QPointer<QGLDisplayList> displayList2 = new QGLDisplayList(obj, palette);
+    QPointer<QGLBuilder> displayList2 = new QGLBuilder(obj, palette);
     QCOMPARE(displayList2->palette(), palette.data());
     QCOMPARE(displayList2->parent(), obj);
     QCOMPARE(obj->children().at(0), displayList2.data());
@@ -109,9 +108,9 @@ void tst_QGLDisplayList::createDefault()
     QVERIFY(!palette.isNull());  // palette did not get destroyed
 }
 
-void tst_QGLDisplayList::newSection()
+void tst_QGLBuilder::newSection()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection(); // defaults to smooth
     QGLSection *s = displayList.currentSection();
     QCOMPARE(s, displayList.currentSection());
@@ -136,9 +135,9 @@ class TestEffect : public QGLAbstractEffect
     }
 };
 
-void tst_QGLDisplayList::newNode()
+void tst_QGLBuilder::newNode()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();  // calls new node
     QGLSceneNode *node = displayList.currentNode();
 
@@ -188,9 +187,9 @@ void tst_QGLDisplayList::newNode()
 #endif
 }
 
-void tst_QGLDisplayList::pushNode()
+void tst_QGLBuilder::pushNode()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
@@ -213,9 +212,9 @@ void tst_QGLDisplayList::pushNode()
     QCOMPARE(node2->materialIndex(), -1);
 }
 
-void tst_QGLDisplayList::popNode()
+void tst_QGLBuilder::popNode()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSceneNode *node = displayList.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
@@ -245,13 +244,13 @@ void tst_QGLDisplayList::popNode()
     QCOMPARE(node3->count(), 0);
 }
 
-void tst_QGLDisplayList::geometryBuild()
+void tst_QGLBuilder::geometryBuild()
 {
     // here we really just test that the right values get added
     // to the underlying QGLPrimitive - the function of the actual
     // building that takes place when end() is called is tested by
     // the addTriangle() and other tests below
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -389,9 +388,9 @@ void tst_QGLDisplayList::geometryBuild()
     QCOMPARE(node->count(), 12); // TRIANGLE_FAN will here draw 4 triangles = 12 indices
 }
 
-void tst_QGLDisplayList::addTriangle()
+void tst_QGLBuilder::addTriangle()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -504,9 +503,9 @@ void tst_QGLDisplayList::addTriangle()
     QCOMPARE(sec->vertex(2), c);
 }
 
-void tst_QGLDisplayList::addQuad()
+void tst_QGLBuilder::addQuad()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -584,9 +583,9 @@ void tst_QGLDisplayList::addQuad()
     QCOMPARE(node->count(), 6);
 }
 
-void tst_QGLDisplayList::addTriangleFan()
+void tst_QGLBuilder::addTriangleFan()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection(QGL::Faceted);
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -649,9 +648,9 @@ void tst_QGLDisplayList::addTriangleFan()
     QCOMPARE(node->count(), 9);
 }
 
-void tst_QGLDisplayList::addTriangulatedFace()
+void tst_QGLBuilder::addTriangulatedFace()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection(QGL::Faceted);
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -707,9 +706,9 @@ void tst_QGLDisplayList::addTriangulatedFace()
     QCOMPARE(node->count(), 12);
 }
 
-void tst_QGLDisplayList::extrude()
+void tst_QGLBuilder::extrude()
 {
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSection *sec = displayList.currentSection();
     QGLSceneNode *node = displayList.currentNode();
@@ -806,7 +805,7 @@ void tst_QGLDisplayList::extrude()
     QCOMPARE(node->count(), 24);
 }
 
-void tst_QGLDisplayList::finalize()
+void tst_QGLBuilder::finalize()
 {
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
@@ -834,7 +833,7 @@ void tst_QGLDisplayList::finalize()
     QVector3D n3(one_on_root2, one_on_root2, 0.0f);
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
-    TestQGLDisplayList displayList;
+    TestQGLBuilder displayList;
     displayList.newSection();
     QGLSceneNode *node = displayList.currentNode();
 
@@ -921,6 +920,6 @@ void tst_QGLDisplayList::finalize()
     QCOMPARE(geom.texCoord(tri), ta);
 }
 
-QTEST_APPLESS_MAIN(tst_QGLDisplayList)
+QTEST_APPLESS_MAIN(tst_QGLBuilder)
 
-#include "tst_qgldisplaylist.moc"
+#include "tst_QGLBuilder.moc"

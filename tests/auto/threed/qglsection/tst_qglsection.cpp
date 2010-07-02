@@ -41,7 +41,7 @@
 
 #include <QtTest/QtTest>
 #include "qglsection_p.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qgeometrydata.h"
 #include "qtest_helpers_p.h"
 #include "qvector3darray.h"
@@ -52,8 +52,8 @@ class tst_QGLSection : public QObject
 public:
     tst_QGLSection() {}
     ~tst_QGLSection() {}
-    void testSmooth(QGLSection *sec, QGLDisplayList *list);
-    void testFaceted(QGLSection *sec, QGLDisplayList *list);
+    void testSmooth(QGLSection *sec, QGLBuilder *list);
+    void testFaceted(QGLSection *sec, QGLBuilder *list);
 
 private slots:
     void create();
@@ -77,7 +77,7 @@ private slots:
 class QGLSectionTest : public QGLSection
 {
 public:
-    QGLSectionTest(QGLDisplayList *list, QGL::Smoothing s = QGL::Smooth)
+    QGLSectionTest(QGLBuilder *list, QGL::Smoothing s = QGL::Smooth)
         : QGLSection(list, s) {}
 
     void appendSmooth(const QLogicalVertex &vertex)
@@ -96,17 +96,17 @@ public:
     }
 };
 
-class TestQGLDisplayList : public QGLDisplayList
+class TestQGLBuilder : public QGLBuilder
 {
 public:
-    QGLSection *currentSection() { return QGLDisplayList::currentSection(); }
-    QList<QGLSection*> sections() { return QGLDisplayList::sections(); }
+    QGLSection *currentSection() { return QGLBuilder::currentSection(); }
+    QList<QGLSection*> sections() { return QGLBuilder::sections(); }
 };
 
 void tst_QGLSection::create()
 {
     // Test that a newly created object has the correct defaults.
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     list.newSection();
     QGLSection *section = list.currentSection();
     QVERIFY(section->hasField(QGL::Position));   // need this initially now
@@ -120,7 +120,7 @@ void tst_QGLSection::create()
 
 void tst_QGLSection::modify()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     list.newSection();
     QGLSection *section = list.currentSection();
 
@@ -128,7 +128,7 @@ void tst_QGLSection::modify()
     QVector3D vb(1.0f, -1.0f, 0.0f);
     QVector3D vc(1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(va);
     p.appendVertex(vb);
     p.appendVertex(vc);
@@ -145,7 +145,7 @@ void tst_QGLSection::modify()
 
 void tst_QGLSection::append()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     list.newSection();
     QGLSection *section = list.currentSection();
 
@@ -164,14 +164,14 @@ void tst_QGLSection::append()
 
 void tst_QGLSection::appendSmooth()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
     testSmooth(section, &list);
 }
 
 void tst_QGLSection::appendSmoothMap()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
     int t = section->mapThreshold();
     QVector3D testVertex(-12.34f, -23.45f, -34.56f);
@@ -185,7 +185,7 @@ void tst_QGLSection::appendSmoothMap()
     testSmooth(section, &list);
 }
 
-void tst_QGLSection::testSmooth(QGLSection *section, QGLDisplayList *list)
+void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *list)
 {
     int poffset = section->count(QGL::Position);
     int noffset = section->count(QGL::Normal);
@@ -236,7 +236,7 @@ void tst_QGLSection::testSmooth(QGLSection *section, QGLDisplayList *list)
 
 void tst_QGLSection::appendFaceted()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
     // test the part where its only using the QArray
     testFaceted(section, &list);
@@ -244,7 +244,7 @@ void tst_QGLSection::appendFaceted()
 
 void tst_QGLSection::appendFacetedMap()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
     // now create a new section and fill to just below the threshold for QMap
     int t = section->mapThreshold();
@@ -318,7 +318,7 @@ void tst_QGLSection::accumNormals()
 
     This test is to cover this problem.
     */
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     list.newSection(QGL::Smooth); // default - but making the point
     //QGLSection *section = list.currentSection();
     QGLSceneNode *node = list.currentNode();
@@ -337,14 +337,14 @@ void tst_QGLSection::accumNormals()
         2.0f, 3.0f, 0.0f
     };
     QVector3DArray v =  QVector3DArray::fromRawData((const QVector3D *)data, 12);
-    QGLPrimitive quads;
+    QGeometryData quads;
     quads.appendVertex(v[0], v[1], v[4], v[3]);      // 0
     quads.appendVertex(v[2], v[3], v[7], v[6]);      // 1
     quads.appendVertex(v[3], v[4], v[8], v[7]);      // 2
     quads.appendVertex(v[4], v[5], v[9], v[8]);      // 3
     quads.appendVertex(v[7], v[8], v[11], v[10]);    // 4
     list.addQuad(quads);
-    QGLPrimitive triangles;
+    QGeometryData triangles;
     triangles.appendVertex(v[0], v[3], v[2]);        // 5
     triangles.appendVertex(v[1], v[5], v[4]);        // 6
     triangles.appendVertex(v[6], v[7], v[10]);       // 7
@@ -413,7 +413,7 @@ void tst_QGLSection::normalizedNormals()
     const qreal qThickness = 0.4f;
     const int qNumSlices = 16;
 
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     list.newSection(QGL::Smooth); // default - but making the point
     //QGLSection *section = list.currentSection();
     QGLSceneNode *node = list.currentNode();
@@ -433,10 +433,10 @@ void tst_QGLSection::normalizedNormals()
         qreal sn = qSin(angle);
         QVector3D a(cs * qRadius, sn * qRadius, 0.0f);
         QVector3D b(cs * (qRadius + qThickness), sn * (qRadius + qThickness), qHeight);
-        QGLPrimitive quad;
+        QGeometryData quad;
         quad.appendVertex(ap, bp, b, a);
         list.addQuad(quad);
-        QGLPrimitive tri;
+        QGeometryData tri;
         tri.appendVertex(b, bp, anc);
         list.addTriangle(tri);
         ap = a;
@@ -449,7 +449,7 @@ void tst_QGLSection::normalizedNormals()
     QCOMPARE(data.count(QGL::Position), 33);
 }
 
-void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)
+void tst_QGLSection::testFaceted(QGLSection *section, QGLBuilder *list)
 {
     int poffset = section->count(QGL::Position);
     int noffset = section->count(QGL::Normal);
@@ -497,7 +497,7 @@ void tst_QGLSection::testFaceted(QGLSection *section, QGLDisplayList *list)
 
 void tst_QGLSection::appendTexCoord()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     // note that the tests above do the case of texCoord, InvalidTexCoord
@@ -586,7 +586,7 @@ void tst_QGLSection::appendTexCoord()
 
 void tst_QGLSection::appendColor()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     QColor4ub color(32, 64, 128, 255);
@@ -623,7 +623,7 @@ void tst_QGLSection::appendColor()
 
 void tst_QGLSection::accessors()
 {
-    TestQGLDisplayList list;
+    TestQGLBuilder list;
     QGLSectionTest *section = new QGLSectionTest(&list);
 
     QCOMPARE(section->smoothing(), QGL::Smooth);

@@ -43,7 +43,7 @@
 #define PLANETVIEW_H
 
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qsphericalanimation.h"
 
 class PlanetView : public QGLView
@@ -73,7 +73,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLDisplayList list;
+    QGLBuilder list;
     QGLSceneNode *sun;
     QGLSceneNode *planet1;
     QGLSceneNode *planet2;

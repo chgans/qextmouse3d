@@ -45,7 +45,7 @@
 #include <QString>
 #include <QObject>
 
-class QGLDisplayList;
+class QGLBuilder;
 class QGLSceneNode;
 class QGLPainter;
 class QGLView;
@@ -59,7 +59,7 @@ public:
     void setImagePath(const QString &imagePath);
     void draw(QGLPainter *painter) const;
 private:
-    QGLDisplayList *m_list;
+    QGLBuilder *m_list;
     QString m_imagePath;
     QGLSceneNode *m_faces[6];
     QGLView *m_view;

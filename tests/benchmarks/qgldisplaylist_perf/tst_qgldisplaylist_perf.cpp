@@ -41,24 +41,23 @@
 
 #include <ctime>
 #include <QtTest/QtTest>
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
 #include "qglteapot.h"
 #include "qglsection_p.h"
 
-class TestList : public QGLDisplayList
+class TestList : public QGLBuilder
 {
 public:
     QGLSection *section() { return currentSection(); }
     void setDefThreshold(int t) { setDefaultThreshold(t); }
 };
 
-class tst_QGLDisplayList : public QObject
+class tst_QGLBuilder : public QObject
 {
     Q_OBJECT
 public:
-    tst_QGLDisplayList() {}
-    virtual ~tst_QGLDisplayList() {}
+    tst_QGLBuilder() {}
+    virtual ~tst_QGLBuilder() {}
     void addQuadBenchMarks(const QVector3DArray &data, int type);
 
 private slots:
@@ -76,7 +75,7 @@ enum {
     Test_20
 };
 
-void tst_QGLDisplayList::addQuadRandom_data()
+void tst_QGLBuilder::addQuadRandom_data()
 {
     QTest::addColumn<int>("size");
     QTest::addColumn<int>("type");
@@ -118,7 +117,7 @@ QVector3D randVector()
     return QVector3D(randCoord(), randCoord(), randCoord());
 }
 
-void tst_QGLDisplayList::addQuadRandom()
+void tst_QGLBuilder::addQuadRandom()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -142,7 +141,7 @@ void tst_QGLDisplayList::addQuadRandom()
     addQuadBenchMarks(data, type);
 }
 
-void tst_QGLDisplayList::addQuadBenchMarks(const QVector3DArray &data, int type)
+void tst_QGLBuilder::addQuadBenchMarks(const QVector3DArray &data, int type)
 {
     int size = data.size();
     if (type == Test_3)
@@ -203,12 +202,12 @@ void tst_QGLDisplayList::addQuadBenchMarks(const QVector3DArray &data, int type)
     }
 }
 
-void tst_QGLDisplayList::addQuadOrdered_data()
+void tst_QGLBuilder::addQuadOrdered_data()
 {
     addQuadRandom_data();
 }
 
-void tst_QGLDisplayList::addQuadOrdered()
+void tst_QGLBuilder::addQuadOrdered()
 {
     QFETCH(int, size);
     QFETCH(int, type);
@@ -226,16 +225,16 @@ void tst_QGLDisplayList::addQuadOrdered()
     addQuadBenchMarks(data, type);
 }
 
-void tst_QGLDisplayList::teapot()
+void tst_QGLBuilder::teapot()
 {
     QBENCHMARK {
-        QGLDisplayList list;
+        QGLBuilder list;
         list << QGLTeapot();
         list.finalize();
     }
 }
 
 
-QTEST_MAIN(tst_QGLDisplayList)
+QTEST_MAIN(tst_QGLBuilder)
 
-#include "tst_qgldisplaylist_perf.moc"
+#include "tst_QGLBuilder_perf.moc"
