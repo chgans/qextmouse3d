@@ -169,13 +169,18 @@ QUrl Effect::texture() const
     return d->textureUrl;
 }
 
+#define TEST "C:\\depot\\research\\qt3d\\demos\\declarative\\qtlogo.png"
+
 void Effect::setTexture(const QUrl& value)
 {
     if (d->textureUrl == value)
+	{
         return;
+	}
     d->textureUrl = value;
 
     if (d->textureUrl.isEmpty()) {
+		qDebug() << "Texture URL is empty. Making a blank texture.";
         d->texture = QImage();
         d->textureChanged = true;
     } else {
@@ -183,9 +188,12 @@ void Effect::setTexture(const QUrl& value)
 //#define QT_NO_LOCALFILE_OPTIMIZED_QML
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
         if (d->textureUrl.scheme() == QLatin1String("file")) {
-            QString fileName = value.path();
-            d->texture = QImage(fileName);
-            d->textureChanged = true;
+			QString fileName = value.toLocalFile();
+            d->texture = QImage(fileName);            
+			if (d->texture.isNull()) {
+				qDebug() << "Could not load texture file [" << value.path() << "]";
+			}
+			d->textureChanged = true;
             emit effectChanged();
         } else
 #endif
@@ -212,6 +220,10 @@ void Effect::textureRequestFinished()
     d->textureChanged = true;
     d->textureReply->deleteLater();
     d->textureReply = 0;
+
+	if (d->texture.isNull()) {
+		qDebug() << "Could not load specified texture file";
+	}
     emit effectChanged();
 }
 
@@ -268,14 +280,15 @@ void Effect::setMaterial(QGLMaterial *value)
 void Effect::enableEffect(QGLPainter *painter)
 {
     QGLTexture2D *tex = texture2D();
-    if (tex == NULL && d->material)
+	if (tex == NULL && d->material){
         tex = d->material->texture();
+	}
     if (d->useLighting) {
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::LitDecalTexture2D);
             painter->setTexture(tex);
-        } else {
-            painter->setStandardEffect(QGL::LitMaterial);
+        } else {            
+			painter->setStandardEffect(QGL::LitMaterial);
         }
         if (d->material)
             painter->setFaceMaterial(QGL::AllFaces, d->material);
@@ -285,7 +298,7 @@ void Effect::enableEffect(QGLPainter *painter)
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::FlatDecalTexture2D);
             painter->setTexture(tex);
-            painter->setColor(d->color);
+            painter->setColor(d->color);			
         } else {
             painter->setStandardEffect(QGL::FlatColor);
             painter->setColor(d->color);
@@ -317,11 +330,13 @@ QGLTexture2D *Effect::texture2D()
     if (d->textureChanged) {
         delete d->texture2D;
         QGLTexture2D *newtex = new QGLTexture2D();
-        if (!d->texture.isNull())
+		if (!d->texture.isNull()) {
             newtex->setImage(d->texture);
         d->texture2D = newtex;
         d->textureChanged = false;
-    }
+		}
+	}
+
     return d->texture2D;
 }
 
