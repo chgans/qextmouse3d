@@ -94,8 +94,8 @@ public:
     QGeometryData translated(const QVector3D &) const;
     void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
                                     QGL::VertexAttribute attribute = QGL::TextureCoord0);
-    QGeometryData zippedWith(const QGeometryData &other) const;
-    void zipWith(const QGeometryData &other);
+    QGeometryData interleavedWith(const QGeometryData &other) const;
+    void interleaveWith(const QGeometryData &other);
     void clear();
     void clear(QGL::VertexAttribute);
     void reserve(int amount);
@@ -162,7 +162,8 @@ public:
 
     QColor4ub &colorRef(int i);
     QArray<QColor4ub> colors() const;
-    const QColor4ub &color(int i) const;
+    const QColor4ub &colorAt(int i) const;
+    //const QColor4ub &color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;

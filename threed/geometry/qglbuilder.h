@@ -64,6 +64,11 @@ class QGLMaterialCollection;
 class QGLBuilderPrivate;
 class QGLPainter;
 
+class QGLSceneNodeFactory
+{
+    QGLSceneNode *makeNode() = 0;
+};
+
 class Q_QT3D_EXPORT QGLBuilder
 {
 public:
@@ -80,11 +85,13 @@ public:
     QGLSceneNode *pushNode();
     QGLSceneNode *popNode();
 
-    void finalize();
+    QGLSceneNode *finalizedNode();
+
+    static setFactory(QGLSceneNodeFactory *);
 
     // geometry building by primitive
-    void addTriangle(const QGeometryData &triangle);
-    void addQuad(const QGeometryData &quad);
+    void addTriangles(const QGeometryData &triangle);
+    void addQuads(const QGeometryData &quad);
     void addTriangleFan(const QGeometryData &fan);
     void addTriangleStrip(const QGeometryData &strip);
     void addTriangulatedFace(const QGeometryData &face);
