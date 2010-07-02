@@ -192,9 +192,14 @@ void Effect::setTexture(const QUrl& value)
         //#define QT_NO_LOCALFILE_OPTIMIZED_QML
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
         if (d->textureUrl.scheme() == QLatin1String("file")) {
-            QString fileName = value.path();
+            QString fileName = value.toLocalFile();
             d->texture = QImage(fileName);
             d->textureChanged = true;
+
+			if (d->texture.isNull()) {
+				qWarning() << "Could not load texture file [" << value.path() << "]";
+			}
+
             emit effectChanged();
         } else
 #endif
@@ -264,6 +269,10 @@ void Effect::textureRequestFinished()
             setTextureImage(pixmap.toImage());
             d->pixmapCacheReply = 0;
             d->pendingPixmapCache = false;
+
+			if (d->texture.isNull()) {
+				qWarning() << "Could not load specified texture file";
+			}
             emit effectChanged();
         } else
         {
