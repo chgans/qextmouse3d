@@ -53,61 +53,38 @@
 const qreal qRadius = 1.0f;
 const qreal qHeight = 0.6f;
 const qreal qThickness = 0.4f;
-const int qNumSlices = 16;
+const int qNumSlices = 32;
 
 PVColorView::PVColorView(QWidget *parent)
     : QGLView(parent)
     , pvScene(new QGLSceneNode(this))
 {
     //! [0]
+    QGLDisplayList *displayList = buildGeometry();
+    displayList->setParent(pvScene);
+
+    // display a copy of the q to the left
+    QGLSceneNode *node = displayList->clone(pvScene);
+    node->setPosition(QVector3D(-2.0f, 0.0f, -2.0f));
+
+    // display a copy of the q to the right
+    node = displayList->clone(pvScene);
+    node->setPosition(QVector3D(2.0f, 0.0f, -2.0f));
+
+    // Make a nice p. v. color triangle as a back drop
     QGLDisplayList *dl2 = new QGLDisplayList(pvScene);
     QGLPrimitive p;
     dl2->newSection();
-    p.appendVertex(QVector3D(1, 1, -3), QVector3D(-1, 1, -3),
-                   QVector3D(-1, -1, -3));
+    p.appendVertex(QVector3D(3, 3, -3), QVector3D(-3, 3, -3),
+                   QVector3D(0, -3, -3));
     p.appendColor(Qt::red, Qt::blue, Qt::yellow);
     dl2->addTriangle(p);
     dl2->setEffect(QGL::FlatPerVertexColor);
 
-    QGLDisplayList *displayList = buildGeometry();
-    displayList->setParent(pvScene);
-    //! [0]
-    {
-        // rotate the q around so its label shows; and down
-        // so the base is facing down
-        QMatrix4x4 mat;
-        QQuaternion q1 = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, 270.0f);
-        QQuaternion q2 = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 100.0f);
-        mat.rotate(q2 * q1);
-        displayList->setLocalTransform(mat);
-    }
-    return;  // remove me
-
-    // display a copy of the q to the left
-    QGLSceneNode *node = new QGLSceneNode(pvScene);
-    node->addNode(displayList);
-    {
-        QMatrix4x4 mat;
-        mat.translate(-2.0f, 0.0f, -2.0f);
-        node->setLocalTransform(mat);
-    }
-
-    // display a copy of the q to the right
-    node = new QGLSceneNode(pvScene);
-    node->addNode(displayList);
-    {
-        QMatrix4x4 mat;
-        mat.translate(2.0f, 0.0f, -2.0f);
-        node->setLocalTransform(mat);
-    }
-
     // rotate the whole scene about x-axis so that
     // q tops are visible when scene is first displayed
-    {
-        QMatrix4x4 mat;
-        mat.rotate(1.0f, 0.0f, 0.0f, -30.0f);
-        pvScene->setLocalTransform(mat);
-    }
+    pvScene->setRotation(QVector3D(20.0f, 0.0f, 0.0f));
+    //! [0]
 }
 
 void PVColorView::wheelEvent(QWheelEvent *e)
@@ -174,6 +151,7 @@ QGLDisplayList *PVColorView::buildGeometry()
 
     // default effect for q where no other effect set
     qList->setEffect(QGL::FlatPerVertexColor);
+    qList->newSection(QGL::Smooth);
     //! [2]
 
     const QVector3D extrudeVec(0.0f, 0.0f, qHeight);
@@ -227,9 +205,8 @@ QGLDisplayList *PVColorView::buildGeometry()
     int ocnt = topQOEdge.count();
     int tailCnt = topTailEdge.count();
     int olap = ocnt - icnt;
-    Q_ASSERT(olap % 2 == 0);
+    Q_ASSERT(olap % 2 == 0);  // this should be even
     int lap = olap / 2;
-    qList->newSection();
     {
         QGLPrimitive top;
         // create the top face of the tail of the Q - its a quad
@@ -266,6 +243,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         top.appendColor(innerColor);
         top.appendVertexArray(topQOEdge.right(lap));
         top.appendColorArray(QArray<QColor4ub>(lap, outerColor));
+        qDebug() << top;
         qList->addTriangleFan(top);
     }
 
@@ -286,7 +264,9 @@ QGLDisplayList *PVColorView::buildGeometry()
         // inside sides
         QGLPrimitive top;
         QGLPrimitive bottom;
+        //! [translated]
         bottomQIEdge = topQIEdge.translated(extrudeVec);
+        //! [translated]
         top.appendVertexArray(topQIEdge);
         top.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
         top.setFlags(QGL::FACE_SENSE_REVERSED);
@@ -315,7 +295,7 @@ QGLDisplayList *PVColorView::buildGeometry()
     bottomQIEdge.reverse();
     bottomQOEdge.reverse();
     bottomTailEdge.reverse();
-    //! [3]
+
     qList->newSection();
     {
         // create the bottom face of the tail of the Q
@@ -334,6 +314,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         bottom.appendColorArray(QArray<QColor4ub>(lap, outerColor));
         qList->addTriangleFan(bottom);
     }
+    //! [3]
     {
         // now draw all the quads of the bottom of the Q
         QGLPrimitive in;
@@ -344,6 +325,7 @@ QGLDisplayList *PVColorView::buildGeometry()
         in.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
         qList->addQuadsZipped(in, out);
     }
+    //! [3]
     if (lap)
     {
         // now draw the overlap points at the other end
@@ -356,6 +338,6 @@ QGLDisplayList *PVColorView::buildGeometry()
     }
 
     qList->finalize();
+    qList->setRotation(QVector3D(0.0f, 0.0f, -45.0f));
     return qList;
-    //! [3]
 }

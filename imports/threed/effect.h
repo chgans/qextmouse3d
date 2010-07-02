@@ -95,6 +95,7 @@ private Q_SLOTS:
 
 protected:
     QGLTexture2D *texture2D();
+    void cancelLoadingTexture();
 
 private:
     EffectPrivate *d;

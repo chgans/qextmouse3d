@@ -45,6 +45,8 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QtDeclarative/qdeclarativeengine.h>
+#include "private/qdeclarativepixmapcache_p.h"
+#include <qdeclarativeinfo.h>
 
 /*!
     \class Effect
@@ -85,7 +87,8 @@ public:
           textureChanged(false),
           texture2D(0),
           material(0),
-          textureReply(0) {}
+          pixmapCacheReply(0),
+          pendingPixmapCache(false) {}
     ~EffectPrivate()
     {
         delete texture2D;
@@ -98,7 +101,9 @@ public:
     QGLTexture2D *texture2D;
     QUrl textureUrl;
     QGLMaterial *material;
-    QNetworkReply *textureReply;
+
+    QDeclarativePixmapReply* pixmapCacheReply;
+    bool pendingPixmapCache;
 };
 
 /*!
@@ -173,6 +178,10 @@ void Effect::setTexture(const QUrl& value)
 {
     if (d->textureUrl == value)
         return;
+
+    // got a new value, so abort any in-progress request
+    cancelLoadingTexture();
+
     d->textureUrl = value;
 
     if (d->textureUrl.isEmpty()) {
@@ -180,7 +189,7 @@ void Effect::setTexture(const QUrl& value)
         d->textureChanged = true;
     } else {
 
-//#define QT_NO_LOCALFILE_OPTIMIZED_QML
+        //#define QT_NO_LOCALFILE_OPTIMIZED_QML
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
         if (d->textureUrl.scheme() == QLatin1String("file")) {
             QString fileName = value.path();
@@ -190,13 +199,50 @@ void Effect::setTexture(const QUrl& value)
         } else
 #endif
         {
-            if (d->textureReply)
-                d->textureReply->deleteLater();
-            QNetworkRequest req(d->textureUrl);
-            req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-            d->textureReply = qmlEngine(this)->networkAccessManager()->get(req);
-            QObject::connect(d->textureReply, SIGNAL(finished()),
-                             this, SLOT(textureRequestFinished()));
+            d->textureUrl = value;
+            emit effectChanged();
+
+            // Load texture from url
+            QSize impsize;
+            QString errorString;
+            QPixmap pixmap;
+            // async is true because we've already handled the syncronous case
+            QDeclarativePixmapReply::Status status =
+                    QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString, &impsize, true);
+            if (status != QDeclarativePixmapReply::Ready && status !=
+                QDeclarativePixmapReply::Error)
+            {
+                d->pixmapCacheReply =
+                        QDeclarativePixmapCache::request(qmlEngine(this), d->textureUrl);
+                d->pendingPixmapCache = true;
+                connect(d->pixmapCacheReply, SIGNAL(finished()), this,
+                        SLOT(textureRequestFinished()));
+            } else {
+                if(status == QDeclarativePixmapReply::Ready)
+                {
+                    setTextureImage(pixmap.toImage());
+                } else {
+                    qWarning() << "Error loading texture image: " << errorString;
+                }
+            }
+        }
+    }
+}
+
+/*!
+  \internal
+  Cancel any earlier network requests.
+  */
+void Effect::cancelLoadingTexture()
+{
+    if (d->pendingPixmapCache) {
+        QDeclarativePixmapCache::cancel(d->textureUrl, this);
+        d->pendingPixmapCache = false;
+        // cancel invalidates our reply as well, which should be deleted by
+        // the cache
+        if(d->pixmapCacheReply != 0)
+        {
+            d->pixmapCacheReply = 0;
         }
     }
 }
@@ -208,11 +254,22 @@ void Effect::setTexture(const QUrl& value)
 */
 void Effect::textureRequestFinished()
 {
-    d->texture.load(d->textureReply,0);
-    d->textureChanged = true;
-    d->textureReply->deleteLater();
-    d->textureReply = 0;
-    emit effectChanged();
+    if(d->pixmapCacheReply && d->pixmapCacheReply->status() == QDeclarativePixmapReply::Ready)
+    {
+        QPixmap pixmap;
+        QString errorString;
+        QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString);
+        if(status == QDeclarativePixmapReply::Ready)
+        {
+            setTextureImage(pixmap.toImage());
+            d->pixmapCacheReply = 0;
+            d->pendingPixmapCache = false;
+            emit effectChanged();
+        } else
+        {
+            qWarning() << "Error getting texture image from cache: " << errorString;
+        }
+    }
 }
 
 /*!

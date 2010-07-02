@@ -75,15 +75,18 @@ QString QmlStanza::toString() const
                 result += "[\n";
                 int ind = m_indent + 1;
                 QList<QmlStanza*>::const_iterator qit = values.constBegin();
+                QString separator = ",";
                 for ( ; qit != values.constEnd(); ++qit)
                 {
                     QmlStanza *s = *qit;
+                    if (s == values.last())
+                        separator = "";
                     s->setIndent(ind+1);
                     result += indent.repeated(ind + 1);
                     if (s->isQuoted())
-                        result += QString("\"%1\",\n").arg(s->toString());
+                        result += QString("\"%1\"%2\n").arg(s->toString()).arg(separator);
                     else
-                        result += s->toString() + ",\n";
+                        result += s->toString() + QString("%1\n").arg(separator);
                 }
                 result += indent.repeated(m_indent + 1) + "]\n";
             }

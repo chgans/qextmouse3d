@@ -49,6 +49,8 @@
 #include "qmatrix4x4.h"
 
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qthread.h>
+#include <QtGui/qapplication.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -607,9 +609,15 @@ void QGLSceneNode::setZ(qreal z)
     \property QGLSceneNode::scale
     \brief The amounts of x, y and z axis scaling for this node.
 
+    If the scale vector is all zeroes (it is equal to the null vector)
+    then no scaling is applied.
+
     Use of the scale property is more advanced than both the position()
     and rotation() properties, since scale changes effect lighting normals
     and change the magnitude of other transformations.
+
+    The default value of scale is the null vector, \c{(0, 0, 0)} meaning
+    that no scale is applied.
 
     \sa position(), rotation()
 */
@@ -1404,12 +1412,15 @@ bool QGLSceneNode::normalViewEnabled() const
 */
 void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop)
 {
+    QThread *appThread = QApplication::instance()->thread();
     QSet<QGLSceneNode *> lp = loop;
     lp.insert(node);
     QString ind;
     ind.fill(' ', indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
+    if (appThread != node->thread())
+        fprintf(stderr, "\n%s        from thread: %p\n", qPrintable(ind), node->thread());
     fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
     {
         QList<QGLSceneNode*> children = node->childNodeList();

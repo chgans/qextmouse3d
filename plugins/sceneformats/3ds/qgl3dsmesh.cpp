@@ -503,7 +503,7 @@ void QGL3dsMesh::modulateMesh()
     if (!(m_options & (QGL::CorrectNormals | QGL::CorrectAcute)))
         return;
     FacePtr face;
-    Lib3dsDword allKeys;
+    Lib3dsDword allKeys = 0;
     QArray<int> vlist = mapFacesToVerts(&allKeys);
     buildAdjacencyMap(vlist);
     QSet<FacePtr> processed;
@@ -513,7 +513,10 @@ void QGL3dsMesh::modulateMesh()
     while ((mod.key < allKeys) && !mod.disabled && mod.key)
     {
         if (!(allKeys & mod.key))
+        {
+            ++mod.key;
             continue;
+        }
         QArray<FacePtr> queue;
         Lib3dsDword fptr = 0;
         int head = 0;

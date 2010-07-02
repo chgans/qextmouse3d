@@ -113,6 +113,14 @@ QString QGLInfo::reportQtGLVersionInfo() const
         version += "2.1 ";
     if ((flags & QGLFormat::OpenGL_Version_3_0) != 0)
         version += "3.0 ";
+    if ((flags & QGLFormat::OpenGL_Version_3_1) != 0)
+        version += "3.1 ";
+    if ((flags & QGLFormat::OpenGL_Version_3_2) != 0)
+        version += "3.2 ";
+    if ((flags & QGLFormat::OpenGL_Version_3_3) != 0)
+        version += "3.3 ";
+    if ((flags & QGLFormat::OpenGL_Version_4_0) != 0)
+        version += "4.0 ";
     if ((flags & QGLFormat::OpenGL_ES_Common_Version_1_0) != 0)
         version += "ES/1.0 ";
     if ((flags & QGLFormat::OpenGL_ES_CommonLite_Version_1_0) != 0)
@@ -131,6 +139,10 @@ QString QGLInfo::reportQtGLVersionInfo() const
                QGLFormat::OpenGL_Version_2_0 |
                QGLFormat::OpenGL_Version_2_1 |
                QGLFormat::OpenGL_Version_3_0 |
+               QGLFormat::OpenGL_Version_3_1 |
+               QGLFormat::OpenGL_Version_3_2 |
+               QGLFormat::OpenGL_Version_3_3 |
+               QGLFormat::OpenGL_Version_4_0 |
                QGLFormat::OpenGL_ES_Common_Version_1_0 |
                QGLFormat::OpenGL_ES_CommonLite_Version_1_0 |
                QGLFormat::OpenGL_ES_Common_Version_1_1 |

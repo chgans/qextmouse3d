@@ -122,7 +122,6 @@ void QGLGraphicsViewportItemPrivate::cameraChanged()
 void QGLGraphicsViewportItemPrivate::setDefaults()
 {
     // Set the default depth buffer options.
-    glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
 #if defined(QT_OPENGL_ES)
@@ -428,6 +427,7 @@ void QGLGraphicsViewportItem::paint
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
     d->setDefaults();
+    glEnable(GL_DEPTH_TEST);
     glpainter.setBlendingEnabled(false);
 
     // Apply the camera.
@@ -444,6 +444,7 @@ void QGLGraphicsViewportItem::paint
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
     d->setDefaults();
+    glDisable(GL_DEPTH_TEST);
 }
 
 /*!
