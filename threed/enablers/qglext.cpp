@@ -52,7 +52,7 @@ typedef void (APIENTRY *q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
 class QGLMultiTextureExtensions
 {
 public:
-    QGLMultiTextureExtensions()
+    QGLMultiTextureExtensions(const QGLContext * = 0)
     {
         activeTexture = 0;
         clientActiveTexture = 0;
@@ -64,12 +64,16 @@ public:
     bool multiTextureResolved;
 };
 
+#if QT_VERSION >= 0x040800
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLMultiTextureExtensions>, qt_multitexture_funcs)
+#else
 static void qt_multitexture_funcs_free(void *data)
 {
     delete reinterpret_cast<QGLMultiTextureExtensions *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_multitexture_funcs, (qt_multitexture_funcs_free))
+#endif
 
 static QGLMultiTextureExtensions *resolveMultiTextureExtensions
     (const QGLContext *ctx)
@@ -135,7 +139,7 @@ typedef void (APIENTRY *q_PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenu
 class QGLBlendExtensions
 {
 public:
-    QGLBlendExtensions()
+    QGLBlendExtensions(const QGLContext * = 0)
     {
         blendColor = 0;
         blendFuncSeparate = 0;
@@ -151,12 +155,16 @@ public:
     bool blendResolved;
 };
 
+#if QT_VERSION >= 0x040800
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLBlendExtensions>, qt_blend_funcs)
+#else
 static void qt_blend_funcs_free(void *data)
 {
     delete reinterpret_cast<QGLBlendExtensions *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_blend_funcs, (qt_blend_funcs_free))
+#endif
 
 static QGLBlendExtensions *resolveBlendExtensions(const QGLContext *ctx)
 {

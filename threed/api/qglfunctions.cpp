@@ -52,13 +52,16 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::enablers
 */
 
+#if QT_VERSION >= 0x040800
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivate>, qt_gl_functions_resource)
+#else
 static void qt_gl_functions_free(void *data)
 {
     delete reinterpret_cast<QGLFunctionsPrivate *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_functions_resource, (qt_gl_functions_free))
-
+#endif
 static QGLFunctionsPrivate *qt_gl_functions(const QGLContext *context = 0)
 {
     if (!context)
@@ -3851,7 +3854,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
 #endif
 #endif // !QT_OPENGL_ES_2
 
-QGLFunctionsPrivate::QGLFunctionsPrivate()
+QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
 {
 #ifndef QT_OPENGL_ES_2
 #ifndef QT_OPENGL_ES_1

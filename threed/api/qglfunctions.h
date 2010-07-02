@@ -259,7 +259,7 @@ private:
 
 struct QGLFunctionsPrivate
 {
-    QGLFunctionsPrivate();
+    QGLFunctionsPrivate(const QGLContext * = 0);
 
 #ifndef QT_OPENGL_ES_2
     void (QGLF_APIENTRYP activeTexture)(GLenum texture);
