@@ -83,7 +83,7 @@ QGL3dsLoader::~QGL3dsLoader()
 */
 void QGL3dsLoader::setUrl(const QUrl &url)
 {
-    // TODO
+    // TODO - handling of network URLs
     if (url.scheme() == QLatin1String("file"))
         mUrl = url;
     else
@@ -261,6 +261,7 @@ QUrl QGL3dsLoader::ensureResource(const QString &path)
                     {
                         if (fit->toLower() == path.toLower())
                         {
+							res.setScheme("file");
                             res.setPath(resDir.absoluteFilePath(*fit));
                             break;
                         }
@@ -269,7 +270,12 @@ QUrl QGL3dsLoader::ensureResource(const QString &path)
                 else
                 {
                     if (fileList.contains(path))
-                        return resDir.absoluteFilePath(path);
+					{
+                        //return resDir.absoluteFilePath(path);
+						res.setScheme("file");
+						res.setPath(resDir.absoluteFilePath(path));
+						break;
+					}
                 }
             }
             if (caseInsensitive)
