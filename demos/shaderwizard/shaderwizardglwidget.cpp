@@ -158,9 +158,6 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
 
     painter->setDepthTestingEnabled(true);
     painter->setCullFaces(QGL::CullBackFaces);
-
-    if(d->effect)
-        d->effect->setActive(painter, true);
 }
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
@@ -175,7 +172,6 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     painter->setTexture(0, mTexture);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
-
     if( d->effect )
     {
         painter->setUserEffect(d->effect);
@@ -184,10 +180,10 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     if(mSceneNode)
         mSceneNode->draw(painter);
 
-//    painter->modelViewMatrix().pop();
-
     if (mSceneRoot)
+    {
         mSceneRoot->draw(painter);
+    }
     else if ( mDefaultSceneObject )
     {
         mDefaultSceneObject->draw(painter);
