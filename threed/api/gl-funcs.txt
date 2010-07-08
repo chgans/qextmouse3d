@@ -41,10 +41,10 @@ void glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum d
     inline es2
     special_handling yes
 
-void glBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+void glBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
     inline es1, es2
 
-void glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+void glBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
     inline es1, es2
 
 GLenum glCheckFramebufferStatus(GLenum target);

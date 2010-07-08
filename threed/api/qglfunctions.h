@@ -67,6 +67,10 @@ QT_MODULE(Qt3d)
 
 struct QGLFunctionsPrivate;
 
+// Types that aren't defined in all system's gl.h files.
+typedef ptrdiff_t qgl_GLintptr;
+typedef ptrdiff_t qgl_GLsizeiptr;
+
 class Q_QT3D_EXPORT QGLFunctions
 {
 public:
@@ -88,8 +92,8 @@ public:
     void blendEquationSeparate(GLenum modeRGB, GLenum modeAlpha);
     void blendFunc(GLenum sfactor, GLenum dfactor);
     void blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-    void bufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
-    void bufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+    void bufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
+    void bufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
     GLenum checkFramebufferStatus(GLenum target);
     void clear(GLbitfield mask);
     void clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -259,7 +263,7 @@ private:
 
 struct QGLFunctionsPrivate
 {
-    QGLFunctionsPrivate(const QGLContext * = 0);
+    QGLFunctionsPrivate();
 
 #ifndef QT_OPENGL_ES_2
     void (QGLF_APIENTRYP activeTexture)(GLenum texture);
@@ -274,8 +278,8 @@ struct QGLFunctionsPrivate
     void (QGLF_APIENTRYP blendEquation)(GLenum mode);
     void (QGLF_APIENTRYP blendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
     void (QGLF_APIENTRYP blendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-    void (QGLF_APIENTRYP bufferData)(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
-    void (QGLF_APIENTRYP bufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+    void (QGLF_APIENTRYP bufferData)(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
+    void (QGLF_APIENTRYP bufferSubData)(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
     GLenum (QGLF_APIENTRYP checkFramebufferStatus)(GLenum target);
 #ifndef QT_OPENGL_ES_1
     void (QGLF_APIENTRYP compileShader)(GLuint shader);
@@ -488,7 +492,7 @@ inline void QGLFunctions::blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum
 #endif
 }
 
-inline void QGLFunctions::bufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+inline void QGLFunctions::bufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 {
 #if defined(QT_OPENGL_ES_1) || defined(QT_OPENGL_ES_2)
     ::glBufferData(target, size, data, usage);
@@ -497,7 +501,7 @@ inline void QGLFunctions::bufferData(GLenum target, GLsizeiptr size, const void*
 #endif
 }
 
-inline void QGLFunctions::bufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+inline void QGLFunctions::bufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
 {
 #if defined(QT_OPENGL_ES_1) || defined(QT_OPENGL_ES_2)
     ::glBufferSubData(target, offset, size, data);
@@ -1553,6 +1557,7 @@ inline void QGLFunctions::viewport(GLint x, GLint y, GLsizei width, GLsizei heig
 {
     ::glViewport(x, y, width, height);
 }
+
 QT_END_NAMESPACE
 
 QT_END_HEADER

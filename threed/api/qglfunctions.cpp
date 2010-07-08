@@ -213,7 +213,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+    \fn void QGLFunctions::bufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 
     Convenience function that calls glBufferData(\a target, \a size, \a data, \a usage).
 
@@ -222,7 +222,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+    \fn void QGLFunctions::bufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
 
     Convenience function that calls glBufferSubData(\a target, \a offset, \a size, \a data).
 
@@ -1799,9 +1799,9 @@ static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum sr
 
 #ifndef QT_OPENGL_ES_1
 
-static void qglfResolveBufferData(GLenum target, GLsizeiptr size, const void* data, GLenum usage)
+static void qglfResolveBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 {
-    typedef void (QGLF_APIENTRYP type_glBufferData)(GLenum target, GLsizeiptr size, const void* data, GLenum usage);
+    typedef void (QGLF_APIENTRYP type_glBufferData)(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
 
     const QGLContext *context = QGLContext::currentContext();
     QGLFunctionsPrivate *funcs = qt_gl_functions(context);
@@ -1829,9 +1829,9 @@ static void qglfResolveBufferData(GLenum target, GLsizeiptr size, const void* da
         funcs->bufferData = qglfResolveBufferData;
 }
 
-static void qglfResolveBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
+static void qglfResolveBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
 {
-    typedef void (QGLF_APIENTRYP type_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const void* data);
+    typedef void (QGLF_APIENTRYP type_glBufferSubData)(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
 
     const QGLContext *context = QGLContext::currentContext();
     QGLFunctionsPrivate *funcs = qt_gl_functions(context);
@@ -3854,7 +3854,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
 #endif
 #endif // !QT_OPENGL_ES_2
 
-QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
+QGLFunctionsPrivate::QGLFunctionsPrivate()
 {
 #ifndef QT_OPENGL_ES_2
 #ifndef QT_OPENGL_ES_1
