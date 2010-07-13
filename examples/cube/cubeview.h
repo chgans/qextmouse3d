@@ -43,8 +43,8 @@
 #define CUBEVIEW_H
 
 #include "qglview.h"
-#include "qglbuilder.h"
-#include "qgltexture2d.h"
+
+class QGLSceneNode;
 
 class CubeView : public QGLView
 {
@@ -58,8 +58,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLTexture2D texture;
-    QGLBuilder cube;
+    QGLSceneNode *cube;
 };
 
 #endif

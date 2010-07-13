@@ -41,33 +41,30 @@
 
 #include "qglobjscene.h"
 #include "qglbuilder.h"
-#include "qglsceneobject.h"
+#include "qglscenenode.h"
 
 QT_BEGIN_NAMESPACE
 
-QGLObjScene::QGLObjScene(QGLBuilder *list,
-                         QGLSceneObject *defaultNode,
-                         const QList<QGLSceneObject *>& otherNodes,
-                         QObject *parent)
-    : QGLAbstractScene(parent),
-      displayList(list),
-      mainObject(defaultNode),
-      meshes(otherNodes)
+QGLObjScene::QGLObjScene(QGLSceneNode *defaultNode, QObject *parent)
+    : QGLAbstractScene(parent)
+    , mainObject(defaultNode)
 {
-    displayList->setParent(this);
 }
 
 QGLObjScene::~QGLObjScene()
 {
 }
 
-QList<QGLSceneObject *> QGLObjScene::objects(QGLSceneObject::Type type) const
+QList<QGLSceneNode *> QGLObjScene::objects(QGLSceneNode::Type type) const
 {
-    QList<QGLSceneObject *> objs;
-    if (type == QGLSceneObject::Mesh) {
+    QList<QGLSceneNode *> objs;
+    if (type == QGLSceneNode::Mesh)
+    {
         objs.append(mainObject);
-        objs.append(meshes);
-    } else if (type == QGLSceneObject::Main) {
+        objs.append(mainObject->allChildren());
+    }
+    else if (type == QGLSceneNode::Main)
+    {
         objs.append(mainObject);
     }
     return objs;

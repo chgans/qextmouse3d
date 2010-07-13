@@ -59,7 +59,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLBuilder *buildGeometry();
+    QGLSceneNode *buildGeometry();
 
     QGLSceneNode *canScene;
 };

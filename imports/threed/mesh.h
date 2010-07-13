@@ -57,7 +57,7 @@ QT_BEGIN_NAMESPACE
 class MeshPrivate;
 class QGLAbstractScene;
 class QGLMaterial;
-class QGLSceneObject;
+class QGLSceneNode;
 
 class Mesh : public QObject, public QDeclarativeParserStatus
 {
@@ -91,17 +91,17 @@ public:
     void setScene(QGLAbstractScene *scene);
     void initSceneObjectList();
     QStringList getSceneObjectNames();
-    QGLSceneObject *getSceneObject();
-    QGLSceneObject *getSceneObject(const QString &name);
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
+    QGLSceneNode *getSceneObject();
+    QGLSceneNode *getSceneObject(const QString &name);
+    QGLSceneNode *getSceneObject(QGLSceneNode::Type type, const QString& name) const;
     
     //The following functions relate to splitting the main scene into sub-branches
     int nextSceneBranchId() const;    
     int createSceneBranch(QString nodeName, QObject *parent = 0);
-    int addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParent=NULL);
+    int addSceneBranch(QGLSceneNode *rootSceneObject, QObject *previousParent=NULL);
     void restoreSceneBranch(int branchId);
     void resetSceneBranches();
-    QGLSceneObject *getSceneBranch(int branchId) const;
+    QGLSceneNode *getSceneBranch(int branchId) const;
     
     void ref();
     bool deref();

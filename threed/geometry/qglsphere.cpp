@@ -253,7 +253,7 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLSphere& sphere)
         }
     }
 
-    list.addTriangle(prim);
+    list.addTriangles(prim);
     return list;
 }
 
@@ -431,12 +431,12 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLIcoSphere& sphere)
         texCoords = newTexCoords;
     }
 
-    // Add the final vertices to the display list.
-    list.begin(QGL::TRIANGLE);
-    list.addVertexArray(vertices);
-    list.addNormalArray(normals);
-    list.addTexCoordArray(texCoords);
-    list.end();
+    // Add the final vertices to the builder.
+    QGeometryData prim;
+    prim.appendVertexArray(vertices);
+    prim.appendNormalArray(normals);
+    prim.appendTexCoordArray(texCoords);
+    list.addTriangles(prim);
     return list;
 }
 
@@ -603,11 +603,11 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere)
     }
 
     // Add the final vertices to the display list.
-    list.begin(QGL::QUAD);
-    list.addVertexArray(vertices);
-    list.addNormalArray(normals);
-    list.addTexCoordArray(texCoords);
-    list.end();
+    QGeometryData prim;
+    prim.appendVertexArray(vertices);
+    prim.appendNormalArray(normals);
+    prim.appendTexCoordArray(texCoords);
+    list.addTriangles(prim);
     return list;
 }
 

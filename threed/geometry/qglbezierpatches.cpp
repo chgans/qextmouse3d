@@ -480,10 +480,7 @@ void QGLBezierPatch::recursiveSubDivide
 
 void QGLBezierPatchesPrivate::subdivide(QGLBuilder *list) const
 {
-    list->newSection(QGL::Smooth);
-    list->begin(QGL::TRIANGLE);
-    QGeometryData *prim = list->currentPrimitive();
-
+    QGeometryData prim;
     bool indexBased = !indices.isEmpty();
     int count;
     if (indexBased)
@@ -527,21 +524,20 @@ void QGLBezierPatchesPrivate::subdivide(QGLBuilder *list) const
                 n = patch.normal(cornerS[corner], cornerT[corner]);
             //else
                 //n = n.normalized();
-            patch.indices[corner] = prim->count();
-            prim->appendVertex(patch.points[cornerOffsets[corner]]);
-            prim->appendNormal(n);
-            prim->appendTexCoord
+            patch.indices[corner] = prim.count();
+            prim.appendVertex(patch.points[cornerOffsets[corner]]);
+            prim.appendNormal(n);
+            prim.appendTexCoord
                 (QVector2D(xtex + wtex * cornerS[corner],
                            ytex + htex * cornerT[corner]));
         }
 
         // Subdivide the patch and generate the final triangles.
-        patch.recursiveSubDivide(prim, subdivisionDepth,
+        patch.recursiveSubDivide(&prim, subdivisionDepth,
                                  xtex, ytex, wtex, htex,
                                  compactSubdivision);
     }
-
-    list->end();
+    list->addTriangles(prim);
 }
 
 /*!

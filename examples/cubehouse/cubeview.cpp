@@ -81,63 +81,69 @@ void CubeView::initializeGL(QGLPainter *painter)
     cube << QGLCube(1.0f);
 
     room.newSection(QGL::Faceted);
-
     QGLSceneNode *back = room.newNode();
-    room.begin(QGL::QUAD);
-    room.addVertex(-3.0f, -3.0f, -15.0f);
-    room.addVertex( 3.0f, -3.0f, -15.0f);
-    room.addVertex( 3.0f,  3.0f, -15.0f);
-    room.addVertex(-3.0f,  3.0f, -15.0f);
-    room.end();
-
+    {
+        QGeometryData quad;
+        quad.addVertex(-3.0f, -3.0f, -15.0f);
+        quad.addVertex( 3.0f, -3.0f, -15.0f);
+        quad.addVertex( 3.0f,  3.0f, -15.0f);
+        quad.addVertex(-3.0f,  3.0f, -15.0f);
+        room.addQuads(quad);
+    }
     QGLSceneNode *left = room.newNode();
-    room.begin(QGL::QUAD);
-    room.addVertex(-3.0f, -3.0f, -15.0f);
-    room.addVertex(-3.0f,  3.0f, -15.0f);
-    room.addVertex(-3.0f,  3.0f, 0.0f);
-    room.addVertex(-3.0f, -3.0f, 0.0f);
-    room.end();
-
+    {
+        QGeometryData quad;
+        quad.addVertex(-3.0f, -3.0f, -15.0f);
+        quad.addVertex(-3.0f,  3.0f, -15.0f);
+        quad.addVertex(-3.0f,  3.0f, 0.0f);
+        quad.addVertex(-3.0f, -3.0f, 0.0f);
+        room.addQuads(quad);
+    }
     QGLSceneNode *right = room.newNode();
-    room.begin(QGL::QUAD);
-    room.addVertex(3.0f,  3.0f, -15.0f);
-    room.addVertex(3.0f, -3.0f, -15.0f);
-    room.addVertex(3.0f, -3.0f, 0.0f);
-    room.addVertex(3.0f,  3.0f, 0.0f);
-    room.end();
-
+    {
+        QGeometryData quad;
+        quad.addVertex(3.0f,  3.0f, -15.0f);
+        quad.addVertex(3.0f, -3.0f, -15.0f);
+        quad.addVertex(3.0f, -3.0f, 0.0f);
+        quad.addVertex(3.0f,  3.0f, 0.0f);
+        room.addQuads(quad);
+    }
     QGLSceneNode *top = room.newNode();
-    room.begin(QGL::QUAD);
-    room.addVertex(-3.0f,  3.0f, -15.0f);
-    room.addVertex( 3.0f,  3.0f, -15.0f);
-    room.addVertex( 3.0f,  3.0f, 0.0f);
-    room.addVertex(-3.0f,  3.0f, 0.0f);
-    room.end();
-
+    {
+        QGeometryData quad;
+        quad.addVertex(-3.0f,  3.0f, -15.0f);
+        quad.addVertex( 3.0f,  3.0f, -15.0f);
+        quad.addVertex( 3.0f,  3.0f, 0.0f);
+        quad.addVertex(-3.0f,  3.0f, 0.0f);
+        room.addQuads(quad);
+    }
     QGLSceneNode *bottom = room.newNode();
-    room.begin(QGL::QUAD);
-    room.addVertex(-3.0f, -3.0f, -15.0f);
-    room.addVertex(-3.0f, -3.0f, 0.0f);
-    room.addVertex( 3.0f, -3.0f, 0.0f);
-    room.addVertex( 3.0f, -3.0f, -15.0f);
-    room.end();
+    {
+        QGeometryData quad;
+        quad.addVertex(-3.0f, -3.0f, -15.0f);
+        quad.addVertex(-3.0f, -3.0f, 0.0f);
+        quad.addVertex( 3.0f, -3.0f, 0.0f);
+        quad.addVertex( 3.0f, -3.0f, -15.0f);
+        room.addQuads(quad);
+    }
 
     int index;
+    QGLMaterialCollection *palette = room.sceneNode()->palette();
 
     QGLMaterial *mat1 = new QGLMaterial();
     mat1->setDiffuseColor(QColor(128, 100, 0));
-    index = room.palette()->addMaterial(mat1);
+    index = palette->addMaterial(mat1);
     back->setMaterialIndex(index);
 
     QGLMaterial *mat2 = new QGLMaterial();
     mat2->setDiffuseColor(Qt::cyan);
-    index = room.palette()->addMaterial(mat2);
+    index = palette->addMaterial(mat2);
     left->setMaterialIndex(index);
     right->setMaterialIndex(index);
 
     QGLMaterial *mat3 = new QGLMaterial();
     mat3->setDiffuseColor(Qt::yellow);
-    index = room.palette()->addMaterial(mat3);
+    index = palette->addMaterial(mat3);
     top->setMaterialIndex(index);
     bottom->setMaterialIndex(index);
 

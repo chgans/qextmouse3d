@@ -161,7 +161,7 @@ public:
     virtual void draw(QGLPainter *painter);
     virtual void initialize(Viewport *viewport, QGLPainter *painter);
 
-    QGLSceneObject *getSceneObject(QGLSceneObject::Type type, const QString& name) const;
+    QGLSceneNode *getSceneObject(QGLSceneNode::Type type, const QString& name) const;
 
     void classBegin();   
     void componentComplete();   

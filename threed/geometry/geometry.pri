@@ -16,8 +16,7 @@ SOURCES += qglcube.cpp \
     qglbezierpatches.cpp \
     qglmaterialcollection.cpp \
     qglteapot.cpp \
-    qlogicalvertex.cpp \
-    geometry/asdf.cpp
+    qlogicalvertex.cpp
 PRIVATE_HEADERS += qglteapot_data_p.h \
     qglbuilder_p.h \
     qglsection_p.h \

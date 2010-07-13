@@ -56,8 +56,8 @@ DisplayListView::DisplayListView(QWidget *parent)
     , canScene(new QGLSceneNode(this))
 {
     //! [0]
-    QGLBuilder *displayList = buildGeometry();
-    displayList->setParent(canScene);
+    QGLSceneNode *can = buildGeometry();
+    can->setParent(canScene);
     {
         // rotate the can around so its label shows; and down
         // so the base is facing down
@@ -65,12 +65,12 @@ DisplayListView::DisplayListView(QWidget *parent)
         QQuaternion q1 = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, 270.0f);
         QQuaternion q2 = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 100.0f);
         mat.rotate(q2 * q1);
-        displayList->setLocalTransform(mat);
+        can->setLocalTransform(mat);
     }
 
     // display a copy of the can to the left
     QGLSceneNode *node = new QGLSceneNode(canScene);
-    node->addNode(displayList);
+    node->addNode(can);
     {
         QMatrix4x4 mat;
         mat.translate(-2.0f, 0.0f, -2.0f);
@@ -79,7 +79,7 @@ DisplayListView::DisplayListView(QWidget *parent)
 
     // display a copy of the can to the right
     node = new QGLSceneNode(canScene);
-    node->addNode(displayList);
+    node->addNode(can);
     {
         QMatrix4x4 mat;
         mat.translate(2.0f, 0.0f, -2.0f);
@@ -115,26 +115,19 @@ void DisplayListView::paintGL(QGLPainter *painter)
 }
 //! [1]
 
-QGLBuilder *DisplayListView::buildGeometry()
+QGLSceneNode *DisplayListView::buildGeometry()
 {
     //! [2]
-    QGLBuilder *soupCan = new QGLBuilder();
-    QGLMaterialCollection *mats = soupCan->palette();
+    QGLBuilder builder;
+    QGLSceneNode *root = builder.sceneNode();
 
-    QGLMaterial *parms = new QGLMaterial(mats);
-    parms->setAmbientColor(QColor(32, 32, 64));
-    parms->setDiffuseColor(QColor(64, 64, 128));
-    int canMat = mats->addMaterial(parms);
-
-    QImage soupLabel(":/images/qt-soup.png");
-    if (soupLabel.isNull())
-        qWarning("Could not load texture :/images/qt-soup.png");
-    QGLTexture2D *tex = new QGLTexture2D(parms);
-    tex->setImage(soupLabel);
-    parms->setTexture(tex);
-
-    // default effect for can where no other effect set
-    soupCan->setEffect(QGL::LitMaterial);
+    QGLMaterial *mat = new QGLMaterial;
+    mat->setAmbientColor(QColor(32, 32, 64));
+    mat->setDiffuseColor(QColor(64, 64, 128));
+    mat->setTextureUrl(QUrl(QLatin1String(":/images/qt-soup.png")));
+    int canMat = root->palette()->addMaterial(mat);
+    root->setMaterialIndex(canMat);
+    root->setEffect(QGL::LitMaterial);
     //! [2]
 
     // size data for can
@@ -156,27 +149,26 @@ QGLBuilder *DisplayListView::buildGeometry()
 
     //! [3]
     // create the flat top lid of the can
-    soupCan->newSection();
-    soupCan->addTriangulatedFace(canRim);
+    builder.newSection();
+    builder.addTriangulatedFace(canRim);
 
     // create the sides of the can, and save the extruded bottom rim
-    soupCan->newSection();
-    soupCan->currentNode()->setMaterialIndex(canMat);
-    soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
+    builder.newSection();
+    builder.currentNode()->setMaterialIndex(canMat);
+    builder.currentNode()->setEffect(QGL::LitModulateTexture2D);
     QGeometryData canTop = canRim;
-    canTop.appendVertex(canTop.vertexRef(0));       // doubled vert for texture seam
+    canTop.appendVertex(canTop.vertex(0));       // doubled vert for texture seam
     canTop.generateTextureCoordinates();            // generate x texture coords
     QGeometryData canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
     for (int i = 0; i < canTop.count(); ++i)
-        canTop.texCoordRef(i).setY(1.0);                      // top has tex.y == 1
-    soupCan->addQuadsZipped(canTop, canBase);
+        canTop.texCoord(i).setY(1.0);                      // top has tex.y == 1
+    builder.addQuadsInterleaved(canTop, canBase);
 
     // create the flat bottom lid of the can
-    soupCan->newSection();
+    builder.newSection();
     QGeometryData canBottom = canRim.translated(canExtrudeVec).reversed();
-    soupCan->addTriangulatedFace(canBottom);
+    builder.addTriangulatedFace(canBottom);
 
-    soupCan->finalize();
-    return soupCan;
+    return builder.finalizedSceneNode();
     //! [3]
 }

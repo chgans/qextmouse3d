@@ -40,24 +40,31 @@
 ****************************************************************************/
 
 #include "cubeview.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
+
+#include <QtCore/qurl.h>
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.5f);
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    builder << QGLCube(1.5f);
+    cube = builder.finalizedSceneNode();
 
-    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
+    QMatrix4x4 m;
+    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    cube->setLocalTransform(m);
 
-    QImage textureImage(":/qtlogo.png");
-    texture.setImage(textureImage);
+    QGLMaterial *mat = new QGLMaterial;
+    mat->setAmbientColor(QColor(170, 202, 0));
+    mat->setTextureUrl(QUrl(":/qtlogo.png"));
+    cube->setMaterial(mat);
 
-    painter->setStandardEffect(QGL::LitDecalTexture2D);
-    painter->setTexture(&texture);
+    cube->setEffect(QGL::LitDecalTexture2D);
 }
 
 void CubeView::paintGL(QGLPainter *painter)
 {
-    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
-    cube.draw(painter);
+    cube->draw(painter);
 }

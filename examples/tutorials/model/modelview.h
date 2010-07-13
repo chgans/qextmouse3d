@@ -46,13 +46,14 @@
 #include "qglview.h"
 
 class QGLAbstractScene;
+class QGLSceneNode;
 
 class ModelView : public QGLView
 {
     Q_OBJECT
 public:
     ModelView(QWidget *parent = 0) : QGLView(parent) {}
-    ~ModelView() {}
+    ~ModelView();
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -60,6 +61,7 @@ protected:
 
 private:
     QGLAbstractScene *m_scene;
+    QGLSceneNode *m_node;
 };
 //! [class-defn]
 

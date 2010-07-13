@@ -40,8 +40,11 @@
 ****************************************************************************/
 
 #include <QTimer>
+
 #include "basketview.h"
 #include "basket_data.h"
+#include "qglbuilder.h"
+#include "qglscenenode.h"
 
 BasketView::BasketView(QWidget *parent)
     : QGLView(parent)
@@ -61,25 +64,25 @@ BasketView::~BasketView()
 
 void BasketView::initializeGL(QGLPainter *painter)
 {
-    basket << BasketPatches();
-    basket.finalize();
+    QGLBuilder builder;
+    builder << BasketPatches();
+    basket = builder.finalizedSceneNode();
 
-    QImage textureImage(QLatin1String(":/basket.jpg"));
-    texture.setImage(textureImage);
-
-    painter->setStandardEffect(QGL::FlatReplaceTexture2D);
-    painter->setTexture(&texture);
+    QGLMaterial *mat = new QGLMaterial;
+    mat->setTextureUrl(QUrl(QLatin1String(":/basket.jpg")));
+    basket->setMaterial(mat);
+    basket->setEffect(QGL::FlatReplaceTexture2D);
+    basket->setScale(QVector3D(1.5f, 1.5f, 1.5f));
 }
 
 void BasketView::paintGL(QGLPainter *painter)
 {
-    painter->modelViewMatrix().scale(1.5f);
     painter->modelViewMatrix().rotate(angle, 0, 1, 0);
-    basket.draw(painter);
+    basket->draw(painter);
 }
 
 void BasketView::rotate()
 {
     angle = (angle + 5) % 360;
-    updateGL();
+    update();
 }

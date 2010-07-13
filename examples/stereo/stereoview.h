@@ -57,8 +57,7 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLBuilder teapot;
-    QGLBuilder cube;
+    QGLSceneNode *scene;
 };
 
 #endif

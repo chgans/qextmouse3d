@@ -116,15 +116,13 @@ struct ModulateRecord
     Lib3dsDword key;
 };
 
-QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent,
-                       QGLMaterialCollection *materials)
-    : QGLBuilder(parent, materials)
+QGL3dsMesh::QGL3dsMesh(Lib3dsMesh *mesh, QGLMaterialCollection *materials)
+    : QGLBuilder(materials)
     , m_mesh(mesh)
     , m_texFlip(false)
     , m_hasZeroSmoothing(false)
     , m_faceMap(0)
 {
-    setObjectName(QString(mesh->name));
 }
 
 QGL3dsMesh::~QGL3dsMesh()
@@ -134,15 +132,16 @@ QGL3dsMesh::~QGL3dsMesh()
 
 void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
 {
-    QString baseName = objectName();
+    QGLSceneNode *s = sceneNode();
+    QString baseName = s->objectName();
     node->setMaterialIndex(matIx);
     node->setObjectName(baseName + QLatin1String("::") +
                         ((matIx == -1)
                          ? QString("No_Material")
-                             : palette()->materialName(matIx)));
+                             : s->palette()->materialName(matIx)));
     checkTextures(matIx);
     generateVertices();
-    palette()->markMaterialAsUsed(matIx);
+    s->palette()->markMaterialAsUsed(matIx);
 }
 
 void QGL3dsMesh::initAdjacencyMap()
@@ -160,10 +159,13 @@ void QGL3dsMesh::initAdjacencyMap()
 
 void QGL3dsMesh::initialize()
 {
+    QGLSceneNode *s = sceneNode();
+    s->setObjectName(m_mesh->name);
     if ((m_options & QGL::ForceSmooth) && (m_options & QGL::ForceFaceted))
     {
         if (m_options & QGL::ShowWarnings)
-            qWarning("Both smooth and faceted forced on for %s: forcing smooth\n", m_mesh->name);
+            qWarning("Both smooth and faceted forced on for %s: forcing smooth\n",
+                     m_mesh->name);
         m_options &= ~QGL::ForceFaceted;
     }
     initAdjacencyMap();
@@ -193,7 +195,7 @@ void QGL3dsMesh::initialize()
     bool mixedTexturedAndPlain = m_plainMaterials.count() > 0 &&
                                  m_textureMaterials.count() > 0;
 
-    setLocalTransform(meshMatrix());
+    s->setLocalTransform(meshMatrix());
 
     // start a new section and node
     newSection(m_smoothingGroups ? QGL::Smooth : QGL::Faceted);
@@ -204,14 +206,14 @@ void QGL3dsMesh::initialize()
     if (mixedTexturedAndPlain)
     {
         node->setEffect(QGL::LitMaterial);
-        node->setObjectName(objectName() + "::Materials");
+        node->setObjectName(s->objectName() + "::Materials");
         //qDebug() << ">>> mixed:" << node;
         pushNode();
         //qDebug() << "   pushed - current now:" << currentNode();
     }
     else
     {
-        setEffect(m_textureMaterials.count() > 0 ? QGL::LitModulateTexture2D : QGL::LitMaterial);
+        s->setEffect(m_textureMaterials.count() > 0 ? QGL::LitModulateTexture2D : QGL::LitMaterial);
     }
     //qDebug() << "processing:" << matList.count() << "materials";
     while (matList.count() > 0)
@@ -229,7 +231,7 @@ void QGL3dsMesh::initialize()
         //qDebug() << "   popped - current now:" << currentNode();
         node = currentNode();
         node->setEffect(QGL::LitModulateTexture2D);
-        node->setObjectName(objectName() + "::Textures");
+        node->setObjectName(s->objectName() + "::Textures");
     }
     while (matList.count() > 0)
     {
@@ -238,8 +240,6 @@ void QGL3dsMesh::initialize()
         if (matList.count() > 0)
             node = newNode();
     }
-    finalize();
-    //qDebug() << "######## finalized & out\n\n";
 }
 
 // Build a linked list, in a QArray: the first N*2 entries correspond
@@ -570,7 +570,7 @@ int QGL3dsMesh::cachedMaterialLookup(const char *material)
     }
     if (qstrncmp(lastName, material, 510) != 0)
     {
-        lastLookup = palette()->indexOf(material);
+        lastLookup = sceneNode()->palette()->indexOf(material);
         qstrncpy(lastName, material, 510);
     }
     return lastLookup;
@@ -588,7 +588,7 @@ int QGL3dsMesh::cachedMaterialLookup(const char *material)
 */
 void QGL3dsMesh::analyzeMesh()
 {
-    QGLMaterialCollection *pal = palette();
+    QGLMaterialCollection *pal = sceneNode()->palette();
     Lib3dsFace *face;
     Lib3dsDword allKeys = 0;
     m_smoothingGroupCount = 0;
@@ -644,7 +644,7 @@ void QGL3dsMesh::analyzeMesh()
 */
 void QGL3dsMesh::checkTextures(int material)
 {
-    QGLMaterial *mat = palette()->material(material);
+    QGLMaterial *mat = sceneNode()->palette()->material(material);
     QGLTexture2D *tex = (mat ? mat->texture() : 0);
     m_hasTextures = false;
     if (tex)
@@ -736,14 +736,14 @@ void QGL3dsMesh::generateVertices()
                             tri.appendTexCoord(QVector2D(t0[0], m_texFlip ? 1.0f - t0[1] : t0[1]));
                         }
                         if (m_options & QGL::NativeIndices)
-                            currentSection()->appendSmooth(tri.vertexAt(cur++), a);
+                            currentSection()->appendSmooth(tri.logicalVertexAt(cur++), a);
                     }
                 }
             }
             if (m_options & QGL::NativeIndices)
                 currentNode()->setCount(cur);
             else
-                addTriangle(tri);
+                addTriangles(tri);
             if (keyCount > 0)
                 newSection(QGL::Smooth);
             else

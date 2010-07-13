@@ -177,7 +177,7 @@ void Model::importModel()
     if (!m_sceneManager)
         return;
     m_sceneManager->setPickable(true);
-    QGLSceneObject *obj = m_sceneManager->defaultObject(QGLSceneObject::Main);
+    QGLSceneNode *obj = m_sceneManager->defaultObject(QGLSceneNode::Main);
     m_sceneRoot = qobject_cast<QGLSceneNode *>(obj);
 #ifndef QT_NO_DEBUG_STREAM
     int totalIndexes = 0;

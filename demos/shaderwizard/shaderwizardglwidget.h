@@ -52,7 +52,7 @@ class QGLPainter;
 class ShaderWizardGLWidgetPrivate;
 class QGLAbstractScene;
 class QGLSceneNode;
-class QGLSceneObject;
+class QGLSceneNode;
 class QGLHeightMap;
 class QGLSphere;
 class QGLShaderProgramEffect;
@@ -126,7 +126,7 @@ private:
     ShaderWizardGLWidgetPrivate* d;
     QGLSceneNode *mSceneNode;
     QGLAbstractScene *mSceneManager;
-    QGLSceneObject *mDefaultSceneObject;
+    QGLSceneNode *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;

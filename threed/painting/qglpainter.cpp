@@ -584,7 +584,7 @@ void QGLPainter::setClearStencil(GLint value)
     \fn void QGLPainter::setDepthTestingEnabled(bool value)
 
     Enables or disables depth testing according to \a value.
-    This is a convience function that is equivalent to
+    This is a convenience function that is equivalent to
     \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
 */
 

@@ -41,7 +41,6 @@
 
 #include "modelview.h"
 #include "qglabstractscene.h"
-#include "qglsceneobject.h"
 
 ModelView::ModelView(QWidget *parent)
     : QGLView(parent)

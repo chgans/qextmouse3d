@@ -42,7 +42,7 @@
 #ifndef IMAGEDISPLAY_H
 #define IMAGEDISPLAY_H
 
-#include "qglbuilder.h"
+#include "qglscenenode.h".h"
 #include "qglmaterialcollection.h"
 
 #include <QString>
@@ -50,7 +50,7 @@
 class QGLBuilder;
 class QGLTexture2D;
 
-class ImageDisplay : public QGLBuilder
+class ImageDisplay : public QGLSceneNode
 {
     Q_OBJECT
 public:

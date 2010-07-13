@@ -56,9 +56,8 @@
 
     It is centered on the origin, and lies in the z = 0 plane.
 */
-QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
-                     QSizeF size, int level)
-                         : QGLBuilder(parent, materials)
+QuadPlane::QuadPlane(QObject *parent, QSizeF size, int level)
+    : QGLSceneNode(parent)
 {
     setObjectName("QuadPlane");
     if (level > 8)
@@ -69,7 +68,7 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
     for ( ; level--; divisions *= 2) {}  // integer 2**n
     QSizeF div = size / float(divisions);
     QSizeF half = size / 2.0f;
-    newSection();
+    QGLBuilder builder;
     QGeometryData zip;
     QGeometryData zip2;
     for (int yy = 0; yy <= divisions; ++yy)
@@ -84,8 +83,9 @@ QuadPlane::QuadPlane(QObject *parent, QGLMaterialCollection *materials,
             zip.appendTexCoord(QVector2D(1.0f - texX, 1.0f - texY));
         }
         if (yy > 0)
-            addQuadsZipped(zip, zip2);
+            builder.addQuadsInterleaved(zip, zip2);
         zip2 = zip;
         zip.clear();
     }
+    addNode(builder.finalizedSceneNode());
 }

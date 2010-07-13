@@ -46,7 +46,7 @@
 #include "qt3dglobal.h"
 
 class QGLAbstractScene;
-class QGLSceneObject;
+class QGLSceneNode;
 class QEvent;
 
 class Q_QT3D_EXPORT QGLPickNode : public QObject
@@ -57,8 +57,8 @@ public:
     int id() const { return m_id; }
     void setId(int id) { m_id = id; }
 
-    QGLSceneObject *target() const { return m_target; }
-    void setTarget(QGLSceneObject *target) { m_target = target; }
+    QGLSceneNode *target() const { return m_target; }
+    void setTarget(QGLSceneNode *target) { m_target = target; }
 
 signals:
     void pressed();
@@ -72,7 +72,7 @@ public slots:
 protected:
     bool event(QEvent *e);
     int m_id;
-    QGLSceneObject *m_target;
+    QGLSceneNode *m_target;
 };
 
 #endif // QGLPICKNODE_H

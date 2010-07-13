@@ -66,7 +66,7 @@ private slots:
     void popNode();
     void geometryBuild();
     void addTriangle();
-    void addQuad();
+    void addQuads);
     void addTriangleFan();
     void addTriangulatedFace();
     void extrude();
@@ -503,7 +503,7 @@ void tst_QGLBuilder::addTriangle()
     QCOMPARE(sec->vertex(2), c);
 }
 
-void tst_QGLBuilder::addQuad()
+void tst_QGLBuilder::addQuads)
 {
     TestQGLBuilder displayList;
     displayList.newSection();
@@ -879,10 +879,10 @@ void tst_QGLBuilder::finalize()
     // triangulated face
     int tf = ids[node->start()]; // beginning of triangulated face
     QCOMPARE(node->count(), 12);
-    QCOMPARE(geom.vertex(tf), center);
-    QCOMPARE(geom.vertex(tf + 2), b);
-    QCOMPARE(geom.normal(tf), n0);
-    QCOMPARE(geom.normal(tf + 2), n0);
+    QCOMPARE(geom.vertexAt(tf), center);
+    QCOMPARE(geom.vertexAt(tf + 2), b);
+    QCOMPARE(geom.normalAt(tf), n0);
+    QCOMPARE(geom.normalAt(tf + 2), n0);
 
     geom = node2->geometry();
     ids = geom.indices();
@@ -890,10 +890,10 @@ void tst_QGLBuilder::finalize()
     int ext = ids[node2->start()]; // beginning of extrude
     int last = ids[node2->start() + (node2->count() - 1)];
     QCOMPARE(node2->count(), 24);
-    QCOMPARE(geom.vertex(ext), a - n);
-    QCOMPARE(geom.normal(ext), n1);
-    QCOMPARE(geom.vertex(last), d);
-    QCOMPARE(geom.normal(last), n4);
+    QCOMPARE(geom.vertexAt(ext), a - n);
+    QCOMPARE(geom.normalAt(ext), n1);
+    QCOMPARE(geom.vertexAt(last), d);
+    QCOMPARE(geom.normalAt(last), n4);
 
 #ifndef QT_NO_MEMBER_TEMPLATES
     QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
@@ -915,9 +915,9 @@ void tst_QGLBuilder::finalize()
     QGL::IndexArray ids2 = geom.indices();
 
     int tri = ids2[node->start()];
-    QCOMPARE(geom.vertex(tri), e);
-    QCOMPARE(geom.normal(tri), n10);
-    QCOMPARE(geom.texCoord(tri), ta);
+    QCOMPARE(geom.vertexAt(tri), e);
+    QCOMPARE(geom.normalAt(tri), n10);
+    QCOMPARE(geom.texCoordAt(tri), ta);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLBuilder)

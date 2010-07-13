@@ -69,7 +69,7 @@
     isolation from the original scene graph.
 
     In order to achieve this the mesh object contains a map correlating numeric identifiers
-    for individual branches with specific \l QGLSceneObject objects which are taken from
+    for individual branches with specific \l QGLSceneNode objects which are taken from
     the original scene.
 
     More details on achieving this can be found in the \l Item3d class.
@@ -117,7 +117,7 @@ public:
 
     struct branchObject {
         QObject *previousParent;
-        QGLSceneObject *rootSceneObject;
+        QGLSceneNode *rootSceneObject;
     };
 
     QUrl data;
@@ -127,8 +127,8 @@ public:
     QGLAbstractScene *scene;
     int nextSceneBranchId;
     QMap<int, branchObject> sceneBranches;
-    QList<QGLSceneObject *>sceneObjects;
-    QGLSceneObject *mainSceneObject;
+    QList<QGLSceneNode *>sceneObjects;
+    QGLSceneNode *mainSceneObject;
     QList<QGLMaterial *> connected;
     int refCount;
     bool completed;
@@ -206,7 +206,7 @@ void Mesh::setMeshName(const QString& value)
 {
     d->meshName = value;
     if (d->loaded && d->scene) {
-        QGLSceneObject *insertObject;
+        QGLSceneNode *insertObject;
         if (value.isEmpty())            
             insertObject = getSceneObject();
         else
@@ -278,15 +278,15 @@ void Mesh::initSceneObjectList()
 {
     d->sceneObjects.clear();
     if (d->scene)
-        d->sceneObjects = d->scene->objects(QGLSceneObject::Mesh);
+        d->sceneObjects = d->scene->objects(QGLSceneNode::Mesh);
 
-    d->mainSceneObject = d->scene->defaultObject(QGLSceneObject::Main);
+    d->mainSceneObject = d->scene->defaultObject(QGLSceneNode::Main);
 }
 
 /*!
     Get the main scene object for the \l QGLAbstractScene associated with this mesh.
 */
-QGLSceneObject *Mesh::getSceneObject()
+QGLSceneNode *Mesh::getSceneObject()
 {
     //This variant of the function gets the main scene object for the scene
     if (!d->mainSceneObject)
@@ -299,14 +299,14 @@ QGLSceneObject *Mesh::getSceneObject()
     Get the scene object called \a name, specified as a QString, and retrieve the
     scene object in this mesh which corresponds to it.
 */
-QGLSceneObject *Mesh::getSceneObject(const QString &name)
+QGLSceneNode *Mesh::getSceneObject(const QString &name)
 {    
     //This variant of the function gets the mesh scene object for a scene
     //based on the name of the object.
     if (d->sceneObjects.empty())
         initSceneObjectList();
 
-    foreach (QGLSceneObject *object, d->sceneObjects) {
+    foreach (QGLSceneNode *object, d->sceneObjects) {
         if (object && object->objectName().startsWith(name))
         {
             return object;
@@ -327,7 +327,7 @@ QStringList Mesh::getSceneObjectNames()
         initSceneObjectList();
 
     QStringList names;
-    foreach (QGLSceneObject *object, d->sceneObjects) {
+    foreach (QGLSceneNode *object, d->sceneObjects) {
         if (object) {
             QString name = object->objectName();
             if (!name.isEmpty())
@@ -348,7 +348,7 @@ QStringList Mesh::getSceneObjectNames()
     previously split away.
 */
 
-QGLSceneObject *Mesh::getSceneObject(QGLSceneObject::Type type, const QString& name) const
+QGLSceneNode *Mesh::getSceneObject(QGLSceneNode::Type type, const QString& name) const
 {    
 	if (d->scene)
 		return d->scene->object(type, name);
@@ -403,7 +403,7 @@ void Mesh::setScene(QGLAbstractScene *scene)
                  d->data.toString().toLatin1().constData());    
     } 
     else {
-        QGLSceneObject *insertObject;
+        QGLSceneNode *insertObject;
         initSceneObjectList();
         if (d->meshName.isEmpty())
             insertObject = getSceneObject();
@@ -464,7 +464,7 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
     }
     else {
         int branchId = nextSceneBranchId();        
-        QGLSceneObject *sceneObj = getSceneObject(nodeName);        
+        QGLSceneNode *sceneObj = getSceneObject(nodeName);        
         QGLSceneNode *sceneNode = qobject_cast<QGLSceneNode *>(sceneObj);
         if (sceneObj) {
             QGLSceneNode *parentNode = qobject_cast<QGLSceneNode *>(sceneNode->parent());
@@ -494,7 +494,7 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
      The \a previousParent of \a rootSceneObject is also stored so that the object can be restored to its
      previous parent if necessary.
 */
-int Mesh::addSceneBranch(QGLSceneObject *rootSceneObject, QObject *previousParent)
+int Mesh::addSceneBranch(QGLSceneNode *rootSceneObject, QObject *previousParent)
 {
     //when adding a new object to a mesh we also store the previous parent information
     //in case we wish to 'reattach' it to the parent at a later stage.
@@ -544,7 +544,7 @@ void Mesh::restoreSceneBranch(int branchId)
 /*!
     Return a pointer to the scene branch identified by \a branchId.
 */
-QGLSceneObject *Mesh::getSceneBranch(int branchId) const
+QGLSceneNode *Mesh::getSceneBranch(int branchId) const
 {
     if (!d->sceneBranches.contains(branchId)) return NULL;    
     MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
@@ -615,7 +615,7 @@ QObject *Mesh::material(const QString& nodeName, const QString& materialName)
     if (!d->scene)
         return 0;
     
-    QGLSceneObject *sceneObject;
+    QGLSceneNode *sceneObject;
     
     if (nodeName.isEmpty())
         sceneObject = getSceneObject();

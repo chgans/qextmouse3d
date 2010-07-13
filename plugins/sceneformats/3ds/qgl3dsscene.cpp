@@ -92,10 +92,10 @@ QGL3dsScene::~QGL3dsScene()
     \internal
     \reimp
 */
-QList<QGLSceneObject *> QGL3dsScene::objects(QGLSceneObject::Type type) const
+QList<QGLSceneNode *> QGL3dsScene::objects(QGLSceneNode::Type type) const
 {
-    QList<QGLSceneObject *> objs;
-    if (type == QGLSceneObject::Main)
+    QList<QGLSceneNode *> objs;
+    if (type == QGLSceneNode::Main)
     {
         objs.append(mRootNode);
         return objs;

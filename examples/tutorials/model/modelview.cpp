@@ -41,7 +41,12 @@
 
 #include "modelview.h"
 #include "qglabstractscene.h"
-#include "qglsceneobject.h"
+
+ModelView::~ModelView()
+{
+    delete m_scene;
+    delete m_node;
+}
 
 //! [initialize]
 void ModelView::initializeGL(QGLPainter *painter)
@@ -55,7 +60,7 @@ void ModelView::initializeGL(QGLPainter *painter)
 //! [paint]
 void ModelView::paintGL(QGLPainter *painter)
 {
-    QGLSceneObject *o = m_scene->defaultObject(QGLSceneObject::Main);
+    QGLSceneNode *o = m_scene->defaultObject(QGLSceneNode::Main);
     o->draw(painter);
 }
 //! [paint]

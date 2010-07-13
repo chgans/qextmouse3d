@@ -48,7 +48,7 @@
 
 class QGLTexture2D;
 
-class Geometry : public QGLBuilder
+class Geometry : public QGLSceneNode
 {
 public:
     Geometry(QObject *parent = 0, QGLMaterialCollection *materials = 0);

@@ -50,8 +50,10 @@ void PainterWidget::initializeGL()
     painter.setDepthTestingEnabled(true);
 
     // Create the cube object for later.
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.5f);
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    builder << QGLCube(1.5f);
+    cube = builder.finalizedSceneNode();
 }
 
 void PainterWidget::resizeGL(int width, int height)
@@ -99,5 +101,5 @@ void PainterWidget::paintGL()
 
     painter.setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
-    cube.draw(&painter);
+    cube->draw(&painter);
 }

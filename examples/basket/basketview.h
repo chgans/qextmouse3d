@@ -43,10 +43,9 @@
 #define BASKETVIEW_H
 
 #include "qglview.h"
-#include "qgltexture2d.h"
-#include "qglbuilder.h"
 
 class QTimer;
+class QGLSceneNode;
 
 class BasketView : public QGLView
 {
@@ -63,8 +62,7 @@ private slots:
     void rotate();
 
 private:
-    QGLTexture2D texture;
-    QGLBuilder basket;
+    QGLSceneNode *basket;
     int angle;
     QTimer *timer;
 };

@@ -56,7 +56,7 @@ MeshObject::MeshObject(QGLBuilder *mesh, QObject *parent)
     m_hoverMaterial = 0;
 }
 
-MeshObject::MeshObject(QGLSceneObject *meshObject, QObject *parent)
+MeshObject::MeshObject(QGLSceneNode *meshObject, QObject *parent)
     : QObject(parent)
 {
     m_mesh = 0;
@@ -75,7 +75,7 @@ MeshObject::MeshObject(QGLAbstractScene *scene, QObject *parent)
 {
     scene->setParent(this);
     m_mesh = 0;
-    m_meshObject = scene->defaultObject(QGLSceneObject::Mesh);
+    m_meshObject = scene->defaultObject(QGLSceneNode::Mesh);
     m_scale = 1.0f;
     m_rotationAngle = 0.0f;
     m_effect = 0;

@@ -51,13 +51,13 @@ class QGLBezierScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit QGLBezierScene(QGLBuilder *geometry, QObject *parent = 0);
+    explicit QGLBezierScene(QGLSceneNode *geometry, QObject *parent = 0);
     virtual ~QGLBezierScene();
 
-    QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
+    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
 
 private:
-    QGLBuilder *mainObject;
+    QGLSceneNode *mainObject;
 };
 
 QT_END_NAMESPACE
