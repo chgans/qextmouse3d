@@ -87,7 +87,7 @@
     Assign an instance of QLogicalVertex:
     \code
     QLogicalVertex lv2;
-    lv2 = data.vertexAt(0);
+    lv2 = data.logicalVertexAt(0);
     \endcode
     Although lv2 gets its own internal QGeometryData which is then immediately
     thrown away by the assignment, because of lazy initialization in
@@ -122,7 +122,7 @@
 /*!
     \fn QLogicalVertex::QLogicalVertex(QGeometryData data, int index)
     Constructs a new QLogicalVertex referencing the \a data at \a index.
-    Note that if this QLogicalVertex is modified, by calling vertexRef() or
+    Note that if this QLogicalVertex is modified, by calling vertex() or
     setNormal() for example, then a copy-on-write for \a data will be
     triggered.
 */
@@ -168,7 +168,7 @@
 */
 
 /*!
-    \fn QVector3D &QLogicalVertex::vertexRef()
+    \fn QVector3D &QLogicalVertex::vertex()
     Returns a modifiable reference to the vertex value.
 */
 
@@ -203,19 +203,19 @@
 */
 
 /*!
-    \fn float &QLogicalVertex::floatAttributeRef(QGL::VertexAttribute field)
+    \fn float &QLogicalVertex::floatAttribute(QGL::VertexAttribute field)
     Returns a modifiable reference to the attribute at \a field, which
     must be a float.  The \a field defaults to QGL::CustomVertex0.
 */
 
 /*!
-    \fn QVector2D &QLogicalVertex::vector2DAttributeRef(QGL::VertexAttribute field)
+    \fn QVector2D &QLogicalVertex::vector2DAttribute(QGL::VertexAttribute field)
     Returns a modifiable reference to the attribute at \a field, which
     must be a QVector2D.  The \a field defaults to QGL::CustomVertex0.
 */
 
 /*!
-    \fn QVector3D &QLogicalVertex::vector3DAttributeRef(QGL::VertexAttribute field = QGL::CustomVertex0);
+    \fn QVector3D &QLogicalVertex::vector3DAttribute(QGL::VertexAttribute field = QGL::CustomVertex0);
     Returns a modifiable reference to the attribute at \a field, which
     must be a QVector3D.  The \a field defaults to QGL::CustomVertex0.
 */
@@ -254,7 +254,7 @@
 */
 
 /*!
-    \fn QVector3D &QLogicalVertex::normalRef()
+    \fn QVector3D &QLogicalVertex::normal()
     Returns a modifiable reference to the normal value for this vertex.
 */
 

@@ -42,7 +42,8 @@
 #ifndef QGLSCENENODE_H
 #define QGLSCENENODE_H
 
-#include "qglsceneobject.h"
+#include <QtCore/qobject.h>
+
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
 
@@ -58,8 +59,9 @@ QT_MODULE(Qt3d)
 
 class QGLSceneNodePrivate;
 class QGLAbstractEffect;
+class QGLPickNode;
 
-class Q_QT3D_EXPORT QGLSceneNode : public QGLSceneObject
+class Q_QT3D_EXPORT QGLSceneNode : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLSceneNode);
@@ -83,6 +85,12 @@ public:
     explicit QGLSceneNode(QObject *parent = 0);
     explicit QGLSceneNode(const QGeometryData &geometry, QObject *parent = 0);
     virtual ~QGLSceneNode();
+
+    enum Type
+    {
+        Mesh,
+        Main
+    };
 
     QGeometryData geometry() const;
     void setGeometry(QGeometryData);

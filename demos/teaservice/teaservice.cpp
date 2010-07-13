@@ -71,7 +71,7 @@ public:
     ~Teapot() {}
 };
 
-static QGLSceneObject *createTeapot()
+static QGLSceneNode *createTeapot()
 {
     QGLBuilder *list = new QGLBuilder();
     (*list) << QGLTeapot();

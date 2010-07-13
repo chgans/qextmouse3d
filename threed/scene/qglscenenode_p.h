@@ -54,13 +54,13 @@
 //
 
 #include "qglnamespace.h"
-#include "qglsceneobject_p.h"
 #include "qglscenenode.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
 #include <QtCore/qstringlist.h>
 #include <QtCore/qset.h>
+#include <QtCore/private/qobject_p.h>
 
 #if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
 #include <QtDeclarative/qdeclarativelist.h>
@@ -69,12 +69,13 @@
 class QGLAbstractEffect;
 class QGLPickNode;
 
-class QGLSceneNodePrivate : public QGLSceneObjectPrivate
+class QGLSceneNodePrivate : public QObjectPrivate
 {
     Q_DECLARE_PUBLIC(QGLSceneNode)
 public:
-    QGLSceneNodePrivate(QGLSceneObject::Type type, int version = QObjectPrivateVersion)
-        : QGLSceneObjectPrivate(type, version)
+    QGLSceneNodePrivate(QGLSceneNode::Type t, int version = QObjectPrivateVersion)
+        : QObjectPrivate(version)
+        , type(t)
         , geometry(0)
         , localEffect(QGL::LitMaterial)
         , customEffect(0)
@@ -102,6 +103,7 @@ public:
             (*it)->invalidateBoundingBox();
     }
 
+    QGLSceneNode::Type type;
     QGeometryData geometry;
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;

@@ -40,10 +40,11 @@
 ****************************************************************************/
 
 #include "qglbezierscene.h"
+#include "qglscenenode.h"
 
 QT_BEGIN_NAMESPACE
 
-QGLBezierScene::QGLBezierScene(QGLBuilder *geometry, QObject *parent)
+QGLBezierScene::QGLBezierScene(QGLSceneNode *geometry, QObject *parent)
     : QGLAbstractScene(parent)
 {
     mainObject = geometry;
@@ -55,10 +56,10 @@ QGLBezierScene::~QGLBezierScene()
 {
 }
 
-QList<QGLSceneObject *> QGLBezierScene::objects(QGLSceneObject::Type type) const
+QList<QGLSceneNode *> QGLBezierScene::objects(QGLSceneNode::Type type) const
 {
-    QList<QGLSceneObject *> objs;
-    if (type == QGLSceneObject::Mesh || type == QGLSceneObject::Main)
+    QList<QGLSceneNode *> objs;
+    if (type == QGLSceneNode::Mesh || type == QGLSceneNode::Main)
         objs.append(mainObject);
     return objs;
 }

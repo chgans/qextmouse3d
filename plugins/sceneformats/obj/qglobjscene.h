@@ -55,20 +55,17 @@ class QGLObjScene : public QGLAbstractScene
     Q_OBJECT
 public:
 //! [1]
-    explicit QGLObjScene(QGLBuilder *list,
-                         QGLSceneObject *defaultNode,
-                         const QList<QGLSceneObject *>& otherNodes,
-                         QObject *parent = 0);
+    explicit QGLObjScene(QGLSceneNode *defaultNode, QObject *parent = 0);
     virtual ~QGLObjScene();
 
 //! [2]
-    QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
+    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
 //! [2]
 
 private:
     QGLBuilder *displayList;
-    QGLSceneObject *mainObject;
-    QList<QGLSceneObject *> meshes;
+    QGLSceneNode *mainObject;
+    QList<QGLSceneNode *> meshes;
 //! [3]
 };
 //! [3]

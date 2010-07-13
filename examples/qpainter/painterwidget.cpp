@@ -41,13 +41,17 @@
 
 #include "painterwidget.h"
 #include "qglcube.h"
+#include "qglbuilder.h"
+
 #include <QPainter>
 
 PainterWidget::PainterWidget(QWidget *parent)
     : QWidget(parent)
 {
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.5f);
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    builder << QGLCube(1.5f);
+    cube = builder.finalizedSceneNode();
 }
 
 void PainterWidget::paintGL(QPainter *p)
@@ -99,7 +103,7 @@ void PainterWidget::paintGL(QPainter *p)
 
     painter.setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
-    cube.draw(&painter);
+    cube->draw(&painter);
 }
 
 void PainterWidget::paintEvent(QPaintEvent *)

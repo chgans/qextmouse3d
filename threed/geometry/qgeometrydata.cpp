@@ -62,10 +62,10 @@
             \o QGeometryData functions
         \row
             \o QGL::Position
-            \o appendVertex(), vertexRef(), vertices()
+            \o appendVertex(), vertex(), vertices()
         \row
             \o QGL::Normal
-            \o appendNormal(), normalRef(), normals()
+            \o appendNormal(), normal(), normals()
         \row
             \o QGL::Color
             \o appendColor(), colorRef(), colors()
@@ -74,13 +74,13 @@
             \o appendTexCoord(), texCoordRef(), texCoords()
         \row
             \o QGL::CustomVertex0 - QGL::CustomVertex1, QGL::UserVertex
-            \o appendAttribute(), vector3DAttributeRef(), attributes()
+            \o appendAttribute(), vector3DAttribute(), attributes()
      \endtable
 
      Additionally the class provides the following features:
      \list
         \o appendVertex() for adding a QLogicalVertex()
-        \o vertexAt() for return the data at an index as a QLogicalVertex()
+        \o logicalVertexAt() for return the data at an index as a QLogicalVertex()
         \o hasField() to find if a particular data type is present
         \o normalizeNormals() to reduce all normal vectors to unit length
         \o boundingBox() to find the bounds of the geometry
@@ -371,7 +371,7 @@ int QGeometryData::appendVertex(const QLogicalVertex &v)
     Returns a QLogicalVertex that references the \a{i}'th logical vertex
     of this geometry.
 */
-QLogicalVertex QGeometryData::vertexAt(int i) const
+QLogicalVertex QGeometryData::logicalVertexAt(int i) const
 {
     return QLogicalVertex(*this, i);
 }
@@ -484,7 +484,7 @@ QGeometryData QGeometryData::translated(const QVector3D &t) const
     for (int i = 0; i < count(); ++i)
     {
         r.appendVertex(vertexAt(i));
-        r.vertexRef(i) = v[i] + t;
+        r.vertex(i) = v[i] + t;
     }
     return r;
 }
@@ -567,7 +567,7 @@ void QGeometryData::generateTextureCoordinates(Qt::Orientation orientation, QGL:
     where \c{N == qMin(count(), other.count())}, and has only the fields
     that are in both geometries.
 */
-QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
+QGeometryData QGeometryData::interleavedWith(const QGeometryData &other) const
 {
     QGeometryData res;
     check();
@@ -652,7 +652,7 @@ QGeometryData QGeometryData::zippedWith(const QGeometryData &other) const
     where \c{N == qMin(count(), other.count())}, and has only the fields
     that are in both geometries.
 */
-void QGeometryData::zipWith(const QGeometryData &other)
+void QGeometryData::interleaveWith(const QGeometryData &other)
 {
     check();
     other.check();
@@ -744,15 +744,14 @@ void QGeometryData::zipWith(const QGeometryData &other)
     qDebug() << data.count();
 
     // x == a
-    QVector3D x = data.vertex(0);
+    QVector3D x = data.vertexAt(0);
 
-    quint32 flds = QGL::fieldMask(QGL::Position)
-                    | QGL::fieldMask(QGL::TextureCoord0);
+    quint32 flds = QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::TextureCoord0);
     qDebug() << (flds == data.fields());  // prints "true"
 
     data.clear();
     qDebug() << data.count();             // prints "0"
-    QVector3D x = data.vertex(0);         // asserts - no data in vertices
+    QVector3D x = data.vertexAt(0);       // asserts - no data in vertices
     qDebug() << (flds == data.fields());  // still prints "true"
     \endcode
 */
@@ -1454,7 +1453,7 @@ void QGeometryData::appendColorArray(const QArray<QColor4ub> &ary)
 /*!
     Returns a modifiable reference to the vertex data at index \a i.
 */
-QVector3D &QGeometryData::vertexRef(int i)
+QVector3D &QGeometryData::vertex(int i)
 {
     detach();
     d->modified = true;
@@ -1485,9 +1484,9 @@ const QVector3DArray *QGeometryData::vertexData() const
 
 
 /*!
-    Returns the vertex position data at index \a i.
+    Returns a non-modifiable reference to the vertex position data at index \a i.
 */
-const QVector3D &QGeometryData::vertex(int i) const
+const QVector3D &QGeometryData::vertexAt(int i) const
 {
     Q_ASSERT(hasField(QGL::Position));
     return d->vertices.at(i);
@@ -1496,7 +1495,7 @@ const QVector3D &QGeometryData::vertex(int i) const
 /*!
     Returns a modifiable reference to the normal data at index \a i.
 */
-QVector3D &QGeometryData::normalRef(int i)
+QVector3D &QGeometryData::normal(int i)
 {
     detach();
     d->modified = true;
@@ -1504,9 +1503,9 @@ QVector3D &QGeometryData::normalRef(int i)
 }
 
 /*!
-    Returns the normal data at index \a i.
+    Returns a non-modifiable reference to the normal data at index \a i.
 */
-const QVector3D &QGeometryData::normal(int i) const
+const QVector3D &QGeometryData::normalAt(int i) const
 {
     Q_ASSERT(hasField(QGL::Normal));
     return d->normals.at(i);
@@ -1525,7 +1524,7 @@ QVector3DArray QGeometryData::normals() const
 /*!
     Returns a modifiable reference to the color data at index \a i.
 */
-QColor4ub &QGeometryData::colorRef(int i)
+QColor4ub &QGeometryData::color(int i)
 {
     detach();
     d->modified = true;
@@ -1533,9 +1532,9 @@ QColor4ub &QGeometryData::colorRef(int i)
 }
 
 /*!
-    Returns a modifiable reference to the color data at index \a i.
+    Returns a non-modifiable reference to the color data at index \a i.
 */
-const QColor4ub &QGeometryData::color(int i) const
+const QColor4ub &QGeometryData::colorAt(int i) const
 {
     Q_ASSERT(hasField(QGL::Color));
     return d->colors.at(i);
@@ -1554,7 +1553,7 @@ QArray<QColor4ub> QGeometryData::colors() const
 /*!
     Returns a modifiable reference to the \a field texture coordinate data at index \a i.
 */
-QVector2D &QGeometryData::texCoordRef(int i, QGL::VertexAttribute field)
+QVector2D &QGeometryData::texCoord(int i, QGL::VertexAttribute field)
 {
     detach();
     d->modified = true;
@@ -1570,9 +1569,9 @@ QVector2DArray QGeometryData::texCoords(QGL::VertexAttribute field) const
 }
 
 /*!
-    Returns the texture coordinate data at index \a i for \a field.
+    Returns a non-modifiable reference to the texture coordinate data at index \a i for \a field.
 */
-const QVector2D &QGeometryData::texCoord(int i, QGL::VertexAttribute field) const
+const QVector2D &QGeometryData::texCoordAt(int i, QGL::VertexAttribute field) const
 {
     Q_ASSERT(hasField(field));
     return d->textures.at(d->key[field]).at(i);
@@ -1581,7 +1580,7 @@ const QVector2D &QGeometryData::texCoord(int i, QGL::VertexAttribute field) cons
 /*!
     Returns a modifiable reference to the float \a field attribute data at index \a i.
 */
-float &QGeometryData::floatAttributeRef(int i, QGL::VertexAttribute field)
+float &QGeometryData::floatAttribute(int i, QGL::VertexAttribute field)
 {
     detach();
     d->modified = true;
@@ -1593,7 +1592,7 @@ float &QGeometryData::floatAttributeRef(int i, QGL::VertexAttribute field)
 /*!
     Returns a modifiable reference to the 2D vector \a field attribute data at index \a i.
 */
-QVector2D &QGeometryData::vector2DAttributeRef(int i, QGL::VertexAttribute field)
+QVector2D &QGeometryData::vector2DAttribute(int i, QGL::VertexAttribute field)
 {
     detach();
     d->modified = true;
@@ -1607,7 +1606,7 @@ QVector2D &QGeometryData::vector2DAttributeRef(int i, QGL::VertexAttribute field
 /*!
     Returns a modifiable reference to the 3D vector \a field attribute data at index \a i.
 */
-QVector3D &QGeometryData::vector3DAttributeRef(int i, QGL::VertexAttribute field)
+QVector3D &QGeometryData::vector3DAttribute(int i, QGL::VertexAttribute field)
 {
     detach();
     d->modified = true;
@@ -1629,7 +1628,7 @@ QCustomDataArray QGeometryData::attributes(QGL::VertexAttribute field) const
 /*!
     Returns a copy of the float \a field attribute data at index \a i.
 */
-float QGeometryData::floatAttribute(int i, QGL::VertexAttribute field) const
+float QGeometryData::floatAttributeAt(int i, QGL::VertexAttribute field) const
 {
     Q_ASSERT(hasField(field));
     return d->attributes.at(d->key[field]).floatAt(i);
@@ -1638,7 +1637,7 @@ float QGeometryData::floatAttribute(int i, QGL::VertexAttribute field) const
 /*!
     Returns a copy of the 2D vector \a field attribute data at index \a i.
 */
-QVector2D QGeometryData::vector2DAttribute(int i, QGL::VertexAttribute field) const
+QVector2D QGeometryData::vector2DAttributeAt(int i, QGL::VertexAttribute field) const
 {
     Q_ASSERT(hasField(field));
     return d->attributes.at(d->key[field]).vector2DAt(i);
@@ -1647,7 +1646,7 @@ QVector2D QGeometryData::vector2DAttribute(int i, QGL::VertexAttribute field) co
 /*!
     Returns a copy of the 3D vector \a field attribute data at index \a i.
 */
-QVector3D QGeometryData::vector3DAttribute(int i, QGL::VertexAttribute field) const
+QVector3D QGeometryData::vector3DAttributeAt(int i, QGL::VertexAttribute field) const
 {
     Q_ASSERT(hasField(field));
     return d->attributes.at(d->key[field]).vector3DAt(i);

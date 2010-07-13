@@ -46,20 +46,34 @@
 
 void StereoView::initializeGL(QGLPainter *painter)
 {
-    teapot << QGLTeapot();
-    teapot.finalize();
+    scene = new QGLSceneNode(this);
 
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.0f);
-    cube.finalize();
+    QGLSceneNode *teapot;
+    QGLSceneNode *cube;
+
+    {
+        QGLBuilder builder;
+        builder << QGLTeapot();
+        teapot = builder.finalizedSceneNode();
+    }
+
+    {
+        QGLBuilder builder;
+        builder.newSection(QGL::Faceted);
+        builder << QGLCube(1.0f);
+        cube = builder.finalizedSceneNode();
+    }
+
+    cube->setPosition(QVector3D(-1.0f, 0.0f, 2.0f));
+    scene->addNode(teapot);
+    scene->addNode(cube);
 
     QGLMaterial *china = new QGLMaterial(this);
     china->setAmbientColor(QColor(192, 150, 128));
     china->setSpecularColor(QColor(60, 60, 60));
     china->setShininess(128);
-
-    painter->setFaceMaterial(QGL::AllFaces, china);
-    painter->setStandardEffect(QGL::LitMaterial);
+    scene->setMaterial(china);
+    scene->setEffect(QGL::LitMaterial);
 
     camera()->setEye(QVector3D(0.0f, 0.0f, 15.0f));
     camera()->setEyeSeparation(0.2f);
@@ -67,8 +81,5 @@ void StereoView::initializeGL(QGLPainter *painter)
 
 void StereoView::paintGL(QGLPainter *painter)
 {
-    teapot.draw(painter);
-
-    painter->modelViewMatrix().translate(-1.0f, 0.0f, 2.0f);
-    cube.draw(painter);
+    scene->draw(painter);
 }

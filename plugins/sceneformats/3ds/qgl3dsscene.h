@@ -53,7 +53,7 @@ QT_MODULE(Qt3d)
 #include <QtCore/qurl.h>
 
 class QGLSceneNode;
-class QGLSceneObject;
+class QGLSceneNode;
 class QGL3dsSceneHandler;
 class Lib3dsFile;
 
@@ -64,7 +64,7 @@ public:
     explicit QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h);
     virtual ~QGL3dsScene();
 
-    QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;
+    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
 
     QUrl url() const { return mUrl; }
 

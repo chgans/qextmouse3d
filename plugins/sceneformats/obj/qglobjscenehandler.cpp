@@ -139,16 +139,17 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QGLMaterial *material = 0;
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
-    QList<QGLSceneObject *> groups;
 
     // Create the display list and start an initial Faceted section.
-    QGLBuilder *dlist = new QGLBuilder();
-    dlist->newSection(smoothing);
-    palette = dlist->palette();
-    defaultNode = dlist;
+    QGLBuilder builder;
+    builder.newSection(smoothing);
+    QGLSceneNode *root = builder.sceneNode();
+    palette = root->palette();
+    defaultNode = root;
     defaultNode->setObjectName(QLatin1String("__main"));
-    dlist->pushNode();
+    builder.pushNode();
 
+    QGeometryData op;
     while (!device()->atEnd()) {
         // Read the next line, including any backslash continuations.
         line = device()->readLine().trimmed();
@@ -186,7 +187,8 @@ QGLAbstractScene *QGLObjSceneHandler::read()
         } else if (keyword == "f") {
             posn = objSkipWS(line, posn);
             count = 0;
-            QGeometryData op; //(dlist, QGL::TRIANGLE_FAN);
+            //QGeometryData op; //(dlist, QGL::TRIANGLE_FAN);
+            op = QGeometryData();  // clear leaves field definitions
             while (posn < line.size()) {
                 // Note: we currently only read the initial vertex
                 // index and also use it for texture co-ordinates
@@ -216,20 +218,20 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else
                     nindex = -1;
                 if (nindex >= 0 && nindex < normals.count())
-                    op.addNormal(normals[nindex]);
+                    op.appendNormal(normals[nindex]);
                 ++count;
                 posn = objSkipNonWS(line, posn, 0);
                 posn = objSkipWS(line, posn);
             }
             // if a different combination of fields start a new section
             // the primitive doesn't get posted to the section until op.end()
-            if (dlist->currentPrimitive()->fields() != fields)
+            if (op.fields() != fields)
             {
                 if (fields)
-                    dlist->newSection(smoothing);
-                fields = dlist->currentPrimitive()->fields();
+                    builder.newSection(smoothing);
+                fields = op.fields();
             }
-            dlist->addTriangleFan(op);
+            builder.addTriangleFan(op);
         } else if (keyword == "usemtl") {
             // Specify a material for the faces that follow.
             posn = objSkipWS(line, posn);
@@ -238,7 +240,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 materialName != QLatin1String("(null)")) {
                 index = palette->indexOf(materialName);
                 if (index != -1) {
-                    QGLSceneNode *node = dlist->newNode();
+                    QGLSceneNode *node = builder.newNode();
                     node->setMaterialIndex(index);
                     QGLMaterial *material = palette->material(index);
                     if (material->texture())
@@ -267,25 +269,22 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 smooth = QGL::Faceted;
             if (smoothing != smooth) {
                 smoothing = smooth;
-                dlist->newSection(smooth);
+                builder.newSection(smooth);
             }
         } else if (keyword == "g" || keyword == "o") {
             // Label the faces that follow as part of a named group or object.
             posn = objSkipWS(line, posn);
             QString objectName = QString::fromLocal8Bit(line.mid(posn));
-            dlist->popNode();
-            QGLSceneNode *node = dlist->pushNode();
+            builder.popNode();
+            QGLSceneNode *node = builder.pushNode();
             node->setObjectName(objectName);
-            groups.append(node);
         } else {
             qWarning() << "unsupported obj command: " << keyword.constData();
         }
     }
 
-    // Create a scene from the geometry, which will split it out
-    // into several mesh objects for each of the group names.
-    dlist->finalize();
-    return new QGLObjScene(dlist, defaultNode, groups);
+    // Create a scene from the geometry
+    return new QGLObjScene(builder.finalizedSceneNode());
 }
 
 void QGLObjSceneHandler::loadMaterialLibrary(const QString& name)

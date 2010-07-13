@@ -79,8 +79,8 @@ public:
     QList<QGLSection*> sections;
     QGLSection *currentSection;
     QList<QGLSceneNode*> nodeStack;
-    QPointer<QGLSceneNode> currentNode;
-    QPointer<QGLSceneNode> rootNode;
+    QGLSceneNode *currentNode;
+    QGLSceneNode *rootNode;
     int defThreshold;
     QGLBuilder *q;
 };

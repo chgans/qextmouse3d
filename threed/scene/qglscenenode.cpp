@@ -83,7 +83,7 @@ QT_BEGIN_NAMESPACE
     Also a node may have a local material.  This allows drawing the same geometry
     with different materials (which includes different textures).
 
-    As a QGLSceneObject, QGLSceneNode provides a draw() implementation.  This
+    As a QGLSceneNode, QGLSceneNode provides a draw() implementation.  This
     default implementation does the following:
     \list
     \o ensures the effect specified by effect() is current on the painter
@@ -184,7 +184,7 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
     a QGLSceneNode then this node is added to it as a child.
 */
 QGLSceneNode::QGLSceneNode(QObject *parent)
-    : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
+    : QObject(*new QGLSceneNodePrivate(QGLSceneNode::Mesh), parent)
 {
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
@@ -197,7 +197,7 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
     as a child.
 */
 QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
-    : QGLSceneObject(*new QGLSceneNodePrivate(QGLSceneObject::Mesh), parent)
+    : QObject(*new QGLSceneNodePrivate(QGLSceneNode::Mesh), parent)
 {
     Q_D(QGLSceneNode);
     d->geometry = geometry;
@@ -208,12 +208,12 @@ QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
 
 /*!
     \internal
-    Constructor for use by QObjectPrivate-using subclasses of QGLSceneObject.
+    Constructor for use by QObjectPrivate-using subclasses of QGLSceneNode.
     If parent is a QGLSceneNode then this node is added to it
     as a child.
 */
 QGLSceneNode::QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent)
-    : QGLSceneObject(dd, parent)
+    : QObject(dd, parent)
 {
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
@@ -286,7 +286,7 @@ QBox3D QGLSceneNode::boundingBox() const
             for (int i = d->start; i < (d->start + d->count); ++i)
             {
                 int ix = indices.at(i);
-                d->bb.unite(d->geometry.vertex(ix));
+                d->bb.unite(d->geometry.vertexAt(ix));
             }
         }
     }
@@ -334,7 +334,7 @@ QVector3D QGLSceneNode::center() const
             QGL::IndexArray ix = d->geometry.indices();
             for (int i = d->start; i < (d->start + d->count); ++i)
             {
-                center += d->geometry.vertex(ix[i]);
+                center += d->geometry.vertexAt(ix[i]);
             }
             center /= (float)d->geometry.count();
         }
@@ -1124,8 +1124,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
             for (int i = d->start; i < (d->start + d->count); ++i)
             {
                 int ix = indices[i];
-                QVector3D a = d->geometry.vertex(ix);
-                QVector3D b = a + d->geometry.normal(ix);
+                QVector3D a = d->geometry.vertexAt(ix);
+                QVector3D b = a + d->geometry.normalAt(ix);
                 verts.append(a, b);
             }
             painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));

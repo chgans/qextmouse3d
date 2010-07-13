@@ -55,17 +55,17 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLAbstractScene
-    \brief The QGLAbstractScene class represents a 3D scene consisting of zero or more QGLSceneObject instances.
+    \brief The QGLAbstractScene class represents a 3D scene consisting of zero or more QGLSceneNode instances.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::scene
 
     Scenes are typically created by 3D modelling packages and then loaded
-    into the application via a QGLSceneFormatPlugin.  The functions in this
+    into the application via a QGLSceneFormatPlugin; but they can also be
+    constructed programatically.  The functions in this
     class provide access to major scene objects so that they can be
     applied or drawn whenever the application decides.
 
-    Because of the high degree of variation between 3D modelling packages,
     QGLAbstractScene presents a very simple model of a 3D scene.  Subclasses
     implement the specific scene graph and object representations in a
     manner specific to the package's format.  Subclasses may also provide
@@ -116,7 +116,7 @@ QT_BEGIN_NAMESPACE
     Each Subclass needs to provide its own policy for deciding which
     objects are considered "important".
 
-    \sa QGLSceneObject, QGLSceneFormatPlugin
+    \sa QGLSceneNode, QGLSceneFormatPlugin
 */
 
 class QGLAbstractScenePrivate
@@ -187,7 +187,7 @@ bool QGLAbstractScene::pickable() const
     Generates QGLPickNode instances for important scene objects that are
     pickable.  Objects that are either not important or not pickable can
     be omitted.  The default implementation simply generates pick nodes
-    for every top level object of type QGLSceneObject::Mesh.
+    for every top level object of type QGLSceneNode::Mesh.
 
     Sub-classes may implement different schemes for picking.  When doing
     so parent the QGLPickNode objects onto the scene, so that they will
@@ -197,8 +197,8 @@ bool QGLAbstractScene::pickable() const
 */
 void QGLAbstractScene::generatePickNodes()
 {
-    QList<QGLSceneObject *> objs = objects(QGLSceneObject::Mesh);
-    QList<QGLSceneObject *>::iterator it = objs.begin();
+    QList<QGLSceneNode *> objs = objects(QGLSceneNode::Mesh);
+    QList<QGLSceneNode *>::iterator it = objs.begin();
     for ( ; it != objs.end(); ++it)
         (*it)->setPickNode(new QGLPickNode(this));
 }
@@ -236,7 +236,7 @@ QList<QGLPickNode *> QGLAbstractScene::pickNodes() const
 }
 
 /*!
-    \fn QList<QGLSceneObject *> QGLAbstractScene::objects(QGLSceneObject::Type type) const
+    \fn QList<QGLSceneNode *> QGLAbstractScene::objects(QGLSceneNode::Type type) const
 
     Returns a list of all objects in the scene that have the specified \a type
     and which are considered important.
@@ -259,11 +259,11 @@ QList<QGLPickNode *> QGLAbstractScene::pickNodes() const
 
     \sa objects()
 */
-QStringList QGLAbstractScene::objectNames(QGLSceneObject::Type type) const
+QStringList QGLAbstractScene::objectNames(QGLSceneNode::Type type) const
 {
-    QList<QGLSceneObject *> objs = objects(type);
+    QList<QGLSceneNode *> objs = objects(type);
     QStringList names;
-    foreach (QGLSceneObject *object, objs) {
+    foreach (QGLSceneNode *object, objs) {
         if (object) {
             QString name = object->objectName();
             if (!name.isEmpty())
@@ -282,13 +282,13 @@ QStringList QGLAbstractScene::objectNames(QGLSceneObject::Type type) const
 
     \sa objects()
 */
-QGLSceneObject *QGLAbstractScene::object
-        (QGLSceneObject::Type type, const QString& name) const
+QGLSceneNode *QGLAbstractScene::object
+        (QGLSceneNode::Type type, const QString& name) const
 {
     if (name.isEmpty())
         return 0;
-    QList<QGLSceneObject *> objs = objects(type);
-    foreach (QGLSceneObject *object, objs) {
+    QList<QGLSceneNode *> objs = objects(type);
+    foreach (QGLSceneNode *object, objs) {
         if (object && object->objectName() == name)
             return object;
     }
@@ -307,9 +307,9 @@ QGLSceneObject *QGLAbstractScene::object
 
     \sa objects()
 */
-QGLSceneObject *QGLAbstractScene::defaultObject(QGLSceneObject::Type type)
+QGLSceneNode *QGLAbstractScene::defaultObject(QGLSceneNode::Type type)
 {
-    QList<QGLSceneObject *> objs = objects(type);
+    QList<QGLSceneNode *> objs = objects(type);
     if (objs.size() >= 1)
         return objs[0];
     else

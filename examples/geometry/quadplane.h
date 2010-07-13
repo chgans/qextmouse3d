@@ -48,10 +48,10 @@
 
 class QPlane3D;
 
-class QuadPlane : public QGLBuilder
+class QuadPlane : public QGLSceneNode
 {
 public:
-    QuadPlane(QObject *parent = 0, QGLMaterialCollection *materials = 0,
+    QuadPlane(QObject *parent = 0,
               QSizeF size = QSizeF(100.0f, 100.0f), int level = 3);
 };
 

@@ -1018,13 +1018,13 @@ void Item3d::setName(QString nameString)
     This function allows the user to get a scene object from the underlying mesh which forms
     an \l Item3d.  
 
-    By passing the \a type of node (defined as a \l QGLSceneObject::Type enumeration), along
-    with the \a name of the scene object, the user can access the corresponding \l QGLSceneObject
+    By passing the \a type of node (defined as a \l QGLSceneNode::Type enumeration), along
+    with the \a name of the scene object, the user can access the corresponding \l QGLSceneNode
     for that name.
 
     Failure to find the scene object will return \i null.
 */
-QGLSceneObject *Item3d::getSceneObject(QGLSceneObject::Type type, const QString& name) const
+QGLSceneNode *Item3d::getSceneObject(QGLSceneNode::Type type, const QString& name) const
 {
     return mesh()->getSceneObject(type, name);
 }

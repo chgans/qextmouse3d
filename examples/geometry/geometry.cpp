@@ -52,8 +52,10 @@
 const qreal phi = 1.618033988749894848f;
 
 Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
-    : QGLBuilder(parent, materials)
+    : QGLSceneNode(parent)
 {
+    setPalette(materials);
+
     float ico[12][3] = {
         { 0.0f, 1.0f, phi },    // A - 0
         { 0.0f, 1.0f, -phi },   // B - 1
@@ -144,8 +146,9 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
     painter.setFont(font);
     QFontMetrics metrics = painter.fontMetrics();
 
-    newSection();
-    currentNode()->setEffect(QGL::LitDecalTexture2D);
+    QGLBuilder b;
+    b.newSection();
+    b.currentNode()->setEffect(QGL::LitDecalTexture2D);
     for (int ix = 0; ix < 20; ++ix)
     {
         QVector3D v0(ico[face[ix][0]][0], ico[face[ix][0]][1], ico[face[ix][0]][2]);
@@ -180,20 +183,19 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
         QGeometryData op;
         op.appendVertex(v0, v1, v2);
         op.appendTexCoord(t0, t1, t2);
-        addTriangle(op);
+        b.addTriangles(op);
     }
+
+    painter.end();
 
     QGLMaterial *mat = new QGLMaterial;
     mat->setAmbientColor(QColor(32, 64, 196));
     mat->setDiffuseColor(QColor(32, 32, 32));
-    int m = palette()->addMaterial(mat);
 
     QGLTexture2D *texture = new QGLTexture2D(mat);
     texture->setImage(uv);
     mat->setTexture(texture);
 
-    setMaterialIndex(m);
-
-    painter.end();
-    finalize();
+    setMaterial(mat);
+    addNode(b.finalizedSceneNode());
 }

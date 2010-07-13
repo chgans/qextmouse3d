@@ -49,7 +49,7 @@
 #include <QImage>
 
 ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
-    : QGLBuilder(parent, materials)
+    : QGLSceneNode(parent)
     , m_wall(0)
     , m_frames(0)
     , m_currentWall(0)
@@ -57,28 +57,29 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     , m_imageSetToDefault(false)
     , m_count(0)
 {
+    QGLBuilder builder(materials);
     setObjectName("ImageDisplay");
-    newSection(QGL::Faceted);
+    builder.newSection(QGL::Faceted);
 
     // build the wall
-    m_wall = currentNode();
+    m_wall = builder.currentNode();
     m_wall->setObjectName("Wall");
-    pushNode();
-    m_currentWall = currentNode();
+    builder.pushNode();
+    m_currentWall = builder.currentNode();
     m_currentWall->setObjectName("wall 0");
-    *this << QGLCubeFace(QGLCubeFace::Front, 2.0f);
-    popNode();
+    builder << QGLCubeFace(QGLCubeFace::Front, 2.0f);
+    builder.popNode();
 
     // build the frames
-    m_frames = currentNode();
+    m_frames = builder.currentNode();
     m_frames->setObjectName("Frames");
-    pushNode();
-    m_currentFrame = newNode();
+    builder.pushNode();
+    m_currentFrame = builder.newNode();
     m_currentFrame->setObjectName("frame 0");
-    *this << QGLCubeFace(QGLCubeFace::Front, 1.0f);
-    popNode();
+    builder << QGLCubeFace(QGLCubeFace::Front, 1.0f);
+    builder.popNode();
 
-    finalize();
+    addNode(builder.finalizedSceneNode());
 
     // paint the wall
     m_wall->setEffect(QGL::LitMaterial);

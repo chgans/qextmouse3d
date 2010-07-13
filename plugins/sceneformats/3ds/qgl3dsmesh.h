@@ -55,10 +55,8 @@ class ModulateRecord;
 
 class QGL3dsMesh : public QGLBuilder
 {
-Q_OBJECT
 public:
-    explicit QGL3dsMesh(Lib3dsMesh *mesh, QObject *parent = 0,
-                        QGLMaterialCollection *materials = 0);
+    explicit QGL3dsMesh(Lib3dsMesh *mesh, QGLMaterialCollection *materials);
     virtual ~QGL3dsMesh();
     void initialize();
     void setOptions(QGL::ModelOptions options) { m_options = options; }

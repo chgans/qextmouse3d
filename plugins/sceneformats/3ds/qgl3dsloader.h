@@ -68,14 +68,14 @@ private:
     QUrl ensureResource(const QString &);
     void setUrl(const QUrl &url);
 
-    Lib3dsFile *mFile;
-    QGLSceneNode *mRootNode;
-    QGL3dsSceneHandler *mScene;
-    QList<QGLSceneNode *> mNodes;
-    QMap<QString, QGL3dsMesh *> mMeshes;
-    QUrl mUrl;
-    bool mHasTextures;
-    bool mHasLitMaterials;
+    Lib3dsFile *m_file;
+    QGLSceneNode *m_rootNode;
+    QGL3dsSceneHandler *m_scene;
+    QList<QGLSceneNode *> m_nodes;
+    QMap<QString, QGLSceneNode *> m_meshes;
+    QUrl m_url;
+    bool m_hasTextures;
+    bool m_hasLitMaterials;
 };
 
 #endif // QGL3DSLOADER_H

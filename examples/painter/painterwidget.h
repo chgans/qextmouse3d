@@ -45,6 +45,8 @@
 #include "qglpainter.h"
 #include "qglbuilder.h"
 
+class QGLSceneNode;
+
 class PainterWidget : public QGLWidget
 {
     Q_OBJECT
@@ -57,7 +59,7 @@ protected:
     void paintGL();
 
 private:
-    QGLBuilder cube;
+    QGLSceneNode *cube;
 };
 
 #endif

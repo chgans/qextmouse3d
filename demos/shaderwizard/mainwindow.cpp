@@ -236,7 +236,7 @@ void MainWindow::loadScene(const QString& fileName)
     if(!mScene)
         return;
 
-    QGLSceneObject* defaultSceneObject = mScene->defaultObject(QGLSceneObject::Main);
+    QGLSceneNode* defaultSceneObject = mScene->defaultObject(QGLSceneNode::Main);
     if(qobject_cast<QGLSceneNode *>(defaultSceneObject))
         handleScene(qobject_cast<QGLSceneNode *>(defaultSceneObject));
     else
@@ -333,19 +333,19 @@ void MainWindow::handleScene(QGLAbstractScene* scene)
         sceneModel = new QStandardItemModel();
 
     QList<QString> typeStrings;
-    QList<QGLSceneObject::Type> types;
+    QList<QGLSceneNode::Type> types;
 
-    types << QGLSceneObject::Main;
+    types << QGLSceneNode::Main;
     typeStrings << tr("Main Objects");
-    types << QGLSceneObject::World;
+    types << QGLSceneNode::World;
     typeStrings << tr("World");
-    types << QGLSceneObject::Camera;
+    types << QGLSceneNode::Camera;
     typeStrings << tr("Cameras");
-    types << QGLSceneObject::Effect;
+    types << QGLSceneNode::Effect;
     typeStrings << tr("Effects");
-    types << QGLSceneObject::Light;
+    types << QGLSceneNode::Light;
     typeStrings << tr("Lights");
-    types << QGLSceneObject::Mesh;
+    types << QGLSceneNode::Mesh;
     typeStrings << tr("Meshes");
 
     QStandardItem *parentItem;
@@ -353,7 +353,7 @@ void MainWindow::handleScene(QGLAbstractScene* scene)
 
     for(int i=0; i < types.size() && i < typeStrings.size(); i++)
     {
-        QList<QGLSceneObject *> objectList = scene->objects(types.at(i));
+        QList<QGLSceneNode *> objectList = scene->objects(types.at(i));
 
         if(!objectList.size())
             continue;
@@ -363,7 +363,7 @@ void MainWindow::handleScene(QGLAbstractScene* scene)
         parentItem->setData(QVariant::fromValue(qobject_cast<QObject*>(scene->defaultObject(types.at(i)))), SceneObjectRole);
 
         // create the children items
-        foreach( QGLSceneObject *sceneObject , objectList )
+        foreach( QGLSceneNode *sceneObject , objectList )
         {
             workingItem = new QStandardItem(sceneObject->objectName());
             workingItem->setData(QVariant::fromValue(qobject_cast<QObject*>(sceneObject)), SceneObjectRole);

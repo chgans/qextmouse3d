@@ -43,7 +43,8 @@
 #define QGLABSTRACTSCENE_H
 
 #include "qt3dglobal.h"
-#include "qglsceneobject.h"
+#include "qglscenenode.h"
+
 #include <QtCore/qstringlist.h>
 #include <QtCore/qurl.h>
 
@@ -55,6 +56,7 @@ QT_MODULE(Qt3d)
 
 class QGLAbstractScenePrivate;
 class QIODevice;
+class QGLPickNode;
 
 class Q_QT3D_EXPORT QGLAbstractScene : public QObject
 {
@@ -69,13 +71,13 @@ public:
     QList<QGLPickNode *> pickNodes() const;
     int nextPickId();
 
-    virtual QList<QGLSceneObject *> objects
-        (QGLSceneObject::Type type) const = 0;
+    virtual QList<QGLSceneNode *> objects
+        (QGLSceneNode::Type type) const = 0;
 
-    virtual QStringList objectNames(QGLSceneObject::Type type) const;
-    virtual QGLSceneObject *object
-        (QGLSceneObject::Type type, const QString& name) const;
-    virtual QGLSceneObject *defaultObject(QGLSceneObject::Type type);
+    virtual QStringList objectNames(QGLSceneNode::Type type) const;
+    virtual QGLSceneNode *object
+        (QGLSceneNode::Type type, const QString& name) const;
+    virtual QGLSceneNode *defaultObject(QGLSceneNode::Type type);
 
     static QGLAbstractScene *loadScene
         (QIODevice *device, const QUrl& url, const QString& format = QString(),

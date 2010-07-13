@@ -185,11 +185,11 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
         patches.setSubdivisionDepth(depth);
     patches.setPositions(vertices);
     patches.setIndices(indices);
-    QGLBuilder *geometry = new QGLBuilder();
-    (*geometry) << patches;
+    QGLBuilder geometry;
+    geometry << patches;
 
     // Create a scene with a single object containing the geometry.
-    return new QGLBezierScene(geometry);
+    return new QGLBezierScene(geometry.finalizedSceneNode());
 }
 
 QT_END_NAMESPACE

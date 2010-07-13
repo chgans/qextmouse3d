@@ -58,8 +58,8 @@
 
     QGLSceneObjects wanting to support picking, should implement the methods
     \list
-    \o QGLSceneObject::pickNode()
-    \o QGLSceneObject::setPickNode()
+    \o QGLSceneNode::pickNode()
+    \o QGLSceneNode::setPickNode()
     \endlist
     and also implement rendering such that the QGLPainter has the relevant
     \l{QGLPainter::setObjectPickId()}{pick id function} called.
@@ -87,7 +87,7 @@
     The pick nodes should be unregistered with similar code for the QGLView if
     switching to a different scene.
 
-    To be able to recover the relevant QGLSceneObject inside the called slot,
+    To be able to recover the relevant QGLSceneNode inside the called slot,
     the object may be set onto the QGLPickNode with the setTarget() function,
     and recovered with target() inside the slot, since the QGLPickNode will
     be the sender() for the slot.
@@ -124,12 +124,12 @@ QGLPickNode::QGLPickNode(QGLAbstractScene *parent) :
 */
 
 /*!
-    \fn QGLSceneObject *QGLPickNode::target() const
-    Returns the QGLSceneObject which is the target of this pick node.
+    \fn QGLSceneNode *QGLPickNode::target() const
+    Returns the QGLSceneNode which is the target of this pick node.
 */
 
 /*!
-    \fn void QGLPickNode::setTarget(QGLSceneObject *target)
+    \fn void QGLPickNode::setTarget(QGLSceneNode *target)
     Sets the \a target for this pick node.
 */
 

@@ -56,7 +56,7 @@ class MeshObject : public QObject
     Q_OBJECT
 public:
     explicit MeshObject(QGLBuilder *mesh, QObject *parent=0);
-    explicit MeshObject(QGLSceneObject *meshObject, QObject *parent=0);
+    explicit MeshObject(QGLSceneNode *meshObject, QObject *parent=0);
     explicit MeshObject(QGLAbstractScene *scene, QObject *parent=0);
     virtual ~MeshObject();
 
@@ -100,7 +100,7 @@ protected:
 
 private:
     QGLBuilder *m_mesh;
-    QGLSceneObject *m_meshObject;
+    QGLSceneNode *m_meshObject;
     QGLAbstractScene *m_scene;
     QVector3D m_position;
     qreal m_scale;

@@ -64,11 +64,6 @@ class QGLMaterialCollection;
 class QGLBuilderPrivate;
 class QGLPainter;
 
-class QGLSceneNodeFactory
-{
-    QGLSceneNode *makeNode() = 0;
-};
-
 class Q_QT3D_EXPORT QGLBuilder
 {
 public:
@@ -79,15 +74,13 @@ public:
     void newSection(QGL::Smoothing sm = QGL::Smooth);
 
     // scene management
-    QGLSceneNode *rootNode();
+    QGLSceneNode *sceneNode();
     QGLSceneNode *currentNode();
     QGLSceneNode *newNode();
     QGLSceneNode *pushNode();
     QGLSceneNode *popNode();
-
-    QGLSceneNode *finalizedNode();
-
-    static setFactory(QGLSceneNodeFactory *);
+    QGLMaterialCollection *palette();
+    QGLSceneNode *finalizedSceneNode();
 
     // geometry building by primitive
     void addTriangles(const QGeometryData &triangle);
@@ -96,7 +89,7 @@ public:
     void addTriangleStrip(const QGeometryData &strip);
     void addTriangulatedFace(const QGeometryData &face);
     void addQuadStrip(const QGeometryData &strip);
-    void addQuadsZipped(const QGeometryData &top,
+    void addQuadsInterleaved(const QGeometryData &top,
                         const QGeometryData &bottom);
 
 protected:

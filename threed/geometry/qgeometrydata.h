@@ -82,7 +82,6 @@ public:
 
     void appendGeometry(const QGeometryData &data);
     int appendVertex(const QLogicalVertex &v);
-    QLogicalVertex vertexAt(int i) const;
     void normalizeNormals();
     QBox3D boundingBox() const;
     QVector3D center() const;
@@ -152,30 +151,31 @@ public:
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
     void appendColorArray(const QArray<QColor4ub> &ary);
 
-    QVector3D &vertexRef(int i);
+    QLogicalVertex logicalVertexAt(int i) const;
+
     QVector3DArray vertices() const;
-    const QVector3D &vertex(int i) const;
+    QVector3D &vertex(int i);
+    const QVector3D &vertexAt(int i) const;
 
-    QVector3D &normalRef(int i);
     QVector3DArray normals() const;
-    const QVector3D &normal(int i) const;
+    QVector3D &normal(int i);
+    const QVector3D &normalAt(int i) const;
 
-    QColor4ub &colorRef(int i);
     QArray<QColor4ub> colors() const;
+    QColor4ub &color(int i);
     const QColor4ub &colorAt(int i) const;
-    //const QColor4ub &color(int i) const;
 
-    QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
-    const QVector2D &texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
+    QVector2D &texCoord(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
+    const QVector2D &texCoordAt(int i, QGL::VertexAttribute field = QGL::TextureCoord0) const;
 
-    float &floatAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
-    QVector2D &vector2DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
-    QVector3D &vector3DAttributeRef(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    float &floatAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    QVector2D &vector2DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
+    QVector3D &vector3DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0);
     QCustomDataArray attributes(QGL::VertexAttribute field = QGL::CustomVertex0) const;
-    float floatAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
-    QVector2D vector2DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
-    QVector3D vector3DAttribute(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    float floatAttributeAt(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    QVector2D vector2DAttributeAt(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
+    QVector3D vector3DAttributeAt(int i, QGL::VertexAttribute field = QGL::CustomVertex0) const;
 
     QGLAttributeValue attributeValue(QGL::VertexAttribute field) const;
     bool hasField(QGL::VertexAttribute field) const;

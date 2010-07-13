@@ -104,7 +104,7 @@
             \o addTriangle()
             \o GL_TRIANGLES
         \row
-            \o addQuad()
+            \o addQuads)
             \o GL_QUADS
         \row
             \o addTriangleFan()
@@ -263,7 +263,7 @@
     materials and effects.
 
     QGLBuilder generates a root level QGLSceneNode, which can be accessed
-    with the rootNode() function.  Under this a new node is created for
+    with the sceneNode() function.  Under this a new node is created for
     each section of geometry, and also by using pushNode() and popNode().
 
     \image soup.png
@@ -283,7 +283,7 @@
 
     \snippet displaylist/displaylist.cpp 1
 
-    Call the \l{QGLSceneNode::palette()}{palette()} function on the rootNode()
+    Call the \l{QGLSceneNode::palette()}{palette()} function on the sceneNode()
     to get the QGLMaterialCollection for the node, and place textures
     and materials into it.
 
@@ -372,6 +372,7 @@ QGLBuilderPrivate::QGLBuilderPrivate(QGLBuilder *parent)
     : finalizeNeeded(true)
     , currentSection(0)
     , currentNode(0)
+    , rootNode(0)
     , defThreshold(5)
     , q(parent)
 {
@@ -380,6 +381,11 @@ QGLBuilderPrivate::QGLBuilderPrivate(QGLBuilder *parent)
 QGLBuilderPrivate::~QGLBuilderPrivate()
 {
     qDeleteAll(sections);
+    if (rootNode)
+    {
+        qWarning("Destroying QGLBuilder but finalizedSceneNode() not called");
+        delete rootNode;
+    }
 }
 
 /*!
@@ -389,9 +395,9 @@ QGLBuilderPrivate::~QGLBuilderPrivate()
 QGLBuilder::QGLBuilder(QGLMaterialCollection *materials)
     : dptr(new QGLBuilderPrivate(this))
 {
-    if (!materials)
-        materials = new QGLMaterialCollection(this);
     dptr->rootNode = new QGLSceneNode;
+    if (!materials)
+        materials = new QGLMaterialCollection(dptr->rootNode);
     dptr->rootNode->setPalette(materials);
 }
 
@@ -401,7 +407,6 @@ QGLBuilder::QGLBuilder(QGLMaterialCollection *materials)
 QGLBuilder::~QGLBuilder()
 {
     delete dptr;
-    finalize();
 }
 
 /*!
@@ -470,9 +475,9 @@ void QGLBuilderPrivate::addTriangle(int i, int j, int k, QGeometryData &p)
     Normals are not calculated in "raw triangle" mode, and skipping of null
     triangles is likewise not performed.
 
-    \sa addQuad()
+    \sa addQuads)
 */
-void QGLBuilder::addTriangle(const QGeometryData &triangle)
+void QGLBuilder::addTriangles(const QGeometryData &triangle)
 {
     if (triangle.indexCount() > 0)
     {
@@ -504,7 +509,7 @@ void QGLBuilder::addTriangle(const QGeometryData &triangle)
 
     \sa addTriangle()
 */
-void QGLBuilder::addQuad(const QGeometryData &quad)
+void QGLBuilder::addQuads(const QGeometryData &quad)
 {
     QGeometryData q = quad;
     QVector3D save = q.commonNormal();
@@ -637,7 +642,6 @@ void QGLBuilder::addQuadStrip(const QGeometryData &strip)
 */
 void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
 {
-    Q_D(QGLBuilder);
     QGeometryData f;
     f.appendGeometry(face);
     int cnt = f.count();
@@ -654,16 +658,18 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
 }
 
 /*!
-    Add a series of quads by 'zipping' \a top and \a bottom.
+    Add a series of quads by 'interleaving' \a top and \a bottom.
 
     This function behaves like quadStrip(), where the odd-numbered vertices in
     the input primitive are from \a top and the even-numbered vertices from
     \a bottom.
 
-    If the vertices in \a top and \a bottom are the perimeter vertices of
-    two polygons then this function can be used to generate quads which form
-    the sides of a \l{http://en.wikipedia.org/wiki/Prism_(geometry)}{prism}
-    with the polygons as the prisms top and bottom end-faces.
+    It is trivial to do extrusions using this function:
+
+    \code
+    // create a series of quads for an extruded edge
+    addQuadsInterleaved(topEdge, topEdge.translated(QVector3D(0, -1, 0));
+    \endcode
 
     N quad faces are generated where \c{N == min(top.count(), bottom.count() - 1}.
     If \a top or \a bottom has less than 2 elements, this functions does
@@ -673,27 +679,33 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
     vertices of \a bottom, followed by the \c{(i + 1)'th} and \c{i'th}
     vertices of \a top.
 
+    If the vertices in \a top and \a bottom are the perimeter vertices of
+    two polygons then this function can be used to generate quads which form
+    the sides of a \l{http://en.wikipedia.org/wiki/Prism_(geometry)}{prism}
+    with the polygons as the prisms top and bottom end-faces.
+
     \image quad-extrude.png
 
     In the diagram above, the \a top is shown in orange, and the \a bottom in
     dark yellow.  The first generated quad, (a, b, c, d) is generated in
     the order shown by the blue arrow.
 
-    To create a complete prismatic solid given the top edge do this:
+    To create such a extruded prismatic solid, complete with top and bottom cap
+    polygons, given just the top edge do this:
     \code
-    QGeometryData top = generateEdge();
+    QGeometryData top = buildTopEdge();
     QGeometryData bottom = top.translated(QVector3D(0, 0, -1));
-    displayList->addQuadsZipped(top, bottom);
+    displayList->addQuadsInterleaved(top, bottom);
     displayList->addTriangulatedFace(top);
     displayList->addTriangulatedFace(bottom.reversed());
     \endcode
     The \a bottom QGeometryData must be \bold{reversed} so that the correct
     winding for an outward facing polygon is obtained.
 */
-void QGLBuilder::addQuadsZipped(const QGeometryData &top,
-                                const QGeometryData &bottom)
+void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
+                                     const QGeometryData &bottom)
 {
-    QGeometryData zipped = bottom.zippedWith(top);
+    QGeometryData zipped = bottom.interleavedWith(top);
     QVector3D norm = top.commonNormal() + bottom.commonNormal();
     zipped.setCommonNormal(norm);
     for (int i = 0; i < zipped.count() - 2; i += 2)
@@ -742,7 +754,6 @@ int QGLBuilderPrivate::adjustNodeTree(QGLSceneNode *top,
         }
         if (totalItems == 0 && top->objectName().isEmpty())
         {
-            top->disconnect(q, SLOT(deleteNode(QObject*)));
             delete top;
             deleted.append(top);
         }
@@ -786,76 +797,113 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
 }
 
 /*!
-    Finish the building of this geometry and optimize it for
-    rendering.  This method must be called once after building the
-    scene, or after modifying the geometry.
+    Finish the building of this geometry, optimize it for rendering, and return a
+    pointer to the detached top-level scene node (root node).
+
+    The root node will have a child node for each section that was created
+    during geometry building.
+
+    This method must be called exactly once after building the scene.
+
+    Calling code takes ownership of the scene.  If this builder is destroyed
+    (deleted or goes out of scope) without calling this method to take
+    ownership of the scene, a warning will be printed on the console and the
+    scene will be deleted.  If this method is called more than once, on the
+    second and subsequent calls a warning is printed and NULL is returned.
+
+    Since the scene is detached from the builder object, the builder itself
+    may be deleted or go out of scope while the scene lives on:
+
+    \code
+    void MyView::~MyView()
+    {
+        delete m_thing;
+    }
+
+    void MyView::initializeGL()
+    {
+        QGLBuilder builder;
+        // construct geometry
+        m_thing = builder.finalizedSceneNode();
+    }
+
+    void MyView::paintGL()
+    {
+        m_thing->draw(painter);
+    }
+    \endcode
 
     This function does the following:
     \list
         \o packs all geometry data from sections into QGLSceneNode instances
         \o references this data via QGLSceneNode start() and count()
-        \o deletes all QGLSection instances in this list
+        \o deletes all internal data structures
+        \o returns the top level scene node that references the geometry
+        \o sets the internal pointer to the top level scene node to NULL
     \endlist
 
-    Finalize will exit quickly without doing anything if no modifications
-    have been made to any data since the last time finalize was called.
+    \sa sceneNode()
 */
-void QGLBuilder::finalize()
+QGLSceneNode *QGLBuilder::finalizedSceneNode()
 {
-    if (dptr->finalizeNeeded)
+    if (dptr->rootNode == 0)
     {
-        QGeometryData g;
-        QMap<quint32, QGeometryData> geos;
-        QMap<QGLSection*, int> offsets;
-        for (int i = 0; i < dptr->sections.count(); ++i)
-        {
-            // pack sections that have the same fields into one geometry
-            QGLSection *s = dptr->sections.at(i);
-            QGL::IndexArray indices = s->indices();
-            int icnt = indices.size();
-            int ncnt = nodeCount(s->nodes());
-            int scnt = s->count();
-            if (scnt == 0 || icnt == 0 || ncnt == 0)
-            {
-                if (!qgetenv("Q_WARN_EMPTY_MESH").isEmpty())
-                {
-                    if (ncnt == 0)
-                        warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
-                    else if (scnt == 0)
-                        warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
-                    else
-                        warnIgnore(scnt, s, icnt, ncnt, "index count zero");
-                }
-                continue;
-            }
-            s->normalizeNormals();
-            int sectionOffset = 0;
-            int sectionIndexOffset = 0;
-            if (geos.contains(s->fields()))
-            {
-                QGeometryData &gd = geos[s->fields()];
-                sectionOffset = gd.count();
-                sectionIndexOffset = gd.indexCount();
-                offsets.insert(s, sectionIndexOffset);
-                gd.appendGeometry(*s);
-                for (int i = 0; i < icnt; ++i)
-                    indices[i] += sectionOffset;
-                gd.appendIndices(indices);
-            }
-            else
-            {
-                g = QGeometryData(*s);
-                geos.insert(s->fields(), g);
-            }
-        }
-        while (dptr->sections.count() > 0)
-        {
-            QGLSection *s = dptr->sections.takeFirst();
-            dptr->adjustSectionNodes(s, offsets[s], geos[s->fields()]);
-            delete s;
-        }
-        dptr->finalizeNeeded = false;
+        qWarning("QGLBuilder::finalizedSceneNode() called twice");
+        return 0;
     }
+    QGeometryData g;
+    QMap<quint32, QGeometryData> geos;
+    QMap<QGLSection*, int> offsets;
+    for (int i = 0; i < dptr->sections.count(); ++i)
+    {
+        // pack sections that have the same fields into one geometry
+        QGLSection *s = dptr->sections.at(i);
+        QGL::IndexArray indices = s->indices();
+        int icnt = indices.size();
+        int ncnt = nodeCount(s->nodes());
+        int scnt = s->count();
+        if (scnt == 0 || icnt == 0 || ncnt == 0)
+        {
+            if (!qgetenv("Q_WARN_EMPTY_MESH").isEmpty())
+            {
+                if (ncnt == 0)
+                    warnIgnore(scnt, s, icnt, ncnt, "nodes empty");
+                else if (scnt == 0)
+                    warnIgnore(scnt, s, icnt, ncnt, "geometry count zero");
+                else
+                    warnIgnore(scnt, s, icnt, ncnt, "index count zero");
+            }
+            continue;
+        }
+        s->normalizeNormals();
+        int sectionOffset = 0;
+        int sectionIndexOffset = 0;
+        if (geos.contains(s->fields()))
+        {
+            QGeometryData &gd = geos[s->fields()];
+            sectionOffset = gd.count();
+            sectionIndexOffset = gd.indexCount();
+            offsets.insert(s, sectionIndexOffset);
+            gd.appendGeometry(*s);
+            for (int i = 0; i < icnt; ++i)
+                indices[i] += sectionOffset;
+            gd.appendIndices(indices);
+        }
+        else
+        {
+            g = QGeometryData(*s);
+            geos.insert(s->fields(), g);
+        }
+    }
+    while (dptr->sections.count() > 0)
+    {
+        QGLSection *s = dptr->sections.takeFirst();
+        dptr->adjustSectionNodes(s, offsets[s], geos[s->fields()]);
+        delete s;
+    }
+    QGLSceneNode *tmp = dptr->rootNode;
+    dptr->rootNode = 0;  // indicates root node detached
+    return tmp;
 }
 
 /*!
@@ -916,31 +964,11 @@ void QGLBuilder::setDefaultThreshold(int t)
 }
 
 /*!
-    Returns the root node of the geometry created by this builder.
-
-    Calling code should take ownership of this root node, whilst the
-    builder object itself may be deleted or go out of scope:
-
-    \code
-    void initializeGL()
-    {
-        QGLBuilder builder;
-        // construct geometry
-        m_thing = builder.rootNode();
-    }
-
-    void paintGL()
-    {
-        m_thing->draw(painter);
-    }
-    \endcode
-
-    The root node will have a child node for each section that was created
-    during geometry building.
+    Returns the root scene node of the geometry created by this builder.
 
     \sa newNode(), newSection()
 */
-void QGLBuilder::rootNode()
+QGLSceneNode *QGLBuilder::sceneNode()
 {
     return dptr->rootNode;
 }
@@ -961,7 +989,7 @@ QGLSceneNode *QGLBuilder::newNode()
     if (dptr->currentSection == 0)
     {
         newSection();  // calls newNode()
-        return;
+        return dptr->currentNode;
     }
     QGLSceneNode *parentNode = dptr->rootNode;
     if (dptr->nodeStack.count() > 0)
@@ -973,8 +1001,6 @@ QGLSceneNode *QGLBuilder::newNode()
     //        qDebug() << "--- last:" << dptr->nodeStack.last();
     dptr->currentNode->setPalette(parentNode->palette());
     dptr->currentNode->setStart(dptr->currentSection->indexCount());
-    connect(dptr->currentNode, SIGNAL(destroyed(QObject*)),
-            this, SLOT(deleteNode(QObject*)));
     if (dptr->nodeStack.count() == 0)
         dptr->currentSection->addNode(dptr->currentNode);
     return dptr->currentNode;
@@ -1037,7 +1063,7 @@ QGLSceneNode *QGLBuilder::popNode()
     int cnt = dptr->currentSection->indexCount();
     QGLSceneNode *s = dptr->nodeStack.takeLast();  // assert here
     //qDebug() << "popNode()" << s;
-    QGLSceneNode *parentNode = this;
+    QGLSceneNode *parentNode = dptr->rootNode;
     if (dptr->nodeStack.count() > 0)
         parentNode = dptr->nodeStack.last();
     dptr->currentNode = s->clone(parentNode);
@@ -1048,6 +1074,19 @@ QGLSceneNode *QGLBuilder::popNode()
     if (dptr->nodeStack.count() == 0)
         dptr->currentSection->addNode(dptr->currentNode);
     return dptr->currentNode;
+}
+
+/*!
+    Returns the palette for this builder.  This is the QGLMaterialCollection
+    pointer that was passed to the constructor; or if that was null a new
+    QGLMaterialCollection.  This function returns the same result as
+    \c{sceneNode()->palette()}.
+
+    \sa sceneNode()
+*/
+QGLMaterialCollection *QGLBuilder::palette()
+{
+    return dptr->rootNode->palette();
 }
 
 /*!

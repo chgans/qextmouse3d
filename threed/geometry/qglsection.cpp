@@ -517,7 +517,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     {
         while (!coalesce && found_index != -1)
         {
-            if (qCompareByAttributes(lv, vertexAt(found_index)))
+            if (qCompareByAttributes(lv, logicalVertexAt(found_index)))
                 coalesce = true;
             else
                 found_index = d->nextIndex();
@@ -534,7 +534,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
             {
                 if (!d->normalAccumulated(found_index, lv.normal()))
                 {
-                    normalRef(found_index) += lv.normal();
+                    normal(found_index) += lv.normal();
                     d->accumulateNormal(found_index, lv.normal());
                 }
                 found_index = d->nextIndex();
@@ -567,7 +567,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
         appendIndex(found_index);
         if (!d->normalAccumulated(found_index, lv.normal()))
         {
-            normalRef(found_index) += lv.normal();
+            normal(found_index) += lv.normal();
             d->accumulateNormal(found_index, lv.normal());
         }
     }
@@ -608,7 +608,7 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     bool coalesce = false;
     while (!coalesce && found_index != -1)
     {
-        if (vertexAt(found_index) == lv)
+        if (logicalVertexAt(found_index) == lv)
             coalesce = true;
         else
             found_index = d->nextIndex();
@@ -727,7 +727,7 @@ QDebug operator<<(QDebug dbg, const QGLSection &section)
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];
-        dbg << section.vertexAt(ix) << "\n";
+        dbg << section.logicalVertexAt(ix) << "\n";
     }
     dbg << ")\n";
     return dbg.space();

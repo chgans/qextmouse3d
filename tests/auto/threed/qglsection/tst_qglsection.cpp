@@ -388,22 +388,22 @@ void tst_QGLSection::accumNormals()
     QCOMPARE(res.count(QGL::Position), 12);
     QCOMPARE(res.count(QGL::Normal), 12);
     QCOMPARE(res.indexCount(), 14 * 3);
-    QCOMPARE(res.vertex(0), v[0]);
-    QCOMPARE(res.vertex(4), v[2]);
-    QCOMPARE(res.vertex(7), v[8]);
-    QCOMPARE(res.vertex(11), v[10]);
-    QCOMPARE(res.normal(0), expected.at(0));
-    QCOMPARE(res.normal(1), expected.at(1));
-    QCOMPARE(res.normal(2), expected.at(2));
-    QCOMPARE(res.normal(3), expected.at(3));
-    QCOMPARE(res.normal(4), expected.at(4));
-    QCOMPARE(res.normal(5), expected.at(5));
-    QCOMPARE(res.normal(6), expected.at(6));
-    QCOMPARE(res.normal(7), expected.at(7));
-    QCOMPARE(res.normal(8), expected.at(8));
-    QCOMPARE(res.normal(9), expected.at(9));
-    QCOMPARE(res.normal(10), expected.at(10));
-    QCOMPARE(res.normal(11), expected.at(11));
+    QCOMPARE(res.vertexAt(0), v[0]);
+    QCOMPARE(res.vertexAt(4), v[2]);
+    QCOMPARE(res.vertexAt(7), v[8]);
+    QCOMPARE(res.vertexAt(11), v[10]);
+    QCOMPARE(res.normalAt(0), expected.at(0));
+    QCOMPARE(res.normalAt(1), expected.at(1));
+    QCOMPARE(res.normalAt(2), expected.at(2));
+    QCOMPARE(res.normalAt(3), expected.at(3));
+    QCOMPARE(res.normalAt(4), expected.at(4));
+    QCOMPARE(res.normalAt(5), expected.at(5));
+    QCOMPARE(res.normalAt(6), expected.at(6));
+    QCOMPARE(res.normalAt(7), expected.at(7));
+    QCOMPARE(res.normalAt(8), expected.at(8));
+    QCOMPARE(res.normalAt(9), expected.at(9));
+    QCOMPARE(res.normalAt(10), expected.at(10));
+    QCOMPARE(res.normalAt(11), expected.at(11));
 }
 
 void tst_QGLSection::normalizedNormals()

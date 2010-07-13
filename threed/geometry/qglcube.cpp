@@ -343,7 +343,7 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCube& cube)
     for (int i = 0; i < 6; ++i)
         op.appendTexCoordArray(texx);
 
-    list.addQuad(op);
+    list.addQuads(op);
     return list;
 }
 
@@ -369,7 +369,7 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeFace& face)
 
     op.appendTexCoordArray(face.textureCoords());
 
-    list.addQuad(op);
+    list.addQuads(op);
     return list;
 }
 

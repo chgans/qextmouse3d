@@ -40,20 +40,22 @@
 ****************************************************************************/
 
 #include "teapotview.h"
+#include "qglbuilder.h"
 
 //! [initialize]
 void TeapotView::initializeGL(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::LitMaterial);
 //! [create-display-list]
-    teapot << QGLTeapot();
-    teapot.finalize();
+    QGLBuilder builder;
+    builder << QGLTeapot();
+    teapot = builder.finalizedSceneNode();
 }
 //! [initialize]
 
 //! [paint]
 void TeapotView::paintGL(QGLPainter *painter)
 {
-    teapot.draw(painter);
+    teapot->draw(painter);
 }
 //! [paint]
