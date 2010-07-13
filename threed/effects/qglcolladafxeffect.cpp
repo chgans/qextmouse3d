@@ -250,6 +250,7 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "attribute highp vec4 normal;\n"\
             "attribute highp vec4 texCoords;\n"\
             "uniform highp mat4 matrix;\n"\
+            "uniform highp mat3 qgl_NormalMatrix;\n"\
             "varying mediump vec3 qNormal;\n"\
             "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
@@ -266,7 +267,7 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "\n"\
             "void main(void)\n"\
             "{\n"\
-            "    qNormal = normalize(gl_NormalMatrix * vec3(normal));\n"\
+            "    qNormal = normalize(qgl_NormalMatrix * vec3(normal));\n"\
             "    qLightVertex(vertex, qNormal);\n"\
             "    qTexCoord0 = texCoords;\n"\
             );

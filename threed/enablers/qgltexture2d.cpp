@@ -373,7 +373,7 @@ void QGLTexture2D::setUrl(const QUrl &url)
     {
         if (url.scheme() == QLatin1String("file"))
         {
-            QString fileName = url.path();
+            QString fileName = url.toLocalFile();
             if (fileName.endsWith(".dds", Qt::CaseInsensitive))
             {
                 setCompressedFile(fileName);

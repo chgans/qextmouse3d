@@ -10,6 +10,7 @@ INCLUDEPATH += $$PWD/scene
 INCLUDEPATH += $$PWD/graphicsview
 INCLUDEPATH += $$PWD/animation
 INCLUDEPATH += $$PWD/other
+INCLUDEPATH += $$PWD/api
 
 win32:CONFIG(debug, debug|release) {
     LIBS += -lQt3Dd

@@ -192,9 +192,14 @@ void Effect::setTexture(const QUrl& value)
         //#define QT_NO_LOCALFILE_OPTIMIZED_QML
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
         if (d->textureUrl.scheme() == QLatin1String("file")) {
-            QString fileName = value.path();
+            QString fileName = value.toLocalFile();
             d->texture = QImage(fileName);
             d->textureChanged = true;
+
+			if (d->texture.isNull()) {
+				qWarning() << "Could not load texture file [" << value.path() << "]";
+			}
+
             emit effectChanged();
         } else
 #endif
@@ -238,10 +243,10 @@ void Effect::cancelLoadingTexture()
     if (d->pendingPixmapCache) {
         QDeclarativePixmapCache::cancel(d->textureUrl, this);
         d->pendingPixmapCache = false;
-        // cancel invalidates our reply as well, so delete that
+        // cancel invalidates our reply as well, which should be deleted by
+        // the cache
         if(d->pixmapCacheReply != 0)
         {
-            d->pixmapCacheReply->deleteLater();
             d->pixmapCacheReply = 0;
         }
     }
@@ -259,12 +264,21 @@ void Effect::textureRequestFinished()
         QPixmap pixmap;
         QString errorString;
         QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString);
-        Q_UNUSED(status);
-        setTextureImage(pixmap.toImage());
-        d->pixmapCacheReply = 0;
-        d->pendingPixmapCache = false;
+        if(status == QDeclarativePixmapReply::Ready)
+        {
+            setTextureImage(pixmap.toImage());
+            d->pixmapCacheReply = 0;
+            d->pendingPixmapCache = false;
+
+			if (d->texture.isNull()) {
+				qWarning() << "Could not load specified texture file";
+			}
+            emit effectChanged();
+        } else
+        {
+            qWarning() << "Error getting texture image from cache: " << errorString;
+        }
     }
-    emit effectChanged();
 }
 
 /*!

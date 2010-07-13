@@ -49,7 +49,7 @@ static char const FallbackPerPixelLightingVertexShader[] =
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 normal;\n"
     "uniform highp mat4 matrix;\n"
-    "uniform mediump mat3 gl_NormalMatrix;\n"
+    "uniform mediump mat3 qgl_NormalMatrix;\n"
     "uniform mediump vec4 acli;      // Ambient intensity of the light\n"
     "uniform mediump vec4 dcli;      // Diffuse intensity of the light\n"
     "uniform mediump vec4 scli;      // Specular intensity of the light\n"
@@ -84,7 +84,7 @@ static char const FallbackPerPixelLightingVertexShader[] =
 
     "void main(void)\n"
     "{\n"
-    "    qNormal = normalize(gl_NormalMatrix * vec3(normal));\n"
+    "    qNormal = normalize(qgl_NormalMatrix * vec3(normal));\n"
     "    qLightVertex(vertex, qNormal);\n"
     "    gl_Position = matrix * vertex;\n"
     "};\n";
@@ -344,10 +344,10 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         else
             program()->setUniformValue("color", painter->color());
     }
+    // Note: using strings is inefficient.
     if ((updates & QGLPainter::UpdateMatrices) != 0) {
-        QMatrix4x4 proj = painter->projectionMatrix();
-        QMatrix4x4 mv = painter->modelViewMatrix();
-        program()->setUniformValue("matrix", proj * mv);
+        program()->setUniformValue("matrix", painter->combinedMatrix());
+        program()->setUniformValue("qgl_NormalMatrix", painter->normalMatrix());
     }
 
     if ((updates & QGLPainter::UpdateLights) != 0 )

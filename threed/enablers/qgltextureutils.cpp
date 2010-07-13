@@ -140,12 +140,16 @@ QGLTextureExtensions::~QGLTextureExtensions()
 {
 }
 
+#if QT_VERSION >= 0x040800
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLTextureExtensions>, qt_gl_texture_extensions)
+#else
 static void QGLTextureExtensions_free(void *ptr)
 {
     delete reinterpret_cast<QGLTextureExtensions *>(ptr);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_texture_extensions, (QGLTextureExtensions_free))
+#endif
 
 QGLTextureExtensions *QGLTextureExtensions::extensions()
 {

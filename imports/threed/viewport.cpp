@@ -393,7 +393,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     QGLPainter painter;
     if (!painter.begin(p)) {
-        qDebug("GL graphics system is not active; cannot use 3D items");
+        qWarning("GL graphics system is not active; cannot use 3D items");
         return;
     }
 

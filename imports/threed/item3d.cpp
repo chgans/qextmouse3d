@@ -1122,11 +1122,7 @@ void Item3d::draw(QGLPainter *painter)
     if (d->cullFaces != CullDisabled)
         painter->setCullFaces(QGL::CullDisabled);
     if (haveLights) {
-        foreach (QObject *child, list) {
-            QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
-            if (light)
-                painter->setMainLight(0);
-        }
+        painter->setMainLight(0);
     }
     painter->setObjectPickId(prevId);
 }
