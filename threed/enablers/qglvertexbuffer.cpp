@@ -40,54 +40,21 @@
 ****************************************************************************/
 
 #include "qglvertexbuffer.h"
+#include "qglvertexbuffer_p.h"
 #include "qglabstracteffect.h"
 #include <QtCore/qlist.h>
+#include <QtCore/qatomic.h>
+#include <QtOpenGL/qglshaderprogram.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLVertexBuffer
     \brief The QGLVertexBuffer class manages uploading of vertex attribute arrays into a GL server.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 */
-
-class QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferAttribute(QGL::VertexAttribute attr) : attribute(attr) {}
-
-    virtual void clear() = 0;
-    virtual QGLAttributeValue uploadValue() = 0;
-    virtual int count() = 0;
-    virtual int elementSize() = 0;
-    virtual void replace
-        (int index, int count, const QGLAttributeValue& value) = 0;
-
-    QGL::VertexAttribute attribute;
-    QGLAttributeValue value;
-};
-
-class QGLVertexBufferFloatAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferFloatAttribute
-            (QGL::VertexAttribute attr, const QArray<float>& array)
-        : QGLVertexBufferAttribute(attr), floatArray(array)
-    {
-        value = QGLAttributeValue(floatArray);
-    }
-
-    void clear() { floatArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(floatArray); }
-    int count() { return floatArray.count(); }
-    int elementSize() { return sizeof(float); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<float> floatArray;
-};
 
 void QGLVertexBufferFloatAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -99,26 +66,6 @@ void QGLVertexBufferFloatAttribute::replace
              (index + count) <= floatArray.size());
     floatArray.replace(index, value.floatData(), count);
 }
-
-class QGLVertexBufferVector2DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector2DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector2D>& array)
-        : QGLVertexBufferAttribute(attr), vector2DArray(array)
-    {
-        value = QGLAttributeValue(vector2DArray);
-    }
-
-    void clear() { vector2DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector2DArray); }
-    int count() { return vector2DArray.count(); }
-    int elementSize() { return sizeof(QVector2D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector2D> vector2DArray;
-};
 
 void QGLVertexBufferVector2DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -132,26 +79,6 @@ void QGLVertexBufferVector2DAttribute::replace
         (index, reinterpret_cast<const QVector2D *>(value.floatData()), count);
 }
 
-class QGLVertexBufferVector3DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector3DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector3D>& array)
-        : QGLVertexBufferAttribute(attr), vector3DArray(array)
-    {
-        value = QGLAttributeValue(vector3DArray);
-    }
-
-    void clear() { vector3DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector3DArray); }
-    int count() { return vector3DArray.count(); }
-    int elementSize() { return sizeof(QVector3D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector3D> vector3DArray;
-};
-
 void QGLVertexBufferVector3DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
@@ -163,26 +90,6 @@ void QGLVertexBufferVector3DAttribute::replace
     vector3DArray.replace
         (index, reinterpret_cast<const QVector3D *>(value.floatData()), count);
 }
-
-class QGLVertexBufferVector4DAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferVector4DAttribute
-            (QGL::VertexAttribute attr, const QArray<QVector4D>& array)
-        : QGLVertexBufferAttribute(attr), vector4DArray(array)
-    {
-        value = QGLAttributeValue(vector4DArray);
-    }
-
-    void clear() { vector4DArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(vector4DArray); }
-    int count() { return vector4DArray.count(); }
-    int elementSize() { return sizeof(QVector4D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QVector4D> vector4DArray;
-};
 
 void QGLVertexBufferVector4DAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -196,57 +103,17 @@ void QGLVertexBufferVector4DAttribute::replace
         (index, reinterpret_cast<const QVector4D *>(value.floatData()), count);
 }
 
-class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferColorAttribute
-            (QGL::VertexAttribute attr, const QArray<QColor4B>& array)
-        : QGLVertexBufferAttribute(attr), colorArray(array)
-    {
-        value = QGLAttributeValue(colorArray);
-    }
-
-    void clear() { colorArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(colorArray); }
-    int count() { return colorArray.count(); }
-    int elementSize() { return sizeof(QColor4B); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QArray<QColor4B> colorArray;
-};
-
 void QGLVertexBufferColorAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
 {
     Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
     Q_ASSERT(value.tupleSize() == 4);
-    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
+    Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4ub));
     Q_ASSERT(index >= 0 && count >= 0 &&
              (index + count) <= colorArray.size());
     colorArray.replace
-        (index, reinterpret_cast<const QColor4B *>(value.data()), count);
+        (index, reinterpret_cast<const QColor4ub *>(value.data()), count);
 }
-
-class QGLVertexBufferCustomAttribute : public QGLVertexBufferAttribute
-{
-public:
-    QGLVertexBufferCustomAttribute
-            (QGL::VertexAttribute attr, const QCustomDataArray& array)
-        : QGLVertexBufferAttribute(attr), customArray(array)
-    {
-        value = QGLAttributeValue(customArray);
-    }
-
-    void clear() { customArray.clear(); }
-    QGLAttributeValue uploadValue()
-        { return QGLAttributeValue(customArray); }
-    int count() { return customArray.count(); }
-    int elementSize() { return customArray.elementSize(); }
-    void replace(int index, int count, const QGLAttributeValue& value);
-
-    QCustomDataArray customArray;
-};
 
 void QGLVertexBufferCustomAttribute::replace
     (int index, int count, const QGLAttributeValue& value)
@@ -289,7 +156,7 @@ void QGLVertexBufferCustomAttribute::replace
     case QCustomDataArray::Color: {
         Q_ASSERT(value.type() == GL_UNSIGNED_BYTE);
         Q_ASSERT(value.tupleSize() == 4);
-        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4B));
+        Q_ASSERT(value.stride() == 0 || value.stride() == sizeof(QColor4ub));
         customArray.m_array.replace(index, value.floatData(), count);
     }
     break;
@@ -297,31 +164,6 @@ void QGLVertexBufferCustomAttribute::replace
     default: break;
     }
 }
-
-class QGLVertexBufferPrivate
-{
-public:
-    QGLVertexBufferPrivate()
-        : buffer(QGLBuffer::VertexBuffer),
-          isUploaded(false),
-          packingHint(QGLVertexBuffer::Interleave),
-          actualPackingHint(QGLVertexBuffer::Interleave),
-          vertexCount(0)
-    {
-    }
-    ~QGLVertexBufferPrivate()
-    {
-        qDeleteAll(attributes);
-    }
-
-    QGLBuffer buffer;
-    bool isUploaded;
-    QGLVertexBuffer::PackingHint packingHint;
-    QGLVertexBuffer::PackingHint actualPackingHint;
-    QList<QGLVertexBufferAttribute *> attributes;
-    QList<QGL::VertexAttribute> attributeNames;
-    int vertexCount;
-};
 
 /*!
     Constructs a new vertex buffer.
@@ -332,10 +174,39 @@ QGLVertexBuffer::QGLVertexBuffer()
 }
 
 /*!
-    Destroys this vertex buffer.
+    Creates a copy of \a other.  Note that this just copies a reference
+    to the vertex buffer.  Any modifications to the copy will also
+    affect the original object.
+*/
+QGLVertexBuffer::QGLVertexBuffer(const QGLVertexBuffer& other)
+    : d_ptr(other.d_ptr)
+{
+    d_ptr->ref.ref();
+}
+
+/*!
+    Destroys this vertex buffer if this object is the last reference to it.
 */
 QGLVertexBuffer::~QGLVertexBuffer()
 {
+    if (!d_ptr->ref.deref())
+        delete d_ptr;
+}
+
+/*!
+    Assigns \a other to this object.  Note that this just assigns a
+    reference to the \a other vertex buffer.  Any modifications to this
+    object will also affect \a other.
+*/
+QGLVertexBuffer& QGLVertexBuffer::operator=(const QGLVertexBuffer& other)
+{
+    if (d_ptr != other.d_ptr) {
+        if (!d_ptr->ref.deref())
+            delete d_ptr;
+        d_ptr = other.d_ptr;
+        d_ptr->ref.ref();
+    }
+    return *this;
 }
 
 /*!
@@ -417,7 +288,7 @@ void QGLVertexBuffer::addAttribute
     (QGL::VertexAttribute attribute, const QArray<float>& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferFloatAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -435,7 +306,7 @@ void QGLVertexBuffer::addAttribute
     (QGL::VertexAttribute attribute, const QArray<QVector2D>& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferVector2DAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -453,7 +324,7 @@ void QGLVertexBuffer::addAttribute
     (QGL::VertexAttribute attribute, const QArray<QVector3D>& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferVector3DAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -471,7 +342,7 @@ void QGLVertexBuffer::addAttribute
     (QGL::VertexAttribute attribute, const QArray<QVector4D>& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferVector4DAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -486,10 +357,10 @@ void QGLVertexBuffer::addAttribute
     \sa upload()
 */
 void QGLVertexBuffer::addAttribute
-    (QGL::VertexAttribute attribute, const QArray<QColor4B>& value)
+    (QGL::VertexAttribute attribute, const QArray<QColor4ub>& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferColorAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -507,7 +378,7 @@ void QGLVertexBuffer::addAttribute
     (QGL::VertexAttribute attribute, const QCustomDataArray& value)
 {
     Q_D(QGLVertexBuffer);
-    if (!d->isUploaded) {
+    if (!d->buffer.isCreated()) {
         d->attributes +=
             new QGLVertexBufferCustomAttribute(attribute, value);
         d->attributeNames += attribute;
@@ -609,7 +480,7 @@ void QGLVertexBuffer::replaceAttribute
         return;
 
     // Upload the new data or replace the client-side data.
-    if (d->isUploaded) {
+    if (d->buffer.isCreated()) {
         d->buffer.bind();
         int stride = attr->value.stride();
         if (d->actualPackingHint == QGLVertexBuffer::Interleave) {
@@ -636,6 +507,31 @@ void QGLVertexBuffer::replaceAttribute
 }
 
 /*!
+    Returns the raw attribute value associated with \a attribute in
+    this vertex buffer; null if \a attribute does not exist in the
+    vertex buffer.
+
+    If isUploaded() is true, then the returned value will contain a
+    buffer offset to the attribute.  If isUploaded() is false,
+    then the returned value will contain a client-side data pointer
+    to the attribute.
+
+    \sa addAttribute()
+*/
+QGLAttributeValue QGLVertexBuffer::attributeValue(QGL::VertexAttribute attribute) const
+{
+    Q_D(const QGLVertexBuffer);
+    QGLVertexBufferAttribute *attr = 0;
+    int attrIndex;
+    for (attrIndex = 0; attrIndex < d->attributes.size(); ++attrIndex) {
+        attr = d->attributes[attrIndex];
+        if (attr->attribute == attribute)
+            return attr->value;
+    }
+    return QGLAttributeValue();
+}
+
+/*!
     Returns the number of vertices that were defined by previous
     called to addAttribute().
 
@@ -646,6 +542,12 @@ int QGLVertexBuffer::vertexCount() const
     Q_D(const QGLVertexBuffer);
     return d->vertexCount;
 }
+
+/*!
+    \fn bool QGLVertexBuffer::isEmpty() const
+
+    Returns true if vertexCount() is zero; false otherwise.
+*/
 
 /*!
     Uploads the vertex data specified by previous addAttribute()
@@ -669,7 +571,7 @@ bool QGLVertexBuffer::upload()
     QGLVertexBufferAttribute *attr;
 
     // Nothing to do if already uploaded or there are no attributes.
-    if (d->isUploaded)
+    if (d->buffer.isCreated())
         return true;
     if (d->attributes.isEmpty())
         return false;
@@ -733,9 +635,11 @@ bool QGLVertexBuffer::upload()
                 if (count <= 0)
                     continue;
                 count = qMin(count, sectionSize);
+                int components = attr->elementSize() / sizeof(float);
                 vertexBufferInterleave
-                    (dst + attrPosn, stride, attr->value.floatData(),
-                     attr->elementSize() / sizeof(float), count);
+                    (dst + attrPosn, stride,
+                     attr->value.floatData() + vertex * components,
+                     components, count);
                 attrPosn += attr->elementSize() / sizeof(float);
             }
             size = sectionSize * stride;
@@ -778,7 +682,6 @@ bool QGLVertexBuffer::upload()
         d->buffer.unmap();
 
     // Buffer is uploaded and ready to go.
-    d->isUploaded = true;
     d->buffer.release();
     return true;
 }
@@ -792,17 +695,19 @@ bool QGLVertexBuffer::upload()
 bool QGLVertexBuffer::isUploaded() const
 {
     Q_D(const QGLVertexBuffer);
-    return d->isUploaded;
+    return d->buffer.isCreated();
 }
 
 /*!
     Returns the QGLBuffer in use by this vertex buffer object,
     so that its properties or contents can be modified directly.
+
+    \sa isUploaded()
 */
-QGLBuffer *QGLVertexBuffer::buffer() const
+QGLBuffer QGLVertexBuffer::buffer() const
 {
     Q_D(const QGLVertexBuffer);
-    return const_cast<QGLBuffer *>(&(d->buffer));
+    return d->buffer;
 }
 
 /*!
@@ -818,8 +723,6 @@ QGLBuffer *QGLVertexBuffer::buffer() const
 bool QGLVertexBuffer::bind() const
 {
     Q_D(const QGLVertexBuffer);
-    if (!d->isUploaded)
-        return false;
     return d->buffer.bind();
 }
 
@@ -837,29 +740,50 @@ void QGLVertexBuffer::release() const
     d->buffer.release();
 }
 
-/*!
-    \internal
-*/
-void QGLVertexBuffer::setOnEffect(QGLAbstractEffect *effect) const
-{
-    Q_D(const QGLVertexBuffer);
-    if (d->isUploaded)
-        d->buffer.bind();
-    for (int index = 0; index < d->attributes.size(); ++index) {
-        QGLVertexBufferAttribute *attr = d->attributes[index];
-        effect->setVertexAttribute(attr->attribute, attr->value);
-    }
-    if (d->isUploaded)
-        d->buffer.release();
-}
+// Defined in qglpainter.cpp.  Needs to be moved eventually.
+void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
 /*!
-    \internal
+    Sets the attribute arrays in this vertex buffer on \a program.
+    If \a program is null, then the attribute arrays will be
+    set on the fixed-function pipeline.
+
+    It is assumed that this vertex buffer and \a program are bound
+    to the current GL context.
+
+    \sa bind()
 */
-QList<QGL::VertexAttribute> QGLVertexBuffer::attributes() const
+void QGLVertexBuffer::setAttributeArrays(QGLShaderProgram *program)
 {
-    Q_D(const QGLVertexBuffer);
-    return d->attributeNames;
+    Q_D(QGLVertexBuffer);
+    Q_UNUSED(program);
+#if !defined(QT_OPENGL_ES_1)
+    if (program) {
+        for (int index = 0; index < d->attributes.size(); ++index) {
+            QGLVertexBufferAttribute *attr = d->attributes[index];
+#if defined(QT_OPENGL_ES_2)
+            glVertexAttribPointer(GLuint(attr->attribute),
+                                  attr->value.tupleSize(),
+                                  attr->value.type(), GL_FALSE,
+                                  attr->value.stride(), attr->value.data());
+#elif QT_VERSION >= 0x040700
+            program->setAttributeArray
+                (int(attr->attribute), attr->value.type(), attr->value.data(),
+                 attr->value.tupleSize(), attr->value.stride());
+#else
+            QGLAbstractEffect::setAttributeArray
+                (program, int(attr->attribute), attr->value);
+#endif
+        }
+        return;
+    }
+#endif
+#if !defined(QT_OPENGL_ES_2)
+    for (int index = 0; index < d->attributes.size(); ++index) {
+        QGLVertexBufferAttribute *attr = d->attributes[index];
+        qt_gl_setVertexAttribute(attr->attribute, attr->value);
+    }
+#endif
 }
 
 QT_END_NAMESPACE

@@ -47,7 +47,6 @@ void CubeView::initializeGL(QGLPainter *painter)
     cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
 
-    painter->setLightEnabled(0, true);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
 
     QImage textureImage(":/qtlogo.png");

@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLGraphicsNavigationItem
     \brief The QGLGraphicsNavigationItem class provides navigation logic for a QGLGraphicsViewportItem
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
 
@@ -560,8 +560,8 @@ void QGLGraphicsNavigationItemPrivate::pan(qreal deltax, qreal deltay)
     // actually thinks they are picking up the object and dragging it rather
     // than moving the eye.  We therefore apply the inverse of the translation
     // to make it "look right".
-    camera->translateEye(-t);
-    camera->translateCenter(-t);
+    camera->setEye(camera->eye() - t);
+    camera->setCenter(camera->center() - t);
 }
 
 // Rotate about the object being viewed.

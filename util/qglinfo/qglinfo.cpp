@@ -10,6 +10,7 @@
 
 #if !defined(QT_NO_EGL)
 #include <QtGui/private/qegl_p.h>
+#include <QtGui/private/qeglproperties_p.h>
 #endif
 
 QGLInfo::QGLInfo(QObject *parent)

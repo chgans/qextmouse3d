@@ -42,13 +42,13 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 #include <QImage>
 
 class QGLTexture2D;
 
-class Geometry : public QGLDisplayList
+class Geometry : public QGLBuilder
 {
 public:
     Geometry(QObject *parent = 0, QGLMaterialCollection *materials = 0);

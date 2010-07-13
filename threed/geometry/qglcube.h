@@ -45,7 +45,7 @@
 #include "qt3dglobal.h"
 
 #include <QtGui/qvector2d.h>
-#include "qvectorarray.h"
+#include "qvector2darray.h"
 
 QT_BEGIN_HEADER
 
@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLDisplayList;
+class QGLBuilder;
 
 class Q_QT3D_EXPORT QGLCube
 {
@@ -153,8 +153,8 @@ inline void QGLCubeFace::setTextureCoords(const QVector2DArray &array)
     m_texCoords = array;
 }
 
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCube& cube);
-Q_QT3D_EXPORT QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeFace& face);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLCube& cube);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeFace& face);
 
 QT_END_NAMESPACE
 

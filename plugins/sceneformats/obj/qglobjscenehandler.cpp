@@ -41,9 +41,10 @@
 
 #include "qglobjscenehandler.h"
 #include "qglobjscene.h"
-#include "qvectorarray.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include "qglbuilder.h"
+
 #include <QtCore/qiodevice.h>
 #include <QtCore/qfile.h>
 #include <QtGui/qimage.h>
@@ -135,13 +136,13 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QVector3DArray normals;
     qreal x, y, z;
     quint32 fields = 0;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
     QList<QGLSceneObject *> groups;
 
     // Create the display list and start an initial Faceted section.
-    QGLDisplayList *dlist = new QGLDisplayList();
+    QGLBuilder *dlist = new QGLBuilder();
     dlist->newSection(smoothing);
     palette = dlist->palette();
     defaultNode = dlist;
@@ -185,7 +186,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
         } else if (keyword == "f") {
             posn = objSkipWS(line, posn);
             count = 0;
-            QGLOperation op(dlist, QGL::TRIANGLE_FAN);
+            QGeometryData op; //(dlist, QGL::TRIANGLE_FAN);
             while (posn < line.size()) {
                 // Note: we currently only read the initial vertex
                 // index and also use it for texture co-ordinates
@@ -199,7 +200,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else if (index > 0)
                     --index;        // Indices in obj are 1-based.
                 if (index >= 0 && index < positions.count())
-                    op << positions[index];
+                    op.appendVertex(positions[index]);
                 if (tindex < 0)
                     tindex = texCoords.count() + tindex;
                 else if (tindex > 0)
@@ -207,7 +208,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 else
                     tindex = -1;
                 if (tindex >= 0 && tindex < texCoords.count())
-                    op << texCoords[tindex];
+                    op.appendTexCoord(texCoords[tindex]);
                 if (nindex < 0)
                     nindex = normals.count() + nindex;
                 else if (nindex > 0)
@@ -228,18 +229,19 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                     dlist->newSection(smoothing);
                 fields = dlist->currentPrimitive()->fields();
             }
-            op.end();
+            dlist->addTriangleFan(op);
         } else if (keyword == "usemtl") {
             // Specify a material for the faces that follow.
             posn = objSkipWS(line, posn);
             QString materialName = QString::fromLocal8Bit(line.mid(posn));
             if (!materialName.isEmpty() &&
                 materialName != QLatin1String("(null)")) {
-                index = palette->materialIndexByName(materialName);
+                index = palette->indexOf(materialName);
                 if (index != -1) {
                     QGLSceneNode *node = dlist->newNode();
-                    node->setMaterial(index);
-                    if (palette->texture(index))
+                    node->setMaterialIndex(index);
+                    QGLMaterial *material = palette->material(index);
+                    if (material->texture())
                         node->setEffect(QGL::LitDecalTexture2D);
                     else
                         node->setEffect(QGL::LitMaterial);
@@ -306,7 +308,7 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
     QByteArray line;
     QByteArray keyword;
     int posn, index;
-    QGLMaterialParameters *material = 0;
+    QGLMaterial *material = 0;
     QString materialName;
     QString textureName;
 
@@ -334,12 +336,12 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
             // Start a new material definition.
             posn = objSkipWS(line, posn);
             materialName = QString::fromLocal8Bit(line.mid(posn));
-            index = palette->materialIndexByName(materialName);
+            index = palette->indexOf(materialName);
             if (index != -1) {
                 qWarning() << "redefining obj material:" << materialName;
-                material = palette->materialByIndex(index);
+                material = palette->material(index);
             } else {
-                material = new QGLMaterialParameters();
+                material = new QGLMaterial();
                 material->setObjectName(materialName);
                 palette->addMaterial(material);
             }
@@ -361,11 +363,14 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
             textureName = QString::fromLocal8Bit(line.mid(posn));
             QGLTexture2D *texture = loadTexture(textureName);
             if (texture) {
-                index = palette->materialIndexByName(materialName);
-                if (index >= 0)
-                    palette->setTexture(index, texture);
-                else
+                index = palette->indexOf(materialName);
+                if (index >= 0) {
+                    QGLMaterial *material = palette->material(index);
+                    texture->setParent(material);
+                    material->setTexture(texture);
+                } else {
                     delete texture;
+                }
             }
         } else if (keyword == "d") {
             // "Dissolve factor" of the material, which is its opacity.

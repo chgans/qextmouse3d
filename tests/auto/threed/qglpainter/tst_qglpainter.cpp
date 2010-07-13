@@ -45,6 +45,7 @@
 #include "qgltestwidget.h"
 #include "qglpainter.h"
 #include "qglsimulator.h"
+#include "qglflatcoloreffect.h"
 
 class tst_QGLPainter : public QObject
 {
@@ -58,15 +59,19 @@ private slots:
     void cleanupTestCase();
     void clear();
     void drawTriangle();
+    void scissor();
     void userMatrixStack();
     void projectionMatrixStack();
     void modelViewMatrixStack();
+    void isCullable();
 
 public slots:
     void clearPaint();
     void clearPaintQ(QPainter *painter, const QSize& size);
     void drawTrianglePaint();
     void drawTrianglePaintQ(QPainter *painter, const QSize& size);
+    void scissorPaint();
+    void scissorPaintQ(QPainter *painter, const QSize& size);
 
 private:
     QGLTestWidget *widget;
@@ -114,19 +119,22 @@ void tst_QGLPainter::drawTrianglePaint()
     painter.setClearColor(Qt::black);
     painter.clear();
 
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(widget->rect());
+    QMatrix4x4 projm;
+    projm.ortho(widget->rect());
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);
 
-    painter.setStandardEffect(QGL::FlatColor);
+    QGLFlatColorEffect effect;
+    painter.setUserEffect(&effect);
     painter.setColor(Qt::green);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
+    painter.setUserEffect(0);
 }
 
 void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
@@ -140,7 +148,7 @@ void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
     proj.ortho(widget->rect());
     sim.setProjectionMatrix(proj);
 
-    QGLVertexArray vertices(QGL::Position, 2);
+    QVector2DArray vertices;
     vertices.append(10, 100);
     vertices.append(500, 100);
     vertices.append(500, 500);
@@ -148,13 +156,200 @@ void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
     sim.drawTriangles(vertices);
 }
 
+static QRect fetchGLScissor(const QRect& windowRect)
+{
+    GLint scissor[4];
+    glGetIntegerv(GL_SCISSOR_BOX, scissor);
+    if (scissor[2] != 0 && scissor[3] != 0) {
+        return QRect(scissor[0],
+                     windowRect.height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+    } else {
+        // Normally should be (0, 0, 0, 0) - don't adjust for window height.
+        return QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+    }
+}
+
+void tst_QGLPainter::scissor()
+{
+    // Run a painting test to check that the scissor works.
+    QVERIFY(widget->runTest(this, "scissorPaint"));
+
+    // Perform some lower level tests to ensure that the
+    // GL state is updated properly as the scissor changes.
+    QGLPainter painter;
+    painter.begin(widget);
+    QRect windowRect = widget->rect();
+
+    QVERIFY(painter.scissor().isNull());
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+
+    painter.setScissor(windowRect);
+    QCOMPARE(painter.scissor(), windowRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), windowRect);
+
+    QRect subRect(windowRect.width() / 3,
+                  windowRect.height() / 3,
+                  2 * windowRect.width() / 3,
+                  2 * windowRect.height() / 3);
+    painter.setScissor(subRect);
+    QCOMPARE(painter.scissor(), subRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    QRect leftHalf(0, 0, windowRect.width() / 2, windowRect.height());
+    painter.intersectScissor(leftHalf);
+    QCOMPARE(painter.scissor(), subRect.intersected(leftHalf));
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect.intersected(leftHalf));
+
+    QRect rightHalf(windowRect.width() - windowRect.width() / 2, 0,
+                    windowRect.width() / 2, windowRect.height());
+    QRect expandedRect(subRect.x(), 0, windowRect.width() - subRect.x(),
+                       windowRect.height());
+    painter.expandScissor(rightHalf);
+    QCOMPARE(painter.scissor(), expandedRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), expandedRect);
+
+    // QRect(0, 0, -2, -2) is a special value indicating "clip everything".
+    painter.setScissor(QRect(0, 0, -2, -2));
+    QCOMPARE(painter.scissor(), QRect(0, 0, -2, -2));
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), QRect(0, 0, 0, 0));
+
+    painter.setScissor(subRect);
+    painter.setScissor(QRect());
+    QCOMPARE(painter.scissor(), QRect());
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    painter.setScissor(windowRect);
+    glScissor(subRect.x(),
+              windowRect.height() - (subRect.y() + subRect.height()),
+              subRect.width(), subRect.height());
+    painter.resetScissor();
+    QCOMPARE(painter.scissor(), subRect);
+    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+
+    glDisable(GL_SCISSOR_TEST);
+    painter.resetScissor();
+    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
+    QCOMPARE(fetchGLScissor(windowRect), subRect);
+    QCOMPARE(painter.scissor(), QRect());
+}
+
+void tst_QGLPainter::scissorPaint()
+{
+    QGLPainter painter;
+    painter.begin();
+    painter.setClearColor(Qt::black);
+    painter.clear();
+
+    QMatrix4x4 projm;
+    projm.ortho(widget->rect());
+    painter.projectionMatrix() = projm;
+    painter.modelViewMatrix().setToIdentity();
+
+    QVector2DArray vertices;
+    vertices.append(10, 100);
+    vertices.append(500, 100);
+    vertices.append(500, 500);
+
+    // Paint a green triangle.
+    QGLFlatColorEffect effect;
+    painter.setUserEffect(&effect);
+    painter.setColor(Qt::green);
+    painter.setVertexAttribute(QGL::Position, vertices);
+    painter.draw(QGL::Triangles, 3);
+
+    // Change the top part of the triangle to blue.
+    painter.setScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 2, 200)));
+    painter.setColor(Qt::blue);
+    painter.draw(QGL::Triangles, 3);
+
+    // Intersect and draw red over the blue section.
+    painter.intersectScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150)));
+    painter.setColor(Qt::red);
+    painter.draw(QGL::Triangles, 3);
+
+    // Change the bottom part of the triangle to yellow.
+    int y = qMin(widget->height() / 2, 350);
+    painter.setScissor
+        (QRect(0, y, 400, widget->height() - y));
+    painter.setColor(Qt::yellow);
+    painter.draw(QGL::Triangles, 3);
+
+    // Intersect and expand, to extend the yellow region.
+    painter.intersectScissor
+        (QRect(0, y + 20, 400, widget->height() - y - 20));
+    painter.expandScissor
+        (QRect(0, y + 20, 450, widget->height() - y - 20));
+    painter.setColor(Qt::yellow);
+    painter.draw(QGL::Triangles, 3);
+
+    painter.setUserEffect(0);
+
+    painter.setScissor(QRect());
+}
+
+void tst_QGLPainter::scissorPaintQ(QPainter *painter, const QSize& size)
+{
+    QGLSimulator sim(painter, size);
+
+    sim.clear();
+
+    QMatrix4x4 proj;
+    proj.ortho(widget->rect());
+    sim.setProjectionMatrix(proj);
+
+    QVector2DArray vertices;
+    vertices.append(10, 100);
+    vertices.append(500, 100);
+    vertices.append(500, 500);
+
+    // Paint a green triangle.
+    sim.setColor(Qt::green);
+    sim.drawTriangles(vertices);
+
+    // Change the top part of the triangle to blue.
+    sim.setScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 2, 200)));
+    sim.setColor(Qt::blue);
+    sim.drawTriangles(vertices);
+
+    // Intersect and draw red over the blue section.
+    sim.intersectScissor
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150)));
+    sim.setColor(Qt::red);
+    sim.drawTriangles(vertices);
+
+    // Change the bottom part of the triangle to yellow.
+    int y = qMin(widget->height() / 2, 350);
+    sim.setScissor
+        (QRect(0, y, 400, widget->height() - y));
+    sim.setColor(Qt::yellow);
+    sim.drawTriangles(vertices);
+
+    // Intersect and expand, to extend the yellow region.
+    sim.intersectScissor
+        (QRect(0, y + 20, 400, widget->height() - y - 20));
+    sim.expandScissor
+        (QRect(0, y + 20, 450, widget->height() - y - 20));
+    sim.setColor(Qt::yellow);
+    sim.drawTriangles(vertices);
+}
+
 // Test the mathematical correctness of matrix stacks on a user stack.
 // We assume that QMatrix4x4 works and we can use it as an oracle.
 void tst_QGLPainter::userMatrixStack()
 {
-    QGLMatrixStack stack;
+    QMatrix4x4Stack stack;
 
-    QVERIFY(stack.type() == QGLMatrixStack::UserMatrix);
     QVERIFY(stack.top().isIdentity());
     QVERIFY(QMatrix4x4(stack).isIdentity());
 
@@ -217,54 +412,17 @@ void tst_QGLPainter::userMatrixStack()
     QMatrix4x4 m4;
 
     m4.setToIdentity();
-    m4.ortho(2, 4, 1, 3, 10, 50);
-    stack.setToIdentity();
-    stack.ortho(2, 4, 1, 3, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
     m4.ortho(QRect(2, 3, 4, 5));
     stack.setToIdentity();
-    stack.ortho(QRect(2, 3, 4, 5));
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.ortho(QRectF(2, 3, 4, 5));
-    stack.setToIdentity();
-    stack.ortho(QRectF(2, 3, 4, 5));
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.frustum(2, 4, 1, 3, 10, 50);
-    stack.setToIdentity();
-    stack.frustum(2, 4, 1, 3, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.perspective(60, 1.5, 10, 50);
-    stack.setToIdentity();
-    stack.perspective(60, 1.5, 10, 50);
-    QVERIFY(qFuzzyCompare(m4, stack.top()));
-    QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
-
-    m4.setToIdentity();
-    m4.lookAt(QVector3D(0, 0, -10), QVector3D(1, 1, 3), QVector3D(0, 1, 0));
-    stack.setToIdentity();
-    stack.lookAt(QVector3D(0, 0, -10), QVector3D(1, 1, 3), QVector3D(0, 1, 0));
+    QMatrix4x4 projm;
+    projm.ortho(QRect(2, 3, 4, 5));
+    stack = projm;
     QVERIFY(qFuzzyCompare(m4, stack.top()));
     QVERIFY(qFuzzyCompare(m4, QMatrix4x4(stack)));
 }
 
 #if defined(QT_OPENGL_ES_2)
 #define QGL_NO_MATRIX_FETCH 1
-#define QGL_NO_MATRIX_RESET 1
-#elif defined(GL_OES_VERSION_1_0) && !defined(GL_OES_VERSION_1_1)
-#define QGL_NO_MATRIX_FETCH 1
-#define QGL_MATRIX_RESET_TO_IDENTITY 1
 #endif
 
 #ifndef QGL_NO_MATRIX_FETCH
@@ -294,16 +452,6 @@ static bool checkGLMatrix(GLenum type, const QMatrix4x4& expected)
     return true;
 }
 
-static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
-{
-    glMatrixMode(type);
-    GLfloat mat[16];
-    const qreal *m = matrix.constData();
-    for (int index = 0; index < 16; ++index)
-        mat[index] = m[index];
-    glLoadMatrixf(mat);
-}
-
 #else
 
 #ifndef GL_PROJECTION
@@ -320,11 +468,9 @@ static void setGLMatrix(GLenum type, const QMatrix4x4& matrix)
 #endif
 
 // OpenGL/ES 2.0 does not have server-side matrices.
-// OpenGL/ES 1.0 cannot fetch the server-side matrices.
-// For these platforms, we stub out the checks and just hope that they work.
+// For such platforms, we stub out the checks and just hope that they work.
 static void clearGLMatrix(GLenum) {}
 static bool checkGLMatrix(GLenum, const QMatrix4x4&) { return true; }
-static void setGLMatrix(GLenum, const QMatrix4x4&) {}
 
 #endif
 
@@ -333,8 +479,6 @@ void tst_QGLPainter::projectionMatrixStack()
     QGLPainter painter(widget);
 
     painter.projectionMatrix().setToIdentity();
-    QVERIFY(painter.projectionMatrix().type() ==
-                QGLMatrixStack::ProjectionMatrix);
     QVERIFY(painter.projectionMatrix().top().isIdentity());
     QVERIFY(QMatrix4x4(painter.projectionMatrix()).isIdentity());
 
@@ -342,8 +486,8 @@ void tst_QGLPainter::projectionMatrixStack()
     clearGLMatrix(GL_PROJECTION);
 
     QMatrix4x4 m;
-    m.frustum(2, 4, 1, 3, 10, 50);
-    painter.projectionMatrix().frustum(2, 4, 1, 3, 10, 50);
+    m.ortho(2, 4, 3, 1, 10, 50);
+    painter.projectionMatrix() = m;
     QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
     QVERIFY(qFuzzyCompare(m, QMatrix4x4(painter.projectionMatrix())));
 
@@ -351,25 +495,10 @@ void tst_QGLPainter::projectionMatrixStack()
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateProjectionMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_PROJECTION_MATRIX, m));
-
-    // Write an explict value to the GL server and reset the client-side copy.
-    QMatrix4x4 m2;
-    m2.ortho(widget->rect());
-    setGLMatrix(GL_PROJECTION, m2);
-    painter.projectionMatrix().reset();
-
-    // Read back the explicitly set value from the GL server.
-#if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.projectionMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.projectionMatrix().top()));
-#else
-    QVERIFY(qFuzzyCompare(m2, painter.projectionMatrix().top()));
-#endif
 }
 
 void tst_QGLPainter::modelViewMatrixStack()
@@ -377,8 +506,6 @@ void tst_QGLPainter::modelViewMatrixStack()
     QGLPainter painter(widget);
 
     painter.modelViewMatrix().setToIdentity();
-    QVERIFY(painter.modelViewMatrix().type() ==
-                QGLMatrixStack::ModelViewMatrix);
     QVERIFY(painter.modelViewMatrix().top().isIdentity());
     QVERIFY(QMatrix4x4(painter.modelViewMatrix()).isIdentity());
 
@@ -399,25 +526,76 @@ void tst_QGLPainter::modelViewMatrixStack()
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, QMatrix4x4()));
 
     // Force an update to the GL server.
-    painter.update();
+    painter.updateFixedFunction(QGLPainter::UpdateModelViewMatrix);
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));
+}
 
-    // Write an explict value to the GL server and reset the client-side copy.
-    QMatrix4x4 m2;
-    m2.translate(5, 6, 7);
-    setGLMatrix(GL_MODELVIEW, m2);
-    painter.modelViewMatrix().reset();
+void tst_QGLPainter::isCullable()
+{
+    QGLPainter painter(widget);
 
-    // Read back the explicitly set value from the GL server.
-#if defined(QGL_NO_MATRIX_RESET) // OpenGL/ES 2.0
-    QVERIFY(qFuzzyCompare(m, painter.modelViewMatrix().top()));
-#elif defined(QGL_MATRIX_RESET_TO_IDENTITY) // OpenGL/ES 1.0
-    QVERIFY(qFuzzyCompare(QMatrix4x4(), painter.modelViewMatrix().top()));
-#else
-    QVERIFY(qFuzzyCompare(m2, painter.modelViewMatrix().top()));
-#endif
+    QGLCamera camera;
+    painter.setCamera(&camera);
+    QVERIFY(!painter.isCullable(QVector3D(0, 0, 0)));
+    QVERIFY(!painter.isCullable(QVector3D(0, 0, -10)));
+    QVERIFY(painter.isCullable(QVector3D(0, 0, 10)));
+
+    // Check the cullability of a box at 10 degree increments of rotation.
+    // It should be visible between -20 and 20 degrees but otherwise not.
+    // Also check the center point of the box.
+    QBox3D box1(QVector3D(-1, -1, -1), QVector3D(1, 1, 1));
+    for (int angle = 0; angle <= 360; angle += 10) {
+        if (angle <= 20 || angle >= 340) {
+            QVERIFY(!painter.isCullable(box1));
+            if (angle < 20 || angle > 340) {
+                QVERIFY(!painter.isCullable(QVector3D(0, 0, 0)));
+            } else {
+                // Box intersects, but center point is now outside.
+                QVERIFY(painter.isCullable(QVector3D(0, 0, 0)));
+            }
+        } else {
+            QVERIFY(painter.isCullable(box1));
+            QVERIFY(painter.isCullable(QVector3D(0, 0, 0)));
+        }
+        camera.rotateEye(camera.pan(10.0f));
+        painter.setCamera(&camera);
+    }
+
+    // Reset the camera and then check boxes in front of the camera
+    // that are close to the near and far planes and the eye.
+    QGLCamera camera2;
+    painter.setCamera(&camera2);
+
+    // Box around the eye, but in front of the near plane.
+    QBox3D box2(QVector3D(-1, -1, 11), QVector3D(1, 1, 9));
+    QVERIFY(painter.isCullable(box2));
+
+    // Box that surrounds the near plane.
+    QBox3D box3(QVector3D(-1, -1, 6), QVector3D(1, 1, 4));
+    QVERIFY(!painter.isCullable(box3));
+
+    // Box between the near plane and the eye.
+    QBox3D box4(QVector3D(-1, -1, 7), QVector3D(1, 1, 6));
+    QVERIFY(painter.isCullable(box4));
+
+    // Box extending from behind the eye to inside the viewing cube.
+    // Not cullable because it is partially visible.
+    QBox3D box5(QVector3D(-1, -1, 11), QVector3D(1, 1, 0));
+    QVERIFY(!painter.isCullable(box5));
+
+    // Box that surrounds the far plane.
+    QBox3D box6(QVector3D(-1, -1, -989), QVector3D(1, 1, -991));
+    QVERIFY(!painter.isCullable(box6));
+
+    // Box that is between the near and far planes, but close to far plane.
+    QBox3D box7(QVector3D(-1, -1, -988), QVector3D(1, 1, -989));
+    QVERIFY(!painter.isCullable(box7));
+
+    // Box that is beyond the far plane.
+    QBox3D box8(QVector3D(-1, -1, -1000), QVector3D(1, 1, -1001));
+    QVERIFY(painter.isCullable(box8));
 }
 
 QTEST_MAIN(tst_QGLPainter)

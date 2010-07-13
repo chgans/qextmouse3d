@@ -1,4 +1,5 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Viewport {
     width: 850
@@ -88,10 +89,10 @@ Viewport {
             }
         }
 
-        y: SequentialAnimation {
+        SequentialAnimation on y{
             running: teapot.bounce
-            NumberAnimation { to : 1.0; duration: 300; easing:"easeOutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing:"easeOutBounce" }
+            NumberAnimation { to : 1.0; duration: 300; easing.type: "OutQuad" }
+            NumberAnimation { to : 0.0; duration: 300; easing.type: "OutBounce" }
             onCompleted: teapot.bounce = false
         }
 
@@ -151,8 +152,8 @@ Viewport {
                 from: "*"
                 to: "facing_left"
                 NumberAnimation {
-                    matchTargets: teapot_rotate1
-                    matchProperties: "angle"
+                    targets: teapot_rotate1
+                    properties: "angle"
                     duration: 300
                 }
             },
@@ -160,8 +161,8 @@ Viewport {
                 from: "*"
                 to: "facing_right"
                 NumberAnimation {
-                    matchTargets: teapot_rotate1
-                    matchProperties: "angle"
+                    targets: teapot_rotate1
+                    properties: "angle"
                     duration: 300
                 }
             },
@@ -175,21 +176,21 @@ Viewport {
                             property: "y"
                             duration: 500
                             to: 1
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot
                             property: "x"
                             duration: 500
                             to: -0.5
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot_rotate2
                             property: "angle"
                             duration: 500
                             to: 45
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                     }
                     PauseAnimation { duration: 700 }
@@ -199,21 +200,21 @@ Viewport {
                             property: "y"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot
                             property: "x"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot_rotate2
                             property: "angle"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                     }
                 }
@@ -228,21 +229,21 @@ Viewport {
                             property: "y"
                             duration: 500
                             to: 1
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot
                             property: "x"
                             duration: 500
                             to: 0.5
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot_rotate2
                             property: "angle"
                             duration: 500
                             to: -45
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                     }
                     PauseAnimation { duration: 700 }
@@ -252,21 +253,21 @@ Viewport {
                             property: "y"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot
                             property: "x"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                         NumberAnimation {
                             target: teapot_rotate2
                             property: "angle"
                             duration: 500
                             to: 0
-                            easing: "easeOutQuad"
+                            easing.type: "OutQuad"
                         }
                     }
                 }

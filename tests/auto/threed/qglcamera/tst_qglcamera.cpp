@@ -52,6 +52,7 @@ public:
 private slots:
     void create();
     void modify();
+    void minViewSize();
 };
 
 void tst_QGLCamera::create()
@@ -152,6 +153,19 @@ void tst_QGLCamera::modify()
     QVERIFY(camera.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
     QVERIFY(camera.center() == QVector3D(7.0f, 8.0f, 9.0f));
 #endif
+}
+
+// Check that the minimum view size works correctly, including when
+// the view size goes negative (e.g. for flipped y co-ordinates).
+void tst_QGLCamera::minViewSize()
+{
+    QGLCamera camera;
+    camera.setViewSize(QSizeF(-20.0f, -30.0f));
+    QCOMPARE(camera.viewSize(), QSizeF(-20.0f, -30.0f));
+    camera.setViewSize(QSizeF(0.0f, 1.0f));
+    QCOMPARE(camera.viewSize(), QSizeF(0.0001f, 1.0f));
+    camera.setViewSize(QSizeF(-1.0f, 0.0f));
+    QCOMPARE(camera.viewSize(), QSizeF(-1.0f, 0.0001f));
 }
 
 QTEST_APPLESS_MAIN(tst_QGLCamera)

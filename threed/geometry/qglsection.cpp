@@ -40,33 +40,34 @@
 ****************************************************************************/
 
 #include "qglsection_p.h"
-#include "qgldisplaylist_p.h"
+#include "qglbuilder_p.h"
 #include "qarray.h"
 #include "qvector_utils_p.h"
 
 #include <QtGui/qvector3d.h>
 #include <QtCore/qdebug.h>
 #include <QtCore/qpointer.h>
-#include <QtCore/qhash.h>
+#include <QtCore/qmap.h>
+#include <QtCore/qbitarray.h>
 
 #include <limits.h>
 
 /*!
     \internal
     \class QGLSection
-    \brief The QGLSection class clusters like geometry in a QGLDisplayList.
-    \since 4.7
+    \brief The QGLSection class clusters like geometry in a QGLBuilder.
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
-    QGLSection instances partition a QGLDisplayList into related sections,
+    QGLSection instances partition a QGLBuilder into related sections,
     while the display list is being initialized with geometry data.
 
     Once the display list is initialized, and geometry building is complete
     the QGLSection instances are destroyed and the data is uploaded to the
     graphics hardware.
 
-    The QGLSection class is a work horse for the QGLDisplayList, and it
+    The QGLSection class is a work horse for the QGLBuilder, and it
     takes care of automatically managing vertex data.  As such
     for usual use cases, its functionality will not need to be referenced
     directly.  For low-level access to geometry, QGLSection provides a
@@ -87,12 +88,12 @@
     \l{QLogicalVertex::Type}{data types}.
 
     Each QGLSection references a contiguous range of vertices in a
-    QGLDisplayList.
+    QGLBuilder.
 
-    A QGLDisplayList instance has the \l{QGLDisplayList::newSection()}{newSection()}
+    A QGLBuilder instance has the \l{QGLBuilder::newSection()}{newSection()}
     function which creates a new QGLSection to reference its data.  Use this
     to construct new QGLSection instances, or alternatively construct
-    a new QGLSection() and pass a non-null QGLDisplayList pointer.
+    a new QGLSection() and pass a non-null QGLBuilder pointer.
 
     These functions all return QVector values. QVector instances are
     implicitly shared, thus the copies are inexpensive unless a
@@ -100,138 +101,12 @@
 
     Generally for adding geometry, use append().  This function simply
     calls virtual protected functions appendSmooth() (for smoothed vertices)
-    and appendFaceted() (for faceted vertices).  See QGLDisplayList for a
+    and appendFaceted() (for faceted vertices).  See QGLBuilder for a
     discussion of smoothing.
-
-    Note that after initialization of the display list, the QGLSection
-    instances are destroyed.  To access the geometry data during the run-time
-    of the application, if needed, call the geometry() method on the
-    display list and its child nodes.
 */
 
-
-/**** goop to QHash a QVector3d ************************************/
-
-uint qHash(float data)
-{
-    union U {
-        quint32 n;
-        float f;
-    };
-    U u;
-    u.f = data;
-    return u.n;
-}
-
-uint qHash(double data)
-{
-    union U {
-        quint64 n;
-        double f;
-    };
-    U u;
-    u.f = data;
-    return u.n ^ (u.n << 32);
-}
-
-static inline uint ROTLY(uint x)
-{
-    return (x << 10) | (x >> 22);
-}
-
-static inline uint ROTLZ(uint x)
-{
-    return (x << 20) | (x >> 12);
- }
-
-uint qHash(const QVector3D &v)
-{
-    return qHash(v.x()) ^ ROTLY(qHash(v.y())) ^ ROTLZ(qHash(v.z()));
-}
-
-
-/****  interface for QVector3D maps ****************************************/
-
-class QVector3DMapperIterator;
-
-class QVector3DMapper
-{
-public:
-    QVector3DMapper() {}
-    virtual ~QVector3DMapper() {}
-    virtual void insert(const QVector3D &, int) {};
-    virtual QVector3DMapperIterator *find(const QVector3D &) const { return 0; }
-    virtual bool atEnd(QVector3DMapperIterator *) const { return true; }
-    virtual void reserve(int) {};
-};
-
-class QVector3DMapperIterator
-{
-public:
-    QVector3DMapperIterator() {}
-    virtual ~QVector3DMapperIterator() {}
-    virtual QVector3D key() const { return QVector3D(); }
-    virtual int value() const { return -1; }
-    virtual void next() {}
-    operator int () { return value(); }
-    QVector3DMapperIterator &operator++() { next(); return *this; }
-};
-
-
-/**** qhash based implementation ****************************************/
-
-class QHashMapper;
-
-class QHashMapperIterator : public QVector3DMapperIterator
-{
-public:
-    QHashMapperIterator(QHash<QVector3D,int>::const_iterator i, const QHashMapper *m)
-        : it(i), map(m) {}
-    ~QHashMapperIterator() {}
-    QVector3D key() const { return it.key(); }
-    int value() const { return it.value(); }
-    void next() { ++it; }
-private:
-    friend class QHashMapper;
-    QHash<QVector3D,int>::const_iterator it;
-    const QHashMapper *map;
-};
-
-class QHashMapper : public QVector3DMapper
-{
-public:
-    QHashMapper() {}
-    ~QHashMapper() {}
-    inline void insert(const QVector3D &vec, int i);
-    inline QVector3DMapperIterator *find(const QVector3D &vec) const;
-    inline bool atEnd(QVector3DMapperIterator *it) const;
-private:
-    QHash<QVector3D, int> hash;
-};
-
-inline void QHashMapper::insert(const QVector3D &vec, int i)
-{
-    hash.insertMulti(vec, i);
-}
-
-inline QVector3DMapperIterator *QHashMapper::find(const QVector3D &vec) const
-{
-    return new QHashMapperIterator(hash.find(vec), this);
-}
-
-inline bool QHashMapper::atEnd(QVector3DMapperIterator *it) const
-{
-    if (it != NULL)
-    {
-        QHashMapperIterator *mit = static_cast<QHashMapperIterator*>(it);
-        return mit->it == hash.constEnd();
-    }
-    return true;
-}
-
-/**** qmap based implementation *******************************************/
-
-bool operator<(const QVector3D &a, const QVector3D &b)
+// allow QVector3D's to be stored in a QMap
+inline bool operator<(const QVector3D &a, const QVector3D &b)
 {
     if (qFskCompare(a.x(), b.x()))
     {
@@ -257,97 +132,172 @@ bool operator<(const QVector3D &a, const QVector3D &b)
     }
 }
 
-class QMapMapper;
-
-class QMapMapperIterator : public QVector3DMapperIterator
+static inline bool qSameDirection(const QVector3D &a , const QVector3D &b)
 {
-public:
-    QMapMapperIterator(QMap<QVector3D,int>::const_iterator i, const QMapMapper *m)
-        : it(i), map(m) {}
-    ~QMapMapperIterator() {}
-    QVector3D key() const { return it.key(); }
-    int value() const { return it.value(); }
-    void next() { ++it; }
-private:
-    friend class QMapMapper;
-    QMap<QVector3D,int>::const_iterator it;
-    const QMapMapper *map;
-};
-
-class QMapMapper : public QVector3DMapper
-{
-public:
-    QMapMapper() {}
-    ~QMapMapper() {}
-    inline void insert(const QVector3D &vec, int i);
-    inline QVector3DMapperIterator *find(const QVector3D &vec) const;
-    inline bool atEnd(QVector3DMapperIterator *it) const;
-private:
-    QMap<QVector3D, int> map;
-};
-
-inline void QMapMapper::insert(const QVector3D &vec, int i)
-{
-    map.insertMulti(vec, i);
-}
-
-inline QVector3DMapperIterator *QMapMapper::find(const QVector3D &vec) const
-{
-    return new QMapMapperIterator(map.find(vec), this);
-}
-
-inline bool QMapMapper::atEnd(QVector3DMapperIterator *it) const
-{
-    if (it != NULL)
+    bool res = false;
+    if (!a.isNull() && !b.isNull())
     {
-        QMapMapperIterator *mit = static_cast<QMapMapperIterator*>(it);
-        return mit->it == map.constEnd();
+        float dot = QVector3D::dotProduct(a, b);
+        res = qFskCompare((qreal)dot, a.length() * b.length());
     }
-    return true;
+    return res;
 }
-
-/************************************************************************/
 
 class QGLSectionPrivate
 {
 public:
-    QGLSectionPrivate(const QVector3DArray *, QGL::Strategy st)
-        : finalized(false)
+    QGLSectionPrivate(const QVector3DArray *ary)
+        : vec_data(ary)
+        , it(vec_map.end())
+        , map_threshold(5)
+        , number_mapped(0)
+        , start_ptr(-1)
+        , end_ptr(-1)
+        , finalized(false)
     {
-        if (st == QGL::HashLookup)
-        {
-            //  QHash based implmentation
-            map = new QHashMapper;
-        }
-        else if (st == QGL::MapLookup)
-        {
-            //  QMap based implmentation
-            map = new QMapMapper;
-        }
-        else
-        {
-            //  "do nothing" implementation
-            map = new QVector3DMapper;
-        }
+        normIndices.fill(-1, 32);
     }
+
     ~QGLSectionPrivate() {}
 
     bool normalAccumulated(int index, const QVector3D &norm) const
     {
-        QHash<int, QVector3D>::const_iterator nit = norms.constFind(index);
-        while (nit != norms.constEnd() && nit.key() == index)
-            if (*nit++ == norm)
+        if (index >= normIndices.size())
+            return false;
+        int ptr = normIndices.at(index);
+        while (ptr != -1)
+        {
+            int val_ptr = normPtrs.at(ptr);
+            //if (normValues.at(val_ptr) == norm)
+            if (qSameDirection(normValues.at(val_ptr), norm))
                 return true;
+            ptr = normPtrs.at(ptr+1);
+        }
         return false;
     }
 
     void accumulateNormal(int index, const QVector3D &norm)
     {
-        norms.insertMulti(index, norm);
+        int new_norm_index = normValues.size();
+        normValues.append(norm);
+        if (normIndices.size() <= index)
+        {
+            int old_size = normIndices.size();
+            normIndices.extend(32);
+            for (int i = old_size; i < normIndices.size(); ++i)
+                normIndices[i] = -1;
+        }
+        int new_norm_ptr = normPtrs.size();
+        normPtrs.append(new_norm_index);  // even ptrs point to vector value
+        normPtrs.append(-1);              // odd ptrs point to next in normPtr linked list
+        if (normIndices.at(index) == -1)
+        {
+            normIndices[index] = new_norm_ptr;
+        }
+        else
+        {
+            int norm_ptr = normIndices.at(index);
+            while (normPtrs.at(norm_ptr + 1) != -1)
+            {
+                norm_ptr = normPtrs.at(norm_ptr + 1);
+            }
+            normPtrs[norm_ptr+1] = new_norm_ptr;
+        }
     }
 
-    QVector3DMapper *map;
-    QHash<int, QVector3D> norms;
+    void mapVertex(const QVector3D &v, int ix)
+    {
+        static bool seeded = false;
+        if (!seeded)
+            qsrand(31415);
+        Q_ASSERT(vec_data->at(ix) == v);
+        if ((vec_data->size() - number_mapped) > map_threshold)
+        {
+            int to_map = vec_data->size() - number_mapped;
+            QArray<int, 100> shuffle(to_map, -1);
+            for (int i = number_mapped, k = 0; i < vec_data->size(); ++i, ++k)
+                shuffle[k] = i;
+            for (int n = to_map; n > 1; --n)
+            {
+                int k = qrand() % n;
+                int tmp = shuffle[k];
+                shuffle[k] = shuffle[n - 1];
+                shuffle[n - 1] = tmp;
+            }
+            for (int i = 0; i < to_map; ++i)
+                vec_map.insertMulti(vec_data->at(shuffle.at(i)), shuffle.at(i));
+            number_mapped += to_map;
+        }
+    }
+
+    int nextIndex()
+    {
+        int result = -1;
+        if (end_ptr != -1)
+        {
+            // first look through the unmapped items
+            while (start_ptr <= end_ptr && result == -1)
+            {
+                // search from the end and beginning, favouring the end - most often
+                // its in the last few we added, sometimes in the first ones
+                if (qFskCompare(vec_data->at(end_ptr--), target))
+                    result = end_ptr+1;
+                else if (start_ptr <= end_ptr && qFskCompare(vec_data->at(end_ptr--), target))
+                    result = end_ptr+1;
+                else if (start_ptr <= end_ptr && qFskCompare(vec_data->at(start_ptr++), target))
+                    result = start_ptr-1;
+            }
+            // if that found nothing, have a look at the map
+            if (result == -1)
+            {
+                start_ptr = -1;
+                end_ptr = -1;
+                it = vec_map.constEnd();
+                if (vec_map.size() > 0)
+                    it = vec_map.find(target);
+            }
+        }
+        if (it != vec_map.constEnd())
+        {
+            // if there was something in the map see if its still on target
+            if (qFskCompare(it.key(), target))
+            {
+                result = it.value();
+                ++it;  // increment to find more insertMulti instances
+            }
+            else
+            {
+                // not on target - flag that we're done here
+                it = vec_map.constEnd();
+            }
+        }
+        return result;
+    }
+
+    int findVertex(const QVector3D &v)
+    {
+        end_ptr = vec_data->size() - 1;   // last one not in QMap
+        start_ptr = number_mapped;        // first one not in QMap
+        target = v;
+        return nextIndex();
+    }
+
+    // mapper
+    int index;
+    QVector3D target;
+    const QVector3DArray *vec_data;
+    QMap<QVector3D, int> vec_map;
+    QMap<int, int> index_map;
+    QMap<QVector3D,int>::const_iterator it;
+    int map_threshold;   // if more than this is unmapped, do a mapping run
+    int number_mapped;    // how many vertices have been mapped
+    int start_ptr;
+    int end_ptr;
+
+    QArray<int, 32> normIndices;
+    QArray<int, 32> normPtrs;
+    QArray<QVector3D, 32> normValues;
+
     bool finalized;
     QList<QGLSceneNode*> nodes;
 };
@@ -357,7 +307,7 @@ public:
     Construct a new QGLSection on the display list \a list, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
-    See QGLDisplayList for a discussion of smoothing.
+    See QGLBuilder for a discussion of smoothing.
 
     The pointer \a list must be non-null, and in debug mode, unless QT_NO_DEBUG is
     defined, this function will assert if \a list is null.
@@ -368,13 +318,15 @@ public:
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
 */
-QGLSection::QGLSection(QGLDisplayList *list, QGL::Smoothing s, QGL::Strategy st)
+QGLSection::QGLSection(QGLBuilder *list, QGL::Smoothing s)
     : m_smoothing(s)
     , m_displayList(list)
     , d(0)
 {
     Q_ASSERT(m_displayList);
-    d = new QGLSectionPrivate(vertexData(), st);
+    enableField(QGL::Position);
+    Q_ASSERT(vertexData());
+    d = new QGLSectionPrivate(vertexData());
     m_displayList->addSection(this);
 }
 
@@ -395,8 +347,9 @@ QGLSection::~QGLSection()
 void QGLSection::reserve(int amount)
 {
     QGeometryData::reserve(amount);
-    d->map->reserve(amount);
-    d->norms.reserve(amount);
+    d->normIndices.reserve(amount);
+    d->normPtrs.reserve(amount * 2);
+    d->normValues.reserve(amount);
 }
 
 /*!
@@ -495,8 +448,16 @@ static bool qCompareByAttributes(const QLogicalVertex &a, const QLogicalVertex &
 
 int QGLSection::appendOne(const QLogicalVertex &lv)
 {
+#ifndef QT_NO_DEBUG_STREAM
+    if (count() && lv.fields() != fields())
+    {
+        qDebug() << "Warning: adding" << lv << "fields:" << lv.fields()
+                << "fields do not match existing:" << fields()
+                << "create new section first?";
+    }
+#endif
     int index = appendVertex(lv);
-    d->map->insert(lv.vertex(), index);
+    d->mapVertex(lv.vertex(), index);
     appendIndex(index);
     return index;
 }
@@ -530,7 +491,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
     of a display list, or use:
 
     \code
-    myDisplayList->newSection(QGLDisplayList::Smooth);
+    myDisplayList->newSection(QGLBuilder::Smooth);
     myDisplayList->addTriangle(a, b, c);
     \endcode
 
@@ -538,27 +499,29 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
     graphics hardware once (not once per face), thus smooth geometry may
     consume fewer resources.
 
-    \sa appendFaceted(), updateTexCoord(), QGLDisplayList::newSection()
+    \sa appendFaceted(), updateTexCoord(), QGLBuilder::newSection()
 */
 void QGLSection::appendSmooth(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
 
-    QVector3DMapperIterator  *it = d->map->find(lv.vertex());
+    int found_index = d->findVertex(lv.vertex());
     bool coalesce = false;
-    if (d->map->atEnd(it))
+    if (found_index == -1)
     {
         int newIndex = appendOne(lv);
         d->accumulateNormal(newIndex, lv.normal());
     }
     else
     {
-        while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
-            if (qCompareByAttributes(lv, vertexAt(*it)))
+        while (!coalesce && found_index != -1)
+        {
+            if (qCompareByAttributes(lv, vertexAt(found_index)))
                 coalesce = true;
             else
-                ++*it;
+                found_index = d->nextIndex();
+        }
         if (!coalesce)  // texture or attributes prevented coalesce
         {
             // new vert to carry tex/attrib data
@@ -566,17 +529,46 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
         }
         else
         {
-            appendIndex(it->value());
-            it = d->map->find(lv.vertex());
-            while (!d->map->atEnd(it) && it->key() == lv.vertex())
+            appendIndex(found_index);
+            while (found_index != -1)
             {
-                if (!d->normalAccumulated(it->value(), lv.normal()))
+                if (!d->normalAccumulated(found_index, lv.normal()))
                 {
-                    normalRef(it->value()) += lv.normal();
-                    d->accumulateNormal(it->value(), lv.normal());
+                    normalRef(found_index) += lv.normal();
+                    d->accumulateNormal(found_index, lv.normal());
                 }
-                ++*it;
+                found_index = d->nextIndex();
             }
+        }
+    }
+    d->finalized = false;
+    m_displayList->setDirty(true);
+}
+
+
+void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
+{
+    Q_ASSERT(lv.hasField(QGL::Position));
+    Q_ASSERT(lv.hasField(QGL::Normal));
+
+    int found_index = -1;
+    QMap<int, int>::const_iterator it = d->index_map.constFind(index);
+    if (it != d->index_map.constEnd())
+        found_index = it.value();
+    if (found_index == -1)
+    {
+        int newIndex = appendVertex(lv);
+        d->index_map.insert(index, newIndex);
+        appendIndex(newIndex);
+        d->accumulateNormal(newIndex, lv.normal());
+    }
+    else
+    {
+        appendIndex(found_index);
+        if (!d->normalAccumulated(found_index, lv.normal()))
+        {
+            normalRef(found_index) += lv.normal();
+            d->accumulateNormal(found_index, lv.normal());
         }
     }
     d->finalized = false;
@@ -599,31 +591,31 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
     This function is used to add the vertices of a faceted face to the list:
 
     \code
-    myDisplayList->newSection(QGLDisplayList::Faceted);
+    myDisplayList->newSection(QGLBuilder::Faceted);
     myDisplayList->addVertex(lv);
     \endcode
 
     In faceted surfaces, the vertex is sent to the graphics hardware once for
     each normal it has, and thus may consume more resources.
 
-    \sa appendSmooth(), updateTexCoord(), QGLDisplayList::newSection()
+    \sa appendSmooth(), updateTexCoord(), QGLBuilder::newSection()
 */
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
     Q_ASSERT(lv.hasField(QGL::Normal));
-    QVector3DMapperIterator *it = d->map->find(lv.vertex());
+    int found_index = d->findVertex(lv.vertex());
     bool coalesce = false;
-    while (!coalesce && !d->map->atEnd(it) && it->key() == lv.vertex())
+    while (!coalesce && found_index != -1)
     {
-        if (vertexAt(it->value()) == lv)
+        if (vertexAt(found_index) == lv)
             coalesce = true;
         else
-            ++*it;
+            found_index = d->nextIndex();
     }
     if (coalesce) // found
     {
-        appendIndex(it->value());
+        appendIndex(found_index);
     }
     else
     {
@@ -631,6 +623,34 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     }
     d->finalized = false;
     m_displayList->setDirty(true);
+}
+
+/*!
+    \internal
+    Returns the current map threshold for this section.  The threshold is the
+    point at which the section switches from using a plain QArray - with
+    linear performance ie O(n) - to using a QMap - with approx O(log n).  These
+    structures are used for looking up vertices during the index generation and
+    normals calculation.
+
+    The default value is 50.
+
+    \sa setMapThreshold()
+*/
+int QGLSection::mapThreshold() const
+{
+    return d->map_threshold;
+}
+
+/*!
+    \internal
+    Sets the current map threshold to \a t for this section.
+
+    \sa mapThreshold()
+*/
+void QGLSection::setMapThreshold(int t)
+{
+    d->map_threshold = t;
 }
 
 /*!
@@ -649,7 +669,7 @@ void QGLSection::appendFlat(const QLogicalVertex &lv)
 
 /*!
     \internal
-    \fn QGLDisplayList *QGLSection::displayList() const
+    \fn QGLBuilder *QGLSection::displayList() const
 
     Returns the display list associated with this section.
 */
@@ -703,7 +723,7 @@ QDebug operator<<(QDebug dbg, const QGLSection &section)
             << "- count:" << section.count()
             << "- smoothing mode:" << (section.smoothing() == QGL::Smooth ?
                                        "QGL::Smooth" : "QGL::Faceted") << "\n";
-    QGLIndexArray indices = section.indices();
+    QGL::IndexArray indices = section.indices();
     for (int i = 0; i < section.count(); ++i)
     {
         int ix = indices[i];

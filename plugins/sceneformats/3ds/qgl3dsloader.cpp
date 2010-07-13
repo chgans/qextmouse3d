@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qgl3dsloader.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexture2d.h"
@@ -59,13 +59,15 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qfileinfo.h>
 
-QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file)
-     : mRootNode(new QGLSceneNode())
-     , mFile(file)
+QGL3dsLoader::QGL3dsLoader(Lib3dsFile *file, QGL3dsSceneHandler* sh)
+     : mFile(file)
+     , mRootNode(new QGLSceneNode())
+     , mScene(sh)
      , mHasTextures(false)
 {
     mRootNode->setPalette(new QGLMaterialCollection(mRootNode));
     mRootNode->setObjectName(file->name);
+    setUrl(sh->url());
 }
 
 QGL3dsLoader::~QGL3dsLoader()
@@ -92,12 +94,16 @@ void QGL3dsLoader::setUrl(const QUrl &url)
 void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
 {
 #ifndef QT_NO_DEBUG_STREAM
-    if (mesh->points == 0)
+    if (mesh->points == 0 && (mScene->options() & QGL::ShowWarnings))
         qDebug() << "Mesh" << mesh->name << "has zero vertex count";
-    else if (mesh->faces == 0)
+    else if (mesh->faces == 0 && (mScene->options() & QGL::ShowWarnings))
         qDebug() << "Mesh" << mesh->name << "has zero face count";
 #endif
     QGL3dsMesh *m = new QGL3dsMesh(mesh, mRootNode, mRootNode->palette());
+    QGL::ModelOptions o = mScene->meshOptions(mesh->name);
+    if (o == 0)
+        o = mScene->options();
+    m->setOptions(o);
     mMeshes.insert(mesh->name, m);
     if (mesh->faces == 0 || mesh->points == 0)
         return;
@@ -166,7 +172,6 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
                     sceneNode->setObjectName(nodeName);
                     loadNodes(node->childs, sceneNode);
                 }
-                qDebug() << "Node with no mesh" << meshName << "created" << nodeName;
             }
         }
 #ifndef QT_NO_DEBUG_STREAM
@@ -195,6 +200,14 @@ QGLSceneNode *QGL3dsLoader::loadMeshes()
     Lib3dsMesh * mesh;
     for (mesh = mFile->meshes; mesh != NULL; mesh = mesh->next)
         loadMesh(mesh);
+    QGL::MeshOptionMap optList = mScene->meshOptions();
+    QStringList optionedMeshes = optList.keys();
+    QStringList gotMeshes = mMeshes.keys();
+    for (int i = 0; i < gotMeshes.size(); ++i)
+        optionedMeshes.removeAll(gotMeshes.at(i));
+    for (int i = 0; i < optionedMeshes.size(); ++i)
+        qWarning("Option specified, but mesh %s not found",
+                 qPrintable(optionedMeshes.at(i)));
     mRootNode->palette()->removeUnusedMaterials();
     loadNodes(mFile->nodes, mRootNode);
     mRootNode->setEffect(mHasTextures ? QGL::LitModulateTexture2D : QGL::LitMaterial);
@@ -203,51 +216,73 @@ QGLSceneNode *QGL3dsLoader::loadMeshes()
 
 /*!
     \internal
-    Search for a resource file based on the given \a fileName.
-    First a case-sensitive search is done of all of the current directory,
-    the root directory of the resource tree, and any directories found in
-    the top QGL3dsSceneNode's resourcePaths().  If the file is not found
-    in any of those locations then they are searched again case-
-    insensitively.  If the file is found, then the absolute file path
-    of the matching file is returned.  Otherwise an empty string is
-    returned.
+    Search for a resource based on the given \a path.
+
+    If the URL for the currently loading mesh has a scheme other than
+    "file" then a URL with the path relative to that URL is returned.
+
+    If the URL for the currently loading mesh has a "file" scheme, then
+    first a case-sensitive search is done of all of the current directory,
+    and the :/ resource directory, and the directory of the current mesh
+    file.
+
+    If the file is not found in any of those locations then they are
+    searched again case-insensitively.  If the file is found, then a
+    URL based on the absolute file path of the matching file is returned.
+
+    Otherwise an empty string is returned.
 */
-QString QGL3dsLoader::ensureResourceFile(const QString &fileName)
+QUrl QGL3dsLoader::ensureResource(const QString &path)
 {
-    QStringList paths;
-    paths << "." << ":/";    // current directory and aliased/root resource file
-    if (!mUrl.isEmpty())
+    QUrl res;
+    if (mUrl.scheme() == QLatin1String("file"))
     {
-        QFileInfo fi(mUrl.encodedPath());
-        paths.prepend(fi.absoluteDir().absolutePath());
-    }
-    bool caseInsensitive = false;
-    do {
-        QStringList::const_iterator it(paths.begin());
-        for ( ; it != paths.end(); ++it)
+        res = mUrl.resolved(path);
+        if (QFile::exists(res.path())) // shortcut common case
+            return res;
+        QStringList paths;
+        paths << "." << ":/";    // current directory and aliased/root resource file
+        if (!mUrl.isEmpty())
         {
-            QDir resDir(*it);
-            QStringList fileList = resDir.entryList(QDir::Files);
-            if (caseInsensitive)
+            QFileInfo fi(mUrl.path());
+            paths.prepend(fi.absoluteDir().absolutePath());
+        }
+        bool caseInsensitive = false;
+        do {
+            QStringList::const_iterator it(paths.begin());
+            for ( ; it != paths.end(); ++it)
             {
-                QStringList::const_iterator fit(fileList.begin());
-                for ( ; fit != fileList.end(); ++fit)
+                QDir resDir(*it);
+                QStringList fileList = resDir.entryList(QDir::Files);
+                if (caseInsensitive)
                 {
-                    if (fit->toLower() == fileName.toLower())
-                        return resDir.absoluteFilePath(*fit);
+                    QStringList::const_iterator fit(fileList.begin());
+                    for ( ; fit != fileList.end(); ++fit)
+                    {
+                        if (fit->toLower() == path.toLower())
+                        {
+                            res.setPath(resDir.absoluteFilePath(*fit));
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    if (fileList.contains(path))
+                        return resDir.absoluteFilePath(path);
                 }
             }
-            else
-            {
-                if (fileList.contains(fileName))
-                    return resDir.absoluteFilePath(fileName);
-            }
-        }
-        if (caseInsensitive)
-            break;
-        caseInsensitive = true;
-    } while(true);
-    return QString();
+            if (caseInsensitive)
+                break;
+            caseInsensitive = true;
+        } while(true);
+    }
+    else
+    {
+        // non-file url
+        res = mUrl.resolved(path);
+    }
+    return res;
 }
 
 /*!
@@ -256,7 +291,7 @@ QString QGL3dsLoader::ensureResourceFile(const QString &fileName)
 void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
 {
     QGLMaterialCollection *palette = mRootNode->palette();
-    QGLMaterialParameters *mat = new QGLMaterialParameters();
+    QGLMaterial *mat = new QGLMaterial();
     Lib3dsRgba &amb = mat3ds->ambient;
     Lib3dsRgba &dif = mat3ds->diffuse;
     Lib3dsRgba &spc = mat3ds->specular;
@@ -265,23 +300,19 @@ void QGL3dsLoader::loadMaterial(Lib3dsMaterial *mat3ds)
     mat->setSpecularColor(QColor::fromRgbF(spc[0], spc[1], spc[2], spc[3]));
     mat->setShininess(128 * mat3ds->shininess);
     mat->setObjectName(mat3ds->name);
-    int index = palette->addMaterial(mat);
+    palette->addMaterial(mat);
     if (mat3ds->texture1_map.name[0])
     {
         QString txName(mat3ds->texture1_map.name);
-        txName = ensureResourceFile(txName);
-        if (txName.isEmpty())
+        QUrl url = ensureResource(txName);
+        if (url.isEmpty())
         {
-            qWarning("Could not load texture: %s", mat3ds->texture1_map.name);
+            if (mScene->options() & QGL::ShowWarnings)
+                qWarning("Could not load texture: %s", mat3ds->texture1_map.name);
         }
         else
         {
-            QGLTexture2D *texture = new QGLTexture2D();
-            if (txName.toLower().endsWith(".dds"))
-                texture->setDdsImage(txName);
-            else
-                texture->setImage(QImage(txName));
-            palette->setTexture(index, texture);
+            mat->setTextureUrl(url);
         }
     }
 }

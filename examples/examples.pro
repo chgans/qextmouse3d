@@ -1,10 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = teapot cube basket painter stereo qpainter geometry sphere
-SUBDIRS += tutorials spot graphicsview planets displaylist cubeaccel
-SUBDIRS += pvcolor
-3ds {
-    SUBDIRS += 3dscube
-}
+SUBDIRS += tutorials graphicsview planets displaylist cubehouse
+SUBDIRS += pvcolor nesting colliding3dmice stereophoto
 
 
 #contains(QT_CONFIG, multimedia): for(p, QMAKE_INCDIR_QT) {

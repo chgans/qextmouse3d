@@ -49,9 +49,10 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLLightParameters
     \brief The QGLLightParameters class represents the parameters of a light in a 3D scene.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+    \ingroup qt3d::qml3d
 
     The functions in this class are a convenience wrapper for the OpenGL enumerations
     which control each light source in a 3D scene.  For the general ambient light in a

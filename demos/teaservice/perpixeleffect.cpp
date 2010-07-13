@@ -91,12 +91,13 @@ QList<QGL::VertexAttribute> PerPixelEffect::requiredFields() const
     return fields;
 }
 
-void PerPixelEffect::setActive(bool flag)
+void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!flag) {
         if (d->program) {
-            d->program->disableAttributeArray(0);
-            d->program->disableAttributeArray(1);
+            d->program->disableAttributeArray(QGL::Position);
+            d->program->disableAttributeArray(QGL::Normal);
             d->program->release();
         }
         return;
@@ -114,28 +115,26 @@ void PerPixelEffect::setActive(bool flag)
         d->program->addShader(d->fragmentLighting);
     }
     if (!d->program->isLinked()) {
-        d->program->bindAttributeLocation("vertexAttr", 0);
-        d->program->bindAttributeLocation("normalAttr", 1);
+        d->program->bindAttributeLocation("vertexAttr", QGL::Position);
+        d->program->bindAttributeLocation("normalAttr", QGL::Normal);
         d->program->link();
         d->modelViewUniform = d->program->uniformLocation("modelView");
         d->matrixUniform = d->program->uniformLocation("matrix");
         d->normalMatrixUniform = d->program->uniformLocation("normalMatrix");
     }
     d->program->bind();
-    d->program->enableAttributeArray(0);
-    d->program->enableAttributeArray(1);
+    d->program->enableAttributeArray(QGL::Position);
+    d->program->enableAttributeArray(QGL::Normal);
 }
 
 void PerPixelEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
     // Update the matrix uniforms.
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
-        QMatrix4x4 mv = painter->modelViewMatrix();
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
         d->program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
-        d->program->setUniformValue(d->modelViewUniform, mv);
-        d->program->setUniformValue(d->normalMatrixUniform, mv.normalMatrix());
+        d->program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
+        d->program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
     }
 
     // Bail out if the lights or materials have not changed.
@@ -143,20 +142,11 @@ void PerPixelEffect::update
         return;
 
     // Find the parameters for the single enabled light.
-    const QGLLightParameters *lparams = 0;
-    QMatrix4x4 ltransform;
-    for (int index = 0; index < painter->lightCount(); ++index) {
-        if (painter->isLightEnabled(index)) {
-            lparams = painter->lightParameters(index);
-            ltransform = painter->lightTransform(index);
-            break;
-        }
-    }
-    if (!lparams)
-        lparams = painter->lightParameters(0);
+    const QGLLightParameters *lparams = painter->mainLight();
+    QMatrix4x4 ltransform = painter->mainLightTransform();
 
     // Get the front material parameters.
-    const QGLMaterialParameters *mparams = painter->faceMaterial(QGL::FrontFaces);
+    const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
 
     // Set the uniform variables on the shader program.
     d->program->setUniformValue("acli", lparams->ambientColor());
@@ -181,9 +171,9 @@ void PerPixelEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
     if (attribute == QGL::Position)
-        setAttributeArray(d->program, 0, value);
+        setAttributeArray(d->program, QGL::Position, value);
     else if (attribute == QGL::Normal)
-        setAttributeArray(d->program, 1, value);
+        setAttributeArray(d->program, QGL::Normal, value);
 }
 
 QT_END_NAMESPACE

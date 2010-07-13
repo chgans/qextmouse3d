@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/" >
-        <file>cube.3ds</file>
-        <file>penguin.3ds</file>
-        <file>trolltech-q.3ds</file>
-        <file>basic-cube.3ds</file>
-    </qresource>
-</RCC>

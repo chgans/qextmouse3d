@@ -58,11 +58,10 @@ QStringList QGLBezierScenePlugin::keys() const
 
 QGLSceneFormatHandler *QGLBezierScenePlugin::create(QIODevice *device, const QUrl& url, const QString &format) const
 {
-    QGLBezierSceneHandler *handler = new QGLBezierSceneHandler;
-    handler->setDevice(device);
-    handler->setUrl(url);
-    handler->setFormat(format);
-    return handler;
+    Q_UNUSED(device);
+    Q_UNUSED(url);
+    Q_UNUSED(format);
+    return new QGLBezierSceneHandler;
 }
 
 Q_EXPORT_STATIC_PLUGIN(QGLBezierScenePlugin)

@@ -46,7 +46,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLSceneFormatHandler
     \brief The QGLSceneFormatHandler class defines the common format I/O interface for loading 3D scene formats.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::scene
 
@@ -150,6 +150,19 @@ QUrl QGLSceneFormatHandler::url() const
 void QGLSceneFormatHandler::setUrl(const QUrl& url)
 {
     d_ptr->url = url;
+}
+
+/*!
+    Decodes and applies \a options to this handler.  Generally this will be
+    called by the QGLAbstractScene::loadScene() method prior to reading
+    the model data with read().  Exactly what the string value may contain
+    and the meaning of the encoded options depends on each individual plugin.
+
+    This default implementation simply does nothing.
+*/
+void QGLSceneFormatHandler::decodeOptions(const QString &options)
+{
+    Q_UNUSED(options);
 }
 
 /*!

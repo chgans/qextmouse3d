@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglpainter.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglcamera.h"
@@ -76,8 +76,8 @@ private:
     static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
-    QGLDisplayList cube;
-    QGLDisplayList teapot;
+    QGLBuilder cube;
+    QGLBuilder teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
 };
@@ -100,7 +100,6 @@ void ShapesWidget::initializeGL()
 
     painter.setCullFaces(QGL::CullDisabled);
 
-    painter.setLightEnabled(0, true);
     painter.setLightModel(&twoSidedModel);
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
@@ -119,8 +118,9 @@ void ShapesWidget::paintGL()
 
     painter.setDepthTestingEnabled(false);
 
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect());
+    QMatrix4x4 projm;
+    projm.ortho(rect());
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
     QRect wrect = rect();
@@ -271,13 +271,9 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     // Overpaint some lines to show the triangle boundaries.
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(202, 170, 0));
-    QGLIndexArray indices;
-    indices.append(0);
-    indices.append(2);
-    indices.append(0);
-    indices.append(3);
+    static ushort const indices[] = {0, 2, 0, 3};
     painter->setVertexAttribute(QGL::Position, vertices);
-    painter->draw(QGL::Lines, indices);
+    painter->draw(QGL::Lines, indices, 4);
 
     drawText(painter, rect, tr("Triangle fan"));
 }
@@ -290,7 +286,7 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->modelViewMatrix().push();
 
     painter->setViewport(rect);
-    camera.apply(painter, rect.size());
+    painter->setCamera(&camera);
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
     cube.draw(painter);
@@ -311,7 +307,7 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->modelViewMatrix().push();
 
     painter->setViewport(rect);
-    camera.apply(painter, rect.size());
+    painter->setCamera(&camera);
 
     // Need a one-sided lighting model for the teapot.
     painter->setLightModel(&oneSidedModel);

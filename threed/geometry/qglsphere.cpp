@@ -40,15 +40,17 @@
 ****************************************************************************/
 
 #include "qglsphere.h"
-#include "qgldisplaylist.h"
-#include "qvectorarray.h"
+#include "qglbuilder.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include <QtGui/qquaternion.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLSphere
     \brief The QGLSphere class represents the geometry of a simple sphere in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -56,7 +58,7 @@ QT_BEGIN_NAMESPACE
     draws it at (10, 25, 0) in a QGLPainter:
 
     \code
-    QGLDisplayList list;
+    QGLBuilder list;
     list << QGLSphere(2);
     painter.translate(10, 25, 0);
     list.draw(&painter);
@@ -83,7 +85,7 @@ QT_BEGIN_NAMESPACE
     alternative division algorithms that can give better results
     for texture mapping.
 
-    \sa QGLIcoSphere, QGLCubeSphere, QGLDisplayList
+    \sa QGLIcoSphere, QGLCubeSphere, QGLBuilder
 */
 
 /*!
@@ -137,7 +139,7 @@ QGLSphere::~QGLSphere()
 /*!
     \class QGLIcoSphere
     \brief The QGLIcoSphere class represents the geometry of a simple sphere in 3D space derived from an icosahedron.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -148,7 +150,7 @@ QGLSphere::~QGLSphere()
     sphere.  It is best used when its the pixel distribution of the
     texture should be as even as possible over the sphere.
 
-    \sa QGLSphere, QGLCubeSphere, QGLDisplayList
+    \sa QGLSphere, QGLCubeSphere, QGLBuilder
 */
 
 /*!
@@ -162,7 +164,7 @@ QGLSphere::~QGLSphere()
 /*!
     \class QGLCubeSphere
     \brief The QGLCubeSphere class represents the geometry of a simple sphere in 3D space derived by subdividing a cube.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -171,7 +173,7 @@ QGLSphere::~QGLSphere()
     The cube sphere has a more even distributions of vertices than
     QGLSphere while still being relatively simple to provide a texture map for.
 
-    \sa QGLSphere, QGLIcoSphere, QGLDisplayList
+    \sa QGLSphere, QGLIcoSphere, QGLBuilder
 */
 
 /*!
@@ -188,7 +190,7 @@ QGLSphere::~QGLSphere()
     Builds the geometry for \a sphere within the specified
     display \a list.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLSphere& sphere)
 {
     qreal scale = sphere.diameter();
     int divisions = qMax(sphere.subdivisionDepth() - 1, 0);
@@ -198,9 +200,9 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere)
     // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
     int total = 2*(1 << divisions);
 
-    list.newSection();
-    list.begin(QGL::TRIANGLE);
-    QGLPrimitive *prim = list.currentPrimitive();
+    //list.begin(QGL::TRIANGLE);
+    //QGeometryData *prim = list.currentPrimitive();
+    QGeometryData prim;
 
     const QVector3D initialVector(0, 0, 1);
     const QVector3D zAxis(0, 0, 1);
@@ -241,17 +243,17 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLSphere& sphere)
             vc = nc * scale / 2.0f;
             vd = nd * scale / 2.0f;
 
-            prim->appendVertex(va, vb, vc);
-            prim->appendNormal(na, nb, nc);
-            prim->appendTexCoord(ta, tb, tc);
+            prim.appendVertex(va, vb, vc);
+            prim.appendNormal(na, nb, nc);
+            prim.appendTexCoord(ta, tb, tc);
 
-            prim->appendVertex(va, vc, vd);
-            prim->appendNormal(na, nc, nd);
-            prim->appendTexCoord(ta, tc, td);
+            prim.appendVertex(va, vc, vd);
+            prim.appendNormal(na, nc, nd);
+            prim.appendTexCoord(ta, tc, td);
         }
     }
 
-    list.end();
+    list.addTriangle(prim);
     return list;
 }
 
@@ -265,7 +267,7 @@ const qreal phi = 1.618033988749894848f;
     Builds the geometry for \a sphere within the specified
     display \a list.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLIcoSphere& sphere)
 {
     qreal scale = sphere.diameter();
     int depth = sphere.subdivisionDepth();
@@ -430,7 +432,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
     }
 
     // Add the final vertices to the display list.
-    list.newSection();
     list.begin(QGL::TRIANGLE);
     list.addVertexArray(vertices);
     list.addNormalArray(normals);
@@ -445,7 +446,7 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLIcoSphere& sphere)
     Builds the geometry for \a sphere within the specified
     display \a list.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere)
 {
     /*
               A-----H
@@ -602,7 +603,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLCubeSphere& sphere)
     }
 
     // Add the final vertices to the display list.
-    list.newSection();
     list.begin(QGL::QUAD);
     list.addVertexArray(vertices);
     list.addNormalArray(normals);

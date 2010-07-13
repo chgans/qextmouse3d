@@ -10,21 +10,14 @@ SOURCES += main.cpp \
     mainwindow.cpp \
     shaderwizardglwidget.cpp \
     qglheightmap.cpp \
-    qglshaderprogrameffect.cpp \
     qglslsyntaxhighlighter.cpp \
-    materialinspector.cpp \
-    qglcolladafxeffect.cpp \
-    qglcolladafxeffectfactory.cpp
+    materialinspector.cpp
 HEADERS += mainwindow.h \
     shaderwizardglwidget.h \
     qglheightmap.h \
     rippleheightmap.h \
-    qglshaderprogrameffect.h \
     qglslsyntaxhighlighter.h \
-    materialinspector.h \
-    qglcolladafxeffect.h \
-    qglcolladafxeffectfactory.h \
-    qglcolladafxeffect_p.h
+    materialinspector.h
 FORMS += mainwindow.ui \
     materialinspector.ui
 RESOURCES = shaderwizard.qrc

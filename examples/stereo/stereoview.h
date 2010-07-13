@@ -43,7 +43,7 @@
 #define STEREOVIEW_H
 
 #include "qglview.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class StereoView : public QGLView
 {
@@ -57,9 +57,8 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLDisplayList list;
-    QGLSceneNode *teapot;
-    QGLSceneNode *cube;
+    QGLBuilder teapot;
+    QGLBuilder cube;
 };
 
 #endif

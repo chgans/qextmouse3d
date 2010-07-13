@@ -51,8 +51,30 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QGL::VertexAttribute
+    \since 4.8
+    This enum defines the type of vertex attribute to set on an effect with QGLPainter::setVertexAttribute()
+
+    \value Position The primary position of the vertex.
+    \value Normal The normal at each vertex.
+    \value Color The color at each vertex.
+    \value TextureCoord0 The texture co-ordinate at each vertex for texture unit 0.
+    \value TextureCoord1 The texture co-ordinate at each vertex for texture unit 1.
+    \value TextureCoord2 The texture co-ordinate at each vertex for texture unit 2.
+    \value CustomVertex0 First custom vertex attribute.  Custom attributes
+           can be used for any purpose: texture co-ordinates, colors,
+           or other values of interest to shader programs.
+    \value CustomVertex1 Second custom vertex attribute.
+    \value UserVertex First user-assigned vertex attribute.  Additional
+           attributes can be assigned as UserVertex, UserVertex + 1, etc.
+           Note that on OpenGL/ES 2.0 systems, usually the maximum
+           number of vertex attributes is 8, which means that user-assigned
+           vertex attributes will be out of range.
+*/
+
+/*!
     \enum QGL::Face
-    \since 4.7
+    \since 4.8
     This enum defines the faces to apply an operation to.
 
     \value FrontFaces Apply the operation to front faces only.
@@ -62,7 +84,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::CullFace
-    \since 4.7
+    \since 4.8
     This enum defines the face culling mode to use with QGLPainter::setCullFaces().
 
     \value CullDisabled Face culling is disabled.
@@ -76,17 +98,16 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::DrawingMode
-    \since 4.7
+    \since 4.8
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().
 
-    \value NoDrawingMode The drawing mode is not specified.
     \value Points Draws a point at each of the specified vertices.
     \value Lines Draws a series of unconnected line segments, using two
            vertices for each line.
-    \value LineLoop series of connected line seguments, from the
+    \value LineLoop series of connected line segments, from the
            first to the last vertex, and then connecting the last
            vertex back to the first vertex.
-    \value LineStrip Draws a series of connected line seguments, from the
+    \value LineStrip Draws a series of connected line segments, from the
            first to the last vertex.
     \value Triangles Draws a series of triangles using three vertices from
            the enabled vertex arrays for each triangle.
@@ -97,11 +118,29 @@ QT_BEGIN_NAMESPACE
            first vertex in the enabled vertex arrays, starting with the
            first three vertices and then one extra vertex for each additional
            triangle.
+    \value LinesAdjacency Draws a series of unconnected lines, using
+           two vertices for each line to define the positions, and an
+           additional vertices per line to define adjacent points.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
+    \value LineStripAdjacency Draws a series of connected line segments,
+           from the second to the second last vertex.  The first and last
+           vertices define adjacent points.  This drawing mode is only
+           supported on OpenGL systems that have geometry shaders.
+    \value TrianglesAdjacency Draws a series of triangles using three
+           vertices from the enabled vertex arrays for each triangle.
+           An additional three vertices per triangle are supplied to
+           define adjacent points.  This drawing mode is only supported
+           on OpenGL systems that have geometry shaders.
+    \value TriangleStripAdjacency Draws a series of triangles in a strip,
+           with additional vertices for points adjacent to the strip.
+           This drawing mode is only supported on OpenGL systems that
+           have geometry shaders.
 */
 
 /*!
     \enum QGL::StandardEffect
-    \since 4.7
+    \since 4.8
     This enum defines a standard drawing effect for use with QGLPainter.
 
     \value FlatColor Single flat color specified by QGLPainter::setColor()
@@ -117,45 +156,25 @@ QT_BEGIN_NAMESPACE
     \value LitMaterial Material colors specified by
            QGLPainter::setFaceMaterial() with lighting enabled.  It is
            assumed that per-vertex normals are provided.  Under OpenGL/ES 2.0
-           only one light is supported.
+           only one light is supported, with single-sided materials,
+           and no attenuation.
     \value LitDecalTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_DECAL combination rule.  The texture is
            sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
+           supported, with single-sided materials, and no attenuation.
     \value LitModulateTexture2D Map a texture across the fragments, combined
            with the material color specified by QGLPainter::setFaceMaterial(),
            and lighting using the GL_MODULATE combination rule.  The texture
            is sourced from texture unit 0.  It is assumed that per-vertex
            normals are provided.  Under OpenGL/ES 2.0 only one light is
-           supported.
-*/
-
-/*!
-    \enum QGL::TextureFilter
-    \since 4.7
-    This enum defines the minifying or magnifying filter to use for a texture.
-
-    \value Nearest Use the value that is nearest the pixel being textured.
-    \value Linear Use the linear weighted average of the nearby pixels.
-    \value NearestMipmapNearest Choose the mipmap that is nearest in size
-        and then use the value that is nearest the pixel being textured.
-    \value NearestMipmapLinear Choose the two mipmaps that most closely
-        match the final pixel size, select a pixel from each using the
-        Nearest criteria, and then produce the linear weighted average
-        of those two values.
-    \value LinearMipmapNearest Choose the mipmap that is nearest in size
-        and then use the linear weighted average of the nearby pixels.
-    \value LinearMipmapLinear Choose the two mipmaps that most closely
-        match the final pixel size, select a pixel from each using the
-        Linear criteria, and then produce the linear weighted average
-        of those two values.
+           supported, with single-sided materials, and no attenuation.
 */
 
 /*!
     \enum QGL::TextureWrap
-    \since 4.7
+    \since 4.8
     This enum defines the wrapping mode for texture co-ordinates.
 
     \value Repeat Ignore the integer part of the texture co-ordinate and
@@ -185,7 +204,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \enum QGL::ClearBuffer
-    \since 4.7
+    \since 4.8
     This enum defines a buffer to be cleared with glClear().
 
     \value NoClearBuffers No buffers should be cleared.
@@ -195,25 +214,26 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \enum QGL::Eye
+    \since 4.8
+    This enum defines the eye that is being rendered by a QGLPainter
+    when stereo rendering is in effect.
+
+    \value NoEye Do not perform an eye adjustment on the camera because
+        stereo rendering is not in effect.
+    \value LeftEye Render the scene from the perspective of the left eye.
+    \value RightEye Render the scene from the perspective of the right eye.
+*/
+
+/*!
     \enum QGL::Smoothing
-    \since 4.7
-    \relates QGLDisplayList
+    \since 4.8
+    \relates QGLBuilder
 
     This enum defines vertex smoothing treatments.
     \value NoSmoothing No smoothing processing is performed.
     \value Smooth Lighting normals averaged for each face for a smooth appearance.
     \value Faceted Lighting normals seperate for each face for a faceted appearance.
-*/
-
-/*!
-    \enum QGL::Strategy
-    \since 4.7
-    \relates QGLDisplayList
-
-    This enum defines vertex processing strategies for performance tuning.
-    \value NullStrategy No vertex processing is done - use this for raw data.
-    \value HashLookup The vertices are processed using a QHash - use for random data.
-    \value MapLookup The vertices are processed using a QMap - use for spatially ordered data.
 */
 
 QT_END_NAMESPACE

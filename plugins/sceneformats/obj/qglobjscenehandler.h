@@ -49,10 +49,12 @@
 
 QT_BEGIN_NAMESPACE
 
+//! [1]
 class QGLObjSceneHandler : public QGLSceneFormatHandler
 {
 public:
     QGLAbstractScene *read();
+//! [1]
 
 private:
     void loadMaterialLibrary(const QString& name);
@@ -60,7 +62,9 @@ private:
     QGLTexture2D *loadTexture(const QString& name);
 
     QGLMaterialCollection *palette;
+//! [2]
 };
+//! [2]
 
 QT_END_NAMESPACE
 

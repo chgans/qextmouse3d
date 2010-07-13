@@ -63,6 +63,12 @@ public:
     explicit QGLAbstractScene(QObject *parent = 0);
     virtual ~QGLAbstractScene();
 
+    virtual void setPickable(bool enable);
+    virtual bool pickable() const;
+    virtual void generatePickNodes();
+    QList<QGLPickNode *> pickNodes() const;
+    int nextPickId();
+
     virtual QList<QGLSceneObject *> objects
         (QGLSceneObject::Type type) const = 0;
 
@@ -72,9 +78,14 @@ public:
     virtual QGLSceneObject *defaultObject(QGLSceneObject::Type type);
 
     static QGLAbstractScene *loadScene
-        (QIODevice *device, const QUrl& url, const QString& format = QString());
+        (QIODevice *device, const QUrl& url, const QString& format = QString(),
+	 const QString& options = QString());
     static QGLAbstractScene *loadScene
-        (const QString& fileName, const QString& format = QString());
+        (const QString& fileName, const QString& format = QString(),
+	 const QString& options = QString());
+
+protected:
+    void childEvent(QChildEvent * event);
 
 private:
     QGLAbstractScenePrivate *d_ptr;

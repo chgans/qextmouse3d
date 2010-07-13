@@ -44,7 +44,6 @@
 
 #include <QtOpenGL/qglbuffer.h>
 #include "qcustomdataarray.h"
-#include "qglvertexdescription.h"
 #include "qglattributevalue.h"
 #include <QtCore/qlist.h>
 
@@ -57,12 +56,16 @@ QT_MODULE(Qt3d)
 class QGLVertexBufferPrivate;
 class QGLPainter;
 class QGLAbstractEffect;
+class QGLShaderProgram;
 
 class Q_QT3D_EXPORT QGLVertexBuffer
 {
 public:
     QGLVertexBuffer();
+    QGLVertexBuffer(const QGLVertexBuffer& other);
     ~QGLVertexBuffer();
+
+    QGLVertexBuffer& operator=(const QGLVertexBuffer& other);
 
     enum PackingHint
     {
@@ -85,7 +88,7 @@ public:
     void addAttribute(QGL::VertexAttribute attribute,
                       const QArray<QVector4D>& value);
     void addAttribute(QGL::VertexAttribute attribute,
-                      const QArray<QColor4B>& value);
+                      const QArray<QColor4ub>& value);
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
 
@@ -93,26 +96,27 @@ public:
         (QGL::VertexAttribute attribute, int index, int count,
          const QGLAttributeValue& value);
 
+    QGLAttributeValue attributeValue(QGL::VertexAttribute attribute) const;
+
     int vertexCount() const;
+    bool isEmpty() const { return vertexCount() == 0; }
 
     bool upload();
     bool isUploaded() const;
 
-    QGLBuffer *buffer() const;
+    QGLBuffer buffer() const;
 
     bool bind() const;
     void release() const;
 
-private:
-    QScopedPointer<QGLVertexBufferPrivate> d_ptr;
+    void setAttributeArrays(QGLShaderProgram *program);
 
-    Q_DISABLE_COPY(QGLVertexBuffer)
+private:
+    QGLVertexBufferPrivate *d_ptr;
+
     Q_DECLARE_PRIVATE(QGLVertexBuffer)
 
     friend class QGLPainter;
-
-    void setOnEffect(QGLAbstractEffect *effect) const;
-    QList<QGL::VertexAttribute> attributes() const;
 };
 
 QT_END_NAMESPACE

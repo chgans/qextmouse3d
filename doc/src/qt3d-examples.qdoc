@@ -50,6 +50,7 @@
     \o \l{painter}{Painter}
     \o \l{stereo}{Stereo}
     \o \l{teapot}{Teapot}
+    \o \l{pvcolor}{Per-vertex Color}
     \endlist
 
     \l{index.html}{Return to the main Qt/3D page}.

@@ -44,11 +44,6 @@
 
 #include "qt3dglobal.h"
 
-#include <QtCore/qvector.h>
-#include <QtGui/qvector3d.h>
-#include <QtGui/qvector2d.h>
-#include "qcolor4b.h"
-
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
@@ -57,6 +52,18 @@ QT_MODULE(Qt3d)
 
 namespace QGL
 {
+    enum VertexAttribute {
+        Position,
+        Normal,
+        Color,
+        TextureCoord0,
+        TextureCoord1,
+        TextureCoord2,
+        CustomVertex0,
+        CustomVertex1,
+        UserVertex
+    };
+
     enum Face
     {
         FrontFaces                  = 0x0404, // GL_FRONT
@@ -76,14 +83,17 @@ namespace QGL
 
     enum DrawingMode
     {
-        NoDrawingMode               = -1,
         Points                      = 0x0000, // GL_POINTS
         Lines                       = 0x0001, // GL_LINES
         LineLoop                    = 0x0002, // GL_LINE_LOOP
         LineStrip                   = 0x0003, // GL_LINE_STRIP
         Triangles                   = 0x0004, // GL_TRIANGLES
         TriangleStrip               = 0x0005, // GL_TRIANGLE_STRIP
-        TriangleFan                 = 0x0006  // GL_TRIANGLE_FAN
+        TriangleFan                 = 0x0006, // GL_TRIANGLE_FAN
+        LinesAdjacency              = 0x000A, // GL_LINES_ADJACENCY
+        LineStripAdjacency          = 0x000B, // GL_LINE_STRIP_ADJACENCY
+        TrianglesAdjacency          = 0x000C, // GL_TRIANGLES_ADJACENCY
+        TriangleStripAdjacency      = 0x000D  // GL_TRIANGLE_STRIP_ADJACENCY
     };
 
     enum StandardEffect
@@ -95,16 +105,6 @@ namespace QGL
         LitMaterial,
         LitDecalTexture2D,
         LitModulateTexture2D
-    };
-
-    enum TextureFilter
-    {
-        Nearest                     = 0x2600,   // GL_NEAREST
-        Linear                      = 0x2601,   // GL_LINEAR
-        NearestMipmapNearest        = 0x2700,   // GL_NEAREST_MIPMAP_NEAREST
-        NearestMipmapLinear         = 0x2702,   // GL_NEAREST_MIPMAP_LINEAR
-        LinearMipmapNearest         = 0x2701,   // GL_LINEAR_MIPMAP_NEAREST
-        LinearMipmapLinear          = 0x2703    // GL_LINEAR_MIPMAP_LINEAR
     };
 
     enum TextureWrap
@@ -125,18 +125,18 @@ namespace QGL
     };
     Q_DECLARE_FLAGS(ClearBuffers, ClearBuffer)
 
+    enum Eye
+    {
+        NoEye,
+        LeftEye,
+        RightEye
+    };
+
     enum Smoothing
     {
         NoSmoothing,
         Smooth,
         Faceted
-    };
-
-    enum Strategy
-    {
-        NullStrategy,
-        HashLookup,
-        MapLookup
     };
 };
 

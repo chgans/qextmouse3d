@@ -54,13 +54,14 @@ QT_MODULE(Qt3d)
 
 class QGLSceneNode;
 class QGLSceneObject;
+class QGL3dsSceneHandler;
 class Lib3dsFile;
 
 class QGL3dsScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit QGL3dsScene(Lib3dsFile *file, QUrl url, QObject *parent = 0);
+    explicit QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h);
     virtual ~QGL3dsScene();
 
     QList<QGLSceneObject *> objects(QGLSceneObject::Type type) const;

@@ -41,6 +41,7 @@
 
 #include "qgltexturecube.h"
 #include "qgltexture2d_p.h"
+#include "qgltextureutils_p.h"
 #include "qglpainter_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -48,7 +49,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLTextureCube
     \brief The QGLTextureCube class represents a cube map texture object for GL painting operations.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
 
@@ -98,7 +99,7 @@ public:
     QGLTextureCubePrivate();
     ~QGLTextureCubePrivate();
 
-    virtual void bindImage(GLenum target, bool firstTime, const QImage& image);
+    void bindImages(QGLTexture2DTextureInfo *info);
 
     QImage otherImages[5];
     uint changedFaces;
@@ -113,46 +114,35 @@ QGLTextureCubePrivate::~QGLTextureCubePrivate()
 {
 }
 
-void QGLTextureCubePrivate::bindImage
-    (GLenum, bool firstTime, const QImage& image)
+void QGLTextureCubePrivate::bindImages(QGLTexture2DTextureInfo *info)
 {
+    QSize scaledSize(size);
 #if defined(QT_OPENGL_ES_2)
-    bool nonNullImages = false;
+    if ((bindOptions & QGLContext::MipmapBindOption) ||
+            horizontalWrap != QGL::ClampToEdge ||
+            verticalWrap != QGL::ClampToEdge) {
+        // ES 2.0 does not support NPOT textures when mipmaps are in use,
+        // or if the wrap mode isn't ClampToEdge.
+        scaledSize = QSize(qt_gl_next_power_of_two(scaledSize.width()),
+                           qt_gl_next_power_of_two(scaledSize.height()));
+    }
 #endif
 
     // Handle the first face.
-    if (firstTime || (changedFaces & (1 << 0)) != 0) {
-        QGLTexture2DPrivate::bindImage
-            (GL_TEXTURE_CUBE_MAP_POSITIVE_X, firstTime, image);
-#if defined(QT_OPENGL_ES_2)
-        if (!image.isNull())
-            nonNullImages = true;
-#endif
-    }
+    if (!image.isNull())
+        info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, image, scaledSize);
+    else if (size.isValid())
+        info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, scaledSize);
 
     // Handle the other faces.
     for (int face = 1; face < 6; ++face) {
-        if (!firstTime && (changedFaces & (1 << face)) == 0)
-            continue;
-        QGLTexture2DPrivate::bindImage
-            (GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-             firstTime, otherImages[face - 1]);
-#if defined(QT_OPENGL_ES_2)
-        if (!otherImages[face - 1].isNull())
-            nonNullImages = true;
-#endif
+        if (!otherImages[face - 1].isNull()) {
+            info->tex.uploadFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+                                 otherImages[face - 1], scaledSize);
+        } else {
+            info->tex.createFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, scaledSize);
+        }
     }
-
-    // Clear the change flags.
-    changedFaces = 0;
-
-    // Generate mipmaps if OpenGL/ES 2.0.
-#if defined(QT_OPENGL_ES_2)
-    if (nonNullImages && generateMipmap) {
-        glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    }
-#endif
 }
 
 /*!
@@ -350,79 +340,39 @@ void QGLTextureCube::copyImage
                     GL_UNSIGNED_BYTE, img.bits());
 #if defined(QT_OPENGL_ES_2)
     Q_D(QGLTextureCube);
-    if (d->generateMipmap)
+    if (d->bindOptions & QGLContext::MipmapBindOption)
         glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 #endif
 }
 
 /*!
-    Returns the texture minifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    smaller than the texture itself.  The default value is
-    QGL::LinearMipmapLinear.
+    Returns the options to use when binding the image() to an OpenGL
+    context for the first time.  The default options are
+    QGLContext::LinearFilteringBindOption |
+    QGLContext::InvertedYBindOption | QGLContext::MipmapBindOption.
 
-    \sa setMinifyFilter(), magnifyFilter()
+    \sa setBindOptions()
 */
-QGL::TextureFilter QGLTextureCube::minifyFilter() const
+QGLContext::BindOptions QGLTextureCube::bindOptions() const
 {
     Q_D(const QGLTextureCube);
-    return d->minifyFilter;
+    return d->bindOptions;
 }
 
 /*!
-    Sets the texture minifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is smaller than the texture itself.
+    Sets the \a options to use when binding the image() to an
+    OpenGL context.  If the image() has already been bound,
+    then changing the options will cause it to be recreated
+    from image() the next time bind() is called.
 
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    If generateMipmap() is false and \a value refers to a mipmap
-    filtering mode, then the equivalent non-mipmap mode of
-    QGL::Linear or QGL::Nearest will be used instead.
-
-    \sa minifyFilter(), setMagnifyFilter()
+    \sa bindOptions(), bind()
 */
-void QGLTextureCube::setMinifyFilter(QGL::TextureFilter value)
+void QGLTextureCube::setBindOptions(QGLContext::BindOptions options)
 {
     Q_D(QGLTextureCube);
-    if (d->minifyFilter != value) {
-        d->minifyFilter = value;
-        ++(d->parameterGeneration);
-    }
-}
-
-/*!
-    Returns the texture magnifying filter for generating pixels when
-    the texture is being mapped to an area of the screen that is
-    larger than the texture itself.  The default value is
-    QGL::Linear.
-
-    \sa setMagnifyFilter(), minifyFilter()
-*/
-QGL::TextureFilter QGLTextureCube::magnifyFilter() const
-{
-    Q_D(const QGLTextureCube);
-    return d->magnifyFilter;
-}
-
-/*!
-    Sets the texture magnifying filter to \a value, which indicates
-    how to generate pixels when the texture is being mapped to an
-    area of the screen that is larger than the texture itself.
-    The only valid values are QGL::Nearest and QGL::Linear.
-
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    \sa magnifyFilter(), setMinifyFilter()
-*/
-void QGLTextureCube::setMagnifyFilter(QGL::TextureFilter value)
-{
-    Q_D(QGLTextureCube);
-    if (d->magnifyFilter != value) {
-        d->magnifyFilter = value;
-        ++(d->parameterGeneration);
+    if (d->bindOptions != options) {
+        d->bindOptions = options;
+        ++(d->imageGeneration);
     }
 }
 
@@ -497,37 +447,6 @@ void QGLTextureCube::setVerticalWrap(QGL::TextureWrap value)
 }
 
 /*!
-    Returns true if mipmaps should be generated for this texture
-    whenever the face images change; false otherwise.  The default
-    value is true.
-
-    \sa setGenerateMipmap()
-*/
-bool QGLTextureCube::generateMipmap() const
-{
-    Q_D(const QGLTextureCube);
-    return d->generateMipmap;
-}
-
-/*!
-    Enables or disables the generation of mipmaps for this
-    texture whenever the face images change according to \a value.
-
-    The \a value will not be applied to the texture in the GL
-    server until the next call to bind().
-
-    \sa generateMipmap()
-*/
-void QGLTextureCube::setGenerateMipmap(bool value)
-{
-    Q_D(QGLTextureCube);
-    if (d->generateMipmap != value) {
-        d->generateMipmap = value;
-        ++(d->parameterGeneration);
-    }
-}
-
-/*!
     Binds this texture to the cube map texture target.
 
     If this texture object is not associated with an identifier in
@@ -574,9 +493,9 @@ GLuint QGLTextureCube::textureId() const
     if (!ctx)
         return 0;
     QGLTexture2DTextureInfo *info = d->infos;
-    while (info != 0 && info->context != ctx)
+    while (info != 0 && info->tex.context() != ctx)
         info = info->next;
-    return info ? info->textureId : 0;
+    return info ? info->tex.textureId() : 0;
 }
 
 /*!

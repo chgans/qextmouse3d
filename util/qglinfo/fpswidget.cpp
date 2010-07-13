@@ -2,6 +2,9 @@
 
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
+#include <QtOpenGL/private/qglextensions_p.h>
+
+#include <private/qglextensions_p.h>
 
 static GLfloat materialColor[] = { 0.1f, 0.85f, 0.25f, 1.0f };
 

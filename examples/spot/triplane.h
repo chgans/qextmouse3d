@@ -47,7 +47,7 @@
 #include <QSizeF>
 
 class QPlane3D;
-class QGLMaterialParameters;
+class QGLMaterial;
 
 class TriPlane : public QGLGeometry
 {
@@ -62,7 +62,7 @@ public:
 private:
     QVector<QGLGeometry*> mStrips;
     QVector3D mNormal;
-    QGLMaterialParameters *mat;
+    QGLMaterial *mat;
 };
 
 #endif // TRIPLANE_H

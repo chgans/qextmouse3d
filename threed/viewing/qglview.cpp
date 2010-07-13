@@ -41,19 +41,20 @@
 
 #include "qglview.h"
 #include "qglframebufferobject.h"
-#include "qgldepthbufferoptions.h"
-#include "qglblendoptions.h"
+#include "qglext.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
-#include <QtCore/qcoreapplication.h>
+#include <QtGui/qapplication.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qdatetime.h>
+#include <QtCore/qdebug.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLView
     \brief The QGLView class extends QGLWidget with support for 3D viewing.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::viewing
 
@@ -87,8 +88,8 @@ QT_BEGIN_NAMESPACE
     then stereo viewing is disabled and only a single image will
     be rendered per frame.
 
-    Two kinds of stereo viewing are possible: hardware stereo
-    and simulated stereo.
+    Three kinds of stereo viewing are possible: hardware stereo,
+    anaglyph stereo, and double image stereo.
 
     Hardware stereo relies upon specialized hardware that can render
     the left and right eye images into separate buffers and then show
@@ -96,8 +97,8 @@ QT_BEGIN_NAMESPACE
     or similar technology.  Hardware stereo is the default if the
     hardware supports it.
 
-    Simulated stereo is used when the hardware doesn't have specialized
-    stereo buffer tracking support.  The left image is masked by a red
+    Anaglyph stereo is used when the hardware doesn't have specialized
+    stereo buffer support.  The left image is masked by a red
     filter and the right image is masked by a cyan filter.  This makes
     the resulting images suitable for viewing with standard red-cyan
     anaglyph glasses.
@@ -112,6 +113,15 @@ QT_BEGIN_NAMESPACE
     stereo is not available and stereo viewing is not critical to
     the application, then stereo can be disabled by setting
     QGLCamera::eyeSeparation() to zero.
+
+    Double image stereo involves drawing the left and right eye
+    images in a double-wide or double-high window, with the hardware
+    combining the images.  Four different configurations are available:
+    DoubleWideLeftRight, DoubleWideRightLeft, DoubleHighLeftRight,
+    and DoubleHighRightLeft, according to the layout of the eye images.
+    Double image stereo is selected by calling setStereoType().  It is
+    the responsibility of the application to resize the window to
+    twice its normal size to accomodate the images.
 
     Ctrl-Left and Ctrl-Right can be used to make the eye separation
     smaller or larger under keyboard control.
@@ -129,6 +139,7 @@ QT_BEGIN_NAMESPACE
            problems with object picking.  Disabled by default.
     \value CameraNavigation Camera navigation using the keyboard and mouse
            is enabled.  Enabled by default.
+    \omitvalue PaintingLog
 */
 
 /*!
@@ -138,6 +149,14 @@ QT_BEGIN_NAMESPACE
     \value Hardware Specialized stereo hardware is being used.
     \value RedCyanAnaglyph Stereo is being simulated for viewing by
         red-cyan anaglyph classes.
+    \value DoubleWideLeftRight The view is double-wide with the left eye
+        image on the left of the window.
+    \value DoubleWideRightLeft The view is double-wide with the left eye
+        image on the right of the window.
+    \value DoubleHighLeftRight The view is double-high with the left eye
+        image on the top of the window.
+    \value DoubleHighRightLeft The view is double-high with the left eye
+        image on the bottom of the window.
 */
 
 class QGLViewPrivate
@@ -166,20 +185,19 @@ public:
 
         panning = false;
         startPan = QPoint(-1, -1);
-
-        depthBufferOptions.setEnabled(true);
-        depthBufferOptions.setFunction(QGLDepthBufferOptions::Less);
-
-        blendOptions.setEnabled(true);
-        blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-        blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-        blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
+        lastPan = QPoint(-1, -1);
+        panModifiers = Qt::NoModifier;
 
         QObject::connect(defaultCamera, SIGNAL(projectionChanged()),
                          parent, SLOT(cameraChanged()));
         QObject::connect(defaultCamera, SIGNAL(viewChanged()),
                          parent, SLOT(cameraChanged()));
+
+        logTime.start();
+        lastFrameTime.start();
+        QByteArray env = qgetenv("QT3D_LOG_EVENTS");
+        if (env == "1")
+            options |= QGLView::PaintingLog;
     }
     ~QGLViewPrivate()
     {
@@ -200,9 +218,91 @@ public:
     QGLCamera *camera;
     bool panning;
     QPoint startPan;
-    QGLDepthBufferOptions depthBufferOptions;
-    QGLBlendOptions blendOptions;
+    QPoint lastPan;
+    QVector3D startEye;
+    QVector3D startCenter;
+    QVector3D startUpVector;
+    Qt::KeyboardModifiers panModifiers;
+    QTime logTime;
+    QTime enterTime;
+    QTime lastFrameTime;
+
+    inline void logEnter(const char *message);
+    inline void logLeave(const char *message);
+
+    void processStereoOptions(QGLView *view);
 };
+
+inline void QGLViewPrivate::logEnter(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    enterTime.start();
+    int sinceLast = lastFrameTime.restart();
+    qDebug("LOG[%d:%02d:%02d.%03d]: ENTER: %s (%d ms since last enter)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, sinceLast);
+}
+
+inline void QGLViewPrivate::logLeave(const char *message)
+{
+    if ((options & QGLView::PaintingLog) == 0)
+        return;
+    int ms = logTime.elapsed();
+    int duration = enterTime.elapsed();
+    qDebug("LOG[%d:%02d:%02d.%03d]: LEAVE: %s (%d ms elapsed)",
+           ms / 3600000, (ms / 60000) % 60,
+           (ms / 1000) % 60, ms % 1000, message, duration);
+}
+
+void QGLViewPrivate::processStereoOptions(QGLView *view)
+{
+    if (stereoType == QGLView::Hardware)
+        return;
+
+    // If the command-line contains an option that starts with "-stereo-",
+    // then convert it into options that define the size and type of
+    // stereo window to use for a top-level QGLView.  Possible options:
+    //
+    //      nhd, vga, wvga, 720p - define the screen resolution
+    //      wide - use double-wide instead of double-high
+    //      rl - use right-left eye order instead of left-right
+    //
+    QStringList args = QApplication::arguments();
+    foreach (QString arg, args) {
+        if (!arg.startsWith(QLatin1String("-stereo-")))
+            continue;
+        QStringList opts = arg.mid(8).split(QLatin1Char('-'));
+        QGLView::StereoType stereoType;
+        QSize size(0, 0);
+        if (opts.contains(QLatin1String("nhd")))
+            size = QSize(640, 360);
+        else if (opts.contains(QLatin1String("vga")))
+            size = QSize(640, 480);
+        else if (opts.contains(QLatin1String("wvga")))
+            size = QSize(800, 480);
+        else if (opts.contains(QLatin1String("720p")))
+            size = QSize(1280, 720);
+        if (opts.contains(QLatin1String("wide"))) {
+            size = QSize(size.width() * 2, size.height());
+            if (opts.contains(QLatin1String("rl")))
+                stereoType = QGLView::DoubleWideRightLeft;
+            else
+                stereoType = QGLView::DoubleWideLeftRight;
+        } else {
+            size = QSize(size.width(), size.height() * 2);
+            if (opts.contains(QLatin1String("rl")))
+                stereoType = QGLView::DoubleHighRightLeft;
+            else
+                stereoType = QGLView::DoubleHighLeftRight;
+        }
+        if (size.width() > 0 && size.height() > 0)
+            view->resize(size);
+        view->setStereoType(stereoType);
+        break;
+    }
+}
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
@@ -228,6 +328,8 @@ QGLView::QGLView(QWidget *parent)
 {
     d = new QGLViewPrivate(this);
     setMouseTracking(true);
+    if (!parent)
+        d->processStereoOptions(this);
 }
 
 /*!
@@ -243,6 +345,8 @@ QGLView::QGLView(const QGLFormat& format, QWidget *parent)
 {
     d = new QGLViewPrivate(this);
     setMouseTracking(true);
+    if (!parent)
+        d->processStereoOptions(this);
 }
 
 /*!
@@ -288,12 +392,32 @@ void QGLView::setOption(QGLView::Option option, bool value)
 }
 
 /*!
-    Returns the type of stereo viewing technology that is in use:
-    Hardware or RedCyanAnaglyph.
+    Returns the type of stereo viewing technology that is in use.
+
+    \sa setStereoType()
 */
 QGLView::StereoType QGLView::stereoType() const
 {
     return d->stereoType;
+}
+
+/*!
+    Sets the \a type of stereo viewing technology that is in use.
+    The request takes effect at the next repaint.
+
+    The request is ignored stereoType() or \a type is Hardware,
+    because hardware stereo can only be enabled if the hardware
+    supports it, and then it can never be disabled.
+
+    \sa stereoType()
+*/
+void QGLView::setStereoType(QGLView::StereoType type)
+{
+    if (d->stereoType == Hardware || type == Hardware)
+        return;
+    if (d->stereoType == type)
+        return;
+    d->stereoType = type;
 }
 
 /*!
@@ -302,7 +426,7 @@ QGLView::StereoType QGLView::stereoType() const
     persist for the lifetime of the QGLView, or until
     deregisterObject() is called for \a objectId.
 
-    \sa deregisterObject(), pickGL()
+    \sa deregisterObject(), objectForPoint()
 */
 void QGLView::registerObject(int objectId, QObject *object)
 {
@@ -312,7 +436,7 @@ void QGLView::registerObject(int objectId, QObject *object)
 /*!
     Deregisters the object associated with \a objectId.
 
-    \sa registerObject(), pickGL()
+    \sa registerObject()
 */
 void QGLView::deregisterObject(int objectId)
 {
@@ -366,6 +490,43 @@ void QGLView::setCamera(QGLCamera *value)
     cameraChanged();
 }
 
+/*!
+    Maps \a point from viewport co-ordinates to eye co-ordinates.
+
+    The returned vector will have its x and y components set to the
+    position of the point on the near plane, and the z component
+    set to the inverse of the camera's near plane.
+
+    This function is used for converting a mouse event's position
+    into eye co-ordinates within the current camera view.
+
+    \sa QGLCamera::mapPoint()
+*/
+QVector3D QGLView::mapPoint(const QPoint &point) const
+{
+    QSize viewportSize(size());
+    qreal aspectRatio;
+
+    // Get the size of the underlying paint device.
+    int width = viewportSize.width();
+    int height = viewportSize.height();
+
+    // Use the device's DPI setting to determine the pixel aspect ratio.
+    int dpiX = logicalDpiX();
+    int dpiY = logicalDpiY();
+    if (dpiX <= 0 || dpiY <= 0)
+        dpiX = dpiY = 1;
+
+    // Derive the aspect ratio based on window and pixel size.
+    if (width <= 0 || height <= 0)
+        aspectRatio = 1.0f;
+    else
+        aspectRatio = ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
+
+    // Map the point into eye co-ordinates.
+    return d->camera->mapPoint(point, aspectRatio, viewportSize);
+}
+
 void QGLView::cameraChanged()
 {
     // The pick buffer will need to be refreshed at the new camera position.
@@ -399,12 +560,28 @@ void QGLView::performUpdate()
 */
 void QGLView::initializeGL()
 {
+    d->logEnter("QGLView::initializeGL");
     QGLPainter painter;
     painter.begin();
-    d->depthBufferOptions.apply(&painter);
-    d->blendOptions.apply(&painter);
+
+    // Set the default depth buffer options.
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+    glDepthRangef(0.0f, 1.0f);
+#else
+    glDepthRange(0.0f, 1.0f);
+#endif
+
+    // Set the default blend options.
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
+
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
+    d->logLeave("QGLView::initializeGL");
 }
 
 /*!
@@ -419,26 +596,81 @@ void QGLView::resizeGL(int w, int h)
     d->pickBufferForceUpdate = true;
 }
 
+static void qt_qglview_left_viewport
+    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
+{
+    switch (type) {
+    case QGLView::DoubleWideLeftRight:
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        painter->setViewportOffset(QPoint(size.width() / 2, 0));
+        painter->setViewport(size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width(), size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        painter->setViewportOffset(QPoint(0, size.height() / 2));
+        painter->setViewport(size.width(), size.height() / 2);
+        break;
+    default: break;
+    }
+}
+
+static void qt_qglview_right_viewport
+    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
+{
+    switch (type) {
+    case QGLView::DoubleWideLeftRight:
+        painter->setViewportOffset(QPoint(size.width() / 2, 0));
+        painter->setViewport(size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        painter->setViewportOffset(QPoint(0, size.height() / 2));
+        painter->setViewport(size.width(), size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        painter->setViewportOffset(QPoint(0, 0));
+        painter->setViewport(size.width(), size.height() / 2);
+        break;
+    default: break;
+    }
+}
+
 /*!
     \internal
 */
 void QGLView::paintGL()
 {
+    d->logEnter("QGLView::paintGL");
     // We may need to regenerate the pick buffer on the next mouse event.
     d->pickBufferMaybeInvalid = true;
 
     // Paint the scene contents.
     QGLPainter painter;
     painter.begin();
-    if (d->options & QGLView::ShowPicking) {
-        // If showing picking, then render normally.
+    painter.resetViewport();
+    if (d->options & QGLView::ShowPicking &&
+            d->stereoType == QGLView::RedCyanAnaglyph) {
+        // If showing picking, then render normally.  This really
+        // only works if we aren't using hardware or double stereo.
         painter.setPicking(true);
         painter.clearPickObjects();
+        painter.setEye(QGL::NoEye);
         earlyPaintGL(&painter);
-        d->camera->apply(&painter);
+        painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
-    } else if (d->camera->eyeSeparation() == 0.0f) {
+    } else if (d->camera->eyeSeparation() == 0.0f &&
+                    (d->stereoType == QGLView::Hardware ||
+                     d->stereoType == QGLView::RedCyanAnaglyph)) {
         // No camera separation, so draw without stereo.  If the hardware
         // has stereo buffers, then render the same image into both buffers.
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
@@ -448,60 +680,76 @@ void QGLView::paintGL()
                 glDrawBuffer(GL_BACK);
             else
                 glDrawBuffer(GL_FRONT);
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         } else
 #endif
         {
+            painter.setEye(QGL::NoEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter);
+            painter.setCamera(d->camera);
             paintGL(&painter);
         }
     } else {
-        // Determine the left and right camera positions and the viewport size.
-        QVector3D vector = d->camera->translation
-            (d->camera->eyeSeparation() / 2.0f, 0.0f, 0.0f);
-        QSize viewportSize = QSize(width(), height());
-
         // Paint the scene twice, from the perspective of each camera.
         // In RedCyanAnaglyph mode, the color mask is set each time to only
         // extract the color planes that we want to see through that eye.
         if (d->stereoType == QGLView::RedCyanAnaglyph) {
+            painter.setEye(QGL::LeftEye);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             earlyPaintGL(&painter);
 
             glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
+            painter.setEye(QGL::RightEye);
             glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
             glClear(GL_DEPTH_BUFFER_BIT);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        } else if (d->stereoType != QGLView::Hardware) {
+            // Render the stereo images into the two halves of the window.
+            QSize sz = size();
+            painter.setEye(QGL::LeftEye);
+            qt_qglview_left_viewport(&painter, sz, d->stereoType);
+            earlyPaintGL(&painter);
+            painter.setCamera(d->camera);
+            paintGL(&painter);
+            painter.setEye(QGL::RightEye);
+            qt_qglview_right_viewport(&painter, sz, d->stereoType);
+            painter.setCamera(d->camera);
+            paintGL(&painter);
+            painter.setViewportOffset(QPoint(0, 0));
+        }
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
-        } else {
+        else {
             bool doubleBuffered = doubleBuffer();
             if (doubleBuffered)
                 glDrawBuffer(GL_BACK_LEFT);
             else
                 glDrawBuffer(GL_FRONT_LEFT);
+            painter.setEye(QGL::LeftEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, -vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
 
             if (doubleBuffered)
                 glDrawBuffer(GL_BACK_RIGHT);
             else
                 glDrawBuffer(GL_FRONT_RIGHT);
+            painter.setEye(QGL::RightEye);
             earlyPaintGL(&painter);
-            d->camera->apply(&painter, viewportSize, vector);
+            painter.setCamera(d->camera);
             paintGL(&painter);
-#endif
         }
+#endif
     }
+    d->logLeave("QGLView::paintGL");
 }
 
 /*!
@@ -536,55 +784,19 @@ void QGLView::earlyPaintGL(QGLPainter *painter)
     Paints the scene onto \a painter.  The color and depth buffers
     will have already been cleared, and the camera() position set.
 
-    \sa pickGL(), earlyPaintGL()
+    If QGLPainter::isPicking() is set for \a painter, then the
+    function should paint the scene onto \a painter in
+    "object picking mode".  The scene will be rendered into a
+    background buffer using flat colors so that mouse events
+    can determine which object lies under the mouse pointer.
+
+    The default implementation of picking will typically just
+    render the scene normally.  However, some applications
+    may wish to render a simpler scene that omits unselectable
+    objects and uses simpler meshes for the selectable objects.
+
+    \sa earlyPaintGL()
 */
-
-/*!
-    Paints the scene onto \a painter in "object picking mode".
-    The scene is rendered into a background buffer using flat
-    colors so that mouse events can determine which object lies
-    under the mouse pointer.
-
-    The default implementation calls paintGL().  Subclasses may
-    override the default implementation of pickGL() to draw a
-    simpler version of the scene.
-
-    \sa needsPickGL(), paintGL(), QGLPainter::setPicking()
-*/
-void QGLView::pickGL(QGLPainter *painter)
-{
-    paintGL(painter);
-}
-
-/*!
-    Returns true if pickGL() needs to be called to refresh
-    the contents of the pick buffer; false otherwise.
-
-    The default implementation returns true if paintGL() has
-    been called since the last call to pickGL().  This can cause
-    the pick buffer to be regenerated very often if the scene
-    is animated.
-
-    If the animations are limited to objects bouncing in place,
-    rotating on an axis, or moving along a short path, the pick
-    buffer probably does not need to be regenerated every time
-    paintGL() is called.
-
-    Subclasses can override needsPickGL() and return false if
-    the scene has not changed substantially enough to require a
-    pick buffer change.  Subclasses will usually also override
-    pickGL() and render an elongated version of the object into
-    the pick buffer that covers the complete animation path.
-    This way, the user can click anywhere along the animation
-    path to select the object rather than having to hit a
-    moving object exactly to select it.
-
-    \sa pickGL()
-*/
-bool QGLView::needsPickGL()
-{
-    return d->pickBufferMaybeInvalid;
-}
 
 /*!
     Processes the mouse press event \a e.
@@ -593,7 +805,7 @@ void QGLView::mousePressEvent(QMouseEvent *e)
 {
     QObject *object;
     if (!d->panning && (d->options & QGLView::ObjectPicking) != 0)
-        object = objectUnderMouse(e);
+        object = objectForPoint(e->pos());
     else
         object = 0;
     if (d->pressedObject) {
@@ -619,7 +831,11 @@ void QGLView::mousePressEvent(QMouseEvent *e)
     } else if ((d->options & QGLView::CameraNavigation) != 0 &&
                     e->button() == Qt::LeftButton) {
         d->panning = true;
-        d->startPan = e->pos();
+        d->lastPan = d->startPan = e->pos();
+        d->startEye = d->camera->eye();
+        d->startCenter = d->camera->center();
+        d->startUpVector = d->camera->upVector();
+        d->panModifiers = e->modifiers();
 #ifndef QT_NO_CURSOR
         setCursor(Qt::ClosedHandCursor);
 #endif
@@ -640,7 +856,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
     }
     if (d->pressedObject) {
         // Notify the previously pressed object about the release.
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         QObject *pressed = d->pressedObject;
         if (e->button() == d->pressedButton) {
             d->pressedObject = 0;
@@ -681,7 +897,7 @@ void QGLView::mouseReleaseEvent(QMouseEvent *e)
 void QGLView::mouseDoubleClickEvent(QMouseEvent *e)
 {
     if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (object) {
             // Simulate a double click event for (0, 0).
             QMouseEvent event
@@ -700,7 +916,19 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
 {
     if (d->panning) {
         QPoint delta = e->pos() - d->startPan;
-        d->startPan = e->pos();
+        if (e->modifiers() == d->panModifiers) {
+            d->camera->setEye(d->startEye);
+            d->camera->setCenter(d->startCenter);
+            d->camera->setUpVector(d->startUpVector);
+        } else {
+            d->startPan = d->lastPan;
+            delta = e->pos() - d->startPan;
+            d->startEye = d->camera->eye();
+            d->startCenter = d->camera->center();
+            d->startUpVector = d->camera->upVector();
+            d->panModifiers = e->modifiers();
+        }
+        d->lastPan = e->pos();
         if ((e->modifiers() & Qt::ControlModifier) != 0)
             wheel(delta.y() * -60);
         else if ((e->modifiers() & Qt::ShiftModifier) != 0)
@@ -708,7 +936,7 @@ void QGLView::mouseMoveEvent(QMouseEvent *e)
         else
             rotate(delta.x(), delta.y());
     } else if ((d->options & QGLView::ObjectPicking) != 0) {
-        QObject *object = objectUnderMouse(e);
+        QObject *object = objectForPoint(e->pos());
         if (d->pressedObject) {
             // Send the move event to the pressed object.  Use a position
             // of (0, 0) if the mouse is still within the pressed object,
@@ -776,6 +1004,13 @@ void QGLView::keyPressEvent(QKeyEvent *e)
         return;
     }
     switch (e->key()) {
+
+        case Qt::Key_Escape:
+        case Qt::Key_Q:
+        {
+            if (parentWidget() == 0)
+                close();
+        }
 
         case Qt::Key_Left:
         {
@@ -847,42 +1082,55 @@ static inline int powerOfTwo(int value)
     return p;
 }
 
-QObject *QGLView::objectUnderMouse(QMouseEvent *e)
+/*!
+    Returns the registered object that is under the mouse position
+    specified by \a point.  This function may need to regenerate
+    the contents of the pick buffer by repainting the scene
+    with paintGL().
+
+    \sa registerObject()
+*/
+QObject *QGLView::objectForPoint(const QPoint &point)
 {
     // Check the window boundaries in case a mouse move has
     // moved the pointer outside the window.
-    int x = e->x();
-    int y = e->y();
-    if (!rect().contains(x, y))
+    if (!rect().contains(point))
         return 0;
 
     // Do we need to refresh the pick buffer contents?
     QGLPainter painter(this);
-    if (d->pickBufferForceUpdate || needsPickGL()) {
+    if (d->pickBufferForceUpdate) {
         // Initialize the painter, which will make the window context current.
         painter.setPicking(true);
         painter.clearPickObjects();
 
         // Create a framebuffer object as big as the window to act
-        // as the pick buffer.  TODO: use the window back buffer if no fbo's.
-        QSize fbosize = size();
-        fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
-        if (!d->fbo) {
-            d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
-        } else if (d->fbo->size() != fbosize) {
-            delete d->fbo;
-            d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+        // as the pick buffer if we are single buffered.  If we are
+        // double-buffered, then use the window back buffer.
+        bool useBackBuffer = doubleBuffer();
+        if (!useBackBuffer) {
+            QSize fbosize = size();
+            fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
+            if (!d->fbo) {
+                d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+            } else if (d->fbo->size() != fbosize) {
+                delete d->fbo;
+                d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
+            }
         }
 
         // Render the pick version of the scene into the framebuffer object.
-        d->fbo->bind();
+        if (d->fbo)
+            d->fbo->bind();
         painter.clear();
-        d->camera->apply(&painter);
-        pickGL(&painter);
+        painter.setEye(QGL::NoEye);
+        painter.setCamera(d->camera);
+        paintGL(&painter);
         painter.setPicking(false);
 
-        // The pick buffer contents are now valid.
-        d->pickBufferForceUpdate = false;
+        // The pick buffer contents are now valid, unless we are using
+        // the back buffer - we cannot rely upon it being valid next time.
+        d->pickBufferForceUpdate = useBackBuffer;
         d->pickBufferMaybeInvalid = false;
     } else {
         // Bind the framebuffer object to the window's context.
@@ -892,7 +1140,7 @@ QObject *QGLView::objectUnderMouse(QMouseEvent *e)
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(x, height() - 1 - y);    
+    int objectId = painter.pickObject(point.x(), height() - 1 - point.y());
     QObject *object = d->objects.value(objectId, 0);
     
     // Release the framebuffer object and return.
@@ -943,8 +1191,8 @@ void QGLView::pan(int deltax, int deltay)
     // actually thinks they are picking up the object and dragging it rather
     // than moving the eye.  We therefore apply the inverse of the translation
     // to make it "look right".
-    d->camera->translateEye(-t);
-    d->camera->translateCenter(-t);
+    d->camera->setEye(d->camera->eye() - t);
+    d->camera->setCenter(d->camera->center() - t);
 }
 
 // Rotate about the object being viewed.
@@ -967,9 +1215,19 @@ void QGLView::rotate(int deltax, int deltay)
     d->camera->rotateCenter(q);
 }
 
-// Convert deltas in the X and Y directions into percentages of
-// the view width and height.
-QPointF QGLView::viewDelta(int deltax, int deltay)
+/*!
+    Converts \a deltax and \a deltay into percentages of the
+    view width and height.  Returns a QPointF containing the
+    percentage values, typically between -1 and 1.
+
+    This function is typically used by subclasses to convert a
+    change in mouse position into a relative distance travelled
+    across the field of view.
+
+    The returned value is corrected for the camera() screen
+    rotation and view size.
+*/
+QPointF QGLView::viewDelta(int deltax, int deltay) const
 {
     int w = width();
     int h = height();
@@ -1008,6 +1266,32 @@ QPointF QGLView::viewDelta(int deltax, int deltay)
         scaleY = scaleFactor * ((qreal)w) / ((qreal)h);
     }
     return QPointF(deltax * scaleX / w, deltay * scaleY / h);
+}
+
+/*!
+    \fn QPointF QGLView::viewDelta(const QPoint &delta) const
+    \overload
+
+    Converts the x and y components of \a delta into percentages
+    of the view width and height.  Returns a QPointF containing
+    the percentage values, typically between -1 and 1.
+*/
+
+
+// The following is a hack to enable the use of QGLView with qml3d
+// and the Qt.labs.threed plugin for QML.  Needs to go away eventually.
+
+static QObject *qmlViewport = 0;
+
+Q_QT3D_EXPORT void qt_gl_set_qml_viewport(QObject *viewport)
+{
+    if (!qmlViewport)
+        qmlViewport = viewport;
+}
+
+Q_QT3D_EXPORT QObject *qt_gl_qml_viewport()
+{
+    return qmlViewport;
 }
 
 QT_END_NAMESPACE

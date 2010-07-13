@@ -39,13 +39,62 @@
 **
 ****************************************************************************/
 
-#include "qglflattextureeffect_p.h"
-#if defined(QGL_SHADERS_ONLY)
+#include "qglflattextureeffect.h"
+#include "qglabstracteffect_p.h"
+#include "qglext.h"
 #include <QtOpenGL/qglshaderprogram.h>
-#endif
 
 QT_BEGIN_NAMESPACE
 
+/*!
+    \class QGLFlatTextureEffect
+    \since 4.8
+    \brief The QGLFlatTextureEffect class provides a standard effect that draws fragments with a flat unlit texture.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+/*!
+    \class QGLFlatDecalTextureEffect
+    \since 4.8
+    \brief The QGLFlatDecalTextureEffect class provides a standard effect that decals fragments with a flat unlit texture.
+    \ingroup qt3d
+    \ingroup qt3d::painting
+*/
+
+class QGLFlatTextureEffectPrivate
+{
+public:
+    QGLFlatTextureEffectPrivate()
+        : program(0)
+        , matrixUniform(-1)
+        , isFixedFunction(false)
+    {
+    }
+
+    QGLShaderProgram *program;
+    int matrixUniform;
+    bool isFixedFunction;
+};
+
+/*!
+    Constructs a new flat texture effect.
+*/
+QGLFlatTextureEffect::QGLFlatTextureEffect()
+    : d_ptr(new QGLFlatTextureEffectPrivate)
+{
+}
+
+/*!
+    Destroys this flat texture effect.
+*/
+QGLFlatTextureEffect::~QGLFlatTextureEffect()
+{
+}
+
+/*!
+    \reimp
+*/
 QList<QGL::VertexAttribute> QGLFlatTextureEffect::requiredFields() const
 {
     QList<QGL::VertexAttribute> fields;
@@ -54,82 +103,12 @@ QList<QGL::VertexAttribute> QGLFlatTextureEffect::requiredFields() const
     return fields;
 }
 
-QList<QGL::VertexAttribute> QGLFlatDecalTextureEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::TextureCoord0;
-    return fields;
-}
-
-#if !defined(QGL_SHADERS_ONLY)
-
-QGLFlatTextureEffect::QGLFlatTextureEffect()
-{
-}
-
-QGLFlatTextureEffect::~QGLFlatTextureEffect()
-{
-}
-
-void QGLFlatTextureEffect::setActive(bool flag)
-{
-    if (flag) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        enableVertexAttribute(QGL::TextureCoord0);
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    } else {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        disableVertexAttribute(QGL::TextureCoord0);
-    }
-}
-
-QGLFlatDecalTextureEffect::QGLFlatDecalTextureEffect()
-{
-}
-
-QGLFlatDecalTextureEffect::~QGLFlatDecalTextureEffect()
-{
-}
-
-void QGLFlatDecalTextureEffect::setActive(bool flag)
-{
-    if (flag) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        enableVertexAttribute(QGL::TextureCoord0);
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    } else {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        disableVertexAttribute(QGL::TextureCoord0);
-    }
-}
-
-void QGLFlatDecalTextureEffect::update
-    (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateColor) != 0) {
-        QColor color = painter->color();
-        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    }
-}
-
-#else // QGL_SHADERS_ONLY
-
-QGLFlatTextureEffect::QGLFlatTextureEffect()
-{
-    program = 0;
-    matrixUniform = -1;
-}
-
-QGLFlatTextureEffect::~QGLFlatTextureEffect()
-{
-    delete program;
-}
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 static char const flatTexVertexShader[] =
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 texcoord;\n"
-    "uniform mediump mat4 matrix;\n"
+    "uniform highp mat4 matrix;\n"
     "varying highp vec4 qTexCoord;\n"
     "void main(void)\n"
     "{\n"
@@ -145,66 +124,6 @@ static char const flatTexFragmentShader[] =
     "    gl_FragColor = texture2D(tex, qTexCoord.st);\n"
     "}\n";
 
-void QGLFlatTextureEffect::setActive(bool flag)
-{
-    if (!program) {
-        if (!flag)
-            return;
-        program = new QGLShaderProgram();
-        program->addShaderFromSourceCode(QGLShader::Vertex, flatTexVertexShader);
-        program->addShaderFromSourceCode(QGLShader::Fragment, flatTexFragmentShader);
-        program->bindAttributeLocation("vertex", 0);
-        program->bindAttributeLocation("texcoord", 1);
-        if (!program->link()) {
-            qWarning("QGLFlatTextureEffect::setActive(): could not link shader program");
-            delete program;
-            program = 0;
-            return;
-        }
-        matrixUniform = program->uniformLocation("matrix");
-        program->bind();
-        program->setUniformValue("tex", 0);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
-    } else if (flag) {
-        program->bind();
-        program->setUniformValue("tex", 0);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
-    } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
-        program->release();
-    }
-}
-
-void QGLFlatTextureEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
-        program->setUniformValue(matrixUniform, painter->combinedMatrix());
-    }
-}
-
-void QGLFlatTextureEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    if (attribute == QGL::Position)
-        setAttributeArray(program, 0, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(program, 1, value);
-}
-
-QGLFlatDecalTextureEffect::QGLFlatDecalTextureEffect()
-{
-    colorUniform = -1;
-}
-
-QGLFlatDecalTextureEffect::~QGLFlatDecalTextureEffect()
-{
-}
-
 static char const flatDecalFragmentShader[] =
     "uniform sampler2D tex;\n"
     "uniform mediump vec4 color;\n"
@@ -212,51 +131,301 @@ static char const flatDecalFragmentShader[] =
     "void main(void)\n"
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
-    "    gl_FragColor = vec4(clamp(color.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), 1.0);\n"
+    "    gl_FragColor = vec4(clamp(color.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), color.a);\n"
     "}\n";
 
-void QGLFlatDecalTextureEffect::setActive(bool flag)
+#endif
+
+/*!
+    \reimp
+*/
+void QGLFlatTextureEffect::setActive(QGLPainter *painter, bool flag)
 {
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    Q_UNUSED(painter);
+    if (flag) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    } else {
+        glDisableClientState(GL_VERTEX_ARRAY);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+#else
+    Q_UNUSED(painter);
+    Q_D(QGLFlatTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (painter->isFixedFunction()) {
+        d->isFixedFunction = true;
+        if (flag) {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        } else {
+            glDisableClientState(GL_VERTEX_ARRAY);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        return;
+    }
+#endif
+    QGLShaderProgram *program =
+        painter->cachedProgram(QLatin1String("qt.texture.flat.replace"));
+    d->program = program;
+    if (!program) {
+        if (!flag)
+            return;
+        program = new QGLShaderProgram();
+        program->addShaderFromSourceCode(QGLShader::Vertex, flatTexVertexShader);
+        program->addShaderFromSourceCode(QGLShader::Fragment, flatTexFragmentShader);
+        program->bindAttributeLocation("vertex", QGL::Position);
+        program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
+        if (!program->link()) {
+            qWarning("QGLFlatTextureEffect::setActive(): could not link shader program");
+            delete program;
+            program = 0;
+            return;
+        }
+        painter->setCachedProgram
+            (QLatin1String("qt.texture.flat.replace"), program);
+        d->program = program;
+        d->matrixUniform = program->uniformLocation("matrix");
+        program->bind();
+        program->setUniformValue("tex", 0);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
+    } else if (flag) {
+        d->matrixUniform = program->uniformLocation("matrix");
+        program->bind();
+        program->setUniformValue("tex", 0);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
+    } else {
+        program->disableAttributeArray(QGL::Position);
+        program->disableAttributeArray(QGL::TextureCoord0);
+        program->release();
+    }
+#endif
+}
+
+/*!
+    \reimp
+*/
+void QGLFlatTextureEffect::update
+        (QGLPainter *painter, QGLPainter::Updates updates)
+{
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    painter->updateFixedFunction(updates & QGLPainter::UpdateMatrices);
+#else
+    Q_D(QGLFlatTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        painter->updateFixedFunction(updates & QGLPainter::UpdateMatrices);
+        return;
+    }
+#endif
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
+        d->program->setUniformValue
+            (d->matrixUniform, painter->combinedMatrix());
+    }
+#endif
+}
+
+/*!
+    \reimp
+*/
+void QGLFlatTextureEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+{
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    QGLAbstractEffect::setVertexAttribute(attribute, value);
+#else
+    Q_D(QGLFlatTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        QGLAbstractEffect::setVertexAttribute(attribute, value);
+        return;
+    }
+#endif
+    if (attribute == QGL::Position)
+        setAttributeArray(d->program, QGL::Position, value);
+    else if (attribute == QGL::TextureCoord0)
+        setAttributeArray(d->program, QGL::TextureCoord0, value);
+#endif
+}
+
+class QGLFlatDecalTextureEffectPrivate
+{
+public:
+    QGLFlatDecalTextureEffectPrivate()
+        : program(0)
+        , matrixUniform(-1)
+        , colorUniform(-1)
+        , isFixedFunction(false)
+    {
+    }
+
+    QGLShaderProgram *program;
+    int matrixUniform;
+    int colorUniform;
+    bool isFixedFunction;
+};
+
+/*!
+    Constructs a new flat decal texture effect.
+*/
+QGLFlatDecalTextureEffect::QGLFlatDecalTextureEffect()
+    : d_ptr(new QGLFlatDecalTextureEffectPrivate)
+{
+}
+
+/*!
+    Destroys this flat decal texture effect.
+*/
+QGLFlatDecalTextureEffect::~QGLFlatDecalTextureEffect()
+{
+}
+
+/*!
+    \reimp
+*/
+QList<QGL::VertexAttribute> QGLFlatDecalTextureEffect::requiredFields() const
+{
+    QList<QGL::VertexAttribute> fields;
+    fields += QGL::Position;
+    fields += QGL::TextureCoord0;
+    return fields;
+}
+
+/*!
+    \reimp
+*/
+void QGLFlatDecalTextureEffect::setActive(QGLPainter *painter, bool flag)
+{
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    Q_UNUSED(painter);
+    if (flag) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    } else {
+        glDisableClientState(GL_VERTEX_ARRAY);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+#else
+    Q_UNUSED(painter);
+    Q_D(QGLFlatDecalTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (painter->isFixedFunction()) {
+        d->isFixedFunction = true;
+        if (flag) {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        } else {
+            glDisableClientState(GL_VERTEX_ARRAY);
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+    }
+#endif
+    QGLShaderProgram *program =
+        painter->cachedProgram(QLatin1String("qt.texture.flat.decal"));
+    d->program = program;
     if (!program) {
         if (!flag)
             return;
         program = new QGLShaderProgram();
         program->addShaderFromSourceCode(QGLShader::Vertex, flatTexVertexShader);
         program->addShaderFromSourceCode(QGLShader::Fragment, flatDecalFragmentShader);
-        program->bindAttributeLocation("vertex", 0);
-        program->bindAttributeLocation("texcoord", 1);
+        program->bindAttributeLocation("vertex", QGL::Position);
+        program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
         if (!program->link()) {
             qWarning("QGLFlatDecalTextureEffect::setActive(): could not link shader program");
             delete program;
             program = 0;
             return;
         }
-        matrixUniform = program->uniformLocation("matrix");
-        colorUniform = program->uniformLocation("color");
+        painter->setCachedProgram
+            (QLatin1String("qt.texture.flat.decal"), program);
+        d->program = program;
+        d->matrixUniform = program->uniformLocation("matrix");
+        d->colorUniform = program->uniformLocation("color");
         program->bind();
         program->setUniformValue("tex", 0);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
     } else if (flag) {
+        d->matrixUniform = program->uniformLocation("matrix");
+        d->colorUniform = program->uniformLocation("color");
         program->bind();
         program->setUniformValue("tex", 0);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
     } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
+        program->disableAttributeArray(QGL::Position);
+        program->disableAttributeArray(QGL::TextureCoord0);
         program->release();
     }
+#endif
 }
 
+/*!
+    \reimp
+*/
 void QGLFlatDecalTextureEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
+    (QGLPainter *painter, QGLPainter::Updates updates)
 {
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    painter->updateFixedFunction
+        (updates & (QGLPainter::UpdateColor |
+                    QGLPainter::UpdateMatrices));
+#else
+    Q_D(QGLFlatDecalTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        painter->updateFixedFunction
+            (updates & (QGLPainter::UpdateColor |
+                        QGLPainter::UpdateMatrices));
+        return;
+    }
+#endif
     if ((updates & QGLPainter::UpdateColor) != 0)
-        program->setUniformValue(colorUniform, painter->color());
-    QGLFlatTextureEffect::update(painter, updates);
+        d->program->setUniformValue(d->colorUniform, painter->color());
+    if ((updates & QGLPainter::UpdateMatrices) != 0) {
+        d->program->setUniformValue
+            (d->matrixUniform, painter->combinedMatrix());
+    }
+#endif
 }
 
-#endif // QGL_SHADERS_ONLY
+/*!
+    \reimp
+*/
+void QGLFlatDecalTextureEffect::setVertexAttribute
+    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+{
+#if defined(QGL_FIXED_FUNCTION_ONLY)
+    QGLAbstractEffect::setVertexAttribute(attribute, value);
+#else
+    Q_D(QGLFlatDecalTextureEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->isFixedFunction) {
+        QGLAbstractEffect::setVertexAttribute(attribute, value);
+        return;
+    }
+#endif
+    if (attribute == QGL::Position)
+        setAttributeArray(d->program, QGL::Position, value);
+    else if (attribute == QGL::TextureCoord0)
+        setAttributeArray(d->program, QGL::TextureCoord0, value);
+#endif
+}
 
 QT_END_NAMESPACE

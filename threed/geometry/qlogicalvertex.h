@@ -58,7 +58,7 @@ public:
     inline QLogicalVertex(const QVector3D &a);
     inline QLogicalVertex(const QVector3D &a, const QVector3D &n);
     inline QLogicalVertex(const QVector3D &a,  const QVector3D &n, const QVector2D &t);
-    inline QLogicalVertex(const QVector3D &a, QColor4B color);
+    inline QLogicalVertex(const QVector3D &a, QColor4ub color);
     ~QLogicalVertex() {}
 
     inline const QVector3D &vertex() const;
@@ -83,9 +83,9 @@ public:
     inline void setNormal(const QVector3D &n);
     inline QVector3D &normalRef();
 
-    inline const QColor4B &color() const;
-    inline void setColor(const QColor4B &c);
-    inline QColor4B &colorRef();
+    inline const QColor4ub &color() const;
+    inline void setColor(const QColor4ub &c);
+    inline QColor4ub &colorRef();
 
     inline const QVector2D &texCoord(QGL::VertexAttribute attr = QGL::TextureCoord0) const;
     inline void setTexCoord(const QVector2D &t, QGL::VertexAttribute attr = QGL::TextureCoord0);
@@ -140,7 +140,7 @@ inline QLogicalVertex::QLogicalVertex(const QVector3D &a, const QVector3D &n, co
     m_data.appendTexCoord(t);
 }
 
-inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4B color)
+inline QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4ub color)
     : m_index(0)
 {
     m_data.appendVertex(a);
@@ -268,7 +268,7 @@ inline const QVector2D &QLogicalVertex::texCoord(QGL::VertexAttribute attr) cons
 
 inline void QLogicalVertex::setTexCoord(const QVector2D &t, QGL::VertexAttribute attr)
 {
-    Q_ASSERT(attr >= QGL::TextureCoord0 && attr <= QGL::TextureCoord7);
+    Q_ASSERT(attr >= QGL::TextureCoord0 && attr <= QGL::TextureCoord2);
     if (m_index == -1)
         m_index = 0;
     if (m_index == m_data.count(attr))
@@ -282,12 +282,12 @@ inline QVector2D &QLogicalVertex::texCoordRef(QGL::VertexAttribute attr)
     return m_data.texCoordRef(m_index, attr);
 }
 
-inline const QColor4B &QLogicalVertex::color() const
+inline const QColor4ub &QLogicalVertex::color() const
 {
     return m_data.color(m_index);
 }
 
-inline void QLogicalVertex::setColor(const QColor4B &c)
+inline void QLogicalVertex::setColor(const QColor4ub &c)
 {
     if (m_index == -1)
         m_index = 0;
@@ -297,7 +297,7 @@ inline void QLogicalVertex::setColor(const QColor4B &c)
         m_data.colorRef(m_index) = c;
 }
 
-inline QColor4B &QLogicalVertex::colorRef()
+inline QColor4ub &QLogicalVertex::colorRef()
 {
     return m_data.colorRef(m_index);
 }

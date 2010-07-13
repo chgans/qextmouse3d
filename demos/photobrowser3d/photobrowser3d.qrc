@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>images/sample_image.jpg</file>
+        <file alias="down.png">images/default_sky_down.png</file>
+        <file alias="west.png">images/default_sky_east.png</file>
+        <file alias="north.png">images/default_sky_north.png</file>
+        <file alias="south.png">images/default_sky_south.png</file>
+        <file alias="up.png">images/default_sky_up.png</file>
+        <file alias="east.png">images/default_sky_west.png</file>
+        <file>images/no-images-yet.png</file>
+    </qresource>
+</RCC>

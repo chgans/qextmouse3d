@@ -42,8 +42,11 @@
 #include "qglpainter.h"
 #include "qglpainter_p.h"
 #include "qglabstracteffect.h"
+#include "qglext.h"
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
+#include <QtOpenGL/qglshaderprogram.h>
+#include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/private/qwidget_p.h>
 #include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
@@ -53,22 +56,24 @@
 #if !defined(QT_NO_THREAD)
 #include <QtCore/qthreadstorage.h>
 #endif
-#include "qglflatcoloreffect_p.h"
-#include "qglflattextureeffect_p.h"
-#include "qgllitmaterialeffect_p.h"
-#include "qgllittextureeffect_p.h"
+#include "qglflatcoloreffect.h"
+#include "qglflattextureeffect.h"
+#include "qgllitmaterialeffect.h"
+#include "qgllittextureeffect.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
 #include "qgeometrydata.h"
+#include "qglvertexbuffer_p.h"
+#include "qmatrix4x4stack_p.h"
 
 QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLPainter
     \brief The QGLPainter class provides portable API's for rendering into a GL context.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
 
@@ -87,9 +92,10 @@ QT_BEGIN_NAMESPACE
     \value UpdateColor The color has been updated.
     \value UpdateModelViewMatrix The modelview matrix has been updated.
     \value UpdateProjectionMatrix The projection matrix has been updated.
+    \value UpdateMatrices The combination of UpdateModelViewMatrix and
+           UpdateProjectionMatrix.
     \value UpdateLights The lights have been updated.
     \value UpdateMaterials The material parameters have been updated.
-    \value UpdateFog The fog parameters have been updated.
     \value UpdateAll All values have been updated.  This is specified
            when an effect is activated.
 */
@@ -99,74 +105,49 @@ QT_BEGIN_NAMESPACE
 #define QGLPAINTER_CHECK_PRIVATE_RETURN(value) \
     Q_ASSERT_X(d, "QGLPainter", "begin() has not been called or it failed")
 
-#ifndef Q_WS_WIN
-Q_GLOBAL_STATIC(QGLPainterExtensions, painterExtensions)
-#endif
-
 QGLPainterPrivate::QGLPainterPrivate()
     : ref(1),
       activePaintEngine(0),
-      projectionMatrix(QGLMatrixStack::ProjectionMatrix),
-      modelViewMatrix(QGLMatrixStack::ModelViewMatrix),
+      eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
-      defaultLight0(0),
-      defaultLight1(0),
+      mainLight(0),
+      defaultLight(0),
       frontMaterial(0),
       backMaterial(0),
       defaultMaterial(0),
       frontColorMaterial(0),
       backColorMaterial(0),
-      fogParameters(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
+      scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
-      pick(0)
+      pick(0),
+      boundVertexBuffer(0),
+      boundIndexBuffer(0)
+#if QT_VERSION < 0x040700
+      , vertexAttribPointer(0)
+#endif
 {
     context = 0;
     effect = 0;
     userEffect = 0;
     standardEffect = QGL::FlatColor;
     memset(stdeffects, 0, sizeof(stdeffects));
-#ifdef Q_WS_WIN
-    extensionFuncs = 0;
-    shaderExtensionFuncs = 0;
-#endif
     textureUnitCount = 0;
-    texturesInUse = QBitArray(8);
-
-    memset(lights, 0, sizeof(lights));
-    enabledLights = 0;
-    maxLights = 0;
-    currentBufferId = 0;
 }
 
 QGLPainterPrivate::~QGLPainterPrivate()
 {
     delete defaultLightModel;
-    delete defaultLight0;
-    delete defaultLight1;
+    delete defaultLight;
     delete defaultMaterial;
     delete frontColorMaterial;
     delete backColorMaterial;
-#ifdef Q_WS_WIN
-    delete extensionFuncs;
-    delete shaderExtensionFuncs;
-#endif
     for (int effect = 0; effect < QGL_MAX_STD_EFFECTS; ++effect)
         delete stdeffects[effect];
     delete pick;
-}
-
-QGLPainterExtensions *QGLPainterPrivate::extensions()
-{
-#ifdef Q_WS_WIN
-    if (!extensionFuncs)
-        extensionFuncs = new QGLPainterExtensions();
-    return extensionFuncs;
-#else
-    return painterExtensions();
-#endif
+    qDeleteAll(cachedPrograms);
 }
 
 QGLPainterPickPrivate::QGLPainterPickPrivate()
@@ -352,6 +333,10 @@ bool QGLPainter::begin(const QGLContext *context)
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
 
+    // Force the matrices to be updated the first time we use them.
+    d_ptr->modelViewMatrix.setDirty(true);
+    d_ptr->projectionMatrix.setDirty(true);
+
     return true;
 }
 
@@ -459,12 +444,35 @@ bool QGLPainter::begin(QPainter *painter)
     If this assumption doesn't apply, then call disableEffect()
     to disable the effect before calling end().
 
+    This function will pop all surfaces from the surface stack,
+    and return currentSurface() to null (the default drawing surface).
+
     \sa begin(), isActive(), disableEffect()
 */
 bool QGLPainter::end()
 {
     if (!d_ptr)
         return false;
+    if (d_ptr->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d_ptr->boundVertexBuffer = 0;
+    }
+    if (d_ptr->boundIndexBuffer) {
+        QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d_ptr->boundIndexBuffer = 0;
+    }
+    if (!d_ptr->surfaceStack.isEmpty() && int(d_ptr->ref) <= 2) {
+        // Restore the default drawing surface before ending painting
+        // operations.  This is needed for proper interoperation with
+        // the OpenGL paint engine which will assume that it is drawing
+        // to the default drawing surface after endNativePainting().
+        // The ref needs to be 2 or less so that we don't do this
+        // if the QGLPainter was nested within another instance of itself.
+        QGLFramebufferObject *fbo = d_ptr->surfaceStack.last();
+        if (fbo)
+            fbo->release();
+        d_ptr->surfaceStack.clear();
+    }
     if (d_ptr->activePaintEngine) {
         d_ptr->activePaintEngine->endNativePainting();
         d_ptr->activePaintEngine = 0;
@@ -496,6 +504,31 @@ const QGLContext *QGLPainter::context() const
         return d_ptr->context;
     else
         return 0;
+}
+
+/*!
+    Returns true if the underlying OpenGL implementation is OpenGL 1.x
+    or OpenGL/ES 1.x and only supports fixed-function OpenGL operations.
+    Returns false if the underlying OpenGL implementation is using
+    GLSL or GLSL/ES shaders.
+
+    If this function returns false, then the built-in effects will
+    use shaders and QGLPainter will not update the fixed-function
+    matrices in the OpenGL context when update() is called.
+    User-supplied effects will need to use shaders also or update
+    the fixed-function matrices themselves or call updateFixedFunction().
+
+    \sa update(), updateFixedFunction()
+*/
+bool QGLPainter::isFixedFunction() const
+{
+#if defined(QT_OPENGL_ES_2)
+    return false;
+#elif defined(QT_OPENGL_ES_1)
+    return true;
+#else
+    return !QGLShaderProgram::hasOpenGLShaderPrograms();
+#endif
 }
 
 /*!
@@ -548,181 +581,350 @@ void QGLPainter::setClearStencil(GLint value)
 }
 
 /*!
+    \fn void QGLPainter::setDepthTestingEnabled(bool value)
+
     Enables or disables depth testing according to \a value.
     This is a convience function that is equivalent to
     \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
-
-    For more complex depth buffer configurations, use QGLDepthBufferOptions.
-
-    \sa QGLDepthBufferOptions
 */
-void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
+
+/*!
+    \fn void QGLPainter::setStencilTestingEnabled(bool value)
+
+    Enables or disables stencil testing according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
+*/
+
+/*!
+    \fn void QGLPainter::setBlendingEnabled(bool value)
+
+    Enables or disables blending according to \a value.
+    This is a convience function that is equivalent to
+    \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
+*/
 
 /*!
     Returns the viewport for the active GL context.  The origin for
     the returned rectangle is the top-left of the drawing surface.
 
-    \sa setViewport()
+    \sa setViewport(), resetViewport(), viewportOffset()
 */
 QRect QGLPainter::viewport() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
-    QPaintDevice *device = d->context->device();
-    if (device) {
+    if (d->viewport.isNull()) {
         GLint view[4];
         glGetIntegerv(GL_VIEWPORT, view);
-        return QRect(view[0], device->height() - (view[1] + view[3]),
-                     view[1], view[3]);
-    } else {
-        return QRect();
+        d->viewport = QRect(view[0], view[1], view[2], view[3]);
     }
+    // Convert the GL viewport into standard Qt co-ordinates
+    // and adjust for the surface size and offset.
+    QRect rect;
+    if (d->surfaceStack.isEmpty()) {
+        rect = QRect(d->viewport.x(),
+                     d->context->device()->height() -
+                            (d->viewport.y() + d->viewport.height()),
+                     d->viewport.width(), d->viewport.height());
+        rect.translate(-d->viewportOffset);
+    } else {
+        QSize size = surfaceSize();
+        rect = QRect(d->viewport.x(),
+                     size.height() - (d->viewport.y() + d->viewport.height()),
+                     d->viewport.width(), d->viewport.height());
+    }
+    return rect;
 }
 
 /*!
     Sets the viewport for the active GL context to \a rect.
     The origin for \a rect is the top-left of the drawing surface.
 
-    \sa viewport()
+    \sa viewport(), resetViewport(), viewportOffset()
 */
 void QGLPainter::setViewport(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    QPaintDevice *device = d->context->device();
-    if (device) {
-        int y = device->height() - (rect.y() + rect.height());
-        glViewport(rect.x(), y, rect.width(), rect.height());
+    int x, y;
+    if (d->surfaceStack.isEmpty()) {
+        x = rect.x() + d->viewportOffset.x();
+        y = d->context->device()->height() -
+                (rect.y() + d->viewportOffset.y() + rect.height());
+    } else {
+        x = rect.x();
+        y = surfaceSize().height() - (rect.y() + rect.height());
     }
+    glViewport(x, y, rect.width(), rect.height());
+    d->viewport = QRect(x, y, rect.width(), rect.height());
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a size.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(const QSize& size)
 {
-    glViewport(0, 0, size.width(), size.height());
+    setViewport(QRect(QPoint(0, 0), size));
 }
 
 /*!
     Sets the viewport for the active GL context to start at the
     origin and extend for \a width and \a height.
 
-    \sa viewport()
+    \sa viewport(), resetViewport()
 */
 void QGLPainter::setViewport(int width, int height)
 {
-    glViewport(0, 0, width, height);
+    setViewport(QRect(0, 0, width, height));
 }
 
 /*!
-    Returns the currently active scissor rectangle.  The rectangle
-    will have zero size if scissoring is disabled.
+    Resets this painter's notion of what the current viewport()
+    is set to.  The next time viewport() is called, the actual
+    viewport rectangle will be fetched from the GL server.
 
-    Performance note: if setScissorRect() has not been called on this
-    QGLPainter, then this function will have to perform a round-trip
-    to the GL server to get the scissor rectangle.  This round-trip
-    can be avoided by calling setScissorRect() before scissorRect().
+    This function is used to synchronize the state of the application
+    with the GL server after the execution of raw GL commands that may
+    have altered the viewport settings.
 
-    Note: OpenGL/ES 1.0 does not have a mechanism to fetch the
-    scissor rectangle.  On that platform, this function will forcibly
-    disable scissoring if it has not been set previously with
-    setScissorRect().
-
-    \sa setScissorRect(), resetScissorRect()
+    \sa viewport(), setViewport()
 */
-QRect QGLPainter::scissorRect() const
+void QGLPainter::resetViewport()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect(0, 0, 0, 0));
-    if (d->scissorRect.isNull()) {
-#if !defined(GL_OES_VERSION_1_0) || defined(GL_OES_VERSION_1_1)
+    QGLPAINTER_CHECK_PRIVATE();
+    d->viewport = QRect();
+}
+
+/*!
+    Returns the viewport offset that will be added to the top-left
+    corner of viewport() when calling \c{glViewport()} on the
+    window.  The default value is (0, 0).
+
+    \sa setViewportOffset(), setViewport()
+*/
+QPoint QGLPainter::viewportOffset() const
+{
+    Q_D(const QGLPainter);
+    return d->viewportOffset;
+}
+
+/*!
+    Sets the viewport offset that will be added to the top-left
+    corner of viewport() when calling \c{glViewport()} to \a point.
+
+    This function can be used to shift the logical viewport to a
+    different part of the window, usually for drawing left and right
+    stereo images side by side.
+
+    \sa viewportOffset(), setViewport()
+*/
+void QGLPainter::setViewportOffset(const QPoint& point)
+{
+    Q_D(QGLPainter);
+    d->viewportOffset = point;
+}
+
+/*!
+    Returns the currently active scissor rectangle; or a null rectangle
+    if scissoring is disabled.
+
+    The special rectangle value of (0, 0, -2, -2) is returned to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    Performance note: if setScissor() has not been called on this
+    QGLPainter, then this function will have to perform a round-trip
+    to the GL server to get the scissor rectangle.  This round-trip
+    can be avoided by calling setScissor() before scissor().
+
+    Note that the returned rectangle will be in window co-ordinates,
+    with the origin at the top-left of the drawing surface.
+
+    \sa setScissor(), resetScissor()
+*/
+QRect QGLPainter::scissor() const
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
+    if (d->scissor.width() <= -3) {
         if (glIsEnabled(GL_SCISSOR_TEST)) {
+            QPaintDevice *device = d->context->device();
             GLint scissor[4];
             glGetIntegerv(GL_SCISSOR_BOX, scissor);
-            d->scissorRect =
-                QRect(scissor[0], scissor[1], scissor[2], scissor[3]);
+            if (scissor[2] != 0 && scissor[3] != 0) {
+                d->scissor = QRect
+                    (scissor[0], device->height() - (scissor[1] + scissor[3]),
+                     scissor[2], scissor[3]);
+            } else {
+                // Special value indicating an empty, but active, scissor.
+                d->scissor = QRect(0, 0, -2, -2);
+            }
         } else {
-            d->scissorRect = QRect(0, 0, 0, 0);
+            d->scissor = QRect();
         }
-#else
-        // OpenGL/ES 1.0 does not have glIsEnabled() or GL_SCISSOR_BOX,
-        // so force the scissor setting to a known state.
-        d->scissorRect = QRect(0, 0, 0, 0);
-        glDisable(GL_SCISSOR_TEST);
-#endif
     }
-    return d->scissorRect;
+    return d->scissor;
 }
 
 /*!
     Enables scissoring to the boundaries of \a rect if it has a
-    non-zero size; disables scissoring if \a rect has a zero size.
+    non-zero size; disables scissoring if \a rect is null.
 
-    \sa scissorRect(), resetScissorRect()
+    The special rectangle value of (0, 0, -2, -2) is used to
+    indicate that scissoring is enabled but that the scissor
+    is empty, effectively clipping away all drawing requests.
+    This value is chosen so that it is distinguishable from
+    the null rectangle (0, 0, -1, -1).
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.  It will be
+    intersected with the drawing surface's bounds before being
+    set in the GL server.
+
+    \sa scissor(), resetScissor(), intersectScissor()
 */
-void QGLPainter::setScissorRect(const QRect& rect)
+void QGLPainter::setScissor(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (rect.width() > 0 && rect.height() > 0) {
-        d->scissorRect = rect;
-        glScissor(rect.x(), rect.y(), rect.width(), rect.height());
+    if (rect.width() == -2) {
+        // Special value indicating an empty, but active, scissor.
+        d->scissor = rect;
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+    } else if (!rect.isNull()) {
+        QPaintDevice *device = d->context->device();
+        int height = device->height();
+        QRect r = rect.intersected(QRect(0, 0, device->width(), height));
+        if (r.isValid()) {
+            d->scissor = r;
+            glScissor(r.x(), height - (r.y() + r.height()),
+                      r.width(), r.height());
+        } else {
+            d->scissor = QRect(0, 0, -2, -2);
+            glScissor(0, 0, 0, 0);
+        }
         glEnable(GL_SCISSOR_TEST);
     } else {
-        d->scissorRect = QRect(0, 0, 0, 0);
+        d->scissor = QRect();
         glDisable(GL_SCISSOR_TEST);
     }
 }
 
 /*!
-    Resets this painter's notion of what the current scissorRect()
-    is set to.  The next time scissorRect() is called, the actual
+    Intersects the current scissor rectangle with \a rect and sets
+    the intersection as the new scissor.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), expandScissor()
+*/
+void QGLPainter::intersectScissor(const QRect& rect)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QRect current = scissor();
+    if (current.width() == -2) {
+        // Scissor is already active and empty: nothing to do.
+        return;
+    } else if (rect.isEmpty()) {
+        // Intersecting with an empty rectangle sets the scissor to empty.
+        // This includes the case where "rect" is (0, 0, -2, -2).
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+        glEnable(GL_SCISSOR_TEST);
+        return;
+    }
+    QPaintDevice *device = d->context->device();
+    QRect r;
+    if (current.isNull())
+        r = rect.intersected(QRect(0, 0, device->width(), device->height()));
+    else
+        r = current.intersected(rect);
+    if (r.isValid()) {
+        d->scissor = r;
+        glScissor(r.x(), device->height() - (r.y() + r.height()),
+                  r.width(), r.height());
+    } else {
+        d->scissor = QRect(0, 0, -2, -2);
+        glScissor(0, 0, 0, 0);
+    }
+    glEnable(GL_SCISSOR_TEST);
+}
+
+/*!
+    Expands the current scissor rectangle to also include the region
+    defined by \a rect and sets the expanded region as the new scissor.
+    The \a rect will be ignored if it is empty, or if the scissor is
+    currently disabled.
+
+    The \a rect is assumed to be in window co-ordinates, with the
+    origin at the top-left of the drawing surface.
+
+    \sa setScissor(), intersectScissor()
+*/
+void QGLPainter::expandScissor(const QRect& rect)
+{
+    if (rect.isEmpty())
+        return;
+    QRect current = scissor();
+    if (current.width() == -2)
+        setScissor(rect);
+    else if (!current.isNull())
+        setScissor(rect.united(current));
+}
+
+/*!
+    Resets this painter's notion of what the current scissor()
+    is set to.  The next time scissor() is called, the actual
     scissor rectangle will be fetched from the GL server.
 
     This function is used to synchronize the state of the application
     with the GL server after the execution of raw GL commands that may
     have altered the scissor settings.
 
-    \sa scissorRect(), setScissorRect()
+    \sa scissor(), setScissor()
 */
-void QGLPainter::resetScissorRect()
+void QGLPainter::resetScissor()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->scissorRect = QRect();
+    d->scissor = QRect(0, 0, -3, -3);
 }
 
 /*!
     Returns a reference to the projection matrix stack.
 
-    \sa modelViewMatrix(), combinedMatrix()
+    It is recommended that setCamera() be used to set the projection
+    matrix at the beginning of a scene rendering pass so that the
+    eye position can be adjusted for stereo.
+
+    \sa modelViewMatrix(), combinedMatrix(), setCamera()
 */
-QGLMatrixStack& QGLPainter::projectionMatrix()
+QMatrix4x4Stack& QGLPainter::projectionMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QGLMatrixStack *)0));
+    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
     return d->projectionMatrix;
 }
 
 /*!
     Returns a reference to the modelview matrix stack.
 
-    \sa projectionMatrix(), combinedMatrix()
+    \sa projectionMatrix(), combinedMatrix(), normalMatrix(), setCamera()
 */
-QGLMatrixStack& QGLPainter::modelViewMatrix()
+QMatrix4x4Stack& QGLPainter::modelViewMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QGLMatrixStack *)0));
+    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
     return d->modelViewMatrix;
 }
 
@@ -737,79 +939,145 @@ QGLMatrixStack& QGLPainter::modelViewMatrix()
     projectionMatrix() and modelViewMatrix() separately and
     multiplying the return values.
 
-    \sa projectionMatrix(), modelViewMatrix()
+    \sa projectionMatrix(), modelViewMatrix(), normalMatrix()
 */
-// Implemented in qglmatrixstack.cpp.
+QMatrix4x4 QGLPainter::combinedMatrix() const
+{
+    const QGLPainterPrivate *d = d_func();
+    if (!d)
+        return QMatrix4x4();
+    const QMatrix4x4StackPrivate *proj = d->projectionMatrix.d_func();
+    const QMatrix4x4StackPrivate *mv = d->modelViewMatrix.d_func();
+    return proj->matrix * mv->matrix;
+}
 
 /*!
-    Returns true if \a point is visible within the current viewing volume.
+    \fn QMatrix3x3 QGLPainter::normalMatrix() const
+
+    Returns the normal matrix corresponding to modelViewMatrix().
+
+    The normal matrix is the transpose of the inverse of the top-left
+    3x3 part of the 4x4 modelview matrix.  If the 3x3 sub-matrix is not
+    invertible, this function returns the identity.
+
+    \sa modelViewMatrix(), combinedMatrix()
+*/
+QMatrix3x3 QGLPainter::normalMatrix() const
+{
+    const QGLPainterPrivate *d = d_func();
+    if (!d)
+        return QMatrix3x3();
+    const QMatrix4x4StackPrivate *mv = d->modelViewMatrix.d_func();
+    return mv->matrix.normalMatrix();
+}
+
+/*!
+    Returns the camera eye that is currently being used for stereo
+    rendering.  The default is QGL::NoEye.
+
+    The eye is used to adjust the camera position by a small amount
+    when setCamera() is called.
+
+    \sa setEye(), setCamera()
+*/
+QGL::Eye QGLPainter::eye() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGL::NoEye);
+    return d->eye;
+}
+
+/*!
+    Sets the camera \a eye that is currently being used for stereo
+    rendering.
+
+    The \a eye is used to adjust the camera position by a small amount
+    when setCamera() is called.
+
+    \sa eye(), setCamera()
+*/
+void QGLPainter::setEye(QGL::Eye eye)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->eye = eye;
+}
+
+/*!
+    Sets the modelViewMatrix() and projectionMatrix() to the view
+    defined by \a camera.  If eye() is not QGL::NoEye, then the view
+    will be adjusted for the camera's eye separation.
+
+    This function is typically called at the beginning of a scene rendering
+    pass to initialize the modelview and projection matrices.
+
+    \sa eye(), modelViewMatrix(), projectionMatrix()
+*/
+void QGLPainter::setCamera(QGLCamera *camera)
+{
+    Q_ASSERT(camera);
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->modelViewMatrix = camera->modelViewMatrix(d->eye);
+    if (camera->projectionType() != QGLCamera::Orthographic2D)
+        d->projectionMatrix = camera->projectionMatrix(aspectRatio());
+    else
+        d->projectionMatrix = camera->projectionMatrix2D(viewport(), d->eye);
+}
+
+/*!
+    Returns true if \a point is outside the current viewing volume.
     This is used to perform object culling checks.
 */
-bool QGLPainter::isVisible(const QVector3D& point) const
+bool QGLPainter::isCullable(const QVector3D& point) const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
     QVector3D projected = d->modelViewMatrix * point;
-    projected = d->projectionMatrix * point;
-    return d->viewingCube.contains(projected);
+    projected = d->projectionMatrix * projected;
+    return !d->viewingCube.contains(projected);
 }
 
 /*!
-    Returns true if \a box is completely or partially visible within the
-    current viewing volume.  This is used to perform object culling checks.
+    Returns true if \a box is completely outside the current viewing volume.
+    This is used to perform object culling checks.
 */
-bool QGLPainter::isVisible(const QBox3D& box) const
+bool QGLPainter::isCullable(const QBox3D& box) const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    QBox3D projected = box.transformed
-        (d->projectionMatrix * d->modelViewMatrix);
-    return d->viewingCube.intersects(projected);
+    QBox3D projected = box.transformed(d->modelViewMatrix);
+    if (projected.minimum().z() >= 0.0f || projected.maximum().z() >= 0.0f) {
+        // The box crosses the eye line in the view.  Don't do the
+        // projection or the math will go all strange with a
+        // perspective projection.  Just assume that it is cullable
+        // if it passes the eye line, and hence is definitely outside
+        // the viewing volume.  Note that it is possible that the box is
+        // half in front of the eye and half behind, which we handle now
+        // by truncating the box at the eye plane.
+        if (projected.minimum().z() >= 0.0f)
+            return true;
+        projected.setExtents(projected.minimum(),
+                             QVector3D(projected.maximum().x(),
+                                       projected.maximum().y(), 0.0f));
+    }
+    projected.transform(d->projectionMatrix);
+    return !d->viewingCube.intersects(projected);
 }
 
 /*!
-    Returns the aspect ratio of the underlying device (usually a window),
-    for adjusting projection transformations.
-
-    \sa QGLMatrixStack::perspective()
+    Returns the aspect ratio of the viewport() for adjusting projection
+    transformations.
 */
 qreal QGLPainter::aspectRatio() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
 
-    // Get the size of the underlying paint device.
-    QPaintDevice *device = d->context->device();
-    int width = device->width();
-    int height = device->height();
-    if (width == 0 || height == 0 || width == height)
-        return 1.0f;
-
-    // Use the device's DPI setting to determine the pixel aspect ratio.
-    int dpiX = device->logicalDpiX();
-    int dpiY = device->logicalDpiY();
-    if (dpiX <= 0 || dpiY <= 0)
-        dpiX = dpiY = 1;
-
-    // Return the final aspect ratio based on window and pixel size.
-    return ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
-}
-
-/*!
-    Returns the aspect ratio for a viewport of size \a viewportSize,
-    accounting for the DPI of the underlying device.
-
-    \sa QGLMatrixStack::perspective()
-*/
-qreal QGLPainter::aspectRatio(const QSize& viewportSize) const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
-
-    // Get the size of the underlying paint device.
-    int width = viewportSize.width();
-    int height = viewportSize.height();
-    if (width <= 0 || height <= 0 || width == height)
+    // Get the size of the current viewport.
+    QSize size = viewport().size();
+    if (size.width() == 0 || size.height() == 0 ||
+            size.width() == size.height())
         return 1.0f;
 
     // Use the device's DPI setting to determine the pixel aspect ratio.
@@ -819,8 +1087,8 @@ qreal QGLPainter::aspectRatio(const QSize& viewportSize) const
     if (dpiX <= 0 || dpiY <= 0)
         dpiX = dpiY = 1;
 
-    // Return the final aspect ratio based on window and pixel size.
-    return ((qreal)(width * dpiY)) / ((qreal)(height * dpiX));
+    // Return the final aspect ratio based on viewport and pixel size.
+    return ((qreal)(size.width() * dpiY)) / ((qreal)(size.height() * dpiX));
 }
 
 /*!
@@ -837,7 +1105,7 @@ QGLAbstractEffect *QGLPainter::effect() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    d->ensureEffect();
+    d->ensureEffect(const_cast<QGLPainter *>(this));
     return d->effect;
 }
 
@@ -872,16 +1140,17 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
     if (d->userEffect == effect)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = effect;
     if (effect && (!d->pick || !d->pick->isPicking)) {
         d->effect = effect;
-        d->effect->setActive(true);
+        d->effect->setActive(this, true);
+        d->setRequiredFields(effect->requiredFields());
         d->updates = UpdateAll;
     } else {
         // Revert to the effect associated with standardEffect().
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 
@@ -913,11 +1182,11 @@ void QGLPainter::setStandardEffect(QGL::StandardEffect effect)
     if (d->standardEffect == effect && d->effect && d->userEffect == 0)
         return;
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->standardEffect = effect;
     d->userEffect = 0;
     d->effect = 0;
-    d->ensureEffect();
+    d->ensureEffect(this);
 }
 
 /*!
@@ -938,30 +1207,86 @@ void QGLPainter::disableEffect()
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     if (d->effect)
-        d->effect->setActive(false);
+        d->effect->setActive(this, false);
     d->userEffect = 0;
     d->effect = 0;
 }
 
-void QGLPainterPrivate::createEffect()
+/*!
+    Returns the cached shader program associated with \a name; or null
+    if \a name is not currently associated with a shader program.
+
+    \sa setCachedProgram()
+*/
+QGLShaderProgram *QGLPainter::cachedProgram(const QString& name) const
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return d->cachedPrograms.value(name, 0);
+#else
+    Q_UNUSED(name);
+    return 0;
+#endif
+}
+
+/*!
+    Sets the cached shader \a program associated with \a name.
+
+    Effect objects can use this function to store pre-compiled
+    and pre-linked shader programs in the painter for future
+    use by the same effect.  The \a program will be destroyed
+    when context() is destroyed.
+
+    If \a program is null, then the program associated with \a name
+    will be destroyed.  If \a name is already present as a cached
+    program, then it will be replaced with \a program.
+
+    Names that start with "\c{qt.}" are reserved for use by Qt's
+    internal effects.
+
+    \sa cachedProgram()
+*/
+void QGLPainter::setCachedProgram
+    (const QString& name, QGLShaderProgram *program)
+{
+#if !defined(QT_OPENGL_ES_1)
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    QGLShaderProgram *current = d->cachedPrograms.value(name, 0);
+    if (current != program) {
+        if (program)
+            d->cachedPrograms[name] = program;
+        else
+            d->cachedPrograms.remove(name);
+        delete current;
+    }
+#else
+    // Wouldn't normally be called, but clean up anyway.
+    Q_UNUSED(name);
+    delete program;
+#endif
+}
+
+void QGLPainterPrivate::createEffect(QGLPainter *painter)
 {
     if (userEffect) {
         if (!pick || !pick->isPicking) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         if (userEffect->supportsPicking()) {
             effect = userEffect;
-            effect->setActive(true);
+            effect->setActive(painter, true);
             setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
         setRequiredFields(effect->requiredFields());
         updates = QGLPainter::UpdateAll;
         return;
@@ -1000,23 +1325,16 @@ void QGLPainterPrivate::createEffect()
             stdeffects[int(standardEffect)] = effect;
     }
     if (!pick || !pick->isPicking || effect->supportsPicking()) {
-        effect->setActive(true);
+        effect->setActive(painter, true);
     } else {
         effect = pick->defaultPickEffect;
-        effect->setActive(true);
+        effect->setActive(painter, true);
     }
     setRequiredFields(effect->requiredFields());
     updates = QGLPainter::UpdateAll;
 }
 
 #ifndef QT_NO_DEBUG
-
-void QGLPainterPrivate::removeRequiredFields(const QGLVertexArray& array)
-{
-    int count = array.m_fields.fieldCount();
-    for (int index = 0; index < count; ++index)
-        requiredFields.removeAll(array.m_fields.fieldAttribute(index));
-}
 
 void QGLPainterPrivate::removeRequiredFields
     (const QList<QGL::VertexAttribute>& array)
@@ -1045,34 +1363,15 @@ void QGLPainter::checkRequiredFields()
             qWarning("Attribute QGL::TextureCoord1 is missing"); break;
         case QGL::TextureCoord2:
             qWarning("Attribute QGL::TextureCoord2 is missing"); break;
-        case QGL::TextureCoord3:
-            qWarning("Attribute QGL::TextureCoord3 is missing"); break;
-        case QGL::TextureCoord4:
-            qWarning("Attribute QGL::TextureCoord4 is missing"); break;
-        case QGL::TextureCoord5:
-            qWarning("Attribute QGL::TextureCoord5 is missing"); break;
-        case QGL::TextureCoord6:
-            qWarning("Attribute QGL::TextureCoord6 is missing"); break;
-        case QGL::TextureCoord7:
-            qWarning("Attribute QGL::TextureCoord7 is missing"); break;
         case QGL::CustomVertex0:
             qWarning("Attribute QGL::CustomVertex0 is missing"); break;
         case QGL::CustomVertex1:
             qWarning("Attribute QGL::CustomVertex1 is missing"); break;
-        case QGL::CustomVertex2:
-            qWarning("Attribute QGL::CustomVertex2 is missing"); break;
-        case QGL::CustomVertex3:
-            qWarning("Attribute QGL::CustomVertex3 is missing"); break;
-        case QGL::CustomVertex4:
-            qWarning("Attribute QGL::CustomVertex4 is missing"); break;
-        case QGL::CustomVertex5:
-            qWarning("Attribute QGL::CustomVertex5 is missing"); break;
-        case QGL::CustomVertex6:
-            qWarning("Attribute QGL::CustomVertex6 is missing"); break;
-        case QGL::CustomVertex7:
-            qWarning("Attribute QGL::CustomVertex7 is missing"); break;
+        case QGL::UserVertex:
+            qWarning("Attribute QGL::UserVertex is missing"); break;
         default:
-            qWarning("Attribute %d is missing", (int)attr); break;
+            qWarning("Attribute UserVertex + %d is missing",
+                     (int)(attr - QGL::UserVertex)); break;
         }
     }
 }
@@ -1111,9 +1410,7 @@ void QGLPainter::setColor(const QColor& color)
     d->updates |= UpdateColor;
 }
 
-#define QGL_TEXTURE0    0x84C0
-
-void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
 #if !defined(QT_OPENGL_ES_2)
     switch (attribute) {
@@ -1136,32 +1433,13 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     case QGL::TextureCoord0:
     case QGL::TextureCoord1:
     case QGL::TextureCoord2:
-    case QGL::TextureCoord3:
-    case QGL::TextureCoord4:
-    case QGL::TextureCoord5:
-    case QGL::TextureCoord6:
-    case QGL::TextureCoord7:
     {
         int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-        glClientActiveTexture(QGL_TEXTURE0 + unit);
+        qt_gl_ClientActiveTexture(GL_TEXTURE0 + unit);
         glTexCoordPointer(value.tupleSize(), value.type(),
                           value.stride(), value.data());
         if (unit != 0)  // Stay on unit 0 between requests.
-            glClientActiveTexture(QGL_TEXTURE0);
-#else
-        QGLPainter painter(QGLContext::currentContext());
-        QGLPainterExtensions *extn =
-            painter.d_ptr->resolveMultiTextureExtensions();
-        if (extn->qt_glClientActiveTexture) {
-            extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-            if (unit != 0)  // Stay on unit 0 between requests.
-                extn->qt_glClientActiveTexture(QGL_TEXTURE0);
-        } else if (unit == 0) {
-            glTexCoordPointer(value.tupleSize(), value.type(), value.stride(), value.data());
-        }
-#endif
+            qt_gl_ClientActiveTexture(GL_TEXTURE0);
     }
     break;
 #endif
@@ -1174,113 +1452,10 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
 #endif
 }
 
-#if !defined(QT_OPENGL_ES_2)
-
-void QGLAbstractEffect::enableVertexAttribute(QGL::VertexAttribute attribute)
+void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    switch (attribute) {
-        case QGL::Position:
-            glEnableClientState(GL_VERTEX_ARRAY);
-            break;
-
-        case QGL::Normal:
-            glEnableClientState(GL_NORMAL_ARRAY);
-            break;
-
-        case QGL::Color:
-            glEnableClientState(GL_COLOR_ARRAY);
-            break;
-
-#ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
-        {
-            int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
-#else
-            QGLPainter painter(QGLContext::currentContext());
-            QGLPainterExtensions *extn =
-                painter.d_ptr->resolveMultiTextureExtensions();
-            if (extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                if (unit != 0)  // Stay on unit 0 between requests.
-                    extn->qt_glClientActiveTexture(QGL_TEXTURE0);
-            } else if (unit == 0) {
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-#endif
-        }
-        break;
-#endif
-
-        default: break;
-    }
+    qt_gl_setVertexAttribute(attribute, value);
 }
-
-void QGLAbstractEffect::disableVertexAttribute(QGL::VertexAttribute attribute)
-{
-    switch (attribute) {
-        case QGL::Position:
-            glDisableClientState(GL_VERTEX_ARRAY);
-            break;
-
-        case QGL::Normal:
-            glDisableClientState(GL_NORMAL_ARRAY);
-            break;
-
-        case QGL::Color:
-            glDisableClientState(GL_COLOR_ARRAY);
-            break;
-
-#ifdef GL_TEXTURE_COORD_ARRAY
-        case QGL::TextureCoord0:
-        case QGL::TextureCoord1:
-        case QGL::TextureCoord2:
-        case QGL::TextureCoord3:
-        case QGL::TextureCoord4:
-        case QGL::TextureCoord5:
-        case QGL::TextureCoord6:
-        case QGL::TextureCoord7:
-        {
-            int unit = (int)(attribute - QGL::TextureCoord0);
-#if defined(QT_OPENGL_ES)
-            glClientActiveTexture(QGL_TEXTURE0 + unit);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            if (unit != 0)  // Stay on unit 0 between requests.
-                glClientActiveTexture(QGL_TEXTURE0);
-#else
-            QGLPainter painter(QGLContext::currentContext());
-            QGLPainterExtensions *extn =
-                painter.d_ptr->resolveMultiTextureExtensions();
-            if (extn->qt_glClientActiveTexture) {
-                extn->qt_glClientActiveTexture(QGL_TEXTURE0 + unit);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                if (unit != 0)  // Stay on unit 0 between requests.
-                    extn->qt_glClientActiveTexture(QGL_TEXTURE0);
-            } else if (unit == 0) {
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-#endif
-        }
-        break;
-#endif
-
-        default: break;
-    }
-}
-
-#endif // !QT_OPENGL_ES_2
 
 /*!
     Sets a vertex \a attribute on the current GL context to \a value.
@@ -1297,7 +1472,11 @@ void QGLPainter::setVertexAttribute
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
+    if (d->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d->boundVertexBuffer = 0;
+    }
     d->effect->setVertexAttribute(attribute, value);
     d->removeRequiredField(attribute);
 }
@@ -1317,60 +1496,25 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
-    buffer.setOnEffect(d->effect);
-#ifndef QT_NO_DEBUG
-    d->removeRequiredFields(buffer.attributes());
-#endif
-}
-
-/*!
-    Sets vertex attributes on the current GL context based on the
-    fields in \a array.
-
-    The following example draws a single triangle, where each
-    vertex consists of a 3D position and a 2D texture co-ordinate:
-
-    \code
-    QGLVertexArray array(QGL::Position, 3, QGL::TextureCoord0, 2);
-    array.append(60.0f,  10.0f,  0.0f);
-    array.append(0.0f, 0.0f);
-    array.append(110.0f, 110.0f, 0.0f);
-    array.append(1.0f, 0.0f);
-    array.append(10.0f,  110.0f, 0.0f);
-    array.append(1.0f, 1.0f);
-    painter.setVertexArray(array);
-    painter.draw(QGL::Triangles, 3);
-    \endcode
-
-    If \a array has been uploaded into the GL server as a vertex
-    buffer, then the vertex buffer will be used to set the attributes.
-
-    \sa draw(), setCommonNormal(), QGLVertexArray::upload()
-*/
-void QGLPainter::setVertexArray(const QGLVertexArray& array)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
-    if (array.isUploaded() && array.bind()) {
-        QGLVertexArray bufferArray = array.toBufferForm();
-        for (int field = 0;
-                field < bufferArray.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (bufferArray.m_fields.fieldAttribute(field),
-                 bufferArray.attributeValue(field));
+    d->ensureEffect(this);
+    const QGLVertexBufferPrivate *bd = buffer.d_func();
+    if (bd->buffer.isCreated()) {
+        GLuint id = bd->buffer.bufferId();
+        if (id != d->boundVertexBuffer) {
+            bd->buffer.bind();
+            d->boundVertexBuffer = id;
         }
-        d->removeRequiredFields(bufferArray);
-        array.release();
-    } else {
-        for (int field = 0; field < array.m_fields.fieldCount(); ++field) {
-            d->effect->setVertexAttribute
-                (array.m_fields.fieldAttribute(field),
-                 array.attributeValue(field));
-        }
-        d->removeRequiredFields(array);
+    } else if (d->boundVertexBuffer) {
+        QGLBuffer::release(QGLBuffer::VertexBuffer);
+        d->boundVertexBuffer = 0;
     }
+    for (int index = 0; index < bd->attributes.size(); ++index) {
+        QGLVertexBufferAttribute *attr = bd->attributes[index];
+        d->effect->setVertexAttribute(attr->attribute, attr->value);
+    }
+#ifndef QT_NO_DEBUG
+    d->removeRequiredFields(bd->attributeNames);
+#endif
 }
 
 /*!
@@ -1383,7 +1527,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     d->effect->setCommonNormal(value);
 #ifndef QT_NO_DEBUG
     d->requiredFields.removeAll(QGL::Normal);
@@ -1394,7 +1538,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
     Returns the number of texture units associated with the
     current GL context.
 
-    \sa setTexture(), isTextureUnitActive()
+    \sa setTexture()
 */
 int QGLPainter::textureUnitCount() const
 {
@@ -1419,28 +1563,10 @@ int QGLPainter::textureUnitCount() const
 }
 
 /*!
-    Returns true if the specified texture \a unit is active;
-    false otherwise.  To activate a texture unit, call setTexture()
-    with a non-null texture object.  To deactivate a texture unit,
-    call setTexture() with a null texture object.
-
-    \sa setTexture(), textureUnitCount()
-*/
-bool QGLPainter::isTextureUnitActive(int unit) const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    if (unit < 0 || unit >= d->texturesInUse.size())
-        return false;
-    else
-        return d->texturesInUse[unit];
-}
-
-/*!
     Sets a texture \a unit to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
 {
@@ -1454,47 +1580,31 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     if (unit < 0)
         return;
 
-    // Record whether this texture unit is in use or not.
-    if (unit >= d->texturesInUse.size())
-        d->texturesInUse.resize(unit + 1);
-    d->texturesInUse[unit] = (texture != 0);
-
     // Select the texture unit and bind the texture.
-#if defined(QT_OPENGL_ES)
-    glActiveTexture(QGL_TEXTURE0 + unit);
-#else
-    QGLPainterExtensions *extn = d->resolveMultiTextureExtensions();
-    if (extn->qt_glActiveTexture)
-        extn->qt_glActiveTexture(QGL_TEXTURE0 + unit);
-#endif
+    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_2D);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_2D);
 #endif
     }
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QT_OPENGL_ES)
     if (unit != 0)
-        glActiveTexture(QGL_TEXTURE0);
-#else
-    if (unit != 0 && extn->qt_glActiveTexture)
-        extn->qt_glActiveTexture(QGL_TEXTURE0);
-#endif
+        qt_gl_ActiveTexture(GL_TEXTURE0);
 }
 
 /*!
     Sets a texture \a unit to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 {
@@ -1503,40 +1613,24 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     if (unit < 0)
         return;
 
-    // Record whether this texture unit is in use or not.
-    if (unit >= d->texturesInUse.size())
-        d->texturesInUse.resize(unit + 1);
-    d->texturesInUse[unit] = (texture != 0);
-
     // Select the texture unit and bind the texture.
-#if defined(QT_OPENGL_ES)
-    glActiveTexture(QGL_TEXTURE0 + unit);
-#else
-    QGLPainterExtensions *extn = d->resolveMultiTextureExtensions();
-    if (extn->qt_glActiveTexture)
-        extn->qt_glActiveTexture(QGL_TEXTURE0 + unit);
-#endif
+    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         QGLTextureCube::release();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glDisable(GL_TEXTURE_CUBE_MAP);
 #endif
     } else {
         texture->bind();
-#if !defined(QGL_SHADERS_ONLY)
+#if !defined(QT_OPENGL_ES_2)
         glEnable(GL_TEXTURE_CUBE_MAP);
 #endif
     }
 
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
-#if defined(QT_OPENGL_ES)
     if (unit != 0)
-        glActiveTexture(QGL_TEXTURE0);
-#else
-    if (unit != 0 && extn->qt_glActiveTexture)
-        extn->qt_glActiveTexture(QGL_TEXTURE0);
-#endif
+        qt_gl_ActiveTexture(GL_TEXTURE0);
 }
 
 /*!
@@ -1545,7 +1639,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     Sets texture unit 0 to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 
 /*!
@@ -1554,7 +1648,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     Sets texture unit 0 to the contents of \a texture.
     If \a texture is null, the texture unit will be disabled.
 
-    \sa textureUnitCount(), isTextureUnitActive()
+    \sa textureUnitCount()
 */
 
 /*!
@@ -1568,21 +1662,247 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     the matrix state and lighting conditions have been set on the
     active effect().
 
+    Note that this function informs the effect that an update is needed.
+    It does not change the GL state itself.  In particular, the
+    modelview and projection matrices in the fixed-function pipeline
+    are not changed unless the effect or application calls
+    updateFixedFunction().
+
     \sa setUserEffect(), projectionMatrix(), modelViewMatrix()
-    \sa draw()
+    \sa draw(), updateFixedFunction()
 */
 void QGLPainter::update()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect();
+    d->ensureEffect(this);
     QGLPainter::Updates updates = d->updates;
     d->updates = 0;
-    if (d->modelViewMatrix.updateServer())
+    if (d->modelViewMatrix.isDirty()) {
         updates |= UpdateModelViewMatrix;
-    if (d->projectionMatrix.updateServer())
+        d->modelViewMatrix.setDirty(false);
+    }
+    if (d->projectionMatrix.isDirty()) {
         updates |= UpdateProjectionMatrix;
-    d->effect->update(this, updates);
+        d->projectionMatrix.setDirty(false);
+    }
+    if (updates != 0)
+        d->effect->update(this, updates);
+}
+
+#if !defined(QT_OPENGL_ES_2)
+
+static void setLight(int light, const QGLLightParameters *parameters,
+                     const QMatrix4x4& transform)
+{
+    GLfloat params[4];
+
+    QColor color = parameters->ambientColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_AMBIENT, params);
+
+    color = parameters->diffuseColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_DIFFUSE, params);
+
+    color = parameters->specularColor();
+    params[0] = color.redF();
+    params[1] = color.greenF();
+    params[2] = color.blueF();
+    params[3] = color.alphaF();
+    glLightfv(light, GL_SPECULAR, params);
+
+    QVector4D vector = parameters->eyePosition(transform);
+    params[0] = vector.x();
+    params[1] = vector.y();
+    params[2] = vector.z();
+    params[3] = vector.w();
+    glLightfv(light, GL_POSITION, params);
+
+    QVector3D spotDirection = parameters->eyeSpotDirection(transform);
+    params[0] = spotDirection.x();
+    params[1] = spotDirection.y();
+    params[2] = spotDirection.z();
+    glLightfv(light, GL_SPOT_DIRECTION, params);
+
+    params[0] = parameters->spotExponent();
+    glLightfv(light, GL_SPOT_EXPONENT, params);
+
+    params[0] = parameters->spotAngle();
+    glLightfv(light, GL_SPOT_CUTOFF, params);
+
+    params[0] = parameters->constantAttenuation();
+    glLightfv(light, GL_CONSTANT_ATTENUATION, params);
+
+    params[0] = parameters->linearAttenuation();
+    glLightfv(light, GL_LINEAR_ATTENUATION, params);
+
+    params[0] = parameters->quadraticAttenuation();
+    glLightfv(light, GL_QUADRATIC_ATTENUATION, params);
+}
+
+static void setMaterial(int face, const QGLMaterial *parameters)
+{
+    GLfloat params[17];
+
+    QColor mcolor = parameters->ambientColor();
+    params[0] = mcolor.redF();
+    params[1] = mcolor.greenF();
+    params[2] = mcolor.blueF();
+    params[3] = mcolor.alphaF();
+
+    mcolor = parameters->diffuseColor();
+    params[4] = mcolor.redF();
+    params[5] = mcolor.greenF();
+    params[6] = mcolor.blueF();
+    params[7] = mcolor.alphaF();
+
+    mcolor = parameters->specularColor();
+    params[8] = mcolor.redF();
+    params[9] = mcolor.greenF();
+    params[10] = mcolor.blueF();
+    params[11] = mcolor.alphaF();
+
+    mcolor = parameters->emittedLight();
+    params[12] = mcolor.redF();
+    params[13] = mcolor.greenF();
+    params[14] = mcolor.blueF();
+    params[15] = mcolor.alphaF();
+
+    params[16] = parameters->shininess();
+
+    glMaterialfv(face, GL_AMBIENT, params);
+    glMaterialfv(face, GL_DIFFUSE, params + 4);
+    glMaterialfv(face, GL_SPECULAR, params + 8);
+    glMaterialfv(face, GL_EMISSION, params + 12);
+    glMaterialfv(face, GL_SHININESS, params + 16);
+}
+
+#endif // !QT_OPENGL_ES_2
+
+/*!
+    Updates the fixed-function pipeline with the current painting
+    state according to the flags in \a updates.
+
+    This function is intended for use by effects in their
+    QGLAbstractEffect::update() override if they are using the
+    fixed-function pipeline.  It can also be used by user
+    applications if they need the QGLPainter state to be
+    set in the fixed-function pipeline.
+
+    If the OpenGL implementation does not have a fixed-function
+    pipeline, e.g. OpenGL/ES 2.0, this function does nothing.
+
+    \sa update()
+*/
+void QGLPainter::updateFixedFunction(QGLPainter::Updates updates)
+{
+#if defined(QT_OPENGL_ES_2)
+    Q_UNUSED(updates);
+#else
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if ((updates & QGLPainter::UpdateColor) != 0) {
+        QColor color;
+        if (isPicking())
+            color = pickColor();
+        else
+            color = this->color();
+        glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    }
+    if ((updates & QGLPainter::UpdateModelViewMatrix) != 0) {
+        const QMatrix4x4 &matrix = d->modelViewMatrix.top();
+        glMatrixMode(GL_MODELVIEW);
+        if (sizeof(qreal) == sizeof(GLfloat)) {
+            glLoadMatrixf(reinterpret_cast<const GLfloat *>
+                (matrix.constData()));
+        } else {
+            GLfloat mat[16];
+            const qreal *m = matrix.constData();
+            for (int index = 0; index < 16; ++index)
+                mat[index] = m[index];
+            glLoadMatrixf(mat);
+        }
+    }
+    if ((updates & QGLPainter::UpdateProjectionMatrix) != 0) {
+        const QMatrix4x4 &matrix = d->projectionMatrix.top();
+        glMatrixMode(GL_PROJECTION);
+        if (sizeof(qreal) == sizeof(GLfloat)) {
+            glLoadMatrixf(reinterpret_cast<const GLfloat *>
+                (matrix.constData()));
+        } else {
+            GLfloat mat[16];
+            const qreal *m = matrix.constData();
+            for (int index = 0; index < 16; ++index)
+                mat[index] = m[index];
+            glLoadMatrixf(mat);
+        }
+    }
+    if ((updates & QGLPainter::UpdateLights) != 0) {
+        // Save the current modelview matrix and load the identity.
+        // We need to apply the light in the modelview transformation
+        // that was active when the light was specified.
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        // Enable the main light.
+        const QGLLightParameters *params = mainLight();
+        setLight(GL_LIGHT0, params, mainLightTransform());
+
+        // Restore the previous modelview transformation.
+        glPopMatrix();
+
+        // Set up the light model parameters if at least one light is enabled.
+        const QGLLightModel *lightModel = this->lightModel();
+        GLfloat values[4];
+#ifdef GL_LIGHT_MODEL_TWO_SIDE
+        if (lightModel->model() == QGLLightModel::TwoSided)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, values);
+#endif
+#ifdef GL_LIGHT_MODEL_COLOR_CONTROL
+        if (lightModel->colorControl() == QGLLightModel::SeparateSpecularColor)
+            values[0] = GL_SEPARATE_SPECULAR_COLOR;
+        else
+            values[0] = GL_SINGLE_COLOR;
+        glLightModelfv(GL_LIGHT_MODEL_COLOR_CONTROL, values);
+#endif
+#ifdef GL_LIGHT_MODEL_LOCAL_VIEWER
+        if (lightModel->viewerPosition() == QGLLightModel::LocalViewer)
+            values[0] = 1.0f;
+        else
+            values[0] = 0.0f;
+        glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, values);
+#endif
+#ifdef GL_LIGHT_MODEL_AMBIENT
+        QColor color = lightModel->ambientSceneColor();
+        values[0] = color.redF();
+        values[1] = color.blueF();
+        values[2] = color.greenF();
+        values[3] = color.alphaF();
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, values);
+#endif
+    }
+    if ((updates & QGLPainter::UpdateMaterials) != 0) {
+        const QGLMaterial *frontMaterial = faceMaterial(QGL::FrontFaces);
+        const QGLMaterial *backMaterial = faceMaterial(QGL::BackFaces);
+        if (frontMaterial == backMaterial) {
+            setMaterial(GL_FRONT_AND_BACK, frontMaterial);
+        } else {
+            setMaterial(GL_FRONT, frontMaterial);
+            setMaterial(GL_BACK, backMaterial);
+        }
+    }
+#endif
 }
 
 /*!
@@ -1597,10 +1917,6 @@ void QGLPainter::update()
 */
 void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
     update();
     checkRequiredFields();
     glDrawArrays((GLenum)mode, index, count);
@@ -1613,75 +1929,122 @@ void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
     setVertexAttribute().  The type of primitive to draw is
     specified by \a mode.
 
-    This operation will consume all of the elements of \a indices,
+    This operation will consume \a count elements of \a indices,
     which are used to index into the enabled arrays.
 
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
+    \sa update()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices)
+void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
 {
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
     update();
     checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        glDrawElements((GLenum)mode, indices.size(), indices.type(),
-                       reinterpret_cast<const char *>(0));
-        indices.release();
-    } else {
-        glDrawElements((GLenum)mode, indices.size(),
-                       indices.type(), indices.constData());
+    if (d->boundIndexBuffer) {
+        QGLBuffer::release(QGLBuffer::IndexBuffer);
+        d->boundIndexBuffer = 0;
+    }
+    glDrawElements(GLenum(mode), count, GL_UNSIGNED_SHORT, indices);
+}
+
+/*!
+    Pushes \a fbo onto the surface stack and makes it the current
+    drawing surface for context().  If \a fbo is null, then the
+    current drawing surface will be set to the default (e.g. the window).
+
+    Note: the \a fbo object must remain valid until popped from
+    the stack or end() is called.  All surfaces are popped from
+    the stack by end().
+
+    \sa popSurface(), currentSurface(), surfaceSize()
+*/
+void QGLPainter::pushSurface(QGLFramebufferObject *fbo)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLFramebufferObject *fboTop;
+    if (d->surfaceStack.isEmpty())
+        fboTop = 0;
+    else
+        fboTop = d->surfaceStack.last();
+    d->surfaceStack.append(fbo);
+    if (fbo != fboTop) {
+        if (fbo)
+            fbo->bind();
+        else if (fboTop)
+            fboTop->release();
     }
 }
 
 /*!
-    \overload
+    Pops the top-most framebuffer object from the surface stack
+    and returns it.  The next object on the stack will be made
+    the current drawing surface for context().  Does nothing
+    if the surface stack is empty when this function is called.
 
-    Draws primitives using vertices from the arrays specified by
-    setVertexAttribute().  The type of primitive to draw is
-    specified by \a mode.
-
-    This operation will consume \a count elements of \a indices,
-    starting at \a offset, which are used to index into the enabled arrays.
-
-    If \a indices has been uploaded to the GL server as an index
-    buffer, then this function will draw using that index buffer.
-
-    \sa update(), QGLIndexArray::upload()
+    \sa pushSurface(), currentSurface()
 */
-void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexArray& indices,
-                      int offset, int count)
+QGLFramebufferObject *QGLPainter::popSurface()
 {
-    Q_ASSERT(offset >= 0 && count >= 0 && (offset + count) <= indices.size());
-#ifndef QT_NO_DEBUG
-    if (mode == QGL::NoDrawingMode)
-        qWarning("Calling QGLPainter::draw with no drawing mode set");
-#endif
-    update();
-    checkRequiredFields();
-    if (indices.isUploaded() && indices.bind()) {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(ushort)));
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const char *>(offset * sizeof(int)));
-        }
-        indices.release();
-    } else {
-        if (indices.type() == GL_UNSIGNED_SHORT) {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const ushort *>(indices.constData()) + offset);
-        } else {
-            glDrawElements((GLenum)mode, count, indices.type(),
-                reinterpret_cast<const int *>(indices.constData()) + offset);
-        }
-    }
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    QGLFramebufferObject *fbo = d->surfaceStack.takeLast();
+    QGLFramebufferObject *fboNext;
+    if (d->surfaceStack.isEmpty())
+        fboNext = 0;
+    else
+        fboNext = d->surfaceStack.last();
+    if (fboNext)
+        fboNext->bind();
+    else if (fbo)
+        fbo->release();
+    return fbo;
+}
+
+/*!
+    Returns the framebuffer object corresponding to the current
+    drawing surface; null if using the default drawing surface.
+
+    \sa pushSurface(), popSurface(), surfaceSize()
+*/
+QGLFramebufferObject *QGLPainter::currentSurface() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (d->surfaceStack.isEmpty())
+        return 0;
+    else
+        return d->surfaceStack.last();
+}
+
+/*!
+    Returns the size of the current drawing surface.
+
+    This function is typically used after calling pushSurface() or
+    popSurface() to readjust the viewport() for the dimensions of
+    the current drawing surface.
+
+    \code
+    painter.pushSurface(fbo);
+    painter.setViewport(painter.surfaceSize());
+    ...
+    painter.popSurface();
+    painter.setViewport(painter.surfaceSize());
+    \endcode
+
+    \sa currentSurface(), viewport()
+*/
+QSize QGLPainter::surfaceSize() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QSize());
+    QGLFramebufferObject *fbo;
+    if (!d->surfaceStack.isEmpty() && (fbo = d->surfaceStack.last()) != 0)
+        return fbo->size();
+    QPaintDevice *device = d->context->device();
+    return QSize(device->width(), device->height());
 }
 
 /*!
@@ -1766,209 +2129,100 @@ void QGLPainter::setLightModel(const QGLLightModel *value)
 }
 
 /*!
-    Returns the total number of lights that are supported by the OpenGL
-    implementation, whether they are enabled or not.  The returned value
-    will be zero before begin() is called.
+    Returns the parameters for the main light in the scene.
 
-    \sa isLightEnabled()
+    The light parameters are specified in world co-ordinates at
+    the point when setMainLight() was called.  The mainLightTransform()
+    must be applied to obtain eye co-ordinates.
+
+    \sa setMainLight(), mainLightTransform()
 */
-int QGLPainter::lightCount() const
+const QGLLightParameters *QGLPainter::mainLight() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    if (!d->maxLights) {
-#if defined(GL_LIGHTING) && defined(GL_MAX_LIGHTS)
-        d->maxLights = 8;
-        glGetIntegerv(GL_MAX_LIGHTS, &d->maxLights);
-        if (d->maxLights >= QGL_MAX_LIGHTS)
-            d->maxLights = QGL_MAX_LIGHTS;
-#else
-        d->maxLights = 8;
-#endif
+    if (!d->mainLight) {
+        if (!d->defaultLight)
+            d->defaultLight = new QGLLightParameters();
+        return d->defaultLight;
+    } else {
+        return d->mainLight;
     }
-    return d->maxLights;
 }
 
 /*!
-    Returns true if there are enabled lights in this painter.
+    Sets the \a parameters for the main light in the scene.
+    The mainLightTransform() is set to the current modelViewMatrix().
 
-    \sa isLightEnabled()
-*/
-bool QGLPainter::hasEnabledLights() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    return (d->enabledLights != 0);
-}
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The mainLightTransform() specifies the transformation to apply to
+    convert the world co-ordinates into eye co-ordinates when the light
+    is used.
 
-/*!
-    Returns true if light \a number has been enabled.
-
-    \sa setLightEnabled(), lightCount(), lightParameters(), hasEnabledLights()
-*/
-bool QGLPainter::isLightEnabled(int number) const
-{
-    Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights)
-        return (d->enabledLights & (1 << number)) != 0;
-    else
-        return false;
-}
-
-/*!
-    Sets the enable state for light \a number to \a value.  The function
-    call will be ignored if \a number is out of range.
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
 
     The light settings in the GL server will not be changed until
-    update() is called.  At that time, the \c{GL_LIGHTn} property
-    will be enabled, but not \c{GL_LIGHTING}.  The effect() is
-    responsible for enabling \c{GL_LIGHTING} if it supports lights.
+    update() is called.
 
-    \sa isLightEnabled(), lightCount(), setLightParameters()
+    If \a parameters is null, then mainLight() will be set to a
+    default internal light object.
+
+    \sa mainLight(), mainLightTransform()
 */
-void QGLPainter::setLightEnabled(int number, bool value) const
+void QGLPainter::setMainLight(QGLLightParameters *parameters)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        if (value)
-            d->enabledLights |= (1 << number);
-        else
-            d->enabledLights &= ~(1 << number);
-        d->updates |= QGLPainter::UpdateLights;
-    }
+    d->mainLight = parameters;
+    d->mainLightTransform = modelViewMatrix();
+    d->updates |= QGLPainter::UpdateLights;
 }
 
 /*!
-    Returns the parameters for light \a number.  If \a number is out
-    of range, a default QGLLightParameters object will be returned.
+    Sets the \a parameters for the main light in the scene, and set
+    mainLightTransform() to \a transform.
 
-    The light parameters are specified in world co-ordinates at
-    the point when setLightParameters() was called for light \a number.
-    The lightTransform() for light \a number must be applied to
-    obtain eye co-ordinates.
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The \a transform specifies the transformation to apply to convert the
+    world co-ordinates into eye co-ordinates when the light is used.
 
-    Note: the default diffuse and specular color for light 0 is
-    white, and the default diffuse and specular color for other
-    lights is black.  All other defaults are as defined in the
-    QGLLightParameters class.
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
 
-    \sa lightTransform(), setLightParameters(), isLightEnabled()
+    The light settings in the GL server will not be changed until
+    update() is called.
+
+    If \a parameters is null, then mainLight() will be set to a
+    default internal light object.
+
+    \sa mainLight(), mainLightTransform()
 */
-const QGLLightParameters *QGLPainter::lightParameters(int number) const
+void QGLPainter::setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform)
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLLightParameters());
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        if (d->lights[number])
-            return d->lights[number];
-    }
-    if (number == 0) {
-        if (!d->defaultLight0)
-            d->defaultLight0 = new QGLLightParameters();
-        return d->defaultLight0;
-    } else {
-        if (!d->defaultLight1) {
-            d->defaultLight1 = new QGLLightParameters();
-            d->defaultLight1->setDiffuseColor(QColor(0, 0, 0, 255));
-            d->defaultLight1->setSpecularColor(QColor(0, 0, 0, 255));
-        }
-        return d->defaultLight1;
-    }
+    QGLPAINTER_CHECK_PRIVATE();
+    d->mainLight = parameters;
+    d->mainLightTransform = transform;
+    d->updates |= QGLPainter::UpdateLights;
 }
 
 /*!
-    Returns the modelview transformation matrix for light \a number that
-    was set at the time setLightParameters() was called.  If \a number is out
-    of range, the identity matrix will be returned.
+    Returns the modelview transformation matrix for the main light that
+    was set at the time setMainLight() was called.
 
     The light transform may be used by later painting operations to
     convert the light from world co-ordinates into eye co-ordinates.
     The eye transformation is set when the light is specified.
 
-    \sa lightParameters(), setLightParameters(), isLightEnabled()
+    \sa mainLight(), setMainLight()
 */
-QMatrix4x4 QGLPainter::lightTransform(int number) const
+QMatrix4x4 QGLPainter::mainLightTransform() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLLightParameters());
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights)
-        return d->lightTransforms[number];
-    else
-        return QMatrix4x4();
-}
-
-/*!
-    Sets the \a parameters for light \a number.  If \a number is out
-    of range, the function call will be ignored.  The lightTransform()
-    for light \a number is set to the current modelViewMatrix().
-
-    Light parameters are stored in world co-ordinates, not eye co-ordinates.
-    The lightTransform() for the light specifies the transformation to
-    apply to convert the world co-ordinates into eye co-ordinates when
-    the light is used.
-
-    Note: the \a parameters may be ignored by effect() if it
-    has some other way to determine the lighting conditions.
-
-    The light settings in the GL server will not be changed until
-    update() is called.
-
-    \sa lightParameters(), lightTransform(), setLightEnabled()
-*/
-void QGLPainter::setLightParameters(int number, const QGLLightParameters *parameters)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        d->lights[number] = parameters;
-        d->lightTransforms[number] = modelViewMatrix();
-        d->updates |= QGLPainter::UpdateLights;
-    }
-}
-
-/*!
-    Sets the \a parameters for light \a number.  If \a number is out
-    of range, the function call will be ignored.  The lightTransform()
-    for light \a number is set to \a transform.
-
-    Light parameters are stored in world co-ordinates, not eye co-ordinates.
-    The lightTransform() for the light specifies the transformation to
-    apply to convert the world co-ordinates into eye co-ordinates when
-    the light is used.
-
-    Note: the \a parameters may be ignored by effect() if it
-    has some other way to determine the lighting conditions.
-
-    The light settings in the GL server will not be changed until
-    update() is called.
-
-    \sa lightParameters(), lightTransform(), setLightEnabled()
-*/
-void QGLPainter::setLightParameters
-    (int number, const QGLLightParameters *parameters,
-     const QMatrix4x4& transform)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (!d->maxLights)
-        lightCount();
-    if (number >= 0 && number < d->maxLights) {
-        d->lights[number] = parameters;
-        d->lightTransforms[number] = transform;
-        d->updates |= QGLPainter::UpdateLights;
-    }
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QMatrix4x4());
+    return d->mainLightTransform;
 }
 
 /*!
@@ -1979,21 +2233,21 @@ void QGLPainter::setLightParameters
 
     \sa setFaceMaterial(), setFaceColor()
 */
-const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
+const QGLMaterial *QGLPainter::faceMaterial(QGL::Face face) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterialParameters());
+    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterial());
     if (face == QGL::BackFaces) {
         if (!d->backMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->backMaterial = d->defaultMaterial;
         }
         return d->backMaterial;
     } else {
         if (!d->frontMaterial) {
             if (!d->defaultMaterial)
-                d->defaultMaterial = new QGLMaterialParameters();
+                d->defaultMaterial = new QGLMaterial();
             d->frontMaterial = d->defaultMaterial;
         }
         return d->frontMaterial;
@@ -2016,7 +2270,7 @@ const QGLMaterialParameters *QGLPainter::faceMaterial(QGL::Face face) const
     \sa faceMaterial(), setFaceColor()
 */
 void QGLPainter::setFaceMaterial
-        (QGL::Face face, const QGLMaterialParameters *value)
+        (QGL::Face face, const QGLMaterial *value)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
@@ -2037,20 +2291,15 @@ void QGLPainter::setFaceMaterial
     d->updates |= QGLPainter::UpdateMaterials;
 }
 
-static QGLMaterialParameters *createColorMaterial
-    (QGLMaterialParameters *prev, const QColor& color)
+static QGLMaterial *createColorMaterial
+    (QGLMaterial *prev, const QColor& color)
 {
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (prev)
         material = prev;
     else
-        material = new QGLMaterialParameters();
-    material->setAmbientColor
-        (QColor::fromRgbF(color.redF() * 0.2, color.greenF() * 0.2,
-                          color.blueF() * 0.2, color.alphaF()));
-    material->setDiffuseColor
-        (QColor::fromRgbF(color.redF() * 0.8, color.greenF() * 0.8,
-                          color.blueF() * 0.8, color.alphaF()));
+        material = new QGLMaterial();
+    material->setColor(color);
     return material;
 }
 
@@ -2099,40 +2348,6 @@ void QGLPainter::setFaceColor(QGL::Face face, const QColor& color)
 }
 
 /*!
-    Returns the current fog parameters; or null if fog has been disabled.
-    The default is that fog is disabled.
-
-    \sa setFogParameters()
-*/
-const QGLFogParameters *QGLPainter::fogParameters() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    return d->fogParameters;
-}
-
-/*!
-    Sets the current fog parameters to \a value.  If \a value is
-    null, then fog will be disabled.
-
-    The fog settings in the GL server will not be changed until
-    update() is called, and if the effect() supports fogging.
-
-    All standard effects support fogging on systems with fixed-function
-    pipelines.  Under OpenGL/ES 2.0, fogging is not supported by the
-    standard effects, but it can be implemented by user-defined effects.
-
-    \sa fogParameters()
-*/
-void QGLPainter::setFogParameters(const QGLFogParameters *value)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->fogParameters = value;
-    d->updates |= QGLPainter::UpdateFog;
-}
-
-/*!
     Returns true if this painter is in object picking mode;
     false if this painter is in normal rendering mode.
 
@@ -2164,9 +2379,9 @@ void QGLPainter::setPicking(bool value)
         // Switch to/from the pick effect.
         d->pick->isPicking = value;
         if (d->effect)
-            d->effect->setActive(false);
+            d->effect->setActive(this, false);
         d->effect = 0;
-        d->ensureEffect();
+        d->ensureEffect(this);
     }
 }
 

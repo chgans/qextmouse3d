@@ -13,3 +13,5 @@ HEADERS += qglinfowindow.h \
     aboutdialog.h \
     fpswidget.h
 RESOURCES += qglinfo.qrc
+
+!contains(QT_CONFIG, egl):DEFINES += QT_NO_EGL

@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QBox3D
     \brief The QBox3D class represents an axis-aligned box in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::math
 
@@ -99,13 +99,7 @@ QT_BEGIN_NAMESPACE
     Constructs a finite box that encloses all of the specified \a points.
 */
 
-/*!
-    \fn QBox3D::QBox3D(const QArrayRef<QVector3D>& points)
-
-    Constructs a finite box that encloses all of the specified \a points.
-*/
-
-void QBox3D::expand(const QVector3D *points, int count)
+void QBox3D::unite(const QVector3D *points, int count)
 {
     if (count <= 0 || boxtype == Infinite)
         return;
@@ -153,7 +147,7 @@ void QBox3D::expand(const QVector3D *points, int count)
 
     Returns true if this box is null; false otherwise.
 
-    \sa isFinite(), isInfinite(), setNull()
+    \sa isFinite(), isInfinite(), setToNull()
 */
 
 /*!
@@ -169,7 +163,7 @@ void QBox3D::expand(const QVector3D *points, int count)
 
     Returns true if this box is infinite in size; false otherwise.
 
-    \sa isNull(), isFinite(), setInfinite()
+    \sa isNull(), isFinite(), setToInfinite()
 */
 
 /*!
@@ -201,7 +195,7 @@ void QBox3D::expand(const QVector3D *points, int count)
 */
 
 /*!
-    \fn void QBox3D::setNull()
+    \fn void QBox3D::setToNull()
 
     Sets this box to null.
 
@@ -209,7 +203,7 @@ void QBox3D::expand(const QVector3D *points, int count)
 */
 
 /*!
-    \fn void QBox3D::setInfinite()
+    \fn void QBox3D::setToInfinite()
 
     Sets this box to be infinite in size.
 
@@ -409,7 +403,7 @@ QResult<QVector3D> QBox3D::intersection(const QLine3D &line) const
 /*!
     Intersects this box with \a box.
 
-    \sa intersected(), intersects(), expand()
+    \sa intersected(), intersects(), unite()
 */
 void QBox3D::intersect(const QBox3D& box)
 {
@@ -423,7 +417,7 @@ void QBox3D::intersect(const QBox3D& box)
         return;
     } else if (box.boxtype == Null) {
         // Anything intersected with null is null.
-        setNull();
+        setToNull();
         return;
     } else if (box.boxtype == Infinite) {
         // Box intersected with infinity is the box.
@@ -448,7 +442,7 @@ void QBox3D::intersect(const QBox3D& box)
     if (max2.z() < max1.z())
         max1.setZ(max2.z());
     if (min1.x() > max1.x() || min1.y() > max1.y() || min1.z() > max1.z()) {
-        setNull();
+        setToNull();
     } else {
         mincorner = min1;
         maxcorner = max1;
@@ -458,7 +452,7 @@ void QBox3D::intersect(const QBox3D& box)
 /*!
     Returns a new box which is the intersection of this box with \a box.
 
-    \sa intersect(), intersects(), expanded()
+    \sa intersect(), intersects(), united()
 */
 QBox3D QBox3D::intersected(const QBox3D& box) const
 {
@@ -468,12 +462,13 @@ QBox3D QBox3D::intersected(const QBox3D& box) const
 }
 
 /*!
-    Expands this box so that it also includes \a point.  If \a point
-    is already contained within this box, then this box will be unchanged.
+    Unites this box with \a point by expanding it to encompass \a point.
+    If \a point is already contained within this box, then this box
+    will be unchanged.
 
-    \sa expanded(), intersect()
+    \sa united(), intersect()
 */
-void QBox3D::expand(const QVector3D& point)
+void QBox3D::unite(const QVector3D& point)
 {
     if (boxtype == Finite) {
         if (point.x() < mincorner.x())
@@ -496,51 +491,41 @@ void QBox3D::expand(const QVector3D& point)
 }
 
 /*!
-    Expands this box so that it also includes \a box.  If \a box
-    is already contained within this box, then this box will be unchanged.
+    Unites this box with \a box by expanding this box to encompass the
+    region defined by \a box.  If \a box is already contained within
+    this box, then this box will be unchanged.
 
-    \sa expanded(), intersect()
+    \sa united(), intersect()
 */
-void QBox3D::expand(const QBox3D& box)
+void QBox3D::unite(const QBox3D& box)
 {
     if (box.boxtype == Finite) {
-        expand(box.minimum());
-        expand(box.maximum());
+        unite(box.minimum());
+        unite(box.maximum());
     } else if (box.boxtype == Infinite) {
-        setInfinite();
+        setToInfinite();
     }
 }
 
 /*!
-    \fn void QBox3D::expand(const QArray<QVector3D>& points)
+    \fn void QBox3D::unite(const QArray<QVector3D>& points)
 
-    Expands this box so that it also includes all of the
-    elements of \a points.
+    Unites this box with all of the elements of \a points.
 
-    \sa expanded(), intersect()
+    \sa united(), intersect()
 */
 
 /*!
-    \fn void QBox3D::expand(const QArrayRef<QVector3D>& points)
+    Returns a new box which unites this box with \a point.  The returned
+    value will be the smallest box that contains both this box and \a point.
 
-    Expands this box so that it also includes all of the
-    elements of \a points.
-
-    \sa expanded(), intersect()
+    \sa unite(), intersected()
 */
-
-/*!
-    Returns a new box which expands this box so that it also includes
-    \a point.  The returned value will be the smallest box that contains
-    both this box and \a point.
-
-    \sa expand(), intersected()
-*/
-QBox3D QBox3D::expanded(const QVector3D& point) const
+QBox3D QBox3D::united(const QVector3D& point) const
 {
     if (boxtype == Finite) {
         QBox3D result(*this);
-        result.expand(point);
+        result.unite(point);
         return result;
     } else if (boxtype == Null) {
         return QBox3D(point, point);
@@ -550,17 +535,16 @@ QBox3D QBox3D::expanded(const QVector3D& point) const
 }
 
 /*!
-    Returns a new box which expands this box so that it also includes
-    \a box.  The returned value will be the smallest box that contains
-    both this box and \a box.
+    Returns a new box which unites this box with \a box.  The returned value
+    will be the smallest box that contains both this box and \a box.
 
-    \sa expand(), intersected()
+    \sa unite(), intersected()
 */
-QBox3D QBox3D::expanded(const QBox3D& box) const
+QBox3D QBox3D::united(const QBox3D& box) const
 {
     if (boxtype == Finite) {
         QBox3D result(*this);
-        result.expand(box);
+        result.unite(box);
         return result;
     } else if (boxtype == Null) {
         return box;
@@ -570,23 +554,13 @@ QBox3D QBox3D::expanded(const QBox3D& box) const
 }
 
 /*!
-    \fn QBox3D QBox3D::expanded(const QArray<QVector3D>& points) const
+    \fn QBox3D QBox3D::united(const QArray<QVector3D>& points) const
 
-    Returns a new box which expands this box so that it also includes
-    all of the elements of \a points.  The returned value will be the
-    smallest box that contains both this box and all of the \a points.
+    Returns a new box which unites this box with all of the elements of
+    \a points.  The returned value will be the smallest box that contains
+    both this box and all of the \a points.
 
-    \sa expand(), intersected()
-*/
-
-/*!
-    \fn QBox3D QBox3D::expanded(const QArrayRef<QVector3D>& points) const
-
-    Returns a new box which expands this box so that it also includes
-    all of the elements of \a points.  The returned value will be the
-    smallest box that contains both this box and all of the \a points.
-
-    \sa expand(), intersected()
+    \sa unite(), intersected()
 */
 
 /*!
@@ -733,14 +707,14 @@ QBox3D QBox3D::transformed(const QMatrix4x4& matrix) const
     if (boxtype != Finite)
         return *this;
     QBox3D result;
-    result.expand(matrix * mincorner);
-    result.expand(matrix * QVector3D(mincorner.x(), mincorner.y(), maxcorner.z()));
-    result.expand(matrix * QVector3D(mincorner.x(), maxcorner.y(), maxcorner.z()));
-    result.expand(matrix * QVector3D(mincorner.x(), maxcorner.y(), mincorner.z()));
-    result.expand(matrix * QVector3D(maxcorner.x(), mincorner.y(), mincorner.z()));
-    result.expand(matrix * QVector3D(maxcorner.x(), maxcorner.y(), mincorner.z()));
-    result.expand(matrix * QVector3D(maxcorner.x(), mincorner.y(), maxcorner.z()));
-    result.expand(matrix * maxcorner);
+    result.unite(matrix * mincorner);
+    result.unite(matrix * QVector3D(mincorner.x(), mincorner.y(), maxcorner.z()));
+    result.unite(matrix * QVector3D(mincorner.x(), maxcorner.y(), maxcorner.z()));
+    result.unite(matrix * QVector3D(mincorner.x(), maxcorner.y(), mincorner.z()));
+    result.unite(matrix * QVector3D(maxcorner.x(), mincorner.y(), mincorner.z()));
+    result.unite(matrix * QVector3D(maxcorner.x(), maxcorner.y(), mincorner.z()));
+    result.unite(matrix * QVector3D(maxcorner.x(), mincorner.y(), maxcorner.z()));
+    result.unite(matrix * maxcorner);
     return result;
 }
 

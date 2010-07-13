@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QLineSegment3D
     \brief The QLineSegment3D class models the mathematics of line between two points in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::math
 

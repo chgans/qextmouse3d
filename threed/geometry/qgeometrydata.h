@@ -42,13 +42,16 @@
 #ifndef QGEOMETRYDATA_H
 #define QGEOMETRYDATA_H
 
-#include "qcolor4b.h"
+#include "qcolor4ub.h"
 #include "qglnamespace.h"
-#include "qglvertexarray.h"
-#include "qglindexarray.h"
+#include "qglindexbuffer.h"
+#include "qglvertexbuffer.h"
+#include "qglattributevalue.h"
+#include "qcustomdataarray.h"
 #include "qbox3d.h"
 #include "qarray.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -59,7 +62,13 @@ class QGLPainter;
 namespace QGL
 {
     inline quint32 fieldMask(QGL::VertexAttribute f) { return (quint32)0x01 << f; }
-}
+
+#if defined(QT_OPENGL_ES)
+    typedef QArray<ushort> IndexArray;
+#else
+    typedef QArray<uint> IndexArray;
+#endif
+};
 
 class Q_QT3D_EXPORT QGeometryData
 {
@@ -74,13 +83,19 @@ public:
     void appendGeometry(const QGeometryData &data);
     int appendVertex(const QLogicalVertex &v);
     QLogicalVertex vertexAt(int i) const;
-    QGLVertexArray toVertexArray() const;
     void normalizeNormals();
     QBox3D boundingBox() const;
+    QVector3D center() const;
+
     void setCommonNormal(const QVector3D &n);
     const QVector3D &commonNormal() const;
-    QGeometryData zippedWith(const QGeometryData &other) const;
-    void zipWith(const QGeometryData &other);
+
+    QGeometryData reversed() const;
+    QGeometryData translated(const QVector3D &) const;
+    void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,
+                                    QGL::VertexAttribute attribute = QGL::TextureCoord0);
+    QGeometryData interleavedWith(const QGeometryData &other) const;
+    void interleaveWith(const QGeometryData &other);
     void clear();
     void clear(QGL::VertexAttribute);
     void reserve(int amount);
@@ -95,12 +110,13 @@ public:
     Q_DECLARE_FLAGS(BufferStrategy, BufferStrategyFlags)
     void setBufferStrategy(BufferStrategy strategy);
     BufferStrategy bufferStrategy() const;
-    const QGLVertexBuffer *vertexBuffer() const;
+    QGLVertexBuffer vertexBuffer() const;
+    QGLIndexBuffer indexBuffer() const;
 
     void appendIndex(int index);
     void appendIndices(int index1, int index2, int index3);
-    void appendIndices(const QGLIndexArray &indices);
-    QGLIndexArray indices() const;
+    void appendIndices(const QGL::IndexArray &indices);
+    QGL::IndexArray indices() const;
 
     void appendVertex(const QVector3D &v0);
     void appendVertex(const QVector3D &v0, const QVector3D &v1);
@@ -125,16 +141,16 @@ public:
     void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, QGL::VertexAttribute field = QGL::TextureCoord0);
     void appendTexCoord(const QVector2D &t0, const QVector2D &t1, const QVector2D &t2, const QVector2D &t3, QGL::VertexAttribute field = QGL::TextureCoord0);
 
-    void appendColor(const QColor4B &c0);
-    void appendColor(const QColor4B &c0, const QColor4B &c1);
-    void appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2);
-    void appendColor(const QColor4B &c0, const QColor4B &c1, const QColor4B &c2, const QColor4B &c3);
+    void appendColor(const QColor4ub &c0);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2);
+    void appendColor(const QColor4ub &c0, const QColor4ub &c1, const QColor4ub &c2, const QColor4ub &c3);
 
     void appendVertexArray(const QVector3DArray &ary);
     void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
-    void appendColorArray(const QArray<QColor4B> &ary);
+    void appendColorArray(const QArray<QColor4ub> &ary);
 
     QVector3D &vertexRef(int i);
     QVector3DArray vertices() const;
@@ -144,9 +160,10 @@ public:
     QVector3DArray normals() const;
     const QVector3D &normal(int i) const;
 
-    QColor4B &colorRef(int i);
-    QArray<QColor4B> colors() const;
-    const QColor4B &color(int i) const;
+    QColor4ub &colorRef(int i);
+    QArray<QColor4ub> colors() const;
+    const QColor4ub &colorAt(int i) const;
+    //const QColor4ub &color(int i) const;
 
     QVector2D &texCoordRef(int i, QGL::VertexAttribute field = QGL::TextureCoord0);
     QVector2DArray texCoords(QGL::VertexAttribute field = QGL::TextureCoord0) const;
@@ -167,6 +184,9 @@ public:
     int count() const;
     int count(QGL::VertexAttribute field) const;
     int indexCount() const;
+    bool operator==(const QGeometryData &other) const;
+    bool isEmpty() const;
+    bool isNull() const;
 protected:
     const QVector3DArray *vertexData() const;
 private:

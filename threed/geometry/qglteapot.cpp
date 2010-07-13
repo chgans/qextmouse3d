@@ -47,7 +47,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLTeapot
     \brief The QGLTeapot class represents a 3D teapot object.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE
     0.5 at the origin:
 
     \code
-    QGLDisplayList teapot;
+    QGLBuilder teapot;
     teapot << QGLTeapot();
 
     painter.modelViewMatrix().scale(0.5f);

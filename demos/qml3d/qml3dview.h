@@ -43,14 +43,11 @@
 #define QML3DVIEW_H
 
 #include "qglview.h"
-#include <QtDeclarative/qmlengine.h>
+#include <QtDeclarative/qdeclarativeengine.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
-
-class Item3d;
-class Viewport;
 
 class Qml3dView : public QGLView
 {
@@ -59,12 +56,7 @@ public:
     Qml3dView(QWidget *parent = 0);
     ~Qml3dView();
 
-    void setUrl(const QUrl& url);
-
-    Viewport *viewport() const { return m_viewport; }
-    void setViewport(Viewport *value) { m_viewport = value; }
-
-    int nextPickId() { return pickId++; }
+    void setSource(const QUrl& url);
 
 public Q_SLOTS:
     void updateGL();
@@ -78,11 +70,10 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QmlEngine engine;
-    QmlComponent *component;
-    Viewport *m_viewport;
+    QDeclarativeEngine engine;
+    QDeclarativeComponent *component;
+    QObject *m_viewport;
     bool initGLCalled;
-    int pickId;
 };
 
 QT_END_NAMESPACE

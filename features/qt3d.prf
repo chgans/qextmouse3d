@@ -1,0 +1,9 @@
+
+INCLUDEPATH += $$[QT_INSTALL_HEADERS]/Qt3D
+QT += opengl
+
+win32:CONFIG(debug, debug|release) {
+    LIBS += -lQt3Dd
+} else {
+    LIBS += -lQt3D
+}

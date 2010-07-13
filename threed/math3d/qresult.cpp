@@ -44,7 +44,7 @@
 /*!
   \class QResult
   \brief The QResult class represents a return value that includes a solution and a validity.
-  \since 4.7
+  \since 4.8
   \ingroup qt3d
   \ingroup qt3d::math
   A QResult instance is returned by mathematical and other operations where

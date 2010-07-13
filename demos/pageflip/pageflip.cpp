@@ -44,8 +44,8 @@
 #include <QMouseEvent>
 #include "qglpainter.h"
 #include "qglabstracteffect.h"
-#include "qglblendoptions.h"
 #include "qgltexture2d.h"
+#include "qglext.h"
 
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
@@ -108,7 +108,7 @@ public:
     ~PageFlipGradientEffect();
 
     QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(bool flag);
+    void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
@@ -174,13 +174,11 @@ void PageFlipView::initializeGL()
 
     gradientTexture.setImage(QImage(":/gradient.png"));
 
-    QGLBlendOptions blendOptions;
-    blendOptions.setEnabled(true);
-    blendOptions.setSourceColorFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setSourceAlphaFactor(QGLBlendOptions::SrcAlpha);
-    blendOptions.setDestinationColorFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.setDestinationAlphaFactor(QGLBlendOptions::OneMinusSrcAlpha);
-    blendOptions.apply(&painter);
+    qt_gl_BlendColor(0, 0, 0, 0);
+    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    qt_gl_BlendEquation(GL_FUNC_ADD);
+
+    glEnable(GL_BLEND);
 
     if (vertical)
         pageFlipMath.setStartCorner(PageFlipMath::VerticalBottomRight);
@@ -197,8 +195,9 @@ void PageFlipView::paintGL()
     int topy = (rect.height() - pageSize.height()) / 2;
 
     painter.clear();
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect);
+    QMatrix4x4 projm;
+    projm.ortho(rect);
+    painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
 #if !defined(QT_OPENGL_ES_1)
@@ -217,9 +216,12 @@ void PageFlipView::paintGL()
     pageFlipMath.setShowPageReverse(false);
     pageFlipMath.compute(posn);
 
-    QGLVertexArray vertices(QGL::Position, 2, QGL::TextureCoord0, 2,
-                            QGL::CustomVertex0, 1);
-    vertices.setRawData(pageFlipMath.vertexArray(), 4 * 5 * 5);
+    QGLAttributeValue positions
+        (2, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray());
+    QGLAttributeValue texCoords
+        (2, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray() + 2);
+    QGLAttributeValue gradientCoords
+        (1, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray() + 4);
 
 #if defined(QT_OPENGL_ES_1)
     painter.setStandardEffect(QGL::FlatReplaceTexture2D);
@@ -229,7 +231,9 @@ void PageFlipView::paintGL()
     painter.setColor(colors[colorIndex]);
     painter.setTexture(0, &(textures[colorIndex]));
     painter.setTexture(1, &gradientTexture);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, positions);
+    painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
+    painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
     setAlphaValue(1.0f);
     painter.update();
     pageFlipMath.drawPage(0);
@@ -260,7 +264,9 @@ void PageFlipView::paintGL()
     painter.setTexture(1, (QGLTexture2D *)0);
 
     painter.setStandardEffect(QGL::FlatColor);
-    painter.setVertexArray(vertices);
+    painter.setVertexAttribute(QGL::Position, positions);
+    painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
+    painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
     painter.setColor(QColor(0, 0, 0, 255));
     painter.update();
     pageFlipMath.drawOutline(2);
@@ -381,17 +387,18 @@ static char const gradientFragmentShader[] =
     "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
     "}\n";
 
-void PageFlipGradientEffect::setActive(bool flag)
+void PageFlipGradientEffect::setActive(QGLPainter *painter, bool flag)
 {
+    Q_UNUSED(painter);
     if (!program) {
         if (!flag)
             return;
         program = new QGLShaderProgram();
         program->addShaderFromSourceCode(QGLShader::Vertex, gradientVertexShader);
         program->addShaderFromSourceCode(QGLShader::Fragment, gradientFragmentShader);
-        program->bindAttributeLocation("vertex", 0);
-        program->bindAttributeLocation("texcoord", 1);
-        program->bindAttributeLocation("gradctrl", 2);
+        program->bindAttributeLocation("vertex", QGL::Position);
+        program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
+        program->bindAttributeLocation("gradctrl", QGL::CustomVertex0);
         if (!program->link()) {
             qWarning("PageFlipGradientEffect::setActive(): could not link shader program");
             delete program;
@@ -403,21 +410,21 @@ void PageFlipGradientEffect::setActive(bool flag)
         program->setUniformValue("tex", 0);
         program->setUniformValue("gradient", 1);
         program->setUniformValue("alphaValue", 1.0f);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
-        program->enableAttributeArray(2);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
+        program->enableAttributeArray(QGL::CustomVertex0);
     } else if (flag) {
         program->bind();
         program->setUniformValue("tex", 0);
         program->setUniformValue("gradient", 1);
         program->setUniformValue("alphaValue", 1.0f);
-        program->enableAttributeArray(0);
-        program->enableAttributeArray(1);
-        program->enableAttributeArray(2);
+        program->enableAttributeArray(QGL::Position);
+        program->enableAttributeArray(QGL::TextureCoord0);
+        program->enableAttributeArray(QGL::CustomVertex0);
     } else {
-        program->disableAttributeArray(0);
-        program->disableAttributeArray(1);
-        program->disableAttributeArray(2);
+        program->disableAttributeArray(QGL::Position);
+        program->disableAttributeArray(QGL::TextureCoord0);
+        program->disableAttributeArray(QGL::CustomVertex0);
         program->release();
     }
 }
@@ -425,21 +432,19 @@ void PageFlipGradientEffect::setActive(bool flag)
 void PageFlipGradientEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
-    if ((updates & (QGLPainter::UpdateProjectionMatrix |
-                    QGLPainter::UpdateModelViewMatrix)) != 0) {
+    if ((updates & QGLPainter::UpdateMatrices) != 0)
         program->setUniformValue(matrixUniform, painter->combinedMatrix());
-    }
 }
 
 void PageFlipGradientEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
     if (attribute == QGL::Position)
-        setAttributeArray(program, 0, value);
+        setAttributeArray(program, QGL::Position, value);
     else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(program, 1, value);
+        setAttributeArray(program, QGL::TextureCoord0, value);
     else if (attribute == QGL::CustomVertex0)
-        setAttributeArray(program, 2, value);
+        setAttributeArray(program, QGL::CustomVertex0, value);
 }
 
 void PageFlipGradientEffect::setAlphaValue(GLfloat value)

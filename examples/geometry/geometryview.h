@@ -49,9 +49,10 @@ class QTimer;
 class QuadPlane;
 class Geometry;
 class QGLLightParameters;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLLightModel;
 class QGLMaterialCollection;
+class QWheelEvent;
 
 class GeometryView : public QGLView
 {
@@ -63,6 +64,7 @@ public:
 protected:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
+    void wheelEvent(QWheelEvent *e);
 
 private slots:
     void rotate();
@@ -77,8 +79,8 @@ private:
     int angle;
     QGLLightParameters *lp;
     QGLMaterialCollection *palette;
-    QGLMaterialParameters *mat1;
-    QGLMaterialParameters *mat2;
+    QGLMaterial *mat1;
+    QGLMaterial *mat2;
     QGLLightModel *mdl;
 };
 

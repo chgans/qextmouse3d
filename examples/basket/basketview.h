@@ -44,9 +44,8 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
-class QGLGeometry;
 class QTimer;
 
 class BasketView : public QGLView
@@ -65,7 +64,7 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLDisplayList basket;
+    QGLBuilder basket;
     int angle;
     QTimer *timer;
 };

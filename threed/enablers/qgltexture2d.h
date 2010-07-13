@@ -54,10 +54,11 @@ QT_MODULE(Qt3d)
 
 class QGLTexture2DPrivate;
 
-class Q_QT3D_EXPORT QGLTexture2D
+class Q_QT3D_EXPORT QGLTexture2D : public QObject
 {
+    Q_OBJECT
 public:
-    QGLTexture2D();
+    QGLTexture2D(QObject *parent = 0);
     ~QGLTexture2D();
 
     bool isNull() const;
@@ -68,17 +69,18 @@ public:
 
     QImage image() const;
     void setImage(const QImage& image);
-    bool setDdsImage(const QString &path);
+    bool setCompressedFile(const QString &path);
+    QUrl url() const;
+    void setUrl(const QUrl &url);
+
+    void setPixmap(const QPixmap& pixmap);
 
     void clearImage();
 
     void copyImage(const QImage& image, const QPoint& offset = QPoint(0, 0));
 
-    QGL::TextureFilter minifyFilter() const;
-    void setMinifyFilter(QGL::TextureFilter value);
-
-    QGL::TextureFilter magnifyFilter() const;
-    void setMagnifyFilter(QGL::TextureFilter value);
+    QGLContext::BindOptions bindOptions() const;
+    void setBindOptions(QGLContext::BindOptions options);
 
     QGL::TextureWrap horizontalWrap() const;
     void setHorizontalWrap(QGL::TextureWrap value);
@@ -86,16 +88,10 @@ public:
     QGL::TextureWrap verticalWrap() const;
     void setVerticalWrap(QGL::TextureWrap value);
 
-    bool generateMipmap() const;
-    void setGenerateMipmap(bool value);
-
     bool bind() const;
     void release() const;
 
     GLuint textureId() const;
-
-    bool flipVertically() const;
-    void setFlipVertically(bool);
 
     static QGLTexture2D *fromTextureId(GLuint id, const QSize& size);
 

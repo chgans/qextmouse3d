@@ -44,11 +44,11 @@
 
 #include "qglview.h"
 #include "qgltexture2d.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 
 class QTimer;
 class QGLSphere;
-class QGLMaterialParameters;
+class QGLMaterial;
 class QGLLightModel;
 
 class SphereView : public QGLView
@@ -71,12 +71,12 @@ private:
     QImage pointsImage;
     bool textured;
     QGLTexture2D cubeTexture, icoTexture, uvTexture;
-    QGLDisplayList list;
+    QGLBuilder list;
     QVector<QGLSceneNode *> spheres;
     QTimer *timer;
     int angle;
     QGLLightParameters *lp;
-    QGLMaterialParameters *mat;
+    QGLMaterial *mat;
     QGLLightModel *mdl;
 };
 

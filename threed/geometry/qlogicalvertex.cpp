@@ -47,12 +47,12 @@
 /*!
     \class QLogicalVertex
     \brief The QLogicalVertex class references QGeometryData at a single vertex.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
     QLogicalVertex instances are a convenience class for use with
-    QGLDisplayList.  A QLogicalVertex simply references through to the data
+    QGLBuilder.  A QLogicalVertex simply references through to the data
     in a QGeometryData for a particular vertex, providing accessors to fetch
     position, texture coordinates, and other values.
 
@@ -111,7 +111,7 @@
     If using common normals, generally do not store normal data as well,
     since it will be ignored.
 
-    \sa QGeometryData, QGLDisplayList
+    \sa QGeometryData, QGLBuilder
 */
 
 /*!
@@ -147,7 +147,7 @@
 */
 
 /*!
-    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4B color)
+    \fn QLogicalVertex::QLogicalVertex(const QVector3D &a, QColor4ub color)
     Constructs a new QLogicalVertex with its vertex value set to \a a,
     color value set to \a color.
 */
@@ -277,17 +277,17 @@
 */
 
 /*!
-    \fn QColor4B QLogicalVertex::color() const
+    \fn QColor4ub QLogicalVertex::color() const
     Returns a const reference to the color value for this vertex.
 */
 
 /*!
-    \fn void QLogicalVertex::setColor(const QColor4B &c)
+    \fn void QLogicalVertex::setColor(const QColor4ub &c)
     Sets the color value for this vertex to \a c.
 */
 
 /*!
-    \fn QColor4B &QLogicalVertex::colorRef()
+    \fn QColor4ub &QLogicalVertex::colorRef()
     Returns a modifiable reference to the color value for this vertex.
 */
 
@@ -419,7 +419,7 @@ QDebug operator<<(QDebug dbg, const QLogicalVertex &lv)
         else
             dbg << " (No Texture)";
         if (lv.hasField(QGL::Color))
-            dbg << "C:" << QColor4B(lv.color());
+            dbg << "C:" << QColor4ub(lv.color());
         else
             dbg << " (No Color)";
     }

@@ -42,7 +42,7 @@
 #include "meshobject.h"
 #include "qglview.h"
 
-MeshObject::MeshObject(QGLDisplayList *mesh, QObject *parent)
+MeshObject::MeshObject(QGLBuilder *mesh, QObject *parent)
     : QObject(parent)
 {
     m_mesh = mesh;
@@ -110,21 +110,17 @@ void MeshObject::draw(QGLPainter *painter)
         painter->modelViewMatrix().rotate(m_rotationAngle, m_rotationVector);
 
     // Apply the material and effect to the painter.
-    QGLMaterialParameters *material;
+    QGLMaterial *material;
     if (m_hovering)
         material = m_hoverMaterial;
     else
         material = m_material;
     painter->setColor(material->diffuseColor());
     painter->setFaceMaterial(QGL::AllFaces, material);
-    if (!painter->hasEnabledLights()) {
-        painter->setStandardEffect(QGL::FlatColor);
-        painter->setColor(material->ambientColor());
-    } else if (m_effect) {
+    if (m_effect)
         painter->setUserEffect(m_effect);
-    } else {
+    else
         painter->setStandardEffect(QGL::LitMaterial);
-    }
 
     // Mark the object for object picking purposes.
     int prevObjectId = painter->objectPickId();

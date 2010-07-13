@@ -41,14 +41,12 @@
 
 #include "qglheightmap.h"
 #include <QVector3D>
-#include "qglvertexarray.h"
-#include "qgldisplaylist.h"
-#include "qgloperation.h"
+#include "qglbuilder.h"
 
 /*!
     \class QGLHeightMap
     \brief The QGLHeightMap class is a convenience class designed to make it easy to create a simple 2D surface in 3D space.
-    \since 4.7
+    \since 4.8
     \ingroup painting-3D
 
     Many 3D objects can be conveniently thought of as a 2D object in a 3D space,
@@ -72,12 +70,12 @@
     << operator, and is then ready to be drawn with a QGLPainter.  For example:
 
     \code
-    QGLDisplayList heightMapList
+    QGLBuilder heightMapList
     heightMapList << QGLHeightMap(51, 51);
     \endcode
 
     Assuming that an appropriate QGLContext or QGLView is available, a
-    height map can be created and drawn immediately with the QGLGeometry::draw()
+    height map can be created and drawn immediately with the QGLBuilder::draw()
     function.  Calculating the vertexes is expensive, however, and it is not
     recommend that a QGLHeightMap be recreated every update.
 
@@ -110,7 +108,7 @@
     };
     \endcode
 
-    \sa QGLDisplayList, QGLPainger, height(), texCoords()
+    \sa QGLBuilder, QGLPainger, height(), texCoords()
 */
 
 /*!
@@ -237,13 +235,13 @@ static float normalizedIndex(int i, int points) {
 
     Subclasses may specify the height and texture coordinates differently by overriding the and texCoords() functions.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& heightMap)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLHeightMap& heightMap)
 {
     int xPoints = heightMap.xPoints();
     int yPoints = heightMap.yPoints();
 
     list.newSection(heightMap.smoothing() );
-    QGLOperation op(&list, QGL::TRIANGLE);
+    QGeometryData op;
 
     for(int y = 0; y < yPoints - 1; y++)
     {
@@ -280,5 +278,6 @@ QGLDisplayList& operator<<(QGLDisplayList& list, const QGLHeightMap& heightMap)
 
         }
     }
+    list.addTriangle(op);
     return list;
 }

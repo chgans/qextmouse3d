@@ -1,7 +1,10 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Viewport {
     width: 640; height: 480
+    Light {}
+
     Item3d {
         id: teapot
         mesh: Mesh { source: "meshes/teapot.bez" }
@@ -9,15 +12,13 @@ Viewport {
             material: china
         }
 
-        y: SequentialAnimation {
+        SequentialAnimation on y{
             running: true
-            repeat: true
+            loops: Animation.Infinite
             PauseAnimation { duration: 500 }
-            NumberAnimation { to : 1.0; duration: 300; easing:"easeOutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing:"easeOutBounce" }
+            NumberAnimation { to : 1.0; duration: 300; easing.type:"OutQuad" }
+            NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
         }
-
-        Light {}
 
         Material {
             id: china

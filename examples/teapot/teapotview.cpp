@@ -44,7 +44,6 @@
 //! [initialize]
 void TeapotView::initializeGL(QGLPainter *painter)
 {
-    painter->setLightEnabled(0, true);
     painter->setStandardEffect(QGL::LitMaterial);
 //! [create-display-list]
     teapot << QGLTeapot();

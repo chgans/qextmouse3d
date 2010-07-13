@@ -43,7 +43,7 @@
 
 QT_BEGIN_NAMESPACE
 
-QGLBezierScene::QGLBezierScene(QGLDisplayList *geometry, QObject *parent)
+QGLBezierScene::QGLBezierScene(QGLBuilder *geometry, QObject *parent)
     : QGLAbstractScene(parent)
 {
     mainObject = geometry;

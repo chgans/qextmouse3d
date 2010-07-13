@@ -1,23 +1,24 @@
 TEMPLATE = subdirs
 SUBDIRS = \
+    qareaallocator \
     qarray \
+    qcolor4ub \
     qcustomdataarray \
+    qgraphicstransform3d \
     qvectorarray \
-    qglblendoptions \
-    qglbuffer \
     qglcamera \
-    qgldepthbufferoptions \
-    qglfogparameters \
+    qglindexbuffer \
     qgllightmodel \
     qgllightparameters \
-    qglmaterialparameters \
-    qglvertexarray \
+    qglmaterial \
+    qglmaterialcollection \
     qglvertexbuffer \
-    qglvertexdescription \
-    qglgeometry \
-    qglindexarray \
     qglpainter \
-    qgldisplaylist \
+    qglbuilder \
     qglsection \
     qgeometrydata \
+    qglpickcolors \
+    qstereoimage
+
+TO_BE_PORTED = \
     qglcube

@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qglbezierpatches.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include <QtCore/qmap.h>
 
 QT_BEGIN_NAMESPACE
@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLBezierPatches
     \brief The QGLBezierPatches class represents 3D geometry as a set of Bezier bicubic patches.
-    \since 4.7
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
@@ -90,7 +90,7 @@ QT_BEGIN_NAMESPACE
     The first vertex in the patch corresponds to (0, 0),
     and the opposite vertex in the patch corresponds to (1, 1).
 
-    \sa QGLDisplayList, QGLTeapot
+    \sa QGLBuilder, QGLTeapot
 */
 
 class QGLBezierPatchesPrivate
@@ -127,7 +127,7 @@ public:
         subdivisionDepth = other->subdivisionDepth;
     }
 
-    void subdivide(QGLDisplayList *list) const;
+    void subdivide(QGLBuilder *list) const;
 
     QArray<QVector3D> positions;
     QArray<QVector2D> textureCoords;
@@ -149,17 +149,17 @@ public:
 
     QVector3D normal(qreal s, qreal t) const;
     void convertToTriangles
-        (QGLPrimitive *prim,
+        (QGeometryData *prim,
          qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision);
     void subDivide(QGLBezierPatch& patch1, QGLBezierPatch& patch2,
                    QGLBezierPatch& patch3, QGLBezierPatch& patch4);
     void createNewCorners(QGLBezierPatch& patch1, QGLBezierPatch& patch2,
                           QGLBezierPatch& patch3, QGLBezierPatch& patch4,
-                          QGLPrimitive *prim,
+                          QGeometryData *prim,
                           qreal xtex, qreal ytex, qreal wtex, qreal htex);
     void recursiveSubDivide
-        (QGLPrimitive *prim,
+        (QGeometryData *prim,
          int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision);
 };
@@ -282,7 +282,7 @@ QVector3D QGLBezierPatch::normal(qreal s, qreal t) const
 
 // Convert this patch into flat triangles.
 void QGLBezierPatch::convertToTriangles
-    (QGLPrimitive *prim,
+    (QGeometryData *prim,
      qreal xtex, qreal ytex, qreal wtex, qreal htex,
      bool compactSubdivision)
 {
@@ -405,7 +405,7 @@ void QGLBezierPatch::subDivide
 void QGLBezierPatch::createNewCorners
         (QGLBezierPatch& patch1, QGLBezierPatch& patch2,
          QGLBezierPatch& patch3, QGLBezierPatch& patch4,
-         QGLPrimitive *prim,
+         QGeometryData *prim,
          qreal xtex, qreal ytex, qreal wtex, qreal htex)
 {
     // Add vertices for the new patch corners we have created.
@@ -458,7 +458,7 @@ void QGLBezierPatch::createNewCorners
 
 // Recursively sub-divide a patch into triangles.
 void QGLBezierPatch::recursiveSubDivide
-        (QGLPrimitive *prim,
+        (QGeometryData *prim,
          int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
          bool compactSubdivision)
 {
@@ -478,11 +478,11 @@ void QGLBezierPatch::recursiveSubDivide
     }
 }
 
-void QGLBezierPatchesPrivate::subdivide(QGLDisplayList *list) const
+void QGLBezierPatchesPrivate::subdivide(QGLBuilder *list) const
 {
-    list->newSection(QGL::Smooth, QGL::NullStrategy);
+    list->newSection(QGL::Smooth);
     list->begin(QGL::TRIANGLE);
-    QGLPrimitive *prim = list->currentPrimitive();
+    QGeometryData *prim = list->currentPrimitive();
 
     bool indexBased = !indices.isEmpty();
     int count;
@@ -787,7 +787,7 @@ void QGLBezierPatches::setCompactSubdivision(bool value)
     Subdivides the Bezier patch data in \a patches into triangles
     and adds them to the specified display \a list.
 */
-QGLDisplayList& operator<<(QGLDisplayList& list, const QGLBezierPatches& patches)
+QGLBuilder& operator<<(QGLBuilder& list, const QGLBezierPatches& patches)
 {
     patches.d_ptr->subdivide(&list);
     return list;

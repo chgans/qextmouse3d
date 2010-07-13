@@ -40,11 +40,11 @@
 ****************************************************************************/
 
 #include "qml3dview.h"
-#include "item3d.h"
-#include "viewport.h"
 #include <QtCore/qtimer.h>
-#include <QtDeclarative/qmlcomponent.h>
-#include <QtDeclarative/qmlcontext.h>
+#include <QtDeclarative/qdeclarativeitem.h>
+#include <QtDeclarative/qdeclarativecomponent.h>
+#include <QtDeclarative/qdeclarativecontext.h>
+#include <QtGui/qapplication.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -54,7 +54,7 @@ QT_BEGIN_NAMESPACE
     display of 3d imagery specified in QML/3d.  The Qml3dView takes the place of its parent class
     and contains provisions for display and management of \l Item3d objects, as well as \l Effect
     objects and related classes.
-    \since 4.6.?
+    \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
 
@@ -79,7 +79,7 @@ QT_BEGIN_NAMESPACE
             url = QUrl::fromLocalFile(fi.absoluteFilePath());
 
         Qml3dView view;
-        view.setUrl(url);
+        view.setSource(url);
         view.show();
 
         return app.exec();
@@ -88,7 +88,7 @@ QT_BEGIN_NAMESPACE
 
     This is a relatively simple example which shows how easy it can be to use the Qml3dView class.
 
-    The user need only define a source URL, then call the setURL() and the show() functions.
+    The user need only define a source URL, then call the setSource() and the show() functions.
 
     Internally the class sets the necessary parameters and functions for OpenGL activities, as
     well as user interaction through picking and mouse actions.  Initialisation of scene elements
@@ -97,6 +97,8 @@ QT_BEGIN_NAMESPACE
     /sa QmlView
 */
 
+QObject *qt_gl_qml_viewport();
+
 /*!
     Construction of the QMl3dView class and assignment of the object parent as \a parent
 */
@@ -104,9 +106,9 @@ Qml3dView::Qml3dView(QWidget *parent)
     : QGLView(parent)
 {
     m_viewport = 0;
-    pickId = 0;
     initGLCalled = false;
     setOption(QGLView::ObjectPicking, true);
+    connect(&engine, SIGNAL(quit()), qApp, SLOT(quit()));
 }
 
 /*!
@@ -129,8 +131,12 @@ void Qml3dView::updateGL()
 */
 void Qml3dView::initializeGL(QGLPainter *painter)
 {
-    if (m_viewport)
-        m_viewport->initialize(this, painter);
+    if (!m_viewport)
+        m_viewport = qt_gl_qml_viewport();
+    if (m_viewport) {
+        QMetaObject::invokeMethod
+            (m_viewport, "initializeGL", Q_ARG(QGLPainter *, painter));
+    }
     initGLCalled = true;
 }
 
@@ -140,10 +146,12 @@ void Qml3dView::initializeGL(QGLPainter *painter)
 */
 void Qml3dView::earlyPaintGL(QGLPainter *painter)
 {
-    if (m_viewport)
-        m_viewport->earlyDraw(painter);
-    else
+    if (m_viewport) {
+        QMetaObject::invokeMethod
+            (m_viewport, "earlyDraw", Q_ARG(QGLPainter *, painter));
+    } else {
         QGLView::earlyPaintGL(painter);
+    }
 }
 
 /*!
@@ -151,22 +159,24 @@ void Qml3dView::earlyPaintGL(QGLPainter *painter)
 */
 void Qml3dView::paintGL(QGLPainter *painter)
 {
-    if (m_viewport)
-        m_viewport->draw(painter);
+    if (m_viewport) {
+        QMetaObject::invokeMethod
+            (m_viewport, "draw", Q_ARG(QGLPainter *, painter));
+    }
 }
 
 /*!
     Sets the url which contains the QML source for this environment to \a url.
 */
-void Qml3dView::setUrl(const QUrl& url)
+void Qml3dView::setSource(const QUrl& url)
 {
     // Load the .qml file into a sub-context.
-    component = new QmlComponent(&engine, url, this);
+    component = new QDeclarativeComponent(&engine, url, this);
 
     if (!component->isLoading()) {
         loaded();
     } else {
-        connect(component, SIGNAL(statusChanged(QmlComponent::Status)), this, SLOT(loaded()));
+        connect(component, SIGNAL(statusChanged(QDeclarativeComponent::Status)), this, SLOT(loaded()));
     }
 }
 
@@ -180,66 +190,36 @@ void Qml3dView::setUrl(const QUrl& url)
 */
 void Qml3dView::loaded()
 {
-    disconnect(component, SIGNAL(statusChanged(QmlComponent::Status)), this, SLOT(loaded()));
+    disconnect(component, SIGNAL(statusChanged(QDeclarativeComponent::Status)), this, SLOT(loaded()));
 
     if (component->isError()) {
-        QList<QmlError> errors = component->errors();
-        foreach (const QmlError &error, errors) {
+        QList<QDeclarativeError> errors = component->errors();
+        foreach (const QDeclarativeError &error, errors) {
             qWarning() << error;
         }
     }
 
-    QmlContext *ctx = new QmlContext(&engine);
+    QDeclarativeContext *ctx = new QDeclarativeContext(&engine);
     QObject *mainObject = component->create(ctx);
 
-    Viewport *viewport = qobject_cast<Viewport *>(mainObject);
-    Item3d *item = qobject_cast<Item3d *>(mainObject);
+    QObject *viewport = qt_gl_qml_viewport();
 
     if (viewport) {
-        int width = viewport->width();
-        if (width > 0)
-            setMinimumWidth(width);
-        int height = viewport->height();
-        if (height > 0)
-            setMinimumHeight(height);
-        setOption(QGLView::ObjectPicking, viewport->picking());
-        setOption(QGLView::ShowPicking, viewport->showPicking());
-        setOption(QGLView::CameraNavigation, viewport->navigation());
-        setViewport(viewport);
-
-        QGLPainter painter(this);
-        viewport->initialize(this, &painter);
-
+        QMetaObject::invokeMethod
+            (viewport, "initialize", Q_ARG(QGLView *, this));
         QTimer::singleShot(0, this, SLOT(updateGL()));
-    } else if (item) {
-        qWarning() << "qml3d: Item3d object without an enclosing Scene";
-    } else if (qobject_cast<QmlGraphicsItem *>(mainObject)) {
-        qWarning() << "qml3d: Ordinary QmlGraphicsItem node found; may be "
+    } else if (mainObject &&
+               QByteArray(mainObject->metaObject()->className())
+                    .contains("Item3d")) {
+        qWarning() << "qml3d: Item3d object without an enclosing Viewport";
+    } else if (qobject_cast<QDeclarativeItem *>(mainObject)) {
+        qWarning() << "qml3d: Ordinary QDeclarativeItem node found; may be "
                       "missing '-graphicssystem OpenGL'";
     } else {
-        qWarning() << "qml3d: No Scene or Item3d node found";
+        qWarning() << "qml3d: No Viewport or Item3d node found";
     }
 
     QGLView::initializeGL();
 }
-
-/*!
-    \fn Viewport *Qml3dView::viewport() const;
-
-    Returns the viewport associated with this view.
-*/
-
-/*!
-    \fn void Qml3dView::setViewport(Viewport *value);
-
-    Sets the viewport associated with this view to \a value.
-*/
-
-/*!
-  \fn int Qml3dView::nextPickId();
-
-  Increments the pick ID number and returns this new value.
-*/
-
 
 QT_END_NAMESPACE

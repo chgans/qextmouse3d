@@ -44,7 +44,6 @@
 #include "qglcube.h"
 #include "qglteapot.h"
 #include "qglsphere.h"
-#include "qglvertexarray.h"
 #include <math.h>
 #include <QVector3D>
 #include "qglheightmap.h"
@@ -55,7 +54,7 @@
 #include <QtCore/qmath.h>
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglcolladafxeffect.h"
 #include "qglcolladafxeffectfactory.h"
@@ -88,13 +87,13 @@ public:
 };
 
 ShaderWizardGLWidget::ShaderWizardGLWidget() :
-        mGeometry(0)
+        mSceneNode(0)
         , mSceneManager(0)
         , mDefaultSceneObject(0)
         , mSceneRoot(0)
         , mLightParameters(new QGLLightParameters(this))
         , mLightModel(new QGLLightModel(this))
-        , mMaterial(new QGLMaterialParameters(this))
+        , mMaterial(new QGLMaterial())
         , mMaterialCollection(new QGLMaterialCollection(this))
         , mTexture(new QGLTexture2D())
         , cube(0)
@@ -135,11 +134,8 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
         sphere = 0;
     }
 
-    if( mMaterial && mMaterialCollection)
+    if( mMaterialCollection)
     {
-        mMaterialCollection->removeMaterial(mMaterial);
-        delete mMaterial;
-        mMaterial = 0;
         delete mMaterialCollection;
         mMaterialCollection = 0;
     }
@@ -148,7 +144,6 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
 void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
 {
     painter->setClearColor(QColor(0, 0, 0, 255));
-    painter->setLightEnabled(0, true);
     d->painterColor = QColor(17, 68, 221, 255);
 
     mLightParameters = new QGLLightParameters;
@@ -156,7 +151,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     mLightParameters->setAmbientColor(QColor(255 *0.2, 255 *0.2, 255 *0.2));
     mLightParameters->setDiffuseColor(QColor(255 * 0.8, 255 * 0.8, 255 * 0.8));
     mLightParameters->setSpecularColor(QColor(255, 255, 255));
-    painter->setLightParameters(0, mLightParameters);
+    painter->setMainLight(mLightParameters);
     painter->setFaceColor(QGL::AllFaces, d->painterColor);
 
     mTexture->setImage(QImage (":/qtlogo.png"));
@@ -165,7 +160,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setCullFaces(QGL::CullBackFaces);
 
     if(d->effect)
-        d->effect->setActive(true);
+        d->effect->setActive(painter, true);
 }
 
 void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
@@ -180,15 +175,14 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     painter->setTexture(0, mTexture);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
-    painter->setLightEnabled(0, true);
 
     if( d->effect )
     {
         painter->setUserEffect(d->effect);
     }
 
-    if(mGeometry)
-        mGeometry->draw(painter);
+    if(mSceneNode)
+        mSceneNode->draw(painter);
 
 //    painter->modelViewMatrix().pop();
 
@@ -198,25 +192,25 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
     {
         mDefaultSceneObject->draw(painter);
     }
+    // Unset the effect in case it gets deleted
+    painter->setUserEffect(0);
 }
 
-void ShaderWizardGLWidget::setGeometry(QGLSceneNode *newGeometry)
+void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
 {
-    mGeometry = newGeometry;
+    mSceneNode = newNode;
 
-    if( mGeometry )
+    setDefaultCamera(mSceneNode);
+
+    if( mSceneNode )
     {
-        setDefaultCamera(newGeometry);
-        if(!mGeometry->palette())
-            mGeometry->setPalette(mMaterialCollection);
-        int materialIndex = mGeometry->palette()->materialIndexByName("ShaderWizardGLWidgetMaterial");
+        if(!mSceneNode->palette())
+            mSceneNode->setPalette(mMaterialCollection);
+        mMaterialCollection->setParent(mSceneNode);
+        int materialIndex = mSceneNode->palette()->indexOf("ShaderWizardGLWidgetMaterial");
         if(materialIndex == -1)
-            materialIndex = mGeometry->palette()->addMaterial(mMaterial);
-        mGeometry->setMaterial(materialIndex);
-    }
-    else
-    {
-        setDefaultCamera(newGeometry);
+            materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
+        mSceneNode->setMaterialIndex(materialIndex);
     }
 
     clearScene();
@@ -312,52 +306,52 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 void ShaderWizardGLWidget::setSquareGeometry()
 {
     if (square == 0) {
-        square = new QGLDisplayList(this);
+        square = new QGLBuilder(this);
         *square << QGLHeightMap(101, 101);
         square->finalize();
     }
-    setGeometry(square);
+    setSceneNode(square);
 }
 
 void ShaderWizardGLWidget::setCubeGeometry()
 {
     if (cube == 0) {
-        cube = new QGLDisplayList(this);
+        cube = new QGLBuilder(this);
         cube->newSection(QGL::Faceted);
         *cube << QGLCube();
         cube->finalize();
     }
-    setGeometry(cube);
+    setSceneNode(cube);
 }
 
 void ShaderWizardGLWidget::setSphereGeometry()
 {
     if (sphere == 0) {
-        sphere = new QGLDisplayList(this);
+        sphere = new QGLBuilder(this);
         *sphere << QGLSphere(2.0, 3);
         sphere->finalize();
     }
-    setGeometry(sphere);
+    setSceneNode(sphere);
 }
 
 void ShaderWizardGLWidget::setTeapotGeometry()
 {
     if (teapot == 0) {
-        teapot = new QGLDisplayList(this);
+        teapot = new QGLBuilder(this);
         *teapot << QGLTeapot();
         teapot->finalize();
     }
-    setGeometry(teapot);
+    setSceneNode(teapot);
 }
 
 void ShaderWizardGLWidget::setHeightMapGeometry()
 {
     if (ripple == 0) {
-        ripple = new QGLDisplayList(this);
+        ripple = new QGLBuilder(this);
         *ripple << RippleHeightMap(101,101);
         ripple->finalize();
     }
-    setGeometry(ripple);
+    setSceneNode(ripple);
 }
 
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)
@@ -387,7 +381,7 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     mSceneManager = qobject_cast<QGLAbstractScene*>(object);
     mDefaultSceneObject = 0;
     mSceneRoot = 0;
-    mGeometry = 0; // Don't show models and geometry at the same time
+    mSceneNode = 0; // Don't show models and geometry at the same time
 
     // Get basic information for default object.
     mDefaultSceneObject = mSceneManager->defaultObject(QGLSceneObject::Main);
@@ -395,7 +389,7 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     setSceneObject(mDefaultSceneObject);
 
     // Point camera at the new model
-    if (mSceneRoot && mSceneRoot->geometry())
+    if (mSceneRoot && mSceneRoot->geometry().count() > 0)
     {
         setDefaultCamera(mSceneRoot);
     }
@@ -409,15 +403,17 @@ void ShaderWizardGLWidget::setSceneObject(QObject* object)
     update();
 }
 
-void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* geometry)
+void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* sceneNode)
 {
     QVector3D boxOrigin(0.0f, 0.0f, 0.0f);
     qreal viewDistance = 15.0; // default zoom if there's no reasonable box;
     qreal maxDimension = 2.0f;
 
     QBox3D box;
-    if(geometry)
-        box = geometry->geometry()->boundingBox();
+    if(sceneNode && sceneNode->geometry().count() > 0)
+    {
+        box = sceneNode->geometry().boundingBox();
+    }
 
     if (!box.isNull())
     {
@@ -498,3 +494,4 @@ QColor ShaderWizardGLWidget::ambientMaterialColor() { return mMaterial->ambientC
 QColor ShaderWizardGLWidget::diffuseMaterialColor() { return mMaterial->diffuseColor(); }
 QColor ShaderWizardGLWidget::specularMaterialColor() { return mMaterial->specularColor(); }
 int ShaderWizardGLWidget::materialShininess() { return mMaterial->shininess(); }
+QGLShaderProgramEffect* ShaderWizardGLWidget::effect() { return d->effect; }

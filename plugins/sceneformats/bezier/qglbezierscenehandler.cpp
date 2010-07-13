@@ -42,7 +42,7 @@
 #include "qglbezierscenehandler.h"
 #include "qglbezierscene.h"
 #include "qglbezierpatches.h"
-#include "qvectorarray.h"
+#include "qvector3darray.h"
 #include <QtCore/qtextstream.h>
 
 QT_BEGIN_NAMESPACE
@@ -185,7 +185,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
         patches.setSubdivisionDepth(depth);
     patches.setPositions(vertices);
     patches.setIndices(indices);
-    QGLDisplayList *geometry = new QGLDisplayList();
+    QGLBuilder *geometry = new QGLBuilder();
     (*geometry) << patches;
 
     // Create a scene with a single object containing the geometry.

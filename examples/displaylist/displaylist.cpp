@@ -40,10 +40,10 @@
 ****************************************************************************/
 
 #include "displaylist.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
-#include "qglmaterialparameters.h"
+#include "qglmaterial.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
 
@@ -56,7 +56,7 @@ DisplayListView::DisplayListView(QWidget *parent)
     , canScene(new QGLSceneNode(this))
 {
     //! [0]
-    QGLDisplayList *displayList = buildGeometry();
+    QGLBuilder *displayList = buildGeometry();
     displayList->setParent(canScene);
     {
         // rotate the can around so its label shows; and down
@@ -102,8 +102,7 @@ void DisplayListView::initializeGL(QGLPainter *painter)
     light0->setAmbientColor(Qt::white);
     light0->setDiffuseColor(Qt::white);
     light0->setDirection(QVector3D(0.0f, 0.2f, 2.0f));
-    painter->setLightParameters(0, light0);
-    painter->setLightEnabled(0, true);
+    painter->setMainLight(light0);
     QGLLightModel *model = new QGLLightModel(this);
     model->setAmbientSceneColor(Qt::white);
     painter->setLightModel(model);
@@ -116,13 +115,13 @@ void DisplayListView::paintGL(QGLPainter *painter)
 }
 //! [1]
 
-QGLDisplayList *DisplayListView::buildGeometry()
+QGLBuilder *DisplayListView::buildGeometry()
 {
     //! [2]
-    QGLDisplayList *soupCan = new QGLDisplayList();
+    QGLBuilder *soupCan = new QGLBuilder();
     QGLMaterialCollection *mats = soupCan->palette();
 
-    QGLMaterialParameters *parms = new QGLMaterialParameters(mats);
+    QGLMaterial *parms = new QGLMaterial(mats);
     parms->setAmbientColor(QColor(32, 32, 64));
     parms->setDiffuseColor(QColor(64, 64, 128));
     int canMat = mats->addMaterial(parms);
@@ -130,9 +129,9 @@ QGLDisplayList *DisplayListView::buildGeometry()
     QImage soupLabel(":/images/qt-soup.png");
     if (soupLabel.isNull())
         qWarning("Could not load texture :/images/qt-soup.png");
-    QGLTexture2D *tex = new QGLTexture2D();
+    QGLTexture2D *tex = new QGLTexture2D(parms);
     tex->setImage(soupLabel);
-    mats->setTexture(canMat, tex);
+    parms->setTexture(tex);
 
     // default effect for can where no other effect set
     soupCan->setEffect(QGL::LitMaterial);
@@ -143,7 +142,7 @@ QGLDisplayList *DisplayListView::buildGeometry()
     const qreal canHeight = 2.5f;
     const int numSlices = 32;
 
-    QGLPrimitive canRim;
+    QGeometryData canRim;
     QVector3D canExtrudeVec(0.0f, 0.0f, -canHeight);
 
     // do the math for the defining points
@@ -162,19 +161,19 @@ QGLDisplayList *DisplayListView::buildGeometry()
 
     // create the sides of the can, and save the extruded bottom rim
     soupCan->newSection();
-    soupCan->currentNode()->setMaterial(canMat);
+    soupCan->currentNode()->setMaterialIndex(canMat);
     soupCan->currentNode()->setEffect(QGL::LitModulateTexture2D);
-    QGLPrimitive canTop = canRim;
+    QGeometryData canTop = canRim;
     canTop.appendVertex(canTop.vertexRef(0));       // doubled vert for texture seam
     canTop.generateTextureCoordinates();            // generate x texture coords
-    QGLPrimitive canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
+    QGeometryData canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0
     for (int i = 0; i < canTop.count(); ++i)
         canTop.texCoordRef(i).setY(1.0);                      // top has tex.y == 1
     soupCan->addQuadsZipped(canTop, canBase);
 
     // create the flat bottom lid of the can
     soupCan->newSection();
-    QGLPrimitive canBottom = canRim.translated(canExtrudeVec).reversed();
+    QGeometryData canBottom = canRim.translated(canExtrudeVec).reversed();
     soupCan->addTriangulatedFace(canBottom);
 
     soupCan->finalize();

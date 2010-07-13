@@ -50,15 +50,15 @@
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
 #include "qglvertexbuffer.h"
-#include "qglvertexarray.h"
-#include "qglindexarray.h"
+#include "qglindexbuffer.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
-#include "qglmaterialparameters.h"
-#include "qglfogparameters.h"
-#include "qglmatrixstack.h"
+#include "qglmaterial.h"
+#include "qmatrix4x4stack.h"
 #include "qglcamera.h"
-#include "qvectorarray.h"
+#include "qvector2darray.h"
+#include "qvector3darray.h"
+#include "qvector4darray.h"
 
 QT_BEGIN_HEADER
 
@@ -68,11 +68,11 @@ QT_MODULE(Qt3d)
 
 class QGLAbstractEffect;
 class QGLPainterPrivate;
-class QGLStencilBufferOptions;
-class QGLBlendOptions;
 class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
+class QGLShaderProgram;
+class QGLFramebufferObject;
 
 class Q_QT3D_EXPORT QGLPainter
 {
@@ -92,14 +92,16 @@ public:
 
     const QGLContext *context() const;
 
+    bool isFixedFunction() const;
+
     enum Update
     {
         UpdateColor                 = 0x00000001,
         UpdateModelViewMatrix       = 0x00000002,
         UpdateProjectionMatrix      = 0x00000004,
+        UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
-        UpdateFog                   = 0x00000020,
         UpdateAll                   = 0x7FFFFFFF
     };
     Q_DECLARE_FLAGS(Updates, Update);
@@ -110,25 +112,38 @@ public:
     void setClearStencil(GLint value);
 
     void setDepthTestingEnabled(bool value);
+    void setStencilTestingEnabled(bool value);
+    void setBlendingEnabled(bool value);
 
     QRect viewport() const;
     void setViewport(const QRect& rect);
     void setViewport(const QSize& size);
     void setViewport(int width, int height);
+    void resetViewport();
 
-    QRect scissorRect() const;
-    void setScissorRect(const QRect& rect);
-    void resetScissorRect();
+    QPoint viewportOffset() const;
+    void setViewportOffset(const QPoint& point);
 
-    QGLMatrixStack& projectionMatrix();
-    QGLMatrixStack& modelViewMatrix();
+    QRect scissor() const;
+    void setScissor(const QRect& rect);
+    void intersectScissor(const QRect& rect);
+    void expandScissor(const QRect& rect);
+    void resetScissor();
+
+    QMatrix4x4Stack& projectionMatrix();
+    QMatrix4x4Stack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
+    QMatrix3x3 normalMatrix() const;
 
-    bool isVisible(const QVector3D& point) const;
-    bool isVisible(const QBox3D& box) const;
+    QGL::Eye eye() const;
+    void setEye(QGL::Eye eye);
+
+    void setCamera(QGLCamera *camera);
+
+    bool isCullable(const QVector3D& point) const;
+    bool isCullable(const QBox3D& box) const;
 
     qreal aspectRatio() const;
-    qreal aspectRatio(const QSize& viewportSize) const;
 
     QGLAbstractEffect *effect() const;
 
@@ -140,6 +155,9 @@ public:
 
     void disableEffect();
 
+    QGLShaderProgram *cachedProgram(const QString& name) const;
+    void setCachedProgram(const QString& name, QGLShaderProgram *program);
+
     QColor color() const;
     void setColor(const QColor& color);
 
@@ -147,12 +165,9 @@ public:
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setVertexBuffer(const QGLVertexBuffer& buffer);
 
-    void setVertexArray(const QGLVertexArray& array);
-
     void setCommonNormal(const QVector3D& value);
 
     int textureUnitCount() const;
-    bool isTextureUnitActive(int unit = 0) const;
 
     void setTexture(int unit, const QGLTexture2D *texture);
     void setTexture(int unit, const QGLTextureCube *texture);
@@ -160,10 +175,17 @@ public:
     void setTexture(const QGLTextureCube *texture) { setTexture(0, texture); }
 
     void update();
+    void updateFixedFunction(QGLPainter::Updates updates);
 
     void draw(QGL::DrawingMode mode, int count, int index = 0);
-    void draw(QGL::DrawingMode mode, const QGLIndexArray& indices);
-    void draw(QGL::DrawingMode mode, const QGLIndexArray& indices, int offset, int count);
+    void draw(QGL::DrawingMode mode, const ushort *indices, int count);
+    void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
+    void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
+
+    void pushSurface(QGLFramebufferObject *fbo);
+    QGLFramebufferObject *popSurface();
+    QGLFramebufferObject *currentSurface() const;
+    QSize surfaceSize() const;
 
     void setPointSize(qreal size);
     void setLineWidth(qreal width);
@@ -173,23 +195,15 @@ public:
     const QGLLightModel *lightModel() const;
     void setLightModel(const QGLLightModel *value);
 
-    int lightCount() const;
-    bool hasEnabledLights() const;
-    bool isLightEnabled(int number) const;
-    void setLightEnabled(int number, bool value) const;
+    const QGLLightParameters *mainLight() const;
+    void setMainLight(QGLLightParameters *parameters);
+    void setMainLight
+        (QGLLightParameters *parameters, const QMatrix4x4& transform);
+    QMatrix4x4 mainLightTransform() const;
 
-    const QGLLightParameters *lightParameters(int number) const;
-    QMatrix4x4 lightTransform(int number) const;
-    void setLightParameters(int number, const QGLLightParameters *parameters);
-    void setLightParameters(int number, const QGLLightParameters *parameters,
-                            const QMatrix4x4& transform);
-
-    const QGLMaterialParameters *faceMaterial(QGL::Face face) const;
-    void setFaceMaterial(QGL::Face face, const QGLMaterialParameters *value);
+    const QGLMaterial *faceMaterial(QGL::Face face) const;
+    void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
     void setFaceColor(QGL::Face face, const QColor& color);
-
-    const QGLFogParameters *fogParameters() const;
-    void setFogParameters(const QGLFogParameters *value);
 
     bool isPicking() const;
     void setPicking(bool value);
@@ -209,8 +223,6 @@ private:
 
     QGLPainterPrivate *d_func() const { return d_ptr; }
 
-    friend class QGLStencilBufferOptions;
-    friend class QGLBlendOptions;
     friend class QGLAbstractEffect;
 
 #ifndef QT_NO_DEBUG
@@ -219,6 +231,30 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
+
+inline void QGLPainter::setDepthTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+}
+
+inline void QGLPainter::setStencilTestingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_STENCIL_TEST);
+    else
+        glDisable(GL_STENCIL_TEST);
+}
+
+inline void QGLPainter::setBlendingEnabled(bool value)
+{
+    if (value)
+        glEnable(GL_BLEND);
+    else
+        glDisable(GL_BLEND);
+}
 
 QT_END_NAMESPACE
 

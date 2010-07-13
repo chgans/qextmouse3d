@@ -44,6 +44,7 @@
 #include <QtCore/QDebug>
 #include <QtGui/QPainter>
 #include <QtMultimedia/QAbstractVideoBuffer>
+#include <QtMultimedia/QVideoSurfaceFormat>
 
 #ifndef GL_TEXTURE0
 # define GL_TEXTURE0    0x84C0
@@ -114,30 +115,34 @@ FBOVideoSurface::FBOVideoSurface(QGLWidget *glWidget)
             yuvSupported = true;
         }
     }
-
-    QList<QVideoFrame::Type> types;
-    //types << QVideoFormat::GLTexture;
-    if (yuvSupported)
-        types << QVideoFrame::Image_YUV420P;
-    types << QVideoFrame::Image_RGB32 << QVideoFrame::Image_ARGB32;
-    setSupportedTypes(types);
 }
 
 FBOVideoSurface::~FBOVideoSurface()
 {
 }
 
-bool FBOVideoSurface::start(const QVideoFormat &format)
+QList<QVideoFrame::PixelFormat> FBOVideoSurface::supportedPixelFormats
+        (QAbstractVideoBuffer::HandleType handleType) const
+{
+    Q_UNUSED(handleType);
+    QList<QVideoFrame::PixelFormat> formats;
+    if (yuvSupported)
+        formats << QVideoFrame::Format_YUV420P;
+    formats << QVideoFrame::Format_RGB32 << QVideoFrame::Format_ARGB32;
+    return formats;
+}
+
+bool FBOVideoSurface::start(const QVideoSurfaceFormat &format)
 {
     if (isFormatSupported(format)) {
         widget->makeCurrent();
 
-        switch (format.frameType()) {
-        case QVideoFrame::Image_YUV420P:
+        switch (format.pixelFormat()) {
+        case QVideoFrame::Format_YUV420P:
             textureCount = 3;
             break;
-        case QVideoFrame::Image_RGB32:
-        case QVideoFrame::Image_ARGB32:
+        case QVideoFrame::Format_RGB32:
+        case QVideoFrame::Format_ARGB32:
             textureCount = 1;
             break;
         default:
@@ -154,12 +159,7 @@ bool FBOVideoSurface::start(const QVideoFormat &format)
 
         fbo = new QGLFramebufferObject(QSize(width, height));
 
-        setFormat(format);
-        setStarted(true);
-
-        qDebug() << "FBOVideoSurface::initialize" << format;
-
-        return true;
+        return QAbstractVideoSurface::start(format);
     } else {
         return false;
     }
@@ -167,11 +167,9 @@ bool FBOVideoSurface::start(const QVideoFormat &format)
 
 void FBOVideoSurface::stop()
 {
-    qDebug() << "FBOVideoSurface::shutdown";
-
-    setStarted(false);
     delete fbo;
     fbo = 0;
+    QAbstractVideoSurface::stop();
 }
 
 bool FBOVideoSurface::present(const QVideoFrame &frame)
@@ -182,24 +180,21 @@ bool FBOVideoSurface::present(const QVideoFrame &frame)
     //QRectF fboGeometry(0, 0, currentFrame.size().width(), currentFrame.size().height());
     QRectF fboGeometry(0, 0, fbo->width(), fbo->height());
     if (fbo->bind()) {
-        switch (frame.type()) {
-        case QVideoFrame::GLTexture:
-            //TODO: implement
-            break;
-        case QVideoFrame::Image_ARGB32:
-        case QVideoFrame::Image_RGB32:
+        switch (frame.pixelFormat()) {
+        case QVideoFrame::Format_ARGB32:
+        case QVideoFrame::Format_RGB32:
             {
                 QPainter p(fbo);
-                QImage image(
-                        reinterpret_cast<uchar *>(frame.buffer()->data()),
-                        frame.size().width(),
-                        frame.size().height(),
-                        QImage::Format_RGB32);
+                QImage image(frame.bits(),
+                             frame.size().width(),
+                             frame.size().height(),
+                             frame.bytesPerLine(),
+                             QImage::Format_RGB32);
 
                 p.drawImage(fboGeometry, image);
             }
             break;
-        case QVideoFrame::Image_YUV420P:
+        case QVideoFrame::Format_YUV420P:
             {
                 QPainter p(fbo);
                 p.fillRect(fboGeometry, Qt::black);

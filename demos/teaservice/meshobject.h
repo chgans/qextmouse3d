@@ -44,10 +44,9 @@
 
 #include <QtCore/qobject.h>
 #include <QtGui/qevent.h>
-#include "qglgeometry.h"
 #include "qglpainter.h"
 #include "qglsceneobject.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qglabstractscene.h"
 
 class QGLView;
@@ -56,7 +55,7 @@ class MeshObject : public QObject
 {
     Q_OBJECT
 public:
-    explicit MeshObject(QGLDisplayList *mesh, QObject *parent=0);
+    explicit MeshObject(QGLBuilder *mesh, QObject *parent=0);
     explicit MeshObject(QGLSceneObject *meshObject, QObject *parent=0);
     explicit MeshObject(QGLAbstractScene *scene, QObject *parent=0);
     virtual ~MeshObject();
@@ -73,12 +72,12 @@ public:
     QVector3D rotationVector() const { return m_rotationVector; }
     void setRotationVector(const QVector3D& value) { m_rotationVector = value; }
 
-    QGLMaterialParameters *material() const { return m_material; }
-    void setMaterial(QGLMaterialParameters *value)
+    QGLMaterial *material() const { return m_material; }
+    void setMaterial(QGLMaterial *value)
         { m_material = value; m_hoverMaterial = value; }
 
-    QGLMaterialParameters *hoverMaterial() const { return m_hoverMaterial; }
-    void setHoverMaterial(QGLMaterialParameters *value) { m_hoverMaterial = value; }
+    QGLMaterial *hoverMaterial() const { return m_hoverMaterial; }
+    void setHoverMaterial(QGLMaterial *value) { m_hoverMaterial = value; }
 
     QGLAbstractEffect *effect() const { return m_effect; }
     void setEffect(QGLAbstractEffect *value) { m_effect = value; }
@@ -100,15 +99,15 @@ protected:
     bool event(QEvent *e);
 
 private:
-    QGLDisplayList *m_mesh;
+    QGLBuilder *m_mesh;
     QGLSceneObject *m_meshObject;
     QGLAbstractScene *m_scene;
     QVector3D m_position;
     qreal m_scale;
     qreal m_rotationAngle;
     QVector3D m_rotationVector;
-    QGLMaterialParameters *m_material;
-    QGLMaterialParameters *m_hoverMaterial;
+    QGLMaterial *m_material;
+    QGLMaterial *m_hoverMaterial;
     QGLAbstractEffect *m_effect;
     int m_objectId;
     bool m_hovering;

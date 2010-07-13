@@ -85,7 +85,7 @@ struct Tga32Reader : public TgaReader
 
 /*!
     \class QTgaFile
-    \since 4.7
+    \since 4.8
     \internal
 
     File data container for a TrueVision Graphics format file.

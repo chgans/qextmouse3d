@@ -57,7 +57,7 @@
 #include <QtGui/qvector4d.h>
 #include <QtGui/qvector3d.h>
 #include <QtGui/qvector2d.h>
-#include "qcolor4b.h"
+#include "qcolor4ub.h"
 
 namespace QTest {
     char *toString(const QVector4D &v)
@@ -82,7 +82,7 @@ namespace QTest {
         return msg;
     }
 
-    char *toString(const QColor4B &c)
+    char *toString(const QColor4ub &c)
     {
         char *msg = new char[128];
         qt_snprintf(msg, 128, "R: %0.2f, G: %0.2f, B: %0.2f, A: %0.2)",
@@ -135,7 +135,7 @@ namespace QTest {
         }
     }
 
-    template<> bool qCompare<QColor4B>(const QColor4B &t1, const QColor4B &t2,
+    template<> bool qCompare<QColor4ub>(const QColor4ub &t1, const QColor4ub &t2,
                                         const char *actual, const char *expected,
                                         const char *file, int line)
     {
@@ -145,7 +145,7 @@ namespace QTest {
         }
         else
         {
-            return compare_helper(false, "Compared QColor4B values are not the same:",
+            return compare_helper(false, "Compared QColor4ub values are not the same:",
                                   toString(t1), toString(t2), actual, expected, file, line);
         }
     }

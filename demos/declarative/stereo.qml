@@ -1,6 +1,8 @@
-import Qt 4.6
+import Qt 4.7
+import Qt.labs.threed 1.0
 
 Viewport {
+    width: 640; height: 480
     camera: Camera {
         eye: Qt.vector3d(0, 0, 15)
         eyeSeparation: 0.2
@@ -15,12 +17,12 @@ Viewport {
             material: china
         }
 
-        z: SequentialAnimation {
+        SequentialAnimation on z {
             running: true
-            repeat: true
+            loops: Animation.Infinite
             PauseAnimation { duration: 500 }
-            NumberAnimation { to : 9.0; duration: 300; easing:"easeOutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing:"easeOutBounce" }
+            NumberAnimation { to : 9.0; duration: 300; easing.type:"OutQuad" }
+            NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
         }
     }
 

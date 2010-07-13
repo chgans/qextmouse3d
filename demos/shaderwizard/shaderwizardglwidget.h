@@ -46,8 +46,7 @@
 class QGLPainter;
 
 #include "qglview.h"
-#include "qglgeometry.h"
-#include "qgldisplaylist.h"
+#include "qglbuilder.h"
 #include "qgltexture2d.h"
 
 class ShaderWizardGLWidgetPrivate;
@@ -84,9 +83,10 @@ public:
     QColor specularMaterialColor();
 
     int materialShininess();
+    QGLShaderProgramEffect* effect();
 
 public slots:
-    void setGeometry(QGLSceneNode *geom);
+    void setSceneNode(QGLSceneNode *geom);
 
     void setCubeGeometry();
     void setSphereGeometry();
@@ -124,22 +124,22 @@ private:
     void setDefaultCamera(QGLSceneNode* geometry);
 
     ShaderWizardGLWidgetPrivate* d;
-    QGLSceneNode *mGeometry;
+    QGLSceneNode *mSceneNode;
     QGLAbstractScene *mSceneManager;
     QGLSceneObject *mDefaultSceneObject;
     QGLSceneNode *mSceneRoot;
     QGLLightParameters *mLightParameters;
     QGLLightModel *mLightModel;
-    QGLMaterialParameters *mMaterial;
+    QGLMaterial *mMaterial;
     QGLMaterialCollection *mMaterialCollection;
     QGLTexture2D *mTexture;
 
     // Models
-    QGLDisplayList* cube;
-    QGLDisplayList* teapot;
-    QGLDisplayList* square;
-    QGLDisplayList* ripple;
-    QGLDisplayList* sphere;
+    QGLBuilder* cube;
+    QGLBuilder* teapot;
+    QGLBuilder* square;
+    QGLBuilder* ripple;
+    QGLBuilder* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

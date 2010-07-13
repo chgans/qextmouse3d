@@ -64,7 +64,7 @@
 QT_BEGIN_NAMESPACE
 
 class QGLPainter;
-class QGLDisplayList;
+class QGLBuilder;
 class QGLSectionPrivate;
 class QGeometryData;
 class QGLSceneNode;
@@ -72,7 +72,7 @@ class QGLSceneNode;
 class Q_QT3D_EXPORT QGLSection : public QGeometryData
 {
 public:
-    QGLSection(QGLDisplayList *d, QGL::Smoothing sm = QGL::Smooth, QGL::Strategy st = QGL::MapLookup);
+    QGLSection(QGLBuilder *d, QGL::Smoothing sm = QGL::Smooth);
     ~QGLSection();
 
     void reserve(int amount);
@@ -80,6 +80,7 @@ public:
     void append(const QLogicalVertex &lv);
     void append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c);
     void appendSmooth(const QLogicalVertex &lv);
+    void appendSmooth(const QLogicalVertex &lv, int index);
     void appendSmooth(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
     {
         appendSmooth(a);
@@ -101,18 +102,21 @@ public:
         appendFlat(c);
     }
     inline QGL::Smoothing smoothing() const;
-    inline QGLDisplayList *displayList() const;
+    inline void setSmoothing(QGL::Smoothing s);
+    inline QGLBuilder *displayList() const;
+    int mapThreshold() const;
+    void setMapThreshold(int);
     QList<QGLSceneNode*> nodes() const;
     void addNode(QGLSceneNode *node);
     bool deleteNode(QGLSceneNode *node);
 private:
     Q_DISABLE_COPY(QGLSection);
-    friend class QGLDisplayList;
+    friend class QGLBuilder;
 
     int appendOne(const QLogicalVertex &vertex);
 
     QGL::Smoothing m_smoothing;
-    QGLDisplayList *m_displayList;
+    QGLBuilder *m_displayList;
     QGLSectionPrivate *d;
 };
 
@@ -121,7 +125,12 @@ inline QGL::Smoothing QGLSection::smoothing() const
     return m_smoothing;
 }
 
-inline QGLDisplayList *QGLSection::displayList() const
+inline void QGLSection::setSmoothing(QGL::Smoothing s)
+{
+    m_smoothing = s;
+}
+
+inline QGLBuilder *QGLSection::displayList() const
 {
     return m_displayList;
 }

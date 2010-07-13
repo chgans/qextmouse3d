@@ -49,9 +49,6 @@ void PainterWidget::initializeGL()
     // Turn on depth testing.
     painter.setDepthTestingEnabled(true);
 
-    // Turn on a light for LitMaterial effects.
-    painter.setLightEnabled(0, true);
-
     // Create the cube object for later.
     cube.newSection(QGL::Faceted);
     cube << QGLCube(1.5f);
@@ -72,8 +69,9 @@ void PainterWidget::paintGL()
     painter.clear();
 
     // Draw a triangle in an orthographic projection.
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().ortho(rect());
+    QMatrix4x4 projm;
+    projm.ortho(rect());
+    painter.projectionMatrix() = projm;
 
     painter.modelViewMatrix().setToIdentity();
 
@@ -90,12 +88,13 @@ void PainterWidget::paintGL()
 
     // Draw a cube in a perspective projection centered in the window.
     painter.setStandardEffect(QGL::LitMaterial);
-    painter.projectionMatrix().setToIdentity();
-    painter.projectionMatrix().perspective(30, painter.aspectRatio(), 5, 1000);
-    painter.projectionMatrix().lookAt
+    QMatrix4x4 projection;
+    projection.perspective(30, painter.aspectRatio(), 5, 1000);
+    projection.lookAt
             (QVector3D(0.0f, 0.0f, 10.0f),
              QVector3D(0.0f, 0.0f, 0.0f),
              QVector3D(0.0f, 1.0f, 0.0f));
+    painter.projectionMatrix() = projection;
     painter.modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
     painter.setFaceColor(QGL::AllFaces, QColor(170, 202, 0));

@@ -65,7 +65,8 @@ public:
     {
         ObjectPicking       = 0x0001,
         ShowPicking         = 0x0002,
-        CameraNavigation    = 0x0004
+        CameraNavigation    = 0x0004,
+        PaintingLog         = 0x0008
     };
     Q_DECLARE_FLAGS(Options, Option)
 
@@ -76,16 +77,24 @@ public:
     enum StereoType
     {
         Hardware,
-        RedCyanAnaglyph
+        RedCyanAnaglyph,
+        DoubleWideLeftRight,
+        DoubleWideRightLeft,
+        DoubleHighLeftRight,
+        DoubleHighRightLeft
     };
 
     QGLView::StereoType stereoType() const;
+    void setStereoType(QGLView::StereoType type);
 
     void registerObject(int objectId, QObject *object);
     void deregisterObject(int objectId);
+    QObject *objectForPoint(const QPoint &point);
 
     QGLCamera *camera() const;
     void setCamera(QGLCamera *camera);
+
+    QVector3D mapPoint(const QPoint &point) const;
 
 public Q_SLOTS:
     void queueUpdate();
@@ -97,8 +106,6 @@ protected:
     virtual void initializeGL(QGLPainter *painter);
     virtual void earlyPaintGL(QGLPainter *painter);
     virtual void paintGL(QGLPainter *painter) = 0;
-    virtual void pickGL(QGLPainter *painter);
-    virtual bool needsPickGL();
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
@@ -110,6 +117,10 @@ protected:
 #endif
     void keyPressEvent(QKeyEvent *e);
 
+    QPointF viewDelta(int deltax, int deltay) const;
+    QPointF viewDelta(const QPoint &delta) const
+        { return viewDelta(delta.x(), delta.y()); }
+
 private Q_SLOTS:
     void cameraChanged();
     void performUpdate();
@@ -117,14 +128,12 @@ private Q_SLOTS:
 private:
     QGLViewPrivate *d;
 
-    QObject *objectUnderMouse(QMouseEvent *e);
     static void sendEnterEvent(QObject *object);
     static void sendLeaveEvent(QObject *object);
 
     void wheel(int delta);
     void pan(int deltax, int deltay);
     void rotate(int deltax, int deltay);
-    QPointF viewDelta(int deltax, int deltay);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLView::Options)
