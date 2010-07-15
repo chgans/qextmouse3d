@@ -222,8 +222,7 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::buildFloor()
 {
-    m_floor = new QGLBuilder(this);
-    m_floor->newSection();
+    QGLBuilder builder;
     for (int x = -5; x < 5; ++x)
     {
         QGeometryData op;
@@ -234,7 +233,7 @@ void Viewer::buildFloor()
             op.appendVertex(QVector3D(x + 1, 0, z));
             op.appendTexCoord(QVector2D(float(-x - 6) / 10.0f, float(z + 5) / 10.0f));
         }
-        m_floor->addQuadStrip(op);
+        builder.addQuadStrip(op);
     }
     for (int z = -5; z < 5; ++z)
     {
@@ -246,9 +245,9 @@ void Viewer::buildFloor()
             op.appendVertex(QVector3D(x, -0.01, z + 1));
             op.appendTexCoord(QVector2D(float(-x - 5) / 10.0f, float(z + 6) / 10.0f));
         }
-        m_floor->addQuadStrip(op);
+        builder.addQuadStrip(op);
     }
-    m_floor->finalize();
+    m_floor = builder.finalizedSceneNode();
     m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);

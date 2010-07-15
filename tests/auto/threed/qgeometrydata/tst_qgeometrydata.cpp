@@ -59,7 +59,7 @@ private slots:
     void appendNormal();
     void appendVertexNormal();
     void copy();
-    void zipWith();
+    void interleaveWith();
 };
 
 void tst_QGeometryData::createDefault()
@@ -339,7 +339,7 @@ void tst_QGeometryData::copy()
     }
 }
 
-void tst_QGeometryData::zipWith()
+void tst_QGeometryData::interleaveWith()
 {
     QVector3D a(1.1, 1.2, 1.3);
     QVector3D b(2.1, 2.2, 2.3);
@@ -360,7 +360,7 @@ void tst_QGeometryData::zipWith()
     // count is the smaller of the two - nothing in this null case
     // also make sure the argument doesnt somehow change - its a const
     // so it shouldn't...
-    dat2.zipWith(data);
+    dat2.interleaveWith(data);
     QCOMPARE(data.count(), 4);
     QCOMPARE(data.vertex(0), a);
     QCOMPARE(dat2.count(), 0);
@@ -369,7 +369,7 @@ void tst_QGeometryData::zipWith()
 
     // dat2 is smaller and has less fields
     dat2.appendVertex(a + vx, b + vx);
-    dat2.zipWith(data);
+    dat2.interleaveWith(data);
     QCOMPARE(data.count(), 4);
     QCOMPARE(data.vertex(0), a);
     QCOMPARE(dat2.count(), 4);
@@ -388,7 +388,7 @@ void tst_QGeometryData::zipWith()
         dat2.appendVertex(data.vertex(i) + vx);
         dat2.appendTexCoord(data.texCoord(i) + tx);
     }
-    dat2.zipWith(data);
+    dat2.interleaveWith(data);
     QCOMPARE(dat2.count(), 8);
     QCOMPARE(dat2.count(QGL::Position), 8);
     QCOMPARE(dat2.count(QGL::TextureCoord0), 8);

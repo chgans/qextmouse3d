@@ -49,13 +49,14 @@
 #include <QFileInfo>
 
 SkyBox::SkyBox(QGLView *view, const QString &imagePath)
-    : m_list(new QGLBuilder)
+    : m_scene(new QGLSceneNode)
     , m_view(view)
 {
-    m_list->setObjectName("SkyboxList");
-    m_list->newSection(QGL::Faceted);
-    m_list->setEffect(QGL::FlatReplaceTexture2D);
-    m_list->setEffectEnabled(true);
+    QGLBuilder builder;
+    m_scene->setObjectName("SkyboxList");
+    builder.newSection(QGL::Faceted);
+    m_scene->setEffect(QGL::FlatReplaceTexture2D);
+    m_scene->setEffectEnabled(true);
     QVector3D blb(-1.0, -1.0, -1.0);
     QVector3D blf(-1.0, -1.0, 1.0);
     QVector3D tlf(-1.0, 1.0, 1.0);
@@ -70,64 +71,64 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     QVector2D tl(0.0f, 1.0f);
     {
         QGeometryData q;   // left
-        m_list->currentNode()->setObjectName("left");
+        builder.currentNode()->setObjectName("left");
         q.appendVertex(blf, blb, tlb, tlf);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[0] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[0] = builder.currentNode();
         m_faces[0]->setMaterial(new QGLMaterial);
     }
     {
-        m_list->newNode();   // top
-        m_list->currentNode()->setObjectName("top");
+        builder.newNode();   // top
+        builder.currentNode()->setObjectName("top");
         QGeometryData q;
         q.appendVertex(trf, tlf, tlb, trb);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[1] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[1] = builder.currentNode();
         m_faces[1]->setMaterial(new QGLMaterial);
     }
     {
-        m_list->newNode();    // right
-        m_list->currentNode()->setObjectName("right");
+        builder.newNode();    // right
+        builder.currentNode()->setObjectName("right");
         QGeometryData q;
         q.appendVertex(brb, brf, trf, trb);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[2] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[2] = builder.currentNode();
         m_faces[2]->setMaterial(new QGLMaterial);
     }
     {
-        m_list->newNode();    // bottom
-        m_list->currentNode()->setObjectName("bottom");
+        builder.newNode();    // bottom
+        builder.currentNode()->setObjectName("bottom");
         QGeometryData q;
         q.appendVertex(brb, blb, blf, brf);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[3] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[3] = builder.currentNode();
         m_faces[3]->setMaterial(new QGLMaterial);
     }
     {
-        m_list->newNode();    // front
-        m_list->currentNode()->setObjectName("front");
+        builder.newNode();    // front
+        builder.currentNode()->setObjectName("front");
         QGeometryData q;
         q.appendVertex(brf, blf, tlf, trf);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[4] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[4] = builder.currentNode();
         m_faces[4]->setMaterial(new QGLMaterial);
     }
     {
-        m_list->newNode();    // back
-        m_list->currentNode()->setObjectName("back");
+        builder.newNode();    // back
+        builder.currentNode()->setObjectName("back");
         QGeometryData q;
         q.appendVertex(blb, brb, trb, tlb);
         q.appendTexCoord(bl, br, tr, tl);
-        m_list->addQuad(q);
-        m_faces[5] = m_list->currentNode();
+        builder.addQuads(q);
+        m_faces[5] = builder.currentNode();
         m_faces[5]->setMaterial(new QGLMaterial);
     }
-    m_list->finalize();
+    m_scene = builder.finalizedSceneNode();
 
     setImagePath(imagePath.isEmpty() ? QString(":/") : imagePath);
 }
@@ -211,7 +212,7 @@ void SkyBox::draw(QGLPainter *painter) const
 
     painter->setDepthTestingEnabled(false);
 
-    m_list->draw(painter);
+    m_scene->draw(painter);
 
     painter->setDepthTestingEnabled(true);
 

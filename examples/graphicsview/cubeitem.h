@@ -71,7 +71,7 @@ private Q_SLOTS:
     void updateScene();
 
 private:
-    QGLBuilder cube;
+    QGLSceneNode *cube;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
     bool navigating;

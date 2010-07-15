@@ -52,8 +52,8 @@ class tst_QGLSection : public QObject
 public:
     tst_QGLSection() {}
     ~tst_QGLSection() {}
-    void testSmooth(QGLSection *sec, QGLBuilder *list);
-    void testFaceted(QGLSection *sec, QGLBuilder *list);
+    void testSmooth(QGLSection *sec, QGLBuilder *builder);
+    void testFaceted(QGLSection *sec, QGLBuilder *builder);
 
 private slots:
     void create();
@@ -77,8 +77,8 @@ private slots:
 class QGLSectionTest : public QGLSection
 {
 public:
-    QGLSectionTest(QGLBuilder *list, QGL::Smoothing s = QGL::Smooth)
-        : QGLSection(list, s) {}
+    QGLSectionTest(QGLBuilder *builder, QGL::Smoothing s = QGL::Smooth)
+        : QGLSection(builder, s) {}
 
     void appendSmooth(const QLogicalVertex &vertex)
     {
@@ -96,7 +96,7 @@ public:
     }
 };
 
-class TestQGLBuilder : public QGLBuilder
+class TestBuilder : public QGLBuilder
 {
 public:
     QGLSection *currentSection() { return QGLBuilder::currentSection(); }
@@ -106,23 +106,23 @@ public:
 void tst_QGLSection::create()
 {
     // Test that a newly created object has the correct defaults.
-    TestQGLBuilder list;
-    list.newSection();
-    QGLSection *section = list.currentSection();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *section = builder.currentSection();
     QVERIFY(section->hasField(QGL::Position));   // need this initially now
     QCOMPARE(section->fields(), (quint32)1);
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
-    QCOMPARE(section->displayList(), &list);
+    QCOMPARE(section->displayList(), &builder);
     QCOMPARE(section->boundingBox(), QBox3D());
     QCOMPARE(section->mapThreshold(), 5);
 }
 
 void tst_QGLSection::modify()
 {
-    TestQGLBuilder list;
-    list.newSection();
-    QGLSection *section = list.currentSection();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *section = builder.currentSection();
 
     QVector3D va(-1.0f, -1.0f, 0.0f);
     QVector3D vb(1.0f, -1.0f, 0.0f);
@@ -135,19 +135,19 @@ void tst_QGLSection::modify()
     p.setCommonNormal(n);
     section->setMapThreshold(30);
     QCOMPARE(section->mapThreshold(), 30);
-    list.addTriangle(p);
+    builder.addTriangles(p);
     QCOMPARE(section->count(), 3);
-    list.newSection();
-    QGLSection *section2 = list.currentSection();
-    list.addTriangle(p);
+    builder.newSection();
+    QGLSection *section2 = builder.currentSection();
+    builder.addTriangles(p);
     QCOMPARE(section2->count(), 3);
 }
 
 void tst_QGLSection::append()
 {
-    TestQGLBuilder list;
-    list.newSection();
-    QGLSection *section = list.currentSection();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *section = builder.currentSection();
 
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(1.0f, 0.0f, 0.0f);
@@ -164,15 +164,15 @@ void tst_QGLSection::append()
 
 void tst_QGLSection::appendSmooth()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
-    testSmooth(section, &list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
+    testSmooth(section, &builder);
 }
 
 void tst_QGLSection::appendSmoothMap()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
     int t = section->mapThreshold();
     QVector3D testVertex(-12.34f, -23.45f, -34.56f);
     QVector3D incrVector(0.02, 0.02, 0.02);
@@ -182,10 +182,10 @@ void tst_QGLSection::appendSmoothMap()
         section->appendSmooth(QLogicalVertex(testVertex, testNormal));
         testVertex += incrVector;
     }
-    testSmooth(section, &list);
+    testSmooth(section, &builder);
 }
 
-void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *list)
+void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *builder)
 {
     int poffset = section->count(QGL::Position);
     int noffset = section->count(QGL::Normal);
@@ -224,7 +224,7 @@ void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *list)
     QCOMPARE_INDEX(section->indices()[poffset + 2], poffset + 1);
 
     // append a vertex equal to one already appended, but inside a new section - check its not coalesced
-    section = new QGLSectionTest(list);
+    section = new QGLSectionTest(builder);
     section->appendSmooth(QLogicalVertex(testVertex2, testNormal3));
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex2);
@@ -236,16 +236,16 @@ void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *list)
 
 void tst_QGLSection::appendFaceted()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
     // test the part where its only using the QArray
-    testFaceted(section, &list);
+    testFaceted(section, &builder);
 }
 
 void tst_QGLSection::appendFacetedMap()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
     // now create a new section and fill to just below the threshold for QMap
     int t = section->mapThreshold();
     QVector3D testVertex(-12.34f, -23.45f, -34.56f);
@@ -256,7 +256,7 @@ void tst_QGLSection::appendFacetedMap()
         section->appendSmooth(QLogicalVertex(testVertex, testNormal));
         testVertex += incrVector;
     }
-    testFaceted(section, &list);
+    testFaceted(section, &builder);
 }
 
 void tst_QGLSection::accumNormals()
@@ -318,10 +318,10 @@ void tst_QGLSection::accumNormals()
 
     This test is to cover this problem.
     */
-    TestQGLBuilder list;
-    list.newSection(QGL::Smooth); // default - but making the point
-    //QGLSection *section = list.currentSection();
-    QGLSceneNode *node = list.currentNode();
+    TestBuilder builder;
+    builder.newSection(QGL::Smooth); // default - but making the point
+    //QGLSection *section = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     static float data[12*3] = {
         1.0f, 0.0f, 0.0f,
         2.0f, 0.0f, 0.0f,
@@ -343,14 +343,14 @@ void tst_QGLSection::accumNormals()
     quads.appendVertex(v[3], v[4], v[8], v[7]);      // 2
     quads.appendVertex(v[4], v[5], v[9], v[8]);      // 3
     quads.appendVertex(v[7], v[8], v[11], v[10]);    // 4
-    list.addQuad(quads);
+    builder.addQuads(quads);
     QGeometryData triangles;
     triangles.appendVertex(v[0], v[3], v[2]);        // 5
     triangles.appendVertex(v[1], v[5], v[4]);        // 6
     triangles.appendVertex(v[6], v[7], v[10]);       // 7
     triangles.appendVertex(v[8], v[9], v[11]);       // 8
-    list.addTriangle(triangles);
-    list.finalize();
+    builder.addTriangles(triangles);
+    builder.finalizedSceneNode();
 
     // There are 9 faces as shown above - here are their normals
     QVector3DArray face_norms;
@@ -413,10 +413,10 @@ void tst_QGLSection::normalizedNormals()
     const qreal qThickness = 0.4f;
     const int qNumSlices = 16;
 
-    TestQGLBuilder list;
-    list.newSection(QGL::Smooth); // default - but making the point
-    //QGLSection *section = list.currentSection();
-    QGLSceneNode *node = list.currentNode();
+    TestBuilder builder;
+    builder.newSection(QGL::Smooth); // default - but making the point
+    //QGLSection *section = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
 
     // draw two 90 degree arcs, qThickness apart radially, and qHeight apart
     // in the z dimension.  the points on the two arcs are joined into quads
@@ -435,21 +435,21 @@ void tst_QGLSection::normalizedNormals()
         QVector3D b(cs * (qRadius + qThickness), sn * (qRadius + qThickness), qHeight);
         QGeometryData quad;
         quad.appendVertex(ap, bp, b, a);
-        list.addQuad(quad);
+        builder.addQuads(quad);
         QGeometryData tri;
         tri.appendVertex(b, bp, anc);
-        list.addTriangle(tri);
+        builder.addTriangles(tri);
         ap = a;
         bp = b;
     }
-    list.finalize();
+    builder.finalizedSceneNode();
     QGeometryData data = node->geometry();
     QVERIFY(!data.isNull());
     //qDebug() << "#############" << *data;
     QCOMPARE(data.count(QGL::Position), 33);
 }
 
-void tst_QGLSection::testFaceted(QGLSection *section, QGLBuilder *list)
+void tst_QGLSection::testFaceted(QGLSection *section, QGLBuilder *builder)
 {
     int poffset = section->count(QGL::Position);
     int noffset = section->count(QGL::Normal);
@@ -485,7 +485,7 @@ void tst_QGLSection::testFaceted(QGLSection *section, QGLBuilder *list)
     QCOMPARE_INDEX(section->indices()[poffset + 2], poffset + 1);
 
     // append a vertex equal to one already appended, with same normal, BUT in a new section - check it was NOT coalesced
-    section = new QGLSectionTest(list);
+    section = new QGLSectionTest(builder);
     section->appendFaceted(QLogicalVertex(testVertex, testNormal2));
     QCOMPARE(section->vertices().count(), 1);
     QCOMPARE(section->vertices().at(0), testVertex);
@@ -497,8 +497,8 @@ void tst_QGLSection::testFaceted(QGLSection *section, QGLBuilder *list)
 
 void tst_QGLSection::appendTexCoord()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
 
     // note that the tests above do the case of texCoord, InvalidTexCoord
 
@@ -541,7 +541,7 @@ void tst_QGLSection::appendTexCoord()
     QCOMPARE(section->indices().size(), 3);
     QCOMPARE_INDEX(section->indices()[2], 1);
 
-    section = new QGLSectionTest(&list);
+    section = new QGLSectionTest(&builder);
 
     // append a faceted vertex with a tex coord check it appears in the data
     // in a new section now, so the same vert and normal wont be coalesced
@@ -586,8 +586,8 @@ void tst_QGLSection::appendTexCoord()
 
 void tst_QGLSection::appendColor()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
 
     QColor4ub color(32, 64, 128, 255);
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
@@ -601,7 +601,7 @@ void tst_QGLSection::appendColor()
     QVERIFY(!section->hasField(QGL::TextureCoord0));
     QVERIFY(!section->hasField(QGL::Normal));
 
-    section = new QGLSectionTest(&list);
+    section = new QGLSectionTest(&builder);
 
     QVector2D testTexCoord(0.0f, 0.0f);
     QLogicalVertex lv;
@@ -623,13 +623,13 @@ void tst_QGLSection::appendColor()
 
 void tst_QGLSection::accessors()
 {
-    TestQGLBuilder list;
-    QGLSectionTest *section = new QGLSectionTest(&list);
+    TestBuilder builder;
+    QGLSectionTest *section = new QGLSectionTest(&builder);
 
     QCOMPARE(section->smoothing(), QGL::Smooth);
-    QCOMPARE(section->displayList(), &list);
+    QCOMPARE(section->displayList(), &builder);
 
-    QGLSectionTest *section2 = new QGLSectionTest(&list, QGL::Faceted);
+    QGLSectionTest *section2 = new QGLSectionTest(&builder, QGL::Faceted);
     QCOMPARE(section2->smoothing(), QGL::Faceted);
 }
 

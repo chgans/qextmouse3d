@@ -48,9 +48,44 @@ PlanetView::PlanetView(QWidget *parent)
       planet2Posn(4.0f, 0.0f, 0.0f),
       planet3Posn(6.0f, 0.0f, 0.0f)
 {
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    sun = builder.newNode();
+    builder << QGLSphere(2.0f, 4);
+    planet1 = builder.newNode();
+    builder << QGLSphere(0.5f, 3);
+    planet2 = builder.newNode();
+    builder << QGLSphere(0.4f, 3);
+    planet3 = builder.newNode();
+    builder << QGLSphere(0.2f, 3);
+
+    scene = builder.finalizedSceneNode();
+
+    scene->setEffect(QGL::LitMaterial);
+
+    QGLMaterial *mat = new QGLMaterial;
+    mat->setDiffuseColor(Qt::yellow);
+    sun->setMaterial(mat);
+
+    mat = new QGLMaterial;
+    mat->setDiffuseColor(QColor(0, 192, 192));
+    planet1->setMaterial(mat);
+    planet1->setPosition(planet1Posn);
+
+    mat = new QGLMaterial;
+    mat->setDiffuseColor(QColor(192, 0, 0));
+    planet2->setMaterial(mat);
+    planet2->setPosition(planet2Posn);
+
+    mat = new QGLMaterial;
+    mat->setDiffuseColor(QColor(255, 255, 255));
+    planet3->setMaterial(mat);
+    planet3->setRotX(10.0f);
+    planet3->setPosition(planet3Posn);
+
     qreal radius = 2.5f;
 
-    animPlanet1 = new QSphericalAnimation(this, "planet1Pos", this);
+    animPlanet1 = new QSphericalAnimation(planet1, "position", this);
     animPlanet1->setStartValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet1->setKeyValueAt(0.25f, qVariantFromValue(QVector3D(0.0f, 0.0f, radius)));
     animPlanet1->setKeyValueAt(0.5f, qVariantFromValue(QVector3D(-radius, 0.0f, 0.0f)));
@@ -62,7 +97,7 @@ PlanetView::PlanetView(QWidget *parent)
 
     radius = 4.0f;
 
-    animPlanet2 = new QSphericalAnimation(this, "planet2Pos", this);
+    animPlanet2 = new QSphericalAnimation(planet2, "position", this);
     animPlanet2->setStartValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet2->setKeyValueAt(0.25f, qVariantFromValue(QVector3D(0.0f, 0.0f, radius)));
     animPlanet2->setKeyValueAt(0.5f, qVariantFromValue(QVector3D(-radius, 0.0f, 0.0f)));
@@ -74,7 +109,7 @@ PlanetView::PlanetView(QWidget *parent)
 
     radius = 6.0f;
 
-    animPlanet3 = new QSphericalAnimation(this, "planet3Pos", this);
+    animPlanet3 = new QSphericalAnimation(planet3, "position", this);
     animPlanet3->setStartValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet3->setKeyValueAt(0.25f, qVariantFromValue(QVector3D(0.0f, 0.0f, radius)));
     animPlanet3->setKeyValueAt(0.5f, qVariantFromValue(QVector3D(-radius, 0.0f, 0.0f)));
@@ -87,44 +122,7 @@ PlanetView::PlanetView(QWidget *parent)
     camera()->setEye(QVector3D(0.0f, 0.0f, 25.0f));
 }
 
-void PlanetView::initializeGL(QGLPainter *painter)
-{
-    painter->setStandardEffect(QGL::LitMaterial);
-
-    list.newSection(QGL::Faceted);
-    sun = list.newNode();
-    list << QGLSphere(2.0f, 4);
-    planet1 = list.newNode();
-    list << QGLSphere(0.5f, 3);
-    planet2 = list.newNode();
-    list << QGLSphere(0.4f, 3);
-    planet3 = list.newNode();
-    list << QGLSphere(0.2f, 3);
-
-    list.finalize();
-}
-
 void PlanetView::paintGL(QGLPainter *painter)
 {
-    painter->setFaceColor(QGL::AllFaces, Qt::yellow);
-    sun->draw(painter);
-
-    painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(planet1Posn);
-    painter->setFaceColor(QGL::AllFaces, QColor(0, 192, 192));
-    planet1->draw(painter);
-    painter->modelViewMatrix().pop();
-
-    painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(planet2Posn);
-    painter->setFaceColor(QGL::AllFaces, QColor(192, 0, 0));
-    planet2->draw(painter);
-    painter->modelViewMatrix().pop();
-
-    painter->modelViewMatrix().push();
-    painter->modelViewMatrix().rotate(-10.f, 1.0f, 0.0f, 0.0f);
-    painter->modelViewMatrix().translate(planet3Posn);
-    painter->setFaceColor(QGL::AllFaces, QColor(255, 255, 255));
-    planet3->draw(painter);
-    painter->modelViewMatrix().pop();
+    scene->draw(painter);
 }

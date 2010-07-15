@@ -47,8 +47,9 @@
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/qdeclarativeengine.h>
 #include <QtDeclarative/qdeclarativeparserstatus.h>
+
+#include "qglscenenode.h"
 #include "qglpainter.h"
-#include "qglsceneobject.h"
 
 QT_BEGIN_HEADER
 
@@ -57,7 +58,6 @@ QT_BEGIN_NAMESPACE
 class MeshPrivate;
 class QGLAbstractScene;
 class QGLMaterial;
-class QGLSceneNode;
 
 class Mesh : public QObject, public QDeclarativeParserStatus
 {

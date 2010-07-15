@@ -45,7 +45,7 @@
 #include "qglview.h"
 
 class QGLAbstractScene;
-class QGLSceneObject;
+class QGLSceneNode;
 
 class ModelView : public QGLView
 {
@@ -60,7 +60,7 @@ protected:
 
 private:
     QGLAbstractScene *m_scene;
-    QGLSceneObject *m_main;
+    QGLSceneNode *m_main;
     QQuaternion m_pose;
 };
 

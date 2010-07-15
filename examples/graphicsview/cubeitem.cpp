@@ -65,8 +65,10 @@ CubeItem::CubeItem(QGraphicsItem *parent)
 
     setFlag(ItemIsFocusable, true);
 
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(CubeSize);
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    builder << QGLCube(CubeSize);
+    cube = builder.finalizedSceneNode();
 }
 
 CubeItem::~CubeItem()
@@ -124,15 +126,15 @@ void CubeItem::paintGL(QGLPainter *painter)
         if (painter->isFixedFunction())
             glEnable(GL_TEXTURE_2D);
         painter->setCullFaces(QGL::CullFrontFaces);
-        cube.draw(painter);
+        cube->draw(painter);
         painter->setCullFaces(QGL::CullBackFaces);
-        cube.draw(painter);
+        cube->draw(painter);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (painter->isFixedFunction())
             glDisable(GL_TEXTURE_2D);
     } else {
         painter->setStandardEffect(QGL::LitMaterial);
-        cube.draw(painter);
+        cube->draw(painter);
     }
 }
 

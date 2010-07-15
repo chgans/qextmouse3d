@@ -44,7 +44,8 @@
 #include "qglcube.h"
 #include "qglmaterial.h"
 
-void StereoView::initializeGL(QGLPainter *painter)
+StereoView::StereoView(QWidget *parent)
+    : QGLView(parent)
 {
     scene = new QGLSceneNode(this);
 

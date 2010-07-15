@@ -41,6 +41,7 @@
 
 #include "modelview.h"
 #include "qglabstractscene.h"
+#include "qglscenenode.h"
 
 ModelView::ModelView(QWidget *parent)
     : QGLView(parent)
@@ -57,7 +58,7 @@ void ModelView::initializeGL(QGLPainter *painter)
 
     m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
     if (m_scene)
-        m_main = m_scene->defaultObject(QGLSceneObject::Main);
+        m_main = m_scene->defaultObject(QGLSceneNode::Main);
 
     QQuaternion xt = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, -90.0f);
     QQuaternion yt = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, 30.0f);

@@ -52,7 +52,7 @@ public:
     ~CubePrivate() { delete cube; }
 
     qreal size;
-    QGLBuilder *cube;
+    QGLSceneNode *cube;
 };
 
 Cube::Cube(QObject *parent)
@@ -83,9 +83,9 @@ void Cube::setSize(qreal value)
 void Cube::drawItem(QGLPainter *painter)
 {
     if (!d->cube) {
-        d->cube = new QGLBuilder();
-        d->cube->newSection(QGL::Faceted);
-        (*d->cube) << QGLCube(d->size);
+        QGLBuilder builder;
+        builder << QGL::Faceted << QGLCube(d->size);
+        d->cube = builder.finalizedSceneNode();
     }
     d->cube->draw(painter);
 }

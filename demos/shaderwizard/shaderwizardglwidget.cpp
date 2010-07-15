@@ -302,9 +302,9 @@ static float const cubeVertices[QGL_CUBE_SIZE] = {
 void ShaderWizardGLWidget::setSquareGeometry()
 {
     if (square == 0) {
-        square = new QGLBuilder(this);
-        *square << QGLHeightMap(101, 101);
-        square->finalize();
+        QGLBuilder builder;
+        builder << QGLHeightMap(101, 101);
+        square = builder.finalizedSceneNode();
     }
     setSceneNode(square);
 }
@@ -312,10 +312,9 @@ void ShaderWizardGLWidget::setSquareGeometry()
 void ShaderWizardGLWidget::setCubeGeometry()
 {
     if (cube == 0) {
-        cube = new QGLBuilder(this);
-        cube->newSection(QGL::Faceted);
-        *cube << QGLCube();
-        cube->finalize();
+        QGLBuilder builder;
+        builder << QGL::Faceted << QGLCube();
+        cube = builder.finalizedSceneNode();
     }
     setSceneNode(cube);
 }
@@ -323,9 +322,9 @@ void ShaderWizardGLWidget::setCubeGeometry()
 void ShaderWizardGLWidget::setSphereGeometry()
 {
     if (sphere == 0) {
-        sphere = new QGLBuilder(this);
-        *sphere << QGLSphere(2.0, 3);
-        sphere->finalize();
+        QGLBuilder builder;
+        builder << QGLSphere(2.0, 3);
+        sphere = builder.finalizedSceneNode();
     }
     setSceneNode(sphere);
 }
@@ -333,9 +332,9 @@ void ShaderWizardGLWidget::setSphereGeometry()
 void ShaderWizardGLWidget::setTeapotGeometry()
 {
     if (teapot == 0) {
-        teapot = new QGLBuilder(this);
-        *teapot << QGLTeapot();
-        teapot->finalize();
+        QGLBuilder builder;
+        builder << QGLTeapot();
+        teapot = builder.finalizedSceneNode();
     }
     setSceneNode(teapot);
 }
@@ -343,9 +342,9 @@ void ShaderWizardGLWidget::setTeapotGeometry()
 void ShaderWizardGLWidget::setHeightMapGeometry()
 {
     if (ripple == 0) {
-        ripple = new QGLBuilder(this);
-        *ripple << RippleHeightMap(101,101);
-        ripple->finalize();
+        QGLBuilder builder;
+        builder << RippleHeightMap(101,101);
+        ripple = builder.finalizedSceneNode();
     }
     setSceneNode(ripple);
 }

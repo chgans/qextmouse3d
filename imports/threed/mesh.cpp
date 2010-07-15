@@ -41,7 +41,6 @@
 
 #include "mesh.h"
 #include "qglabstractscene.h"
-#include "qglsceneobject.h"
 #include "qglscenenode.h"
 #include "qglmaterial.h"
 #include "qglmaterialcollection.h"
@@ -580,7 +579,6 @@ void Mesh::draw(QGLPainter *painter, int branchId)
         MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
         targetBranch.rootSceneObject->apply(painter);
         targetBranch.rootSceneObject->draw(painter);
-        targetBranch.rootSceneObject->cleanup(painter);
     }
 }
 

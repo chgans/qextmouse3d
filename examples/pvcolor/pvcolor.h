@@ -60,7 +60,7 @@ protected:
     void wheelEvent(QWheelEvent *e);
 
 private:
-    QGLBuilder *buildGeometry();
+    QGLSceneNode *buildGeometry();
 
     QGLSceneNode *pvScene;
 };

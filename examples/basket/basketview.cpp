@@ -51,19 +51,6 @@ BasketView::BasketView(QWidget *parent)
 {
     setWindowTitle(tr("Basket"));
 
-    angle = 0;
-
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
-    timer->start(10);
-}
-
-BasketView::~BasketView()
-{
-}
-
-void BasketView::initializeGL(QGLPainter *painter)
-{
     QGLBuilder builder;
     builder << BasketPatches();
     basket = builder.finalizedSceneNode();
@@ -73,6 +60,17 @@ void BasketView::initializeGL(QGLPainter *painter)
     basket->setMaterial(mat);
     basket->setEffect(QGL::FlatReplaceTexture2D);
     basket->setScale(QVector3D(1.5f, 1.5f, 1.5f));
+
+    angle = 0;
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
+    timer->start(10);
+}
+
+BasketView::~BasketView()
+{
+    delete basket;
 }
 
 void BasketView::paintGL(QGLPainter *painter)

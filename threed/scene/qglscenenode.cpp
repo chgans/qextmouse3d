@@ -1146,21 +1146,10 @@ void QGLSceneNode::draw(QGLPainter *painter)
 }
 
 /*!
-    \reimp
-*/
-void QGLSceneNode::apply(QGLPainter *painter)
-{
-    Q_D(QGLSceneNode);
-    if (d->hasEffect && painter->standardEffect() != d->localEffect)
-        painter->setStandardEffect(d->localEffect);
+    Returns the pick node for this scene node, if one was set; otherwise
+    NULL (0) is returned.
 
-    QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
-    for ( ; cit != d->childNodes.end(); ++cit)
-        (*cit)->apply(painter);
-}
-
-/*!
-    \reimp
+    \sa setPickNode()
 */
 QGLPickNode *QGLSceneNode::pickNode() const
 {
@@ -1169,7 +1158,9 @@ QGLPickNode *QGLSceneNode::pickNode() const
 }
 
 /*!
-    \reimp
+    Sets the pick node for this scene node to \a node.
+
+    \sa pickNode()
 */
 void QGLSceneNode::setPickNode(QGLPickNode *node)
 {

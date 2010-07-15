@@ -68,10 +68,10 @@ private slots:
     void rotate();
 
 private:
+    QGLSceneNode *scene;
     QImage pointsImage;
     bool textured;
     QGLTexture2D cubeTexture, icoTexture, uvTexture;
-    QGLBuilder list;
     QVector<QGLSceneNode *> spheres;
     QTimer *timer;
     int angle;

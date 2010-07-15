@@ -65,8 +65,8 @@ private slots:
     void pushNode();
     void popNode();
     void geometryBuild();
-    void addTriangle();
-    void addQuads);
+    void addTriangles();
+    void addQuads();
     void addTriangleFan();
     void addTriangulatedFace();
     void extrude();
@@ -77,7 +77,7 @@ private slots:
 // This macro works around the discrepancy to avoid confusing QCOMPARE.
 #define QCOMPARE_INDEX(x,y)     QCOMPARE(int(x), int(y))
 
-class TestQGLBuilder : public QGLBuilder
+class TestBuilder : public QGLBuilder
 {
 public:
     QGLSection *currentSection() { return QGLBuilder::currentSection(); }
@@ -86,42 +86,36 @@ public:
 
 void tst_QGLBuilder::createDefault()
 {
-    // Test that a newly created list works with no defaults
-    TestQGLBuilder displayList0;
-    QCOMPARE(displayList0.currentSection(), (QGLSection*)0);
-    QCOMPARE(displayList0.sections().size(), 0);
-    QCOMPARE(displayList0.currentNode(), (QGLSceneNode*)0);
-    QVERIFY(displayList0.geometry().isEmpty());
-    QVERIFY(displayList0.palette() != 0);
+    // Test that a newly created builder works with no defaults
+    TestBuilder builder;
+    QCOMPARE(builder.currentSection(), (QGLSection*)0);
+    QCOMPARE(builder.sections().size(), 0);
+    QCOMPARE(builder.currentNode(), (QGLSceneNode*)0);
+    QVERIFY(builder.sceneNode() != 0);
+    QVERIFY(builder.sceneNode()->geometry().isEmpty());
+    QVERIFY(builder.palette() != 0);
 
     QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
-    QGLBuilder displayList1(0, palette);
-    QCOMPARE(displayList1.palette(), palette.data());
+    QGLBuilder builder1(palette);
+    QCOMPARE(builder1.palette(), palette.data());
 
-    QObject *obj = new QObject();
-    QPointer<QGLBuilder> displayList2 = new QGLBuilder(obj, palette);
-    QCOMPARE(displayList2->palette(), palette.data());
-    QCOMPARE(displayList2->parent(), obj);
-    QCOMPARE(obj->children().at(0), displayList2.data());
-    delete obj;
-    QVERIFY(displayList2.isNull());  // got destroyed by being a child
-    QVERIFY(!palette.isNull());  // palette did not get destroyed
+    // TODO - add tests for management of sceneNode()
 }
 
 void tst_QGLBuilder::newSection()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection(); // defaults to smooth
-    QGLSection *s = displayList.currentSection();
-    QCOMPARE(s, displayList.currentSection());
-    QCOMPARE(displayList.sections().count(), 1);
-    QVERIFY(displayList.sections().contains(s));
+    TestBuilder builder;
+    builder.newSection(); // defaults to smooth
+    QGLSection *s = builder.currentSection();
+    QCOMPARE(s, builder.currentSection());
+    QCOMPARE(builder.sections().count(), 1);
+    QVERIFY(builder.sections().contains(s));
     QCOMPARE(s->smoothing(), QGL::Smooth);
-    displayList.newSection(QGL::Faceted);
-    QGLSection *s2 = displayList.currentSection();
-    QCOMPARE(s2, displayList.currentSection());
-    QCOMPARE(displayList.sections().count(), 2);
-    QVERIFY(displayList.sections().contains(s2));
+    builder.newSection(QGL::Faceted);
+    QGLSection *s2 = builder.currentSection();
+    QCOMPARE(s2, builder.currentSection());
+    QCOMPARE(builder.sections().count(), 2);
+    QVERIFY(builder.sections().contains(s2));
 }
 
 class TestEffect : public QGLAbstractEffect
@@ -137,12 +131,11 @@ class TestEffect : public QGLAbstractEffect
 
 void tst_QGLBuilder::newNode()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();  // calls new node
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection();  // calls new node
+    QGLSceneNode *node = builder.currentNode();
 
     // newly created node works and has all defaults
-    QCOMPARE(node->parent(), &displayList);
     QCOMPARE(node->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node->materialIndex(), -1);
@@ -154,12 +147,12 @@ void tst_QGLBuilder::newNode()
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
     node->setMaterialIndex(5);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
-    displayList.addTriangle(p);
+    builder.addTriangles(p);
 
     // now create a new node
-    QGLSceneNode *node2 = displayList.newNode();
+    QGLSceneNode *node2 = builder.newNode();
 
     // the previous node got cleaned up properly, with its count updated
     QCOMPARE(node->start(), 0);
@@ -168,42 +161,35 @@ void tst_QGLBuilder::newNode()
     // new node counts off from where the previous one finished and has same defaults
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 0);
-    QCOMPARE(node2->parent(), &displayList);
     QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node2->materialIndex(), -1);
 
-    displayList.addTriangle(p);
-    displayList.newNode();
+    builder.addTriangles(p);
+    builder.newNode();
 
     // confirm that 2nd and last node in chain was also finished properly
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 3);
-
-#ifndef QT_NO_MEMBER_TEMPLATES
-    QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
-    QVERIFY(nodes.contains(node));
-    QVERIFY(nodes.contains(node2));
-#endif
 }
 
 void tst_QGLBuilder::pushNode()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSceneNode *node = displayList.newNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSceneNode *node = builder.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
     node->setUserEffect(eff);
     node->setMaterialIndex(5);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
-    displayList.addTriangle(p);
+    builder.addTriangles(p);
 
-    QGLSceneNode *node2 = displayList.pushNode();
+    QGLSceneNode *node2 = builder.pushNode();
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 3);
-    QCOMPARE(displayList.currentNode(), node2);
+    QCOMPARE(builder.currentNode(), node2);
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 0);
     QCOMPARE(node2->parent(), node);
@@ -214,9 +200,9 @@ void tst_QGLBuilder::pushNode()
 
 void tst_QGLBuilder::popNode()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSceneNode *node = displayList.newNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSceneNode *node = builder.newNode();
     node->setEffect(QGL::LitDecalTexture2D);
     QGLAbstractEffect *eff = new TestEffect;
     QMatrix4x4 mat;
@@ -224,15 +210,15 @@ void tst_QGLBuilder::popNode()
     node->setLocalTransform(mat);
     node->setUserEffect(eff);
     node->setMaterialIndex(5);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
-    displayList.addTriangle(p);
+    builder.addTriangles(p);
 
-    QGLSceneNode *node2 = displayList.pushNode();
+    QGLSceneNode *node2 = builder.pushNode();
 
-    displayList.addTriangle(p);
+    builder.addTriangles(p);
 
-    QGLSceneNode *node3 = displayList.popNode();
+    QGLSceneNode *node3 = builder.popNode();
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 3);
 
@@ -247,13 +233,13 @@ void tst_QGLBuilder::popNode()
 void tst_QGLBuilder::geometryBuild()
 {
     // here we really just test that the right values get added
-    // to the underlying QGLPrimitive - the function of the actual
+    // to the underlying QGeometryData - the function of the actual
     // building that takes place when end() is called is tested by
-    // the addTriangle() and other tests below
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    // the addTriangles() and other tests below
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
 
     QCOMPARE(sec->count(), 0);  // empty to start off with
     QCOMPARE(node->count(), 0);
@@ -267,18 +253,9 @@ void tst_QGLBuilder::geometryBuild()
     QVector3D origin;
     QVector3D norm(0.0f, 0.0f, 1.0f);
 
-    displayList.begin(QGL::TRIANGLE);
-    QGLPrimitive *p = displayList.currentPrimitive();
-    QVERIFY(p != (QGLPrimitive*)0);
-    displayList.addVertex(a);
-    displayList.addVertex(b.x(), b.y());
-    displayList.addVertex(c.x(), c.y(), c.z());
-    QCOMPARE(p->count(), 3);
-    QCOMPARE(p->vertex(0), a);
-    QCOMPARE(p->vertex(1), b);
-    QCOMPARE(p->vertex(2), c);
-    displayList.end();
-    QCOMPARE(displayList.currentPrimitive(), (QGLPrimitive*)0);
+    QGeometryData p;
+    p.appendVertex(a, b, c);
+    builder.addTriangles(p);
     QCOMPARE(sec->count(), 3);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
@@ -288,30 +265,16 @@ void tst_QGLBuilder::geometryBuild()
     QCOMPARE(sec->normal(2).normalized(), norm);
     QCOMPARE(node->count(), 3);
 
-    displayList.newSection();
-    displayList.begin(QGL::TRIANGLE_STRIP);
-    p = displayList.currentPrimitive();
-    QVERIFY(p != (QGLPrimitive*)0);  // should get a whole new primitive here
-    sec = displayList.currentSection();
-    node = displayList.currentNode();
+    builder.newSection();
+    QGeometryData q;
+    sec = builder.currentSection();
+    node = builder.currentNode();
     QCOMPARE(sec->count(), 0);  // empty to start off with
     QCOMPARE(node->count(), 0);
     QVector3DArray data;
     data << a << b << d << c << f << e;
-    displayList.addVertexArray(data);
-    QCOMPARE(p->count(), 6);
-    QCOMPARE(p->vertex(0), a);
-    QCOMPARE(p->vertex(1), b);
-    QCOMPARE(p->vertex(2), d);
-    QCOMPARE(p->vertex(3), c);
-    QCOMPARE(p->vertex(4), f);
-    QCOMPARE(p->vertex(5), e);
-
-    // this will implicitly call displayList.end() -  test the end of TRIANGLE_STRIP
-    displayList.begin(QGL::TRIANGLE_FAN);
-    p = displayList.currentPrimitive();
-    QVERIFY(p != (QGLPrimitive*)0);  // should get a whole new primitive here
-    // but the section will contain the data from posting the last primitive
+    q.appendVertexArray(data);
+    builder.addTriangleStrip(q);
     QCOMPARE(sec->count(), 6);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
@@ -325,25 +288,20 @@ void tst_QGLBuilder::geometryBuild()
     QCOMPARE(node->count(), 12); // TRIANGLE_STRIP will here draw 4 triangles = 12 indices
 
     // now go on and test TRIANGLE_FAN
-    displayList.newSection();
-    sec = displayList.currentSection();
-    node = displayList.currentNode();
-    displayList.addVertex(a);
-    displayList.addNormal(norm);
-    displayList.addVertex(b);
-    displayList.addNormal(norm);
-    displayList.addVertex(c);
-    displayList.addNormal(norm);
-    displayList.addVertex(d);
-    displayList.addNormal(norm);
-    displayList.addVertex(e);
-    displayList.addNormal(norm);
-    QCOMPARE(p->count(), 5);
-    QCOMPARE(p->vertex(0), a);
-    QCOMPARE(p->vertex(4), e);
-    QCOMPARE(p->normal(0), norm);
-    QCOMPARE(p->normal(4), norm);
-    displayList.end();
+    builder.newSection();
+    sec = builder.currentSection();
+    node = builder.currentNode();
+    QGeometryData r;
+    r.appendVertex(a);
+    r.appendNormal(norm);
+    r.appendVertex(b);
+    r.appendNormal(norm);
+    r.appendVertex(c);
+    r.appendNormal(norm);
+    r.appendVertex(d);
+    r.appendNormal(norm);
+    r.appendVertex(e);
+    r.appendNormal(norm);
     QCOMPARE(sec->count(), 5);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(2), c);
@@ -352,48 +310,39 @@ void tst_QGLBuilder::geometryBuild()
     QCOMPARE(sec->normal(4).normalized(), norm);
     QCOMPARE(node->count(), 9); // TRIANGLE_FAN will here draw 3 triangles = 9 indices
 
-    displayList.begin(QGL::TRIANGULATED_FACE);
-    displayList.newSection();
-    sec = displayList.currentSection();
-    node = displayList.currentNode();
-    displayList.addVertex(a);
-    displayList.addColor(Qt::red);
-    displayList.addVertex(b);
-    displayList.addColor(QColor4ub(Qt::green));
-    displayList.addVertex(c);
-    displayList.addVertex(d);
-    displayList.addVertex(e);
+    QGeometryData s;
+    //builder.begin(QGL::TRIANGULATED_FACE);
+    builder.newSection();
+    sec = builder.currentSection();
+    node = builder.currentNode();
+    s.appendVertex(a);
+    s.appendColor(Qt::red);
+    s.appendVertex(b);
+    s.appendColor(QColor4ub(Qt::green));
+    s.appendVertex(c);
+    s.appendVertex(d);
+    s.appendVertex(e);
     QArray<QColor4ub> cdata;
     cdata.append(Qt::blue, Qt::yellow, Qt::black);
-    displayList.addColorArray(cdata);
-    QCOMPARE(p->count(), 5);
-    QCOMPARE(p->vertex(0), a);
-    QCOMPARE(p->vertex(4), e);
-    QCOMPARE(p->color(0), QColor4ub(Qt::red));
-    QCOMPARE(p->color(1), QColor4ub(Qt::green));
-    QCOMPARE(p->color(2), QColor4ub(Qt::blue));
-    QCOMPARE(p->color(3), QColor4ub(Qt::yellow));
-    QCOMPARE(p->color(4), QColor4ub(Qt::black));
-    displayList.setFlags(QGL::USE_VERTEX_0_AS_CTR);
-    QVERIFY(p->flags() == QGL::USE_VERTEX_0_AS_CTR);
-    displayList.end();
+    s.appendColorArray(cdata);
+    builder.addTriangulatedFace(s);
     QCOMPARE(sec->count(), 5);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(4), e);
-    QCOMPARE(p->color(0), QColor4ub(Qt::red));
-    QCOMPARE(p->color(1), QColor4ub(Qt::green));
-    QCOMPARE(p->color(2), QColor4ub(Qt::blue));
-    QCOMPARE(p->color(3), QColor4ub(Qt::yellow));
-    QCOMPARE(p->color(4), QColor4ub(Qt::black));
+    QCOMPARE(sec->colorAt(0), QColor4ub(Qt::red));
+    QCOMPARE(sec->colorAt(1), QColor4ub(Qt::green));
+    QCOMPARE(sec->colorAt(2), QColor4ub(Qt::blue));
+    QCOMPARE(sec->colorAt(3), QColor4ub(Qt::yellow));
+    QCOMPARE(sec->colorAt(4), QColor4ub(Qt::black));
     QCOMPARE(node->count(), 12); // TRIANGLE_FAN will here draw 4 triangles = 12 indices
 }
 
-void tst_QGLBuilder::addTriangle()
+void tst_QGLBuilder::addTriangles()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
@@ -401,11 +350,11 @@ void tst_QGLBuilder::addTriangle()
     QVector2D tb(1.0, 0.0);
     QVector2D tc(1.0, 1.0);
     QVector3D norm(0.0f, 0.0f, 1.0f);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(a, b, c);
     p.setCommonNormal(norm);
 
-    displayList.addTriangle(p);
+    builder.addTriangles(p);
     QCOMPARE(sec->vertices().count(), 3);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
@@ -419,10 +368,10 @@ void tst_QGLBuilder::addTriangle()
 
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector2D td(0.0f, 1.0f);
-    QGLPrimitive q;
+    QGeometryData q;
     q.appendVertex(a, c, d);
     q.setCommonNormal(norm);
-    displayList.addTriangle(q);
+    builder.addTriangles(q);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
@@ -439,13 +388,13 @@ void tst_QGLBuilder::addTriangle()
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
 
-    displayList.newSection();
-    sec = displayList.currentSection();
-    node = displayList.currentNode();
-    QGLPrimitive r;
+    builder.newSection();
+    sec = builder.currentSection();
+    node = builder.currentNode();
+    QGeometryData r;
     r.appendVertex(a, b, c);
     r.appendTexCoord(ta, tb, tc);
-    displayList.addTriangle(r);
+    builder.addTriangles(r);
     QCOMPARE(sec->vertices().count(), 3);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
@@ -465,10 +414,10 @@ void tst_QGLBuilder::addTriangle()
     QCOMPARE(sec->fields(),
              QGL::fieldMask(QGL::Position) | QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::TextureCoord0));
 
-    QGLPrimitive s;
+    QGeometryData s;
     s.appendVertex(a, b, d);
     s.appendTexCoord(ta, tb, td);
-    displayList.addTriangle(s);
+    builder.addTriangles(s);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertex(3), d);
     QCOMPARE(sec->normals().count(), 4);
@@ -492,33 +441,33 @@ void tst_QGLBuilder::addTriangle()
     QCOMPARE(node->count(), 6);
 
     // correctly handle not being a multiple of 3 - discard spare ones
-    displayList.newSection();
-    sec = displayList.currentSection();
-    QGLPrimitive t;
+    builder.newSection();
+    sec = builder.currentSection();
+    QGeometryData t;
     t.appendVertex(a, b, c, d);
-    displayList.addTriangle(t);
+    builder.addTriangles(t);
     QCOMPARE(sec->count(), 3);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
     QCOMPARE(sec->vertex(2), c);
 }
 
-void tst_QGLBuilder::addQuads)
+void tst_QGLBuilder::addQuads()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
     QVector3D d(-1.0f, 1.0f, 0.0f);
     QVector3D norm(0.0f, 0.0f, 1.0f);
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(a, b, c, d);
     p.setCommonNormal(norm);
 
-    displayList.addQuad(p);
+    builder.addQuads(p);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
@@ -542,17 +491,17 @@ void tst_QGLBuilder::addQuads)
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
 
-    displayList.newSection();
-    sec = displayList.currentSection();
-    node = displayList.currentNode();
+    builder.newSection();
+    sec = builder.currentSection();
+    node = builder.currentNode();
     QVector2D ta(0.0f, 0.0f);
     QVector2D tb(1.0f, 0.0f);
     QVector2D tc(1.0f, 1.0f);
     QVector2D td(0.0f, 1.0f);
-    QGLPrimitive q;
+    QGeometryData q;
     q.appendVertex(a, b, c, d);
     q.appendTexCoord(ta, tb, tc, td);
-    displayList.addQuad(q);
+    builder.addQuads(q);
 
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertex(0), a);
@@ -585,10 +534,10 @@ void tst_QGLBuilder::addQuads)
 
 void tst_QGLBuilder::addTriangleFan()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection(QGL::Faceted);
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection(QGL::Faceted);
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
@@ -601,16 +550,16 @@ void tst_QGLBuilder::addTriangleFan()
     QVector2DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(center);
-    displayList.addTriangleFan(p);
+    builder.addTriangleFan(p);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
 
     p.appendVertex(a, b, c, d);
 
-    displayList.addTriangleFan(p);
+    builder.addTriangleFan(p);
     sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 9);
     QCOMPARE(sec->vertex(0), center);
@@ -650,10 +599,10 @@ void tst_QGLBuilder::addTriangleFan()
 
 void tst_QGLBuilder::addTriangulatedFace()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection(QGL::Faceted);
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection(QGL::Faceted);
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
@@ -663,17 +612,16 @@ void tst_QGLBuilder::addTriangulatedFace()
     QVector2DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    QGLPrimitive p;
-    displayList.addTriangleFan(p);
+    QGeometryData p;
+    builder.addTriangleFan(p);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
 
     p.appendVertex(center);
     p.appendVertex(a, b, c, d);
-    p.setFlags(QGL::USE_VERTEX_0_AS_CTR);
 
-    displayList.addTriangulatedFace(p);
+    builder.addTriangulatedFace(p);
     sec->normalizeNormals();
     QCOMPARE(sec->vertices().count(), 5);
     QCOMPARE(sec->vertex(0), center);
@@ -708,10 +656,10 @@ void tst_QGLBuilder::addTriangulatedFace()
 
 void tst_QGLBuilder::extrude()
 {
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSection *sec = displayList.currentSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSection *sec = builder.currentSection();
+    QGLSceneNode *node = builder.currentNode();
     QVector3D a(-1.0f, -1.0f, 0.0f);
     QVector3D b(1.0f, -1.0f, 0.0f);
     QVector3D c(1.0f, 1.0f, 0.0f);
@@ -720,9 +668,9 @@ void tst_QGLBuilder::extrude()
     QVector3DArray edges;
 
     // if edges has length < 2, exit without doing anything
-    QGLPrimitive p;
-    QGLPrimitive q;
-    displayList.addQuadsZipped(p, q);
+    QGeometryData p;
+    QGeometryData q;
+    builder.addQuadsInterleaved(p, q);
     QCOMPARE(sec->vertices().count(), 0);
     QCOMPARE(sec->normals().count(), 0);
     QCOMPARE(sec->indices().size(), 0);
@@ -738,7 +686,7 @@ void tst_QGLBuilder::extrude()
     QVector3D n3(one_on_root2, one_on_root2, 0.0f);
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
-    displayList.addQuadsZipped(p, q);
+    builder.addQuadsInterleaved(p, q);
     //sec->normalizeNormals();
 
     QCOMPARE(sec->count(), 8);
@@ -821,9 +769,8 @@ void tst_QGLBuilder::finalize()
     // normal points back
     QVector3D n10(0.0f, 0.0f, -1.0f);
 
-    QGLPrimitive p;
+    QGeometryData p;
     p.appendVertex(center);
-    p.setFlags(QGL::USE_VERTEX_0_AS_CTR);
     p.appendVertex(a, b, c, d);
 
     qreal one_on_root2 = 1.0f / sqrt(2.0f);
@@ -833,42 +780,42 @@ void tst_QGLBuilder::finalize()
     QVector3D n3(one_on_root2, one_on_root2, 0.0f);
     QVector3D n4(-one_on_root2, one_on_root2, 0.0f);
 
-    TestQGLBuilder displayList;
-    displayList.newSection();
-    QGLSceneNode *node = displayList.currentNode();
+    TestBuilder builder;
+    builder.newSection();
+    QGLSceneNode *node = builder.currentNode();
 
-    displayList.addTriangulatedFace(p);
+    builder.addTriangulatedFace(p);
 
-    displayList.newSection();
-    QGLSceneNode *node2 = displayList.currentNode();
+    builder.newSection();
+    QGLSceneNode *node2 = builder.currentNode();
 
-    QGLPrimitive s;
+    QGeometryData s;
     s.appendVertex(a, b, c, d);
     s.appendVertex(a);
-    displayList.addQuadsZipped(s, s.translated(-n));
+    builder.addQuadsInterleaved(s, s.translated(-n));
 
-    QPointer<QGLSceneNode> nodeEmpty0 = displayList.newNode();
+    QPointer<QGLSceneNode> nodeEmpty0 = builder.newNode();
 
-    displayList.newSection();
-    QGLSceneNode *node3 = displayList.currentNode();
+    builder.newSection();
+    QGLSceneNode *node3 = builder.currentNode();
 
-    QGLPrimitive q;
+    QGeometryData q;
     QVector2D ta(0.0f, 0.0f);
     QVector2D tb(1.0f, 0.0f);
     QVector2D tc(1.0f, 1.0f);
     q.appendVertex(e, f, g);
     q.appendTexCoord(ta, tb, tc);
     // reverse winding, backwards normal == n10
-    displayList.addTriangle(q);
+    builder.addTriangles(q);
 
-    QPointer<QGLSceneNode> nodeEmpty1 = displayList.pushNode();
+    QPointer<QGLSceneNode> nodeEmpty1 = builder.pushNode();
 
-    displayList.finalize();
+    builder.finalizedSceneNode();
 
     QCOMPARE(nodeEmpty0.data(), (QGLSceneNode*)0);
     QCOMPARE(nodeEmpty1.data(), (QGLSceneNode*)0);
 
-    QCOMPARE(displayList.sections().count(), 0);
+    QCOMPARE(builder.sections().count(), 0);
 
     QGeometryData geom = node->geometry();
     QGL::IndexArray ids = geom.indices();
@@ -895,15 +842,7 @@ void tst_QGLBuilder::finalize()
     QCOMPARE(geom.vertexAt(last), d);
     QCOMPARE(geom.normalAt(last), n4);
 
-#ifndef QT_NO_MEMBER_TEMPLATES
-    QList<QGLSceneNode*> nodes = displayList.findChildren<QGLSceneNode*>();
-    QCOMPARE(nodes.count(), 3);
-    QVERIFY(nodes.contains(node));
-    QVERIFY(nodes.contains(node2));
-    QVERIFY(nodes.contains(node3));
-#endif
-
-    // the first two nodes and the list itself all reference the same
+    // the first two nodes and the builder itself all reference the same
     // geometry object, since they all have the same types: just vertices
     // and normals.  the last node has geometry with textures, so its in
     // a different geometry object.
@@ -922,4 +861,4 @@ void tst_QGLBuilder::finalize()
 
 QTEST_APPLESS_MAIN(tst_QGLBuilder)
 
-#include "tst_QGLBuilder.moc"
+#include "tst_qglbuilder.moc"

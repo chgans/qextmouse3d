@@ -70,9 +70,10 @@ private slots:
 
 private:
     QGLTexture2D texture;
-    QGLBuilder cube;
-    QGLBuilder room;
-    QGLBuilder teapot;
+    QGLSceneNode *scene;
+    QGLSceneNode *cube;
+    QGLSceneNode *teapot;
+    QGLSceneNode *room;
     QGLCamera *roomCamera;
     qreal sensitivity;
     QGLLightModel *roomModel;

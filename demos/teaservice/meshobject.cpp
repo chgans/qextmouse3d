@@ -42,20 +42,6 @@
 #include "meshobject.h"
 #include "qglview.h"
 
-MeshObject::MeshObject(QGLBuilder *mesh, QObject *parent)
-    : QObject(parent)
-{
-    m_mesh = mesh;
-    m_meshObject = 0;
-    m_scale = 1.0f;
-    m_rotationAngle = 0.0f;
-    m_effect = 0;
-    m_objectId = -1;
-    m_hovering = false;
-    m_material = 0;
-    m_hoverMaterial = 0;
-}
-
 MeshObject::MeshObject(QGLSceneNode *meshObject, QObject *parent)
     : QObject(parent)
 {
@@ -95,8 +81,6 @@ void MeshObject::initialize(QGLView *view, QGLPainter *painter)
     Q_UNUSED(painter);
     if (m_objectId != -1)
         view->registerObject(m_objectId, this);
-    if (m_mesh)
-        m_mesh->finalize();
 }
 
 void MeshObject::draw(QGLPainter *painter)

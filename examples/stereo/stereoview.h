@@ -49,11 +49,10 @@ class StereoView : public QGLView
 {
     Q_OBJECT
 public:
-    StereoView(QWidget *parent = 0) : QGLView(parent) {}
+    StereoView(QWidget *parent = 0);
     ~StereoView() {}
 
 protected:
-    void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
 private:

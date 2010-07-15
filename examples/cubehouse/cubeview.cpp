@@ -48,7 +48,7 @@
 #include <stdio.h>
 
 CubeView::CubeView(QWidget *parent)
-    : QGLView(parent),
+    : QGLView(parent), scene(0), cube(0), teapot(0), room(0),
       sensitivity(0.1f),
       showFrameRate(false),
       stereo(false),
@@ -77,58 +77,59 @@ CubeView::CubeView(QWidget *parent)
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.0f);
-
-    room.newSection(QGL::Faceted);
-    QGLSceneNode *back = room.newNode();
+    QGLBuilder builder;
+    builder << QGL::Faceted << QGLCube(1.0f);
+    cube = builder.currentNode();
+    builder << QGL::Faceted;
+    QGLSceneNode *back = builder.newNode();
     {
         QGeometryData quad;
-        quad.addVertex(-3.0f, -3.0f, -15.0f);
-        quad.addVertex( 3.0f, -3.0f, -15.0f);
-        quad.addVertex( 3.0f,  3.0f, -15.0f);
-        quad.addVertex(-3.0f,  3.0f, -15.0f);
-        room.addQuads(quad);
+        quad.appendVertex(QVector3D(-3.0f, -3.0f, -15.0f));
+        quad.appendVertex(QVector3D( 3.0f, -3.0f, -15.0f));
+        quad.appendVertex(QVector3D( 3.0f,  3.0f, -15.0f));
+        quad.appendVertex(QVector3D(-3.0f,  3.0f, -15.0f));
+        builder.addQuads(quad);
     }
-    QGLSceneNode *left = room.newNode();
+    QGLSceneNode *left = builder.newNode();
     {
         QGeometryData quad;
-        quad.addVertex(-3.0f, -3.0f, -15.0f);
-        quad.addVertex(-3.0f,  3.0f, -15.0f);
-        quad.addVertex(-3.0f,  3.0f, 0.0f);
-        quad.addVertex(-3.0f, -3.0f, 0.0f);
-        room.addQuads(quad);
+        quad.appendVertex(QVector3D(-3.0f, -3.0f, -15.0f));
+        quad.appendVertex(QVector3D(-3.0f,  3.0f, -15.0f));
+        quad.appendVertex(QVector3D(-3.0f,  3.0f, 0.0f));
+        quad.appendVertex(QVector3D(-3.0f, -3.0f, 0.0f));
+        builder.addQuads(quad);
     }
-    QGLSceneNode *right = room.newNode();
+    QGLSceneNode *right = builder.newNode();
     {
         QGeometryData quad;
-        quad.addVertex(3.0f,  3.0f, -15.0f);
-        quad.addVertex(3.0f, -3.0f, -15.0f);
-        quad.addVertex(3.0f, -3.0f, 0.0f);
-        quad.addVertex(3.0f,  3.0f, 0.0f);
-        room.addQuads(quad);
+        quad.appendVertex(QVector3D(3.0f,  3.0f, -15.0f));
+        quad.appendVertex(QVector3D(3.0f, -3.0f, -15.0f));
+        quad.appendVertex(QVector3D(3.0f, -3.0f, 0.0f));
+        quad.appendVertex(QVector3D(3.0f,  3.0f, 0.0f));
+        builder.addQuads(quad);
     }
-    QGLSceneNode *top = room.newNode();
+    QGLSceneNode *top = builder.newNode();
     {
         QGeometryData quad;
-        quad.addVertex(-3.0f,  3.0f, -15.0f);
-        quad.addVertex( 3.0f,  3.0f, -15.0f);
-        quad.addVertex( 3.0f,  3.0f, 0.0f);
-        quad.addVertex(-3.0f,  3.0f, 0.0f);
-        room.addQuads(quad);
+        quad.appendVertex(QVector3D(-3.0f,  3.0f, -15.0f));
+        quad.appendVertex(QVector3D( 3.0f,  3.0f, -15.0f));
+        quad.appendVertex(QVector3D( 3.0f,  3.0f, 0.0f));
+        quad.appendVertex(QVector3D(-3.0f,  3.0f, 0.0f));
+        builder.addQuads(quad);
     }
-    QGLSceneNode *bottom = room.newNode();
+    QGLSceneNode *bottom = builder.newNode();
     {
         QGeometryData quad;
-        quad.addVertex(-3.0f, -3.0f, -15.0f);
-        quad.addVertex(-3.0f, -3.0f, 0.0f);
-        quad.addVertex( 3.0f, -3.0f, 0.0f);
-        quad.addVertex( 3.0f, -3.0f, -15.0f);
-        room.addQuads(quad);
+        quad.appendVertex(QVector3D(-3.0f, -3.0f, -15.0f));
+        quad.appendVertex(QVector3D(-3.0f, -3.0f, 0.0f));
+        quad.appendVertex(QVector3D( 3.0f, -3.0f, 0.0f));
+        quad.appendVertex(QVector3D( 3.0f, -3.0f, -15.0f));
+        builder.addQuads(quad);
     }
+    room = builder.currentNode();
 
     int index;
-    QGLMaterialCollection *palette = room.sceneNode()->palette();
+    QGLMaterialCollection *palette = builder.sceneNode()->palette();
 
     QGLMaterial *mat1 = new QGLMaterial();
     mat1->setDiffuseColor(QColor(128, 100, 0));
@@ -147,16 +148,18 @@ void CubeView::initializeGL(QGLPainter *painter)
     top->setMaterialIndex(index);
     bottom->setMaterialIndex(index);
 
-    room.finalize();
     //qDumpScene(&room);
 
-    teapot << QGLTeapot();
+    builder.newSection();
+    builder << QGLTeapot();
+    teapot = builder.currentNode();
     QGLMaterial *china = new QGLMaterial();
     china->setAmbientColor(QColor(192, 150, 128));
     china->setSpecularColor(QColor(60, 60, 60));
     china->setShininess(128);
-    teapot.currentNode()->setMaterial(china);
-    teapot.finalize();
+    teapot->setMaterial(china);
+
+    scene = builder.finalizedSceneNode();
 
     roomModel = new QGLLightModel(this);
     roomModel->setAmbientSceneColor(Qt::white);
@@ -190,7 +193,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setStandardEffect(QGL::LitMaterial);
     painter->setCamera(roomCamera);
     painter->setLightModel(roomModel);
-    room.draw(painter);
+    room->draw(painter);
 
     painter->modelViewMatrix().pop();
     painter->projectionMatrix().pop();
@@ -199,7 +202,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().translate(-0.8f, -1.5f, -3.0f);
     painter->setLightModel(normalModel);
     painter->setStandardEffect(QGL::LitMaterial);
-    teapot.draw(painter);
+    teapot->draw(painter);
     painter->modelViewMatrix().pop();
 
     glEnable(GL_BLEND);
@@ -212,9 +215,9 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setTexture(&texture);
     painter->setDepthTestingEnabled(false);
     painter->setCullFaces(QGL::CullFrontFaces);
-    cube.draw(painter);
+    cube->draw(painter);
     painter->setCullFaces(QGL::CullBackFaces);
-    cube.draw(painter);
+    cube->draw(painter);
     painter->setCullFaces(QGL::CullDisabled);
     painter->setDepthTestingEnabled(true);
     painter->setTexture((QGLTexture2D *)0);

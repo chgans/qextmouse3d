@@ -44,7 +44,6 @@
 #include "effect.h"
 #include "qgllightparameters.h"
 #include "qglabstractscene.h"
-#include "qglsceneobject.h"
 #include "qglscenenode.h"
 #include "qglview.h"
 #include "qgraphicsscale3d.h"

@@ -154,7 +154,6 @@ public:
     void setParent(QObject *);
 
     virtual void draw(QGLPainter *painter);
-    virtual void apply(QGLPainter *painter);
 
     virtual QGLPickNode *pickNode() const;
     virtual void setPickNode(QGLPickNode *node);

@@ -66,12 +66,12 @@
     these surfaces into any desired orientation or scale, and to apply 
     materials or textures as desired.
 
-    A QGLHeightmap is intended to be added to a display list, using the
+    A QGLHeightmap is intended to be added to a display builder, using the
     << operator, and is then ready to be drawn with a QGLPainter.  For example:
 
     \code
-    QGLBuilder heightMapList
-    heightMapList << QGLHeightMap(51, 51);
+    QGLBuilder heightMapbuilder
+    heightMapbuilder << QGLHeightMap(51, 51);
     \endcode
 
     Assuming that an appropriate QGLContext or QGLView is available, a
@@ -224,7 +224,7 @@ static float normalizedIndex(int i, int points) {
 
 /*!
     Builds the geometry for \a heightMap within the specified
-    display \a list.
+    display \a builder.
 
     This operator specifies the positions, normals, and 2D texture
     co-ordinates for all of the vertices that make up the height map.
@@ -235,12 +235,12 @@ static float normalizedIndex(int i, int points) {
 
     Subclasses may specify the height and texture coordinates differently by overriding the and texCoords() functions.
 */
-QGLBuilder& operator<<(QGLBuilder& list, const QGLHeightMap& heightMap)
+QGLBuilder& operator<<(QGLBuilder& builder, const QGLHeightMap& heightMap)
 {
     int xPoints = heightMap.xPoints();
     int yPoints = heightMap.yPoints();
 
-    list.newSection(heightMap.smoothing() );
+    builder.newSection(heightMap.smoothing() );
     QGeometryData op;
 
     for(int y = 0; y < yPoints - 1; y++)
@@ -257,27 +257,27 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLHeightMap& heightMap)
             QVector3D topRightPoint(s1 * heightMap.xSize(), t1 * heightMap.ySize(), heightMap.height(s1, t1));
 
             // Top left triangle
-            op.addVertex(bottomLeftPoint);
-            op.addTexCoord(heightMap.texCoords(s0, t0));
+            op.appendVertex(bottomLeftPoint);
+            op.appendTexCoord(heightMap.texCoords(s0, t0));
 
-            op.addVertex(topRightPoint);
-            op.addTexCoord(heightMap.texCoords(s1, t1));
+            op.appendVertex(topRightPoint);
+            op.appendTexCoord(heightMap.texCoords(s1, t1));
 
-            op.addVertex(topLeftPoint);
-            op.addTexCoord(heightMap.texCoords(s0, t1));
+            op.appendVertex(topLeftPoint);
+            op.appendTexCoord(heightMap.texCoords(s0, t1));
 
             // Bottom right triangle
-            op.addVertex(bottomLeftPoint);
-            op.addTexCoord(heightMap.texCoords(s0, t0));
+            op.appendVertex(bottomLeftPoint);
+            op.appendTexCoord(heightMap.texCoords(s0, t0));
 
-            op.addVertex(bottomRightPoint);
-            op.addTexCoord(heightMap.texCoords(s1, t0));
+            op.appendVertex(bottomRightPoint);
+            op.appendTexCoord(heightMap.texCoords(s1, t0));
 
-            op.addVertex(topRightPoint);
-            op.addTexCoord(heightMap.texCoords(s1, t1));
+            op.appendVertex(topRightPoint);
+            op.appendTexCoord(heightMap.texCoords(s1, t1));
 
         }
     }
-    list.addTriangle(op);
-    return list;
+    builder << op;
+    return builder;
 }

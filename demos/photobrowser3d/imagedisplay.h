@@ -42,7 +42,7 @@
 #ifndef IMAGEDISPLAY_H
 #define IMAGEDISPLAY_H
 
-#include "qglscenenode.h".h"
+#include "qglscenenode.h"
 #include "qglmaterialcollection.h"
 
 #include <QString>

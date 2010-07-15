@@ -135,11 +135,11 @@ private:
     QGLTexture2D *mTexture;
 
     // Models
-    QGLBuilder* cube;
-    QGLBuilder* teapot;
-    QGLBuilder* square;
-    QGLBuilder* ripple;
-    QGLBuilder* sphere;
+    QGLSceneNode* cube;
+    QGLSceneNode* teapot;
+    QGLSceneNode* square;
+    QGLSceneNode* ripple;
+    QGLSceneNode* sphere;
 };
 
 #endif // SHADERWIZARDGLWIDGET_H

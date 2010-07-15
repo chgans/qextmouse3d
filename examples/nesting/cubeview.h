@@ -72,8 +72,9 @@ protected:
     void paintGL(QGLPainter *painter);
 
 private:
-    QGLBuilder cube;
-    QGLBuilder teapot;
+    QGLSceneNode *scene;
+    QGLSceneNode *cube;
+    QGLSceneNode *teapot;
     QGLTexture2D qtlogo;
     QGLFramebufferObject *fbo;
     QGLCamera *innerCamera;

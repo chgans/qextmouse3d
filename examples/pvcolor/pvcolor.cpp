@@ -59,26 +59,28 @@ PVColorView::PVColorView(QWidget *parent)
     , pvScene(new QGLSceneNode(this))
 {
     //! [0]
-    QGLBuilder *displayList = buildGeometry();
-    displayList->setParent(pvScene);
+    QGLSceneNode *scene = buildGeometry();
+    scene->setParent(pvScene);
 
     // display a copy of the q to the left
-    QGLSceneNode *node = displayList->clone(pvScene);
+    QGLSceneNode *node = scene->clone(pvScene);
     node->setPosition(QVector3D(-2.0f, 0.0f, -2.0f));
 
     // display a copy of the q to the right
-    node = displayList->clone(pvScene);
+    node = scene->clone(pvScene);
     node->setPosition(QVector3D(2.0f, 0.0f, -2.0f));
 
     // Make a nice p. v. color triangle as a back drop
-    QGLBuilder *dl2 = new QGLBuilder(pvScene);
+    QGLBuilder builder;
     QGeometryData p;
-    dl2->newSection();
+    builder.newSection();
     p.appendVertex(QVector3D(3, 3, -3), QVector3D(-3, 3, -3),
                    QVector3D(0, -3, -3));
     p.appendColor(Qt::red, Qt::blue, Qt::yellow);
-    dl2->addTriangle(p);
-    dl2->setEffect(QGL::FlatPerVertexColor);
+    builder.addTriangles(p);
+    node = builder.finalizedSceneNode();
+    node->setEffect(QGL::FlatPerVertexColor);
+    pvScene->addNode(node);
 
     // rotate the whole scene about x-axis so that
     // q tops are visible when scene is first displayed
@@ -143,14 +145,14 @@ inline static void calculateSlice(int slice, const QBox3D &box,
         inner << ipt;
 }
 
-QGLBuilder *PVColorView::buildGeometry()
+QGLSceneNode *PVColorView::buildGeometry()
 {
     //! [2]
-    QGLBuilder *qList = new QGLBuilder();
+    QGLBuilder builder;
 
     // default effect for q where no other effect set
-    qList->setEffect(QGL::FlatPerVertexColor);
-    qList->newSection(QGL::Smooth);
+    builder.sceneNode()->setEffect(QGL::FlatPerVertexColor);
+    builder.newSection(QGL::Smooth);
     //! [2]
 
     const QVector3D extrudeVec(0.0f, 0.0f, qHeight);
@@ -211,7 +213,7 @@ QGLBuilder *PVColorView::buildGeometry()
         // create the top face of the tail of the Q - its a quad
         top.appendVertexArray(topTailEdge);
         top.appendColorArray(QArray<QColor4ub>(tailCnt, tailColor));
-        qList->addQuad(top);
+        builder.addQuads(top);
     }
 
     if (lap)
@@ -223,7 +225,7 @@ QGLBuilder *PVColorView::buildGeometry()
         top.appendColor(innerColor);
         top.appendVertexArray(topQOEdge.left(lap));
         top.appendColorArray(QArray<QColor4ub>(lap, outerColor));
-        qList->addTriangleFan(top);
+        builder.addTriangleFan(top);
     }
     {
         // now draw all the quads making up the rest of the face of the Q
@@ -233,7 +235,7 @@ QGLBuilder *PVColorView::buildGeometry()
         out.appendColorArray(QArray<QColor4ub>(icnt, outerColor));
         in.appendVertexArray(topQIEdge);
         in.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
-        qList->addQuadsZipped(in, out);
+        builder.addQuadsInterleaved(in, out);
     }
     if (lap)
     {
@@ -243,11 +245,11 @@ QGLBuilder *PVColorView::buildGeometry()
         top.appendVertexArray(topQOEdge.right(lap));
         top.appendColorArray(QArray<QColor4ub>(lap, outerColor));
         qDebug() << top;
-        qList->addTriangleFan(top);
+        builder.addTriangleFan(top);
     }
 
     // create the extruded sides of the q, and save the extruded values
-    qList->newSection();
+    builder.newSection();
     {
         // outside sides
         QGeometryData top;
@@ -257,7 +259,7 @@ QGLBuilder *PVColorView::buildGeometry()
         top.appendColorArray(QArray<QColor4ub>(ocnt, outerColor));
         bottom.appendVertexArray(bottomQOEdge);
         bottom.appendColorArray(QArray<QColor4ub>(ocnt, outerColor));
-        qList->addQuadsZipped(top, bottom);
+        builder.addQuadsInterleaved(top, bottom);
     }
     {
         // inside sides
@@ -266,12 +268,11 @@ QGLBuilder *PVColorView::buildGeometry()
         //! [translated]
         bottomQIEdge = topQIEdge.translated(extrudeVec);
         //! [translated]
-        top.appendVertexArray(topQIEdge);
+        top.appendVertexArray(topQIEdge.reversed());
         top.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
-        top.setFlags(QGL::FACE_SENSE_REVERSED);
-        bottom.appendVertexArray(bottomQIEdge);
+        bottom.appendVertexArray(bottomQIEdge.reversed());
         bottom.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
-        qList->addQuadsZipped(top, bottom);
+        builder.addQuadsInterleaved(top, bottom);
     }
     {
         // tail sides
@@ -286,7 +287,7 @@ QGLBuilder *PVColorView::buildGeometry()
         top.appendColorArray(QArray<QColor4ub>(tailCnt+1, outerColor));
         bottom.appendVertexArray(b1);
         bottom.appendColorArray(QArray<QColor4ub>(tailCnt+1, outerColor));
-        qList->addQuadsZipped(top, bottom);
+        builder.addQuadsInterleaved(top, bottom);
     }
 
     // now create the obverse faces of the Q - need to work
@@ -295,13 +296,13 @@ QGLBuilder *PVColorView::buildGeometry()
     bottomQOEdge.reverse();
     bottomTailEdge.reverse();
 
-    qList->newSection();
+    builder.newSection();
     {
         // create the bottom face of the tail of the Q
         QGeometryData bottom;
         bottom.appendVertexArray(bottomTailEdge);
         bottom.appendColorArray(QArray<QColor4ub>(tailCnt, tailColor));
-        qList->addQuad(bottom);
+        builder.addQuads(bottom);
     }
     if (lap)
     {
@@ -311,7 +312,7 @@ QGLBuilder *PVColorView::buildGeometry()
         bottom.appendColor(innerColor);
         bottom.appendVertexArray(bottomQOEdge.left(lap));
         bottom.appendColorArray(QArray<QColor4ub>(lap, outerColor));
-        qList->addTriangleFan(bottom);
+        builder.addTriangleFan(bottom);
     }
     //! [3]
     {
@@ -322,7 +323,7 @@ QGLBuilder *PVColorView::buildGeometry()
         out.appendColorArray(QArray<QColor4ub>(icnt, outerColor));
         in.appendVertexArray(bottomQIEdge);
         in.appendColorArray(QArray<QColor4ub>(icnt, innerColor));
-        qList->addQuadsZipped(in, out);
+        builder.addQuadsInterleaved(in, out);
     }
     //! [3]
     if (lap)
@@ -333,10 +334,10 @@ QGLBuilder *PVColorView::buildGeometry()
         bottom.appendColor(innerColor);
         bottom.appendVertexArray(bottomQOEdge.right(lap));
         bottom.appendColorArray(QArray<QColor4ub>(lap, outerColor));
-        qList->addTriangleFan(bottom);
+        builder.addTriangleFan(bottom);
     }
 
-    qList->finalize();
-    qList->setRotation(QVector3D(0.0f, 0.0f, -45.0f));
-    return qList;
+    QGLSceneNode *node = builder.finalizedSceneNode();
+    node->setRotation(QVector3D(0.0f, 0.0f, -45.0f));
+    return node;
 }

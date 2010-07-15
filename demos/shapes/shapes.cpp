@@ -76,8 +76,9 @@ private:
     static QVector2DArray basicPoints(const QRect& rect);
 
     QGLCamera camera;
-    QGLBuilder cube;
-    QGLBuilder teapot;
+    QGLSceneNode *scene;
+    QGLSceneNode *cube;
+    QGLSceneNode *teapot;
     QGLLightModel oneSidedModel;
     QGLLightModel twoSidedModel;
 };
@@ -92,6 +93,7 @@ ShapesWidget::ShapesWidget(QWidget *parent)
 
 ShapesWidget::~ShapesWidget()
 {
+    delete scene;
 }
 
 void ShapesWidget::initializeGL()
@@ -104,9 +106,12 @@ void ShapesWidget::initializeGL()
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));
 
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube();
-    teapot << QGLTeapot();
+    QGLBuilder builder;
+    builder << QGL::Faceted << QGLCube();
+    cube = builder.currentNode();
+    builder << QGL::Smooth << QGLTeapot();
+    teapot = builder.currentNode();
+    scene = builder.finalizedSceneNode();
 }
 
 void ShapesWidget::paintGL()
@@ -289,7 +294,7 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->setCamera(&camera);
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
-    cube.draw(painter);
+    cube->draw(painter);
 
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
@@ -312,7 +317,7 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     // Need a one-sided lighting model for the teapot.
     painter->setLightModel(&oneSidedModel);
 
-    teapot.draw(painter);
+    teapot->draw(painter);
 
     painter->setLightModel(&twoSidedModel);
 

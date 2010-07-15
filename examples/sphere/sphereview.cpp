@@ -53,38 +53,42 @@
 #include "qplane3d.h"
 
 SphereView::SphereView(QWidget *parent)
-    : QGLView(parent), pointsImage(1, 1, QImage::Format_ARGB32),
-    textured(true), timer(new QTimer(this))
+    : QGLView(parent)
+    , scene(0)
+    , pointsImage(1, 1, QImage::Format_ARGB32)
+    , textured(true)
+    , timer(new QTimer(this))
 {
-    list.newSection(QGL::Faceted);
-    spheres.append(list.newNode());
-    list << QGLCubeSphere(1, 1);
-    spheres.append(list.newNode());
-    list << QGLCubeSphere(1, 2);
-    spheres.append(list.newNode());
-    list << QGLCubeSphere(1, 3);
-    spheres.append(list.newNode());
-    list << QGLCubeSphere(1, 5);
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    spheres.append(builder.newNode());
+    builder << QGLCubeSphere(1, 1);
+    spheres.append(builder.newNode());
+    builder << QGLCubeSphere(1, 2);
+    spheres.append(builder.newNode());
+    builder << QGLCubeSphere(1, 3);
+    spheres.append(builder.newNode());
+    builder << QGLCubeSphere(1, 5);
 
-    spheres.append(list.newNode());
-    list << QGLSphere(1, 1);
-    spheres.append(list.newNode());
-    list << QGLSphere(1, 2);
-    spheres.append(list.newNode());
-    list << QGLSphere(1, 3);
-    spheres.append(list.newNode());
-    list << QGLSphere(1, 5);
+    spheres.append(builder.newNode());
+    builder << QGLSphere(1, 1);
+    spheres.append(builder.newNode());
+    builder << QGLSphere(1, 2);
+    spheres.append(builder.newNode());
+    builder << QGLSphere(1, 3);
+    spheres.append(builder.newNode());
+    builder << QGLSphere(1, 5);
 
-    spheres.append(list.newNode());
-    list << QGLIcoSphere(1, 1);
-    spheres.append(list.newNode());
-    list << QGLIcoSphere(1, 2);
-    spheres.append(list.newNode());
-    list << QGLIcoSphere(1, 3);
-    spheres.append(list.newNode());
-    list << QGLIcoSphere(1, 5);
+    spheres.append(builder.newNode());
+    builder << QGLIcoSphere(1, 1);
+    spheres.append(builder.newNode());
+    builder << QGLIcoSphere(1, 2);
+    spheres.append(builder.newNode());
+    builder << QGLIcoSphere(1, 3);
+    spheres.append(builder.newNode());
+    builder << QGLIcoSphere(1, 5);
 
-    list.finalize();
+    scene = builder.finalizedSceneNode();
 
     lp = new QGLLightParameters(this);
     lp->setDirection(QVector3D(1.0, 0.0, 0.0));
@@ -115,6 +119,7 @@ SphereView::SphereView(QWidget *parent)
 SphereView::~SphereView()
 {
     delete timer;
+    delete scene;
 }
 
 void SphereView::initializeGL(QGLPainter *painter)

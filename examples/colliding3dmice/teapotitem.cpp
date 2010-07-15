@@ -42,6 +42,8 @@
 #include "teapotitem.h"
 #include "qglpainter.h"
 #include "qglteapot.h"
+#include "qglbuilder.h"
+
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsscene.h>
@@ -53,7 +55,10 @@ TeapotItem::TeapotItem(QGraphicsItem *parent)
 {
     setFlag(ItemIsFocusable, true);
 
-    teapot << QGLTeapot();
+    QGLBuilder builder;
+    builder << QGLTeapot();
+    teapot = builder.finalizedSceneNode();
+    teapot->setParent(this);
 }
 
 TeapotItem::~TeapotItem()
@@ -103,13 +108,13 @@ void TeapotItem::paintGL(QGLPainter *painter)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         if (painter->isFixedFunction())
             glEnable(GL_TEXTURE_2D);
-        teapot.draw(painter);
+        teapot->draw(painter);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (painter->isFixedFunction())
             glDisable(GL_TEXTURE_2D);
     } else {
         painter->setStandardEffect(QGL::LitMaterial);
-        teapot.draw(painter);
+        teapot->draw(painter);
     }
 }
 

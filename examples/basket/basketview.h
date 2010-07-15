@@ -55,7 +55,6 @@ public:
     ~BasketView();
 
 protected:
-    void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
 
 private slots:

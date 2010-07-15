@@ -337,14 +337,6 @@ void MainWindow::handleScene(QGLAbstractScene* scene)
 
     types << QGLSceneNode::Main;
     typeStrings << tr("Main Objects");
-    types << QGLSceneNode::World;
-    typeStrings << tr("World");
-    types << QGLSceneNode::Camera;
-    typeStrings << tr("Cameras");
-    types << QGLSceneNode::Effect;
-    typeStrings << tr("Effects");
-    types << QGLSceneNode::Light;
-    typeStrings << tr("Lights");
     types << QGLSceneNode::Mesh;
     typeStrings << tr("Meshes");
 

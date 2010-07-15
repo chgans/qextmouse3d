@@ -73,9 +73,9 @@ public:
 
 static QGLSceneNode *createTeapot()
 {
-    QGLBuilder *list = new QGLBuilder();
-    (*list) << QGLTeapot();
-    return list;
+    QGLBuilder builder;
+    builder << QGLTeapot();
+    return builder.finalizedSceneNode();
 }
 
 Teapot::Teapot(QObject *parent)

@@ -94,12 +94,16 @@ void CubeView::performUpdate()
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
-    cube.newSection(QGL::Faceted);
-    cube << QGLCube(1.5f);
-    cube.finalize();
+    QGLBuilder builder;
+    builder.newSection(QGL::Faceted);
+    builder << QGLCube(1.5f);
+    cube = builder.currentNode();
 
-    teapot << QGLTeapot();
-    teapot.finalize();
+    builder << QGLTeapot();
+    teapot = builder.currentNode();
+
+    scene = builder.finalizedSceneNode();
+    scene->setParent(this);
 
     fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
 
@@ -129,7 +133,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setDepthTestingEnabled(true);
 
     painter->clear();
-    teapot.draw(painter);
+    teapot->draw(painter);
 
     painter->popSurface();
     painter->projectionMatrix().pop();
@@ -166,9 +170,9 @@ void CubeView::drawCube1(QGLPainter *painter, const QVector3D &posn)
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
 
     painter->setCullFaces(QGL::CullFrontFaces);
-    cube.draw(painter);
+    cube->draw(painter);
     painter->setCullFaces(QGL::CullBackFaces);
-    cube.draw(painter);
+    cube->draw(painter);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
@@ -188,9 +192,9 @@ void CubeView::drawCube2(QGLPainter *painter, const QVector3D &posn)
     painter->modelViewMatrix().rotate(cangle, 1.0f, -1.0f, 1.0f);
 
     painter->setCullFaces(QGL::CullFrontFaces);
-    cube.draw(painter);
+    cube->draw(painter);
     painter->setCullFaces(QGL::CullBackFaces);
-    cube.draw(painter);
+    cube->draw(painter);
 
     painter->modelViewMatrix().pop();
 }

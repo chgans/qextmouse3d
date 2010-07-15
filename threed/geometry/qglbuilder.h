@@ -108,6 +108,9 @@ private:
     QGLBuilderPrivate *dptr;
 };
 
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGL::Smoothing& smoothing);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGeometryData& triangles);
+
 QT_END_NAMESPACE
 
 QT_END_HEADER

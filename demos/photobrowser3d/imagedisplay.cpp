@@ -59,7 +59,6 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
 {
     QGLBuilder builder(materials);
     setObjectName("ImageDisplay");
-    builder.newSection(QGL::Faceted);
 
     // build the wall
     m_wall = builder.currentNode();

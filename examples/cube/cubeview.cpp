@@ -45,11 +45,11 @@
 
 #include <QtCore/qurl.h>
 
-void CubeView::initializeGL(QGLPainter *painter)
+CubeView::CubeView(QWidget *parent)
+    : QGLView(parent)
 {
     QGLBuilder builder;
-    builder.newSection(QGL::Faceted);
-    builder << QGLCube(1.5f);
+    builder << QGL::Faceted << QGLCube(1.5f);
     cube = builder.finalizedSceneNode();
 
     QMatrix4x4 m;

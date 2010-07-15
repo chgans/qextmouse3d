@@ -44,8 +44,9 @@
 #include "qglbuilder.h"
 #include "qglteapot.h"
 #include "qglsection_p.h"
+#include "qgeometrydata.h"
 
-class TestList : public QGLBuilder
+class TestBuilder : public QGLBuilder
 {
 public:
     QGLSection *section() { return currentSection(); }
@@ -147,57 +148,61 @@ void tst_QGLBuilder::addQuadBenchMarks(const QVector3DArray &data, int type)
     if (type == Test_3)
     {
         QBENCHMARK {
-            TestList list;
-            list.newSection(QGL::Smooth);
-            list.section()->setMapThreshold(3);
+            TestBuilder builder;
+            builder.newSection(QGL::Smooth);
+            builder.section()->setMapThreshold(3);
             for (int i = 0; (i+3) < size; i += 4)
             {
-                QGLOperation op(&list, QGL::QUAD);
-                op << data[i] << data[i+1] << data[i+2] << data[i+3];
+                QGeometryData op;
+                op.appendVertex(data[i], data[i+1], data[i+2], data[i+3]);
+                builder.addQuads(op);
             }
-            list.finalize();
+            builder.finalizedSceneNode();
         }
     }
     else if (type == Test_7)
     {
         QBENCHMARK {
-            TestList list;
-            list.newSection(QGL::Smooth);
-            list.section()->setMapThreshold(7);
+            TestBuilder builder;
+            builder.newSection(QGL::Smooth);
+            builder.section()->setMapThreshold(7);
             for (int i = 0; (i+3) < size; i += 4)
             {
-                QGLOperation op(&list, QGL::QUAD);
-                op << data[i] << data[i+1] << data[i+2] << data[i+3];
+                QGeometryData op;
+                op.appendVertex(data[i], data[i+1], data[i+2], data[i+3]);
+                builder.addQuads(op);
             }
-            list.finalize();
+            builder.finalizedSceneNode();
         }
     }
     else if (type == Test_10)
     {
         QBENCHMARK {
-            TestList list;
-            list.newSection(QGL::Smooth);
-            list.section()->setMapThreshold(10);
+            TestBuilder builder;
+            builder.newSection(QGL::Smooth);
+            builder.section()->setMapThreshold(10);
             for (int i = 0; (i+3) < size; i += 4)
             {
-                QGLOperation op(&list, QGL::QUAD);
-                op << data[i] << data[i+1] << data[i+2] << data[i+3];
+                QGeometryData op;
+                op.appendVertex(data[i], data[i+1], data[i+2], data[i+3]);
+                builder.addQuads(op);
             }
-            list.finalize();
+            builder.finalizedSceneNode();
         }
     }
     else if (type == Test_20)
     {
         QBENCHMARK {
-            TestList list;
-            list.newSection(QGL::Smooth);
-            list.section()->setMapThreshold(20);
+            TestBuilder builder;
+            builder.newSection(QGL::Smooth);
+            builder.section()->setMapThreshold(20);
             for (int i = 0; (i+3) < size; i += 4)
             {
-                QGLOperation op(&list, QGL::QUAD);
-                op << data[i] << data[i+1] << data[i+2] << data[i+3];
+                QGeometryData op;
+                op.appendVertex(data[i], data[i+1], data[i+2], data[i+3]);
+                builder.addQuads(op);
             }
-            list.finalize();
+            builder.finalizedSceneNode();
         }
     }
 }
@@ -228,13 +233,13 @@ void tst_QGLBuilder::addQuadOrdered()
 void tst_QGLBuilder::teapot()
 {
     QBENCHMARK {
-        QGLBuilder list;
-        list << QGLTeapot();
-        list.finalize();
+        QGLBuilder builder;
+        builder << QGLTeapot();
+        builder.finalizedSceneNode();
     }
 }
 
 
 QTEST_MAIN(tst_QGLBuilder)
 
-#include "tst_QGLBuilder_perf.moc"
+#include "tst_qglbuilder_perf.moc"

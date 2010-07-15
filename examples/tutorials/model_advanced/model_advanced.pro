@@ -7,8 +7,7 @@ QT += opengl
 SOURCES = modelview.cpp \
     main.cpp
 HEADERS = modelview.h
-VPATH += ../model
-RESOURCES = model.qrc
+RESOURCES = model_advanced.qrc
 LIBS += -L../../../lib \
     -L../../../bin
 include(../../../threed/threed_dep.pri)

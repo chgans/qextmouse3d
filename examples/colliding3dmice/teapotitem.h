@@ -43,10 +43,11 @@
 #define TEAPOTITEM_H
 
 #include "qglgraphicsviewportitem.h"
-#include "qglbuilder.h"
+
 #include <QtGui/qbrush.h>
 
 class QGLFramebufferObject;
+class QGLSceneNode;
 
 class TeapotItem : public QObject, public QGLGraphicsViewportItem
 {
@@ -70,7 +71,7 @@ private Q_SLOTS:
     void updateScene();
 
 private:
-    QGLBuilder teapot;
+    QGLSceneNode *teapot;
     QGraphicsScene *mScene;
     QGLFramebufferObject *fbo;
     QBrush background;

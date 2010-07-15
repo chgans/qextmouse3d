@@ -59,7 +59,7 @@ public:
     void setImagePath(const QString &imagePath);
     void draw(QGLPainter *painter) const;
 private:
-    QGLBuilder *m_list;
+    QGLSceneNode *m_scene;
     QString m_imagePath;
     QGLSceneNode *m_faces[6];
     QGLView *m_view;

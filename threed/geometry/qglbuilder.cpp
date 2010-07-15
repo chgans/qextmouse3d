@@ -1097,3 +1097,31 @@ void QGLBuilder::setDirty(bool dirty)
 {
     dptr->finalizeNeeded = dirty;
 }
+
+/*!
+    Convenience operator for creating a new section in \a builder with \a smoothing.
+
+    \code
+    // equivalent to builder.newSection(QGL::Faceted)
+    builder << QGL::Faceted;
+    \endcode
+*/
+QGLBuilder& operator<<(QGLBuilder& builder, const QGL::Smoothing& smoothing)
+{
+    builder.newSection(smoothing);
+    return builder;
+}
+
+/*!
+    Convenience operator for adding \a triangles to the \a builder.
+
+    \code
+    // equivalent to builder.addTriangles(triangles);
+    builder << triangles;
+    \endcode
+*/
+QGLBuilder& operator<<(QGLBuilder& builder, const QGeometryData& triangles)
+{
+    builder.addTriangles(triangles);
+    return builder;
+}

@@ -51,6 +51,8 @@
 #include <QtDeclarative/private/qdeclarativestate_p.h>
 #include <QtDeclarative/private/qdeclarativetransition_p.h>
 #include <QtDeclarative/qdeclarativeparserstatus.h>
+
+#include "qglscenenode.h"
 #include "qglpainter.h"
 #include "mesh.h"
 
@@ -61,7 +63,6 @@ QT_BEGIN_NAMESPACE
 class Item3dPrivate;
 class Effect;
 class Viewport;
-class QGLSceneNode;
 
 class Item3d : public QObject, public QDeclarativeParserStatus
 {
