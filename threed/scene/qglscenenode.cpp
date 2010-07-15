@@ -62,16 +62,21 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::scene
     \ingroup qt3d::qml3d
 
-    QGLSceneNode is a convenience class that makes it easier for
-    applications to extract the interesting properties of a mesh or
-    other geometry and manipulate them as part of a scene.
+    QGLSceneNode represents one component of a scene.  The QGLSceneNode
+    class manages materials, effects and transformations for itself and
+    for its child nodes.
 
-    Also multiple QGLSceneNodes can reference the same geometry, whilst
+    As a general approach to 3D applications, a tree of QGLSceneNodes may
+    be constructed, geometry added to them, materials and transformations
+    applied, all during application initialization; and then by simply
+    calling the draw() function the scene is easily rendered for each frame.
+
+    Multiple QGLSceneNodes can reference the same geometry, whilst
     applying different transformations and treatments to it.  Since
     QGLSceneNode is a QObject sub class it cannot be copied directly, so
     instead use the clone() function for this purpose.
 
-    A scene node allows referencing into sections of geometry, via the start
+    A scene node allows referencing into sub-parts of geometry, via the start
     and count properties.
 
     The start index is an offset into the geometry at which drawing will start.
@@ -80,32 +85,12 @@ QT_BEGIN_NAMESPACE
     default count is 0, which instructs the underlying geometry to draw all
     vertices.
 
+    A node may have no geometry, that is \c{geometry().count() == 0}.  This is
+    useful for example to have one node controlling or collecting together
+    several child nodes to be manipulated as a unit.
+
     Also a node may have a local material.  This allows drawing the same geometry
     with different materials (which includes different textures).
-
-    As a QGLSceneNode, QGLSceneNode provides a draw() implementation.  This
-    default implementation does the following:
-    \list
-    \o ensures the effect specified by effect() is current on the painter
-    \o moves the node to the x, y, z position
-    \o rotates the node by the rotX, rotY and rotZ rotations
-    \o scales the node by the scale factor, in x, y and z directions
-    \o applies any local transformation that may be set for this node
-    \o sets the nodes material onto the painter, if the material is valid
-    \o calls draw() for all the child nodes
-    \o calls draw(start, count) on this nodes geometry object (if any)
-    \o restores the geometry's original material if it was changed
-    \o restores the model-view matrix if any local transform was applied
-    \endlist
-
-    Note that the draw() method does \bold not restore the effect.  If the first
-    step above results in a change to the current QGL::Standard effect then it
-    will remain set to that effect.  In general any painting method should
-    ensure the effect it requires is current.
-
-    The way draw is implemented ensures that this nodes effects, materials and
-    transformations will apply by default to its child nodes.  Transformations
-    are cumulative, but effects and materials override those of any parent node.
 
     Typically the local transformation matrix is set by the process that
     constructed the node:  in the case of an imported model, it is likely
@@ -133,11 +118,8 @@ QT_BEGIN_NAMESPACE
     see if its parent is a QGLSceneNode and add itself via the addNode()
     function if it is.
 
-    \bold{Advanced feature:} if there are suspected problems with lighting
-    normals, recompile Qt3D with \c{config+=Q_DEBUG_NORMALS}.  This will cause
-    QGLSceneNode to display the lighting normals as short lines protruding
-    from each vertex, pointing in the direction of the lighting normal.
-    This can be very helpful when a few normals are incorrect for some reason.
+    To help debug a scene, use the qDumpScene() function to get a printout
+    on stderr of the entire structure of the scene below the argument node.
 
     \sa QGLAbstractScene
 */
@@ -178,6 +160,16 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
 }
 
 #endif
+
+/*!
+    \enum QGLSceneNode::Type
+    This enum covers the types of QGLSceneNode objects that may exist in
+    a scene.  At present only two types exist, however this enum exists
+    to allow for future development of, for example, light or camera type
+    objects.
+    \value Mesh A geometry object representing a mesh of vertices
+    \value Main The main geometry object of the scene
+*/
 
 /*!
     Constructs a new scene node and attaches it to \a parent.  If parent is
@@ -1034,7 +1026,30 @@ void QGLSceneNode::setParent(QObject *parent)
 }
 
 /*!
-    \reimp
+    Draws this scene node on the \a painter.
+
+    In detail this function:
+    \list
+    \o ensures the effect specified by effect() is current on the painter
+    \o sets the nodes material onto the painter, if the material is valid
+    \o moves the model-view to the x, y, z position
+    \o rotates the model-view by the rotX, rotY and rotZ rotations
+    \o scales the node by the scale factor, in x, y and z directions
+    \o applies any local transformation that may be set for this node
+    \o calls draw() for all the child nodes
+    \o calls draw(start, count) on this nodes geometry object (if any)
+    \o restores the geometry's original material if it was changed
+    \o restores the model-view matrix if any local transform was applied
+    \endlist
+
+    Note that the draw() method does \bold not restore the effect.  If the first
+    step above results in a change to the current QGL::Standard effect then it
+    will remain set to that effect.  In general any painting method should
+    ensure the effect it requires is current.
+
+    The way draw is implemented ensures that this nodes effects, materials and
+    transformations will apply by default to its child nodes.  Transformations
+    are cumulative, but effects and materials override those of any parent node.
 */
 void QGLSceneNode::draw(QGLPainter *painter)
 {

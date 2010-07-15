@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "displaylist.h"
+#include "builder.h"
 #include "qglbuilder.h"
 #include "qglmaterialcollection.h"
 #include "qgltexture2d.h"
@@ -51,7 +51,7 @@
 
 #include <QtCore/qmath.h>
 
-DisplayListView::DisplayListView(QWidget *parent)
+BuilderView::BuilderView(QWidget *parent)
     : QGLView(parent)
     , canScene(new QGLSceneNode(this))
 {
@@ -96,7 +96,7 @@ DisplayListView::DisplayListView(QWidget *parent)
     }
 }
 
-void DisplayListView::initializeGL(QGLPainter *painter)
+void BuilderView::initializeGL(QGLPainter *painter)
 {
     QGLLightParameters *light0 = new QGLLightParameters(this);
     light0->setAmbientColor(Qt::white);
@@ -109,13 +109,13 @@ void DisplayListView::initializeGL(QGLPainter *painter)
 }
 
 //! [1]
-void DisplayListView::paintGL(QGLPainter *painter)
+void BuilderView::paintGL(QGLPainter *painter)
 {
     canScene->draw(painter);
 }
 //! [1]
 
-QGLSceneNode *DisplayListView::buildGeometry()
+QGLSceneNode *BuilderView::buildGeometry()
 {
     //! [2]
     QGLBuilder builder;

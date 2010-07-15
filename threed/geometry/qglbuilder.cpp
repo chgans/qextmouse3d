@@ -53,7 +53,7 @@
 
 /*!
     \class QGLBuilder
-    \brief The QGLBuilder class accumulates geometry for efficient display.
+    \brief The QGLBuilder class constructs geometry for efficient display.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
@@ -61,70 +61,51 @@
     \tableofcontents
 
     Use a QGLBuilder to build up vertex, index, texture and other data
-    when an application starts up, then it can be efficiently and flexibly
+    during application initialization.  The finalizedSceneNode() function
+    returns an optimized scene which can be efficiently and flexibly
     displayed during frames of rendering.  It is suited to writing loaders
     for 3D models, and also for programatically creating geometry.
 
-    \section1 Comparison with OpenGL fixed-functions
+    \section1 Geometry Building
 
-    QGLBuilder contains functions which provide similar functionality to
-    OpenGL modes GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS and so on.  There
-    is currently no support for GL_LINES or GL_POINTS.
+    The simplest way to use QGLBuilder is to send a set of geometry
+    values to it using QGeometryData in the constructor:
 
-    Also, with regard to the ordering and winding of vertices, QGLBuilder
-    always starts at the origin, with (0, 0) being the bottom-left.
+    \code
+    MyView::MyView() : QGLView()
+    {
+        // in the constructor construct a builder on the stack
+        QGLBuilder builder;
+        QGeometryData triangle;
+        QVector3D a(2, 2, 0);
+        QVector3D b(-2, 2, 0);
+        QVector3D c(0, -2, 0);
+        triangle.appendVertex(a, b, c);
 
-    The order follows with (1, 0) bottom-right, (1, 1) top-right and
-    lastly (1, 0) top-left - this gives an anti-clockwise wound face.
+        // When adding geometry, QGLBuilder automatically creates lighting normals
+        builder << triangle;
 
-    So, while remembering that QGLBuilder does not attempt to exactly
-    replicate OpenGL, these are QGLBuilders geometry functions and the
-    OpenGL mode/function they most resemble:
+        // obtain the scene from the builder
+        m_scene = builder.finalizedSceneNode();
 
-    \table
-        \header
-            \o QGLBuilder function
-            \o Similar to OpenGL mode/function
-        \row
-            \o addVertex()
-            \o glVertex()
-        \row
-            \o addNormal()
-            \o glNormal()
-        \row
-            \o addColor()
-            \o glColor()
-        \row
-            \o addTexCoord()
-            \o glTexCoord()
-        \row
-            \o addAttribute()
-            \o glVertexAttrib()
-        \row
-            \o addTriangle()
-            \o GL_TRIANGLES
-        \row
-            \o addQuads)
-            \o GL_QUADS
-        \row
-            \o addTriangleFan()
-            \o GL_TRIANGLE_FAN
-        \row
-            \o addTriangulatedFace()
-            \o GL_POLYGON
-        \row
-            \o addTriangleStrip()
-            \o GL_TRIANGLE_STRIP
-        \row
-            \o addQuadStrip(), addQuadsZipped()
-            \o GL_QUAD_STRIP
-    \endtable
+        // apply effects at app initialization time
+        QGLMaterial *mat = new QGLMaterial;
+        mat->setDiffuseColor(Qt::red);
+        m_scene->setMaterial(mat);
+    }
+    \endcode
 
-    \section1 Index and Normal Generation
+    Then during rendering the scene is used to display the results:
+    \code
+    MyView::paintGL(QGLPainter *painter)
+    {
+        m_scene->draw(painter);
+    }
+    \endcode
 
     QGLBuilder automatically generates index values and normals
     on-the-fly during geometry building.  During building, simply send
-    primitives to the display list as a sequence of vertices, and
+    primitives to the builder as a sequence of vertices, and
     vertices that are the same will be referenced by a single index
     automatically.
 
@@ -171,17 +152,17 @@
         -1.0, 1.0, 1.0      // D
     };
     QGLBuilder quad;
-    QGeometryData op;
-    for (int i = 0; i < 12; i += 3)
-        op.appendVertex(QVector3D(vertices[i], vertices[i+1], vertices[i+2]));
-    quad.addQuad(op);
+    QGeometryData data;
+    data.appendVertexArray(QArray<QVector3D>::fromRawData(
+            reinterpret_cast<const QVector3D*>(vertices), 4));
+    quad.addQuads(data);
     \endcode
 
-    The quad primitive is added to the list, as two triangles, indexed to
+    The data primitive is added to the list, as two triangles, indexed to
     removed the redundant double storage of B & C - just the same as the
     OpenGL code.
 
-    It will also calculate a normal for the quad and apply it
+    QGLBuilder will also calculate a normal for the quad and apply it
     to the vertices.
 
     In this trivial example the indices are easily calculated, however
@@ -266,22 +247,34 @@
     with the sceneNode() function.  Under this a new node is created for
     each section of geometry, and also by using pushNode() and popNode().
 
+    To organize geometry for painting with different materials and effects
+    call the newNode() function:
+
+    \code
+    QGLSceneNode *box = builder.newNode();
+    box->setMaterial(wood);
+    \endcode
+
+    Many nodes may be created this way, but they will be optimized into
+    a small number of buffers under the one scene when the
+    finalizedSceneNode() function is called.
+
     \image soup.png
 
     Here the front can is a set of built geometry and the other two are
     scene nodes that reference it, without copying any geometry.
 
-    \snippet displaylist/displaylist.cpp 0
+    \snippet builder/builder.cpp 0
 
-    QGLSceneNodes can be used after the display list is created to cheaply
-    copy and redisplay the whole list.  Or to reference parts of the list
+    QGLSceneNodes can be used after the builder is created to cheaply
+    copy and redisplay the whole scene.  Or to reference parts of the geometry
     use the functions newNode() or pushNode() and popNode() to manage
     QGLSceneNode generation while building geometry.
 
     To draw the resulting built geometry simply call the draw method of the
     build geometry.
 
-    \snippet displaylist/displaylist.cpp 1
+    \snippet builder/builder.cpp 1
 
     Call the \l{QGLSceneNode::palette()}{palette()} function on the sceneNode()
     to get the QGLMaterialCollection for the node, and place textures
@@ -292,10 +285,12 @@
     or pass no arguments to the constructor and the QGLBuilder
     will create a palette:
 
-    \snippet displaylist/displaylist.cpp 2
+    \snippet builder/builder.cpp 2
 
     These may then be applied as needed throughout the building of the
     geometry using the integer reference, \c{canMat} in the above code.
+
+    See the QGLSceneNode documentation for more.
 
     \section1 Using Sections
 
@@ -305,7 +300,7 @@
 
     Call the newSection() function to create a new section:
 
-    \snippet displaylist/displaylist.cpp 3
+    \snippet builder/builder.cpp 3
 
     Here seperate sections for the rounded outside cylinder and flat top and
     bottom of the soup can model makes for the appearance of a sharp edge
@@ -330,10 +325,24 @@
     Faceted geometry is suitable for small models, where hard edges are
     desired between every face - a dice, gem or geometric solid for example.
 
+    If no section has been created when geometry is added a new section is
+    created automatically.  This section will have its smoothing set
+    to QGL::Smooth.
+
+    To create a faceted appearance rather than accepting the automatically
+    created section the << operator can also be used:
+
+    \code
+    QGLBuilder builder;
+    QGeometryData triangles;
+    triangles.appendVertices(a, b, c);
+    builder << QGL::Faceted << triangles;
+    \endcode
+
     \section2 Geometry Data in a Section
 
     Management of normals and vertices for smoothing, and other data is
-    handled automatically by the display list.
+    handled automatically by the QGLBuilder instance.
 
     Within a section, incoming geometry data will be coalesced and
     indices created to reference the fewest possible copies of the vertex
@@ -356,16 +365,44 @@
     Each QGLSection references a contiguous range of vertices in a
     QGLBuilder.
 
-    \section1 Finalizing a QGLBuilder
+    \section1 Finalizing and Retrieving the Scene
 
     Once the geometry has been accumulated in the QGLBuilder instance,  the
-    finalize() method must be called to normalize the geometry and optimize
-    it for display.  The finalize() method makes passes through the data of
-    each section, normalizing and then optimizing and preparing the data for
-    display.  Thus it may be expensive for large geometry.
+    finalizedSceneNode() method must be called to retrieve the optimized
+    scene.  This function serves to normalize the geometry and optimize
+    it for display.
 
-    The finalize() function only needs to be called once in the application
-    lifetime.  It is automatically called by the QGLBuilder's destructor.
+    While it may be convenient to get pointers to sub nodes in the scene
+    during construction, it is important to retrieve the root of the scene
+    so that the memory consumed by the scene can be recovered.  The builder
+    will create a QGLMaterialCollection; and there may be geometry, materials
+    and other resources: these are all parented onto the root scene node.
+    These can easily be recovered by deleting the root scene node:
+
+    \code
+    MyView::MyView() : QGLView()
+    {
+        // in the constructor construct a builder on the stack
+        QGLBuilder builder;
+
+        // add geometry as shown above
+        builder << triangles;
+
+        // obtain the scene from the builder & take ownership
+        m_scene = builder.finalizedSceneNode();
+    }
+
+    MyView::~MyView()
+    {
+        // recover all scene resources
+        delete m_scene;
+    }
+    \endcode
+
+    Alternatively set the scene's parent to ensure resource recovery
+    \c{m_scene->setParent(this)}.
+
+
 */
 
 QGLBuilderPrivate::QGLBuilderPrivate(QGLBuilder *parent)
@@ -449,10 +486,10 @@ void QGLBuilderPrivate::addTriangle(int i, int j, int k, QGeometryData &p)
 }
 
 /*!
-    Add a \a triangle or series of triangles to this display list.
+    Add a \a triangle or series of triangles to this builder.
 
     If \a triangle has indices specified then no processing of any kind is
-    done and all the geometry is simply dumped in to the display list.
+    done and all the geometry is simply dumped in to the builder.
 
     This "raw triangle" mode is for advanced use, and it is assumed that
     the user knows what they are doing, in particular that the indices
@@ -475,7 +512,7 @@ void QGLBuilderPrivate::addTriangle(int i, int j, int k, QGeometryData &p)
     Normals are not calculated in "raw triangle" mode, and skipping of null
     triangles is likewise not performed.
 
-    \sa addQuads)
+    \sa addQuads()
 */
 void QGLBuilder::addTriangles(const QGeometryData &triangle)
 {
@@ -499,7 +536,7 @@ void QGLBuilder::addTriangles(const QGeometryData &triangle)
 }
 
 /*!
-    Add a \a quad or series of quads to this display list.  Each quad
+    Add a \a quad or series of quads to this builder.  Each quad
     is broken up into two triangles.
 
     One normal per quad is calculated and applied to both triangles,
@@ -507,7 +544,7 @@ void QGLBuilder::addTriangles(const QGeometryData &triangle)
     or commonNormal().  Degenerate triangles are skipped in the same way
     as addTriangle().
 
-    \sa addTriangle()
+    \sa addTriangles()
 */
 void QGLBuilder::addQuads(const QGeometryData &quad)
 {
@@ -695,9 +732,9 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
     \code
     QGeometryData top = buildTopEdge();
     QGeometryData bottom = top.translated(QVector3D(0, 0, -1));
-    displayList->addQuadsInterleaved(top, bottom);
-    displayList->addTriangulatedFace(top);
-    displayList->addTriangulatedFace(bottom.reversed());
+    builder.addQuadsInterleaved(top, bottom);
+    builder.addTriangulatedFace(top);
+    builder.addTriangulatedFace(bottom.reversed());
     \endcode
     The \a bottom QGeometryData must be \bold{reversed} so that the correct
     winding for an outward facing polygon is obtained.
@@ -815,16 +852,16 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
     may be deleted or go out of scope while the scene lives on:
 
     \code
-    void MyView::~MyView()
-    {
-        delete m_thing;
-    }
-
-    void MyView::initializeGL()
+    void MyView::MyView()
     {
         QGLBuilder builder;
         // construct geometry
         m_thing = builder.finalizedSceneNode();
+    }
+
+    void MyView::~MyView()
+    {
+        delete m_thing;
     }
 
     void MyView::paintGL()
@@ -836,8 +873,8 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
     This function does the following:
     \list
         \o packs all geometry data from sections into QGLSceneNode instances
-        \o references this data via QGLSceneNode start() and count()
-        \o deletes all internal data structures
+        \o recalculates QGLSceneNode start() and count() for the scene
+        \o deletes all QGLBuilder's internal data structures
         \o returns the top level scene node that references the geometry
         \o sets the internal pointer to the top level scene node to NULL
     \endlist
@@ -1099,6 +1136,7 @@ void QGLBuilder::setDirty(bool dirty)
 }
 
 /*!
+    \relates QGLBuilder
     Convenience operator for creating a new section in \a builder with \a smoothing.
 
     \code
@@ -1113,6 +1151,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGL::Smoothing& smoothing)
 }
 
 /*!
+    \relates QGLBuilder
     Convenience operator for adding \a triangles to the \a builder.
 
     \code

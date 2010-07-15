@@ -1,15 +1,15 @@
 TEMPLATE = app
-TARGET = displaylist
+TARGET = builder
 CONFIG += qt \
     debug \
     warn_on
 QT += opengl
-SOURCES = displaylist.cpp \
+SOURCES = builder.cpp \
     main.cpp
-HEADERS = displaylist.h
+HEADERS = builder.h
 LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin
 include(../../threed/threed_dep.pri)
 FORMS += 
-RESOURCES += displaylist.qrc
+RESOURCES += builder.qrc

@@ -39,21 +39,29 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
+#ifndef BUILDER_H
+#define BUILDER_H
 
-#include "displaylist.h"
+#include "qglview.h"
 
-int main(int argc, char *argv[])
+class QGLSceneNode;
+class QGLBuilder;
+
+class BuilderView : public QGLView
 {
-    QApplication app(argc, argv);
-    DisplayListView view;
-    if (view.stereoType() != QGLView::RedCyanAnaglyph)
-        view.camera()->setEyeSeparation(0.3f);
-    if (QApplication::arguments().contains("-maximize"))
-        view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
-        view.showFullScreen();
-    else
-        view.show();
-    return app.exec();
-}
+    Q_OBJECT
+public:
+    BuilderView(QWidget *parent = 0);
+    ~BuilderView() {}
+
+protected:
+    void initializeGL(QGLPainter *painter);
+    void paintGL(QGLPainter *painter);
+
+private:
+    QGLSceneNode *buildGeometry();
+
+    QGLSceneNode *canScene;
+};
+
+#endif
