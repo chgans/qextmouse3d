@@ -577,7 +577,6 @@ void Mesh::draw(QGLPainter *painter, int branchId)
         qWarning() << "Unable to find valid scene object with ID: " << branchId;
     } else {
         MeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
-        targetBranch.rootSceneObject->apply(painter);
         targetBranch.rootSceneObject->draw(painter);
     }
 }

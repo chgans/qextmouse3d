@@ -86,9 +86,6 @@ public:
     QBox3D boundingBox() const;
     QVector3D center() const;
 
-    void setCommonNormal(const QVector3D &n);
-    const QVector3D &commonNormal() const;
-
     QGeometryData reversed() const;
     QGeometryData translated(const QVector3D &) const;
     void generateTextureCoordinates(Qt::Orientation orientation = Qt::Horizontal,

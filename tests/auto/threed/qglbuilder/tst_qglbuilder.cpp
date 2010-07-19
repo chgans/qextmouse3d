@@ -90,16 +90,12 @@ void tst_QGLBuilder::createDefault()
     TestBuilder builder;
     QCOMPARE(builder.currentSection(), (QGLSection*)0);
     QCOMPARE(builder.sections().size(), 0);
-    QCOMPARE(builder.currentNode(), (QGLSceneNode*)0);
+    QVERIFY(builder.currentNode() != 0);
     QVERIFY(builder.sceneNode() != 0);
     QVERIFY(builder.sceneNode()->geometry().isEmpty());
     QVERIFY(builder.palette() != 0);
-
-    QPointer<QGLMaterialCollection> palette = new QGLMaterialCollection();
-    QGLBuilder builder1(palette);
-    QCOMPARE(builder1.palette(), palette.data());
-
-    // TODO - add tests for management of sceneNode()
+    QGLSceneNode *root = builder.sceneNode();
+    QCOMPARE(builder.finalizedSceneNode(), root);
 }
 
 void tst_QGLBuilder::newSection()
@@ -113,9 +109,12 @@ void tst_QGLBuilder::newSection()
     QCOMPARE(s->smoothing(), QGL::Smooth);
     builder.newSection(QGL::Faceted);
     QGLSection *s2 = builder.currentSection();
-    QCOMPARE(s2, builder.currentSection());
     QCOMPARE(builder.sections().count(), 2);
     QVERIFY(builder.sections().contains(s2));
+    builder << QGL::Faceted;
+    QCOMPARE(builder.sections().count(), 3);
+    QGLSceneNode *root = builder.sceneNode();
+    QCOMPARE(builder.finalizedSceneNode(), root);
 }
 
 class TestEffect : public QGLAbstractEffect
@@ -151,6 +150,7 @@ void tst_QGLBuilder::newNode()
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     builder.addTriangles(p);
 
+    qDebug() << (*builder.currentSection());
     // now create a new node
     QGLSceneNode *node2 = builder.newNode();
 
@@ -352,7 +352,7 @@ void tst_QGLBuilder::addTriangles()
     QVector3D norm(0.0f, 0.0f, 1.0f);
     QGeometryData p;
     p.appendVertex(a, b, c);
-    p.setCommonNormal(norm);
+    p.appendNormal(norm, norm, norm);
 
     builder.addTriangles(p);
     QCOMPARE(sec->vertices().count(), 3);
@@ -370,7 +370,7 @@ void tst_QGLBuilder::addTriangles()
     QVector2D td(0.0f, 1.0f);
     QGeometryData q;
     q.appendVertex(a, c, d);
-    q.setCommonNormal(norm);
+    p.appendNormal(norm, norm, norm, norm);
     builder.addTriangles(q);
     QCOMPARE(sec->vertices().count(), 4);
     QCOMPARE(sec->vertex(3), d);
@@ -465,7 +465,7 @@ void tst_QGLBuilder::addQuads()
     QVector3D norm(0.0f, 0.0f, 1.0f);
     QGeometryData p;
     p.appendVertex(a, b, c, d);
-    p.setCommonNormal(norm);
+    p.appendNormal(norm, norm, norm, norm);
 
     builder.addQuads(p);
     QCOMPARE(sec->vertices().count(), 4);

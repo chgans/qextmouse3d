@@ -84,7 +84,6 @@
         \o hasField() to find if a particular data type is present
         \o normalizeNormals() to reduce all normal vectors to unit length
         \o boundingBox() to find the bounds of the geometry
-        \o setCommonNormal() / commonNormal() for a normal that applies to all vertices
      \endlist
 
      It is up to the user of a QGeometryData instance to ensure that the
@@ -138,7 +137,6 @@ public:
     bool modified;
     QBox3D bb;
     static const int ATTR_CNT = 32;
-    QVector3D commonNormal;
     quint32 fields;
     qint8 key[ATTR_CNT];
     quint8 size[ATTR_CNT];
@@ -180,7 +178,6 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
     temp->uploadsViable = uploadsViable;
     temp->modified = modified;
     temp->bb = bb;
-    temp->commonNormal = commonNormal;
     temp->fields = fields;
     qMemCopy(temp->key, key, ATTR_CNT);
     qMemCopy(temp->size, size, ATTR_CNT);
@@ -429,37 +426,6 @@ QVector3D QGeometryData::center() const
     for (int i = 0; i < d->vertices.count(); ++i)
         center += d->vertices.at(i);
     return center / (float)d->vertices.count();
-}
-
-/*!
-    Sets \a normal to be a common normal.  This normal vector is used for
-    all vertices in the geometry.
-*/
-void QGeometryData::setCommonNormal(const QVector3D &normal)
-{
-    if (!d && normal.isNull())
-        return
-    detach();
-    d->modified = true;
-    d->commonNormal = normal;
-}
-
-/*!
-    Returns the common normal set on this geometry, or a null vector if
-    none was set.  This vector is not affected by normalizeNormals().
-    Also fields() and enableFields() only affect per-vertex normal values
-    stored in the geometry data - these values are unrelated to commonNormal().
-
-    A QLogicalVertex extracted from this geometry will return the commonNormal()
-    value, if it is non-null.  In this way, the common normal overrides any
-    geometry data set.
-*/
-const QVector3D &QGeometryData::commonNormal() const
-{
-    static QVector3D def;
-    if (d)
-        return d->commonNormal;
-    return def;
 }
 
 /*!
@@ -1904,6 +1870,7 @@ int QGeometryData::indexCount() const
 */
 void QGeometryData::detach()
 {
+    qDebug() << "detaching" << this;
     if (!d) // lazy creation of data block
     {
         d = new QGeometryDataPrivate;

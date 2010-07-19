@@ -113,7 +113,6 @@ void tst_QGLSection::create()
     QCOMPARE(section->fields(), (quint32)1);
     QCOMPARE(section->smoothing(), QGL::Smooth);
     QCOMPARE(section->count(), 0);
-    QCOMPARE(section->displayList(), &builder);
     QCOMPARE(section->boundingBox(), QBox3D());
     QCOMPARE(section->mapThreshold(), 5);
 }
@@ -129,10 +128,8 @@ void tst_QGLSection::modify()
     QVector3D vc(1.0f, 1.0f, 0.0f);
     QVector3D n(0.0f, 0.0f, 1.0f);
     QGeometryData p;
-    p.appendVertex(va);
-    p.appendVertex(vb);
-    p.appendVertex(vc);
-    p.setCommonNormal(n);
+    p.appendVertex(va, vb, vc);
+    p.appendNormal(n, n, n);
     section->setMapThreshold(30);
     QCOMPARE(section->mapThreshold(), 30);
     builder.addTriangles(p);
@@ -627,7 +624,6 @@ void tst_QGLSection::accessors()
     QGLSectionTest *section = new QGLSectionTest(&builder);
 
     QCOMPARE(section->smoothing(), QGL::Smooth);
-    QCOMPARE(section->displayList(), &builder);
 
     QGLSectionTest *section2 = new QGLSectionTest(&builder, QGL::Faceted);
     QCOMPARE(section2->smoothing(), QGL::Faceted);

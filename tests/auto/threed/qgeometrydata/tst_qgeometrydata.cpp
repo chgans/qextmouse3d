@@ -71,7 +71,6 @@ void tst_QGeometryData::createDefault()
     QCOMPARE(data.vertices().count(), 0);
     data.normalizeNormals();
     QCOMPARE(data.boundingBox(), QBox3D());
-    QCOMPARE(data.commonNormal(), QVector3D());
 
     // copy constructor on initialization - null default
     QGeometryData other = data;

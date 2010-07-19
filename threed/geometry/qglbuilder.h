@@ -49,7 +49,6 @@
 
 #include "qglnamespace.h"
 #include "qglscenenode.h"
-#include "qlogicalvertex.h"
 #include "qglattributevalue.h"
 #include "qgeometrydata.h"
 
@@ -101,7 +100,6 @@ protected:
 private:
     Q_DISABLE_COPY(QGLBuilder);
     void addSection(QGLSection *section);
-    void setDirty(bool dirty);
 
     friend class QGLSection;
 

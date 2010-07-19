@@ -240,10 +240,7 @@ inline QCustomDataArray::ElementType QLogicalVertex::attributeType(QGL::VertexAt
 
 inline const QVector3D &QLogicalVertex::normal() const
 {
-    const QVector3D &norm = m_data.commonNormal();
-    if (norm.isNull())
-        return m_data.normalAt(m_index);
-    return norm;
+    return m_data.normalAt(m_index);
 }
 
 inline void QLogicalVertex::setNormal(const QVector3D &n)
@@ -304,18 +301,12 @@ inline QColor4ub &QLogicalVertex::colorRef()
 
 inline bool QLogicalVertex::hasField(QGL::VertexAttribute attr) const
 {
-    if (attr == QGL::Normal)
-        return (m_data.hasField(attr) || !m_data.commonNormal().isNull());
     return m_data.hasField(attr);
 }
 
 inline quint32 QLogicalVertex::fields() const
 {
-    static const quint32 nmask = 0x01 << QGL::Normal;
-    quint32 f = m_data.fields();
-    if (!(f & nmask) && !m_data.commonNormal().isNull())
-        f |= nmask;
-    return f;
+    return m_data.fields();
 }
 
 inline int QLogicalVertex::index() const

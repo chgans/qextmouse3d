@@ -64,9 +64,14 @@
     during application initialization.  The finalizedSceneNode() function
     returns an optimized scene which can be efficiently and flexibly
     displayed during frames of rendering.  It is suited to writing loaders
-    for 3D models, and also for programatically creating geometry.
+    for 3D models, and for programatically creating geometry.
 
     \section1 Geometry Building
+
+    QGLBuilder makes the job of getting triangles on the GPU simple.  It
+    calculates indices and normals for you, then uploads the data.  While
+    it has addQuads() and other functions to deal with quads, all data is
+    represented as triangles for portability.
 
     The simplest way to use QGLBuilder is to send a set of geometry
     values to it using QGeometryData in the constructor:
@@ -218,8 +223,7 @@
 
     When lighting normals are specified explicitly the skipping
     optimization is suppressed, so if for some reason null triangles are
-    required to be retained, then specify normals for each logical vertex,
-    or via the QGeometry::setCommonNormal() function.
+    required to be retained, then specify normals for each logical vertex.
 
     See the documentation below of the individual addTriangle() and other
     functions for more details.
@@ -227,16 +231,18 @@
     \section2 Raw Triangle Mode
 
     Where generation of indices and normals is not needed - for example if
-    porting an existing application, or where indices and normals result
-    naturally; it is possible to do a very fast add of triangles, without
-    using any of QGLBuilder's processing.
+    porting an existing application, it is possible to do a raw import of
+    triangle data, without using any of QGLBuilder's processing.
 
-    Simply ensure that indices are placed in the QGeometryData passed to
-    the addTriangle() function, and this will trigger "raw triangle" mode.
+    To do this ensure that indices are placed in the QGeometryData passed to
+    the addTriangles() function, and this will trigger \bold{raw triangle} mode.
 
     When adding triangles in this way ensure that all appropriate values
     have been correctly set, and that the normals, indices and other data
     are correctly calculated, since no checking is done.
+
+    When writing new applications, simply leave construction of normals and
+    indices to the QGLBuilder
 
     \section1 Rendering and QGLSceneNode items.
 
@@ -406,8 +412,7 @@
 */
 
 QGLBuilderPrivate::QGLBuilderPrivate(QGLBuilder *parent)
-    : finalizeNeeded(true)
-    , currentSection(0)
+    : currentSection(0)
     , currentNode(0)
     , rootNode(0)
     , defThreshold(5)
@@ -447,114 +452,170 @@ QGLBuilder::~QGLBuilder()
 }
 
 /*!
-    \internal
-    Helper function to calculate normal if required, and actually
-    add the vertices to geometry.
-
-    Note the modifiable reference p - any normal calculated is
-    stored in here, and needs to be restored unless persisting it
-    to the next iteration.
+    Helper function to calculate the normal for and set it on vertices
+    in \a i, \a j and \a k in triangle data \a p.  If the triangle in
+    data \a p is a null triangle (area == 0) then the function returns
+    false, otherwise it returns true.
 */
-void QGLBuilderPrivate::addTriangle(int i, int j, int k, QGeometryData &p)
+static bool qCalculateNormal(int i, int j, int k, QGeometryData &p, QVector3D *vec = 0)
 {
-    if (currentSection == 0)
-        q->newSection();
-    bool calcNormal = !p.hasField(QGL::Normal) && p.commonNormal().isNull();
-    QLogicalVertex a(p, i);
-    QLogicalVertex b(p, j);
-    QLogicalVertex c(p, k);
     QVector3D norm;
-    if (calcNormal)
-        norm = QVector3D::crossProduct(b - a, c - b);
-    if (qFskIsNull(norm.x()))
-        norm.setX(0.0f);
-    if (qFskIsNull(norm.y()))
-        norm.setY(0.0f);
-    if (qFskIsNull(norm.z()))
-        norm.setZ(0.0f);
-    norm *= 5.0f;
-    // if the normal was calculated, and it was null, then this is a null
-    // triangle - don't add it, it just wastes space - see class doco
-    if (!calcNormal || !norm.isNull())
+    QVector3D *n = &norm;
+    if (vec)
+        n = vec;
+    bool nullTriangle = false;
+    *n = QVector3D::crossProduct(p.vertexAt(j) - p.vertexAt(i),
+                                   p.vertexAt(k) - p.vertexAt(j));
+    if (qFskIsNull(n->x()))
+        n->setX(0.0f);
+    if (qFskIsNull(n->y()))
+        n->setY(0.0f);
+    if (qFskIsNull(n->z()))
+        n->setZ(0.0f);
+    if (n->isNull())
     {
-        // use common normal to communicate the normal down the stack
-        if (calcNormal)
-            p.setCommonNormal(norm);
-        currentSection->append(a, b, c);
-        currentNode->setCount(currentNode->count() + 3);
+        nullTriangle = true;
     }
+    else
+    {
+        p.vertex(i) = *n;
+        p.vertex(j) = *n;
+        p.vertex(k) = *n;
+    }
+    return nullTriangle;
+}
+
+static inline void setNormals(int i, int j, int k, QGeometryData &p, const QVector3D &n)
+{
+    p.normal(i) = n;
+    p.normal(j) = n;
+    p.normal(k) = n;
 }
 
 /*!
-    Add a \a triangle or series of triangles to this builder.
+    \internal
+    Helper function to actually add the vertices to geometry.
+*/
+void QGLBuilderPrivate::addTriangle(int i, int j, int k, const QGeometryData &p)
+{
+    if (currentSection == 0)
+        q->newSection();
+    QLogicalVertex a(p, i);
+    QLogicalVertex b(p, j);
+    QLogicalVertex c(p, k);
+    currentSection->append(a, b, c);
+    currentNode->setCount(currentNode->count() + 3);
+}
 
-    If \a triangle has indices specified then no processing of any kind is
-    done and all the geometry is simply dumped in to the builder.
+/*!
+    Add \a triangles - a series of one or more triangles - to this builder.
 
-    This "raw triangle" mode is for advanced use, and it is assumed that
-    the user knows what they are doing, in particular that the indices
-    supplied are correct, and normals are supplied and correct.
+    The data is broken into groups of 3 vertices, each processed as a triangle.
 
-    Otherwise, if no indices are supplied, then the list is broken into
-    groups of 3 vertices, each processed as a triangle.
+    If \a triangles has less than 3 vertices this function exits without
+    doing anything.  Any vertices at the end of the list under a multiple
+    of 3 are ignored.
 
-    Any vertices at the end of the list under a multiple of 3 are
-    ignored.
-
-    If no normals are supplied in \a triangle, a normal is calculated as
+    If no normals are supplied in \a triangles, a normal is calculated; as
     the cross-product \c{(b - a) x (c - a)}, for each group of 3
     logical vertices \c{a(triangle, i), b(triangle, i+1), c(triangle, i+2)}.
 
     In the case of a degenerate triangle, where the cross-product is null,
     that triangle is skipped.  Supplying normals suppresses this behaviour
-    and degenerate triangles will be added to the geometry.
+    (and means any degenerate triangles will be added to the geometry).
 
-    Normals are not calculated in "raw triangle" mode, and skipping of null
-    triangles is likewise not performed.
+    \bold{Raw Triangle Mode}
 
-    \sa addQuads()
+    If \a triangles has indices specified then no processing of any kind is
+    done and all the geometry is simply dumped in to the builder.
+
+    This \bold{raw triangle} mode is for advanced use, and it is assumed that
+    the user knows what they are doing, in particular that the indices
+    supplied are correct, and normals are supplied and correct.
+
+    Normals are not calculated in raw triangle mode, and skipping of null
+    triangles is likewise not performed.  See the section on
+    \l{raw-triangle-mode}{raw triangle mode}
+    in the class documentation above.
+
+    \sa addQuads(), operator>>()
 */
-void QGLBuilder::addTriangles(const QGeometryData &triangle)
+void QGLBuilder::addTriangles(const QGeometryData &triangles)
 {
-    if (triangle.indexCount() > 0)
+    if (triangles.count() < 3)
+        return;
+    if (triangles.indexCount() > 0)
     {
         // raw triangle mode
-        dptr->currentSection->appendGeometry(triangle);
-        dptr->currentSection->appendIndices(triangle.indices());
-        dptr->currentNode->setCount(dptr->currentNode->count() + triangle.indexCount());
+        dptr->currentSection->appendGeometry(triangles);
+        dptr->currentSection->appendIndices(triangles.indices());
+        dptr->currentNode->setCount(dptr->currentNode->count() + triangles.indexCount());
     }
     else
     {
-        QGeometryData t = triangle;
-        QVector3D save = t.commonNormal();
+        QGeometryData t = triangles;
+        bool calcNormal = !t.hasField(QGL::Normal);
+        if (calcNormal)
+        {
+            QVector3DArray nm(t.count());
+            t.appendNormalArray(nm);
+        }
+        bool skip = false;
         for (int i = 0; i < t.count() - 2; i += 3)
         {
-            dptr->addTriangle(i, i+1, i+2, t);
-            t.setCommonNormal(save);
+            if (calcNormal)
+                skip = qCalculateNormal(i, i+1, i+2, t);
+            if (!skip)
+                dptr->addTriangle(i, i+1, i+2, t);
         }
     }
 }
 
 /*!
-    Add a \a quad or series of quads to this builder.  Each quad
-    is broken up into two triangles.
+    Add \a quads - a series of one or more quads - to this builder.
 
-    One normal per quad is calculated and applied to both triangles,
-    if \a quad does not have normals, either via \c{hasField(QGL::Normal)}
-    or commonNormal().  Degenerate triangles are skipped in the same way
-    as addTriangle().
+    If \a quads has less than four vertices this function exits without
+    doing anything.
 
-    \sa addTriangles()
+    One normal per quad is calculated if \a quads does not have normals.
+    For this reason quads should have all four vertices in the same plane.
+    If the vertices do not lie in the same plane, use addTriangleStrip()
+    to add two adjacent triangles instead.
+
+    Since internally \l{geometry-building}{quads are stored as two triangles},
+    each quad is actually divided in half into two triangles.
+
+    Degenerate triangles are skipped in the same way as addTriangles().
+
+    \sa addTriangles(), addTriangleStrip()
 */
-void QGLBuilder::addQuads(const QGeometryData &quad)
+void QGLBuilder::addQuads(const QGeometryData &quads)
 {
-    QGeometryData q = quad;
-    QVector3D save = q.commonNormal();
+    if (quads.count() < 4)
+        return;
+    QGeometryData q = quads;
+    bool calcNormal = !q.hasField(QGL::Normal);
+    if (calcNormal)
+    {
+        QVector3DArray nm(q.count());
+        q.appendNormalArray(nm);
+    }
+    bool skip = false;
+    QVector3D norm;
     for (int i = 0; i < q.count(); i += 4)
     {
-        dptr->addTriangle(i, i+1, i+2, q);
-        dptr->addTriangle(i, i+2, i+3, q);
-        q.setCommonNormal(save);
+        if (calcNormal)
+            skip = qCalculateNormal(i, i+1, i+2, q, &norm);
+        if (!skip)
+            dptr->addTriangle(i, i+1, i+2, q);
+        if (skip)
+            skip = qCalculateNormal(i, i+2, i+3, q, &norm);
+        if (!skip)
+        {
+            if (calcNormal)
+                setNormals(i, i+2, i+3, q, norm);
+            dptr->addTriangle(i, i+2, i+3, q);
+        }
     }
 }
 
@@ -573,18 +634,30 @@ void QGLBuilder::addQuads(const QGeometryData &quad)
     is the 0'th vertex of the \a fan.
 
     Normals are calculated as for addTriangle(), given the above ordering.
-    Note that the central() vector on \a fan is ignored.
+    There is no requirement or assumption that all triangles lie in the
+    same plane.  Degenerate triangles are skipped in the same way as
+    addTriangles().
 
     \sa addTriangulatedFace()
 */
 void QGLBuilder::addTriangleFan(const QGeometryData &fan)
 {
+    if (fan.count() < 3)
+        return;
     QGeometryData f = fan;
-    QVector3D save = f.commonNormal();
+    bool calcNormal = !f.hasField(QGL::Normal);
+    if (calcNormal)
+    {
+        QVector3DArray nm(f.count());
+        f.appendNormalArray(nm);
+    }
+    bool skip = false;
     for (int i = 1; i < f.count() - 1; ++i)
     {
-        dptr->addTriangle(0, i, i+1, f);
-        f.setCommonNormal(save);
+        if (calcNormal)
+            skip = qCalculateNormal(0, i, i+1, f);
+        if (!skip)
+            dptr->addTriangle(0, i, i+1, f);
     }
 }
 
@@ -610,20 +683,40 @@ void QGLBuilder::addTriangleFan(const QGeometryData &fan)
 */
 void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
 {
+    if (strip.count() < 3)
+        return;
     QGeometryData s = strip;
-    QVector3D save = s.commonNormal();
+    bool calcNormal = !s.hasField(QGL::Normal);
+    if (calcNormal)
+    {
+        QVector3DArray nm(s.count());
+        s.appendNormalArray(nm);
+    }
+    bool skip = false;
     for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
-            dptr->addTriangle(i+1, i, i+2, s);
+        {
+            if (calcNormal)
+                skip = qCalculateNormal(i+1, i, i+2, s);
+            if (!skip)
+                dptr->addTriangle(i+1, i, i+2, s);
+        }
         else
-            dptr->addTriangle(i, i+1, i+2, s);
-        s.setCommonNormal(save);
+        {
+            if (calcNormal)
+                skip = qCalculateNormal(i, i+1, i+2, s);
+            if (!skip)
+                dptr->addTriangle(i, i+1, i+2, s);
+        }
     }
 }
 
 /*!
     Adds to this section a set of quads defined by \a strip.
+
+    If \a strip has less than four vertices this function exits without
+    doing anything.
 
     The first quad is formed from the 0'th, 2'nd, 3'rd and 1'st vertices.
     The second quad is formed from the 2'nd, 4'th, 5'th and 3'rd vertices,
@@ -631,24 +724,60 @@ void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
 
     \image quads.png
 
+    One normal per quad is calculated if \a strip does not have normals.
+    For this reason quads should have all four vertices in the same plane.
+    If the vertices do not lie in the same plane, use addTriangles() instead.
+
+    Since internally \l{geometry-building}{quads are stored as two triangles},
+    each quad is actually divided in half into two triangles.
+
+    Degenerate triangles are skipped in the same way as addTriangles().
+
+    \sa addQuads(), addTriangleStrip()
 */
 void QGLBuilder::addQuadStrip(const QGeometryData &strip)
 {
+    if (strip.count() < 4)
+        return;
     QGeometryData s = strip;
-    QVector3D save = s.commonNormal();
+    bool calcNormal = !s.hasField(QGL::Normal);
+    if (calcNormal)
+    {
+        QVector3DArray nm(s.count());
+        s.appendNormalArray(nm);
+    }
+    bool skip = false;
+    QVector3D norm;
     for (int i = 0; i < s.count() - 3; i += 2)
     {
-        dptr->addTriangle(i, i+2, i+3, s);
-        dptr->addTriangle(i, i+3, i+1, s);
-        s.setCommonNormal(save);
+        if (calcNormal)
+            skip = qCalculateNormal(i, i+2, i+3, s, &norm);
+        if (!skip)
+            dptr->addTriangle(i, i+2, i+3, s);
+        if (skip)
+            skip = qCalculateNormal(i, i+3, i+1, s, &norm);
+        if (!skip)
+        {
+            if (calcNormal)
+                setNormals(i, i+3, i+1, s, norm);
+            dptr->addTriangle(i, i+3, i+1, s);
+        }
     }
 }
 
 /*!
-    Adds to this section a polygonal face, made of triangular sub-faces
-    defined by \a face.  This function provides functionality similar to the
-    OpenGL mode GL_POLYGON, except it divides the face into sub-faces
-    around a \bold{central point}.  The 0'th vertex is used for the center.
+    Adds to this section a polygonal face made of triangular sub-faces,
+    defined by \a face.  The 0'th vertex is used for the center, while
+    the subsequent vertices form the perimeter of the face, which must
+    at minimum be a triangle.
+
+    If \a face has less than four vertices this function exits without
+    doing anything.
+
+    This function provides functionality similar to the OpenGL mode GL_POLYGON,
+    except it divides the face into sub-faces around a \bold{central point}.
+    The center and perimeter vertices must lie in the same plane (unlike
+    triangle fan).  If they do not normals will be incorrectly calculated.
 
     \image triangulated-face.png
 
@@ -666,31 +795,53 @@ void QGLBuilder::addQuadStrip(const QGeometryData &strip)
     builder.addTriangulatedFace(face);
     \endcode
 
-    N sub-faces are generated where \c{N == face.count() - 1}.
-    Each triangular sub-face consists the center; followed by the \c{i'th}
-    and \c{((i + 1) % N)'th} vertex.  The last face generated then is
-    \c{(center, face[N - 1], face[0]}, the closing face.
+    N sub-faces are generated where \c{N == face.count() - 2}.
 
-    If N is 0, this function exits without doing anything.
+    Each triangular sub-face consists of the center; followed by the \c{i'th}
+    and \c{((i + 1) % N)'th} vertex.  The last face generated then is
+    \c{(center, face[N - 1], face[0]}, the closing face.  Note that the closing
+    face is automatically created, unlike addTriangleFan().
 
     If no normals are supplied in the vertices of \a face, normals are
     calculated as per addTriangle().  One normal is calculated, since a
     faces vertices lie in the same plane.
+
+    Degenerate triangles are skipped in the same way as addTriangles().
+
+    \sa addTriangleFan(), addTriangles()
 */
 void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
 {
+    if (face.count() < 4)
+        return;
     QGeometryData f;
     f.appendGeometry(face);
     int cnt = f.count();
-    if (cnt > 1)
+    bool calcNormal = !f.hasField(QGL::Normal);
+    if (calcNormal)
     {
-        for (int i = 1; i < cnt; ++i)
+        QVector3DArray nm(cnt);
+        f.appendNormalArray(nm);
+    }
+    bool skip = false;
+    QVector3D norm;
+    for (int i = 1; i < cnt; ++i)
+    {
+        int n = i + 1;
+        if (n == cnt)
+            n = 1;
+        if (calcNormal)
         {
-            int n = i + 1;
-            if (n == cnt)
-                n = 1;
-            dptr->addTriangle(0, i, n, f);
+            skip = qCalculateNormal(0, i, n, f);
+            if (norm.isNull() && !skip)
+            {
+                norm = f.normalAt(0);
+                for (int i = 0; i < cnt; ++i)
+                    f.normal(i) = norm;
+            }
         }
+        if (!skip)
+            dptr->addTriangle(0, i, n, f);
     }
 }
 
@@ -704,7 +855,7 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
     It is trivial to do extrusions using this function:
 
     \code
-    // create a series of quads for an extruded edge
+    // create a series of quads for an extruded edge along -Y
     addQuadsInterleaved(topEdge, topEdge.translated(QVector3D(0, -1, 0));
     \endcode
 
@@ -742,14 +893,31 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
 void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
                                      const QGeometryData &bottom)
 {
+    if (top.count() < 2 || bottom.count() < 2)
+        return;
     QGeometryData zipped = bottom.interleavedWith(top);
-    QVector3D norm = top.commonNormal() + bottom.commonNormal();
-    zipped.setCommonNormal(norm);
+    bool calcNormal = !zipped.hasField(QGL::Normal);
+    if (calcNormal)
+    {
+        QVector3DArray nm(zipped.count());
+        zipped.appendNormalArray(nm);
+    }
+    bool skip = false;
+    QVector3D norm;
     for (int i = 0; i < zipped.count() - 2; i += 2)
     {
-        dptr->addTriangle(i, i+2, i+3, zipped);
-        dptr->addTriangle(i, i+3, i+1, zipped);
-        zipped.setCommonNormal(norm);
+        if (calcNormal)
+            skip = qCalculateNormal(i, i+2, i+3, zipped, &norm);
+        if (!skip)
+            dptr->addTriangle(i, i+2, i+3, zipped);
+        if (skip)
+            skip = qCalculateNormal(i, i+3, i+1, zipped, &norm);
+        if (!skip)
+        {
+            if (calcNormal)
+                setNormals(i, i+3, i+1, zipped, norm);
+            dptr->addTriangle(i, i+3, i+1, zipped);
+        }
     }
 }
 
@@ -1023,8 +1191,10 @@ QGLSceneNode *QGLBuilder::sceneNode()
 */
 QGLSceneNode *QGLBuilder::newNode()
 {
+    qDebug() << "QGLBuilder::newNode -- current section:" << dptr->currentSection;
     if (dptr->currentSection == 0)
     {
+        qDebug() << "QGLBuilder::newNode -- creating new section";
         newSection();  // calls newNode()
         return dptr->currentNode;
     }
@@ -1038,13 +1208,18 @@ QGLSceneNode *QGLBuilder::newNode()
     //        qDebug() << "--- last:" << dptr->nodeStack.last();
     dptr->currentNode->setPalette(parentNode->palette());
     dptr->currentNode->setStart(dptr->currentSection->indexCount());
+    qDebug() << "Setting start of new node:" << dptr->currentNode << "to"
+            << dptr->currentSection->indexCount();
     if (dptr->nodeStack.count() == 0)
         dptr->currentSection->addNode(dptr->currentNode);
     return dptr->currentNode;
 }
 
 /*!
-    Returns a pointer to the current scene node.
+    Returns a pointer to the current scene node, within the current section.
+
+    If there is no current section then newSection() will be called to
+    create one.
 
     \sa newNode(), newSection()
 */
@@ -1124,15 +1299,6 @@ QGLSceneNode *QGLBuilder::popNode()
 QGLMaterialCollection *QGLBuilder::palette()
 {
     return dptr->rootNode->palette();
-}
-
-/*!
-    \internal
-    Mark the data as dirty and in need of loading/finalizing.
-*/
-void QGLBuilder::setDirty(bool dirty)
-{
-    dptr->finalizeNeeded = dirty;
 }
 
 /*!

@@ -70,12 +70,11 @@ public:
     QGLBuilderPrivate(QGLBuilder *parent);
     ~QGLBuilderPrivate();
     inline void setDirty(bool dirty = true);
-    void addTriangle(int a, int b, int c, QGeometryData &p);
+    void addTriangle(int a, int b, int c, const QGeometryData &p);
     void adjustSectionNodes(QGLSection *sec, int offset, const QGeometryData &geom);
     int adjustNodeTree(QGLSceneNode *top, int offset, const QGeometryData &geom,
                        QList<QGLSceneNode*> &deleted);
 
-    bool finalizeNeeded;
     QList<QGLSection*> sections;
     QGLSection *currentSection;
     QList<QGLSceneNode*> nodeStack;
@@ -84,11 +83,6 @@ public:
     int defThreshold;
     QGLBuilder *q;
 };
-
-inline void QGLBuilderPrivate::setDirty(bool dirty)
-{
-    finalizeNeeded = dirty;
-}
 
 QT_END_NAMESPACE
 

@@ -52,7 +52,7 @@
     \ingroup qt3d::geometry
 
     QLogicalVertex instances are a convenience class for use with
-    QGLBuilder.  A QLogicalVertex simply references through to the data
+    QGeometryData.  A QLogicalVertex simply references through to the data
     in a QGeometryData for a particular vertex, providing accessors to fetch
     position, texture coordinates, and other values.
 
@@ -97,19 +97,6 @@
     field is present in the vertex.  Accessing non-existent data will cause
     an assert in debug mode (from the underlying QArray), and give
     undefined behaviour in release mode.
-
-    Common normals are treated specially - if the underlying QGeometryData has
-    a non-null \l{QGeometryData::commonNormal()}{common normal} specified, then
-    the function normal() will return that common normal.
-
-    The hasField() and fields() functions can still be used to determine if
-    normal() can safely be called: hasField(QGL::Normal) will return true in
-    the case of a non-null common normal, even if there is no data present;
-    and fields() likewise will show a normal field present in that case.
-
-    In this way, common normals override the values of any normal data set.
-    If using common normals, generally do not store normal data as well,
-    since it will be ignored.
 
     \sa QGeometryData, QGLBuilder
 */

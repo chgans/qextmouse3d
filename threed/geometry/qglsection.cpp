@@ -153,7 +153,6 @@ public:
         , number_mapped(0)
         , start_ptr(-1)
         , end_ptr(-1)
-        , finalized(false)
     {
         normIndices.fill(-1, 32);
     }
@@ -298,7 +297,6 @@ public:
     QArray<int, 32> normPtrs;
     QArray<QVector3D, 32> normValues;
 
-    bool finalized;
     QList<QGLSceneNode*> nodes;
 };
 
@@ -318,16 +316,15 @@ public:
     QGLSection *s2 = new QGLSection(myDisplayList, QGL::Faceted);
     \endcode
 */
-QGLSection::QGLSection(QGLBuilder *list, QGL::Smoothing s)
+QGLSection::QGLSection(QGLBuilder *builder, QGL::Smoothing s)
     : m_smoothing(s)
-    , m_displayList(list)
     , d(0)
 {
-    Q_ASSERT(m_displayList);
+    Q_ASSERT(builder);
     enableField(QGL::Position);
     Q_ASSERT(vertexData());
     d = new QGLSectionPrivate(vertexData());
-    m_displayList->addSection(this);
+    builder->addSection(this);
 }
 
 /*!
@@ -360,14 +357,14 @@ void QGLSection::reserve(int amount)
         append(a); append(b); append(c);
     \endcode
 
-    \sa appendSmooth(), appendFaceted(), appendFlat()
+    \sa appendSmooth(), appendFaceted()
 */
 void QGLSection::append(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
 {
     Q_ASSERT(a.fields() == b.fields() && b.fields() == c.fields());
     if (!a.hasField(QGL::Normal))
     {
-        appendFlat(a, b, c);
+        appendFaceted(a, b, c);
     }
     else
     {
@@ -382,22 +379,19 @@ void QGLSection::append(const QLogicalVertex &a, const QLogicalVertex &b, const 
     \internal
     Adds the logical vertex \a lv to this section.
 
-    If the \a lv has no lighting normal component, then the append will
-    be done by calling appendFlat().
-
     Otherwise, if the \a lv does have a lighting normal; then the
     vertex processing depends on the smoothing property of this section.
     If this section has smoothing QGL::Smooth, then the append will be done
     by calling appendSmooth(); or if this section has smoothing QGL::Faceted,
     then the append will be done by calling appendFaceted().
 
-    \sa appendSmooth(), appendFaceted(), appendFlat()
+    \sa appendSmooth(), appendFaceted()
 */
 void QGLSection::append(const QLogicalVertex &lv)
 {
     if (!lv.hasField(QGL::Normal))
     {
-        appendFlat(lv);
+        appendFaceted(lv);
     }
     else
     {
@@ -541,8 +535,6 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv)
             }
         }
     }
-    d->finalized = false;
-    m_displayList->setDirty(true);
 }
 
 
@@ -571,8 +563,6 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
             d->accumulateNormal(found_index, lv.normal());
         }
     }
-    d->finalized = false;
-    m_displayList->setDirty(true);
 }
 
 /*!
@@ -588,13 +578,6 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
     As for appendSmooth() vertices are not coalesced in this way if \a lv
     has a different texture coordinate or attribute than its duplicate.
 
-    This function is used to add the vertices of a faceted face to the list:
-
-    \code
-    myDisplayList->newSection(QGLBuilder::Faceted);
-    myDisplayList->addVertex(lv);
-    \endcode
-
     In faceted surfaces, the vertex is sent to the graphics hardware once for
     each normal it has, and thus may consume more resources.
 
@@ -603,7 +586,6 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
 void QGLSection::appendFaceted(const QLogicalVertex &lv)
 {
     Q_ASSERT(lv.hasField(QGL::Position));
-    Q_ASSERT(lv.hasField(QGL::Normal));
     int found_index = d->findVertex(lv.vertex());
     bool coalesce = false;
     while (!coalesce && found_index != -1)
@@ -621,8 +603,6 @@ void QGLSection::appendFaceted(const QLogicalVertex &lv)
     {
         appendOne(lv);
     }
-    d->finalized = false;
-    m_displayList->setDirty(true);
 }
 
 /*!
@@ -652,27 +632,6 @@ void QGLSection::setMapThreshold(int t)
 {
     d->map_threshold = t;
 }
-
-/*!
-    \internal
-    Append the logical vertex \a lv to this section.
-
-    The vertex will be treated as flat colored, and thus no management
-    of lighting normals is done.
-*/
-void QGLSection::appendFlat(const QLogicalVertex &lv)
-{
-    appendVertex(lv);
-    d->finalized = false;
-    m_displayList->setDirty(true);
-}
-
-/*!
-    \internal
-    \fn QGLBuilder *QGLSection::displayList() const
-
-    Returns the display list associated with this section.
-*/
 
 /*!
     \internal

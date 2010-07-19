@@ -94,16 +94,9 @@ public:
         appendFaceted(b);
         appendFaceted(c);
     }
-    void appendFlat(const QLogicalVertex &lv);
-    void appendFlat(const QLogicalVertex &a, const QLogicalVertex &b, const QLogicalVertex &c)
-    {
-        appendFlat(a);
-        appendFlat(b);
-        appendFlat(c);
-    }
+
     inline QGL::Smoothing smoothing() const;
     inline void setSmoothing(QGL::Smoothing s);
-    inline QGLBuilder *displayList() const;
     int mapThreshold() const;
     void setMapThreshold(int);
     QList<QGLSceneNode*> nodes() const;
@@ -116,7 +109,6 @@ private:
     int appendOne(const QLogicalVertex &vertex);
 
     QGL::Smoothing m_smoothing;
-    QGLBuilder *m_displayList;
     QGLSectionPrivate *d;
 };
 
@@ -129,12 +121,6 @@ inline void QGLSection::setSmoothing(QGL::Smoothing s)
 {
     m_smoothing = s;
 }
-
-inline QGLBuilder *QGLSection::displayList() const
-{
-    return m_displayList;
-}
-
 
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGLSection &section);
