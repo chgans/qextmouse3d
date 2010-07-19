@@ -87,8 +87,11 @@ public:
           textureChanged(false),
           texture2D(0),
           material(0),
-          pixmapCacheReply(0),
-          pendingPixmapCache(false) {}
+          declarativePixmap(),
+          progress(0.0)
+    {
+    }
+
     ~EffectPrivate()
     {
         delete texture2D;
@@ -97,13 +100,12 @@ public:
     QColor color;
     bool useLighting;
     bool textureChanged;
-    QImage texture;
     QGLTexture2D *texture2D;
     QUrl textureUrl;
     QGLMaterial *material;
 
-    QDeclarativePixmapReply* pixmapCacheReply;
-    bool pendingPixmapCache;
+    QDeclarativePixmap declarativePixmap;
+    qreal progress;
 };
 
 /*!
@@ -179,75 +181,44 @@ void Effect::setTexture(const QUrl& value)
     if (d->textureUrl == value)
         return;
 
-    // got a new value, so abort any in-progress request
-    cancelLoadingTexture();
-
     d->textureUrl = value;
+    // got a new value, so abort any in-progress request
+    d->declarativePixmap.clear(this);
 
-    if (d->textureUrl.isEmpty()) {
-        d->texture = QImage();
-        d->textureChanged = true;
-    } else {
-
-        //#define QT_NO_LOCALFILE_OPTIMIZED_QML
-#ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
-        if (d->textureUrl.scheme() == QLatin1String("file")) {
-            QString fileName = value.toLocalFile();
-            d->texture = QImage(fileName);
-            d->textureChanged = true;
-
-			if (d->texture.isNull()) {
-				qWarning() << "Could not load texture file [" << value.path() << "]";
-			}
-
-            emit effectChanged();
-        } else
-#endif
-        {
-            d->textureUrl = value;
-            emit effectChanged();
-
-            // Load texture from url
-            QSize impsize;
-            QString errorString;
-            QPixmap pixmap;
-            // async is true because we've already handled the syncronous case
-            QDeclarativePixmapReply::Status status =
-                    QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString, &impsize, true);
-            if (status != QDeclarativePixmapReply::Ready && status !=
-                QDeclarativePixmapReply::Error)
-            {
-                d->pixmapCacheReply =
-                        QDeclarativePixmapCache::request(qmlEngine(this), d->textureUrl);
-                d->pendingPixmapCache = true;
-                connect(d->pixmapCacheReply, SIGNAL(finished()), this,
-                        SLOT(textureRequestFinished()));
-            } else {
-                if(status == QDeclarativePixmapReply::Ready)
-                {
-                    setTextureImage(pixmap.toImage());
-                } else {
-                    qWarning() << "Error loading texture image: " << errorString;
-                }
-            }
-        }
+    if(d->progress != 0.0)
+    {
+        d->progress = 0.0;
+        emit progressChanged(d->progress);
     }
-}
 
-/*!
-  \internal
-  Cancel any earlier network requests.
-  */
-void Effect::cancelLoadingTexture()
-{
-    if (d->pendingPixmapCache) {
-        QDeclarativePixmapCache::cancel(d->textureUrl, this);
-        d->pendingPixmapCache = false;
-        // cancel invalidates our reply as well, which should be deleted by
-        // the cache
-        if(d->pixmapCacheReply != 0)
+    if (d->textureUrl.isEmpty())
+    {
+        d->textureChanged = true;
+    }
+    else
+    {
+        // Start loading the new texture
+        d->textureUrl = value;
+        emit effectChanged();
+
+        bool async(true);
+#ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
+        async = d->textureUrl.scheme() != QLatin1String("file");
+#endif
+        d->declarativePixmap.load(qmlEngine(this), d->textureUrl, async );
+        if(d->declarativePixmap.isLoading())
         {
-            d->pixmapCacheReply = 0;
+            d->declarativePixmap.connectFinished(this, SLOT(textureRequestFinished()));
+            d->declarativePixmap.connectDownloadProgress(this, SLOT(textureRequestProgress(qint64,qint64)));
+        }
+        else
+        {
+            if(d->declarativePixmap.isError())
+                qWarning() << "Error loading pixmap: " <<                     d->declarativePixmap.error();
+            else if(d->declarativePixmap.isReady())
+            {
+                textureRequestFinished();
+            }
         }
     }
 }
@@ -259,27 +230,32 @@ void Effect::cancelLoadingTexture()
 */
 void Effect::textureRequestFinished()
 {
-    if(d->pixmapCacheReply && d->pixmapCacheReply->status() == QDeclarativePixmapReply::Ready)
+    QDeclarativePixmap::Status status = d->declarativePixmap.status();
+    d->textureChanged = true;
+    if(status == QDeclarativePixmap::Ready)
     {
-        QPixmap pixmap;
-        QString errorString;
-        QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(d->textureUrl, &pixmap, &errorString);
-        if(status == QDeclarativePixmapReply::Ready)
-        {
-            setTextureImage(pixmap.toImage());
-            d->pixmapCacheReply = 0;
-            d->pendingPixmapCache = false;
-
-			if (d->texture.isNull()) {
-				qWarning() << "Could not load specified texture file";
-			}
-            emit effectChanged();
-        } else
-        {
-            qWarning() << "Error getting texture image from cache: " << errorString;
+        setTextureImage(d->declarativePixmap.pixmap().toImage());
+        if (d->declarativePixmap.pixmap().isNull() ) {
+            qWarning() << "Could not load specified texture file";
         }
+        d->progress = 1.0;
+        emit progressChanged(d->progress);
+        emit effectChanged();
+    } else if(status != QDeclarativePixmap::Loading)
+    {
+        qWarning() << "Error getting texture image from cache: "
+                << d->declarativePixmap.error();
     }
 }
+
+void Effect::textureRequestProgress(qint64 received, qint64 total)
+{
+    if (d->declarativePixmap.status() == QDeclarativePixmap::Loading && total > 0) {
+        d->progress = qreal(received)/total;
+        emit progressChanged(d->progress);
+    }
+}
+
 
 /*!
     \property Effect::textureImage
@@ -291,12 +267,13 @@ void Effect::textureRequestFinished()
 */
 QImage Effect::textureImage() const
 {
-    return d->texture;
+    // Expensive
+    return d->declarativePixmap.pixmap().toImage();
 }
 
 void Effect::setTextureImage(const QImage& value)
 {
-    d->texture = value;
+    d->declarativePixmap.setPixmap(QPixmap::fromImage(value));
     d->textureChanged = true;
     emit effectChanged();
 }
@@ -326,6 +303,14 @@ void Effect::setMaterial(QGLMaterial *value)
         }
         emit effectChanged();
     }
+}
+
+/*!
+  Returns the progress of loading the image for the effect's texture
+ */
+qreal Effect::progress()
+{
+    return d->progress;
 }
 
 /*!
@@ -383,8 +368,8 @@ QGLTexture2D *Effect::texture2D()
     if (d->textureChanged) {
         delete d->texture2D;
         QGLTexture2D *newtex = new QGLTexture2D();
-        if (!d->texture.isNull())
-            newtex->setImage(d->texture);
+        if (!d->declarativePixmap.pixmap().isNull())
+            newtex->setPixmap(d->declarativePixmap.pixmap());
         d->texture2D = newtex;
         d->textureChanged = false;
     }

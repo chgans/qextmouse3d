@@ -65,6 +65,7 @@ class Effect : public QObject
     Q_PROPERTY(QUrl texture READ texture WRITE setTexture NOTIFY effectChanged)
     Q_PROPERTY(QImage textureImage READ textureImage WRITE setTextureImage NOTIFY effectChanged)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
+    Q_PROPERTY(qreal progress READ progress() NOTIFY progressChanged)
 public:
     Effect(QObject *parent = 0);
     ~Effect();
@@ -84,18 +85,20 @@ public:
     QGLMaterial *material() const;
     void setMaterial(QGLMaterial *value);
 
+    qreal progress();
+
     virtual void enableEffect(QGLPainter *painter);
     virtual void disableEffect(QGLPainter *painter);
 
 Q_SIGNALS:
     void effectChanged();
+    void progressChanged(qreal progress);
 
 private Q_SLOTS:
     void textureRequestFinished();
-
+    void textureRequestProgress(qint64 recieived, qint64 total);
 protected:
     QGLTexture2D *texture2D();
-    void cancelLoadingTexture();
 
 private:
     EffectPrivate *d;
