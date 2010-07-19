@@ -65,7 +65,7 @@ public:
     void setPropertiesDirty();
     void setPropertyDirty(int property);
 
-    void processFinishedRequest(QDeclarativePixmapReply* reply);
+    void processFinishedRequest();
 protected:
     void updatePixmap(int uniformLocation, QPixmap pixmap);
 

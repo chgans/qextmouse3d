@@ -444,20 +444,19 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
         break;
     case QVariant::String:
         {
-            qWarning() << "%%%string";
             // We assume strings are URLs to images for textures
             QString urlString = value.toString();
             QUrl url(urlString);
             if(urlString.isEmpty())
             {
-                QDeclarativePixmapReply* pendingRequest = pendingPixmapRequests.value(uniformLocation, 0);
-                if(pendingRequest != 0)
-                {
-                    QDeclarativePixmapCache::cancel(urls[uniformLocation], parent.data());
-                    pendingPixmapRequests.remove(uniformLocation);
-                    urls.remove(uniformLocation);
-                }
-                urls[uniformLocation] = urlString;
+//                QDeclarativePixmapReply* pendingRequest = pendingPixmapRequests.value(uniformLocation, 0);
+//                if(pendingRequest != 0)
+//                {
+//                    QDeclarativePixmapCache::cancel(urls[uniformLocation], parent.data());
+//                    pendingPixmapRequests.remove(uniformLocation);
+//                    urls.remove(uniformLocation);
+//                }
+//                urls[uniformLocation] = urlString;
                 break;
             };
 
@@ -486,43 +485,35 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
 
             if (urlString != urls[uniformLocation])
             {
-                qDebug() << "acting on new url";
                 QPixmap pixmap;
                 QString errorString;
 
-                QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(urlString, &pixmap, &errorString);
+//                QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(urlString, &pixmap, &errorString);
 
 
-                if (status != QDeclarativePixmapReply::Ready &&
-                    status != QDeclarativePixmapReply::Error)
-                {
-                    qDebug() << "pixmap was unrequested, requesting now";
-                    urls[uniformLocation] = urlString;
-                    QDeclarativeEngine *engine = qmlEngine(parent.data());
-                    QSize impsize;
+//                if (status != QDeclarativePixmapReply::Ready &&
+//                    status != QDeclarativePixmapReply::Error)
+//                {
+//                    urls[uniformLocation] = urlString;
+//                    QDeclarativeEngine *engine = qmlEngine(parent.data());
+//                    QSize impsize;
 
-                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
-                    pendingPixmapRequests[uniformLocation] = reply;
-                    if(status != QDeclarativePixmapReply::Loading)
-                    {
-                        qDebug() << "Warning, image not loading";
-                    }
-                    QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
-                }
-                else if (status == QDeclarativePixmapReply::Error)
-                {
-                    qWarning() << "Error getting resource for property"
-                            << parent.data()->metaObject()->property(propertyIndex).name()
-                            << ":" << errorString;
-                    return false;
-                } else if (status == QDeclarativePixmapReply::Ready)
-                {
-                    qDebug() << "pixmap was ready, applying immediately:";
-                    updatePixmap(uniformLocation, pixmap);
-                }  else {
-                    qDebug() << "unhandled case? status: " << status;
+//                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
+//                    pendingPixmapRequests[uniformLocation] = reply;
+//                    QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
+//                }
+//                else if (status == QDeclarativePixmapReply::Error)
+//                {
+//                    qWarning() << "Error getting resource for property"
+//                            << parent.data()->metaObject()->property(propertyIndex).name()
+//                            << ":" << errorString;
+//                    return false;
+//                } else if (status == QDeclarativePixmapReply::Ready)
+//                {
+//                    updatePixmap(uniformLocation, pixmap);
+//                }  else {
 
-                }
+//                }
             }
         }
         break;
@@ -657,16 +648,14 @@ void ShaderProgramEffect::setPropertyDirty(int property)
   a requested network resource is ready, so load the pixmap and get
   ready for painting with it
 */
-void ShaderProgramEffect::processFinishedRequest(QDeclarativePixmapReply* reply)
+void ShaderProgramEffect::processFinishedRequest()
 {
-    qDebug() << "processFinishedRequest";
-    QUrl url = reply->url();
+    QUrl url;
     QPixmap pixmap;
     QString errorString;
-    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, &pixmap, &errorString);
-    Q_UNUSED(status);
-    int uniformLocation = pendingPixmapRequests.key(reply, -1);
-    updatePixmap(uniformLocation, pixmap);
+//    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, &pixmap, &errorString);
+//    int uniformLocation = pendingPixmapRequests.key(reply, -1);
+//    updatePixmap(uniformLocation, pixmap);
 }
 
 void ShaderProgramEffect::updatePixmap(int uniformLocation, QPixmap pixmap)
@@ -799,18 +788,17 @@ void ShaderProgram::markPropertyDirty(int property)
  */
 void ShaderProgram::pixmapRequestFinished()
 {
-    qDebug() << "void ShaderProgram::pixmapRequestFinished()";
     QObject *sender = QObject::sender();
-    QDeclarativePixmapReply* reply =
-            qobject_cast<QDeclarativePixmapReply*>(sender);
+//    QDeclarativePixmapReply* reply =
+//            qobject_cast<QDeclarativePixmapReply*>(sender);
 
-    if(reply == 0)
-    {
-        qWarning() << "Warning: received pixmapRequestFinished() signal from unexpected object, unable to process requested pixmap" << sender;
-        return;
-    }
+//    if(reply == 0)
+//    {
+//        qWarning() << "Warning: received pixmapRequestFinished() signal from unexpected object, unable to process requested pixmap" << sender;
+//        return;
+//    }
 
-    d->effect->processFinishedRequest(reply);
+    d->effect->processFinishedRequest();
 }
 
 /*!
