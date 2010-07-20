@@ -57,6 +57,7 @@ BuilderView::BuilderView(QWidget *parent)
 {
     //! [0]
     QGLSceneNode *can = buildGeometry();
+    qDumpScene(can);
     can->setParent(canScene);
     {
         // rotate the can around so its label shows; and down
@@ -122,9 +123,12 @@ QGLSceneNode *BuilderView::buildGeometry()
     QGLSceneNode *root = builder.sceneNode();
 
     QGLMaterial *mat = new QGLMaterial;
-    mat->setAmbientColor(QColor(32, 32, 64));
-    mat->setDiffuseColor(QColor(64, 64, 128));
-    mat->setTextureUrl(QUrl(QLatin1String(":/images/qt-soup.png")));
+    mat->setAmbientColor(Qt::lightGray);
+    mat->setDiffuseColor(Qt::lightGray);
+    QUrl url;
+    url.setPath(QLatin1String(":/images/qt-soup.png"));
+    url.setScheme(QLatin1String("file"));
+    mat->setTextureUrl(url);
     int canMat = root->palette()->addMaterial(mat);
     root->setMaterialIndex(canMat);
     root->setEffect(QGL::LitMaterial);
@@ -150,10 +154,15 @@ QGLSceneNode *BuilderView::buildGeometry()
     //! [3]
     // create the flat top lid of the can
     builder.newSection();
-    builder.addTriangulatedFace(canRim);
+    builder.currentNode()->setObjectName("CanTop");
+    QGeometryData top;
+    top.appendVertex(canRim.center());
+    top.appendVertexArray(canRim.vertices());
+    builder.addTriangulatedFace(top);
 
-    // create the sides of the can, and save the extruded bottom rim
+    // create the sides of the can
     builder.newSection();
+    builder.currentNode()->setObjectName("CanSides");
     builder.currentNode()->setMaterialIndex(canMat);
     builder.currentNode()->setEffect(QGL::LitModulateTexture2D);
     QGeometryData canTop = canRim;
@@ -166,7 +175,12 @@ QGLSceneNode *BuilderView::buildGeometry()
 
     // create the flat bottom lid of the can
     builder.newSection();
-    QGeometryData canBottom = canRim.translated(canExtrudeVec).reversed();
+    builder.currentNode()->setObjectName("CanBottom");
+    builder.currentNode()->setEffect(QGL::LitMaterial);
+    QGeometryData rimReversed = canRim.translated(canExtrudeVec).reversed();
+    QGeometryData canBottom;
+    canBottom.appendVertex(rimReversed.center());
+    canBottom.appendVertexArray(rimReversed.vertices());
     builder.addTriangulatedFace(canBottom);
 
     return builder.finalizedSceneNode();
