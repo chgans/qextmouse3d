@@ -65,6 +65,7 @@ class Effect : public QObject
     Q_PROPERTY(QUrl texture READ texture WRITE setTexture NOTIFY effectChanged)
     Q_PROPERTY(QImage textureImage READ textureImage WRITE setTextureImage NOTIFY effectChanged)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
+    Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
 public:
     Effect(QObject *parent = 0);
     ~Effect();
@@ -72,30 +73,32 @@ public:
     virtual QColor color() const;
     virtual void setColor(const QColor& value);
 
-    bool useLighting() const;
-    void setUseLighting(bool value);
+    virtual bool useLighting() const;
+    virtual void setUseLighting(bool value);
 
-    QUrl texture() const;
-    void setTexture(const QUrl& value);
+    virtual QUrl texture() const;
+    virtual void setTexture(const QUrl& value);
 
-    QImage textureImage() const;
-    void setTextureImage(const QImage& value);
+    virtual QImage textureImage() const;
+    virtual void setTextureImage(const QImage& value);
 
-    QGLMaterial *material() const;
-    void setMaterial(QGLMaterial *value);
+    virtual QGLMaterial *material() const;
+    virtual void setMaterial(QGLMaterial *value);
 
     virtual void enableEffect(QGLPainter *painter);
     virtual void disableEffect(QGLPainter *painter);
 
+    virtual qreal progress();
+
 Q_SIGNALS:
     void effectChanged();
+    void progressChanged(qreal progress);
 
-private Q_SLOTS:
-    void textureRequestFinished();
-
+protected Q_SLOTS:
+    virtual void textureRequestFinished();
+    virtual void textureRequestProgress(qint64 recieived, qint64 total);
 protected:
     QGLTexture2D *texture2D();
-    void cancelLoadingTexture();
 
 private:
     EffectPrivate *d;

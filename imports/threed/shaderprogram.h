@@ -69,6 +69,8 @@ public:
 public slots:
     void markAllPropertiesDirty();
     void markPropertyDirty(int property);
+signals:
+    void finishedLoading();
 private slots:
     void pixmapRequestFinished();
 private:
