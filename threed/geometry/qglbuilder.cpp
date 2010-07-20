@@ -545,6 +545,8 @@ void QGLBuilder::addTriangles(const QGeometryData &triangles)
     if (triangles.indexCount() > 0)
     {
         // raw triangle mode
+        if (dptr->currentSection == 0)
+            newSection();
         dptr->currentSection->appendGeometry(triangles);
         dptr->currentSection->appendIndices(triangles.indices());
         dptr->currentNode->setCount(dptr->currentNode->count() + triangles.indexCount());

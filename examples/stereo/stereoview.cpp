@@ -47,19 +47,21 @@
 StereoView::StereoView(QWidget *parent)
     : QGLView(parent)
 {
+    QGLMaterialCollection *materials = new QGLMaterialCollection;
     scene = new QGLSceneNode(this);
+    scene->setPalette(materials);
 
     QGLSceneNode *teapot;
     QGLSceneNode *cube;
 
     {
-        QGLBuilder builder;
+        QGLBuilder builder(materials);
         builder << QGLTeapot();
         teapot = builder.finalizedSceneNode();
     }
 
     {
-        QGLBuilder builder;
+        QGLBuilder builder(materials);
         builder.newSection(QGL::Faceted);
         builder << QGLCube(1.0f);
         cube = builder.finalizedSceneNode();

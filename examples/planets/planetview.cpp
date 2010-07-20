@@ -49,7 +49,6 @@ PlanetView::PlanetView(QWidget *parent)
       planet3Posn(6.0f, 0.0f, 0.0f)
 {
     QGLBuilder builder;
-    builder.newSection(QGL::Faceted);
     sun = builder.newNode();
     builder << QGLSphere(2.0f, 4);
     planet1 = builder.newNode();
@@ -93,6 +92,7 @@ PlanetView::PlanetView(QWidget *parent)
     animPlanet1->setEndValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet1->setDuration(3000);
     animPlanet1->setLoopCount(-1);
+    connect(planet1, SIGNAL(positionChanged()), this, SLOT(update()));
     animPlanet1->start();
 
     radius = 4.0f;
@@ -105,6 +105,7 @@ PlanetView::PlanetView(QWidget *parent)
     animPlanet2->setEndValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet2->setDuration(7000);
     animPlanet2->setLoopCount(-1);
+    connect(planet2, SIGNAL(positionChanged()), this, SLOT(update()));
     animPlanet2->start();
 
     radius = 6.0f;
@@ -117,6 +118,7 @@ PlanetView::PlanetView(QWidget *parent)
     animPlanet3->setEndValue(qVariantFromValue(QVector3D(radius, 0.0f, 0.0f)));
     animPlanet3->setDuration(5000);
     animPlanet3->setLoopCount(-1);
+    connect(planet3, SIGNAL(positionChanged()), this, SLOT(update()));
     animPlanet3->start();
 
     camera()->setEye(QVector3D(0.0f, 0.0f, 25.0f));

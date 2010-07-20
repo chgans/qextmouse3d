@@ -56,7 +56,10 @@ BasketView::BasketView(QWidget *parent)
     basket = builder.finalizedSceneNode();
 
     QGLMaterial *mat = new QGLMaterial;
-    mat->setTextureUrl(QUrl(QLatin1String(":/basket.jpg")));
+    QUrl url;
+    url.setPath(QLatin1String(":/basket.jpg"));
+    url.setScheme(QLatin1String("file"));
+    mat->setTextureUrl(url);
     basket->setMaterial(mat);
     basket->setEffect(QGL::FlatReplaceTexture2D);
     basket->setScale(QVector3D(1.5f, 1.5f, 1.5f));

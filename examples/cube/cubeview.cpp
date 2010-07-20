@@ -50,6 +50,7 @@ CubeView::CubeView(QWidget *parent)
 {
     QGLBuilder builder;
     builder << QGL::Faceted << QGLCube(1.5f);
+    qDebug() << format().stereo();
     cube = builder.finalizedSceneNode();
 
     QMatrix4x4 m;
@@ -58,13 +59,22 @@ CubeView::CubeView(QWidget *parent)
 
     QGLMaterial *mat = new QGLMaterial;
     mat->setAmbientColor(QColor(170, 202, 0));
-    mat->setTextureUrl(QUrl(":/qtlogo.png"));
+    QUrl url;
+    url.setPath(QLatin1String(":/qtlogo.png"));
+    url.setScheme(QLatin1String("file"));
+    mat->setTextureUrl(url);
     cube->setMaterial(mat);
 
     cube->setEffect(QGL::LitDecalTexture2D);
 }
 
+CubeView::~CubeView()
+{
+    delete cube;
+}
+
 void CubeView::paintGL(QGLPainter *painter)
 {
     cube->draw(painter);
+    qDebug() << "Hi Mom!!!";
 }

@@ -51,7 +51,7 @@ class CubeView : public QGLView
     Q_OBJECT
 public:
     CubeView(QWidget *parent = 0);
-    ~CubeView() {}
+    ~CubeView();
 
 protected:
     void paintGL(QGLPainter *painter);
