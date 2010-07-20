@@ -248,6 +248,10 @@ void Effect::textureRequestFinished()
     }
 }
 
+/*!
+    Updates the progress of an asyncronous resource request.  Progress is
+    simply \a received / \a total.
+*/
 void Effect::textureRequestProgress(qint64 received, qint64 total)
 {
     if (d->declarativePixmap.status() == QDeclarativePixmap::Loading && total > 0) {
@@ -271,6 +275,9 @@ QImage Effect::textureImage() const
     return d->declarativePixmap.pixmap().toImage();
 }
 
+/*!
+  Sets this effect to use \value as the image for it's texture.
+*/
 void Effect::setTextureImage(const QImage& value)
 {
     d->declarativePixmap.setPixmap(QPixmap::fromImage(value));
@@ -289,6 +296,9 @@ QGLMaterial *Effect::material() const
     return d->material;
 }
 
+/*!
+  Sets the material for use with this effect.
+*/
 void Effect::setMaterial(QGLMaterial *value)
 {
     if (d->material != value) {
@@ -306,12 +316,10 @@ void Effect::setMaterial(QGLMaterial *value)
 }
 
 /*!
-  Returns the progress of loading the image for the effect's texture
- */
-qreal Effect::progress()
-{
-    return d->progress;
-}
+    \property Effect::progress
+    \brief Tracks how much of a remote resource has been downloaded, where 0.0
+    is no progress, and 1.0 is completion.
+*/
 
 /*!
     Enable the effect on for a given \a painter.
@@ -354,10 +362,24 @@ void Effect::disableEffect(QGLPainter *painter)
     painter->setTexture((QGLTexture2D *)0);
 }
 
-/*! \fn void Effect::effectChanged();
+/*!
+  Returns the progress of remote resource loading.
+  */
+qreal Effect::progress()
+{
+    return d->progress;
+}
 
-  Signals that a preoperty of the Effect has changed in some way, this may be a texture, material,
-  or other parameter.
+/*!
+  \fn void Effect::effectChanged();
+  Signals that a property of the Effect has changed in some way, this may be
+  a texture, material, or other parameter.
+*/
+
+/*!
+  \fn void Effect::progressChanged(qreal progress)
+  Emitted while loading a resource to \a progress as a fraction of total size
+  loaded.  Starts at 0.0, with 1.0 indicating completion.
 */
 
 /*!

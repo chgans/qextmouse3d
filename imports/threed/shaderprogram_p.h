@@ -5,12 +5,23 @@
 #include <QGLShaderProgram>
 #include "effect.h"
 #include "qglabstracteffect.h"
+#include "private/qdeclarativepixmapcache_p.h"
 
 class ShaderProgram;
 
 class ShaderProgramEffect;
 class QDeclarativePixmapReply;
 
+/*!
+  \internal
+    This class's purpose is to be a proxy for signals for the main shader
+    program.
+
+    This is necessary so the qt_metacall trick can be used to tell tell apart
+    the update signals from QML generated properties.  (In short, each update
+    signal is connected to an imaginary slot, but calling the slot is
+    intercepted and replaced by a call to the appropriate update function).
+*/
 class ShaderProgramPropertyListener : public QObject
 {
     Q_OBJECT
@@ -24,6 +35,10 @@ public:
     }
 };
 
+/*!
+  \internal
+  \sa ShaderProgramPropertyListener
+*/
 class ShaderProgramPropertyListenerEx : public ShaderProgramPropertyListener
 {
 public:
@@ -38,9 +53,11 @@ private:
 };
 
 
-/*
-  The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.  It contains the actual
-  QGLShaderProgram along with all of the necessary parameters to use that program.
+/*!
+  \internal
+  The ShaderProgramEffect class underlies the ShaderProgram class in Qml/3d.
+  It contains the actual QGLShaderProgram along with all of the necessary
+  parameters to use that program.
 */
 class ShaderProgramEffect : public QGLAbstractEffect
 {
@@ -65,9 +82,10 @@ public:
     void setPropertiesDirty();
     void setPropertyDirty(int property);
 
-    void processFinishedRequest();
+    bool pixmapRequestFinished();
+    void setAttributeFields(QGL::VertexAttribute fields);
 protected:
-    void updatePixmap(int uniformLocation, QPixmap pixmap);
+    void processTextureUrl(int uniformLocation, QString urlString);
 
 private:
     void setUniformLocationsFromParentProperties();
@@ -95,11 +113,14 @@ private:
     QArray<int> propertiesWithoutNotificationSignal;
     ShaderProgramPropertyListener* propertyListener;
 
-    QMap<int, QGLTexture2D*> texture2DsByUniformValue;
-    QMap <int, QPixmap> pendingPixmapsByUniformLocations;
-    QMap <QDeclarativePixmapReply*, int> pendingPixmapRequestsWithUniformLocations;
-    QMap <int, QDeclarativePixmapReply*> pendingPixmapRequests;
-    QMap <int, QString> urls;
+    // Thes maps are all referenced by uniform location
+    QMap<int, QGLTexture2D*> texture2Ds;
+    QMap<int, QDeclarativePixmap*> declarativePixmaps;
+    QMap<int, QString> urls;
+
+    // These are sets of uniform locations
+    QSet<int> loadingTextures;
+    QSet<int> changedTextures;
 };
 
 #endif // SHADERPROGRAM_P_H

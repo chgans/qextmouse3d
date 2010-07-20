@@ -52,8 +52,7 @@
 /*!
     \class ShaderProgram
     \brief The ShaderProgram class is derivative class of the more general \l Effect class in Qml/3d.
-    Whereas the Effect class provides support for standard effects under OpenGL, the ShaderProgramEffect class
-    provides a more specific effects capability based on custom shader programs for the GPU.
+    Whereas the Effect class provides support for standard effects under OpenGL, the ShaderProgramEffect supports effects based on custom shader programs for the GPU.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::qml3d
@@ -86,6 +85,8 @@
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0 ]\endcode \o uniform mat4 myMatrix4x4;
+    \row \o \code property string imageExample :
+        "http://example.com/image.png" \endcode \o uniform sampler2D imageExample;
     \endtable
 
     Note: The precision hints in this table are just examples.  highp,
@@ -97,11 +98,27 @@
     can have significant performance implications.  Conversion from variants
     can be slow, and matrices can consume multiple slots for uniforms, which
     are usually limited by hardware.
+
+    String properties are assumed to be urls to images for use in textures.
+    Where these images are remote, they are loaded in the background and bound
+    to the effect when they are ready.
     \sa QGLGraphicsViewportItem
 */
 
 class ShaderProgramEffect;
 QT_BEGIN_NAMESPACE
+
+class ShaderProgramPrivate
+{
+public:
+    ShaderProgramPrivate() : regenerate(false), effect(0) {}
+
+    QString vertexShader;
+    QString fragmentShader;
+    bool regenerate;
+    ShaderProgramEffect *effect;
+};
+
 
 /*
   Construction for the ShaderProgramEffect class consists of setting the key parameter values of the
@@ -133,10 +150,13 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 ShaderProgramEffect::~ShaderProgramEffect()
 {
     delete program;
-    QList<QGLTexture2D*> textures = texture2DsByUniformValue.values();
+    QList<QGLTexture2D*> textures = texture2Ds.values();
     QGLTexture2D* texture;
     foreach(texture, textures)
         delete texture;
+    QDeclarativePixmap* declarativePixmap;
+    foreach(declarativePixmap, declarativePixmaps)
+        delete declarativePixmap;
 }
 
 /*
@@ -227,7 +247,8 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
     this->setPropertiesDirty();
 }
 
-/*
+/*!
+  \internal
   This function returns a list of the requisite parameter fields for the shader program currently defined.
   This assists by clearly identifying the items which need to be specified for correct funcitoning of the
   program.
@@ -248,9 +269,10 @@ QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
     return fields;
 }
 
-/*
-    This activates or deactivates the shader based on the \a flag paramter.  This effectively binds
-    or releases the QGLShaderProgram.
+/*!
+  \internal
+    This activates or deactivates the shader based on the \a flag paramter.
+    This effectively binds or releases the QGLShaderProgram to \a painter.
 */
 void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 {
@@ -328,13 +350,25 @@ static inline void setUniformFromFloatList(QGLShaderProgram *program, int unifor
 void ShaderProgramEffect::update
     (QGLPainter *painter, QGLPainter::Updates updates)
 {
-    if( pendingPixmapsByUniformLocations.count() > 0 )
+    if(changedTextures.count() > 0)
     {
-        foreach (int i, pendingPixmapsByUniformLocations.keys())
+        foreach (int i, changedTextures)
         {
-            setUniform(i, pendingPixmapsByUniformLocations.value(i), painter);
+            if(!declarativePixmaps.contains(i))
+            {
+                changedTextures.remove(i);
+                continue;
+            }
+
+            if(declarativePixmaps[i]->isReady())
+            {
+                setUniform(i, declarativePixmaps[i]->pixmap(), painter);
+            } else
+            {
+                qWarning() << "Warning: ShaderProgramEffect failed to apply texture for uniform" << i << (urls.contains(i) ? QString(" url: ") + urls[i] : "");
+            }
+            changedTextures.remove(i);
         }
-        pendingPixmapsByUniformLocations.clear();
     }
 
     // Update the matrix uniforms.
@@ -380,11 +414,11 @@ void ShaderProgramEffect::update
 
 inline QGLTexture2D* ShaderProgramEffect::textureForUniformValue(int uniformLocation)
 {
-    QGLTexture2D* result = texture2DsByUniformValue.value(uniformLocation);
+    QGLTexture2D* result = texture2Ds.value(uniformLocation);
     if(result == 0)
     {
         result = new QGLTexture2D();
-        texture2DsByUniformValue[uniformLocation] = result;
+        texture2Ds[uniformLocation] = result;
     }
     return result;
 }
@@ -446,75 +480,7 @@ inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, Q
         {
             // We assume strings are URLs to images for textures
             QString urlString = value.toString();
-            QUrl url(urlString);
-            if(urlString.isEmpty())
-            {
-//                QDeclarativePixmapReply* pendingRequest = pendingPixmapRequests.value(uniformLocation, 0);
-//                if(pendingRequest != 0)
-//                {
-//                    QDeclarativePixmapCache::cancel(urls[uniformLocation], parent.data());
-//                    pendingPixmapRequests.remove(uniformLocation);
-//                    urls.remove(uniformLocation);
-//                }
-//                urls[uniformLocation] = urlString;
-                break;
-            };
-
-            // Try to make path absolute:
-            if (url.isRelative())
-            {
-                // Get the baseUrl from the declarative engine
-                QDeclarativeContext *context =
-                        QDeclarativeEngine::contextForObject(parent.data());
-
-                if(context)
-                {
-                    QUrl baseurl = context->baseUrl();
-                    QUrl absolute =  baseurl.resolved(urlString);
-
-                    if(absolute.isValid())
-                    {
-                        url = absolute;
-                        urlString = absolute.toString();
-                    } else {
-                        qWarning() << "Warning: failed to resolve relative path for property"
-                                << parent.data()->metaObject()->property(propertyIndex).name();
-                    }
-                }
-            };
-
-            if (urlString != urls[uniformLocation])
-            {
-                QPixmap pixmap;
-                QString errorString;
-
-//                QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(urlString, &pixmap, &errorString);
-
-
-//                if (status != QDeclarativePixmapReply::Ready &&
-//                    status != QDeclarativePixmapReply::Error)
-//                {
-//                    urls[uniformLocation] = urlString;
-//                    QDeclarativeEngine *engine = qmlEngine(parent.data());
-//                    QSize impsize;
-
-//                    QDeclarativePixmapReply *reply = QDeclarativePixmapCache::request(engine, url);
-//                    pendingPixmapRequests[uniformLocation] = reply;
-//                    QObject::connect(reply, SIGNAL(finished()), parent.data(), SLOT(pixmapRequestFinished()));
-//                }
-//                else if (status == QDeclarativePixmapReply::Error)
-//                {
-//                    qWarning() << "Error getting resource for property"
-//                            << parent.data()->metaObject()->property(propertyIndex).name()
-//                            << ":" << errorString;
-//                    return false;
-//                } else if (status == QDeclarativePixmapReply::Ready)
-//                {
-//                    updatePixmap(uniformLocation, pixmap);
-//                }  else {
-
-//                }
-            }
+            processTextureUrl(uniformLocation, urlString);
         }
         break;
     case QVariant::Image:
@@ -646,50 +612,115 @@ void ShaderProgramEffect::setPropertyDirty(int property)
 /*!
   \internal Notification recieved via parent ShaderProgram parent that
   a requested network resource is ready, so load the pixmap and get
-  ready for painting with it
+  ready for painting with it.
+
+  Returns true if the Effect has finished loading all it's remote resources.
 */
-void ShaderProgramEffect::processFinishedRequest()
+bool ShaderProgramEffect::pixmapRequestFinished()
 {
-    QUrl url;
-    QPixmap pixmap;
-    QString errorString;
-//    QDeclarativePixmapReply::Status status = QDeclarativePixmapCache::get(url, &pixmap, &errorString);
-//    int uniformLocation = pendingPixmapRequests.key(reply, -1);
-//    updatePixmap(uniformLocation, pixmap);
-}
-
-void ShaderProgramEffect::updatePixmap(int uniformLocation, QPixmap pixmap)
-{
-    if(uniformLocation == -1)
+    bool removedTexture = false;
+    foreach (int i, loadingTextures)
     {
-        // Unknown uniform, most likely because the uniform was changed before
-        // this pixmap has finished loading.
-        // The pixmap should have been cached, and should be ready if
-        // it's needed again later.
-        return;
+        if(!declarativePixmaps.contains(i))
+        {
+            loadingTextures.remove(i);
+            removedTexture = true;
+            continue;
+        }
+
+        if(declarativePixmaps[i]->isReady())
+        {
+            changedTextures.insert(i);
+            loadingTextures.remove(i);
+            removedTexture = true;
+        } else if (!declarativePixmaps[i]->isLoading())
+        {
+            qWarning() << "Error loading " << urls[i] << ": "
+                    << declarativePixmaps[i]->error();
+            loadingTextures.remove(i);
+            removedTexture = true;
+        }
     }
-
-    // Add update information to be process next update() and make sure that
-    // pixmap is not deleted prematurely
-    pendingPixmapsByUniformLocations[uniformLocation] = pixmap;
-    //    QGLTexture2D* texture = textureForUniformValue(uniformLocation);
-    //    texture->setPixmap(*pixmap);
-
-    // The pixmap will be set on the painter at the next update(),
-    // and can be considered clean
-    dirtyProperties.removeAll(uniformLocation);
+    return (removedTexture && loadingTextures.count() == 0);
 }
 
-class ShaderProgramPrivate
-{
-public:
-    ShaderProgramPrivate() : regenerate(false), effect(0) {}
+/*!
+  \internal Update the image for the texture bound at \a uniform location with
+    the the image at \a urlString.  If \a urlString is a remote resource, this
+    starts an asycnrounous loading process.
 
-    QString vertexShader;
-    QString fragmentShader;
-    bool regenerate;
-    ShaderProgramEffect *effect;
-};
+    Note: Consecutive calls with the same url for a given uniform are ignored.
+*/
+void ShaderProgramEffect::processTextureUrl(int uniformLocation, QString urlString)
+{
+    QUrl url(urlString);
+    if(urlString.isEmpty() &&
+       urls.contains(uniformLocation) &&
+       !urls[uniformLocation].isNull())
+    {
+        if(!declarativePixmaps[uniformLocation]->isNull())
+        {
+            declarativePixmaps[uniformLocation]->clear(parent.data());
+            urls.remove(uniformLocation);
+            changedTextures.insert(uniformLocation);
+            return;
+        }
+    };
+
+    bool async = true;
+    // Try to make path absolute:
+    if (url.isRelative())
+    {
+        async = false;
+        // Get the baseUrl from the declarative engine
+        QDeclarativeContext *context =
+                QDeclarativeEngine::contextForObject(parent.data());
+
+        if(context)
+        {
+            QUrl baseurl = context->baseUrl();
+            QUrl absolute =  baseurl.resolved(urlString);
+
+            if(absolute.isValid())
+            {
+                url = absolute;
+                urlString = absolute.toString();
+            } else {
+                qWarning() << "Warning: failed to resolve relative path " <<
+                        urlString;
+            }
+        }
+    };
+
+    if (urlString != urls[uniformLocation])
+    {
+        urls.insert(uniformLocation, urlString);
+        if(declarativePixmaps.contains(uniformLocation))
+            declarativePixmaps[uniformLocation]->clear();
+        else
+            declarativePixmaps[uniformLocation] = new QDeclarativePixmap();
+
+        QDeclarativePixmap* declarativePixmap =
+                declarativePixmaps[uniformLocation];
+        QDeclarativeEngine *engine = qmlEngine(parent.data());
+        declarativePixmap->load(engine, urlString, async);
+
+        QDeclarativePixmap::Status status =
+                declarativePixmap->status();
+        if( status == QDeclarativePixmap::Ready)
+        {
+            changedTextures.insert(uniformLocation);
+            return;
+        } else if (status == QDeclarativePixmap::Loading)
+        {
+            declarativePixmap->connectFinished(parent.data(), SLOT(pixmapRequestFinished()));
+            loadingTextures.insert(uniformLocation);
+        } else {
+            qWarning() << "Failed to load texture " << urlString << ": "
+                    << declarativePixmap->error();
+        }
+    }
+}
 
 /*!
   Construction of the shader program and assignment of its \a parent object.
@@ -763,8 +794,8 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     }
     d->regenerate = false;
     painter->setUserEffect(d->effect);
-    painter->setTexture(texture2D());
     painter->setColor(color());
+    painter->setTexture(texture2D());
 }
 
 /*!
@@ -784,21 +815,20 @@ void ShaderProgram::markPropertyDirty(int property)
 }
 
 /*!
+  \fn void ShaderProgram::finishedLoading()
+  Emitted when the last remote resource request is resolved, and implies that
+  the effect is ready to be displayed.  Does not imply
+*/
+
+/*!
  \internal Proxy the signal for the ShaderProgramEffect class
  */
 void ShaderProgram::pixmapRequestFinished()
 {
-    QObject *sender = QObject::sender();
-//    QDeclarativePixmapReply* reply =
-//            qobject_cast<QDeclarativePixmapReply*>(sender);
-
-//    if(reply == 0)
-//    {
-//        qWarning() << "Warning: received pixmapRequestFinished() signal from unexpected object, unable to process requested pixmap" << sender;
-//        return;
-//    }
-
-    d->effect->processFinishedRequest();
+    if(d->effect->pixmapRequestFinished())
+    {
+        emit finishedLoading();
+    }
 }
 
 /*!
