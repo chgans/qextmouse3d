@@ -435,28 +435,26 @@ QGeometryData QGeometryData::reversed() const
 {
     QGeometryData r;
     for (int i = count() - 1; i >= 0; --i)
-        r.appendVertex(vertexAt(i));
+        r.appendVertex(logicalVertexAt(i));
     return r;
 }
 
 /*!
-    Returns a copy of this primitive with QGL::Position data translated by
+    Returns a copy of this geometry data with QGL::Position data translated by
     the vector \a t.  The other fields are unchanged.
 */
 QGeometryData QGeometryData::translated(const QVector3D &t) const
 {
-    QGeometryData r;
-    QArray<QVector3D> v = vertices();
+    QGeometryData r(*this);
     for (int i = 0; i < count(); ++i)
     {
-        r.appendVertex(vertexAt(i));
-        r.vertex(i) = v[i] + t;
+        r.vertex(i) = r.vertexAt(i) + t;
     }
     return r;
 }
 
 /*!
-    Modifies this primitive by generating texture data based on QGL::Position
+    Modifies this geometry data by generating texture data based on QGL::Position
     values.  If \a orientation is Qt::Horizontal (the default) then x-coordinate
     values are generated, and y-coordinate values are set to 0.0; otherwise
     y-coordinate values are generated and x-coordinate values are set to 0.0.
@@ -548,6 +546,7 @@ QGeometryData QGeometryData::interleavedWith(const QGeometryData &other) const
             if (mask & fields)
             {
                 QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                res.enableField(attr);
                 if (attr < QGL::TextureCoord0)
                 {
                     if (attr == QGL::Position)
@@ -607,7 +606,7 @@ QGeometryData QGeometryData::interleavedWith(const QGeometryData &other) const
                 }
             }
         }
-        res.d->count = cnt;
+        res.d->count = cnt * 2;
     }
     return res;
 }
@@ -720,7 +719,14 @@ void QGeometryData::interleaveWith(const QGeometryData &other)
     QVector3D x = data.vertexAt(0);       // asserts - no data in vertices
     qDebug() << (flds == data.fields());  // still prints "true"
     \endcode
-*/
+
+    To clear a specific field and its data use \c{data.clear(field)} below.
+
+    To clear all fields and data, simply set this to an empty geometry:
+    \code
+    data = QGeometryData();
+    \endcode
+ */
 void QGeometryData::clear()
 {
     if (d)
@@ -760,8 +766,8 @@ void QGeometryData::clear()
 }
 
 /*!
-    Clears the data from \a field.
-    \overload
+    Clears the data from \a field, and removes the field.  After this call
+    hasField() will return false for this field.
 */
 void QGeometryData::clear(QGL::VertexAttribute field)
 {
@@ -793,6 +799,7 @@ void QGeometryData::clear(QGL::VertexAttribute field)
             d->attributes[d->key[field]].clear();
         }
         d->key[field] = -1;
+        d->fields = d->fields & ~QGL::fieldMask(field);
     }
 }
 
@@ -1870,7 +1877,6 @@ int QGeometryData::indexCount() const
 */
 void QGeometryData::detach()
 {
-    qDebug() << "detaching" << this;
     if (!d) // lazy creation of data block
     {
         d = new QGeometryDataPrivate;

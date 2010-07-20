@@ -115,6 +115,9 @@ void tst_QGLSection::create()
     QCOMPARE(section->count(), 0);
     QCOMPARE(section->boundingBox(), QBox3D());
     QCOMPARE(section->mapThreshold(), 5);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::modify()
@@ -138,6 +141,9 @@ void tst_QGLSection::modify()
     QGLSection *section2 = builder.currentSection();
     builder.addTriangles(p);
     QCOMPARE(section2->count(), 3);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::append()
@@ -157,6 +163,9 @@ void tst_QGLSection::append()
     QCOMPARE(section->indices().size(), 1);
     QCOMPARE(section->texCoords().count(), 0);
     QCOMPARE(section->colors().count(), 0);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::appendSmooth()
@@ -164,6 +173,9 @@ void tst_QGLSection::appendSmooth()
     TestBuilder builder;
     QGLSectionTest *section = new QGLSectionTest(&builder);
     testSmooth(section, &builder);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::appendSmoothMap()
@@ -180,6 +192,9 @@ void tst_QGLSection::appendSmoothMap()
         testVertex += incrVector;
     }
     testSmooth(section, &builder);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::testSmooth(QGLSection *section, QGLBuilder *builder)
@@ -237,6 +252,9 @@ void tst_QGLSection::appendFaceted()
     QGLSectionTest *section = new QGLSectionTest(&builder);
     // test the part where its only using the QArray
     testFaceted(section, &builder);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::appendFacetedMap()
@@ -254,6 +272,9 @@ void tst_QGLSection::appendFacetedMap()
         testVertex += incrVector;
     }
     testFaceted(section, &builder);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::accumNormals()
@@ -442,7 +463,6 @@ void tst_QGLSection::normalizedNormals()
     builder.finalizedSceneNode();
     QGeometryData data = node->geometry();
     QVERIFY(!data.isNull());
-    //qDebug() << "#############" << *data;
     QCOMPARE(data.count(QGL::Position), 33);
 }
 
@@ -579,6 +599,9 @@ void tst_QGLSection::appendTexCoord()
     QVERIFY(section->hasField(QGL::Normal));
     QVERIFY(section->hasField(QGL::TextureCoord0));
     QVERIFY(!section->hasField(QGL::Color));
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::appendColor()
@@ -616,6 +639,9 @@ void tst_QGLSection::appendColor()
     QVERIFY(section->hasField(QGL::Color));
     QVERIFY(section->hasField(QGL::TextureCoord0));
     QVERIFY(!section->hasField(QGL::Normal));
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLSection::accessors()
@@ -627,6 +653,9 @@ void tst_QGLSection::accessors()
 
     QGLSectionTest *section2 = new QGLSectionTest(&builder, QGL::Faceted);
     QCOMPARE(section2->smoothing(), QGL::Faceted);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSection)

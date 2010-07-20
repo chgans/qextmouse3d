@@ -41,8 +41,11 @@
 
 #include <QtTest/QtTest>
 #include <QtCore/qpointer.h>
+
 #include "qgeometrydata.h"
+#include "qvector_utils_p.h"
 #include "qtest_helpers_p.h"
+#include "qglpainter.h"
 
 #include <QtCore/qdebug.h>
 
@@ -60,6 +63,14 @@ private slots:
     void appendVertexNormal();
     void copy();
     void interleaveWith();
+    void boundingBox();
+    void center();
+    void normalizeNormals();
+    void reversed();
+    void translated();
+    void generateTextureCoordinates();
+    void clear();
+    void draw();
 };
 
 void tst_QGeometryData::createDefault()
@@ -402,6 +413,217 @@ void tst_QGeometryData::interleaveWith()
     QCOMPARE(dat2.texCoord(7), dt);
 }
 
-QTEST_APPLESS_MAIN(tst_QGeometryData)
+void tst_QGeometryData::boundingBox()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+
+    QBox3D bb = data.boundingBox();
+    QCOMPARE(bb.maximum(), d);
+    QCOMPARE(bb.minimum(), a);
+}
+
+void tst_QGeometryData::center()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+
+    QVector3D center = data.center();
+    QCOMPARE(center, QVector3D(2.6, 2.7, 2.8));
+}
+
+void tst_QGeometryData::normalizeNormals()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+    QVector3D an(5.1, 5.2, 5.3);
+    QVector3D bn(6.1, 6.2, 6.3);
+    QVector3D cn(7.1, 7.2, 7.3);
+    QVector3D dn(8.1, 8.2, 8.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    data.normalizeNormals();
+    QVector3D n = data.normalAt(1);
+    QVERIFY(qFskCompare(data.normalAt(0), QVector3D(0.566178, 0.577279, 0.588381)));
+    QVERIFY(qFskCompare(data.normalAt(1), QVector3D(0.567989, 0.577300, 0.586612)));
+    QVERIFY(qFskCompare(data.normalAt(2), QVector3D(0.569295, 0.577313, 0.585331)));
+    QVERIFY(qFskCompare(data.normalAt(3), QVector3D(0.570281, 0.577322, 0.584362)));
+    QVERIFY(qFskCompare(data.normalAt(0).lengthSquared(), 1.0));
+    QVERIFY(qFskCompare(data.normalAt(1).lengthSquared(), 1.0));
+    QVERIFY(qFskCompare(data.normalAt(2).lengthSquared(), 1.0));
+    QVERIFY(qFskCompare(data.normalAt(3).lengthSquared(), 1.0));
+}
+
+void tst_QGeometryData::reversed()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+    QVector3D an(5.1, 5.2, 5.3);
+    QVector3D bn(6.1, 6.2, 6.3);
+    QVector3D cn(7.1, 7.2, 7.3);
+    QVector3D dn(8.1, 8.2, 8.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    QGeometryData reversed = data.reversed();
+
+    QCOMPARE(data.vertexAt(0), reversed.vertexAt(3));
+    QCOMPARE(data.vertexAt(1), reversed.vertexAt(2));
+    QCOMPARE(data.vertexAt(2), reversed.vertexAt(1));
+    QCOMPARE(data.vertexAt(3), reversed.vertexAt(0));
+    QCOMPARE(data.normalAt(0), reversed.normalAt(3));
+    QCOMPARE(data.normalAt(1), reversed.normalAt(2));
+    QCOMPARE(data.normalAt(2), reversed.normalAt(1));
+    QCOMPARE(data.normalAt(3), reversed.normalAt(0));
+}
+
+void tst_QGeometryData::translated()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+    QVector3D an(5.1, 5.2, 5.3);
+    QVector3D bn(6.1, 6.2, 6.3);
+    QVector3D cn(7.1, 7.2, 7.3);
+    QVector3D dn(8.1, 8.2, 8.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    QVector3D t(0.5, -0.5, -0.5);
+    QGeometryData translated = data.translated(t);
+
+    QVector3D at = a + t;
+    QVector3D bt = b + t;
+    QVector3D ct = c + t;
+    QVector3D dt = d + t;
+
+    QCOMPARE(at, translated.vertexAt(0));
+    QCOMPARE(bt, translated.vertexAt(1));
+    QCOMPARE(ct, translated.vertexAt(2));
+    QCOMPARE(dt, translated.vertexAt(3));
+    QCOMPARE(an, translated.normalAt(0));
+    QCOMPARE(bn, translated.normalAt(1));
+    QCOMPARE(cn, translated.normalAt(2));
+    QCOMPARE(dn, translated.normalAt(3));
+}
+
+void tst_QGeometryData::generateTextureCoordinates()
+{
+    QGeometryData top;
+
+    top.appendVertex(QVector3D(0.0, 0.0, 0.0));
+    top.appendVertex(QVector3D(6.0, 3.6, 0.0));    // (v1 - v0).length() = 7.0
+    top.appendVertex(QVector3D(10.0, 0.6, 0.0));   // (v2 - v1).length() = 5.0
+    top.appendVertex(QVector3D(13.0, 3.24, 0.0));  // (v3 - v2).length() = 4.0
+
+    // generate x (Qt::Horizontal) texture coordinates
+    top.generateTextureCoordinates();              // spread over 7 + 5 + 4 = 16
+
+    QVERIFY(qFskCompare(top.texCoordAt(0), QVector2D()));
+    QVERIFY(qFskCompare(top.texCoordAt(1), QVector2D(0.43750349, 0.0)));
+    QVERIFY(qFskCompare(top.texCoordAt(2), QVector2D(0.75013363, 0.0)));
+    QVERIFY(qFskCompare(top.texCoordAt(3), QVector2D(1.0, 0.0)));
+
+    QGeometryData side;
+
+    side.appendVertex(QVector3D(0.0, 0.0, 0.0));
+    side.appendVertex(QVector3D(3.6, 6.0, 0.0));    // (v1 - v0).length() = 7.0
+    side.appendVertex(QVector3D(0.6, 10.0, 0.0));   // (v2 - v1).length() = 5.0
+    side.appendVertex(QVector3D(3.24, 13.0, 0.0));  // (v3 - v2).length() = 4.0
+
+    // generate x (Qt::Vertical) texture coordinates
+    side.generateTextureCoordinates(Qt::Vertical);  // spread over 7 + 5 + 4 = 16
+
+    QVERIFY(qFskCompare(side.texCoordAt(0), QVector2D()));
+    QVERIFY(qFskCompare(side.texCoordAt(1), QVector2D(0.0, 0.43750349)));
+    QVERIFY(qFskCompare(side.texCoordAt(2), QVector2D(0.0, 0.75013363)));
+    QVERIFY(qFskCompare(side.texCoordAt(3), QVector2D(0.0, 1.0)));
+}
+
+void tst_QGeometryData::clear()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+    QVector3D an(5.1, 5.2, 5.3);
+    QVector3D bn(6.1, 6.2, 6.3);
+    QVector3D cn(7.1, 7.2, 7.3);
+    QVector3D dn(8.1, 8.2, 8.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    quint32 f = data.fields();
+    quint32 expectedFields = QGL::fieldMask(QGL::Normal) | QGL::fieldMask(QGL::Position);
+    QCOMPARE(f, expectedFields);
+    QCOMPARE(data.count(), 4);
+    QCOMPARE(data.count(QGL::Normal), 4);
+    QCOMPARE(data.count(QGL::Position), 4);
+
+    data.clear();
+    QCOMPARE(f, expectedFields);
+    QCOMPARE(data.count(), 0);
+    QCOMPARE(data.count(QGL::Normal), 0);
+    QCOMPARE(data.count(QGL::Position), 0);
+
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    data.clear(QGL::Normal);
+
+    f = data.fields();
+    expectedFields = QGL::fieldMask(QGL::Position);
+    QCOMPARE(f, expectedFields);
+    QCOMPARE(data.count(), 4);
+    QCOMPARE(data.count(QGL::Normal), 0);
+    QCOMPARE(data.count(QGL::Position), 4);
+}
+
+void tst_QGeometryData::draw()
+{
+    QVector3D a(1.1, 1.2, 1.3);
+    QVector3D b(2.1, 2.2, 2.3);
+    QVector3D c(3.1, 3.2, 3.3);
+    QVector3D d(4.1, 4.2, 4.3);
+    QVector3D an(5.1, 5.2, 5.3);
+    QVector3D bn(6.1, 6.2, 6.3);
+    QVector3D cn(7.1, 7.2, 7.3);
+    QVector3D dn(8.1, 8.2, 8.3);
+
+    QGeometryData data;
+    data.appendVertex(a, b, c, d);
+    data.appendNormal(an, bn, cn, dn);
+
+    QGLWidget w;
+    QGLPainter p(&w);
+    data.draw(&p, 0, 4);
+}
+
+
+QTEST_MAIN(tst_QGeometryData)
 
 #include "tst_qgeometrydata.moc"

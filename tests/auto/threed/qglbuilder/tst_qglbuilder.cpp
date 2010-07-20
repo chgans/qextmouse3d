@@ -150,7 +150,6 @@ void tst_QGLBuilder::newNode()
     p.appendVertex(QVector3D(), QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     builder.addTriangles(p);
 
-    qDebug() << (*builder.currentSection());
     // now create a new node
     QGLSceneNode *node2 = builder.newNode();
 
@@ -171,6 +170,9 @@ void tst_QGLBuilder::newNode()
     // confirm that 2nd and last node in chain was also finished properly
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 3);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::pushNode()
@@ -196,6 +198,9 @@ void tst_QGLBuilder::pushNode()
     QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node2->materialIndex(), -1);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::popNode()
@@ -228,14 +233,15 @@ void tst_QGLBuilder::popNode()
     QCOMPARE(node3->localTransform(), mat);
     QCOMPARE(node3->start(), 6);
     QCOMPARE(node3->count(), 0);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::geometryBuild()
 {
     // here we really just test that the right values get added
-    // to the underlying QGeometryData - the function of the actual
-    // building that takes place when end() is called is tested by
-    // the addTriangles() and other tests below
+    // to the underlying QGeometryData
     TestBuilder builder;
     builder.newSection();
     QGLSection *sec = builder.currentSection();
@@ -302,6 +308,7 @@ void tst_QGLBuilder::geometryBuild()
     r.appendNormal(norm);
     r.appendVertex(e);
     r.appendNormal(norm);
+    builder.addTriangleFan(r);
     QCOMPARE(sec->count(), 5);
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(2), c);
@@ -335,6 +342,9 @@ void tst_QGLBuilder::geometryBuild()
     QCOMPARE(sec->colorAt(3), QColor4ub(Qt::yellow));
     QCOMPARE(sec->colorAt(4), QColor4ub(Qt::black));
     QCOMPARE(node->count(), 12); // TRIANGLE_FAN will here draw 4 triangles = 12 indices
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::addTriangles()
@@ -450,6 +460,9 @@ void tst_QGLBuilder::addTriangles()
     QCOMPARE(sec->vertex(0), a);
     QCOMPARE(sec->vertex(1), b);
     QCOMPARE(sec->vertex(2), c);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::addQuads()
@@ -530,6 +543,9 @@ void tst_QGLBuilder::addQuads()
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 6);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::addTriangleFan()
@@ -595,6 +611,9 @@ void tst_QGLBuilder::addTriangleFan()
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 9);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::addTriangulatedFace()
@@ -652,6 +671,9 @@ void tst_QGLBuilder::addTriangulatedFace()
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 12);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::extrude()
@@ -751,6 +773,9 @@ void tst_QGLBuilder::extrude()
 
     QCOMPARE(node->start(), 0);
     QCOMPARE(node->count(), 24);
+
+    // suppress warning
+    builder.finalizedSceneNode();
 }
 
 void tst_QGLBuilder::finalize()

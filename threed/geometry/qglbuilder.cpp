@@ -457,6 +457,13 @@ QGLBuilder::~QGLBuilder()
     data \a p is a null triangle (area == 0) then the function returns
     false, otherwise it returns true.
 */
+static inline void setNormals(int i, int j, int k, QGeometryData &p, const QVector3D &n)
+{
+    p.normal(i) = n;
+    p.normal(j) = n;
+    p.normal(k) = n;
+}
+
 static bool qCalculateNormal(int i, int j, int k, QGeometryData &p, QVector3D *vec = 0)
 {
     QVector3D norm;
@@ -478,18 +485,9 @@ static bool qCalculateNormal(int i, int j, int k, QGeometryData &p, QVector3D *v
     }
     else
     {
-        p.vertex(i) = *n;
-        p.vertex(j) = *n;
-        p.vertex(k) = *n;
+        setNormals(i, j, k, p, *n);
     }
     return nullTriangle;
-}
-
-static inline void setNormals(int i, int j, int k, QGeometryData &p, const QVector3D &n)
-{
-    p.normal(i) = n;
-    p.normal(j) = n;
-    p.normal(k) = n;
 }
 
 /*!
@@ -1136,7 +1134,6 @@ void QGLBuilder::addSection(QGLSection *sec)
     dptr->currentSection = sec;
     sec->setMapThreshold(dptr->defThreshold);
     dptr->sections.append(sec);
-    //qDebug() << "Adding section - clear node stack:" << sec;
     dptr->nodeStack.clear();
     newNode();
 }
@@ -1191,10 +1188,8 @@ QGLSceneNode *QGLBuilder::sceneNode()
 */
 QGLSceneNode *QGLBuilder::newNode()
 {
-    qDebug() << "QGLBuilder::newNode -- current section:" << dptr->currentSection;
     if (dptr->currentSection == 0)
     {
-        qDebug() << "QGLBuilder::newNode -- creating new section";
         newSection();  // calls newNode()
         return dptr->currentNode;
     }
@@ -1202,14 +1197,8 @@ QGLSceneNode *QGLBuilder::newNode()
     if (dptr->nodeStack.count() > 0)
         parentNode = dptr->nodeStack.last();
     dptr->currentNode = new QGLSceneNode(parentNode);
-    //qDebug() << "newNode()" << dptr->currentNode << "parent:" << parentNode
-    //        << "--- nodestack count:" << dptr->nodeStack.count();
-    //if (dptr->nodeStack.count() > 0)
-    //        qDebug() << "--- last:" << dptr->nodeStack.last();
     dptr->currentNode->setPalette(parentNode->palette());
     dptr->currentNode->setStart(dptr->currentSection->indexCount());
-    qDebug() << "Setting start of new node:" << dptr->currentNode << "to"
-            << dptr->currentSection->indexCount();
     if (dptr->nodeStack.count() == 0)
         dptr->currentSection->addNode(dptr->currentNode);
     return dptr->currentNode;
@@ -1242,11 +1231,8 @@ QGLSceneNode *QGLBuilder::pushNode()
 {
     if (dptr->currentSection == 0)
         newSection();  // calls newNode()
-    //qDebug() << "pushNode() - current:" << dptr->currentNode;
     QGLSceneNode *parentNode = dptr->currentNode;
     dptr->nodeStack.append(parentNode);
-    //qDebug() << "    currentNode:" << dptr->currentNode <<
-    //        "--- nodeStack:" << dptr->nodeStack.count();
     dptr->currentNode = new QGLSceneNode(parentNode);
     dptr->currentNode->setStart(dptr->currentSection->indexCount());
     dptr->currentNode->setPalette(parentNode->palette());
@@ -1274,7 +1260,6 @@ QGLSceneNode *QGLBuilder::popNode()
         newSection();  // calls newNode()
     int cnt = dptr->currentSection->indexCount();
     QGLSceneNode *s = dptr->nodeStack.takeLast();  // assert here
-    //qDebug() << "popNode()" << s;
     QGLSceneNode *parentNode = dptr->rootNode;
     if (dptr->nodeStack.count() > 0)
         parentNode = dptr->nodeStack.last();
