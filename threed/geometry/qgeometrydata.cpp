@@ -846,11 +846,12 @@ void QGeometryData::reserve(int amount)
 }
 
 /*!
-    Draws this geometry on the \a painter, from \a start for \a count elements.
+    Draws this geometry on the \a painter, from \a start for \a count elements
+    in \a mode.  The drawing \a mode is by default QGL::Triangles.  This function
     Also calls the upload() method to ensure that the geometry is resident on
     the graphics hardware if appropriate.
 */
-void QGeometryData::draw(QGLPainter *painter, int start, int count)
+void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode)
 {
     if (d && d->indices.size() && d->count)
     {
@@ -858,7 +859,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count)
         painter->setVertexBuffer(d->vertexBuffer);
         if (count == 0)
             count = d->indexBuffer.indexCount();
-        painter->draw(QGL::Triangles, d->indexBuffer, start, count);
+        painter->draw(QGL::DrawingMode(mode), d->indexBuffer, start, count);
     }
 }
 
