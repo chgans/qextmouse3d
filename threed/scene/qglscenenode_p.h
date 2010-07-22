@@ -87,6 +87,7 @@ public:
         , pickNode(0)
         , boxValid(false)
         , transformValid(false)
+        , drawingMode(QGLSceneNode::Triangles)
     {
     }
 
