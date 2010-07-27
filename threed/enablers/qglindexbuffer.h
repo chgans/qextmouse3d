@@ -87,8 +87,8 @@ public:
 
     QGLBuffer buffer() const;
 
-    bool bind() const;
-    void release() const;
+    bool bind();
+    void release();
 
     void append(const QGLIndexBuffer &buffer, uint offset);
     void append(const QGLIndexBuffer &buffer, uint offset, QGL::DrawingMode combineMode);

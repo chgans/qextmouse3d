@@ -720,9 +720,9 @@ QGLBuffer QGLVertexBuffer::buffer() const
 
     \sa release(), upload()
 */
-bool QGLVertexBuffer::bind() const
+bool QGLVertexBuffer::bind()
 {
-    Q_D(const QGLVertexBuffer);
+    Q_D(QGLVertexBuffer);
     return d->buffer.bind();
 }
 
@@ -734,9 +734,9 @@ bool QGLVertexBuffer::bind() const
 
     \sa bind()
 */
-void QGLVertexBuffer::release() const
+void QGLVertexBuffer::release()
 {
-    Q_D(const QGLVertexBuffer);
+    Q_D(QGLVertexBuffer);
     d->buffer.release();
 }
 
