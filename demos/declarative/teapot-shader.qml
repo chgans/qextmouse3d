@@ -14,22 +14,28 @@ Item3d {
             loops: Animation.Infinite
             from: 0
             to: 360
-            duration: 2000
+            duration: 5000
         }
         axis: Qt.vector3d(1, -0.3, 0)
     }
 
-    SequentialAnimation on y{
-        running: true
-        loops: Animation.Infinite
-        PauseAnimation { duration: 500 }
-        NumberAnimation { to : 1.0; duration: 300; easing.type:"OutQuad" }
-        NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
-    }
-
     ShaderProgram {
         id: program
-        texture: "textures/qtlogo.png"
+        texture: "textures/basket.jpg"
+        property variant texture2 : "textures/qtlogo.png"
+        property real interpolationFactor : 1.0
+
+        SequentialAnimation on interpolationFactor {
+            running: true
+            loops: Animation.Infinite
+            NumberAnimation { to : 1.0; duration: 750; }
+
+
+            PauseAnimation { duration: 550 }
+            NumberAnimation { to : 0.0; duration: 750; }
+            PauseAnimation { duration: 550 }
+        }
+
         SequentialAnimation on color{
             running: true
             loops: Animation.Infinite
@@ -60,13 +66,15 @@ Item3d {
         fragmentShader: "
             varying highp vec4 texCoord;
             uniform sampler2D qgl_Texture0;
+            uniform sampler2D texture2;
             uniform mediump vec4 qgl_Color;
+            uniform float interpolationFactor;
 
             void main(void)
             {
-                mediump vec4 col = texture2D(qgl_Texture0, texCoord.st);
-                gl_FragColor = vec4(clamp(qgl_Color.rgb * (1.0 - col.a) +
-                                          col.rgb, 0.0, 1.0), 1.0);
+                mediump vec4 col1 = texture2D(qgl_Texture0, texCoord.st);
+                mediump vec4 col2 = texture2D(texture2, texCoord.st);
+                gl_FragColor = mix(col1, col2, interpolationFactor);
             }
         "
     }
