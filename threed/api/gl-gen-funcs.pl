@@ -96,7 +96,7 @@ print "};\n";
 print "\n";
 print "struct QGLFunctionsPrivate\n";
 print "{\n";
-print "    QGLFunctionsPrivate();\n";
+print "    QGLFunctionsPrivate(const QGLContext *context = 0);\n";
 print "\n";
 print "#ifndef QT_OPENGL_ES_2";
 print "\n";
@@ -378,7 +378,7 @@ print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n\n";
 
 # Generate the initialization code for QGLFunctionsPrivate.
-print "QGLFunctionsPrivate::QGLFunctionsPrivate()\n";
+print "QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)\n";
 print "{\n";
 print "#ifndef QT_OPENGL_ES_2\n";
 $last_shader_only = 0;

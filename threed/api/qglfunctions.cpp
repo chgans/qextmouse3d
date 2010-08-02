@@ -70,10 +70,12 @@ static QGLFunctionsPrivate *qt_gl_functions(const QGLContext *context = 0)
     QGLFunctionsPrivate *funcs =
         reinterpret_cast<QGLFunctionsPrivate *>
             (qt_gl_functions_resource()->value(context));
+#if QT_VERSION < 0x040800
     if (!funcs) {
         funcs = new QGLFunctionsPrivate();
         qt_gl_functions_resource()->insert(context, funcs);
     }
+#endif
     return funcs;
 }
 
@@ -3854,7 +3856,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
 #endif
 #endif // !QT_OPENGL_ES_2
 
-QGLFunctionsPrivate::QGLFunctionsPrivate()
+QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
 {
 #ifndef QT_OPENGL_ES_2
 #ifndef QT_OPENGL_ES_1
