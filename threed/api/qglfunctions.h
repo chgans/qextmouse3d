@@ -86,6 +86,7 @@ struct QGLFunctionsPrivate;
 #undef glBufferData
 #undef glBufferSubData
 #undef glCheckFramebufferStatus
+#undef glClearDepthf
 #undef glCompileShader
 #undef glCompressedTexImage2D
 #undef glCompressedTexSubImage2D
@@ -96,6 +97,7 @@ struct QGLFunctionsPrivate;
 #undef glDeleteProgram
 #undef glDeleteRenderbuffers
 #undef glDeleteShader
+#undef glDepthRangef
 #undef glDetachShader
 #undef glDisableVertexAttribArray
 #undef glEnableVertexAttribArray
@@ -191,6 +193,7 @@ public:
     void glBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
     void glBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
     GLenum glCheckFramebufferStatus(GLenum target);
+    void glClearDepthf(GLclampf depth);
     void glCompileShader(GLuint shader);
     void glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
     void glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
@@ -201,6 +204,7 @@ public:
     void glDeleteProgram(GLuint program);
     void glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers);
     void glDeleteShader(GLuint shader);
+    void glDepthRangef(GLclampf zNear, GLclampf zFar);
     void glDetachShader(GLuint program, GLuint shader);
     void glDisableVertexAttribArray(GLuint index);
     void glEnableVertexAttribArray(GLuint index);
@@ -498,6 +502,15 @@ inline GLenum QGLFunctions::glCheckFramebufferStatus(GLenum target)
 #endif
 }
 
+inline void QGLFunctions::glClearDepthf(GLclampf depth)
+{
+#ifndef QT_OPENGL_ES
+    ::glClearDepth(depth);
+#else
+    ::glClearDepthf(depth);
+#endif
+}
+
 inline void QGLFunctions::glCompileShader(GLuint shader)
 {
 #if defined(QT_OPENGL_ES_2)
@@ -585,6 +598,15 @@ inline void QGLFunctions::glDeleteShader(GLuint shader)
     ::glDeleteShader(shader);
 #else
     d_ptr->deleteShader(shader);
+#endif
+}
+
+inline void QGLFunctions::glDepthRangef(GLclampf zNear, GLclampf zFar)
+{
+#ifndef QT_OPENGL_ES
+    ::glDepthRange(zNear, zFar);
+#else
+    ::glDepthRangef(zNear, zFar);
 #endif
 }
 

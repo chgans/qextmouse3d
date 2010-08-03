@@ -123,6 +123,7 @@ foreach ( @functions ) {
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
     my $inline = $_->{'inline'};
     next if ($inline && $inline eq 'all');
+    next if $inline && $inline eq 'all_diff';
     my $name = $_->{'varname'};
     #print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
     #print "#endif\n" if (!$shader_only && $last_shader_only);
@@ -256,6 +257,7 @@ $last_shader_only = 0;
 foreach ( @functions ) {
     my $inline = $_->{'inline'};
     next if $inline && $inline eq 'all';
+    next if $inline && $inline eq 'all_diff';
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
     my $name = $_->{'varname'};
     my $resolver_name = $_->{'name'};
@@ -399,6 +401,7 @@ $last_shader_only = 0;
 foreach ( @functions ) {
     my $inline = $_->{'inline'};
     next if $inline && $inline eq 'all';
+    next if $inline && $inline eq 'all_diff';
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
     my $name = $_->{'varname'};
     my $resolver_name = $_->{'name'};

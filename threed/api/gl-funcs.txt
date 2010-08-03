@@ -57,7 +57,7 @@ void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
     inline all
 
 void glClearDepth(GLclampf depth);
-    inline all
+    inline all_diff
     es_name glClearDepthf
 
 void glClearStencil(GLint s);
@@ -125,7 +125,7 @@ void glDepthMask(GLboolean flag);
     inline all
 
 void glDepthRange(GLclampf zNear, GLclampf zFar);
-    inline all
+    inline all_diff
     es_name glDepthRangef
 
 void glDetachShader(GLuint program, GLuint shader);

@@ -302,6 +302,17 @@ void QGLFunctions::setContext(const QGLContext *context)
 */
 
 /*!
+    \fn void QGLFunctions::glClearDepthf(GLclampf depth)
+
+    Convenience function that calls glClearDepth(\a depth) on
+    desktop OpenGL systems and glClearDepthf(\a depth) on
+    embedded OpenGL/ES systems.
+
+    For more information, see the OpenGL/ES 2.0 documentation for
+    \l{http://www.khronos.org/opengles/sdk/docs/man/glClearDepthf.xml}{glClearDepthf()}.
+*/
+
+/*!
     \fn void QGLFunctions::glCompileShader(GLuint shader)
 
     Convenience function that calls glCompileShader(\a shader).
@@ -399,6 +410,17 @@ void QGLFunctions::setContext(const QGLContext *context)
     \l{http://www.khronos.org/opengles/sdk/docs/man/glDeleteShader.xml}{glDeleteShader()}.
 
     This convenience function will do nothing on OpenGL/ES 1.x systems.
+*/
+
+/*!
+    \fn void QGLFunctions::glDepthRangef(GLclampf zNear, GLclampf zFar)
+
+    Convenience function that calls glDepthRange(\a zNear, \a zFar) on
+    desktop OpenGL systems and glDepthRangef(\a zNear, \a zFar) on
+    embedded OpenGL/ES systems.
+
+    For more information, see the OpenGL/ES 2.0 documentation for
+    \l{http://www.khronos.org/opengles/sdk/docs/man/glDepthRangef.xml}{glDepthRangef()}.
 */
 
 /*!
