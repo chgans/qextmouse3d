@@ -66,12 +66,17 @@ QT_BEGIN_NAMESPACE
     {
         Q_OBJECT
     public:
-        MyGLWidget(QWidget *parent = 0)
-            : QGLWidget(parent), QGLFunctions(context()) {}
+        MyGLWidget(QWidget *parent = 0) : QGLWidget(parent) {}
 
     protected:
+        void initializeGL();
         void paintGL();
     };
+
+    void MyGLWidget::initializeGL()
+    {
+        initializeGLFunctions();
+    }
     \endcode
 
     The \c{paintGL()} function can then use any of the OpenGL/ES 2.0
@@ -127,22 +132,15 @@ static QGLFunctionsPrivate *qt_gl_functions(const QGLContext *context = 0)
     return funcs;
 }
 
-// Function block that is used for the "use whatever is current"
-// mode of QGLFunctions.
-Q_GLOBAL_STATIC(QGLFunctionsPrivate, qt_gl_common_functions)
-
 /*!
-    Constructs a function resolver that uses the QGLContext that
-    is current when a function is called.
+    Constructs a default function resolver.  The resolver cannot
+    be used until initializeGLFunctions() is called to specify
+    the context.
 
-    Use of this constructor may make the resulting QGLFunctions object
-    less efficient than explicitly specifying the context with the
-    other constructor or setContext().
-
-    \sa setContext()
+    \sa initializeGLFunctions()
 */
 QGLFunctions::QGLFunctions()
-    : d_ptr(qt_gl_common_functions())
+    : d_ptr(0)
 {
 }
 
@@ -151,10 +149,10 @@ QGLFunctions::QGLFunctions()
     is null, then the resolver will be created for the current QGLContext.
 
     An object constructed in this way can only be used with \a context
-    and no other context, unless setContext() is called to change
-    the object's context association.
+    and other contexts that share with it.  Use initializeGLFunctions()
+    to change the object's context association.
 
-    \sa setContext()
+    \sa initializeGLFunctions()
 */
 QGLFunctions::QGLFunctions(const QGLContext *context)
     : d_ptr(qt_gl_functions(context))
@@ -168,14 +166,15 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    Sets the \a context to use to resolve GL functions.  If \a context
+    Initializes GL function resolution for \a context.  If \a context
     is null, then the current QGLContext will be used.
 
     After calling this function, the QGLFunctions object can only be
-    used with \a context until setContext() is called again to change
-    the object's context association.
+    used with \a context and other contexts that share with it.
+    Call initializeGLFunctions() again to change the object's context
+    association.
 */
-void QGLFunctions::setContext(const QGLContext *context)
+void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 {
     d_ptr = qt_gl_functions(context);
 }

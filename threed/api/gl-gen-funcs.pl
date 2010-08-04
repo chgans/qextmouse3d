@@ -90,7 +90,7 @@ print "    QGLFunctions();\n";
 print "    explicit QGLFunctions(const QGLContext *context);\n";
 print "    ~QGLFunctions() {}\n";
 print "\n";
-print "    void setContext(const QGLContext *context);\n";
+print "    void initializeGLFunctions(const QGLContext *context = 0);\n";
 print "\n";
 my $last_shader_only = 0;
 foreach ( @functions ) {
@@ -108,6 +108,7 @@ foreach ( @functions ) {
 print "\n";
 print "private:\n";
 print "    QGLFunctionsPrivate *d_ptr;\n";
+print "    static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }\n";
 print "};\n";
 print "\n";
 print "struct QGLFunctionsPrivate\n";
@@ -188,6 +189,7 @@ foreach ( @functions ) {
         }
         print "::$_->{'name'}($_->{'argnamestr'});\n";
         print "#else\n";
+        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
@@ -197,6 +199,7 @@ foreach ( @functions ) {
         print "#endif\n";
     } else {
         # Resolve on all platforms.
+        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
