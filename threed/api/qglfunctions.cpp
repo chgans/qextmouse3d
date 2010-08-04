@@ -109,6 +109,24 @@ QT_BEGIN_NAMESPACE
     the system's OpenGL headers, such as \c{GL_TEXTURE1} above.
 */
 
+/*!
+    \enum QGLFunctions::Feature
+    This enum defines OpenGL/ES 2.0 features that may be optional
+    on other platforms.
+
+    \value Multitexture Multitexture functions are available.
+    \value Shaders Shader functions are available.
+    \value Buffers Vertex and index buffer functions are available.
+    \value Framebuffers Framebuffer object functions are available.
+    \value BlendColor glBlendColor() is available.
+    \value BlendEquationSeparate glBlendEquationSeparate() is available.
+    \value BlendFuncSeparate glBlendFuncSeparate() is available.
+    \value BlendSubtract Blend subtract mode is available.
+    \value CompressedTextures Compressed texture functions are available.
+    \value Multisample Multisample coverage functions are available.
+    \value StencilSeparate Separate stencil functions are available.
+*/
+
 #if QT_VERSION >= 0x040800
 Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivate>, qt_gl_functions_resource)
 #else
@@ -168,6 +186,98 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 
     Destroys this function resolver.
 */
+
+static int qt_gl_resolve_features()
+{
+#if defined(QT_OPENGL_ES_2)
+    return QGLFunctions::Multitexture |
+           QGLFunctions::Shaders |
+           QGLFunctions::Buffers |
+           QGLFunctions::Framebuffers |
+           QGLFunctions::BlendColor |
+           QGLFunctions::BlendEquationSeparate |
+           QGLFunctions::BlendFuncSeparate |
+           QGLFunctions::BlendSubtract |
+           QGLFunctions::CompressedTextures |
+           QGLFunctions::Multisample |
+           QGLFunctions::StencilSeparate;
+#elif defined(QT_OPENGL_ES)
+    int features = QGLFunctions::Multitexture |
+                   QGLFunctions::Buffers |
+                   QGLFunctions::CompressedTextures |
+                   QGLFunctions::Multisample;
+    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    if (extensions.match("GL_OES_framebuffer_object"))
+        features |= QGLFunctions::Framebuffers;
+    if (extensions.match("GL_OES_blend_equation_separate"))
+        features |= QGLFunctions::BlendEquationSeparate;
+    if (extensions.match("GL_OES_blend_func_separate"))
+        features |= QGLFunctions::BlendFuncSeparate;
+    if (extensions.match("GL_OES_blend_subtract"))
+        features |= QGLFunctions::BlendSubtract;
+    return features;
+#else
+    int features = 0;
+    QGLFormat::OpenGLVersionFlags versions = QGLFormat::openGLVersionFlags();
+    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    if (extensions.match("GL_EXT_framebuffer_object") ||
+            extensions.match("GL_ARB_framebuffer_object"))
+        features |= QGLFunctions::Framebuffers;
+    if (extensions.match("GL_EXT_blend_color"))
+        features |= QGLFunctions::BlendColor;
+    if (extensions.match("GL_EXT_blend_equation_separate"))
+        features |= QGLFunctions::BlendEquationSeparate;
+    if (extensions.match("GL_EXT_blend_func_separate"))
+        features |= QGLFunctions::BlendFuncSeparate;
+    if (extensions.match("GL_EXT_blend_subtract"))
+        features |= QGLFunctions::BlendSubtract;
+    if (extensions.match("GL_ARB_texture_compression"))
+        features |= QGLFunctions::CompressedTextures;
+    if (extensions.match("GL_ARB_multisample"))
+        features |= QGLFunctions::Multisample;
+    if (versions & QGLFormat::OpenGL_Version_1_5)
+        features |= QGLFunctions::Buffers;
+    if (versions & QGLFormat::OpenGL_Version_2_0)
+        features |= QGLFunctions::StencilSeparate;
+    return features;
+#endif
+}
+
+/*!
+    Returns the set of features that are present on this system's
+    OpenGL implementation.
+
+    It is assumed that the QGLContext associated with this function
+    resolver is current.
+
+    \sa hasFeature()
+*/
+QGLFunctions::Features QGLFunctions::features() const
+{
+    if (!d_ptr)
+        return 0;
+    if (d_ptr->m_features == -1)
+        d_ptr->m_features = qt_gl_resolve_features();
+    return QGLFunctions::Features(d_ptr->m_features);
+}
+
+/*!
+    Returns true if \a feature is present on this system's OpenGL
+    implementation; false otherwise.
+
+    It is assumed that the QGLContext associated with this function
+    resolver is current.
+
+    \sa features()
+*/
+bool QGLFunctions::hasFeature(QGLFunctions::Feature feature) const
+{
+    if (!d_ptr)
+        return false;
+    if (d_ptr->m_features == -1)
+        d_ptr->m_features = qt_gl_resolve_features();
+    return (d_ptr->m_features & int(feature)) != 0;
+}
 
 /*!
     Initializes GL function resolution for \a context.  If \a context
@@ -3538,6 +3648,7 @@ QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
     vertexAttrib4fv = qglfResolveVertexAttrib4fv;
     vertexAttribPointer = qglfResolveVertexAttribPointer;
 #endif // !QT_OPENGL_ES_2
+    m_features = -1;
 }
 
 QT_END_NAMESPACE

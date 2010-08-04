@@ -99,6 +99,25 @@ print "    QGLFunctions();\n";
 print "    explicit QGLFunctions(const QGLContext *context);\n";
 print "    ~QGLFunctions() {}\n";
 print "\n";
+print "    enum Feature\n";
+print "    {\n";
+print "        Multitexture          = 0x0001,\n";
+print "        Shaders               = 0x0002,\n";
+print "        Buffers               = 0x0004,\n";
+print "        Framebuffers          = 0x0008,\n";
+print "        BlendColor            = 0x0010,\n";
+print "        BlendEquationSeparate = 0x0020,\n";
+print "        BlendFuncSeparate     = 0x0040,\n";
+print "        BlendSubtract         = 0x0080,\n";
+print "        CompressedTextures    = 0x0100,\n";
+print "        Multisample           = 0x0200,\n";
+print "        StencilSeparate       = 0x0400\n";
+print "    };\n";
+print "    Q_DECLARE_FLAGS(Features, Feature)\n";
+print "\n";
+print "    QGLFunctions::Features features() const;\n";
+print "    bool hasFeature(QGLFunctions::Feature feature) const;\n";
+print "\n";
 print "    void initializeGLFunctions(const QGLContext *context = 0);\n";
 print "\n";
 my $last_shader_only = 0;
@@ -119,6 +138,8 @@ print "private:\n";
 print "    QGLFunctionsPrivate *d_ptr;\n";
 print "    static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }\n";
 print "};\n";
+print "\n";
+print "Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::Features)\n";
 print "\n";
 print "struct QGLFunctionsPrivate\n";
 print "{\n";
@@ -143,6 +164,9 @@ foreach ( @functions ) {
 #print "#endif\n" if $last_shader_only;
 
 print "#endif\n";
+print "private:\n";
+print "    friend class QGLFunctions;\n";
+print "    int m_features;\n";
 print "};\n";
 print "\n";
 
@@ -395,6 +419,7 @@ foreach ( @functions ) {
 }
 #print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n";
+print "    m_features = -1;\n";
 print "}\n\n";
 
 #print Dumper(\@functions);

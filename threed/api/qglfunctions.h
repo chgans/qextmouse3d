@@ -178,6 +178,25 @@ public:
     explicit QGLFunctions(const QGLContext *context);
     ~QGLFunctions() {}
 
+    enum Feature
+    {
+        Multitexture          = 0x0001,
+        Shaders               = 0x0002,
+        Buffers               = 0x0004,
+        Framebuffers          = 0x0008,
+        BlendColor            = 0x0010,
+        BlendEquationSeparate = 0x0020,
+        BlendFuncSeparate     = 0x0040,
+        BlendSubtract         = 0x0080,
+        CompressedTextures    = 0x0100,
+        Multisample           = 0x0200,
+        StencilSeparate       = 0x0400
+    };
+    Q_DECLARE_FLAGS(Features, Feature)
+
+    QGLFunctions::Features features() const;
+    bool hasFeature(QGLFunctions::Feature feature) const;
+
     void initializeGLFunctions(const QGLContext *context = 0);
 
     void glActiveTexture(GLenum texture);
@@ -283,6 +302,8 @@ private:
     static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::Features)
+
 struct QGLFunctionsPrivate
 {
     QGLFunctionsPrivate(const QGLContext *context = 0);
@@ -384,6 +405,9 @@ struct QGLFunctionsPrivate
     void (QGLF_APIENTRYP vertexAttrib4fv)(GLuint indx, const GLfloat* values);
     void (QGLF_APIENTRYP vertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
 #endif
+private:
+    friend class QGLFunctions;
+    int m_features;
 };
 
 inline void QGLFunctions::glActiveTexture(GLenum texture)
