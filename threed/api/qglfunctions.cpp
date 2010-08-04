@@ -1392,14 +1392,6 @@ static void qglfResolveBlendEquation(GLenum mode)
         funcs->blendEquation = qglfResolveBlendEquation;
 }
 
-static void qglfSpecialBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
-{
-    const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
-    Q_UNUSED(modeAlpha);
-    funcs->blendEquation(modeRGB);
-}
-
 static void qglfResolveBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
 {
     typedef void (QGLF_APIENTRYP type_glBlendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
@@ -1424,17 +1416,10 @@ static void qglfResolveBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
             context->getProcAddress(QLatin1String("glBlendEquationSeparateARB"));
     }
 
-    if (!funcs->blendEquationSeparate)
-        funcs->blendEquationSeparate = qglfSpecialBlendEquationSeparate;
-
-    funcs->blendEquationSeparate(modeRGB, modeAlpha);
-}
-
-static void qglfSpecialBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
-{
-    Q_UNUSED(srcAlpha);
-    Q_UNUSED(dstAlpha);
-    ::glBlendFunc(srcRGB, dstRGB);
+    if (funcs->blendEquationSeparate)
+        funcs->blendEquationSeparate(modeRGB, modeAlpha);
+    else
+        funcs->blendEquationSeparate = qglfResolveBlendEquationSeparate;
 }
 
 static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
@@ -1461,10 +1446,10 @@ static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum sr
             context->getProcAddress(QLatin1String("glBlendFuncSeparateARB"));
     }
 
-    if (!funcs->blendFuncSeparate)
-        funcs->blendFuncSeparate = qglfSpecialBlendFuncSeparate;
-
-    funcs->blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+    if (funcs->blendFuncSeparate)
+        funcs->blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+    else
+        funcs->blendFuncSeparate = qglfResolveBlendFuncSeparate;
 }
 
 static void qglfResolveBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
@@ -2718,15 +2703,6 @@ static void qglfResolveSampleCoverage(GLclampf value, GLboolean invert)
         funcs->sampleCoverage = qglfResolveSampleCoverage;
 }
 
-static void qglfSpecialShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
-{
-    Q_UNUSED(n);
-    Q_UNUSED(shaders);
-    Q_UNUSED(binaryformat);
-    Q_UNUSED(binary);
-    Q_UNUSED(length);
-}
-
 static void qglfResolveShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
 {
     typedef void (QGLF_APIENTRYP type_glShaderBinary)(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length);
@@ -2741,10 +2717,10 @@ static void qglfResolveShaderBinary(GLint n, const GLuint* shaders, GLenum binar
             context->getProcAddress(QLatin1String("glShaderBinaryARB"));
     }
 
-    if (!funcs->shaderBinary)
-        funcs->shaderBinary = qglfSpecialShaderBinary;
-
-    funcs->shaderBinary(n, shaders, binaryformat, binary, length);
+    if (funcs->shaderBinary)
+        funcs->shaderBinary(n, shaders, binaryformat, binary, length);
+    else
+        funcs->shaderBinary = qglfResolveShaderBinary;
 }
 
 static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
@@ -2765,12 +2741,6 @@ static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** s
         funcs->shaderSource(shader, count, string, length);
     else
         funcs->shaderSource = qglfResolveShaderSource;
-}
-
-static void qglfSpecialStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
-{
-    Q_UNUSED(face);
-    ::glStencilFunc(func, ref, mask);
 }
 
 static void qglfResolveStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
@@ -2797,16 +2767,10 @@ static void qglfResolveStencilFuncSeparate(GLenum face, GLenum func, GLint ref, 
             context->getProcAddress(QLatin1String("glStencilFuncSeparateARB"));
     }
 
-    if (!funcs->stencilFuncSeparate)
-        funcs->stencilFuncSeparate = qglfSpecialStencilFuncSeparate;
-
-    funcs->stencilFuncSeparate(face, func, ref, mask);
-}
-
-static void qglfSpecialStencilMaskSeparate(GLenum face, GLuint mask)
-{
-    Q_UNUSED(face);
-    ::glStencilMask(mask);
+    if (funcs->stencilFuncSeparate)
+        funcs->stencilFuncSeparate(face, func, ref, mask);
+    else
+        funcs->stencilFuncSeparate = qglfResolveStencilFuncSeparate;
 }
 
 static void qglfResolveStencilMaskSeparate(GLenum face, GLuint mask)
@@ -2833,16 +2797,10 @@ static void qglfResolveStencilMaskSeparate(GLenum face, GLuint mask)
             context->getProcAddress(QLatin1String("glStencilMaskSeparateARB"));
     }
 
-    if (!funcs->stencilMaskSeparate)
-        funcs->stencilMaskSeparate = qglfSpecialStencilMaskSeparate;
-
-    funcs->stencilMaskSeparate(face, mask);
-}
-
-static void qglfSpecialStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
-{
-    Q_UNUSED(face);
-    ::glStencilOp(fail, zfail, zpass);
+    if (funcs->stencilMaskSeparate)
+        funcs->stencilMaskSeparate(face, mask);
+    else
+        funcs->stencilMaskSeparate = qglfResolveStencilMaskSeparate;
 }
 
 static void qglfResolveStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
@@ -2869,10 +2827,10 @@ static void qglfResolveStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail,
             context->getProcAddress(QLatin1String("glStencilOpSeparateARB"));
     }
 
-    if (!funcs->stencilOpSeparate)
-        funcs->stencilOpSeparate = qglfSpecialStencilOpSeparate;
-
-    funcs->stencilOpSeparate(face, fail, zfail, zpass);
+    if (funcs->stencilOpSeparate)
+        funcs->stencilOpSeparate(face, fail, zfail, zpass);
+    else
+        funcs->stencilOpSeparate = qglfResolveStencilOpSeparate;
 }
 
 static void qglfResolveUniform1f(GLint location, GLfloat x)

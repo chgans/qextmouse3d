@@ -276,22 +276,7 @@ foreach ( @functions ) {
 
     if ($special_handling) {
         # Output special fallback implementations for certain functions.
-        if ($name eq "blendEquationSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    const QGLContext *context = QGLContext::currentContext();\n";
-            print "    QGLFunctionsPrivate *funcs = qt_gl_functions(context);\n";
-            print "    Q_UNUSED(modeAlpha);\n";
-            print "    funcs->blendEquation(modeRGB);\n";
-            print "}\n\n";
-        } elsif ($name eq "blendFuncSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(srcAlpha);\n";
-            print "    Q_UNUSED(dstAlpha);\n";
-            print "    ::glBlendFunc(srcRGB, dstRGB);\n";
-            print "}\n\n";
-        } elsif ($name eq "getShaderPrecisionFormat") {
+        if ($name eq "getShaderPrecisionFormat") {
             print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
             print "{\n";
             print "    Q_UNUSED(shadertype);\n";
@@ -306,33 +291,6 @@ foreach ( @functions ) {
         } elsif ($name eq "releaseShaderCompiler") {
             print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
             print "{\n";
-            print "}\n\n";
-        } elsif ($name eq "shaderBinary") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(n);\n";
-            print "    Q_UNUSED(shaders);\n";
-            print "    Q_UNUSED(binaryformat);\n";
-            print "    Q_UNUSED(binary);\n";
-            print "    Q_UNUSED(length);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilFuncSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilFunc(func, ref, mask);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilMaskSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilMask(mask);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilOpSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilOp(fail, zfail, zpass);\n";
             print "}\n\n";
         }
     }
