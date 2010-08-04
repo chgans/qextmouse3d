@@ -462,9 +462,9 @@ QGLBuffer QGLIndexBuffer::buffer() const
 
     \sa release(), upload()
 */
-bool QGLIndexBuffer::bind() const
+bool QGLIndexBuffer::bind()
 {
-    Q_D(const QGLIndexBuffer);
+    Q_D(QGLIndexBuffer);
     return d->buffer.bind();
 }
 
@@ -476,9 +476,9 @@ bool QGLIndexBuffer::bind() const
 
     \sa bind()
 */
-void QGLIndexBuffer::release() const
+void QGLIndexBuffer::release()
 {
-    Q_D(const QGLIndexBuffer);
+    Q_D(QGLIndexBuffer);
     d->buffer.release();
 }
 
@@ -709,7 +709,7 @@ void QGLIndexBuffer::append
 */
 void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes)
 {
-    const QGLIndexBufferPrivate *d = indexes.d_func();
+    QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
 #ifndef QT_NO_DEBUG
     // FIXME
@@ -751,7 +751,7 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes)
 */
 void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes, int offset, int count)
 {
-    const QGLIndexBufferPrivate *d = indexes.d_func();
+    QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
 #ifndef QT_NO_DEBUG
     // FIXME

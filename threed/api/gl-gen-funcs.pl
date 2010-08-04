@@ -7,6 +7,7 @@ use Data::Dumper;
 
 # Read the function definitions from the input.
 my @functions = ();
+my @macros = ();
 my %func_info = ();
 while (<>)
 {
@@ -14,9 +15,18 @@ while (<>)
         m/^(\w+|const GLubyte\*)\s+(\w+)\s*\(([^)]*)\)/;
 
     if (!$returnType) {
+        my ($macroname, $macrovalue) = m/^#define\s+(\w+)\s+(.*)$/;
+        if ($macroname) {
+            my %macro_info = ();
+            $macro_info{'name'} = $macroname;
+            $macro_info{'value'} = $macrovalue;
+            push @macros, { %macro_info };
+            next;
+        }
         my ($tag, $value) = m/^\s+(\w+)\s+(.*)$/;
         next unless $tag;
         $func_info{$tag} = $value;
+        $func_info{'funcname'} = $value if ($tag eq "es_name");
         next;
     }
 
@@ -41,6 +51,9 @@ while (<>)
     my $argnamestr = join(', ', @argNames);
 
     $func_info{'name'} = $name;
+    $func_info{'funcname'} = $name;
+    $name =~ s/^gl//;
+    $func_info{'varname'} = lcfirst($name);
     $func_info{'returnType'} = $returnType;
     $func_info{'argstr'} = $argstr;
     $func_info{'argnamestr'} = $argnamestr;
@@ -67,6 +80,18 @@ print "#endif\n";
 print "\n";
 print "struct QGLFunctionsPrivate;\n";
 print "\n";
+
+print "// Undefine any macros from GLEW, qglextensions_p.h, etc that\n";
+print "// may interfere with the definition of QGLFunctions.\n";
+foreach ( @functions ) {
+    my $inline = $_->{'inline'};
+    next if ($inline && $inline eq 'all');
+    my $name = $_->{'funcname'};
+    print "#undef $name\n";
+}
+print "\n";
+
+# Output the prototypes into the QGLFunctions class.
 print "class Q_QT3D_EXPORT QGLFunctions\n";
 print "{\n";
 print "public:\n";
@@ -74,29 +99,51 @@ print "    QGLFunctions();\n";
 print "    explicit QGLFunctions(const QGLContext *context);\n";
 print "    ~QGLFunctions() {}\n";
 print "\n";
-
-# Output the prototypes into the QGLFunctions class.
+print "    enum Feature\n";
+print "    {\n";
+print "        Multitexture          = 0x0001,\n";
+print "        Shaders               = 0x0002,\n";
+print "        Buffers               = 0x0004,\n";
+print "        Framebuffers          = 0x0008,\n";
+print "        BlendColor            = 0x0010,\n";
+print "        BlendEquationSeparate = 0x0020,\n";
+print "        BlendFuncSeparate     = 0x0040,\n";
+print "        BlendSubtract         = 0x0080,\n";
+print "        CompressedTextures    = 0x0100,\n";
+print "        Multisample           = 0x0200,\n";
+print "        StencilSeparate       = 0x0400\n";
+print "    };\n";
+print "    Q_DECLARE_FLAGS(Features, Feature)\n";
+print "\n";
+print "    QGLFunctions::Features features() const;\n";
+print "    bool hasFeature(QGLFunctions::Feature feature) const;\n";
+print "\n";
+print "    void initializeGLFunctions(const QGLContext *context = 0);\n";
+print "\n";
 my $last_shader_only = 0;
 foreach ( @functions ) {
+    my $inline = $_->{'inline'};
+    next if ($inline && $inline eq 'all');
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
-    print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
-    print "#endif\n" if (!$shader_only && $last_shader_only);
+    my $name = $_->{'funcname'};
+    #print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
+    #print "#endif\n" if (!$shader_only && $last_shader_only);
     print "    $_->{'returnType'} $name($_->{'argstr'});\n";
     $last_shader_only = $shader_only;
 }
-print "#endif\n" if $last_shader_only;
+#print "#endif\n" if $last_shader_only;
 
 print "\n";
 print "private:\n";
 print "    QGLFunctionsPrivate *d_ptr;\n";
+print "    static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }\n";
 print "};\n";
+print "\n";
+print "Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::Features)\n";
 print "\n";
 print "struct QGLFunctionsPrivate\n";
 print "{\n";
-print "    QGLFunctionsPrivate();\n";
+print "    QGLFunctionsPrivate(const QGLContext *context = 0);\n";
 print "\n";
 print "#ifndef QT_OPENGL_ES_2";
 print "\n";
@@ -105,18 +152,21 @@ print "\n";
 $last_shader_only = 0;
 foreach ( @functions ) {
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
-    next if $_->{'inline'} && $_->{'inline'} eq 'all';
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
-    print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
-    print "#endif\n" if (!$shader_only && $last_shader_only);
+    my $inline = $_->{'inline'};
+    next if ($inline && $inline eq 'all');
+    next if $inline && $inline eq 'all_diff';
+    my $name = $_->{'varname'};
+    #print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
+    #print "#endif\n" if (!$shader_only && $last_shader_only);
     print "    $_->{'returnType'} (QGLF_APIENTRYP $name)($_->{'argstr'});\n";
     $last_shader_only = $shader_only;
 }
-print "#endif\n" if $last_shader_only;
+#print "#endif\n" if $last_shader_only;
 
 print "#endif\n";
+print "private:\n";
+print "    friend class QGLFunctions;\n";
+print "    int m_features;\n";
 print "};\n";
 print "\n";
 
@@ -131,14 +181,14 @@ $platform_defines{'desktop'} = "!defined(QT_OPENGL_ES)";
 $last_shader_only = 0;
 foreach ( @functions ) {
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
+    my $funcname = $_->{'funcname'};
+    my $varname = $_->{'varname'};
     my $is_void = ($_->{'returnType'} eq 'void');
     my $inline = $_->{'inline'};
-    print "#ifndef QT_OPENGL_ES_1\n\n" if ($shader_only && !$last_shader_only);
-    print "#endif\n\n" if (!$shader_only && $last_shader_only);
-    print "inline $_->{'returnType'} QGLFunctions::$name($_->{'argstr'})\n";
+    next if ($inline && $inline eq 'all');
+    #print "#ifndef QT_OPENGL_ES_1\n\n" if ($shader_only && !$last_shader_only);
+    #print "#endif\n\n" if (!$shader_only && $last_shader_only);
+    print "inline $_->{'returnType'} QGLFunctions::$funcname($_->{'argstr'})\n";
     print "{\n";
     if ($_->{'es_name'}) {
         # Functions like glClearDepth() that are inline, but named differently.
@@ -172,36 +222,49 @@ foreach ( @functions ) {
         }
         print "::$_->{'name'}($_->{'argnamestr'});\n";
         print "#else\n";
+        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
             print ("    return ");
         }
-        print "d_ptr->$name($_->{'argnamestr'});\n";
+        print "d_ptr->$varname($_->{'argnamestr'});\n";
         print "#endif\n";
     } else {
         # Resolve on all platforms.
+        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
             print ("    return ");
         }
-        print "d_ptr->$name($_->{'argnamestr'});\n";
+        print "d_ptr->$varname($_->{'argnamestr'});\n";
     }
     print "}\n\n";
     $last_shader_only = $shader_only;
 }
-print "#endif\n" if $last_shader_only;
+#print "#endif\n" if $last_shader_only;
+
+# Output the macro definitions.
+foreach ( @macros ) {
+    my $name = $_->{'name'};
+    my $value = $_->{'value'};
+    print "#ifndef $name\n";
+    print "#define $name $value\n";
+    print "#endif\n";
+}
+print "\n";
 
 print "// qglfunctions.cpp\n\n";
 
 # Generate qdoc documentation for all of the functions.
 foreach ( @functions ) {
+    my $inline = $_->{'inline'};
+    next if $inline && $inline eq 'all';
+
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
 
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
+    my $name = $_->{'funcname'};
 
     my $docargs = $_->{'argnamestr'};
     if (length($docargs) > 0) {
@@ -229,7 +292,7 @@ foreach ( @functions ) {
     print "    \\l{http://www.khronos.org/opengles/sdk/docs/man/$khronos_name.xml}{$khronos_name()}.\n";
     if ($shader_only) {
         print "\n";
-        print "    This convenience function is not present on OpenGL/ES 1.x systems.\n";
+        print "    This convenience function will do nothing on OpenGL/ES 1.x systems.\n";
     }
     print "*/\n\n";
 }
@@ -240,10 +303,9 @@ $last_shader_only = 0;
 foreach ( @functions ) {
     my $inline = $_->{'inline'};
     next if $inline && $inline eq 'all';
+    next if $inline && $inline eq 'all_diff';
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
+    my $name = $_->{'varname'};
     my $resolver_name = $_->{'name'};
     $resolver_name =~ s/^gl/qglfResolve/;
     my $special_name = $_->{'name'};
@@ -252,27 +314,12 @@ foreach ( @functions ) {
     $shader_only = 1 if @platforms ~~ 'es1';
     my $is_void = ($_->{'returnType'} eq 'void');
     my $special_handling = ($_->{'special_handling'} && $_->{'special_handling'} eq 'yes');
-    print "#ifndef QT_OPENGL_ES_1\n\n" if ($shader_only && !$last_shader_only);
-    print "#endif\n\n" if (!$shader_only && $last_shader_only);
+    #print "#ifndef QT_OPENGL_ES_1\n\n" if ($shader_only && !$last_shader_only);
+    #print "#endif\n\n" if (!$shader_only && $last_shader_only);
 
     if ($special_handling) {
         # Output special fallback implementations for certain functions.
-        if ($name eq "blendEquationSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    const QGLContext *context = QGLContext::currentContext();\n";
-            print "    QGLFunctionsPrivate *funcs = qt_gl_functions(context);\n";
-            print "    Q_UNUSED(modeAlpha);\n";
-            print "    funcs->blendEquation(modeRGB);\n";
-            print "}\n\n";
-        } elsif ($name eq "blendFuncSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(srcAlpha);\n";
-            print "    Q_UNUSED(dstAlpha);\n";
-            print "    ::glBlendFunc(srcRGB, dstRGB);\n";
-            print "}\n\n";
-        } elsif ($name eq "getShaderPrecisionFormat") {
+        if ($name eq "getShaderPrecisionFormat") {
             print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
             print "{\n";
             print "    Q_UNUSED(shadertype);\n";
@@ -287,33 +334,6 @@ foreach ( @functions ) {
         } elsif ($name eq "releaseShaderCompiler") {
             print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
             print "{\n";
-            print "}\n\n";
-        } elsif ($name eq "shaderBinary") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(n);\n";
-            print "    Q_UNUSED(shaders);\n";
-            print "    Q_UNUSED(binaryformat);\n";
-            print "    Q_UNUSED(binary);\n";
-            print "    Q_UNUSED(length);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilFuncSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilFunc(func, ref, mask);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilMaskSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilMask(mask);\n";
-            print "}\n\n";
-        } elsif ($name eq "stencilOpSeparate") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
-            print "{\n";
-            print "    Q_UNUSED(face);\n";
-            print "    ::glStencilOp(fail, zfail, zpass);\n";
             print "}\n\n";
         }
     }
@@ -374,32 +394,32 @@ foreach ( @functions ) {
 
     $last_shader_only = $shader_only;
 }
-print "#endif\n" if $last_shader_only;
+#print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n\n";
 
 # Generate the initialization code for QGLFunctionsPrivate.
-print "QGLFunctionsPrivate::QGLFunctionsPrivate()\n";
+print "QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)\n";
 print "{\n";
 print "#ifndef QT_OPENGL_ES_2\n";
 $last_shader_only = 0;
 foreach ( @functions ) {
     my $inline = $_->{'inline'};
     next if $inline && $inline eq 'all';
+    next if $inline && $inline eq 'all_diff';
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
-    my $name = $_->{'name'};
-    $name =~ s/^gl//;
-    $name = lcfirst($name);
+    my $name = $_->{'varname'};
     my $resolver_name = $_->{'name'};
     $resolver_name =~ s/^gl/qglfResolve/;
     my @platforms = split /,\s*/,$inline;
     $shader_only = 1 if @platforms ~~ 'es1';
-    print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
-    print "#endif\n" if (!$shader_only && $last_shader_only);
+    #print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
+    #print "#endif\n" if (!$shader_only && $last_shader_only);
     print "    $name = $resolver_name;\n";
     $last_shader_only = $shader_only;
 }
-print "#endif\n" if $last_shader_only;
+#print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n";
+print "    m_features = -1;\n";
 print "}\n\n";
 
 #print Dumper(\@functions);

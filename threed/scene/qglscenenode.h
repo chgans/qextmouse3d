@@ -81,10 +81,19 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
     Q_PROPERTY(int start READ start WRITE setStart NOTIFY startChanged)
     Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
     Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
+    Q_PROPERTY(DrawingMode drawingMode READ drawingMode WRITE setDrawingMode NOTIFY drawingModeChanged)
+    Q_ENUMS(DrawingMode)
 public:
     explicit QGLSceneNode(QObject *parent = 0);
     explicit QGLSceneNode(const QGeometryData &geometry, QObject *parent = 0);
     virtual ~QGLSceneNode();
+
+    enum DrawingMode
+    {
+        Points = QGL::Points,
+        Lines  = QGL::Lines,
+        Triangles = QGL::Triangles
+    };
 
     enum Type
     {
@@ -118,6 +127,9 @@ public:
     void setZ(qreal z);
     QVector3D scale() const;
     void setScale(const QVector3D &scale);
+
+    DrawingMode drawingMode() const;
+    void setDrawingMode(DrawingMode mode);
 
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
@@ -175,6 +187,7 @@ Q_SIGNALS:
     void materialChanged();
     void startChanged();
     void countChanged();
+    void drawingModeChanged();
 
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);

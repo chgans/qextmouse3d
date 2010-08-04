@@ -87,6 +87,7 @@ public:
         , pickNode(0)
         , boxValid(false)
         , transformValid(false)
+        , drawingMode(QGLSceneNode::Triangles)
     {
     }
 
@@ -124,6 +125,7 @@ public:
     mutable bool boxValid;
     mutable QMatrix4x4 transform;
     mutable bool transformValid;
+    QGLSceneNode::DrawingMode drawingMode;
 };
 
 #endif // QGLSCENENODE_P_H

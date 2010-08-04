@@ -81,6 +81,8 @@ void CubeView::initializeGL(QGLPainter *painter)
     builder << QGL::Faceted << QGLCube(1.0f);
     cube = builder.currentNode();
     builder << QGL::Faceted;
+    room = builder.currentNode();
+    builder.pushNode();
     QGLSceneNode *back = builder.newNode();
     {
         QGeometryData quad;
@@ -126,7 +128,7 @@ void CubeView::initializeGL(QGLPainter *painter)
         quad.appendVertex(QVector3D( 3.0f, -3.0f, -15.0f));
         builder.addQuads(quad);
     }
-    room = builder.currentNode();
+    builder.popNode();
 
     int index;
     QGLMaterialCollection *palette = builder.sceneNode()->palette();
@@ -148,7 +150,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     top->setMaterialIndex(index);
     bottom->setMaterialIndex(index);
 
-    //qDumpScene(&room);
+    //qDumpScene(room);
 
     builder.newSection();
     builder << QGLTeapot();

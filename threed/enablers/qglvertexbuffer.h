@@ -106,8 +106,8 @@ public:
 
     QGLBuffer buffer() const;
 
-    bool bind() const;
-    void release() const;
+    bool bind();
+    void release();
 
     void setAttributeArrays(QGLShaderProgram *program);
 

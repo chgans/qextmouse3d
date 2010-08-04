@@ -50,7 +50,6 @@ CubeView::CubeView(QWidget *parent)
 {
     QGLBuilder builder;
     builder << QGL::Faceted << QGLCube(1.5f);
-    qDebug() << format().stereo();
     cube = builder.finalizedSceneNode();
 
     QMatrix4x4 m;
@@ -76,5 +75,4 @@ CubeView::~CubeView()
 void CubeView::paintGL(QGLPainter *painter)
 {
     cube->draw(painter);
-    qDebug() << "Hi Mom!!!";
 }

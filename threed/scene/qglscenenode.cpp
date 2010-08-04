@@ -172,6 +172,16 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
 */
 
 /*!
+    \enum QGLSceneNode::DrawingMode
+    This enum covers the supported drawing modes for a QGLSceneNode.  This
+    value is set on a node using the setDrawingMode() function, and will be
+    passed when drawing the underlying geometry.  If in doubt use Triangles.
+    \value Points draw the node as a point cloud
+    \value Lines draw the node as lines
+    \value Triangles draw the node as triangles
+*/
+
+/*!
     Constructs a new scene node and attaches it to \a parent.  If parent is
     a QGLSceneNode then this node is added to it as a child.
 */
@@ -627,6 +637,29 @@ void QGLSceneNode::setScale(const QVector3D &scale)
         d->scale = scale;
         emit scaleChanged();
         invalidateTransform();
+    }
+}
+
+/*!
+    \property QGLSceneNode::drawingMode
+    \brief The drawing mode for this node.
+
+    This property holds the current drawing mode for this node.  The default is
+    QGL::Triangles.
+*/
+QGLSceneNode::DrawingMode QGLSceneNode::drawingMode() const
+{
+    Q_D(const QGLSceneNode);
+    return d->drawingMode;
+}
+
+void QGLSceneNode::setDrawingMode(QGLSceneNode::DrawingMode mode)
+{
+    Q_D(QGLSceneNode);
+    if (d->drawingMode != mode)
+    {
+        d->drawingMode = mode;
+        emit drawingModeChanged();
     }
 }
 
@@ -1127,7 +1160,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
             painter->setObjectPickId(d->pickNode->id());
         }
 
-        d->geometry.draw(painter, d->start, d->count);
+        d->geometry.draw(painter, d->start, d->count, d->drawingMode);
 
         if (idSaved)
             painter->setObjectPickId(id);
@@ -1405,6 +1438,11 @@ bool QGLSceneNode::normalViewEnabled() const
 /*!
     \fn QGLSceneNode::startChanged()
     Signals that the count() property for this scene node has changed.
+*/
+
+/*!
+    \fn QGLSceneNode::drawingModeChanged()
+    Signals that the drawingMode() propert for this scene node has changed.
 */
 
 #ifndef QT_NO_DEBUG_STREAM

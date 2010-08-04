@@ -462,19 +462,21 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
         return -1;
     }
     else {
-        int branchId = nextSceneBranchId();        
-        QGLSceneNode *sceneObj = getSceneObject(nodeName);        
-        QGLSceneNode *sceneNode = qobject_cast<QGLSceneNode *>(sceneObj);
-        if (sceneObj) {
+        int branchId = nextSceneBranchId();
+        QGLSceneNode *sceneNode = getSceneObject(nodeName);
+        qDumpScene(sceneNode);
+        if (sceneNode) {
             QGLSceneNode *parentNode = qobject_cast<QGLSceneNode *>(sceneNode->parent());
+            qDebug() << "retrieved parentNode:" << parentNode << "from:" << sceneNode->parent();
             
-            QObject *prevParent=parentNode;//sceneObj->parent();            
-            parentNode->removeNode(sceneNode);  //this becomes irrelevant.
+            QObject *prevParent=parentNode;
+            if (parentNode)
+                parentNode->removeNode(sceneNode);  //this becomes irrelevant.
             
             //sceneNode->setParent(d->scene);     //TODO: currently this fails as sceneNode changes make problems.
             //If no specific parent is nominated, use the scene specified by the mesh
-            parent ? sceneObj->setParent(parent)  : sceneObj->setParent(d->scene);
-            addSceneBranch(sceneObj, prevParent);
+            parent ? sceneNode->setParent(parent)  : sceneNode->setParent(d->scene);
+            addSceneBranch(sceneNode, prevParent);
             
             return branchId;
         }
