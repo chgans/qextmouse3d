@@ -7,6 +7,7 @@ use Data::Dumper;
 
 # Read the function definitions from the input.
 my @functions = ();
+my @macros = ();
 my %func_info = ();
 while (<>)
 {
@@ -14,6 +15,14 @@ while (<>)
         m/^(\w+|const GLubyte\*)\s+(\w+)\s*\(([^)]*)\)/;
 
     if (!$returnType) {
+        my ($macroname, $macrovalue) = m/^#define\s+(\w+)\s+(.*)$/;
+        if ($macroname) {
+            my %macro_info = ();
+            $macro_info{'name'} = $macroname;
+            $macro_info{'value'} = $macrovalue;
+            push @macros, { %macro_info };
+            next;
+        }
         my ($tag, $value) = m/^\s+(\w+)\s+(.*)$/;
         next unless $tag;
         $func_info{$tag} = $value;
@@ -211,6 +220,16 @@ foreach ( @functions ) {
     $last_shader_only = $shader_only;
 }
 #print "#endif\n" if $last_shader_only;
+
+# Output the macro definitions.
+foreach ( @macros ) {
+    my $name = $_->{'name'};
+    my $value = $_->{'value'};
+    print "#ifndef $name\n";
+    print "#define $name $value\n";
+    print "#endif\n";
+}
+print "\n";
 
 print "// qglfunctions.cpp\n\n";
 

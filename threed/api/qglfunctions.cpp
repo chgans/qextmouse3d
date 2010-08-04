@@ -103,6 +103,10 @@ QT_BEGIN_NAMESPACE
     QGLFunctions provides wrappers for all OpenGL/ES 2.0 functions,
     except those like \c{glDrawArrays()}, \c{glViewport()}, and
     \c{glBindTexture()} that don't have portability issues.
+
+    Including the header for QGLFunctions will also define all of
+    the OpenGL/ES 2.0 macro constants that are not already defined by
+    the system's OpenGL headers, such as \c{GL_TEXTURE1} above.
 */
 
 #if QT_VERSION >= 0x040800
