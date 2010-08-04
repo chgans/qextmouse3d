@@ -164,9 +164,6 @@ foreach ( @functions ) {
 #print "#endif\n" if $last_shader_only;
 
 print "#endif\n";
-print "private:\n";
-print "    friend class QGLFunctions;\n";
-print "    int m_features;\n";
 print "};\n";
 print "\n";
 
@@ -419,7 +416,6 @@ foreach ( @functions ) {
 }
 #print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n";
-print "    m_features = -1;\n";
 print "}\n\n";
 
 #print Dumper(\@functions);

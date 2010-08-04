@@ -405,9 +405,6 @@ struct QGLFunctionsPrivate
     void (QGLF_APIENTRYP vertexAttrib4fv)(GLuint indx, const GLfloat* values);
     void (QGLF_APIENTRYP vertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
 #endif
-private:
-    friend class QGLFunctions;
-    int m_features;
 };
 
 inline void QGLFunctions::glActiveTexture(GLenum texture)

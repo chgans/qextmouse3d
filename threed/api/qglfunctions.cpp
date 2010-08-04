@@ -127,27 +127,37 @@ QT_BEGIN_NAMESPACE
     \value StencilSeparate Separate stencil functions are available.
 */
 
+// Hidden private fields for additional extension data.
+struct QGLFunctionsPrivateEx : public QGLFunctionsPrivate
+{
+    QGLFunctionsPrivateEx(const QGLContext *context = 0)
+        : QGLFunctionsPrivate(context)
+        , m_features(-1) {}
+
+    int m_features;
+};
+
 #if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivate>, qt_gl_functions_resource)
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivateEx>, qt_gl_functions_resource)
 #else
 static void qt_gl_functions_free(void *data)
 {
-    delete reinterpret_cast<QGLFunctionsPrivate *>(data);
+    delete reinterpret_cast<QGLFunctionsPrivateEx *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_functions_resource, (qt_gl_functions_free))
 #endif
-static QGLFunctionsPrivate *qt_gl_functions(const QGLContext *context = 0)
+static QGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
 {
     if (!context)
         context = QGLContext::currentContext();
     Q_ASSERT(context);
-    QGLFunctionsPrivate *funcs =
-        reinterpret_cast<QGLFunctionsPrivate *>
+    QGLFunctionsPrivateEx *funcs =
+        reinterpret_cast<QGLFunctionsPrivateEx *>
             (qt_gl_functions_resource()->value(context));
 #if QT_VERSION < 0x040800
     if (!funcs) {
-        funcs = new QGLFunctionsPrivate();
+        funcs = new QGLFunctionsPrivateEx();
         qt_gl_functions_resource()->insert(context, funcs);
     }
 #endif
@@ -254,11 +264,12 @@ static int qt_gl_resolve_features()
 */
 QGLFunctions::Features QGLFunctions::features() const
 {
-    if (!d_ptr)
+    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    if (!d)
         return 0;
-    if (d_ptr->m_features == -1)
-        d_ptr->m_features = qt_gl_resolve_features();
-    return QGLFunctions::Features(d_ptr->m_features);
+    if (d->m_features == -1)
+        d->m_features = qt_gl_resolve_features();
+    return QGLFunctions::Features(d->m_features);
 }
 
 /*!
@@ -272,11 +283,12 @@ QGLFunctions::Features QGLFunctions::features() const
 */
 bool QGLFunctions::hasFeature(QGLFunctions::Feature feature) const
 {
-    if (!d_ptr)
+    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    if (!d)
         return false;
-    if (d_ptr->m_features == -1)
-        d_ptr->m_features = qt_gl_resolve_features();
-    return (d_ptr->m_features & int(feature)) != 0;
+    if (d->m_features == -1)
+        d->m_features = qt_gl_resolve_features();
+    return (d->m_features & int(feature)) != 0;
 }
 
 /*!
@@ -3648,7 +3660,6 @@ QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
     vertexAttrib4fv = qglfResolveVertexAttrib4fv;
     vertexAttribPointer = qglfResolveVertexAttribPointer;
 #endif // !QT_OPENGL_ES_2
-    m_features = -1;
 }
 
 QT_END_NAMESPACE
