@@ -7,6 +7,7 @@ SUBDIRS = \
     qgraphicstransform3d \
     qvectorarray \
     qglcamera \
+    qglfunctions \
     qglindexbuffer \
     qgllightmodel \
     qgllightparameters \

@@ -178,7 +178,7 @@ public:
     explicit QGLFunctions(const QGLContext *context);
     ~QGLFunctions() {}
 
-    enum Feature
+    enum OpenGLFeature
     {
         Multitexture          = 0x0001,
         Shaders               = 0x0002,
@@ -190,12 +190,13 @@ public:
         BlendSubtract         = 0x0080,
         CompressedTextures    = 0x0100,
         Multisample           = 0x0200,
-        StencilSeparate       = 0x0400
+        StencilSeparate       = 0x0400,
+        NPOTTextures          = 0x0800
     };
-    Q_DECLARE_FLAGS(Features, Feature)
+    Q_DECLARE_FLAGS(OpenGLFeatures, OpenGLFeature)
 
-    QGLFunctions::Features features() const;
-    bool hasFeature(QGLFunctions::Feature feature) const;
+    QGLFunctions::OpenGLFeatures openGLFeatures() const;
+    bool hasOpenGLFeature(QGLFunctions::OpenGLFeature feature) const;
 
     void initializeGLFunctions(const QGLContext *context = 0);
 
@@ -302,7 +303,7 @@ private:
     static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::Features)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::OpenGLFeatures)
 
 struct QGLFunctionsPrivate
 {
