@@ -42,7 +42,7 @@
 #include "qglpainter.h"
 #include "qglpainter_p.h"
 #include "qglabstracteffect.h"
-#include "qglext.h"
+#include "qglext_p.h"
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
@@ -67,6 +67,8 @@
 #include "qgeometrydata.h"
 #include "qglvertexbuffer_p.h"
 #include "qmatrix4x4stack_p.h"
+
+#undef glActiveTexture
 
 QT_BEGIN_NAMESPACE
 
@@ -337,6 +339,8 @@ bool QGLPainter::begin(const QGLContext *context)
     d_ptr->modelViewMatrix.setDirty(true);
     d_ptr->projectionMatrix.setDirty(true);
 
+    // Initialize the QGLFunctions parent class.
+    initializeGLFunctions(context);
     return true;
 }
 
@@ -1581,7 +1585,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
         return;
 
     // Select the texture unit and bind the texture.
-    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
 #if !defined(QT_OPENGL_ES_2)
@@ -1597,7 +1601,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
     if (unit != 0)
-        qt_gl_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
 }
 
 /*!
@@ -1614,7 +1618,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
         return;
 
     // Select the texture unit and bind the texture.
-    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         QGLTextureCube::release();
 #if !defined(QT_OPENGL_ES_2)
@@ -1630,7 +1634,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
     if (unit != 0)
-        qt_gl_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
 }
 
 /*!

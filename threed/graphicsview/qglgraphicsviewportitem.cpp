@@ -41,7 +41,6 @@
 
 #include "qglgraphicsviewportitem.h"
 #include "qglpainter.h"
-#include "qglext.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsscene.h>
 
@@ -86,7 +85,7 @@ public:
     }
 
     void changeCamera(QGLCamera *c);
-    void setDefaults();
+    void setDefaults(QGLPainter *painter);
 
     QGLGraphicsViewportItem *q;
     QGLGraphicsViewportItem::Options options;
@@ -119,7 +118,7 @@ void QGLGraphicsViewportItemPrivate::cameraChanged()
     q->update();
 }
 
-void QGLGraphicsViewportItemPrivate::setDefaults()
+void QGLGraphicsViewportItemPrivate::setDefaults(QGLPainter *painter)
 {
     // Set the default depth buffer options.
     glDepthFunc(GL_LESS);
@@ -132,9 +131,13 @@ void QGLGraphicsViewportItemPrivate::setDefaults()
 
     // Set the default blend options.
     glDisable(GL_BLEND);
-    qt_gl_BlendColor(0, 0, 0, 0);
-    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    qt_gl_BlendEquation(GL_FUNC_ADD);
+    if (painter->hasOpenGLFeature(QGLFunctions::BlendColor))
+        painter->glBlendColor(0, 0, 0, 0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (painter->hasOpenGLFeature(QGLFunctions::BlendEquation))
+        painter->glBlendEquation(GL_FUNC_ADD);
+    else if (painter->hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+        painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 }
 
 /*!
@@ -403,9 +406,7 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
-    qt_gl_BlendColor(0, 0, 0, 0);
-    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    qt_gl_BlendEquation(GL_FUNC_ADD);
+    d->setDefaults(&glpainter);
     if (d->backgroundColor.isValid()) {
         // We clear the background by drawing a triangle fan so
         // that the background color will blend with the underlying
@@ -426,7 +427,6 @@ void QGLGraphicsViewportItem::paint
     }
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
-    d->setDefaults();
     glEnable(GL_DEPTH_TEST);
     glpainter.setBlendingEnabled(false);
 
@@ -443,7 +443,7 @@ void QGLGraphicsViewportItem::paint
 
     // Try to restore the GL state to something paint-engine compatible.
     glpainter.setCullFaces(QGL::CullDisabled);
-    d->setDefaults();
+    d->setDefaults(&glpainter);
     glDisable(GL_DEPTH_TEST);
 }
 

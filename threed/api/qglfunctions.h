@@ -185,13 +185,14 @@ public:
         Buffers               = 0x0004,
         Framebuffers          = 0x0008,
         BlendColor            = 0x0010,
-        BlendEquationSeparate = 0x0020,
-        BlendFuncSeparate     = 0x0040,
-        BlendSubtract         = 0x0080,
-        CompressedTextures    = 0x0100,
-        Multisample           = 0x0200,
-        StencilSeparate       = 0x0400,
-        NPOTTextures          = 0x0800
+        BlendEquation         = 0x0020,
+        BlendEquationSeparate = 0x0040,
+        BlendFuncSeparate     = 0x0080,
+        BlendSubtract         = 0x0100,
+        CompressedTextures    = 0x0200,
+        Multisample           = 0x0400,
+        StencilSeparate       = 0x0800,
+        NPOTTextures          = 0x1000
     };
     Q_DECLARE_FLAGS(OpenGLFeatures, OpenGLFeature)
 

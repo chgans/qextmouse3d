@@ -129,6 +129,7 @@ QT_BEGIN_NAMESPACE
     \value Buffers Vertex and index buffer functions are available.
     \value Framebuffers Framebuffer object functions are available.
     \value BlendColor glBlendColor() is available.
+    \value BlendEquation glBlendEquation() is available.
     \value BlendEquationSeparate glBlendEquationSeparate() is available.
     \value BlendFuncSeparate glBlendFuncSeparate() is available.
     \value BlendSubtract Blend subtract mode is available.
@@ -216,6 +217,7 @@ static int qt_gl_resolve_features()
            QGLFunctions::Buffers |
            QGLFunctions::Framebuffers |
            QGLFunctions::BlendColor |
+           QGLFunctions::BlendEquation |
            QGLFunctions::BlendEquationSeparate |
            QGLFunctions::BlendFuncSeparate |
            QGLFunctions::BlendSubtract |
@@ -269,8 +271,10 @@ static int qt_gl_resolve_features()
         features |= QGLFunctions::NPOTTextures;
 
     // Recognize features by minimum OpenGL version.
-    if (versions & QGLFormat::OpenGL_Version_1_2)
-        features |= QGLFunctions::BlendColor;
+    if (versions & QGLFormat::OpenGL_Version_1_2) {
+        features |= QGLFunctions::BlendColor |
+                    QGLFunctions::BlendEquation;
+    }
     if (versions & QGLFormat::OpenGL_Version_1_3) {
         features |= QGLFunctions::Multitexture |
                     QGLFunctions::CompressedTextures |

@@ -79,6 +79,7 @@ void tst_QGLFunctions::features()
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Buffers));
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Framebuffers));
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendColor));
+    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendEquation));
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate));
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate));
     QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract));
@@ -100,6 +101,7 @@ void tst_QGLFunctions::features()
          QGLFunctions::Buffers |
          QGLFunctions::Framebuffers |
          QGLFunctions::BlendColor |
+         QGLFunctions::BlendEquation |
          QGLFunctions::BlendEquationSeparate |
          QGLFunctions::BlendFuncSeparate |
          QGLFunctions::BlendSubtract |
@@ -113,6 +115,7 @@ void tst_QGLFunctions::features()
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Buffers));
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Framebuffers));
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendColor));
+    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendEquation));
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate));
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate));
     QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract));
@@ -159,6 +162,8 @@ void tst_QGLFunctions::features()
              hasExtension("GL_ARB_framebuffer_object"));
     QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendColor),
              hasExtension("GL_EXT_blend_color") ||
+             (versions & QGLFormat::OpenGL_Version_1_2) != 0);
+    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendEquation),
              (versions & QGLFormat::OpenGL_Version_1_2) != 0);
     QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate),
              hasExtension("GL_EXT_blend_equation_separate") ||
