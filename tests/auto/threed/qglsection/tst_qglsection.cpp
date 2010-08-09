@@ -159,13 +159,9 @@ void tst_QGLSection::modify()
 
 void tst_QGLSection::append()
 {
-    qDebug() << "builder create";
     TestBuilder builder;
-    qDebug() << "builder new section call";
     builder.newSection();
-    qDebug() << "builder current section call";
     QGLSection *section = builder.currentSection();
-    qDebug() << "section1:" << section;
 
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(1.0f, 0.0f, 0.0f);
