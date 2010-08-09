@@ -49,6 +49,7 @@
 #include <QtGui/qvector4d.h>
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
+#include "qglfunctions.h"
 #include "qglvertexbuffer.h"
 #include "qglindexbuffer.h"
 #include "qgllightmodel.h"
@@ -74,7 +75,7 @@ class QGeometryData;
 class QGLShaderProgram;
 class QGLFramebufferObject;
 
-class Q_QT3D_EXPORT QGLPainter
+class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
 {
 public:
     QGLPainter();

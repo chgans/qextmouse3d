@@ -463,10 +463,10 @@ void tst_QGeometryData::normalizeNormals()
     QVERIFY(qFskCompare(data.normalAt(1), QVector3D(0.567989, 0.577300, 0.586612)));
     QVERIFY(qFskCompare(data.normalAt(2), QVector3D(0.569295, 0.577313, 0.585331)));
     QVERIFY(qFskCompare(data.normalAt(3), QVector3D(0.570281, 0.577322, 0.584362)));
-    QVERIFY(qFskCompare(data.normalAt(0).lengthSquared(), 1.0));
-    QVERIFY(qFskCompare(data.normalAt(1).lengthSquared(), 1.0));
-    QVERIFY(qFskCompare(data.normalAt(2).lengthSquared(), 1.0));
-    QVERIFY(qFskCompare(data.normalAt(3).lengthSquared(), 1.0));
+    QVERIFY(qFskCompare(data.normalAt(0).lengthSquared(), qreal(1.0f)));
+    QVERIFY(qFskCompare(data.normalAt(1).lengthSquared(), qreal(1.0f)));
+    QVERIFY(qFskCompare(data.normalAt(2).lengthSquared(), qreal(1.0f)));
+    QVERIFY(qFskCompare(data.normalAt(3).lengthSquared(), qreal(1.0f)));
 }
 
 void tst_QGeometryData::reversed()

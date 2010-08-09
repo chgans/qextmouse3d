@@ -45,7 +45,6 @@
 #include "qgllightparameters.h"
 #include "qglcamera.h"
 #include "qglview.h"
-#include "qglext.h"
 #include <QtGui/qpainter.h>
 #include <QtOpenGL/qglframebufferobject.h>
 
@@ -498,9 +497,13 @@ void Viewport::draw(QGLPainter *painter)
     glDepthRange(0.0f, 1.0f);
 #endif
     painter->setBlendingEnabled(d->blending);
-    qt_gl_BlendColor(0, 0, 0, 0);
-    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    qt_gl_BlendEquation(GL_FUNC_ADD);
+    if (painter->hasOpenGLFeature(QGLFunctions::BlendColor))
+        painter->glBlendColor(0, 0, 0, 0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (painter->hasOpenGLFeature(QGLFunctions::BlendEquation))
+        painter->glBlendEquation(GL_FUNC_ADD);
+    else if (painter->hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+        painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     painter->setCullFaces(QGL::CullDisabled);
     if (!d->view)
         painter->setPicking(d->showPicking);
@@ -656,9 +659,13 @@ QObject *Viewport::objectForPoint(int x, int y)
         glDepthRange(0.0f, 1.0f);
 #endif
         painter.setBlendingEnabled(false);
-        qt_gl_BlendColor(0, 0, 0, 0);
-        qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        qt_gl_BlendEquation(GL_FUNC_ADD);
+        if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+            painter.glBlendColor(0, 0, 0, 0);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+            painter.glBlendEquation(GL_FUNC_ADD);
+        else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+            painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
         painter.setCullFaces(QGL::CullDisabled);
         if (d->camera) {
             painter.setCamera(d->camera);
