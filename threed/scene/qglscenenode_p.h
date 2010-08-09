@@ -77,7 +77,8 @@ public:
         : QObjectPrivate(version)
         , type(t)
         , geometry(0)
-        , localEffect(QGL::LitMaterial)
+        , palette(0)
+        , localEffect(QGL::FlatColor)   // 0 - zero
         , customEffect(0)
         , hasEffect(false)
         , material(-1)

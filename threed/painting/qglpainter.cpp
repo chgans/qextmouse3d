@@ -130,6 +130,7 @@ QGLPainterPrivate::QGLPainterPrivate()
 #if QT_VERSION < 0x040700
       , vertexAttribPointer(0)
 #endif
+      , renderSequencer(0)
 {
     context = 0;
     effect = 0;
@@ -150,6 +151,7 @@ QGLPainterPrivate::~QGLPainterPrivate()
         delete stdeffects[effect];
     delete pick;
     qDeleteAll(cachedPrograms);
+    delete renderSequencer;
 }
 
 QGLPainterPickPrivate::QGLPainterPickPrivate()
@@ -334,6 +336,11 @@ bool QGLPainter::begin(const QGLContext *context)
     const_cast<QGLContext *>(context)->makeCurrent();
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
+    if (d_ptr->renderSequencer)
+    {
+        d_ptr->renderSequencer->reset();
+        d_ptr->renderSequencer->setPainter(this);
+    }
 
     // Force the matrices to be updated the first time we use them.
     d_ptr->modelViewMatrix.setDirty(true);
@@ -1067,6 +1074,19 @@ bool QGLPainter::isCullable(const QBox3D& box) const
     }
     projected.transform(d->projectionMatrix);
     return !d->viewingCube.intersects(projected);
+}
+
+/*!
+    Returns the current render order sequencer.
+
+    \sa QGLRenderSequencer
+*/
+QGLRenderSequencer *QGLPainter::renderSequencer()
+{
+    Q_D(QGLPainter);
+    if (!d->renderSequencer)
+        d->renderSequencer = new QGLRenderSequencer(this);
+    return d->renderSequencer;
 }
 
 /*!

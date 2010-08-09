@@ -305,6 +305,7 @@ void QGLViewPrivate::processStereoOptions(QGLView *view)
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
+    return format;
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
     QGLFormat fmt(format);
     fmt.setOption(QGL::StereoBuffers);

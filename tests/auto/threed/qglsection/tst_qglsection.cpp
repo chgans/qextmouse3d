@@ -103,6 +103,16 @@ public:
     QList<QGLSection*> sections() { return QGLBuilder::sections(); }
 };
 
+static void addGeometry(TestBuilder &builder)
+{
+    QVector3D va(-1.0f, -1.0f, 0.0f);
+    QVector3D vb(1.0f, -1.0f, 0.0f);
+    QVector3D vc(1.0f, 1.0f, 0.0f);
+    QGeometryData p;
+    p.appendVertex(va, vb, vc);
+    builder.addTriangles(p);
+}
+
 void tst_QGLSection::create()
 {
     // Test that a newly created object has the correct defaults.
@@ -117,6 +127,7 @@ void tst_QGLSection::create()
     QCOMPARE(section->mapThreshold(), 5);
 
     // suppress warning
+    addGeometry(builder);
     builder.finalizedSceneNode();
 }
 
@@ -148,9 +159,13 @@ void tst_QGLSection::modify()
 
 void tst_QGLSection::append()
 {
+    qDebug() << "builder create";
     TestBuilder builder;
+    qDebug() << "builder new section call";
     builder.newSection();
+    qDebug() << "builder current section call";
     QGLSection *section = builder.currentSection();
+    qDebug() << "section1:" << section;
 
     QVector3D testVertex(1.234f, 2.345f, 3.456f);
     QVector3D testNormal(1.0f, 0.0f, 0.0f);

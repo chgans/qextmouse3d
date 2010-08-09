@@ -19,7 +19,8 @@ SUBDIRS = \
     qglsection \
     qgeometrydata \
     qglpickcolors \
-    qstereoimage
+    qstereoimage \
+    qglrender
 
 TO_BE_PORTED = \
     qglcube
