@@ -90,7 +90,7 @@
     The read function will typically construct a QGLDisplayList
     for the geometry in the scene and then parse all of the objects,
     materials, textures, and so on.  Ultimately, it needs to produce a
-    QGLAbstractScene object, populated with QGLSceneObject instances
+    QGLAbstractScene object, populated with QGLSceneNode instances
     for each of the objects in the model file.  In our case, we create
     an instance of \c QGLObjScene:
 
@@ -108,7 +108,7 @@
 
     Note: the plug-in does not need to use QGLDisplayList and the
     other Qt/3D classes to load the model if it doesn't want to.
-    It can instantiate subclasses of QGLSceneObject that override
+    It can instantiate subclasses of QGLSceneNode that override
     the draw() method and draws the object using whatever technique
     the plug-in chooses.  It just needs to leave the OpenGL state
     in the condition that it found it so that other parts of Qt/3D
