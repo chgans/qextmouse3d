@@ -203,17 +203,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \enum QGL::ClearBuffer
-    \since 4.8
-    This enum defines a buffer to be cleared with glClear().
-
-    \value NoClearBuffers No buffers should be cleared.
-    \value ClearDepthBuffer Clears the depth buffer.
-    \value ClearStencilBuffer Clears the stencil buffer.
-    \value ClearColorBuffer Clears the color buffer.
-*/
-
-/*!
     \enum QGL::Eye
     \since 4.8
     This enum defines the eye that is being rendered by a QGLPainter

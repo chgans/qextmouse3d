@@ -210,11 +210,11 @@ void SkyBox::draw(QGLPainter *painter) const
     cam->setViewSize(QSizeF(0.3f, 0.3f));
     painter->setCamera(cam);
 
-    painter->setDepthTestingEnabled(false);
+    glDisable(GL_DEPTH_TEST);
 
     m_scene->draw(painter);
 
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
     cam->setCenter(center);
     cam->setEye(eye);

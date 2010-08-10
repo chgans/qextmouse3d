@@ -63,14 +63,14 @@ void PainterWidget::paintGL(QPainter *p)
     }
 
     // Turn on depth testing.
-    painter.setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
     // Set the default viewport.
     painter.setViewport(rect());
 
     // Clear the window to the standard window background color.
     painter.setClearColor(palette().color(backgroundRole()));
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Draw a triangle in an orthographic projection.
     QMatrix4x4 projm;

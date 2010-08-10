@@ -97,7 +97,7 @@ void tst_QGLPainter::clearPaint()
     QGLPainter painter;
     painter.begin();
     painter.setClearColor(Qt::blue);
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void tst_QGLPainter::clearPaintQ(QPainter *painter, const QSize& size)
@@ -117,7 +117,7 @@ void tst_QGLPainter::drawTrianglePaint()
     QGLPainter painter;
     painter.begin();
     painter.setClearColor(Qt::black);
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     QMatrix4x4 projm;
     projm.ortho(widget->rect());
@@ -246,7 +246,7 @@ void tst_QGLPainter::scissorPaint()
     QGLPainter painter;
     painter.begin();
     painter.setClearColor(Qt::black);
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     QMatrix4x4 projm;
     projm.ortho(widget->rect());

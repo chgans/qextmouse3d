@@ -778,7 +778,7 @@ void QGLView::initializeGL(QGLPainter *painter)
 */
 void QGLView::earlyPaintGL(QGLPainter *painter)
 {
-    painter->clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 /*!
@@ -1125,7 +1125,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // Render the pick version of the scene into the framebuffer object.
         if (d->fbo)
             d->fbo->bind();
-        painter.clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
         paintGL(&painter);

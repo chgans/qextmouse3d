@@ -107,14 +107,7 @@ public:
     };
     Q_DECLARE_FLAGS(Updates, Update);
 
-    void clear(QGL::ClearBuffers buffers = QGL::ClearColorBuffer | QGL::ClearDepthBuffer);
     void setClearColor(const QColor& color);
-    void setClearDepth(qreal depth);
-    void setClearStencil(GLint value);
-
-    void setDepthTestingEnabled(bool value);
-    void setStencilTestingEnabled(bool value);
-    void setBlendingEnabled(bool value);
 
     QRect viewport() const;
     void setViewport(const QRect& rect);
@@ -188,9 +181,6 @@ public:
     QGLFramebufferObject *currentSurface() const;
     QSize surfaceSize() const;
 
-    void setPointSize(qreal size);
-    void setLineWidth(qreal width);
-
     void setCullFaces(QGL::CullFaces faces);
 
     const QGLLightModel *lightModel() const;
@@ -232,30 +222,6 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
-
-inline void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
-
-inline void QGLPainter::setStencilTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_STENCIL_TEST);
-    else
-        glDisable(GL_STENCIL_TEST);
-}
-
-inline void QGLPainter::setBlendingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_BLEND);
-    else
-        glDisable(GL_BLEND);
-}
 
 QT_END_NAMESPACE
 

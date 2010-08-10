@@ -116,8 +116,8 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 void CubeItem::paintGL(QGLPainter *painter)
 {
     if (fbo) {
-        painter->setDepthTestingEnabled(false);
-        painter->setBlendingEnabled(true);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
         painter->setFaceColor(QGL::AllFaces, QColor(0, 0, 0, 200));
         painter->setStandardEffect(QGL::LitDecalTexture2D);
         glBindTexture(GL_TEXTURE_2D, fbo->texture());

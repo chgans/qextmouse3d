@@ -73,7 +73,7 @@ void TutorialWidget::paintGL()
     QGLPainter painter(this);
 
     painter.setClearColor(palette().color(backgroundRole()));
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //! [clear-window]
 
 //! [set-matrices]

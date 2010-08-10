@@ -135,7 +135,7 @@ void SphereView::initializeGL(QGLPainter *painter)
     connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
     timer->start(25);
 
-    painter->setBlendingEnabled(true);
+    glEnable(GL_BLEND);
 }
 
 void SphereView::paintGL(QGLPainter *painter)

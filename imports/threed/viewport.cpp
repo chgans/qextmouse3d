@@ -432,13 +432,13 @@ void Viewport::earlyDraw(QGLPainter *painter)
     // If are running with the regular qml viewer, then assume that it
     // has cleared the background for us, and just clear the depth buffer.
     if (!d->view && parentItem() && !d->showPicking) {
-        painter->clear(QGL::ClearDepthBuffer);
+        glClear(GL_DEPTH_BUFFER_BIT);
     } else {
         if (d->showPicking)
             painter->setClearColor(Qt::black);
         else
             painter->setClearColor(d->backgroundColor);
-        painter->clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     // If we have a scene backdrop, then draw it now.
@@ -496,7 +496,10 @@ void Viewport::draw(QGLPainter *painter)
 #else
     glDepthRange(0.0f, 1.0f);
 #endif
-    painter->setBlendingEnabled(d->blending);
+    if (d->blending)
+        glEnable(GL_BLEND);
+    else
+        glDisable(GL_BLEND);
     if (painter->hasOpenGLFeature(QGLFunctions::BlendColor))
         painter->glBlendColor(0, 0, 0, 0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -648,7 +651,7 @@ QObject *Viewport::objectForPoint(int x, int y)
         painter.setPicking(true);
         painter.clearPickObjects();
         painter.setClearColor(Qt::black);
-        painter.clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter.setEye(QGL::NoEye);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -658,7 +661,7 @@ QObject *Viewport::objectForPoint(int x, int y)
 #else
         glDepthRange(0.0f, 1.0f);
 #endif
-        painter.setBlendingEnabled(false);
+        glDisable(GL_BLEND);
         if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
             painter.glBlendColor(0, 0, 0, 0);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

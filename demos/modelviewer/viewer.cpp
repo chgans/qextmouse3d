@@ -300,7 +300,7 @@ void Viewer::initializeGL(QGLPainter *painter)
 {
     setFocus();
     painter->setClearColor(QColor(32, 32, 128));
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
     painter->setCullFaces(QGL::CullBackFaces);
 
     buildFloor();
@@ -323,7 +323,7 @@ void Viewer::paintGL(QGLPainter *painter)
 {
     if (m_model->scene())
     {
-        painter->clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter->modelViewMatrix().push();
 
         if (m_drawFloor)
