@@ -953,7 +953,7 @@ void QGLPainter::setEye(QGL::Eye eye)
 
     \sa eye(), modelViewMatrix(), projectionMatrix()
 */
-void QGLPainter::setCamera(QGLCamera *camera)
+void QGLPainter::setCamera(const QGLCamera *camera)
 {
     Q_ASSERT(camera);
     Q_D(QGLPainter);

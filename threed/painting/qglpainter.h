@@ -132,7 +132,7 @@ public:
     QGL::Eye eye() const;
     void setEye(QGL::Eye eye);
 
-    void setCamera(QGLCamera *camera);
+    void setCamera(const QGLCamera *camera);
 
     bool isCullable(const QVector3D& point) const;
     bool isCullable(const QBox3D& box) const;
