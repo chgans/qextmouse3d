@@ -602,7 +602,7 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere)
         texCoords = newTexCoords;
     }
 
-    // Add the final vertices to the display list.
+    // Add the final vertices to the geometry builder.
     QGeometryData prim;
     prim.appendVertexArray(vertices);
     prim.appendNormalArray(normals);

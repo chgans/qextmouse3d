@@ -62,18 +62,18 @@ QT_BEGIN_NAMESPACE
     0.5 at the origin:
 
     \code
-    QGLBuilder teapot;
-    teapot << QGLTeapot();
+    QGLBuilder builder;
+    builder << QGLTeapot();
+    teapot = builder.finalizedSceneNode();
 
     painter.modelViewMatrix().scale(0.5f);
-    teapot.draw(painter);
+    teapot->draw(painter);
     \endcode
 
     The QGLTeapot object contains a lot of vertex data once it has
     been subdivided into triangles.  It is recommended that instances
-    of this class be created at startup, added to a display list,
-    and then be reused over and over, rather than creating and
-    destroying the object every frame.
+    of this class be created at startup, added to a QGLBuilder,
+    and then the finalized scene node can be reused over and over.
 
     \sa QGLBezierPatches
 */

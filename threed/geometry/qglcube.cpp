@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::geometry
 
     The following example adds a cube of 2 units on a side to a
-    display list, and draws it at (10, 25, 0) in a QGLPainter:
+    geometry builder, and draws it at (10, 25, 0) in a QGLPainter:
 
     \code
     QGLBuilder list;
@@ -108,7 +108,7 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::geometry
 
     The following example adds a cube of 2 units on a side to a
-    display list, one face at a time.
+    geometry builder, one face at a time.
 
     The orientation of the faces are shown in these labelled screenshots
     from the cube example program.

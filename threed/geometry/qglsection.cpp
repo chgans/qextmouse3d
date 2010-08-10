@@ -61,9 +61,9 @@
     \ingroup qt3d::geometry
 
     QGLSection instances partition a QGLBuilder into related sections,
-    while the display list is being initialized with geometry data.
+    while the builder is being initialized with geometry data.
 
-    Once the display list is initialized, and geometry building is complete
+    Once the builder is initialized, and geometry building is complete
     the QGLSection instances are destroyed and the data is uploaded to the
     graphics hardware.
 
@@ -302,7 +302,7 @@ public:
 
 /*!
     \internal
-    Construct a new QGLSection on the display list \a list, and with smoothing \a s.
+    Construct a new QGLSection on \a builder, and with smoothing \a s.
     By default the smoothing is QGL::Smooth.
 
     See QGLBuilder for a discussion of smoothing.
@@ -458,7 +458,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
 
 /*!
     \internal
-    Adds the logical vertex \a lv to this section of a display list.
+    Adds the logical vertex \a lv to this section of a builder.
 
     Two QLogicalVertex instances a and b are treated as being duplicates for
     the purpose of smoothing, if \c{qFuzzyCompare(a.vertex(), b.vertex())} is
@@ -482,7 +482,7 @@ int QGLSection::appendOne(const QLogicalVertex &lv)
     this way all copies receive the averaged normals.
 
     Call this function to add the vertices of a smooth face to the section
-    of a display list, or use:
+    of a builder, or use:
 
     \code
     myDisplayList->newSection(QGLBuilder::Smooth);
@@ -567,7 +567,7 @@ void QGLSection::appendSmooth(const QLogicalVertex &lv, int index)
 
 /*!
     \internal
-    Add the logical vertex \a lv to this section of a display list.
+    Add the logical vertex \a lv to this section of a builder.
 
     The vertex will be drawn as a distinct edge, instead of just part of a
     continuous smooth surface.  To acheive this the vertex value of \a lv

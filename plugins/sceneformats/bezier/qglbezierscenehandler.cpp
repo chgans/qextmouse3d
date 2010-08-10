@@ -180,7 +180,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
         }
     }
 
-    // Create the display list from the Bezier patch data.
+    // Create the geometry node from the Bezier patch data.
     if (depth != 0)
         patches.setSubdivisionDepth(depth);
     patches.setPositions(vertices);

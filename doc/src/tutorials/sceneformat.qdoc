@@ -87,7 +87,7 @@
     \dots
     \snippet sceneformats/obj/qglobjscenehandler.h 2
 
-    The read function will typically construct a QGLDisplayList
+    The read function will typically construct a QGLBuilder
     for the geometry in the scene and then parse all of the objects,
     materials, textures, and so on.  Ultimately, it needs to produce a
     QGLAbstractScene object, populated with QGLSceneNode instances
@@ -106,7 +106,7 @@
     The scene object can also override QGLAbstractScene::object()
     if it has an efficient method to quickly look up an object by name.
 
-    Note: the plug-in does not need to use QGLDisplayList and the
+    Note: the plug-in does not need to use QGLBuilder and the
     other Qt/3D classes to load the model if it doesn't want to.
     It can instantiate subclasses of QGLSceneNode that override
     the draw() method and draws the object using whatever technique
