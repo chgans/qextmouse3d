@@ -33,6 +33,8 @@ public:
     virtual ~ShaderProgramPropertyListener()
     {
     }
+signals:
+    void propertyChanged();
 };
 
 /*!
