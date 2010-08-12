@@ -7,6 +7,7 @@ SUBDIRS = \
     qgraphicstransform3d \
     qvectorarray \
     qglcamera \
+    qglcube \
     qglfunctions \
     qglindexbuffer \
     qgllightmodel \
@@ -20,6 +21,3 @@ SUBDIRS = \
     qgeometrydata \
     qglpickcolors \
     qstereoimage
-
-TO_BE_PORTED = \
-    qglcube
