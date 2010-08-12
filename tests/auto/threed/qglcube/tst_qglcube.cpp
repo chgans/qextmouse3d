@@ -43,8 +43,7 @@
 
 #include "qglcube.h"
 #include "qglbuilder.h"
-
-#include "qtest_helpers_p.h"
+#include "qtest_helpers.h"
 
 class tst_QGLCube : public QObject
 {
