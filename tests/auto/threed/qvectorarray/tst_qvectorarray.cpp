@@ -92,8 +92,6 @@ void tst_QVectorArray::vector2DArray()
     QCOMPARE(array.size(), size);
     QVERIFY(array[0] == QVector2D(1.0f, 2.0f));
     QVERIFY(array[4] == QVector2D(9.0f, 10.0f));
-    // result should be copy - mult by 1.0 costs nothing
-    QVERIFY(!result.isDetached());
     QCOMPARE(result.size(), size);
     QCOMPARE(result[0], QVector2D(1.0f, 2.0f));
     QCOMPARE(result[4], QVector2D(9.0f, 10.0f));
@@ -156,8 +154,6 @@ void tst_QVectorArray::vector3DArray()
     QCOMPARE(array.size(), size);
     QCOMPARE(array[0], QVector3D(1.0f, 2.0f, 3.0));
     QCOMPARE(array[4], QVector3D(9.0f, 10.0f, 11.0f));
-    // result should be copy - mult by 1.0 costs nothing
-    QVERIFY(!result.isDetached());
     QCOMPARE(result.size(), size);
     QCOMPARE(result[0], QVector3D(1.0f, 2.0f, 3.0f));
     QCOMPARE(result[4], QVector3D(9.0f, 10.0f, 11.0f));
@@ -219,8 +215,6 @@ void tst_QVectorArray::vector4DArray()
     QCOMPARE(array.size(), size);
     QCOMPARE(array[0], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
     QCOMPARE(array[4], QVector4D(9.0f, 10.0f, 11.0f, 12.0));
-    // result should be copy - mult by 1.0 costs nothing
-    QVERIFY(!result.isDetached());
     QCOMPARE(result.size(), size);
     QCOMPARE(result[0], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
     QCOMPARE(result[4], QVector4D(9.0f, 10.0f, 11.0f, 12.0));

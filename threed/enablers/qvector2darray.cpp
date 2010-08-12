@@ -121,16 +121,12 @@ QT_BEGIN_NAMESPACE
 
 /*!
     Multiplies the elements in this array of QVector2D values by
-    the \a scale.  If scale is 1.0 (or very close to 1.0) then
-    this function does nothing.
+    the \a scale.
 
     \sa scaled()
 */
 void QVector2DArray::scale(qreal scale)
 {
-    const qreal identity = 1.0;
-    if (qFuzzyCompare(scale, identity))
-        return;
     if (isDetached()) {
         // Modify the array in-place.
         int size = count();
@@ -151,8 +147,7 @@ void QVector2DArray::scale(qreal scale)
 
 /*!
     Returns a copy of this array of QVector2D values, multiplied
-    by the \a scale.  If scale is 1.0 (or very close to 1.0) then
-    this function simply returns a copy of this array.
+    by the \a scale.
 
     \sa scale()
 */

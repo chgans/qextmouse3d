@@ -65,8 +65,8 @@ public:
     void append(const QPointF& point);
     void append(const QPoint& point);
 
-    void scale(qreal s);
-    QVector2DArray scaled(qreal s) const;
+    void scale(qreal scale);
+    QVector2DArray scaled(qreal scale) const;
 
     void translate(const QVector2D& value);
     void translate(qreal x, qreal y);

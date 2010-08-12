@@ -333,7 +333,8 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCube& cube)
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
-    vrts.scale(cube.size());
+    if (cube.size() != 1.0f)
+        vrts.scale(cube.size());
 
     op.appendVertexArray(vrts);
 
@@ -363,7 +364,8 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeFace& face)
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>
                 (vertexData + face.face() * 4 * 3), 4);
-    vrts.scale(face.size());
+    if (face.size() != 1.0f)
+        vrts.scale(face.size());
 
     op.appendVertexArray(vrts);
 
