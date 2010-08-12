@@ -51,7 +51,6 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QTransform;
 class QMatrix4x4;
 
 class Q_QT3D_EXPORT QVector2DArray : public QArray<QVector2D>
@@ -70,18 +69,11 @@ public:
 
     void translate(const QVector2D& value);
     void translate(qreal x, qreal y);
-    void translate(const QPointF& point);
-    void translate(const QPoint& point);
 
     QArray<QVector2D> translated(const QVector2D& value) const;
     QArray<QVector2D> translated(qreal x, qreal y) const;
-    QArray<QVector2D> translated(const QPointF& point) const;
-    QArray<QVector2D> translated(const QPoint& point) const;
 
-    void transform(const QTransform& matrix);
     void transform(const QMatrix4x4& matrix);
-
-    QArray<QVector2D> transformed(const QTransform& matrix) const;
     QArray<QVector2D> transformed(const QMatrix4x4& matrix) const;
 
 #if !defined(Q_NO_USING_KEYWORD)
@@ -122,20 +114,8 @@ inline void QVector2DArray::append(const QPoint& point)
 inline void QVector2DArray::translate(qreal x, qreal y)
     { translate(QVector2D(x, y)); }
 
-inline void QVector2DArray::translate(const QPointF& value)
-    { translate(QVector2D(value)); }
-
-inline void QVector2DArray::translate(const QPoint& value)
-    { translate(QVector2D(value)); }
-
 inline QArray<QVector2D> QVector2DArray::translated(qreal x, qreal y) const
     { return translated(QVector2D(x, y)); }
-
-inline QArray<QVector2D> QVector2DArray::translated(const QPointF& point) const
-    { return translated(QVector2D(point)); }
-
-inline QArray<QVector2D> QVector2DArray::translated(const QPoint& point) const
-    { return translated(QVector2D(point)); }
 
 QT_END_NAMESPACE
 
