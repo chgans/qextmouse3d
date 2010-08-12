@@ -44,7 +44,7 @@
 
 #include "qgeometrydata.h"
 #include "qvector_utils_p.h"
-#include "qtest_helpers_p.h"
+#include "qtest_helpers.h"
 #include "qglpainter.h"
 
 #include <QtCore/qdebug.h>

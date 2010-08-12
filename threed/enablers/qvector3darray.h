@@ -62,8 +62,8 @@ public:
 
     void append(qreal x, qreal y, qreal z);
 
-    void scale(qreal s);
-    QVector3DArray scaled(qreal s) const;
+    void scale(qreal scale);
+    QVector3DArray scaled(qreal scale) const;
 
     void translate(const QVector3D& value);
     void translate(qreal x, qreal y, qreal z);

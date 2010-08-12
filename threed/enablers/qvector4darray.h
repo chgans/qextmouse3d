@@ -62,8 +62,8 @@ public:
 
     void append(qreal x, qreal y, qreal z, qreal w);
 
-    void scale(qreal s);
-    QVector4DArray scaled(qreal s) const;
+    void scale(qreal scale);
+    QVector4DArray scaled(qreal scale) const;
 
     void translate(const QVector4D& value);
     void translate(qreal x, qreal y, qreal z, qreal w);

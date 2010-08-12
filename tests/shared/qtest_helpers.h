@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QTEST_HELPERS_P_H
-#define QTEST_HELPERS_P_H
+#ifndef QTEST_HELPERS_H
+#define QTEST_HELPERS_H
 
 //
 //  W A R N I N G
@@ -152,4 +152,4 @@ namespace QTest {
 
 };
 
-#endif // QTEST_HELPERS_P_H
+#endif // QTEST_HELPERS_H
