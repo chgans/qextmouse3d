@@ -222,6 +222,8 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::buildFloor()
 {
+    if (m_floor)
+        return;
     QGLBuilder builder;
     for (int x = -5; x < 5; ++x)
     {
@@ -248,6 +250,7 @@ void Viewer::buildFloor()
         builder.addQuadStrip(op);
     }
     m_floor = builder.finalizedSceneNode();
+    m_floor->setParent(this);
     m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);

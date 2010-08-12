@@ -77,9 +77,15 @@
 
     The QGLTeapot class represents the geometry for the teapot,
     which is added to the builder with the \c{<<} operator.
+
     We then call QGLBuilder::finalizedSceneNode() to finalize the
-    object and prepare it to be uploaded to the GL server as a
-    vertex buffer.
+    object, prepare it to be uploaded to the GL server as a
+    vertex buffer, and hand over ownership of the scene node.
+
+    We have to take care to clean up our scene after we're done with it
+    and here that is done in the destructor:
+
+    \snippet teapot/teapotview.cpp destructor
 
     Finally, we paint the teapot every time the window is refreshed:
 

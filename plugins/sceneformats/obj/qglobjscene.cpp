@@ -49,6 +49,7 @@ QGLObjScene::QGLObjScene(QGLSceneNode *defaultNode, QObject *parent)
     : QGLAbstractScene(parent)
     , mainObject(defaultNode)
 {
+    defaultNode->setParent(this);
 }
 
 QGLObjScene::~QGLObjScene()

@@ -54,6 +54,7 @@ void PainterWidget::initializeGL()
     builder.newSection(QGL::Faceted);
     builder << QGLCube(1.5f);
     cube = builder.finalizedSceneNode();
+    cube->setParent(this);
 }
 
 void PainterWidget::resizeGL(int width, int height)

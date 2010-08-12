@@ -972,7 +972,7 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
 /*!
     Adds the \a node to the list of child nodes for this node.
 
-    Adding a the same child node more than once is not supported, and will
+    Adding the same child node more than once is not supported, and will
     lead to undefined results.
 
     It usually makes no sense to add a node as a child to another node
@@ -984,7 +984,13 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
     call to create copies of the node and then apply the transformations to
     the copies.
 
-    \sa removeNode(), clone()
+    This function \bold{does not} make this node a parent of \a node for the
+    purposes of memory management, because a \a node could have many parents
+    in a scene graph.
+
+    See setParent() if you want to parent nodes for memory management.
+
+    \sa removeNode(), clone(), setParent()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
@@ -1033,8 +1039,12 @@ void QGLSceneNode::invalidateTransform() const
 }
 
 /*!
-    Sets the \a parent to be the parent of this object.  If \a parent is
-    a QGLSceneNode then this node is added to it as a child.
+    Sets the \a parent to be the parent of this object, exactly the
+    same as QObject::setParent(), meaning that if \a parent is deleted
+    then this object will also be deleted.
+
+    Additionally, if \a parent is a QGLSceneNode then this node is added
+    to it as a child in the scene, the same as calling \c{parent->addNode()}.
 
     \sa addNode()
 */

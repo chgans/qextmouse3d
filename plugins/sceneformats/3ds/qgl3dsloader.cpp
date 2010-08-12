@@ -119,7 +119,7 @@ void QGL3dsLoader::loadMesh(Lib3dsMesh *mesh)
         m_hasLitMaterials = !m.hasTexture();
     node = m.finalizedSceneNode();
     m_meshes.insert(mesh->name, node);
-    m_rootNode->addNode(node);
+    node->setParent(m_rootNode);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

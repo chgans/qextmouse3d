@@ -74,6 +74,7 @@ CubeItem::CubeItem(QGraphicsItem *parent)
 CubeItem::~CubeItem()
 {
     delete startNavCamera;
+    delete cube;
 }
 
 void CubeItem::setScene(QGraphicsScene *scene)

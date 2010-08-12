@@ -162,6 +162,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     teapot->setMaterial(china);
 
     scene = builder.finalizedSceneNode();
+    scene->setParent(this);
 
     roomModel = new QGLLightModel(this);
     roomModel->setAmbientSceneColor(Qt::white);

@@ -71,15 +71,17 @@ public:
     ~Teapot() {}
 };
 
-static QGLSceneNode *createTeapot()
+static QGLSceneNode *createTeapot(QObject *parent)
 {
     QGLBuilder builder;
     builder << QGLTeapot();
-    return builder.finalizedSceneNode();
+    QGLSceneNode *n = builder.finalizedSceneNode();
+    n->setParent(parent);
+    return n;
 }
 
 Teapot::Teapot(QObject *parent)
-    : MeshObject(createTeapot(), parent)
+    : MeshObject(createTeapot(parent), parent)
 {
 }
 
