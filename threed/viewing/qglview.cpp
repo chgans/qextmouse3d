@@ -778,6 +778,7 @@ void QGLView::initializeGL(QGLPainter *painter)
 */
 void QGLView::earlyPaintGL(QGLPainter *painter)
 {
+    Q_UNUSED(painter);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
