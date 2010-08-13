@@ -102,7 +102,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     cube = builder.currentNode();
     cube->setObjectName("Cube");
 
-    builder.newNode();
+    builder.newSection();
     builder << QGLTeapot();
     teapot = builder.currentNode();
     teapot->setObjectName("Teapot");
