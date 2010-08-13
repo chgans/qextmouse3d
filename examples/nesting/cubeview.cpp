@@ -100,9 +100,12 @@ void CubeView::initializeGL(QGLPainter *painter)
     builder.newSection(QGL::Faceted);
     builder << QGLCube(1.5f);
     cube = builder.currentNode();
+    cube->setObjectName("Cube");
 
+    builder.newNode();
     builder << QGLTeapot();
     teapot = builder.currentNode();
+    teapot->setObjectName("Teapot");
 
     scene = builder.finalizedSceneNode();
     scene->setParent(this);
