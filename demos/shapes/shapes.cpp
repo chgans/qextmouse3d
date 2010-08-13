@@ -45,6 +45,7 @@
 #include "qglteapot.h"
 #include "qglcamera.h"
 #include "qgltexture2d.h"
+#include "qglsubsurface.h"
 #include <QApplication>
 #include <QImage>
 #include <QPainter>
@@ -118,7 +119,6 @@ void ShapesWidget::paintGL()
 {
     QGLPainter painter(this);
 
-    painter.setViewport(size());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
@@ -287,7 +287,9 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().push();
     painter->modelViewMatrix().push();
 
-    painter->setViewport(rect);
+    QGLSubsurface surface(painter->currentSurface(), rect);
+    painter->pushSurface(&surface);
+
     painter->setCamera(&camera);
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
@@ -296,7 +298,7 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
 
-    painter->setViewport(size());
+    painter->popSurface();
 
     drawText(painter, rect, tr("Cube"));
 }
@@ -308,7 +310,9 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().push();
     painter->modelViewMatrix().push();
 
-    painter->setViewport(rect);
+    QGLSubsurface surface(painter->currentSurface(), rect);
+    painter->pushSurface(&surface);
+
     painter->setCamera(&camera);
 
     // Need a one-sided lighting model for the teapot.
@@ -321,7 +325,7 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
 
-    painter->setViewport(size());
+    painter->popSurface();
 
     drawText(painter, rect, tr("Teapot"));
 }

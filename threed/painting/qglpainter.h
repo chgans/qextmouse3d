@@ -55,6 +55,7 @@
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglmaterial.h"
+#include "qglabstractsurface.h"
 #include "qmatrix4x4stack.h"
 #include "qglcamera.h"
 #include "qvector2darray.h"
@@ -73,7 +74,7 @@ class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
 class QGLShaderProgram;
-class QGLFramebufferObject;
+class QGLAbstractSurface;
 
 class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
 {
@@ -82,12 +83,14 @@ public:
     explicit QGLPainter(const QGLContext *context);
     explicit QGLPainter(QPaintDevice *device);
     explicit QGLPainter(QPainter *painter);
+    explicit QGLPainter(QGLAbstractSurface *surface);
     virtual ~QGLPainter();
 
     bool begin();
     bool begin(const QGLContext *context);
     bool begin(QPaintDevice *device);
     bool begin(QPainter *painter);
+    bool begin(QGLAbstractSurface *surface);
     bool end();
     bool isActive() const;
 
@@ -108,15 +111,6 @@ public:
     Q_DECLARE_FLAGS(Updates, Update);
 
     void setClearColor(const QColor& color);
-
-    QRect viewport() const;
-    void setViewport(const QRect& rect);
-    void setViewport(const QSize& size);
-    void setViewport(int width, int height);
-    void resetViewport();
-
-    QPoint viewportOffset() const;
-    void setViewportOffset(const QPoint& point);
 
     QRect scissor() const;
     void setScissor(const QRect& rect);
@@ -176,10 +170,9 @@ public:
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
 
-    void pushSurface(QGLFramebufferObject *fbo);
-    QGLFramebufferObject *popSurface();
-    QGLFramebufferObject *currentSurface() const;
-    QSize surfaceSize() const;
+    void pushSurface(QGLAbstractSurface *surface);
+    QGLAbstractSurface *popSurface();
+    QGLAbstractSurface *currentSurface() const;
 
     void setCullFaces(QGL::CullFaces faces);
 
@@ -219,6 +212,9 @@ private:
 #ifndef QT_NO_DEBUG
     void checkRequiredFields();
 #endif
+
+    bool begin(const QGLContext *context, QGLAbstractSurface *surface,
+               bool destroySurface = true);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)

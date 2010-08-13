@@ -57,12 +57,6 @@ void PainterWidget::initializeGL()
     cube->setParent(this);
 }
 
-void PainterWidget::resizeGL(int width, int height)
-{
-    QGLPainter painter(this);
-    painter.setViewport(width, height);
-}
-
 void PainterWidget::paintGL()
 {
     QGLPainter painter(this);

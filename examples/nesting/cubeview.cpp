@@ -111,6 +111,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     scene->setParent(this);
 
     fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
+    fboSurface.setFramebufferObject(fbo);
 
     QImage textureImage(":/qtlogo.png");
     qtlogo.setImage(textureImage);
@@ -122,12 +123,9 @@ void CubeView::paintGL(QGLPainter *painter)
 {
     needsUpdate = false;
 
-    QRect windowViewport = painter->viewport();
-
     painter->modelViewMatrix().push();
     painter->projectionMatrix().push();
-    painter->pushSurface(fbo);
-    painter->setViewport(painter->surfaceSize());
+    painter->pushSurface(&fboSurface);
 
     painter->setCamera(innerCamera);
     painter->modelViewMatrix().rotate(tangle, 0.0f, 1.0f, 0.0f);
@@ -143,7 +141,6 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->popSurface();
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
-    painter->setViewport(windowViewport);
 
     glDisable(GL_DEPTH_TEST);
 
