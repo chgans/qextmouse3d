@@ -221,9 +221,7 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
 QGLSceneNode::QGLSceneNode(QObject *parent)
     : QObject(*new QGLSceneNodePrivate(QGLSceneNode::Mesh), parent)
 {
-    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
-    if (sceneParent)
-        sceneParent->addNode(this);
+    setParent(parent);
 }
 
 /*!
