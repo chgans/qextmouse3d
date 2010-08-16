@@ -8,7 +8,6 @@ SUBDIRS = \
     qvectorarray \
     qglcamera \
     qglcube \
-    qglfunctions \
     qglindexbuffer \
     qgllightmodel \
     qgllightparameters \
@@ -21,3 +20,8 @@ SUBDIRS = \
     qgeometrydata \
     qglpickcolors \
     qstereoimage
+
+# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
+contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
+    SUBDIRS += qglfunctions
+}

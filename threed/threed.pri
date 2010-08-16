@@ -8,4 +8,8 @@ include(scene/scene.pri)
 include(graphicsview/graphicsview.pri)
 include(animation/animation.pri)
 include(other/other.pri)
-include(api/api.pri)
+
+# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
+contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
+    include(api/api.pri)
+}
