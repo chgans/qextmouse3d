@@ -1097,14 +1097,8 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
 /*!
     Adds the \a node to the list of child nodes for this node.
 
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
-    Adding a the same child node more than once is not supported, and will
-    lead to undefined results.  In debug builds doing this will cause an
-    assert.
-=======
     Adding the same child node more than once is not supported, and will
     lead to undefined results.
->>>>>>> master:threed/scene/qglscenenode.cpp
 
     It makes no sense to add a node as a direct child to another node
     more than once, since it would appear in the same place and overdraw
@@ -1115,9 +1109,8 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
     call to create copies of the node and then apply the transformations to
     the copies.
 
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
-    Alternatively, create modifier nodes with the transformations and parent
-    the child onto each of them:
+    Alternatively, create modifier nodes with the transformations and add the
+    geometry bearing node to each with addNode():
     \code
     QGLBuilder builder;
     builder << CarWheel(5.0f); // some car wheel geometry
@@ -1146,8 +1139,6 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
     Doing either of these will create a QObject::parent relationship as
     well as calling addNode().
 
-    \sa removeNode(), clone()
-=======
     This function \bold{does not} make this node a parent of \a node for the
     purposes of memory management, because a \a node could have many parents
     in a scene graph.
@@ -1155,7 +1146,6 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
     See setParent() if you want to parent nodes for memory management.
 
     \sa removeNode(), clone(), setParent()
->>>>>>> master:threed/scene/qglscenenode.cpp
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
@@ -1207,18 +1197,12 @@ void QGLSceneNode::invalidateTransform() const
 }
 
 /*!
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
-    Sets the \a parent to be the parent of this object.  If \a parent is
-    a QGLSceneNode then this node is added to it as a child by calling
-    addNode().
-=======
     Sets the \a parent to be the parent of this object, exactly the
     same as QObject::setParent(), meaning that if \a parent is deleted
     then this object will also be deleted.
 
     Additionally, if \a parent is a QGLSceneNode then this node is added
     to it as a child in the scene, the same as calling \c{parent->addNode()}.
->>>>>>> master:threed/scene/qglscenenode.cpp
 
     \sa addNode()
 */
@@ -1227,26 +1211,10 @@ void QGLSceneNode::setParent(QObject *parent)
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
         sceneParent->addNode(this);
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
-    else 
-    {
-        //If the parent wasn't a scene node, then usually we would expect it to be an 
-        //abstract scene - failing this we should probably warn the user, as in some
-        //instances it may indicate an incorrect assignment (there is a slight overhead
-        //to this, so this is usually useful for debugging, and may be removed later).
-        QGLAbstractScene *abstractScene = qobject_cast<QGLAbstractScene*>(parent);
-        if (!abstractScene)
-            qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent"
-                     "Scene Node or Scene to add the new node to.");
-    }
-        
-=======
->>>>>>> master:threed/scene/qglscenenode.cpp
     //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
 }
 
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
 void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
@@ -1262,7 +1230,8 @@ void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)
     painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
     glLineWidth(2.0f);
     painter->draw(QGL::Lines, verts.size());
-=======
+}
+
 const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *painter,
                                               QGL::Face faces, bool &changedTex)
 {
@@ -1286,7 +1255,6 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
         }
     }
     return saveMat;
->>>>>>> master:threed/scene/qglscenenode.cpp
 }
 
 /*!
@@ -1351,16 +1319,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         return;
     }
 
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
-    bool stateEntered = false;
-    if (d->childNodes.size() > 0)
-    {
-        seq->beginState(this);
-        stateEntered = true;
-        QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
-        for ( ; cit != d->childNodes.end(); ++cit)
-            (*cit)->draw(painter);
-=======
     const QGLMaterial *saveMat = 0;
     bool changedTex = false;
     const QGLMaterial *saveBackMat = 0;
@@ -1374,7 +1332,16 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (d->backMaterial != -1)
             saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
                                              changedBackTex);
->>>>>>> master:threed/scene/qglscenenode.cpp
+    }
+
+    bool stateEntered = false;
+    if (d->childNodes.size() > 0)
+    {
+        seq->beginState(this);
+        stateEntered = true;
+        QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
+        for ( ; cit != d->childNodes.end(); ++cit)
+            (*cit)->draw(painter);
     }
 
     if (d->count && (d->geometry.count() > 0) && seq->renderInSequence(this))
@@ -1400,23 +1367,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
             painter->setObjectPickId(id);
 
         if (d->viewNormals)
-<<<<<<< HEAD:threed/scene/qglscenenode.cpp
             drawNormalIndicators(painter);
-=======
-        {
-            QVector3DArray verts;
-            QGL::IndexArray indices = d->geometry.indices();
-            for (int i = d->start; i < (d->start + d->count); ++i)
-            {
-                int ix = indices[i];
-                QVector3D a = d->geometry.vertexAt(ix);
-                QVector3D b = a + d->geometry.normalAt(ix);
-                verts.append(a, b);
-            }
-            painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
-            glLineWidth(2.0f);
-            painter->draw(QGL::Lines, verts.size());
-        }
     }
 
     if (saveMat)
@@ -1424,7 +1375,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         painter->setFaceMaterial(faces, saveMat);
         if (changedTex)
             painter->setTexture((QGLTexture2D*)0);
->>>>>>> master:threed/scene/qglscenenode.cpp
     }
     else if (saveBackMat)
     {
