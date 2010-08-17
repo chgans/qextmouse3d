@@ -200,8 +200,6 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLSphere& sphere)
     // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
     int total = 2*(1 << divisions);
 
-    //list.begin(QGL::TRIANGLE);
-    //QGeometryData *prim = list.currentPrimitive();
     QGeometryData prim;
 
     const QVector3D initialVector(0, 0, 1);
@@ -607,7 +605,7 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere)
     prim.appendVertexArray(vertices);
     prim.appendNormalArray(normals);
     prim.appendTexCoordArray(texCoords);
-    list.addTriangles(prim);
+    list.addQuads(prim);
     return list;
 }
 
