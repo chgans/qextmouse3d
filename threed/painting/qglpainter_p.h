@@ -132,7 +132,6 @@ public:
     QGLMaterial *frontColorMaterial;
     QGLMaterial *backColorMaterial;
     QBox3D viewingCube;
-    QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
     QGLPainterPickPrivate *pick;
