@@ -181,12 +181,9 @@ void tst_QGLPainter::scissor()
     painter.begin(widget);
     QRect windowRect = widget->rect();
 
-    QVERIFY(painter.scissor().isNull());
     QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
 
     painter.setScissor(windowRect);
-    QCOMPARE(painter.scissor(), windowRect);
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
     QCOMPARE(fetchGLScissor(windowRect), windowRect);
 
     QRect subRect(windowRect.width() / 3,
@@ -194,51 +191,13 @@ void tst_QGLPainter::scissor()
                   2 * windowRect.width() / 3,
                   2 * windowRect.height() / 3);
     painter.setScissor(subRect);
-    QCOMPARE(painter.scissor(), subRect);
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
     QCOMPARE(fetchGLScissor(windowRect), subRect);
 
-    QRect leftHalf(0, 0, windowRect.width() / 2, windowRect.height());
-    painter.intersectScissor(leftHalf);
-    QCOMPARE(painter.scissor(), subRect.intersected(leftHalf));
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
-    QCOMPARE(fetchGLScissor(windowRect), subRect.intersected(leftHalf));
-
-    QRect rightHalf(windowRect.width() - windowRect.width() / 2, 0,
-                    windowRect.width() / 2, windowRect.height());
-    QRect expandedRect(subRect.x(), 0, windowRect.width() - subRect.x(),
-                       windowRect.height());
-    painter.expandScissor(rightHalf);
-    QCOMPARE(painter.scissor(), expandedRect);
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
-    QCOMPARE(fetchGLScissor(windowRect), expandedRect);
-
-    // QRect(0, 0, -2, -2) is a special value indicating "clip everything".
+    // Empty rectangles should result in glScissor(0, 0, 0, 0).
     painter.setScissor(QRect(0, 0, -2, -2));
-    QCOMPARE(painter.scissor(), QRect(0, 0, -2, -2));
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
     QCOMPARE(fetchGLScissor(windowRect), QRect(0, 0, 0, 0));
-
-    painter.setScissor(subRect);
-    painter.setScissor(QRect());
-    QCOMPARE(painter.scissor(), QRect());
-    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
-    QCOMPARE(fetchGLScissor(windowRect), subRect);
-
-    painter.setScissor(windowRect);
-    glScissor(subRect.x(),
-              windowRect.height() - (subRect.y() + subRect.height()),
-              subRect.width(), subRect.height());
-    painter.resetScissor();
-    QCOMPARE(painter.scissor(), subRect);
-    QVERIFY(glIsEnabled(GL_SCISSOR_TEST));
-    QCOMPARE(fetchGLScissor(windowRect), subRect);
-
-    glDisable(GL_SCISSOR_TEST);
-    painter.resetScissor();
-    QVERIFY(!glIsEnabled(GL_SCISSOR_TEST));
-    QCOMPARE(fetchGLScissor(windowRect), subRect);
-    QCOMPARE(painter.scissor(), QRect());
+    painter.setScissor(QRect(27, 42, 0, 0));
+    QCOMPARE(fetchGLScissor(windowRect), QRect(0, 0, 0, 0));
 }
 
 void tst_QGLPainter::scissorPaint()
@@ -266,35 +225,35 @@ void tst_QGLPainter::scissorPaint()
     painter.draw(QGL::Triangles, 3);
 
     // Change the top part of the triangle to blue.
-    painter.setScissor
-        (QRect(0, 0, widget->width(), qMin(widget->height() / 2, 200)));
+    QRect scissor(0, 0, widget->width(), qMin(widget->height() / 2, 200));
+    painter.setScissor(scissor);
+    glEnable(GL_SCISSOR_TEST);
     painter.setColor(Qt::blue);
     painter.draw(QGL::Triangles, 3);
 
     // Intersect and draw red over the blue section.
-    painter.intersectScissor
-        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150)));
+    painter.setScissor(scissor.intersected
+        (QRect(0, 0, widget->width(), qMin(widget->height() / 4, 150))));
     painter.setColor(Qt::red);
     painter.draw(QGL::Triangles, 3);
 
     // Change the bottom part of the triangle to yellow.
     int y = qMin(widget->height() / 2, 350);
-    painter.setScissor
-        (QRect(0, y, 400, widget->height() - y));
+    scissor = QRect(0, y, 400, widget->height() - y);
+    painter.setScissor(scissor);
     painter.setColor(Qt::yellow);
     painter.draw(QGL::Triangles, 3);
 
     // Intersect and expand, to extend the yellow region.
-    painter.intersectScissor
-        (QRect(0, y + 20, 400, widget->height() - y - 20));
-    painter.expandScissor
-        (QRect(0, y + 20, 450, widget->height() - y - 20));
+    scissor &= QRect(0, y + 20, 400, widget->height() - y - 20);
+    scissor |= QRect(0, y + 20, 450, widget->height() - y - 20);
+    painter.setScissor(scissor);
     painter.setColor(Qt::yellow);
     painter.draw(QGL::Triangles, 3);
 
     painter.setUserEffect(0);
 
-    painter.setScissor(QRect());
+    glDisable(GL_SCISSOR_TEST);
 }
 
 void tst_QGLPainter::scissorPaintQ(QPainter *painter, const QSize& size)

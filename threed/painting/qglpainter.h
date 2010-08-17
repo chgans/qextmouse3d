@@ -112,11 +112,7 @@ public:
 
     void setClearColor(const QColor& color);
 
-    QRect scissor() const;
     void setScissor(const QRect& rect);
-    void intersectScissor(const QRect& rect);
-    void expandScissor(const QRect& rect);
-    void resetScissor();
 
     QMatrix4x4Stack& projectionMatrix();
     QMatrix4x4Stack& modelViewMatrix();
