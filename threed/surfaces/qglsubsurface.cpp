@@ -74,7 +74,8 @@ QGLSubsurface::QGLSubsurface()
 
 /*!
     Constructs a new subsurface that occupies \a region within
-    \a surface.
+    \a surface.  The \a region has its origin at the top-left
+    of \a surface.
 */
 QGLSubsurface::QGLSubsurface
         (QGLAbstractSurface *surface, const QRect &region)
@@ -116,6 +117,7 @@ void QGLSubsurface::setSurface(QGLAbstractSurface *surface)
 /*!
     Returns the region within surface() that is occupied by this
     subsurface, relative to the viewportRect() of surface().
+    The origin is at the top-left of surface().
 
     \sa setRegion(), surface()
 */
@@ -128,6 +130,7 @@ QRect QGLSubsurface::region() const
 /*!
     Sets the \a region within surface() that is occupied by this
     subsurface, relative to the viewportRect() of surface().
+    The origin is at the top-left of surface().
 
     \sa region(), setSurface()
 */
@@ -152,11 +155,11 @@ QPaintDevice *QGLSubsurface::device() const
 /*!
     \reimp
 */
-bool QGLSubsurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+bool QGLSubsurface::activate(QGLAbstractSurface *prevSurface)
 {
     Q_D(QGLSubsurface);
     if (d->surface)
-        return d->surface->activateNoViewport(prevSurface);
+        return d->surface->activate(prevSurface);
     else
         return false;
 }
@@ -174,14 +177,22 @@ void QGLSubsurface::deactivate(QGLAbstractSurface *nextSurface)
 /*!
     \reimp
 */
-QRect QGLSubsurface::viewportRect() const
+QRect QGLSubsurface::viewportGL() const
 {
     Q_D(const QGLSubsurface);
     if (d->surface) {
-        QRect rect = d->surface->viewportRect();
-        return d->region.translated(rect.x(), rect.y());
+        // The underlying surface's viewportGL() has its origin
+        // at the bottom-left, whereas d->region has its origin
+        // at the top-left.  Flip the sub-region and adjust.
+        QRect rect = d->surface->viewportGL();
+        return QRect(rect.x() + d->region.x(),
+                     rect.y() + rect.height() -
+                        (d->region.y() + d->region.height()),
+                     d->region.width(), d->region.height());
     } else {
-        return d->region;
+        // Don't know the actual height of the surrounding surface,
+        // so the best we can do is assume the region is bottom-aligned.
+        return QRect(d->region.x(), 0, d->region.width(), d->region.height());
     }
 }
 

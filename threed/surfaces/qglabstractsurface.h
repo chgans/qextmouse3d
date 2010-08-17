@@ -51,8 +51,6 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLSubsurface;
-
 class Q_QT3D_EXPORT QGLAbstractSurface
 {
 public:
@@ -70,9 +68,12 @@ public:
     QGLAbstractSurface::SurfaceType surfaceType() const { return m_type; }
 
     virtual QPaintDevice *device() const = 0;
-    bool activate(QGLAbstractSurface *prevSurface = 0);
+    virtual bool activate(QGLAbstractSurface *prevSurface = 0) = 0;
     virtual void deactivate(QGLAbstractSurface *nextSurface = 0) = 0;
-    virtual QRect viewportRect() const = 0;
+    virtual QRect viewportGL() const = 0;
+    QRect viewportRect() const;
+
+    bool switchTo(QGLAbstractSurface *nextSurface);
 
     static QGLAbstractSurface *createSurfaceForDevice(QPaintDevice *device);
     static QGLAbstractSurface *createSurfaceForContext(const QGLContext *context);
@@ -81,13 +82,10 @@ protected:
     QGLAbstractSurface(QGLAbstractSurface::SurfaceType surfaceType)
         : m_type(surfaceType) {}
 
-    virtual bool activateNoViewport(QGLAbstractSurface *prevSurface) = 0;
-
 private:
     QGLAbstractSurface::SurfaceType m_type;
-    Q_DISABLE_COPY(QGLAbstractSurface)
 
-    friend class QGLSubsurface;
+    Q_DISABLE_COPY(QGLAbstractSurface)
 };
 
 QT_END_NAMESPACE

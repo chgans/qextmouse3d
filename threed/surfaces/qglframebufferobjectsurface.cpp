@@ -159,7 +159,7 @@ QPaintDevice *QGLFramebufferObjectSurface::device() const
 /*!
     \reimp
 */
-bool QGLFramebufferObjectSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+bool QGLFramebufferObjectSurface::activate(QGLAbstractSurface *prevSurface)
 {
     Q_UNUSED(prevSurface);
     Q_D(QGLFramebufferObjectSurface);
@@ -180,7 +180,6 @@ bool QGLFramebufferObjectSurface::activateNoViewport(QGLAbstractSurface *prevSur
 */
 void QGLFramebufferObjectSurface::deactivate(QGLAbstractSurface *nextSurface)
 {
-    Q_UNUSED(nextSurface);
     Q_D(QGLFramebufferObjectSurface);
     if (d->framebufferObject) {
         if (nextSurface && nextSurface->surfaceType() == FramebufferObject) {
@@ -198,7 +197,7 @@ void QGLFramebufferObjectSurface::deactivate(QGLAbstractSurface *nextSurface)
 /*!
     \reimp
 */
-QRect QGLFramebufferObjectSurface::viewportRect() const
+QRect QGLFramebufferObjectSurface::viewportGL() const
 {
     Q_D(const QGLFramebufferObjectSurface);
     if (d->framebufferObject)

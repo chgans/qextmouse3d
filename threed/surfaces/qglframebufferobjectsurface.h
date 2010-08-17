@@ -68,11 +68,9 @@ public:
     void setFramebufferObject(QGLFramebufferObject *fbo);
 
     QPaintDevice *device() const;
+    bool activate(QGLAbstractSurface *prevSurface = 0);
     void deactivate(QGLAbstractSurface *nextSurface = 0);
-    QRect viewportRect() const;
-
-protected:
-    bool activateNoViewport(QGLAbstractSurface *prevSurface);
+    QRect viewportGL() const;
 
 private:
     QScopedPointer<QGLFramebufferObjectSurfacePrivate> d_ptr;

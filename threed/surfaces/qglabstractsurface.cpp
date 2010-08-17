@@ -55,6 +55,49 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+
+    OpenGL can be used to draw into a number of different surface types:
+    windows, pixel buffers (pbuffers), framebuffer objects, and so on.
+    It is also possible to use only part of a surface by setting
+    the \c{glViewport()} to restrict drawing to that part.  An example
+    of a subsurface may be the left or right eye image of a stereoscopic
+    pair that is rendered into the two halves of a window.
+
+    Activating a surface for OpenGL drawing, and deactivating it afterwards
+    can be quite varied across surface types.  Sometimes it is enough
+    to just make a QGLContext current and set the \c{glViewport()}.
+    Other times a context must be made current, followed by binding a
+    framebuffer object, and finally setting the \c{glViewport()}.
+
+    QGLAbstractSurface and its subclasses simplify the activation and
+    deactivation of surfaces by encapsulating the logic needed to
+    use a particular kind of surface into activate() and deactivate()
+    respectively.
+
+    Normally surfaces are activated by calling QGLPainter::pushSurface()
+    as in the following example of switching drawing to a framebuffer
+    object:
+
+    \code
+    QGLPainter painter;
+    painter.begin(widget);
+    QGLFramebufferObjectSurface surface(fbo);
+    painter.pushSurface(&surface);
+    ... // draw into the fbo
+    painter.popSurface();
+    ... // draw into the widget
+    \endcode
+
+    QGLPainter maintains a stack of surfaces, starting with the paint
+    device specified to QGLPainter::begin() (usually a widget).
+    The QGLPainter::pushSurface() function calls deactivate() on the
+    current surface, activate() on the new surface, and then adjusts the
+    \c{glViewport()} to match the value of viewportGL() for the new surface.
+    When QGLPainter::popSurface() is called, the previous surface
+    is re-activated and the \c{glViewport()} changed accordingly.
+
+    \sa QGLFramebufferObjectSurface, QGLWidgetSurface, QGLSubsurface
+    \sa QGLPixelBufferSurface, QGLPainter::pushSurface()
 */
 
 /*!
@@ -100,45 +143,18 @@ QGLAbstractSurface::~QGLAbstractSurface()
 */
 
 /*!
-    Activate this surface by making its context current, binding
-    the associated framebuffer object, if any, and adjusting the
-    \c{glViewport()} to restrict painting to viewportRect().
+    \fn bool QGLAbstractSurface::activate(QGLAbstractSurface *prevSurface)
 
-    If \a prevSurface is null, then it will first be deactivated
-    with deactivate().  If \a prevSurface and this surface are
-    both framebuffer objects for the same context, then the
-    deactivate() on \a prevSurface will be skipped as it is unnecessary.
+    Activate this surface by making its context current, and binding
+    the associated framebuffer object, if any.
 
-    Returns true if the surface was activated; false otherwise.
-
-    \sa deactivate(), activateNoViewport()
-*/
-bool QGLAbstractSurface::activate(QGLAbstractSurface *prevSurface)
-{
-    if (prevSurface)
-        prevSurface->deactivate(this);
-    if (!activateNoViewport(prevSurface))
-        return false;
-    QRect viewport = viewportRect();
-    int height = device()->height();
-    glViewport(viewport.x(), height - (viewport.y() + viewport.height()),
-               viewport.width(), viewport.height());
-    return true;
-}
-
-/*!
-    \fn bool QGLAbstractSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
-
-    Activate this surface by making its context current and binding
-    the associated framebuffer object, if any.  The \c{glViewport()}
-    is not modified.
-
-    If \a prevSurface is null, then it indicates the previous surface
-    that was active.
+    If \a prevSurface is null, then that surface has just been deactivated
+    in the process of switching to this surface.  This may allow activate()
+    to optimize the transition to avoid unnecessary state changes.
 
     Returns true if the surface was activated; false otherwise.
-    
-    \sa activate()
+
+    \sa deactivate(), switchTo()
 */
 
 /*!
@@ -148,17 +164,43 @@ bool QGLAbstractSurface::activate(QGLAbstractSurface *prevSurface)
     context current.  Typically this will release the framebuffer
     object associated with the surface.
 
-    If \a nextSurface is not null, then it indicates that the caller
-    is switching to \a nextSurface.
+    If \a nextSurface is null, then that surface will be activated next
+    in the process of switching away from this surface.  This may allow
+    deactivate() to optimize the transition to avoid unnecessary state
+    changes.
 
-    \sa activate()
+    \sa activate(), switchTo()
 */
 
 /*!
-    \fn QRect QGLAbstractSurface::viewportRect() const
-
     Returns the rectangle of the surface device() that is occupied by
     the viewport for this surface.  The origin is at the top-left.
+
+    This function calls viewportGL() and then flips the rectangle
+    upside down using the height of device() so that the origin
+    is at the top-left instead of the bottom-right.
+
+    \sa viewportGL(), device()
+*/
+QRect QGLAbstractSurface::viewportRect() const
+{
+    QRect view = viewportGL();
+    int height = device()->height();
+    return QRect(view.x(), height - (view.y() + view.height()),
+                 view.width(), view.height());
+}
+
+/*!
+    \fn QRect QGLAbstractSurface::viewportGL() const
+
+    Returns the rectangle of the surface device() that is occupied by
+    the viewport for this surface.  The origin is at the bottom-left,
+    which makes the value suitable for passing to \c{glViewport()}:
+
+    \code
+    QRect viewport = surface->viewportGL();
+    glViewport(viewport.x(), viewport.y(), viewport.width(), viewport.height());
+    \endcode
 
     Normally the viewport rectangle is the full extent of the device(),
     but it could be smaller if the application only wishes to draw
@@ -166,8 +208,32 @@ bool QGLAbstractSurface::activate(QGLAbstractSurface *prevSurface)
     and right stereo eye images into the two halves of a QGLWidget.
     The eye surfaces would typically be instances of QGLSubsurface.
 
-    \sa device()
+    \sa viewportRect(), device()
 */
+
+/*!
+    Switches from this surface to \a nextSurface by calling deactivate()
+    on this surface and activate() on \a nextSurface.
+
+    Returns true if \a nextSurface was activated, or false otherwise.
+    If \a nextSurface could not be activated, then this surface will
+    remain activated.
+
+    \sa activate(), deactivate()
+*/
+bool QGLAbstractSurface::switchTo(QGLAbstractSurface *nextSurface)
+{
+    if (nextSurface) {
+        deactivate(nextSurface);
+        if (nextSurface->activate(this))
+            return true;
+        activate();
+        return false;
+    } else {
+        deactivate();
+        return true;
+    }
+}
 
 /*!
     Creates an OpenGL drawing surface for the specified paint \a device.
