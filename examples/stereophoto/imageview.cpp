@@ -85,7 +85,7 @@ void ImageView::paintGL(QGLPainter *painter)
         painter->setTexture(m_rightTexture);
     }
 
-    QSize viewSize = painter->viewport().size();
+    QSize viewSize = painter->currentSurface()->viewportRect().size();
     QSize imageSize = m_image.size();
     imageSize.scale(viewSize, Qt::KeepAspectRatio);
 

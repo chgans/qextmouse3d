@@ -53,18 +53,9 @@ public:
     TutorialWidget(QWidget *parent=0) : QGLWidget(parent) {}
 
 protected:
-    void resizeGL(int width, int height);
     void paintGL();
 };
 //! [class-defn]
-
-//! [set-viewport]
-void TutorialWidget::resizeGL(int width, int height)
-{
-    QGLPainter painter(this);
-    painter.setViewport(width, height);
-}
-//! [set-viewport]
 
 //! [paintGL]
 //! [clear-window]
@@ -73,7 +64,7 @@ void TutorialWidget::paintGL()
     QGLPainter painter(this);
 
     painter.setClearColor(palette().color(backgroundRole()));
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //! [clear-window]
 
 //! [set-matrices]

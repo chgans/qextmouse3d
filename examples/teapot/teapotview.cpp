@@ -41,6 +41,7 @@
 
 #include "teapotview.h"
 #include "qglbuilder.h"
+#include "qglscenenode.h"
 
 //! [initialize]
 void TeapotView::initializeGL(QGLPainter *painter)
@@ -52,6 +53,13 @@ void TeapotView::initializeGL(QGLPainter *painter)
     teapot = builder.finalizedSceneNode();
 }
 //! [initialize]
+
+//! [destructor]
+TeapotView::~TeapotView()
+{
+    delete teapot;
+}
+//! [destructor]
 
 //! [paint]
 void TeapotView::paintGL(QGLPainter *painter)

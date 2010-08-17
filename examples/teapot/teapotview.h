@@ -52,8 +52,8 @@ class TeapotView : public QGLView
 {
     Q_OBJECT
 public:
-    TeapotView(QWidget *parent = 0) : QGLView(parent) {}
-    ~TeapotView() {}
+    TeapotView(QWidget *parent = 0) : QGLView(parent), teapot(0) {}
+    ~TeapotView();
 
 protected:
     void initializeGL(QGLPainter *painter);

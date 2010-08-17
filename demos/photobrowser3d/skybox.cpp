@@ -49,14 +49,11 @@
 #include <QFileInfo>
 
 SkyBox::SkyBox(QGLView *view, const QString &imagePath)
-    : m_scene(new QGLSceneNode)
+    : m_scene(0)
     , m_view(view)
 {
     QGLBuilder builder;
-    m_scene->setObjectName("SkyboxList");
     builder.newSection(QGL::Faceted);
-    m_scene->setEffect(QGL::FlatReplaceTexture2D);
-    m_scene->setEffectEnabled(true);
     QVector3D blb(-1.0, -1.0, -1.0);
     QVector3D blf(-1.0, -1.0, 1.0);
     QVector3D tlf(-1.0, 1.0, 1.0);
@@ -129,6 +126,10 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
         m_faces[5]->setMaterial(new QGLMaterial);
     }
     m_scene = builder.finalizedSceneNode();
+    m_scene->setObjectName("SkyboxList");
+    m_scene->setEffect(QGL::FlatReplaceTexture2D);
+    m_scene->setEffectEnabled(true);
+    m_scene->setParent(this);
 
     setImagePath(imagePath.isEmpty() ? QString(":/") : imagePath);
 }
@@ -210,11 +211,11 @@ void SkyBox::draw(QGLPainter *painter) const
     cam->setViewSize(QSizeF(0.3f, 0.3f));
     painter->setCamera(cam);
 
-    painter->setDepthTestingEnabled(false);
+    glDisable(GL_DEPTH_TEST);
 
     m_scene->draw(painter);
 
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
     cam->setCenter(center);
     cam->setEye(eye);

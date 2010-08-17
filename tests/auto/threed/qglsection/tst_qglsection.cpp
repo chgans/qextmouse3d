@@ -43,7 +43,7 @@
 #include "qglsection_p.h"
 #include "qglbuilder.h"
 #include "qgeometrydata.h"
-#include "qtest_helpers_p.h"
+#include "qtest_helpers.h"
 #include "qvector3darray.h"
 
 class tst_QGLSection : public QObject

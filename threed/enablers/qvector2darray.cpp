@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qvector2darray.h"
-#include <QtGui/qtransform.h>
 #include <QtGui/qmatrix4x4.h>
 
 QT_BEGIN_NAMESPACE
@@ -121,16 +120,12 @@ QT_BEGIN_NAMESPACE
 
 /*!
     Multiplies the elements in this array of QVector2D values by
-    the \a scale.  If scale is 1.0 (or very close to 1.0) then
-    this function does nothing.
+    the \a scale.
 
     \sa scaled()
 */
 void QVector2DArray::scale(qreal scale)
 {
-    const qreal identity = 1.0;
-    if (qFuzzyCompare(scale, identity))
-        return;
     if (isDetached()) {
         // Modify the array in-place.
         int size = count();
@@ -151,8 +146,7 @@ void QVector2DArray::scale(qreal scale)
 
 /*!
     Returns a copy of this array of QVector2D values, multiplied
-    by the \a scale.  If scale is 1.0 (or very close to 1.0) then
-    this function simply returns a copy of this array.
+    by the \a scale.
 
     \sa scale()
 */
@@ -207,26 +201,6 @@ void QVector2DArray::translate(const QVector2D& value)
 */
 
 /*!
-    \fn void QVector2DArray::translate(const QPointF& point)
-    \overload
-
-    Translates the elements in this array of QVector2D values
-    by the components of \a point.
-
-    \sa translated()
-*/
-
-/*!
-    \fn void QVector2DArray::translate(const QPoint& point)
-    \overload
-
-    Translates the elements in this array of QVector2D values
-    by the components of \a point.
-
-    \sa translated()
-*/
-
-/*!
     Returns a copy of this array of QVector2D values, translated
     by the components of \a value.
 
@@ -254,56 +228,6 @@ QArray<QVector2D> QVector2DArray::translated(const QVector2D& value) const
 */
 
 /*!
-    \fn QArray<QVector2D> QVector2DArray::translated(const QPointF& point) const
-    \overload
-
-    Returns a copy of this array of QVector2D values, translated
-    by the components of \a point.
-
-    \sa translate()
-*/
-
-/*!
-    \fn QArray<QVector2D> QVector2DArray::translated(const QPoint& point) const
-    \overload
-
-    Returns a copy of this array of QVector2D values, translated
-    by the components of \a point.
-
-    \sa translate()
-*/
-
-/*!
-    \overload
-
-    Transforms the elements in this array of QVector2D values
-    by \a matrix.
-
-    \sa transformed()
-*/
-void QVector2DArray::transform(const QTransform& matrix)
-{
-    if (isDetached()) {
-        // Modify the array in-place.
-        int size = count();
-        QVector2D *dst = data();
-        for (int index = 0; index < size; ++index) {
-            *dst = QVector2D(matrix.map(dst->toPointF()));
-            ++dst;
-        }
-    } else {
-        // Create a new array, transform the values, and assign.
-        QArray<QVector2D> result;
-        int size = count();
-        const QVector2D *src = constData();
-        QVector2D *dst = result.extend(size);
-        for (int index = 0; index < size; ++index)
-            *dst++ = QVector2D(matrix.map((src++)->toPointF()));
-        *this = result;
-    }
-}
-
-/*!
     Transforms the elements in this array of QVector2D values
     by \a matrix.
 
@@ -329,25 +253,6 @@ void QVector2DArray::transform(const QMatrix4x4& matrix)
             *dst++ = (matrix * QVector3D(*src++, 0.0f)).toVector2D();
         *this = result;
     }
-}
-
-/*!
-    \overload
-
-    Returns a copy of this array of QVector2D values,
-    transformed by \a matrix.
-
-    \sa transformed()
-*/
-QArray<QVector2D> QVector2DArray::transformed(const QTransform& matrix) const
-{
-    QArray<QVector2D> result;
-    int size = count();
-    const QVector2D *src = constData();
-    QVector2D *dst = result.extend(size);
-    for (int index = 0; index < size; ++index)
-        *dst++ = QVector2D(matrix.map((src++)->toPointF()));
-    return result;
 }
 
 /*!

@@ -48,7 +48,7 @@
 #include "qglmaterialcollection.h"
 #include "qglscenenode.h"
 #include "qglabstracteffect.h"
-#include "qtest_helpers_p.h"
+#include "qtest_helpers.h"
 #include "qgeometrydata.h"
 
 class tst_QGLBuilder : public QObject

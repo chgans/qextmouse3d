@@ -55,7 +55,6 @@ public:
 
 protected:
     void initializeGL();
-    void resizeGL(int width, int height);
     void paintGL();
 
 private:

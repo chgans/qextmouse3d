@@ -140,7 +140,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     QGL::Smoothing smoothing = QGL::Faceted;
     QGLSceneNode *defaultNode;
 
-    // Create the display list and start an initial Faceted section.
+    // Create the geometry builder and start an initial Faceted section.
     QGLBuilder builder;
     builder.newSection(smoothing);
     QGLSceneNode *root = builder.sceneNode();

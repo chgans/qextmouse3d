@@ -200,10 +200,12 @@ void ShaderProgramEffect::create
 inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 {
     propertyIdsToUniformLocations.clear();
+    propertyListener->disconnect();
     if (parent.data() == 0)
     {
         return;
     }
+    QObject::connect(propertyListener, SIGNAL(propertyChanged()), parent.data(), SIGNAL(effectChanged()));
 
     const QMetaObject* parentMetaObject = parent.data()->metaObject();
     int parentMethodCount = parentMetaObject->methodCount();
@@ -833,7 +835,10 @@ void ShaderProgram::pixmapRequestFinished()
 
 /*!
     \internal
-    A subclass without the Q_OBJECT macro in order to use the qt_metacall trick to track property changes
+    A subclass without the Q_OBJECT macro in order to use the qt_metacall trick to track property changes.
+
+    It is also conveniently placed to connect appropriate properties to
+    Effect::effectChanged() to trigger timely updates.
   */
 ShaderProgramPropertyListenerEx::ShaderProgramPropertyListenerEx(ShaderProgram *parent, ShaderProgramEffect* effect)
     : ShaderProgramPropertyListener(parent), effect(effect)
@@ -859,6 +864,7 @@ int ShaderProgramPropertyListenerEx::qt_metacall(QMetaObject::Call c, int id, vo
     {
         if(id >= shaderProgramMethodCount) {
             effect->setPropertyDirty(id - shaderProgramMethodCount);
+            emit propertyChanged();
         }
         // Consume the metacall
         return -1;

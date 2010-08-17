@@ -94,35 +94,38 @@ void CubeView::performUpdate()
 
 void CubeView::initializeGL(QGLPainter *painter)
 {
+    Q_UNUSED(painter);
+
     QGLBuilder builder;
     builder.newSection(QGL::Faceted);
     builder << QGLCube(1.5f);
     cube = builder.currentNode();
+    cube->setObjectName("Cube");
 
+    builder.newSection();
     builder << QGLTeapot();
     teapot = builder.currentNode();
+    teapot->setObjectName("Teapot");
 
     scene = builder.finalizedSceneNode();
     scene->setParent(this);
 
     fbo = new QGLFramebufferObject(512, 512, QGLFramebufferObject::Depth);
+    fboSurface.setFramebufferObject(fbo);
 
     QImage textureImage(":/qtlogo.png");
     qtlogo.setImage(textureImage);
 
-    painter->setBlendingEnabled(true);
+    glEnable(GL_BLEND);
 }
 
 void CubeView::paintGL(QGLPainter *painter)
 {
     needsUpdate = false;
 
-    QRect windowViewport = painter->viewport();
-
     painter->modelViewMatrix().push();
     painter->projectionMatrix().push();
-    painter->pushSurface(fbo);
-    painter->setViewport(painter->surfaceSize());
+    painter->pushSurface(&fboSurface);
 
     painter->setCamera(innerCamera);
     painter->modelViewMatrix().rotate(tangle, 0.0f, 1.0f, 0.0f);
@@ -130,17 +133,16 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
     painter->setStandardEffect(QGL::LitMaterial);
 
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
-    painter->clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     teapot->draw(painter);
 
     painter->popSurface();
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
-    painter->setViewport(windowViewport);
 
-    painter->setDepthTestingEnabled(false);
+    glDisable(GL_DEPTH_TEST);
 
     painter->modelViewMatrix().rotate(oangle, 0.0f, 1.0f, 0.0f);
 

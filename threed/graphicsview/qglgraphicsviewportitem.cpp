@@ -41,6 +41,7 @@
 
 #include "qglgraphicsviewportitem.h"
 #include "qglpainter.h"
+#include "qglsubsurface.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsscene.h>
 
@@ -402,7 +403,8 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the GL viewport to limit drawing to the bounds of this item.
     QRect viewport = painter->deviceTransform().mapRect(rect()).toRect();
-    glpainter.setViewport(viewport);
+    QGLSubsurface surface(glpainter.currentSurface(), viewport);
+    glpainter.pushSurface(&surface);
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
@@ -411,8 +413,11 @@ void QGLGraphicsViewportItem::paint
         // We clear the background by drawing a triangle fan so
         // that the background color will blend with the underlying
         // screen content if it has an alpha component.
-        glpainter.setDepthTestingEnabled(false);
-        glpainter.setBlendingEnabled(d->backgroundColor.alpha() != 255);
+        glDisable(GL_DEPTH_TEST);
+        if (d->backgroundColor.alpha() != 255)
+            glEnable(GL_BLEND);
+        else
+            glDisable(GL_BLEND);
         QVector2DArray array;
         array.append(-1, -1);
         array.append(1, -1);
@@ -428,7 +433,7 @@ void QGLGraphicsViewportItem::paint
     if (d->clearDepthBuffer)
         glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    glpainter.setBlendingEnabled(false);
+    glDisable(GL_BLEND);
 
     // Apply the camera.
     glpainter.setEye(QGL::NoEye);
@@ -445,6 +450,8 @@ void QGLGraphicsViewportItem::paint
     glpainter.setCullFaces(QGL::CullDisabled);
     d->setDefaults(&glpainter);
     glDisable(GL_DEPTH_TEST);
+
+    glpainter.popSurface();
 }
 
 /*!

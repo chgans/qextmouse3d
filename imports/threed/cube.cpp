@@ -86,6 +86,7 @@ void Cube::drawItem(QGLPainter *painter)
         QGLBuilder builder;
         builder << QGL::Faceted << QGLCube(d->size);
         d->cube = builder.finalizedSceneNode();
+        d->cube->setParent(this);
     }
     d->cube->draw(painter);
 }

@@ -61,7 +61,6 @@ protected:
 
 private:
     QGLAbstractScene *m_scene;
-    QGLSceneNode *m_node;
 };
 //! [class-defn]
 

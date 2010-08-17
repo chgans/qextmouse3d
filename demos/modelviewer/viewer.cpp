@@ -222,6 +222,8 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::buildFloor()
 {
+    if (m_floor)
+        return;
     QGLBuilder builder;
     for (int x = -5; x < 5; ++x)
     {
@@ -248,6 +250,7 @@ void Viewer::buildFloor()
         builder.addQuadStrip(op);
     }
     m_floor = builder.finalizedSceneNode();
+    m_floor->setParent(this);
     m_floor->setEffect(QGL::LitDecalTexture2D);
     int sz = 512;
     QImage uv(sz, sz, QImage::Format_ARGB32);
@@ -300,7 +303,7 @@ void Viewer::initializeGL(QGLPainter *painter)
 {
     setFocus();
     painter->setClearColor(QColor(32, 32, 128));
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
     painter->setCullFaces(QGL::CullBackFaces);
 
     buildFloor();
@@ -323,7 +326,7 @@ void Viewer::paintGL(QGLPainter *painter)
 {
     if (m_model->scene())
     {
-        painter->clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter->modelViewMatrix().push();
 
         if (m_drawFloor)

@@ -59,6 +59,7 @@
 
 #include <QtCore/qatomic.h>
 #include <QtCore/qmap.h>
+#include <QtCore/qstack.h>
 #include <QtGui/private/qpaintengineex_p.h>
 #include <QtOpenGL/private/qglextensions_p.h>
 
@@ -100,6 +101,13 @@ public:
     QGLAbstractEffect *defaultPickEffect;
 };
 
+struct QGLPainterSurfaceInfo
+{
+    QGLAbstractSurface *surface;
+    bool destroySurface;
+    bool mainSurface;
+};
+
 class QGLPainterPrivate
 {
 public:
@@ -108,7 +116,6 @@ public:
 
     QAtomicInt ref;
     const QGLContext *context;
-    QPaintEngineEx *activePaintEngine;
     QMatrix4x4Stack projectionMatrix;
     QMatrix4x4Stack modelViewMatrix;
     QGL::Eye eye;
@@ -128,14 +135,11 @@ public:
     QGLMaterial *frontColorMaterial;
     QGLMaterial *backColorMaterial;
     QBox3D viewingCube;
-    QPoint viewportOffset;
-    QRect viewport; // GL co-ordinates - origin bottom-left.
-    QRect scissor;  // Qt co-ordinates - origin top-left.
     QColor color;
     QGLPainter::Updates updates;
     QGLPainterPickPrivate *pick;
     QMap<QString, QGLShaderProgram *> cachedPrograms;
-    QList<QGLFramebufferObject *> surfaceStack;
+    QStack<QGLPainterSurfaceInfo> surfaceStack;
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
 #if QT_VERSION < 0x040700

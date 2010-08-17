@@ -1005,17 +1005,6 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
     Finish the building of this geometry, optimize it for rendering, and return a
     pointer to the detached top-level scene node (root node).
 
-    The root node will have a child node for each section that was created
-    during geometry building.
-
-    This method must be called exactly once after building the scene.
-
-    Calling code takes ownership of the scene.  If this builder is destroyed
-    (deleted or goes out of scope) without calling this method to take
-    ownership of the scene, a warning will be printed on the console and the
-    scene will be deleted.  If this method is called more than once, on the
-    second and subsequent calls a warning is printed and NULL is returned.
-
     Since the scene is detached from the builder object, the builder itself
     may be deleted or go out of scope while the scene lives on:
 
@@ -1037,6 +1026,46 @@ static inline void warnIgnore(int secCount, QGLSection *s, int vertCount, int no
         m_thing->draw(painter);
     }
     \endcode
+
+    The root node will have a child node for each section that was created
+    during geometry building.
+
+    This method must be called exactly once after building the scene.
+
+    \bold{Calling code takes ownership of the scene.}  In particular take care
+    to either explicitly destroy the scene when it is no longer needed - as shown
+    above.
+
+    For more complex applications parent each finalized scene node onto a QObject
+    so it will be implictly cleaned up by Qt.  If you use QGLSceneNode::setParent()
+    to do this, you can save an explicit call to addNode() since if setParent()
+    detects that the new parent is a QGLSceneNode it will call addNode() for you:
+
+    \code
+    // here a top level node for the app is created, and parented to the view
+    QGLSceneNode *topNode = new QGLSceneNode(this);
+
+    QGLBuilder b1;
+    // build geometry
+
+    QGLSceneNode *thing = b1.finalizedSceneNode();
+
+    // does a QObject::setParent() to manage memory, and also adds to the scene
+    // graph, so no need to call topNode->addNode(thing)
+    thing->setParent(topNode);
+
+    QGLBuilder b2;
+    // build more geometry
+    QGLSceneNode *anotherThing = b2.finalizedSceneNode();
+
+    // again parent on get addNode for free
+    anotherThing->setParent(topNode);
+    \endcode
+
+    If this builder is destroyed without calling this method to take
+    ownership of the scene, a warning will be printed on the console and the
+    scene will be deleted.  If this method is called more than once, on the
+    second and subsequent calls a warning is printed and NULL is returned.
 
     This function does the following:
     \list

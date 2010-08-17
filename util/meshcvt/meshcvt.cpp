@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     printf("static float const %sBezierVertexData[] = {\n", name);
     for (int vertex = 0; vertex < vertices.count(); ++vertex) {
         QVector3D v = vertices[vertex];
-        printf("    %f, %f, %f", v.x(), v.y(), v.z());
+        printf("    %ff, %ff, %ff", v.x(), v.y(), v.z());
         if (vertex < (vertices.count() - 1))
             printf(",\n");
         else

@@ -45,6 +45,7 @@
 #include "qglteapot.h"
 #include "qglcamera.h"
 #include "qgltexture2d.h"
+#include "qglsubsurface.h"
 #include <QApplication>
 #include <QImage>
 #include <QPainter>
@@ -118,10 +119,9 @@ void ShapesWidget::paintGL()
 {
     QGLPainter painter(this);
 
-    painter.setViewport(size());
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    painter.setDepthTestingEnabled(false);
+    glDisable(GL_DEPTH_TEST);
 
     QMatrix4x4 projm;
     projm.ortho(rect());
@@ -140,7 +140,7 @@ void ShapesWidget::paintGL()
     paintTriangleFan(&painter, QRect(boxw * 2, boxh, boxw, boxh));
     paintPoints(&painter, QRect(0, boxh * 2, boxw, boxh));
 
-    painter.setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
     paintCube(&painter, QRect(boxw, boxh * 2, boxw, boxh));
     paintTeapot(&painter, QRect(boxw * 2, boxh * 2, boxw, boxh));
@@ -167,7 +167,6 @@ void ShapesWidget::paintPoints(QGLPainter *painter, const QRect& rect)
 {
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(170, 202, 0));
-    painter->setPointSize(1);
 
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Points, 8);
@@ -177,8 +176,6 @@ void ShapesWidget::paintPoints(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLines(QGLPainter *painter, const QRect& rect)
 {
-    painter->setLineWidth(1);
-
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Lines, 8);
 
@@ -290,7 +287,9 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().push();
     painter->modelViewMatrix().push();
 
-    painter->setViewport(rect);
+    QGLSubsurface surface(painter->currentSurface(), rect);
+    painter->pushSurface(&surface);
+
     painter->setCamera(&camera);
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 
@@ -299,7 +298,7 @@ void ShapesWidget::paintCube(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
 
-    painter->setViewport(size());
+    painter->popSurface();
 
     drawText(painter, rect, tr("Cube"));
 }
@@ -311,7 +310,9 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().push();
     painter->modelViewMatrix().push();
 
-    painter->setViewport(rect);
+    QGLSubsurface surface(painter->currentSurface(), rect);
+    painter->pushSurface(&surface);
+
     painter->setCamera(&camera);
 
     // Need a one-sided lighting model for the teapot.
@@ -324,7 +325,7 @@ void ShapesWidget::paintTeapot(QGLPainter *painter, const QRect& rect)
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
 
-    painter->setViewport(size());
+    painter->popSurface();
 
     drawText(painter, rect, tr("Teapot"));
 }

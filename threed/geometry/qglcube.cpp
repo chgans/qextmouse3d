@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::geometry
 
     The following example adds a cube of 2 units on a side to a
-    display list, and draws it at (10, 25, 0) in a QGLPainter:
+    geometry builder, and draws it at (10, 25, 0) in a QGLPainter:
 
     \code
     QGLBuilder list;
@@ -108,7 +108,7 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::geometry
 
     The following example adds a cube of 2 units on a side to a
-    display list, one face at a time.
+    geometry builder, one face at a time.
 
     The orientation of the faces are shown in these labelled screenshots
     from the cube example program.
@@ -333,7 +333,8 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCube& cube)
 
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>(vertexData), vertexDataLen / 3);
-    vrts.scale(cube.size());
+    if (cube.size() != 1.0f)
+        vrts.scale(cube.size());
 
     op.appendVertexArray(vrts);
 
@@ -363,7 +364,8 @@ QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeFace& face)
     QVector3DArray vrts = QVector3DArray::fromRawData(
             reinterpret_cast<const QVector3D *>
                 (vertexData + face.face() * 4 * 3), 4);
-    vrts.scale(face.size());
+    if (face.size() != 1.0f)
+        vrts.scale(face.size());
 
     op.appendVertexArray(vrts);
 

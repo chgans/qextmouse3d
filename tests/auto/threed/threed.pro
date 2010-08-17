@@ -6,8 +6,9 @@ SUBDIRS = \
     qcustomdataarray \
     qgraphicstransform3d \
     qvectorarray \
+    qglabstractsurface \
     qglcamera \
-    qglfunctions \
+    qglcube \
     qglindexbuffer \
     qgllightmodel \
     qgllightparameters \
@@ -22,5 +23,7 @@ SUBDIRS = \
     qstereoimage \
     qglrender
 
-TO_BE_PORTED = \
-    qglcube
+# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
+contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
+    SUBDIRS += qglfunctions
+}

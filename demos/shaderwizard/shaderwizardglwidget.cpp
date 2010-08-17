@@ -156,7 +156,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
 
     mTexture->setImage(QImage (":/qtlogo.png"));
 
-    painter->setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
     painter->setCullFaces(QGL::CullBackFaces);
 }
 

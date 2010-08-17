@@ -68,19 +68,24 @@
     effect that lights material colors with the default OpenGL
     two-sided lighting algorithm and the default light.
 
-    The \c{teapot} member variable is an instance of QGLDisplayList.
-    We load the standard geometry for the teapot into this display list
-    during \c{initializeGL()}:
+    The \c{teapot} member variable is an instance of QGLSceneNode,
+    which we create using QGLBuilder during \c{initializeGL()}:
 
     \quotefromfile teapot/teapotview.cpp
     \skipuntil [create-display-list]
     \printto [initialize]
 
     The QGLTeapot class represents the geometry for the teapot,
-    which is added to the display list with the \c{<<} operator.
-    We then call QGLDisplayList::finalize() to finalize the display
-    list and prepare it to be uploaded to the GL server as a
-    vertex buffer.
+    which is added to the builder with the \c{<<} operator.
+
+    We then call QGLBuilder::finalizedSceneNode() to finalize the
+    object, prepare it to be uploaded to the GL server as a
+    vertex buffer, and hand over ownership of the scene node.
+
+    We have to take care to clean up our scene after we're done with it
+    and here that is done in the destructor:
+
+    \snippet teapot/teapotview.cpp destructor
 
     Finally, we paint the teapot every time the window is refreshed:
 

@@ -53,6 +53,7 @@ private slots:
     void create();
     void allocateSimple();
     void allocateGeneral();
+    void allocateUniform();
 };
 
 void tst_QAreaAllocator::create()
@@ -102,6 +103,26 @@ void tst_QAreaAllocator::create()
 
     alloc2.expandBy(QSize(1, 2));
     QCOMPARE(alloc2.size(), QSize(2048, 1024));
+
+    QUniformAreaAllocator alloc3(QSize(400, 200), QSize(16, 16));
+    QCOMPARE(alloc3.size(), QSize(400, 200));
+    QCOMPARE(alloc3.minimumAllocation(), QSize(1, 1));
+    QCOMPARE(alloc3.margin(), QSize(0, 0));
+
+    alloc3.expand(QSize(256, 96));
+    QCOMPARE(alloc3.size(), QSize(400, 200));
+
+    alloc3.expand(QSize(256, 257));
+    QCOMPARE(alloc3.size(), QSize(400, 257));
+
+    alloc3.expand(QSize(513, 257));
+    QCOMPARE(alloc3.size(), QSize(513, 257));
+
+    alloc3.expandBy(QSize(-100, -100));
+    QCOMPARE(alloc3.size(), QSize(513, 257));
+
+    alloc3.expandBy(QSize(1, 2));
+    QCOMPARE(alloc3.size(), QSize(514, 259));
 }
 
 void tst_QAreaAllocator::allocateSimple()
@@ -204,6 +225,53 @@ void tst_QAreaAllocator::allocateGeneral()
     rect = alloc1.allocate(QSize(64, 48));      // Over-allocates to 64x64.
     QVERIFY(!rect.isNull());
     rect = alloc1.allocate(QSize(8, 8));        // Will fail.
+    QVERIFY(rect.isNull());
+}
+
+void tst_QAreaAllocator::allocateUniform()
+{
+    // The uniform allocator initially returns regions in a
+    // left-to-right, top-to-bottom order across the image extents.
+    QUniformAreaAllocator alloc1(QSize(100, 100), QSize(10, 10));
+    QRect rect;
+    for (int y = 0; y < 10; ++y) {
+        for (int x = 0; x < 10; ++x) {
+            rect = alloc1.allocate(QSize(10, 10));
+            QCOMPARE(rect, QRect(x * 10, y * 10, 10, 10));
+        }
+    }
+    rect = alloc1.allocate(QSize(10, 10));
+    QVERIFY(rect.isNull());
+
+    // Release some areas and then allocate again.  Should act like a stack.
+    rect = QRect(60, 50, 10, 10);
+    QRect rect2 = QRect(50, 40, 10, 10);
+    alloc1.release(rect);
+    alloc1.release(rect2);
+    QCOMPARE(alloc1.allocate(QSize(10, 10)), rect2);
+    QCOMPARE(alloc1.allocate(QSize(10, 10)), rect);
+    QVERIFY(alloc1.allocate(QSize(10, 10)).isNull());
+
+    // Expand the allocation area.
+    alloc1.release(rect);   // Copy across at least 1 free list entry.
+    alloc1.expandBy(QSize(10, 10));
+    for (int count = 0; count < 22; ++count) {
+        rect = alloc1.allocate(QSize(10, 10));
+        QVERIFY(!rect.isNull());
+    }
+    rect = alloc1.allocate(QSize(10, 10));
+    QVERIFY(rect.isNull());
+
+    // Release everything and then reallocate.
+    for (int y = 0; y < 11; ++y) {
+        for (int x = 0; x < 11; ++x)
+            alloc1.release(QRect(x * 10, y * 10, 10, 10));
+    }
+    for (int count = 0; count < (11 * 11); ++count) {
+        rect = alloc1.allocate(QSize(10, 10));
+        QVERIFY(!rect.isNull());
+    }
+    rect = alloc1.allocate(QSize(10, 10));
     QVERIFY(rect.isNull());
 }
 

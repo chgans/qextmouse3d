@@ -240,8 +240,8 @@ void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {    
     painter->setClearColor(Qt::blue);
-    painter->setBlendingEnabled(true);
-    painter->clear();
+    glEnable(GL_BLEND);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     m_skybox->draw(painter);
     m_scene->draw(painter);
 }

@@ -47,19 +47,14 @@ void PainterWidget::initializeGL()
     QGLPainter painter(this);
 
     // Turn on depth testing.
-    painter.setDepthTestingEnabled(true);
+    glEnable(GL_DEPTH_TEST);
 
     // Create the cube object for later.
     QGLBuilder builder;
     builder.newSection(QGL::Faceted);
     builder << QGLCube(1.5f);
     cube = builder.finalizedSceneNode();
-}
-
-void PainterWidget::resizeGL(int width, int height)
-{
-    QGLPainter painter(this);
-    painter.setViewport(width, height);
+    cube->setParent(this);
 }
 
 void PainterWidget::paintGL()
@@ -68,7 +63,7 @@ void PainterWidget::paintGL()
 
     // Clear the window to the standard window background color.
     painter.setClearColor(palette().color(backgroundRole()));
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Draw a triangle in an orthographic projection.
     QMatrix4x4 projm;

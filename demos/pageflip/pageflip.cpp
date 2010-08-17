@@ -197,7 +197,7 @@ void PageFlipView::paintGL()
     int midx = rect.width() / 2;
     int topy = (rect.height() - pageSize.height()) / 2;
 
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     QMatrix4x4 projm;
     projm.ortho(rect);
     painter.projectionMatrix() = projm;

@@ -65,7 +65,7 @@ QT_BEGIN_NAMESPACE
 
     A mesh defined by QGLBezierPatches is subdivided into flat
     triangles for rendering when the \c{<<} operator is used
-    to add the patches to a display list.
+    to add the patches to a QGLBuilder.
 
     Many curved 3D objects can be defined as being made up of Bezier
     bicubic patches, stitched together into a mesh.  The most famous

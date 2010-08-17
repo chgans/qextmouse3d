@@ -66,7 +66,7 @@ QT_BEGIN_NAMESPACE
     The caller can return a sub-region to the allocation pool with
     release().  Note that not all strategies support release().
 
-    \sa QSimpleAreaAllocator, QGeneralAreaAllocator
+    \sa QSimpleAreaAllocator, QGeneralAreaAllocator, QUniformAreaAllocator
 */
 
 /*!
@@ -78,7 +78,7 @@ QT_BEGIN_NAMESPACE
     \internal
 
     QSimpleAreaAllocator uses a trivial allocation strategy whereby
-    sub-regions are allocated in rows, with a new row is started each
+    sub-regions are allocated in rows, with a new row started each
     time the previous row fills up.  Space is never reclaimed by
     release().
 
@@ -110,9 +110,30 @@ QT_BEGIN_NAMESPACE
 
     If the sub-region sizes to be allocated are very similar, and release()
     is not necessary, then QSimpleAreaAllocator may work better than
-    QGeneralAreaAllocator.
+    QGeneralAreaAllocator.  If the sizes are very similar, and
+    release() is necessary, then QUniformAreaAllocator may work better
+    than QGeneralAreaAllocator.
 
-    \sa QAreaAllocator, QSimpleAreaAllocator
+    \sa QAreaAllocator, QSimpleAreaAllocator, QUniformAreaAllocator
+*/
+
+/*!
+    \class QUniformAreaAllocator
+    \brief The QUniformAreaAllocator class provides an allocation policy for uniform-sized areas.
+    \since 4.8
+    \ingroup qt3d
+    \ingroup qt3d::enablers
+    \internal
+
+    QUniformAreaAllocator allocates any size up to uniformSize()
+    by dividing size() up into a grid of uniformSize() areas.
+    Areas can be deallocated with release() and returned to the pool.
+
+    This allocator is suitable for use when the allocations will all
+    be of a similar size.  Unlike QSimpleAreaAllocator, this class
+    can release allocations.
+
+    \sa QAreaAllocator, QSimpleAreaAllocator, QGeneralAreaAllocator
 */
 
 /*!
@@ -732,6 +753,142 @@ void QGeneralAreaAllocator::release(const QRect &rect)
 int QGeneralAreaAllocator::overhead() const
 {
     return m_nodeCount * sizeof(Node);
+}
+
+/*!
+    \internal
+
+    Constructs a uniform area allocator that is initially \a size pixels
+    in size.  The \a uniformSize specifies the single allocation size
+    that is supported.  All allocate() requests must be \a uniformSize
+    or less.
+*/
+QUniformAreaAllocator::QUniformAreaAllocator
+        (const QSize &size, const QSize &uniformSize)
+    : QAreaAllocator(size), m_uniformSize(uniformSize), m_firstFree(0)
+{
+    Q_ASSERT(uniformSize.width() > 0 && uniformSize.height() > 0);
+    Q_ASSERT(size.width() >= uniformSize.width() &&
+             size.height() >= uniformSize.height());
+    m_gridSize = QSize(size.width() / uniformSize.width(),
+                       size.height() / uniformSize.height());
+    int count = m_gridSize.width() * m_gridSize.height();
+    m_grid = new int [count];
+    for (int index = 0; index < (count - 1); ++index)
+        m_grid[index] = index + 1;
+    m_grid[count - 1] = -1;
+}
+
+/*!
+    \internal
+
+    Destroys this uniform area allocator.
+*/
+QUniformAreaAllocator::~QUniformAreaAllocator()
+{
+    delete [] m_grid;
+}
+
+/*!
+    \fn QSize QUniformAreaAllocator::uniformSize() const
+    \internal
+
+    Returns the uniform size of all allocations.
+
+    \sa allocate()
+*/
+
+/*!
+    \internal
+*/
+void QUniformAreaAllocator::expand(const QSize &size)
+{
+    QAreaAllocator::expand(size);
+
+    QSize newGridSize = QSize(m_size.width() / m_uniformSize.width(),
+                              m_size.height() / m_uniformSize.height());
+    if (m_gridSize == newGridSize)
+        return;
+
+    // Create a new grid.
+    int newCount = newGridSize.width() * newGridSize.height();
+    int *newGrid = new int [newCount];
+
+    // Copy across the free blocks from the old grid.
+    int posn = m_firstFree;
+    int newFirstFree = -1;
+    while (posn != -1) {
+        int x = posn % m_gridSize.width();
+        int y = posn / m_gridSize.width();
+        int newPosn = x + y * newGridSize.width();
+        newGrid[newPosn] = newFirstFree;
+        newFirstFree = newPosn;
+        posn = m_grid[posn];
+    }
+
+    // Add free blocks within the expanded area of the new grid.
+    for (int y = 0; y < m_gridSize.height(); ++y) {
+        int newPosn = y * newGridSize.width() + m_gridSize.width();
+        for (int x = m_gridSize.width(); x < newGridSize.width(); ++x) {
+            newGrid[newPosn] = newFirstFree;
+            newFirstFree = newPosn;
+            ++newPosn;
+        }
+    }
+    for (int y = m_gridSize.height(); y < newGridSize.height(); ++y) {
+        int newPosn = y * newGridSize.width();
+        for (int x = 0; x < newGridSize.width(); ++x) {
+            newGrid[newPosn] = newFirstFree;
+            newFirstFree = newPosn;
+            ++newPosn;
+        }
+    }
+
+    // Replace the old grid.
+    delete [] m_grid;
+    m_grid = newGrid;
+    m_gridSize = newGridSize;
+    m_firstFree = newFirstFree;
+}
+
+/*!
+    \internal
+*/
+QRect QUniformAreaAllocator::allocate(const QSize &size)
+{
+    QSize rounded = roundAllocation(size);
+    if (rounded.width() > m_uniformSize.width() ||
+            rounded.height() > m_uniformSize.height())
+        return QRect();
+    int posn = m_firstFree;
+    if (posn == -1)
+        return QRect();
+    m_firstFree = m_grid[posn];
+    int x = posn % m_gridSize.width();
+    int y = posn / m_gridSize.width();
+    return QRect(x * m_uniformSize.width(), y * m_uniformSize.height(),
+                 size.width(), size.height());
+}
+
+/*!
+    \internal
+*/
+void QUniformAreaAllocator::release(const QRect &rect)
+{
+    int x = rect.x() / m_uniformSize.width();
+    int y = rect.y() / m_uniformSize.height();
+    int posn = x + y * m_gridSize.width();
+    Q_ASSERT(posn >= 0 && posn < m_gridSize.width() * m_gridSize.height());
+    m_grid[posn] = m_firstFree;
+    m_firstFree = posn;
+}
+
+/*!
+    \internal
+*/
+int QUniformAreaAllocator::overhead() const
+{
+    return sizeof(int) * m_gridSize.width() * m_gridSize.height();
 }
 
 QT_END_NAMESPACE

@@ -197,5 +197,7 @@ Geometry::Geometry(QObject *parent, QGLMaterialCollection *materials)
     mat->setTexture(texture);
 
     setMaterial(mat);
-    addNode(b.finalizedSceneNode());
+    QGLSceneNode *n = b.finalizedSceneNode();
+    n->setParent(this);
+    addNode(n);
 }
