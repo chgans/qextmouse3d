@@ -41,6 +41,7 @@
 
 #include "qglview.h"
 #include "qglframebufferobject.h"
+#include "qglsubsurface.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtGui/qapplication.h>
@@ -599,51 +600,37 @@ void QGLView::resizeGL(int w, int h)
     d->pickBufferForceUpdate = true;
 }
 
-static void qt_qglview_left_viewport
-    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
+static QRect qt_qglview_left_viewport
+    (const QSize &size, QGLView::StereoType type)
 {
     switch (type) {
     case QGLView::DoubleWideLeftRight:
-        painter->setViewportOffset(QPoint(0, 0));
-        painter->setViewport(size.width() / 2, size.height());
-        break;
+        return QRect(0, 0, size.width() / 2, size.height());
     case QGLView::DoubleWideRightLeft:
-        painter->setViewportOffset(QPoint(size.width() / 2, 0));
-        painter->setViewport(size.width() / 2, size.height());
-        break;
+        return QRect(size.width() / 2, 0, size.width() / 2, size.height());
     case QGLView::DoubleHighLeftRight:
-        painter->setViewportOffset(QPoint(0, 0));
-        painter->setViewport(size.width(), size.height() / 2);
-        break;
+        return QRect(0, 0, size.width(), size.height() / 2);
     case QGLView::DoubleHighRightLeft:
-        painter->setViewportOffset(QPoint(0, size.height() / 2));
-        painter->setViewport(size.width(), size.height() / 2);
-        break;
-    default: break;
+        return QRect(0, size.height() / 2, size.width(), size.height() / 2);
+    default:
+        return QRect(QPoint(0, 0), size);
     }
 }
 
-static void qt_qglview_right_viewport
-    (QGLPainter *painter, const QSize &size, QGLView::StereoType type)
+static QRect qt_qglview_right_viewport
+    (const QSize &size, QGLView::StereoType type)
 {
     switch (type) {
     case QGLView::DoubleWideLeftRight:
-        painter->setViewportOffset(QPoint(size.width() / 2, 0));
-        painter->setViewport(size.width() / 2, size.height());
-        break;
+        return QRect(size.width() / 2, 0, size.width() / 2, size.height());
     case QGLView::DoubleWideRightLeft:
-        painter->setViewportOffset(QPoint(0, 0));
-        painter->setViewport(size.width() / 2, size.height());
-        break;
+        return QRect(0, 0, size.width() / 2, size.height());
     case QGLView::DoubleHighLeftRight:
-        painter->setViewportOffset(QPoint(0, size.height() / 2));
-        painter->setViewport(size.width(), size.height() / 2);
-        break;
+        return QRect(0, size.height() / 2, size.width(), size.height() / 2);
     case QGLView::DoubleHighRightLeft:
-        painter->setViewportOffset(QPoint(0, 0));
-        painter->setViewport(size.width(), size.height() / 2);
-        break;
-    default: break;
+        return QRect(0, 0, size.width(), size.height() / 2);
+    default:
+        return QRect(QPoint(0, 0), size);
     }
 }
 
@@ -659,7 +646,6 @@ void QGLView::paintGL()
     // Paint the scene contents.
     QGLPainter painter;
     painter.begin();
-    painter.resetViewport();
     if (d->options & QGLView::ShowPicking &&
             d->stereoType == QGLView::RedCyanAnaglyph) {
         // If showing picking, then render normally.  This really
@@ -719,15 +705,20 @@ void QGLView::paintGL()
             // Render the stereo images into the two halves of the window.
             QSize sz = size();
             painter.setEye(QGL::LeftEye);
-            qt_qglview_left_viewport(&painter, sz, d->stereoType);
+            QGLSubsurface eyeSurface;
+            eyeSurface.setSurface(painter.currentSurface());
+            eyeSurface.setRegion(qt_qglview_left_viewport(sz, d->stereoType));
+            painter.pushSurface(&eyeSurface);
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
             painter.setEye(QGL::RightEye);
-            qt_qglview_right_viewport(&painter, sz, d->stereoType);
+            painter.popSurface();
+            eyeSurface.setRegion(qt_qglview_right_viewport(sz, d->stereoType));
+            painter.pushSurface(&eyeSurface);
             painter.setCamera(d->camera);
             paintGL(&painter);
-            painter.setViewportOffset(QPoint(0, 0));
+            painter.popSurface();
         }
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         else {

@@ -39,26 +39,50 @@
 **
 ****************************************************************************/
 
-#ifndef PAINTERWIDGET_H
-#define PAINTERWIDGET_H
+#ifndef QGLFRAMEBUFFEROBJECTSURFACE_H
+#define QGLFRAMEBUFFEROBJECTSURFACE_H
 
-#include "qglpainter.h"
-#include "qglbuilder.h"
+#include "qglabstractsurface.h"
+#include <QtOpenGL/qglframebufferobject.h>
 
-class QGLSceneNode;
+QT_BEGIN_HEADER
 
-class PainterWidget : public QGLWidget
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QGLFramebufferObjectSurfacePrivate;
+
+class Q_QT3D_EXPORT QGLFramebufferObjectSurface : public QGLAbstractSurface
 {
-    Q_OBJECT
 public:
-    PainterWidget(QWidget *parent=0) : QGLWidget(parent) {}
+    QGLFramebufferObjectSurface();
+    explicit QGLFramebufferObjectSurface
+        (QGLFramebufferObject *fbo, const QGLContext *context = 0);
+    ~QGLFramebufferObjectSurface();
+
+    const QGLContext *context() const;
+    void setContext(const QGLContext *context);
+
+    QGLFramebufferObject *framebufferObject() const;
+    void setFramebufferObject(QGLFramebufferObject *fbo);
+
+    QPaintDevice *device() const;
+    void deactivate(QGLAbstractSurface *nextSurface = 0);
+    QRect viewportRect() const;
 
 protected:
-    void initializeGL();
-    void paintGL();
+    bool activateNoViewport(QGLAbstractSurface *prevSurface);
 
 private:
-    QGLSceneNode *cube;
+    QScopedPointer<QGLFramebufferObjectSurfacePrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLFramebufferObjectSurface)
+    Q_DISABLE_COPY(QGLFramebufferObjectSurface)
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

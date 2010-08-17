@@ -45,6 +45,8 @@
 #include "qgllightparameters.h"
 #include "qglcamera.h"
 #include "qglview.h"
+#include "qglsubsurface.h"
+#include "qglframebufferobjectsurface.h"
 #include <QtGui/qpainter.h>
 #include <QtOpenGL/qglframebufferobject.h>
 
@@ -404,8 +406,10 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     // Modify the GL viewport to only cover the extent of this QDeclarativeItem.
     QTransform transform = p->transform();
-    painter.setViewport(QRect(qRound(transform.dx()), qRound(transform.dy()),
-                              width(), height()));
+    QRect viewport(qRound(transform.dx()), qRound(transform.dy()),
+                   width(), height());
+    QGLSubsurface surface(painter.currentSurface(), viewport);
+    painter.pushSurface(&surface);
 
     // Perform early drawing operations.
     earlyDraw(&painter);
@@ -421,6 +425,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     // Draw the Item3d children.
     draw(&painter);
     painter.setPicking(false);
+    painter.popSurface();
 }
 
 /*!
@@ -646,8 +651,8 @@ QObject *Viewport::objectForPoint(int x, int y)
             d->pickFbo = new QGLFramebufferObject
                 (fbosize, QGLFramebufferObject::CombinedDepthStencil);
         }
-        d->pickFbo->bind();
-        painter.setViewport(size);
+        QGLFramebufferObjectSurface surface(d->pickFbo);
+        painter.pushSurface(&surface);
         painter.setPicking(true);
         painter.clearPickObjects();
         painter.setClearColor(Qt::black);
@@ -679,7 +684,7 @@ QObject *Viewport::objectForPoint(int x, int y)
         draw(&painter);
         painter.setPicking(false);
         objectId = painter.pickObject(x, height() - 1 - y);
-        d->pickFbo->release();
+        painter.popSurface();
     }
 
     d->needsPick = false;

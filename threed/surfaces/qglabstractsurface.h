@@ -39,26 +39,59 @@
 **
 ****************************************************************************/
 
-#ifndef PAINTERWIDGET_H
-#define PAINTERWIDGET_H
+#ifndef QGLABSTRACTSURFACE_H
+#define QGLABSTRACTSURFACE_H
 
-#include "qglpainter.h"
-#include "qglbuilder.h"
+#include "qt3dglobal.h"
+#include <QtOpenGL/qgl.h>
 
-class QGLSceneNode;
+QT_BEGIN_HEADER
 
-class PainterWidget : public QGLWidget
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QGLSubsurface;
+
+class Q_QT3D_EXPORT QGLAbstractSurface
 {
-    Q_OBJECT
 public:
-    PainterWidget(QWidget *parent=0) : QGLWidget(parent) {}
+    virtual ~QGLAbstractSurface();
+
+    enum SurfaceType
+    {
+        Widget,
+        FramebufferObject,
+        PixelBuffer,
+        Subsurface,
+        Other
+    };
+
+    QGLAbstractSurface::SurfaceType surfaceType() const { return m_type; }
+
+    virtual QPaintDevice *device() const = 0;
+    bool activate(QGLAbstractSurface *prevSurface = 0);
+    virtual void deactivate(QGLAbstractSurface *nextSurface = 0) = 0;
+    virtual QRect viewportRect() const = 0;
+
+    static QGLAbstractSurface *createSurfaceForDevice(QPaintDevice *device);
+    static QGLAbstractSurface *createSurfaceForContext(const QGLContext *context);
 
 protected:
-    void initializeGL();
-    void paintGL();
+    QGLAbstractSurface(QGLAbstractSurface::SurfaceType surfaceType)
+        : m_type(surfaceType) {}
+
+    virtual bool activateNoViewport(QGLAbstractSurface *prevSurface) = 0;
 
 private:
-    QGLSceneNode *cube;
+    QGLAbstractSurface::SurfaceType m_type;
+    Q_DISABLE_COPY(QGLAbstractSurface)
+
+    friend class QGLSubsurface;
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

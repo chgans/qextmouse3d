@@ -39,26 +39,34 @@
 **
 ****************************************************************************/
 
-#ifndef PAINTERWIDGET_H
-#define PAINTERWIDGET_H
+#include "qglpaintersurface_p.h"
 
-#include "qglpainter.h"
-#include "qglbuilder.h"
+QT_BEGIN_NAMESPACE
 
-class QGLSceneNode;
-
-class PainterWidget : public QGLWidget
+QPaintDevice *QGLPainterSurface::device() const
 {
-    Q_OBJECT
-public:
-    PainterWidget(QWidget *parent=0) : QGLWidget(parent) {}
+    return m_painter->device();
+}
 
-protected:
-    void initializeGL();
-    void paintGL();
+void QGLPainterSurface::deactivate(QGLAbstractSurface *nextSurface)
+{
+    if (!nextSurface)
+        m_painter->endNativePainting();
+}
 
-private:
-    QGLSceneNode *cube;
-};
+QRect QGLPainterSurface::viewportRect() const
+{
+    QPaintDevice *device = m_painter->device();
+    return QRect(0, 0, device->width(), device->height());
+}
 
-#endif
+bool QGLPainterSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+{
+    if (m_painterContext != QGLContext::currentContext())
+        const_cast<QGLContext *>(m_painterContext)->makeCurrent();
+    if (!prevSurface)
+        m_painter->beginNativePainting();
+    return true;
+}
+
+QT_END_NAMESPACE

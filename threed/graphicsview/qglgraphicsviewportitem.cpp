@@ -41,6 +41,7 @@
 
 #include "qglgraphicsviewportitem.h"
 #include "qglpainter.h"
+#include "qglsubsurface.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsscene.h>
 
@@ -402,7 +403,8 @@ void QGLGraphicsViewportItem::paint
 
     // Set up the GL viewport to limit drawing to the bounds of this item.
     QRect viewport = painter->deviceTransform().mapRect(rect()).toRect();
-    glpainter.setViewport(viewport);
+    QGLSubsurface surface(glpainter.currentSurface(), viewport);
+    glpainter.pushSurface(&surface);
 
     // Set up the desired drawing options.
     glpainter.setCullFaces(d->cullFaces);
@@ -448,6 +450,8 @@ void QGLGraphicsViewportItem::paint
     glpainter.setCullFaces(QGL::CullDisabled);
     d->setDefaults(&glpainter);
     glDisable(GL_DEPTH_TEST);
+
+    glpainter.popSurface();
 }
 
 /*!

@@ -39,26 +39,43 @@
 **
 ****************************************************************************/
 
-#ifndef PAINTERWIDGET_H
-#define PAINTERWIDGET_H
+#ifndef QGLPIXELBUFFERSURFACE_H
+#define QGLPIXELBUFFERSURFACE_H
 
-#include "qglpainter.h"
-#include "qglbuilder.h"
+#include "qglabstractsurface.h"
+#include <QtOpenGL/qglpixelbuffer.h>
 
-class QGLSceneNode;
+QT_BEGIN_HEADER
 
-class PainterWidget : public QGLWidget
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class Q_QT3D_EXPORT QGLPixelBufferSurface : public QGLAbstractSurface
 {
-    Q_OBJECT
 public:
-    PainterWidget(QWidget *parent=0) : QGLWidget(parent) {}
+    QGLPixelBufferSurface();
+    explicit QGLPixelBufferSurface(QGLPixelBuffer *pbuffer);
+    ~QGLPixelBufferSurface();
+
+    QGLPixelBuffer *pixelBuffer() const;
+    void setPixelBuffer(QGLPixelBuffer *pbuffer);
+
+    QPaintDevice *device() const;
+    void deactivate(QGLAbstractSurface *nextSurface = 0);
+    QRect viewportRect() const;
 
 protected:
-    void initializeGL();
-    void paintGL();
+    bool activateNoViewport(QGLAbstractSurface *prevSurface);
 
 private:
-    QGLSceneNode *cube;
+    QGLPixelBuffer *m_pbuffer;
+
+    Q_DISABLE_COPY(QGLPixelBufferSurface)
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

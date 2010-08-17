@@ -44,6 +44,7 @@
 
 #include "qglview.h"
 #include "qglbuilder.h"
+#include "qglframebufferobjectsurface.h"
 
 class QGLFramebufferObject;
 class QGLCamera;
@@ -77,6 +78,7 @@ private:
     QGLSceneNode *teapot;
     QGLTexture2D qtlogo;
     QGLFramebufferObject *fbo;
+    QGLFramebufferObjectSurface fboSurface;
     QGLCamera *innerCamera;
     qreal tangle;
     qreal cangle;

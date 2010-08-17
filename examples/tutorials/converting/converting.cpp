@@ -53,18 +53,9 @@ public:
     TutorialWidget(QWidget *parent=0) : QGLWidget(parent) {}
 
 protected:
-    void resizeGL(int width, int height);
     void paintGL();
 };
 //! [class-defn]
-
-//! [set-viewport]
-void TutorialWidget::resizeGL(int width, int height)
-{
-    QGLPainter painter(this);
-    painter.setViewport(width, height);
-}
-//! [set-viewport]
 
 //! [paintGL]
 //! [clear-window]

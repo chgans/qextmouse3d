@@ -39,26 +39,45 @@
 **
 ****************************************************************************/
 
-#ifndef PAINTERWIDGET_H
-#define PAINTERWIDGET_H
+#ifndef QGLWIDGETSURFACE_H
+#define QGLWIDGETSURFACE_H
 
-#include "qglpainter.h"
-#include "qglbuilder.h"
+#include "qglabstractsurface.h"
 
-class QGLSceneNode;
+QT_BEGIN_HEADER
 
-class PainterWidget : public QGLWidget
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QGLWidgetSurfacePrivate;
+
+class Q_QT3D_EXPORT QGLWidgetSurface : public QGLAbstractSurface
 {
-    Q_OBJECT
 public:
-    PainterWidget(QWidget *parent=0) : QGLWidget(parent) {}
+    QGLWidgetSurface();
+    explicit QGLWidgetSurface(QWidget *widget);
+    ~QGLWidgetSurface();
+
+    QWidget *widget() const;
+    void setWidget(QWidget *widget);
+
+    QPaintDevice *device() const;
+    void deactivate(QGLAbstractSurface *nextSurface = 0);
+    QRect viewportRect() const;
 
 protected:
-    void initializeGL();
-    void paintGL();
+    bool activateNoViewport(QGLAbstractSurface *prevSurface);
 
 private:
-    QGLSceneNode *cube;
+    QScopedPointer<QGLWidgetSurfacePrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QGLWidgetSurface)
+    Q_DISABLE_COPY(QGLWidgetSurface)
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

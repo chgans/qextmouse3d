@@ -90,11 +90,9 @@
 
     \snippet tutorials/converting/converting-rawgl.cpp set-viewport
 
-    The above code also works with QGLPainter because \c{glViewport()}
-    is available on all GL implementations.  But there is an alternative
-    way to do it with QGLPainter:
-
-    \snippet tutorials/converting/converting.cpp set-viewport
+    It isn't necessary to set the viewport with QGLPainter because
+    QGLPainter::begin() will take care of setting the correct viewport
+    for the drawing surface.
 
     QGLPainter is a wrapper around QGLContext objects.  In this case,
     we are creating a painter object for the QGLContext associated
