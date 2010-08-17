@@ -42,7 +42,7 @@
 #include "qglpainter.h"
 #include "qglpainter_p.h"
 #include "qglabstracteffect.h"
-#include "qglext.h"
+#include "qglext_p.h"
 #include <QtOpenGL/qglpixelbuffer.h>
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
@@ -67,6 +67,8 @@
 #include "qgeometrydata.h"
 #include "qglvertexbuffer_p.h"
 #include "qmatrix4x4stack_p.h"
+
+#undef glActiveTexture
 
 QT_BEGIN_NAMESPACE
 
@@ -337,6 +339,8 @@ bool QGLPainter::begin(const QGLContext *context)
     d_ptr->modelViewMatrix.setDirty(true);
     d_ptr->projectionMatrix.setDirty(true);
 
+    // Initialize the QGLFunctions parent class.
+    initializeGLFunctions(context);
     return true;
 }
 
@@ -532,77 +536,13 @@ bool QGLPainter::isFixedFunction() const
 }
 
 /*!
-    Clears the specified rendering \a buffers.  The default \a buffers
-    value is QGL::ClearColorBuffer | QGL::ClearDepthBuffer, which
-    indicates that the color and depth buffers should be cleared.
-
-    \sa setClearColor(), setClearDepth(), setClearStencil()
-*/
-void QGLPainter::clear(QGL::ClearBuffers buffers)
-{
-    glClear(GLuint(buffers));
-}
-
-/*!
-    Sets the \a color to use to clear the color buffer when clear()
+    Sets the \a color to use to clear the color buffer when \c{glClear()}
     is called.
-
-    \sa clear()
 */
 void QGLPainter::setClearColor(const QColor& color)
 {
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 }
-
-/*!
-    Sets the \a depth to use to clear the depth buffer when clear()
-    is called.
-
-    \sa clear()
-*/
-void QGLPainter::setClearDepth(qreal depth)
-{
-#if defined(QT_OPENGL_ES)
-    glClearDepthf(depth);
-#else
-    glClearDepth(depth);
-#endif
-}
-
-/*!
-    Sets the stencil \a value to use to clear the stencil buffer
-    when clear() is called.
-
-    \sa clear()
-*/
-void QGLPainter::setClearStencil(GLint value)
-{
-    glClearStencil(value);
-}
-
-/*!
-    \fn void QGLPainter::setDepthTestingEnabled(bool value)
-
-    Enables or disables depth testing according to \a value.
-    This is a convenience function that is equivalent to
-    \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
-*/
-
-/*!
-    \fn void QGLPainter::setStencilTestingEnabled(bool value)
-
-    Enables or disables stencil testing according to \a value.
-    This is a convience function that is equivalent to
-    \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
-*/
-
-/*!
-    \fn void QGLPainter::setBlendingEnabled(bool value)
-
-    Enables or disables blending according to \a value.
-    This is a convience function that is equivalent to
-    \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
-*/
 
 /*!
     Returns the viewport for the active GL context.  The origin for
@@ -1013,7 +953,7 @@ void QGLPainter::setEye(QGL::Eye eye)
 
     \sa eye(), modelViewMatrix(), projectionMatrix()
 */
-void QGLPainter::setCamera(QGLCamera *camera)
+void QGLPainter::setCamera(const QGLCamera *camera)
 {
     Q_ASSERT(camera);
     Q_D(QGLPainter);
@@ -1581,7 +1521,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
         return;
 
     // Select the texture unit and bind the texture.
-    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         glBindTexture(GL_TEXTURE_2D, 0);
 #if !defined(QT_OPENGL_ES_2)
@@ -1597,7 +1537,7 @@ void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
     if (unit != 0)
-        qt_gl_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
 }
 
 /*!
@@ -1614,7 +1554,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
         return;
 
     // Select the texture unit and bind the texture.
-    qt_gl_ActiveTexture(GL_TEXTURE0 + unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
     if (!texture) {
         QGLTextureCube::release();
 #if !defined(QT_OPENGL_ES_2)
@@ -1630,7 +1570,7 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     // Leave the default setting on texture unit 0 just in case
     // raw GL code is being mixed in with QGLPainter code.
     if (unit != 0)
-        qt_gl_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
 }
 
 /*!
@@ -2045,34 +1985,6 @@ QSize QGLPainter::surfaceSize() const
         return fbo->size();
     QPaintDevice *device = d->context->device();
     return QSize(device->width(), device->height());
-}
-
-/*!
-    Sets the point \a size to use with draw().
-
-    This function has no effect if a shader program is in use,
-    or on OpenGL/ES 2.0.  Shader programs must set the point size
-    in the vertex shader.
-
-    \sa draw(), setLineWidth()
-*/
-void QGLPainter::setPointSize(qreal size)
-{
-#if defined(QT_OPENGL_ES_2)
-    Q_UNUSED(size);
-#else
-    glPointSize(size);
-#endif
-}
-
-/*!
-    Sets the line \a width to use with draw().
-
-    \sa draw(), setPointSize()
-*/
-void QGLPainter::setLineWidth(qreal width)
-{
-    glLineWidth(width);
 }
 
 /*!

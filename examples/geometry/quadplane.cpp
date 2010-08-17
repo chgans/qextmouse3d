@@ -87,5 +87,7 @@ QuadPlane::QuadPlane(QObject *parent, QSizeF size, int level)
         zip2 = zip;
         zip.clear();
     }
-    addNode(builder.finalizedSceneNode());
+    QGLSceneNode *n = builder.finalizedSceneNode();
+    n->setParent(this);
+    addNode(n);
 }

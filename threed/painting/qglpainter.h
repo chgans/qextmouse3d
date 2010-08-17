@@ -49,6 +49,7 @@
 #include <QtGui/qvector4d.h>
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
+#include "qglfunctions.h"
 #include "qglvertexbuffer.h"
 #include "qglindexbuffer.h"
 #include "qgllightmodel.h"
@@ -74,7 +75,7 @@ class QGeometryData;
 class QGLShaderProgram;
 class QGLFramebufferObject;
 
-class Q_QT3D_EXPORT QGLPainter
+class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
 {
 public:
     QGLPainter();
@@ -106,14 +107,7 @@ public:
     };
     Q_DECLARE_FLAGS(Updates, Update);
 
-    void clear(QGL::ClearBuffers buffers = QGL::ClearColorBuffer | QGL::ClearDepthBuffer);
     void setClearColor(const QColor& color);
-    void setClearDepth(qreal depth);
-    void setClearStencil(GLint value);
-
-    void setDepthTestingEnabled(bool value);
-    void setStencilTestingEnabled(bool value);
-    void setBlendingEnabled(bool value);
 
     QRect viewport() const;
     void setViewport(const QRect& rect);
@@ -138,7 +132,7 @@ public:
     QGL::Eye eye() const;
     void setEye(QGL::Eye eye);
 
-    void setCamera(QGLCamera *camera);
+    void setCamera(const QGLCamera *camera);
 
     bool isCullable(const QVector3D& point) const;
     bool isCullable(const QBox3D& box) const;
@@ -187,9 +181,6 @@ public:
     QGLFramebufferObject *currentSurface() const;
     QSize surfaceSize() const;
 
-    void setPointSize(qreal size);
-    void setLineWidth(qreal width);
-
     void setCullFaces(QGL::CullFaces faces);
 
     const QGLLightModel *lightModel() const;
@@ -231,30 +222,6 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
-
-inline void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
-
-inline void QGLPainter::setStencilTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_STENCIL_TEST);
-    else
-        glDisable(GL_STENCIL_TEST);
-}
-
-inline void QGLPainter::setBlendingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_BLEND);
-    else
-        glDisable(GL_BLEND);
-}
 
 QT_END_NAMESPACE
 

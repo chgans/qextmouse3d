@@ -71,6 +71,8 @@ QT_BEGIN_NAMESPACE
     applied, all during application initialization; and then by simply
     calling the draw() function the scene is easily rendered for each frame.
 
+    \section1 Geometry
+
     Multiple QGLSceneNodes can reference the same geometry, whilst
     applying different transformations and treatments to it.  Since
     QGLSceneNode is a QObject sub class it cannot be copied directly, so
@@ -89,8 +91,37 @@ QT_BEGIN_NAMESPACE
     useful for example to have one node controlling or collecting together
     several child nodes to be manipulated as a unit.
 
+    \section1 Materials
+
     Also a node may have a local material.  This allows drawing the same geometry
     with different materials (which includes different textures).
+
+    When accessing a QGLSceneNode via QML, or for simple applications, the
+    pointer based material functions are convenient and intuitive, saving the
+    trouble of adding the material pointer to the correct palette:
+    \list
+        \i material()
+        \i setMaterial()
+        \i backMaterial()
+        \i setBackMaterial()
+    \endlist
+
+    For more complex applications; for example building model loaders, or for
+    larger scenes; where you need to explicitly manage materials via a palette,
+    use the index based functions:
+    \list
+        \i materialIndex()
+        \i setMaterialIndex()
+        \i backMaterialIndex()
+        \i setBackMaterialIndex()
+    \endlist
+
+    The behaviour of both with respect to faces is the same - if a material()
+    is specified but no backMaterial() is specified, then the material() is
+    applied to both faces; if both material() and backMaterial() are non-null
+    then they are applied to their specific faces.
+
+    \section1 Transformations
 
     Typically the local transformation matrix is set by the process that
     constructed the node:  in the case of an imported model, it is likely
@@ -101,6 +132,8 @@ QT_BEGIN_NAMESPACE
 
     Note that modifying scale can effect lighting calculations due to normals
     so usage of the scale attribute is also advanced.
+
+    \section1 Scene Graph
 
     Use childNodes() to obtain the list of child nodes, and add and remove
     child nodes by the addNode() and removeNode() methods.  Also if the normal
@@ -812,7 +845,7 @@ void QGLSceneNode::setCount(int count)
 /*!
     Returns the material index for this scene node.
 
-    \sa setMaterial()
+    \sa setMaterialIndex()
 */
 int QGLSceneNode::materialIndex() const
 {
@@ -823,7 +856,7 @@ int QGLSceneNode::materialIndex() const
 /*!
     Sets the material index for this scene node to \a material.
 
-    \sa material()
+    \sa materialIndex()
 */
 void QGLSceneNode::setMaterialIndex(int material)
 {
@@ -833,10 +866,40 @@ void QGLSceneNode::setMaterialIndex(int material)
 }
 
 /*!
-    \property QGLSceneNode::material
-    \brief This property is a pointer to the QGLMaterial instance for this scene node.
+    Returns the back material index for this scene node.
 
-    Getting this property is exactly equivalent to \c{palette()->material(materialIndex())}.
+    \sa setBackMaterialIndex()
+*/
+int QGLSceneNode::backMaterialIndex() const
+{
+    Q_D(const QGLSceneNode);
+    return d->material;
+}
+
+/*!
+    Sets the back material index for this scene node to \a material.
+
+    \sa materialIndex()
+*/
+void QGLSceneNode::setBackMaterialIndex(int material)
+{
+    Q_D(QGLSceneNode);
+    d->material = material;
+    emit materialChanged();
+}
+
+/*!
+    \property QGLSceneNode::material
+    \brief This property is a pointer to a QGLMaterial instance for this node.
+
+    This material is applied to all faces if the backMaterial() property
+    is set to null, which is the default.  If the backMaterial() property is non-null
+    then this material is only applied to the front faces.
+
+    To apply a material to the back faces use the backMaterial() property.
+
+    Getting this property is exactly equivalent to
+    \c{palette()->material(materialIndex())}.
 
     Setting this property causes the material if not already in this nodes palette to be
     added, and then the corresponding index to be set for this scene node.
@@ -846,7 +909,7 @@ void QGLSceneNode::setMaterialIndex(int material)
     int index = d->palette->indexOf(material);
     if (index == -1)
         index = d->palette->addMaterial(material);
-    setMaterialIndex(ix);
+    setMaterialIndex(index, QGL::FrontFaces);
     \endcode
 
     \sa materialIndex(), setMaterialIndex()
@@ -857,10 +920,6 @@ QGLMaterial *QGLSceneNode::material() const
     return d->palette->material(d->material);
 }
 
-/*!
-    Sets the \a material instance for this scene node.
-
-*/
 void QGLSceneNode::setMaterial(QGLMaterial *material)
 {
     Q_D(QGLSceneNode);
@@ -870,6 +929,44 @@ void QGLSceneNode::setMaterial(QGLMaterial *material)
     setMaterialIndex(ix);
 }
 
+/*!
+    \property QGLSceneNode::backMaterial
+    \brief This property is a pointer to any QGLMaterial instance for this node's back faces.
+
+    This material is applied to the back faces, if non-null.  The default value
+    of this property is null.  When this property is null, any non-null material
+    set on the material() property will be applied to front and back faces.
+
+    To apply a material to the front faces use the material() property.
+
+    Getting this property is exactly equivalent to
+    \c{palette()->material(backMaterialIndex())}.
+
+    Setting this property causes the material if not already in this nodes palette to be
+    added, and then the corresponding index to be set for this scene node.
+
+    Setting this property is exactly equivalent to:
+    \code
+    int index = d->palette->indexOf(material);
+    if (index == -1)
+        index = d->palette->addMaterial(material);
+    setBackMaterialIndex(index);
+    \endcode
+*/
+QGLMaterial *QGLSceneNode::backMaterial() const
+{
+    Q_D(const QGLSceneNode);
+    return d->palette->material(d->backMaterial);
+}
+
+void QGLSceneNode::setBackMaterial(QGLMaterial *material)
+{
+    Q_D(QGLSceneNode);
+    int ix = d->palette->indexOf(material);
+    if (ix == -1)
+        ix = d->palette->addMaterial(material);
+    setBackMaterialIndex(ix);
+}
 /*!
     Returns the palette of materials used by this scene node, or NULL
     if no palette has been set.
@@ -972,7 +1069,7 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
 /*!
     Adds the \a node to the list of child nodes for this node.
 
-    Adding a the same child node more than once is not supported, and will
+    Adding the same child node more than once is not supported, and will
     lead to undefined results.
 
     It usually makes no sense to add a node as a child to another node
@@ -984,7 +1081,13 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
     call to create copies of the node and then apply the transformations to
     the copies.
 
-    \sa removeNode(), clone()
+    This function \bold{does not} make this node a parent of \a node for the
+    purposes of memory management, because a \a node could have many parents
+    in a scene graph.
+
+    See setParent() if you want to parent nodes for memory management.
+
+    \sa removeNode(), clone(), setParent()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
@@ -1033,8 +1136,12 @@ void QGLSceneNode::invalidateTransform() const
 }
 
 /*!
-    Sets the \a parent to be the parent of this object.  If \a parent is
-    a QGLSceneNode then this node is added to it as a child.
+    Sets the \a parent to be the parent of this object, exactly the
+    same as QObject::setParent(), meaning that if \a parent is deleted
+    then this object will also be deleted.
+
+    Additionally, if \a parent is a QGLSceneNode then this node is added
+    to it as a child in the scene, the same as calling \c{parent->addNode()}.
 
     \sa addNode()
 */
@@ -1043,19 +1150,33 @@ void QGLSceneNode::setParent(QObject *parent)
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
         sceneParent->addNode(this);
-    else 
-    {
-        //If the parent wasn't a scene node, then usually we would expect it to be an 
-        //abstract scene - failing this we should probably warn the user, as in some
-        //instances it may indicate an incorrect assignment (there is a slight overhead
-        //to this, so this is usually useful for debugging, and may be removed later).
-        QGLAbstractScene *abstractScene = qobject_cast<QGLAbstractScene*>(parent);
-        if (!abstractScene)
-            qWarning("Warning: QGLSceneNode::setParent was unable to find a valid parent Scene Node or Scene to add the new node to.");
-    }
-        
     //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
+}
+
+const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *painter,
+                                              QGL::Face faces, bool &changedTex)
+{
+    Q_D(QGLSceneNode);
+    QGLMaterial *mat = d->palette->material(material);
+    const QGLMaterial *saveMat = 0;
+    if (painter->faceMaterial(faces) != mat)
+    {
+        saveMat = painter->faceMaterial(faces);
+        painter->setFaceMaterial(faces, mat);
+        int texUnit = 0;
+        for (int i = 0; i < mat->textureLayerCount(); ++i)
+        {
+            QGLTexture2D *tex = mat->texture(i);
+            if (tex)
+            {
+                painter->setTexture(texUnit, tex);
+                changedTex = true;
+                ++texUnit;
+            }
+        }
+    }
+    return saveMat;
 }
 
 /*!
@@ -1064,14 +1185,14 @@ void QGLSceneNode::setParent(QObject *parent)
     In detail this function:
     \list
     \o ensures the effect specified by effect() is current on the painter
-    \o sets the nodes material onto the painter, if the material is valid
+    \o sets the nodes materials onto the painter, if valid materials are present
     \o moves the model-view to the x, y, z position
     \o rotates the model-view by the rotX, rotY and rotZ rotations
     \o scales the node by the scale factor, in x, y and z directions
     \o applies any local transformation that may be set for this node
     \o calls draw() for all the child nodes
     \o calls draw(start, count) on this nodes geometry object (if any)
-    \o restores the geometry's original material if it was changed
+    \o restores the geometry's original materials if they were changed
     \o restores the model-view matrix if any local transform was applied
     \endlist
 
@@ -1124,25 +1245,17 @@ void QGLSceneNode::draw(QGLPainter *painter)
 
     const QGLMaterial *saveMat = 0;
     bool changedTex = false;
-    if (d->palette && d->material != -1 && !painter->isPicking())
+    const QGLMaterial *saveBackMat = 0;
+    bool changedBackTex = false;
+    QGL::Face faces = QGL::AllFaces;
+    if (d->palette && !painter->isPicking())
     {
-        QGLMaterial *mat = d->palette->material(d->material);
-        if (painter->faceMaterial(QGL::FrontFaces) != mat)
-        {
-            saveMat = painter->faceMaterial(QGL::FrontFaces);
-            painter->setFaceMaterial(QGL::FrontFaces, mat);
-            int texUnit = 0;
-            for (int i = 0; i < mat->textureLayerCount(); ++i)
-            {
-                QGLTexture2D *tex = mat->texture(i);
-                if (tex)
-                {
-                    painter->setTexture(texUnit, tex);
-                    changedTex = true;
-                    ++texUnit;
-                }
-            }
-        }
+        QGL::Face faces = (d->backMaterial == -1) ? QGL::AllFaces : QGL::FrontFaces;
+        if (d->material != -1)
+            saveMat = setPainterMaterial(d->material, painter, faces, changedTex);
+        if (d->backMaterial != -1)
+            saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
+                                             changedBackTex);
     }
 
     QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
@@ -1184,8 +1297,14 @@ void QGLSceneNode::draw(QGLPainter *painter)
 
     if (saveMat)
     {
-        painter->setFaceMaterial(QGL::FrontFaces, saveMat);
+        painter->setFaceMaterial(faces, saveMat);
         if (changedTex)
+            painter->setTexture((QGLTexture2D*)0);
+    }
+    else if (saveBackMat)
+    {
+        painter->setFaceMaterial(QGL::FrontFaces, saveMat);
+        if (changedBackTex)
             painter->setTexture((QGLTexture2D*)0);
     }
 
@@ -1428,6 +1547,11 @@ bool QGLSceneNode::normalViewEnabled() const
 /*!
     \fn QGLSceneNode::materialChanged()
     Signals that the material() property for this scene node has changed.
+*/
+
+/*!
+    \fn QGLSceneNode::backMaterialChanged()
+    Signals that the backMaterial() property for this scene node has changed.
 */
 
 /*!

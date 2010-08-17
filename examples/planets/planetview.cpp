@@ -59,7 +59,7 @@ PlanetView::PlanetView(QWidget *parent)
     builder << QGLSphere(0.2f, 3);
 
     scene = builder.finalizedSceneNode();
-
+    scene->setParent(this);
     scene->setEffect(QGL::LitMaterial);
 
     QGLMaterial *mat = new QGLMaterial;

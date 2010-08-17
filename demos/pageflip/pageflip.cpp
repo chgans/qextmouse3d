@@ -45,7 +45,6 @@
 #include "qglpainter.h"
 #include "qglabstracteffect.h"
 #include "qgltexture2d.h"
-#include "qglext.h"
 
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
@@ -174,9 +173,13 @@ void PageFlipView::initializeGL()
 
     gradientTexture.setImage(QImage(":/gradient.png"));
 
-    qt_gl_BlendColor(0, 0, 0, 0);
-    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    qt_gl_BlendEquation(GL_FUNC_ADD);
+    if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+        painter.glBlendColor(0, 0, 0, 0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+        painter.glBlendEquation(GL_FUNC_ADD);
+    else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+        painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
     glEnable(GL_BLEND);
 
@@ -194,7 +197,7 @@ void PageFlipView::paintGL()
     int midx = rect.width() / 2;
     int topy = (rect.height() - pageSize.height()) / 2;
 
-    painter.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     QMatrix4x4 projm;
     projm.ortho(rect);
     painter.projectionMatrix() = projm;

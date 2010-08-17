@@ -50,44 +50,153 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
+
+    OpenGL/ES 2.0 defines a subset of the OpenGL specification that is
+    common across many desktop and embedded OpenGL implementations.
+    However, it can be difficult to use the functions from that subset
+    because they need to be resolved manually on desktop systems.
+
+    QGLFunctions provides a guaranteed API that is available on all
+    OpenGL systems and takes care of function resolution on systems
+    that need it.  The recommended way to use QGLFunctions is by
+    direct inheritance:
+
+    \code
+    class MyGLWidget : public QGLWidget, protected QGLFunctions
+    {
+        Q_OBJECT
+    public:
+        MyGLWidget(QWidget *parent = 0) : QGLWidget(parent) {}
+
+    protected:
+        void initializeGL();
+        void paintGL();
+    };
+
+    void MyGLWidget::initializeGL()
+    {
+        initializeGLFunctions();
+    }
+    \endcode
+
+    The \c{paintGL()} function can then use any of the OpenGL/ES 2.0
+    functions without explicit resolution, such as glActiveTexture()
+    in the following example:
+
+    \code
+    void MyGLWidget::paintGL()
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        ...
+    }
+    \endcode
+
+    QGLFunctions can also be used directly for ad-hoc invocation
+    of OpenGL/ES 2.0 functions on all platforms:
+
+    \code
+    QGLFunctions glFuncs(QGLContext::currentContext());
+    glFuncs.glActiveTexture(GL_TEXTURE1);
+    \endcode
+
+    QGLFunctions provides wrappers for all OpenGL/ES 2.0 functions,
+    except those like \c{glDrawArrays()}, \c{glViewport()}, and
+    \c{glBindTexture()} that don't have portability issues.
+
+    Including the header for QGLFunctions will also define all of
+    the OpenGL/ES 2.0 macro constants that are not already defined by
+    the system's OpenGL headers, such as \c{GL_TEXTURE1} above.
+
+    The hasOpenGLFeature() and openGLFeatures() functions can be used
+    to determine if the OpenGL implementation has a major OpenGL/ES 2.0
+    feature.  For example, the following checks if non power of two
+    textures are available:
+
+    \code
+    QGLFunctions funcs(QGLContext::currentContext());
+    bool npot = funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures);
+    \endcode
 */
 
+/*!
+    \enum QGLFunctions::OpenGLFeature
+    This enum defines OpenGL/ES 2.0 features that may be optional
+    on other platforms.
+
+    \value Multitexture glActiveTexture() function is available.
+    \value Shaders Shader functions are available.
+    \value Buffers Vertex and index buffer functions are available.
+    \value Framebuffers Framebuffer object functions are available.
+    \value BlendColor glBlendColor() is available.
+    \value BlendEquation glBlendEquation() is available.
+    \value BlendEquationSeparate glBlendEquationSeparate() is available.
+    \value BlendFuncSeparate glBlendFuncSeparate() is available.
+    \value BlendSubtract Blend subtract mode is available.
+    \value CompressedTextures Compressed texture functions are available.
+    \value Multisample glSampleCoverage() function is available.
+    \value StencilSeparate Separate stencil functions are available.
+    \value NPOTTextures Non power of two textures are available.
+*/
+
+// Hidden private fields for additional extension data.
+struct QGLFunctionsPrivateEx : public QGLFunctionsPrivate
+{
+    QGLFunctionsPrivateEx(const QGLContext *context = 0)
+        : QGLFunctionsPrivate(context)
+        , m_features(-1) {}
+
+    int m_features;
+};
+
 #if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivate>, qt_gl_functions_resource)
+Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivateEx>, qt_gl_functions_resource)
 #else
 static void qt_gl_functions_free(void *data)
 {
-    delete reinterpret_cast<QGLFunctionsPrivate *>(data);
+    delete reinterpret_cast<QGLFunctionsPrivateEx *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_functions_resource, (qt_gl_functions_free))
 #endif
-static QGLFunctionsPrivate *qt_gl_functions(const QGLContext *context = 0)
+static QGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
 {
     if (!context)
         context = QGLContext::currentContext();
     Q_ASSERT(context);
-    QGLFunctionsPrivate *funcs =
-        reinterpret_cast<QGLFunctionsPrivate *>
+    QGLFunctionsPrivateEx *funcs =
+        reinterpret_cast<QGLFunctionsPrivateEx *>
             (qt_gl_functions_resource()->value(context));
+#if QT_VERSION < 0x040800
     if (!funcs) {
-        funcs = new QGLFunctionsPrivate();
+        funcs = new QGLFunctionsPrivateEx();
         qt_gl_functions_resource()->insert(context, funcs);
     }
+#endif
     return funcs;
 }
 
 /*!
-    Constructs a function resolver for the current QGLContext.
+    Constructs a default function resolver.  The resolver cannot
+    be used until initializeGLFunctions() is called to specify
+    the context.
+
+    \sa initializeGLFunctions()
 */
 QGLFunctions::QGLFunctions()
-    : d_ptr(qt_gl_functions())
+    : d_ptr(0)
 {
 }
 
 /*!
-    Constructs a function resolver for \a context.  If \a context,
+    Constructs a function resolver for \a context.  If \a context
     is null, then the resolver will be created for the current QGLContext.
+
+    An object constructed in this way can only be used with \a context
+    and other contexts that share with it.  Use initializeGLFunctions()
+    to change the object's context association.
+
+    \sa initializeGLFunctions()
 */
 QGLFunctions::QGLFunctions(const QGLContext *context)
     : d_ptr(qt_gl_functions(context))
@@ -100,8 +209,145 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
     Destroys this function resolver.
 */
 
+static int qt_gl_resolve_features()
+{
+#if defined(QT_OPENGL_ES_2)
+    return QGLFunctions::Multitexture |
+           QGLFunctions::Shaders |
+           QGLFunctions::Buffers |
+           QGLFunctions::Framebuffers |
+           QGLFunctions::BlendColor |
+           QGLFunctions::BlendEquation |
+           QGLFunctions::BlendEquationSeparate |
+           QGLFunctions::BlendFuncSeparate |
+           QGLFunctions::BlendSubtract |
+           QGLFunctions::CompressedTextures |
+           QGLFunctions::Multisample |
+           QGLFunctions::StencilSeparate |
+           QGLFunctions::NPOTTextures;
+#elif defined(QT_OPENGL_ES)
+    int features = QGLFunctions::Multitexture |
+                   QGLFunctions::Buffers |
+                   QGLFunctions::CompressedTextures |
+                   QGLFunctions::Multisample;
+    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    if (extensions.match("GL_OES_framebuffer_object"))
+        features |= QGLFunctions::Framebuffers;
+    if (extensions.match("GL_OES_blend_equation_separate"))
+        features |= QGLFunctions::BlendEquationSeparate;
+    if (extensions.match("GL_OES_blend_func_separate"))
+        features |= QGLFunctions::BlendFuncSeparate;
+    if (extensions.match("GL_OES_blend_subtract"))
+        features |= QGLFunctions::BlendSubtract;
+    if (extensions.match("GL_OES_texture_npot"))
+        features |= QGLFunctions::NPOTTextures;
+    return features;
+#else
+    int features = 0;
+    QGLFormat::OpenGLVersionFlags versions = QGLFormat::openGLVersionFlags();
+    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+
+    // Recognize features by extension name.
+    if (extensions.match("GL_ARB_multitexture"))
+        features |= QGLFunctions::Multitexture;
+    if (extensions.match("GL_ARB_shader_objects"))
+        features |= QGLFunctions::Shaders;
+    if (extensions.match("GL_EXT_framebuffer_object") ||
+            extensions.match("GL_ARB_framebuffer_object"))
+        features |= QGLFunctions::Framebuffers;
+    if (extensions.match("GL_EXT_blend_color"))
+        features |= QGLFunctions::BlendColor;
+    if (extensions.match("GL_EXT_blend_equation_separate"))
+        features |= QGLFunctions::BlendEquationSeparate;
+    if (extensions.match("GL_EXT_blend_func_separate"))
+        features |= QGLFunctions::BlendFuncSeparate;
+    if (extensions.match("GL_EXT_blend_subtract"))
+        features |= QGLFunctions::BlendSubtract;
+    if (extensions.match("GL_ARB_texture_compression"))
+        features |= QGLFunctions::CompressedTextures;
+    if (extensions.match("GL_ARB_multisample"))
+        features |= QGLFunctions::Multisample;
+    if (extensions.match("GL_ARB_texture_non_power_of_two"))
+        features |= QGLFunctions::NPOTTextures;
+
+    // Recognize features by minimum OpenGL version.
+    if (versions & QGLFormat::OpenGL_Version_1_2) {
+        features |= QGLFunctions::BlendColor |
+                    QGLFunctions::BlendEquation;
+    }
+    if (versions & QGLFormat::OpenGL_Version_1_3) {
+        features |= QGLFunctions::Multitexture |
+                    QGLFunctions::CompressedTextures |
+                    QGLFunctions::Multisample;
+    }
+    if (versions & QGLFormat::OpenGL_Version_1_4)
+        features |= QGLFunctions::BlendFuncSeparate;
+    if (versions & QGLFormat::OpenGL_Version_1_5)
+        features |= QGLFunctions::Buffers;
+    if (versions & QGLFormat::OpenGL_Version_2_0) {
+        features |= QGLFunctions::Shaders |
+                    QGLFunctions::StencilSeparate |
+                    QGLFunctions::BlendEquationSeparate |
+                    QGLFunctions::NPOTTextures;
+    }
+    return features;
+#endif
+}
+
 /*!
-    \fn void QGLFunctions::activeTexture(GLenum texture)
+    Returns the set of features that are present on this system's
+    OpenGL implementation.
+
+    It is assumed that the QGLContext associated with this function
+    resolver is current.
+
+    \sa hasOpenGLFeature()
+*/
+QGLFunctions::OpenGLFeatures QGLFunctions::openGLFeatures() const
+{
+    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    if (!d)
+        return 0;
+    if (d->m_features == -1)
+        d->m_features = qt_gl_resolve_features();
+    return QGLFunctions::OpenGLFeatures(d->m_features);
+}
+
+/*!
+    Returns true if \a feature is present on this system's OpenGL
+    implementation; false otherwise.
+
+    It is assumed that the QGLContext associated with this function
+    resolver is current.
+
+    \sa openGLFeatures()
+*/
+bool QGLFunctions::hasOpenGLFeature(QGLFunctions::OpenGLFeature feature) const
+{
+    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    if (!d)
+        return false;
+    if (d->m_features == -1)
+        d->m_features = qt_gl_resolve_features();
+    return (d->m_features & int(feature)) != 0;
+}
+
+/*!
+    Initializes GL function resolution for \a context.  If \a context
+    is null, then the current QGLContext will be used.
+
+    After calling this function, the QGLFunctions object can only be
+    used with \a context and other contexts that share with it.
+    Call initializeGLFunctions() again to change the object's context
+    association.
+*/
+void QGLFunctions::initializeGLFunctions(const QGLContext *context)
+{
+    d_ptr = qt_gl_functions(context);
+}
+
+/*!
+    \fn void QGLFunctions::glActiveTexture(GLenum texture)
 
     Convenience function that calls glActiveTexture(\a texture).
 
@@ -110,29 +356,29 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::attachShader(GLuint program, GLuint shader)
+    \fn void QGLFunctions::glAttachShader(GLuint program, GLuint shader)
 
     Convenience function that calls glAttachShader(\a program, \a shader).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glAttachShader.xml}{glAttachShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::bindAttribLocation(GLuint program, GLuint index, const char* name)
+    \fn void QGLFunctions::glBindAttribLocation(GLuint program, GLuint index, const char* name)
 
     Convenience function that calls glBindAttribLocation(\a program, \a index, \a name).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glBindAttribLocation.xml}{glBindAttribLocation()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::bindBuffer(GLenum target, GLuint buffer)
+    \fn void QGLFunctions::glBindBuffer(GLenum target, GLuint buffer)
 
     Convenience function that calls glBindBuffer(\a target, \a buffer).
 
@@ -141,7 +387,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bindFramebuffer(GLenum target, GLuint framebuffer)
+    \fn void QGLFunctions::glBindFramebuffer(GLenum target, GLuint framebuffer)
 
     Convenience function that calls glBindFramebuffer(\a target, \a framebuffer).
 
@@ -150,7 +396,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bindRenderbuffer(GLenum target, GLuint renderbuffer)
+    \fn void QGLFunctions::glBindRenderbuffer(GLenum target, GLuint renderbuffer)
 
     Convenience function that calls glBindRenderbuffer(\a target, \a renderbuffer).
 
@@ -159,16 +405,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bindTexture(GLenum target, GLuint texture)
-
-    Convenience function that calls glBindTexture(\a target, \a texture).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glBindTexture.xml}{glBindTexture()}.
-*/
-
-/*!
-    \fn void QGLFunctions::blendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+    \fn void QGLFunctions::glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 
     Convenience function that calls glBlendColor(\a red, \a green, \a blue, \a alpha).
 
@@ -177,7 +414,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::blendEquation(GLenum mode)
+    \fn void QGLFunctions::glBlendEquation(GLenum mode)
 
     Convenience function that calls glBlendEquation(\a mode).
 
@@ -186,7 +423,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::blendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
+    \fn void QGLFunctions::glBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
 
     Convenience function that calls glBlendEquationSeparate(\a modeRGB, \a modeAlpha).
 
@@ -195,16 +432,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::blendFunc(GLenum sfactor, GLenum dfactor)
-
-    Convenience function that calls glBlendFunc(\a sfactor, \a dfactor).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glBlendFunc.xml}{glBlendFunc()}.
-*/
-
-/*!
-    \fn void QGLFunctions::blendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+    \fn void QGLFunctions::glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 
     Convenience function that calls glBlendFuncSeparate(\a srcRGB, \a dstRGB, \a srcAlpha, \a dstAlpha).
 
@@ -213,7 +441,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
+    \fn void QGLFunctions::glBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 
     Convenience function that calls glBufferData(\a target, \a size, \a data, \a usage).
 
@@ -222,7 +450,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::bufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
+    \fn void QGLFunctions::glBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
 
     Convenience function that calls glBufferSubData(\a target, \a offset, \a size, \a data).
 
@@ -231,7 +459,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLenum QGLFunctions::checkFramebufferStatus(GLenum target)
+    \fn GLenum QGLFunctions::glCheckFramebufferStatus(GLenum target)
 
     Convenience function that calls glCheckFramebufferStatus(\a target).
 
@@ -240,25 +468,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::clear(GLbitfield mask)
-
-    Convenience function that calls glClear(\a mask).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glClear.xml}{glClear()}.
-*/
-
-/*!
-    \fn void QGLFunctions::clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-
-    Convenience function that calls glClearColor(\a red, \a green, \a blue, \a alpha).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glClearColor.xml}{glClearColor()}.
-*/
-
-/*!
-    \fn void QGLFunctions::clearDepth(GLclampf depth)
+    \fn void QGLFunctions::glClearDepthf(GLclampf depth)
 
     Convenience function that calls glClearDepth(\a depth) on
     desktop OpenGL systems and glClearDepthf(\a depth) on
@@ -269,36 +479,18 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::clearStencil(GLint s)
-
-    Convenience function that calls glClearStencil(\a s).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glClearStencil.xml}{glClearStencil()}.
-*/
-
-/*!
-    \fn void QGLFunctions::colorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
-
-    Convenience function that calls glColorMask(\a red, \a green, \a blue, \a alpha).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glColorMask.xml}{glColorMask()}.
-*/
-
-/*!
-    \fn void QGLFunctions::compileShader(GLuint shader)
+    \fn void QGLFunctions::glCompileShader(GLuint shader)
 
     Convenience function that calls glCompileShader(\a shader).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glCompileShader.xml}{glCompileShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::compressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data)
+    \fn void QGLFunctions::glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data)
 
     Convenience function that calls glCompressedTexImage2D(\a target, \a level, \a internalformat, \a width, \a height, \a border, \a imageSize, \a data).
 
@@ -307,7 +499,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::compressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
+    \fn void QGLFunctions::glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
 
     Convenience function that calls glCompressedTexSubImage2D(\a target, \a level, \a xoffset, \a yoffset, \a width, \a height, \a format, \a imageSize, \a data).
 
@@ -316,56 +508,29 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::copyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
-
-    Convenience function that calls glCopyTexImage2D(\a target, \a level, \a internalformat, \a x, \a y, \a width, \a height, \a border).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glCopyTexImage2D.xml}{glCopyTexImage2D()}.
-*/
-
-/*!
-    \fn void QGLFunctions::copyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
-
-    Convenience function that calls glCopyTexSubImage2D(\a target, \a level, \a xoffset, \a yoffset, \a x, \a y, \a width, \a height).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glCopyTexSubImage2D.xml}{glCopyTexSubImage2D()}.
-*/
-
-/*!
-    \fn GLuint QGLFunctions::createProgram()
+    \fn GLuint QGLFunctions::glCreateProgram()
 
     Convenience function that calls glCreateProgram().
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glCreateProgram.xml}{glCreateProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn GLuint QGLFunctions::createShader(GLenum type)
+    \fn GLuint QGLFunctions::glCreateShader(GLenum type)
 
     Convenience function that calls glCreateShader(\a type).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glCreateShader.xml}{glCreateShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::cullFace(GLenum mode)
-
-    Convenience function that calls glCullFace(\a mode).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glCullFace.xml}{glCullFace()}.
-*/
-
-/*!
-    \fn void QGLFunctions::deleteBuffers(GLsizei n, const GLuint* buffers)
+    \fn void QGLFunctions::glDeleteBuffers(GLsizei n, const GLuint* buffers)
 
     Convenience function that calls glDeleteBuffers(\a n, \a buffers).
 
@@ -374,7 +539,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::deleteFramebuffers(GLsizei n, const GLuint* framebuffers)
+    \fn void QGLFunctions::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 
     Convenience function that calls glDeleteFramebuffers(\a n, \a framebuffers).
 
@@ -383,18 +548,18 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::deleteProgram(GLuint program)
+    \fn void QGLFunctions::glDeleteProgram(GLuint program)
 
     Convenience function that calls glDeleteProgram(\a program).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glDeleteProgram.xml}{glDeleteProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::deleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
+    \fn void QGLFunctions::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 
     Convenience function that calls glDeleteRenderbuffers(\a n, \a renderbuffers).
 
@@ -403,45 +568,18 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::deleteShader(GLuint shader)
+    \fn void QGLFunctions::glDeleteShader(GLuint shader)
 
     Convenience function that calls glDeleteShader(\a shader).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glDeleteShader.xml}{glDeleteShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::deleteTextures(GLsizei n, const GLuint* textures)
-
-    Convenience function that calls glDeleteTextures(\a n, \a textures).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDeleteTextures.xml}{glDeleteTextures()}.
-*/
-
-/*!
-    \fn void QGLFunctions::depthFunc(GLenum func)
-
-    Convenience function that calls glDepthFunc(\a func).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDepthFunc.xml}{glDepthFunc()}.
-*/
-
-/*!
-    \fn void QGLFunctions::depthMask(GLboolean flag)
-
-    Convenience function that calls glDepthMask(\a flag).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDepthMask.xml}{glDepthMask()}.
-*/
-
-/*!
-    \fn void QGLFunctions::depthRange(GLclampf zNear, GLclampf zFar)
+    \fn void QGLFunctions::glDepthRangef(GLclampf zNear, GLclampf zFar)
 
     Convenience function that calls glDepthRange(\a zNear, \a zFar) on
     desktop OpenGL systems and glDepthRangef(\a zNear, \a zFar) on
@@ -452,94 +590,40 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::detachShader(GLuint program, GLuint shader)
+    \fn void QGLFunctions::glDetachShader(GLuint program, GLuint shader)
 
     Convenience function that calls glDetachShader(\a program, \a shader).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glDetachShader.xml}{glDetachShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::disable(GLenum cap)
-
-    Convenience function that calls glDisable(\a cap).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDisable.xml}{glDisable()}.
-*/
-
-/*!
-    \fn void QGLFunctions::disableVertexAttribArray(GLuint index)
+    \fn void QGLFunctions::glDisableVertexAttribArray(GLuint index)
 
     Convenience function that calls glDisableVertexAttribArray(\a index).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glDisableVertexAttribArray.xml}{glDisableVertexAttribArray()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::drawArrays(GLenum mode, GLint first, GLsizei count)
-
-    Convenience function that calls glDrawArrays(\a mode, \a first, \a count).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDrawArrays.xml}{glDrawArrays()}.
-*/
-
-/*!
-    \fn void QGLFunctions::drawElements(GLenum mode, GLsizei count, GLenum type, const void* indices)
-
-    Convenience function that calls glDrawElements(\a mode, \a count, \a type, \a indices).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glDrawElements.xml}{glDrawElements()}.
-*/
-
-/*!
-    \fn void QGLFunctions::enable(GLenum cap)
-
-    Convenience function that calls glEnable(\a cap).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glEnable.xml}{glEnable()}.
-*/
-
-/*!
-    \fn void QGLFunctions::enableVertexAttribArray(GLuint index)
+    \fn void QGLFunctions::glEnableVertexAttribArray(GLuint index)
 
     Convenience function that calls glEnableVertexAttribArray(\a index).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glEnableVertexAttribArray.xml}{glEnableVertexAttribArray()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::finish()
-
-    Convenience function that calls glFinish().
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glFinish.xml}{glFinish()}.
-*/
-
-/*!
-    \fn void QGLFunctions::flush()
-
-    Convenience function that calls glFlush().
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glFlush.xml}{glFlush()}.
-*/
-
-/*!
-    \fn void QGLFunctions::framebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+    \fn void QGLFunctions::glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 
     Convenience function that calls glFramebufferRenderbuffer(\a target, \a attachment, \a renderbuffertarget, \a renderbuffer).
 
@@ -548,7 +632,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::framebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+    \fn void QGLFunctions::glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 
     Convenience function that calls glFramebufferTexture2D(\a target, \a attachment, \a textarget, \a texture, \a level).
 
@@ -557,16 +641,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::frontFace(GLenum mode)
-
-    Convenience function that calls glFrontFace(\a mode).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glFrontFace.xml}{glFrontFace()}.
-*/
-
-/*!
-    \fn void QGLFunctions::genBuffers(GLsizei n, GLuint* buffers)
+    \fn void QGLFunctions::glGenBuffers(GLsizei n, GLuint* buffers)
 
     Convenience function that calls glGenBuffers(\a n, \a buffers).
 
@@ -575,7 +650,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::generateMipmap(GLenum target)
+    \fn void QGLFunctions::glGenerateMipmap(GLenum target)
 
     Convenience function that calls glGenerateMipmap(\a target).
 
@@ -584,7 +659,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::genFramebuffers(GLsizei n, GLuint* framebuffers)
+    \fn void QGLFunctions::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
 
     Convenience function that calls glGenFramebuffers(\a n, \a framebuffers).
 
@@ -593,7 +668,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::genRenderbuffers(GLsizei n, GLuint* renderbuffers)
+    \fn void QGLFunctions::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
 
     Convenience function that calls glGenRenderbuffers(\a n, \a renderbuffers).
 
@@ -602,69 +677,51 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::genTextures(GLsizei n, GLuint* textures)
-
-    Convenience function that calls glGenTextures(\a n, \a textures).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGenTextures.xml}{glGenTextures()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getActiveAttrib(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
+    \fn void QGLFunctions::glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
 
     Convenience function that calls glGetActiveAttrib(\a program, \a index, \a bufsize, \a length, \a size, \a type, \a name).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetActiveAttrib.xml}{glGetActiveAttrib()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getActiveUniform(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
+    \fn void QGLFunctions::glGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
 
     Convenience function that calls glGetActiveUniform(\a program, \a index, \a bufsize, \a length, \a size, \a type, \a name).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetActiveUniform.xml}{glGetActiveUniform()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getAttachedShaders(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
+    \fn void QGLFunctions::glGetAttachedShaders(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
 
     Convenience function that calls glGetAttachedShaders(\a program, \a maxcount, \a count, \a shaders).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetAttachedShaders.xml}{glGetAttachedShaders()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn int QGLFunctions::getAttribLocation(GLuint program, const char* name)
+    \fn int QGLFunctions::glGetAttribLocation(GLuint program, const char* name)
 
     Convenience function that calls glGetAttribLocation(\a program, \a name).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetAttribLocation.xml}{glGetAttribLocation()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getBooleanv(GLenum pname, GLboolean* params)
-
-    Convenience function that calls glGetBooleanv(\a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetBooleanv.xml}{glGetBooleanv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getBufferParameteriv(GLenum target, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetBufferParameteriv(GLenum target, GLenum pname, GLint* params)
 
     Convenience function that calls glGetBufferParameteriv(\a target, \a pname, \a params).
 
@@ -673,25 +730,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLenum QGLFunctions::getError()
-
-    Convenience function that calls glGetError().
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetError.xml}{glGetError()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getFloatv(GLenum pname, GLfloat* params)
-
-    Convenience function that calls glGetFloatv(\a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetFloatv.xml}{glGetFloatv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* params)
 
     Convenience function that calls glGetFramebufferAttachmentParameteriv(\a target, \a attachment, \a pname, \a params).
 
@@ -700,38 +739,29 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::getIntegerv(GLenum pname, GLint* params)
-
-    Convenience function that calls glGetIntegerv(\a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetIntegerv.xml}{glGetIntegerv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getProgramiv(GLuint program, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetProgramiv(GLuint program, GLenum pname, GLint* params)
 
     Convenience function that calls glGetProgramiv(\a program, \a pname, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetProgramiv.xml}{glGetProgramiv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getProgramInfoLog(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog)
+    \fn void QGLFunctions::glGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog)
 
     Convenience function that calls glGetProgramInfoLog(\a program, \a bufsize, \a length, \a infolog).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetProgramInfoLog.xml}{glGetProgramInfoLog()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params)
 
     Convenience function that calls glGetRenderbufferParameteriv(\a target, \a pname, \a params).
 
@@ -740,153 +770,117 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::getShaderiv(GLuint shader, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetShaderiv(GLuint shader, GLenum pname, GLint* params)
 
     Convenience function that calls glGetShaderiv(\a shader, \a pname, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetShaderiv.xml}{glGetShaderiv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog)
+    \fn void QGLFunctions::glGetShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog)
 
     Convenience function that calls glGetShaderInfoLog(\a shader, \a bufsize, \a length, \a infolog).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetShaderInfoLog.xml}{glGetShaderInfoLog()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
+    \fn void QGLFunctions::glGetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
 
     Convenience function that calls glGetShaderPrecisionFormat(\a shadertype, \a precisiontype, \a range, \a precision).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetShaderPrecisionFormat.xml}{glGetShaderPrecisionFormat()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getShaderSource(GLuint shader, GLsizei bufsize, GLsizei* length, char* source)
+    \fn void QGLFunctions::glGetShaderSource(GLuint shader, GLsizei bufsize, GLsizei* length, char* source)
 
     Convenience function that calls glGetShaderSource(\a shader, \a bufsize, \a length, \a source).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetShaderSource.xml}{glGetShaderSource()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn const GLubyte* QGLFunctions::getString(GLenum name)
-
-    Convenience function that calls glGetString(\a name).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetString.xml}{glGetString()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getTexParameterfv(GLenum target, GLenum pname, GLfloat* params)
-
-    Convenience function that calls glGetTexParameterfv(\a target, \a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetTexParameterfv.xml}{glGetTexParameterfv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getTexParameteriv(GLenum target, GLenum pname, GLint* params)
-
-    Convenience function that calls glGetTexParameteriv(\a target, \a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glGetTexParameteriv.xml}{glGetTexParameteriv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::getUniformfv(GLuint program, GLint location, GLfloat* params)
+    \fn void QGLFunctions::glGetUniformfv(GLuint program, GLint location, GLfloat* params)
 
     Convenience function that calls glGetUniformfv(\a program, \a location, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetUniformfv.xml}{glGetUniformfv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getUniformiv(GLuint program, GLint location, GLint* params)
+    \fn void QGLFunctions::glGetUniformiv(GLuint program, GLint location, GLint* params)
 
     Convenience function that calls glGetUniformiv(\a program, \a location, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetUniformiv.xml}{glGetUniformiv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn int QGLFunctions::getUniformLocation(GLuint program, const char* name)
+    \fn int QGLFunctions::glGetUniformLocation(GLuint program, const char* name)
 
     Convenience function that calls glGetUniformLocation(\a program, \a name).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetUniformLocation.xml}{glGetUniformLocation()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getVertexAttribfv(GLuint index, GLenum pname, GLfloat* params)
+    \fn void QGLFunctions::glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* params)
 
     Convenience function that calls glGetVertexAttribfv(\a index, \a pname, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetVertexAttribfv.xml}{glGetVertexAttribfv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getVertexAttribiv(GLuint index, GLenum pname, GLint* params)
+    \fn void QGLFunctions::glGetVertexAttribiv(GLuint index, GLenum pname, GLint* params)
 
     Convenience function that calls glGetVertexAttribiv(\a index, \a pname, \a params).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetVertexAttribiv.xml}{glGetVertexAttribiv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::getVertexAttribPointerv(GLuint index, GLenum pname, void** pointer)
+    \fn void QGLFunctions::glGetVertexAttribPointerv(GLuint index, GLenum pname, void** pointer)
 
     Convenience function that calls glGetVertexAttribPointerv(\a index, \a pname, \a pointer).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glGetVertexAttribPointerv.xml}{glGetVertexAttribPointerv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::hint(GLenum target, GLenum mode)
-
-    Convenience function that calls glHint(\a target, \a mode).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glHint.xml}{glHint()}.
-*/
-
-/*!
-    \fn GLboolean QGLFunctions::isBuffer(GLuint buffer)
+    \fn GLboolean QGLFunctions::glIsBuffer(GLuint buffer)
 
     Convenience function that calls glIsBuffer(\a buffer).
 
@@ -895,16 +889,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::isEnabled(GLenum cap)
-
-    Convenience function that calls glIsEnabled(\a cap).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glIsEnabled.xml}{glIsEnabled()}.
-*/
-
-/*!
-    \fn GLboolean QGLFunctions::isFramebuffer(GLuint framebuffer)
+    \fn GLboolean QGLFunctions::glIsFramebuffer(GLuint framebuffer)
 
     Convenience function that calls glIsFramebuffer(\a framebuffer).
 
@@ -913,18 +898,18 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::isProgram(GLuint program)
+    \fn GLboolean QGLFunctions::glIsProgram(GLuint program)
 
     Convenience function that calls glIsProgram(\a program).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glIsProgram.xml}{glIsProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn GLboolean QGLFunctions::isRenderbuffer(GLuint renderbuffer)
+    \fn GLboolean QGLFunctions::glIsRenderbuffer(GLuint renderbuffer)
 
     Convenience function that calls glIsRenderbuffer(\a renderbuffer).
 
@@ -933,85 +918,40 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::isShader(GLuint shader)
+    \fn GLboolean QGLFunctions::glIsShader(GLuint shader)
 
     Convenience function that calls glIsShader(\a shader).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glIsShader.xml}{glIsShader()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn GLboolean QGLFunctions::isTexture(GLuint texture)
-
-    Convenience function that calls glIsTexture(\a texture).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glIsTexture.xml}{glIsTexture()}.
-*/
-
-/*!
-    \fn void QGLFunctions::lineWidth(GLfloat width)
-
-    Convenience function that calls glLineWidth(\a width).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glLineWidth.xml}{glLineWidth()}.
-*/
-
-/*!
-    \fn void QGLFunctions::linkProgram(GLuint program)
+    \fn void QGLFunctions::glLinkProgram(GLuint program)
 
     Convenience function that calls glLinkProgram(\a program).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glLinkProgram.xml}{glLinkProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::pixelStorei(GLenum pname, GLint param)
-
-    Convenience function that calls glPixelStorei(\a pname, \a param).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glPixelStorei.xml}{glPixelStorei()}.
-*/
-
-/*!
-    \fn void QGLFunctions::polygonOffset(GLfloat factor, GLfloat units)
-
-    Convenience function that calls glPolygonOffset(\a factor, \a units).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glPolygonOffset.xml}{glPolygonOffset()}.
-*/
-
-/*!
-    \fn void QGLFunctions::readPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* pixels)
-
-    Convenience function that calls glReadPixels(\a x, \a y, \a width, \a height, \a format, \a type, \a pixels).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glReadPixels.xml}{glReadPixels()}.
-*/
-
-/*!
-    \fn void QGLFunctions::releaseShaderCompiler()
+    \fn void QGLFunctions::glReleaseShaderCompiler()
 
     Convenience function that calls glReleaseShaderCompiler().
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glReleaseShaderCompiler.xml}{glReleaseShaderCompiler()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::renderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+    \fn void QGLFunctions::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
 
     Convenience function that calls glRenderbufferStorage(\a target, \a internalformat, \a width, \a height).
 
@@ -1020,7 +960,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::sampleCoverage(GLclampf value, GLboolean invert)
+    \fn void QGLFunctions::glSampleCoverage(GLclampf value, GLboolean invert)
 
     Convenience function that calls glSampleCoverage(\a value, \a invert).
 
@@ -1029,47 +969,29 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::scissor(GLint x, GLint y, GLsizei width, GLsizei height)
-
-    Convenience function that calls glScissor(\a x, \a y, \a width, \a height).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glScissor.xml}{glScissor()}.
-*/
-
-/*!
-    \fn void QGLFunctions::shaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
+    \fn void QGLFunctions::glShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
 
     Convenience function that calls glShaderBinary(\a n, \a shaders, \a binaryformat, \a binary, \a length).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glShaderBinary.xml}{glShaderBinary()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::shaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
+    \fn void QGLFunctions::glShaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
 
     Convenience function that calls glShaderSource(\a shader, \a count, \a string, \a length).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glShaderSource.xml}{glShaderSource()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::stencilFunc(GLenum func, GLint ref, GLuint mask)
-
-    Convenience function that calls glStencilFunc(\a func, \a ref, \a mask).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glStencilFunc.xml}{glStencilFunc()}.
-*/
-
-/*!
-    \fn void QGLFunctions::stencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
+    \fn void QGLFunctions::glStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
 
     Convenience function that calls glStencilFuncSeparate(\a face, \a func, \a ref, \a mask).
 
@@ -1078,16 +1000,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::stencilMask(GLuint mask)
-
-    Convenience function that calls glStencilMask(\a mask).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glStencilMask.xml}{glStencilMask()}.
-*/
-
-/*!
-    \fn void QGLFunctions::stencilMaskSeparate(GLenum face, GLuint mask)
+    \fn void QGLFunctions::glStencilMaskSeparate(GLenum face, GLuint mask)
 
     Convenience function that calls glStencilMaskSeparate(\a face, \a mask).
 
@@ -1096,16 +1009,7 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::stencilOp(GLenum fail, GLenum zfail, GLenum zpass)
-
-    Convenience function that calls glStencilOp(\a fail, \a zfail, \a zpass).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glStencilOp.xml}{glStencilOp()}.
-*/
-
-/*!
-    \fn void QGLFunctions::stencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+    \fn void QGLFunctions::glStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
 
     Convenience function that calls glStencilOpSeparate(\a face, \a fail, \a zfail, \a zpass).
 
@@ -1114,401 +1018,336 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::texImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels)
-
-    Convenience function that calls glTexImage2D(\a target, \a level, \a internalformat, \a width, \a height, \a border, \a format, \a type, \a pixels).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexImage2D.xml}{glTexImage2D()}.
-*/
-
-/*!
-    \fn void QGLFunctions::texParameterf(GLenum target, GLenum pname, GLfloat param)
-
-    Convenience function that calls glTexParameterf(\a target, \a pname, \a param).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexParameterf.xml}{glTexParameterf()}.
-*/
-
-/*!
-    \fn void QGLFunctions::texParameterfv(GLenum target, GLenum pname, const GLfloat* params)
-
-    Convenience function that calls glTexParameterfv(\a target, \a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexParameterfv.xml}{glTexParameterfv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::texParameteri(GLenum target, GLenum pname, GLint param)
-
-    Convenience function that calls glTexParameteri(\a target, \a pname, \a param).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexParameteri.xml}{glTexParameteri()}.
-*/
-
-/*!
-    \fn void QGLFunctions::texParameteriv(GLenum target, GLenum pname, const GLint* params)
-
-    Convenience function that calls glTexParameteriv(\a target, \a pname, \a params).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexParameteriv.xml}{glTexParameteriv()}.
-*/
-
-/*!
-    \fn void QGLFunctions::texSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels)
-
-    Convenience function that calls glTexSubImage2D(\a target, \a level, \a xoffset, \a yoffset, \a width, \a height, \a format, \a type, \a pixels).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glTexSubImage2D.xml}{glTexSubImage2D()}.
-*/
-
-/*!
-    \fn void QGLFunctions::uniform1f(GLint location, GLfloat x)
+    \fn void QGLFunctions::glUniform1f(GLint location, GLfloat x)
 
     Convenience function that calls glUniform1f(\a location, \a x).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform1f.xml}{glUniform1f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform1fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QGLFunctions::glUniform1fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform1fv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform1fv.xml}{glUniform1fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform1i(GLint location, GLint x)
+    \fn void QGLFunctions::glUniform1i(GLint location, GLint x)
 
     Convenience function that calls glUniform1i(\a location, \a x).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform1i.xml}{glUniform1i()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform1iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QGLFunctions::glUniform1iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform1iv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform1iv.xml}{glUniform1iv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform2f(GLint location, GLfloat x, GLfloat y)
+    \fn void QGLFunctions::glUniform2f(GLint location, GLfloat x, GLfloat y)
 
     Convenience function that calls glUniform2f(\a location, \a x, \a y).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform2f.xml}{glUniform2f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform2fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QGLFunctions::glUniform2fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform2fv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform2fv.xml}{glUniform2fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform2i(GLint location, GLint x, GLint y)
+    \fn void QGLFunctions::glUniform2i(GLint location, GLint x, GLint y)
 
     Convenience function that calls glUniform2i(\a location, \a x, \a y).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform2i.xml}{glUniform2i()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform2iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QGLFunctions::glUniform2iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform2iv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform2iv.xml}{glUniform2iv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z)
+    \fn void QGLFunctions::glUniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z)
 
     Convenience function that calls glUniform3f(\a location, \a x, \a y, \a z).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform3f.xml}{glUniform3f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform3fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QGLFunctions::glUniform3fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform3fv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform3fv.xml}{glUniform3fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform3i(GLint location, GLint x, GLint y, GLint z)
+    \fn void QGLFunctions::glUniform3i(GLint location, GLint x, GLint y, GLint z)
 
     Convenience function that calls glUniform3i(\a location, \a x, \a y, \a z).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform3i.xml}{glUniform3i()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform3iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QGLFunctions::glUniform3iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform3iv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform3iv.xml}{glUniform3iv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+    \fn void QGLFunctions::glUniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
     Convenience function that calls glUniform4f(\a location, \a x, \a y, \a z, \a w).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform4f.xml}{glUniform4f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform4fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QGLFunctions::glUniform4fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform4fv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform4fv.xml}{glUniform4fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform4i(GLint location, GLint x, GLint y, GLint z, GLint w)
+    \fn void QGLFunctions::glUniform4i(GLint location, GLint x, GLint y, GLint z, GLint w)
 
     Convenience function that calls glUniform4i(\a location, \a x, \a y, \a z, \a w).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform4i.xml}{glUniform4i()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniform4iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QGLFunctions::glUniform4iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform4iv(\a location, \a count, \a v).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniform4iv.xml}{glUniform4iv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QGLFunctions::glUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix2fv(\a location, \a count, \a transpose, \a value).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniformMatrix2fv.xml}{glUniformMatrix2fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QGLFunctions::glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix3fv(\a location, \a count, \a transpose, \a value).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniformMatrix3fv.xml}{glUniformMatrix3fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::uniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QGLFunctions::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix4fv(\a location, \a count, \a transpose, \a value).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUniformMatrix4fv.xml}{glUniformMatrix4fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::useProgram(GLuint program)
+    \fn void QGLFunctions::glUseProgram(GLuint program)
 
     Convenience function that calls glUseProgram(\a program).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glUseProgram.xml}{glUseProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::validateProgram(GLuint program)
+    \fn void QGLFunctions::glValidateProgram(GLuint program)
 
     Convenience function that calls glValidateProgram(\a program).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glValidateProgram.xml}{glValidateProgram()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib1f(GLuint indx, GLfloat x)
+    \fn void QGLFunctions::glVertexAttrib1f(GLuint indx, GLfloat x)
 
     Convenience function that calls glVertexAttrib1f(\a indx, \a x).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib1f.xml}{glVertexAttrib1f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib1fv(GLuint indx, const GLfloat* values)
+    \fn void QGLFunctions::glVertexAttrib1fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib1fv(\a indx, \a values).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib1fv.xml}{glVertexAttrib1fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
+    \fn void QGLFunctions::glVertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
 
     Convenience function that calls glVertexAttrib2f(\a indx, \a x, \a y).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib2f.xml}{glVertexAttrib2f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib2fv(GLuint indx, const GLfloat* values)
+    \fn void QGLFunctions::glVertexAttrib2fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib2fv(\a indx, \a values).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib2fv.xml}{glVertexAttrib2fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+    \fn void QGLFunctions::glVertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
 
     Convenience function that calls glVertexAttrib3f(\a indx, \a x, \a y, \a z).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib3f.xml}{glVertexAttrib3f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib3fv(GLuint indx, const GLfloat* values)
+    \fn void QGLFunctions::glVertexAttrib3fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib3fv(\a indx, \a values).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib3fv.xml}{glVertexAttrib3fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+    \fn void QGLFunctions::glVertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
     Convenience function that calls glVertexAttrib4f(\a indx, \a x, \a y, \a z, \a w).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib4f.xml}{glVertexAttrib4f()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttrib4fv(GLuint indx, const GLfloat* values)
+    \fn void QGLFunctions::glVertexAttrib4fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib4fv(\a indx, \a values).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttrib4fv.xml}{glVertexAttrib4fv()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 /*!
-    \fn void QGLFunctions::vertexAttribPointer(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr)
+    \fn void QGLFunctions::glVertexAttribPointer(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr)
 
     Convenience function that calls glVertexAttribPointer(\a indx, \a size, \a type, \a normalized, \a stride, \a ptr).
 
     For more information, see the OpenGL/ES 2.0 documentation for
     \l{http://www.khronos.org/opengles/sdk/docs/man/glVertexAttribPointer.xml}{glVertexAttribPointer()}.
 
-    This convenience function is not present on OpenGL/ES 1.x systems.
-*/
-
-/*!
-    \fn void QGLFunctions::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
-
-    Convenience function that calls glViewport(\a x, \a y, \a width, \a height).
-
-    For more information, see the OpenGL/ES 2.0 documentation for
-    \l{http://www.khronos.org/opengles/sdk/docs/man/glViewport.xml}{glViewport()}.
+    This convenience function will do nothing on OpenGL/ES 1.x systems.
 */
 
 #ifndef QT_OPENGL_ES_2
-
-#ifndef QT_OPENGL_ES_1
 
 static void qglfResolveActiveTexture(GLenum texture)
 {
@@ -1519,7 +1358,7 @@ static void qglfResolveActiveTexture(GLenum texture)
 
     funcs->activeTexture = (type_glActiveTexture)
         context->getProcAddress(QLatin1String("glActiveTexture"));
-    if (funcs->activeTexture) {
+    if (!funcs->activeTexture) {
         funcs->activeTexture = (type_glActiveTexture)
             context->getProcAddress(QLatin1String("glActiveTextureARB"));
     }
@@ -1539,7 +1378,7 @@ static void qglfResolveAttachShader(GLuint program, GLuint shader)
 
     funcs->attachShader = (type_glAttachShader)
         context->getProcAddress(QLatin1String("glAttachShader"));
-    if (funcs->attachShader) {
+    if (!funcs->attachShader) {
         funcs->attachShader = (type_glAttachShader)
             context->getProcAddress(QLatin1String("glAttachObjectARB"));
     }
@@ -1559,7 +1398,7 @@ static void qglfResolveBindAttribLocation(GLuint program, GLuint index, const ch
 
     funcs->bindAttribLocation = (type_glBindAttribLocation)
         context->getProcAddress(QLatin1String("glBindAttribLocation"));
-    if (funcs->bindAttribLocation) {
+    if (!funcs->bindAttribLocation) {
         funcs->bindAttribLocation = (type_glBindAttribLocation)
             context->getProcAddress(QLatin1String("glBindAttribLocationARB"));
     }
@@ -1580,16 +1419,16 @@ static void qglfResolveBindBuffer(GLenum target, GLuint buffer)
     funcs->bindBuffer = (type_glBindBuffer)
         context->getProcAddress(QLatin1String("glBindBuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->bindBuffer) {
+    if (!funcs->bindBuffer) {
         funcs->bindBuffer = (type_glBindBuffer)
             context->getProcAddress(QLatin1String("glBindBufferOES"));
     }
 #endif
-    if (funcs->bindBuffer) {
+    if (!funcs->bindBuffer) {
         funcs->bindBuffer = (type_glBindBuffer)
             context->getProcAddress(QLatin1String("glBindBufferEXT"));
     }
-    if (funcs->bindBuffer) {
+    if (!funcs->bindBuffer) {
         funcs->bindBuffer = (type_glBindBuffer)
             context->getProcAddress(QLatin1String("glBindBufferARB"));
     }
@@ -1599,8 +1438,6 @@ static void qglfResolveBindBuffer(GLenum target, GLuint buffer)
     else
         funcs->bindBuffer = qglfResolveBindBuffer;
 }
-
-#endif
 
 static void qglfResolveBindFramebuffer(GLenum target, GLuint framebuffer)
 {
@@ -1612,16 +1449,16 @@ static void qglfResolveBindFramebuffer(GLenum target, GLuint framebuffer)
     funcs->bindFramebuffer = (type_glBindFramebuffer)
         context->getProcAddress(QLatin1String("glBindFramebuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->bindFramebuffer) {
+    if (!funcs->bindFramebuffer) {
         funcs->bindFramebuffer = (type_glBindFramebuffer)
             context->getProcAddress(QLatin1String("glBindFramebufferOES"));
     }
 #endif
-    if (funcs->bindFramebuffer) {
+    if (!funcs->bindFramebuffer) {
         funcs->bindFramebuffer = (type_glBindFramebuffer)
             context->getProcAddress(QLatin1String("glBindFramebufferEXT"));
     }
-    if (funcs->bindFramebuffer) {
+    if (!funcs->bindFramebuffer) {
         funcs->bindFramebuffer = (type_glBindFramebuffer)
             context->getProcAddress(QLatin1String("glBindFramebufferARB"));
     }
@@ -1642,16 +1479,16 @@ static void qglfResolveBindRenderbuffer(GLenum target, GLuint renderbuffer)
     funcs->bindRenderbuffer = (type_glBindRenderbuffer)
         context->getProcAddress(QLatin1String("glBindRenderbuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->bindRenderbuffer) {
+    if (!funcs->bindRenderbuffer) {
         funcs->bindRenderbuffer = (type_glBindRenderbuffer)
             context->getProcAddress(QLatin1String("glBindRenderbufferOES"));
     }
 #endif
-    if (funcs->bindRenderbuffer) {
+    if (!funcs->bindRenderbuffer) {
         funcs->bindRenderbuffer = (type_glBindRenderbuffer)
             context->getProcAddress(QLatin1String("glBindRenderbufferEXT"));
     }
-    if (funcs->bindRenderbuffer) {
+    if (!funcs->bindRenderbuffer) {
         funcs->bindRenderbuffer = (type_glBindRenderbuffer)
             context->getProcAddress(QLatin1String("glBindRenderbufferARB"));
     }
@@ -1672,16 +1509,16 @@ static void qglfResolveBlendColor(GLclampf red, GLclampf green, GLclampf blue, G
     funcs->blendColor = (type_glBlendColor)
         context->getProcAddress(QLatin1String("glBlendColor"));
 #ifdef QT_OPENGL_ES
-    if (funcs->blendColor) {
+    if (!funcs->blendColor) {
         funcs->blendColor = (type_glBlendColor)
             context->getProcAddress(QLatin1String("glBlendColorOES"));
     }
 #endif
-    if (funcs->blendColor) {
+    if (!funcs->blendColor) {
         funcs->blendColor = (type_glBlendColor)
             context->getProcAddress(QLatin1String("glBlendColorEXT"));
     }
-    if (funcs->blendColor) {
+    if (!funcs->blendColor) {
         funcs->blendColor = (type_glBlendColor)
             context->getProcAddress(QLatin1String("glBlendColorARB"));
     }
@@ -1702,16 +1539,16 @@ static void qglfResolveBlendEquation(GLenum mode)
     funcs->blendEquation = (type_glBlendEquation)
         context->getProcAddress(QLatin1String("glBlendEquation"));
 #ifdef QT_OPENGL_ES
-    if (funcs->blendEquation) {
+    if (!funcs->blendEquation) {
         funcs->blendEquation = (type_glBlendEquation)
             context->getProcAddress(QLatin1String("glBlendEquationOES"));
     }
 #endif
-    if (funcs->blendEquation) {
+    if (!funcs->blendEquation) {
         funcs->blendEquation = (type_glBlendEquation)
             context->getProcAddress(QLatin1String("glBlendEquationEXT"));
     }
-    if (funcs->blendEquation) {
+    if (!funcs->blendEquation) {
         funcs->blendEquation = (type_glBlendEquation)
             context->getProcAddress(QLatin1String("glBlendEquationARB"));
     }
@@ -1720,14 +1557,6 @@ static void qglfResolveBlendEquation(GLenum mode)
         funcs->blendEquation(mode);
     else
         funcs->blendEquation = qglfResolveBlendEquation;
-}
-
-static void qglfSpecialBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
-{
-    const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
-    Q_UNUSED(modeAlpha);
-    funcs->blendEquation(modeRGB);
 }
 
 static void qglfResolveBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
@@ -1740,31 +1569,24 @@ static void qglfResolveBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
     funcs->blendEquationSeparate = (type_glBlendEquationSeparate)
         context->getProcAddress(QLatin1String("glBlendEquationSeparate"));
 #ifdef QT_OPENGL_ES
-    if (funcs->blendEquationSeparate) {
+    if (!funcs->blendEquationSeparate) {
         funcs->blendEquationSeparate = (type_glBlendEquationSeparate)
             context->getProcAddress(QLatin1String("glBlendEquationSeparateOES"));
     }
 #endif
-    if (funcs->blendEquationSeparate) {
+    if (!funcs->blendEquationSeparate) {
         funcs->blendEquationSeparate = (type_glBlendEquationSeparate)
             context->getProcAddress(QLatin1String("glBlendEquationSeparateEXT"));
     }
-    if (funcs->blendEquationSeparate) {
+    if (!funcs->blendEquationSeparate) {
         funcs->blendEquationSeparate = (type_glBlendEquationSeparate)
             context->getProcAddress(QLatin1String("glBlendEquationSeparateARB"));
     }
 
-    if (!funcs->blendEquationSeparate)
-        funcs->blendEquationSeparate = qglfSpecialBlendEquationSeparate;
-
-    funcs->blendEquationSeparate(modeRGB, modeAlpha);
-}
-
-static void qglfSpecialBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
-{
-    Q_UNUSED(srcAlpha);
-    Q_UNUSED(dstAlpha);
-    ::glBlendFunc(srcRGB, dstRGB);
+    if (funcs->blendEquationSeparate)
+        funcs->blendEquationSeparate(modeRGB, modeAlpha);
+    else
+        funcs->blendEquationSeparate = qglfResolveBlendEquationSeparate;
 }
 
 static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
@@ -1777,27 +1599,25 @@ static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum sr
     funcs->blendFuncSeparate = (type_glBlendFuncSeparate)
         context->getProcAddress(QLatin1String("glBlendFuncSeparate"));
 #ifdef QT_OPENGL_ES
-    if (funcs->blendFuncSeparate) {
+    if (!funcs->blendFuncSeparate) {
         funcs->blendFuncSeparate = (type_glBlendFuncSeparate)
             context->getProcAddress(QLatin1String("glBlendFuncSeparateOES"));
     }
 #endif
-    if (funcs->blendFuncSeparate) {
+    if (!funcs->blendFuncSeparate) {
         funcs->blendFuncSeparate = (type_glBlendFuncSeparate)
             context->getProcAddress(QLatin1String("glBlendFuncSeparateEXT"));
     }
-    if (funcs->blendFuncSeparate) {
+    if (!funcs->blendFuncSeparate) {
         funcs->blendFuncSeparate = (type_glBlendFuncSeparate)
             context->getProcAddress(QLatin1String("glBlendFuncSeparateARB"));
     }
 
-    if (!funcs->blendFuncSeparate)
-        funcs->blendFuncSeparate = qglfSpecialBlendFuncSeparate;
-
-    funcs->blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+    if (funcs->blendFuncSeparate)
+        funcs->blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+    else
+        funcs->blendFuncSeparate = qglfResolveBlendFuncSeparate;
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static void qglfResolveBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 {
@@ -1809,16 +1629,16 @@ static void qglfResolveBufferData(GLenum target, qgl_GLsizeiptr size, const void
     funcs->bufferData = (type_glBufferData)
         context->getProcAddress(QLatin1String("glBufferData"));
 #ifdef QT_OPENGL_ES
-    if (funcs->bufferData) {
+    if (!funcs->bufferData) {
         funcs->bufferData = (type_glBufferData)
             context->getProcAddress(QLatin1String("glBufferDataOES"));
     }
 #endif
-    if (funcs->bufferData) {
+    if (!funcs->bufferData) {
         funcs->bufferData = (type_glBufferData)
             context->getProcAddress(QLatin1String("glBufferDataEXT"));
     }
-    if (funcs->bufferData) {
+    if (!funcs->bufferData) {
         funcs->bufferData = (type_glBufferData)
             context->getProcAddress(QLatin1String("glBufferDataARB"));
     }
@@ -1839,16 +1659,16 @@ static void qglfResolveBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLs
     funcs->bufferSubData = (type_glBufferSubData)
         context->getProcAddress(QLatin1String("glBufferSubData"));
 #ifdef QT_OPENGL_ES
-    if (funcs->bufferSubData) {
+    if (!funcs->bufferSubData) {
         funcs->bufferSubData = (type_glBufferSubData)
             context->getProcAddress(QLatin1String("glBufferSubDataOES"));
     }
 #endif
-    if (funcs->bufferSubData) {
+    if (!funcs->bufferSubData) {
         funcs->bufferSubData = (type_glBufferSubData)
             context->getProcAddress(QLatin1String("glBufferSubDataEXT"));
     }
-    if (funcs->bufferSubData) {
+    if (!funcs->bufferSubData) {
         funcs->bufferSubData = (type_glBufferSubData)
             context->getProcAddress(QLatin1String("glBufferSubDataARB"));
     }
@@ -1858,8 +1678,6 @@ static void qglfResolveBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLs
     else
         funcs->bufferSubData = qglfResolveBufferSubData;
 }
-
-#endif
 
 static GLenum qglfResolveCheckFramebufferStatus(GLenum target)
 {
@@ -1871,16 +1689,16 @@ static GLenum qglfResolveCheckFramebufferStatus(GLenum target)
     funcs->checkFramebufferStatus = (type_glCheckFramebufferStatus)
         context->getProcAddress(QLatin1String("glCheckFramebufferStatus"));
 #ifdef QT_OPENGL_ES
-    if (funcs->checkFramebufferStatus) {
+    if (!funcs->checkFramebufferStatus) {
         funcs->checkFramebufferStatus = (type_glCheckFramebufferStatus)
             context->getProcAddress(QLatin1String("glCheckFramebufferStatusOES"));
     }
 #endif
-    if (funcs->checkFramebufferStatus) {
+    if (!funcs->checkFramebufferStatus) {
         funcs->checkFramebufferStatus = (type_glCheckFramebufferStatus)
             context->getProcAddress(QLatin1String("glCheckFramebufferStatusEXT"));
     }
-    if (funcs->checkFramebufferStatus) {
+    if (!funcs->checkFramebufferStatus) {
         funcs->checkFramebufferStatus = (type_glCheckFramebufferStatus)
             context->getProcAddress(QLatin1String("glCheckFramebufferStatusARB"));
     }
@@ -1891,8 +1709,6 @@ static GLenum qglfResolveCheckFramebufferStatus(GLenum target)
     return GLenum(0);
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveCompileShader(GLuint shader)
 {
     typedef void (QGLF_APIENTRYP type_glCompileShader)(GLuint shader);
@@ -1902,7 +1718,7 @@ static void qglfResolveCompileShader(GLuint shader)
 
     funcs->compileShader = (type_glCompileShader)
         context->getProcAddress(QLatin1String("glCompileShader"));
-    if (funcs->compileShader) {
+    if (!funcs->compileShader) {
         funcs->compileShader = (type_glCompileShader)
             context->getProcAddress(QLatin1String("glCompileShader"));
     }
@@ -1923,16 +1739,16 @@ static void qglfResolveCompressedTexImage2D(GLenum target, GLint level, GLenum i
     funcs->compressedTexImage2D = (type_glCompressedTexImage2D)
         context->getProcAddress(QLatin1String("glCompressedTexImage2D"));
 #ifdef QT_OPENGL_ES
-    if (funcs->compressedTexImage2D) {
+    if (!funcs->compressedTexImage2D) {
         funcs->compressedTexImage2D = (type_glCompressedTexImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexImage2DOES"));
     }
 #endif
-    if (funcs->compressedTexImage2D) {
+    if (!funcs->compressedTexImage2D) {
         funcs->compressedTexImage2D = (type_glCompressedTexImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexImage2DEXT"));
     }
-    if (funcs->compressedTexImage2D) {
+    if (!funcs->compressedTexImage2D) {
         funcs->compressedTexImage2D = (type_glCompressedTexImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexImage2DARB"));
     }
@@ -1953,16 +1769,16 @@ static void qglfResolveCompressedTexSubImage2D(GLenum target, GLint level, GLint
     funcs->compressedTexSubImage2D = (type_glCompressedTexSubImage2D)
         context->getProcAddress(QLatin1String("glCompressedTexSubImage2D"));
 #ifdef QT_OPENGL_ES
-    if (funcs->compressedTexSubImage2D) {
+    if (!funcs->compressedTexSubImage2D) {
         funcs->compressedTexSubImage2D = (type_glCompressedTexSubImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexSubImage2DOES"));
     }
 #endif
-    if (funcs->compressedTexSubImage2D) {
+    if (!funcs->compressedTexSubImage2D) {
         funcs->compressedTexSubImage2D = (type_glCompressedTexSubImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexSubImage2DEXT"));
     }
-    if (funcs->compressedTexSubImage2D) {
+    if (!funcs->compressedTexSubImage2D) {
         funcs->compressedTexSubImage2D = (type_glCompressedTexSubImage2D)
             context->getProcAddress(QLatin1String("glCompressedTexSubImage2DARB"));
     }
@@ -1982,7 +1798,7 @@ static GLuint qglfResolveCreateProgram()
 
     funcs->createProgram = (type_glCreateProgram)
         context->getProcAddress(QLatin1String("glCreateProgram"));
-    if (funcs->createProgram) {
+    if (!funcs->createProgram) {
         funcs->createProgram = (type_glCreateProgram)
             context->getProcAddress(QLatin1String("glCreateProgramObjectARB"));
     }
@@ -2002,7 +1818,7 @@ static GLuint qglfResolveCreateShader(GLenum type)
 
     funcs->createShader = (type_glCreateShader)
         context->getProcAddress(QLatin1String("glCreateShader"));
-    if (funcs->createShader) {
+    if (!funcs->createShader) {
         funcs->createShader = (type_glCreateShader)
             context->getProcAddress(QLatin1String("glCreateShaderObjectARB"));
     }
@@ -2023,16 +1839,16 @@ static void qglfResolveDeleteBuffers(GLsizei n, const GLuint* buffers)
     funcs->deleteBuffers = (type_glDeleteBuffers)
         context->getProcAddress(QLatin1String("glDeleteBuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->deleteBuffers) {
+    if (!funcs->deleteBuffers) {
         funcs->deleteBuffers = (type_glDeleteBuffers)
             context->getProcAddress(QLatin1String("glDeleteBuffersOES"));
     }
 #endif
-    if (funcs->deleteBuffers) {
+    if (!funcs->deleteBuffers) {
         funcs->deleteBuffers = (type_glDeleteBuffers)
             context->getProcAddress(QLatin1String("glDeleteBuffersEXT"));
     }
-    if (funcs->deleteBuffers) {
+    if (!funcs->deleteBuffers) {
         funcs->deleteBuffers = (type_glDeleteBuffers)
             context->getProcAddress(QLatin1String("glDeleteBuffersARB"));
     }
@@ -2042,8 +1858,6 @@ static void qglfResolveDeleteBuffers(GLsizei n, const GLuint* buffers)
     else
         funcs->deleteBuffers = qglfResolveDeleteBuffers;
 }
-
-#endif
 
 static void qglfResolveDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 {
@@ -2055,16 +1869,16 @@ static void qglfResolveDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
     funcs->deleteFramebuffers = (type_glDeleteFramebuffers)
         context->getProcAddress(QLatin1String("glDeleteFramebuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->deleteFramebuffers) {
+    if (!funcs->deleteFramebuffers) {
         funcs->deleteFramebuffers = (type_glDeleteFramebuffers)
             context->getProcAddress(QLatin1String("glDeleteFramebuffersOES"));
     }
 #endif
-    if (funcs->deleteFramebuffers) {
+    if (!funcs->deleteFramebuffers) {
         funcs->deleteFramebuffers = (type_glDeleteFramebuffers)
             context->getProcAddress(QLatin1String("glDeleteFramebuffersEXT"));
     }
-    if (funcs->deleteFramebuffers) {
+    if (!funcs->deleteFramebuffers) {
         funcs->deleteFramebuffers = (type_glDeleteFramebuffers)
             context->getProcAddress(QLatin1String("glDeleteFramebuffersARB"));
     }
@@ -2075,8 +1889,6 @@ static void qglfResolveDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
         funcs->deleteFramebuffers = qglfResolveDeleteFramebuffers;
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveDeleteProgram(GLuint program)
 {
     typedef void (QGLF_APIENTRYP type_glDeleteProgram)(GLuint program);
@@ -2086,7 +1898,7 @@ static void qglfResolveDeleteProgram(GLuint program)
 
     funcs->deleteProgram = (type_glDeleteProgram)
         context->getProcAddress(QLatin1String("glDeleteProgram"));
-    if (funcs->deleteProgram) {
+    if (!funcs->deleteProgram) {
         funcs->deleteProgram = (type_glDeleteProgram)
             context->getProcAddress(QLatin1String("glDeleteObjectARB"));
     }
@@ -2096,8 +1908,6 @@ static void qglfResolveDeleteProgram(GLuint program)
     else
         funcs->deleteProgram = qglfResolveDeleteProgram;
 }
-
-#endif
 
 static void qglfResolveDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 {
@@ -2109,16 +1919,16 @@ static void qglfResolveDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffer
     funcs->deleteRenderbuffers = (type_glDeleteRenderbuffers)
         context->getProcAddress(QLatin1String("glDeleteRenderbuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->deleteRenderbuffers) {
+    if (!funcs->deleteRenderbuffers) {
         funcs->deleteRenderbuffers = (type_glDeleteRenderbuffers)
             context->getProcAddress(QLatin1String("glDeleteRenderbuffersOES"));
     }
 #endif
-    if (funcs->deleteRenderbuffers) {
+    if (!funcs->deleteRenderbuffers) {
         funcs->deleteRenderbuffers = (type_glDeleteRenderbuffers)
             context->getProcAddress(QLatin1String("glDeleteRenderbuffersEXT"));
     }
-    if (funcs->deleteRenderbuffers) {
+    if (!funcs->deleteRenderbuffers) {
         funcs->deleteRenderbuffers = (type_glDeleteRenderbuffers)
             context->getProcAddress(QLatin1String("glDeleteRenderbuffersARB"));
     }
@@ -2129,8 +1939,6 @@ static void qglfResolveDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffer
         funcs->deleteRenderbuffers = qglfResolveDeleteRenderbuffers;
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveDeleteShader(GLuint shader)
 {
     typedef void (QGLF_APIENTRYP type_glDeleteShader)(GLuint shader);
@@ -2140,7 +1948,7 @@ static void qglfResolveDeleteShader(GLuint shader)
 
     funcs->deleteShader = (type_glDeleteShader)
         context->getProcAddress(QLatin1String("glDeleteShader"));
-    if (funcs->deleteShader) {
+    if (!funcs->deleteShader) {
         funcs->deleteShader = (type_glDeleteShader)
             context->getProcAddress(QLatin1String("glDeleteObjectARB"));
     }
@@ -2160,7 +1968,7 @@ static void qglfResolveDetachShader(GLuint program, GLuint shader)
 
     funcs->detachShader = (type_glDetachShader)
         context->getProcAddress(QLatin1String("glDetachShader"));
-    if (funcs->detachShader) {
+    if (!funcs->detachShader) {
         funcs->detachShader = (type_glDetachShader)
             context->getProcAddress(QLatin1String("glDetachObjectARB"));
     }
@@ -2180,7 +1988,7 @@ static void qglfResolveDisableVertexAttribArray(GLuint index)
 
     funcs->disableVertexAttribArray = (type_glDisableVertexAttribArray)
         context->getProcAddress(QLatin1String("glDisableVertexAttribArray"));
-    if (funcs->disableVertexAttribArray) {
+    if (!funcs->disableVertexAttribArray) {
         funcs->disableVertexAttribArray = (type_glDisableVertexAttribArray)
             context->getProcAddress(QLatin1String("glDisableVertexAttribArrayARB"));
     }
@@ -2200,7 +2008,7 @@ static void qglfResolveEnableVertexAttribArray(GLuint index)
 
     funcs->enableVertexAttribArray = (type_glEnableVertexAttribArray)
         context->getProcAddress(QLatin1String("glEnableVertexAttribArray"));
-    if (funcs->enableVertexAttribArray) {
+    if (!funcs->enableVertexAttribArray) {
         funcs->enableVertexAttribArray = (type_glEnableVertexAttribArray)
             context->getProcAddress(QLatin1String("glEnableVertexAttribArrayARB"));
     }
@@ -2210,8 +2018,6 @@ static void qglfResolveEnableVertexAttribArray(GLuint index)
     else
         funcs->enableVertexAttribArray = qglfResolveEnableVertexAttribArray;
 }
-
-#endif
 
 static void qglfResolveFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
@@ -2223,16 +2029,16 @@ static void qglfResolveFramebufferRenderbuffer(GLenum target, GLenum attachment,
     funcs->framebufferRenderbuffer = (type_glFramebufferRenderbuffer)
         context->getProcAddress(QLatin1String("glFramebufferRenderbuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->framebufferRenderbuffer) {
+    if (!funcs->framebufferRenderbuffer) {
         funcs->framebufferRenderbuffer = (type_glFramebufferRenderbuffer)
             context->getProcAddress(QLatin1String("glFramebufferRenderbufferOES"));
     }
 #endif
-    if (funcs->framebufferRenderbuffer) {
+    if (!funcs->framebufferRenderbuffer) {
         funcs->framebufferRenderbuffer = (type_glFramebufferRenderbuffer)
             context->getProcAddress(QLatin1String("glFramebufferRenderbufferEXT"));
     }
-    if (funcs->framebufferRenderbuffer) {
+    if (!funcs->framebufferRenderbuffer) {
         funcs->framebufferRenderbuffer = (type_glFramebufferRenderbuffer)
             context->getProcAddress(QLatin1String("glFramebufferRenderbufferARB"));
     }
@@ -2253,16 +2059,16 @@ static void qglfResolveFramebufferTexture2D(GLenum target, GLenum attachment, GL
     funcs->framebufferTexture2D = (type_glFramebufferTexture2D)
         context->getProcAddress(QLatin1String("glFramebufferTexture2D"));
 #ifdef QT_OPENGL_ES
-    if (funcs->framebufferTexture2D) {
+    if (!funcs->framebufferTexture2D) {
         funcs->framebufferTexture2D = (type_glFramebufferTexture2D)
             context->getProcAddress(QLatin1String("glFramebufferTexture2DOES"));
     }
 #endif
-    if (funcs->framebufferTexture2D) {
+    if (!funcs->framebufferTexture2D) {
         funcs->framebufferTexture2D = (type_glFramebufferTexture2D)
             context->getProcAddress(QLatin1String("glFramebufferTexture2DEXT"));
     }
-    if (funcs->framebufferTexture2D) {
+    if (!funcs->framebufferTexture2D) {
         funcs->framebufferTexture2D = (type_glFramebufferTexture2D)
             context->getProcAddress(QLatin1String("glFramebufferTexture2DARB"));
     }
@@ -2272,8 +2078,6 @@ static void qglfResolveFramebufferTexture2D(GLenum target, GLenum attachment, GL
     else
         funcs->framebufferTexture2D = qglfResolveFramebufferTexture2D;
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static void qglfResolveGenBuffers(GLsizei n, GLuint* buffers)
 {
@@ -2285,16 +2089,16 @@ static void qglfResolveGenBuffers(GLsizei n, GLuint* buffers)
     funcs->genBuffers = (type_glGenBuffers)
         context->getProcAddress(QLatin1String("glGenBuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->genBuffers) {
+    if (!funcs->genBuffers) {
         funcs->genBuffers = (type_glGenBuffers)
             context->getProcAddress(QLatin1String("glGenBuffersOES"));
     }
 #endif
-    if (funcs->genBuffers) {
+    if (!funcs->genBuffers) {
         funcs->genBuffers = (type_glGenBuffers)
             context->getProcAddress(QLatin1String("glGenBuffersEXT"));
     }
-    if (funcs->genBuffers) {
+    if (!funcs->genBuffers) {
         funcs->genBuffers = (type_glGenBuffers)
             context->getProcAddress(QLatin1String("glGenBuffersARB"));
     }
@@ -2304,8 +2108,6 @@ static void qglfResolveGenBuffers(GLsizei n, GLuint* buffers)
     else
         funcs->genBuffers = qglfResolveGenBuffers;
 }
-
-#endif
 
 static void qglfResolveGenerateMipmap(GLenum target)
 {
@@ -2317,16 +2119,16 @@ static void qglfResolveGenerateMipmap(GLenum target)
     funcs->generateMipmap = (type_glGenerateMipmap)
         context->getProcAddress(QLatin1String("glGenerateMipmap"));
 #ifdef QT_OPENGL_ES
-    if (funcs->generateMipmap) {
+    if (!funcs->generateMipmap) {
         funcs->generateMipmap = (type_glGenerateMipmap)
             context->getProcAddress(QLatin1String("glGenerateMipmapOES"));
     }
 #endif
-    if (funcs->generateMipmap) {
+    if (!funcs->generateMipmap) {
         funcs->generateMipmap = (type_glGenerateMipmap)
             context->getProcAddress(QLatin1String("glGenerateMipmapEXT"));
     }
-    if (funcs->generateMipmap) {
+    if (!funcs->generateMipmap) {
         funcs->generateMipmap = (type_glGenerateMipmap)
             context->getProcAddress(QLatin1String("glGenerateMipmapARB"));
     }
@@ -2347,16 +2149,16 @@ static void qglfResolveGenFramebuffers(GLsizei n, GLuint* framebuffers)
     funcs->genFramebuffers = (type_glGenFramebuffers)
         context->getProcAddress(QLatin1String("glGenFramebuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->genFramebuffers) {
+    if (!funcs->genFramebuffers) {
         funcs->genFramebuffers = (type_glGenFramebuffers)
             context->getProcAddress(QLatin1String("glGenFramebuffersOES"));
     }
 #endif
-    if (funcs->genFramebuffers) {
+    if (!funcs->genFramebuffers) {
         funcs->genFramebuffers = (type_glGenFramebuffers)
             context->getProcAddress(QLatin1String("glGenFramebuffersEXT"));
     }
-    if (funcs->genFramebuffers) {
+    if (!funcs->genFramebuffers) {
         funcs->genFramebuffers = (type_glGenFramebuffers)
             context->getProcAddress(QLatin1String("glGenFramebuffersARB"));
     }
@@ -2377,16 +2179,16 @@ static void qglfResolveGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
     funcs->genRenderbuffers = (type_glGenRenderbuffers)
         context->getProcAddress(QLatin1String("glGenRenderbuffers"));
 #ifdef QT_OPENGL_ES
-    if (funcs->genRenderbuffers) {
+    if (!funcs->genRenderbuffers) {
         funcs->genRenderbuffers = (type_glGenRenderbuffers)
             context->getProcAddress(QLatin1String("glGenRenderbuffersOES"));
     }
 #endif
-    if (funcs->genRenderbuffers) {
+    if (!funcs->genRenderbuffers) {
         funcs->genRenderbuffers = (type_glGenRenderbuffers)
             context->getProcAddress(QLatin1String("glGenRenderbuffersEXT"));
     }
-    if (funcs->genRenderbuffers) {
+    if (!funcs->genRenderbuffers) {
         funcs->genRenderbuffers = (type_glGenRenderbuffers)
             context->getProcAddress(QLatin1String("glGenRenderbuffersARB"));
     }
@@ -2397,8 +2199,6 @@ static void qglfResolveGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
         funcs->genRenderbuffers = qglfResolveGenRenderbuffers;
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveGetActiveAttrib(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
 {
     typedef void (QGLF_APIENTRYP type_glGetActiveAttrib)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
@@ -2408,7 +2208,7 @@ static void qglfResolveGetActiveAttrib(GLuint program, GLuint index, GLsizei buf
 
     funcs->getActiveAttrib = (type_glGetActiveAttrib)
         context->getProcAddress(QLatin1String("glGetActiveAttrib"));
-    if (funcs->getActiveAttrib) {
+    if (!funcs->getActiveAttrib) {
         funcs->getActiveAttrib = (type_glGetActiveAttrib)
             context->getProcAddress(QLatin1String("glGetActiveAttribARB"));
     }
@@ -2428,7 +2228,7 @@ static void qglfResolveGetActiveUniform(GLuint program, GLuint index, GLsizei bu
 
     funcs->getActiveUniform = (type_glGetActiveUniform)
         context->getProcAddress(QLatin1String("glGetActiveUniform"));
-    if (funcs->getActiveUniform) {
+    if (!funcs->getActiveUniform) {
         funcs->getActiveUniform = (type_glGetActiveUniform)
             context->getProcAddress(QLatin1String("glGetActiveUniformARB"));
     }
@@ -2448,7 +2248,7 @@ static void qglfResolveGetAttachedShaders(GLuint program, GLsizei maxcount, GLsi
 
     funcs->getAttachedShaders = (type_glGetAttachedShaders)
         context->getProcAddress(QLatin1String("glGetAttachedShaders"));
-    if (funcs->getAttachedShaders) {
+    if (!funcs->getAttachedShaders) {
         funcs->getAttachedShaders = (type_glGetAttachedShaders)
             context->getProcAddress(QLatin1String("glGetAttachedObjectsARB"));
     }
@@ -2468,7 +2268,7 @@ static int qglfResolveGetAttribLocation(GLuint program, const char* name)
 
     funcs->getAttribLocation = (type_glGetAttribLocation)
         context->getProcAddress(QLatin1String("glGetAttribLocation"));
-    if (funcs->getAttribLocation) {
+    if (!funcs->getAttribLocation) {
         funcs->getAttribLocation = (type_glGetAttribLocation)
             context->getProcAddress(QLatin1String("glGetAttribLocationARB"));
     }
@@ -2478,8 +2278,6 @@ static int qglfResolveGetAttribLocation(GLuint program, const char* name)
     funcs->getAttribLocation = qglfResolveGetAttribLocation;
     return int(0);
 }
-
-#endif
 
 static void qglfResolveGetBufferParameteriv(GLenum target, GLenum pname, GLint* params)
 {
@@ -2491,16 +2289,16 @@ static void qglfResolveGetBufferParameteriv(GLenum target, GLenum pname, GLint* 
     funcs->getBufferParameteriv = (type_glGetBufferParameteriv)
         context->getProcAddress(QLatin1String("glGetBufferParameteriv"));
 #ifdef QT_OPENGL_ES
-    if (funcs->getBufferParameteriv) {
+    if (!funcs->getBufferParameteriv) {
         funcs->getBufferParameteriv = (type_glGetBufferParameteriv)
             context->getProcAddress(QLatin1String("glGetBufferParameterivOES"));
     }
 #endif
-    if (funcs->getBufferParameteriv) {
+    if (!funcs->getBufferParameteriv) {
         funcs->getBufferParameteriv = (type_glGetBufferParameteriv)
             context->getProcAddress(QLatin1String("glGetBufferParameterivEXT"));
     }
-    if (funcs->getBufferParameteriv) {
+    if (!funcs->getBufferParameteriv) {
         funcs->getBufferParameteriv = (type_glGetBufferParameteriv)
             context->getProcAddress(QLatin1String("glGetBufferParameterivARB"));
     }
@@ -2521,16 +2319,16 @@ static void qglfResolveGetFramebufferAttachmentParameteriv(GLenum target, GLenum
     funcs->getFramebufferAttachmentParameteriv = (type_glGetFramebufferAttachmentParameteriv)
         context->getProcAddress(QLatin1String("glGetFramebufferAttachmentParameteriv"));
 #ifdef QT_OPENGL_ES
-    if (funcs->getFramebufferAttachmentParameteriv) {
+    if (!funcs->getFramebufferAttachmentParameteriv) {
         funcs->getFramebufferAttachmentParameteriv = (type_glGetFramebufferAttachmentParameteriv)
             context->getProcAddress(QLatin1String("glGetFramebufferAttachmentParameterivOES"));
     }
 #endif
-    if (funcs->getFramebufferAttachmentParameteriv) {
+    if (!funcs->getFramebufferAttachmentParameteriv) {
         funcs->getFramebufferAttachmentParameteriv = (type_glGetFramebufferAttachmentParameteriv)
             context->getProcAddress(QLatin1String("glGetFramebufferAttachmentParameterivEXT"));
     }
-    if (funcs->getFramebufferAttachmentParameteriv) {
+    if (!funcs->getFramebufferAttachmentParameteriv) {
         funcs->getFramebufferAttachmentParameteriv = (type_glGetFramebufferAttachmentParameteriv)
             context->getProcAddress(QLatin1String("glGetFramebufferAttachmentParameterivARB"));
     }
@@ -2541,8 +2339,6 @@ static void qglfResolveGetFramebufferAttachmentParameteriv(GLenum target, GLenum
         funcs->getFramebufferAttachmentParameteriv = qglfResolveGetFramebufferAttachmentParameteriv;
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveGetProgramiv(GLuint program, GLenum pname, GLint* params)
 {
     typedef void (QGLF_APIENTRYP type_glGetProgramiv)(GLuint program, GLenum pname, GLint* params);
@@ -2552,7 +2348,7 @@ static void qglfResolveGetProgramiv(GLuint program, GLenum pname, GLint* params)
 
     funcs->getProgramiv = (type_glGetProgramiv)
         context->getProcAddress(QLatin1String("glGetProgramiv"));
-    if (funcs->getProgramiv) {
+    if (!funcs->getProgramiv) {
         funcs->getProgramiv = (type_glGetProgramiv)
             context->getProcAddress(QLatin1String("glGetObjectParameterivARB"));
     }
@@ -2572,7 +2368,7 @@ static void qglfResolveGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsize
 
     funcs->getProgramInfoLog = (type_glGetProgramInfoLog)
         context->getProcAddress(QLatin1String("glGetProgramInfoLog"));
-    if (funcs->getProgramInfoLog) {
+    if (!funcs->getProgramInfoLog) {
         funcs->getProgramInfoLog = (type_glGetProgramInfoLog)
             context->getProcAddress(QLatin1String("glGetInfoLogARB"));
     }
@@ -2582,8 +2378,6 @@ static void qglfResolveGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsize
     else
         funcs->getProgramInfoLog = qglfResolveGetProgramInfoLog;
 }
-
-#endif
 
 static void qglfResolveGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params)
 {
@@ -2595,16 +2389,16 @@ static void qglfResolveGetRenderbufferParameteriv(GLenum target, GLenum pname, G
     funcs->getRenderbufferParameteriv = (type_glGetRenderbufferParameteriv)
         context->getProcAddress(QLatin1String("glGetRenderbufferParameteriv"));
 #ifdef QT_OPENGL_ES
-    if (funcs->getRenderbufferParameteriv) {
+    if (!funcs->getRenderbufferParameteriv) {
         funcs->getRenderbufferParameteriv = (type_glGetRenderbufferParameteriv)
             context->getProcAddress(QLatin1String("glGetRenderbufferParameterivOES"));
     }
 #endif
-    if (funcs->getRenderbufferParameteriv) {
+    if (!funcs->getRenderbufferParameteriv) {
         funcs->getRenderbufferParameteriv = (type_glGetRenderbufferParameteriv)
             context->getProcAddress(QLatin1String("glGetRenderbufferParameterivEXT"));
     }
-    if (funcs->getRenderbufferParameteriv) {
+    if (!funcs->getRenderbufferParameteriv) {
         funcs->getRenderbufferParameteriv = (type_glGetRenderbufferParameteriv)
             context->getProcAddress(QLatin1String("glGetRenderbufferParameterivARB"));
     }
@@ -2615,8 +2409,6 @@ static void qglfResolveGetRenderbufferParameteriv(GLenum target, GLenum pname, G
         funcs->getRenderbufferParameteriv = qglfResolveGetRenderbufferParameteriv;
 }
 
-#ifndef QT_OPENGL_ES_1
-
 static void qglfResolveGetShaderiv(GLuint shader, GLenum pname, GLint* params)
 {
     typedef void (QGLF_APIENTRYP type_glGetShaderiv)(GLuint shader, GLenum pname, GLint* params);
@@ -2626,7 +2418,7 @@ static void qglfResolveGetShaderiv(GLuint shader, GLenum pname, GLint* params)
 
     funcs->getShaderiv = (type_glGetShaderiv)
         context->getProcAddress(QLatin1String("glGetShaderiv"));
-    if (funcs->getShaderiv) {
+    if (!funcs->getShaderiv) {
         funcs->getShaderiv = (type_glGetShaderiv)
             context->getProcAddress(QLatin1String("glGetObjectParameterivARB"));
     }
@@ -2646,7 +2438,7 @@ static void qglfResolveGetShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei*
 
     funcs->getShaderInfoLog = (type_glGetShaderInfoLog)
         context->getProcAddress(QLatin1String("glGetShaderInfoLog"));
-    if (funcs->getShaderInfoLog) {
+    if (!funcs->getShaderInfoLog) {
         funcs->getShaderInfoLog = (type_glGetShaderInfoLog)
             context->getProcAddress(QLatin1String("glGetInfoLogARB"));
     }
@@ -2674,16 +2466,16 @@ static void qglfResolveGetShaderPrecisionFormat(GLenum shadertype, GLenum precis
     funcs->getShaderPrecisionFormat = (type_glGetShaderPrecisionFormat)
         context->getProcAddress(QLatin1String("glGetShaderPrecisionFormat"));
 #ifdef QT_OPENGL_ES
-    if (funcs->getShaderPrecisionFormat) {
+    if (!funcs->getShaderPrecisionFormat) {
         funcs->getShaderPrecisionFormat = (type_glGetShaderPrecisionFormat)
             context->getProcAddress(QLatin1String("glGetShaderPrecisionFormatOES"));
     }
 #endif
-    if (funcs->getShaderPrecisionFormat) {
+    if (!funcs->getShaderPrecisionFormat) {
         funcs->getShaderPrecisionFormat = (type_glGetShaderPrecisionFormat)
             context->getProcAddress(QLatin1String("glGetShaderPrecisionFormatEXT"));
     }
-    if (funcs->getShaderPrecisionFormat) {
+    if (!funcs->getShaderPrecisionFormat) {
         funcs->getShaderPrecisionFormat = (type_glGetShaderPrecisionFormat)
             context->getProcAddress(QLatin1String("glGetShaderPrecisionFormatARB"));
     }
@@ -2703,7 +2495,7 @@ static void qglfResolveGetShaderSource(GLuint shader, GLsizei bufsize, GLsizei* 
 
     funcs->getShaderSource = (type_glGetShaderSource)
         context->getProcAddress(QLatin1String("glGetShaderSource"));
-    if (funcs->getShaderSource) {
+    if (!funcs->getShaderSource) {
         funcs->getShaderSource = (type_glGetShaderSource)
             context->getProcAddress(QLatin1String("glGetShaderSourceARB"));
     }
@@ -2723,7 +2515,7 @@ static void qglfResolveGetUniformfv(GLuint program, GLint location, GLfloat* par
 
     funcs->getUniformfv = (type_glGetUniformfv)
         context->getProcAddress(QLatin1String("glGetUniformfv"));
-    if (funcs->getUniformfv) {
+    if (!funcs->getUniformfv) {
         funcs->getUniformfv = (type_glGetUniformfv)
             context->getProcAddress(QLatin1String("glGetUniformfvARB"));
     }
@@ -2743,7 +2535,7 @@ static void qglfResolveGetUniformiv(GLuint program, GLint location, GLint* param
 
     funcs->getUniformiv = (type_glGetUniformiv)
         context->getProcAddress(QLatin1String("glGetUniformiv"));
-    if (funcs->getUniformiv) {
+    if (!funcs->getUniformiv) {
         funcs->getUniformiv = (type_glGetUniformiv)
             context->getProcAddress(QLatin1String("glGetUniformivARB"));
     }
@@ -2763,7 +2555,7 @@ static int qglfResolveGetUniformLocation(GLuint program, const char* name)
 
     funcs->getUniformLocation = (type_glGetUniformLocation)
         context->getProcAddress(QLatin1String("glGetUniformLocation"));
-    if (funcs->getUniformLocation) {
+    if (!funcs->getUniformLocation) {
         funcs->getUniformLocation = (type_glGetUniformLocation)
             context->getProcAddress(QLatin1String("glGetUniformLocationARB"));
     }
@@ -2783,7 +2575,7 @@ static void qglfResolveGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* pa
 
     funcs->getVertexAttribfv = (type_glGetVertexAttribfv)
         context->getProcAddress(QLatin1String("glGetVertexAttribfv"));
-    if (funcs->getVertexAttribfv) {
+    if (!funcs->getVertexAttribfv) {
         funcs->getVertexAttribfv = (type_glGetVertexAttribfv)
             context->getProcAddress(QLatin1String("glGetVertexAttribfvARB"));
     }
@@ -2803,7 +2595,7 @@ static void qglfResolveGetVertexAttribiv(GLuint index, GLenum pname, GLint* para
 
     funcs->getVertexAttribiv = (type_glGetVertexAttribiv)
         context->getProcAddress(QLatin1String("glGetVertexAttribiv"));
-    if (funcs->getVertexAttribiv) {
+    if (!funcs->getVertexAttribiv) {
         funcs->getVertexAttribiv = (type_glGetVertexAttribiv)
             context->getProcAddress(QLatin1String("glGetVertexAttribivARB"));
     }
@@ -2823,7 +2615,7 @@ static void qglfResolveGetVertexAttribPointerv(GLuint index, GLenum pname, void*
 
     funcs->getVertexAttribPointerv = (type_glGetVertexAttribPointerv)
         context->getProcAddress(QLatin1String("glGetVertexAttribPointerv"));
-    if (funcs->getVertexAttribPointerv) {
+    if (!funcs->getVertexAttribPointerv) {
         funcs->getVertexAttribPointerv = (type_glGetVertexAttribPointerv)
             context->getProcAddress(QLatin1String("glGetVertexAttribPointervARB"));
     }
@@ -2844,16 +2636,16 @@ static GLboolean qglfResolveIsBuffer(GLuint buffer)
     funcs->isBuffer = (type_glIsBuffer)
         context->getProcAddress(QLatin1String("glIsBuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->isBuffer) {
+    if (!funcs->isBuffer) {
         funcs->isBuffer = (type_glIsBuffer)
             context->getProcAddress(QLatin1String("glIsBufferOES"));
     }
 #endif
-    if (funcs->isBuffer) {
+    if (!funcs->isBuffer) {
         funcs->isBuffer = (type_glIsBuffer)
             context->getProcAddress(QLatin1String("glIsBufferEXT"));
     }
-    if (funcs->isBuffer) {
+    if (!funcs->isBuffer) {
         funcs->isBuffer = (type_glIsBuffer)
             context->getProcAddress(QLatin1String("glIsBufferARB"));
     }
@@ -2863,8 +2655,6 @@ static GLboolean qglfResolveIsBuffer(GLuint buffer)
     funcs->isBuffer = qglfResolveIsBuffer;
     return GLboolean(0);
 }
-
-#endif
 
 static GLboolean qglfResolveIsFramebuffer(GLuint framebuffer)
 {
@@ -2876,16 +2666,16 @@ static GLboolean qglfResolveIsFramebuffer(GLuint framebuffer)
     funcs->isFramebuffer = (type_glIsFramebuffer)
         context->getProcAddress(QLatin1String("glIsFramebuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->isFramebuffer) {
+    if (!funcs->isFramebuffer) {
         funcs->isFramebuffer = (type_glIsFramebuffer)
             context->getProcAddress(QLatin1String("glIsFramebufferOES"));
     }
 #endif
-    if (funcs->isFramebuffer) {
+    if (!funcs->isFramebuffer) {
         funcs->isFramebuffer = (type_glIsFramebuffer)
             context->getProcAddress(QLatin1String("glIsFramebufferEXT"));
     }
-    if (funcs->isFramebuffer) {
+    if (!funcs->isFramebuffer) {
         funcs->isFramebuffer = (type_glIsFramebuffer)
             context->getProcAddress(QLatin1String("glIsFramebufferARB"));
     }
@@ -2895,8 +2685,6 @@ static GLboolean qglfResolveIsFramebuffer(GLuint framebuffer)
     funcs->isFramebuffer = qglfResolveIsFramebuffer;
     return GLboolean(0);
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static GLboolean qglfSpecialIsProgram(GLuint program)
 {
@@ -2912,7 +2700,7 @@ static GLboolean qglfResolveIsProgram(GLuint program)
 
     funcs->isProgram = (type_glIsProgram)
         context->getProcAddress(QLatin1String("glIsProgram"));
-    if (funcs->isProgram) {
+    if (!funcs->isProgram) {
         funcs->isProgram = (type_glIsProgram)
             context->getProcAddress(QLatin1String("glIsProgramARB"));
     }
@@ -2922,8 +2710,6 @@ static GLboolean qglfResolveIsProgram(GLuint program)
 
     return funcs->isProgram(program);
 }
-
-#endif
 
 static GLboolean qglfResolveIsRenderbuffer(GLuint renderbuffer)
 {
@@ -2935,16 +2721,16 @@ static GLboolean qglfResolveIsRenderbuffer(GLuint renderbuffer)
     funcs->isRenderbuffer = (type_glIsRenderbuffer)
         context->getProcAddress(QLatin1String("glIsRenderbuffer"));
 #ifdef QT_OPENGL_ES
-    if (funcs->isRenderbuffer) {
+    if (!funcs->isRenderbuffer) {
         funcs->isRenderbuffer = (type_glIsRenderbuffer)
             context->getProcAddress(QLatin1String("glIsRenderbufferOES"));
     }
 #endif
-    if (funcs->isRenderbuffer) {
+    if (!funcs->isRenderbuffer) {
         funcs->isRenderbuffer = (type_glIsRenderbuffer)
             context->getProcAddress(QLatin1String("glIsRenderbufferEXT"));
     }
-    if (funcs->isRenderbuffer) {
+    if (!funcs->isRenderbuffer) {
         funcs->isRenderbuffer = (type_glIsRenderbuffer)
             context->getProcAddress(QLatin1String("glIsRenderbufferARB"));
     }
@@ -2954,8 +2740,6 @@ static GLboolean qglfResolveIsRenderbuffer(GLuint renderbuffer)
     funcs->isRenderbuffer = qglfResolveIsRenderbuffer;
     return GLboolean(0);
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static GLboolean qglfSpecialIsShader(GLuint shader)
 {
@@ -2971,7 +2755,7 @@ static GLboolean qglfResolveIsShader(GLuint shader)
 
     funcs->isShader = (type_glIsShader)
         context->getProcAddress(QLatin1String("glIsShader"));
-    if (funcs->isShader) {
+    if (!funcs->isShader) {
         funcs->isShader = (type_glIsShader)
             context->getProcAddress(QLatin1String("glIsShaderARB"));
     }
@@ -2991,7 +2775,7 @@ static void qglfResolveLinkProgram(GLuint program)
 
     funcs->linkProgram = (type_glLinkProgram)
         context->getProcAddress(QLatin1String("glLinkProgram"));
-    if (funcs->linkProgram) {
+    if (!funcs->linkProgram) {
         funcs->linkProgram = (type_glLinkProgram)
             context->getProcAddress(QLatin1String("glLinkProgramARB"));
     }
@@ -3015,7 +2799,7 @@ static void qglfResolveReleaseShaderCompiler()
 
     funcs->releaseShaderCompiler = (type_glReleaseShaderCompiler)
         context->getProcAddress(QLatin1String("glReleaseShaderCompiler"));
-    if (funcs->releaseShaderCompiler) {
+    if (!funcs->releaseShaderCompiler) {
         funcs->releaseShaderCompiler = (type_glReleaseShaderCompiler)
             context->getProcAddress(QLatin1String("glReleaseShaderCompilerARB"));
     }
@@ -3025,8 +2809,6 @@ static void qglfResolveReleaseShaderCompiler()
 
     funcs->releaseShaderCompiler();
 }
-
-#endif
 
 static void qglfResolveRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
 {
@@ -3038,16 +2820,16 @@ static void qglfResolveRenderbufferStorage(GLenum target, GLenum internalformat,
     funcs->renderbufferStorage = (type_glRenderbufferStorage)
         context->getProcAddress(QLatin1String("glRenderbufferStorage"));
 #ifdef QT_OPENGL_ES
-    if (funcs->renderbufferStorage) {
+    if (!funcs->renderbufferStorage) {
         funcs->renderbufferStorage = (type_glRenderbufferStorage)
             context->getProcAddress(QLatin1String("glRenderbufferStorageOES"));
     }
 #endif
-    if (funcs->renderbufferStorage) {
+    if (!funcs->renderbufferStorage) {
         funcs->renderbufferStorage = (type_glRenderbufferStorage)
             context->getProcAddress(QLatin1String("glRenderbufferStorageEXT"));
     }
-    if (funcs->renderbufferStorage) {
+    if (!funcs->renderbufferStorage) {
         funcs->renderbufferStorage = (type_glRenderbufferStorage)
             context->getProcAddress(QLatin1String("glRenderbufferStorageARB"));
     }
@@ -3057,8 +2839,6 @@ static void qglfResolveRenderbufferStorage(GLenum target, GLenum internalformat,
     else
         funcs->renderbufferStorage = qglfResolveRenderbufferStorage;
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static void qglfResolveSampleCoverage(GLclampf value, GLboolean invert)
 {
@@ -3070,16 +2850,16 @@ static void qglfResolveSampleCoverage(GLclampf value, GLboolean invert)
     funcs->sampleCoverage = (type_glSampleCoverage)
         context->getProcAddress(QLatin1String("glSampleCoverage"));
 #ifdef QT_OPENGL_ES
-    if (funcs->sampleCoverage) {
+    if (!funcs->sampleCoverage) {
         funcs->sampleCoverage = (type_glSampleCoverage)
             context->getProcAddress(QLatin1String("glSampleCoverageOES"));
     }
 #endif
-    if (funcs->sampleCoverage) {
+    if (!funcs->sampleCoverage) {
         funcs->sampleCoverage = (type_glSampleCoverage)
             context->getProcAddress(QLatin1String("glSampleCoverageEXT"));
     }
-    if (funcs->sampleCoverage) {
+    if (!funcs->sampleCoverage) {
         funcs->sampleCoverage = (type_glSampleCoverage)
             context->getProcAddress(QLatin1String("glSampleCoverageARB"));
     }
@@ -3088,15 +2868,6 @@ static void qglfResolveSampleCoverage(GLclampf value, GLboolean invert)
         funcs->sampleCoverage(value, invert);
     else
         funcs->sampleCoverage = qglfResolveSampleCoverage;
-}
-
-static void qglfSpecialShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
-{
-    Q_UNUSED(n);
-    Q_UNUSED(shaders);
-    Q_UNUSED(binaryformat);
-    Q_UNUSED(binary);
-    Q_UNUSED(length);
 }
 
 static void qglfResolveShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
@@ -3108,15 +2879,15 @@ static void qglfResolveShaderBinary(GLint n, const GLuint* shaders, GLenum binar
 
     funcs->shaderBinary = (type_glShaderBinary)
         context->getProcAddress(QLatin1String("glShaderBinary"));
-    if (funcs->shaderBinary) {
+    if (!funcs->shaderBinary) {
         funcs->shaderBinary = (type_glShaderBinary)
             context->getProcAddress(QLatin1String("glShaderBinaryARB"));
     }
 
-    if (!funcs->shaderBinary)
-        funcs->shaderBinary = qglfSpecialShaderBinary;
-
-    funcs->shaderBinary(n, shaders, binaryformat, binary, length);
+    if (funcs->shaderBinary)
+        funcs->shaderBinary(n, shaders, binaryformat, binary, length);
+    else
+        funcs->shaderBinary = qglfResolveShaderBinary;
 }
 
 static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
@@ -3128,7 +2899,7 @@ static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** s
 
     funcs->shaderSource = (type_glShaderSource)
         context->getProcAddress(QLatin1String("glShaderSource"));
-    if (funcs->shaderSource) {
+    if (!funcs->shaderSource) {
         funcs->shaderSource = (type_glShaderSource)
             context->getProcAddress(QLatin1String("glShaderSourceARB"));
     }
@@ -3137,14 +2908,6 @@ static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** s
         funcs->shaderSource(shader, count, string, length);
     else
         funcs->shaderSource = qglfResolveShaderSource;
-}
-
-#endif
-
-static void qglfSpecialStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
-{
-    Q_UNUSED(face);
-    ::glStencilFunc(func, ref, mask);
 }
 
 static void qglfResolveStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
@@ -3157,30 +2920,24 @@ static void qglfResolveStencilFuncSeparate(GLenum face, GLenum func, GLint ref, 
     funcs->stencilFuncSeparate = (type_glStencilFuncSeparate)
         context->getProcAddress(QLatin1String("glStencilFuncSeparate"));
 #ifdef QT_OPENGL_ES
-    if (funcs->stencilFuncSeparate) {
+    if (!funcs->stencilFuncSeparate) {
         funcs->stencilFuncSeparate = (type_glStencilFuncSeparate)
             context->getProcAddress(QLatin1String("glStencilFuncSeparateOES"));
     }
 #endif
-    if (funcs->stencilFuncSeparate) {
+    if (!funcs->stencilFuncSeparate) {
         funcs->stencilFuncSeparate = (type_glStencilFuncSeparate)
             context->getProcAddress(QLatin1String("glStencilFuncSeparateEXT"));
     }
-    if (funcs->stencilFuncSeparate) {
+    if (!funcs->stencilFuncSeparate) {
         funcs->stencilFuncSeparate = (type_glStencilFuncSeparate)
             context->getProcAddress(QLatin1String("glStencilFuncSeparateARB"));
     }
 
-    if (!funcs->stencilFuncSeparate)
-        funcs->stencilFuncSeparate = qglfSpecialStencilFuncSeparate;
-
-    funcs->stencilFuncSeparate(face, func, ref, mask);
-}
-
-static void qglfSpecialStencilMaskSeparate(GLenum face, GLuint mask)
-{
-    Q_UNUSED(face);
-    ::glStencilMask(mask);
+    if (funcs->stencilFuncSeparate)
+        funcs->stencilFuncSeparate(face, func, ref, mask);
+    else
+        funcs->stencilFuncSeparate = qglfResolveStencilFuncSeparate;
 }
 
 static void qglfResolveStencilMaskSeparate(GLenum face, GLuint mask)
@@ -3193,30 +2950,24 @@ static void qglfResolveStencilMaskSeparate(GLenum face, GLuint mask)
     funcs->stencilMaskSeparate = (type_glStencilMaskSeparate)
         context->getProcAddress(QLatin1String("glStencilMaskSeparate"));
 #ifdef QT_OPENGL_ES
-    if (funcs->stencilMaskSeparate) {
+    if (!funcs->stencilMaskSeparate) {
         funcs->stencilMaskSeparate = (type_glStencilMaskSeparate)
             context->getProcAddress(QLatin1String("glStencilMaskSeparateOES"));
     }
 #endif
-    if (funcs->stencilMaskSeparate) {
+    if (!funcs->stencilMaskSeparate) {
         funcs->stencilMaskSeparate = (type_glStencilMaskSeparate)
             context->getProcAddress(QLatin1String("glStencilMaskSeparateEXT"));
     }
-    if (funcs->stencilMaskSeparate) {
+    if (!funcs->stencilMaskSeparate) {
         funcs->stencilMaskSeparate = (type_glStencilMaskSeparate)
             context->getProcAddress(QLatin1String("glStencilMaskSeparateARB"));
     }
 
-    if (!funcs->stencilMaskSeparate)
-        funcs->stencilMaskSeparate = qglfSpecialStencilMaskSeparate;
-
-    funcs->stencilMaskSeparate(face, mask);
-}
-
-static void qglfSpecialStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
-{
-    Q_UNUSED(face);
-    ::glStencilOp(fail, zfail, zpass);
+    if (funcs->stencilMaskSeparate)
+        funcs->stencilMaskSeparate(face, mask);
+    else
+        funcs->stencilMaskSeparate = qglfResolveStencilMaskSeparate;
 }
 
 static void qglfResolveStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
@@ -3229,27 +2980,25 @@ static void qglfResolveStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail,
     funcs->stencilOpSeparate = (type_glStencilOpSeparate)
         context->getProcAddress(QLatin1String("glStencilOpSeparate"));
 #ifdef QT_OPENGL_ES
-    if (funcs->stencilOpSeparate) {
+    if (!funcs->stencilOpSeparate) {
         funcs->stencilOpSeparate = (type_glStencilOpSeparate)
             context->getProcAddress(QLatin1String("glStencilOpSeparateOES"));
     }
 #endif
-    if (funcs->stencilOpSeparate) {
+    if (!funcs->stencilOpSeparate) {
         funcs->stencilOpSeparate = (type_glStencilOpSeparate)
             context->getProcAddress(QLatin1String("glStencilOpSeparateEXT"));
     }
-    if (funcs->stencilOpSeparate) {
+    if (!funcs->stencilOpSeparate) {
         funcs->stencilOpSeparate = (type_glStencilOpSeparate)
             context->getProcAddress(QLatin1String("glStencilOpSeparateARB"));
     }
 
-    if (!funcs->stencilOpSeparate)
-        funcs->stencilOpSeparate = qglfSpecialStencilOpSeparate;
-
-    funcs->stencilOpSeparate(face, fail, zfail, zpass);
+    if (funcs->stencilOpSeparate)
+        funcs->stencilOpSeparate(face, fail, zfail, zpass);
+    else
+        funcs->stencilOpSeparate = qglfResolveStencilOpSeparate;
 }
-
-#ifndef QT_OPENGL_ES_1
 
 static void qglfResolveUniform1f(GLint location, GLfloat x)
 {
@@ -3260,7 +3009,7 @@ static void qglfResolveUniform1f(GLint location, GLfloat x)
 
     funcs->uniform1f = (type_glUniform1f)
         context->getProcAddress(QLatin1String("glUniform1f"));
-    if (funcs->uniform1f) {
+    if (!funcs->uniform1f) {
         funcs->uniform1f = (type_glUniform1f)
             context->getProcAddress(QLatin1String("glUniform1fARB"));
     }
@@ -3280,7 +3029,7 @@ static void qglfResolveUniform1fv(GLint location, GLsizei count, const GLfloat* 
 
     funcs->uniform1fv = (type_glUniform1fv)
         context->getProcAddress(QLatin1String("glUniform1fv"));
-    if (funcs->uniform1fv) {
+    if (!funcs->uniform1fv) {
         funcs->uniform1fv = (type_glUniform1fv)
             context->getProcAddress(QLatin1String("glUniform1fvARB"));
     }
@@ -3300,7 +3049,7 @@ static void qglfResolveUniform1i(GLint location, GLint x)
 
     funcs->uniform1i = (type_glUniform1i)
         context->getProcAddress(QLatin1String("glUniform1i"));
-    if (funcs->uniform1i) {
+    if (!funcs->uniform1i) {
         funcs->uniform1i = (type_glUniform1i)
             context->getProcAddress(QLatin1String("glUniform1iARB"));
     }
@@ -3320,7 +3069,7 @@ static void qglfResolveUniform1iv(GLint location, GLsizei count, const GLint* v)
 
     funcs->uniform1iv = (type_glUniform1iv)
         context->getProcAddress(QLatin1String("glUniform1iv"));
-    if (funcs->uniform1iv) {
+    if (!funcs->uniform1iv) {
         funcs->uniform1iv = (type_glUniform1iv)
             context->getProcAddress(QLatin1String("glUniform1ivARB"));
     }
@@ -3340,7 +3089,7 @@ static void qglfResolveUniform2f(GLint location, GLfloat x, GLfloat y)
 
     funcs->uniform2f = (type_glUniform2f)
         context->getProcAddress(QLatin1String("glUniform2f"));
-    if (funcs->uniform2f) {
+    if (!funcs->uniform2f) {
         funcs->uniform2f = (type_glUniform2f)
             context->getProcAddress(QLatin1String("glUniform2fARB"));
     }
@@ -3360,7 +3109,7 @@ static void qglfResolveUniform2fv(GLint location, GLsizei count, const GLfloat* 
 
     funcs->uniform2fv = (type_glUniform2fv)
         context->getProcAddress(QLatin1String("glUniform2fv"));
-    if (funcs->uniform2fv) {
+    if (!funcs->uniform2fv) {
         funcs->uniform2fv = (type_glUniform2fv)
             context->getProcAddress(QLatin1String("glUniform2fvARB"));
     }
@@ -3380,7 +3129,7 @@ static void qglfResolveUniform2i(GLint location, GLint x, GLint y)
 
     funcs->uniform2i = (type_glUniform2i)
         context->getProcAddress(QLatin1String("glUniform2i"));
-    if (funcs->uniform2i) {
+    if (!funcs->uniform2i) {
         funcs->uniform2i = (type_glUniform2i)
             context->getProcAddress(QLatin1String("glUniform2iARB"));
     }
@@ -3400,7 +3149,7 @@ static void qglfResolveUniform2iv(GLint location, GLsizei count, const GLint* v)
 
     funcs->uniform2iv = (type_glUniform2iv)
         context->getProcAddress(QLatin1String("glUniform2iv"));
-    if (funcs->uniform2iv) {
+    if (!funcs->uniform2iv) {
         funcs->uniform2iv = (type_glUniform2iv)
             context->getProcAddress(QLatin1String("glUniform2ivARB"));
     }
@@ -3420,7 +3169,7 @@ static void qglfResolveUniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z
 
     funcs->uniform3f = (type_glUniform3f)
         context->getProcAddress(QLatin1String("glUniform3f"));
-    if (funcs->uniform3f) {
+    if (!funcs->uniform3f) {
         funcs->uniform3f = (type_glUniform3f)
             context->getProcAddress(QLatin1String("glUniform3fARB"));
     }
@@ -3440,7 +3189,7 @@ static void qglfResolveUniform3fv(GLint location, GLsizei count, const GLfloat* 
 
     funcs->uniform3fv = (type_glUniform3fv)
         context->getProcAddress(QLatin1String("glUniform3fv"));
-    if (funcs->uniform3fv) {
+    if (!funcs->uniform3fv) {
         funcs->uniform3fv = (type_glUniform3fv)
             context->getProcAddress(QLatin1String("glUniform3fvARB"));
     }
@@ -3460,7 +3209,7 @@ static void qglfResolveUniform3i(GLint location, GLint x, GLint y, GLint z)
 
     funcs->uniform3i = (type_glUniform3i)
         context->getProcAddress(QLatin1String("glUniform3i"));
-    if (funcs->uniform3i) {
+    if (!funcs->uniform3i) {
         funcs->uniform3i = (type_glUniform3i)
             context->getProcAddress(QLatin1String("glUniform3iARB"));
     }
@@ -3480,7 +3229,7 @@ static void qglfResolveUniform3iv(GLint location, GLsizei count, const GLint* v)
 
     funcs->uniform3iv = (type_glUniform3iv)
         context->getProcAddress(QLatin1String("glUniform3iv"));
-    if (funcs->uniform3iv) {
+    if (!funcs->uniform3iv) {
         funcs->uniform3iv = (type_glUniform3iv)
             context->getProcAddress(QLatin1String("glUniform3ivARB"));
     }
@@ -3500,7 +3249,7 @@ static void qglfResolveUniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z
 
     funcs->uniform4f = (type_glUniform4f)
         context->getProcAddress(QLatin1String("glUniform4f"));
-    if (funcs->uniform4f) {
+    if (!funcs->uniform4f) {
         funcs->uniform4f = (type_glUniform4f)
             context->getProcAddress(QLatin1String("glUniform4fARB"));
     }
@@ -3520,7 +3269,7 @@ static void qglfResolveUniform4fv(GLint location, GLsizei count, const GLfloat* 
 
     funcs->uniform4fv = (type_glUniform4fv)
         context->getProcAddress(QLatin1String("glUniform4fv"));
-    if (funcs->uniform4fv) {
+    if (!funcs->uniform4fv) {
         funcs->uniform4fv = (type_glUniform4fv)
             context->getProcAddress(QLatin1String("glUniform4fvARB"));
     }
@@ -3540,7 +3289,7 @@ static void qglfResolveUniform4i(GLint location, GLint x, GLint y, GLint z, GLin
 
     funcs->uniform4i = (type_glUniform4i)
         context->getProcAddress(QLatin1String("glUniform4i"));
-    if (funcs->uniform4i) {
+    if (!funcs->uniform4i) {
         funcs->uniform4i = (type_glUniform4i)
             context->getProcAddress(QLatin1String("glUniform4iARB"));
     }
@@ -3560,7 +3309,7 @@ static void qglfResolveUniform4iv(GLint location, GLsizei count, const GLint* v)
 
     funcs->uniform4iv = (type_glUniform4iv)
         context->getProcAddress(QLatin1String("glUniform4iv"));
-    if (funcs->uniform4iv) {
+    if (!funcs->uniform4iv) {
         funcs->uniform4iv = (type_glUniform4iv)
             context->getProcAddress(QLatin1String("glUniform4ivARB"));
     }
@@ -3580,7 +3329,7 @@ static void qglfResolveUniformMatrix2fv(GLint location, GLsizei count, GLboolean
 
     funcs->uniformMatrix2fv = (type_glUniformMatrix2fv)
         context->getProcAddress(QLatin1String("glUniformMatrix2fv"));
-    if (funcs->uniformMatrix2fv) {
+    if (!funcs->uniformMatrix2fv) {
         funcs->uniformMatrix2fv = (type_glUniformMatrix2fv)
             context->getProcAddress(QLatin1String("glUniformMatrix2fvARB"));
     }
@@ -3600,7 +3349,7 @@ static void qglfResolveUniformMatrix3fv(GLint location, GLsizei count, GLboolean
 
     funcs->uniformMatrix3fv = (type_glUniformMatrix3fv)
         context->getProcAddress(QLatin1String("glUniformMatrix3fv"));
-    if (funcs->uniformMatrix3fv) {
+    if (!funcs->uniformMatrix3fv) {
         funcs->uniformMatrix3fv = (type_glUniformMatrix3fv)
             context->getProcAddress(QLatin1String("glUniformMatrix3fvARB"));
     }
@@ -3620,7 +3369,7 @@ static void qglfResolveUniformMatrix4fv(GLint location, GLsizei count, GLboolean
 
     funcs->uniformMatrix4fv = (type_glUniformMatrix4fv)
         context->getProcAddress(QLatin1String("glUniformMatrix4fv"));
-    if (funcs->uniformMatrix4fv) {
+    if (!funcs->uniformMatrix4fv) {
         funcs->uniformMatrix4fv = (type_glUniformMatrix4fv)
             context->getProcAddress(QLatin1String("glUniformMatrix4fvARB"));
     }
@@ -3640,7 +3389,7 @@ static void qglfResolveUseProgram(GLuint program)
 
     funcs->useProgram = (type_glUseProgram)
         context->getProcAddress(QLatin1String("glUseProgram"));
-    if (funcs->useProgram) {
+    if (!funcs->useProgram) {
         funcs->useProgram = (type_glUseProgram)
             context->getProcAddress(QLatin1String("glUseProgramObjectARB"));
     }
@@ -3660,7 +3409,7 @@ static void qglfResolveValidateProgram(GLuint program)
 
     funcs->validateProgram = (type_glValidateProgram)
         context->getProcAddress(QLatin1String("glValidateProgram"));
-    if (funcs->validateProgram) {
+    if (!funcs->validateProgram) {
         funcs->validateProgram = (type_glValidateProgram)
             context->getProcAddress(QLatin1String("glValidateProgramARB"));
     }
@@ -3680,7 +3429,7 @@ static void qglfResolveVertexAttrib1f(GLuint indx, GLfloat x)
 
     funcs->vertexAttrib1f = (type_glVertexAttrib1f)
         context->getProcAddress(QLatin1String("glVertexAttrib1f"));
-    if (funcs->vertexAttrib1f) {
+    if (!funcs->vertexAttrib1f) {
         funcs->vertexAttrib1f = (type_glVertexAttrib1f)
             context->getProcAddress(QLatin1String("glVertexAttrib1fARB"));
     }
@@ -3700,7 +3449,7 @@ static void qglfResolveVertexAttrib1fv(GLuint indx, const GLfloat* values)
 
     funcs->vertexAttrib1fv = (type_glVertexAttrib1fv)
         context->getProcAddress(QLatin1String("glVertexAttrib1fv"));
-    if (funcs->vertexAttrib1fv) {
+    if (!funcs->vertexAttrib1fv) {
         funcs->vertexAttrib1fv = (type_glVertexAttrib1fv)
             context->getProcAddress(QLatin1String("glVertexAttrib1fvARB"));
     }
@@ -3720,7 +3469,7 @@ static void qglfResolveVertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
 
     funcs->vertexAttrib2f = (type_glVertexAttrib2f)
         context->getProcAddress(QLatin1String("glVertexAttrib2f"));
-    if (funcs->vertexAttrib2f) {
+    if (!funcs->vertexAttrib2f) {
         funcs->vertexAttrib2f = (type_glVertexAttrib2f)
             context->getProcAddress(QLatin1String("glVertexAttrib2fARB"));
     }
@@ -3740,7 +3489,7 @@ static void qglfResolveVertexAttrib2fv(GLuint indx, const GLfloat* values)
 
     funcs->vertexAttrib2fv = (type_glVertexAttrib2fv)
         context->getProcAddress(QLatin1String("glVertexAttrib2fv"));
-    if (funcs->vertexAttrib2fv) {
+    if (!funcs->vertexAttrib2fv) {
         funcs->vertexAttrib2fv = (type_glVertexAttrib2fv)
             context->getProcAddress(QLatin1String("glVertexAttrib2fvARB"));
     }
@@ -3760,7 +3509,7 @@ static void qglfResolveVertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat
 
     funcs->vertexAttrib3f = (type_glVertexAttrib3f)
         context->getProcAddress(QLatin1String("glVertexAttrib3f"));
-    if (funcs->vertexAttrib3f) {
+    if (!funcs->vertexAttrib3f) {
         funcs->vertexAttrib3f = (type_glVertexAttrib3f)
             context->getProcAddress(QLatin1String("glVertexAttrib3fARB"));
     }
@@ -3780,7 +3529,7 @@ static void qglfResolveVertexAttrib3fv(GLuint indx, const GLfloat* values)
 
     funcs->vertexAttrib3fv = (type_glVertexAttrib3fv)
         context->getProcAddress(QLatin1String("glVertexAttrib3fv"));
-    if (funcs->vertexAttrib3fv) {
+    if (!funcs->vertexAttrib3fv) {
         funcs->vertexAttrib3fv = (type_glVertexAttrib3fv)
             context->getProcAddress(QLatin1String("glVertexAttrib3fvARB"));
     }
@@ -3800,7 +3549,7 @@ static void qglfResolveVertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat
 
     funcs->vertexAttrib4f = (type_glVertexAttrib4f)
         context->getProcAddress(QLatin1String("glVertexAttrib4f"));
-    if (funcs->vertexAttrib4f) {
+    if (!funcs->vertexAttrib4f) {
         funcs->vertexAttrib4f = (type_glVertexAttrib4f)
             context->getProcAddress(QLatin1String("glVertexAttrib4fARB"));
     }
@@ -3820,7 +3569,7 @@ static void qglfResolveVertexAttrib4fv(GLuint indx, const GLfloat* values)
 
     funcs->vertexAttrib4fv = (type_glVertexAttrib4fv)
         context->getProcAddress(QLatin1String("glVertexAttrib4fv"));
-    if (funcs->vertexAttrib4fv) {
+    if (!funcs->vertexAttrib4fv) {
         funcs->vertexAttrib4fv = (type_glVertexAttrib4fv)
             context->getProcAddress(QLatin1String("glVertexAttrib4fvARB"));
     }
@@ -3840,7 +3589,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
 
     funcs->vertexAttribPointer = (type_glVertexAttribPointer)
         context->getProcAddress(QLatin1String("glVertexAttribPointer"));
-    if (funcs->vertexAttribPointer) {
+    if (!funcs->vertexAttribPointer) {
         funcs->vertexAttribPointer = (type_glVertexAttribPointer)
             context->getProcAddress(QLatin1String("glVertexAttribPointerARB"));
     }
@@ -3851,70 +3600,52 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
         funcs->vertexAttribPointer = qglfResolveVertexAttribPointer;
 }
 
-#endif
 #endif // !QT_OPENGL_ES_2
 
-QGLFunctionsPrivate::QGLFunctionsPrivate()
+QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
 {
 #ifndef QT_OPENGL_ES_2
-#ifndef QT_OPENGL_ES_1
     activeTexture = qglfResolveActiveTexture;
     attachShader = qglfResolveAttachShader;
     bindAttribLocation = qglfResolveBindAttribLocation;
     bindBuffer = qglfResolveBindBuffer;
-#endif
     bindFramebuffer = qglfResolveBindFramebuffer;
     bindRenderbuffer = qglfResolveBindRenderbuffer;
     blendColor = qglfResolveBlendColor;
     blendEquation = qglfResolveBlendEquation;
     blendEquationSeparate = qglfResolveBlendEquationSeparate;
     blendFuncSeparate = qglfResolveBlendFuncSeparate;
-#ifndef QT_OPENGL_ES_1
     bufferData = qglfResolveBufferData;
     bufferSubData = qglfResolveBufferSubData;
-#endif
     checkFramebufferStatus = qglfResolveCheckFramebufferStatus;
-#ifndef QT_OPENGL_ES_1
     compileShader = qglfResolveCompileShader;
     compressedTexImage2D = qglfResolveCompressedTexImage2D;
     compressedTexSubImage2D = qglfResolveCompressedTexSubImage2D;
     createProgram = qglfResolveCreateProgram;
     createShader = qglfResolveCreateShader;
     deleteBuffers = qglfResolveDeleteBuffers;
-#endif
     deleteFramebuffers = qglfResolveDeleteFramebuffers;
-#ifndef QT_OPENGL_ES_1
     deleteProgram = qglfResolveDeleteProgram;
-#endif
     deleteRenderbuffers = qglfResolveDeleteRenderbuffers;
-#ifndef QT_OPENGL_ES_1
     deleteShader = qglfResolveDeleteShader;
     detachShader = qglfResolveDetachShader;
     disableVertexAttribArray = qglfResolveDisableVertexAttribArray;
     enableVertexAttribArray = qglfResolveEnableVertexAttribArray;
-#endif
     framebufferRenderbuffer = qglfResolveFramebufferRenderbuffer;
     framebufferTexture2D = qglfResolveFramebufferTexture2D;
-#ifndef QT_OPENGL_ES_1
     genBuffers = qglfResolveGenBuffers;
-#endif
     generateMipmap = qglfResolveGenerateMipmap;
     genFramebuffers = qglfResolveGenFramebuffers;
     genRenderbuffers = qglfResolveGenRenderbuffers;
-#ifndef QT_OPENGL_ES_1
     getActiveAttrib = qglfResolveGetActiveAttrib;
     getActiveUniform = qglfResolveGetActiveUniform;
     getAttachedShaders = qglfResolveGetAttachedShaders;
     getAttribLocation = qglfResolveGetAttribLocation;
-#endif
     getBufferParameteriv = qglfResolveGetBufferParameteriv;
     getFramebufferAttachmentParameteriv = qglfResolveGetFramebufferAttachmentParameteriv;
-#ifndef QT_OPENGL_ES_1
     getProgramiv = qglfResolveGetProgramiv;
     getProgramInfoLog = qglfResolveGetProgramInfoLog;
-#endif
     getRenderbufferParameteriv = qglfResolveGetRenderbufferParameteriv;
-#ifndef QT_OPENGL_ES_1
     getShaderiv = qglfResolveGetShaderiv;
     getShaderInfoLog = qglfResolveGetShaderInfoLog;
     getShaderPrecisionFormat = qglfResolveGetShaderPrecisionFormat;
@@ -3926,27 +3657,19 @@ QGLFunctionsPrivate::QGLFunctionsPrivate()
     getVertexAttribiv = qglfResolveGetVertexAttribiv;
     getVertexAttribPointerv = qglfResolveGetVertexAttribPointerv;
     isBuffer = qglfResolveIsBuffer;
-#endif
     isFramebuffer = qglfResolveIsFramebuffer;
-#ifndef QT_OPENGL_ES_1
     isProgram = qglfResolveIsProgram;
-#endif
     isRenderbuffer = qglfResolveIsRenderbuffer;
-#ifndef QT_OPENGL_ES_1
     isShader = qglfResolveIsShader;
     linkProgram = qglfResolveLinkProgram;
     releaseShaderCompiler = qglfResolveReleaseShaderCompiler;
-#endif
     renderbufferStorage = qglfResolveRenderbufferStorage;
-#ifndef QT_OPENGL_ES_1
     sampleCoverage = qglfResolveSampleCoverage;
     shaderBinary = qglfResolveShaderBinary;
     shaderSource = qglfResolveShaderSource;
-#endif
     stencilFuncSeparate = qglfResolveStencilFuncSeparate;
     stencilMaskSeparate = qglfResolveStencilMaskSeparate;
     stencilOpSeparate = qglfResolveStencilOpSeparate;
-#ifndef QT_OPENGL_ES_1
     uniform1f = qglfResolveUniform1f;
     uniform1fv = qglfResolveUniform1fv;
     uniform1i = qglfResolveUniform1i;
@@ -3977,7 +3700,6 @@ QGLFunctionsPrivate::QGLFunctionsPrivate()
     vertexAttrib4f = qglfResolveVertexAttrib4f;
     vertexAttrib4fv = qglfResolveVertexAttrib4fv;
     vertexAttribPointer = qglfResolveVertexAttribPointer;
-#endif
 #endif // !QT_OPENGL_ES_2
 }
 

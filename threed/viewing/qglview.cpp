@@ -41,7 +41,6 @@
 
 #include "qglview.h"
 #include "qglframebufferobject.h"
-#include "qglext.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtGui/qapplication.h>
@@ -575,9 +574,13 @@ void QGLView::initializeGL()
 #endif
 
     // Set the default blend options.
-    qt_gl_BlendColor(0, 0, 0, 0);
-    qt_gl_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    qt_gl_BlendEquation(GL_FUNC_ADD);
+    if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+        painter.glBlendColor(0, 0, 0, 0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+        painter.glBlendEquation(GL_FUNC_ADD);
+    else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+        painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
     painter.setCullFaces(QGL::CullDisabled);
     initializeGL(&painter);
@@ -775,7 +778,8 @@ void QGLView::initializeGL(QGLPainter *painter)
 */
 void QGLView::earlyPaintGL(QGLPainter *painter)
 {
-    painter->clear();
+    Q_UNUSED(painter);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 /*!
@@ -1122,7 +1126,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // Render the pick version of the scene into the framebuffer object.
         if (d->fbo)
             d->fbo->bind();
-        painter.clear();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
         paintGL(&painter);

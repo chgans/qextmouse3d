@@ -81,6 +81,7 @@ public:
         , customEffect(0)
         , hasEffect(false)
         , material(-1)
+        , backMaterial(-1)
         , start(0)
         , count(0)
         , viewNormals(false)
@@ -117,6 +118,7 @@ public:
     QList<QGLSceneNode*> parentNodes;
     bool hasEffect;
     int material;
+    int backMaterial;
     int start;
     int count;
     bool viewNormals;

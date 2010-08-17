@@ -79,7 +79,7 @@
 
     \snippet pvcolor/pvcolor.cpp 2
 
-    This is the buildGeometry() function.  Here a new QGLDisplayList is created
+    This is the buildGeometry() function.  Here a new QGLBuilder is created
     to hold the Q model, and the effect is set on it: QGL::FlatPerVertexColor.
 
     The remainder of the buildGeometry() function is taken up with some math to

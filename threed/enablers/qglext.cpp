@@ -39,14 +39,13 @@
 **
 ****************************************************************************/
 
-#include "qglext.h"
+#include "qglext_p.h"
 #include <QtOpenGL/private/qgl_p.h>
 
 QT_BEGIN_NAMESPACE
 
 #if !defined(QT_OPENGL_ES)
 
-typedef void (APIENTRY *q_PFNGLACTIVETEXTUREPROC) (GLenum);
 typedef void (APIENTRY *q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
 
 class QGLMultiTextureExtensions
@@ -54,12 +53,10 @@ class QGLMultiTextureExtensions
 public:
     QGLMultiTextureExtensions(const QGLContext * = 0)
     {
-        activeTexture = 0;
         clientActiveTexture = 0;
         multiTextureResolved = false;
     }
 
-    q_PFNGLACTIVETEXTUREPROC activeTexture;
     q_PFNGLCLIENTACTIVETEXTUREPROC clientActiveTexture;
     bool multiTextureResolved;
 };
@@ -87,14 +84,6 @@ static QGLMultiTextureExtensions *resolveMultiTextureExtensions
     }
     if (!(extn->multiTextureResolved)) {
         extn->multiTextureResolved = true;
-        if (!extn->activeTexture) {
-            extn->activeTexture = (q_PFNGLACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glActiveTexture"));
-        }
-        if (!extn->activeTexture) {
-            extn->activeTexture = (q_PFNGLACTIVETEXTUREPROC)
-                ctx->getProcAddress(QLatin1String("glActiveTextureARB"));
-        }
         if (!extn->clientActiveTexture) {
             extn->clientActiveTexture = (q_PFNGLCLIENTACTIVETEXTUREPROC)
                 ctx->getProcAddress(QLatin1String("glClientActiveTexture"));
@@ -115,161 +104,6 @@ void qt_gl_ClientActiveTexture(GLenum texture)
     QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
     if (extn->clientActiveTexture)
         extn->clientActiveTexture(texture);
-}
-
-void qt_gl_ActiveTexture(GLenum texture)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLMultiTextureExtensions *extn = resolveMultiTextureExtensions(ctx);
-    if (extn->activeTexture)
-        extn->activeTexture(texture);
-}
-
-#endif
-
-#if !defined(QT_OPENGL_ES_2)
-
-typedef void (APIENTRY *q_PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-typedef void (APIENTRY *q_PFNGLBLENDEQUATIONPROC) (GLenum mode);
-typedef void (APIENTRY *q_PFNGLBLENDFUNCSEPARATEPROC) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
-typedef void (APIENTRY *q_PFNGLBLENDEQUATIONSEPARATEPROC) (GLenum modeRGB, GLenum modeAlpha);
-
-class QGLBlendExtensions
-{
-public:
-    QGLBlendExtensions(const QGLContext * = 0)
-    {
-        blendColor = 0;
-        blendFuncSeparate = 0;
-        blendEquation = 0;
-        blendEquationSeparate = 0;
-        blendResolved = false;
-    }
-
-    q_PFNGLBLENDCOLORPROC blendColor;
-    q_PFNGLBLENDFUNCSEPARATEPROC blendFuncSeparate;
-    q_PFNGLBLENDEQUATIONPROC blendEquation;
-    q_PFNGLBLENDEQUATIONSEPARATEPROC blendEquationSeparate;
-    bool blendResolved;
-};
-
-#if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLBlendExtensions>, qt_blend_funcs)
-#else
-static void qt_blend_funcs_free(void *data)
-{
-    delete reinterpret_cast<QGLBlendExtensions *>(data);
-}
-
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_blend_funcs, (qt_blend_funcs_free))
-#endif
-
-static QGLBlendExtensions *resolveBlendExtensions(const QGLContext *ctx)
-{
-    QGLBlendExtensions *extn =
-        reinterpret_cast<QGLBlendExtensions *>(qt_blend_funcs()->value(ctx));
-    if (!extn) {
-        extn = new QGLBlendExtensions();
-        qt_blend_funcs()->insert(ctx, extn);
-    }
-    if (!(extn->blendResolved)) {
-        extn->blendResolved = true;
-        if (!extn->blendColor) {
-            extn->blendColor = (q_PFNGLBLENDCOLORPROC)
-                ctx->getProcAddress(QLatin1String("glBlendColorEXT"));
-        }
-        if (!extn->blendColor) {
-            extn->blendColor = (q_PFNGLBLENDCOLORPROC)
-                ctx->getProcAddress(QLatin1String("glBlendColorOES"));
-        }
-        if (!extn->blendColor) {
-            extn->blendColor = (q_PFNGLBLENDCOLORPROC)
-                ctx->getProcAddress(QLatin1String("glBlendColor"));
-        }
-        if (!extn->blendFuncSeparate) {
-            extn->blendFuncSeparate = (q_PFNGLBLENDFUNCSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendFuncSeparateEXT"));
-        }
-        if (!extn->blendFuncSeparate) {
-            extn->blendFuncSeparate = (q_PFNGLBLENDFUNCSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendFuncSeparateOES"));
-        }
-        if (!extn->blendFuncSeparate) {
-            extn->blendFuncSeparate = (q_PFNGLBLENDFUNCSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendFuncSeparate"));
-        }
-        if (!extn->blendEquation) {
-            extn->blendEquation = (q_PFNGLBLENDEQUATIONPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquationEXT"));
-        }
-        if (!extn->blendEquation) {
-            extn->blendEquation = (q_PFNGLBLENDEQUATIONPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquationOES"));
-        }
-        if (!extn->blendEquation) {
-            extn->blendEquation = (q_PFNGLBLENDEQUATIONPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquation"));
-        }
-        if (!extn->blendEquationSeparate) {
-            extn->blendEquationSeparate = (q_PFNGLBLENDEQUATIONSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquationSeparateEXT"));
-        }
-        if (!extn->blendEquationSeparate) {
-            extn->blendEquationSeparate = (q_PFNGLBLENDEQUATIONSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquationSeparateOES"));
-        }
-        if (!extn->blendEquationSeparate) {
-            extn->blendEquationSeparate = (q_PFNGLBLENDEQUATIONSEPARATEPROC)
-                ctx->getProcAddress(QLatin1String("glBlendEquationSeparate"));
-        }
-    }
-    return extn;
-}
-
-void qt_gl_BlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
-    if (extn->blendColor)
-        extn->blendColor(red, green, blue, alpha);
-}
-
-void qt_gl_BlendEquation(GLenum mode)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
-    if (extn->blendEquation)
-        extn->blendEquation(mode);
-}
-
-void qt_gl_BlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
-    if (extn->blendEquationSeparate)
-        extn->blendEquationSeparate(modeRGB, modeAlpha);
-    else if (extn->blendEquation)
-        extn->blendEquation(modeRGB);   // Do the best we can.
-}
-
-void qt_gl_BlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
-{
-    const QGLContext *ctx = QGLContext::currentContext();
-    if (!ctx)
-        return;
-    QGLBlendExtensions *extn = resolveBlendExtensions(ctx);
-    if (extn->blendFuncSeparate)
-        extn->blendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
-    else
-        glBlendFunc(srcRGB, dstRGB);    // Do the best we can.
 }
 
 #endif

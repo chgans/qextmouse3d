@@ -131,6 +131,26 @@ private:
     static void updateLargestFree(Node *node);
 };
 
+class Q_QT3D_EXPORT QUniformAreaAllocator : public QAreaAllocator
+{
+public:
+    QUniformAreaAllocator(const QSize &size, const QSize &uniformSize);
+    virtual ~QUniformAreaAllocator();
+
+    QSize uniformSize() const { return m_uniformSize; }
+
+    void expand(const QSize &size);
+    QRect allocate(const QSize &size);
+    void release(const QRect &rect);
+    int overhead() const;
+
+private:
+    QSize m_uniformSize;
+    QSize m_gridSize;
+    int *m_grid;
+    int m_firstFree;
+};
+
 QT_END_NAMESPACE
 
 QT_END_HEADER
