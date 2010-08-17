@@ -55,6 +55,7 @@
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglmaterial.h"
+#include "qglabstractsurface.h"
 #include "qmatrix4x4stack.h"
 #include "qglcamera.h"
 #include "qvector2darray.h"
@@ -77,6 +78,7 @@ class QGLFramebufferObject;
 class QGLSceneNode;
 class QGLRenderOrderRepository;
 class QGLRenderSequencer;
+class QGLAbstractSurface;
 
 class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
 {
@@ -85,12 +87,14 @@ public:
     explicit QGLPainter(const QGLContext *context);
     explicit QGLPainter(QPaintDevice *device);
     explicit QGLPainter(QPainter *painter);
+    explicit QGLPainter(QGLAbstractSurface *surface);
     virtual ~QGLPainter();
 
     bool begin();
     bool begin(const QGLContext *context);
     bool begin(QPaintDevice *device);
     bool begin(QPainter *painter);
+    bool begin(QGLAbstractSurface *surface);
     bool end();
     bool isActive() const;
 
@@ -110,29 +114,9 @@ public:
     };
     Q_DECLARE_FLAGS(Updates, Update);
 
-    void clear(QGL::ClearBuffers buffers = QGL::ClearColorBuffer | QGL::ClearDepthBuffer);
     void setClearColor(const QColor& color);
-    void setClearDepth(qreal depth);
-    void setClearStencil(GLint value);
 
-    void setDepthTestingEnabled(bool value);
-    void setStencilTestingEnabled(bool value);
-    void setBlendingEnabled(bool value);
-
-    QRect viewport() const;
-    void setViewport(const QRect& rect);
-    void setViewport(const QSize& size);
-    void setViewport(int width, int height);
-    void resetViewport();
-
-    QPoint viewportOffset() const;
-    void setViewportOffset(const QPoint& point);
-
-    QRect scissor() const;
     void setScissor(const QRect& rect);
-    void intersectScissor(const QRect& rect);
-    void expandScissor(const QRect& rect);
-    void resetScissor();
 
     QMatrix4x4Stack& projectionMatrix();
     QMatrix4x4Stack& modelViewMatrix();
@@ -142,7 +126,7 @@ public:
     QGL::Eye eye() const;
     void setEye(QGL::Eye eye);
 
-    void setCamera(QGLCamera *camera);
+    void setCamera(const QGLCamera *camera);
 
     bool isCullable(const QVector3D& point) const;
     bool isCullable(const QBox3D& box) const;
@@ -187,13 +171,9 @@ public:
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
     virtual void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
 
-    void pushSurface(QGLFramebufferObject *fbo);
-    QGLFramebufferObject *popSurface();
-    QGLFramebufferObject *currentSurface() const;
-    QSize surfaceSize() const;
-
-    void setPointSize(qreal size);
-    void setLineWidth(qreal width);
+    void pushSurface(QGLAbstractSurface *surface);
+    QGLAbstractSurface *popSurface();
+    QGLAbstractSurface *currentSurface() const;
 
     void setCullFaces(QGL::CullFaces faces);
 
@@ -233,33 +213,12 @@ private:
 #ifndef QT_NO_DEBUG
     void checkRequiredFields();
 #endif
+
+    bool begin(const QGLContext *context, QGLAbstractSurface *surface,
+               bool destroySurface = true);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLPainter::Updates)
-
-inline void QGLPainter::setDepthTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
-}
-
-inline void QGLPainter::setStencilTestingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_STENCIL_TEST);
-    else
-        glDisable(GL_STENCIL_TEST);
-}
-
-inline void QGLPainter::setBlendingEnabled(bool value)
-{
-    if (value)
-        glEnable(GL_BLEND);
-    else
-        glDisable(GL_BLEND);
-}
 
 QT_END_NAMESPACE
 

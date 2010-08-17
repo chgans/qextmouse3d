@@ -67,6 +67,9 @@
 #include "qgeometrydata.h"
 #include "qglvertexbuffer_p.h"
 #include "qmatrix4x4stack_p.h"
+#include "qglwidgetsurface.h"
+#include "qglpixelbuffersurface.h"
+#include "qglpaintersurface_p.h"
 
 #undef glActiveTexture
 
@@ -109,7 +112,6 @@ QT_BEGIN_NAMESPACE
 
 QGLPainterPrivate::QGLPainterPrivate()
     : ref(1),
-      activePaintEngine(0),
       eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
@@ -121,7 +123,6 @@ QGLPainterPrivate::QGLPainterPrivate()
       frontColorMaterial(0),
       backColorMaterial(0),
       viewingCube(QVector3D(-1, -1, -1), QVector3D(1, 1, 1)),
-      scissor(0, 0, -3, -3),
       color(255, 255, 255, 255),
       updates(QGLPainter::UpdateAll),
       pick(0),
@@ -292,7 +293,18 @@ QGLPainter::QGLPainter(QPainter *painter)
     : d_ptr(0)
 {
     begin(painter);
+}
 
+/*!
+    Constructs a new GL painter and attaches it to the GL context associated
+    with \a surface.
+
+    \sa begin(), isActive()
+*/
+QGLPainter::QGLPainter(QGLAbstractSurface *surface)
+    : d_ptr(0)
+{
+    begin(surface);
 }
 
 /*!
@@ -333,7 +345,29 @@ bool QGLPainter::begin(const QGLContext *context)
     if (!context)
         return false;
     end();
-    const_cast<QGLContext *>(context)->makeCurrent();
+    return begin(context, QGLAbstractSurface::createSurfaceForContext(context));
+}
+
+/*!
+    \internal
+*/
+bool QGLPainter::begin
+    (const QGLContext *context, QGLAbstractSurface *surface,
+     bool destroySurface)
+{
+    // Activate the main surface for the context.
+    if (!surface->activate()) {
+        if (destroySurface)
+            delete surface;
+        return false;
+    }
+
+    // If we don't have a context specified, then use the one
+    // that the surface just made current.
+    if (!context)
+        context = QGLContext::currentContext();
+
+    // Find the QGLPainterPrivate for the context, or create a new one.
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
     if (d_ptr->renderSequencer)
@@ -341,6 +375,13 @@ bool QGLPainter::begin(const QGLContext *context)
         d_ptr->renderSequencer->reset();
         d_ptr->renderSequencer->setPainter(this);
     }
+
+    // Push a main surface descriptor onto the surface stack.
+    QGLPainterSurfaceInfo psurf;
+    psurf.surface = surface;
+    psurf.destroySurface = destroySurface;
+    psurf.mainSurface = true;
+    d_ptr->surfaceStack.append(psurf);
 
     // Force the matrices to be updated the first time we use them.
     d_ptr->modelViewMatrix.setDirty(true);
@@ -369,33 +410,14 @@ bool QGLPainter::begin(QPaintDevice *device)
     int devType = device->devType();
     if (devType == QInternal::Widget) {
         QWidget *widget = static_cast<QWidget *>(device);
-
-        // Handle the easy QGLWidget case first.
         QGLWidget *glWidget = qobject_cast<QGLWidget *>(widget);
         if (glWidget)
-            return begin(glWidget->context());
-
-        // See if there is a QPainter active for the widget's window surface.
-        QWindowSurface *surf = widget->windowSurface();
-        if (surf) {
-            QPaintDevice *surfDevice = surf->paintDevice();
-            if (surfDevice && surfDevice->paintingActive()) {
-                // Check that the QPaintEngine is OpenGL and that the
-                // currently active QPainter on that engine is this widget.
-                QPaintEngine *engine = surfDevice->paintEngine();
-                if (engine &&
-                        (engine->type() == QPaintEngine::OpenGL ||
-                         engine->type() == QPaintEngine::OpenGL2)) {
-                    QPainter *painter = engine->painter();
-                    if (painter && painter->device() == device)
-                        return begin(painter);
-                }
-            }
-        }
+            return begin(glWidget->context(), new QGLWidgetSurface(widget));
+        else
+            return begin(0, new QGLWidgetSurface(widget));
     } else if (devType == QInternal::Pbuffer) {
         QGLPixelBuffer *pbuffer = static_cast<QGLPixelBuffer *>(device);
-        if (pbuffer->makeCurrent())
-            return begin();
+        return begin(0, new QGLPixelBufferSurface(pbuffer));
     }
     return false;
 }
@@ -424,22 +446,22 @@ bool QGLPainter::begin(QPainter *painter)
             engine->type() != QPaintEngine::OpenGL2)
         return false;
 
-    // Force the OpenGL paint engine to flush its GL state
-    // so that we can take over drawing.
-    painter->beginNativePainting();
-
     // Begin GL painting operations.
-    bool result = begin(QGLContext::currentContext());
+    return begin(0, new QGLPainterSurface(painter));
+}
 
-    // Remember the paint engine so that end() can call endNativePainting().
-    if (result) {
-        Q_D(QGLPainter);
-        if (engine->isExtended())
-            d->activePaintEngine = static_cast<QPaintEngineEx *>(engine);
-        else
-            d->activePaintEngine = 0;
-    }
-    return result;
+/*!
+    Begins painting to \a surface.  Returns false if \a surface is
+    null or could not be activated.
+
+    \sa end(), QGLAbstractSurface::activate()
+*/
+bool QGLPainter::begin(QGLAbstractSurface *surface)
+{
+    if (!surface)
+        return false;
+    end();
+    return begin(0, surface, false);
 }
 
 /*!
@@ -462,34 +484,40 @@ bool QGLPainter::begin(QPainter *painter)
 */
 bool QGLPainter::end()
 {
-    if (!d_ptr)
+    Q_D(QGLPainter);
+    if (!d)
         return false;
-    if (d_ptr->boundVertexBuffer) {
+
+    // Unbind the current vertex and index buffers.
+    if (d->boundVertexBuffer) {
         QGLBuffer::release(QGLBuffer::VertexBuffer);
-        d_ptr->boundVertexBuffer = 0;
+        d->boundVertexBuffer = 0;
     }
-    if (d_ptr->boundIndexBuffer) {
+    if (d->boundIndexBuffer) {
         QGLBuffer::release(QGLBuffer::IndexBuffer);
-        d_ptr->boundIndexBuffer = 0;
+        d->boundIndexBuffer = 0;
     }
-    if (!d_ptr->surfaceStack.isEmpty() && int(d_ptr->ref) <= 2) {
-        // Restore the default drawing surface before ending painting
-        // operations.  This is needed for proper interoperation with
-        // the OpenGL paint engine which will assume that it is drawing
-        // to the default drawing surface after endNativePainting().
-        // The ref needs to be 2 or less so that we don't do this
-        // if the QGLPainter was nested within another instance of itself.
-        QGLFramebufferObject *fbo = d_ptr->surfaceStack.last();
-        if (fbo)
-            fbo->release();
-        d_ptr->surfaceStack.clear();
+
+    // Pop surfaces from the surface stack until we reach a
+    // main surface.  Then deactivate the main surface.
+    int size = d->surfaceStack.size();
+    while (size > 0) {
+        --size;
+        QGLPainterSurfaceInfo &surf = d->surfaceStack[size];
+        if (surf.mainSurface) {
+            surf.surface->deactivate();
+            if (surf.destroySurface)
+                delete surf.surface;
+            break;
+        } else if (size > 0) {
+            surf.surface->deactivate(d->surfaceStack[size - 1].surface);
+        }
     }
-    if (d_ptr->activePaintEngine) {
-        d_ptr->activePaintEngine->endNativePainting();
-        d_ptr->activePaintEngine = 0;
-    }
-    if (!d_ptr->ref.deref())
-        delete d_ptr;
+    d->surfaceStack.resize(size);
+
+    // Destroy the QGLPainterPrivate if this is the last reference.
+    if (!d->ref.deref())
+        delete d;
     d_ptr = 0;
     return true;
 }
@@ -543,22 +571,8 @@ bool QGLPainter::isFixedFunction() const
 }
 
 /*!
-    Clears the specified rendering \a buffers.  The default \a buffers
-    value is QGL::ClearColorBuffer | QGL::ClearDepthBuffer, which
-    indicates that the color and depth buffers should be cleared.
-
-    \sa setClearColor(), setClearDepth(), setClearStencil()
-*/
-void QGLPainter::clear(QGL::ClearBuffers buffers)
-{
-    glClear(GLuint(buffers));
-}
-
-/*!
-    Sets the \a color to use to clear the color buffer when clear()
+    Sets the \a color to use to clear the color buffer when \c{glClear()}
     is called.
-
-    \sa clear()
 */
 void QGLPainter::setClearColor(const QColor& color)
 {
@@ -566,349 +580,37 @@ void QGLPainter::setClearColor(const QColor& color)
 }
 
 /*!
-    Sets the \a depth to use to clear the depth buffer when clear()
-    is called.
+    Sets the scissor \a rect for the current drawing surface
+    to use when \c{GL_SCISSOR_TEST} is enabled.  If \a rect is empty,
+    then the scissor will be set to clip away all drawing.
 
-    \sa clear()
-*/
-void QGLPainter::setClearDepth(qreal depth)
-{
-#if defined(QT_OPENGL_ES)
-    glClearDepthf(depth);
-#else
-    glClearDepth(depth);
-#endif
-}
+    Note that \a rect is in Qt co-ordinates with the origin
+    at the top-left of the drawing surface's viewport rectangle.
+    If the currentSurface() is an instance of QGLSubsurface,
+    then \a rect will be adjusted relative to the subsurface's origin.
 
-/*!
-    Sets the stencil \a value to use to clear the stencil buffer
-    when clear() is called.
-
-    \sa clear()
-*/
-void QGLPainter::setClearStencil(GLint value)
-{
-    glClearStencil(value);
-}
-
-/*!
-    \fn void QGLPainter::setDepthTestingEnabled(bool value)
-
-    Enables or disables depth testing according to \a value.
-    This is a convenience function that is equivalent to
-    \c{glEnable(GL_DEPTH_TEST)} or \c{glDisable(GL_DEPTH_TEST)}.
-*/
-
-/*!
-    \fn void QGLPainter::setStencilTestingEnabled(bool value)
-
-    Enables or disables stencil testing according to \a value.
-    This is a convience function that is equivalent to
-    \c{glEnable(GL_STENCIL_TEST)} or \c{glDisable(GL_STENCIL_TEST)}.
-*/
-
-/*!
-    \fn void QGLPainter::setBlendingEnabled(bool value)
-
-    Enables or disables blending according to \a value.
-    This is a convience function that is equivalent to
-    \c{glEnable(GL_BLEND)} or \c{glDisable(GL_BLEND)}.
-*/
-
-/*!
-    Returns the viewport for the active GL context.  The origin for
-    the returned rectangle is the top-left of the drawing surface.
-
-    \sa setViewport(), resetViewport(), viewportOffset()
-*/
-QRect QGLPainter::viewport() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
-    if (d->viewport.isNull()) {
-        GLint view[4];
-        glGetIntegerv(GL_VIEWPORT, view);
-        d->viewport = QRect(view[0], view[1], view[2], view[3]);
-    }
-    // Convert the GL viewport into standard Qt co-ordinates
-    // and adjust for the surface size and offset.
-    QRect rect;
-    if (d->surfaceStack.isEmpty()) {
-        rect = QRect(d->viewport.x(),
-                     d->context->device()->height() -
-                            (d->viewport.y() + d->viewport.height()),
-                     d->viewport.width(), d->viewport.height());
-        rect.translate(-d->viewportOffset);
-    } else {
-        QSize size = surfaceSize();
-        rect = QRect(d->viewport.x(),
-                     size.height() - (d->viewport.y() + d->viewport.height()),
-                     d->viewport.width(), d->viewport.height());
-    }
-    return rect;
-}
-
-/*!
-    Sets the viewport for the active GL context to \a rect.
-    The origin for \a rect is the top-left of the drawing surface.
-
-    \sa viewport(), resetViewport(), viewportOffset()
-*/
-void QGLPainter::setViewport(const QRect& rect)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    int x, y;
-    if (d->surfaceStack.isEmpty()) {
-        x = rect.x() + d->viewportOffset.x();
-        y = d->context->device()->height() -
-                (rect.y() + d->viewportOffset.y() + rect.height());
-    } else {
-        x = rect.x();
-        y = surfaceSize().height() - (rect.y() + rect.height());
-    }
-    glViewport(x, y, rect.width(), rect.height());
-    d->viewport = QRect(x, y, rect.width(), rect.height());
-}
-
-/*!
-    Sets the viewport for the active GL context to start at the
-    origin and extend for \a size.
-
-    \sa viewport(), resetViewport()
-*/
-void QGLPainter::setViewport(const QSize& size)
-{
-    setViewport(QRect(QPoint(0, 0), size));
-}
-
-/*!
-    Sets the viewport for the active GL context to start at the
-    origin and extend for \a width and \a height.
-
-    \sa viewport(), resetViewport()
-*/
-void QGLPainter::setViewport(int width, int height)
-{
-    setViewport(QRect(0, 0, width, height));
-}
-
-/*!
-    Resets this painter's notion of what the current viewport()
-    is set to.  The next time viewport() is called, the actual
-    viewport rectangle will be fetched from the GL server.
-
-    This function is used to synchronize the state of the application
-    with the GL server after the execution of raw GL commands that may
-    have altered the viewport settings.
-
-    \sa viewport(), setViewport()
-*/
-void QGLPainter::resetViewport()
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->viewport = QRect();
-}
-
-/*!
-    Returns the viewport offset that will be added to the top-left
-    corner of viewport() when calling \c{glViewport()} on the
-    window.  The default value is (0, 0).
-
-    \sa setViewportOffset(), setViewport()
-*/
-QPoint QGLPainter::viewportOffset() const
-{
-    Q_D(const QGLPainter);
-    return d->viewportOffset;
-}
-
-/*!
-    Sets the viewport offset that will be added to the top-left
-    corner of viewport() when calling \c{glViewport()} to \a point.
-
-    This function can be used to shift the logical viewport to a
-    different part of the window, usually for drawing left and right
-    stereo images side by side.
-
-    \sa viewportOffset(), setViewport()
-*/
-void QGLPainter::setViewportOffset(const QPoint& point)
-{
-    Q_D(QGLPainter);
-    d->viewportOffset = point;
-}
-
-/*!
-    Returns the currently active scissor rectangle; or a null rectangle
-    if scissoring is disabled.
-
-    The special rectangle value of (0, 0, -2, -2) is returned to
-    indicate that scissoring is enabled but that the scissor
-    is empty, effectively clipping away all drawing requests.
-    This value is chosen so that it is distinguishable from
-    the null rectangle (0, 0, -1, -1).
-
-    Performance note: if setScissor() has not been called on this
-    QGLPainter, then this function will have to perform a round-trip
-    to the GL server to get the scissor rectangle.  This round-trip
-    can be avoided by calling setScissor() before scissor().
-
-    Note that the returned rectangle will be in window co-ordinates,
-    with the origin at the top-left of the drawing surface.
-
-    \sa setScissor(), resetScissor()
-*/
-QRect QGLPainter::scissor() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QRect());
-    if (d->scissor.width() <= -3) {
-        if (glIsEnabled(GL_SCISSOR_TEST)) {
-            QPaintDevice *device = d->context->device();
-            GLint scissor[4];
-            glGetIntegerv(GL_SCISSOR_BOX, scissor);
-            if (scissor[2] != 0 && scissor[3] != 0) {
-                d->scissor = QRect
-                    (scissor[0], device->height() - (scissor[1] + scissor[3]),
-                     scissor[2], scissor[3]);
-            } else {
-                // Special value indicating an empty, but active, scissor.
-                d->scissor = QRect(0, 0, -2, -2);
-            }
-        } else {
-            d->scissor = QRect();
-        }
-    }
-    return d->scissor;
-}
-
-/*!
-    Enables scissoring to the boundaries of \a rect if it has a
-    non-zero size; disables scissoring if \a rect is null.
-
-    The special rectangle value of (0, 0, -2, -2) is used to
-    indicate that scissoring is enabled but that the scissor
-    is empty, effectively clipping away all drawing requests.
-    This value is chosen so that it is distinguishable from
-    the null rectangle (0, 0, -1, -1).
-
-    The \a rect is assumed to be in window co-ordinates, with the
-    origin at the top-left of the drawing surface.  It will be
-    intersected with the drawing surface's bounds before being
-    set in the GL server.
-
-    \sa scissor(), resetScissor(), intersectScissor()
+    \sa currentSurface(), QGLAbstractSurface::viewportRect()
 */
 void QGLPainter::setScissor(const QRect& rect)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (rect.width() == -2) {
-        // Special value indicating an empty, but active, scissor.
-        d->scissor = rect;
-        glScissor(0, 0, 0, 0);
-        glEnable(GL_SCISSOR_TEST);
-    } else if (!rect.isNull()) {
-        QPaintDevice *device = d->context->device();
+    if (!rect.isEmpty()) {
+        // Adjust the rectangle by the position of the surface viewport.
+        QGLAbstractSurface *surface = currentSurface();
+        QRect viewport = surface->viewportRect();
+        QPaintDevice *device = surface->device();
         int height = device->height();
-        QRect r = rect.intersected(QRect(0, 0, device->width(), height));
-        if (r.isValid()) {
-            d->scissor = r;
+        QRect r = rect.translated(viewport.topLeft()).intersected(viewport);
+        if (!r.isEmpty()) {
             glScissor(r.x(), height - (r.y() + r.height()),
                       r.width(), r.height());
         } else {
-            d->scissor = QRect(0, 0, -2, -2);
             glScissor(0, 0, 0, 0);
         }
-        glEnable(GL_SCISSOR_TEST);
     } else {
-        d->scissor = QRect();
-        glDisable(GL_SCISSOR_TEST);
-    }
-}
-
-/*!
-    Intersects the current scissor rectangle with \a rect and sets
-    the intersection as the new scissor.
-
-    The \a rect is assumed to be in window co-ordinates, with the
-    origin at the top-left of the drawing surface.
-
-    \sa setScissor(), expandScissor()
-*/
-void QGLPainter::intersectScissor(const QRect& rect)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    QRect current = scissor();
-    if (current.width() == -2) {
-        // Scissor is already active and empty: nothing to do.
-        return;
-    } else if (rect.isEmpty()) {
-        // Intersecting with an empty rectangle sets the scissor to empty.
-        // This includes the case where "rect" is (0, 0, -2, -2).
-        d->scissor = QRect(0, 0, -2, -2);
-        glScissor(0, 0, 0, 0);
-        glEnable(GL_SCISSOR_TEST);
-        return;
-    }
-    QPaintDevice *device = d->context->device();
-    QRect r;
-    if (current.isNull())
-        r = rect.intersected(QRect(0, 0, device->width(), device->height()));
-    else
-        r = current.intersected(rect);
-    if (r.isValid()) {
-        d->scissor = r;
-        glScissor(r.x(), device->height() - (r.y() + r.height()),
-                  r.width(), r.height());
-    } else {
-        d->scissor = QRect(0, 0, -2, -2);
         glScissor(0, 0, 0, 0);
     }
-    glEnable(GL_SCISSOR_TEST);
-}
-
-/*!
-    Expands the current scissor rectangle to also include the region
-    defined by \a rect and sets the expanded region as the new scissor.
-    The \a rect will be ignored if it is empty, or if the scissor is
-    currently disabled.
-
-    The \a rect is assumed to be in window co-ordinates, with the
-    origin at the top-left of the drawing surface.
-
-    \sa setScissor(), intersectScissor()
-*/
-void QGLPainter::expandScissor(const QRect& rect)
-{
-    if (rect.isEmpty())
-        return;
-    QRect current = scissor();
-    if (current.width() == -2)
-        setScissor(rect);
-    else if (!current.isNull())
-        setScissor(rect.united(current));
-}
-
-/*!
-    Resets this painter's notion of what the current scissor()
-    is set to.  The next time scissor() is called, the actual
-    scissor rectangle will be fetched from the GL server.
-
-    This function is used to synchronize the state of the application
-    with the GL server after the execution of raw GL commands that may
-    have altered the scissor settings.
-
-    \sa scissor(), setScissor()
-*/
-void QGLPainter::resetScissor()
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->scissor = QRect(0, 0, -3, -3);
 }
 
 /*!
@@ -1024,7 +726,7 @@ void QGLPainter::setEye(QGL::Eye eye)
 
     \sa eye(), modelViewMatrix(), projectionMatrix()
 */
-void QGLPainter::setCamera(QGLCamera *camera)
+void QGLPainter::setCamera(const QGLCamera *camera)
 {
     Q_ASSERT(camera);
     Q_D(QGLPainter);
@@ -1033,7 +735,8 @@ void QGLPainter::setCamera(QGLCamera *camera)
     if (camera->projectionType() != QGLCamera::Orthographic2D)
         d->projectionMatrix = camera->projectionMatrix(aspectRatio());
     else
-        d->projectionMatrix = camera->projectionMatrix2D(viewport(), d->eye);
+        d->projectionMatrix = camera->projectionMatrix2D
+            (currentSurface()->viewportRect(), d->eye);
 }
 
 /*!
@@ -1090,7 +793,7 @@ QGLRenderSequencer *QGLPainter::renderSequencer()
 }
 
 /*!
-    Returns the aspect ratio of the viewport() for adjusting projection
+    Returns the aspect ratio of the viewport for adjusting projection
     transformations.
 */
 qreal QGLPainter::aspectRatio() const
@@ -1099,7 +802,7 @@ qreal QGLPainter::aspectRatio() const
     QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
 
     // Get the size of the current viewport.
-    QSize size = viewport().size();
+    QSize size = currentSurface()->viewportRect().size();
     if (size.width() == 0 || size.height() == 0 ||
             size.width() == size.height())
         return 1.0f;
@@ -1972,131 +1675,79 @@ void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
 }
 
 /*!
-    Pushes \a fbo onto the surface stack and makes it the current
-    drawing surface for context().  If \a fbo is null, then the
-    current drawing surface will be set to the default (e.g. the window).
+    Pushes \a surface onto the surface stack and makes it the current
+    drawing surface for context().  If \a surface is null, then the
+    current drawing surface will be set to the main surface (e.g. the window).
 
-    Note: the \a fbo object must remain valid until popped from
+    Note: the \a surface object must remain valid until popped from
     the stack or end() is called.  All surfaces are popped from
     the stack by end().
 
-    \sa popSurface(), currentSurface(), surfaceSize()
+    The \c{glViewport()} will be adjusted to the extents of \a surface
+    by this function.
+
+    \sa popSurface(), currentSurface(), QGLAbstractSurface::activate()
 */
-void QGLPainter::pushSurface(QGLFramebufferObject *fbo)
+void QGLPainter::pushSurface(QGLAbstractSurface *surface)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    QGLFramebufferObject *fboTop;
-    if (d->surfaceStack.isEmpty())
-        fboTop = 0;
-    else
-        fboTop = d->surfaceStack.last();
-    d->surfaceStack.append(fbo);
-    if (fbo != fboTop) {
-        if (fbo)
-            fbo->bind();
-        else if (fboTop)
-            fboTop->release();
+    if (!surface) {
+        // Find the most recent main surface for this painter.
+        int size = d->surfaceStack.size();
+        while (size > 0 && !d->surfaceStack[size - 1].mainSurface)
+            --size;
+        if (!size)
+            return;     // Shouldn't happen, but be safe anyway.
+        surface = d->surfaceStack[size - 1].surface;
     }
+    Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
+    QGLAbstractSurface *current = d->surfaceStack.top().surface;
+    QGLPainterSurfaceInfo psurf;
+    psurf.surface = surface;
+    psurf.destroySurface = false;
+    psurf.mainSurface = false;
+    d->surfaceStack.append(psurf);
+    surface->activate(current);
 }
 
 /*!
-    Pops the top-most framebuffer object from the surface stack
+    Pops the top-most drawing surface from the surface stack
     and returns it.  The next object on the stack will be made
-    the current drawing surface for context().  Does nothing
-    if the surface stack is empty when this function is called.
+    the current drawing surface for context().  Returns null if the
+    surface stack is already at the main surface (e.g. the window).
+
+    The \c{glViewport()} will be adjusted to the extents of the
+    next surface on the stack by this function.
 
     \sa pushSurface(), currentSurface()
 */
-QGLFramebufferObject *QGLPainter::popSurface()
+QGLAbstractSurface *QGLPainter::popSurface()
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE_RETURN(0);
-    if (d->surfaceStack.isEmpty())
+    Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
+    QGLPainterSurfaceInfo &surf = d->surfaceStack.top();
+    if (surf.mainSurface)
         return 0;
-    QGLFramebufferObject *fbo = d->surfaceStack.takeLast();
-    QGLFramebufferObject *fboNext;
-    if (d->surfaceStack.isEmpty())
-        fboNext = 0;
-    else
-        fboNext = d->surfaceStack.last();
-    if (fboNext)
-        fboNext->bind();
-    else if (fbo)
-        fbo->release();
-    return fbo;
+    QGLAbstractSurface *surface = surf.surface;
+    d->surfaceStack.pop();
+    Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
+    d->surfaceStack.top().surface->activate(surface);
+    return surface;
 }
 
 /*!
-    Returns the framebuffer object corresponding to the current
-    drawing surface; null if using the default drawing surface.
+    Returns the current drawing surface.
 
-    \sa pushSurface(), popSurface(), surfaceSize()
+    \sa pushSurface(), popSurface()
 */
-QGLFramebufferObject *QGLPainter::currentSurface() const
+QGLAbstractSurface *QGLPainter::currentSurface() const
 {
     Q_D(const QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (d->surfaceStack.isEmpty())
-        return 0;
-    else
-        return d->surfaceStack.last();
-}
-
-/*!
-    Returns the size of the current drawing surface.
-
-    This function is typically used after calling pushSurface() or
-    popSurface() to readjust the viewport() for the dimensions of
-    the current drawing surface.
-
-    \code
-    painter.pushSurface(fbo);
-    painter.setViewport(painter.surfaceSize());
-    ...
-    painter.popSurface();
-    painter.setViewport(painter.surfaceSize());
-    \endcode
-
-    \sa currentSurface(), viewport()
-*/
-QSize QGLPainter::surfaceSize() const
-{
-    Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QSize());
-    QGLFramebufferObject *fbo;
-    if (!d->surfaceStack.isEmpty() && (fbo = d->surfaceStack.last()) != 0)
-        return fbo->size();
-    QPaintDevice *device = d->context->device();
-    return QSize(device->width(), device->height());
-}
-
-/*!
-    Sets the point \a size to use with draw().
-
-    This function has no effect if a shader program is in use,
-    or on OpenGL/ES 2.0.  Shader programs must set the point size
-    in the vertex shader.
-
-    \sa draw(), setLineWidth()
-*/
-void QGLPainter::setPointSize(qreal size)
-{
-#if defined(QT_OPENGL_ES_2)
-    Q_UNUSED(size);
-#else
-    glPointSize(size);
-#endif
-}
-
-/*!
-    Sets the line \a width to use with draw().
-
-    \sa draw(), setPointSize()
-*/
-void QGLPainter::setLineWidth(qreal width)
-{
-    glLineWidth(width);
+    Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
+    return d->surfaceStack.top().surface;
 }
 
 /*!

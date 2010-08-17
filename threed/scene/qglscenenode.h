@@ -78,6 +78,7 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
     Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY scaleChanged)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY materialChanged)
+    Q_PROPERTY(QGLMaterial *backMaterial READ backMaterial WRITE setBackMaterial NOTIFY backMaterialChanged)
     Q_PROPERTY(int start READ start WRITE setStart NOTIFY startChanged)
     Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
     Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
@@ -148,8 +149,13 @@ public:
 
     int materialIndex() const;
     void setMaterialIndex(int material);
+    int backMaterialIndex() const;
+    void setBackMaterialIndex(int material);
+
     QGLMaterial *material() const;
     void setMaterial(QGLMaterial *material);
+    QGLMaterial *backMaterial() const;
+    void setBackMaterial(QGLMaterial *material);
 
     QGLMaterialCollection *palette() const;
     void setPalette(QGLMaterialCollection *palette);
@@ -185,6 +191,7 @@ Q_SIGNALS:
     void positionChanged();
     void scaleChanged();
     void materialChanged();
+    void backMaterialChanged();
     void startChanged();
     void countChanged();
     void drawingModeChanged();
@@ -202,6 +209,8 @@ private:
     void invalidateBoundingBox() const;
     void invalidateTransform() const;
     void drawNormalIndicators(QGLPainter *painter);
+    const QGLMaterial *setPainterMaterial(int material, QGLPainter *painter,
+                                    QGL::Face faces, bool &changedTex);
 
     Q_DISABLE_COPY(QGLSceneNode)
 };
