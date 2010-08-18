@@ -690,19 +690,18 @@ void QGLView::paintGL()
             painter.setEye(QGL::LeftEye);
             earlyPaintGL(&painter);
 
-            QGLMaskedSurface eyeSurface;
-            eyeSurface.setSurface(painter.currentSurface());
-            eyeSurface.setMask(QGLMaskedSurface::RedMask |
-                               QGLMaskedSurface::AlphaMask);
-            painter.pushSurface(&eyeSurface);
+            QGLMaskedSurface leftSurface
+                (painter.currentSurface(), QGLMaskedSurface::RedMask |
+                                           QGLMaskedSurface::AlphaMask);
+            painter.pushSurface(&leftSurface);
             painter.setCamera(d->camera);
             paintGL(&painter);
 
             painter.setEye(QGL::RightEye);
-            painter.popSurface();
-            eyeSurface.setMask(QGLMaskedSurface::GreenMask |
-                               QGLMaskedSurface::BlueMask);
-            painter.pushSurface(&eyeSurface);
+            QGLMaskedSurface rightSurface
+                (painter.currentSurface(), QGLMaskedSurface::GreenMask |
+                                           QGLMaskedSurface::BlueMask);
+            painter.setSurface(&rightSurface);
             glClear(GL_DEPTH_BUFFER_BIT);
             painter.setCamera(d->camera);
             paintGL(&painter);
@@ -711,17 +710,18 @@ void QGLView::paintGL()
             // Render the stereo images into the two halves of the window.
             QSize sz = size();
             painter.setEye(QGL::LeftEye);
-            QGLSubsurface eyeSurface;
-            eyeSurface.setSurface(painter.currentSurface());
-            eyeSurface.setRegion(qt_qglview_left_viewport(sz, d->stereoType));
-            painter.pushSurface(&eyeSurface);
+            QGLSubsurface leftSurface
+                (painter.currentSurface(),
+                 qt_qglview_left_viewport(sz, d->stereoType));
+            painter.pushSurface(&leftSurface);
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
             painter.setEye(QGL::RightEye);
-            painter.popSurface();
-            eyeSurface.setRegion(qt_qglview_right_viewport(sz, d->stereoType));
-            painter.pushSurface(&eyeSurface);
+            QGLSubsurface rightSurface
+                (painter.currentSurface(),
+                 qt_qglview_right_viewport(sz, d->stereoType));
+            painter.setSurface(&rightSurface);
             painter.setCamera(d->camera);
             paintGL(&painter);
             painter.popSurface();

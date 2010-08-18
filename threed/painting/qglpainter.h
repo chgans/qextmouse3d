@@ -169,6 +169,7 @@ public:
 
     void pushSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *popSurface();
+    void setSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *currentSurface() const;
 
     void setCullFaces(QGL::CullFaces faces);
