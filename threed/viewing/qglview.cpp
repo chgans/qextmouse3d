@@ -43,6 +43,7 @@
 #include "qglframebufferobject.h"
 #include "qglsubsurface.h"
 #include "qglmaskedsurface.h"
+#include "qgldrawbuffersurface_p.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtGui/qapplication.h>
@@ -729,23 +730,24 @@ void QGLView::paintGL()
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         else {
             bool doubleBuffered = doubleBuffer();
-            if (doubleBuffered)
-                glDrawBuffer(GL_BACK_LEFT);
-            else
-                glDrawBuffer(GL_FRONT_LEFT);
+            QGLDrawBufferSurface leftSurface
+                (painter.currentSurface(),
+                 doubleBuffered ? GL_BACK_LEFT : GL_FRONT_LEFT);
+            painter.pushSurface(&leftSurface);
             painter.setEye(QGL::LeftEye);
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
 
-            if (doubleBuffered)
-                glDrawBuffer(GL_BACK_RIGHT);
-            else
-                glDrawBuffer(GL_FRONT_RIGHT);
+            QGLDrawBufferSurface rightSurface
+                (painter.currentSurface(),
+                 doubleBuffered ? GL_BACK_RIGHT : GL_FRONT_RIGHT);
+            painter.setSurface(&rightSurface);
             painter.setEye(QGL::RightEye);
             earlyPaintGL(&painter);
             painter.setCamera(d->camera);
             paintGL(&painter);
+            painter.popSurface();
         }
 #endif
     }

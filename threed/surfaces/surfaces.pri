@@ -10,6 +10,7 @@ HEADERS += \
 SOURCES += \
     qglabstractsurface.cpp \
     qglcontextsurface.cpp \
+    qgldrawbuffersurface.cpp \
     qglframebufferobjectsurface.cpp \
     qglmaskedsurface.cpp \
     qglpaintersurface.cpp \
@@ -18,4 +19,5 @@ SOURCES += \
     qglwidgetsurface.cpp
 PRIVATE_HEADERS += \
     qglcontextsurface_p.h \
+    qgldrawbuffersurface_p.h \
     qglpaintersurface_p.h
