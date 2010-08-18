@@ -11,4 +11,4 @@ esac
 export TOPSRC="$SCRIPTDIR/../.."
 export DESTDIR="$SCRIPTDIR/../html"
 mkdir -p "$DESTDIR"
-exec qdoc3 "$SCRIPTDIR/qt3d.qdocconf"
+exec qdoc3 $QDOC3_FLAGS "$SCRIPTDIR/qt3d.qdocconf"
