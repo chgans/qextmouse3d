@@ -53,10 +53,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     , m_view(view)
 {
     QGLBuilder builder;
-    m_scene->setObjectName("SkyboxList");
     builder.newSection(QGL::Faceted);
-    m_scene->setEffect(QGL::FlatReplaceTexture2D);
-    m_scene->setEffectEnabled(true);
     QVector3D blb(-1.0, -1.0, -1.0);
     QVector3D blf(-1.0, -1.0, 1.0);
     QVector3D tlf(-1.0, 1.0, 1.0);

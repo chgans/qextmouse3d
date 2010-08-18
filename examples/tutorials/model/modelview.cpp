@@ -45,7 +45,6 @@
 ModelView::~ModelView()
 {
     delete m_scene;
-    delete m_node;
 }
 
 //! [initialize]
