@@ -608,9 +608,9 @@ void QGLPainter::setClearColor(const QColor& color)
     Note that \a rect is in Qt co-ordinates with the origin
     at the top-left of the drawing surface's viewport rectangle.
     If the currentSurface() is an instance of QGLSubsurface,
-    then \a rect will be adjusted relative to the subsurface's origin.
+    then \a rect will be adjusted relative to the subsurface's position.
 
-    \sa currentSurface(), QGLAbstractSurface::viewportRect()
+    \sa currentSurface(), QGLAbstractSurface::viewportGL()
 */
 void QGLPainter::setScissor(const QRect& rect)
 {
@@ -619,16 +619,14 @@ void QGLPainter::setScissor(const QRect& rect)
     if (!rect.isEmpty()) {
         // Adjust the rectangle by the position of the surface viewport.
         QGLAbstractSurface *surface = currentSurface();
-        QRect viewport = surface->viewportRect();
-        QPaintDevice *device = surface->device();
-        int height = device->height();
-        QRect r = rect.translated(viewport.topLeft()).intersected(viewport);
-        if (!r.isEmpty()) {
-            glScissor(r.x(), height - (r.y() + r.height()),
-                      r.width(), r.height());
-        } else {
+        QRect viewport = surface->viewportGL();
+        QRect r(viewport.x() + rect.x(),
+                viewport.y() + viewport.height() - (rect.y() + rect.height()),
+                rect.width(), rect.height());
+        if (!r.isEmpty())
+            glScissor(r.x(), r.y(), r.width(), r.height());
+        else
             glScissor(0, 0, 0, 0);
-        }
     } else {
         glScissor(0, 0, 0, 0);
     }
@@ -810,7 +808,7 @@ qreal QGLPainter::aspectRatio() const
     QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
 
     // Get the size of the current viewport.
-    QSize size = currentSurface()->viewportRect().size();
+    QSize size = currentSurface()->viewportGL().size();
     if (size.width() == 0 || size.height() == 0 ||
             size.width() == size.height())
         return 1.0f;
