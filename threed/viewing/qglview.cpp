@@ -42,6 +42,7 @@
 #include "qglview.h"
 #include "qglframebufferobject.h"
 #include "qglsubsurface.h"
+#include "qglmaskedsurface.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtGui/qapplication.h>
@@ -687,20 +688,25 @@ void QGLView::paintGL()
         // extract the color planes that we want to see through that eye.
         if (d->stereoType == QGLView::RedCyanAnaglyph) {
             painter.setEye(QGL::LeftEye);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             earlyPaintGL(&painter);
 
-            glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
+            QGLMaskedSurface eyeSurface;
+            eyeSurface.setSurface(painter.currentSurface());
+            eyeSurface.setMask(QGLMaskedSurface::RedMask |
+                               QGLMaskedSurface::AlphaMask);
+            painter.pushSurface(&eyeSurface);
             painter.setCamera(d->camera);
             paintGL(&painter);
 
             painter.setEye(QGL::RightEye);
-            glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+            painter.popSurface();
+            eyeSurface.setMask(QGLMaskedSurface::GreenMask |
+                               QGLMaskedSurface::BlueMask);
+            painter.pushSurface(&eyeSurface);
             glClear(GL_DEPTH_BUFFER_BIT);
             painter.setCamera(d->camera);
             paintGL(&painter);
-
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            painter.popSurface();
         } else if (d->stereoType != QGLView::Hardware) {
             // Render the stereo images into the two halves of the window.
             QSize sz = size();

@@ -108,6 +108,7 @@ QT_BEGIN_NAMESPACE
     \value FramebufferObject Instance of QGLFramebufferObjectSurface.
     \value PixelBuffer Instance of QGLPixelBufferSurface.
     \value Subsurface Instance of QGLSubsurface.
+    \value Masked Instance of QGLMaskedSurface.
     \value Other Some other kind of user-defined surface.
 */
 

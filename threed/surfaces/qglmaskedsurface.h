@@ -39,11 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QGLABSTRACTSURFACE_H
-#define QGLABSTRACTSURFACE_H
+#ifndef QGLMASKEDSURFACE_H
+#define QGLMASKEDSURFACE_H
 
-#include "qt3dglobal.h"
-#include <QtOpenGL/qgl.h>
+#include "qglabstractsurface.h"
 
 QT_BEGIN_HEADER
 
@@ -51,43 +50,44 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class Q_QT3D_EXPORT QGLAbstractSurface
+class QGLMaskedSurfacePrivate;
+
+class Q_QT3D_EXPORT QGLMaskedSurface : public QGLAbstractSurface
 {
 public:
-    virtual ~QGLAbstractSurface();
-
-    enum SurfaceType
+    enum BufferMaskBit
     {
-        Widget,
-        FramebufferObject,
-        PixelBuffer,
-        Subsurface,
-        Masked,
-        Other
+        RedMask     = 0x0001,
+        GreenMask   = 0x0002,
+        BlueMask    = 0x0004,
+        AlphaMask   = 0x0008
     };
+    Q_DECLARE_FLAGS(BufferMask, BufferMaskBit)
 
-    QGLAbstractSurface::SurfaceType surfaceType() const { return m_type; }
+    QGLMaskedSurface();
+    QGLMaskedSurface
+        (QGLAbstractSurface *surface, QGLMaskedSurface::BufferMask mask);
+    ~QGLMaskedSurface();
 
-    virtual QPaintDevice *device() const = 0;
-    virtual bool activate(QGLAbstractSurface *prevSurface = 0) = 0;
-    virtual void deactivate(QGLAbstractSurface *nextSurface = 0) = 0;
-    virtual QRect viewportGL() const = 0;
-    QRect viewportRect() const;
+    QGLAbstractSurface *surface() const;
+    void setSurface(QGLAbstractSurface *surface);
 
-    bool switchTo(QGLAbstractSurface *nextSurface);
+    QGLMaskedSurface::BufferMask mask() const;
+    void setMask(QGLMaskedSurface::BufferMask mask);
 
-    static QGLAbstractSurface *createSurfaceForDevice(QPaintDevice *device);
-    static QGLAbstractSurface *createSurfaceForContext(const QGLContext *context);
-
-protected:
-    QGLAbstractSurface(QGLAbstractSurface::SurfaceType surfaceType)
-        : m_type(surfaceType) {}
+    QPaintDevice *device() const;
+    bool activate(QGLAbstractSurface *prevSurface = 0);
+    void deactivate(QGLAbstractSurface *nextSurface = 0);
+    QRect viewportGL() const;
 
 private:
-    QGLAbstractSurface::SurfaceType m_type;
+    QScopedPointer<QGLMaskedSurfacePrivate> d_ptr;
 
-    Q_DISABLE_COPY(QGLAbstractSurface)
+    Q_DECLARE_PRIVATE(QGLMaskedSurface)
+    Q_DISABLE_COPY(QGLMaskedSurface)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLMaskedSurface::BufferMask)
 
 QT_END_NAMESPACE
 
