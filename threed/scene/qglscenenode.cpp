@@ -1318,7 +1318,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         seq->reset();
         return;
     }
-
     const QGLMaterial *saveMat = 0;
     bool changedTex = false;
     const QGLMaterial *saveBackMat = 0;
@@ -1333,7 +1332,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
             saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
                                              changedBackTex);
     }
-
     bool stateEntered = false;
     if (d->childNodes.size() > 0)
     {

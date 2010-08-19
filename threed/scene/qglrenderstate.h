@@ -65,6 +65,7 @@ public:
     QGL::StandardEffect standardEffect() const;
     bool hasEffect() const;
     QGLMaterial *material() const;
+    QGLMaterial *backMaterial() const;
     const QGLSceneNode *node() const;
 private:
     void detach();

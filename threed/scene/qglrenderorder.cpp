@@ -208,6 +208,10 @@ bool QGLRenderOrder::isEqual(const QGLRenderOrder &rhs) const
     {
         result = (effectiveMaterial() == rhs.effectiveMaterial());
     }
+    if (result)
+    {
+        result = (effectiveBackMaterial() == rhs.effectiveBackMaterial());
+    }
     return result;
 }
 
@@ -216,7 +220,8 @@ bool QGLRenderOrder::isEqual(const QGLRenderOrder &rhs) const
     returns false.  Reimplement this function when creating a sub-class of
     QGLRenderOrder.
 
-    The default implementation sorts first by effect, second by material.
+    The default implementation sorts first by effect, second by material (front
+    then back).
 
     Sorting by material is ordered by pointer comparison.
 
@@ -253,6 +258,10 @@ bool QGLRenderOrder::isLessThan(const QGLRenderOrder &rhs) const
     if (!result)
     {
         result = (effectiveMaterial() < rhs.effectiveMaterial());
+    }
+    if (!result)
+    {
+        result = (effectiveBackMaterial() < rhs.effectiveBackMaterial());
     }
     return result;
 }
@@ -323,7 +332,16 @@ bool QGLRenderOrder::isLessThan(const QGLRenderOrder &rhs) const
     order, taking into account any effect inherited from parent nodes
     as specified by the render state().
 
-    \sa state()
+    \sa state(), effectiveBackMaterial()
+*/
+
+/*!
+    \fn QGLMaterial *QGLRenderOrder::effectiveBackMaterial() const
+    Returns the effective back material of the node set for this render
+    order, taking into account any effect inherited from parent nodes
+    as specified by the render state().
+
+    \sa state(), effectiveMaterial()
 */
 
 /*!
@@ -346,7 +364,8 @@ QDebug operator<<(QDebug dbg, const QGLRenderOrder &order)
 {
     dbg << "QGLRenderOrder for node:" << order.node()
             << "-- effect hash:" << order.effectHash()
-            << "-- material:" << order.node()->material();
+            << "-- material:" << order.node()->material()
+            << "-- back material:" << order.node()->backMaterial();
     return dbg;
 }
 

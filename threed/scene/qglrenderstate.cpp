@@ -85,6 +85,7 @@ public:
 
     bool hasEffect;
     QGLMaterial *material;
+    QGLMaterial *backMaterial;
     QGL::StandardEffect standardEffect;
     QGLAbstractEffect *userEffect;
     const QGLSceneNode *node;
@@ -93,6 +94,7 @@ public:
 QGLRenderStatePrivate::QGLRenderStatePrivate()
     : hasEffect(false)
     , material(0)
+    , backMaterial(0)
     , standardEffect(QGL::FlatColor)
     , userEffect(0)
     , node(0)
@@ -108,6 +110,7 @@ QGLRenderStatePrivate *QGLRenderStatePrivate::clone() const
     QGLRenderStatePrivate *r = new QGLRenderStatePrivate;
     r->hasEffect = hasEffect;
     r->material = material;
+    r->backMaterial = backMaterial;
     r->standardEffect = standardEffect;
     r->userEffect = userEffect;
     r->node = node;
@@ -229,6 +232,18 @@ QGLMaterial *QGLRenderState::material() const
 }
 
 /*!
+    Returns the back material stored on this QGLRenderState, or null if no
+    back material has been set.  The default value is null.
+*/
+QGLMaterial *QGLRenderState::backMaterial() const
+{
+    QGLMaterial *m = 0;
+    if (d)
+        m = d->backMaterial;
+    return m;
+}
+
+/*!
     Returns the node used to populate this QGLRenderState.
 */
 const QGLSceneNode *QGLRenderState::node() const
@@ -265,6 +280,7 @@ Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLRenderState &order)
             << "-- standardEffect:" << order.standardEffect()
             << "-- hasEffect:" << order.hasEffect()
             << "-- material:" << order.material()
+            << "-- back material:" << order.backMaterial()
             << "-- node:" << order.node();
     return dbg;
 }

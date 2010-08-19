@@ -86,6 +86,7 @@ public:
     inline QGLAbstractEffect *effectiveUserEffect() const;
     inline QGL::StandardEffect effectiveStandardEffect() const;
     inline QGLMaterial *effectiveMaterial() const;
+    inline QGLMaterial *effectiveBackMaterial() const;
     inline bool effectiveHasEffect() const;
 private:
     RenderOrderKey m_key;
@@ -154,6 +155,16 @@ inline QGLMaterial *QGLRenderOrder::effectiveMaterial() const
         result = m_key.node->material();
     else if (m_key.state.material())
         result = m_key.state.material();
+    return result;
+}
+
+inline QGLMaterial *QGLRenderOrder::effectiveBackMaterial() const
+{
+    QGLMaterial *result = 0;
+    if (m_key.node->backMaterial())
+        result = m_key.node->backMaterial();
+    else if (m_key.state.backMaterial())
+        result = m_key.state.backMaterial();
     return result;
 }
 
