@@ -180,6 +180,8 @@ void QGLRenderState::updateFrom(const QGLSceneNode *node)
     }
     if (node->material())
         d->material = node->material();
+    if (node->backMaterial())
+        d->backMaterial = node->backMaterial();
     d->node = node;
 }
 
