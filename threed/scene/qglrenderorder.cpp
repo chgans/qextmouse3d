@@ -87,6 +87,12 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn bool RenderOrderKey::operator==(const RenderOrderKey &rhs) const
+    Returns true if this is equal to \a rhs, that is if both the node and
+    state are equal to that of \a rhs.
+*/
+
+/*!
     \class QGLRenderOrder
     \brief The QGLRenderOrder class represents an order of a scene node during rendering.
     \since 4.8

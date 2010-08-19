@@ -257,6 +257,11 @@ const QGLSceneNode *QGLRenderState::node() const
     return s;
 }
 
+/*!
+    \fn bool QGLRenderState::operator==(const QGLRenderState &rhs) const
+    Returns true if this state is equal to \a rhs, that is if each of the
+    materials, effects and values are equal to those of \a rhs.
+*/
 void QGLRenderState::detach()
 {
     if (!d) // lazy creation of data block
@@ -276,6 +281,9 @@ void QGLRenderState::detach()
     }
 }
 
+/*!
+    Returns a hash value representing this state.
+*/
 uint QGLRenderState::hash() const
 {
     const QByteArray bytes((const char *)d, sizeof(d));
