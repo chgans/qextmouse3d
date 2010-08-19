@@ -173,7 +173,11 @@ void QGLRenderSequencer::reset()
 {
     d->top = 0;
     d->latched = false;
-    //qDebug() << "QGLRenderSequencer::reset()";
+    d->exclude.clear();
+    d->stack.clear();
+    d->stack.resize(8);
+    d->stackTop = -1;
+    d->current = RenderOrderKey();
 }
 
 /*!
@@ -186,7 +190,6 @@ void QGLRenderSequencer::reset()
 bool QGLRenderSequencer::nextInSequence()
 {
     bool nextAvailable = true;
-    //qDebug() << "############## nextInSequence() ###############";
     if (d->queue.size() > 0)
     {
         // process thru next render order
@@ -197,7 +200,6 @@ bool QGLRenderSequencer::nextInSequence()
         // end top level loop
         nextAvailable = false;
     }
-    //qDebug() << "              ---> return is next:" << nextAvailable;
     return nextAvailable;
 }
 
@@ -226,35 +228,19 @@ bool QGLRenderSequencer::renderInSequence(QGLSceneNode *node)
         state = d->stack.at(d->stackTop);
     RenderOrderKey key(node, state);
     QGLRenderOrder *o = d->renderOrderRepository->getOrder(key);
-    //qDebug() << "QGLRenderSequencer::renderInSequence:" << *o;
     if (!d->current.valid())
         d->current = key;
     QGLRenderOrder *c = d->renderOrderRepository->getOrder(d->current);
-    //qDebug() << "     comparing with current:" << *c;
     if (d->latched && *o != *c)
     {
         if (!d->exclude.contains(*o))
-        {
-            //qDebug() << "    no match - render on later pass";
             insertNew(*o);
-        }
-        else
-        {
-            //qDebug() << "    no match - already rendered";
-        }
         doRender = false;
     }
     else
     {
         if (!d->latched)
-        {
-            //qDebug() << "    not latched -falling thru";
             d->exclude.insert(*o);
-        }
-        else
-        {
-            //qDebug() << "    matched!! - rendering...";
-        }
     }
     return doRender;
 }
@@ -280,7 +266,6 @@ void QGLRenderSequencer::beginState(QGLSceneNode *node)
     if (d->stackTop >= d->stack.size())
         d->stack.extend(d->stack.size() * 2);
     d->stack[d->stackTop] = state;
-    //qDebug() << "begin state for:" << node << "stack size now:" << (d->stackTop + 1);
 }
 
 /*!
@@ -294,8 +279,6 @@ void QGLRenderSequencer::beginState(QGLSceneNode *node)
 */
 void QGLRenderSequencer::endState(QGLSceneNode *node)
 {
-    //qDebug() << "end state for:" << node << "stack size now:" << (d->stackTop)
-    //        << "popping stack top:" << d->stack.at(d->stackTop);
 #ifndef QT_NO_DEBUG_STREAM
     const QGLSceneNode *n = d->stack.at(d->stackTop).node();
     Q_ASSERT(n == node);
@@ -312,7 +295,6 @@ void QGLRenderSequencer::applyState()
 {
     d->latched = true;
     QGLRenderState s = d->stack.at(d->stackTop);
-    // qDebug() << "Applying state:\n" << s;
     if (s.hasEffect() && !d->painter->isPicking())
     {
         if (s.userEffect())
@@ -349,15 +331,12 @@ void QGLRenderSequencer::applyState()
 void QGLRenderSequencer::insertNew(const QGLRenderOrder &order)
 {
     QLinkedList<RenderOrderKey>::iterator it = d->queue.begin();
-    int j = 0; // debug = remove me
     for ( ; it != d->queue.end(); ++it)
     {
         const QGLRenderOrder *o = d->renderOrderRepository->getOrder(*it);
         if (order < *o)
             break;
-        ++j;
     }
-    //qDebug() << "inserting:" << order << "at" << j << "in queue of" << d->queue.size();
     d->queue.insert(it, order.key());
     d->exclude.insert(order);
 }
