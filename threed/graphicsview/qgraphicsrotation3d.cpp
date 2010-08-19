@@ -41,30 +41,29 @@
 
 #include "qgraphicsrotation3d.h"
 
+QT_BEGIN_NAMESPACE
+
 /*!
     \class QGraphicsRotation3D
     \brief The QGraphicsRotation3D class supports arbitrary rotation around an axis in 3D space.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
+
+    \sa QGraphicsTranslation3D, QGraphicsScale3D
+*/
+
+/*!
+    \qmlclass Rotation3D QGraphicsRotation3D
+    \brief The Rotation3D item supports arbitrary rotation around an axis in 3D space.
+    \since 4.8
     \ingroup qt3d::qml3d
-
-    \section1 Properties
-
-    QGraphicsRotation3D is derived directly from the QGraphicsRotation class,
-    and has support for the \c origin, \c angle, and \c axis properties
-    contained in the parent class.  The difference between the two
-    classes is that QGraphicsRotation performs a \i projected rotation
-    around the \c axis, whereas QGraphicsRotation3D performs a true
-    3D rotation without projecting back to 2D.
-
-    \section1 Usage in QML/3D
 
     Frequently a user will create and item in the 3d world and immediately
     wish to apply a rotation to that item before it is displayed, or,
     optionally, perform an animation on that rotation parameter based on
     user inputs, or other events.  Such an rotation can easily be defined
-    in QML/3D using the following code:
+    in QML using the following code:
 
     \code
     Item3d {
@@ -111,16 +110,25 @@
     By giving each rotation a unique \c id users can then refer to these
     rotations in the QML source in order to perform rotational animations.
 
-    \sa QGraphicsTranslation3D, QGraphicsScale3D
+    \sa Translation3D, Scale3D
 */
 
-QT_BEGIN_NAMESPACE
+class QGraphicsRotation3DPrivate
+{
+public:
+    QGraphicsRotation3DPrivate() : axis(0, 0, 1), angle(0) {}
+
+    QVector3D origin;
+    QVector3D axis;
+    qreal angle;
+};
 
 /*!
     Create a 3D rotation transformation and attach it to \a parent.
 */
 QGraphicsRotation3D::QGraphicsRotation3D(QObject *parent)
-    : QGraphicsRotation(parent)
+    : QGraphicsTransform(parent)
+    , d_ptr(new QGraphicsRotation3DPrivate)
 {
 }
 
@@ -132,20 +140,126 @@ QGraphicsRotation3D::~QGraphicsRotation3D()
 }
 
 /*!
+    \property QGraphicsRotation3D::origin
+    \brief the origin about which to rotate.
+
+    The default value for this property is (0, 0, 0).
+*/
+
+/*!
+    \qmlproperty vector3D Rotation3D::origin
+
+    The origin about which to rotate.  The default value for this
+    property is (0, 0, 0).
+*/
+
+QVector3D QGraphicsRotation3D::origin() const
+{
+    Q_D(const QGraphicsRotation3D);
+    return d->origin;
+}
+
+void QGraphicsRotation3D::setOrigin(const QVector3D &value)
+{
+    Q_D(QGraphicsRotation3D);
+    if (d->origin != value) {
+        d->origin = value;
+        update();
+        emit originChanged();
+    }
+}
+
+/*!
+    \property QGraphicsRotation3D::angle
+    \brief the angle to rotate around the axis, in degrees anti-clockwise.
+
+    The default value for this property is 0.
+*/
+
+/*!
+    \qmlproperty real Rotation3D::angle
+
+    The angle to rotate around the axis, in degrees anti-clockwise.
+    The default value for this property is 0.
+*/
+
+qreal QGraphicsRotation3D::angle() const
+{
+    Q_D(const QGraphicsRotation3D);
+    return d->angle;
+}
+
+void QGraphicsRotation3D::setAngle(qreal value)
+{
+    Q_D(QGraphicsRotation3D);
+    if (d->angle != value) {
+        d->angle = value;
+        update();
+        emit angleChanged();
+    }
+}
+
+/*!
+    \property QGraphicsRotation3D::axis
+    \brief the axis to rotate around.
+
+    The default value for this property is (0, 0, 1); i.e. the z-axis.
+*/
+
+/*!
+    \qmlproperty vector3D Rotation3D::axis
+
+    The axis to rotate around.  The default value for this property
+    is (0, 0, 1); i.e. the z-axis.
+*/
+
+QVector3D QGraphicsRotation3D::axis() const
+{
+    Q_D(const QGraphicsRotation3D);
+    return d->axis;
+}
+
+void QGraphicsRotation3D::setAxis(const QVector3D &value)
+{
+    Q_D(QGraphicsRotation3D);
+    if (d->axis != value) {
+        d->axis = value;
+        update();
+        emit axisChanged();
+    }
+}
+
+/*!
     \internal
 */
 void QGraphicsRotation3D::applyTo(QMatrix4x4 *matrix) const
 {
-    qreal angle = this->angle();
-    QVector3D axis = this->axis();
-    QVector3D origin = this->origin();
+    Q_D(const QGraphicsRotation3D);
 
-    if (angle == 0. || axis.isNull())
+    if (d->angle == 0.0f || d->axis.isNull())
         return;
 
-    matrix->translate(origin);
-    matrix->rotate(angle, axis.x(), axis.y(), axis.z());
-    matrix->translate(-origin);
+    matrix->translate(d->origin);
+    matrix->rotate(d->angle, d->axis.x(), d->axis.y(), d->axis.z());
+    matrix->translate(-d->origin);
 }
+
+/*!
+    \fn void QGraphicsRotation3D::originChanged()
+
+    Signal that is emitted when origin() changes.
+*/
+
+/*!
+    \fn void QGraphicsRotation3D::angleChanged()
+
+    Signal that is emitted when angle() changes.
+*/
+
+/*!
+    \fn void QGraphicsRotation3D::axisChanged()
+
+    Signal that is emitted when axis() changes.
+*/
 
 QT_END_NAMESPACE

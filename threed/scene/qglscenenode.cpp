@@ -60,7 +60,6 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::scene
-    \ingroup qt3d::qml3d
 
     QGLSceneNode represents one component of a scene.  The QGLSceneNode
     class manages materials, effects and transformations for itself and

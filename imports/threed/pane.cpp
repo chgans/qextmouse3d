@@ -44,11 +44,15 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class Pane
-    \brief The Pane class represents a rectangular pane in 3D space that can be textured with an effect.
+    \qmlclass Pane Pane
+    \brief The Pane item represents a rectangular pane in 3D space that can be textured with an effect.
     \since 4.8
-    \ingroup qt3d
     \ingroup qt3d::qml3d
+    \inherits Item3d
+
+    The Pane element in QML provides a simple way to create a quad
+    object, usually for placing a 2D image in 3D space.  For example,
+    the following displays a picture on 2 x 1.5 unit pane at the origin:
 
     \code
     Pane {
@@ -57,9 +61,12 @@ QT_BEGIN_NAMESPACE
         effect: Effect { texture: "picture.jpg" }
     }
     \endcode
+
+    \sa Item3d, Cube
 */
 
 /*!
+    \internal
     Constructs a new 3D pane and attaches it to \a parent.
 */
 Pane::Pane(QObject *parent)
@@ -72,6 +79,7 @@ Pane::Pane(QObject *parent)
 }
 
 /*!
+    \internal
     Destroys this 3D pane.
 */
 Pane::~Pane()
@@ -79,10 +87,11 @@ Pane::~Pane()
 }
 
 /*!
-    \property Pane::width
-    \brief the width of the pane.  The default value is 1.
+    \qmlproperty qreal Pane::width
 
-    \sa height()
+    The width of the pane.  The default value is 1.
+
+    \sa height
 */
 
 qreal Pane::width() const
@@ -99,10 +108,11 @@ void Pane::setWidth(qreal value)
 }
 
 /*!
-    \property Pane::height
-    \brief the height of the pane.  The default value is 1.
+    \qmlproperty real Pane::height
 
-    \sa width()
+    The height of the pane.  The default value is 1.
+
+    \sa width
 */
 
 qreal Pane::height() const
@@ -119,14 +129,12 @@ void Pane::setHeight(qreal value)
 }
 
 /*!
-    \property Pane::twoSided
-    \brief the two-sided state.
+    \qmlproperty bool Pane::twoSided
 
-    If false, then lit materials will always use a normal that faces
-    forward with respect to the pane, which will make the back side
-    appear dark.  If true, then lit materials will always use a normal
-    that faces towards the viewer so that both sides appear lit.
-
+    The two-sided state.  If false, then lit materials will always use a
+    normal that faces forward with respect to the pane, which will make
+    the back side appear dark.  If true, then lit materials will always
+    use a normal that faces towards the viewer so that both sides appear lit.
     The default value is true.
 */
 
@@ -144,20 +152,18 @@ void Pane::setTwoSided(bool value)
 }
 
 /*!
-    \enum Pane::Orientation
-    This enum defines the orientation of the texture co-ordinates
-    for the image displayed on a pane.
+    \qmlproperty enumeration Pane::orientation
 
-    \value Normal Normal orientation with (0, 0) at the bottom-left.
-    \value Rot90 Rotate 90 degrees anti-clockwise.
-    \value Rot180 Rotate 180 degrees.
-    \value Rot270 Rotate 270 degrees anti-clockwise.
-*/
+    The orientation of the texture co-ordinates for the image displayed on
+    the pane, which helps to properly orient the image:
 
-/*!
-    \property Pane::orientation
-    \brief the orientation of the texture co-ordinates for the
-    image displayed on the pane.  The default value is Normal.
+    \list
+    \o Normal Normal orientation with (0, 0) at the bottom-left.
+              This is the default value.
+    \o Rot90 Rotate 90 degrees anti-clockwise.
+    \o Rot180 Rotate 180 degrees.
+    \o Rot270 Rotate 270 degrees anti-clockwise.
+    \endlist
 */
 
 Pane::Orientation Pane::orientation() const
@@ -279,29 +285,5 @@ void Pane::drawItem(QGLPainter *painter)
     }
     painter->draw(QGL::Triangles, 6);
 }
-
-/*!
-    \fn void Pane::widthChanged()
-
-    Signal that is emitted when width() changes.
-*/
-
-/*!
-    \fn void Pane::heightChanged()
-
-    Signal that is emitted when height() changes.
-*/
-
-/*!
-    \fn void Pane::twoSidedChanged()
-
-    Signal that is emitted when twoSided() changes.
-*/
-
-/*!
-    \fn void Pane::orientationChanged()
-
-    Signal that is emitted when orientation() changes.
-*/
 
 QT_END_NAMESPACE

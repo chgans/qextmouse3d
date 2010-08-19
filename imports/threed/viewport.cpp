@@ -51,22 +51,32 @@
 #include <QtOpenGL/qglframebufferobject.h>
 
 /*!
-    \class Viewport
-    \brief The Viewport class defines the logical viewport for the 3d scene.  It includes all necessary
+    \qmlclass Viewport Viewport
+    \brief The Viewport item defines the logical viewport for a 3D scene.  It includes all necessary
     references and parameters for the contents of the scene, as well as drawing and painting functions
     \since 4.8
-    \ingroup qt3d
     \ingroup qt3d::qml3d
 
-    \section1 Properties
-
-
-    \section1 Usage in QML/3d
+    The Viewport item is usually the outermost in a 3D scene, specifying
+    the size of the view, the camera position, lights, and the main 3D object:
 
     \code
-    \endcode
-*/
+    import Qt 4.7
+    import Qt.labs.threed 1.0
 
+    Viewport {
+        width: 640; height: 480
+        camera: Camera {}
+        Light {}
+        Item3d {
+            mesh: Mesh { source: "meshes/teapot.bez" }
+            effect: Effect {}
+        }
+    }
+    \endcode
+
+    \sa Camera
+*/
 
 QT_BEGIN_NAMESPACE
 
@@ -148,6 +158,7 @@ ViewportPrivate::~ViewportPrivate()
 void qt_gl_set_qml_viewport(QObject *viewport);
 
 /*!
+    \internal
     Construct the class and assign it a \a parent QDeclarativeItem.
 */
 Viewport::Viewport(QDeclarativeItem *parent)
@@ -163,6 +174,7 @@ Viewport::Viewport(QDeclarativeItem *parent)
 }
 
 /*!
+    \internal
     Class destruction and cleanup.
 */
 Viewport::~Viewport()
@@ -171,17 +183,18 @@ Viewport::~Viewport()
 }
 
 /*!
-    \property Viewport::picking
-    \brief User interaction in QML/3d is handled through the concept of object picking.  Each
+    \qmlproperty bool Viewport::picking
+
+    User interaction in QML/3d is handled through the concept of object picking.  Each
     item has a unique picking id which s queried for a given screen click position when the
     mouse is clicked.
 
-    If the \a picking property is set to \c true, picking will be supported for this viewport,
-    while if the property is \c false, no picking will b applied.
+    If this property is set to true, picking will be supported for this
+    viewport, while if the property is false, no picking will b applied.
 
-    The default value for this property is \c false.
+    The default value for this property is false.
 
-    \sa showPicking()
+    \sa showPicking
 */
 bool Viewport::picking() const
 {
@@ -195,16 +208,17 @@ void Viewport::setPicking(bool value)
 }
 
 /*!
-    \property Viewport::showPicking
-    \brief The underlying mechanism for picking is based on painting an off-screen buffer with a flat
+    \qmlproperty bool Viewport::showPicking
+    The underlying mechanism for picking is based on painting an off-screen buffer with a flat
     coloured image containing all of the objects with a unique color value.
 
-    Setting the \a showPicking value to true will display this flat-colour picking representation
-    in the viewport.
+    Setting this property to true will display this flat-colour picking
+    representation in the viewport, which can be useful for debugging
+    problems with object selection.
 
-    The default value for this property is \c false.
+    The default value for this property is false.
 
-    \sa picking()
+    \sa picking
 */
 
 bool Viewport::showPicking() const
@@ -219,11 +233,12 @@ void Viewport::setShowPicking(bool value)
 }
 
 /*!
-    \property Viewport::navigation
-    \brief The navigation property is used to set or unset camera navigation in for the viewport.
+    \qmlproperty bool Viewport::navigation
+
+    This property is used to set or unset camera navigation in for the viewport.
     Camera navigation allows the user to move the camera position around using the moose.
 
-    By default, camera navigation is set to \c true.
+    By default, camera navigation is set to true.
 */
 bool Viewport::navigation() const
 {
@@ -237,11 +252,12 @@ void Viewport::setNavigation(bool value)
 }
 
 /*!
-    \property Viewport::blending
-    \brief The blending property is used to enable or disable GL_BLEND
+    \qmlproperty bool Viewport::blending
+
+    The blending property is used to enable or disable GL_BLEND
     on the viewport, for alpha blending of drawn objects.
 
-    By default, blending is set to \c false.
+    By default, blending is set to false.
 */
 bool Viewport::blending() const
 {
@@ -255,14 +271,11 @@ void Viewport::setBlending(bool value)
 }
 
 /*!
-    \property Viewport::camera
-    \brief The camera property of the Viewport class sets the camera parameters which will be used
-    for the appropriate viewing transforms in OpenGL.  The camera is specified as a \l QGLCamera,
-    and like all properties in QML/3d it can be updated or changed at any time.
+    \qmlproperty Camera Viewport::camera
 
-    By default the camera is undefined.
-
-    \sa QGLCamera
+    This property sets the camera parameters which will be used for
+    the appropriate viewing transforms in OpenGL.  By default the camera
+    is undefined.
 */
 QGLCamera *Viewport::camera() const
 {
@@ -290,13 +303,9 @@ void Viewport::setCamera(QGLCamera *value)
 }
 
 /*!
-    \property Viewport::lightModel
-    \brief The user is able to set a lighting model for the 3d environment through the use of the
-    lightModel property.  This is defined using a \l QGLLightModel.
-
-    By default the light model is undefined.
-
-    \sa QGLLightModel
+    \qmlproperty LightModel Viewport::lightModel
+    The user is able to set a lighting model for the 3d environment through the use of the
+    lightModel property.  By default the light model is undefined.
 */
 QGLLightModel *Viewport::lightModel() const
 {
@@ -320,14 +329,14 @@ void Viewport::setLightModel(QGLLightModel *value)
 }
 
 /*!
-    \property Viewport::backdrop
-    \brief The user can set the backdrop property of the Viewport class to define a backdrop effect
-    for the 3d environment.  This backdrop is defined as an \l Effect class, and can take on any of
-    the effects supported (eg. fog effects, etc).
+    \qmlproperty Effect Viewport::backdrop
+    The user can set the backdrop property of the Viewport class to define a backdrop effect
+    for the 3d environment.  This backdrop is defined as an Effect object, and can take on any of
+    the effects supported.
 
     By default no backdrop effect is defined.
 
-    \sa Effect, backgroundColor()
+    \sa Effect, backgroundColor
 */
 Effect *Viewport::backdrop() const
 {
@@ -352,15 +361,16 @@ void Viewport::setBackdrop(Effect *value)
 }
 
 /*!
-    \property Viewport::backgroundColor
-    \brief the background color for the viewport, which is used if
+    \qmlproperty color Viewport::backgroundColor
+
+    The background color for the viewport, which is used if
     backdrop is not specified.  The default color is black.
 
     Setting this property to \c{"transparent"} will result in no
     background color being set, so that items behind this viewport
     will be visible through the viewport.
 
-    \sa backdrop()
+    \sa backdrop
 */
 QColor Viewport::backgroundColor() const
 {
@@ -376,6 +386,7 @@ void Viewport::setBackgroundColor(const QColor &value)
 }
 
 /*!
+    \internal
     The main paint function for the Viewport class.  It takes a  QPainter \a p, which performs the
     painting of objects in the 3d environment.
 
@@ -429,6 +440,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 }
 
 /*!
+  \internal
   Some elements of the image are drawn as an "early" draw activity.  Essentially it performs clearing
   and drawing of backdrop effects in preparation for primary drawing activities using \a painter.
 */
@@ -484,6 +496,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 }
 
 /*!
+  \internal
   The draw function for the viewport sets up all of the lighting parameters for the scene before
   iterating through the top level items in the scene and drawing them using \a painter.
 
@@ -538,6 +551,7 @@ void Viewport::draw(QGLPainter *painter)
 }
 
 /*!
+  \internal
   The initialize function, as its name suggests, peforms all top level initialisation for the viewport.
 
   This includes setting up the camera, as well as initialising all of the
@@ -570,6 +584,7 @@ void Viewport::initialize(QGLView *view)
 }
 
 /*!
+  \internal
   Initialize the GL viewport for the first time on \a painter.
 */
 
@@ -586,6 +601,7 @@ void Viewport::initializeGL(QGLPainter *painter)
 }
 
 /*!
+  \internal
   Return the QGLView being used by the viewport.
 */
 QGLView *Viewport::view() const
@@ -594,6 +610,7 @@ QGLView *Viewport::view() const
 }
 
 /*!
+  \internal
     Registers \a obj with this viewport as a pickable object and
     return its pick identifier.
 */
@@ -617,6 +634,7 @@ static inline int powerOfTwo(int value)
 }
 
 /*!
+  \internal
     Returns the registered object that is under the mouse position
     specified by (\a x, \a y).  This function may need to regenerate
     the contents of the pick buffer by repainting the scene.
@@ -692,12 +710,7 @@ QObject *Viewport::objectForPoint(int x, int y)
 }
 
 /*!
-    \fn void Viewport::viewportChanged()
-
-    Signal that is emitted when the parameters on this viewport change.
-*/
-
-/*!
+  \internal
   If a QGLView is defined for this viewport then this function queues an update for that QGLView.
 
   If this is not defined then a normal update is called.
@@ -711,6 +724,7 @@ void Viewport::update3d()
 }
 
 /*!
+    \internal
     The cameraChanged slot updates the camera in the QGLView if one exists, or simply calls the
     \l update() function otherwise.
 

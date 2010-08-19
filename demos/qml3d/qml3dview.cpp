@@ -50,6 +50,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class Qml3dView
+    \internal
     \brief The Qml3dView class is based on the QMLView class, and is intended to allow for the
     display of 3d imagery specified in QML/3d.  The Qml3dView takes the place of its parent class
     and contains provisions for display and management of \l Item3d objects, as well as \l Effect

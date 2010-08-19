@@ -49,17 +49,39 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Q_QT3D_EXPORT QGraphicsRotation3D : public QGraphicsRotation
+class QGraphicsRotation3DPrivate;
+
+class Q_QT3D_EXPORT QGraphicsRotation3D : public QGraphicsTransform
 {
     Q_OBJECT
+    Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)
+    Q_PROPERTY(qreal angle READ angle WRITE setAngle NOTIFY angleChanged)
+    Q_PROPERTY(QVector3D axis READ axis WRITE setAxis NOTIFY axisChanged)
 public:
     QGraphicsRotation3D(QObject *parent = 0);
     ~QGraphicsRotation3D();
 
+    QVector3D origin() const;
+    void setOrigin(const QVector3D &value);
+
+    qreal angle() const;
+    void setAngle(qreal value);
+
+    QVector3D axis() const;
+    void setAxis(const QVector3D &value);
+
     void applyTo(QMatrix4x4 *matrix) const;
 
+Q_SIGNALS:
+    void originChanged();
+    void angleChanged();
+    void axisChanged();
+
 private:
+    QScopedPointer<QGraphicsRotation3DPrivate> d_ptr;
+
     Q_DISABLE_COPY(QGraphicsRotation3D)
+    Q_DECLARE_PRIVATE(QGraphicsRotation3D)
 };
 
 QT_END_NAMESPACE

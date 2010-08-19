@@ -50,12 +50,11 @@
 #include <QtCore/qlist.h>
 
 /*!
-    \class Mesh
-    \brief The Mesh class provides a means of abstracting 3d mesh mesh/geometry representations in
+    \qmlclass Mesh Mesh
+    \brief The Mesh item provides a means of abstracting 3D mesh and geometry representations in
     a way that can be used in QML.  The Mesh class contains necessary properties and methods for
     display and manipulation of 3d objects of this type.
     \since 4.8
-    \ingroup qt3d
     \ingroup qt3d::qml3d
 
     \section1 Underlying Architecture
@@ -89,7 +88,7 @@
     \code
     Effect {
         id: myTextureEffect
-        texture: "C:\textures\texture.png"
+        texture: "texture.png"
     }
     \endcode
 */
@@ -137,6 +136,7 @@ public:
 };
 
 /*!
+    \internal
     Construct a \l Mesh object with \a parent as its parent.
 */
 Mesh::Mesh(QObject *parent)
@@ -146,6 +146,7 @@ Mesh::Mesh(QObject *parent)
 }
 
 /*!
+    \internal
     Destroy the \l Mesh object and free any unneeded memory.
 */
 Mesh::~Mesh()
@@ -154,10 +155,11 @@ Mesh::~Mesh()
 }
 
 /*!
-    \property Mesh::source
-    \brief Each mesh requires a set of data that describes (among other things) vertices
+    \qmlproperty url Mesh::source
+
+    Each mesh requires a set of data that describes (among other things) vertices
     transformations, textures, and so on.  This data is generally stored in files and
-    specified via the \c source property.
+    specified via the source property.
 
     Source files can be of any type supported by Qt/3d.  The types of file currently
     supported can be found in the \c sceneFormat plugins, with \i .3ds, \i .bez, \i. obj
@@ -192,8 +194,9 @@ void Mesh::setSource(const QUrl& value)
 }
 
 /*!
-    \property Mesh::meshName
-    \brief Users can associate a \l QString name with a mesh to facilitate easy finding or
+    \qmlproperty string Mesh::meshName
+
+    Users can associate a name with a mesh to facilitate easy finding or
     description of a mesh.
 */
 QString Mesh::meshName() const
@@ -225,12 +228,13 @@ void Mesh::setMeshName(const QString& value)
 }
 
 /*!
-    \property Mesh::options
-    \brief The behaviour of the underlying file loader can be controlled by
+    \qmlproperty string Mesh::options
+
+    The behaviour of the underlying file loader can be controlled by
     string encoded options.  Consult the documentation for each loader for
     the options available.
 
-    Specifies the current \a options for loading this mesh.  The default value
+    Specifies the current options for loading this mesh.  The default value
     is the null string, meaning no options are applied.
 */
 QString Mesh::options() const
@@ -248,6 +252,7 @@ void Mesh::setOptions(const QString &options)
 }
 
 /*!
+  \internal
   Once the request for data has been finished the \l Mesh class is now free to load
   the scene.
 */
@@ -259,6 +264,7 @@ void Mesh::dataRequestFinished()
 }
 
 /*!
+    \internal
     Because the branches of the overall scene are essentially /i moveable, and the
     standard methods of getting objects/names from a scene rely on a single tree,
     the \l Mesh class supports its own list of mesh objects in the scene which is
@@ -283,6 +289,7 @@ void Mesh::initSceneObjectList()
 }
 
 /*!
+    \internal
     Get the main scene object for the \l QGLAbstractScene associated with this mesh.
 */
 QGLSceneNode *Mesh::getSceneObject()
@@ -295,6 +302,7 @@ QGLSceneNode *Mesh::getSceneObject()
 }
 
 /*!
+    \internal
     Get the scene object called \a name, specified as a QString, and retrieve the
     scene object in this mesh which corresponds to it.
 */
@@ -316,6 +324,7 @@ QGLSceneNode *Mesh::getSceneObject(const QString &name)
 }
 
 /*!
+    \internal
     Used mainly for diagnostic purposes this function returns a QStringList containing
     all of the object names for the given mesh.
 */
@@ -337,6 +346,7 @@ QStringList Mesh::getSceneObjectNames()
 }
 
 /*!
+    \internal
     Sometimes we want objects in a scene other than meshes - this is usually at start-up or
     similar and does not generally need a whole mesh tree, this function, then, is a generic
     mesh tree searcher for a given scene object \a name of a specific \a type.
@@ -357,8 +367,9 @@ QGLSceneNode *Mesh::getSceneObject(QGLSceneNode::Type type, const QString& name)
 }
 
 /*!
-    \property Mesh::dumpInfo
-    \brief Flag set to true if the description of the item will be dumped to the console.
+    \qmlproperty bool Mesh::dumpInfo
+
+    Flag set to true if the description of the item will be dumped to the console.
 
     When this flag is true, useful debugging and diagnostic information, for example the
     names of all the subnodes of the mesh, materials and geometry parameters, will be
@@ -379,6 +390,7 @@ void Mesh::setDumpInfo(bool enable)
 }
 
 /*!
+    \internal
     Set the \a scene associated with this mesh.
 
     The function attempts to load a meaningful scene if one exists, and will attempt to
@@ -434,6 +446,7 @@ void Mesh::setScene(QGLAbstractScene *scene)
 }
 
 /*!
+    \internal
     When a scene has been deconstructed into several branches, each one being a separately
     manipulated sub-branch of the whole, the branches taken are identified numerically.  This
     function returns the next scene branch ID number
@@ -445,6 +458,7 @@ int Mesh::nextSceneBranchId() const
 }
 
 /*!
+    \internal
     This function "prunes" a specific branch away from the main scene-tree/graph and adds it to the
     list of independent branches drawn by the mesh.  This facilitates animation & picking of specific
     sub-branches of the larger tree.
@@ -489,6 +503,7 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
 }
 
 /*!
+    \internal
      Given a scene object \a rootSceneObject, this function adds a pointer to the object to an internally
      maintained map of scene branches.
 
@@ -509,6 +524,7 @@ int Mesh::addSceneBranch(QGLSceneNode *rootSceneObject, QObject *previousParent)
 }
 
 /*!
+    \internal
     When an object is deleted or the user otherwise calls this function, the scene branch identified by
     \a branchId is reattached to the parent node from which it was originally pruned.
 
@@ -543,6 +559,7 @@ void Mesh::restoreSceneBranch(int branchId)
 }
 
 /*!
+    \internal
     Return a pointer to the scene branch identified by \a branchId.
 */
 QGLSceneNode *Mesh::getSceneBranch(int branchId) const
@@ -554,6 +571,7 @@ QGLSceneNode *Mesh::getSceneBranch(int branchId) const
 
 
 /*!
+    \internal
     This function iterates through the list of scene branches in the internal map and attempts to
     restore them to their original position in the object hierarchy of the scene.  It then clears the
     map ready for reuse.
@@ -571,6 +589,7 @@ void Mesh::resetSceneBranches()
 }
 
 /*!
+    \internal
     Core "draw" function for the mesh draws scene branch \a branchId using \a painter.
 */
 void Mesh::draw(QGLPainter *painter, int branchId)
@@ -584,6 +603,7 @@ void Mesh::draw(QGLPainter *painter, int branchId)
 }
 
 /*!
+    \internal
     Reference counting increment.
 */
 void Mesh::ref()
@@ -592,6 +612,7 @@ void Mesh::ref()
 }
 
 /*!
+    \internal
     Reference counting decrement; returns true if there are still outstanding references
     to the class.
 */
@@ -647,6 +668,7 @@ void Mesh::classBegin()
 }
 
 /*!
+    \internal
     Checks that all loading and initialisation has been finished, and emits the  loaded() signal if
     the component is complete.
 
@@ -660,28 +682,9 @@ void Mesh::componentComplete()
 }
 
 /*!
-  \fn void Mesh::dataChanged();
+  \qmlsignal Mesh::onLoaded()
 
-  Signals a change to one of the properties of the class, or the scene represented  by the class.
-
-*/
-
-/*!
-    \fn void Mesh::optionsChanged()
-
-    Signals a change to the string options to be processed by the loader for this mesh.
-*/
-
-/*!
-    \fn void Mesh::dumpInfoChanged()
-
-    Signals a change to the state of the dumpInfo flag for this mesh.
-*/
-
-/*!
-  \fn void Mesh::loaded()
-
-  Signals that loading of the mesh is complete.
+  This handler is called when mesh loading is complete.
 */
 
 QT_END_NAMESPACE

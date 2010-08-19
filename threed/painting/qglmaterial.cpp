@@ -56,6 +56,12 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+*/
+
+/*!
+    \qmlclass Material QGLMaterial
+    \brief The Material item describes material properties for OpenGL drawing.
+    \since 4.8
     \ingroup qt3d::qml3d
 */
 
@@ -100,6 +106,19 @@ QGLMaterial::~QGLMaterial()
 
     \sa ambientColor(), diffuseColor(), basicColorChanged(), setColor()
 */
+
+/*!
+    \qmlproperty color Material::basicColor
+    The basic color of the material.  The default value
+    is (1.0, 1.0, 1.0, 1.0).
+
+    The basic color is used by effects that don't implement
+    material-based lighting.  It is ignored by material-based
+    lighting effects.
+
+    \sa ambientColor, diffuseColor, color
+*/
+
 QColor QGLMaterial::basicColor() const
 {
     Q_D(const QGLMaterial);
@@ -123,6 +142,15 @@ void QGLMaterial::setBasicColor(const QColor& value)
 
     \sa diffuseColor(), specularColor(), ambientColorChanged()
 */
+
+/*!
+    \qmlproperty color Material::ambientColor
+    The ambient color of the material.  The default value
+    is (0.2, 0.2, 0.2, 1.0).
+
+    \sa diffuseColor, specularColor
+*/
+
 QColor QGLMaterial::ambientColor() const
 {
     Q_D(const QGLMaterial);
@@ -146,6 +174,15 @@ void QGLMaterial::setAmbientColor(const QColor& value)
 
     \sa ambientColor(), specularColor(), diffuseColorChanged()
 */
+
+/*!
+    \qmlproperty color Material::diffuseColor
+    The diffuse color of the material.  The default value
+    is (0.8, 0.8, 0.8, 1.0).
+
+    \sa ambientColor, specularColor
+*/
+
 QColor QGLMaterial::diffuseColor() const
 {
     Q_D(const QGLMaterial);
@@ -169,6 +206,15 @@ void QGLMaterial::setDiffuseColor(const QColor& value)
 
     \sa ambientColor(), diffuseColor(), specularColorChanged()
 */
+
+/*!
+    \qmlproperty color Material::specularColor
+    The specular color of the material.  The default value
+    is (0, 0, 0, 1).
+
+    \sa ambientColor, diffuseColor
+*/
+
 QColor QGLMaterial::specularColor() const
 {
     Q_D(const QGLMaterial);
@@ -193,6 +239,14 @@ void QGLMaterial::setSpecularColor(const QColor& value)
 
     \sa emittedLightChanged()
 */
+
+/*!
+    \qmlproperty color Material::emittedLight
+    The emitted light intensity of the material.
+    The default value is (0.0, 0.0, 0.0, 1.0), which indicates
+    that the material does not emit any light.
+*/
+
 QColor QGLMaterial::emittedLight() const
 {
     Q_D(const QGLMaterial);
@@ -222,6 +276,21 @@ void QGLMaterial::setEmittedLight(const QColor& value)
 
     \sa basicColor(), ambientColor(), diffuseColor()
 */
+
+/*!
+    \qmlproperty color Material::color
+    The overall color of the material.  The default value
+    is (1.0, 1.0, 1.0, 1.0).
+
+    This is a convenience property.  When read it returns basicColor.
+    When written, it sets basicColor to the value, ambientColor
+    to 20% of the value, and diffuseColor to 80% of the value.
+    The result is that regardless of whether lighting is used or not,
+    the material will appear to have a similar color.
+
+    \sa basicColor, ambientColor, diffuseColor
+*/
+
 QColor QGLMaterial::color() const
 {
     Q_D(const QGLMaterial);
@@ -252,6 +321,14 @@ void QGLMaterial::setColor(const QColor& value)
 
     \sa shininessChanged()
 */
+
+/*!
+    \qmlproperty real Material::shininess
+    The specular exponent of the material, or how shiny it is.
+    Must be between 0 and 128.  The default value is 0.  A value outside
+    this range will be clamped to the range when the property is set.
+*/
+
 qreal QGLMaterial::shininess() const
 {
     Q_D(const QGLMaterial);

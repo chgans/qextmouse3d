@@ -50,7 +50,15 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+*/
+
+/*!
+    \qmlclass LightModel QGLLightModel
+    \brief The LightModel item defines the lighting model to use for the scene.
+    \since 4.8
     \ingroup qt3d::qml3d
+
+    \sa Light
 */
 
 /*!
@@ -120,6 +128,13 @@ QGLLightModel::~QGLLightModel()
 
     \sa modelChanged()
 */
+
+/*!
+    \qmlproperty enumeration LightModel::model
+    The lighting model to use, either OneSided or TwoSided.
+    The default is OneSided.
+*/
+
 QGLLightModel::Model QGLLightModel::model() const
 {
     Q_D(const QGLLightModel);
@@ -148,6 +163,18 @@ void QGLLightModel::setModel(QGLLightModel::Model value)
 
     \sa colorControlChanged()
 */
+
+/*!
+    \qmlproperty enumeration LightModel::colorControl
+    The color control mode, either SingleColor or
+    SeparateSpecularColor.  The default value is SingleColor.
+
+    If SingleColor is specified, then a single color is calculated
+    by the lighting computation for a vertex.  If SeparateSpecularColor
+    is specified, then a separate specular color computation is
+    performed and then summed into the pixel color after texture mapping.
+*/
+
 QGLLightModel::ColorControl QGLLightModel::colorControl() const
 {
     Q_D(const QGLLightModel);
@@ -171,6 +198,13 @@ void QGLLightModel::setColorControl(QGLLightModel::ColorControl value)
 
     \sa viewerPositionChanged()
 */
+
+/*!
+    \qmlproperty enumeration LightModel::viewerPosition
+    The viewer position, either ViewerAtInfinity or LocalViewer.
+    The default value is ViewerAtInfinity.
+*/
+
 QGLLightModel::ViewerPosition QGLLightModel::viewerPosition() const
 {
     Q_D(const QGLLightModel);
@@ -194,6 +228,13 @@ void QGLLightModel::setViewerPosition(QGLLightModel::ViewerPosition value)
 
     \sa ambientSceneColorChanged()
 */
+
+/*!
+    \qmlproperty color LightModel::ambientSceneColor
+    The ambient color of the entire scene.  The default value
+    is (0.2, 0.2, 0.2, 1.0).
+*/
+
 QColor QGLLightModel::ambientSceneColor() const
 {
     Q_D(const QGLLightModel);

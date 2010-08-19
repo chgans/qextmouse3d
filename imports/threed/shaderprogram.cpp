@@ -50,12 +50,12 @@
 #include <QDeclarativeContext>
 
 /*!
-    \class ShaderProgram
-    \brief The ShaderProgram class is derivative class of the more general \l Effect class in Qml/3d.
+    \qmlclass ShaderProgram ShaderProgram
+    \brief The ShaderProgram item is derivative class of the more general Effect class in QML/3d.
     Whereas the Effect class provides support for standard effects under OpenGL, the ShaderProgramEffect supports effects based on custom shader programs for the GPU.
     \since 4.8
-    \ingroup qt3d
     \ingroup qt3d::qml3d
+    \inherits Effect
 
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
@@ -121,6 +121,7 @@ public:
 
 
 /*
+  \internal
   Construction for the ShaderProgramEffect class consists of setting the key parameter values of the
   class to undefined.  As such, a shader program effect with no further initialisation will do nothing at all
   until further creation of shader programs for it has been carried out.
@@ -144,6 +145,7 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 }
 
 /*
+  \internal
   Destruction entails deletion of the underlying \l QGLShaderProgram which forms the functional core of the
   class.
 */
@@ -160,6 +162,7 @@ ShaderProgramEffect::~ShaderProgramEffect()
 }
 
 /*
+  \internal
   The act of shader programe creation can be undertakn in the manner defined for the QGLShaderProgram class.
   Failure to successfully carry out creation will result in a warning message.  Success will auto-populate the
   parameter fields of the ShaderProgramEffect with the necessary values based on the shader program.
@@ -346,6 +349,7 @@ static inline void setUniformFromFloatList(QGLShaderProgram *program, int unifor
 }
 
 /*!
+  \internal
   This performs all updates for the shader program given a QGLPainter \a painter, and the type of update
   being carried out based on the \a updates field, which is an enumeration of the possible painter updates.
 */
@@ -725,6 +729,7 @@ void ShaderProgramEffect::processTextureUrl(int uniformLocation, QString urlStri
 }
 
 /*!
+  \internal
   Construction of the shader program and assignment of its \a parent object.
 */
 ShaderProgram::ShaderProgram(QObject *parent)
@@ -734,6 +739,7 @@ ShaderProgram::ShaderProgram(QObject *parent)
 }
 
 /*!
+  \internal
   Destruction of the ShaderProgram entails deletion of private data, and explicit deletion of the
   underlying ShaderProgramEffect defined by the class.
 */
@@ -744,11 +750,12 @@ ShaderProgram::~ShaderProgram()
 }
 
 /*!
-  \property ShaderProgram::vertexShader
-  \brief The vertexShader property defines the source for the vertex shader to be implemented by this
-  instance of the ShaderProgram.  It is a QString which, by default, is undefined.
+  \qmlproperty string ShaderProgram::vertexShader
 
-  \sa fragmentShader()
+  This property defines the source for the vertex shader to be implemented by this
+  instance of the ShaderProgram.
+
+  \sa fragmentShader
 */
 QString ShaderProgram::vertexShader() const
 {
@@ -764,11 +771,11 @@ void ShaderProgram::setVertexShader(const QString& value)
 
 
 /*!
-  \property ShaderProgram::fragmentShader
-  \brief The fragmentShader property defines the source for the fragment shader (ie. pixel shader) to be
-  implemented by this instance of the ShaderProgram.  It is a QString which, by default, is undefined.
+  \qmlproperty string ShaderProgram::fragmentShader
+  This property defines the source for the fragment shader (ie. pixel shader) to be
+  implemented by this instance of the ShaderProgram.
 
-  \sa vertexShader()
+  \sa vertexShader
 */
 QString ShaderProgram::fragmentShader() const
 {
@@ -783,6 +790,7 @@ void ShaderProgram::setFragmentShader(const QString& value)
 }
 
 /*!
+  \internal
   Enables the effect for a given \a painter.  If the effect has not been created yet, this function will
   attempt to do so.
 */
@@ -801,6 +809,7 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
 }
 
 /*!
+  \internal
   Mark all properties as dirty to be re-uploaded in the next update
 */
 void ShaderProgram::markAllPropertiesDirty()
@@ -809,6 +818,7 @@ void ShaderProgram::markAllPropertiesDirty()
 }
 
 /*!
+  \internal
   Mark a \a property as dirty to be re-uploaded in the next update
   */
 void ShaderProgram::markPropertyDirty(int property)
@@ -817,9 +827,9 @@ void ShaderProgram::markPropertyDirty(int property)
 }
 
 /*!
-  \fn void ShaderProgram::finishedLoading()
+  \qmlsignal ShaderProgram::onFinishedLoading()
   Emitted when the last remote resource request is resolved, and implies that
-  the effect is ready to be displayed.  Does not imply
+  the effect is ready to be displayed.
 */
 
 /*!

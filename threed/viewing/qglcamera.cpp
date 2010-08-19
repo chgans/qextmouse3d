@@ -52,7 +52,6 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::viewing
-    \ingroup qt3d::qml3d
 
     \section1 Modelview and projection transformations
 
@@ -309,6 +308,15 @@ QT_BEGIN_NAMESPACE
     \sa QGLView, QGLPainter
 */
 
+/*!
+    \qmlclass Camera QGLCamera
+    \brief The Camera item defines the viewing position and projection for a 3D scene.
+    \since 4.8
+    \ingroup qt3d::qml3d
+
+    \sa Viewport
+*/
+
 class QGLCameraPrivate
 {
 public:
@@ -381,6 +389,21 @@ QGLCamera::~QGLCamera()
     \property QGLCamera::projectionType
     \brief the projection type for this camera.  The default is Perspective.
 */
+
+/*!
+    \qmlproperty enumeration Camera::projectionType
+
+    The projection type for this camera, which is one of:
+
+    \list
+    \o Perspective Use a perspective view.  This is the default.
+    \o Orthographic Use an orthographic view.
+    \o Orthographic2D Use a 2D orthographic view that directly maps
+        x and y world co-ordinates to pixel co-ordinates.  The origin
+        will be at the top-left of the view.
+    \endlist
+*/
+
 QGLCamera::ProjectionType QGLCamera::projectionType() const
 {
     Q_D(const QGLCamera);
@@ -408,6 +431,19 @@ void QGLCamera::setProjectionType(QGLCamera::ProjectionType value)
 
     \sa viewSize()
 */
+
+/*!
+    \qmlproperty real Camera::fieldOfView
+    The field of view in degrees for a perspective projection.
+
+    The default value is zero, which indicates a standard perspective
+    frustum view volume.
+
+    This value is ignored if projectionType is not Perspective.
+
+    \sa projectionType
+*/
+
 qreal QGLCamera::fieldOfView() const
 {
     Q_D(const QGLCamera);
@@ -430,6 +466,15 @@ void QGLCamera::setFieldOfView(qreal angle)
 
     \sa farPlane()
 */
+
+/*!
+    \qmlproperty real Camera::nearPlane
+    The distance from the eye to the near clipping plane.
+    The default value is 5.
+
+    \sa farPlane
+*/
+
 qreal QGLCamera::nearPlane() const
 {
     Q_D(const QGLCamera);
@@ -452,6 +497,15 @@ void QGLCamera::setNearPlane(qreal value)
 
     \sa nearPlane()
 */
+
+/*!
+    \qmlproperty real Camera::farPlane
+    The distance from the eye to the far clipping plane.
+    The default value is 1000.
+
+    \sa nearPlane
+*/
+
 qreal QGLCamera::farPlane() const
 {
     Q_D(const QGLCamera);
@@ -563,6 +617,21 @@ void QGLCamera::setMinViewSize(const QSizeF& size)
     Use rotateEye() or rotateCenter() for more complex rotations
     that are not aligned with 0, 90, 180, or 270 degrees.
 */
+
+/*!
+    \qmlproperty int Camera::screenRotation
+    The screen rotation angle in degrees.  The default
+    value is 0.  If this value is 90 or 270, then the view
+    will be flipped width for height.  The only supported values
+    are 0, 90, 180, and 270.  The screen is rotated around the
+    positive z axis.
+
+    This setting is intended for simple screen rotations on handheld
+    devices that can be held in either portrait or landscape orientations.
+    The entire screen image is rotated so that it can be viewed in a
+    different device orientation.
+*/
+
 int QGLCamera::screenRotation() const
 {
     Q_D(const QGLCamera);
@@ -585,6 +654,14 @@ void QGLCamera::setScreenRotation(int angle)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::xEye
+    The x position of the viewer's eye.  The default value is 0.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::xEye() const
 {
     Q_D(QGLCamera);
@@ -608,6 +685,14 @@ void QGLCamera::setXEye(qreal value)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::yEye
+    The y position of the viewer's eye.  The default value is 0.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::yEye() const
 {
     Q_D(QGLCamera);
@@ -631,6 +716,14 @@ void QGLCamera::setYEye(qreal value)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::zEye
+    The z position of the viewer's eye.  The default value is 10.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::zEye() const
 {
     Q_D(QGLCamera);
@@ -657,6 +750,17 @@ void QGLCamera::setZEye(qreal value)
 
     \sa translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
+*/
+
+/*!
+    \qmlproperty vector3D Camera::eye
+    The position of the viewer's eye.  The default value is (0, 0, 10).
+
+    If the projectionType is Orthographic2D, then the x and y
+    components are ignored: only the z component is used
+    to determine the eye position.
+
+    \sa upVector, center, eyeSeparation, motionAdjustment
 */
 QVector3D QGLCamera::eye() const
 {
@@ -698,6 +802,14 @@ void QGLCamera::translateEye(qreal x, qreal y, qreal z)
 
     \sa eye(), center()
 */
+
+/*!
+    \qmlproperty vector3D Camera::upVector
+    The up vector for the viewer.  The default value is (0, 1, 0).
+
+    \sa eye, center
+*/
+
 QVector3D QGLCamera::upVector() const
 {
     Q_D(const QGLCamera);
@@ -721,6 +833,15 @@ void QGLCamera::setUpVector(const QVector3D& vector)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::xCenter
+    The x position of the center of the view visible from the viewer's
+    position.  The default value is 0.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::xCenter() const
 {
     Q_D(QGLCamera);
@@ -745,6 +866,15 @@ void QGLCamera::setXCenter(qreal value)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::yCenter
+    The y position of the center of the view visible from the 
+	viewer's position.  The default value is 0.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::yCenter() const
 {
     Q_D(QGLCamera);
@@ -769,6 +899,15 @@ void QGLCamera::setYCenter(qreal value)
     \sa eye(), translateEye(), upVector(), center(), eyeSeparation()
     \sa motionAdjustment()
 */
+
+/*!
+    \qmlproperty real Camera::zCenter
+    The z position of the center of the view visible from the 
+	viewer's position.  The default value is 0.
+
+    \sa eye, upVector, center, eyeSeparation, motionAdjustment
+*/
+
 qreal QGLCamera::zCenter() const
 {
     Q_D(QGLCamera);
@@ -796,6 +935,19 @@ void QGLCamera::setZCenter(qreal value)
 
     \sa translateCenter(), eye(), upVector()
 */
+
+/*!
+    \qmlproperty vector3D Camera::center
+    The center of the view visible from the viewer's position.
+    The default value is (0, 0, 0).
+
+    If the projectionType is Orthographic2D, then the x and y
+    components are ignored: only the z component is used
+    to determine the center position.
+
+    \sa eye, upVector
+*/
+
 QVector3D QGLCamera::center() const
 {
     Q_D(const QGLCamera);
@@ -837,6 +989,16 @@ void QGLCamera::translateCenter(qreal x, qreal y, qreal z)
 
     \sa eye()
 */
+
+/*!
+    \qmlproperty real Camera::eyeSeparation
+    The separation between the eyes when stereo viewing is in use,
+    with \l eye property specifying the mid-point between the eyes.
+    The default value is 0.
+
+    \sa eye
+*/
+
 qreal QGLCamera::eyeSeparation() const
 {
     Q_D(const QGLCamera);
@@ -880,6 +1042,36 @@ void QGLCamera::setEyeSeparation(qreal value)
     This value is ignored if projectionType() is Orthographic2D.
 
     \sa eye(), modelViewMatrix()
+*/
+
+/*!
+    \qmlproperty vector3D Camera::motionAdjustment
+    The adjustment vector to apply to the eye for user motion.
+
+    This property is typically used to implement motion tracking.
+    It is interpreted as a vector from the center of the screen to the
+    current position of the viewer.  The angle between the motion
+    adjustment vector and the screen center is used to adjust the
+    position of the eye() when modelViewMatrix() is called.
+
+    The default value is (0, 0, 1), which indicates a viewer
+    directly in front of the center of the screen.
+
+    The units for the vector are unspecified.  They could be
+    meters, centimeters, or the force due to gravity in various
+    directions from an accelerometer.  The angle defined
+    by the vector is used to perform the adjustment, not its
+    magnitude.
+
+    The output of motion tracking hardware can be very noisy,
+    with minor fluctuations due to viewer twitch movements or
+    environmental factors.  The application is responsible for
+    cleaning up the signal and removing these fluctuations before
+    altering this property.
+
+    This value is ignored if projectionType is Orthographic2D.
+
+    \sa eye, projectionType
 */
 
 QVector3D QGLCamera::motionAdjustment() const
@@ -928,6 +1120,22 @@ void QGLCamera::setMotionAdjustment(const QVector3D& vector)
     not performed.
 
     This value is ignored if projectionType() is Orthographic2D.
+*/
+
+/*!
+    \qmlproperty bool Camera::adjustForAspectRatio
+    The adjustment state of the aspect ratio in the viewing volume.
+
+    By default, the camera adjusts the viewing volume for the aspect
+    ratio of the window so that pixels appear square without the
+    application needing to adjust the view size manually.
+
+    If this property is false, then the aspect ratio adjustment is
+    not performed.
+
+    This value is ignored if projectionType is Orthographic2D.
+
+    \sa projectionType
 */
 
 bool QGLCamera::adjustForAspectRatio() const

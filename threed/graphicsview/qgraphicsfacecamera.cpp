@@ -49,6 +49,21 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
+
+    Sometimes it can be useful to make an object face towards the camera
+    no matter what orientation the scene is in.  The common name for
+    this technique is "billboarding".
+
+    When applied as a transformation, this class will replace the top-left
+    3x3 part of the transformation matrix with the identity.  This has the
+    effect of removing the rotation and scale components from the current
+    world co-ordinate orientation.
+*/
+
+/*!
+    \qmlclass FaceCamera QGraphicsFaceCamera
+    \brief The FaceCamera item implements a transformation that causes objects to face the camera.
+    \since 4.8
     \ingroup qt3d::qml3d
 
     Sometimes it can be useful to make an object face towards the camera
@@ -143,6 +158,22 @@ QGraphicsFaceCamera::~QGraphicsFaceCamera()
 /*!
     \property QGraphicsFaceCamera::preserveUpVector
     \brief true to preserve the up orientation.
+
+    The default value for this property is false, which indicates that
+    the object being transformed should always face directly to the camera
+    This is also known as a "spherical billboard".
+
+    If the value for this property is true, then the object will have
+    its up orientation preserved.  This is also known as a "cylindrical
+    billboard".
+*/
+
+/*!
+    \qmlproperty bool FaceCamera::preserveUpVector
+
+    This property specifies whether the camera facing transform should
+    preserve the "up vector" so that objects stay at right angles
+    to the ground plane in the scene.
 
     The default value for this property is false, which indicates that
     the object being transformed should always face directly to the camera

@@ -49,11 +49,10 @@
 #include <qdeclarativeinfo.h>
 
 /*!
-    \class Effect
-    \brief The Effect class defines simple effects within the QML/3d environment.  Examples 
+    \qmlclass Effect Effect
+    \brief The Effect item defines simple effects within the QML/3D environment.  Examples 
     of such effects include textures, simple material and lighting effects, and so on.
     \since 4.8
-    \ingroup qt3d
     \ingroup qt3d::qml3d
 
     \section1 Defining an Effect
@@ -71,7 +70,7 @@
     \code
     Effect {
         id: myTextureEffect
-        texture: "C:\textures\texture.png"
+        texture: "texture.png"
     }
     \endcode
 */
@@ -109,6 +108,7 @@ public:
 };
 
 /*!
+    \internal
     Constructs the Effect object with \a parent as its parent.
 */
 Effect::Effect(QObject *parent)
@@ -118,6 +118,7 @@ Effect::Effect(QObject *parent)
 }
 
 /*!
+    \internal
     Destroy the \l Effect object and delete any unneeded data.
 */
 Effect::~Effect()
@@ -126,11 +127,12 @@ Effect::~Effect()
 }
 
 /*!
-    \property Effect::color
-    \brief The color of the object defined by a QColor object.
+    \qmlproperty color Effect::color
 
-    The default value for this property is \c 255,255,255,255
+    The color of the object for simple non-texture effects.
+    The default value for this property is white.
 */
+
 QColor Effect::color() const
 {
     return d->color;
@@ -143,12 +145,13 @@ void Effect::setColor(const QColor& value)
 }
 
 /*!
-    \property Effect::useLighting
-    \brief the lighting control parameter; true if this effect should
+    \qmlproperty bool Effect::useLighting
+
+    The lighting control parameter; true if this effect should
     use lighting or false if this effect should use flat colors and
     textures.
 
-    The default value for this true.
+    The default value for this property is true.
 */
 bool Effect::useLighting() const
 {
@@ -162,14 +165,15 @@ void Effect::setUseLighting(bool value)
 }
 
 /*!
-    \property Effect::texture
-    \brief Texture effects are defined by this property.  A texture is 
-    provided by means of a \l QUrl which is then used for texturing.
+    \qmlproperty url Effect::texture
 
-    Textures can also be defined directly as images using the \l textureImage
+    Texture effects are defined by this property.  A texture is 
+    provided by means of a QUrl which is then used for texturing.
+
+    Textures can also be defined directly as images using the textureImage
     property.
 
-    \sa textureImage()
+    \sa textureImage
 */
 QUrl Effect::texture() const
 {
@@ -262,12 +266,13 @@ void Effect::textureRequestProgress(qint64 received, qint64 total)
 
 
 /*!
-    \property Effect::textureImage
-    \brief This property directly defines a texture using an existing \l QImage.
+    \qmlproperty image Effect::textureImage
 
-    Textures can also be defined based on a URL using the \l texture property.
+    This property directly defines a texture using an existing QImage.
 
-    \sa texture()
+    Textures can also be defined based on a URL using the texture property.
+
+    \sa texture
 */
 QImage Effect::textureImage() const
 {
@@ -276,6 +281,7 @@ QImage Effect::textureImage() const
 }
 
 /*!
+  \internal
   Sets this effect to use \value as the image for it's texture.
 */
 void Effect::setTextureImage(const QImage& value)
@@ -286,10 +292,9 @@ void Effect::setTextureImage(const QImage& value)
 }
 
 /*!
-    \property Effect::material
-    \brief Material parameters are defined in an \l Effect in QML/3d via the
-    \c material property.  This specifies a set of \l QGLMaterial which
-    are then used when creating the effect.
+    \qmlproperty Material Effect::material
+
+    Defines the material to apply to items that use this effect.
 */
 QGLMaterial *Effect::material() const
 {
@@ -297,6 +302,7 @@ QGLMaterial *Effect::material() const
 }
 
 /*!
+  \internal
   Sets the material for use with this effect.
 */
 void Effect::setMaterial(QGLMaterial *value)
@@ -316,12 +322,14 @@ void Effect::setMaterial(QGLMaterial *value)
 }
 
 /*!
-    \property Effect::progress
-    \brief Tracks how much of a remote resource has been downloaded, where 0.0
+    \qmlproperty real Effect::progress
+
+    Tracks how much of a remote resource has been downloaded, where 0.0
     is no progress, and 1.0 is completion.
 */
 
 /*!
+    \internal
     Enable the effect on for a given \a painter.
 */
 void Effect::enableEffect(QGLPainter *painter)
@@ -353,6 +361,7 @@ void Effect::enableEffect(QGLPainter *painter)
 }
 
 /*!
+    \internal
     Disable the effect for a given \a painter.
 */
 void Effect::disableEffect(QGLPainter *painter)
@@ -371,18 +380,7 @@ qreal Effect::progress()
 }
 
 /*!
-  \fn void Effect::effectChanged();
-  Signals that a property of the Effect has changed in some way, this may be
-  a texture, material, or other parameter.
-*/
-
-/*!
-  \fn void Effect::progressChanged(qreal progress)
-  Emitted while loading a resource to \a progress as a fraction of total size
-  loaded.  Starts at 0.0, with 1.0 indicating completion.
-*/
-
-/*!
+    \internal
     This function returns a \l QGLTexture2D based on the \c texture property of the \l Effect.
 */
 QGLTexture2D *Effect::texture2D()

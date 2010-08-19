@@ -45,6 +45,45 @@
 
 QT_BEGIN_NAMESPACE
 
+/*!
+    \qmlclass Cube Cube
+    \brief The Cube item represents a simple cube in 3D space.
+    \since 4.8
+    \ingroup qt3d::qml3d
+    \inherits Item3d
+
+    The Cube element in QML provides a simple way to create a cube
+    object, usually for testing material effects.  For example,
+    the following QML code displays a cube of size 1.5, centered
+    on the origin and covered in the Qt logo texture:
+
+    \code
+    Cube {
+        size: 1.5
+        effect: Effect {
+            color: "#aaca00"
+            texture: "qtlogo.png"
+        }
+    }
+    \endcode
+
+    The cube can be moved from the origin by specifying the
+    Item3d::position property:
+
+    \code
+    Cube {
+        size: 1.5
+        position: Qt.vector3d(1, 0, 5)
+        effect: Effect {
+            color: "#aaca00"
+            texture: "qtlogo.png"
+        }
+    }
+    \endcode
+
+    \sa Item3d, Pane
+*/
+
 class CubePrivate
 {
 public:
@@ -65,6 +104,13 @@ Cube::~Cube()
 {
     delete d;
 }
+
+/*!
+    \qmlproperty real Cube::size
+
+    The size of the cube.  The default value for this property is 1.
+    The cube will be centered on Item3d::position.
+*/
 
 qreal Cube::size() const
 {

@@ -49,13 +49,10 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
-    \ingroup qt3d::qml3d
-
-    \section1 Properties
 
     QGraphicsTranslation3D is derived directly from QGraphicsTransform, and
     provides a \c translate property to specify the 3D vector to
-    apply to the incoming co-ordinates.
+    apply to incoming co-ordinates.
 
     The \a progress property can be used to perform animation along a
     translation vector by varying the progress value between 0 and 1.
@@ -64,6 +61,48 @@ QT_BEGIN_NAMESPACE
     value is 1.
 
     \sa QGraphicsRotation3D, QGraphicsScale3D
+*/
+
+/*!
+    \qmlclass Translation3D QGraphicsTranslation3D
+    \brief The Translation3D item supports translation of items in 3D.
+    \since 4.8
+    \ingroup qt3d::qml3d
+
+    3D items in QML are typically positioned directly as follows:
+
+    \code
+    Item3d {
+        mesh: Mesh { source: "chair.3ds" }
+        position: Qt.vector3d(0, 5, 10)
+    }
+    \endcode
+
+    However, it can sometimes be useful to translate an object along a
+    vector under the control of an animation.  The Translate3D
+    element can be used for this purpose.  The following example
+    translates the object along a straight-line path 5 units to
+    the right of its original position, and then back again:
+
+    \code
+    Item3d {
+        mesh: Mesh { source: "chair.3ds" }
+        position: Qt.vector3d(0, 5, 10)
+        transform: [
+            Translation3D {
+                translate: Qt.vector3d(5, 0, 0)
+                SequentialAnimation on progress {
+                    running: true
+                    loops: Animation.Infinite
+                    NumberAnimation { to : 1.0; duration: 300 }
+                    NumberAnimation { to : 0.0; duration: 300 }
+                }
+            }
+        ]
+    }
+    \endcode
+
+    \sa Rotation3D, Scale3D
 */
 
 class QGraphicsTranslation3DPrivate
@@ -97,6 +136,13 @@ QGraphicsTranslation3D::~QGraphicsTranslation3D()
     The default value for this property is (0, 0, 0).
 */
 
+/*!
+    \qmlproperty vector3D Translation3D::translate
+
+    The translation to apply to incoming co-ordinates.  The default value
+    for this property is (0, 0, 0).
+*/
+
 QVector3D QGraphicsTranslation3D::translate() const
 {
     Q_D(const QGraphicsTranslation3D);
@@ -118,6 +164,13 @@ void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
     \brief the x component of the translation to apply to
     incoming co-ordinates.
 
+    The default value for this property is 0.
+*/
+
+/*!
+    \qmlproperty real Translation3D::xTranslate
+
+    The x component of the translation to apply to incoming co-ordinates.
     The default value for this property is 0.
 */
 
@@ -145,6 +198,13 @@ void QGraphicsTranslation3D::setXTranslate(qreal value)
     The default value for this property is 0.
 */
 
+/*!
+    \qmlproperty real Translation3D::yTranslate
+
+    The y component of the translation to apply to incoming co-ordinates.
+    The default value for this property is 0.
+*/
+
 qreal QGraphicsTranslation3D::yTranslate() const
 {
     Q_D(const QGraphicsTranslation3D);
@@ -169,6 +229,13 @@ void QGraphicsTranslation3D::setYTranslate(qreal value)
     The default value for this property is 0.
 */
 
+/*!
+    \qmlproperty real Translation3D::zTranslate
+
+    The z component of the translation to apply to incoming co-ordinates.
+    The default value for this property is 0.
+*/
+
 qreal QGraphicsTranslation3D::zTranslate() const
 {
     Q_D(const QGraphicsTranslation3D);
@@ -190,6 +257,17 @@ void QGraphicsTranslation3D::setZTranslate(qreal value)
     \brief the progress along the translation vector, from 0 to 1.
 
     The default value for this property is 1.
+
+    This property can be used to perform animation along a translation
+    vector by varying the progress between 0 and 1.  Overshoot animations
+    are also possible by setting the value to something outside this range.
+*/
+
+/*!
+    \qmlproperty real Translation3D::progress
+
+    The progress along the translation vector, from 0 to 1.  The default
+    value for this property is 1.
 
     This property can be used to perform animation along a translation
     vector by varying the progress between 0 and 1.  Overshoot animations

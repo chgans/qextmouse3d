@@ -52,7 +52,6 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
-    \ingroup qt3d::qml3d
 
     The functions in this class are a convenience wrapper for the OpenGL enumerations
     which control each light source in a 3D scene.  For the general ambient light in a
@@ -126,6 +125,15 @@ QT_BEGIN_NAMESPACE
     with distance from the object.
 */
 
+/*!
+    \qmlclass Light QGLLightParameters
+    \brief The Light item represents the parameters of a light in a 3D scene.
+    \since 4.8
+    \ingroup qt3d::qml3d
+
+    \sa LightModel
+*/
+
 class QGLLightParametersPrivate : public QObjectPrivate
 {
     Q_DECLARE_PUBLIC(QGLLightParameters)
@@ -197,6 +205,15 @@ QGLLightParameters::~QGLLightParameters()
 
     \sa position(), direction()
 */
+
+/*!
+    \qmlproperty enumeration Light::type
+    The type of this light; Positional or Directional.  The default
+    is Directional.
+
+    \sa position, direction
+*/
+
 QGLLightParameters::LightType QGLLightParameters::type() const
 {
     Q_D(const QGLLightParameters);
@@ -220,6 +237,25 @@ QGLLightParameters::LightType QGLLightParameters::type() const
 
     \sa direction(), type(), positionChanged()
 */
+
+/*!
+    \qmlproperty vector3D Light::position
+    The position of this light if it is Positional; or a zero vector
+    if it is Directional.  By default, the light is Directional.
+
+    For a Positional light, the return value is the location in model space
+    of the light, at some finite distance from the origin.  The value is
+    transformed by the model-view transformation when the light
+    parameters are applied.
+
+    When the light is Positional OpenGL will obey other parameters relating
+    to the light's position, such as attenuation and spot angle.
+
+    Setting the position converts the light from Directional to Positional.
+
+    \sa direction, type
+*/
+
 QVector3D QGLLightParameters::position() const
 {
     Q_D(const QGLLightParameters);
@@ -269,6 +305,28 @@ void QGLLightParameters::setPosition(const QVector3D& point)
 
     \sa position(), type(), directionChanged()
 */
+
+/*!
+    \qmlproperty vector3D Light::direction
+    The direction of this light if it is Directional; or a zero vector
+    if it is Positional.  By default, the light is Directional.
+
+    For a Directional light, the return value is the direction vector of
+    an infinitely distant directional light, like the sun.
+
+    The default value is (0, 0, 1), for a directional light pointing along
+    the positive z-axis.
+
+    OpenGL will ignore other parameters such as attenuation and spot angle
+    when this value is set, since a directional light has no location.
+    In order to set the direction of a spot light, use the setSpotDirection()
+    function.
+
+    Setting the direction converts the light from Positional to Directional.
+
+    \sa position, type
+*/
+
 QVector3D QGLLightParameters::direction() const
 {
     Q_D(const QGLLightParameters);
@@ -304,6 +362,14 @@ void QGLLightParameters::setDirection(const QVector3D& value)
 
     \sa diffuseColor(), specularColor(), ambientColorChanged()
 */
+
+/*!
+    \qmlproperty color Light::ambientColor
+    The ambient color of this light.  The default value is black.
+
+    \sa diffuseColor, specularColor
+*/
+
 QColor QGLLightParameters::ambientColor() const
 {
     Q_D(const QGLLightParameters);
@@ -325,6 +391,13 @@ void QGLLightParameters::setAmbientColor(const QColor& value)
     \brief the diffuse color of this light.  The default value is white.
 
     \sa ambientColor(), specularColor(), diffuseColorChanged()
+*/
+
+/*!
+    \qmlproperty color Light::diffuseColor
+    The diffuse color of this light.  The default value is white.
+
+    \sa ambientColor, specularColor
 */
 QColor QGLLightParameters::diffuseColor() const
 {
@@ -348,6 +421,14 @@ void QGLLightParameters::setDiffuseColor(const QColor& value)
 
     \sa ambientColor(), diffuseColor(), specularColorChanged()
 */
+
+/*!
+    \qmlproperty color Light::specularColor
+    The specular color of this light.  The default value is white.
+
+    \sa ambientColor, diffuseColor
+*/
+
 QColor QGLLightParameters::specularColor() const
 {
     Q_D(const QGLLightParameters);
@@ -375,6 +456,18 @@ void QGLLightParameters::setSpecularColor(const QColor& value)
 
     \sa spotExponent(), spotDirectionChanged()
 */
+
+/*!
+    \qmlproperty vector3D Light::spotDirection
+    The direction that a spot-light is shining in.
+
+    A spotlight is a positional light that has a value other than the default
+    for spot angle.  The default value is (0, 0, -1).
+
+    This parameter has no effect on a Directional light.
+
+    \sa spotExponent
+*/
 QVector3D QGLLightParameters::spotDirection() const
 {
     Q_D(const QGLLightParameters);
@@ -401,6 +494,18 @@ void QGLLightParameters::setSpotDirection(const QVector3D& vector)
 
     \sa spotAngle(), setPosition(), spotExponentChanged()
 */
+
+/*!
+    \qmlproperty real Light::spotExponent
+    The exponent value between 0 and 128 that indicates the
+    intensity distribution of a spot-light.  The default value is 0,
+    indicating uniform light distribution.
+
+    This parameter has no effect on a Directional light.
+
+    \sa spotAngle, position
+*/
+
 qreal QGLLightParameters::spotExponent() const
 {
     Q_D(const QGLLightParameters);
@@ -428,6 +533,17 @@ void QGLLightParameters::setSpotExponent(qreal value)
 
     \sa spotCosAngle(), spotAngleChanged()
 */
+
+/*!
+    \qmlproperty real Light::spotAngle
+    The angle over which light is spread from this light.
+    It should be between 0 and 90 for spot lights, and 180 for
+    uniform light distribution from a remote light source.
+    The default value is 180.
+
+    This parameter has no effect on a Directional light.
+*/
+
 qreal QGLLightParameters::spotAngle() const
 {
     Q_D(const QGLLightParameters);
@@ -477,6 +593,16 @@ qreal QGLLightParameters::spotCosAngle() const
     \sa linearAttenuation(), quadraticAttenuation()
     \sa constantAttenuationChanged()
 */
+
+/*!
+    \qmlproperty real Light::constantAttenuation
+    The constant light attenuation factor.  The default value is 1.
+
+    This parameter has no effect on a Directional light.
+
+    \sa linearAttenuation, quadraticAttenuation
+*/
+
 qreal QGLLightParameters::constantAttenuation() const
 {
     Q_D(const QGLLightParameters);
@@ -502,6 +628,16 @@ void QGLLightParameters::setConstantAttenuation(qreal value)
     \sa constantAttenuation(), quadraticAttenuation()
     \sa linearAttenuationChanged()
 */
+
+/*!
+    \qmlproperty real Light::linearAttenuation
+    The linear light attenuation factor.  The default value is 0.
+
+    This parameter has no effect on a Directional light.
+
+    \sa constantAttenuation, quadraticAttenuation
+*/
+
 qreal QGLLightParameters::linearAttenuation() const
 {
     Q_D(const QGLLightParameters);
@@ -527,6 +663,16 @@ void QGLLightParameters::setLinearAttenuation(qreal value)
     \sa constantAttenuation(), linearAttenuation()
     \sa quadraticAttenuationChanged()
 */
+
+/*!
+    \qmlproperty real Light::quadraticAttenuation
+    The quadratic light attenuation factor.  The default value is 0.
+
+    This parameter has no effect on a Directional light.
+
+    \sa constantAttenuation, linearAttenuation
+*/
+
 qreal QGLLightParameters::quadraticAttenuation() const
 {
     Q_D(const QGLLightParameters);
