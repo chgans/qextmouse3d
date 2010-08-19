@@ -43,6 +43,7 @@
 #include "qglframebufferobject.h"
 #include "qglsubsurface.h"
 #include "qglmaskedsurface.h"
+#include "qglwidgetsurface.h"
 #include "qgldrawbuffersurface_p.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
@@ -165,9 +166,13 @@ class QGLViewPrivate
 {
 public:
     QGLViewPrivate(QGLView *parent)
+        : view(parent), mainSurface(parent)
     {
         options = QGLView::CameraNavigation;
         fbo = 0;
+        leftSurface = 0;
+        rightSurface = 0;
+        bothSurface = 0;
 
         if (parent->format().stereo())
             stereoType = QGLView::Hardware;
@@ -204,11 +209,19 @@ public:
     ~QGLViewPrivate()
     {
         delete fbo;
+        delete leftSurface;
+        delete rightSurface;
+        delete bothSurface;
     }
 
+    QGLView *view;
     QGLView::Options options;
     QGLView::StereoType stereoType;
     QGLFramebufferObject *fbo;
+    QGLWidgetSurface mainSurface;
+    QGLAbstractSurface *leftSurface;
+    QGLAbstractSurface *rightSurface;
+    QGLAbstractSurface *bothSurface;
     bool pickBufferForceUpdate;
     bool pickBufferMaybeInvalid;
     bool updateQueued;
@@ -233,6 +246,10 @@ public:
     inline void logLeave(const char *message);
 
     void processStereoOptions(QGLView *view);
+
+    QGLAbstractSurface *leftEyeSurface(const QSize &size);
+    QGLAbstractSurface *rightEyeSurface(const QSize &size);
+    QGLAbstractSurface *bothEyesSurface();
 };
 
 inline void QGLViewPrivate::logEnter(const char *message)
@@ -303,6 +320,109 @@ void QGLViewPrivate::processStereoOptions(QGLView *view)
             view->resize(size);
         view->setStereoType(stereoType);
         break;
+    }
+}
+
+// Returns the surface to use to render the left eye image.
+QGLAbstractSurface *QGLViewPrivate::leftEyeSurface(const QSize &size)
+{
+    QRect viewport;
+    switch (stereoType) {
+    case QGLView::Hardware:
+#if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
+        if (!leftSurface) {
+            leftSurface = new QGLDrawBufferSurface
+                (&mainSurface,
+                 view->doubleBuffer() ? GL_BACK_LEFT : GL_FRONT_LEFT);
+        }
+        return leftSurface;
+#endif
+    case QGLView::RedCyanAnaglyph:
+        if (!leftSurface) {
+            leftSurface = new QGLMaskedSurface
+                (&mainSurface,
+                 QGLMaskedSurface::RedMask | QGLMaskedSurface::AlphaMask);
+        }
+        return leftSurface;
+    case QGLView::DoubleWideLeftRight:
+        viewport = QRect(0, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        viewport = QRect(0, 0, size.width(), size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
+        break;
+    }
+    if (!leftSurface)
+        leftSurface = new QGLSubsurface(&mainSurface, viewport);
+    else
+        static_cast<QGLSubsurface *>(leftSurface)->setRegion(viewport);
+    return leftSurface;
+}
+
+// Returns the surface to use to render the right eye image.
+QGLAbstractSurface *QGLViewPrivate::rightEyeSurface(const QSize &size)
+{
+    QRect viewport;
+    switch (stereoType) {
+    case QGLView::Hardware:
+#if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
+        if (!rightSurface) {
+            rightSurface = new QGLDrawBufferSurface
+                (&mainSurface,
+                 view->doubleBuffer() ? GL_BACK_RIGHT : GL_FRONT_RIGHT);
+        }
+        return rightSurface;
+#endif
+    case QGLView::RedCyanAnaglyph:
+        if (!rightSurface) {
+            rightSurface = new QGLMaskedSurface
+                (&mainSurface,
+                 QGLMaskedSurface::GreenMask | QGLMaskedSurface::BlueMask);
+        }
+        return rightSurface;
+    case QGLView::DoubleWideLeftRight:
+        viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleWideRightLeft:
+        viewport = QRect(0, 0, size.width() / 2, size.height());
+        break;
+    case QGLView::DoubleHighLeftRight:
+        viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
+        break;
+    case QGLView::DoubleHighRightLeft:
+        viewport = QRect(0, 0, size.width(), size.height() / 2);
+        break;
+    }
+    if (!rightSurface)
+        rightSurface = new QGLSubsurface(&mainSurface, viewport);
+    else
+        static_cast<QGLSubsurface *>(rightSurface)->setRegion(viewport);
+    return rightSurface;
+}
+
+// Returns a surface that can be used to render a non-stereoscopic
+// image into both eyes at the same time.  Returns null if the eyes
+// must be rendered one at a time.
+QGLAbstractSurface *QGLViewPrivate::bothEyesSurface()
+{
+    switch (stereoType) {
+    case QGLView::Hardware:
+#if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
+        if (!bothSurface) {
+            bothSurface = new QGLDrawBufferSurface
+                (&mainSurface, view->doubleBuffer() ? GL_BACK : GL_FRONT);
+        }
+        return bothSurface;
+#endif
+    case QGLView::RedCyanAnaglyph:
+        return &mainSurface;
+    default:
+        return 0;
     }
 }
 
@@ -420,6 +540,15 @@ void QGLView::setStereoType(QGLView::StereoType type)
     if (d->stereoType == type)
         return;
     d->stereoType = type;
+
+    // Destroy the current surface objects so that they will
+    // be re-generated the next time we paint the widget.
+    delete d->leftSurface;
+    delete d->rightSurface;
+    delete d->bothSurface;
+    d->leftSurface = 0;
+    d->rightSurface = 0;
+    d->bothSurface = 0;
 }
 
 /*!
@@ -602,40 +731,6 @@ void QGLView::resizeGL(int w, int h)
     d->pickBufferForceUpdate = true;
 }
 
-static QRect qt_qglview_left_viewport
-    (const QSize &size, QGLView::StereoType type)
-{
-    switch (type) {
-    case QGLView::DoubleWideLeftRight:
-        return QRect(0, 0, size.width() / 2, size.height());
-    case QGLView::DoubleWideRightLeft:
-        return QRect(size.width() / 2, 0, size.width() / 2, size.height());
-    case QGLView::DoubleHighLeftRight:
-        return QRect(0, 0, size.width(), size.height() / 2);
-    case QGLView::DoubleHighRightLeft:
-        return QRect(0, size.height() / 2, size.width(), size.height() / 2);
-    default:
-        return QRect(QPoint(0, 0), size);
-    }
-}
-
-static QRect qt_qglview_right_viewport
-    (const QSize &size, QGLView::StereoType type)
-{
-    switch (type) {
-    case QGLView::DoubleWideLeftRight:
-        return QRect(size.width() / 2, 0, size.width() / 2, size.height());
-    case QGLView::DoubleWideRightLeft:
-        return QRect(0, 0, size.width() / 2, size.height());
-    case QGLView::DoubleHighLeftRight:
-        return QRect(0, size.height() / 2, size.width(), size.height() / 2);
-    case QGLView::DoubleHighRightLeft:
-        return QRect(0, 0, size.width(), size.height() / 2);
-    default:
-        return QRect(QPoint(0, 0), size);
-    }
-}
-
 /*!
     \internal
 */
@@ -647,6 +742,7 @@ void QGLView::paintGL()
 
     // Paint the scene contents.
     QGLPainter painter;
+    QGLAbstractSurface *surface;
     painter.begin();
     if (d->options & QGLView::ShowPicking &&
             d->stereoType == QGLView::RedCyanAnaglyph) {
@@ -660,96 +756,31 @@ void QGLView::paintGL()
         paintGL(&painter);
         painter.setPicking(false);
     } else if (d->camera->eyeSeparation() == 0.0f &&
-                    (d->stereoType == QGLView::Hardware ||
-                     d->stereoType == QGLView::RedCyanAnaglyph)) {
-        // No camera separation, so draw without stereo.  If the hardware
-        // has stereo buffers, then render the same image into both buffers.
-#if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
-        if (d->stereoType == QGLView::Hardware) {
-            bool doubleBuffered = doubleBuffer();
-            if (doubleBuffered)
-                glDrawBuffer(GL_BACK);
-            else
-                glDrawBuffer(GL_FRONT);
-            painter.setEye(QGL::NoEye);
-            earlyPaintGL(&painter);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-        } else
-#endif
-        {
-            painter.setEye(QGL::NoEye);
-            earlyPaintGL(&painter);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-        }
+               (surface = d->bothEyesSurface()) != 0) {
+        // No camera separation, so render the same image into both buffers.
+        painter.pushSurface(surface);
+        painter.setEye(QGL::NoEye);
+        earlyPaintGL(&painter);
+        painter.setCamera(d->camera);
+        paintGL(&painter);
+        painter.popSurface();
     } else {
         // Paint the scene twice, from the perspective of each camera.
-        // In RedCyanAnaglyph mode, the color mask is set each time to only
-        // extract the color planes that we want to see through that eye.
-        if (d->stereoType == QGLView::RedCyanAnaglyph) {
-            painter.setEye(QGL::LeftEye);
-            earlyPaintGL(&painter);
-
-            QGLMaskedSurface leftSurface
-                (painter.currentSurface(), QGLMaskedSurface::RedMask |
-                                           QGLMaskedSurface::AlphaMask);
-            painter.pushSurface(&leftSurface);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-
-            painter.setEye(QGL::RightEye);
-            QGLMaskedSurface rightSurface
-                (painter.currentSurface(), QGLMaskedSurface::GreenMask |
-                                           QGLMaskedSurface::BlueMask);
-            painter.setSurface(&rightSurface);
+        QSize size(this->size());
+        painter.setEye(QGL::LeftEye);
+        painter.pushSurface(d->leftEyeSurface(size));
+        earlyPaintGL(&painter);
+        painter.setCamera(d->camera);
+        paintGL(&painter);
+        if (d->stereoType == QGLView::RedCyanAnaglyph)
             glClear(GL_DEPTH_BUFFER_BIT);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-            painter.popSurface();
-        } else if (d->stereoType != QGLView::Hardware) {
-            // Render the stereo images into the two halves of the window.
-            QSize sz = size();
-            painter.setEye(QGL::LeftEye);
-            QGLSubsurface leftSurface
-                (painter.currentSurface(),
-                 qt_qglview_left_viewport(sz, d->stereoType));
-            painter.pushSurface(&leftSurface);
+        painter.setEye(QGL::RightEye);
+        painter.setSurface(d->rightEyeSurface(size));
+        if (d->stereoType == QGLView::Hardware)
             earlyPaintGL(&painter);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-            painter.setEye(QGL::RightEye);
-            QGLSubsurface rightSurface
-                (painter.currentSurface(),
-                 qt_qglview_right_viewport(sz, d->stereoType));
-            painter.setSurface(&rightSurface);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-            painter.popSurface();
-        }
-#if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
-        else {
-            bool doubleBuffered = doubleBuffer();
-            QGLDrawBufferSurface leftSurface
-                (painter.currentSurface(),
-                 doubleBuffered ? GL_BACK_LEFT : GL_FRONT_LEFT);
-            painter.pushSurface(&leftSurface);
-            painter.setEye(QGL::LeftEye);
-            earlyPaintGL(&painter);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-
-            QGLDrawBufferSurface rightSurface
-                (painter.currentSurface(),
-                 doubleBuffered ? GL_BACK_RIGHT : GL_FRONT_RIGHT);
-            painter.setSurface(&rightSurface);
-            painter.setEye(QGL::RightEye);
-            earlyPaintGL(&painter);
-            painter.setCamera(d->camera);
-            paintGL(&painter);
-            painter.popSurface();
-        }
-#endif
+        painter.setCamera(d->camera);
+        paintGL(&painter);
+        painter.popSurface();
     }
     d->logLeave("QGLView::paintGL");
 }
