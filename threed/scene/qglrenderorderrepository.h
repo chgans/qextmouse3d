@@ -62,8 +62,20 @@ public:
 
     virtual QGLRenderOrder *getOrder(const RenderOrderKey &key)
     {
-        return new QGLRenderOrder(key);
+        QGLRenderOrder *o = 0;
+        if (m_cache.contains(key))
+        {
+            o = m_cache[key];
+        }
+        else
+        {
+            o = new QGLRenderOrder(key);
+            m_cache.insert(key, o);
+        }
+        return o;
     }
+private:
+    QCache<RenderOrderKey, QGLRenderOrder> m_cache;
 };
 
 QT_END_NAMESPACE

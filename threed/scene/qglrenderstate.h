@@ -67,10 +67,30 @@ public:
     QGLMaterial *material() const;
     QGLMaterial *backMaterial() const;
     const QGLSceneNode *node() const;
+    uint hash() const;
+    bool operator==(const QGLRenderState &rhs) const
+    {
+        if (userEffect() != rhs.userEffect())
+            return false;
+        if (standardEffect() != rhs.standardEffect())
+            return false;
+        if (hasEffect() != rhs.hasEffect())
+            return false;
+        if (material() != rhs.material())
+            return false;
+        if (backMaterial() != rhs.backMaterial())
+            return false;
+        return true;
+    }
 private:
     void detach();
     QGLRenderStatePrivate *d;
 };
+
+inline uint qHash(const QGLRenderState &s)
+{
+    return s.hash();
+}
 
 #ifndef QT_NO_DEBUG_STREAM
 #include <QtCore/qdebug.h>

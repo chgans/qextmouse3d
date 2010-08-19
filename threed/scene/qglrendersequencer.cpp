@@ -45,6 +45,8 @@
 #include "qglrenderorderrepository.h"
 #include "qglrenderstate.h"
 
+#include <QtCore/qstack.h>
+
 /*!
     \class QGLRenderSequencer
     \brief The QGLRenderSequencer class orders the rendering of QGLSceneNode instances.
@@ -102,8 +104,7 @@ public:
     ~QGLRenderSequencerPrivate();
     QGLSceneNode *top;
     QLinkedList<RenderOrderKey> queue;
-    QArray<QGLRenderState> stack;
-    int stackTop;
+    QStack<QGLRenderState> stack;
     QSet<QGLRenderOrder> exclude;
     RenderOrderKey current;
     QGLPainter *painter;
@@ -113,7 +114,6 @@ public:
 
 QGLRenderSequencerPrivate::QGLRenderSequencerPrivate(QGLPainter *painter)
     : top(0)
-    , stackTop(-1)
     , current(RenderOrderKey())
     , painter(painter)
     , renderOrderRepository(new QGLRenderOrderRepository)
@@ -174,9 +174,7 @@ void QGLRenderSequencer::reset()
     d->top = 0;
     d->latched = false;
     d->exclude.clear();
-    d->stack.clear();
-    d->stack.resize(8);
-    d->stackTop = -1;
+    //d->stack.clear();
     d->current = RenderOrderKey();
 }
 
@@ -224,8 +222,8 @@ bool QGLRenderSequencer::renderInSequence(QGLSceneNode *node)
     Q_ASSERT(d->top);
     bool doRender = true;
     QGLRenderState state;
-    if (d->stackTop >= 0)
-        state = d->stack.at(d->stackTop);
+    if (!d->stack.empty())
+        state = d->stack.top();
     RenderOrderKey key(node, state);
     QGLRenderOrder *o = d->renderOrderRepository->getOrder(key);
     if (!d->current.valid())
@@ -259,13 +257,10 @@ bool QGLRenderSequencer::renderInSequence(QGLSceneNode *node)
 void QGLRenderSequencer::beginState(QGLSceneNode *node)
 {
     QGLRenderState state;
-    if (d->stackTop >= 0)
-        state = d->stack.at(d->stackTop);
+    if (!d->stack.empty())
+        state = d->stack.top();
     state.updateFrom(node);
-    ++d->stackTop;
-    if (d->stackTop >= d->stack.size())
-        d->stack.extend(d->stack.size() * 2);
-    d->stack[d->stackTop] = state;
+    d->stack.push(state);
 }
 
 /*!
@@ -280,10 +275,10 @@ void QGLRenderSequencer::beginState(QGLSceneNode *node)
 void QGLRenderSequencer::endState(QGLSceneNode *node)
 {
 #ifndef QT_NO_DEBUG_STREAM
-    const QGLSceneNode *n = d->stack.at(d->stackTop).node();
+    const QGLSceneNode *n = d->stack.top().node();
     Q_ASSERT(n == node);
 #endif
-    --d->stackTop;
+    d->stack.pop();
 }
 
 /*!
@@ -294,7 +289,7 @@ void QGLRenderSequencer::endState(QGLSceneNode *node)
 void QGLRenderSequencer::applyState()
 {
     d->latched = true;
-    QGLRenderState s = d->stack.at(d->stackTop);
+    QGLRenderState s = d->stack.top();
     if (s.hasEffect() && !d->painter->isPicking())
     {
         if (s.userEffect())

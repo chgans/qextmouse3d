@@ -59,7 +59,10 @@ struct RenderOrderKey
     RenderOrderKey(const QGLSceneNode *n, const QGLRenderState &s)
         : node(n), state(s) {}
     bool valid() const { return node != 0; }
-
+    bool operator==(const RenderOrderKey &rhs) const
+    {
+        return (node == rhs.node && state == rhs.state);
+    }
     const QGLSceneNode *node;
     QGLRenderState state;
 };
@@ -182,6 +185,12 @@ inline uint qHash(const QGLRenderOrder &order)
 {
     quint64 result = order.effectHash();
     return result ^ reinterpret_cast<quint64>(order.effectiveMaterial());
+}
+
+inline uint qHash(const RenderOrderKey &k)
+{
+    quint64 result = reinterpret_cast<quint64>(k.node);
+    return result ^ qHash(k.state);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

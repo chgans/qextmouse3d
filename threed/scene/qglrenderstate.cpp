@@ -273,6 +273,12 @@ void QGLRenderState::detach()
     }
 }
 
+uint QGLRenderState::hash() const
+{
+    const QByteArray bytes((const char *)d, sizeof(d));
+    return qHash(bytes);
+}
+
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QGLRenderState &order)
 {
