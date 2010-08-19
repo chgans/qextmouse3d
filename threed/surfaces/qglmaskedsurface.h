@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLWIDGETSURFACE_H
-#define QGLWIDGETSURFACE_H
+#ifndef QGLMASKEDSURFACE_H
+#define QGLMASKEDSURFACE_H
 
 #include "qglabstractsurface.h"
 
@@ -50,17 +50,30 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLWidgetSurfacePrivate;
+class QGLMaskedSurfacePrivate;
 
-class Q_QT3D_EXPORT QGLWidgetSurface : public QGLAbstractSurface
+class Q_QT3D_EXPORT QGLMaskedSurface : public QGLAbstractSurface
 {
 public:
-    QGLWidgetSurface();
-    explicit QGLWidgetSurface(QWidget *widget);
-    ~QGLWidgetSurface();
+    enum BufferMaskBit
+    {
+        RedMask     = 0x0001,
+        GreenMask   = 0x0002,
+        BlueMask    = 0x0004,
+        AlphaMask   = 0x0008
+    };
+    Q_DECLARE_FLAGS(BufferMask, BufferMaskBit)
 
-    QWidget *widget() const;
-    void setWidget(QWidget *widget);
+    QGLMaskedSurface();
+    QGLMaskedSurface
+        (QGLAbstractSurface *surface, QGLMaskedSurface::BufferMask mask);
+    ~QGLMaskedSurface();
+
+    QGLAbstractSurface *surface() const;
+    void setSurface(QGLAbstractSurface *surface);
+
+    QGLMaskedSurface::BufferMask mask() const;
+    void setMask(QGLMaskedSurface::BufferMask mask);
 
     QPaintDevice *device() const;
     bool activate(QGLAbstractSurface *prevSurface = 0);
@@ -68,11 +81,13 @@ public:
     QRect viewportGL() const;
 
 private:
-    QScopedPointer<QGLWidgetSurfacePrivate> d_ptr;
+    QScopedPointer<QGLMaskedSurfacePrivate> d_ptr;
 
-    Q_DECLARE_PRIVATE(QGLWidgetSurface)
-    Q_DISABLE_COPY(QGLWidgetSurface)
+    Q_DECLARE_PRIVATE(QGLMaskedSurface)
+    Q_DISABLE_COPY(QGLMaskedSurface)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLMaskedSurface::BufferMask)
 
 QT_END_NAMESPACE
 

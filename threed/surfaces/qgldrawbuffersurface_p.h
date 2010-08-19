@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLWIDGETSURFACE_H
-#define QGLWIDGETSURFACE_H
+#ifndef QGLDRAWBUFFERSURFACE_P_H
+#define QGLDRAWBUFFERSURFACE_P_H
 
 #include "qglabstractsurface.h"
 
@@ -48,30 +48,24 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-class QGLWidgetSurfacePrivate;
-
-class Q_QT3D_EXPORT QGLWidgetSurface : public QGLAbstractSurface
+class QGLDrawBufferSurface : public QGLAbstractSurface
 {
 public:
-    QGLWidgetSurface();
-    explicit QGLWidgetSurface(QWidget *widget);
-    ~QGLWidgetSurface();
-
-    QWidget *widget() const;
-    void setWidget(QWidget *widget);
+    QGLDrawBufferSurface(QGLAbstractSurface *surface, GLenum buffer)
+        : QGLAbstractSurface(QGLAbstractSurface::Other)
+        , m_surface(surface), m_buffer(buffer) {}
+    ~QGLDrawBufferSurface() {}
 
     QPaintDevice *device() const;
-    bool activate(QGLAbstractSurface *prevSurface = 0);
-    void deactivate(QGLAbstractSurface *nextSurface = 0);
+    bool activate(QGLAbstractSurface *prevSurface);
+    void deactivate(QGLAbstractSurface *nextSurface);
     QRect viewportGL() const;
 
 private:
-    QScopedPointer<QGLWidgetSurfacePrivate> d_ptr;
+    QGLAbstractSurface *m_surface;
+    GLenum m_buffer;
 
-    Q_DECLARE_PRIVATE(QGLWidgetSurface)
-    Q_DISABLE_COPY(QGLWidgetSurface)
+    Q_DISABLE_COPY(QGLDrawBufferSurface)
 };
 
 QT_END_NAMESPACE

@@ -101,6 +101,8 @@ QT_BEGIN_NAMESPACE
            UpdateProjectionMatrix.
     \value UpdateLights The lights have been updated.
     \value UpdateMaterials The material parameters have been updated.
+    \value UpdateViewport The viewport needs to be updated because the
+           drawing surface has changed.
     \value UpdateAll All values have been updated.  This is specified
            when an effect is activated.
 */
@@ -355,13 +357,6 @@ bool QGLPainter::begin
     (const QGLContext *context, QGLAbstractSurface *surface,
      bool destroySurface)
 {
-    // Activate the main surface for the context.
-    if (!surface->activate()) {
-        if (destroySurface)
-            delete surface;
-        return false;
-    }
-
     // If we don't have a context specified, then use the one
     // that the surface just made current.
     if (!context)
@@ -374,6 +369,27 @@ bool QGLPainter::begin
     {
         d_ptr->renderSequencer->reset();
         d_ptr->renderSequencer->setPainter(this);
+    }
+
+    // Activate the main surface for the context.
+    QGLAbstractSurface *prevSurface;
+    if (d_ptr->surfaceStack.isEmpty()) {
+        prevSurface = 0;
+    } else {
+        // We are starting a nested begin()/end() scope, so switch
+        // to the new main surface rather than activate from scratch.
+        prevSurface = d_ptr->surfaceStack.last().surface;
+        prevSurface->deactivate(surface);
+    }
+    if (!surface->activate(prevSurface)) {
+        if (prevSurface)
+            prevSurface->activate(surface);
+        if (destroySurface)
+            delete surface;
+        if (!d_ptr->ref.deref())
+            delete d_ptr;
+        d_ptr = 0;
+        return false;
     }
 
     // Push a main surface descriptor onto the surface stack.
@@ -505,7 +521,16 @@ bool QGLPainter::end()
         --size;
         QGLPainterSurfaceInfo &surf = d->surfaceStack[size];
         if (surf.mainSurface) {
-            surf.surface->deactivate();
+            if (size > 0) {
+                // There are still other surfaces on the stack, probably
+                // because we are within a nested begin()/end() scope.
+                // Re-activate the next surface down in the outer scope.
+                QGLPainterSurfaceInfo &nextSurf = d->surfaceStack[size - 1];
+                surf.surface->switchTo(nextSurf.surface);
+            } else {
+                // Last surface on the stack, so deactivate it permanently.
+                surf.surface->deactivate();
+            }
             if (surf.destroySurface)
                 delete surf.surface;
             break;
@@ -514,6 +539,9 @@ bool QGLPainter::end()
         }
     }
     d->surfaceStack.resize(size);
+
+    // Force a viewport update if we are within a nested begin()/end().
+    d->updates |= UpdateViewport;
 
     // Destroy the QGLPainterPrivate if this is the last reference.
     if (!d->ref.deref())
@@ -587,9 +615,9 @@ void QGLPainter::setClearColor(const QColor& color)
     Note that \a rect is in Qt co-ordinates with the origin
     at the top-left of the drawing surface's viewport rectangle.
     If the currentSurface() is an instance of QGLSubsurface,
-    then \a rect will be adjusted relative to the subsurface's origin.
+    then \a rect will be adjusted relative to the subsurface's position.
 
-    \sa currentSurface(), QGLAbstractSurface::viewportRect()
+    \sa currentSurface(), QGLAbstractSurface::viewportGL()
 */
 void QGLPainter::setScissor(const QRect& rect)
 {
@@ -598,16 +626,14 @@ void QGLPainter::setScissor(const QRect& rect)
     if (!rect.isEmpty()) {
         // Adjust the rectangle by the position of the surface viewport.
         QGLAbstractSurface *surface = currentSurface();
-        QRect viewport = surface->viewportRect();
-        QPaintDevice *device = surface->device();
-        int height = device->height();
-        QRect r = rect.translated(viewport.topLeft()).intersected(viewport);
-        if (!r.isEmpty()) {
-            glScissor(r.x(), height - (r.y() + r.height()),
-                      r.width(), r.height());
-        } else {
+        QRect viewport = surface->viewportGL();
+        QRect r(viewport.x() + rect.x(),
+                viewport.y() + viewport.height() - (rect.y() + rect.height()),
+                rect.width(), rect.height());
+        if (!r.isEmpty())
+            glScissor(r.x(), r.y(), r.width(), r.height());
+        else
             glScissor(0, 0, 0, 0);
-        }
     } else {
         glScissor(0, 0, 0, 0);
     }
@@ -802,7 +828,7 @@ qreal QGLPainter::aspectRatio() const
     QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
 
     // Get the size of the current viewport.
-    QSize size = currentSurface()->viewportRect().size();
+    QSize size = currentSurface()->viewportGL().size();
     if (size.width() == 0 || size.height() == 0 ||
             size.width() == size.height())
         return 1.0f;
@@ -1379,9 +1405,10 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
 */
 
 /*!
-    Updates the projection, modelview, texture matrices, and lighting
+    Updates the projection matrix, modelview matrix, and lighting
     conditions in the currently active effect() object by calling
-    QGLAbstractEffect::update().
+    QGLAbstractEffect::update().  Also updates \c{glViewport()}
+    to cover the currentSurface() if necessary.
 
     Normally this function is called automatically by draw().
     However, if the user wishes to use raw GL functions to draw fragments,
@@ -1390,10 +1417,10 @@ void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
     active effect().
 
     Note that this function informs the effect that an update is needed.
-    It does not change the GL state itself.  In particular, the
-    modelview and projection matrices in the fixed-function pipeline
-    are not changed unless the effect or application calls
-    updateFixedFunction().
+    It does not change the GL state itself, except for \c{glViewport()}.
+    In particular, the modelview and projection matrices in the
+    fixed-function pipeline are not changed unless the effect or
+    application calls updateFixedFunction().
 
     \sa setUserEffect(), projectionMatrix(), modelViewMatrix()
     \sa draw(), updateFixedFunction()
@@ -1412,6 +1439,11 @@ void QGLPainter::update()
     if (d->projectionMatrix.isDirty()) {
         updates |= UpdateProjectionMatrix;
         d->projectionMatrix.setDirty(false);
+    }
+    if ((updates & UpdateViewport) != 0) {
+        QRect viewport = currentSurface()->viewportGL();
+        glViewport(viewport.x(), viewport.y(),
+                   viewport.width(), viewport.height());
     }
     if (updates != 0)
         d->effect->update(this, updates);
@@ -1683,15 +1715,18 @@ void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
     the stack or end() is called.  All surfaces are popped from
     the stack by end().
 
-    The \c{glViewport()} will be adjusted to the extents of \a surface
-    by this function.
+    The UpdateViewport flag will be set to indicate that the
+    \c{glViewport()} should be adjusted to the extents of \a surface
+    when update() is next called.
 
-    \sa popSurface(), currentSurface(), QGLAbstractSurface::activate()
+    \sa popSurface(), currentSurface(), setSurface()
+    \sa QGLAbstractSurface::activate()
 */
 void QGLPainter::pushSurface(QGLAbstractSurface *surface)
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
+    Q_ASSERT(surface);
     if (!surface) {
         // Find the most recent main surface for this painter.
         int size = d->surfaceStack.size();
@@ -1708,7 +1743,8 @@ void QGLPainter::pushSurface(QGLAbstractSurface *surface)
     psurf.destroySurface = false;
     psurf.mainSurface = false;
     d->surfaceStack.append(psurf);
-    surface->activate(current);
+    current->switchTo(surface);
+    d->updates |= UpdateViewport;
 }
 
 /*!
@@ -1717,10 +1753,11 @@ void QGLPainter::pushSurface(QGLAbstractSurface *surface)
     the current drawing surface for context().  Returns null if the
     surface stack is already at the main surface (e.g. the window).
 
-    The \c{glViewport()} will be adjusted to the extents of the
-    next surface on the stack by this function.
+    The UpdateViewport flag will be set to indicate that the
+    \c{glViewport()} should be adjusted to the new surface extents
+    when update() is next called.
 
-    \sa pushSurface(), currentSurface()
+    \sa pushSurface(), currentSurface(), setSurface()
 */
 QGLAbstractSurface *QGLPainter::popSurface()
 {
@@ -1733,14 +1770,50 @@ QGLAbstractSurface *QGLPainter::popSurface()
     QGLAbstractSurface *surface = surf.surface;
     d->surfaceStack.pop();
     Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
-    d->surfaceStack.top().surface->activate(surface);
+    QGLAbstractSurface *nextSurface = d->surfaceStack.top().surface;
+    surface->switchTo(nextSurface);
+    d->updates |= UpdateViewport;
     return surface;
+}
+
+/*!
+    Sets the top-most drawing surface on the surface stack to \a surface
+    and activate it.
+
+    Note: if the top-most drawing surface is the main surface specified
+    during begin(), then this function will perform a pushSurface()
+    instead.  Typically this function is used to replace the last
+    surface that was pushed onto the stack and avoid doing popSurface()
+    followed by pushSurface().  The main surface cannot be replaced
+    in this manner.
+
+    The UpdateViewport flag will be set to indicate that the
+    \c{glViewport()} should be adjusted to the extents of \a surface
+    when update() is next called.
+
+    \sa pushSurface(), popSurface(), currentSurface()
+*/
+void QGLPainter::setSurface(QGLAbstractSurface *surface)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    Q_ASSERT(surface);
+    Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
+    QGLPainterSurfaceInfo &surf = d->surfaceStack.top();
+    if (surf.mainSurface) {
+        pushSurface(surface);
+        return;
+    }
+    QGLAbstractSurface *oldSurface = surf.surface;
+    surf.surface = surface;
+    oldSurface->switchTo(surface);
+    d->updates |= UpdateViewport;
 }
 
 /*!
     Returns the current drawing surface.
 
-    \sa pushSurface(), popSurface()
+    \sa pushSurface(), popSurface(), setSurface()
 */
 QGLAbstractSurface *QGLPainter::currentSurface() const
 {

@@ -110,6 +110,7 @@ public:
         UpdateMatrices              = 0x00000006,
         UpdateLights                = 0x00000008,
         UpdateMaterials             = 0x00000010,
+        UpdateViewport              = 0x00000020,
         UpdateAll                   = 0x7FFFFFFF
     };
     Q_DECLARE_FLAGS(Updates, Update);
@@ -173,6 +174,7 @@ public:
 
     void pushSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *popSurface();
+    void setSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *currentSurface() const;
 
     void setCullFaces(QGL::CullFaces faces);

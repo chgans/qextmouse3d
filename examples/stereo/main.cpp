@@ -45,7 +45,12 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    StereoView view;
+
+    // Request hardware stereo if available.  Otherwise red-cyan anaglyphs.
+    QGLFormat format(QGLFormat::defaultFormat());
+    format.setOption(QGL::StereoBuffers);
+    StereoView view(format);
+
     if (QApplication::arguments().contains("-maximize"))
         view.showMaximized();
     else if (QApplication::arguments().contains("-fullscreen"))

@@ -151,7 +151,7 @@ QPaintDevice *QGLWidgetSurface::device() const
 
     \sa deactivate()
 */
-bool QGLWidgetSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+bool QGLWidgetSurface::activate(QGLAbstractSurface *prevSurface)
 {
     Q_D(QGLWidgetSurface);
     if (d->glWidget) {
@@ -222,11 +222,11 @@ void QGLWidgetSurface::deactivate(QGLAbstractSurface *nextSurface)
 /*!
     \reimp
 */
-QRect QGLWidgetSurface::viewportRect() const
+QRect QGLWidgetSurface::viewportGL() const
 {
     Q_D(const QGLWidgetSurface);
     if (d->widget)
-        return d->widget->rect();
+        return d->widget->rect();   // Origin assumed to be (0, 0).
     else
         return QRect();
 }

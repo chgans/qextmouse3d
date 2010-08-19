@@ -48,25 +48,25 @@ QPaintDevice *QGLPainterSurface::device() const
     return m_painter->device();
 }
 
-void QGLPainterSurface::deactivate(QGLAbstractSurface *nextSurface)
-{
-    if (!nextSurface)
-        m_painter->endNativePainting();
-}
-
-QRect QGLPainterSurface::viewportRect() const
-{
-    QPaintDevice *device = m_painter->device();
-    return QRect(0, 0, device->width(), device->height());
-}
-
-bool QGLPainterSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+bool QGLPainterSurface::activate(QGLAbstractSurface *prevSurface)
 {
     if (m_painterContext != QGLContext::currentContext())
         const_cast<QGLContext *>(m_painterContext)->makeCurrent();
     if (!prevSurface)
         m_painter->beginNativePainting();
     return true;
+}
+
+void QGLPainterSurface::deactivate(QGLAbstractSurface *nextSurface)
+{
+    if (!nextSurface)
+        m_painter->endNativePainting();
+}
+
+QRect QGLPainterSurface::viewportGL() const
+{
+    QPaintDevice *device = m_painter->device();
+    return QRect(0, 0, device->width(), device->height());
 }
 
 QT_END_NAMESPACE

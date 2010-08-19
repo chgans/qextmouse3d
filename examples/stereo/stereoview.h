@@ -49,7 +49,7 @@ class StereoView : public QGLView
 {
     Q_OBJECT
 public:
-    StereoView(QWidget *parent = 0);
+    StereoView(const QGLFormat &format, QWidget *parent = 0);
     ~StereoView() {}
 
 protected:

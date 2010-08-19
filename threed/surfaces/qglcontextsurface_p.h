@@ -57,11 +57,9 @@ public:
     ~QGLContextSurface() {}
 
     QPaintDevice *device() const;
+    bool activate(QGLAbstractSurface *prevSurface);
     void deactivate(QGLAbstractSurface *nextSurface);
-    QRect viewportRect() const;
-
-protected:
-    bool activateNoViewport(QGLAbstractSurface *prevSurface);
+    QRect viewportGL() const;
 
 private:
     const QGLContext *m_context;

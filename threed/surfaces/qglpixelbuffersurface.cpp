@@ -110,7 +110,7 @@ QPaintDevice *QGLPixelBufferSurface::device() const
 /*!
     \reimp
 */
-bool QGLPixelBufferSurface::activateNoViewport(QGLAbstractSurface *prevSurface)
+bool QGLPixelBufferSurface::activate(QGLAbstractSurface *prevSurface)
 {
     Q_UNUSED(prevSurface);
     if (m_pbuffer)
@@ -131,7 +131,7 @@ void QGLPixelBufferSurface::deactivate(QGLAbstractSurface *nextSurface)
 /*!
     \reimp
 */
-QRect QGLPixelBufferSurface::viewportRect() const
+QRect QGLPixelBufferSurface::viewportGL() const
 {
     if (m_pbuffer)
         return QRect(0, 0, m_pbuffer->width(), m_pbuffer->height());
