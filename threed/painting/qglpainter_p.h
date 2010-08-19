@@ -54,6 +54,9 @@
 //
 
 #include "qglpainter.h"
+#include "qglrendersequencer.h"
+#include "qglrenderorderrepository.h"
+
 #include <QtCore/qatomic.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qstack.h>
@@ -142,6 +145,7 @@ public:
 #if QT_VERSION < 0x040700
     q_glVertexAttribPointer vertexAttribPointer;
 #endif
+    QGLRenderSequencer *renderSequencer;
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }

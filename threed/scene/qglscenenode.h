@@ -203,9 +203,12 @@ private Q_SLOTS:
     void deleteChild(QObject *object);
 
 private:
+    void parentOnto(QGLSceneNode *parent);
+    void unParent(QGLSceneNode *parent);
     QMatrix4x4 transform() const;
     void invalidateBoundingBox() const;
     void invalidateTransform() const;
+    void drawNormalIndicators(QGLPainter *painter);
     const QGLMaterial *setPainterMaterial(int material, QGLPainter *painter,
                                     QGL::Face faces, bool &changedTex);
 

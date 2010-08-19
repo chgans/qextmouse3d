@@ -47,6 +47,7 @@
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
 #include "qmatrix4x4.h"
+#include "qglrendersequencer.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qthread.h>
@@ -695,7 +696,7 @@ void QGLSceneNode::setDrawingMode(QGLSceneNode::DrawingMode mode)
 
 /*!
     Returns the local effect associated with this node.  The default value
-    is QGL::LitMaterial.  If the value of hasEffect() is false, then this
+    is QGL::FlatColor.  If the value of hasEffect() is false, then this
     the value of effect() is ignored.
 
     \sa setEffect(), hasEffect()
@@ -710,12 +711,8 @@ QGL::StandardEffect QGLSceneNode::effect() const
     Sets the local effect associated with this node to be \a effect.  hasEffect()
     will return true after calling this method.
 
-    The default implementation of QGLSceneNode::apply() will set this effect
-    during initialization of the model.
-
-    The default implementation of the QGLSceneNode::draw() method will
-    ensure that \a effect is applied to the QGLPainter before drawing
-    any geometry.
+    The QGLSceneNode::draw() function will ensure that \a effect is applied to the
+    QGLPainter before drawing any geometry.
 
     \sa effect(), hasEffect()
 */
@@ -901,25 +898,44 @@ void QGLSceneNode::setBackMaterialIndex(int material)
     Setting this property causes the material if not already in this nodes palette to be
     added, and then the corresponding index to be set for this scene node.
 
-    Setting this property is exactly equivalent to:
+    Setting this property is equivalent to:
     \code
     int index = d->palette->indexOf(material);
     if (index == -1)
         index = d->palette->addMaterial(material);
-    setMaterialIndex(index, QGL::FrontFaces);
+    setMaterialIndex(index);
     \endcode
+
+    If setting this property, when no palette exists one is created, as a
+    convenience - but this is suitable only for experimental code and for
+    \bold{very small numbers of nodes}.  In debug mode a warning is
+    printed in this case.
+
+    Generally one common palette should be created, and set on each node.  This
+    also allows nodes to share materials and their textures.
 
     \sa materialIndex(), setMaterialIndex()
 */
 QGLMaterial *QGLSceneNode::material() const
 {
     Q_D(const QGLSceneNode);
-    return d->palette->material(d->material);
+    if (d->palette)
+        return d->palette->material(d->material);
+#ifndef QT_NO_DEBUG_STREAM
+    qDebug() << "Warning: accessing material without a palette";
+#endif
+    return 0;
 }
 
 void QGLSceneNode::setMaterial(QGLMaterial *material)
 {
     Q_D(QGLSceneNode);
+    if (d->palette == NULL)
+        d->palette = new QGLMaterialCollection(this);
+#ifndef QT_NO_DEBUG_STREAM
+    if (d->palette == NULL)
+        qDebug() << "Warning: setting material without a palette";
+#endif
     int ix = d->palette->indexOf(material);
     if (ix == -1)
         ix = d->palette->addMaterial(material);
@@ -1063,13 +1079,27 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
 
 #endif
 
+void QGLSceneNode::parentOnto(QGLSceneNode *parent)
+{
+    Q_D(QGLSceneNode);
+    Q_ASSERT(!d->parentNodes.contains(parent));
+    d->parentNodes.append(parent);
+}
+
+void QGLSceneNode::unParent(QGLSceneNode *parent)
+{
+    Q_D(QGLSceneNode);
+    Q_ASSERT(d->parentNodes.contains(parent));
+    d->parentNodes.removeOne(parent);
+}
+
 /*!
     Adds the \a node to the list of child nodes for this node.
 
     Adding the same child node more than once is not supported, and will
     lead to undefined results.
 
-    It usually makes no sense to add a node as a child to another node
+    It makes no sense to add a node as a direct child to another node
     more than once, since it would appear in the same place and overdraw
     with no perceptible result.
 
@@ -1077,6 +1107,36 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
     given node, each time with different transformations, use the clone()
     call to create copies of the node and then apply the transformations to
     the copies.
+
+    Alternatively, create modifier nodes with the transformations and add the
+    geometry bearing node to each with addNode():
+    \code
+    QGLBuilder builder;
+    builder << CarWheel(5.0f); // some car wheel geometry
+    QGLSceneNode wheel = builder.finalizedSceneNode();
+    QGLSceneNode frontLeft = new QGLSceneNode(m_sceneRoot);
+    frontLeft->addNode(wheel);
+    frontLeft->setPosition(QVector3D(1.0f, 2.0f, 0.0f));
+    QGLSceneNode frontRight = new QGLSceneNode(m_sceneRoot);
+    frontRight->addNode(wheel);
+    frontRight->setPosition(QVector3D(-1.0f, 2.0f, 0.0f));
+    QGLSceneNode backLeft = new QGLSceneNode(m_sceneRoot);
+    backLeft->addNode(wheel);
+    backLeft->setPosition(QVector3D(1.0f, -2.0f, 0.0f));
+    QGLSceneNode backRight = new QGLSceneNode(m_sceneRoot);
+    backRight->addNode(wheel);
+    backRight->setPosition(QVector3D(-1.0f, -2.0f, 0.0f));
+    \endcode
+
+    Because a child node can be validly added to many different nodes,
+    adding as a child does not affect the QObject::parent() ownership.  To
+    manage ownership, either:
+    \list
+        \o call the setParent() function, or
+        \o pass a parent QGLSceneNode to the \l{QGLSceneNode::QGLSceneNode()}{constructor}
+    \endlist
+    Doing either of these will create a QObject::parent relationship as
+    well as calling addNode().
 
     This function \bold{does not} make this node a parent of \a node for the
     purposes of memory management, because a \a node could have many parents
@@ -1089,15 +1149,18 @@ QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
+    Q_ASSERT(!d->childNodes.contains(node));
     invalidateBoundingBox();
     d->childNodes.append(node);
-    node->d_func()->parentNodes.append(this);
+    node->parentOnto(this);
     connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
     emit childNodesChanged();
 }
 
 /*!
-    Removes the child node matching \a node.
+    Detaches the child node matching \a node from this node.
+
+    This does not affect the QObject::parent() ownership.
 
     \sa addNode()
 */
@@ -1108,7 +1171,7 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
     // under a given parent due to the requirement that no node be addNode()'ed
     // more than once.
     d->childNodes.removeOne(node);
-    node->d_func()->parentNodes.removeOne(this);
+    node->unParent(this);
     emit childNodesChanged();
     invalidateBoundingBox();
 }
@@ -1149,6 +1212,23 @@ void QGLSceneNode::setParent(QObject *parent)
         sceneParent->addNode(this);
     //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
+}
+
+void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)
+{
+    Q_D(QGLSceneNode);
+    QVector3DArray verts;
+    QGL::IndexArray indices = d->geometry.indices();
+    for (int i = d->start; i < (d->start + d->count); ++i)
+    {
+        int ix = indices[i];
+        QVector3D a = d->geometry.vertexAt(ix);
+        QVector3D b = a + d->geometry.normalAt(ix);
+        verts.append(a, b);
+    }
+    painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
+    glLineWidth(2.0f);
+    painter->draw(QGL::Lines, verts.size());
 }
 
 const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *painter,
@@ -1216,8 +1296,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    // If this node only references a small section of the geometry, then
-    // this bounding-box test may draw something that didn't need to be.
     QBox3D bb = boundingBox();
     if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
     {
@@ -1226,20 +1304,19 @@ void QGLSceneNode::draw(QGLPainter *painter)
         return;
     }
 
-    if (d->hasEffect && !painter->isPicking())
+    QGLRenderSequencer *seq = painter->renderSequencer();
+    if (seq->top() == NULL)
     {
-        if (d->customEffect)
+        seq->setTop(this);
+        while (true)
         {
-            if (painter->userEffect() != d->customEffect)
-                painter->setUserEffect(d->customEffect);
+            draw(painter);  // recursively draw myself for each state
+            if (!seq->nextInSequence())
+                break;
         }
-        else
-        {
-            if (painter->standardEffect() != d->localEffect)
-                painter->setStandardEffect(d->localEffect);
-        }
+        seq->reset();
+        return;
     }
-
     const QGLMaterial *saveMat = 0;
     bool changedTex = false;
     const QGLMaterial *saveBackMat = 0;
@@ -1254,12 +1331,17 @@ void QGLSceneNode::draw(QGLPainter *painter)
             saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
                                              changedBackTex);
     }
+    bool stateEntered = false;
+    if (d->childNodes.size() > 0)
+    {
+        seq->beginState(this);
+        stateEntered = true;
+        QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
+        for ( ; cit != d->childNodes.end(); ++cit)
+            (*cit)->draw(painter);
+    }
 
-    QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
-    for ( ; cit != d->childNodes.end(); ++cit)
-        (*cit)->draw(painter);
-
-    if (d->count && d->geometry.count() > 0)
+    if (d->count && (d->geometry.count() > 0) && seq->renderInSequence(this))
     {
         bool idSaved = false;
         int id = -1;
@@ -1270,26 +1352,19 @@ void QGLSceneNode::draw(QGLPainter *painter)
             painter->setObjectPickId(d->pickNode->id());
         }
 
+        if (!stateEntered)
+        {
+            stateEntered = true;
+            seq->beginState(this);
+        }
+        seq->applyState();
         d->geometry.draw(painter, d->start, d->count, d->drawingMode);
 
         if (idSaved)
             painter->setObjectPickId(id);
 
         if (d->viewNormals)
-        {
-            QVector3DArray verts;
-            QGL::IndexArray indices = d->geometry.indices();
-            for (int i = d->start; i < (d->start + d->count); ++i)
-            {
-                int ix = indices[i];
-                QVector3D a = d->geometry.vertexAt(ix);
-                QVector3D b = a + d->geometry.normalAt(ix);
-                verts.append(a, b);
-            }
-            painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
-            glLineWidth(2.0f);
-            painter->draw(QGL::Lines, verts.size());
-        }
+            drawNormalIndicators(painter);
     }
 
     if (saveMat)
@@ -1305,6 +1380,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
             painter->setTexture((QGLTexture2D*)0);
     }
 
+    if (stateEntered)
+        seq->endState(this);
     if (wasTransformed)
         painter->modelViewMatrix().pop();
 }

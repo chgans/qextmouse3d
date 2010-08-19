@@ -74,6 +74,10 @@ class QGLTexture2D;
 class QGLTextureCube;
 class QGeometryData;
 class QGLShaderProgram;
+class QGLFramebufferObject;
+class QGLSceneNode;
+class QGLRenderOrderRepository;
+class QGLRenderSequencer;
 class QGLAbstractSurface;
 
 class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
@@ -127,6 +131,7 @@ public:
 
     bool isCullable(const QVector3D& point) const;
     bool isCullable(const QBox3D& box) const;
+    QGLRenderSequencer *renderSequencer();
 
     qreal aspectRatio() const;
 
@@ -165,7 +170,7 @@ public:
     void draw(QGL::DrawingMode mode, int count, int index = 0);
     void draw(QGL::DrawingMode mode, const ushort *indices, int count);
     void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices);
-    void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
+    virtual void draw(QGL::DrawingMode mode, const QGLIndexBuffer& indices, int offset, int count);
 
     void pushSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *popSurface();

@@ -133,6 +133,7 @@ QGLPainterPrivate::QGLPainterPrivate()
 #if QT_VERSION < 0x040700
       , vertexAttribPointer(0)
 #endif
+      , renderSequencer(0)
 {
     context = 0;
     effect = 0;
@@ -153,6 +154,7 @@ QGLPainterPrivate::~QGLPainterPrivate()
         delete stdeffects[effect];
     delete pick;
     qDeleteAll(cachedPrograms);
+    delete renderSequencer;
 }
 
 QGLPainterPickPrivate::QGLPainterPickPrivate()
@@ -363,6 +365,11 @@ bool QGLPainter::begin
     // Find the QGLPainterPrivate for the context, or create a new one.
     d_ptr = painterPrivateCache()->fromContext(context);
     d_ptr->ref.ref();
+    if (d_ptr->renderSequencer)
+    {
+        d_ptr->renderSequencer->reset();
+        d_ptr->renderSequencer->setPainter(this);
+    }
 
     // Activate the main surface for the context.
     QGLAbstractSurface *prevSurface;
@@ -796,6 +803,19 @@ bool QGLPainter::isCullable(const QBox3D& box) const
     }
     projected.transform(d->projectionMatrix);
     return !d->viewingCube.intersects(projected);
+}
+
+/*!
+    Returns the current render order sequencer.
+
+    \sa QGLRenderSequencer
+*/
+QGLRenderSequencer *QGLPainter::renderSequencer()
+{
+    Q_D(QGLPainter);
+    if (!d->renderSequencer)
+        d->renderSequencer = new QGLRenderSequencer(this);
+    return d->renderSequencer;
 }
 
 /*!

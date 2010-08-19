@@ -135,7 +135,7 @@ void tst_QGLBuilder::newNode()
     QGLSceneNode *node = builder.currentNode();
 
     // newly created node works and has all defaults
-    QCOMPARE(node->effect(), QGL::LitMaterial); // lit material is the default
+    QCOMPARE(node->effect(), QGL::FlatColor); // flat color is the default
     QCOMPARE(node->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node->materialIndex(), -1);
     QCOMPARE(node->start(), 0);
@@ -160,7 +160,7 @@ void tst_QGLBuilder::newNode()
     // new node counts off from where the previous one finished and has same defaults
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 0);
-    QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
+    QCOMPARE(node2->effect(), QGL::FlatColor); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node2->materialIndex(), -1);
 
@@ -195,7 +195,7 @@ void tst_QGLBuilder::pushNode()
     QCOMPARE(node2->start(), 3);
     QCOMPARE(node2->count(), 0);
     QCOMPARE(node2->parent(), node);
-    QCOMPARE(node2->effect(), QGL::LitMaterial); // lit material is the default
+    QCOMPARE(node2->effect(), QGL::FlatColor); // lit material is the default
     QCOMPARE(node2->userEffect(), (QGLAbstractEffect *)0);
     QCOMPARE(node2->materialIndex(), -1);
 
