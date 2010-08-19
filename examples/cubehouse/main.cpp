@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         view.setShowFrameRate(true);
     if (QApplication::arguments().contains("-stereo"))
         view.setStereo(true);
-    else if (view.stereoType() >= QGLView::DoubleWideLeftRight)
+    else if (view.stereoType() != QGLView::RedCyanAnaglyph)
         view.setStereo(true);
     if (QApplication::arguments().contains("-maximize"))
         view.showMaximized();

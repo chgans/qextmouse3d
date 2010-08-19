@@ -44,8 +44,8 @@
 #include "qglcube.h"
 #include "qglmaterial.h"
 
-StereoView::StereoView(QWidget *parent)
-    : QGLView(parent)
+StereoView::StereoView(const QGLFormat &format, QWidget *parent)
+    : QGLView(format, parent)
 {
     QGLMaterialCollection *materials = new QGLMaterialCollection;
     scene = new QGLSceneNode(this);

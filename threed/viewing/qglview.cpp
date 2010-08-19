@@ -97,12 +97,19 @@ QT_BEGIN_NAMESPACE
     Hardware stereo relies upon specialized hardware that can render
     the left and right eye images into separate buffers and then show
     them independently to each eye through the use of polarized glasses
-    or similar technology.  Hardware stereo is the default if the
-    hardware supports it.
+    or similar technology.  Hardware stereo is used if the \c{-stereo-hw}
+    command-line option is supplied or if the user explicitly requests
+    stereo buffers when the QGLView is constructed:
+
+    \code
+    QGLFormat format(QGLFormat::defaultFormat());
+    format.setOption(QGL::StereoBuffers);
+    QGLView view(format);
+    \endcode
 
     Anaglyph stereo is used when the hardware doesn't have specialized
-    stereo buffer support.  The left image is masked by a red
-    filter and the right image is masked by a cyan filter.  This makes
+    stereo buffer support.  The left eye image is masked by a red
+    filter and the right eye image is masked by a cyan filter.  This makes
     the resulting images suitable for viewing with standard red-cyan
     anaglyph glasses.
 
@@ -295,7 +302,9 @@ void QGLViewPrivate::processStereoOptions(QGLView *view)
         QStringList opts = arg.mid(8).split(QLatin1Char('-'));
         QGLView::StereoType stereoType;
         QSize size(0, 0);
-        if (opts.contains(QLatin1String("nhd")))
+        if (opts.contains(QLatin1String("hw")))
+            break;  // Hardware mode is selected by makeStereoGLFormat().
+        else if (opts.contains(QLatin1String("nhd")))
             size = QSize(640, 360);
         else if (opts.contains(QLatin1String("vga")))
             size = QSize(640, 480);
@@ -430,7 +439,8 @@ static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
     QGLFormat fmt(format);
-    fmt.setOption(QGL::StereoBuffers);
+    if (QApplication::arguments().contains(QLatin1String("-stereo-hw")))
+        fmt.setOption(QGL::StereoBuffers);
     return fmt;
 #else
     QGLFormat fmt(format);
@@ -768,8 +778,8 @@ void QGLView::paintGL()
         // Paint the scene twice, from the perspective of each camera.
         QSize size(this->size());
         painter.setEye(QGL::LeftEye);
-        painter.pushSurface(d->leftEyeSurface(size));
         earlyPaintGL(&painter);
+        painter.pushSurface(d->leftEyeSurface(size));
         painter.setCamera(d->camera);
         paintGL(&painter);
         if (d->stereoType == QGLView::RedCyanAnaglyph)
