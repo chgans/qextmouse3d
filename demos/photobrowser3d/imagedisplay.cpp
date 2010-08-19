@@ -80,7 +80,6 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
 
     QGLSceneNode *top = builder.finalizedSceneNode();
     top->setParent(this);
-    addNode(top);
 
     // paint the wall
     m_wall->setEffect(QGL::LitMaterial);
