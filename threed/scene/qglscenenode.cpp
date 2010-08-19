@@ -921,9 +921,6 @@ QGLMaterial *QGLSceneNode::material() const
     Q_D(const QGLSceneNode);
     if (d->palette)
         return d->palette->material(d->material);
-#ifndef QT_NO_DEBUG_STREAM
-    qDebug() << "Warning: accessing material without a palette";
-#endif
     return 0;
 }
 
