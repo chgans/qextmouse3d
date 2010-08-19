@@ -119,7 +119,6 @@ QGLRenderSequencerPrivate::QGLRenderSequencerPrivate(QGLPainter *painter)
     , renderOrderRepository(new QGLRenderOrderRepository)
     , latched(false)
 {
-    stack.resize(8);
 }
 
 QGLRenderSequencerPrivate::~QGLRenderSequencerPrivate()
@@ -174,7 +173,7 @@ void QGLRenderSequencer::reset()
     d->top = 0;
     d->latched = false;
     d->exclude.clear();
-    //d->stack.clear();
+    d->stack.clear();
     d->current = RenderOrderKey();
 }
 

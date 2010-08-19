@@ -99,6 +99,7 @@ QGLRenderStatePrivate::QGLRenderStatePrivate()
     , userEffect(0)
     , node(0)
 {
+    ref = 0;
 }
 
 QGLRenderStatePrivate::~QGLRenderStatePrivate()
