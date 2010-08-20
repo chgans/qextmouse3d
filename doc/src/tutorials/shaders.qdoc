@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 /*!
-    \title Using OpenGL SL shaders in QML3D
+    \title Using OpenGLSL shaders in QML3D
     \example tutorials/shaders
 
 
