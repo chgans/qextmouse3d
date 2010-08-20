@@ -49,6 +49,7 @@
     \o \l{Loading a 3DS model with Qt/3D}
     \o \l{Converting raw GL applications to use QGLPainter}
     \o \l{Writing a scene format plug-in for Qt/3D}
+    \o \l{Using OpenGL SL shaders in QML3D}
     \endlist
 
     \l{index.html}{Return to the main Qt/3D page}.
