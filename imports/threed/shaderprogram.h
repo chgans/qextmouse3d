@@ -71,6 +71,7 @@ public slots:
     void markPropertyDirty(int property);
 signals:
     void finishedLoading();
+    void effectChanged();
 private slots:
     void pixmapRequestFinished();
 private:

@@ -47,7 +47,7 @@
 class RedCyanEffect : public QGraphicsEffect
 {
     Q_OBJECT
-    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY zChanged)
+    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY depthChanged)
 public:
     RedCyanEffect(QObject *parent = 0);
     ~RedCyanEffect();

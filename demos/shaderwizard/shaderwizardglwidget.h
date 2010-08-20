@@ -60,14 +60,14 @@ class QGLShaderProgramEffect;
 class ShaderWizardGLWidget : public QGLView
 {
     Q_OBJECT
-    Q_PROPERTY(QColor painterColor READ painterColor WRITE setPainterColor NOTIFY painterColorChanged)
-    Q_PROPERTY(QColor ambientLightColor READ ambientLightColor WRITE setAmbientLightColor NOTIFY ambientLightColorChanged)
-    Q_PROPERTY(QColor diffuseLightColor READ diffuseLightColor WRITE setDiffuseLightColor NOTIFY diffuseLightColorChanged)
-    Q_PROPERTY(QColor specularLightColor READ specularLightColor WRITE setSpecularLightColor NOTIFY specularLightColorChanged)
-    Q_PROPERTY(QColor ambientMaterialColor READ ambientMaterialColor WRITE setAmbientMaterialColor NOTIFY ambientMaterialColorChanged)
-    Q_PROPERTY(QColor diffuseMaterialColor READ diffuseMaterialColor WRITE setDiffuseMaterialColor NOTIFY diffuseMaterialColorChanged)
-    Q_PROPERTY(QColor specularMaterialColor READ specularMaterialColor WRITE setSpecularMaterialColor NOTIFY specularMaterialColorChanged)
-    Q_PROPERTY(int materialShininess READ materialShininess WRITE setMaterialShininess NOTIFY materialShininessChanged)
+    Q_PROPERTY(QColor painterColor READ painterColor WRITE setPainterColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor ambientLightColor READ ambientLightColor WRITE setAmbientLightColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor diffuseLightColor READ diffuseLightColor WRITE setDiffuseLightColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor specularLightColor READ specularLightColor WRITE setSpecularLightColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor ambientMaterialColor READ ambientMaterialColor WRITE setAmbientMaterialColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor diffuseMaterialColor READ diffuseMaterialColor WRITE setDiffuseMaterialColor NOTIFY effectChanged)
+    Q_PROPERTY(QColor specularMaterialColor READ specularMaterialColor WRITE setSpecularMaterialColor NOTIFY effectChanged)
+    Q_PROPERTY(int materialShininess READ materialShininess WRITE setMaterialShininess NOTIFY effectChanged)
 
 public:
     ShaderWizardGLWidget();
@@ -114,8 +114,7 @@ public slots:
     void setEffect(QGLShaderProgramEffect* effect);
 
 signals:
-    void vertexShaderChanged(const QString);
-    void fragmentShaderChanged(const QString);
+    void effectChanged();
 
 private:
     void initializeGL(QGLPainter *painter);

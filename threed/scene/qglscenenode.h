@@ -195,6 +195,7 @@ Q_SIGNALS:
     void startChanged();
     void countChanged();
     void drawingModeChanged();
+    void centerChanged();
 
 protected:
     QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);

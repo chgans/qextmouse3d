@@ -191,6 +191,7 @@ Q_SIGNALS:
     void nameChanged();
     void inheritEventsChanged();
     void isVisibleChanged();
+    void childrenChanged();
 
 private:
     Item3dPrivate *d;
