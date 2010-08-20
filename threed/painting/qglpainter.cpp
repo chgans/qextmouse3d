@@ -1824,25 +1824,6 @@ QGLAbstractSurface *QGLPainter::currentSurface() const
 }
 
 /*!
-    Sets the \a faces to be culled based on whether they are front
-    or back faces.
-*/
-void QGLPainter::setCullFaces(QGL::CullFaces faces)
-{
-    if ((faces & ~QGL::CullClockwise) == QGL::CullDisabled) {
-        glDisable(GL_CULL_FACE);
-    } else if (faces & QGL::CullClockwise) {
-        glFrontFace(GL_CW);
-        glCullFace((GLenum)(faces & ~QGL::CullClockwise));
-        glEnable(GL_CULL_FACE);
-    } else {
-        glFrontFace(GL_CCW);
-        glCullFace((GLenum)faces);
-        glEnable(GL_CULL_FACE);
-    }
-}
-
-/*!
     Returns the current lighting model.
 
     \sa setLightModel()

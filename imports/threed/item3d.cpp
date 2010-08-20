@@ -1106,7 +1106,17 @@ void Item3d::draw(QGLPainter *painter)
     }
 
     //Culling
-    painter->setCullFaces((QGL::CullFaces)(int)(d->cullFaces));
+    if ((d->cullFaces & ~CullClockwise) == CullDisabled) {
+        glDisable(GL_CULL_FACE);
+    } else if (d->cullFaces & CullClockwise) {
+        glFrontFace(GL_CW);
+        glCullFace(GLenum(d->cullFaces & ~CullClockwise));
+        glEnable(GL_CULL_FACE);
+    } else {
+        glFrontFace(GL_CCW);
+        glCullFace(GLenum(d->cullFaces));
+        glEnable(GL_CULL_FACE);
+    }
 
     //Effects
     if (d->effect)
@@ -1156,7 +1166,7 @@ void Item3d::draw(QGLPainter *painter)
     if (d->effect)
         d->effect->disableEffect(painter);
     if (d->cullFaces != CullDisabled)
-        painter->setCullFaces(QGL::CullDisabled);
+        glDisable(GL_CULL_FACE);
     if (haveLights) {
         painter->setMainLight(0);
     }

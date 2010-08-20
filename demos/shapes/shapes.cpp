@@ -101,8 +101,6 @@ void ShapesWidget::initializeGL()
 {
     QGLPainter painter(this);
 
-    painter.setCullFaces(QGL::CullDisabled);
-
     painter.setLightModel(&twoSidedModel);
     painter.setFaceColor(QGL::FrontFaces, QColor(170, 202, 0));
     painter.setFaceColor(QGL::BackFaces, QColor(202, 170, 0));

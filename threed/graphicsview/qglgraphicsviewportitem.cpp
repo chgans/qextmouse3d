@@ -82,7 +82,6 @@ public:
 
         options = QGLGraphicsViewportItem::CameraNavigation;
         clearDepthBuffer = true;
-        cullFaces = QGL::CullBackFaces;
     }
 
     void changeCamera(QGLCamera *c);
@@ -94,7 +93,6 @@ public:
     QGLCamera *camera;
     QGLCamera *defaultCamera;
     bool clearDepthBuffer;
-    QGL::CullFaces cullFaces;
     QColor backgroundColor;
 
 private Q_SLOTS:
@@ -327,29 +325,6 @@ void QGLGraphicsViewportItem::setClearDepthBuffer(bool value)
 }
 
 /*!
-    Returns the face culling mode to set before calling paintGL().
-    The default value is QGL::CullBackFaces.
-
-    \sa setCullFaces()
-*/
-QGL::CullFaces QGLGraphicsViewportItem::cullFaces() const
-{
-    Q_D(const QGLGraphicsViewportItem);
-    return d->cullFaces;
-}
-
-/*!
-    Sets the face culling mode to set before calling paintGL() to \a faces.
-
-    \sa cullFaces()
-*/
-void QGLGraphicsViewportItem::setCullFaces(QGL::CullFaces faces)
-{
-    Q_D(QGLGraphicsViewportItem);
-    d->cullFaces = faces;
-}
-
-/*!
     Returns the background color, which is used to clear the viewport
     before calling paintGL().  The default value is an invalid QColor,
     which indicates that the viewport should not be cleared.
@@ -407,7 +382,7 @@ void QGLGraphicsViewportItem::paint
     glpainter.pushSurface(&surface);
 
     // Set up the desired drawing options.
-    glpainter.setCullFaces(d->cullFaces);
+    glDisable(GL_CULL_FACE);
     d->setDefaults(&glpainter);
     if (d->backgroundColor.isValid()) {
         // We clear the background by drawing a triangle fan so
@@ -447,7 +422,7 @@ void QGLGraphicsViewportItem::paint
     glpainter.disableEffect();
 
     // Try to restore the GL state to something paint-engine compatible.
-    glpainter.setCullFaces(QGL::CullDisabled);
+    glDisable(GL_CULL_FACE);
     d->setDefaults(&glpainter);
     glDisable(GL_DEPTH_TEST);
 

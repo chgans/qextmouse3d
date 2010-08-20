@@ -71,16 +71,6 @@ namespace QGL
         AllFaces                    = 0x0408  // GL_FRONT_AND_BACK
     };
 
-    enum CullFace
-    {
-        CullDisabled                = 0,
-        CullFrontFaces              = 0x0404, // GL_FRONT
-        CullBackFaces               = 0x0405, // GL_BACK
-        CullAllFaces                = 0x0408, // GL_FRONT_AND_BACK
-        CullClockwise               = 0x10000
-    };
-    Q_DECLARE_FLAGS(CullFaces, CullFace)
-
     enum DrawingMode
     {
         Points                      = 0x0000, // GL_POINTS
@@ -130,8 +120,6 @@ namespace QGL
         Faceted
     };
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(QGL::CullFaces)
 
 QT_END_NAMESPACE
 

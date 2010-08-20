@@ -88,9 +88,6 @@ public:
     bool clearDepthBuffer() const;
     void setClearDepthBuffer(bool value);
 
-    QGL::CullFaces cullFaces() const;
-    void setCullFaces(QGL::CullFaces faces);
-
     QColor backgroundColor() const;
     void setBackgroundColor(const QColor& color);
 

@@ -304,7 +304,8 @@ void Viewer::initializeGL(QGLPainter *painter)
     setFocus();
     painter->setClearColor(QColor(32, 32, 128));
     glEnable(GL_DEPTH_TEST);
-    painter->setCullFaces(QGL::CullBackFaces);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     buildFloor();
 

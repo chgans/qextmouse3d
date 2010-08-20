@@ -83,20 +83,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \enum QGL::CullFace
-    \since 4.8
-    This enum defines the face culling mode to use with QGLPainter::setCullFaces().
-
-    \value CullDisabled Face culling is disabled.
-    \value CullFrontFaces Cull front faces, but not back faces.
-    \value CullBackFaces Cull back faces, but not front faces.
-    \value CullAllFaces Cull both front and back faces.
-    \value CullClockwise Flag that indicates that clockwise faces should
-           be treated as front-facing instead of the default whereby
-           counter-clockwise faces are treated as front-facing.
-*/
-
-/*!
     \enum QGL::DrawingMode
     \since 4.8
     This enum defines the type of OpenGL primitive to render with QGLPainter::draw().

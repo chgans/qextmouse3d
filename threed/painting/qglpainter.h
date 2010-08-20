@@ -177,8 +177,6 @@ public:
     void setSurface(QGLAbstractSurface *surface);
     QGLAbstractSurface *currentSurface() const;
 
-    void setCullFaces(QGL::CullFaces faces);
-
     const QGLLightModel *lightModel() const;
     void setLightModel(const QGLLightModel *value);
 

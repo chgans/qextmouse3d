@@ -171,10 +171,12 @@ void CubeView::drawCube1(QGLPainter *painter, const QVector3D &posn)
     painter->modelViewMatrix().translate(posn);
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
 
-    painter->setCullFaces(QGL::CullFrontFaces);
+    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
     cube->draw(painter);
-    painter->setCullFaces(QGL::CullBackFaces);
+    glCullFace(GL_BACK);
     cube->draw(painter);
+    glDisable(GL_CULL_FACE);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
@@ -193,10 +195,12 @@ void CubeView::drawCube2(QGLPainter *painter, const QVector3D &posn)
     painter->modelViewMatrix().translate(posn);
     painter->modelViewMatrix().rotate(cangle, 1.0f, -1.0f, 1.0f);
 
-    painter->setCullFaces(QGL::CullFrontFaces);
+    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
     cube->draw(painter);
-    painter->setCullFaces(QGL::CullBackFaces);
+    glCullFace(GL_BACK);
     cube->draw(painter);
+    glDisable(GL_CULL_FACE);
 
     painter->modelViewMatrix().pop();
 }

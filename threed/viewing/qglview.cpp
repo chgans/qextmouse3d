@@ -725,7 +725,7 @@ void QGLView::initializeGL()
     else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
         painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
-    painter.setCullFaces(QGL::CullDisabled);
+    glDisable(GL_CULL_FACE);
     initializeGL(&painter);
     d->logLeave("QGLView::initializeGL");
 }

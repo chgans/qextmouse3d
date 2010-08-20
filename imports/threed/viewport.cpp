@@ -525,7 +525,7 @@ void Viewport::draw(QGLPainter *painter)
         painter->glBlendEquation(GL_FUNC_ADD);
     else if (painter->hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
         painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-    painter->setCullFaces(QGL::CullDisabled);
+    glDisable(GL_CULL_FACE);
     if (!d->view)
         painter->setPicking(d->showPicking);
 
@@ -692,7 +692,7 @@ QObject *Viewport::objectForPoint(int x, int y)
             painter.glBlendEquation(GL_FUNC_ADD);
         else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
             painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-        painter.setCullFaces(QGL::CullDisabled);
+        glDisable(GL_CULL_FACE);
         if (d->camera) {
             painter.setCamera(d->camera);
         } else {

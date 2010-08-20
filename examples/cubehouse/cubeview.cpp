@@ -217,11 +217,12 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     painter->setTexture(&texture);
     glDisable(GL_DEPTH_TEST);
-    painter->setCullFaces(QGL::CullFrontFaces);
+    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
     cube->draw(painter);
-    painter->setCullFaces(QGL::CullBackFaces);
+    glCullFace(GL_BACK);
     cube->draw(painter);
-    painter->setCullFaces(QGL::CullDisabled);
+    glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     painter->setTexture((QGLTexture2D *)0);
     painter->modelViewMatrix().pop();

@@ -126,10 +126,12 @@ void CubeItem::paintGL(QGLPainter *painter)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         if (painter->isFixedFunction())
             glEnable(GL_TEXTURE_2D);
-        painter->setCullFaces(QGL::CullFrontFaces);
+        glCullFace(GL_FRONT);
+        glEnable(GL_CULL_FACE);
         cube->draw(painter);
-        painter->setCullFaces(QGL::CullBackFaces);
+        glCullFace(GL_BACK);
         cube->draw(painter);
+        glDisable(GL_CULL_FACE);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (painter->isFixedFunction())
             glDisable(GL_TEXTURE_2D);
