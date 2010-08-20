@@ -105,5 +105,10 @@
 
     \image tutorials/cube4-screenshot.png
 
+    Appendix A:
+    It's quite simple to achieve the same effect in qml:
+
+    \snippet tutorials/cube4/cube.qml 1
+
     \l{qt3d-tutorials.html}{Return to the main Tutorials page}.
 */
