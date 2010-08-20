@@ -1637,7 +1637,12 @@ bool QGLSceneNode::normalViewEnabled() const
 
 /*!
     \fn QGLSceneNode::drawingModeChanged()
-    Signals that the drawingMode() propert for this scene node has changed.
+    Signals that the drawingMode() property for this scene node has changed.
+*/
+
+/*!
+    \fn QGLSceneNode::centerChanged()
+    Signals that the center() property for this scene node has changed.
 */
 
 #ifndef QT_NO_DEBUG_STREAM
