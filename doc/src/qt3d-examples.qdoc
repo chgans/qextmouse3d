@@ -49,7 +49,8 @@
     \o \l{cube}{Cube}
     \o \l{painter}{Painter}
     \o \l{stereo}{Stereo}
-    \o \l{teapot}{Teapot}
+    \o \l{teapot}{Teapot (C++ version)}
+    \o \l{Teapot Example in QML/3D}{Teapot (QML version)}
     \o \l{pvcolor}{Per-vertex Color}
     \endlist
 

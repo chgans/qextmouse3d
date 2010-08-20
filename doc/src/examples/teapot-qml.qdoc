@@ -40,26 +40,49 @@
 ****************************************************************************/
 
 /*!
-    \page qt3d-tutorials.html
-    \title Qt/3D Tutorials
-    \keyword Qt/3D Tutorials
+    \example tutorials/teapot-qml
+    \title Teapot Example in QML/3D
 
-    Using C++ to build applications with Qt/3D:
+    This example shows to use QML/3D to display a teapot on
+    the screen.  The QML is fairly simple:
 
-    \list
-    \o \l{Teapot Example}{Hello Teapot in C++}
-    \o \l{Applying transformations and materials to objects}
-    \o \l{Loading a 3DS model with Qt/3D}
-    \o \l{Converting raw GL applications to use QGLPainter}
-    \o \l{Writing a scene format plug-in for Qt/3D}
-    \endlist
+    \snippet tutorials/teapot-qml/teapot.qml 1
 
-    Using QML to build applications with Qt/3D:
+    \image teapot-qml-screenshot.png
 
-    \list
-    \o \l{Teapot Example in QML/3D}{Hello Teapot in QML/3D}
-    \o \l{Using GLSL shaders in QML/3D}
-    \endlist
+    The example starts by importing the Qt and Qt/3D QML modules:
 
-    \l{index.html}{Return to the main Qt/3D page}.
+    \snippet tutorials/teapot-qml/teapot.qml 2
+
+    Then we create a viewport of size 640x480 to display the teapot:
+
+    \snippet tutorials/teapot-qml/teapot.qml 3
+
+    And now we create a \l Item3d to display the teapot with a
+    default lit material effect:
+
+    \snippet tutorials/teapot-qml/teapot.qml 4
+
+    The teapot data itself is loaded from \c{teapot.bez}, which contains
+    Bezier patch data that describes the geometry of the teapot.
+
+    Let's make the teapot a little more interesting by adding a
+    material to simulate bone china:
+
+    \snippet tutorials/teapot-qml/teapot-bounce.qml 1
+    \snippet tutorials/teapot-qml/teapot-bounce.qml 2
+
+    \image teapot-china-screenshot.png
+
+    To make the teapot even more interesting, we can cause it to
+    bounce up and down using a QML animation item:
+
+    \snippet tutorials/teapot-qml/teapot-bounce.qml 3
+
+    This QML teapot example can be compared with the \l{teapot}{C++ version}.
+    Using QML is briefer than C++, and easier to modify to adjust
+    materials and add new features like animations.
+
+    \l{qt3d-examples.html}{Return to Examples},
+    \l{qt3d-tutorials.html}{Return to Tutorials}.
 */
