@@ -52,12 +52,8 @@ CubeView::CubeView(QWidget *parent)
     builder << QGL::Faceted << QGLCube(1.5f);
     cube = builder.finalizedSceneNode();
 
-    QMatrix4x4 m;
-    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
-    cube->setLocalTransform(m);
-
     QGLMaterial *mat = new QGLMaterial;
-    mat->setAmbientColor(QColor(170, 202, 0));
+    mat->setColor(QColor(170, 202, 0));
     QUrl url;
     url.setPath(QLatin1String(":/qtlogo.png"));
     url.setScheme(QLatin1String("file"));
@@ -74,5 +70,6 @@ CubeView::~CubeView()
 
 void CubeView::paintGL(QGLPainter *painter)
 {
+    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
     cube->draw(painter);
 }
