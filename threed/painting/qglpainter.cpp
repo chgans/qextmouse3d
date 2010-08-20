@@ -109,8 +109,6 @@ QT_BEGIN_NAMESPACE
 
 #define QGLPAINTER_CHECK_PRIVATE() \
     Q_ASSERT_X(d, "QGLPainter", "begin() has not been called or it failed")
-#define QGLPAINTER_CHECK_PRIVATE_RETURN(value) \
-    Q_ASSERT_X(d, "QGLPainter", "begin() has not been called or it failed")
 
 QGLPainterPrivate::QGLPainterPrivate()
     : ref(1),
@@ -651,7 +649,7 @@ void QGLPainter::setScissor(const QRect& rect)
 QMatrix4x4Stack& QGLPainter::projectionMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
+    QGLPAINTER_CHECK_PRIVATE();
     return d->projectionMatrix;
 }
 
@@ -663,7 +661,7 @@ QMatrix4x4Stack& QGLPainter::projectionMatrix()
 QMatrix4x4Stack& QGLPainter::modelViewMatrix()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(*((QMatrix4x4Stack *)0));
+    QGLPAINTER_CHECK_PRIVATE();
     return d->modelViewMatrix;
 }
 
@@ -722,7 +720,7 @@ QMatrix3x3 QGLPainter::normalMatrix() const
 QGL::Eye QGLPainter::eye() const
 {
     Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGL::NoEye);
+    QGLPAINTER_CHECK_PRIVATE();
     return d->eye;
 }
 
@@ -772,7 +770,7 @@ void QGLPainter::setCamera(const QGLCamera *camera)
 bool QGLPainter::isCullable(const QVector3D& point) const
 {
     Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
+    QGLPAINTER_CHECK_PRIVATE();
     QVector3D projected = d->modelViewMatrix * point;
     projected = d->projectionMatrix * projected;
     return !d->viewingCube.contains(projected);
@@ -785,7 +783,7 @@ bool QGLPainter::isCullable(const QVector3D& point) const
 bool QGLPainter::isCullable(const QBox3D& box) const
 {
     Q_D(const QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
+    QGLPAINTER_CHECK_PRIVATE();
     QBox3D projected = box.transformed(d->modelViewMatrix);
     if (projected.minimum().z() >= 0.0f || projected.maximum().z() >= 0.0f) {
         // The box crosses the eye line in the view.  Don't do the
@@ -825,7 +823,7 @@ QGLRenderSequencer *QGLPainter::renderSequencer()
 qreal QGLPainter::aspectRatio() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(1.0f);
+    QGLPAINTER_CHECK_PRIVATE();
 
     // Get the size of the current viewport.
     QSize size = currentSurface()->viewportGL().size();
@@ -857,7 +855,7 @@ qreal QGLPainter::aspectRatio() const
 QGLAbstractEffect *QGLPainter::effect() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(const_cast<QGLPainter *>(this));
     return d->effect;
 }
@@ -871,7 +869,7 @@ QGLAbstractEffect *QGLPainter::effect() const
 QGLAbstractEffect *QGLPainter::userEffect() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
     return d->userEffect;
 }
 
@@ -916,7 +914,7 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
 QGL::StandardEffect QGLPainter::standardEffect() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGL::FlatColor);
+    QGLPAINTER_CHECK_PRIVATE();
     return d->standardEffect;
 }
 
@@ -1144,7 +1142,7 @@ static inline void checkRequiredFields() {}
 QColor QGLPainter::color() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QColor());
+    QGLPAINTER_CHECK_PRIVATE();
     return d->color;
 }
 
@@ -1296,7 +1294,7 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
 int QGLPainter::textureUnitCount() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
 
     if (!(d->textureUnitCount)) {
 #if defined(GL_MAX_TEXTURE_UNITS)
@@ -1762,7 +1760,7 @@ void QGLPainter::pushSurface(QGLAbstractSurface *surface)
 QGLAbstractSurface *QGLPainter::popSurface()
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
     Q_ASSERT(!d->surfaceStack.isEmpty()); // Should have a main surface.
     QGLPainterSurfaceInfo &surf = d->surfaceStack.top();
     if (surf.mainSurface)
@@ -1831,7 +1829,7 @@ QGLAbstractSurface *QGLPainter::currentSurface() const
 const QGLLightModel *QGLPainter::lightModel() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLLightModel());
+    QGLPAINTER_CHECK_PRIVATE();
     if (!d->lightModel) {
         if (!d->defaultLightModel)
             d->defaultLightModel = new QGLLightModel();
@@ -1869,7 +1867,7 @@ void QGLPainter::setLightModel(const QGLLightModel *value)
 const QGLLightParameters *QGLPainter::mainLight() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(0);
+    QGLPAINTER_CHECK_PRIVATE();
     if (!d->mainLight) {
         if (!d->defaultLight)
             d->defaultLight = new QGLLightParameters();
@@ -1950,7 +1948,7 @@ void QGLPainter::setMainLight
 QMatrix4x4 QGLPainter::mainLightTransform() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QMatrix4x4());
+    QGLPAINTER_CHECK_PRIVATE();
     return d->mainLightTransform;
 }
 
@@ -1965,7 +1963,7 @@ QMatrix4x4 QGLPainter::mainLightTransform() const
 const QGLMaterial *QGLPainter::faceMaterial(QGL::Face face) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QGLMaterial());
+    QGLPAINTER_CHECK_PRIVATE();
     if (face == QGL::BackFaces) {
         if (!d->backMaterial) {
             if (!d->defaultMaterial)
@@ -2085,7 +2083,7 @@ void QGLPainter::setFaceColor(QGL::Face face, const QColor& color)
 bool QGLPainter::isPicking() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(false);
+    QGLPAINTER_CHECK_PRIVATE();
     return (d->pick ? d->pick->isPicking : false);
 }
 
@@ -2124,7 +2122,7 @@ void QGLPainter::setPicking(bool value)
 int QGLPainter::objectPickId() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(-1);
+    QGLPAINTER_CHECK_PRIVATE();
     return (d->pick ? d->pick->objectPickId : -1);
 }
 
@@ -2196,7 +2194,7 @@ void QGLPainter::clearPickObjects()
 QColor QGLPainter::pickColor() const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(QColor());
+    QGLPAINTER_CHECK_PRIVATE();
     if (d->pick) {
         QColor color;
         color.setRgb(d->pick->pickColor);        
@@ -2218,7 +2216,7 @@ QColor QGLPainter::pickColor() const
 int QGLPainter::pickObject(int x, int y) const
 {
     Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE_RETURN(-1);
+    QGLPAINTER_CHECK_PRIVATE();
 
     if (!d->pick)
     {
