@@ -39,19 +39,13 @@
 **
 ****************************************************************************/
 
-/*!
-    \page qt3d-tutorials.html
-    \title Qt/3D Tutorials
-    \keyword Qt/3D Tutorials
+#include <QApplication>
+#include "cubeview.h"
 
-    \list
-    \o \l{Teapot Example}{Hello Teapot}
-    \o \l{Applying transformations and materials to objects}
-    \o \l{Loading a 3DS model with Qt/3D}
-    \o \l{Converting raw GL applications to use QGLPainter}
-    \o \l{Writing a scene format plug-in for Qt/3D}
-    \o \l{Using GLSL shaders in QML3D}
-    \endlist
-
-    \l{index.html}{Return to the main Qt/3D page}.
-*/
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    CubeView view;
+    view.show();
+    return app.exec();
+}

@@ -39,19 +39,30 @@
 **
 ****************************************************************************/
 
-/*!
-    \page qt3d-tutorials.html
-    \title Qt/3D Tutorials
-    \keyword Qt/3D Tutorials
+#include "cubeview.h"
+#include "qglbuilder.h"
+#include "qglcube.h"
 
-    \list
-    \o \l{Teapot Example}{Hello Teapot}
-    \o \l{Applying transformations and materials to objects}
-    \o \l{Loading a 3DS model with Qt/3D}
-    \o \l{Converting raw GL applications to use QGLPainter}
-    \o \l{Writing a scene format plug-in for Qt/3D}
-    \o \l{Using GLSL shaders in QML3D}
-    \endlist
+//! [1]
+CubeView::CubeView(QWidget *parent)
+    : QGLView(parent)
+{
+    QGLBuilder builder;
+    builder << QGL::Faceted;
+    builder << QGLCube();
 
-    \l{index.html}{Return to the main Qt/3D page}.
-*/
+    cube = builder.finalizedSceneNode();
+}
+//! [1]
+
+CubeView::~CubeView()
+{
+    delete cube;
+}
+
+//! [2]
+void CubeView::paintGL(QGLPainter *painter)
+{
+    cube->draw(painter);
+}
+//! [2]

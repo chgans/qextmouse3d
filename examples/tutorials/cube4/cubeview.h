@@ -39,19 +39,31 @@
 **
 ****************************************************************************/
 
-/*!
-    \page qt3d-tutorials.html
-    \title Qt/3D Tutorials
-    \keyword Qt/3D Tutorials
+#ifndef CUBEVIEW_H
+#define CUBEVIEW_H
 
-    \list
-    \o \l{Teapot Example}{Hello Teapot}
-    \o \l{Applying transformations and materials to objects}
-    \o \l{Loading a 3DS model with Qt/3D}
-    \o \l{Converting raw GL applications to use QGLPainter}
-    \o \l{Writing a scene format plug-in for Qt/3D}
-    \o \l{Using GLSL shaders in QML3D}
-    \endlist
+#include "qglview.h"
+#include "qgltexture2d.h"
 
-    \l{index.html}{Return to the main Qt/3D page}.
-*/
+class QGLSceneNode;
+
+//! [1]
+class CubeView : public QGLView
+{
+//! [1]
+    Q_OBJECT
+public:
+    CubeView(QWidget *parent = 0);
+    ~CubeView();
+
+protected:
+    void paintGL(QGLPainter *painter);
+
+//! [2]
+private:
+    QGLSceneNode *cube;
+    QGLTexture2D logo;
+};
+//! [2]
+
+#endif
