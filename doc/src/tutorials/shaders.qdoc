@@ -40,12 +40,12 @@
 ****************************************************************************/
 
 /*!
-    \title Using GLSL shaders in QML3D
+    \title Using GLSL shaders in QML/3D
     \example tutorials/shaders
 
 
     In this tutorial, we will show how to apply QML property animations to
-    GLSL shaders in a QML3D application. 
+    GLSL shaders in a QML/3D application.
 
     Starting with a relatively simple shader program, we are going to
     manipulate various parameters to explain how both the shader and the QML
@@ -66,17 +66,18 @@
         </table>
     \endraw
 
-    At the highest level, shaders in QML3D are created using the ShaderProgram
+    At the highest level, shaders in QML/3D are created using the ShaderProgram
     element.  The ShaderProgram element in this example has the id \a program,
     and applying it to the teapot is as simple as assigning it to the \c effect
     property of an Item3d derived element.
 
     The two most important properties of the ShaderProgram element are the
-    \c vertexShader and \c fragmentShader properties.  Broadly speaking, the
-    vertex shader is run on each vertex in a model (for example, the 8 corners
-    of a cube) to calculate the final position of each point, while the
+    \c vertexShader and \c fragmentShader properties, which are strings
+    containing the code for the respective shader programs.  Broadly speaking,
+    the vertex shader is run on each vertex in a model (for example, the 8
+    corners of a cube) to calculate the final position of each point, while the
     fragment shader is run on each pixel visible onscreen to calculate it's
-    colour.
+    color.
 
     The other attribute we use in this tutorial is the \c texture property.
     This property is connected to the \c qgl_Texture0 attribute in our shader
@@ -111,8 +112,9 @@
     textures and cube maps out there.
 
     To fix the image's orientation we can simply reverse the sign when we
-    pass the texture coordinate to our fragment shader, because texture
-    coordinates wrap around if they are higher than 1.0 or lower than 0.0:
+    pass the texture coordinate to our fragment shader because the default
+    behaviour is for texture coordinates wrap around if they are higher than
+    1.0 or lower than 0.0:
     \code texCoord = -qgl_TexCoord0; \endcode
 
     In order to fix the boring, we're going to have to add a bit more QML
@@ -133,12 +135,14 @@
     \code uniform mediump float textureOffsetX; \endcode
 
     The final step is to work our new variable into the program, by changing
-    the texCoord assignment (we'll get to texCoord in just a second):
-    \code            texCoord = vec4(-qgl_TexCoord0.s - textureOffsetX,
-                            -qgl_TexCoord0.t,
-                            0,0);
+    the texCoord assignment.  We'll add our animated variable to our horizontal
+    texture coordinate, which will effectively scroll our texture around our
+    teapot:
+    \code
+        texCoord = vec4(-qgl_TexCoord0.s - textureOffsetX,
+                        -qgl_TexCoord0.t,
+                        0,0);
     \endcode
-
 
     Adding an additional texture is done by adding another uniform.  The
     ShaderProgram element interprets string properties as URIs for texture
@@ -184,15 +188,18 @@
     \endcode
 
     In general, textures needs to have the same name in the shaders as in the
-    ShaderProgram element in order to be connected up, but \c qgl_Texture0 is
-    special cased and very slightly faster, so it's good to use it first.
+    ShaderProgram element in order to be automatically connected, but \c
+    qgl_Texture0 is special cased and very slightly faster, so it's good to use
+    it first.
 
     \c mix() is another handy built in GLSL function that interpolates linearly
-    between two values or vectors.
+    between two values or vectors.  (You can find details of all the built in
+    functions in the official OpenGL Shader Language specification available at
+    http://www.khronos.org/opengl/ )
 
     Finally, let's make one more change to make this example pop.  If you're
-    familiar with hardware, it just might have rankled you that we padded out
-    our texture coordinates with two zeros, and passed them in for processing
+    a performance fanatic, it just might have rankled that we padded out our
+    texture coordinates with two zeros, and passed them in for processing
     on every single pixel of our teapot.
 
     Let's make use of that space by putting a second set of co-ordinates in
@@ -317,7 +324,7 @@
     happens if we use the same effect that we just used on the vertex after
     the transformation matrices are applied.
 
-    Firstly, we're going to need multiple teabots to see the difference, so
+    Firstly, we're going to need multiple teapots to see the difference, so
     let's add those in.  We want to move them all together, so we'll wrap
     them in an Item3d, and apply our animations to that item instead of
     the teapots directly.
@@ -388,6 +395,8 @@
     used to explore each element.
 
 
+    For further reading, the full specification for the OpenGL Shader Language
+    is available from the Khronos website at http://www.khronos.org/opengl/
 
     \l{qt3d-tutorials.html}{Return to the main Tutorials page}.
 */
