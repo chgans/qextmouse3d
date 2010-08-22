@@ -1660,7 +1660,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     QSet<QGLSceneNode *> lp = loop;
     lp.insert(node);
     QString ind;
-    ind.fill(' ', indent * 4);
+    ind.fill(QLatin1Char(' '), indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
     if (appThread != node->thread())

@@ -54,35 +54,35 @@ QGLColladaFxEffectPrivate::~QGLColladaFxEffectPrivate()
 
 inline void QGLColladaFxEffectPrivate::updateMaterialChannelSnippets(QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor)
 {
-    QString qVariableName = "q" + channelName;
+    QString qVariableName = QLatin1String("q") + channelName;
     if (texture != 0)
     {
-        QString sourceVariableName = "texture" + channelName;
-        QString texVariableName = QString("texCoord%1").arg(*textureUnit);
+        QString sourceVariableName = QLatin1String("texture") + channelName;
+        QString texVariableName = QString(QLatin1String("texCoord%1")).arg(*textureUnit);
         // Take care of texture coordinates
-        QString varyingSnippet = QString("varying vec4 %1;").arg(texVariableName);
+        QString varyingSnippet = QString(QLatin1String("varying vec4 %1;")).arg(texVariableName);
         vertexShaderDeclarationSnippets.append(varyingSnippet);
         vertexShaderVariableNames.append(texVariableName);
         fragmentShaderDeclarationSnippets.append(varyingSnippet);
         fragmentShaderVariableNames.append(texVariableName);
 
-        vertexShaderCodeSnippets.append(QString("%1 = texCoords; // TODO: dynamically add tex attributes\n").arg(texVariableName));
+        vertexShaderCodeSnippets.append(QString(QLatin1String("%1 = texCoords; // TODO: dynamically add tex attributes\n")).arg(texVariableName));
         vertexShaderVariableNames.append(texVariableName);
 
         // Declare the color variable in the fragment shader
-        fragmentShaderDeclarationSnippets.append(QString("lowp vec4 %1;").arg(qVariableName));
+        fragmentShaderDeclarationSnippets.append(QString(QLatin1String("lowp vec4 %1;")).arg(qVariableName));
         fragmentShaderVariableNames.append(qVariableName);
-        fragmentShaderDeclarationSnippets.append(QString("uniform sampler2D %1;").arg(sourceVariableName));
+        fragmentShaderDeclarationSnippets.append(QString(QLatin1String("uniform sampler2D %1;")).arg(sourceVariableName));
         fragmentShaderVariableNames.append(sourceVariableName);
 
         // Assign a colour to the variable out of the appropriate sampler
-        fragmentShaderCodeSnippets.append("    mediump vec4 " + qVariableName + " = texture2D(" + sourceVariableName + ", " + texVariableName + ".st);");
+        fragmentShaderCodeSnippets.append(QLatin1String("    mediump vec4 ") + qVariableName + QLatin1String(" = texture2D(") + sourceVariableName + QLatin1String(", ") + texVariableName + QLatin1String(".st);"));
         fragmentShaderVariableNames.append(qVariableName);
         // mediump? lowp?
 
         *textureUnit++;
     } else {
-        fragmentShaderDeclarationSnippets.append(QString ("const vec4 %1 = vec4(%2, %3, %4, %5);").arg( qVariableName).arg(fallbackColor.redF(), 0, 'f', 6).arg(fallbackColor.greenF(), 0, 'f', 6).arg(fallbackColor.blueF(), 0, 'f', 6).arg(fallbackColor.alphaF(), 0, 'f', 6 ));
+        fragmentShaderDeclarationSnippets.append(QString (QLatin1String("const vec4 %1 = vec4(%2, %3, %4, %5);")).arg( qVariableName).arg(fallbackColor.redF(), 0, 'f', 6).arg(fallbackColor.greenF(), 0, 'f', 6).arg(fallbackColor.blueF(), 0, 'f', 6).arg(fallbackColor.alphaF(), 0, 'f', 6 ));
         fragmentShaderVariableNames.append(qVariableName);
     }
 }
@@ -91,12 +91,12 @@ inline void QGLColladaFxEffectPrivate::updateMaterialChannelSnippets(QString cha
 
 inline void QGLColladaFxEffectPrivate::setTextureUniform(QGLShaderProgram *program, QGLPainter* painter, QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor)
 {
-    QString qVariableName = "q" + channelName;
+    QString qVariableName = QLatin1String("q") + channelName;
 
     if (texture != 0)
     {
-        QString sourceVariableName = "texture" + channelName;
-        QString texVariableName = QString("texCoord%1").arg(*textureUnit);
+        QString sourceVariableName = QLatin1String("texture") + channelName;
+        QString texVariableName = QString(QLatin1String("texCoord%1")).arg(*textureUnit);
         painter->setTexture(*textureUnit, texture);
         program->setUniformValue(sourceVariableName.toAscii().data(), *textureUnit);
     }
@@ -126,20 +126,20 @@ void QGLColladaFxEffect::update(QGLPainter *painter, QGLPainter::Updates updates
         // painter.
         int textureUnit = 1;
         d->setTextureUniform(
-                program(), painter, "Emissive", d->emissiveTexture,
+                program(), painter, QLatin1String("Emissive"), d->emissiveTexture,
                 &textureUnit,
                 material() ? material()->emittedLight() : QColor());
 
         d->setTextureUniform(
-                program(), painter, "Ambient", d->ambientTexture, &textureUnit,
+                program(), painter, QLatin1String("Ambient"), d->ambientTexture, &textureUnit,
                 material() ? material()->ambientColor() : QColor());
 
         d->setTextureUniform(
-                program(), painter, "Diffuse", d->diffuseTexture, &textureUnit,
+                program(), painter, QLatin1String("Diffuse"), d->diffuseTexture, &textureUnit,
                 material() ? material()->diffuseColor() : QColor());
 
         d->setTextureUniform(
-                program(), painter, "Specular", d->specularTexture,
+                program(), painter, QLatin1String("Specular"), d->specularTexture,
                 &textureUnit,
                 material() ? material()->specularColor() : QColor());
     }
@@ -172,10 +172,10 @@ void QGLColladaFxEffectPrivate::addMaterialChannelsToShaderSnippets(const QGLMat
 {
     int textureUnit = 1;
 
-    updateMaterialChannelSnippets("Emissive", emissiveTexture, &textureUnit, material->emittedLight());
-    updateMaterialChannelSnippets("Ambient", ambientTexture, &textureUnit, material->ambientColor());
-    updateMaterialChannelSnippets("Diffuse", diffuseTexture, &textureUnit, material->diffuseColor());
-    updateMaterialChannelSnippets("Specular", specularTexture, &textureUnit, material->specularColor());
+    updateMaterialChannelSnippets(QLatin1String("Emissive"), emissiveTexture, &textureUnit, material->emittedLight());
+    updateMaterialChannelSnippets(QLatin1String("Ambient"), ambientTexture, &textureUnit, material->ambientColor());
+    updateMaterialChannelSnippets(QLatin1String("Diffuse"), diffuseTexture, &textureUnit, material->diffuseColor());
+    updateMaterialChannelSnippets(QLatin1String("Specular"), specularTexture, &textureUnit, material->specularColor());
 }
 
 
@@ -185,32 +185,32 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
     d->addMaterialChannelsToShaderSnippets(material());
 
     // Fragment shader declarations:
-    d->fragmentShaderDeclarationSnippets.append("uniform mediump sampler2D texture0;");
-    d->fragmentShaderVariableNames.append("texture0");
-    d->fragmentShaderDeclarationSnippets.append("varying highp vec4 qTexCoord0;");
-    d->fragmentShaderVariableNames.append("qTexCoord0");
+    d->fragmentShaderDeclarationSnippets.append(QLatin1String("uniform mediump sampler2D texture0;"));
+    d->fragmentShaderVariableNames.append(QLatin1String("texture0"));
+    d->fragmentShaderDeclarationSnippets.append(QLatin1String("varying highp vec4 qTexCoord0;"));
+    d->fragmentShaderVariableNames.append(QLatin1String("qTexCoord0"));
 
     // Fragment Shader code
-    d->fragmentShaderCodeSnippets.append(
+    d->fragmentShaderCodeSnippets.append(QLatin1String(
             "    vec4 specularComponent = vec4( 0.0, 0.0, 0.0, 0.0 );\n"\
             "    if(intensity > 0.0)\n"\
             "   {\n"\
             "       float specularIntensity = max( dot(perPixelNormal, qHalfVector), 0.0 );\n"\
             "       if(specularIntensity > 0.0)\n"\
             "           specularComponent = qSpecular  * pow(specularIntensity, shininess);\n"\
-            "   }\n");
-    d->fragmentShaderVariableNames.append("lighting");
+            "   }\n"));
+    d->fragmentShaderVariableNames.append(QLatin1String("lighting"));
 
 
     // Replace the "end glue" to set colour from lighting
-    d->fragmentShaderEndGlueSnippet =
+    d->fragmentShaderEndGlueSnippet = QLatin1String(
             "    vec4 texture0Color = texture2D(texture0, qTexCoord0.st);\n"\
             "    vec4 diffuseColor = qDiffuse;\n"\
             "    vec4 lightingColor = qAmbient + diffuseColor * intensity + specularComponent;\n"\
             "   vec4 texturedColor = vec4(lightingColor.xyz * (1.0 - texture0Color.a)\n"\
             "+ (texture0Color.xyz + specularComponent.rgb) * texture0Color.a, lightingColor.a);\n"\
             "    gl_FragColor = texturedColor;\n"\
-            "}";
+            "}");
     generateShaders();
 }
 
@@ -221,19 +221,19 @@ void QGLColladaFxEffect::generateShaders()
     if(!d->hasCustomVertexShader)
     {
         setVertexShader(
-                d->vertexShaderDeclarationSnippets.join("\n")
-                + "\n" + d->vertexShaderMainGlueSnippet
-                + d->vertexShaderCodeSnippets.join("\n")
-                + "\n" + d->vertexShaderEndGlueSnippet);
+                d->vertexShaderDeclarationSnippets.join(QLatin1String("\n"))
+                + QLatin1String("\n") + d->vertexShaderMainGlueSnippet
+                + d->vertexShaderCodeSnippets.join(QLatin1String("\n"))
+                + QLatin1String("\n") + d->vertexShaderEndGlueSnippet);
     }
 
     if(!d->hasCustomFragmentShader)
     {
         setFragmentShader(
-                d->fragmentShaderDeclarationSnippets.join("\n")
-                + "\n" + d->fragmentShaderMainGlueSnippet
-                +  d->fragmentShaderCodeSnippets.join("\n")
-                + "\n" + d->fragmentShaderEndGlueSnippet);
+                d->fragmentShaderDeclarationSnippets.join(QLatin1String("\n"))
+                + QLatin1String("\n") + d->fragmentShaderMainGlueSnippet
+                +  d->fragmentShaderCodeSnippets.join(QLatin1String("\n"))
+                + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet);
     }
 
     // Set inactive to trigger relinking later
@@ -245,7 +245,7 @@ void QGLColladaFxEffect::generateShaders()
 
 void QGLColladaFxEffectPrivate::resetGlueSnippets()
 {
-    vertexShaderMainGlueSnippet = QString(
+    vertexShaderMainGlueSnippet = QLatin1String(
             "attribute highp vec4 vertex;\n"\
             "attribute highp vec4 normal;\n"\
             "attribute highp vec4 texCoords;\n"\
@@ -272,17 +272,17 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "    qTexCoord0 = texCoords;\n"\
             );
 
-    vertexShaderEndGlueSnippet = QString (
+    vertexShaderEndGlueSnippet = QLatin1String (
             "    gl_Position = matrix * vertex;\n"\
             "}\n");
 
 
-    fragmentShaderEndGlueSnippet = QString(
+    fragmentShaderEndGlueSnippet = QLatin1String(
             "    gl_FragColor = color;\n"\
             "}\n"
             );
 
-    fragmentShaderMainGlueSnippet = QString(
+    fragmentShaderMainGlueSnippet = QLatin1String(
             "varying mediump vec3 qNormal;\n"\
             "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\

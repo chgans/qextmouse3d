@@ -252,9 +252,9 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             return;
         program = new QGLShaderProgram();
 #if defined(QT_OPENGL_ES)
-        program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(":/QtOpenGL/shaders/lighting-embedded.vsh", d->vertexShader));
+        program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(QLatin1String(":/QtOpenGL/shaders/lighting-embedded.vsh"), d->vertexShader));
 #else
-        program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(":/QtOpenGL/shaders/lighting.vsh", d->vertexShader));
+        program->addShaderFromSourceCode(QGLShader::Vertex, createVertexSource(QLatin1String(":/QtOpenGL/shaders/lighting.vsh"), d->vertexShader));
 #endif
         program->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
         program->bindAttributeLocation("vertex", QGL::Position);
