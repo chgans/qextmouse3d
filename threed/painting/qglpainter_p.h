@@ -182,10 +182,10 @@ public:
 
     static QGLPainterPrivateCache *instance();
 
-public slots:
+public Q_SLOTS:
     void contextDestroyed(const QGLContext *context);
 
-signals:
+Q_SIGNALS:
     void destroyedContext(const QGLContext *context);
 };
 

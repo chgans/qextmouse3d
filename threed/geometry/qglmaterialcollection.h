@@ -87,7 +87,7 @@ public:
     bool isEmpty() const;
     int size() const;
 
-private slots:
+private Q_SLOTS:
     void materialDeleted();
 };
 

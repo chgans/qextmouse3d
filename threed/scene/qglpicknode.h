@@ -60,14 +60,14 @@ public:
     QGLSceneNode *target() const { return m_target; }
     void setTarget(QGLSceneNode *target) { m_target = target; }
 
-signals:
+Q_SIGNALS:
     void pressed();
     void released();
     void clicked();
     void doubleClicked();
     void hoverChanged();
 
-public slots:
+public Q_SLOTS:
 
 protected:
     bool event(QEvent *e);
