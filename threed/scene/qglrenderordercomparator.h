@@ -39,13 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QGLRENDERORDERREPOSITORY_H
-#define QGLRENDERORDERREPOSITORY_H
-
-#include <QtCore/qcache.h>
+#ifndef QGLRenderOrderComparator_H
+#define QGLRenderOrderComparator_H
 
 #include "qglrenderorder.h"
-#include "qglpainter.h"
 
 QT_BEGIN_HEADER
 
@@ -55,31 +52,18 @@ QT_MODULE(Qt3d)
 
 class QGLSceneNode;
 
-class Q_QT3D_EXPORT QGLRenderOrderRepository
+class Q_QT3D_EXPORT QGLRenderOrderComparator
 {
 public:
-    QGLRenderOrderRepository() {}
+    QGLRenderOrderComparator() {}
+    virtual ~QGLRenderOrderComparator() {}
 
-    virtual QGLRenderOrder *getOrder(const RenderOrderKey &key)
-    {
-        QGLRenderOrder *o = 0;
-        if (m_cache.contains(key))
-        {
-            o = m_cache[key];
-        }
-        else
-        {
-            o = new QGLRenderOrder(key);
-            m_cache.insert(key, o);
-        }
-        return o;
-    }
-private:
-    QCache<RenderOrderKey, QGLRenderOrder> m_cache;
+    virtual bool isLessThan(const QGLRenderOrder &lhs, const QGLRenderOrder &rhs);
+    virtual bool isEqualTo(const QGLRenderOrder &lhs, const QGLRenderOrder &rhs);
 };
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // QGLRENDERORDERREPOSITORY_H
+#endif // QGLRenderOrderComparator_H

@@ -55,7 +55,6 @@
 
 #include "qglpainter.h"
 #include "qglrendersequencer.h"
-#include "qglrenderorderrepository.h"
 
 #include <QtCore/qatomic.h>
 #include <QtCore/qmap.h>

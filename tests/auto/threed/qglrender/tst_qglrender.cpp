@@ -43,7 +43,7 @@
 
 #include "qglrenderorder.h"
 #include "qglrendersequencer.h"
-#include "qglrenderorderrepository.h"
+#include "qglrenderordercomparator.h"
 #include "qglscenenode.h"
 #include "qglpainter.h"
 #include "qglbuilder.h"
@@ -72,20 +72,21 @@ void tst_QGLRender::create()
     node2.setPalette(&pal);
 
     QGLRenderState s;
-    QGLRenderOrder order(RenderOrderKey(&node, s));
+    QGLRenderOrder order(&node, s);
     QGLRenderOrder other(order);     // copy constructor
     QCOMPARE(order.node(), &node);
     QCOMPARE(order.node(), other.node());
-    QCOMPARE(order, other);          // operator==
+    QGLRenderOrderComparator cmp;
+    QVERIFY(cmp.isEqualTo(order, other));          // operator==
 
-    QGLRenderOrder other2(RenderOrderKey(&node2, s));
-    QCOMPARE(other2, order);  // same because nodes have same values
+    QGLRenderOrder other2(&node2, s);
+    QVERIFY(cmp.isEqualTo(other2, order));  // same because nodes have same values
     other2 = order;                  // operator=
-    QCOMPARE(other2, order);  // same again
+    QVERIFY(cmp.isEqualTo(other2, order));  // same again
 
     QGLRenderState state0;
-    QGLRenderOrder other3(RenderOrderKey(&node2, state0));
-    QCOMPARE(other2, other3);
+    QGLRenderOrder other3(&node2, state0);
+    QVERIFY(cmp.isEqualTo(other2, other3));
 }
 
 void tst_QGLRender::values()
@@ -98,10 +99,11 @@ void tst_QGLRender::values()
     node2.setEffect(QGL::LitMaterial);
 
     QGLRenderState s;
-    QGLRenderOrder order(RenderOrderKey(&node, s));
-    QGLRenderOrder other(RenderOrderKey(&node2, s));
-    QVERIFY(other != order);
-    QVERIFY(order < other);
+    QGLRenderOrder order(&node, s);
+    QGLRenderOrder other(&node2, s);
+    QGLRenderOrderComparator cmp;
+    QVERIFY(!cmp.isEqualTo(other, order));
+    QVERIFY(cmp.isLessThan(order, other));
 
     QGLRenderState state;
     QGLMaterial *mat = new QGLMaterial;
@@ -112,13 +114,13 @@ void tst_QGLRender::values()
     node3.setMaterialIndex(ix);
     node3.setEffect(QGL::LitMaterial);
     state.updateFrom(&node3);
-    QGLRenderOrder other2(RenderOrderKey(&node, state));
+    QGLRenderOrder other2(&node, state);
     QVERIFY(other2.effectiveHasEffect());
     QCOMPARE(other2.effectiveMaterial(), mat);
     QCOMPARE(other2.effectiveStandardEffect(), QGL::LitMaterial);
     QCOMPARE(other2.effectiveUserEffect(), (QGLAbstractEffect*)0);
-    QVERIFY(order < other2);
-    QVERIFY(other < other2);
+    QVERIFY(cmp.isLessThan(order, other2));
+    QVERIFY(cmp.isLessThan(other, other2));
 }
 
 void tst_QGLRender::repo()
@@ -130,15 +132,15 @@ void tst_QGLRender::repo()
     node2.setPalette(&pal);
     node2.setEffect(QGL::LitDecalTexture2D);
 
-    QGLRenderOrderRepository repo;
     QGLRenderState s;
-    QGLRenderOrder *order = repo.getOrder(RenderOrderKey(&node, s));
-    QGLRenderOrder *other = repo.getOrder(RenderOrderKey(&node2, s));
-    QGLRenderOrder *order2 = repo.getOrder(RenderOrderKey(&node, s));
-    QVERIFY(*other != *order);
-    QVERIFY(*order < *other);
-    QCOMPARE(*order2, *order);
-    QCOMPARE(order2->node(), order->node());
+    QGLRenderOrder order(&node, s);
+    QGLRenderOrder other(&node2, s);
+    QGLRenderOrder order2(&node, s);
+    QGLRenderOrderComparator cmp;
+    QVERIFY(!cmp.isEqualTo(other, order));
+    QVERIFY(cmp.isLessThan(order, other));
+    QVERIFY(cmp.isEqualTo(order2, order));
+    QCOMPARE(order2.node(), order.node());
 }
 
 class TestPainter : public QGLPainter

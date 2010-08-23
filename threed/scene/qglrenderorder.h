@@ -52,31 +52,20 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-
-struct RenderOrderKey
-{
-    RenderOrderKey() : node(0), state(QGLRenderState()) {}
-    RenderOrderKey(const QGLSceneNode *n, const QGLRenderState &s)
-        : node(n), state(s) {}
-    bool valid() const { return node != 0; }
-    bool operator==(const RenderOrderKey &rhs) const
-    {
-        return (node == rhs.node && state == rhs.state);
-    }
-    const QGLSceneNode *node;
-    QGLRenderState state;
-};
-
-
 class Q_QT3D_EXPORT QGLRenderOrder
 {
 public:
-    explicit QGLRenderOrder(const RenderOrderKey &key) : m_key(key) { }
-    virtual ~QGLRenderOrder() {}
+    explicit QGLRenderOrder(const QGLSceneNode *node = 0, const QGLRenderState &state = QGLRenderState())
+        : m_node(node)
+        , m_state(state)
+    {
+    }
+    ~QGLRenderOrder() {}
 
-    virtual uint effectHash() const;
-    virtual bool isEqual(const QGLRenderOrder &rhs) const;
-    virtual bool isLessThan(const QGLRenderOrder &rhs) const;
+    uint effectHash() const;
+    bool isEqual(const QGLRenderOrder &rhs) const;
+    bool isLessThan(const QGLRenderOrder &rhs) const;
+    inline bool isValid() const;
 
     inline bool operator!=(const QGLRenderOrder &rhs) const;
     inline bool operator==(const QGLRenderOrder &rhs) const;
@@ -85,16 +74,21 @@ public:
     inline const QGLSceneNode *node() const;
     inline void setState(const QGLRenderState &state);
     inline QGLRenderState state() const;
-    inline RenderOrderKey key() const;
     inline QGLAbstractEffect *effectiveUserEffect() const;
     inline QGL::StandardEffect effectiveStandardEffect() const;
     inline QGLMaterial *effectiveMaterial() const;
     inline QGLMaterial *effectiveBackMaterial() const;
     inline bool effectiveHasEffect() const;
 private:
-    RenderOrderKey m_key;
+    const QGLSceneNode *m_node;
+    QGLRenderState m_state;
 };
 
+
+inline bool QGLRenderOrder::isValid() const
+{
+    return m_node;
+}
 
 inline bool QGLRenderOrder::operator!=(const QGLRenderOrder &rhs) const
 {
@@ -113,71 +107,81 @@ inline bool QGLRenderOrder::operator<(const QGLRenderOrder &rhs) const
 
 inline const QGLSceneNode *QGLRenderOrder::node() const
 {
-    return m_key.node;
+    return m_node;
 }
 
 inline QGLRenderState QGLRenderOrder::state() const
 {
-    return m_key.state;
+    return m_state;
 }
 
 inline void QGLRenderOrder::setState(const QGLRenderState &state)
 {
-    m_key.state = state;
-}
-
-inline RenderOrderKey QGLRenderOrder::key() const
-{
-    return m_key;
+    m_state = state;
 }
 
 inline QGLAbstractEffect *QGLRenderOrder::effectiveUserEffect() const
 {
     QGLAbstractEffect *result = 0;
-    if (m_key.node->userEffect())
-        result = m_key.node->userEffect();
-    else if (m_key.state.userEffect())
-        result = m_key.state.userEffect();
+    if (m_node)
+    {
+        if (m_node->userEffect())
+            result = m_node->userEffect();
+        else if (m_state.userEffect())
+            result = m_state.userEffect();
+    }
     return result;
 }
 
 inline QGL::StandardEffect QGLRenderOrder::effectiveStandardEffect() const
 {
     QGL::StandardEffect result = QGL::FlatColor;
-    if (m_key.node->hasEffect())
-        result = m_key.node->effect();
-    else if (m_key.state.hasEffect())
-        result = m_key.state.standardEffect();
+    if (m_node)
+    {
+        if (m_node->hasEffect())
+            result = m_node->effect();
+        else if (m_state.hasEffect())
+            result = m_state.standardEffect();
+    }
     return result;
 }
 
 inline QGLMaterial *QGLRenderOrder::effectiveMaterial() const
 {
     QGLMaterial *result = 0;
-    if (m_key.node->material())
-        result = m_key.node->material();
-    else if (m_key.state.material())
-        result = m_key.state.material();
+    if (m_node)
+    {
+        if (m_node->material())
+            result = m_node->material();
+        else if (m_state.material())
+            result = m_state.material();
+    }
     return result;
 }
 
 inline QGLMaterial *QGLRenderOrder::effectiveBackMaterial() const
 {
     QGLMaterial *result = 0;
-    if (m_key.node->backMaterial())
-        result = m_key.node->backMaterial();
-    else if (m_key.state.backMaterial())
-        result = m_key.state.backMaterial();
+    if (m_node)
+    {
+        if (m_node->backMaterial())
+            result = m_node->backMaterial();
+        else if (m_state.backMaterial())
+            result = m_state.backMaterial();
+    }
     return result;
 }
 
 inline bool QGLRenderOrder::effectiveHasEffect() const
 {
     bool result = false;
-    if (m_key.node->hasEffect())
-        result = true;
-    else
-        result = m_key.state.hasEffect();
+    if (m_node)
+    {
+        if (m_node->hasEffect())
+            result = true;
+        else
+            result = m_state.hasEffect();
+    }
     return result;
 }
 
@@ -185,12 +189,6 @@ inline uint qHash(const QGLRenderOrder &order)
 {
     quint64 result = order.effectHash();
     return result ^ reinterpret_cast<quint64>(order.effectiveMaterial());
-}
-
-inline uint qHash(const RenderOrderKey &k)
-{
-    quint64 result = reinterpret_cast<quint64>(k.node);
-    return result ^ qHash(k.state);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

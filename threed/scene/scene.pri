@@ -6,7 +6,7 @@ HEADERS += qglabstractscene.h \
     qglpicknode.h \
     scene/qglrendersequencer.h \
     scene/qglrenderorder.h \
-    scene/qglrenderorderrepository.h \
+    scene/qglrenderordercomparator.h \
     scene/qglrenderstate.h
 SOURCES += qglabstractscene.cpp \
     qglsceneformatplugin.cpp \
@@ -14,6 +14,6 @@ SOURCES += qglabstractscene.cpp \
     qglpicknode.cpp \
     scene/qglrendersequencer.cpp \
     scene/qglrenderorder.cpp \
-    scene/qglrenderorderrepository.cpp \
+    scene/qglrenderordercomparator.cpp \
     scene/qglrenderstate.cpp
 PRIVATE_HEADERS += qglscenenode_p.h

@@ -55,7 +55,7 @@
     and it should not be necessary to explicitly create or manipulate them.
 
     A QGLRenderState instance encapsulates rendering properties for a given
-    level in the rendering process.  The state includes properties such as
+    path through the rendering process.  The state includes properties such as
     effects, and materials; which may either be directly set on a scene node,
     or inherited from its parents.
 
@@ -255,6 +255,17 @@ const QGLSceneNode *QGLRenderState::node() const
     if (d)
         s = d->node;
     return s;
+}
+
+/*!
+    Returns true if this is a valid representation of a render state, that
+    is if it has ever been updated from a node; and false otherwise.
+*/
+bool QGLRenderState::isValid() const
+{
+    if (d && d->node)
+        return true;
+    return false;
 }
 
 /*!

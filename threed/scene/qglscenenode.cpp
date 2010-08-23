@@ -966,7 +966,9 @@ void QGLSceneNode::setMaterial(QGLMaterial *material)
 QGLMaterial *QGLSceneNode::backMaterial() const
 {
     Q_D(const QGLSceneNode);
-    return d->palette->material(d->backMaterial);
+    if (d->palette)
+        return d->palette->material(d->backMaterial);
+    return 0;
 }
 
 void QGLSceneNode::setBackMaterial(QGLMaterial *material)

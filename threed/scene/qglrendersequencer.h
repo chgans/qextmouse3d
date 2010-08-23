@@ -56,7 +56,7 @@ QT_MODULE(Qt3d)
 
 class QGLSceneNode;
 class QGLPainter;
-class QGLRenderOrderRepository;
+class QGLRenderOrderComparator;
 class QGLRenderSequencerPrivate;
 
 class Q_QT3D_EXPORT QGLRenderSequencer
@@ -71,8 +71,8 @@ public:
     void reset();
     QGLSceneNode *top() const;
     void setTop(QGLSceneNode *top);
-    QGLRenderOrderRepository *renderOrderRepository() const;
-    void setRenderOrderRepository(QGLRenderOrderRepository *repository);
+    QGLRenderOrderComparator *comparator() const;
+    void setComparator(QGLRenderOrderComparator *comparator);
     void applyState();
 private:
     void insertNew(const QGLRenderOrder &order);

@@ -82,6 +82,7 @@ public:
             return false;
         return true;
     }
+    bool isValid() const;
 private:
     void detach();
     QGLRenderStatePrivate *d;

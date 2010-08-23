@@ -44,55 +44,6 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class RenderOrderKey
-    \brief The RenderOrderKey class encapsulates a state and node to identify an order.
-    \since 4.8
-    \ingroup qt3d
-    \ingroup qt3d::scene
-
-    The RenderOrderKey class is a simple value structure exposing a QGLSceneNode
-    and a related QGLRenderState.  Together these two items uniquely identify a
-    a particular rendering operation which must be ordered.
-
-    Create instances of RenderOrderKey in order to specify to a QGLRenderOrderRepository
-    which QGLRenderOrder to construct.
-*/
-
-/*!
-    \fn RenderOrderKey::RenderOrderKey()
-    Constructs a new RenderOrderKey with default values.
-*/
-
-/*!
-    \fn RenderOrderKey::RenderOrderKey(const QGLSceneNode *node, const QGLRenderState &state)
-    Constructs a new RenderOrderKey with the given \a node and \a state.
-*/
-
-/*!
-    \variable RenderOrderKey::node
-    \brief This public member variable contains the node for this key.  The default value
-    is null.
-*/
-
-/*!
-    \variable RenderOrderKey::state
-    \brief This public member variable contains the state for this key.  The default value is
-    an empty (default constructed) render state.
-*/
-
-/*!
-    \fn bool RenderOrderKey::valid() const
-    Returns true if this is a valid key; false otherwise.  The key is valid if the
-    node() is non-null.
-*/
-
-/*!
-    \fn bool RenderOrderKey::operator==(const RenderOrderKey &rhs) const
-    Returns true if this is equal to \a rhs, that is if both the node and
-    state are equal to that of \a rhs.
-*/
-
-/*!
     \class QGLRenderOrder
     \brief The QGLRenderOrder class represents an order of a scene node during rendering.
     \since 4.8
@@ -102,62 +53,45 @@ QT_BEGIN_NAMESPACE
     The QGLRenderOrder class works with the QGLRenderSequencer to optimize
     the rendering order of scene nodes.
 
-    The class encapsulates the ordering with which a QGLSceneNode appears in the
-    rendering of a scene.
+    The class encapsulates the ordering with which QGLSceneNodes appear in the
+    rendering of a scene.  Every scene node that has the same rendering properties
+    maps to the same QGLRenderOrder.
+
+    QGLRenderOrder instances are based on a scene node, and the path through
+    the scene graph by which the node was reached.  This is necessary since the
+    same node may appear with different rendering properties in multiple
+    different places in the rendering graph.
+
+    For example a node holding a model of a pawn chess piece may appear in
+    several different places on a board, some with a white material and some
+    with a black material.
+
+    To capture this concept QGLRenderOrder instances are constructed from a
+    pointer to a QGLSceneNode, and a QGLRenderState instance.
+
+    A render order then calculates the effective values of its various attributes
+    based on both the node, and the state.
+
+    Custom render orders may be created by sub-classing QGLRenderOrderComparator
+    and reimplementing the following methods:
+    \list
+        \i isEqualTo()
+        \i isLessThan()
+    \endlist
 
     By default all nodes which have the same effect type are rendered together,
     and then within that, those nodes which have the same material are
     rendered together.
 
-    Custom render orders may be created by sub-classing QGLRenderOrder and
-    reimplementing the following methods:
-    \list
-        \i isEqualTo()
-        \i isLessThan()
-        \i qHash()
-    \endlist
-
-    This QGLRenderOrder, the base class provides default implementations of
-    these function to provide the default behaviour mentioned above.
-
-    \section1 Creating Custom Render Orders
-
-    To provide a different render order, for example MyRenderOrder, first create
-    a subclass of QGLRenderOrder and reimplement the following methods for the
-    new subclass:
-    \list
-        \i isEqualTo()
-        \i isLessThan()
-        \i qHash()
-    \endlist
-
-    \code
-    class MyRenderOrder : public QGLRenderOrder
-    {
-        bool isEqual(const QGLRenderOrder &rhs) const;
-        bool isLessThan(const QGLRenderOrder &rhs) const;
-    }
-
-    uint qHash(const QGLRenderOrder &order);
-    \endcode
-
-    Then create a subclass of QGLRenderOrderFactory and reimplement newOrder() so
-    that it returns an instance of your new QGLRenderOrder, and set an instance
-    of your factory onto QGLPainter:
-
-    \code
-    void MyView::paintGL(QGLPainter *painter)
-    {
-        painter->setRenderOrderFactory(m_myRenderOrderFactory);
-        complexScene->draw(painter);
-    }
-    \endcode
+    \sa QGLRenderOrderComparator
 */
 
 /*!
-    \fn QGLRenderOrder::QGLRenderOrder(const RenderOrderKey &key)
+    \fn QGLRenderOrder::QGLRenderOrder(const QGLSceneNode *node, const QGLRenderState &state)
     Creates a new QGLRenderOrder instance that encapsulates the order in this
-    render pass represented by the given \a key.
+    render pass represented by the given \a node and \a state.  The \a node
+    defaults to NULL, and the \a state defaults to a default constructed
+    invalid QGLRenderState.
 */
 
 /*!
@@ -273,6 +207,12 @@ bool QGLRenderOrder::isLessThan(const QGLRenderOrder &rhs) const
 }
 
 /*!
+    \fn bool QGLRenderOrder::isValid() const
+    Returns true if this is a valid QGLRenderOrder, that is it was
+    initialized with a non-null QGLSceneNode.
+*/
+
+/*!
     \fn bool QGLRenderOrder::operator!=(const QGLRenderOrder &rhs) const
     Returns true if this QGLRenderOrder is not equal to the \a rhs, otherwise
     returns false.  This function simply returns \c{!isEqual(rhs)}.
@@ -295,12 +235,6 @@ bool QGLRenderOrder::isLessThan(const QGLRenderOrder &rhs) const
     Returns a pointer to the scene node for which the render order is held by
     this QGLRenderOrder instance.  This is simply the value passed to the
     constructor.
-*/
-
-/*!
-    \fn RenderOrderKey QGLRenderOrder::key() const
-    Returns the key for this QGLRender order instance.  This is simply the value
-    passed to the constructor.
 */
 
 /*!
@@ -368,10 +302,13 @@ bool QGLRenderOrder::isLessThan(const QGLRenderOrder &rhs) const
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGLRenderOrder &order)
 {
-    dbg << "QGLRenderOrder for node:" << order.node()
+    if (order.isValid())
+        dbg << "QGLRenderOrder for node:" << order.node()
             << "-- effect hash:" << order.effectHash()
             << "-- material:" << order.node()->material()
             << "-- back material:" << order.node()->backMaterial();
+    else
+        dbg << "QGLRenderOrder -- invalid";
     return dbg;
 }
 

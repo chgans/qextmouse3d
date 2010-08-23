@@ -76,7 +76,6 @@ class QGeometryData;
 class QGLShaderProgram;
 class QGLFramebufferObject;
 class QGLSceneNode;
-class QGLRenderOrderRepository;
 class QGLRenderSequencer;
 class QGLAbstractSurface;
 
