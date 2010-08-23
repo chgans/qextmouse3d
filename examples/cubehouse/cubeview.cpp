@@ -215,7 +215,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
     painter->setStandardEffect(QGL::LitDecalTexture2D);
-    painter->setTexture(&texture);
+    texture.bind();
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
     glEnable(GL_CULL_FACE);
@@ -224,7 +224,7 @@ void CubeView::paintGL(QGLPainter *painter)
     cube->draw(painter);
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    painter->setTexture((QGLTexture2D *)0);
+    glBindTexture(GL_TEXTURE_2D, 0);
     painter->modelViewMatrix().pop();
 }
 

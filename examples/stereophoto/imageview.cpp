@@ -76,13 +76,13 @@ void ImageView::paintGL(QGLPainter *painter)
             m_leftTexture = new QGLTexture2D(this);
             m_leftTexture->setImage(m_image.leftImage());
         }
-        painter->setTexture(m_leftTexture);
+        m_leftTexture->bind();
     } else {
         if (!m_rightTexture) {
             m_rightTexture = new QGLTexture2D(this);
             m_rightTexture->setImage(m_image.rightImage());
         }
-        painter->setTexture(m_rightTexture);
+        m_rightTexture->bind();
     }
 
     QSize viewSize = painter->currentSurface()->viewportRect().size();

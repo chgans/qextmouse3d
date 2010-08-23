@@ -45,7 +45,7 @@
 #include <QtCore/qcache.h>
 
 #include "qglrenderorder.h"
-#include "qglpainter_p.h"
+#include "qglpainter.h"
 
 QT_BEGIN_HEADER
 

@@ -232,8 +232,10 @@ void PageFlipView::paintGL()
     painter.setUserEffect(effect);
 #endif
     painter.setColor(colors[colorIndex]);
-    painter.setTexture(0, &(textures[colorIndex]));
-    painter.setTexture(1, &gradientTexture);
+    painter.glActiveTexture(GL_TEXTURE0);
+    textures[colorIndex].bind();
+    painter.glActiveTexture(GL_TEXTURE1);
+    gradientTexture.bind();
     painter.setVertexAttribute(QGL::Position, positions);
     painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
     painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
@@ -242,14 +244,15 @@ void PageFlipView::paintGL()
     pageFlipMath.drawPage(0);
 
     painter.setColor(colors[(colorIndex + 1) % 4]);
-    painter.setTexture(0, &(textures[(colorIndex + 1) % 4]));
+    painter.glActiveTexture(GL_TEXTURE0);
+    textures[(colorIndex + 1) % 4].bind();
     setAlphaValue(1.0f);
     painter.update();
     pageFlipMath.drawPage(1);
 
     painter.setColor(colors[(colorIndex + 2) % 4]);
     if (!pageFlipMath.showPageReverse())
-        painter.setTexture(0, &(textures[(colorIndex + 2) % 4]));
+        textures[(colorIndex + 2) % 4].bind();
     if (blend)
         setAlphaValue(0.75f);
     else
@@ -258,13 +261,14 @@ void PageFlipView::paintGL()
     pageFlipMath.drawPage(2);
 
     painter.setColor(colors[(colorIndex + 3) % 4]);
-    painter.setTexture(0, &(textures[(colorIndex + 3) % 4]));
+    textures[(colorIndex + 3) % 4].bind();
     setAlphaValue(1.0f);
     painter.update();
     pageFlipMath.drawPage(3);
 
-    painter.setTexture(0, (QGLTexture2D *)0);
-    painter.setTexture(1, (QGLTexture2D *)0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    painter.glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     painter.setStandardEffect(QGL::FlatColor);
     painter.setVertexAttribute(QGL::Position, positions);

@@ -188,7 +188,7 @@ void CubeView::drawCube2(QGLPainter *painter, const QVector3D &posn)
 {
     painter->modelViewMatrix().push();
 
-    painter->setTexture(&qtlogo);
+    qtlogo.bind();
     painter->setFaceColor(QGL::AllFaces, QColor(202, 100, 0, 150));
     painter->setStandardEffect(QGL::LitDecalTexture2D);
 

@@ -107,9 +107,6 @@ public:
 
     int textureLayerCount() const;
 
-    void bindTextures(QGLPainter *painter);
-    void releaseTextures(QGLPainter *painter);
-
 Q_SIGNALS:
     void basicColorChanged();
     void ambientColorChanged();

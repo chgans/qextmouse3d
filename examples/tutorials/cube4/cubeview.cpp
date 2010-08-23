@@ -69,7 +69,7 @@ void CubeView::paintGL(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::LitDecalTexture2D);
     painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0));
-    painter->setTexture(&logo);
+    logo.bind();
 
     painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
     cube->draw(painter);

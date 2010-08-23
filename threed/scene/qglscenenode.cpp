@@ -1244,7 +1244,8 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
             QGLTexture2D *tex = mat->texture(i);
             if (tex)
             {
-                painter->setTexture(texUnit, tex);
+                painter->glActiveTexture(GL_TEXTURE0 + texUnit);
+                tex->bind();
                 changedTex = true;
                 ++texUnit;
             }
@@ -1368,13 +1369,13 @@ void QGLSceneNode::draw(QGLPainter *painter)
     {
         painter->setFaceMaterial(faces, saveMat);
         if (changedTex)
-            painter->setTexture((QGLTexture2D*)0);
+            glBindTexture(GL_TEXTURE_2D, 0);
     }
     else if (saveBackMat)
     {
         painter->setFaceMaterial(QGL::FrontFaces, saveMat);
         if (changedBackTex)
-            painter->setTexture((QGLTexture2D*)0);
+            glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     if (stateEntered)

@@ -123,7 +123,6 @@ public:
     QGLAbstractEffect *userEffect;
     QGL::StandardEffect standardEffect;
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
-    int textureUnitCount;
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
     const QGLLightParameters *mainLight;

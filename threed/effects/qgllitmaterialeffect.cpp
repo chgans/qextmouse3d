@@ -205,6 +205,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d->textureMode);
+            glEnable(GL_TEXTURE_2D);
         }
     } else {
         glDisable(GL_LIGHTING);
@@ -214,6 +215,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         if (d->textureMode) {
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisable(GL_TEXTURE_2D);
         }
     }
 #else
@@ -231,6 +233,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
                 qt_gl_ClientActiveTexture(GL_TEXTURE0);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d->textureMode);
+                glEnable(GL_TEXTURE_2D);
             }
         } else {
             glDisable(GL_LIGHTING);
@@ -240,6 +243,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             if (d->textureMode) {
                 qt_gl_ClientActiveTexture(GL_TEXTURE0);
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glDisable(GL_TEXTURE_2D);
             }
         }
         return;

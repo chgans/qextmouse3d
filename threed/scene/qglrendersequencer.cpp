@@ -314,7 +314,8 @@ void QGLRenderSequencer::applyState()
                 QGLTexture2D *tex = mat->texture(i);
                 if (tex)
                 {
-                    d->painter->setTexture(texUnit, tex);
+                    d->painter->glActiveTexture(GL_TEXTURE0 + texUnit);
+                    tex->bind();
                     ++texUnit;
                 }
             }

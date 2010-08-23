@@ -157,13 +157,6 @@ public:
 
     void setCommonNormal(const QVector3D& value);
 
-    int textureUnitCount() const;
-
-    void setTexture(int unit, const QGLTexture2D *texture);
-    void setTexture(int unit, const QGLTextureCube *texture);
-    void setTexture(const QGLTexture2D *texture) { setTexture(0, texture); }
-    void setTexture(const QGLTextureCube *texture) { setTexture(0, texture); }
-
     void update();
     void updateFixedFunction(QGLPainter::Updates updates);
 

@@ -340,7 +340,8 @@ void Effect::enableEffect(QGLPainter *painter)
     if (d->useLighting) {
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::LitDecalTexture2D);
-            painter->setTexture(tex);
+            painter->glActiveTexture(GL_TEXTURE0);
+            tex->bind();
         } else {
             painter->setStandardEffect(QGL::LitMaterial);
         }
@@ -351,7 +352,8 @@ void Effect::enableEffect(QGLPainter *painter)
     } else {
         if (tex && !tex->isNull()) {
             painter->setStandardEffect(QGL::FlatDecalTexture2D);
-            painter->setTexture(tex);
+            painter->glActiveTexture(GL_TEXTURE0);
+            tex->bind();
             painter->setColor(d->color);
         } else {
             painter->setStandardEffect(QGL::FlatColor);
@@ -368,7 +370,8 @@ void Effect::disableEffect(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(Qt::white);
-    painter->setTexture((QGLTexture2D *)0);
+    painter->glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /*!

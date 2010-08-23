@@ -138,7 +138,6 @@ QGLPainterPrivate::QGLPainterPrivate()
     userEffect = 0;
     standardEffect = QGL::FlatColor;
     memset(stdeffects, 0, sizeof(stdeffects));
-    textureUnitCount = 0;
 }
 
 QGLPainterPrivate::~QGLPainterPrivate()
@@ -1284,123 +1283,6 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
     d->requiredFields.removeAll(QGL::Normal);
 #endif
 }
-
-/*!
-    Returns the number of texture units associated with the
-    current GL context.
-
-    \sa setTexture()
-*/
-int QGLPainter::textureUnitCount() const
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-
-    if (!(d->textureUnitCount)) {
-#if defined(GL_MAX_TEXTURE_UNITS)
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &d->textureUnitCount);
-#elif defined(GL_MAX_TEXTURE_UNITS_ARB)
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &d->textureUnitCount);
-#elif defined(GL_MAX_TEXTURE_IMAGE_UNITS)
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &d->textureUnitCount);
-#endif
-        if (!(d->textureUnitCount)) {
-            // Multitexturing is not available, so report only 1 unit.
-            d->textureUnitCount = 1;
-        }
-    }
-
-    return d->textureUnitCount;
-}
-
-/*!
-    Sets a texture \a unit to the contents of \a texture.
-    If \a texture is null, the texture unit will be disabled.
-
-    \sa textureUnitCount()
-*/
-void QGLPainter::setTexture(int unit, const QGLTexture2D *texture)
-{
-    //If we are using the painter to determine pick IDs we shouldn't use 
-    //texturing: it 'corrupts' the picking colours and results in 
-    //erroneous pick IDs.
-    if (this->isPicking()) return;
-
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (unit < 0)
-        return;
-
-    // Select the texture unit and bind the texture.
-    glActiveTexture(GL_TEXTURE0 + unit);
-    if (!texture) {
-        glBindTexture(GL_TEXTURE_2D, 0);
-#if !defined(QT_OPENGL_ES_2)
-        glDisable(GL_TEXTURE_2D);
-#endif
-    } else {
-        texture->bind();
-#if !defined(QT_OPENGL_ES_2)
-        glEnable(GL_TEXTURE_2D);
-#endif
-    }
-
-    // Leave the default setting on texture unit 0 just in case
-    // raw GL code is being mixed in with QGLPainter code.
-    if (unit != 0)
-        glActiveTexture(GL_TEXTURE0);
-}
-
-/*!
-    Sets a texture \a unit to the contents of \a texture.
-    If \a texture is null, the texture unit will be disabled.
-
-    \sa textureUnitCount()
-*/
-void QGLPainter::setTexture(int unit, const QGLTextureCube *texture)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    if (unit < 0)
-        return;
-
-    // Select the texture unit and bind the texture.
-    glActiveTexture(GL_TEXTURE0 + unit);
-    if (!texture) {
-        QGLTextureCube::release();
-#if !defined(QT_OPENGL_ES_2)
-        glDisable(GL_TEXTURE_CUBE_MAP);
-#endif
-    } else {
-        texture->bind();
-#if !defined(QT_OPENGL_ES_2)
-        glEnable(GL_TEXTURE_CUBE_MAP);
-#endif
-    }
-
-    // Leave the default setting on texture unit 0 just in case
-    // raw GL code is being mixed in with QGLPainter code.
-    if (unit != 0)
-        glActiveTexture(GL_TEXTURE0);
-}
-
-/*!
-    \fn void QGLPainter::setTexture(const QGLTexture2D *texture)
-
-    Sets texture unit 0 to the contents of \a texture.
-    If \a texture is null, the texture unit will be disabled.
-
-    \sa textureUnitCount()
-*/
-
-/*!
-    \fn void QGLPainter::setTexture(const QGLTextureCube *texture)
-
-    Sets texture unit 0 to the contents of \a texture.
-    If \a texture is null, the texture unit will be disabled.
-
-    \sa textureUnitCount()
-*/
 
 /*!
     Updates the projection matrix, modelview matrix, and lighting

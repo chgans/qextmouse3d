@@ -148,10 +148,12 @@ void QGLFlatTextureEffect::setActive(QGLPainter *painter, bool flag)
         qt_gl_ClientActiveTexture(GL_TEXTURE0);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        glEnable(GL_TEXTURE_2D);
     } else {
         glDisableClientState(GL_VERTEX_ARRAY);
         qt_gl_ClientActiveTexture(GL_TEXTURE0);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
     }
 #else
     Q_UNUSED(painter);
@@ -164,10 +166,12 @@ void QGLFlatTextureEffect::setActive(QGLPainter *painter, bool flag)
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            glEnable(GL_TEXTURE_2D);
         } else {
             glDisableClientState(GL_VERTEX_ARRAY);
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisable(GL_TEXTURE_2D);
         }
         return;
     }
@@ -312,10 +316,12 @@ void QGLFlatDecalTextureEffect::setActive(QGLPainter *painter, bool flag)
         qt_gl_ClientActiveTexture(GL_TEXTURE0);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        glEnable(GL_TEXTURE_2D);
     } else {
         glDisableClientState(GL_VERTEX_ARRAY);
         qt_gl_ClientActiveTexture(GL_TEXTURE0);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
     }
 #else
     Q_UNUSED(painter);
@@ -328,10 +334,12 @@ void QGLFlatDecalTextureEffect::setActive(QGLPainter *painter, bool flag)
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+            glEnable(GL_TEXTURE_2D);
         } else {
             glDisableClientState(GL_VERTEX_ARRAY);
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisable(GL_TEXTURE_2D);
         }
     }
 #endif

@@ -170,7 +170,11 @@ void ShaderWizardGLWidget::paintGL(QGLPainter *painter)
 //    painter->modelViewMatrix().rotate(45.0f, 1.0f, 1.0f, 1.0f);
 //    painter->modelViewMatrix().translate(0.5f, 0.0f, -3.0f);
 
-    painter->setTexture(0, mTexture);
+    painter->glActiveTexture(GL_TEXTURE0);
+    if (mTexture)
+        mTexture->bind();
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
     painter->setFaceMaterial(QGL::FrontFaces, mMaterial);
 
     if( d->effect )

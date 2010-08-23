@@ -149,11 +149,11 @@ void SphereView::paintGL(QGLPainter *painter)
 
     for (int i = 0; i < spheres.size(); ++i)  {
         if (i == 0)
-            painter->setTexture(&cubeTexture);
+            cubeTexture.bind();
         else if (i == 4)
-            painter->setTexture(&uvTexture);
+            uvTexture.bind();
         else if (i == 8)
-            painter->setTexture(&icoTexture);
+            icoTexture.bind();
 
         qreal x = (i % 4) * 1.5f - 2.25f;
         qreal y = (i / 4) * 1.5f - 1.5f;

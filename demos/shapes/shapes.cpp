@@ -366,12 +366,12 @@ void ShapesWidget::drawText
     texCoord.append(1.0f, 0.0f);
 
     painter->setStandardEffect(QGL::FlatReplaceTexture2D);
-    painter->setTexture(&texture);
+    texture.bind();
     painter->setVertexAttribute(QGL::Position, vertices);
     painter->setVertexAttribute(QGL::TextureCoord0, texCoord);
     painter->draw(QGL::TriangleFan, 4);
     painter->setStandardEffect(QGL::FlatColor);
-    painter->setTexture((QGLTexture2D *)0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 int main(int argc, char *argv[])

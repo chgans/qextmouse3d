@@ -512,12 +512,10 @@ void ShaderProgramEffect::setUniform
     if(texture != 0)
     {
         texture->setPixmap(pixmap);
-        if(texture->textureId() == 0)
-        {
-            texture->bind();
-        }
-        painter->setTexture(texture->textureId(), texture);
-        program->setUniformValue(uniformLocation, texture->textureId());
+        // FIXME: textureId() is the texture's handle, not its unit number!
+        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        texture->bind();
+        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
     }
 }
 
@@ -532,12 +530,9 @@ void ShaderProgramEffect::setUniform
     if(texture != 0)
     {
         texture->setImage(image);
-        if(texture->textureId() == 0)
-        {
-            texture->bind();
-        }
-        painter->setTexture(texture->textureId(), texture);
-        program->setUniformValue(uniformLocation, texture->textureId());
+        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        texture->bind();
+        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
     }
 }
 
@@ -805,7 +800,12 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
     d->regenerate = false;
     painter->setUserEffect(d->effect);
     painter->setColor(color());
-    painter->setTexture(texture2D());
+    QGLTexture2D *tex = texture2D();
+    painter->glActiveTexture(GL_TEXTURE0);
+    if (tex)
+        tex->bind();
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /*!

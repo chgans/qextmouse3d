@@ -97,7 +97,8 @@ inline void QGLColladaFxEffectPrivate::setTextureUniform(QGLShaderProgram *progr
     {
         QString sourceVariableName = QLatin1String("texture") + channelName;
         QString texVariableName = QString(QLatin1String("texCoord%1")).arg(*textureUnit);
-        painter->setTexture(*textureUnit, texture);
+        painter->glActiveTexture(GL_TEXTURE0 + *textureUnit);
+        texture->bind();
         program->setUniformValue(sourceVariableName.toAscii().data(), *textureUnit);
     }
     else

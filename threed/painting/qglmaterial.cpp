@@ -359,7 +359,7 @@ void QGLMaterial::setShininess(qreal value)
     blending effects or to specify ambient, diffuse, or specular colors
     pixel-by-pixel.
 
-    \sa texturesChanged(), bindTextures()
+    \sa texturesChanged()
 */
 QGLTexture2D *QGLMaterial::texture(int layer) const
 {
@@ -439,38 +439,6 @@ int QGLMaterial::textureLayerCount() const
     if (!d->textures.isEmpty())
         maxLayer = qMax(maxLayer, (d->textures.end() - 1).key());
     return maxLayer + 1;
-}
-
-/*!
-    Binds the textures for this material to the texture units on
-    \a painter corresponding to their layer numbers.
-
-    \sa texture(), releaseTextures()
-*/
-void QGLMaterial::bindTextures(QGLPainter *painter)
-{
-    Q_D(QGLMaterial);
-    QMap<int, QGLTexture2D *>::ConstIterator it1;
-    for (it1 = d->textures.constBegin(); it1 != d->textures.constEnd(); ++it1) {
-        if (it1.value())
-            painter->setTexture(it1.key(), it1.value());
-    }
-}
-
-/*!
-    Releases the textures for this material from the texture units
-    on \a painter.
-
-    \sa bindTextures()
-*/
-void QGLMaterial::releaseTextures(QGLPainter *painter)
-{
-    Q_D(QGLMaterial);
-    QMap<int, QGLTexture2D *>::ConstIterator it1;
-    for (it1 = d->textures.constBegin(); it1 != d->textures.constEnd(); ++it1) {
-        if (it1.value())
-            painter->setTexture(it1.key(), static_cast<QGLTexture2D *>(0));
-    }
 }
 
 /*!
