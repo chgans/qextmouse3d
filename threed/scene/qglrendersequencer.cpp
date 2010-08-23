@@ -42,7 +42,7 @@
 #include "qglrendersequencer.h"
 #include "qglrenderorder.h"
 #include "qglpainter.h"
-#include "QGLRenderOrderComparator.h"
+#include "qglrenderordercomparator.h"
 #include "qglrenderstate.h"
 
 #include <QtCore/qstack.h>
