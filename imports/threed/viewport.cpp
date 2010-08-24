@@ -317,12 +317,12 @@ void Viewport::setLightModel(QGLLightModel *value)
     if (d->lightModel != value) {
         if (d->lightModel) {
             disconnect(d->lightModel, SIGNAL(lightModelChanged()),
-                       this, SIGNAL(update3d()));
+                       this, SLOT(update3d()));
         }
         d->lightModel = value;
         if (d->lightModel) {
             connect(d->lightModel, SIGNAL(lightModelChanged()),
-                    this, SIGNAL(update3d()));
+                    this, SLOT(update3d()));
         }
         emit viewportChanged();
     }
