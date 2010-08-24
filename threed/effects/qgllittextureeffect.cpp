@@ -123,6 +123,7 @@ static char const litDecalFragmentShader[] =
 #if defined(QT_OPENGL_ES)
     "varying mediump vec4 qCombinedColor;\n"
 #else
+    "uniform bool separateSpecular;\n"
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
 #endif
@@ -132,11 +133,15 @@ static char const litDecalFragmentShader[] =
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
 #if defined(QT_OPENGL_ES)
-    "    mediump vec4 lcolor = qCombinedColor;\n"
+    "    gl_FragColor = vec4(clamp(qCombinedColor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), qCombinedColor.a);\n"
 #else
-    "    mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+    "    if (separateSpecular) {\n"
+    "        gl_FragColor = vec4(clamp(qColor.rgb * (1.0 - col.a) + col.rgb * col.a + qSecondaryColor.xyz, 0.0, 1.0), qColor.a);\n"
+    "    } else {\n"
+    "        mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+    "        gl_FragColor = vec4(clamp(lcolor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), lcolor.a);\n"
+    "    }\n"
 #endif
-    "    gl_FragColor = vec4(clamp(lcolor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), lcolor.a);\n"
     "}\n";
 
 static char const litModulateFragmentShader[] =
@@ -144,6 +149,7 @@ static char const litModulateFragmentShader[] =
 #if defined(QT_OPENGL_ES)
     "varying mediump vec4 qCombinedColor;\n"
 #else
+    "uniform bool separateSpecular;\n"
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
 #endif
@@ -153,11 +159,15 @@ static char const litModulateFragmentShader[] =
     "{\n"
     "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
 #if defined(QT_OPENGL_ES)
-    "    mediump vec4 lcolor = qCombinedColor;\n"
+    "    gl_FragColor = col * qCombinedColor;\n"
 #else
-    "    mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+    "    if (separateSpecular) {\n"
+    "        gl_FragColor = clamp(col * qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+    "    } else {\n"
+    "        mediump vec4 lcolor = clamp(qColor + vec4(qSecondaryColor.xyz, 0.0), 0.0, 1.0);\n"
+    "        gl_FragColor = col * lcolor;\n"
+    "    }\n"
 #endif
-    "    gl_FragColor = col * lcolor;\n"
     "}\n";
 
 #endif

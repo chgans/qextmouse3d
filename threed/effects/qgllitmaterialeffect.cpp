@@ -357,6 +357,10 @@ void QGLLitMaterialEffect::update
         program->setUniformValue("twoSided", (int)(model->model() == QGLLightModel::TwoSided));
 #endif
         program->setUniformValue("viewerAtInfinity", (int)(model->viewerPosition() == QGLLightModel::ViewerAtInfinity));
+#if !defined(QT_OPENGL_ES)
+        if (d->textureMode != 0)
+            program->setUniformValue("separateSpecular", (int)(model->colorControl() == QGLLightModel::SeparateSpecularColor));
+#endif
 
         // Set the uniform variables for the front and back materials.
 #if defined(QT_OPENGL_ES)
