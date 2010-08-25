@@ -135,6 +135,9 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
     colorAttr = -1;
     texCoord0Attr = -1;
     texCoord1Attr = -1;
+    texCoord2Attr = -1;
+    customVertex0Attr = -1;
+    customVertex1Attr = -1;
     matrixUniform = -1;
     modelViewMatrixUniform = -1;
     normalMatrixUniform = -1;
@@ -179,6 +182,8 @@ void ShaderProgramEffect::create
         qWarning("Could not compile vertex shader");
     if (!program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader))
         qWarning("Could not compile fragment shader");
+    // Some systems require the position to be at location 0.
+    program->bindAttributeLocation("qgl_Vertex", 0);
     if (!program->link())
         qWarning("Could not link shader program");
     vertexAttr = program->attributeLocation("qgl_Vertex");
@@ -186,6 +191,9 @@ void ShaderProgramEffect::create
     colorAttr = program->attributeLocation("qgl_Color");
     texCoord0Attr = program->attributeLocation("qgl_TexCoord0");
     texCoord1Attr = program->attributeLocation("qgl_TexCoord1");
+    texCoord2Attr = program->attributeLocation("qgl_TexCoord2");
+    customVertex0Attr = program->attributeLocation("qgl_Custom0");
+    customVertex1Attr = program->attributeLocation("qgl_Custom1");
     matrixUniform = program->uniformLocation("qgl_ModelViewProjectionMatrix");
     modelViewMatrixUniform = program->uniformLocation("qgl_ModelViewMatrix");
     normalMatrixUniform = program->uniformLocation("qgl_NormalMatrix");
@@ -272,6 +280,12 @@ QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
         fields.append(QGL::TextureCoord0);
     if (texCoord1Attr != -1)
         fields.append(QGL::TextureCoord1);
+    if (texCoord2Attr != -1)
+        fields.append(QGL::TextureCoord2);
+    if (customVertex0Attr != -1)
+        fields.append(QGL::CustomVertex0);
+    if (customVertex1Attr != -1)
+        fields.append(QGL::CustomVertex1);
     return fields;
 }
 
@@ -285,9 +299,41 @@ void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
     Q_UNUSED(painter);
     if (flag) {
         program->bind();
+        if (vertexAttr != -1)
+            program->enableAttributeArray(vertexAttr);
+        if (normalAttr != -1)
+            program->enableAttributeArray(normalAttr);
+        if (colorAttr != -1)
+            program->enableAttributeArray(colorAttr);
+        if (texCoord0Attr != -1)
+            program->enableAttributeArray(texCoord0Attr);
+        if (texCoord1Attr != -1)
+            program->enableAttributeArray(texCoord1Attr);
+        if (texCoord2Attr != -1)
+            program->enableAttributeArray(texCoord2Attr);
+        if (customVertex0Attr != -1)
+            program->enableAttributeArray(customVertex0Attr);
+        if (customVertex1Attr != -1)
+            program->enableAttributeArray(customVertex1Attr);
         if (texture0 != -1)
             program->setUniformValue(texture0, 0);
     } else {
+        if (vertexAttr != -1)
+            program->disableAttributeArray(vertexAttr);
+        if (normalAttr != -1)
+            program->disableAttributeArray(normalAttr);
+        if (colorAttr != -1)
+            program->disableAttributeArray(colorAttr);
+        if (texCoord0Attr != -1)
+            program->disableAttributeArray(texCoord0Attr);
+        if (texCoord1Attr != -1)
+            program->disableAttributeArray(texCoord1Attr);
+        if (texCoord2Attr != -1)
+            program->disableAttributeArray(texCoord2Attr);
+        if (customVertex0Attr != -1)
+            program->disableAttributeArray(customVertex0Attr);
+        if (customVertex1Attr != -1)
+            program->disableAttributeArray(customVertex1Attr);
         program->release();
     }
 }
@@ -558,34 +604,39 @@ void ShaderProgramEffect::setVertexAttribute
 {
     switch (attribute) {
     case QGL::Position:
-        if (vertexAttr != -1) {
+        if (vertexAttr != -1)
             setAttributeArray(program, vertexAttr, value);
-            program->enableAttributeArray(vertexAttr);
-        }
         break;
     case QGL::Normal:
         if (normalAttr != -1) {
             setAttributeArray(program, normalAttr, value);
+            // Must explicitly enable in case setCommonNormal() was called.
             program->enableAttributeArray(normalAttr);
         }
         break;
     case QGL::Color:
-        if (colorAttr != -1) {
+        if (colorAttr != -1)
             setAttributeArray(program, colorAttr, value);
-            program->enableAttributeArray(colorAttr);
-        }
         break;
     case QGL::TextureCoord0:
-        if (texCoord0Attr != -1) {
+        if (texCoord0Attr != -1)
             setAttributeArray(program, texCoord0Attr, value);
-            program->enableAttributeArray(texCoord0Attr);
-        }
         break;
     case QGL::TextureCoord1:
-        if (texCoord1Attr != -1) {
+        if (texCoord1Attr != -1)
             setAttributeArray(program, texCoord1Attr, value);
-            program->enableAttributeArray(texCoord1Attr);
-        }
+        break;
+    case QGL::TextureCoord2:
+        if (texCoord2Attr != -1)
+            setAttributeArray(program, texCoord2Attr, value);
+        break;
+    case QGL::CustomVertex0:
+        if (customVertex0Attr != -1)
+            setAttributeArray(program, customVertex0Attr, value);
+        break;
+    case QGL::CustomVertex1:
+        if (customVertex1Attr != -1)
+            setAttributeArray(program, customVertex1Attr, value);
         break;
     default: break;
     }

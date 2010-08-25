@@ -105,6 +105,9 @@ private:
     int colorAttr;
     int texCoord0Attr;
     int texCoord1Attr;
+    int texCoord2Attr;
+    int customVertex0Attr;
+    int customVertex1Attr;
     int matrixUniform;
     int modelViewMatrixUniform;
     int normalMatrixUniform;
