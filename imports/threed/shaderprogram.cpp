@@ -60,6 +60,85 @@
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
 
+    \section1 Attributes
+
+    ShaderProgram provides a standard set of 8 vertex attributes that
+    can be provided via the geometry \l Mesh:
+
+    \table
+    \header \o Shader Variable \o Mesh Attribute \o Purpose
+    \row \o \c qgl_Vertex \o QGL::Position
+         \o The primary position of the vertex.
+    \row \o \c qgl_Normal \o QGL::Normal
+         \o The normal at each vertex, for lit material effects.
+    \row \o \c qgl_Color \o QGL::Color
+         \o The color at each vertex, for per-vertex color effects.
+    \row \o \c qgl_TexCoord0 \o QGL::TextureCoord0
+         \o The texture co-ordinate at each vertex for texture unit 0.
+    \row \o \c qgl_TexCoord1 \o QGL::TextureCoord1
+         \o Secondary texture co-ordinate at each vertex.
+    \row \o \c qgl_TexCoord2 \o QGL::TextureCoord2
+         \o Tertiary texture co-ordinate at each vertex.
+    \row \o \c qgl_Custom0 \o QGL::CustomVertex0
+         \o First custom vertex attribute that can be used for any
+            user-defined purpose.
+    \row \o \c qgl_Custom1 \o QGL::CustomVertex1
+         \o Second custom vertex attribute that can be used for any
+            user-defined purpose.
+    \endtable
+
+    These attributes are used in the vertexShader, as in the following
+    example of a simple texture shader:
+
+    \code
+    attribute highp vec4 qgl_Vertex;
+    attribute highp vec4 qgl_TexCoord0;
+    uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+    varying highp vec4 texCoord;
+
+    void main(void)
+    {
+        gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
+        texCoord = qgl_TexCoord0;
+    }
+    \endcode
+
+    \section1 Standard uniform variables
+
+    ShaderProgram provides a standard set of uniform variables for
+    common values from the environment:
+
+    \table
+    \row \o \c qgl_ModelViewProjectionMatrix
+         \o Combination of the modelview and projection matrices into a
+            single 4x4 matrix.
+    \row \o \c qgl_ModelViewMatrix
+         \o Modelview matrix without the projection.  This is typically
+            used for performing calculations in eye co-ordinates.
+    \row \o \c qgl_NormalMatrix
+         \o Normal matrix, which is the transpose of the inverse of the
+            top-left 3x3 part of the modelview matrix.  This is typically
+            used in lighting calcuations to transform \c qgl_Normal.
+    \row \o \c qgl_Texture0
+         \o Sampler holding the texture from the Effect::texture property.
+    \row \o \c qgl_Color
+         \o Set to the value of the Effect::color property.
+    \endtable
+
+    The above variables are usually declared in the shaders as follows
+    (where \c highp may be replaced with \c mediump or \c lowp depending
+    upon the shader's precision requirements):
+
+    \code
+    uniform highp mat4 qgl_ModelViewProjectionMatrix;
+    uniform highp mat4 qgl_ModelViewMatrix;
+    uniform highp mat3 qgl_NormalMatrix;
+    uniform sampler2D qgl_Texture0;
+    uniform highp vec4 qgl_Color;
+    \endcode
+
+    \section1 Custom uniform variables
+
     Many properties defined on the ShaderProgram are automatically exposed as
     uniforms for the fragment and vertex shaders under the same name.
 
