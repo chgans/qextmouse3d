@@ -96,6 +96,7 @@ private:
     void setUniform(int uniformValue, const QPixmap pixmap,
                              QGLPainter* painter);
     QGLTexture2D* textureForUniformValue(int uniformLocation);
+    int textureUnitForUniformValue(int uniformLocation);
 
     QWeakPointer<ShaderProgram> parent;
     QGLShaderProgram *program;
@@ -108,9 +109,10 @@ private:
     int modelViewMatrixUniform;
     int normalMatrixUniform;
     int texture0;
-    int texture1;
     int colorUniform;
+    int nextTextureUnit;
     QMap<int, int> propertyIdsToUniformLocations;
+    QMap<int, int> uniformLocationsToTextureUnits;
     QList<int> dirtyProperties;
     QArray<int> propertiesWithoutNotificationSignal;
     ShaderProgramPropertyListener* propertyListener;

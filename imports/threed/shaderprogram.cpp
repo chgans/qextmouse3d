@@ -139,8 +139,8 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
     modelViewMatrixUniform = -1;
     normalMatrixUniform = -1;
     texture0 = -1;
-    texture1 = -1;
     colorUniform = -1;
+    nextTextureUnit = 1;
     propertyListener = new ShaderProgramPropertyListenerEx(parent, this);
 }
 
@@ -190,7 +190,6 @@ void ShaderProgramEffect::create
     modelViewMatrixUniform = program->uniformLocation("qgl_ModelViewMatrix");
     normalMatrixUniform = program->uniformLocation("qgl_NormalMatrix");
     texture0 = program->uniformLocation("qgl_Texture0");
-    texture1 = program->uniformLocation("qgl_Texture1");
     colorUniform = program->uniformLocation("qgl_Color");
     setUniformLocationsFromParentProperties();
 }
@@ -203,6 +202,8 @@ void ShaderProgramEffect::create
 inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 {
     propertyIdsToUniformLocations.clear();
+    uniformLocationsToTextureUnits.clear();
+    nextTextureUnit = 1;
     propertyListener->disconnect();
     if (parent.data() == 0)
     {
@@ -286,8 +287,6 @@ void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
         program->bind();
         if (texture0 != -1)
             program->setUniformValue(texture0, 0);
-        if (texture1 != -1)
-            program->setUniformValue(texture1, 1);
     } else {
         program->release();
     }
@@ -509,13 +508,13 @@ void ShaderProgramEffect::setUniform
 {
     // TODO: Perspective correction
     QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    int unit = textureUnitForUniformValue(uniformLocation);
     if(texture != 0)
     {
         texture->setPixmap(pixmap);
-        // FIXME: textureId() is the texture's handle, not its unit number!
-        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
+        program->setUniformValue(uniformLocation, unit);
     }
 }
 
@@ -527,13 +526,27 @@ void ShaderProgramEffect::setUniform
 {
     // TODO: Perspective correction
     QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    int unit = textureUnitForUniformValue(uniformLocation);
     if(texture != 0)
     {
         texture->setImage(image);
-        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
+        program->setUniformValue(uniformLocation, unit);
     }
+}
+
+/*!
+  \internal Find the texture unit to associate with \a uniformLocation.
+*/
+int ShaderProgramEffect::textureUnitForUniformValue(int uniformLocation)
+{
+    int unit = uniformLocationsToTextureUnits.value(uniformLocation, -1);
+    if (unit == -1) {
+        unit = nextTextureUnit++;
+        uniformLocationsToTextureUnits[uniformLocation] = unit;
+    }
+    return unit;
 }
 
 /*
