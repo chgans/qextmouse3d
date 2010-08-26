@@ -113,6 +113,8 @@ private:
     int normalMatrixUniform;
     int texture0;
     int colorUniform;
+    int lightPositionUniform;
+    int spotDirectionUniform;
     int nextTextureUnit;
     QMap<int, int> propertyIdsToUniformLocations;
     QMap<int, int> uniformLocationsToTextureUnits;

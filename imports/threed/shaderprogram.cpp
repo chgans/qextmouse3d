@@ -109,6 +109,7 @@
     common values from the environment:
 
     \table
+    \header \o Shader Variable \o Purpose
     \row \o \c qgl_ModelViewProjectionMatrix
          \o Combination of the modelview and projection matrices into a
             single 4x4 matrix.
@@ -123,6 +124,12 @@
          \o Sampler holding the texture from the Effect::texture property.
     \row \o \c qgl_Color
          \o Set to the value of the Effect::color property.
+    \row \o \c qgl_LightPosition
+         \o Position or direction of the main scene light in eye
+            co-ordinates.  If the w component is 0, then the
+            value is directional, otherwise it is positional.
+    \row \o \c qgl_SpotDirection
+         \o Eye co-ordinate direction that the spot-light is shining in.
     \endtable
 
     The above variables are usually declared in the shaders as follows
@@ -135,7 +142,13 @@
     uniform highp mat3 qgl_NormalMatrix;
     uniform sampler2D qgl_Texture0;
     uniform highp vec4 qgl_Color;
+    uniform highp vec4 qgl_LightPosition;
+    uniform highp vec3 qgl_SpotDirection;
     \endcode
+
+    Other lighting and material values, such as the ambient, diffuse,
+    and specular colors, can be passed to the shader program using
+    custom uniform variables.
 
     \section1 Custom uniform variables
 
@@ -222,6 +235,8 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
     normalMatrixUniform = -1;
     texture0 = -1;
     colorUniform = -1;
+    lightPositionUniform = -1;
+    spotDirectionUniform = -1;
     nextTextureUnit = 1;
     propertyListener = new ShaderProgramPropertyListenerEx(parent, this);
 }
@@ -278,6 +293,8 @@ void ShaderProgramEffect::create
     normalMatrixUniform = program->uniformLocation("qgl_NormalMatrix");
     texture0 = program->uniformLocation("qgl_Texture0");
     colorUniform = program->uniformLocation("qgl_Color");
+    lightPositionUniform = program->uniformLocation("qgl_LightPosition");
+    spotDirectionUniform = program->uniformLocation("qgl_SpotDirection");
     setUniformLocationsFromParentProperties();
 }
 
@@ -516,7 +533,20 @@ void ShaderProgramEffect::update
         program->setUniformValue(colorUniform, painter->color());
     }
 
-    // TODO: lighting and material parameters.
+    // Update the lighting values.
+    if ((updates & QGLPainter::UpdateLights) != 0 &&
+            (lightPositionUniform != -1 || spotDirectionUniform != -1)) {
+        const QGLLightParameters *lparams = painter->mainLight();
+        QMatrix4x4 ltransform = painter->mainLightTransform();
+        if (lightPositionUniform != -1) {
+            program->setUniformValue
+                (lightPositionUniform, lparams->eyePosition(ltransform));
+        }
+        if (spotDirectionUniform != -1) {
+            program->setUniformValue
+                (spotDirectionUniform, lparams->eyeSpotDirection(ltransform));
+        }
+    }
 
     // Assign custom properties if they exist
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
