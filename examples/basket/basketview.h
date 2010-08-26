@@ -44,26 +44,27 @@
 
 #include "qglview.h"
 
-class QTimer;
 class QGLSceneNode;
 
+//! [1]
 class BasketView : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal angle READ angle WRITE setAngle)
 public:
+    qreal angle() const { return m_angle; }
+    void setAngle(qreal angle) { m_angle = angle; update(); }
+//! [1]
+
     BasketView(QWidget *parent = 0);
     ~BasketView();
 
 protected:
     void paintGL(QGLPainter *painter);
 
-private slots:
-    void rotate();
-
 private:
     QGLSceneNode *basket;
-    int angle;
-    QTimer *timer;
+    qreal m_angle;
 };
 
 #endif

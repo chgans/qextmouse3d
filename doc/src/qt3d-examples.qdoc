@@ -59,7 +59,8 @@
     Using QML to build applications with Qt/3D:
 
     \list
-    \o \l{Teapot Example in QML/3D}{Hello Teapot in QML/3D}
+    \o \l{Teapot Example in QML/3D}{Hello Teapot} in QML/3D
+    \o \l{basket#Basket in QML/3D}{Basket} in QML/3D
     \o \l{Using GLSL shaders in QML/3D}
     \endlist
 

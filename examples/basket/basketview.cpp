@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include <QTimer>
+#include <QPropertyAnimation>
 
 #include "basketview.h"
 #include "basket_data.h"
@@ -48,9 +48,11 @@
 
 BasketView::BasketView(QWidget *parent)
     : QGLView(parent)
+    , m_angle(0)
 {
     setWindowTitle(tr("Basket"));
 
+//! [1]
     QGLBuilder builder;
     builder << BasketPatches();
     basket = builder.finalizedSceneNode();
@@ -62,13 +64,19 @@ BasketView::BasketView(QWidget *parent)
     mat->setTextureUrl(url);
     basket->setMaterial(mat);
     basket->setEffect(QGL::FlatReplaceTexture2D);
-    basket->setScale(QVector3D(1.5f, 1.5f, 1.5f));
+//! [1]
 
-    angle = 0;
+//! [2]
+    QPropertyAnimation *animation;
+    animation = new QPropertyAnimation(this, "angle", this);
+    animation->setStartValue(0.0f);
+    animation->setEndValue(360.0f);
+    animation->setDuration(2000);
+    animation->setLoopCount(-1);
+    animation->start();
+//! [2]
 
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
-    timer->start(10);
+    camera()->setEye(QVector3D(0, 4, 10));
 }
 
 BasketView::~BasketView()
@@ -76,14 +84,11 @@ BasketView::~BasketView()
     delete basket;
 }
 
+//! [3]
 void BasketView::paintGL(QGLPainter *painter)
 {
-    painter->modelViewMatrix().rotate(angle, 0, 1, 0);
+    painter->modelViewMatrix().rotate(angle(), 0, 1, 0);
+    painter->modelViewMatrix().scale(1.5f);
     basket->draw(painter);
 }
-
-void BasketView::rotate()
-{
-    angle = (angle + 5) % 360;
-    update();
-}
+//! [3]
