@@ -182,5 +182,5 @@
     using shaders.  On all other platforms, the fixed function pipeline
     is used to implement the QGL::FlatColor effect.
 
-    \l{qt3d-tutorials.html}{Return to the main Tutorials page}.
+    \l{qt3d-examples.html}{Return to the main Tutorials page}.
 */

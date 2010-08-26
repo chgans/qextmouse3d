@@ -398,5 +398,5 @@
     For further reading, the full specification for the OpenGL Shader Language
     is available from the Khronos website at http://www.khronos.org/opengl/
 
-    \l{qt3d-tutorials.html}{Return to the main Tutorials page}.
+    \l{qt3d-examples.html}{Return to the main Tutorials page}.
 */

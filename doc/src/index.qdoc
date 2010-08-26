@@ -69,7 +69,7 @@
     Writing a single OpenGL application that runs on all platforms
     is quite difficult, even for simple objects.
 
-    See the \l{Qt/3D Tutorials} for an introduction to using Qt/3D.
+    See the \l{Qt/3D Tutorials and Examples} for an introduction to using Qt/3D.
 
     \raw HTML
         <table cellpadding="2" cellspacing="1" border="0" width="100%" class="indextable">
@@ -85,8 +85,7 @@
         <td valign="top">
         <ul>
         <li><a href="qt3d-building.html">Building</a></li>
-        <li><a href="qt3d-tutorials.html">Tutorials</a></li>
-        <li><a href="qt3d-examples.html">Examples</a></li>
+        <li><a href="qt3d-examples.html">Tutorials and Examples</a></li>
         <li><a href="qt3d-demos.html">Demos</a></li>
         <li><a href="sceneformats-obj.html">Scene format plug-ins</a></li>
         <li><a href="qt3d-contrib.html">Contributing</a></li>

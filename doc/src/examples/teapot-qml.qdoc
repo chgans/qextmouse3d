@@ -83,6 +83,5 @@
     Using QML is briefer than C++, and easier to modify to adjust
     materials and add new features like animations.
 
-    \l{qt3d-examples.html}{Return to Examples},
-    \l{qt3d-tutorials.html}{Return to Tutorials}.
+    \l{qt3d-examples.html}{Return to Examples}.
 */

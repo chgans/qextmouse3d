@@ -120,5 +120,5 @@
     in your new format.  When debugging, it can be useful to set the
     \c{QT_DEBUG_PLUGINS} environment variable to 1.
 
-    \l{qt3d-tutorials.html}{Return to the main Tutorials page}.
+    \l{qt3d-examples.html}{Return to the main Tutorials page}.
 */

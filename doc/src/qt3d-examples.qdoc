@@ -41,17 +41,33 @@
 
 /*!
     \page qt3d-examples.html
-    \title Qt/3D Examples
+    \title Qt/3D Tutorials and Examples
     \keyword Qt/3D Examples
 
+    Using C++ to build applications with Qt/3D:
+
     \list
-    \o \l{basket}{Basket}
-    \o \l{cube}{Cube}
-    \o \l{painter}{Painter}
-    \o \l{stereo}{Stereo}
-    \o \l{teapot}{Teapot (C++ version)}
-    \o \l{Teapot Example in QML/3D}{Teapot (QML version)}
+    \o \l{Teapot Example}{Hello Teapot} - drawing a basic object in 3D.
+    \o \l{Applying transformations and materials to objects}{Cube} - applying transformations and materials to objects.
+    \o \l{basket}{Basket} - animating objects in 3D.
+    \o \l{Loading a 3DS model with Qt/3D}{Penguin} - loading a 3DS model with Qt/3D.
+    \o \l{painter}{Painter} - basic painting operations using QGLPainter.
+    \o \l{stereo}{Stereo} - using stereoscopic displays.
     \o \l{pvcolor}{Per-vertex Color}
+    \endlist
+
+    Using QML to build applications with Qt/3D:
+
+    \list
+    \o \l{Teapot Example in QML/3D}{Hello Teapot in QML/3D}
+    \o \l{Using GLSL shaders in QML/3D}
+    \endlist
+
+    Other topics:
+
+    \list
+    \o \l{Converting raw GL applications to use QGLPainter}
+    \o \l{Writing a scene format plug-in for Qt/3D}
     \endlist
 
     \l{index.html}{Return to the main Qt/3D page}.
