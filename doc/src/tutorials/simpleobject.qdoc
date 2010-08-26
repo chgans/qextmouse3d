@@ -105,8 +105,9 @@
 
     \image tutorials/cube4-screenshot.png
 
-    Appendix A:
-    It's quite simple to achieve the same effect in qml:
+    \section2 Cube in QML/3D
+
+    It is quite simple to achieve the same effect in QML:
 
     \snippet tutorials/cube4/cube.qml 1
 
