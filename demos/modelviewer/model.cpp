@@ -57,7 +57,8 @@ struct MVCNode
     ~MVCNode() { qDeleteAll(rows); }
     void addMVCChildren(QGLSceneNode *node)
     {
-        QList<QGLSceneNode*> ch = node->childNodeList();
+        QList<QGLSceneNode*> ch;
+        ch = node->childNodeList();
         for (int row = 0; row < ch.size(); ++row)
         {
             QGLSceneNode *c = ch.at(row);
@@ -68,6 +69,7 @@ struct MVCNode
             rows.append(n);
             n->addMVCChildren(c);
         }
+    
     }
     QGLSceneNode *node;
     Model *model;
@@ -143,13 +145,16 @@ QStringList Model::components() const
 
 void Model::setFullPath(const QString &path)
 {
-    if (!m_fullPath.isEmpty())
+    if (!m_fullPath.isEmpty()) 
         emit modelUnloaded(m_fullPath);
+        
     m_fullPath = path;
     importModel();
     buildModel();
     if (m_sceneRoot)
         emit modelLoaded(m_fullPath);
+    else 
+        emit modelNotLoaded(m_fullPath);
     reset();
 }
 
@@ -194,6 +199,10 @@ void Model::importModel()
 
 void Model::buildModel()
 {
+    if (!m_sceneRoot) {
+        qWarning() << "Unable to build a model without a valid root node - check that model loaded correctly.";
+        return;
+    }
     delete m_modelRoot;
     m_selectionMap.clear();
     m_modelRoot = new MVCNode(m_sceneRoot, this);

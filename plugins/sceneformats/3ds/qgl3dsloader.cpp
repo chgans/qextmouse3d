@@ -134,12 +134,19 @@ static const char *node_type_names[] = {
 };
 #endif
 
+void qGetMyMatrix()
+{
+    QMatrix4x4 test;
+
+    
+}
+
 inline static QMatrix4x4 getNodeMatrix(Lib3dsNode *node)
 {
     QMatrix4x4 nodeMatrix;
     for (int col = 0; col < 4; ++col)
         for (int row = 0; row < 4; ++row)
-            nodeMatrix(row, col) = node->matrix[col][row];
+           nodeMatrix(row, col) = node->matrix[col][row];
     nodeMatrix.optimize();
     Lib3dsObjectData *d = &node->data.object;
     if (!qFuzzyIsNull(d->pivot[0]) || !qFuzzyIsNull(d->pivot[1]) || !qFuzzyIsNull(d->pivot[2]))

@@ -75,8 +75,6 @@
 // defining DO_NORMAL_CORRECT false
 #define AVG_CNT 2
 
-
-
 // make a QVector3D from a Lib3dsVector - by a hard cast.  Its required
 // that QVector3D behave like a POD type - float[3] - for all of the
 // OpenGL stuff
