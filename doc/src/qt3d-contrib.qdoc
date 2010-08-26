@@ -44,15 +44,25 @@
     \title Contributing to Qt/3D
     \keyword Contributing to Qt/3D
 
-    Qt/3D is being developed primarily in the Brisbane office of Qt Software,
-    but anyone is welcome to join the effort with patches, new examples,
-    and major feature development.
-
-    \l{https://qtrequirements.europe.nokia.com/browse/QT-206}{QT-206} in
-    JIRA is being used to manage the requirements.
+    Qt/3D is being developed primarily in the Brisbane office of Qt
+    Development Frameworks, but anyone is welcome to join the effort with
+    patches, new examples, and major feature development.
 
     Contact Rhys Weatherley in the Brisbane office for more information
     on how you can contribute to Qt/3D.
+
+    Because Qt/3D may eventually become part of Qt, all contributions
+    need to conform with the
+    \l{http://qt.gitorious.org/qt/pages/QtContributionGuidelines}{Qt Contribution Model Guidelines}.
+
+    The source for Qt/3D is hosted on Gitorious at
+    \l{http://qt.gitorious.org/qt-labs/qt3d}.
+
+    Bugs can be reported against the "Qt3D" component of the "Qt" project
+    at \l{http://bugreports.qt.nokia.com/}.
+
+    The Qt/3D project has an open mailing list, which can be subscribed
+    to at \l{http://lists.trolltech.com/mailman/listinfo/qt-3d}.
 
     \l{index.html}{Return to the main Qt/3D page}.
 */
