@@ -98,6 +98,8 @@ void Viewer::setModel(Model *model)
         m_model = model;
         connect(model, SIGNAL(modelLoaded(QString)),
                 this, SLOT(registerPicking()));
+        connect(model, SIGNAL(modelNotLoaded(QString)),
+                this, SLOT(resetWarnings()));
         connect(model, SIGNAL(modelUnloaded(QString)),
                 this, SLOT(unregisterPicking()));
         update();
@@ -372,10 +374,10 @@ void Viewer::paintGL(QGLPainter *painter)
     {
         if (!m_warningDisplayed)
         {
+            m_warningDisplayed = true;
             QMessageBox::warning(this,
                                  tr("Model Error"),
-                                 tr("Could not load file %1").arg(m_model->fullPath()));
-            m_warningDisplayed = true;
+                                 tr("Could not load file %1").arg(m_model->fullPath()));                        
         }
     }
 }
@@ -473,8 +475,14 @@ void Viewer::resetView()
     update();
 }
 
+void Viewer::resetWarnings()
+{
+    m_warningDisplayed = false;
+}
+
 void Viewer::registerPicking()
 {
+    m_warningDisplayed = false;
     QGLAbstractScene *manager = m_model->manager();
     QList<QGLPickNode *>nodes = manager->pickNodes();
     QList<QGLPickNode *>::const_iterator it = nodes.constBegin();
@@ -490,12 +498,14 @@ void Viewer::registerPicking()
 void Viewer::unregisterPicking()
 {
     QGLAbstractScene *manager = m_model->manager();
-    QList<QGLPickNode *>nodes = manager->pickNodes();
-    QList<QGLPickNode *>::const_iterator it = nodes.constBegin();
-    for ( ; it != nodes.constEnd(); ++it)
-    {
-        QGLPickNode *node = *it;
-        deregisterObject(node->id());
+    if (manager) {
+        QList<QGLPickNode *>nodes = manager->pickNodes();
+        QList<QGLPickNode *>::const_iterator it = nodes.constBegin();
+        for ( ; it != nodes.constEnd(); ++it)
+        {
+            QGLPickNode *node = *it;
+            deregisterObject(node->id());
+        }
     }
 }
 

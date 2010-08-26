@@ -92,6 +92,7 @@ public slots:
     void registerPicking();
     void unregisterPicking();
     void objectPicked();
+    void resetWarnings();
 
 protected:
     void paintGL(QGLPainter *painter);

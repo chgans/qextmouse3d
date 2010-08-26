@@ -70,6 +70,7 @@ public:
 
 signals:
     void modelLoaded(const QString &path);
+    void modelNotLoaded(const QString &path);
     void modelUnloaded(const QString &path);
     void modelLoadTime(int ms);
     void modelTriangles(int triangles);
