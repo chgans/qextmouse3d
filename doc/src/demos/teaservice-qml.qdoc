@@ -54,5 +54,5 @@
     It is much easier to implement interaction models and
     animations in QML than in C++.
 
-    \l{qt3d-demos.html}{Return to Demos}.
+    \l{qt3d-examples.html}{Return to Examples}.
 */

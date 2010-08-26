@@ -53,7 +53,11 @@
     \o \l{Loading a 3DS model with Qt/3D}{Penguin} - loading a 3DS model with Qt/3D.
     \o \l{painter}{Painter} - basic painting operations using QGLPainter.
     \o \l{stereo}{Stereo} - using stereoscopic displays.
-    \o \l{pvcolor}{Per-vertex Color}
+    \o \l{pvcolor}{Per-vertex Color} - building models with QGLBuilder
+       that have per-vertex color values.
+    \o \l{pageflip}{Page Flip} - using shaders to combine textures.
+    \o \l{shapes}{Shapes} - paints all of the basic OpenGL shapes.
+    \o \l{teaservice}{Tea Service} - complex scenes and object picking.
     \endlist
 
     Using QML to build applications with Qt/3D:
@@ -63,6 +67,7 @@
     \o \l{basket#Basket in QML/3D}{Basket} in QML/3D
     \o \l{Applying transformations and materials to objects#Cube in QML/3D}{Cube} in QML/3D
     \o \l{Monkey God in QML}{Monkey God} in QML/3D
+    \o \l{Tea Service Demo in QML}{Tea Service} in QML/3D
     \o \l{Using GLSL shaders in QML/3D}
     \endlist
 
@@ -71,7 +76,6 @@
     \list
     \o \l{Converting raw GL applications to use QGLPainter}
     \o \l{Writing a scene format plug-in for Qt/3D}
-    \o \l{qt3d-demos.html}{Qt/3D Demos}
     \endlist
 
     \l{index.html}{Return to the main Qt/3D page}.
