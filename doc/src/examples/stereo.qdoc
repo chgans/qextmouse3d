@@ -43,10 +43,33 @@
     \example stereo
     \title Stereo Viewing Example
 
-    The Stereo example shows how to view objects in "true 3D" with
-    the use of red-cyan or polarized 3D viewing classes.
+    The Stereo example shows how to view objects in "stereoscopic 3D" with
+    the use of red-cyan viewing glasses, polarized classes, or
+    side-by-side rendering.
 
     \image stereo-screenshot.png
+
+    The example is pretty much the same as the \l{qt3d-examples.html}{other
+    examples}, with one small modification to camera initialization:
+
+    \snippet stereo/stereoview.cpp 1
+
+    By setting the QGLCamera::eyeSeparation property to a non-zero value,
+    we indicate that we want the \c{paintGL()} function to be called twice.
+    The first time, the camera on the QGLPainter is set slightly offset
+    for the left eye, and the second time the camera is set slightly offset
+    for the right eye.
+
+    The QGLView class supports a number of stereoscopic viewing modes.
+    The screenshot above shows the default red-cyan anaglyph mode.
+    If the QGLView::stereoType() is changed to QGLView::DoubleWideLeftRight,
+    then the two eye images will be rendered side by side:
+
+    \image stereo-wide-screenshot.png
+
+    See the \l{QGLView#Stereo viewing support}{stereo viewing support} 
+    section in the QGLView documentation for more information on the
+    stereoscopic viewing modes that are supported.
 
     \l{qt3d-examples.html}{Return to Examples}.
 */

@@ -78,8 +78,10 @@ StereoView::StereoView(const QGLFormat &format, QWidget *parent)
     scene->setMaterial(china);
     scene->setEffect(QGL::LitMaterial);
 
+//! [1]
     camera()->setEye(QVector3D(0.0f, 0.0f, 15.0f));
     camera()->setEyeSeparation(0.2f);
+//! [1]
 }
 
 void StereoView::paintGL(QGLPainter *painter)
