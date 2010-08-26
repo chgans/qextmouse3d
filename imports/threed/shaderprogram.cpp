@@ -60,6 +60,98 @@
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
 
+    \section1 Attributes
+
+    ShaderProgram provides a standard set of 8 vertex attributes that
+    can be provided via the geometry \l Mesh:
+
+    \table
+    \header \o Shader Variable \o Mesh Attribute \o Purpose
+    \row \o \c qgl_Vertex \o QGL::Position
+         \o The primary position of the vertex.
+    \row \o \c qgl_Normal \o QGL::Normal
+         \o The normal at each vertex, for lit material effects.
+    \row \o \c qgl_Color \o QGL::Color
+         \o The color at each vertex, for per-vertex color effects.
+    \row \o \c qgl_TexCoord0 \o QGL::TextureCoord0
+         \o The texture co-ordinate at each vertex for texture unit 0.
+    \row \o \c qgl_TexCoord1 \o QGL::TextureCoord1
+         \o Secondary texture co-ordinate at each vertex.
+    \row \o \c qgl_TexCoord2 \o QGL::TextureCoord2
+         \o Tertiary texture co-ordinate at each vertex.
+    \row \o \c qgl_Custom0 \o QGL::CustomVertex0
+         \o First custom vertex attribute that can be used for any
+            user-defined purpose.
+    \row \o \c qgl_Custom1 \o QGL::CustomVertex1
+         \o Second custom vertex attribute that can be used for any
+            user-defined purpose.
+    \endtable
+
+    These attributes are used in the vertexShader, as in the following
+    example of a simple texture shader:
+
+    \code
+    attribute highp vec4 qgl_Vertex;
+    attribute highp vec4 qgl_TexCoord0;
+    uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+    varying highp vec4 texCoord;
+
+    void main(void)
+    {
+        gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
+        texCoord = qgl_TexCoord0;
+    }
+    \endcode
+
+    \section1 Standard uniform variables
+
+    ShaderProgram provides a standard set of uniform variables for
+    common values from the environment:
+
+    \table
+    \header \o Shader Variable \o Purpose
+    \row \o \c qgl_ModelViewProjectionMatrix
+         \o Combination of the modelview and projection matrices into a
+            single 4x4 matrix.
+    \row \o \c qgl_ModelViewMatrix
+         \o Modelview matrix without the projection.  This is typically
+            used for performing calculations in eye co-ordinates.
+    \row \o \c qgl_NormalMatrix
+         \o Normal matrix, which is the transpose of the inverse of the
+            top-left 3x3 part of the modelview matrix.  This is typically
+            used in lighting calcuations to transform \c qgl_Normal.
+    \row \o \c qgl_Texture0
+         \o Sampler holding the texture from the Effect::texture property.
+    \row \o \c qgl_Color
+         \o Set to the value of the Effect::color property.
+    \row \o \c qgl_LightPosition
+         \o Position or direction of the main scene light in eye
+            co-ordinates.  If the w component is 0, then the
+            value is directional, otherwise it is positional.
+    \row \o \c qgl_SpotDirection
+         \o Eye co-ordinate direction that the spot-light is shining in.
+    \endtable
+
+    The above variables are usually declared in the shaders as follows
+    (where \c highp may be replaced with \c mediump or \c lowp depending
+    upon the shader's precision requirements):
+
+    \code
+    uniform highp mat4 qgl_ModelViewProjectionMatrix;
+    uniform highp mat4 qgl_ModelViewMatrix;
+    uniform highp mat3 qgl_NormalMatrix;
+    uniform sampler2D qgl_Texture0;
+    uniform highp vec4 qgl_Color;
+    uniform highp vec4 qgl_LightPosition;
+    uniform highp vec3 qgl_SpotDirection;
+    \endcode
+
+    Other lighting and material values, such as the ambient, diffuse,
+    and specular colors, can be passed to the shader program using
+    custom uniform variables.
+
+    \section1 Custom uniform variables
+
     Many properties defined on the ShaderProgram are automatically exposed as
     uniforms for the fragment and vertex shaders under the same name.
 
@@ -135,12 +227,17 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
     colorAttr = -1;
     texCoord0Attr = -1;
     texCoord1Attr = -1;
+    texCoord2Attr = -1;
+    customVertex0Attr = -1;
+    customVertex1Attr = -1;
     matrixUniform = -1;
     modelViewMatrixUniform = -1;
     normalMatrixUniform = -1;
     texture0 = -1;
-    texture1 = -1;
     colorUniform = -1;
+    lightPositionUniform = -1;
+    spotDirectionUniform = -1;
+    nextTextureUnit = 1;
     propertyListener = new ShaderProgramPropertyListenerEx(parent, this);
 }
 
@@ -179,6 +276,8 @@ void ShaderProgramEffect::create
         qWarning("Could not compile vertex shader");
     if (!program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader))
         qWarning("Could not compile fragment shader");
+    // Some systems require the position to be at location 0.
+    program->bindAttributeLocation("qgl_Vertex", 0);
     if (!program->link())
         qWarning("Could not link shader program");
     vertexAttr = program->attributeLocation("qgl_Vertex");
@@ -186,12 +285,16 @@ void ShaderProgramEffect::create
     colorAttr = program->attributeLocation("qgl_Color");
     texCoord0Attr = program->attributeLocation("qgl_TexCoord0");
     texCoord1Attr = program->attributeLocation("qgl_TexCoord1");
+    texCoord2Attr = program->attributeLocation("qgl_TexCoord2");
+    customVertex0Attr = program->attributeLocation("qgl_Custom0");
+    customVertex1Attr = program->attributeLocation("qgl_Custom1");
     matrixUniform = program->uniformLocation("qgl_ModelViewProjectionMatrix");
     modelViewMatrixUniform = program->uniformLocation("qgl_ModelViewMatrix");
     normalMatrixUniform = program->uniformLocation("qgl_NormalMatrix");
     texture0 = program->uniformLocation("qgl_Texture0");
-    texture1 = program->uniformLocation("qgl_Texture1");
     colorUniform = program->uniformLocation("qgl_Color");
+    lightPositionUniform = program->uniformLocation("qgl_LightPosition");
+    spotDirectionUniform = program->uniformLocation("qgl_SpotDirection");
     setUniformLocationsFromParentProperties();
 }
 
@@ -203,6 +306,8 @@ void ShaderProgramEffect::create
 inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 {
     propertyIdsToUniformLocations.clear();
+    uniformLocationsToTextureUnits.clear();
+    nextTextureUnit = 1;
     propertyListener->disconnect();
     if (parent.data() == 0)
     {
@@ -271,6 +376,12 @@ QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
         fields.append(QGL::TextureCoord0);
     if (texCoord1Attr != -1)
         fields.append(QGL::TextureCoord1);
+    if (texCoord2Attr != -1)
+        fields.append(QGL::TextureCoord2);
+    if (customVertex0Attr != -1)
+        fields.append(QGL::CustomVertex0);
+    if (customVertex1Attr != -1)
+        fields.append(QGL::CustomVertex1);
     return fields;
 }
 
@@ -284,11 +395,41 @@ void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
     Q_UNUSED(painter);
     if (flag) {
         program->bind();
+        if (vertexAttr != -1)
+            program->enableAttributeArray(vertexAttr);
+        if (normalAttr != -1)
+            program->enableAttributeArray(normalAttr);
+        if (colorAttr != -1)
+            program->enableAttributeArray(colorAttr);
+        if (texCoord0Attr != -1)
+            program->enableAttributeArray(texCoord0Attr);
+        if (texCoord1Attr != -1)
+            program->enableAttributeArray(texCoord1Attr);
+        if (texCoord2Attr != -1)
+            program->enableAttributeArray(texCoord2Attr);
+        if (customVertex0Attr != -1)
+            program->enableAttributeArray(customVertex0Attr);
+        if (customVertex1Attr != -1)
+            program->enableAttributeArray(customVertex1Attr);
         if (texture0 != -1)
             program->setUniformValue(texture0, 0);
-        if (texture1 != -1)
-            program->setUniformValue(texture1, 1);
     } else {
+        if (vertexAttr != -1)
+            program->disableAttributeArray(vertexAttr);
+        if (normalAttr != -1)
+            program->disableAttributeArray(normalAttr);
+        if (colorAttr != -1)
+            program->disableAttributeArray(colorAttr);
+        if (texCoord0Attr != -1)
+            program->disableAttributeArray(texCoord0Attr);
+        if (texCoord1Attr != -1)
+            program->disableAttributeArray(texCoord1Attr);
+        if (texCoord2Attr != -1)
+            program->disableAttributeArray(texCoord2Attr);
+        if (customVertex0Attr != -1)
+            program->disableAttributeArray(customVertex0Attr);
+        if (customVertex1Attr != -1)
+            program->disableAttributeArray(customVertex1Attr);
         program->release();
     }
 }
@@ -392,7 +533,20 @@ void ShaderProgramEffect::update
         program->setUniformValue(colorUniform, painter->color());
     }
 
-    // TODO: lighting and material parameters.
+    // Update the lighting values.
+    if ((updates & QGLPainter::UpdateLights) != 0 &&
+            (lightPositionUniform != -1 || spotDirectionUniform != -1)) {
+        const QGLLightParameters *lparams = painter->mainLight();
+        QMatrix4x4 ltransform = painter->mainLightTransform();
+        if (lightPositionUniform != -1) {
+            program->setUniformValue
+                (lightPositionUniform, lparams->eyePosition(ltransform));
+        }
+        if (spotDirectionUniform != -1) {
+            program->setUniformValue
+                (spotDirectionUniform, lparams->eyeSpotDirection(ltransform));
+        }
+    }
 
     // Assign custom properties if they exist
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
@@ -509,13 +663,13 @@ void ShaderProgramEffect::setUniform
 {
     // TODO: Perspective correction
     QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    int unit = textureUnitForUniformValue(uniformLocation);
     if(texture != 0)
     {
         texture->setPixmap(pixmap);
-        // FIXME: textureId() is the texture's handle, not its unit number!
-        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
+        program->setUniformValue(uniformLocation, unit);
     }
 }
 
@@ -527,13 +681,27 @@ void ShaderProgramEffect::setUniform
 {
     // TODO: Perspective correction
     QGLTexture2D* texture = textureForUniformValue(uniformLocation);
+    int unit = textureUnitForUniformValue(uniformLocation);
     if(texture != 0)
     {
         texture->setImage(image);
-        painter->glActiveTexture(GL_TEXTURE0 + texture->textureId()); // FIXME
+        painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, texture->textureId()); // FIXME
+        program->setUniformValue(uniformLocation, unit);
     }
+}
+
+/*!
+  \internal Find the texture unit to associate with \a uniformLocation.
+*/
+int ShaderProgramEffect::textureUnitForUniformValue(int uniformLocation)
+{
+    int unit = uniformLocationsToTextureUnits.value(uniformLocation, -1);
+    if (unit == -1) {
+        unit = nextTextureUnit++;
+        uniformLocationsToTextureUnits[uniformLocation] = unit;
+    }
+    return unit;
 }
 
 /*
@@ -545,34 +713,39 @@ void ShaderProgramEffect::setVertexAttribute
 {
     switch (attribute) {
     case QGL::Position:
-        if (vertexAttr != -1) {
+        if (vertexAttr != -1)
             setAttributeArray(program, vertexAttr, value);
-            program->enableAttributeArray(vertexAttr);
-        }
         break;
     case QGL::Normal:
         if (normalAttr != -1) {
             setAttributeArray(program, normalAttr, value);
+            // Must explicitly enable in case setCommonNormal() was called.
             program->enableAttributeArray(normalAttr);
         }
         break;
     case QGL::Color:
-        if (colorAttr != -1) {
+        if (colorAttr != -1)
             setAttributeArray(program, colorAttr, value);
-            program->enableAttributeArray(colorAttr);
-        }
         break;
     case QGL::TextureCoord0:
-        if (texCoord0Attr != -1) {
+        if (texCoord0Attr != -1)
             setAttributeArray(program, texCoord0Attr, value);
-            program->enableAttributeArray(texCoord0Attr);
-        }
         break;
     case QGL::TextureCoord1:
-        if (texCoord1Attr != -1) {
+        if (texCoord1Attr != -1)
             setAttributeArray(program, texCoord1Attr, value);
-            program->enableAttributeArray(texCoord1Attr);
-        }
+        break;
+    case QGL::TextureCoord2:
+        if (texCoord2Attr != -1)
+            setAttributeArray(program, texCoord2Attr, value);
+        break;
+    case QGL::CustomVertex0:
+        if (customVertex0Attr != -1)
+            setAttributeArray(program, customVertex0Attr, value);
+        break;
+    case QGL::CustomVertex1:
+        if (customVertex1Attr != -1)
+            setAttributeArray(program, customVertex1Attr, value);
         break;
     default: break;
     }
