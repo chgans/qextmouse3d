@@ -53,7 +53,7 @@ class QGLMaterial;
 
 class QGLRenderStatePrivate;
 
-class QGLRenderState
+class Q_QT3D_EXPORT QGLRenderState
 {
 public:
     QGLRenderState();
