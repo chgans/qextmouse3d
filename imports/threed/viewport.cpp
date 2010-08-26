@@ -493,6 +493,10 @@ void Viewport::earlyDraw(QGLPainter *painter)
 #ifdef GL_RESCALE_NORMAL
     glEnable(GL_RESCALE_NORMAL);
 #endif
+
+    // Set the default effect for the scene.
+    painter->setStandardEffect(QGL::LitMaterial);
+    painter->setFaceColor(QGL::AllFaces, Qt::white);
 }
 
 /*!
