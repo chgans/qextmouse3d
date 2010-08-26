@@ -40,17 +40,13 @@
 ****************************************************************************/
 
 /*!
-    \page qt3d-demos.html
-    \title Qt/3D Demos
-    \keyword Qt/3D Demos
+    \example declarative/monkeygod
+    \title Monkey God in QML
 
-    \list
-    \o \l{pageflip}{Page Flip}
-    \o \l{shapes}{Shapes}
-    \o \l{teaservice}{Tea Service} in C++
-    \o \l{Tea Service Demo in QML}{Tea Service} in QML/3D
-    \o \l{Monkey God in QML}{Monkey God} in QML/3D
-    \endlist
+    The Monkey God demo in QML shows how QML/3D can be used to build
+    up complex 3D scenes including materials and animations.
 
-    \l{index.html}{Return to the main Qt/3D page}.
+    \image monkeygod-screenshot.png
+
+    \l{qt3d-demos.html}{Return to Demos}.
 */

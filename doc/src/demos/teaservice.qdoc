@@ -48,5 +48,10 @@
 
     \image teaservice-screenshot.png
 
+    There is also a \l{Tea Service Demo in QML}{QML version} of the
+    Tea Service demo which has more advanced object picking, animations,
+    states, and transitions.  It is much easier to add complex
+    interaction models and animations in QML than in C++.
+
     \l{qt3d-demos.html}{Return to Demos}.
 */

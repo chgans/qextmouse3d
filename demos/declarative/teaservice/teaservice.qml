@@ -30,7 +30,7 @@ Viewport {
 
         Item3d {
             id: body
-            mesh: Mesh { source: "meshes/teapot-body.bez" }
+            mesh: Mesh { source: "teapot-body.bez" }
             effect: Effect {
                 material: china
             }
@@ -42,7 +42,7 @@ Viewport {
 
         Item3d {
             id: handle
-            mesh: Mesh { source: "meshes/teapot-handle.bez" }
+            mesh: Mesh { source: "teapot-handle.bez" }
             effect: Effect {
                 material: china
             }
@@ -65,7 +65,7 @@ Viewport {
 
         Item3d {
             id: spout
-            mesh: Mesh { source: "meshes/teapot-spout.bez" }
+            mesh: Mesh { source: "teapot-spout.bez" }
             effect: Effect {
                 material: china
             }
@@ -303,12 +303,12 @@ Viewport {
 
     Mesh {
         id: teacup_mesh
-        source: "meshes/teacup.bez"
+        source: "teacup.bez"
     }
 
     Mesh {
         id: teaspoon_mesh
-        source: "meshes/teaspoon.bez"
+        source: "teaspoon.bez"
     }
 
     Material {

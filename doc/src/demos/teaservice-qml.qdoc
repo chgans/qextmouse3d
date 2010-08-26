@@ -40,17 +40,19 @@
 ****************************************************************************/
 
 /*!
-    \page qt3d-demos.html
-    \title Qt/3D Demos
-    \keyword Qt/3D Demos
+    \example declarative/teaservice
+    \title Tea Service Demo in QML
 
-    \list
-    \o \l{pageflip}{Page Flip}
-    \o \l{shapes}{Shapes}
-    \o \l{teaservice}{Tea Service} in C++
-    \o \l{Tea Service Demo in QML}{Tea Service} in QML/3D
-    \o \l{Monkey God in QML}{Monkey God} in QML/3D
-    \endlist
+    The Tea Service demo in QML shows how QML/3D can be used to draw a complex
+    scene made up of several objects.  It also demonstrates object picking,
+    animations, states and transitions.
 
-    \l{index.html}{Return to the main Qt/3D page}.
+    \image teaservice-qml-screenshot.png
+
+    There is also a \l{Tea Service Demo}{C++ version} of this demo,
+    which is not as visually interesting as the QML/3D version.
+    It is much easier to implement interaction models and
+    animations in QML than in C++.
+
+    \l{qt3d-demos.html}{Return to Demos}.
 */
