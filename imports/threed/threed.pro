@@ -8,23 +8,19 @@ VERSION = 1.0.0
 SOURCES += \
     threed.cpp \
     redcyaneffect.cpp \
-    cube.cpp \
     effect.cpp \
     inlinemesh.cpp \
     item3d.cpp \
     mesh.cpp \
-    pane.cpp \
     qt3dnamespace.cpp \
     shaderprogram.cpp \
     viewport.cpp
 HEADERS += \
     redcyaneffect.h \
-    cube.h \
     effect.h \
     inlinemesh.h \
     item3d.h \
     mesh.h \
-    pane.h \
     qt3dnamespace.h \
     shaderprogram.h \
     shaderprogram_p.h \
@@ -32,7 +28,9 @@ HEADERS += \
 
 qdeclarativesources.files += \
     qmldir \
-    DefaultNavigator.qml
+    DefaultNavigator.qml \
+    Cube.qml \
+    Pane.qml
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
 

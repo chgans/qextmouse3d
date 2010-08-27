@@ -17,7 +17,6 @@ Viewport {
     PhotoPane {
         offset: -2.1
         layer: 0
-        orientation: "Rot90"
         image: "textures/button/woman.jpg"
     }
     PhotoPane {
@@ -76,7 +75,6 @@ Viewport {
     PhotoPane {
         offset: 2.1
         layer: 5
-        orientation: "Rot90"
         image: "textures/button/woman.jpg"
     }
 

@@ -12,7 +12,7 @@ Pane {
     width: 4
     height: 3
     position: Qt.vector3d(offset, 0, -layer)
-    effect: Effect { texture: image }
+    effect: Effect { decal: true; texture: image }
 
     onClicked: {
         if (photo.state == "pulled_out")

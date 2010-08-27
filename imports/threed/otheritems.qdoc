@@ -39,12 +39,6 @@
 **
 ****************************************************************************/
 
-#include "cube.h"
-#include "qglbuilder.h"
-#include "qglcube.h"
-
-QT_BEGIN_NAMESPACE
-
 /*!
     \qmlclass Cube Cube
     \brief The Cube item represents a simple cube in 3D space.
@@ -84,27 +78,6 @@ QT_BEGIN_NAMESPACE
     \sa Item3d, Pane
 */
 
-class CubePrivate
-{
-public:
-    CubePrivate() : size(1.0f) {}
-    ~CubePrivate() { delete cube; }
-
-    qreal size;
-    QGLSceneNode *cube;
-};
-
-Cube::Cube(QObject *parent)
-    : Item3d(parent)
-{
-    d = new CubePrivate();
-}
-
-Cube::~Cube()
-{
-    delete d;
-}
-
 /*!
     \qmlproperty real Cube::size
 
@@ -112,29 +85,41 @@ Cube::~Cube()
     The cube will be centered on Item3d::position.
 */
 
-qreal Cube::size() const
-{
-    return d->size;
-}
+/*!
+    \qmlclass Pane Pane
+    \brief The Pane item represents a rectangular pane in 3D space that can be textured with an effect.
+    \since 4.8
+    \ingroup qt3d::qml3d
+    \inherits Item3d
 
-void Cube::setSize(qreal value)
-{
-    d->size = value;
-    //        delete d->cube;
-    d->cube = 0;
-    emit sizeChanged();
-    update();
-}
+    The Pane element in QML provides a simple way to create a quad
+    object, usually for placing a 2D image in 3D space.  For example,
+    the following displays a picture on a 2 x 1.5 unit pane at the origin:
 
-void Cube::drawItem(QGLPainter *painter)
-{
-    if (!d->cube) {
-        QGLBuilder builder;
-        builder << QGL::Faceted << QGLCube(d->size);
-        d->cube = builder.finalizedSceneNode();
-        d->cube->setParent(this);
+    \code
+    Pane {
+        width: 2
+        height: 1.5
+        effect: Effect { texture: "picture.jpg" }
     }
-    d->cube->draw(painter);
-}
+    \endcode
 
-QT_END_NAMESPACE
+    \sa Item3d, Cube
+*/
+
+/*!
+    \qmlproperty qreal Pane::width
+
+    The width of the pane.  The default value is 1.
+
+    \sa height
+*/
+
+/*!
+    \qmlproperty real Pane::height
+
+    The height of the pane.  The default value is 1.
+
+    \sa width
+*/
+

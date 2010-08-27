@@ -39,8 +39,11 @@
 **
 ****************************************************************************/
 
-#ifndef PANE_H
-#define PANE_H
+#ifndef OTHERITEMS_H
+#define OTHERITEMS_H
+
+// This is a dummy header file for defining the interface of
+// pure QML items from "Cube.qml", "Pane.qml", etc, to qdoc.
 
 #include "item3d.h"
 
@@ -48,54 +51,49 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
+class Cube : public Item3d
+{
+    Q_OBJECT
+    Q_PROPERTY(qreal size READ size WRITE setSize NOTIFY sizeChanged)
+public:
+    Cube(QObject *parent = 0) : Item3d(parent), m_size(1) {}
+    ~Cube() {}
+
+    qreal size() const { return m_size; }
+    void setSize(qreal value) { m_size = value; emit sizeChanged(); }
+
+Q_SIGNALS:
+    void sizeChanged();
+
+private:
+    qreal m_size;
+};
+
 class Pane : public Item3d
 {
     Q_OBJECT
-    Q_ENUMS(Orientation)
     Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
-    Q_PROPERTY(bool twoSided READ twoSided WRITE setTwoSided NOTIFY twoSidedChanged)
-    Q_PROPERTY(Orientation orientation READ orientation WRITE setOrientation NOTIFY orientationChanged)
 public:
-    Pane(QObject *parent = 0);
-    ~Pane();
+    Pane(QObject *parent = 0) : Item3d(parent), m_width(1), m_height(1) {}
+    ~Pane() {}
 
-    qreal width() const;
-    void setWidth(qreal value);
+    qreal width() const { return m_width; }
+    void setWidth(qreal value) { m_width = value; emit widthChanged(); }
 
-    qreal height() const;
-    void setHeight(qreal value);
-
-    bool twoSided() const;
-    void setTwoSided(bool value);
-
-    enum Orientation
-    {
-        Normal,
-        Rot90,
-        Rot180,
-        Rot270
-    };
-
-    Orientation orientation() const;
-    void setOrientation(Orientation value);
-
-protected:
-    void drawItem(QGLPainter *painter);
+    qreal height() const { return m_height; }
+    void setHeight(qreal value) { m_height = value; emit heightChanged(); }
 
 Q_SIGNALS:
     void widthChanged();
     void heightChanged();
-    void twoSidedChanged();
-    void orientationChanged();
 
 private:
     qreal m_width;
     qreal m_height;
-    bool m_twoSided;
-    Orientation m_orientation;
 };
 
+QML_DECLARE_TYPE(Cube)
 QML_DECLARE_TYPE(Pane)
 
 QT_END_NAMESPACE

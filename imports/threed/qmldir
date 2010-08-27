@@ -1,2 +1,4 @@
 DefaultNavigator 1.0 DefaultNavigator.qml
+Cube 1.0 Cube.qml
+Pane 1.0 Pane.qml
 plugin qthreedqmlplugin
