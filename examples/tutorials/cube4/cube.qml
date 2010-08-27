@@ -13,7 +13,8 @@ Viewport {
 
         effect: Effect {
             color: "#aaca00";
-            texture: "textures/qtlogo.png"
+            texture: "qtlogo.png"
+            decal: true
         }
     }
 }

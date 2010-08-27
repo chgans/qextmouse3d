@@ -84,6 +84,7 @@ public:
         : color(255, 255, 255, 255),
           useLighting(true),
           textureChanged(false),
+          decal(false),
           texture2D(0),
           material(0),
           declarativePixmap(),
@@ -99,6 +100,7 @@ public:
     QColor color;
     bool useLighting;
     bool textureChanged;
+    bool decal;
     QGLTexture2D *texture2D;
     QUrl textureUrl;
     QGLMaterial *material;
@@ -162,6 +164,29 @@ void Effect::setUseLighting(bool value)
 {
     d->useLighting = value;
     emit effectChanged();
+}
+
+/*!
+    \qmlproperty bool Effect::decal
+
+    This property should be set to true if the \l texture should be
+    combined with \l color to decal the texture onto the object.
+    This property should be set to false to use the texture
+    directly, combined with the \l material parameters.
+
+    The default value for this property is false.
+*/
+bool Effect::decal() const
+{
+    return d->decal;
+}
+
+void Effect::setDecal(bool value)
+{
+    if (d->decal != value) {
+        d->decal = value;
+        emit effectChanged();
+    }
 }
 
 /*!
@@ -339,7 +364,10 @@ void Effect::enableEffect(QGLPainter *painter)
         tex = d->material->texture();
     if (d->useLighting) {
         if (tex && !tex->isNull()) {
-            painter->setStandardEffect(QGL::LitDecalTexture2D);
+            if (d->decal)
+                painter->setStandardEffect(QGL::LitDecalTexture2D);
+            else
+                painter->setStandardEffect(QGL::LitModulateTexture2D);
             painter->glActiveTexture(GL_TEXTURE0);
             tex->bind();
         } else {
@@ -351,7 +379,10 @@ void Effect::enableEffect(QGLPainter *painter)
             painter->setFaceColor(QGL::AllFaces, d->color);
     } else {
         if (tex && !tex->isNull()) {
-            painter->setStandardEffect(QGL::FlatDecalTexture2D);
+            if (d->decal)
+                painter->setStandardEffect(QGL::FlatDecalTexture2D);
+            else
+                painter->setStandardEffect(QGL::FlatReplaceTexture2D);
             painter->glActiveTexture(GL_TEXTURE0);
             tex->bind();
             painter->setColor(d->color);

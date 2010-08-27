@@ -63,7 +63,7 @@ BasketView::BasketView(QWidget *parent)
     url.setScheme(QLatin1String("file"));
     mat->setTextureUrl(url);
     basket->setMaterial(mat);
-    basket->setEffect(QGL::FlatReplaceTexture2D);
+    basket->setEffect(QGL::LitModulateTexture2D);
 //! [1]
 
 //! [2]
