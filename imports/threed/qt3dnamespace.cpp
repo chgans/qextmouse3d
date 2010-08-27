@@ -43,20 +43,47 @@
 
 QT_BEGIN_NAMESPACE
 
+/*!
+    \qmlclass Qt3d Qt3dNamespace
+    \brief The QML global object Qt3d provides useful functions for 3D applications.
+    \ingroup qt3d::qml3d
+*/
+
+/*!
+    \qmlmethod Qt3d::vector2d(real x, real y)
+    Returns a Vector2D with the specified \c x and \c y.
+*/
+
 QVector2D Qt3dNamespace::vector2d(qreal x, qreal y)
 {
     return QVector2D(x, y);
 }
+
+/*!
+    \qmlmethod Qt3d::vector4d(real x, real y, real z, real w)
+    Returns a Vector4D with the specified \c x, \c y, \c z, and \c w.
+*/
 
 QVector4D Qt3dNamespace::vector4d(qreal x, qreal y, qreal z, qreal w)
 {
     return QVector4D(x, y, z, w);
 }
 
+/*!
+    \qmlmethod Qt3d::quaternion(real scalar, real x, real y, real z)
+    Returns a Quaternion with the specified \c scalar, \c x, \c y, and \c z.
+*/
+
 QQuaternion Qt3dNamespace::quaternion(qreal scalar, qreal x, qreal y, qreal z)
 {
     return QQuaternion(scalar, x, y, z);
 }
+
+/*!
+    \qmlmethod Qt3d::matrix4x4(real m11, real m12, real m13, real m14, real m21, real m22, real m23, real m24, real m31, real m32, real m33, real m34, real m41, real m42, real m43, real m44)
+    Returns a Matrix4x4 with the specified 16 components, which are specified
+    in row-major order.
+*/
 
 QMatrix4x4 Qt3dNamespace::matrix4x4
     (qreal m11, qreal m12, qreal m13, qreal m14,
