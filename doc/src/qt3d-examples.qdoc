@@ -69,6 +69,7 @@
     \o \l{Monkey God in QML}{Monkey God} in QML/3D
     \o \l{Tea Service Demo in QML}{Tea Service} in QML/3D
     \o \l{Using GLSL shaders in QML/3D}
+    \o \l{Pyramid inline mesh example}{Pyramid} - defining inline meshes in QML/3D
     \endlist
 
     Other topics:

@@ -10,6 +10,7 @@ SOURCES += \
     redcyaneffect.cpp \
     cube.cpp \
     effect.cpp \
+    inlinemesh.cpp \
     item3d.cpp \
     mesh.cpp \
     pane.cpp \
@@ -20,6 +21,7 @@ HEADERS += \
     redcyaneffect.h \
     cube.h \
     effect.h \
+    inlinemesh.h \
     item3d.h \
     mesh.h \
     pane.h \

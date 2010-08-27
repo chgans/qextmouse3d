@@ -57,6 +57,7 @@
 #include "pane.h"
 #include "qt3dnamespace.h"
 #include "qglscenenode.h"
+#include "inlinemesh.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -76,6 +77,7 @@ public:
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");
+        qmlRegisterType<InlineMesh>(uri,1,0,"InlineMesh");
         qmlRegisterType<Item3d>(uri,1,0,"Item3d");
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
