@@ -115,7 +115,7 @@
 
     \snippet nesting/cubeview.cpp 8
 
-    Because our cubes are transparent, we need to make sure we drawn
+    Because our cubes are transparent, we need to make sure we draw
     the objects in the scene from back to front.  Otherwise the result
     will not look correct.  To do this, we check which of the cube
     mid-points is furtherest away from the camera and draw that cube first
