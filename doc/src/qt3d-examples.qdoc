@@ -50,6 +50,7 @@
     \o \l{Teapot Example}{Hello Teapot} - drawing a basic object in 3D.
     \o \l{Applying transformations and materials to objects}{Cube} - applying transformations and materials to objects.
     \o \l{basket}{Basket} - animating objects in 3D.
+    \o \l{nesting}{Nesting} - drawing into framebuffer objects.
     \o \l{Loading a 3DS model with Qt/3D}{Penguin} - loading a 3DS model with Qt/3D.
     \o \l{painter}{Painter} - basic painting operations using QGLPainter.
     \o \l{stereo}{Stereo} - using stereoscopic displays.

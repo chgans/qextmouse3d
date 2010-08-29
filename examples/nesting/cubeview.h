@@ -60,13 +60,13 @@ public:
     ~CubeView();
 
     qreal teapotAngle() const { return tangle; }
-    void setTeapotAngle(qreal angle) { tangle = angle; performUpdate(); }
+    void setTeapotAngle(qreal angle) { tangle = angle; update(); }
 
     qreal cubeAngle() const { return cangle; }
-    void setCubeAngle(qreal angle) { cangle = angle; performUpdate(); }
+    void setCubeAngle(qreal angle) { cangle = angle; update(); }
 
     qreal orbitAngle() const { return oangle; }
-    void setOrbitAngle(qreal angle) { oangle = angle; performUpdate(); }
+    void setOrbitAngle(qreal angle) { oangle = angle; update(); }
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -83,9 +83,7 @@ private:
     qreal tangle;
     qreal cangle;
     qreal oangle;
-    bool needsUpdate;
 
-    void performUpdate();
     void drawCube1(QGLPainter *painter, const QVector3D &posn);
     void drawCube2(QGLPainter *painter, const QVector3D &posn);
 };
