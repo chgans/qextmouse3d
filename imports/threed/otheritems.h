@@ -43,7 +43,7 @@
 #define OTHERITEMS_H
 
 // This is a dummy header file for defining the interface of
-// pure QML items from "Cube.qml", "Pane.qml", etc, to qdoc.
+// pure QML items from "Cube.qml", etc, to qdoc.
 
 #include "item3d.h"
 
@@ -69,32 +69,7 @@ private:
     qreal m_size;
 };
 
-class Pane : public Item3d
-{
-    Q_OBJECT
-    Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged)
-    Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
-public:
-    Pane(QObject *parent = 0) : Item3d(parent), m_width(1), m_height(1) {}
-    ~Pane() {}
-
-    qreal width() const { return m_width; }
-    void setWidth(qreal value) { m_width = value; emit widthChanged(); }
-
-    qreal height() const { return m_height; }
-    void setHeight(qreal value) { m_height = value; emit heightChanged(); }
-
-Q_SIGNALS:
-    void widthChanged();
-    void heightChanged();
-
-private:
-    qreal m_width;
-    qreal m_height;
-};
-
 QML_DECLARE_TYPE(Cube)
-QML_DECLARE_TYPE(Pane)
 
 QT_END_NAMESPACE
 

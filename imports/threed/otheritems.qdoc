@@ -75,7 +75,7 @@
     }
     \endcode
 
-    \sa Item3d, Pane
+    \sa Item3d
 */
 
 /*!
@@ -84,42 +84,3 @@
     The size of the cube.  The default value for this property is 1.
     The cube will be centered on Item3d::position.
 */
-
-/*!
-    \qmlclass Pane Pane
-    \brief The Pane item represents a rectangular pane in 3D space that can be textured with an effect.
-    \since 4.8
-    \ingroup qt3d::qml3d
-    \inherits Item3d
-
-    The Pane element in QML provides a simple way to create a quad
-    object, usually for placing a 2D image in 3D space.  For example,
-    the following displays a picture on a 2 x 1.5 unit pane at the origin:
-
-    \code
-    Pane {
-        width: 2
-        height: 1.5
-        effect: Effect { texture: "picture.jpg" }
-    }
-    \endcode
-
-    \sa Item3d, Cube
-*/
-
-/*!
-    \qmlproperty qreal Pane::width
-
-    The width of the pane.  The default value is 1.
-
-    \sa height
-*/
-
-/*!
-    \qmlproperty real Pane::height
-
-    The height of the pane.  The default value is 1.
-
-    \sa width
-*/
-

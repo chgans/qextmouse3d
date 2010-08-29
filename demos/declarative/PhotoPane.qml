@@ -1,16 +1,31 @@
 import Qt 4.7
 import Qt.labs.threed 1.0
 
-Pane {
+Item3d {
     id: photo
 
     property real offset
     property real layer
     property variant image
-	property bool bounce: false
-	
-    width: 4
-    height: 3
+    property bool bounce: false
+
+    mesh: InlineMesh {
+        primitiveType: InlineMesh.Quads
+        smooth: false
+        vertices: [
+            -2, -1.5, 0.0,
+             2, -1.5, 0.0,
+             2,  1.5, 0.0,
+            -2,  1.5, 0.0
+        ]
+        textureCoords: [
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            0.0, 1.0
+        ]
+    }
+
     position: Qt.vector3d(offset, 0, -layer)
     effect: Effect { decal: true; texture: image }
 
@@ -21,17 +36,17 @@ Pane {
             photo.state = "pulled_out";
     }
 
-	onHoverEnter: { photo.state = "pop_up" }
+    onHoverEnter: { photo.state = "pop_up" }
     onHoverLeave: { photo.state = "returned" }
 
     states: [
-		State {
-			name: "pop_up"
-			PropertyChanges {
-				target: photo
-				y: 1.0
-			}
-		},
+        State {
+            name: "pop_up"
+            PropertyChanges {
+                target: photo
+                y: 1.0
+            }
+        },
         State {
             name: "pulled_out"
             PropertyChanges {
