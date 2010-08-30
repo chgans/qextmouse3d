@@ -3,7 +3,7 @@ TARGET = model
 CONFIG += qt \
     debug \
     warn_on
-QT += opengl
+QT += opengl network
 SOURCES = modelview.cpp \
     main.cpp
 HEADERS = modelview.h

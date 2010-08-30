@@ -1,7 +1,12 @@
 TEMPLATE = lib
 TARGET = Qt3D
-CONFIG += dll \
-    warn_on
+gcov {
+    CONFIG += staticlib warn_on
+    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
+    QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
+} else {
+    CONFIG += dll warn_on
+}
 QT += opengl \
     network
  DESTDIR = ../lib

@@ -1,5 +1,7 @@
 TEMPLATE = subdirs
-SUBDIRS += threed plugins util examples demos tests
+SUBDIRS += threed plugins
+!gcov: SUBDIRS += util examples demos
+SUBDIRS += tests
 contains(QT_CONFIG, declarative): SUBDIRS += imports
 CONFIG += ordered
 

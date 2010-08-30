@@ -17,6 +17,11 @@ contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
     INCLUDEPATH += $$PWD/api
 }
 
+gcov {
+    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
+    QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
+}
+
 win32:CONFIG(debug, debug|release) {
     LIBS += -lQt3Dd
 } else {

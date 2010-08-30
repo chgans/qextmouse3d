@@ -3,7 +3,7 @@ TARGET = modelviewer
 CONFIG += qt \
     debug \
     warn_on
-QT += opengl
+QT += opengl network
 SOURCES += main.cpp \
     viewer.cpp \
     controls.cpp \

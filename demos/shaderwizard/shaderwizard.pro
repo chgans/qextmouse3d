@@ -1,7 +1,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2009-09-28T09:59:40
 # -------------------------------------------------
-QT += opengl
+QT += opengl network
 CONFIG += qt \
     debug
 TARGET = shaderwizard
