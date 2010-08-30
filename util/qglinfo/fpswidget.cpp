@@ -128,6 +128,10 @@ void FPSWidget::setupShaders()
 
 #endif
 
+#ifndef GL_MULTISAMPLE
+#define GL_MULTISAMPLE 0x809D
+#endif
+
 void FPSWidget::initializeGL()
 {
     glClearColor(0.9f, 0.95f, 0.8f, 1.0f);
