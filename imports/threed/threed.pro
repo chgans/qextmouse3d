@@ -2,6 +2,14 @@ TEMPLATE = lib
 #DESTDIR = Qt/labs/threed
 TARGET  = qthreedqmlplugin
 CONFIG += qt plugin
+symbian {
+    CONFIG += epocallowdlldata
+    contains(QT_EDITION, OpenSource) {
+        TARGET.CAPABILITY = LocalServices NetworkServices ReadUserData UserEnvironment WriteUserData
+    } else {
+        TARGET.CAPABILITY = All -Tcb
+    }
+}
 QT += declarative opengl network
 VERSION = 1.0.0
 

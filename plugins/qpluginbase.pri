@@ -19,6 +19,7 @@ symbian: {
     contains(QT_EDITION, OpenSource) {
         TARGET.CAPABILITY = LocalServices NetworkServices ReadUserData UserEnvironment WriteUserData
     } else {
-        TARGET.CAPABILITY = All -Tcb        
+        TARGET.CAPABILITY = All -Tcb
     }
+    TARGET = $${TARGET}$${QT_LIBINFIX}
 }

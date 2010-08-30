@@ -23,9 +23,9 @@ gcov {
 }
 
 win32:CONFIG(debug, debug|release) {
-    LIBS += -lQt3Dd
+    LIBS += -lQt3D$${QT_LIBINFIX}d
 } else {
-    LIBS += -lQt3D
+    LIBS += -lQt3D$${QT_LIBINFIX}
 }
 
 # Locate the "lib" directory in the build tree and put it before

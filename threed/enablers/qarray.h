@@ -352,7 +352,7 @@ Q_INLINE_TEMPLATE void QArray<T, PreallocSize>::release()
                 free(m_start, m_end - m_start);
             qFree(m_data);
         }
-    } else if (isPrealloc(m_start)) {
+    } else if (this->isPrealloc(m_start)) {
         if (QTypeInfo<T>::isComplex)
             free(m_start, m_end - m_start);
     }
@@ -472,7 +472,7 @@ Q_OUTOFLINE_TEMPLATE void QArray<T, PreallocSize>::grow(int needed)
     if (!m_data || m_data->ref != 1) {
         // Copy preallocated, raw, or shared data and expand the capacity.
         Data *data = copyData(m_start, size, capacity);
-        if (isPrealloc(m_start))
+        if (this->isPrealloc(m_start))
             free(m_start, size);
         if (m_data)
             m_data->ref.deref();
@@ -596,7 +596,7 @@ Q_INLINE_TEMPLATE int QArray<T, PreallocSize>::capacity() const
 {
     if (m_data)
         return m_data->capacity;
-    else if (isPrealloc(m_start))
+    else if (this->isPrealloc(m_start))
         return PreallocSize;
     else
         return m_end - m_start; // raw data, m_limit == m_start

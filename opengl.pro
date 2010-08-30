@@ -12,3 +12,12 @@ include(doc/doc.pri)
 feature.path = $$[QT_INSTALL_DATA]/mkspecs/features
 feature.files = $$PWD/features/qt3d.prf
 INSTALLS += feature
+
+#symbian does not generate make install rule. Copy prf manually
+symbian {
+    qt3dFile=$$PWD\\features\\qt3d.prf
+    qt3dFile=$$replace(qt3dFile,/,\\)
+    featuresDir=$$[QT_INSTALL_DATA]\\mkspecs\\features
+    featuresDir=$$replace(featuresDir,/,\\)
+    system(copy "$$qt3dFile $$featuresDir")
+}

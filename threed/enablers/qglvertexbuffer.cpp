@@ -608,7 +608,8 @@ bool QGLVertexBuffer::upload()
         size += count * elemSize;
         stride += elemSize;
     }
-    d->buffer.allocate(size);
+    int bufferSize = size;
+    d->buffer.allocate(bufferSize);
     stride /= sizeof(float);
 
     // Determine how to upload the data, using a map if possible.
@@ -647,6 +648,8 @@ bool QGLVertexBuffer::upload()
                 dst += size;
             } else {
                 size *= sizeof(float);
+                if(offset+size > bufferSize) // buffer overflow check
+                    size = bufferSize-offset;
                 d->buffer.write(offset, dst, size);
                 offset += size;
             }

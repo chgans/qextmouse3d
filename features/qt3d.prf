@@ -1,9 +1,15 @@
+!symbian {
+    INCLUDEPATH += $$[QT_INSTALL_HEADERS]/Qt3D
+} else {
+    load(data_caging_paths)
 
-INCLUDEPATH += $$[QT_INSTALL_HEADERS]/Qt3D
+    INCLUDEPATH+=$$MW_LAYER_PUBLIC_EXPORT_PATH(Qt3D)
+}
+
 QT += opengl
 
 win32:CONFIG(debug, debug|release) {
-    LIBS += -lQt3Dd
+    LIBS += -lQt3D$${QT_LIBINFIX}d
 } else {
-    LIBS += -lQt3D
+    LIBS += -lQt3D$${QT_LIBINFIX}
 }

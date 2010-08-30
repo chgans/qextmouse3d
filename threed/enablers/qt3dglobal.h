@@ -46,14 +46,22 @@
 
 // XXX: Move to qglobal.h eventually.
 QT_LICENSED_MODULE(Qt3d)
-#if defined(Q_OS_WIN) && defined(QT_MAKEDLL)
-#   if defined(QT_BUILD_QT3D_LIB)
-#       define Q_QT3D_EXPORT Q_DECL_EXPORT
-#   else
-#       define Q_QT3D_EXPORT Q_DECL_IMPORT
-#   endif
-#elif defined(Q_OS_WIN) && defined(QT_DLL)
-#   define Q_QT3D_EXPORT Q_DECL_IMPORT
+#if defined(Q_OS_WIN) || defined(Q_OS_SYMBIAN)
+#  if defined(QT_NODLL)
+#    undef QT_MAKEDLL
+#    undef QT_DLL
+#  elif defined(QT_MAKEDLL)        /* create a Qt DLL library */
+#    if defined(QT_DLL)
+#      undef QT_DLL
+#    endif
+#    if defined(QT_BUILD_QT3D_LIB)
+#        define Q_QT3D_EXPORT Q_DECL_EXPORT
+#    else
+#        define Q_QT3D_EXPORT Q_DECL_IMPORT
+#    endif
+#  elif defined(QT_DLL) /* use a Qt DLL library */
+#    define Q_QT3D_EXPORT Q_DECL_IMPORT
+#  endif
 #endif
 #if !defined(Q_QT3D_EXPORT)
 #   if defined(QT_SHARED)
