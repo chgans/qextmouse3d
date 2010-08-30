@@ -67,7 +67,7 @@
     Viewport {
         width: 640; height: 480
         camera: Camera {}
-        Light {}
+        light: Light {}
         Item3d {
             mesh: Mesh { source: "meshes/teapot.bez" }
             effect: Effect {}
@@ -93,6 +93,7 @@ public:
     bool itemsInitialized;
     bool needsPick;
     QGLCamera *camera;
+    QGLLightParameters *light;
     QGLLightModel *lightModel;
     Effect *backdrop;
     QColor backgroundColor;
@@ -112,6 +113,7 @@ ViewportPrivate::ViewportPrivate()
     , itemsInitialized(false)
     , needsPick(true)
     , camera(0)
+    , light(0)
     , lightModel(0)
     , backdrop(0)
     , backgroundColor(Qt::black)
@@ -171,6 +173,7 @@ Viewport::Viewport(QDeclarativeItem *parent)
     connect(this, SIGNAL(viewportChanged()), this, SLOT(update3d()));
 
     setCamera(new QGLCamera(this));
+    setLight(new QGLLightParameters(this));
 }
 
 /*!
@@ -303,9 +306,41 @@ void Viewport::setCamera(QGLCamera *value)
 }
 
 /*!
+    \qmlproperty Light Viewport::light
+
+    This property defines the main scene light to use for 3D items
+    that are drawn in this viewport.
+
+    \sa lightModel
+*/
+
+QGLLightParameters *Viewport::light() const
+{
+    return d->light;
+}
+
+void Viewport::setLight(QGLLightParameters *value)
+{
+    if (d->light != value) {
+        if (d->light) {
+            disconnect(d->light, SIGNAL(lightChanged()),
+                       this, SLOT(update3d()));
+        }
+        d->light = value;
+        if (d->light) {
+            connect(d->light, SIGNAL(lightChanged()),
+                    this, SLOT(update3d()));
+        }
+        emit viewportChanged();
+    }
+}
+
+/*!
     \qmlproperty LightModel Viewport::lightModel
     The user is able to set a lighting model for the 3d environment through the use of the
     lightModel property.  By default the light model is undefined.
+
+    \sa light
 */
 QGLLightModel *Viewport::lightModel() const
 {
@@ -535,23 +570,13 @@ void Viewport::draw(QGLPainter *painter)
 
     painter->setObjectPickId(-1);
     QObjectList list = QObject::children();    
-    bool haveLights = false;
-    foreach (QObject *child, list) {
-        QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
-        if (light) {
-            painter->setMainLight(light, QMatrix4x4());
-            break;
-        }
-    }
+    painter->setMainLight(d->light, QMatrix4x4());
     painter->setLightModel(d->lightModel);
     foreach (QObject *child, list) {
         Item3d *item = qobject_cast<Item3d *>(child);
         if (item)
             item->draw(painter);
     }
-    
-    if (haveLights)
-        painter->setMainLight(0);
 }
 
 /*!

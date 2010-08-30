@@ -64,6 +64,7 @@ class Viewport : public QDeclarativeItem
     Q_PROPERTY(bool navigation READ navigation WRITE setNavigation NOTIFY viewportChanged)
     Q_PROPERTY(bool blending READ blending WRITE setBlending NOTIFY viewportChanged)
     Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera)
+    Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY viewportChanged)
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel NOTIFY viewportChanged)
     Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop NOTIFY viewportChanged)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY viewportChanged)
@@ -85,6 +86,9 @@ public:
 
     QGLCamera *camera() const;
     void setCamera(QGLCamera *value);
+
+    QGLLightParameters *light() const;
+    void setLight(QGLLightParameters *value);
 
     QGLLightModel *lightModel() const;
     void setLightModel(QGLLightModel *value);

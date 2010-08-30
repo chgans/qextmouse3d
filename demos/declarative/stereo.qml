@@ -8,8 +8,6 @@ Viewport {
         eyeSeparation: 0.2
     }
 
-    Light {}
-
     Item3d {
         id: teapot
         mesh: Mesh { source: "meshes/teapot.bez" }

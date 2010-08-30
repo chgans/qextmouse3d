@@ -18,7 +18,7 @@ Item3d {
 		}
 	]
 	
-	Light {}
+	light: Light {}
 	
 	mesh: Mesh { source: "meshes/penguin.3ds" }
 	

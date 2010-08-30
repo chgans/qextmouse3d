@@ -10,8 +10,6 @@ Viewport {
         eye: Qt.vector3d(0, 3, 10)
     }
 
-    Light {}
-
     Item3d {
         id: teapot
         transform: [

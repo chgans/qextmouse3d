@@ -3,7 +3,6 @@ import Qt.labs.threed 1.0
 
 Viewport {
     width: 640; height: 480
-    Light {}
 
     Cube {
         size: 1.5

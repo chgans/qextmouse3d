@@ -173,9 +173,9 @@ public:
     void setLightModel(const QGLLightModel *value);
 
     const QGLLightParameters *mainLight() const;
-    void setMainLight(QGLLightParameters *parameters);
+    void setMainLight(const QGLLightParameters *parameters);
     void setMainLight
-        (QGLLightParameters *parameters, const QMatrix4x4& transform);
+        (const QGLLightParameters *parameters, const QMatrix4x4& transform);
     QMatrix4x4 mainLightTransform() const;
 
     const QGLMaterial *faceMaterial(QGL::Face face) const;

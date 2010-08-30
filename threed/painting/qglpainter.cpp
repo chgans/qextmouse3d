@@ -1779,7 +1779,7 @@ const QGLLightParameters *QGLPainter::mainLight() const
 
     \sa mainLight(), mainLightTransform()
 */
-void QGLPainter::setMainLight(QGLLightParameters *parameters)
+void QGLPainter::setMainLight(const QGLLightParameters *parameters)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
@@ -1808,7 +1808,7 @@ void QGLPainter::setMainLight(QGLLightParameters *parameters)
     \sa mainLight(), mainLightTransform()
 */
 void QGLPainter::setMainLight
-        (QGLLightParameters *parameters, const QMatrix4x4& transform)
+        (const QGLLightParameters *parameters, const QMatrix4x4& transform)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();

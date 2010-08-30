@@ -234,6 +234,7 @@ public:
         , scale(1.0f)
         , mesh(0)
         , effect(0)
+        , light(0)
         , objectPickId(-1)
         , cullFaces(Item3d::CullDisabled)
         , _stateGroup(0)
@@ -251,6 +252,7 @@ public:
     qreal scale;
     Mesh *mesh;
     Effect *effect;    
+    QGLLightParameters *light;
     int objectPickId;
     Item3d::CullFaces cullFaces;
     QDeclarativeStateGroup *states();
@@ -871,7 +873,37 @@ void Item3d::setEffect(Effect *value)
     update();
 }
 
+/*!
+    \qmlproperty Light Item3d::light
 
+    This property defines an item-specific light that will be used
+    intead of Viewport::light for rendering this item and its children
+    if the value is not null.
+
+    \sa Viewport::light
+*/
+
+QGLLightParameters *Item3d::light() const
+{
+    return d->light;
+}
+
+void Item3d::setLight(QGLLightParameters *value)
+{
+    if (d->light != value) {
+        if (d->light) {
+            disconnect(d->light, SIGNAL(lightChanged()),
+                       this, SLOT(update()));
+        }
+        d->light = value;
+        if (d->light) {
+            connect(d->light, SIGNAL(lightChanged()),
+                    this, SLOT(update()));
+        }
+        emit lightChanged();
+        update();
+    }
+}
 
 /*!
     \qmlproperty list<Item3d> Item3d::children
@@ -1092,17 +1124,14 @@ void Item3d::draw(QGLPainter *painter)
     int prevId = painter->objectPickId();
     painter->setObjectPickId(d->objectPickId);
     QObjectList list = QObject::children();
-    bool haveLights = false;
 
-	//Lighting
-    foreach (QObject *child, list) {
-        QGLLightParameters *light = qobject_cast<QGLLightParameters *>(child);
-        if (light) {
-            painter->setMainLight(light);
-            haveLights = true;
-            break;
-            // TODO: only one light supported right now
-        }
+    //Lighting
+    const QGLLightParameters *currentLight = 0;
+    QMatrix4x4 currentLightTransform;
+    if (d->light) {
+        currentLight = painter->mainLight();
+        currentLightTransform = painter->mainLightTransform();
+        painter->setMainLight(d->light);
     }
 
     //Culling
@@ -1167,9 +1196,8 @@ void Item3d::draw(QGLPainter *painter)
         d->effect->disableEffect(painter);
     if (d->cullFaces != CullDisabled)
         glDisable(GL_CULL_FACE);
-    if (haveLights) {
-        painter->setMainLight(0);
-    }
+    if (d->light)
+        painter->setMainLight(currentLight, currentLightTransform);
     painter->setObjectPickId(prevId);
 }
 

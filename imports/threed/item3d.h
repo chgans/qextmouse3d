@@ -80,6 +80,7 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> pretransform READ pretransform DESIGNABLE false FINAL)
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
+    Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)    
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<Item3d> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
@@ -128,6 +129,9 @@ public:
 
     Effect *effect() const;
     void setEffect(Effect *value);
+
+    QGLLightParameters *light() const;
+    void setLight(QGLLightParameters *value);
 
     QDeclarativeListProperty<QObject> data();
     QDeclarativeListProperty<QObject> resources();
@@ -181,6 +185,7 @@ Q_SIGNALS:
     void meshChanged();
     void meshNodeChanged();
     void effectChanged();
+    void lightChanged();
     void stateChanged(const QString &);
     void clicked();
     void doubleClicked();
