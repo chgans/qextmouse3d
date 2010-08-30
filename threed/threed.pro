@@ -23,7 +23,6 @@ QT += opengl \
 
 }
 include(threed.pri)
-RESOURCES += shaders.qrc
 PUBLIC_HEADERS = $$HEADERS
 HEADERS += $$PRIVATE_HEADERS
 DEFINES += QT_BUILD_QT3D_LIB
