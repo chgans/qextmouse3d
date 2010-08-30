@@ -8,7 +8,7 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 
-#if !defined(QT_NO_EGL)
+#if !defined(QT_NO_EGL) && defined(QT_BUILD_INTERNAL)
 #include <QtGui/private/qegl_p.h>
 #include <QtGui/private/qeglproperties_p.h>
 #endif
@@ -220,7 +220,7 @@ QString QGLInfo::formatExtensions(const QByteArray& extString) const
 
 QString QGLInfo::reportEGLVersionInfo() const
 {
-#if !defined(QT_NO_EGL)
+#if !defined(QT_NO_EGL) && defined(QT_BUILD_INTERNAL)
     QString d;
     EGLDisplay dpy = eglGetCurrentDisplay();
     d += "EGL vendor string: ";
@@ -242,7 +242,7 @@ QString QGLInfo::reportEGLVersionInfo() const
 
 QString QGLInfo::reportEGLExtensionInfo() const
 {
-#if !defined(QT_NO_EGL)
+#if !defined(QT_NO_EGL) && defined(QT_BUILD_INTERNAL)
     EGLDisplay dpy = eglGetCurrentDisplay();
     QByteArray extString
         (reinterpret_cast<const char *>(eglQueryString(dpy, EGL_EXTENSIONS)));
@@ -254,7 +254,7 @@ QString QGLInfo::reportEGLExtensionInfo() const
 
 QString QGLInfo::reportEGLConfigInfo() const
 {
-#if !defined(QT_NO_EGL)
+#if !defined(QT_NO_EGL) && defined(QT_BUILD_INTERNAL)
     QString d;
     QEglProperties props;
     EGLint count = 0;
