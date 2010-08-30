@@ -206,7 +206,7 @@ InlineMesh::~InlineMesh()
     \o Triangles Separate triangles with three vertices each.
     \o TriangleFan Triangle fan starting with the first vertex.
     \o TriangleStrip Triangle strip.
-    \o Quads Separate quads with three vertices each.
+    \o Quads Separate quads with four vertices each.
     \o QuadStrip Quad strip.
     \endlist
 */

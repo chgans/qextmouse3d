@@ -120,7 +120,7 @@ QT_BEGIN_NAMESPACE
     face directly at the camera no matter how the world co-ordinate
     system is rotated.  Sometimes the billboard needs to stay at right
     angles to the "ground plane" even if the user's viewpoint is
-    elevated.  This behavior can be enabled using the preserveUpVector()
+    elevated.  This behavior can be enabled using the preserveUpVector
     property:
 
     \code
