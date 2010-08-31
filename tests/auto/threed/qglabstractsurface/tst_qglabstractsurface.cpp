@@ -100,6 +100,7 @@ void tst_QGLAbstractSurface::glWidgetSurface()
     QGLWidgetSurface surface2(&glw2);
     QVERIFY(surface2.surfaceType() == QGLAbstractSurface::Widget);
     QVERIFY(surface2.widget() == &glw2);
+    QVERIFY(surface2.device() == &glw2);
 
     QVERIFY(surface1.activate());
     QVERIFY(surface1.switchTo(&surface2));
@@ -126,6 +127,7 @@ void tst_QGLAbstractSurface::fboSurface()
     QGLFramebufferObjectSurface surface2(&fbo1);
     QVERIFY(surface2.surfaceType() == QGLAbstractSurface::FramebufferObject);
     QVERIFY(surface2.framebufferObject() == &fbo1);
+    QVERIFY(surface2.device() == &fbo1);
 
     QVERIFY(isFboCurrent(0));
 
@@ -167,8 +169,12 @@ void tst_QGLAbstractSurface::fboSurface()
     QGLFramebufferObjectSurface surface4;
     QVERIFY(surface4.surfaceType() == QGLAbstractSurface::FramebufferObject);
     QVERIFY(surface4.framebufferObject() == 0);
+    QVERIFY(surface4.device() == 0);
+    QVERIFY(!surface4.activate(0));
+    QVERIFY(surface4.viewportGL().isNull());
     surface4.setFramebufferObject(&fbo2);
     QVERIFY(surface4.framebufferObject() == &fbo2);
+    QVERIFY(surface4.device() == &fbo2);
     surface4.setContext(glw.context());
 
     QVERIFY(surface1.switchTo(&surface2));
@@ -208,6 +214,7 @@ void tst_QGLAbstractSurface::pbufferSurface()
     QGLPixelBufferSurface surface2(&pbuffer1);
     QVERIFY(surface2.surfaceType() == QGLAbstractSurface::PixelBuffer);
     QVERIFY(surface2.pixelBuffer() == &pbuffer1);
+    QVERIFY(surface2.device() == &pbuffer1);
 
     QVERIFY(surface2.activate());
     QVERIFY(QGLContext::currentContext() != glw.context());
@@ -242,8 +249,12 @@ void tst_QGLAbstractSurface::pbufferSurface()
     QGLPixelBufferSurface surface4;
     QVERIFY(surface4.surfaceType() == QGLAbstractSurface::PixelBuffer);
     QVERIFY(surface4.pixelBuffer() == 0);
+    QVERIFY(surface4.device() == 0);
+    QVERIFY(!surface4.activate(0));
+    QVERIFY(surface4.viewportGL().isNull());
     surface4.setPixelBuffer(&pbuffer2);
     QVERIFY(surface4.pixelBuffer() == &pbuffer2);
+    QVERIFY(surface4.device() == &pbuffer2);
 
     QVERIFY(surface1.switchTo(&surface2));
     QVERIFY(QGLContext::currentContext() == surface2ctx);
@@ -272,6 +283,7 @@ void tst_QGLAbstractSurface::subSurface()
     QGLSubsurface surface2(&surface1, QRect(0, 0, 32, 16));
     QVERIFY(surface2.surfaceType() == QGLAbstractSurface::Subsurface);
     QVERIFY(surface2.surface() == &surface1);
+    QVERIFY(surface2.device() == &glw);
     QCOMPARE(surface2.region(), QRect(0, 0, 32, 16));
 
     QVERIFY(surface2.activate());
@@ -290,9 +302,12 @@ void tst_QGLAbstractSurface::subSurface()
     QGLSubsurface surface4;
     QVERIFY(surface4.surfaceType() == QGLAbstractSurface::Subsurface);
     QVERIFY(surface4.surface() == 0);
+    QVERIFY(surface4.device() == 0);
     QVERIFY(surface4.region().isNull());
-    surface4.setSurface(&surface3);
+    QVERIFY(!surface4.activate(0));
     surface4.setRegion(QRect(4, 6, 12, 8));
+    QCOMPARE(surface4.viewportGL(), QRect(4, 0, 12, 8));
+    surface4.setSurface(&surface3);
     QVERIFY(surface4.surface() == &surface3);
     QCOMPARE(surface4.region(), QRect(4, 6, 12, 8));
 
@@ -305,6 +320,7 @@ void tst_QGLAbstractSurface::maskedSurface()
 {
     QGLWidget glw;
     QGLWidgetSurface surface1(&glw);
+    QVERIFY(surface1.device() == &glw);
 
     QGLMaskedSurface surface2(&surface1, QGLMaskedSurface::RedMask |
                                          QGLMaskedSurface::AlphaMask);
@@ -312,6 +328,8 @@ void tst_QGLAbstractSurface::maskedSurface()
     QVERIFY(surface2.surface() == &surface1);
     QVERIFY(surface2.mask() == (QGLMaskedSurface::RedMask |
                                 QGLMaskedSurface::AlphaMask));
+    QVERIFY(surface2.device() == surface1.device());
+    QCOMPARE(surface2.viewportGL(), QRect(0, 0, glw.width(), glw.height()));
 
     QVERIFY(surface2.activate());
 
@@ -325,10 +343,13 @@ void tst_QGLAbstractSurface::maskedSurface()
     QGLMaskedSurface surface3;
     QVERIFY(surface3.surfaceType() == QGLAbstractSurface::Masked);
     QVERIFY(surface3.surface() == 0);
+    QVERIFY(surface3.device() == 0);
     QVERIFY(surface3.mask() == (QGLMaskedSurface::RedMask |
                                 QGLMaskedSurface::GreenMask |
                                 QGLMaskedSurface::BlueMask |
                                 QGLMaskedSurface::AlphaMask));
+    QVERIFY(!surface3.activate(0));
+    QVERIFY(surface3.viewportGL().isNull());
     surface3.setSurface(&surface1);
     surface3.setMask(QGLMaskedSurface::GreenMask | QGLMaskedSurface::BlueMask);
     QVERIFY(surface3.surface() == &surface1);
