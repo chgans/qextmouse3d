@@ -42,9 +42,8 @@
 #ifndef QGRAPHICSFACECAMERA_H
 #define QGRAPHICSFACECAMERA_H
 
-#include <QtGui/QGraphicsTransform>
+#include "qgraphicstransform3d.h"
 #include <QtCore/qscopedpointer.h>
-#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
@@ -52,7 +51,7 @@ QT_BEGIN_NAMESPACE
 
 class QGraphicsFaceCameraPrivate;
 
-class Q_QT3D_EXPORT QGraphicsFaceCamera : public QGraphicsTransform
+class Q_QT3D_EXPORT QGraphicsFaceCamera : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(bool preserveUpVector READ preserveUpVector WRITE setPreserveUpVector NOTIFY preserveUpVectorChanged)

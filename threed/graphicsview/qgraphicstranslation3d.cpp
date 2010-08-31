@@ -118,7 +118,7 @@ public:
     Constructs a new translation and attaches it to \a parent.
 */
 QGraphicsTranslation3D::QGraphicsTranslation3D(QObject *parent)
-    : QGraphicsTransform(parent), d_ptr(new QGraphicsTranslation3DPrivate)
+    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsTranslation3DPrivate)
 {
 }
 

@@ -127,7 +127,7 @@ public:
     Construct a 3D scale transform and attach it to \a parent.
 */
 QGraphicsScale3D::QGraphicsScale3D(QObject *parent)
-    : QGraphicsTransform(parent), d_ptr(new QGraphicsScale3DPrivate)
+    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsScale3DPrivate)
 {
 }
 

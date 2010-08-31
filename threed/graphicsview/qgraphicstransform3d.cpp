@@ -39,64 +39,52 @@
 **
 ****************************************************************************/
 
-#ifndef QGRAPHICSSCALE3D_H
-#define QGRAPHICSSCALE3D_H
-
 #include "qgraphicstransform3d.h"
-#include <QtCore/qscopedpointer.h>
-
-QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QGraphicsScale3DPrivate;
+/*!
+    \class QGraphicsTransform3D
+    \brief The QGraphicsTransform3D class is an abstract base class for building 3D transformations.
+    \since 4.8
+    \ingroup qt3d
+    \ingroup qt3d::graphicsview
 
-class Q_QT3D_EXPORT QGraphicsScale3D : public QGraphicsTransform3D
+    \sa QGraphicsScale3D, QGraphicsRotation3D, QGraphicsTranslation3D
+    \sa QGraphicsFaceCamera
+*/
+
+/*!
+    \fn QGraphicsTransform3D::QGraphicsTransform3D(QObject *parent)
+
+    Constructs a 3D transformation and attaches it to \a parent.
+*/
+
+/*!
+    \fn QGraphicsTransform3D::~QGraphicsTransform3D()
+
+    Destroys this 3D transformation.
+*/
+
+/*!
+    Notifies items that are using this transformation that the parameters
+    have changed, and emits the transformChanged() signal.
+
+    \sa transformChanged()
+*/
+void QGraphicsTransform3D::update()
 {
-    Q_OBJECT
-    Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)
-    Q_PROPERTY(qreal xScale READ xScale WRITE setXScale NOTIFY scaleChanged)
-    Q_PROPERTY(qreal yScale READ yScale WRITE setYScale NOTIFY scaleChanged)
-    Q_PROPERTY(qreal zScale READ zScale WRITE setZScale NOTIFY scaleChanged)
-    Q_PROPERTY(QVector3D scaleVector READ scaleVector WRITE setScaleVector NOTIFY scaleChanged)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
-public:
-    QGraphicsScale3D(QObject *parent = 0);
-    ~QGraphicsScale3D();
+    emit transformChanged();
+    QGraphicsTransform::update();
+}
 
-    QVector3D origin() const;
-    void setOrigin(const QVector3D &value);
+/*!
+    \fn void QGraphicsTransform3D::transformChanged()
 
-    qreal xScale() const;
-    void setXScale(qreal value);
+    Signal that is emitted whenever any of the transformation's parameters
+    are changed and update() has been called.
 
-    qreal yScale() const;
-    void setYScale(qreal value);
-
-    qreal zScale() const;
-    void setZScale(qreal value);
-
-    QVector3D scaleVector() const;
-    void setScaleVector(const QVector3D &value);
-
-    qreal scale() const;
-    void setScale(qreal value);
-
-    void applyTo(QMatrix4x4 *matrix) const;
-
-Q_SIGNALS:
-    void originChanged();
-    void scaleChanged();
-
-private:
-    QScopedPointer<QGraphicsScale3DPrivate> d_ptr;
-
-    Q_DISABLE_COPY(QGraphicsScale3D)
-    Q_DECLARE_PRIVATE(QGraphicsScale3D)
-};
+    \sa update()
+*/
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif

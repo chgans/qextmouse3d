@@ -127,7 +127,7 @@ public:
     Create a 3D rotation transformation and attach it to \a parent.
 */
 QGraphicsRotation3D::QGraphicsRotation3D(QObject *parent)
-    : QGraphicsTransform(parent)
+    : QGraphicsTransform3D(parent)
     , d_ptr(new QGraphicsRotation3DPrivate)
 {
 }

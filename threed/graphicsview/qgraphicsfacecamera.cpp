@@ -144,7 +144,7 @@ public:
     Construct a camera-facing transform and attach it to \a parent.
 */
 QGraphicsFaceCamera::QGraphicsFaceCamera(QObject *parent)
-    : QGraphicsTransform(parent), d_ptr(new QGraphicsFaceCameraPrivate)
+    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsFaceCameraPrivate)
 {
 }
 

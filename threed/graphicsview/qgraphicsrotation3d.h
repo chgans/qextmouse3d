@@ -42,8 +42,7 @@
 #ifndef QGRAPHICSROTATION3D_H
 #define QGRAPHICSROTATION3D_H
 
-#include <QtGui/QGraphicsTransform>
-#include "qt3dglobal.h"
+#include "qgraphicstransform3d.h"
 
 QT_BEGIN_HEADER
 
@@ -51,7 +50,7 @@ QT_BEGIN_NAMESPACE
 
 class QGraphicsRotation3DPrivate;
 
-class Q_QT3D_EXPORT QGraphicsRotation3D : public QGraphicsTransform
+class Q_QT3D_EXPORT QGraphicsRotation3D : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)

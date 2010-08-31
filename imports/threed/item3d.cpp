@@ -46,10 +46,7 @@
 #include "qglabstractscene.h"
 #include "qglscenenode.h"
 #include "qglview.h"
-#include "qgraphicsrotation3d.h"
-#include "qgraphicsscale3d.h"
-#include "qgraphicstranslation3d.h"
-#include "qgraphicsfacecamera.h"
+#include "qgraphicstransform3d.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
@@ -317,29 +314,20 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
             ptrans->append(item);            
-            if (qobject_cast<QGraphicsScale *>(item)) {
+            if (qobject_cast<QGraphicsTransform3D *>(item)) {
+                QObject::connect(item, SIGNAL(transformChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsScale *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(scaleChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsRotation *>(item) ||
-                       qobject_cast<QGraphicsRotation3D *>(item)) {
+            } else if (qobject_cast<QGraphicsRotation *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(angleChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(axisChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsScale3D *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(scaleChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
-                QObject::connect(item, SIGNAL(translateChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsFaceCamera *>(item)) {
-                QObject::connect(item, SIGNAL(preserveUpVectorChanged()),
                                  object, SLOT(update()));
             }
         }
@@ -394,29 +382,20 @@ void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransf
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
             ptrans->append(item);            
-            if (qobject_cast<QGraphicsScale *>(item)) {
+            if (qobject_cast<QGraphicsTransform3D *>(item)) {
+                QObject::connect(item, SIGNAL(transformChanged()),
+                                 object, SLOT(update()));
+            } else if (qobject_cast<QGraphicsScale *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(scaleChanged()),
                                  object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsRotation *>(item) ||
-                       qobject_cast<QGraphicsRotation3D *>(item)) {
+            } else if (qobject_cast<QGraphicsRotation *>(item)) {
                 QObject::connect(item, SIGNAL(originChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(angleChanged()),
                                  object, SLOT(update()));
                 QObject::connect(item, SIGNAL(axisChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsScale3D *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(scaleChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsTranslation3D *>(item)) {
-                QObject::connect(item, SIGNAL(translateChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsFaceCamera *>(item)) {
-                QObject::connect(item, SIGNAL(preserveUpVectorChanged()),
                                  object, SLOT(update()));
             }
         }

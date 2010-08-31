@@ -42,9 +42,8 @@
 #ifndef QGRAPHICSTRANSLATION3D_H
 #define QGRAPHICSTRANSLATION3D_H
 
-#include <QtGui/QGraphicsTransform>
+#include "qgraphicstransform3d.h"
 #include <QtCore/qscopedpointer.h>
-#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
@@ -52,7 +51,7 @@ QT_BEGIN_NAMESPACE
 
 class QGraphicsTranslation3DPrivate;
 
-class Q_QT3D_EXPORT QGraphicsTranslation3D : public QGraphicsTransform
+class Q_QT3D_EXPORT QGraphicsTranslation3D : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(QVector3D translate READ translate WRITE setTranslate NOTIFY translateChanged)
