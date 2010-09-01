@@ -67,7 +67,7 @@ public:
     ShaderProgramEffect(ShaderProgram* parent);
     virtual ~ShaderProgramEffect();
 
-    void create(const QString& vertexShader, const QString& fragmentShader);
+    bool create(const QString& vertexShader, const QString& fragmentShader);
 
     QList<QGL::VertexAttribute> requiredFields() const;
 

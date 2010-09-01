@@ -60,6 +60,10 @@
     The ShaderProgram class provides Qml/3d users with the ability to use a  QGLShaderProgram within the
     logical context of the normal \l Effect class provided by Qml/3d.
 
+    If the system does not support shaders, then ShaderProgram will
+    behave the same as \l Effect, with support for simple lit
+    materials only.
+
     \section1 Attributes
 
     ShaderProgram provides a standard set of 8 vertex attributes that
@@ -203,11 +207,17 @@ QT_BEGIN_NAMESPACE
 class ShaderProgramPrivate
 {
 public:
-    ShaderProgramPrivate() : regenerate(false), effect(0) {}
+    ShaderProgramPrivate()
+        : regenerate(false)
+        , shadersSupported(true) // Assume supported until known otherwise.
+        , effect(0)
+    {
+    }
 
     QString vertexShader;
     QString fragmentShader;
     bool regenerate;
+    bool shadersSupported;
     ShaderProgramEffect *effect;
 };
 
@@ -267,19 +277,33 @@ ShaderProgramEffect::~ShaderProgramEffect()
   The vertex shader source is defined as a QString in the \a vertexShader parameter, while the fragment shader
   is provided in the \a fragmentShader parameter.
 */
-void ShaderProgramEffect::create
+bool ShaderProgramEffect::create
     (const QString& vertexShader, const QString& fragmentShader)
 {
+    if (!QGLShaderProgram::hasOpenGLShaderPrograms())
+        return false;
     delete program;
     program = new QGLShaderProgram();
-    if (!program->addShaderFromSourceCode(QGLShader::Vertex, vertexShader))
+    bool compiled = true;
+    if (!program->addShaderFromSourceCode(QGLShader::Vertex, vertexShader)) {
         qWarning("Could not compile vertex shader");
-    if (!program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader))
+        compiled = false;
+    }
+    if (!program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader)) {
         qWarning("Could not compile fragment shader");
+        compiled = false;
+    }
     // Some systems require the position to be at location 0.
     program->bindAttributeLocation("qgl_Vertex", 0);
-    if (!program->link())
+    if (!program->link()) {
         qWarning("Could not link shader program");
+        compiled = false;
+    }
+    if (!compiled) {
+        delete program;
+        program = 0;
+        return false;
+    }
     vertexAttr = program->attributeLocation("qgl_Vertex");
     normalAttr = program->attributeLocation("qgl_Normal");
     colorAttr = program->attributeLocation("qgl_Color");
@@ -296,6 +320,7 @@ void ShaderProgramEffect::create
     lightPositionUniform = program->uniformLocation("qgl_LightPosition");
     spotDirectionUniform = program->uniformLocation("qgl_SpotDirection");
     setUniformLocationsFromParentProperties();
+    return true;
 }
 
 /*!
@@ -964,11 +989,31 @@ void ShaderProgram::setFragmentShader(const QString& value)
 */
 void ShaderProgram::enableEffect(QGLPainter *painter)
 {
+    if (!d->shadersSupported && !d->regenerate) {
+        Effect::enableEffect(painter);
+        return;
+    }
     if (!d->effect) {
         d->effect = new ShaderProgramEffect(this);
-        d->effect->create(d->vertexShader, d->fragmentShader);
+        if (!d->effect->create(d->vertexShader, d->fragmentShader)) {
+            delete d->effect;
+            d->effect = 0;
+            Effect::enableEffect(painter);
+            d->regenerate = false;
+            d->shadersSupported = false;
+            return;
+        }
+        d->shadersSupported = true;
     } else if (d->regenerate) {
-        d->effect->create(d->vertexShader, d->fragmentShader);
+        if (!d->effect->create(d->vertexShader, d->fragmentShader)) {
+            delete d->effect;
+            d->effect = 0;
+            Effect::enableEffect(painter);
+            d->regenerate = false;
+            d->shadersSupported = false;
+            return;
+        }
+        d->shadersSupported = true;
     }
     d->regenerate = false;
     painter->setUserEffect(d->effect);
