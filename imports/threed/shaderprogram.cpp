@@ -959,6 +959,7 @@ void ShaderProgram::setVertexShader(const QString& value)
 {
     d->vertexShader = value;
     d->regenerate = true;
+    emit shaderChanged();
     emit effectChanged();
 }
 
@@ -979,6 +980,7 @@ void ShaderProgram::setFragmentShader(const QString& value)
 {
     d->fragmentShader = value;
     d->regenerate = true;
+    emit shaderChanged();
     emit effectChanged();
 }
 

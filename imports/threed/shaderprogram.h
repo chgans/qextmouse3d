@@ -53,8 +53,8 @@ class ShaderProgramPrivate;
 class ShaderProgram : public Effect
 {
     Q_OBJECT
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY effectChanged)
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY effectChanged)
+    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY shaderChanged)
+    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY shaderChanged)
 public:
     ShaderProgram(QObject *parent = 0);
     virtual ~ShaderProgram();
@@ -66,13 +66,13 @@ public:
     void setFragmentShader(const QString& value);
 
     virtual void enableEffect(QGLPainter *painter);
-public slots:
+public Q_SLOTS:
     void markAllPropertiesDirty();
     void markPropertyDirty(int property);
-signals:
+Q_SIGNALS:
     void finishedLoading();
-    void effectChanged();
-private slots:
+    void shaderChanged();
+private Q_SLOTS:
     void pixmapRequestFinished();
 private:
     ShaderProgramPrivate *d;
