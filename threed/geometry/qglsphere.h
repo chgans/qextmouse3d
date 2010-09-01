@@ -51,6 +51,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLBuilder;
+class QVector2D;
 
 class Q_QT3D_EXPORT QGLSphere
 {
@@ -75,6 +76,9 @@ class Q_QT3D_EXPORT QGLIcoSphere : public QGLSphere
 public:
     explicit QGLIcoSphere(qreal diameter = 1.0f, int depth = 3)
         : QGLSphere(diameter, depth) {}
+
+    virtual void faceTextureCoords
+        (int face, QVector2D *t0, QVector2D *t1, QVector2D *t2) const;
 };
 
 class Q_QT3D_EXPORT QGLCubeSphere : public QGLSphere
@@ -82,11 +86,15 @@ class Q_QT3D_EXPORT QGLCubeSphere : public QGLSphere
 public:
     explicit QGLCubeSphere(qreal diameter = 1.0f, int depth = 3)
         : QGLSphere(diameter, depth) {}
+
+    virtual void faceTextureCoords
+        (int face, QVector2D *t0, QVector2D *t1,
+         QVector2D *t2, QVector2D *t3) const;
 };
 
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLSphere& sphere);
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLIcoSphere& sphere);
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLCubeSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLIcoSphere& sphere);
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLCubeSphere& sphere);
 
 QT_END_NAMESPACE
 
