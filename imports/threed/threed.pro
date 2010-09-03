@@ -17,7 +17,6 @@ SOURCES += \
     threed.cpp \
     redcyaneffect.cpp \
     effect.cpp \
-    inlinemesh.cpp \
     item3d.cpp \
     mesh.cpp \
     qt3dnamespace.cpp \
@@ -26,7 +25,6 @@ SOURCES += \
 HEADERS += \
     redcyaneffect.h \
     effect.h \
-    inlinemesh.h \
     item3d.h \
     mesh.h \
     qt3dnamespace.h \
@@ -37,7 +35,8 @@ HEADERS += \
 qdeclarativesources.files += \
     qmldir \
     DefaultNavigator.qml \
-    Cube.qml
+    Cube.qml \
+    cube.obj
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
 

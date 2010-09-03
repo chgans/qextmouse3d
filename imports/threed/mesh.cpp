@@ -91,8 +91,6 @@
         texture: "texture.png"
     }
     \endcode
-
-    \sa InlineMesh
 */
 
 QT_BEGIN_NAMESPACE

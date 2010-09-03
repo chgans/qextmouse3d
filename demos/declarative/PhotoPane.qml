@@ -9,22 +9,7 @@ Item3d {
     property variant image
     property bool bounce: false
 
-    mesh: InlineMesh {
-        primitiveType: InlineMesh.Quads
-        smooth: false
-        vertices: [
-            -2, -1.5, 0.0,
-             2, -1.5, 0.0,
-             2,  1.5, 0.0,
-            -2,  1.5, 0.0
-        ]
-        textureCoords: [
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0
-        ]
-    }
+    mesh: Mesh { source: "meshes/photopane.obj" }
 
     position: Qt.vector3d(offset, 0, -layer)
     effect: Effect { decal: true; texture: image }
