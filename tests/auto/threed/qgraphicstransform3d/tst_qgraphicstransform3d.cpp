@@ -104,23 +104,15 @@ void tst_QGraphicsTransform3D::scale3D()
 {
     QGraphicsScale3D scale1;
     QVERIFY(scale1.origin() == QVector3D(0, 0, 0));
-    QVERIFY(scale1.scaleVector() == QVector3D(1, 1, 1));
-    QCOMPARE(scale1.xScale(), qreal(1.0f));
-    QCOMPARE(scale1.yScale(), qreal(1.0f));
-    QCOMPARE(scale1.zScale(), qreal(1.0f));
-    QCOMPARE(scale1.scale(), qreal(1.0f));
+    QVERIFY(scale1.scale() == QVector3D(1, 1, 1));
 
     QSignalSpy spy1(&scale1, SIGNAL(originChanged()));
     QSignalSpy spy2(&scale1, SIGNAL(scaleChanged()));
 
     scale1.setOrigin(QVector3D(1, 2, 3));
-    scale1.setScaleVector(QVector3D(4, -6, 0.5f));
+    scale1.setScale(QVector3D(4, -6, 0.5f));
     QVERIFY(scale1.origin() == QVector3D(1, 2, 3));
-    QVERIFY(scale1.scaleVector() == QVector3D(4, -6, 0.5f));
-    QCOMPARE(scale1.xScale(), qreal(4.0f));
-    QCOMPARE(scale1.yScale(), qreal(-6.0f));
-    QCOMPARE(scale1.zScale(), qreal(0.5f));
-    QCOMPARE(scale1.scale(), qreal(-0.5f)); // Average of scale factors.
+    QVERIFY(scale1.scale() == QVector3D(4, -6, 0.5f));
 
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
@@ -134,21 +126,15 @@ void tst_QGraphicsTransform3D::scale3D()
     m2.translate(-1, -2, -3);
     QVERIFY(isSameMatrix(m1, m2));
 
-    scale1.setXScale(20);
+    scale1.setScale(QVector3D(20, -4, 42));
     QCOMPARE(spy2.size(), 2);
-    scale1.setYScale(-4);
-    QCOMPARE(spy2.size(), 3);
-    scale1.setZScale(42);
-    QCOMPARE(spy2.size(), 4);
 
-    QVERIFY(scale1.scaleVector() == QVector3D(20, -4, 42));
-    QCOMPARE(scale1.scale(), qreal((20 - 4 + 42) / 3.0));
+    QVERIFY(scale1.scale() == QVector3D(20, -4, 42));
 
     scale1.setScale(33);
-    QCOMPARE(spy2.size(), 5);
+    QCOMPARE(spy2.size(), 3);
 
-    QVERIFY(scale1.scaleVector() == QVector3D(33, 33, 33));
-    QCOMPARE(scale1.scale(), qreal(33));
+    QVERIFY(scale1.scale() == QVector3D(33, 33, 33));
 
     QVERIFY(scale1.origin() == QVector3D(1, 2, 3));
     QCOMPARE(spy1.size(), 1);

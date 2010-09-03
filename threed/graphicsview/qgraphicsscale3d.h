@@ -44,6 +44,7 @@
 
 #include "qgraphicstransform3d.h"
 #include <QtCore/qscopedpointer.h>
+#include <QtCore/qvariant.h>
 
 QT_BEGIN_HEADER
 
@@ -55,11 +56,7 @@ class Q_QT3D_EXPORT QGraphicsScale3D : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)
-    Q_PROPERTY(qreal xScale READ xScale WRITE setXScale NOTIFY scaleChanged)
-    Q_PROPERTY(qreal yScale READ yScale WRITE setYScale NOTIFY scaleChanged)
-    Q_PROPERTY(qreal zScale READ zScale WRITE setZScale NOTIFY scaleChanged)
-    Q_PROPERTY(QVector3D scaleVector READ scaleVector WRITE setScaleVector NOTIFY scaleChanged)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(QVariant scale READ scale WRITE setScale NOTIFY scaleChanged)
 public:
     QGraphicsScale3D(QObject *parent = 0);
     ~QGraphicsScale3D();
@@ -67,20 +64,8 @@ public:
     QVector3D origin() const;
     void setOrigin(const QVector3D &value);
 
-    qreal xScale() const;
-    void setXScale(qreal value);
-
-    qreal yScale() const;
-    void setYScale(qreal value);
-
-    qreal zScale() const;
-    void setZScale(qreal value);
-
-    QVector3D scaleVector() const;
-    void setScaleVector(const QVector3D &value);
-
-    qreal scale() const;
-    void setScale(qreal value);
+    QVariant scale() const;
+    void setScale(const QVariant &value);
 
     void applyTo(QMatrix4x4 *matrix) const;
 

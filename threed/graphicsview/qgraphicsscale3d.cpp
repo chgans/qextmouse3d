@@ -169,157 +169,57 @@ void QGraphicsScale3D::setOrigin(const QVector3D &value)
 }
 
 /*!
-    \property QGraphicsScale3D::xScale
-    \brief the amount with which to scale the x component.
-
-    The default value for this property is 1.
-*/
-
-/*!
-    \qmlproperty real Scale3D::xScale
-
-    The amount with which to scale the x component.  The default value for
-    this property is 1.
-*/
-
-qreal QGraphicsScale3D::xScale() const
-{
-    Q_D(const QGraphicsScale3D);
-    return d->scale.x();
-}
-
-void QGraphicsScale3D::setXScale(qreal value)
-{
-    Q_D(QGraphicsScale3D);
-    if (d->scale.x() != value) {
-        d->scale.setX(value);
-        update();
-        emit scaleChanged();
-    }
-}
-
-/*!
-    \property QGraphicsScale3D::yScale
-    \brief the amount with which to scale the y component.
-
-    The default value for this property is 1.
-*/
-
-/*!
-    \qmlproperty real Scale3D::yScale
-
-    The amount with which to scale the y component.  The default value for
-    this property is 1.
-*/
-
-qreal QGraphicsScale3D::yScale() const
-{
-    Q_D(const QGraphicsScale3D);
-    return d->scale.y();
-}
-
-void QGraphicsScale3D::setYScale(qreal value)
-{
-    Q_D(QGraphicsScale3D);
-    if (d->scale.y() != value) {
-        d->scale.setY(value);
-        update();
-        emit scaleChanged();
-    }
-}
-
-/*!
-    \property QGraphicsScale3D::zScale
-    \brief the amount with which to scale the z component.
-
-    The default value for this property is 1.
-*/
-
-/*!
-    \qmlproperty real Scale3D::zScale
-
-    The amount with which to scale the z component.  The default value for
-    this property is 1.
-*/
-
-qreal QGraphicsScale3D::zScale() const
-{
-    Q_D(const QGraphicsScale3D);
-    return d->scale.z();
-}
-
-void QGraphicsScale3D::setZScale(qreal value)
-{
-    Q_D(QGraphicsScale3D);
-    if (d->scale.z() != value) {
-        d->scale.setZ(value);
-        update();
-        emit scaleChanged();
-    }
-}
-
-/*!
-    \property QGraphicsScale3D::scaleVector
+    \property QGraphicsScale3D::scale
     \brief the amount with which to scale each component.
 
-    The default value for this property is (1, 1, 1).
+    The default value for this property is QVector3D(1, 1, 1).
+
+    The type of this property is QVariant, which permits the scale
+    to be specified as either a QVector3D or a single floating-point
+    value.  When a single floating-point value is specified, the
+    x, y, and z scale components will all be set to the same value.
 */
 
 /*!
-    \qmlproperty vector3D Scale3D::scaleVector
+    \qmlproperty vector3D Scale3D::scale
 
     The amount with which to scale each component.  The default value for
     this property is (1, 1, 1).
+
+    This property can be specified as either a vector3D or a single
+    floating-point value.  A single floating-point value will set
+    the x, y, and z scale components to the same value.  In other words,
+    the following two transformations are equivalent:
+
+    \code
+    Scale3D { scale: 2 }
+    Scale3D { scale: Qt.vector3d(2, 2, 2) }
+    \endcode
 */
 
-QVector3D QGraphicsScale3D::scaleVector() const
+QVariant QGraphicsScale3D::scale() const
 {
     Q_D(const QGraphicsScale3D);
     return d->scale;
 }
 
-void QGraphicsScale3D::setScaleVector(const QVector3D &value)
+void QGraphicsScale3D::setScale(const QVariant &value)
 {
     Q_D(QGraphicsScale3D);
-    if (d->scale != value) {
-        d->scale = value;
-        update();
-        emit scaleChanged();
+    QVector3D newScale;
+    if (value.type() == QVariant::Vector3D) {
+        newScale = value.value<QVector3D>();
+    } else {
+        bool ok = false;
+        double val = value.toDouble(&ok);
+        if (!ok) {
+            qWarning("Scale3D: scale value is not a vector3D or single floating-point value");
+            return;
+        }
+        newScale = QVector3D(qreal(val), qreal(val), qreal(val));
     }
-}
-
-/*!
-    \property QGraphicsScale3D::scale
-    \brief the amount with which to scale.
-
-    When read, this property returns the average of xScale,
-    yScale, and zScale.  When written, this property will
-    set the x, y, and z scales to the same value.
-
-    The default value for this property is 1.
-*/
-
-/*!
-    \qmlproperty real Scale3D::scale
-
-    The amount with which to scale.  When read, this property returns
-    the average of xScale, yScale, and zScale.  When written, this property
-    will set the x, y, and z scales to the same value.
-
-    The default value for this property is 1.
-*/
-
-qreal QGraphicsScale3D::scale() const
-{
-    Q_D(const QGraphicsScale3D);
-    return (d->scale.x() + d->scale.y() + d->scale.z()) / 3.0f;
-}
-
-void QGraphicsScale3D::setScale(qreal value)
-{
-    Q_D(QGraphicsScale3D);
-    if (d->scale.x() != value || d->scale.y() != value || d->scale.z() != value) {
-        d->scale = QVector3D(value, value, value);
+    if (d->scale != newScale) {
+        d->scale = newScale;
         update();
         emit scaleChanged();
     }
@@ -345,7 +245,7 @@ void QGraphicsScale3D::applyTo(QMatrix4x4 *matrix) const
 /*!
     \fn void QGraphicsScale3D::scaleChanged()
 
-    Signal that is emitted when scaleVector() changes.
+    Signal that is emitted when scale() changes.
 */
 
 QT_END_NAMESPACE
