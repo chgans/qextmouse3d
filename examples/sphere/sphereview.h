@@ -46,7 +46,7 @@
 #include "qgltexture2d.h"
 #include "qglbuilder.h"
 
-class QTimer;
+class QPropertyAnimation;
 class QGLSphere;
 class QGLMaterial;
 class QGLLightModel;
@@ -54,9 +54,13 @@ class QGLLightModel;
 class SphereView : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal rotateAngle READ rotateAngle WRITE setRotateAngle)
 public:
     SphereView(QWidget *parent = 0);
     ~SphereView();
+
+    qreal rotateAngle() const { return angle; }
+    void setRotateAngle(qreal value) { angle = value; update(); }
 
 protected:
     void initializeGL(QGLPainter *painter);
@@ -64,17 +68,14 @@ protected:
 
     void keyPressEvent(QKeyEvent *);
 
-private slots:
-    void rotate();
-
 private:
     QGLSceneNode *scene;
     QImage pointsImage;
     bool textured;
     QGLTexture2D cubeTexture, icoTexture, uvTexture;
     QVector<QGLSceneNode *> spheres;
-    QTimer *timer;
-    int angle;
+    QPropertyAnimation *animation;
+    qreal angle;
     QGLLightParameters *lp;
     QGLMaterial *mat;
     QGLLightModel *mdl;

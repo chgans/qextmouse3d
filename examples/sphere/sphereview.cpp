@@ -44,7 +44,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QDir>
-#include <QTimer>
+#include <QPropertyAnimation>
 #include <QKeyEvent>
 
 #include <math.h>
@@ -57,8 +57,14 @@ SphereView::SphereView(QWidget *parent)
     , scene(0)
     , pointsImage(1, 1, QImage::Format_ARGB32)
     , textured(true)
-    , timer(new QTimer(this))
+    , angle(0)
 {
+    animation = new QPropertyAnimation(this, "rotateAngle", this);
+    animation->setStartValue(0.0f);
+    animation->setEndValue(360.0f);
+    animation->setDuration(4500);
+    animation->setLoopCount(-1);
+
     QGLBuilder builder;
     builder.newSection(QGL::Faceted);
     spheres.append(builder.newNode());
@@ -91,7 +97,8 @@ SphereView::SphereView(QWidget *parent)
     scene = builder.finalizedSceneNode();
 
     lp = new QGLLightParameters(this);
-    lp->setDirection(QVector3D(1.0, 0.0, 0.0));
+    // FIXME: directional lighting is a little broken at present.
+    //lp->setDirection(QVector3D(1.0, 0.0, 0.0));
 
     mat = new QGLMaterial(this);
     mat->setDiffuseColor(QColor(255, 255, 255));
@@ -118,7 +125,6 @@ SphereView::SphereView(QWidget *parent)
 
 SphereView::~SphereView()
 {
-    delete timer;
     delete scene;
 }
 
@@ -132,8 +138,7 @@ void SphereView::initializeGL(QGLPainter *painter)
 
     painter->setMainLight(lp);
 
-    connect(timer, SIGNAL(timeout()), this, SLOT(rotate()));
-    timer->start(25);
+    animation->start();
 
     glEnable(GL_BLEND);
 }
@@ -168,15 +173,9 @@ void SphereView::paintGL(QGLPainter *painter)
 void SphereView::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
-        if (timer->isActive())
-            timer->stop();
+        if (animation->state() == QAbstractAnimation::Running)
+            animation->stop();
         else
-            timer->start();
+            animation->start();
     }
-}
-
-void SphereView::rotate()
-{
-    angle = (angle + 2) % 360;
-    updateGL();
 }
