@@ -18,6 +18,7 @@ SUBDIRS = \
     qglpainter \
     qglbuilder \
     qglsection \
+    qglsphere \
     qgeometrydata \
     qglpickcolors \
     qstereoimage \
