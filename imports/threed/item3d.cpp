@@ -1098,6 +1098,16 @@ void Item3d::draw(QGLPainter *painter)
         glEnable(GL_CULL_FACE);
     }
 
+    // Blending change for the effect.
+    bool viewportBlend = d->viewport ? d->viewport->blending() : false;
+    bool effectBlend = d->effect ? d->effect->blending() : viewportBlend;
+    if (viewportBlend != effectBlend) {
+        if (effectBlend)
+            glEnable(GL_BLEND);
+        else
+            glDisable(GL_BLEND);
+    }
+
     //Effects
     if (d->effect)
         d->effect->enableEffect(painter);
@@ -1145,6 +1155,12 @@ void Item3d::draw(QGLPainter *painter)
 
     if (d->effect)
         d->effect->disableEffect(painter);
+    if (viewportBlend != effectBlend) {
+        if (effectBlend)
+            glDisable(GL_BLEND);
+        else
+            glEnable(GL_BLEND);
+    }
     if (d->cullFaces != CullDisabled)
         glDisable(GL_CULL_FACE);
     if (d->light)

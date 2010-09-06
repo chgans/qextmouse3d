@@ -261,6 +261,8 @@ void Viewport::setNavigation(bool value)
     on the viewport, for alpha blending of drawn objects.
 
     By default, blending is set to false.
+
+    \sa Effect::blending
 */
 bool Viewport::blending() const
 {

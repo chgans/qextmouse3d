@@ -63,6 +63,7 @@ class Effect : public QObject
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY effectChanged)
     Q_PROPERTY(bool useLighting READ useLighting WRITE setUseLighting NOTIFY effectChanged)
     Q_PROPERTY(bool decal READ decal WRITE setDecal NOTIFY effectChanged)
+    Q_PROPERTY(bool blending READ blending WRITE setBlending NOTIFY effectChanged)
     Q_PROPERTY(QUrl texture READ texture WRITE setTexture NOTIFY effectChanged)
     Q_PROPERTY(QImage textureImage READ textureImage WRITE setTextureImage NOTIFY effectChanged)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
@@ -79,6 +80,9 @@ public:
 
     virtual bool decal() const;
     virtual void setDecal(bool value);
+
+    virtual bool blending() const;
+    virtual void setBlending(bool value);
 
     virtual QUrl texture() const;
     virtual void setTexture(const QUrl& value);

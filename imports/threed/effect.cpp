@@ -85,6 +85,7 @@ public:
           useLighting(true),
           textureChanged(false),
           decal(false),
+          blending(false),
           texture2D(0),
           material(0),
           declarativePixmap(),
@@ -101,6 +102,7 @@ public:
     bool useLighting;
     bool textureChanged;
     bool decal;
+    bool blending;
     QGLTexture2D *texture2D;
     QUrl textureUrl;
     QGLMaterial *material;
@@ -185,6 +187,29 @@ void Effect::setDecal(bool value)
 {
     if (d->decal != value) {
         d->decal = value;
+        emit effectChanged();
+    }
+}
+
+/*!
+    \qmlproperty bool Effect::blending
+
+    This property should be set to true if alpha blending should be
+    enabled when this effect is active, or false otherwise.  The
+    default is false.
+
+    This property overrides the viewport-specific blending setting
+    that is specified by Viewport::blending.
+*/
+bool Effect::blending() const
+{
+    return d->blending;
+}
+
+void Effect::setBlending(bool value)
+{
+    if (d->blending != value) {
+        d->blending = value;
         emit effectChanged();
     }
 }
