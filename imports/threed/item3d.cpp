@@ -276,23 +276,23 @@ public:
     static int children_count(QDeclarativeListProperty<Item3d> *);
 
     // transform property
-    static int transform_count(QDeclarativeListProperty<QGraphicsTransform> *list);
-    static void transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
-    static QGraphicsTransform *transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
-    static void transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
-    QList<QGraphicsTransform *> transforms;
+    static int transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list);
+    static void transform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *);
+    static QGraphicsTransform3D *transform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int);
+    static void transform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list);
+    QList<QGraphicsTransform3D *> transforms;
 
 
     // pretransform property
-    static int pretransform_count(QDeclarativeListProperty<QGraphicsTransform> *list);
-    static void pretransform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *);
-    static QGraphicsTransform *pretransform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int);
-    static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform> *list);
-    QList<QGraphicsTransform *> pretransforms;
+    static int pretransform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list);
+    static void pretransform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *);
+    static QGraphicsTransform3D *pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int);
+    static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list);
+    QList<QGraphicsTransform3D *> pretransforms;
 };
 
 
-int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
+int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {  
     Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
@@ -303,10 +303,10 @@ int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform> 
     }
 }
 
-void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
+void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
 {
     Item3d *object = qobject_cast<Item3d *>(list->object);
-    QList<QGraphicsTransform *> *ptrans;
+    QList<QGraphicsTransform3D *> *ptrans;
     if (object)
     {
         ptrans = &object->d->transforms;
@@ -314,29 +314,15 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
             ptrans->append(item);            
-            if (qobject_cast<QGraphicsTransform3D *>(item)) {
-                QObject::connect(item, SIGNAL(transformChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsScale *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(scaleChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsRotation *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(angleChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(axisChanged()),
-                                 object, SLOT(update()));
-            }
+            QObject::connect(item, SIGNAL(transformChanged()),
+                             object, SLOT(update()));
         }
     }
     else
         qWarning()<<"Warning: could not find Item3d to add transformation to.";
 }
 
-QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
+QGraphicsTransform3D *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
 {    
    Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
@@ -348,7 +334,7 @@ QGraphicsTransform *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphi
     return 0;
 }
 
-void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
+void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {
 
     Item3d *object = qobject_cast<Item3d *>(list->object);
@@ -360,7 +346,7 @@ void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform>
         qWarning()<<"Warning: could not find Item3d to clear of transformations";
 }
 
-int Item3dPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform> *list)
+int Item3dPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {  
     Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
@@ -371,10 +357,10 @@ int Item3dPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransfor
     }
 }
 
-void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransform> *list, QGraphicsTransform *item)
+void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
 {
     Item3d *object = qobject_cast<Item3d *>(list->object);
-    QList<QGraphicsTransform *> *ptrans;
+    QList<QGraphicsTransform3D *> *ptrans;
     if (object)
     {
         ptrans = &object->d->pretransforms;
@@ -382,29 +368,15 @@ void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransf
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
             ptrans->append(item);            
-            if (qobject_cast<QGraphicsTransform3D *>(item)) {
-                QObject::connect(item, SIGNAL(transformChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsScale *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(scaleChanged()),
-                                 object, SLOT(update()));
-            } else if (qobject_cast<QGraphicsRotation *>(item)) {
-                QObject::connect(item, SIGNAL(originChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(angleChanged()),
-                                 object, SLOT(update()));
-                QObject::connect(item, SIGNAL(axisChanged()),
-                                 object, SLOT(update()));
-            }
+            QObject::connect(item, SIGNAL(transformChanged()),
+                             object, SLOT(update()));
         }
     }
     else
         qWarning()<<"Warning: could not find Item3d to add transformation to.";
 }
 
-QGraphicsTransform *Item3dPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform> *list, int idx)
+QGraphicsTransform3D *Item3dPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
 {    
    Item3d *object = qobject_cast<Item3d *>(list->object);
     if (object) {
@@ -416,7 +388,7 @@ QGraphicsTransform *Item3dPrivate::pretransform_at(QDeclarativeListProperty<QGra
     return 0;
 }
 
-void Item3dPrivate::pretransform_clear(QDeclarativeListProperty<QGraphicsTransform> *list)
+void Item3dPrivate::pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {
 
     Item3d *object = qobject_cast<Item3d *>(list->object);
@@ -677,9 +649,9 @@ void Item3d::setScale(qreal value)
 */
 
 
-QDeclarativeListProperty<QGraphicsTransform> Item3d::transform()
+QDeclarativeListProperty<QGraphicsTransform3D> Item3d::transform()
 {
-    return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->transform_append, d->transform_count,
+    return QDeclarativeListProperty<QGraphicsTransform3D>(this, 0, d->transform_append, d->transform_count,
                                                d->transform_at, d->transform_clear);
 }
 
@@ -703,9 +675,9 @@ QDeclarativeListProperty<QGraphicsTransform> Item3d::transform()
     \sa transform, scale, position
 */
 
-QDeclarativeListProperty<QGraphicsTransform> Item3d::pretransform()
+QDeclarativeListProperty<QGraphicsTransform3D> Item3d::pretransform()
 {
-    return QDeclarativeListProperty<QGraphicsTransform>(this, 0, d->pretransform_append, d->pretransform_count,
+    return QDeclarativeListProperty<QGraphicsTransform3D>(this, 0, d->pretransform_append, d->pretransform_count,
                                                d->pretransform_at, d->pretransform_clear);
 }
 

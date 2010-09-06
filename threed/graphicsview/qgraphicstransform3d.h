@@ -42,22 +42,22 @@
 #ifndef QGRAPHICSTRANSFORM3D_H
 #define QGRAPHICSTRANSFORM3D_H
 
-#include <QtGui/QGraphicsTransform>
+#include <QtCore/qobject.h>
+#include <QtGui/qmatrix4x4.h>
 #include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Q_QT3D_EXPORT QGraphicsTransform3D : public QGraphicsTransform
+class Q_QT3D_EXPORT QGraphicsTransform3D : public QObject
 {
     Q_OBJECT
 public:
-    QGraphicsTransform3D(QObject *parent = 0) : QGraphicsTransform(parent) {}
+    QGraphicsTransform3D(QObject *parent = 0) : QObject(parent) {}
     ~QGraphicsTransform3D() {}
 
-protected Q_SLOTS:
-    void update();
+    virtual void applyTo(QMatrix4x4 *matrix) const = 0;
 
 Q_SIGNALS:
     void transformChanged();

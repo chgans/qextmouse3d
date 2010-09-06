@@ -50,6 +50,29 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d
     \ingroup qt3d::graphicsview
 
+    QGraphicsTransform3D lets you create and control advanced transformations
+    that can be configured independently using specialized properties.
+    Scene nodes have an associated list of transforms, which are applied
+    in order, one at a time, to the modelview matrix.  Transformations are
+    computed in true 3D space using QMatrix4x4.
+
+    QGraphicsTransform3D is particularily useful for animations. Whereas
+    QGLPainter::modelViewMatrix() lets you assign any transform directly,
+    there is no direct way to interpolate between two different
+    transformations (e.g., when transitioning between two states, each for
+    which the item has a different arbitrary transform assigned). Using
+    QGraphicsTransform3D you can interpolate the property values of each
+    independent transformation. The resulting operation is then combined into a
+    single transform which is applied to the modelview matrix during drawing.
+
+    If you want to create your own configurable transformation, you can create
+    a subclass of QGraphicsTransform3D (or any or the existing subclasses), and
+    reimplement the pure virtual applyTo() function, which takes a pointer to a
+    QMatrix4x4. Each operation you would like to apply should be exposed as
+    properties (e.g., customTransform->setVerticalShear(2.5)). Inside you
+    reimplementation of applyTo(), you can modify the provided transform
+    respectively.
+
     \sa QGraphicsScale3D, QGraphicsRotation3D, QGraphicsTranslation3D
     \sa QGraphicsFaceCamera
 */
@@ -67,24 +90,17 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    Notifies items that are using this transformation that the parameters
-    have changed, and emits the transformChanged() signal.
+    \fn void QGraphicsTransform3D::applyTo(QMatrix4x4 *matrix) const
 
-    \sa transformChanged()
+    Applies the effect of this transformation to the specified
+    modelview \a matrix.
 */
-void QGraphicsTransform3D::update()
-{
-    emit transformChanged();
-    QGraphicsTransform::update();
-}
 
 /*!
     \fn void QGraphicsTransform3D::transformChanged()
 
-    Signal that is emitted whenever any of the transformation's parameters
-    are changed and update() has been called.
-
-    \sa update()
+    Signal that is emitted whenever any of the transformation's
+    parameters are changed.
 */
 
 QT_END_NAMESPACE

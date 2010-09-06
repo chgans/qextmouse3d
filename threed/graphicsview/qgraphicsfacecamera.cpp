@@ -195,7 +195,7 @@ void QGraphicsFaceCamera::setPreserveUpVector(bool value)
     Q_D(QGraphicsFaceCamera);
     if (d->preserveUpVector != value) {
         d->preserveUpVector = value;
-        update();
+        emit transformChanged();
         emit preserveUpVectorChanged();
     }
 }

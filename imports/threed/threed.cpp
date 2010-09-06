@@ -58,6 +58,7 @@
 
 QT_BEGIN_NAMESPACE
 
+QML_DECLARE_TYPE(QGraphicsTransform3D)
 QML_DECLARE_TYPE(QGraphicsRotation3D)
 QML_DECLARE_TYPE(QGraphicsTranslation3D)
 QML_DECLARE_TYPE(QGraphicsScale3D)
@@ -85,6 +86,9 @@ public:
         qmlRegisterType<QGraphicsFaceCamera>(uri,1,0,"FaceCamera");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
+
+        // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
+        qmlRegisterType<QGraphicsTransform3D>();
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {

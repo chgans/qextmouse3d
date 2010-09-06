@@ -164,7 +164,7 @@ void QGraphicsRotation3D::setOrigin(const QVector3D &value)
     Q_D(QGraphicsRotation3D);
     if (d->origin != value) {
         d->origin = value;
-        update();
+        emit transformChanged();
         emit originChanged();
     }
 }
@@ -194,7 +194,7 @@ void QGraphicsRotation3D::setAngle(qreal value)
     Q_D(QGraphicsRotation3D);
     if (d->angle != value) {
         d->angle = value;
-        update();
+        emit transformChanged();
         emit angleChanged();
     }
 }
@@ -224,7 +224,7 @@ void QGraphicsRotation3D::setAxis(const QVector3D &value)
     Q_D(QGraphicsRotation3D);
     if (d->axis != value) {
         d->axis = value;
-        update();
+        emit transformChanged();
         emit axisChanged();
     }
 }

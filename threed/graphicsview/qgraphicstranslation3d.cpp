@@ -154,7 +154,7 @@ void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
     Q_D(QGraphicsTranslation3D);
     if (d->translate != value) {
         d->translate = value;
-        update();
+        emit transformChanged();
         emit translateChanged();
     }
 }
@@ -185,7 +185,7 @@ void QGraphicsTranslation3D::setXTranslate(qreal value)
     Q_D(QGraphicsTranslation3D);
     if (d->translate.x() != value) {
         d->translate.setX(value);
-        update();
+        emit transformChanged();
         emit translateChanged();
     }
 }
@@ -216,7 +216,7 @@ void QGraphicsTranslation3D::setYTranslate(qreal value)
     Q_D(QGraphicsTranslation3D);
     if (d->translate.y() != value) {
         d->translate.setY(value);
-        update();
+        emit transformChanged();
         emit translateChanged();
     }
 }
@@ -247,7 +247,7 @@ void QGraphicsTranslation3D::setZTranslate(qreal value)
     Q_D(QGraphicsTranslation3D);
     if (d->translate.z() != value) {
         d->translate.setZ(value);
-        update();
+        emit transformChanged();
         emit translateChanged();
     }
 }
@@ -285,7 +285,7 @@ void QGraphicsTranslation3D::setProgress(qreal value)
     Q_D(QGraphicsTranslation3D);
     if (d->progress != value) {
         d->progress = value;
-        update();
+        emit transformChanged();
         emit progressChanged();
     }
 }

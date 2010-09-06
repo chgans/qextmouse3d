@@ -45,7 +45,6 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qvariant.h>
 #include <QtGui/qvector3d.h>
-#include <QtGui/qgraphicstransform.h>
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/qdeclarativelist.h>
 #include <QtDeclarative/private/qdeclarativestate_p.h>
@@ -54,6 +53,7 @@
 
 #include "qglscenenode.h"
 #include "qglpainter.h"
+#include "qgraphicstransform3d.h"
 #include "mesh.h"
 
 QT_BEGIN_HEADER
@@ -76,8 +76,8 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)   
-    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> transform READ transform DESIGNABLE false FINAL)
-    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform> pretransform READ pretransform DESIGNABLE false FINAL)
+    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> transform READ transform DESIGNABLE false FINAL)
+    Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> pretransform READ pretransform DESIGNABLE false FINAL)
     Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
     Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)    
@@ -137,8 +137,8 @@ public:
     QDeclarativeListProperty<QObject> resources();
     QDeclarativeListProperty<Item3d> fxChildren();    
 
-    QDeclarativeListProperty<QGraphicsTransform> transform();
-    QDeclarativeListProperty<QGraphicsTransform> pretransform();
+    QDeclarativeListProperty<QGraphicsTransform3D> transform();
+    QDeclarativeListProperty<QGraphicsTransform3D> pretransform();
 
     QDeclarativeListProperty<QDeclarativeState> states();
     QDeclarativeState *findState(const QString &name) const;

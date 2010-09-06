@@ -163,7 +163,7 @@ void QGraphicsScale3D::setOrigin(const QVector3D &value)
     Q_D(QGraphicsScale3D);
     if (d->origin != value) {
         d->origin = value;
-        update();
+        emit transformChanged();
         emit originChanged();
     }
 }
@@ -220,7 +220,7 @@ void QGraphicsScale3D::setScale(const QVariant &value)
     }
     if (d->scale != newScale) {
         d->scale = newScale;
-        update();
+        emit transformChanged();
         emit scaleChanged();
     }
 }
