@@ -67,20 +67,14 @@ class Q_QT3D_EXPORT QGLCamera : public QObject
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY projectionChanged)
     Q_PROPERTY(qreal nearPlane READ nearPlane WRITE setNearPlane NOTIFY projectionChanged)
     Q_PROPERTY(qreal farPlane READ farPlane WRITE setFarPlane NOTIFY projectionChanged)
-    Q_PROPERTY(QSizeF viewSize READ viewSize WRITE setViewSize NOTIFY projectionChanged)
-    Q_PROPERTY(QSizeF minViewSize READ minViewSize WRITE setMinViewSize NOTIFY projectionChanged)
-    Q_PROPERTY(int screenRotation READ screenRotation WRITE setScreenRotation NOTIFY projectionChanged)
-    Q_PROPERTY(qreal xEye READ xEye WRITE setXEye NOTIFY viewChanged)
-    Q_PROPERTY(qreal yEye READ yEye WRITE setYEye NOTIFY viewChanged)
-    Q_PROPERTY(qreal zEye READ zEye WRITE setZEye NOTIFY viewChanged)
+    Q_PROPERTY(QSizeF viewSize READ viewSize WRITE setViewSize NOTIFY projectionChanged SCRIPTABLE false)
+    Q_PROPERTY(QSizeF minViewSize READ minViewSize WRITE setMinViewSize NOTIFY projectionChanged SCRIPTABLE false)
+    Q_PROPERTY(int screenRotation READ screenRotation WRITE setScreenRotation NOTIFY projectionChanged SCRIPTABLE false)
     Q_PROPERTY(QVector3D eye READ eye WRITE setEye NOTIFY viewChanged)
     Q_PROPERTY(QVector3D upVector READ upVector WRITE setUpVector NOTIFY viewChanged)
-    Q_PROPERTY(qreal xCenter READ xCenter WRITE setXCenter NOTIFY viewChanged)
-    Q_PROPERTY(qreal yCenter READ yCenter WRITE setYCenter NOTIFY viewChanged)
-    Q_PROPERTY(qreal zCenter READ zCenter WRITE setZCenter NOTIFY viewChanged)
     Q_PROPERTY(QVector3D center READ center WRITE setCenter NOTIFY viewChanged)
     Q_PROPERTY(qreal eyeSeparation READ eyeSeparation WRITE setEyeSeparation NOTIFY viewChanged)
-    Q_PROPERTY(QVector3D motionAdjustment READ motionAdjustment WRITE setMotionAdjustment DESIGNABLE false NOTIFY viewChanged)
+    Q_PROPERTY(QVector3D motionAdjustment READ motionAdjustment WRITE setMotionAdjustment DESIGNABLE false NOTIFY viewChanged SCRIPTABLE false)
     Q_PROPERTY(bool adjustForAspectRatio READ adjustForAspectRatio WRITE setAdjustForAspectRatio NOTIFY viewChanged)
 public:
     explicit QGLCamera(QObject *parent = 0);
@@ -114,25 +108,11 @@ public:
     int screenRotation() const;
     void setScreenRotation(int angle);
 
-    qreal xEye() const;
-    void setXEye(qreal value);
-    qreal yEye() const;
-    void setYEye(qreal value);
-    qreal zEye() const;
-    void setZEye(qreal value);
-
     QVector3D eye() const;
     void setEye(const QVector3D& vertex);
 
     QVector3D upVector() const;
     void setUpVector(const QVector3D& vector);
-
-    qreal xCenter() const;
-    void setXCenter(qreal value);
-    qreal yCenter() const;
-    void setYCenter(qreal value);
-    qreal zCenter() const;
-    void setZCenter(qreal value);
 
     QVector3D center() const;
     void setCenter(const QVector3D& vertex);

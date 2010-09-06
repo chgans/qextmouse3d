@@ -83,15 +83,15 @@ Viewport {
             name: "show_photo"
             PropertyChanges {
                 target: main_camera
-                yEye: 0
+                eye.y: 0
             }
             PropertyChanges {
                 target: main_camera
-                xEye: 0
+                eye.x: 0
             }
             PropertyChanges {
                 target: main_camera
-                zEye: 12
+                eye.z: 12
             }
             PropertyChanges {
                 target: main_camera
@@ -102,7 +102,7 @@ Viewport {
             name: "show_group"
             PropertyChanges {
                 target: main_camera
-                yEye: 4
+                eye.y: 4
             }
         }
     ]
@@ -113,7 +113,7 @@ Viewport {
             to: "*"
             NumberAnimation {
                 targets: main_camera
-                properties: "yEye"
+                properties: "eye.y"
                 easing.type: "OutBounce"
                 duration: 700
             }
