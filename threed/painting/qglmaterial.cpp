@@ -410,7 +410,7 @@ void QGLMaterial::setTextureUrl(const QUrl &url, int layer)
 {
     Q_ASSERT(layer >= 0);
     Q_D(QGLMaterial);
-    if (textureUrl() != url)
+    if (textureUrl(layer) != url)
     {
         QGLTexture2D *tex = 0;
         if (!url.isEmpty())
@@ -418,7 +418,7 @@ void QGLMaterial::setTextureUrl(const QUrl &url, int layer)
             tex = new QGLTexture2D(d->collection);
             tex->setUrl(url);
         }
-        setTexture(tex);
+        setTexture(tex, layer);
     }
 }
 

@@ -618,8 +618,6 @@ void QGLPainter::setClearColor(const QColor& color)
 */
 void QGLPainter::setScissor(const QRect& rect)
 {
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
     if (!rect.isEmpty()) {
         // Adjust the rectangle by the position of the surface viewport.
         QGLAbstractSurface *surface = currentSurface();
