@@ -83,8 +83,7 @@ public:
     enum ProjectionType
     {
         Perspective,
-        Orthographic,
-        Orthographic2D
+        Orthographic
     };
 
     QGLCamera::ProjectionType projectionType() const;
@@ -136,9 +135,6 @@ public:
     QVector3D translation(qreal x, qreal y, qreal z) const;
 
     QMatrix4x4 projectionMatrix(qreal aspectRatio) const;
-    QMatrix4x4 projectionMatrix2D
-        (const QRect& rect, QGL::Eye eye = QGL::NoEye) const;
-
     QMatrix4x4 modelViewMatrix(QGL::Eye eye = QGL::NoEye) const;
 
     QVector3D mapPoint
