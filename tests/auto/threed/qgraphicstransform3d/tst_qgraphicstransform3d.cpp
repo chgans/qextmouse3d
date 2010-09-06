@@ -144,9 +144,6 @@ void tst_QGraphicsTransform3D::translation3D()
 {
     QGraphicsTranslation3D translate1;
     QVERIFY(translate1.translate() == QVector3D(0, 0, 0));
-    QCOMPARE(translate1.xTranslate(), qreal(0.0f));
-    QCOMPARE(translate1.yTranslate(), qreal(0.0f));
-    QCOMPARE(translate1.zTranslate(), qreal(0.0f));
     QCOMPARE(translate1.progress(), qreal(1.0f));
 
     QSignalSpy spy1(&translate1, SIGNAL(translateChanged()));
@@ -155,9 +152,6 @@ void tst_QGraphicsTransform3D::translation3D()
     translate1.setTranslate(QVector3D(4, -6, 0.5f));
     translate1.setProgress(2.0f);
     QVERIFY(translate1.translate() == QVector3D(4, -6, 0.5f));
-    QCOMPARE(translate1.xTranslate(), qreal(4.0f));
-    QCOMPARE(translate1.yTranslate(), qreal(-6.0f));
-    QCOMPARE(translate1.zTranslate(), qreal(0.5f));
     QCOMPARE(translate1.progress(), qreal(2.0f));
 
     QCOMPARE(spy1.size(), 1);
@@ -169,18 +163,6 @@ void tst_QGraphicsTransform3D::translation3D()
     QMatrix4x4 m2;
     m2.translate(QVector3D(8, -12, 1));
     QVERIFY(isSameMatrix(m1, m2));
-
-    translate1.setXTranslate(20);
-    QCOMPARE(spy1.size(), 2);
-    translate1.setYTranslate(-4);
-    QCOMPARE(spy1.size(), 3);
-    translate1.setZTranslate(42);
-    QCOMPARE(spy1.size(), 4);
-    translate1.setProgress(0.5f);
-    QCOMPARE(spy2.size(), 2);
-
-    QVERIFY(translate1.translate() == QVector3D(20, -4, 42));
-    QCOMPARE(translate1.progress(), qreal(0.5f));
 }
 
 QTEST_APPLESS_MAIN(tst_QGraphicsTransform3D)

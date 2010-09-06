@@ -51,10 +51,10 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::graphicsview
 
     QGraphicsTranslation3D is derived directly from QGraphicsTransform, and
-    provides a \c translate property to specify the 3D vector to
+    provides a \l translate property to specify the 3D vector to
     apply to incoming co-ordinates.
 
-    The \a progress property can be used to perform animation along a
+    The \l progress property can be used to perform animation along a
     translation vector by varying the progress value between 0 and 1.
     Overshoot animations are also possible by setting the progress
     value to something outside this range.  The default progress
@@ -154,99 +154,6 @@ void QGraphicsTranslation3D::setTranslate(const QVector3D &value)
     Q_D(QGraphicsTranslation3D);
     if (d->translate != value) {
         d->translate = value;
-        emit transformChanged();
-        emit translateChanged();
-    }
-}
-
-/*!
-    \property QGraphicsTranslation3D::xTranslate
-    \brief the x component of the translation to apply to
-    incoming co-ordinates.
-
-    The default value for this property is 0.
-*/
-
-/*!
-    \qmlproperty real Translation3D::xTranslate
-
-    The x component of the translation to apply to incoming co-ordinates.
-    The default value for this property is 0.
-*/
-
-qreal QGraphicsTranslation3D::xTranslate() const
-{
-    Q_D(const QGraphicsTranslation3D);
-    return d->translate.x();
-}
-
-void QGraphicsTranslation3D::setXTranslate(qreal value)
-{
-    Q_D(QGraphicsTranslation3D);
-    if (d->translate.x() != value) {
-        d->translate.setX(value);
-        emit transformChanged();
-        emit translateChanged();
-    }
-}
-
-/*!
-    \property QGraphicsTranslation3D::yTranslate
-    \brief the y component of the translation to apply to
-    incoming co-ordinates.
-
-    The default value for this property is 0.
-*/
-
-/*!
-    \qmlproperty real Translation3D::yTranslate
-
-    The y component of the translation to apply to incoming co-ordinates.
-    The default value for this property is 0.
-*/
-
-qreal QGraphicsTranslation3D::yTranslate() const
-{
-    Q_D(const QGraphicsTranslation3D);
-    return d->translate.y();
-}
-
-void QGraphicsTranslation3D::setYTranslate(qreal value)
-{
-    Q_D(QGraphicsTranslation3D);
-    if (d->translate.y() != value) {
-        d->translate.setY(value);
-        emit transformChanged();
-        emit translateChanged();
-    }
-}
-
-/*!
-    \property QGraphicsTranslation3D::zTranslate
-    \brief the z component of the translation to apply to
-    incoming co-ordinates.
-
-    The default value for this property is 0.
-*/
-
-/*!
-    \qmlproperty real Translation3D::zTranslate
-
-    The z component of the translation to apply to incoming co-ordinates.
-    The default value for this property is 0.
-*/
-
-qreal QGraphicsTranslation3D::zTranslate() const
-{
-    Q_D(const QGraphicsTranslation3D);
-    return d->translate.z();
-}
-
-void QGraphicsTranslation3D::setZTranslate(qreal value)
-{
-    Q_D(QGraphicsTranslation3D);
-    if (d->translate.z() != value) {
-        d->translate.setZ(value);
         emit transformChanged();
         emit translateChanged();
     }
