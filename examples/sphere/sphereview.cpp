@@ -97,8 +97,7 @@ SphereView::SphereView(QWidget *parent)
     scene = builder.finalizedSceneNode();
 
     lp = new QGLLightParameters(this);
-    // FIXME: directional lighting is a little broken at present.
-    //lp->setDirection(QVector3D(1.0, 0.0, 0.0));
+    lp->setDirection(QVector3D(1.0, 0.0, 0.0));
 
     mat = new QGLMaterial(this);
     mat->setDiffuseColor(QColor(255, 255, 255));
