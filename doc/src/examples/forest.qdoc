@@ -1,0 +1,89 @@
+/****************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+**
+** This file is part of the Qt3D module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** In addition, as a special exception, Nokia gives you certain additional
+** rights.  These rights are described in the Nokia Qt LGPL Exception
+** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
+**
+**
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+    \example declarative/forest
+    \title Forest Example
+
+    The Forest example shows how the BillboardTransform element in QML/3D
+    can be used to create billboard objects that always face towards
+    the viewer regardless of how the scene is rotated.  A common use
+    for this technique is to draw trees and other complex objects by
+    plastering a texture over a simple quad.
+
+    \image forest-screenshot.png
+
+    We start by defining a "Tree.qml" component in QML, which loads a
+    simple quad object from "tree.obj" and plasters "tree.png" over it:
+
+    \snippet declarative/forest/Tree.qml 1
+    \dots
+    \snippet declarative/forest/Tree.qml 3
+
+    Because we want the tree to always face towards the viewer, and be
+    oriented upright with respect to the ground, we add a BillboardTransform
+    to the tree's transform property:
+
+    \snippet declarative/forest/Tree.qml 2
+
+    Then in the main "forest.qml" file we create the ground and all of
+    the trees in our forest:
+
+    \snippet declarative/forest/forest.qml 1
+
+    When we run this example, the result should be as shown in the
+    image above.  As we rotate the scene left and right, the trees
+    stay pointing at the viewer:
+
+    \image forest-screenshot2.png
+
+    However, the illusion can be broken.  If we rotate the scene
+    too far up or down, then it becomes apparent that the trees
+    are actually thin quads:
+
+    \image forest-screenshot3.png
+
+    Usually an application that uses billboarding will restrict
+    the user's navigation through 3D space so that they cannot
+    stray too far up or down and break the illusion.
+
+    \l{qt3d-examples.html}{Return to Examples}.
+*/
