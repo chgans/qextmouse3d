@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGRAPHICSFACECAMERA_H
-#define QGRAPHICSFACECAMERA_H
+#ifndef QGRAPHICSBILLBOARDTRANSFORM_H
+#define QGRAPHICSBILLBOARDTRANSFORM_H
 
 #include "qgraphicstransform3d.h"
 #include <QtCore/qscopedpointer.h>
@@ -49,15 +49,15 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QGraphicsFaceCameraPrivate;
+class QGraphicsBillboardTransformPrivate;
 
-class Q_QT3D_EXPORT QGraphicsFaceCamera : public QGraphicsTransform3D
+class Q_QT3D_EXPORT QGraphicsBillboardTransform : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(bool preserveUpVector READ preserveUpVector WRITE setPreserveUpVector NOTIFY preserveUpVectorChanged)
 public:
-    QGraphicsFaceCamera(QObject *parent = 0);
-    ~QGraphicsFaceCamera();
+    QGraphicsBillboardTransform(QObject *parent = 0);
+    ~QGraphicsBillboardTransform();
 
     bool preserveUpVector() const;
     void setPreserveUpVector(bool value);
@@ -68,10 +68,10 @@ Q_SIGNALS:
     void preserveUpVectorChanged();
 
 private:
-    QScopedPointer<QGraphicsFaceCameraPrivate> d_ptr;
+    QScopedPointer<QGraphicsBillboardTransformPrivate> d_ptr;
 
-    Q_DISABLE_COPY(QGraphicsFaceCamera)
-    Q_DECLARE_PRIVATE(QGraphicsFaceCamera)
+    Q_DISABLE_COPY(QGraphicsBillboardTransform)
+    Q_DECLARE_PRIVATE(QGraphicsBillboardTransform)
 };
 
 QT_END_NAMESPACE

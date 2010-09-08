@@ -51,7 +51,7 @@
 #include "qgraphicsrotation3d.h"
 #include "qgraphicstranslation3d.h"
 #include "qgraphicsscale3d.h"
-#include "qgraphicsfacecamera.h"
+#include "qgraphicsbillboardtransform.h"
 #include "shaderprogram.h"
 #include "qt3dnamespace.h"
 #include "qglscenenode.h"
@@ -62,7 +62,7 @@ QML_DECLARE_TYPE(QGraphicsTransform3D)
 QML_DECLARE_TYPE(QGraphicsRotation3D)
 QML_DECLARE_TYPE(QGraphicsTranslation3D)
 QML_DECLARE_TYPE(QGraphicsScale3D)
-QML_DECLARE_TYPE(QGraphicsFaceCamera)
+QML_DECLARE_TYPE(QGraphicsBillboardTransform)
 
 class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
@@ -83,7 +83,7 @@ public:
         qmlRegisterType<QGraphicsRotation3D>(uri,1,0,"Rotation3D");
         qmlRegisterType<QGraphicsTranslation3D>(uri,1,0,"Translation3D");
         qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
-        qmlRegisterType<QGraphicsFaceCamera>(uri,1,0,"FaceCamera");
+        qmlRegisterType<QGraphicsBillboardTransform>(uri,1,0,"BillboardTransform");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
 

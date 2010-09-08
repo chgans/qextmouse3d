@@ -39,13 +39,13 @@
 **
 ****************************************************************************/
 
-#include "qgraphicsfacecamera.h"
+#include "qgraphicsbillboardtransform.h"
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QGraphicsFaceCamera
-    \brief The QGraphicsFaceCamera class implements a transformation that causes objects to face the camera.
+    \class QGraphicsBillboardTransform
+    \brief The QGraphicsBillboardTransform class implements a transformation that causes objects to face the camera.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::graphicsview
@@ -61,8 +61,8 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \qmlclass FaceCamera QGraphicsFaceCamera
-    \brief The FaceCamera item implements a transformation that causes objects to face the camera.
+    \qmlclass BillboardTransform QGraphicsBillboardTransform
+    \brief The BillboardTransform item implements a transformation that causes objects to face the camera.
     \since 4.8
     \ingroup qt3d::qml3d
 
@@ -74,49 +74,53 @@ QT_BEGIN_NAMESPACE
     3x3 part of the transformation matrix with the identity.  This has the
     effect of removing the rotation and scale components from the current
     world co-ordinate orientation.  In QML, this can be used as follows
-    to orient a Pane to point towards the viewer:
+    to orient a pane to point towards the viewer:
 
     \code
-    Pane {
+    Item3d {
+        mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
-        transform: FaceCamera {}
+        transform: BillboardTransform {}
         effect: Effect { texture: "picture.jpg" }
     }
     \endcode
 
-    Because the camera-facing transformation will strip any further
-    alterations to the matrix, it will usually be the last transformation
-    that is applied to the \c transform property:
+    Because the billboard transformation will strip any further
+    alterations to the matrix, it will usually be the last element
+    in the \c transform list (transformations are applied to the matrix in
+    reverse order of their appearance in \c transform):
 
     \code
-    Pane {
+    Item3d {
+        mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
         transform: [
             Scale3D { scale: 0.5 },
             Rotation3D { angle: 30 },
-            FaceCamera {}
+            BillboardTransform {}
         ]
         effect: Effect { texture: "picture.jpg" }
     }
     \endcode
 
-    The \c scale property is applied after \c transform has performed
-    the camera-facing transformation, so the above can also be written
+    The \c scale property is applied to the matrix after \c transform has
+    performed the billboard transformation, so the above can also be written
     as follows:
 
     \code
-    Pane {
+    Item3d {
+        mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
         scale: 0.5
         transform: [
             Rotation3D { angle: 30 },
-            FaceCamera {}
+            BillboardTransform {}
         ]
         effect: Effect { texture: "picture.jpg" }
     }
     \endcode
 
-    By default the camera-facing transform will cause the object to
+    By default the billboard transform will cause the object to
     face directly at the camera no matter how the world co-ordinate
     system is rotated.  Sometimes the billboard needs to stay at right
     angles to the "ground plane" even if the user's viewpoint is
@@ -126,37 +130,37 @@ QT_BEGIN_NAMESPACE
     \code
     Pane {
         position: Qt.vector3d(2, 0, -20)
-        transform: FaceCamera { preserveUpVector: true }
+        transform: BillboardTransform { preserveUpVector: true }
         effect: Effect { texture: "picture.jpg" }
     }
     \endcode
 */
 
-class QGraphicsFaceCameraPrivate
+class QGraphicsBillboardTransformPrivate
 {
 public:
-    QGraphicsFaceCameraPrivate() : preserveUpVector(false) {}
+    QGraphicsBillboardTransformPrivate() : preserveUpVector(false) {}
 
     bool preserveUpVector;
 };
 
 /*!
-    Construct a camera-facing transform and attach it to \a parent.
+    Construct a billboard transform and attach it to \a parent.
 */
-QGraphicsFaceCamera::QGraphicsFaceCamera(QObject *parent)
-    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsFaceCameraPrivate)
+QGraphicsBillboardTransform::QGraphicsBillboardTransform(QObject *parent)
+    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsBillboardTransformPrivate)
 {
 }
 
 /*!
-    Destroy this camera-facing transform.
+    Destroy this billboard transform.
 */
-QGraphicsFaceCamera::~QGraphicsFaceCamera()
+QGraphicsBillboardTransform::~QGraphicsBillboardTransform()
 {
 }
 
 /*!
-    \property QGraphicsFaceCamera::preserveUpVector
+    \property QGraphicsBillboardTransform::preserveUpVector
     \brief true to preserve the up orientation.
 
     The default value for this property is false, which indicates that
@@ -169,9 +173,9 @@ QGraphicsFaceCamera::~QGraphicsFaceCamera()
 */
 
 /*!
-    \qmlproperty bool FaceCamera::preserveUpVector
+    \qmlproperty bool BillboardTransform::preserveUpVector
 
-    This property specifies whether the camera facing transform should
+    This property specifies whether the billboard transform should
     preserve the "up vector" so that objects stay at right angles
     to the ground plane in the scene.
 
@@ -184,15 +188,15 @@ QGraphicsFaceCamera::~QGraphicsFaceCamera()
     billboard".
 */
 
-bool QGraphicsFaceCamera::preserveUpVector() const
+bool QGraphicsBillboardTransform::preserveUpVector() const
 {
-    Q_D(const QGraphicsFaceCamera);
+    Q_D(const QGraphicsBillboardTransform);
     return d->preserveUpVector;
 }
 
-void QGraphicsFaceCamera::setPreserveUpVector(bool value)
+void QGraphicsBillboardTransform::setPreserveUpVector(bool value)
 {
-    Q_D(QGraphicsFaceCamera);
+    Q_D(QGraphicsBillboardTransform);
     if (d->preserveUpVector != value) {
         d->preserveUpVector = value;
         emit transformChanged();
@@ -203,9 +207,9 @@ void QGraphicsFaceCamera::setPreserveUpVector(bool value)
 /*!
     \internal
 */
-void QGraphicsFaceCamera::applyTo(QMatrix4x4 *matrix) const
+void QGraphicsBillboardTransform::applyTo(QMatrix4x4 *matrix) const
 {
-    Q_D(const QGraphicsFaceCamera);
+    Q_D(const QGraphicsBillboardTransform);
     if (!d->preserveUpVector) {
         // Replace the top-left 3x3 of the matrix with the identity.
         // The technique is "Cheating Spherical Billboards", described here:
@@ -235,7 +239,7 @@ void QGraphicsFaceCamera::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
-    \fn void QGraphicsFaceCamera::preserveUpVectorChanged()
+    \fn void QGraphicsBillboardTransform::preserveUpVectorChanged()
 
     Signal that is emitted when preserveUpVector() changes.
 */

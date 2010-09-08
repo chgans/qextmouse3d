@@ -74,7 +74,7 @@ QT_BEGIN_NAMESPACE
     respectively.
 
     \sa QGraphicsScale3D, QGraphicsRotation3D, QGraphicsTranslation3D
-    \sa QGraphicsFaceCamera
+    \sa QGraphicsBillboardTransform
 */
 
 /*!
