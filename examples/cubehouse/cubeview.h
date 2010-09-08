@@ -47,6 +47,8 @@
 #include "qgltexture2d.h"
 #include <QtCore/qdatetime.h>
 
+class ProjectiveTextureEffect;
+
 class CubeView : public QGLView
 {
     Q_OBJECT
@@ -57,6 +59,10 @@ public:
 
     void setShowFrameRate(bool value) { showFrameRate = value; }
     void setStereo(bool value) { stereo = value; }
+    void setProjectiveTextureEffect(bool value)
+{
+    useProjectiveTextureEffect = value;
+}
 
     qreal cubeAngle() const { return cangle; }
     void setCubeAngle(qreal angle);
@@ -67,6 +73,9 @@ protected:
 
 private slots:
     void accelerometerTimeout();
+    void updateProjectorViewMatrix();
+    void updateProjectorProjectionMatrix();
+    void updateObjectLinearTexgenMatrix();
 
 private:
     QGLTexture2D texture;
@@ -75,17 +84,28 @@ private:
     QGLSceneNode *teapot;
     QGLSceneNode *room;
     QGLCamera *roomCamera;
+    QGLCamera *projectorCamera;
     qreal sensitivity;
     QGLLightModel *roomModel;
     QGLLightModel *normalModel;
+    QGLLightParameters *lightParameters;
     bool showFrameRate;
     bool stereo;
+    bool useProjectiveTextureEffect;
     QTime time;
     qreal cangle;
     mutable qreal prevX, prevY, prevZ;
     mutable bool havePrev;
 
     QVector3D gravity() const;
+
+    QMatrix4x4 projectorProjectionMatrix;
+    QMatrix4x4 projectorViewMatrix;
+
+    ProjectiveTextureEffect* projectiveTextureEffect;
+    QMatrix4x4 biasMatrix;
+    QMatrix4x4Stack modelMatrix;
+    QMatrix4x4 objectLinearTexgenMatrix;
 };
 
 #endif

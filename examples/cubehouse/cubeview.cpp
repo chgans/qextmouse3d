@@ -46,12 +46,15 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qpropertyanimation.h>
 #include <stdio.h>
+#include "projectivetextureeffect.h"
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent), scene(0), cube(0), teapot(0), room(0),
       sensitivity(0.1f),
+      lightParameters(0),
       showFrameRate(false),
       stereo(false),
+      useProjectiveTextureEffect(false),
       cangle(0.0f),
       prevX(0),
       prevY(0),
@@ -63,6 +66,12 @@ CubeView::CubeView(QWidget *parent)
     roomCamera = new QGLCamera(this);
     roomCamera->setAdjustForAspectRatio(false);
 
+    if(useProjectiveTextureEffect)
+    {
+        projectorCamera = new QGLCamera(this);
+        projectorCamera->setAdjustForAspectRatio(false);
+    }
+
     QPropertyAnimation *animation;
 
     animation = new QPropertyAnimation(this, "cubeAngle", this);
@@ -73,6 +82,14 @@ CubeView::CubeView(QWidget *parent)
     animation->start();
 
     time.start();
+
+    projectiveTextureEffect = new ProjectiveTextureEffect;
+    biasMatrix = QMatrix4x4(0.5, 0.0, 0.0, 0.5,
+                          0.0, 0.5, 0.0, 0.5,
+                          0.0, 0.0, 0.5, 0.5,
+                          0.0, 0.0, 0.0, 1.0);
+
+//    modelMatrix.setToIdentity();
 }
 
 void CubeView::initializeGL(QGLPainter *painter)
@@ -170,9 +187,9 @@ void CubeView::initializeGL(QGLPainter *painter)
 
     normalModel = new QGLLightModel(this);
 
-    QGLLightParameters *light = new QGLLightParameters(this);
-    light->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
-    painter->setMainLight(light);
+    lightParameters = new QGLLightParameters(this);
+    lightParameters->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
+    painter->setMainLight(lightParameters);
 
     QImage textureImage(":/qtlogo.png");
     texture.setImage(textureImage);
@@ -180,6 +197,16 @@ void CubeView::initializeGL(QGLPainter *painter)
     if (stereo) {
         camera()->setEyeSeparation(0.4f);
         roomCamera->setEyeSeparation(0.1f);
+    }
+
+    if(useProjectiveTextureEffect)
+    {
+        // initialize the projector camera
+        projectorCamera = new QGLCamera(this);
+        connect(projectorCamera, SIGNAL(viewChanged()),
+                this, SLOT(updateProjectorViewMatrix()));
+        connect(projectorCamera, SIGNAL(projectionChanged()),
+                this, SLOT(updateProjectorProjectionMatrix()));
     }
 }
 
@@ -189,6 +216,13 @@ void CubeView::paintGL(QGLPainter *painter)
         qWarning("time since last frame: %d ms", time.restart());
 
     glDisable(GL_BLEND);
+
+    // Animate the projector position so the effect can be seen
+    if(useProjectiveTextureEffect)
+    {
+        projectorCamera->panCenter(-0.2);
+        projectorCamera->tiltCenter(-0.1);
+    }
 
     painter->modelViewMatrix().push();
     painter->projectionMatrix().push();
@@ -202,31 +236,74 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->projectionMatrix().pop();
 
     painter->modelViewMatrix().push();
+    modelMatrix.push();
+    // These are the model transformations
     painter->modelViewMatrix().translate(-0.8f, -1.5f, -3.0f);
     painter->setLightModel(normalModel);
-    painter->setStandardEffect(QGL::LitMaterial);
+    if(useProjectiveTextureEffect)
+    {
+        // For an effect that looks like we have only one projector
+        // Over the whole screen, we duplicate transformations into the
+        // projector's model matrix.  For now, we don't apply the transform
+        // to center the effect on each object and see it more clearly.
+//        modelMatrix.translate(-0.8f, -1.5f, -3.0f);
+
+        updateObjectLinearTexgenMatrix();
+
+        painter->setUserEffect(projectiveTextureEffect);
+        texture.bind();
+    }
+    else
+        painter->setStandardEffect(QGL::LitMaterial);
     teapot->draw(painter);
+
+    if(useProjectiveTextureEffect)
+        modelMatrix.pop();
     painter->modelViewMatrix().pop();
 
-    glEnable(GL_BLEND);
 
+    // These are the model transformations
     painter->modelViewMatrix().push();
     painter->modelViewMatrix().translate(1.0f, -0.5f, 0.0f);
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
-    painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
-    painter->setStandardEffect(QGL::LitDecalTexture2D);
+
     texture.bind();
-    glDisable(GL_DEPTH_TEST);
-    glCullFace(GL_FRONT);
-    glEnable(GL_CULL_FACE);
-    cube->draw(painter);
-    glCullFace(GL_BACK);
-    cube->draw(painter);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if(useProjectiveTextureEffect)
+    {
+        modelMatrix.push();
+        // For an effect that looks like we have only one projector
+        // Over the whole screen, we duplicate transformations into the
+        // projector's model matrix.  For now, we don't apply the transform
+        // to center the effect on each object and see it more clearly.
+//        modelMatrix.translate(1.0f, -0.5f, 0.0f);
+        modelMatrix.rotate(cangle, 1.0f, 1.0f, 1.0f);
+        updateObjectLinearTexgenMatrix();
+        painter->setUserEffect(projectiveTextureEffect);
+//        painter->setStandardEffect(QGL::FlatDecalTexture2D);
+        cube->draw(painter);
+        modelMatrix.pop();
+    } else {
+        glEnable(GL_BLEND);
+        painter->setStandardEffect(QGL::LitDecalTexture2D);
+        painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
+        glDisable(GL_DEPTH_TEST);
+        glCullFace(GL_FRONT);
+        glEnable(GL_CULL_FACE);
+        cube->draw(painter);
+        glCullFace(GL_BACK);
+        cube->draw(painter);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     painter->modelViewMatrix().pop();
 }
+
+//inline void CubeView::setProjectiveTextureEffect(bool value)
+//{
+//    useProjectiveTextureEffect = value;
+//}
 
 void CubeView::setCubeAngle(qreal angle)
 {
@@ -273,4 +350,27 @@ QVector3D CubeView::gravity() const
 
     return QVector3D((x / 1000.0f) * sensitivity,
                      (-y / 1000.0f) * sensitivity, -z / 1000.0f);
+}
+
+void CubeView::updateProjectorViewMatrix()
+{
+    Q_ASSERT_X(projectorCamera != 0, Q_FUNC_INFO, "Null projector camera in updateProjectorViewMatrix()");
+    projectorViewMatrix = projectorCamera->modelViewMatrix();
+    updateObjectLinearTexgenMatrix();
+}
+
+void CubeView::updateProjectorProjectionMatrix()
+{
+    qreal projectorAspectRatio = 1.0;
+    projectorProjectionMatrix = projectorCamera->projectionMatrix(projectorAspectRatio);
+    updateObjectLinearTexgenMatrix();
+}
+
+void CubeView::updateObjectLinearTexgenMatrix()
+{
+    objectLinearTexgenMatrix = biasMatrix *
+            projectorProjectionMatrix *
+            projectorViewMatrix *
+            modelMatrix;
+    projectiveTextureEffect->setObjectLinearTexgenMatrix(objectLinearTexgenMatrix);
 }
