@@ -41,7 +41,7 @@ void ProjectiveTextureEffect::setObjectLinearTexgenMatrix(const QMatrix4x4 newOb
 
 void ProjectiveTextureEffect::setupShaders()
 {
-        QString vertexShaderFileName = "/home/debhal/depot/qt3d/examples/projectivehouse/shaders/objectlineartexgen.vert";
+        QString vertexShaderFileName = ":/shaders/objectlineartexgen.vert";
         QFile vertexShaderFile(vertexShaderFileName);
         if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
@@ -50,7 +50,7 @@ void ProjectiveTextureEffect::setupShaders()
             qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
         }
 
-                QString fragmentShaderFileName = "/home/debhal/depot/qt3d/examples/projectivehouse/shaders/objectlineartexgen.frag";
+                QString fragmentShaderFileName = ":/shaders/objectlineartexgen.frag";
         QFile fragmentShaderFile(fragmentShaderFileName);
         if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
