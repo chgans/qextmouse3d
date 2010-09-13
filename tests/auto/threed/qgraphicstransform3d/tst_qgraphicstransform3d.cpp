@@ -43,6 +43,7 @@
 #include "qgraphicsrotation3d.h"
 #include "qgraphicsscale3d.h"
 #include "qgraphicstranslation3d.h"
+#include "qgraphicsbillboardtransform.h"
 
 class tst_QGraphicsTransform3D : public QObject
 {
@@ -55,6 +56,7 @@ private slots:
     void rotation3D();
     void scale3D();
     void translation3D();
+    void billboard();
 };
 
 static bool isSameMatrix(const QMatrix4x4 &m1, const QMatrix4x4 &m2)
@@ -78,6 +80,7 @@ void tst_QGraphicsTransform3D::rotation3D()
     QSignalSpy spy1(&rot1, SIGNAL(originChanged()));
     QSignalSpy spy2(&rot1, SIGNAL(axisChanged()));
     QSignalSpy spy3(&rot1, SIGNAL(angleChanged()));
+    QSignalSpy spy4(&rot1, SIGNAL(transformChanged()));
 
     rot1.setOrigin(QVector3D(1, 2, 3));
     rot1.setAxis(QVector3D(4, -5, 6));
@@ -89,6 +92,7 @@ void tst_QGraphicsTransform3D::rotation3D()
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
     QCOMPARE(spy3.size(), 1);
+    QCOMPARE(spy4.size(), 3);
 
     QMatrix4x4 m1;
     rot1.applyTo(&m1);
@@ -108,6 +112,7 @@ void tst_QGraphicsTransform3D::scale3D()
 
     QSignalSpy spy1(&scale1, SIGNAL(originChanged()));
     QSignalSpy spy2(&scale1, SIGNAL(scaleChanged()));
+    QSignalSpy spy3(&scale1, SIGNAL(transformChanged()));
 
     scale1.setOrigin(QVector3D(1, 2, 3));
     scale1.setScale(QVector3D(4, -6, 0.5f));
@@ -116,6 +121,7 @@ void tst_QGraphicsTransform3D::scale3D()
 
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
+    QCOMPARE(spy3.size(), 2);
 
     QMatrix4x4 m1;
     scale1.applyTo(&m1);
@@ -128,11 +134,13 @@ void tst_QGraphicsTransform3D::scale3D()
 
     scale1.setScale(QVector3D(20, -4, 42));
     QCOMPARE(spy2.size(), 2);
+    QCOMPARE(spy3.size(), 3);
 
     QVERIFY(scale1.scale() == QVector3D(20, -4, 42));
 
     scale1.setScale(33);
     QCOMPARE(spy2.size(), 3);
+    QCOMPARE(spy3.size(), 4);
 
     QVERIFY(scale1.scale() == QVector3D(33, 33, 33));
 
@@ -148,6 +156,7 @@ void tst_QGraphicsTransform3D::translation3D()
 
     QSignalSpy spy1(&translate1, SIGNAL(translateChanged()));
     QSignalSpy spy2(&translate1, SIGNAL(progressChanged()));
+    QSignalSpy spy3(&translate1, SIGNAL(transformChanged()));
 
     translate1.setTranslate(QVector3D(4, -6, 0.5f));
     translate1.setProgress(2.0f);
@@ -156,6 +165,7 @@ void tst_QGraphicsTransform3D::translation3D()
 
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
+    QCOMPARE(spy3.size(), 2);
 
     QMatrix4x4 m1;
     translate1.applyTo(&m1);
@@ -163,6 +173,48 @@ void tst_QGraphicsTransform3D::translation3D()
     QMatrix4x4 m2;
     m2.translate(QVector3D(8, -12, 1));
     QVERIFY(isSameMatrix(m1, m2));
+}
+
+void tst_QGraphicsTransform3D::billboard()
+{
+    QGraphicsBillboardTransform billboard1;
+    QVERIFY(!billboard1.preserveUpVector());
+
+    QSignalSpy spy1(&billboard1, SIGNAL(preserveUpVectorChanged()));
+    QSignalSpy spy2(&billboard1, SIGNAL(transformChanged()));
+
+    billboard1.setPreserveUpVector(true);
+    QVERIFY(billboard1.preserveUpVector());
+
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 1);
+
+    QMatrix4x4 m1;
+    billboard1.applyTo(&m1);
+    QVERIFY(m1.isIdentity());
+
+    QMatrix4x4 m2(2.0f, 3.0f, 4.0f, 5.0f,
+                  6.0f, 7.0f, 8.0f, 9.0f,
+                  10.0f, 11.0f, 12.0f, 13.0f,
+                  14.0f, 15.0f, 16.0f, 17.0f);
+    QMatrix4x4 m3(1.0f, 0.0f, 0.0f, 5.0f,
+                  0.0f, 1.0f, 0.0f, 9.0f,
+                  0.0f, 0.0f, 1.0f, 13.0f,
+                  14.0f, 15.0f, 16.0f, 17.0f);
+    QMatrix4x4 m4(1.0f, 3.0f, 0.0f, 5.0f,
+                  0.0f, 7.0f, 0.0f, 9.0f,
+                  0.0f, 11.0f, 1.0f, 13.0f,
+                  14.0f, 15.0f, 16.0f, 17.0f);
+
+    QMatrix4x4 m5(m2);
+    billboard1.setPreserveUpVector(false);
+    billboard1.applyTo(&m5);
+    QVERIFY(m5 == m3);
+
+    QMatrix4x4 m6(m2);
+    billboard1.setPreserveUpVector(true);
+    billboard1.applyTo(&m6);
+    QVERIFY(m6 == m4);
 }
 
 QTEST_APPLESS_MAIN(tst_QGraphicsTransform3D)
