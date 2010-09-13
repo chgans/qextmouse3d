@@ -1,10 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>qtlogo.png</file>
-    <file>shaders/depth.frag</file>
-    <file>shaders/depthTestShader.frag</file>
-    <file>shaders/depthTestShader.vert</file>
-    <file>shaders/depth.vert</file>
     <file>shaders/objectlineartexgen.frag</file>
     <file>shaders/objectlineartexgen.vert</file>
 </qresource>
