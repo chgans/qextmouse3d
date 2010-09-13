@@ -182,7 +182,7 @@ void QGLAbstractEffect::setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value)
 {
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     program->setAttributeArray
         (location, value.type(), value.data(),
          value.tupleSize(), value.stride());

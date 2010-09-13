@@ -51,7 +51,7 @@
 #include "sceneobject.h"
 #include "qglteapot.h"
 #include "qglbuilder.h"
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
 #include "perpixeleffect.h"
 #endif
 
@@ -135,7 +135,7 @@ public:
     Teacup *teacup2;
     Teaspoon *teaspoon1;
     Teaspoon *teaspoon2;
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     PerPixelEffect *lighting;
 #endif
 
@@ -206,7 +206,7 @@ TeaService::TeaService(QObject *parent)
     teaspoon1->setObjectId(ObjTeaspoon1);
     teaspoon2->setObjectId(ObjTeaspoon2);
 
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     lighting = new PerPixelEffect();
 #endif
     changeMaterials(false);
@@ -226,7 +226,7 @@ TeaService::TeaService(QObject *parent)
 
 TeaService::~TeaService()
 {
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     delete lighting;
 #endif
 }
@@ -239,7 +239,7 @@ void TeaService::changeMaterials(bool perPixel)
     teacup1->setHoverMaterial(chinaHighlight);
     teacup2->setMaterial(china);
     teacup2->setHoverMaterial(chinaHighlight);
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     if (perPixel) {
         teapot->setEffect(lighting);
         teacup1->setEffect(lighting);
@@ -256,7 +256,7 @@ void TeaService::changeMaterials(bool perPixel)
     teaspoon1->setHoverMaterial(metalHighlight);
     teaspoon2->setMaterial(metal);
     teaspoon2->setHoverMaterial(metalHighlight);
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     if (perPixel) {
         teaspoon1->setEffect(lighting);
         teaspoon2->setEffect(lighting);
@@ -374,7 +374,7 @@ int main(int argc, char *argv[])
     menu->addAction(standardLighting);
     QObject::connect(standardLighting, SIGNAL(triggered()), &view, SLOT(standardLighting()));
 
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     QAction *perPixelLighting = new QAction("Per-pixel lighting", &mainw);
     menu->addAction(perPixelLighting);
     QObject::connect(perPixelLighting, SIGNAL(triggered()), &view, SLOT(perPixelLighting()));

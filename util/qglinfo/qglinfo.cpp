@@ -168,7 +168,7 @@ QString QGLInfo::reportQtGLFeatures() const
               QGLFramebufferObject::hasOpenGLFramebufferObjects());
     d += printBool("QGLFramebufferObject::hasOpenGLFramebufferBlit: ",
               QGLFramebufferObject::hasOpenGLFramebufferBlit());
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     d += printBool("QGLShaderProgram::hasOpenGLShaderPrograms: ",
               QGLShaderProgram::hasOpenGLShaderPrograms());
 #endif
