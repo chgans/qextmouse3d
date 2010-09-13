@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLShaderProgram;
-class QGLVertexBuffer;
+class QGLVertexBundle;
 
 class Q_QT3D_EXPORT QGLAbstractEffect
 {
@@ -77,7 +77,7 @@ protected:
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value);
 
-    friend class QGLVertexBuffer;
+    friend class QGLVertexBundle;
     friend class QGLPainter;
 };
 

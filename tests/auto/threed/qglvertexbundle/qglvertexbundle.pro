@@ -3,7 +3,7 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglvertexbuffer.cpp
+SOURCES += tst_qglvertexbundle.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 

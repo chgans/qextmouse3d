@@ -97,7 +97,7 @@ public:
     QGLLightModel *lightModel;
     Effect *backdrop;
     QColor backgroundColor;
-    QGLVertexBuffer backdropVertices;
+    QGLVertexBundle backdropVertices;
     QGLView *view;
     QWidget *viewWidget;
     int pickId;
@@ -125,7 +125,6 @@ ViewportPrivate::ViewportPrivate()
     // Construct the vertices for a quad with (0, 0) as the
     // texture co-ordinate for the bottom-left of the screen
     // and (1, 1) as the texture co-ordinate for the top-right.
-    backdropVertices.setPackingHint(QGLVertexBuffer::Append);
 
     QArray<QVector2D> pos;
     pos.append(QVector2D(-1.0f, -1.0f));
@@ -505,7 +504,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
-        painter->setVertexBuffer(d->backdropVertices);
+        painter->setVertexBundle(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
 
@@ -520,7 +519,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         painter->setStandardEffect(QGL::FlatColor);
         painter->setColor(d->backgroundColor);
-        painter->setVertexBuffer(d->backdropVertices);
+        painter->setVertexBundle(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
 
         glDepthMask(GL_TRUE);

@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLVERTEXBUFFER_H
-#define QGLVERTEXBUFFER_H
+#ifndef QGLVERTEXBUNDLE_H
+#define QGLVERTEXBUNDLE_H
 
 #include <QtOpenGL/qglbuffer.h>
 #include "qcustomdataarray.h"
@@ -53,31 +53,19 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLVertexBufferPrivate;
+class QGLVertexBundlePrivate;
 class QGLPainter;
 class QGLAbstractEffect;
 class QGLShaderProgram;
 
-class Q_QT3D_EXPORT QGLVertexBuffer
+class Q_QT3D_EXPORT QGLVertexBundle
 {
 public:
-    QGLVertexBuffer();
-    QGLVertexBuffer(const QGLVertexBuffer& other);
-    ~QGLVertexBuffer();
+    QGLVertexBundle();
+    QGLVertexBundle(const QGLVertexBundle& other);
+    ~QGLVertexBundle();
 
-    QGLVertexBuffer& operator=(const QGLVertexBuffer& other);
-
-    enum PackingHint
-    {
-        Interleave,
-        Append
-    };
-
-    QGLVertexBuffer::PackingHint packingHint() const;
-    void setPackingHint(QGLVertexBuffer::PackingHint value);
-
-    QGLBuffer::UsagePattern usagePattern() const;
-    void setUsagePattern(QGLBuffer::UsagePattern value);
+    QGLVertexBundle& operator=(const QGLVertexBundle& other);
 
     void addAttribute(QGL::VertexAttribute attribute,
                       const QArray<float>& value);
@@ -91,10 +79,6 @@ public:
                       const QArray<QColor4ub>& value);
     void addAttribute(QGL::VertexAttribute attribute,
                       const QCustomDataArray& value);
-
-    void replaceAttribute
-        (QGL::VertexAttribute attribute, int index, int count,
-         const QGLAttributeValue& value);
 
     QGLAttributeValue attributeValue(QGL::VertexAttribute attribute) const;
 
@@ -112,9 +96,9 @@ public:
     void setAttributeArrays(QGLShaderProgram *program);
 
 private:
-    QGLVertexBufferPrivate *d_ptr;
+    QGLVertexBundlePrivate *d_ptr;
 
-    Q_DECLARE_PRIVATE(QGLVertexBuffer)
+    Q_DECLARE_PRIVATE(QGLVertexBundle)
 
     friend class QGLPainter;
 };

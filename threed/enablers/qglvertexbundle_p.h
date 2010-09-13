@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLVERTEXBUFFER_P_H
-#define QGLVERTEXBUFFER_P_H
+#ifndef QGLVERTEXBUNDLE_P_H
+#define QGLVERTEXBUNDLE_P_H
 
 //
 //  W A R N I N G
@@ -53,17 +53,17 @@
 // We mean it.
 //
 
-#include "qglvertexbuffer.h"
+#include "qglvertexbundle.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QGLVertexBufferAttribute
+class QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferAttribute(QGL::VertexAttribute attr) : attribute(attr) {}
-    virtual ~QGLVertexBufferAttribute() {}
+    QGLVertexBundleAttribute(QGL::VertexAttribute attr) : attribute(attr) {}
+    virtual ~QGLVertexBundleAttribute() {}
 
     virtual void clear() = 0;
     virtual QGLAttributeValue uploadValue() = 0;
@@ -76,12 +76,12 @@ public:
     QGLAttributeValue value;
 };
 
-class QGLVertexBufferFloatAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleFloatAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferFloatAttribute
+    QGLVertexBundleFloatAttribute
             (QGL::VertexAttribute attr, const QArray<float>& array)
-        : QGLVertexBufferAttribute(attr), floatArray(array)
+        : QGLVertexBundleAttribute(attr), floatArray(array)
     {
         value = QGLAttributeValue(floatArray);
     }
@@ -96,12 +96,12 @@ public:
     QArray<float> floatArray;
 };
 
-class QGLVertexBufferVector2DAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleVector2DAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferVector2DAttribute
+    QGLVertexBundleVector2DAttribute
             (QGL::VertexAttribute attr, const QArray<QVector2D>& array)
-        : QGLVertexBufferAttribute(attr), vector2DArray(array)
+        : QGLVertexBundleAttribute(attr), vector2DArray(array)
     {
         value = QGLAttributeValue(vector2DArray);
     }
@@ -116,12 +116,12 @@ public:
     QArray<QVector2D> vector2DArray;
 };
 
-class QGLVertexBufferVector3DAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleVector3DAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferVector3DAttribute
+    QGLVertexBundleVector3DAttribute
             (QGL::VertexAttribute attr, const QArray<QVector3D>& array)
-        : QGLVertexBufferAttribute(attr), vector3DArray(array)
+        : QGLVertexBundleAttribute(attr), vector3DArray(array)
     {
         value = QGLAttributeValue(vector3DArray);
     }
@@ -136,12 +136,12 @@ public:
     QArray<QVector3D> vector3DArray;
 };
 
-class QGLVertexBufferVector4DAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleVector4DAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferVector4DAttribute
+    QGLVertexBundleVector4DAttribute
             (QGL::VertexAttribute attr, const QArray<QVector4D>& array)
-        : QGLVertexBufferAttribute(attr), vector4DArray(array)
+        : QGLVertexBundleAttribute(attr), vector4DArray(array)
     {
         value = QGLAttributeValue(vector4DArray);
     }
@@ -156,12 +156,12 @@ public:
     QArray<QVector4D> vector4DArray;
 };
 
-class QGLVertexBufferColorAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleColorAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferColorAttribute
+    QGLVertexBundleColorAttribute
             (QGL::VertexAttribute attr, const QArray<QColor4ub>& array)
-        : QGLVertexBufferAttribute(attr), colorArray(array)
+        : QGLVertexBundleAttribute(attr), colorArray(array)
     {
         value = QGLAttributeValue(colorArray);
     }
@@ -176,12 +176,12 @@ public:
     QArray<QColor4ub> colorArray;
 };
 
-class QGLVertexBufferCustomAttribute : public QGLVertexBufferAttribute
+class QGLVertexBundleCustomAttribute : public QGLVertexBundleAttribute
 {
 public:
-    QGLVertexBufferCustomAttribute
+    QGLVertexBundleCustomAttribute
             (QGL::VertexAttribute attr, const QCustomDataArray& array)
-        : QGLVertexBufferAttribute(attr), customArray(array)
+        : QGLVertexBundleAttribute(attr), customArray(array)
     {
         value = QGLAttributeValue(customArray);
     }
@@ -196,28 +196,23 @@ public:
     QCustomDataArray customArray;
 };
 
-class QGLVertexBufferPrivate
+class QGLVertexBundlePrivate
 {
 public:
-    QGLVertexBufferPrivate()
+    QGLVertexBundlePrivate()
         : buffer(QGLBuffer::VertexBuffer),
-          packingHint(QGLVertexBuffer::Interleave),
-          actualPackingHint(QGLVertexBuffer::Interleave),
           vertexCount(0)
     {
         ref = 1;
     }
-    ~QGLVertexBufferPrivate()
+    ~QGLVertexBundlePrivate()
     {
         qDeleteAll(attributes);
     }
 
     QBasicAtomicInt ref;
     QGLBuffer buffer;
-    QGLVertexBuffer::PackingHint packingHint;
-    QGLVertexBuffer::PackingHint actualPackingHint;
-    QList<QGLVertexBufferAttribute *> attributes;
-    QList<QGL::VertexAttribute> attributeNames;
+    QList<QGLVertexBundleAttribute *> attributes;
     int vertexCount;
 };
 

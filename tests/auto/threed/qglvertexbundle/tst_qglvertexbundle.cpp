@@ -41,22 +41,22 @@
 
 #include <QtTest/QtTest>
 #include <QtOpenGL/qgl.h>
-#include "qglvertexbuffer.h"
+#include "qglvertexbundle.h"
 #include "qvector2darray.h"
 #include "qvector3darray.h"
 
-class tst_QGLVertexBuffer : public QObject
+class tst_QGLVertexBundle : public QObject
 {
     Q_OBJECT
 public:
-    tst_QGLVertexBuffer() {}
-    ~tst_QGLVertexBuffer() {}
+    tst_QGLVertexBundle() {}
+    ~tst_QGLVertexBundle() {}
 
 private slots:
     void create();
 };
 
-void tst_QGLVertexBuffer::create()
+void tst_QGLVertexBundle::create()
 {
     // Interleave 4 positions and texture co-ordinates, which will
     // result in the numbers 1..20 ending up in the GL server's buffer.
@@ -72,15 +72,13 @@ void tst_QGLVertexBuffer::create()
     texCoords.append(14.0f, 15.0f);
     texCoords.append(19.0f, 20.0f);
 
-    QGLVertexBuffer buffer;
+    QGLVertexBundle buffer;
     buffer.addAttribute(QGL::Position, positions);
     buffer.addAttribute(QGL::TextureCoord0, texCoords);
 
     QVERIFY(!buffer.isUploaded());
-    QVERIFY(buffer.packingHint() == QGLVertexBuffer::Interleave);
-    QVERIFY(buffer.usagePattern() == QGLBuffer::StaticDraw);
 
-    // Create a context to upload into.  We populate the QGLVertexBuffer
+    // Create a context to upload into.  We populate the QGLVertexBundle
     // with data before doing this to ensure that the client-side part of
     // the buffers can be created at application startup time before an
     // actual OpenGL context exists.
@@ -107,6 +105,6 @@ void tst_QGLVertexBuffer::create()
     buffer.release();
 }
 
-QTEST_MAIN(tst_QGLVertexBuffer)
+QTEST_MAIN(tst_QGLVertexBundle)
 
-#include "tst_qglvertexbuffer.moc"
+#include "tst_qglvertexbundle.moc"

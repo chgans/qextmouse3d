@@ -45,7 +45,7 @@
 #include "qcolor4ub.h"
 #include "qglnamespace.h"
 #include "qglindexbuffer.h"
-#include "qglvertexbuffer.h"
+#include "qglvertexbundle.h"
 #include "qglattributevalue.h"
 #include "qcustomdataarray.h"
 #include "qbox3d.h"
@@ -106,7 +106,7 @@ public:
     Q_DECLARE_FLAGS(BufferStrategy, BufferStrategyFlags)
     void setBufferStrategy(BufferStrategy strategy);
     BufferStrategy bufferStrategy() const;
-    QGLVertexBuffer vertexBuffer() const;
+    QGLVertexBundle vertexBundle() const;
     QGLIndexBuffer indexBuffer() const;
 
     void appendIndex(int index);

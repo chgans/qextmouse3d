@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLVertexBuffer;
+class QGLVertexBundle;
 
 class Q_QT3D_EXPORT QGLAttributeValue
 {
@@ -89,7 +89,7 @@ private:
     void setOffset(int offset)
         { m_data = reinterpret_cast<const void *>(offset); }
 
-    friend class QGLVertexBuffer;
+    friend class QGLVertexBundle;
 };
 
 inline QGLAttributeValue::QGLAttributeValue()

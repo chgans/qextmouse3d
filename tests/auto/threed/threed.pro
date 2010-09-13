@@ -14,7 +14,7 @@ SUBDIRS = \
     qgllightparameters \
     qglmaterial \
     qglmaterialcollection \
-    qglvertexbuffer \
+    qglvertexbundle \
     qglpainter \
     qglbuilder \
     qglsection \

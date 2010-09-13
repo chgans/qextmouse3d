@@ -65,7 +65,7 @@
 #include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
 #include "qgeometrydata.h"
-#include "qglvertexbuffer_p.h"
+#include "qglvertexbundle_p.h"
 #include "qmatrix4x4stack_p.h"
 #include "qglwidgetsurface.h"
 #include "qglpixelbuffersurface.h"
@@ -1209,7 +1209,7 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     on the GL state.  If the effect() does not need \a attribute,
     it will be ignored.
 
-    \sa setVertexBuffer(), draw(), setCommonNormal()
+    \sa setVertexBundle(), draw(), setCommonNormal()
 */
 void QGLPainter::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
@@ -1236,12 +1236,12 @@ void QGLPainter::setVertexAttribute
 
     \sa setVertexAttribute(), draw(), setCommonNormal()
 */
-void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
+void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(this);
-    QGLVertexBufferPrivate *bd = const_cast<QGLVertexBufferPrivate *>(buffer.d_func());
+    QGLVertexBundlePrivate *bd = const_cast<QGLVertexBundlePrivate *>(buffer.d_func());
     if (bd->buffer.isCreated()) {
         GLuint id = bd->buffer.bufferId();
         if (id != d->boundVertexBuffer) {
@@ -1253,12 +1253,12 @@ void QGLPainter::setVertexBuffer(const QGLVertexBuffer& buffer)
         d->boundVertexBuffer = 0;
     }
     for (int index = 0; index < bd->attributes.size(); ++index) {
-        QGLVertexBufferAttribute *attr = bd->attributes[index];
+        QGLVertexBundleAttribute *attr = bd->attributes[index];
         d->effect->setVertexAttribute(attr->attribute, attr->value);
-    }
 #ifndef QT_NO_DEBUG
-    d->removeRequiredFields(bd->attributeNames);
+        d->removeRequiredField(attr->attribute);
 #endif
+    }
 }
 
 /*!
