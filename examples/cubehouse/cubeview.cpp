@@ -46,7 +46,9 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qpropertyanimation.h>
 #include <stdio.h>
+#if !defined(QT_OPENGL_ES_1)
 #include "projectivetextureeffect.h"
+#endif
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent), scene(0), cube(0), teapot(0), room(0),
@@ -83,7 +85,9 @@ CubeView::CubeView(QWidget *parent)
 
     time.start();
 
+#if !defined(QT_OPENGL_ES_1)
     projectiveTextureEffect = new ProjectiveTextureEffect;
+#endif
     biasMatrix = QMatrix4x4(0.5, 0.0, 0.0, 0.5,
                           0.0, 0.5, 0.0, 0.5,
                           0.0, 0.0, 0.5, 0.5,
@@ -240,6 +244,7 @@ void CubeView::paintGL(QGLPainter *painter)
     // These are the model transformations
     painter->modelViewMatrix().translate(-0.8f, -1.5f, -3.0f);
     painter->setLightModel(normalModel);
+#if !defined(QT_OPENGL_ES_1)
     if(useProjectiveTextureEffect)
     {
         // For an effect that looks like we have only one projector
@@ -254,6 +259,7 @@ void CubeView::paintGL(QGLPainter *painter)
         texture.bind();
     }
     else
+#endif
         painter->setStandardEffect(QGL::LitMaterial);
     teapot->draw(painter);
 
@@ -268,6 +274,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
 
     texture.bind();
+#if !defined(QT_OPENGL_ES_1)
     if(useProjectiveTextureEffect)
     {
         modelMatrix.push();
@@ -282,7 +289,9 @@ void CubeView::paintGL(QGLPainter *painter)
 //        painter->setStandardEffect(QGL::FlatDecalTexture2D);
         cube->draw(painter);
         modelMatrix.pop();
-    } else {
+    } else
+#endif
+    {
         glEnable(GL_BLEND);
         painter->setStandardEffect(QGL::LitDecalTexture2D);
         painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
@@ -368,9 +377,11 @@ void CubeView::updateProjectorProjectionMatrix()
 
 void CubeView::updateObjectLinearTexgenMatrix()
 {
+#if !defined(QT_OPENGL_ES_1)
     objectLinearTexgenMatrix = biasMatrix *
             projectorProjectionMatrix *
             projectorViewMatrix *
             modelMatrix;
     projectiveTextureEffect->setObjectLinearTexgenMatrix(objectLinearTexgenMatrix);
+#endif
 }

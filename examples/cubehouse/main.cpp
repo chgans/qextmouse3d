@@ -48,8 +48,10 @@ int main(int argc, char *argv[])
     CubeView view;
     if (QApplication::arguments().contains("-framerate"))
         view.setShowFrameRate(true);
+#if !defined(QT_OPENGL_ES_1)
     if (QApplication::arguments().contains("-projectivetexture"))
         view.setProjectiveTextureEffect(true);
+#endif
     if (QApplication::arguments().contains("-stereo"))
         view.setStereo(true);
     else if (view.stereoType() != QGLView::RedCyanAnaglyph)

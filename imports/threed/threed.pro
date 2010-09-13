@@ -20,7 +20,6 @@ SOURCES += \
     item3d.cpp \
     mesh.cpp \
     qt3dnamespace.cpp \
-    shaderprogram.cpp \
     viewport.cpp
 HEADERS += \
     redcyaneffect.h \
@@ -28,9 +27,13 @@ HEADERS += \
     item3d.h \
     mesh.h \
     qt3dnamespace.h \
-    shaderprogram.h \
-    shaderprogram_p.h \
     viewport.h
+
+!contains(QT_CONFIG, opengles1) {
+    SOURCES += shaderprogram.cpp
+    HEADERS += shaderprogram.h \
+               shaderprogram_p.h
+}
 
 qdeclarativesources.files += \
     qmldir \

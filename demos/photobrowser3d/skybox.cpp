@@ -223,7 +223,7 @@ void SkyBox::draw(QGLPainter *painter) const
     cam->setViewSize(size);
     painter->setCamera(cam);
 
-#ifndef QT_OPENGL_ES_2
+#ifndef QT_OPENGL_ES
     glPopAttrib();
 #endif
 

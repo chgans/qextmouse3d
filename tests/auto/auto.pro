@@ -2,5 +2,6 @@ TEMPLATE = subdirs
 SUBDIRS = \
     math3d \
     threed \
-    compareimage \
-    qglcolladafxeffectfactory
+    compareimage
+
+!contains(QT_CONFIG, opengles1): SUBDIRS += qglcolladafxeffectfactory

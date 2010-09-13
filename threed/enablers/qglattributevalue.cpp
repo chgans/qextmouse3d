@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglattributevalue.h"
+#include "qglfunctions.h"
 
 QT_BEGIN_NAMESPACE
 

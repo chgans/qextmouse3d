@@ -85,7 +85,9 @@ public:
         qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGraphicsBillboardTransform>(uri,1,0,"BillboardTransform");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
+#if !defined(QT_OPENGL_ES_1)
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
+#endif
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();

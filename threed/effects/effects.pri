@@ -6,20 +6,29 @@ HEADERS += \
     qglflatcoloreffect.h \
     qglflattextureeffect.h \
     qgllitmaterialeffect.h \
-    qgllittextureeffect.h \
-    qglcolladafxeffectfactory.h \
-    qglcolladafxeffect.h \
-    qglcolladafxeffectloader.h \
-    qglcolladafxeffect_p.h \
-    qglshaderprogrameffect.h
+    qgllittextureeffect.h
 
 SOURCES += \
     qglflatcoloreffect.cpp \
     qglflattextureeffect.cpp \
     qgllitmaterialeffect.cpp \
-    qgllittextureeffect.cpp \
+    qgllittextureeffect.cpp
+
+!contains(QT_CONFIG,opengles1) {
+
+HEADERS += \
+    qglcolladafxeffectfactory.h \
+    qglcolladafxeffect.h \
+    qglcolladafxeffectloader.h \
+    qglshaderprogrameffect.h
+
+PRIVATE_HEADERS += \
+    qglcolladafxeffect_p.h
+
+SOURCES += \
     qglcolladafxeffect.cpp \
     qglcolladafxeffectfactory.cpp \
     qglcolladafxeffectloader.cpp \
     qglshaderprogrameffect.cpp
 
+}
