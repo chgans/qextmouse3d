@@ -476,70 +476,50 @@ bool QGLVertexBundle::upload()
     stride /= sizeof(float);
 
     // Determine how to upload the data, using a map if possible.
-    // Interleaving will be used if we can map the buffer directly.
-    // Otherwise we append the attributes one after the other.
+    // Interleave the data into the final buffer.  We do it in
+    // sections so as to keep locality problems to a minimum.
     void *mapped = d->buffer.map(QGLBuffer::WriteOnly);
     int offset = 0;
-    if (mapped) {
-        // Interleave the data into the final buffer.  We do it in
-        // sections so as to keep locality problems to a minimum.
-        QArray<float> temp;
-        float *dst;
-        if (mapped)
-            dst = reinterpret_cast<float *>(mapped);
-        else
-            dst = temp.extend(1024);
-        int sectionSize = 1024 / stride;
-        for (int vertex = 0; vertex < maxCount; vertex += sectionSize) {
-            int attrPosn = 0;
-            for (int index = 0; index < d->attributes.size(); ++index) {
-                attr = d->attributes[index];
-                int count = attr->count() - vertex;
-                if (count <= 0)
-                    continue;
-                count = qMin(count, sectionSize);
-                int components = attr->elementSize() / sizeof(float);
-                vertexBufferInterleave
-                    (dst + attrPosn, stride,
-                     attr->value.floatData() + vertex * components,
-                     components, count);
-                attrPosn += attr->elementSize() / sizeof(float);
-            }
-            size = sectionSize * stride;
-            if (mapped) {
-                dst += size;
-            } else {
-                size *= sizeof(float);
-                if((offset + size) > bufferSize)    // buffer overflow check
-                    size = bufferSize-offset;
-                d->buffer.write(offset, dst, size);
-                offset += size;
-            }
-        }
-        offset = 0;
+    QArray<float> temp;
+    float *dst;
+    if (mapped)
+        dst = reinterpret_cast<float *>(mapped);
+    else
+        dst = temp.extend(1024);
+    int sectionSize = 1024 / stride;
+    for (int vertex = 0; vertex < maxCount; vertex += sectionSize) {
+        int attrPosn = 0;
         for (int index = 0; index < d->attributes.size(); ++index) {
             attr = d->attributes[index];
-            attr->value.setOffset(offset);
-            attr->value.setStride(stride * sizeof(float));
-            offset += attr->elementSize();
-            attr->clear();
+            int count = attr->count() - vertex;
+            if (count <= 0)
+                continue;
+            count = qMin(count, sectionSize);
+            int components = attr->elementSize() / sizeof(float);
+            vertexBufferInterleave
+                (dst + attrPosn, stride,
+                 attr->value.floatData() + vertex * components,
+                 components, count);
+            attrPosn += attr->elementSize() / sizeof(float);
         }
-    } else {
-        // Append the arrays to each other and write.
-        for (int index = 0; index < d->attributes.size(); ++index) {
-            attr = d->attributes[index];
-            size = attr->count() * attr->elementSize();
-            if (mapped) {
-                qMemCopy(reinterpret_cast<char *>(mapped) + offset,
-                         attr->value.data(), size);
-            } else {
-                d->buffer.write(offset, attr->value.data(), size);
-            }
-            attr->value.setOffset(offset);
-            attr->value.setStride(attr->elementSize());
-            attr->clear();
+        size = sectionSize * stride;
+        if (mapped) {
+            dst += size;
+        } else {
+            size *= sizeof(float);
+            if((offset + size) > bufferSize)    // buffer overflow check
+                size = bufferSize-offset;
+            d->buffer.write(offset, dst, size);
             offset += size;
         }
+    }
+    offset = 0;
+    for (int index = 0; index < d->attributes.size(); ++index) {
+        attr = d->attributes[index];
+        attr->value.setOffset(offset);
+        attr->value.setStride(stride * sizeof(float));
+        offset += attr->elementSize();
+        attr->clear();
     }
     if (mapped)
         d->buffer.unmap();
