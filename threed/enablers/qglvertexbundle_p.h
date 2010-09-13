@@ -69,8 +69,6 @@ public:
     virtual QGLAttributeValue uploadValue() = 0;
     virtual int count() = 0;
     virtual int elementSize() = 0;
-    virtual void replace
-        (int index, int count, const QGLAttributeValue& value) = 0;
 
     QGL::VertexAttribute attribute;
     QGLAttributeValue value;
@@ -91,7 +89,6 @@ public:
         { return QGLAttributeValue(floatArray); }
     int count() { return floatArray.count(); }
     int elementSize() { return sizeof(float); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QArray<float> floatArray;
 };
@@ -111,7 +108,6 @@ public:
         { return QGLAttributeValue(vector2DArray); }
     int count() { return vector2DArray.count(); }
     int elementSize() { return sizeof(QVector2D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QArray<QVector2D> vector2DArray;
 };
@@ -131,7 +127,6 @@ public:
         { return QGLAttributeValue(vector3DArray); }
     int count() { return vector3DArray.count(); }
     int elementSize() { return sizeof(QVector3D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QArray<QVector3D> vector3DArray;
 };
@@ -151,7 +146,6 @@ public:
         { return QGLAttributeValue(vector4DArray); }
     int count() { return vector4DArray.count(); }
     int elementSize() { return sizeof(QVector4D); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QArray<QVector4D> vector4DArray;
 };
@@ -171,7 +165,6 @@ public:
         { return QGLAttributeValue(colorArray); }
     int count() { return colorArray.count(); }
     int elementSize() { return sizeof(QColor4ub); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QArray<QColor4ub> colorArray;
 };
@@ -191,7 +184,6 @@ public:
         { return QGLAttributeValue(customArray); }
     int count() { return customArray.count(); }
     int elementSize() { return customArray.elementSize(); }
-    void replace(int index, int count, const QGLAttributeValue& value);
 
     QCustomDataArray customArray;
 };
