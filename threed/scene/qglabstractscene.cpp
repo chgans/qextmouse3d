@@ -127,6 +127,7 @@ public:
     bool picking;
     int nextPickId;
     QList<QGLPickNode*> pickNodes;
+    QSet<QGLSceneNode*> pickable;
     bool pickNodesDirty;
 };
 
@@ -153,7 +154,9 @@ QGLAbstractScene::~QGLAbstractScene()
 void QGLAbstractScene::childEvent(QChildEvent *event)
 {
     if (event->type() == QEvent::ChildAdded)
+    {
         d_ptr->pickNodesDirty = true;
+    }
 }
 
 /*!
@@ -199,8 +202,17 @@ void QGLAbstractScene::generatePickNodes()
 {
     QList<QGLSceneNode *> objs = objects(QGLSceneNode::Mesh);
     QList<QGLSceneNode *>::iterator it = objs.begin();
+    d_ptr->pickNodes.clear();
     for ( ; it != objs.end(); ++it)
-        (*it)->setPickNode(new QGLPickNode(this));
+    {
+        QGLSceneNode *n = *it;
+        if (!d_ptr->pickable.contains(n))
+        {
+            n->setPickNode(new QGLPickNode(this));
+            d_ptr->pickable.insert(n);
+        }
+        d_ptr->pickNodes.append(n->pickNode());
+    }
 }
 
 /*!
@@ -221,15 +233,7 @@ QList<QGLPickNode *> QGLAbstractScene::pickNodes() const
 {
     if (d_ptr->pickNodesDirty)
     {
-        d_ptr->pickNodes.clear();
-        QObjectList c = children();
-        QObjectList::const_iterator it = c.constBegin();
-        for ( ; it != c.constEnd(); ++it)
-        {
-            QGLPickNode *n = qobject_cast<QGLPickNode*>(*it);
-            if (n)
-                d_ptr->pickNodes.append(n);
-        }
+        const_cast<QGLAbstractScene*>(this)->generatePickNodes();
         d_ptr->pickNodesDirty = false;
     }
     return d_ptr->pickNodes;
