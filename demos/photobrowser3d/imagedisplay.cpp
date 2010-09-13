@@ -44,7 +44,10 @@
 
 #include "qglbuilder.h"
 #include "qglcube.h"
+#include "qframesscene.h"
 
+#include <QApplication>
+#include <QChildEvent>
 #include <QUrl>
 #include <QImage>
 
@@ -98,6 +101,11 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);
 
+    // make the frames pickable
+    m_frameScene = new QFramesScene(this);
+    m_frameScene->setRootNode(m_frames);
+    m_frameScene->setPickable(true);
+
     m_imageSetToDefault = true;
 }
 
@@ -120,6 +128,10 @@ void ImageDisplay::addImage(const QImage &image)
         if (scale != 1)
             s->setScale(QVector3D(scale, scale, scale));
 
+        // tell the frame scene to make the child pickable
+        QChildEvent e(QEvent::ChildAdded, s);
+        QApplication::sendEvent(m_frameScene, &e);
+
         s = m_currentWall->clone(m_wall);
         s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
@@ -136,4 +148,10 @@ void ImageDisplay::addImage(const QImage &image)
     tex->setImage(image);
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);
+    emit framesChanged();
+}
+
+QList<QGLPickNode *> ImageDisplay::pickNodes() const
+{
+    return m_frameScene->pickNodes();
 }

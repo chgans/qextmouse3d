@@ -43,6 +43,8 @@
 #include "imagemanager.h"
 #include "imagedisplay.h"
 #include "skybox.h"
+#include "qglpicknode.h"
+#include "qfocusadaptor.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -53,6 +55,7 @@
 #include <QStateMachine>
 #include <QState>
 #include <QFinalState>
+#include <QSignalTransition>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
@@ -68,7 +71,10 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_zoomed(0)
     , m_browse(0)
     , m_pan(0)
+    , m_framesDirty(true)
 {
+    setOption(QGLView::ObjectPicking, true);
+
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
     if (ix != -1)
@@ -82,12 +88,18 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_skybox = new SkyBox(this, path);
     m_scene = new ImageDisplay(this, m_palette);
 
+    setupStates();
+
     QTimer::singleShot(0, this, SLOT(initialise()));
+}
 
-    m_keyTimer->setInterval(100);
-    connect(m_keyTimer, SIGNAL(timeout()),
-            this, SLOT(keyTimeOut()));
+PhotoBrowser3DView::~PhotoBrowser3DView()
+{
+    delete m_panTime;
+}
 
+void PhotoBrowser3DView::setupStates()
+{
     m_state = new QStateMachine(this);
     m_app = new QState;
     m_zoomed = new QState(m_app);
@@ -99,11 +111,18 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_app->addTransition(this, SIGNAL(done()), end_state);
     m_state->addState(end_state);
     connect(m_state, SIGNAL(finished()), this, SLOT(close()));
-}
 
-PhotoBrowser3DView::~PhotoBrowser3DView()
-{
-    delete m_panTime;
+    m_fa = new QFocusAdaptor(this);
+    m_browse->assignProperty(m_fa, "progress", 0.0);
+    m_pan->assignProperty(m_fa, "progress", 0.0);
+    m_zoomed->assignProperty(m_fa, "progress", 1.0);
+
+    m_browse->addTransition(this, SIGNAL(zoomIn()), m_zoomed);
+    m_pan->addTransition(this, SIGNAL(zoomIn()), m_zoomed);
+    m_zoomed->addTransition(this, SIGNAL(zoomOut()), m_browse);
+
+    m_state->setInitialState(m_app);
+    m_state->start();
 }
 
 void PhotoBrowser3DView::initialise()
@@ -115,15 +134,21 @@ void PhotoBrowser3DView::initialise()
         if (qApp->arguments().size() > ix+1)
             path = qApp->arguments().at(ix+1);
         else
-            qWarning("Expected path/to/image/files after \"--pictures\" switch\n");
+            qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
     connect(m_images, SIGNAL(imageReady(QImage)),
             m_scene, SLOT(addImage(QImage)));
+    connect(m_scene, SIGNAL(framesChanged()),
+            this, SLOT(framesDirty()));
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
     m_images->setImageUrl(url);
     m_images->start(QThread::IdlePriority);
+
+    m_keyTimer->setInterval(100);
+    connect(m_keyTimer, SIGNAL(timeout()),
+            this, SLOT(keyTimeOut()));
 }
 
 void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
@@ -219,10 +244,17 @@ void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
     QWidget::closeEvent(e);
 }
 
+void PhotoBrowser3DView::mousePressEvent(QMouseEvent *e)
+{
+    Q_UNUSED(e);
+    registerFrames();
+    QGLView::mousePressEvent(e);
+}
+
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
-    //camera()->setEye(QVector3D(0.0f, 0.0f, -10.0f));
+    registerFrames();
 }
 
 void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
@@ -254,3 +286,37 @@ void PhotoBrowser3DView::paintEvent(QPaintEvent *e)
     View::paintEvent(e);
 }
 */
+
+void PhotoBrowser3DView::zoomImage()
+{
+    QGLPickNode *pn = qobject_cast<QGLPickNode*>(sender());
+    Q_ASSERT(pn);
+    QGLSceneNode *n = pn->target();
+    m_fa->setTarget(n);
+    qDebug() << "emitting zoomIn";
+    emit zoomIn();
+    qDebug() << "    done";
+}
+
+void PhotoBrowser3DView::framesDirty()
+{
+    m_framesDirty = true;
+}
+
+void PhotoBrowser3DView::registerFrames()
+{
+    if (m_framesDirty)
+    {
+        QList<QGLPickNode*> pickList = m_scene->pickNodes();
+        QList<QGLPickNode*>::const_iterator it = pickList.constBegin();
+        for ( ; it != pickList.constEnd(); ++it)
+        {
+            QGLPickNode *pn = *it;
+            pn->disconnect(this);
+            QObject::connect(pn, SIGNAL(clicked()),
+                             this, SLOT(zoomImage()));
+            registerObject(pn->id(), pn);
+        }
+        m_framesDirty = false;
+    }
+}

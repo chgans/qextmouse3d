@@ -39,36 +39,28 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#ifndef QFRAMESSCENE_H
+#define QFRAMESSCENE_H
 
-#include <QString>
+#include "qglabstractscene.h"
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
+class QGLSceneNode;
 
-class ImageDisplay : public QGLSceneNode
+class QFramesScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials);
-    QList<QGLPickNode *> pickNodes() const;
+    explicit QFramesScene(QObject *parent = 0);
+    virtual QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    void setRootNode(QGLSceneNode *node) { m_rootNode = node; }
+
 signals:
-    void framesChanged();
+
 public slots:
-    void addImage(const QImage &image);
+
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    bool m_imageSetToDefault;
-    int m_count;
+    QGLSceneNode *m_rootNode;
 };
 
-#endif // IMAGEDISPLAY_H
+#endif // QFRAMESSCENE_H

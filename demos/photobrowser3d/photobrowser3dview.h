@@ -51,6 +51,7 @@ class QGLSceneNode;
 class ImageManager;
 class QState;
 class QStateMachine;
+class QFocusAdaptor;
 
 class PhotoBrowser3DView : public QGLView
 {
@@ -61,16 +62,25 @@ public:
     void initializeGL(QGLPainter *);
 signals:
     void done();
+    void zoomIn();
+    void zoomOut();
+    void pan();
 protected:
     void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
     void wheelEvent(QWheelEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void closeEvent(QCloseEvent *e);
+    void mousePressEvent(QMouseEvent *e);
 private slots:
     void initialise();
     void keyTimeOut();
+    void zoomImage();
+    void framesDirty();
 private:
+    void registerFrames();
+    void setupStates();
+
     ImageDisplay *m_scene;
     ImageManager *m_images;
     SkyBox *m_skybox;
@@ -83,6 +93,8 @@ private:
     QState *m_zoomed;
     QState *m_browse;
     QState *m_pan;
+    QFocusAdaptor *m_fa;
+    bool m_framesDirty;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H

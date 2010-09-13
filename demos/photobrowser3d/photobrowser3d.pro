@@ -10,14 +10,18 @@ SOURCES += main.cpp\
     skybox.cpp \
     imagemanager.cpp \
     imageloader.cpp \
-    launcher.cpp
+    launcher.cpp \
+    qframesscene.cpp \
+    qfocusadaptor.cpp
 
 HEADERS  += photobrowser3dview.h \
     imagedisplay.h \
     skybox.h \
     imagemanager.h \
     imageloader.h \
-    launcher.h
+    launcher.h \
+    qframesscene.h \
+    qfocusadaptor.h
 
 RESOURCES += \
     photobrowser3d.qrc

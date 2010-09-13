@@ -39,36 +39,42 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#ifndef QFOCUSADAPTOR_H
+#define QFOCUSADAPTOR_H
 
-#include <QString>
+#include <QObject>
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
+class QGLView;
+class QGLSceneNode;
+class QFocusAdaptorPrivate;
 
-class ImageDisplay : public QGLSceneNode
+class QFocusAdaptor : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials);
-    QList<QGLPickNode *> pickNodes() const;
+    explicit QFocusAdaptor(QObject *parent = 0);
+    ~QFocusAdaptor();
+
+    qreal progress() const;
+    void setProgress(qreal progress);
+
+    QGLView *view() const;
+    void setView(QGLView *view);
+
+    QGLSceneNode *target() const;
+    void setTarget(QGLSceneNode *target);
+
 signals:
-    void framesChanged();
+    void progressChanged();
+
 public slots:
-    void addImage(const QImage &image);
+
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    bool m_imageSetToDefault;
-    int m_count;
+    void calculateValues();
+
+    QFocusAdaptorPrivate *d;
 };
 
-#endif // IMAGEDISPLAY_H
+#endif // QFOCUSADAPTOR_H
