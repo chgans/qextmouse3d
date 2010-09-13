@@ -93,8 +93,6 @@ public:
     bool bind();
     void release();
 
-    void setAttributeArrays(QGLShaderProgram *program);
-
 private:
     QGLVertexBundlePrivate *d_ptr;
 
