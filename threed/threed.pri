@@ -6,7 +6,6 @@ include(viewing/viewing.pri)
 include(math3d/math3d.pri)
 include(scene/scene.pri)
 include(graphicsview/graphicsview.pri)
-include(animation/animation.pri)
 include(other/other.pri)
 include(surfaces/surfaces.pri)
 
