@@ -5,7 +5,7 @@ Viewport {
     width: 640; height: 480
 
 //! [1]
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "teapot.bez" }
 

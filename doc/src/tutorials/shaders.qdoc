@@ -69,7 +69,7 @@
     At the highest level, shaders in QML/3D are created using the ShaderProgram
     element.  The ShaderProgram element in this example has the id \a program,
     and applying it to the teapot is as simple as assigning it to the \c effect
-    property of an Item3d derived element.
+    property of an Item3D derived element.
 
     The two most important properties of the ShaderProgram element are the
     \c vertexShader and \c fragmentShader properties, which are strings
@@ -326,11 +326,11 @@
 
     Firstly, we're going to need multiple teapots to see the difference, so
     let's add those in.  We want to move them all together, so we'll wrap
-    them in an Item3d, and apply our animations to that item instead of
+    them in an Item3D, and apply our animations to that item instead of
     the teapots directly.
     \code
 
-    Item3d {
+    Item3D {
         z: -8.0
         transform: [
             Rotation3D {

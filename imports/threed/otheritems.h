@@ -51,12 +51,12 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Cube : public Item3d
+class Cube : public Item3D
 {
     Q_OBJECT
     Q_PROPERTY(qreal size READ size WRITE setSize NOTIFY sizeChanged)
 public:
-    Cube(QObject *parent = 0) : Item3d(parent), m_size(1) {}
+    Cube(QObject *parent = 0) : Item3D(parent), m_size(1) {}
     ~Cube() {}
 
     qreal size() const { return m_size; }

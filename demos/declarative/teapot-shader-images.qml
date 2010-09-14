@@ -23,7 +23,7 @@ Viewport {
         source: imageUrl
     }
 
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "meshes/teapot.bez" }
         effect: shaderEffect
 

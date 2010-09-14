@@ -63,7 +63,7 @@ void QmlGenerator::save() const
         os << "import Qt 4.7" << endl;
         os << "import Qt3D 1.0" << endl << endl;
 
-        QmlStanza item3d("Item3d");
+        QmlStanza item3d("Item3D");
 
         QmlStanza mesh("Mesh");
         item3d.addProperty("mesh", &mesh);

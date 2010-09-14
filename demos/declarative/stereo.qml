@@ -8,7 +8,7 @@ Viewport {
         eyeSeparation: 0.2
     }
 
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "meshes/teapot.bez" }
         effect: Effect {

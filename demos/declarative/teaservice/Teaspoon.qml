@@ -1,10 +1,10 @@
 import Qt 4.7
 import Qt3D 1.0
 
-Item3d {
+Item3D {
     id: "top"
     property real saucerY
-    Item3d {
+    Item3D {
         id: teaspoon1
         property real y_lift
         y: Math.max(y_lift,top.saucerY)

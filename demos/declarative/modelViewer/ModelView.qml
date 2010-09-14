@@ -147,7 +147,7 @@ Rectangle {
 			farPlane: 2000
 		}
 
-		Item3d {
+		Item3D {
 				id: mainItem
 				scale: 50
 				//y: -20

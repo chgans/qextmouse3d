@@ -75,7 +75,7 @@ public:
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");
-        qmlRegisterType<Item3d>(uri,1,0,"Item3d");
+        qmlRegisterType<Item3D>(uri,1,0,"Item3D");
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");

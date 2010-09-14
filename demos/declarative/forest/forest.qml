@@ -11,7 +11,7 @@ Viewport {
         eye: Qt.vector3d(0, 4, 12)
     }
 
-    Item3d {
+    Item3D {
         id: ground
         mesh: Mesh { source: "ground.obj" }
         effect: Effect {

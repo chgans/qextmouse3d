@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
     \internal
     \brief The Qml3dView class is based on the QMLView class, and is intended to allow for the
     display of 3d imagery specified in QML/3d.  The Qml3dView takes the place of its parent class
-    and contains provisions for display and management of \l Item3d objects, as well as \l Effect
+    and contains provisions for display and management of \l Item3D objects, as well as \l Effect
     objects and related classes.
     \since 4.8
     \ingroup qt3d
@@ -211,13 +211,13 @@ void Qml3dView::loaded()
         QTimer::singleShot(0, this, SLOT(updateGL()));
     } else if (mainObject &&
                QByteArray(mainObject->metaObject()->className())
-                    .contains("Item3d")) {
-        qWarning() << "qml3d: Item3d object without an enclosing Viewport";
+                    .contains("Item3D")) {
+        qWarning() << "qml3d: Item3D object without an enclosing Viewport";
     } else if (qobject_cast<QDeclarativeItem *>(mainObject)) {
         qWarning() << "qml3d: Ordinary QDeclarativeItem node found; may be "
                       "missing '-graphicssystem OpenGL'";
     } else {
-        qWarning() << "qml3d: No Viewport or Item3d node found";
+        qWarning() << "qml3d: No Viewport or Item3D node found";
     }
 
     QGLView::initializeGL();

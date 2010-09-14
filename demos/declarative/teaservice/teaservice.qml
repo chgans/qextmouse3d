@@ -10,7 +10,7 @@ Viewport {
         eye: Qt.vector3d(0, 3, 10)
     }
 
-    Item3d {
+    Item3D {
         id: teapot
         transform: [
             Rotation3D {
@@ -26,7 +26,7 @@ Viewport {
         ]
         property bool bounce: false
 
-        Item3d {
+        Item3D {
             id: body
             mesh: Mesh { source: "teapot-body.bez" }
             effect: Effect {
@@ -38,7 +38,7 @@ Viewport {
             onClicked: { teapot.bounce = true }
         }
 
-        Item3d {
+        Item3D {
             id: handle
             mesh: Mesh { source: "teapot-handle.bez" }
             effect: Effect {
@@ -61,7 +61,7 @@ Viewport {
             }
         }
 
-        Item3d {
+        Item3D {
             id: spout
             mesh: Mesh { source: "teapot-spout.bez" }
             effect: Effect {

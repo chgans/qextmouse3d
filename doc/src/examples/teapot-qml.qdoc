@@ -58,7 +58,7 @@
 
     \snippet tutorials/teapot-qml/teapot.qml 3
 
-    And now we create a \l Item3d to display the teapot with a
+    And now we create a \l Item3D to display the teapot with a
     default lit material effect:
 
     \snippet tutorials/teapot-qml/teapot.qml 4

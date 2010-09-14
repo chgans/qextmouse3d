@@ -10,7 +10,7 @@ Viewport {
         onClicked: program.scalex = 2.5 - program.scalex
     }
 
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "meshes/teapot.bez" }
         effect: program
 

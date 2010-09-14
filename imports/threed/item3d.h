@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef Item3d_H
-#define Item3d_H
+#ifndef Item3D_H
+#define Item3D_H
 
 #include <QtCore/qobject.h>
 #include <QtCore/qvariant.h>
@@ -60,11 +60,11 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Item3dPrivate;
+class Item3DPrivate;
 class Effect;
 class Viewport;
 
-class Item3d : public QObject, public QDeclarativeParserStatus
+class Item3D : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
@@ -83,7 +83,7 @@ class Item3d : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)    
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
-    Q_PROPERTY(QDeclarativeListProperty<Item3d> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
+    Q_PROPERTY(QDeclarativeListProperty<Item3D> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
@@ -95,8 +95,8 @@ class Item3d : public QObject, public QDeclarativeParserStatus
 	
     Q_CLASSINFO("DefaultProperty", "data")
 public:
-    Item3d(QObject *parent = 0);
-    ~Item3d();
+    Item3D(QObject *parent = 0);
+    ~Item3D();
 
     enum CullFace
     {
@@ -135,7 +135,7 @@ public:
 
     QDeclarativeListProperty<QObject> data();
     QDeclarativeListProperty<QObject> resources();
-    QDeclarativeListProperty<Item3d> fxChildren();    
+    QDeclarativeListProperty<Item3D> fxChildren();    
 
     QDeclarativeListProperty<QGraphicsTransform3D> transform();
     QDeclarativeListProperty<QGraphicsTransform3D> pretransform();
@@ -199,14 +199,14 @@ Q_SIGNALS:
     void childrenChanged();
 
 private:
-    Item3dPrivate *d;
+    Item3DPrivate *d;
 
-    friend class Item3dPrivate;
+    friend class Item3DPrivate;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Item3d::CullFaces)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Item3D::CullFaces)
 
-QML_DECLARE_TYPE(Item3d)
+QML_DECLARE_TYPE(Item3D)
 
 QT_END_NAMESPACE
 

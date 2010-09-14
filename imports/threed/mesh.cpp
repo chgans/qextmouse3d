@@ -70,7 +70,7 @@
     for individual branches with specific \l QGLSceneNode objects which are taken from
     the original scene.
 
-    More details on achieving this can be found in the \l Item3d class.
+    More details on achieving this can be found in the \l Item3D class.
 
     \section1 Specifying Simple Mesh Objects
 

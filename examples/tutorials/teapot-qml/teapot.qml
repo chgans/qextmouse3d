@@ -9,7 +9,7 @@ Viewport {
     width: 640; height: 480
 //![3]
 //![4]
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "teapot.bez" }
         effect: Effect {}

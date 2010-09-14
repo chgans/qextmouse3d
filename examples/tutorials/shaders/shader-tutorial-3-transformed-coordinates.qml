@@ -5,7 +5,7 @@ Viewport {
     width: 640; height: 480
 
 
-    Item3d {
+    Item3D {
         z: -8.0
         transform: [
             Rotation3D {

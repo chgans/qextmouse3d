@@ -44,7 +44,7 @@
     \brief The Cube item represents a simple cube in 3D space.
     \since 4.8
     \ingroup qt3d::qml3d
-    \inherits Item3d
+    \inherits Item3D
 
     The Cube element in QML provides a simple way to create a cube
     object, usually for testing material effects.  For example,
@@ -62,7 +62,7 @@
     \endcode
 
     The cube can be moved from the origin by specifying the
-    Item3d::position property:
+    Item3D::position property:
 
     \code
     Cube {
@@ -75,12 +75,12 @@
     }
     \endcode
 
-    \sa Item3d
+    \sa Item3D
 */
 
 /*!
     \qmlproperty real Cube::size
 
     The size of the cube.  The default value for this property is 1.
-    The cube will be centered on Item3d::position.
+    The cube will be centered on Item3D::position.
 */

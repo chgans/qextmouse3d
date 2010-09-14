@@ -1,7 +1,7 @@
 ﻿import Qt 4.7
 import Qt3D 1.0
 
-Item3d {
+Item3D {
 	id: penguin
 	scale: 0.2
 	effect: Effect{}

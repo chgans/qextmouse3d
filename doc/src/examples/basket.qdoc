@@ -80,7 +80,7 @@
 
     \snippet declarative/basket.qml 1
 
-    We then add an \l Item3d object to load the basket model and
+    We then add an \l Item3D object to load the basket model and
     apply the desired texture to it:
 
     \snippet declarative/basket.qml 2

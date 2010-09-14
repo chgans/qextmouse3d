@@ -68,7 +68,7 @@
         width: 640; height: 480
         camera: Camera {}
         light: Light {}
-        Item3d {
+        Item3D {
             mesh: Mesh { source: "meshes/teapot.bez" }
             effect: Effect {}
         }
@@ -469,7 +469,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
         painter.setCamera(&defCamera);
     }
 
-    // Draw the Item3d children.
+    // Draw the Item3D children.
     draw(&painter);
     painter.setPicking(false);
     painter.popSurface();
@@ -574,7 +574,7 @@ void Viewport::draw(QGLPainter *painter)
     painter->setMainLight(d->light, QMatrix4x4());
     painter->setLightModel(d->lightModel);
     foreach (QObject *child, list) {
-        Item3d *item = qobject_cast<Item3d *>(child);
+        Item3D *item = qobject_cast<Item3D *>(child);
         if (item)
             item->draw(painter);
     }
@@ -620,10 +620,10 @@ void Viewport::initialize(QGLView *view)
 
 void Viewport::initializeGL(QGLPainter *painter)
 {
-    // Initialize the Item3d objects attached to this scene.
+    // Initialize the Item3D objects attached to this scene.
     QObjectList list = QObject::children();
     foreach (QObject *child, list) {
-        Item3d *item = qobject_cast<Item3d *>(child);
+        Item3D *item = qobject_cast<Item3D *>(child);
         if (item)
             item->initialize(this, painter);
     }

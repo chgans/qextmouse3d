@@ -1,7 +1,7 @@
 import Qt 4.7
 import Qt3D 1.0
 
-Item3d {
+Item3D {
     mesh: Mesh { source: "meshes/teapot.bez" }
     effect: Effect {}
     property int xRotation : 0.0

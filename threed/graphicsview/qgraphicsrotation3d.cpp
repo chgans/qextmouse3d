@@ -66,7 +66,7 @@ QT_BEGIN_NAMESPACE
     in QML using the following code:
 
     \code
-    Item3d {
+    Item3D {
         id: helicoptor
         mesh:  {source: "bellUH1.3ds"}
         effect: Effect {}
