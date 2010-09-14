@@ -70,7 +70,7 @@ class QThreedQmlModule : public QDeclarativeExtensionPlugin
 public:
     virtual void registerTypes(const char *uri)
     {
-        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
+        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D"));
         qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");

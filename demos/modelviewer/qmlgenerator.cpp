@@ -61,7 +61,7 @@ void QmlGenerator::save() const
     {
         QTextStream os(&f);
         os << "import Qt 4.7" << endl;
-        os << "import Qt.labs.threed 1.0" << endl << endl;
+        os << "import Qt3D 1.0" << endl << endl;
 
         QmlStanza item3d("Item3d");
 

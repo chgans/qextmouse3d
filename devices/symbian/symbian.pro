@@ -38,8 +38,10 @@ symbian {
         qt3dthreedImports.sources = \
                                 qthreedqmlplugin.dll \
                                 DefaultNavigator.qml \
+                                Cube.qml \
+                                cube.obj \
                                 qmldir
-        qt3dthreedImports.path = $$QT_IMPORTS_BASE_DIR/Qt/labs/threed
+        qt3dthreedImports.path = $$QT_IMPORTS_BASE_DIR/Qt3D
         DEPLOYMENT += qt3dthreedImports
     }
 }

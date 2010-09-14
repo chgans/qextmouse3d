@@ -1,5 +1,4 @@
 TEMPLATE = lib
-#DESTDIR = Qt/labs/threed
 TARGET  = qthreedqmlplugin
 CONFIG += qt plugin
 symbian {
@@ -41,9 +40,9 @@ qdeclarativesources.files += \
     Cube.qml \
     cube.obj
 
-qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
+qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
-target.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
+target.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
 INSTALLS += qdeclarativesources target
 
