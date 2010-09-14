@@ -94,6 +94,15 @@ void tst_QGraphicsTransform3D::rotation3D()
     QCOMPARE(spy3.size(), 1);
     QCOMPARE(spy4.size(), 3);
 
+    // Change to same values should not result in any extra signals.
+    rot1.setOrigin(QVector3D(1, 2, 3));
+    rot1.setAxis(QVector3D(4, -5, 6));
+    rot1.setAngle(45.0f);
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 1);
+    QCOMPARE(spy3.size(), 1);
+    QCOMPARE(spy4.size(), 3);
+
     QMatrix4x4 m1;
     rot1.applyTo(&m1);
 
@@ -123,6 +132,13 @@ void tst_QGraphicsTransform3D::scale3D()
     QCOMPARE(spy2.size(), 1);
     QCOMPARE(spy3.size(), 2);
 
+    // Change to same values should not result in any extra signals.
+    scale1.setOrigin(QVector3D(1, 2, 3));
+    scale1.setScale(QVector3D(4, -6, 0.5f));
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 1);
+    QCOMPARE(spy3.size(), 2);
+
     QMatrix4x4 m1;
     scale1.applyTo(&m1);
 
@@ -146,6 +162,15 @@ void tst_QGraphicsTransform3D::scale3D()
 
     QVERIFY(scale1.origin() == QVector3D(1, 2, 3));
     QCOMPARE(spy1.size(), 1);
+
+    // Try setting a scale that is not a double or a QVector3D
+    // and check for the warning message we expect.
+    QTest::ignoreMessage(QtWarningMsg, "Scale3D: scale value is not a vector3D or single floating-point value");
+    scale1.setScale(QLatin1String("hello"));
+    QVERIFY(scale1.scale() == QVector3D(33, 33, 33));
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 3);
+    QCOMPARE(spy3.size(), 4);
 }
 
 void tst_QGraphicsTransform3D::translation3D()
@@ -163,6 +188,13 @@ void tst_QGraphicsTransform3D::translation3D()
     QVERIFY(translate1.translate() == QVector3D(4, -6, 0.5f));
     QCOMPARE(translate1.progress(), qreal(2.0f));
 
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 1);
+    QCOMPARE(spy3.size(), 2);
+
+    // Change to same values should not result in any extra signals.
+    translate1.setTranslate(QVector3D(4, -6, 0.5f));
+    translate1.setProgress(2.0f);
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
     QCOMPARE(spy3.size(), 2);
@@ -186,6 +218,11 @@ void tst_QGraphicsTransform3D::billboard()
     billboard1.setPreserveUpVector(true);
     QVERIFY(billboard1.preserveUpVector());
 
+    QCOMPARE(spy1.size(), 1);
+    QCOMPARE(spy2.size(), 1);
+
+    // Change to same value should not result in any extra signals.
+    billboard1.setPreserveUpVector(true);
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
 
