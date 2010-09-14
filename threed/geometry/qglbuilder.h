@@ -90,6 +90,7 @@ public:
     void addQuadStrip(const QGeometryData &strip);
     void addQuadsInterleaved(const QGeometryData &top,
                         const QGeometryData &bottom);
+    inline void addPane(qreal size = 1.0f);
 
 protected:
     // internal and test functions
@@ -105,6 +106,23 @@ private:
 
     QGLBuilderPrivate *dptr;
 };
+
+inline void QGLBuilder::addPane(qreal size)
+{
+    qreal f = size / 2.0f;
+    QVector2D a(-f, -f);
+    QVector2D b(f, -f);
+    QVector2D c(f, f);
+    QVector2D d(-f, f);
+    QVector2D ta(0.0f, 0.0f);
+    QVector2D tb(1.0f, 0.0f);
+    QVector2D tc(1.0f, 1.0f);
+    QVector2D td(0.0f, 1.0f);
+    QGeometryData quad;
+    quad.appendVertex(a, b, c, d);
+    quad.appendTexCoord(ta, tb, tc, td);
+    addQuads(quad);
+}
 
 Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGL::Smoothing& smoothing);
 Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGeometryData& triangles);

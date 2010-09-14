@@ -922,6 +922,15 @@ void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
 }
 
 /*!
+    \fn void QGLBuilder::addPane(qreal size)
+    Convenience method to add a single quad of dimensions \a size wide by
+    \a size high in the z = 0 plane, centered on the origin.  The quad has
+    texture coordinates of (0, 0) at the bottom left and (1, 1) at the top
+    right.  The default value for \a size is 1.0, resulting in a quad
+    from QVector3D(-0.5, -0.5, 0.0) to QVector3D(0.5, 0.5, 0.0).
+*/
+
+/*!
     \internal
 */
 void QGLBuilderPrivate::adjustSectionNodes(QGLSection *sec,
