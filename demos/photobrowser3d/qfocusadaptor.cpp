@@ -79,19 +79,15 @@ QFocusAdaptor::~QFocusAdaptor()
 
 qreal QFocusAdaptor::progress() const
 {
-    qDebug() << "requesting progress:" << d->progress;
     return d->progress;
 }
 
 void QFocusAdaptor::setProgress(qreal progress)
 {
-    qDebug() << "setting progress:" << progress;
     if (d->progress != progress)
     {
-        qDebug() << "     from:" << d->progress;
         d->progress = progress;
-        if (d->reset)
-            calculateValues();
+        calculateValues();
         emit progressChanged();
     }
 }
@@ -114,13 +110,16 @@ QGLSceneNode *QFocusAdaptor::target() const
 
 void QFocusAdaptor::setTarget(QGLSceneNode *target)
 {
-    d->target = target;
-    d->reset = true;
+    qDebug() << "setTarget" << target << "was:" << d->target;
+    if (d->target != target)
+    {
+        d->target = target;
+        d->reset = true;
+    }
 }
 
 void QFocusAdaptor::calculateValues()
 {
-    qDebug() << "QFocusAdaptor::calculateValues() -- target:" << d->target << "view:" << d->view;
     if (d->target && d->view)
     {
         QGLCamera *cam = d->view->camera();
@@ -148,17 +147,22 @@ void QFocusAdaptor::calculateValues()
             // in order that it is a tight fit in the viewport
             QBox3D box = d->target->boundingBox();
             QVector3D sz = box.size();
+
             qreal near = cam->nearPlane();
+
             QSizeF v = cam->viewSize();
-            qreal qh = (near * v.height()) / sz.y();
-            qreal qw = (near * v.width()) / sz.x();
+            qreal qh = (near * sz.y()) / v.height();
+            qreal qw = (near * sz.x()) / v.width();
+
             qreal q = qMax(qh, qw);
 
             d->sourceCenter = cam->center();
             d->sourceEye = cam->eye();
 
-            d->targetCenter = box.center();
+            d->targetCenter = d->target->position();
             d->targetEye = d->targetCenter + (toCam * q);
+            qDebug() << "resetting --- zoom from:" << d->sourceCenter << "( eye:" << d->sourceEye << ")"
+                        << "to:" << d->targetCenter << "( eye:" << d->targetEye << ")";
             d->reset = false;
         }
         cam->setCenter(d->sourceCenter + ((d->targetCenter - d->sourceCenter) * d->progress));

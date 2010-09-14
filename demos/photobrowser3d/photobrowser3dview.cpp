@@ -56,6 +56,7 @@
 #include <QState>
 #include <QFinalState>
 #include <QSignalTransition>
+#include <QPropertyAnimation>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
@@ -85,8 +86,9 @@ PhotoBrowser3DView::PhotoBrowser3DView()
             qWarning("Expected path/to/skybox/files after \"--skybox\" switch\n");
     }
 
+    m_displaySize = 4.0;
     m_skybox = new SkyBox(this, path);
-    m_scene = new ImageDisplay(this, m_palette);
+    m_scene = new ImageDisplay(this, m_palette, m_displaySize);
 
     setupStates();
 
@@ -117,9 +119,42 @@ void PhotoBrowser3DView::setupStates()
     m_pan->assignProperty(m_fa, "progress", 0.0);
     m_zoomed->assignProperty(m_fa, "progress", 1.0);
 
-    m_browse->addTransition(this, SIGNAL(zoomIn()), m_zoomed);
-    m_pan->addTransition(this, SIGNAL(zoomIn()), m_zoomed);
-    m_zoomed->addTransition(this, SIGNAL(zoomOut()), m_browse);
+    m_state->setObjectName("StateMachine");
+    m_app->setObjectName("Application");
+    m_zoomed->setObjectName("Zoomed");
+    m_browse->setObjectName("Browse");
+    m_pan->setObjectName("Pan");
+    end_state->setObjectName("EndState");
+    QObject::connect(m_state, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(m_state, SIGNAL(exited()), this, SLOT(stateExit()));
+    QObject::connect(m_app, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(m_app, SIGNAL(exited()), this, SLOT(stateExit()));
+    QObject::connect(m_browse, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(m_browse, SIGNAL(exited()), this, SLOT(stateExit()));
+    QObject::connect(m_pan, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(m_pan, SIGNAL(exited()), this, SLOT(stateExit()));
+    QObject::connect(m_zoomed, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(m_zoomed, SIGNAL(exited()), this, SLOT(stateExit()));
+    QObject::connect(end_state, SIGNAL(entered()), this, SLOT(stateEnter()));
+    QObject::connect(end_state, SIGNAL(exited()), this, SLOT(stateExit()));
+
+    QSignalTransition *transition = m_browse->addTransition(this, SIGNAL(zoom()), m_zoomed);
+    QPropertyAnimation *a = new QPropertyAnimation(m_fa, "progress");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::OutQuad);
+    transition->addAnimation(a);
+
+    transition = m_pan->addTransition(this, SIGNAL(zoom()), m_zoomed);
+    a = new QPropertyAnimation(m_fa, "progress");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::InQuad);
+    transition->addAnimation(a);
+
+    transition = m_zoomed->addTransition(this, SIGNAL(zoom()), m_browse);
+    a = new QPropertyAnimation(m_fa, "progress");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::InQuad);
+    transition->addAnimation(a);
 
     m_state->setInitialState(m_app);
     m_state->start();
@@ -254,6 +289,7 @@ void PhotoBrowser3DView::mousePressEvent(QMouseEvent *e)
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
+    camera()->setEye(QVector3D(0.0f, 0.0f, 4.0f * m_displaySize));
     registerFrames();
 }
 
@@ -293,14 +329,24 @@ void PhotoBrowser3DView::zoomImage()
     Q_ASSERT(pn);
     QGLSceneNode *n = pn->target();
     m_fa->setTarget(n);
-    qDebug() << "emitting zoomIn";
-    emit zoomIn();
+    qDebug() << "emitting zoom";
+    emit zoom();
     qDebug() << "    done";
 }
 
 void PhotoBrowser3DView::framesDirty()
 {
     m_framesDirty = true;
+}
+
+void PhotoBrowser3DView::stateEnter()
+{
+    qDebug() << "Entered state:" << sender()->objectName();
+}
+
+void PhotoBrowser3DView::stateExit()
+{
+    qDebug() << "Exited state:" << sender()->objectName();
 }
 
 void PhotoBrowser3DView::registerFrames()

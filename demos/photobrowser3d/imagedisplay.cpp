@@ -51,7 +51,7 @@
 #include <QUrl>
 #include <QImage>
 
-ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
+ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize)
     : QGLSceneNode(parent)
     , m_wall(0)
     , m_frames(0)
@@ -59,6 +59,8 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     , m_currentFrame(0)
     , m_imageSetToDefault(false)
     , m_count(0)
+    , m_size(wallSize)
+    , m_frameSize((m_size * 3.0f) / 4.0f)
 {
     QGLBuilder builder(materials);
     setObjectName("ImageDisplay");
@@ -69,8 +71,9 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     builder.pushNode();
     m_currentWall = builder.currentNode();
     m_currentWall->setObjectName("wall 0");
-    builder << QGLCubeFace(QGLCubeFace::Front, 2.0f);
+    builder.addPane(m_size);
     builder.popNode();
+    m_wall->setPosition(QVector3D(0.0f, 0.0f, m_size / -4.0));
 
     // build the frames
     m_frames = builder.currentNode();
@@ -78,25 +81,25 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     builder.pushNode();
     m_currentFrame = builder.newNode();
     m_currentFrame->setObjectName("frame 0");
-    builder << QGLCubeFace(QGLCubeFace::Front, 1.0f);
+    builder.addPane(m_frameSize);
     builder.popNode();
 
     QGLSceneNode *top = builder.finalizedSceneNode();
     top->setParent(this);
 
     // paint the wall
-    m_wall->setEffect(QGL::LitMaterial);
+    m_wall->setEffect(QGL::FlatReplaceTexture2D);
     QGLMaterial *mat = new QGLMaterial();
-    mat->setAmbientColor(Qt::darkGray);
-    mat->setDiffuseColor(Qt::darkGray);
+    QGLTexture2D *tex = new QGLTexture2D(mat);
+    tex->setImage(QImage(":/res/images/girder.png"));
+    mat->setTexture(tex);
     m_wall->setMaterial(mat);
-    m_wall->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
 
     // paint the frames
     m_frames->setEffect(QGL::FlatReplaceTexture2D);
     m_frames->setEffectEnabled(true);
     mat = new QGLMaterial();
-    QGLTexture2D *tex = new QGLTexture2D(mat);
+    tex = new QGLTexture2D(mat);
     tex->setImage(QImage(":/res/images/no-images-yet.png"));
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);
@@ -105,6 +108,8 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     m_frameScene = new QFramesScene(this);
     m_frameScene->setRootNode(m_frames);
     m_frameScene->setPickable(true);
+
+    qDebug() << *m_currentFrame;
 
     m_imageSetToDefault = true;
 }
@@ -121,7 +126,7 @@ void ImageDisplay::addImage(const QImage &image)
         ++m_count;
         s->setObjectName(QString("frame %1").arg(m_count));
         QVector3D p = s->position();
-        p.setX(p.x() - 2.0f);
+        p.setX(p.x() - m_size);
         s->setPosition(p);
         m_currentFrame = s;
         int scale = image.width() / 1024;
@@ -135,7 +140,7 @@ void ImageDisplay::addImage(const QImage &image)
         s = m_currentWall->clone(m_wall);
         s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
-        p.setX(p.x() - 2.0f);
+        p.setX(p.x() - m_size);
         s->setPosition(p);
         m_currentWall = s;
     }

@@ -55,7 +55,7 @@ class ImageDisplay : public QGLSceneNode
 {
     Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials);
+    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
     QList<QGLPickNode *> pickNodes() const;
 signals:
     void framesChanged();
@@ -69,6 +69,8 @@ private:
     QFramesScene *m_frameScene;
     bool m_imageSetToDefault;
     int m_count;
+    qreal m_size;
+    qreal m_frameSize;
 };
 
 #endif // IMAGEDISPLAY_H

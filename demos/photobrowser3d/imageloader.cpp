@@ -106,7 +106,7 @@ void ImageLoader::run()
         frm = QImage(QSize(512, 512), QImage::Format_ARGB32);
     else
         frm = QImage(QSize(1024, 1024), QImage::Format_ARGB32);
-    frm.fill(qRgba(0, 0, 0, 0));
+    frm.fill(qRgba(0, 30, 50, 64));
     QPainter ptr;
     ptr.begin(&frm);
     ptr.setBackgroundMode(Qt::TransparentMode);

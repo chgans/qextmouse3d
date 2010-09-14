@@ -62,8 +62,7 @@ public:
     void initializeGL(QGLPainter *);
 signals:
     void done();
-    void zoomIn();
-    void zoomOut();
+    void zoom();
     void pan();
 protected:
     void earlyPaintGL(QGLPainter *);
@@ -77,6 +76,8 @@ private slots:
     void keyTimeOut();
     void zoomImage();
     void framesDirty();
+    void stateEnter();
+    void stateExit();
 private:
     void registerFrames();
     void setupStates();
@@ -95,6 +96,7 @@ private:
     QState *m_pan;
     QFocusAdaptor *m_fa;
     bool m_framesDirty;
+    qreal m_displaySize;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H

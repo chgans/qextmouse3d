@@ -8,5 +8,6 @@
         <file alias="up.png">images/default_sky_up.png</file>
         <file alias="east.png">images/default_sky_west.png</file>
         <file>images/no-images-yet.png</file>
+        <file>images/girder.png</file>
     </qresource>
 </RCC>
