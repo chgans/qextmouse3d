@@ -39,11 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef OTHERITEMS_H
-#define OTHERITEMS_H
+#ifndef CUBE_H
+#define CUBE_H
 
-// This is a dummy header file for defining the interface of
-// pure QML items from "Cube.qml", etc, to qdoc.
+// This is a dummy header for defining the interface of "Cube.qml" to qdoc.
 
 #include "item3d.h"
 

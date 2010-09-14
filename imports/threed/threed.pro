@@ -36,9 +36,7 @@ HEADERS += \
 
 qdeclarativesources.files += \
     qmldir \
-    DefaultNavigator.qml \
-    Cube.qml \
-    cube.obj
+    DefaultNavigator.qml
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 

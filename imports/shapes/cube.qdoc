@@ -61,6 +61,14 @@
     }
     \endcode
 
+    The Cube element is part of the \c{Qt3D.Shapes} namespace,
+    so the following must appear at the top of any QML file that
+    references it:
+
+    \code
+    import Qt3D.Shapes 1.0
+    \endcode
+
     The cube can be moved from the origin by specifying the
     Item3D::position property:
 
