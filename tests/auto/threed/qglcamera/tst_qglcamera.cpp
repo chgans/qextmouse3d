@@ -64,37 +64,61 @@ void tst_QGLCamera::create()
     QCOMPARE(camera.nearPlane(), (qreal)5.0f);
     QCOMPARE(camera.farPlane(), (qreal)1000.0f);
     QCOMPARE(camera.viewSize(), QSizeF(2.0f, 2.0f));
+    QCOMPARE(camera.minViewSize(), QSizeF(0.0001f, 0.0001f));
     QCOMPARE(camera.screenRotation(), 0);
     QVERIFY(camera.eye() == QVector3D(0, 0, 10));
     QVERIFY(camera.upVector() == QVector3D(0, 1, 0));
     QVERIFY(camera.center() == QVector3D(0, 0, 0));
     QCOMPARE(camera.eyeSeparation(), (qreal)0.0f);
+    QVERIFY(camera.motionAdjustment() == QVector3D(0, 0, 1));
+    QVERIFY(camera.adjustForAspectRatio());
 }
 
 void tst_QGLCamera::modify()
 {
     // Test modifying each field individually.
     QGLCamera camera;
+    QSignalSpy spy1(&camera, SIGNAL(projectionChanged()));
+    QSignalSpy spy2(&camera, SIGNAL(viewChanged()));
     camera.setProjectionType(QGLCamera::Orthographic);
     QVERIFY(camera.projectionType() == QGLCamera::Orthographic);
+    QCOMPARE(spy1.size(), 1);
     camera.setFieldOfView(60.0f);
     QCOMPARE(camera.fieldOfView(), (qreal)60.0f);
+    QCOMPARE(spy1.size(), 2);
     camera.setNearPlane(-3.0f);
     QCOMPARE(camera.nearPlane(), (qreal)-3.0f);
+    QCOMPARE(spy1.size(), 3);
     camera.setFarPlane(3000.0f);
     QCOMPARE(camera.farPlane(), (qreal)3000.0f);
+    QCOMPARE(spy1.size(), 4);
     camera.setViewSize(QSizeF(45.0f, 25.5f));
     QCOMPARE(camera.viewSize(), QSizeF(45.0f, 25.5f));
+    QCOMPARE(spy1.size(), 5);
+    camera.setMinViewSize(QSizeF(0.05f, 0.025f));
+    QCOMPARE(camera.minViewSize(), QSizeF(0.05f, 0.025f));
+    QCOMPARE(spy1.size(), 6);
     camera.setScreenRotation(270);
     QCOMPARE(camera.screenRotation(), 270);
+    QCOMPARE(spy1.size(), 7);
     camera.setEye(QVector3D(1.0f, 2.0f, 3.0f));
     QVERIFY(camera.eye() == QVector3D(1.0f, 2.0f, 3.0f));
+    QCOMPARE(spy2.size(), 1);
     camera.setUpVector(QVector3D(4.0f, 5.0f, 6.0f));
     QVERIFY(camera.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
+    QCOMPARE(spy2.size(), 2);
     camera.setCenter(QVector3D(7.0f, 8.0f, 9.0f));
     QVERIFY(camera.center() == QVector3D(7.0f, 8.0f, 9.0f));
+    QCOMPARE(spy2.size(), 3);
     camera.setEyeSeparation(3.0f);
     QCOMPARE(camera.eyeSeparation(), (qreal)3.0f);
+    QCOMPARE(spy2.size(), 4);
+    camera.setMotionAdjustment(QVector3D(10.0f, 11.0f, 12.0f));
+    QVERIFY(camera.motionAdjustment() == QVector3D(10.0f, 11.0f, 12.0f));
+    QCOMPARE(spy2.size(), 5);
+    camera.setAdjustForAspectRatio(false);
+    QVERIFY(!camera.adjustForAspectRatio());
+    QCOMPARE(spy2.size(), 6);
 
     // Test that we don't get any side effects between properties.
     QVERIFY(camera.projectionType() == QGLCamera::Orthographic);
@@ -102,57 +126,31 @@ void tst_QGLCamera::modify()
     QCOMPARE(camera.nearPlane(), (qreal)-3.0f);
     QCOMPARE(camera.farPlane(), (qreal)3000.0f);
     QCOMPARE(camera.viewSize(), QSizeF(45.0f, 25.5f));
+    QCOMPARE(camera.minViewSize(), QSizeF(0.05f, 0.025f));
     QCOMPARE(camera.screenRotation(), 270);
     QVERIFY(camera.eye() == QVector3D(1.0f, 2.0f, 3.0f));
     QVERIFY(camera.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
     QVERIFY(camera.center() == QVector3D(7.0f, 8.0f, 9.0f));
     QCOMPARE(camera.eyeSeparation(), (qreal)3.0f);
+    QVERIFY(camera.motionAdjustment() == QVector3D(10.0f, 11.0f, 12.0f));
+    QVERIFY(!camera.adjustForAspectRatio());
 
-#if 0 // FIXME
-    // Copy and test that the copied version is the same.
-    QGLCamera camera2(camera);
-    QVERIFY(camera2.projectionType() == QGLCamera::Orthographic);
-    QCOMPARE(camera2.fieldOfView(), (qreal)60.0f);
-    QCOMPARE(camera2.nearPlane(), (qreal)-3.0f);
-    QCOMPARE(camera2.farPlane(), (qreal)3000.0f);
-    QCOMPARE(camera2.viewSize(), QSizeF(45.0f, 25.5f));
-    QCOMPARE(camera2.screenRotation(), 270);
-    QVERIFY(camera2.eye() == QVector3D(1.0f, 2.0f, 3.0f));
-    QVERIFY(camera2.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
-    QVERIFY(camera2.center() == QVector3D(7.0f, 8.0f, 9.0f));
-
-    QGLCamera camera3;
-    camera3 = camera;
-    QVERIFY(camera3.projectionType() == QGLCamera::Orthographic);
-    QCOMPARE(camera3.fieldOfView(), (qreal)60.0f);
-    QCOMPARE(camera3.nearPlane(), (qreal)-3.0f);
-    QCOMPARE(camera3.farPlane(), (qreal)3000.0f);
-    QCOMPARE(camera3.viewSize(), QSizeF(45.0f, 25.5f));
-    QCOMPARE(camera3.screenRotation(), 270);
-    QVERIFY(camera3.eye() == QVector3D(1.0f, 2.0f, 3.0f));
-    QVERIFY(camera3.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
-    QVERIFY(camera3.center() == QVector3D(7.0f, 8.0f, 9.0f));
-
-    // Modify the copy and check that the original stays the same.
-    camera2.setProjectionType(QGLCamera::Perspective);
-    camera2.setFieldOfView(45.0f);
-    camera2.setNearPlane(3.0f);
-    camera2.setFarPlane(-3000.0f);
-    camera2.setViewSize(QSizeF(2.0f, 2.5f));
-    camera2.setScreenRotation(90);
-    QVERIFY(camera.projectionType() == QGLCamera::Orthographic);
-    QCOMPARE(camera.fieldOfView(), (qreal)60.0f);
-    QCOMPARE(camera.nearPlane(), (qreal)-3.0f);
-    QCOMPARE(camera.farPlane(), (qreal)3000.0f);
-    QCOMPARE(camera.viewSize(), QSizeF(45.0f, 25.5f));
-    QCOMPARE(camera.screenRotation(), 270);
-    camera2.setEye(QVector3D(-1.0f, -2.0f, -3.0f));
-    camera2.setUpVector(QVector3D(-4.0f, -5.0f, -6.0f));
-    camera2.setCenter(QVector3D(-7.0f, -8.0f, -9.0f));
-    QVERIFY(camera.eye() == QVector3D(1.0f, 2.0f, 3.0f));
-    QVERIFY(camera.upVector() == QVector3D(4.0f, 5.0f, 6.0f));
-    QVERIFY(camera.center() == QVector3D(7.0f, 8.0f, 9.0f));
-#endif
+    // Test that changing to the same values does not emit any signals.
+    camera.setProjectionType(QGLCamera::Orthographic);
+    camera.setFieldOfView(60.0f);
+    camera.setNearPlane(-3.0f);
+    camera.setFarPlane(3000.0f);
+    camera.setViewSize(QSizeF(45.0f, 25.5f));
+    camera.setMinViewSize(QSizeF(0.05f, 0.025f));
+    camera.setScreenRotation(270);
+    camera.setEye(QVector3D(1.0f, 2.0f, 3.0f));
+    camera.setUpVector(QVector3D(4.0f, 5.0f, 6.0f));
+    camera.setCenter(QVector3D(7.0f, 8.0f, 9.0f));
+    camera.setEyeSeparation(3.0f);
+    camera.setMotionAdjustment(QVector3D(10.0f, 11.0f, 12.0f));
+    camera.setAdjustForAspectRatio(false);
+    QCOMPARE(spy1.size(), 7);
+    QCOMPARE(spy2.size(), 6);
 }
 
 // Check that the minimum view size works correctly, including when
@@ -160,12 +158,18 @@ void tst_QGLCamera::modify()
 void tst_QGLCamera::minViewSize()
 {
     QGLCamera camera;
+    camera.setMinViewSize(QSizeF(0.05f, 0.05f));
+    QCOMPARE(camera.minViewSize(), QSizeF(0.05f, 0.05f));
     camera.setViewSize(QSizeF(-20.0f, -30.0f));
     QCOMPARE(camera.viewSize(), QSizeF(-20.0f, -30.0f));
     camera.setViewSize(QSizeF(0.0f, 1.0f));
-    QCOMPARE(camera.viewSize(), QSizeF(0.0001f, 1.0f));
+    QCOMPARE(camera.viewSize(), QSizeF(0.05f, 1.0f));
+    camera.setViewSize(QSizeF(-0.01f, 1.0f));
+    QCOMPARE(camera.viewSize(), QSizeF(-0.05f, 1.0f));
     camera.setViewSize(QSizeF(-1.0f, 0.0f));
-    QCOMPARE(camera.viewSize(), QSizeF(-1.0f, 0.0001f));
+    QCOMPARE(camera.viewSize(), QSizeF(-1.0f, 0.05f));
+    camera.setViewSize(QSizeF(-1.0f, -0.01f));
+    QCOMPARE(camera.viewSize(), QSizeF(-1.0f, -0.05f));
 }
 
 QTEST_APPLESS_MAIN(tst_QGLCamera)

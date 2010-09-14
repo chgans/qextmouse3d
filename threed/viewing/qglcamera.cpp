@@ -301,6 +301,82 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d::qml3d
 
+    Camera instances are defined on a \l Viewport item using the
+    Viewport::camera property:
+
+    \code
+    import Qt 4.7
+    import Qt3D 1.0
+
+    Viewport {
+        width: 640; height: 480
+        camera: Camera {
+            eye: Qt.vector3d(-1, 2, 10)
+        }
+        light: Light {}
+        Item3D {
+            mesh: Mesh { source: "meshes/teapot.bez" }
+            effect: Effect {}
+        }
+    }
+    \endcode
+
+    \section1 Positioning and orienting the view
+
+    The viewer position and orientation are defined by \l eye, \l center,
+    and \l upVector.  The location of the viewer in world co-ordinates is
+    given by \l eye, the viewer is looking at the object of interest located
+    at \l center, and the \l upVector specifies the direction that should
+    be considered "up" with respect to the viewer.
+
+    The vector from the \l eye to the \l center is called the "view vector",
+    and the cross-product of the view vector and \l upVector is called
+    the "side vector".  The view vector specifies the direction the
+    viewer is looking, and the side vector points off to the right of
+    the viewer.
+
+    It is recommended that the view vector and \l upVector be at right angles
+    to each other, but this is not required as long as the angle between
+    them is close to 90 degrees.
+
+    The most common use of view and up vectors that are not at right angles
+    is to simulate a human eye at a specific height above the ground looking
+    down at a lower object or up at a higher object.  In this case, the
+    the view vector will not be true horizontal, but the \l upVector
+    indicating the human's upright stance will be true vertical.
+
+    \section1 Zooming the camera image
+
+    There are two ways to zoom the image seen through the camera: either
+    the camera \l eye position can be moved closer to the object of interest,
+    or the field of view of the camera lens can be changed to make it appear
+    as though the object is moving closer.
+
+    Changing the \l eye position changes the lighting calculation in the
+    scene because the viewer is in a different position, changing the
+    angle of light reflection on the object's surface.
+
+    The \l fieldOfView property function can be used to simulate the effect
+    of a camera lens.  The smaller the \l fieldOfView, the closer the object
+    will appear.  The lighting calculation will be the same as for the
+    unzoomed scene.
+
+    If \l fieldOfView is zero, then a standard perspective frustum of
+    is used to define the viewing volume based on the width and height
+    of the \l Viewport.
+
+    \section1 Stereo projections
+
+    Camera can adjust the camera position for rendering separate left
+    and right eye images by setting the \l eyeSeparation property
+    to a non-zero value.  The \l eyeSeparation is in world co-ordinates.
+
+    Objects that are placed at \l center will coincide in the left and
+    right eye images, establishing the logical center of the stereo
+    effect.  Objects that are closer to the \l eye will be rendered
+    to appear closer in the stereo effect, and objects that are further
+    away from \l eye than \l center will be rendered to appear further away.
+
     \sa Viewport
 */
 
@@ -572,8 +648,8 @@ QSizeF QGLCamera::minViewSize() const
 void QGLCamera::setMinViewSize(const QSizeF& size)
 {
     Q_D(QGLCamera);
-    if (d->viewSize != size) {
-        d->viewSize = size;
+    if (d->minViewSize != size) {
+        d->minViewSize = size;
         emit projectionChanged();
     }
 }
