@@ -43,7 +43,7 @@
     \qmlclass Cube Cube
     \brief The Cube item represents a simple cube in 3D space.
     \since 4.8
-    \ingroup qt3d::qml3d
+    \ingroup qt3d::qml3d::shapes
     \inherits Item3D
 
     The Cube element in QML provides a simple way to create a cube
