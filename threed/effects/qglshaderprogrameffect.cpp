@@ -127,6 +127,7 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     managing and displaying GLSL shader based effects.
     \since 4.8
     \ingroup qt3d
+    \ingroup qt3d::painting
 
     The QGLShaderProgramEffect's primary role is to bundle a QGLShaderProgram
     with a QGLAbstractEffect and to make it very easy to create, display, 
