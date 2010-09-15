@@ -129,10 +129,10 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     \ingroup qt3d
 
     The QGLShaderProgramEffect's primary role is to bundle a QGLShaderProgram
-    and a QGLAbstractEffect and to, and to make it very easy to create,
-    display, and manipulate shader based graphical effects.
+    with a QGLAbstractEffect and to make it very easy to create, display, 
+    and manipulate shader based graphical effects.
 
-    It also calulates and binds a variety of standard attributes and uniforms
+    It also calculates and binds a variety of standard attributes and uniforms
     commonly needed by shader programs such as vertex, normal, and texture
     coordinates, lighting and material parameters.
 
@@ -140,8 +140,11 @@ static char const FallbackPerPixelLightingFragmentShader[] =
     shaders.  If the material is unset, the material values for the
     QGLPainter are used.
 
-    Lighting and texture values from the QGLPainter are passed in to the
-    shader program when
+    Lighting texture and material values from the QGLPainter are passed in to 
+    the shader program in the update() function.  Override this function in a
+    derived class to use values that are not derived from the painter's
+    lighting.  This is also the appropriate place to set any other required 
+    uniforms.
 */
 
 class QGLShaderProgramEffectPrivate
