@@ -42,7 +42,7 @@
 #include "cubeitem.h"
 #include "qglpainter.h"
 #include "qglcube.h"
-#include "qline3d.h"
+#include "qray3d.h"
 #include "qplane3d.h"
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/qgraphicsscene.h>
@@ -347,7 +347,7 @@ QPoint CubeItem::cubeIntersection
         // the ray coming from the eye position.
         QVector3D eyept = proj.inverted().map
             (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
-        QLine3D ray(QVector3D(0, 0, 0), eyept);
+        QRay3D ray(QVector3D(0, 0, 0), eyept);
         QPlane3D plane(mv * pt1, v);
         QResult<QVector3D> intersection = plane.intersection(ray);
         if (!intersection.isValid())

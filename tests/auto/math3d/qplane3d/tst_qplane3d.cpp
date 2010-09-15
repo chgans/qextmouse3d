@@ -42,7 +42,7 @@
 #include <QtTest/QtTest>
 
 #include "qplane3d.h"
-#include "qline3d.h"
+#include "qray3d.h"
 
 class tst_QPlane3D : public QObject
 {
@@ -196,7 +196,7 @@ void tst_QPlane3D::intersection()
     QFETCH(QVector3D, normal);
     QFETCH(QVector3D, intersection);
 
-    QLine3D line(point1, direction);
+    QRay3D line(point1, direction);
     QPlane3D plane(point2, normal);
 
     QResult<QVector3D> res = plane.intersection(line);
@@ -246,7 +246,7 @@ void tst_QPlane3D::noIntersection()
     QFETCH(QVector3D, normal);
 
     QPlane3D plane(point1, normal);
-    QLine3D line(point2, direction);
+    QRay3D line(point2, direction);
 
     QResult<QVector3D> res = plane.intersection(line);
     QVERIFY(!res.isValid());

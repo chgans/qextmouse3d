@@ -1,14 +1,12 @@
 INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += qbox3d.h \
-    qline3d.h \
     qplane3d.h \
+    qray3d.h \
     qresult.h \
-    qtriangle3d.h \
-    qlinesegment3d.h
+    qtriangle3d.h
 SOURCES += qbox3d.cpp \
-    qline3d.cpp \
     qplane3d.cpp \
+    qray3d.cpp \
     qresult.cpp \
-    qtriangle3d.cpp \
-    qlinesegment3d.cpp
+    qtriangle3d.cpp

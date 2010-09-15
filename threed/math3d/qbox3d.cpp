@@ -305,7 +305,7 @@ bool QBox3D::intersects(const QBox3D& box) const
 
   \sa intersection()
  */
-bool QBox3D::intersects(const QLine3D &line) const
+bool QBox3D::intersects(const QRay3D &line) const
 {
     return intersection(line).isValid();
 }
@@ -322,7 +322,7 @@ bool QBox3D::intersects(const QLine3D &line) const
   heuristic.
  */
 inline static void trackIntersection(qreal t, qreal *closest_t, QVector3D *closest_p,
-                         const QBox3D &box, const QLine3D &line)
+                         const QBox3D &box, const QRay3D &line)
 {
     if ((t > 0.0f && t < *closest_t) || qIsNull(*closest_t))
     {
@@ -365,7 +365,7 @@ inline static void trackIntersection(qreal t, qreal *closest_t, QVector3D *close
   a QResult::isValid() value of false.  In the case of an infinite box
   the result reflects that with QResult::OutOfRange
  */
-QResult<QVector3D> QBox3D::intersection(const QLine3D &line) const
+QResult<QVector3D> QBox3D::intersection(const QRay3D &line) const
 {
     if (boxtype == Null)
         return QResult<QVector3D>();

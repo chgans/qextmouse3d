@@ -545,7 +545,7 @@ void tst_QTriangle3D::intersect()
     QFETCH(bool, doesIntersect);
 
     QTriangle3D triangle(p, q, r);
-    QLine3D line(origin, direction);
+    QRay3D line(origin, direction);
     QCOMPARE(triangle.intersects(line), doesIntersect);
 
     QResult<QVector3D> result = triangle.intersection(line);

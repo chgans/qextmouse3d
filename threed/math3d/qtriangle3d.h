@@ -44,9 +44,8 @@
 
 #include <QtGui/qvector3d.h>
 #include "qresult.h"
-#include "qline3d.h"
+#include "qray3d.h"
 #include "qplane3d.h"
-#include "qlinesegment3d.h"
 
 QT_BEGIN_HEADER
 
@@ -84,8 +83,8 @@ public:
 
     bool contains(const QVector3D &point) const;
 
-    bool intersects(const QLine3D &line) const;
-    QResult<QVector3D> intersection(const QLine3D &line) const;
+    bool intersects(const QRay3D &line) const;
+    QResult<QVector3D> intersection(const QRay3D &line) const;
 
     QVector3D interpolate(qreal s, qreal t) const;
 
@@ -143,7 +142,7 @@ inline qreal QTriangle3D::width() const
 
 inline qreal QTriangle3D::height() const
 {
-    return QLine3D(m_p, m_q - m_p).distance(m_r);
+    return QRay3D(m_p, m_q - m_p).distance(m_r);
 }
 
 inline qreal QTriangle3D::area() const
@@ -176,14 +175,14 @@ inline QVector3D QTriangle3D::faceNormal() const
     return QVector3D::crossProduct(m_q - m_p, m_r - m_q);
 }
 
-inline bool QTriangle3D::intersects(const QLine3D &line) const
+inline bool QTriangle3D::intersects(const QRay3D &line) const
 {
     if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
         return false;
     return contains(plane().intersection(line));
 }
 
-inline QResult<QVector3D> QTriangle3D::intersection(const QLine3D &line) const
+inline QResult<QVector3D> QTriangle3D::intersection(const QRay3D &line) const
 {
     if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
         return QResult<QVector3D>();
@@ -195,6 +194,7 @@ inline QResult<QVector3D> QTriangle3D::intersection(const QLine3D &line) const
 
 inline QVector3D QTriangle3D::interpolate(qreal s, qreal t) const
 {
+#if 0
     QLineSegment3D base(m_p, m_q);
     QVector3D inter = base.toLine3D().point(t);
     QLineSegment3D apexToPoint(m_r, inter);
@@ -202,6 +202,9 @@ inline QVector3D QTriangle3D::interpolate(qreal s, qreal t) const
     // afaict this method from the parametric definition of a plane using three points
     // actually results in a bias, such that the s coefficient is out of proportion to t.
     // return (1.0f - s) * (((1.0f - t) * m_p) + (t * m_q)) + s * m_r;
+#endif
+    // FIXME
+    return m_p;
 }
 
 QT_END_NAMESPACE

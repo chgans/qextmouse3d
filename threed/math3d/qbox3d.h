@@ -47,7 +47,7 @@
 
 #include "qarray.h"
 #include "qresult.h"
-#include "qline3d.h"
+#include "qray3d.h"
 
 QT_BEGIN_HEADER
 
@@ -83,8 +83,8 @@ public:
     bool contains(const QVector3D& point) const;
     bool contains(const QBox3D& box) const;
 
-    bool intersects(const QLine3D& line) const;
-    QResult<QVector3D> intersection(const QLine3D& line) const;
+    bool intersects(const QRay3D& line) const;
+    QResult<QVector3D> intersection(const QRay3D& line) const;
 
     bool intersects(const QBox3D& box) const;
     void intersect(const QBox3D& box);

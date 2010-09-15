@@ -44,7 +44,7 @@
 
 #include <QtGui/qvector3d.h>
 #include "qresult.h"
-#include "qline3d.h"
+#include "qray3d.h"
 
 QT_BEGIN_HEADER
 
@@ -66,13 +66,13 @@ public:
     void setNormal(const QVector3D& value);
 
     bool contains(const QVector3D &point) const;
-    bool contains(const QLine3D &line) const;
+    bool contains(const QRay3D &line) const;
 
-    bool intersects(const QLine3D &line) const;
-    QResult<QVector3D> intersection(const QLine3D &line) const;
+    bool intersects(const QRay3D &line) const;
+    QResult<QVector3D> intersection(const QRay3D &line) const;
 
     QVector3D project(const QVector3D &point) const;
-    QLine3D project(const QLine3D &line) const;
+    QRay3D project(const QRay3D &line) const;
     bool sameSide(const QVector3D &pointA, const QVector3D &pointB) const;
 
 private:
@@ -124,20 +124,20 @@ inline bool QPlane3D::contains(const QVector3D &point) const
     return qIsNull(QVector3D::dotProduct(m_normal, m_origin - point));
 }
 
-inline bool QPlane3D::contains(const QLine3D &line) const
+inline bool QPlane3D::contains(const QRay3D &line) const
 {
     return qIsNull(QVector3D::dotProduct(m_normal, line.direction())) &&
             contains(line.origin());
 }
 
-inline bool QPlane3D::intersects(const QLine3D &line) const
+inline bool QPlane3D::intersects(const QRay3D &line) const
 {
     return !qIsNull(QVector3D::dotProduct(m_normal, line.direction()));
 }
 
-inline QLine3D QPlane3D::project(const QLine3D &line) const
+inline QRay3D QPlane3D::project(const QRay3D &line) const
 {
-    return QLine3D(project(line.origin()), project(line.direction()));
+    return QRay3D(project(line.origin()), project(line.direction()));
 }
 
 inline bool QPlane3D::sameSide(const QVector3D &pointA, const QVector3D &pointB) const

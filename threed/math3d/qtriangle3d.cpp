@@ -67,7 +67,7 @@
 
   The width() function simply returns the length of P - Q, the base of the triangle
   (given its counter-clockwise winding), while the height() function returns the
-  distance of the point R from the line PQ.  See the QLine3D class for definition of
+  distance of the point R from the line PQ.  See the QRay3D class for definition of
   the distance from a line.
 
   \image triangle3d-dimensions.png
@@ -134,7 +134,7 @@
 /*!
   \fn qreal QTriangle3D::height() const
   Returns the height of the triangle.  This is the distance from the point R,
-  to the line P-Q.  Here distance has the same definition as for QLine3D: the minimum
+  to the line P-Q.  Here distance has the same definition as for QRay3D: the minimum
   distance of R from the P-Q, or equivalently, the length of a line perpendicular
   to the line P-Q which passes through R.
  */
@@ -199,18 +199,22 @@
  */
 bool QTriangle3D::contains(const QVector3D &point) const
 {
+#if 0
     if (qFuzzyCompare(point, m_p) || qFuzzyCompare(point, m_q) || qFuzzyCompare(point, m_r))
         return true;
-    QLine3D apexToPoint(m_r, point - m_r);
+    QRay3D apexToPoint(m_r, point - m_r);
     QLineSegment3D base(m_p, m_q);
     QResult<QVector3D> res = base.intersection(apexToPoint);
     if (!res.isValid())
         return false;
     return apexToPoint.distanceFromOrigin(point) <= apexToPoint.distanceFromOrigin(res.value());
+#endif
+    // FIXME
+    return false;
 }
 
 /*!
-  \fn bool QTriangle3D::intersects(const QLine3D &line) const
+  \fn bool QTriangle3D::intersects(const QRay3D &line) const
   Returns true if the \a line intersects with this triangle, false otherwise.
   This test constructs a point which is the intersection of the \a line with the
   plane this triangle lies in and tests that for containment.  Therefore the conditions
@@ -219,7 +223,7 @@ bool QTriangle3D::contains(const QVector3D &point) const
  */
 
 /*!
-  \fn QResult<QVector3D> QTriangle3D::intersection(const QLine3D &line) const
+  \fn QResult<QVector3D> QTriangle3D::intersection(const QRay3D &line) const
   Returns the intersection point of the \a line on this triangle.  Call
   QResult::resultExists on the returned value to check if an intersection exists.
   This test constructs a point which is the intersection of the \a line with the

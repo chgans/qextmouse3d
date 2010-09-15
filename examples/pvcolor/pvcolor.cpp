@@ -98,7 +98,7 @@ void PVColorView::wheelEvent(QWheelEvent *e)
         zoomMag += inc;
         if (zoomMag < 5.0f)
             zoomMag = 5.0f;
-        QLine3D viewLine(camera()->center(), viewVec);
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
         camera()->setEye(viewLine.point(zoomMag));
         update();
     }

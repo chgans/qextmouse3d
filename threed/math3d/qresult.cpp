@@ -63,7 +63,7 @@
   returns this value either by the cast operator or explicity by the value
   function.
 
-  \sa QLine3D, QPlane3D
+  \sa QRay3D, QPlane3D
 */
 
 /*!

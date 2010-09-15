@@ -74,7 +74,7 @@
   the contains() methods.
   \list
     \o bool QPlane3D::contains(const QVector3D &point) const
-    \o bool QPlane3D::contains(const QLine3D &line) const
+    \o bool QPlane3D::contains(const QRay3D &line) const
   \endlist
 
   \image qplane3d.png
@@ -85,14 +85,14 @@
 
   The project() methods project a point, vector or a line onto this plane.
 
-  In this diagram a QLine3D intsects with the Z-X plane:
+  In this diagram a QRay3D intsects with the Z-X plane:
   \code
   QVector3D planeOrigin(1.0f, 0.0f, 1.0f);
   QVector3D planeNormal(0.0f, 1.0f, 0.0f);
   QPlane3D zxPlane(planeOrigin, planeNormal);
   QVector3D lineOrigin(24.0f, 32.0f, -22.0f);
   QVector3D lineDirection(2.0f, 1.0f, -1.5f);
-  QLine3D ray(lineOrigin, lineDirection);
+  QRay3D ray(lineOrigin, lineDirection);
   QVector3D intersection = zxPlane.intersection(ray);
   QVector3D projection = zxPlane.project(ray);
   \endcode
@@ -162,13 +162,13 @@
  */
 
 /*!
-  \fn bool QPlane3D::contains(const QLine3D &line) const
+  \fn bool QPlane3D::contains(const QRay3D &line) const
   Return true if the \a line lies in this plane.  Note that this is
   only true if all points on the line are contained in the plane.
  */
 
 /*!
-  \fn bool QPlane3D::intersects(const QLine3D &line) const
+  \fn bool QPlane3D::intersects(const QRay3D &line) const
   Return true if an intersection of the \a line with this plane exists,
   and false otherwise.  When the actual intersection point is not required,
   this method is cheaper than calling QPlane3D::intersection.  However the
@@ -195,7 +195,7 @@
   This method does not distinguish between these two failure cases and
   simply returns QResult<QVector3D>::NoResult in both cases.
  */
-QResult<QVector3D> QPlane3D::intersection(const QLine3D& line) const
+QResult<QVector3D> QPlane3D::intersection(const QRay3D& line) const
 {
     qreal dotLineAndPlane = QVector3D::dotProduct(m_normal, line.direction());
     if (qIsNull(dotLineAndPlane))
@@ -213,7 +213,7 @@ QResult<QVector3D> QPlane3D::intersection(const QLine3D& line) const
 }
 
 /*!
-  \fn QLine3D QPlane3D::project(const QLine3D &line) const
+  \fn QRay3D QPlane3D::project(const QRay3D &line) const
   Returns the projection of the \a line onto this plane.
  */
 
