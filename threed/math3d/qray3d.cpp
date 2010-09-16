@@ -157,7 +157,7 @@ bool QRay3D::contains(const QRay3D &ray) const
     The units for \a t are defined by direction().  The return value
     is precisely origin() + t * direction().
 
-    \sa fromPoint(), distance()
+    \sa fromPoint(), distanceTo()
 */
 
 /*!
@@ -195,13 +195,13 @@ QVector3D QRay3D::project(const QVector3D &vector) const
 }
 
 /*!
-    Returns the minimum distance of \a point from this ray, or equivalently
+    Returns the minimum distance from this ray to \a point, or equivalently
     the length of a line perpendicular to this ray which passes through
     \a point.  If \a point is on the ray, then this function will return zero.
 
     \sa point()
 */
-qreal QRay3D::distance(const QVector3D &point) const
+qreal QRay3D::distanceTo(const QVector3D &point) const
 {
     qreal t = fromPoint(point);
     return (point - (m_origin + t * m_direction)).length();

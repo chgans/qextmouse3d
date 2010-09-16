@@ -349,10 +349,10 @@ QPoint CubeItem::cubeIntersection
             (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
         QRay3D ray(QVector3D(0, 0, 0), eyept);
         QPlane3D plane(mv * pt1, v);
-        QResult<QVector3D> intersection = plane.intersection(ray);
-        if (!intersection.isValid())
+        qreal t = plane.intersection(ray);
+        if (qIsNaN(t))
             continue;
-        QVector3D worldpt = mv.inverted().map(intersection.value());
+        QVector3D worldpt = mv.inverted().map(ray.point(t));
 
         // Map the world point to the range 0..1.
         worldpt = (worldpt / CubeSize) + QVector3D(0.5f, 0.5f, 0.5f);

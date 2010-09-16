@@ -43,6 +43,7 @@
 #define QTRIANGLE3D_H
 
 #include <QtGui/qvector3d.h>
+#include <QtCore/qnumeric.h>
 #include "qresult.h"
 #include "qray3d.h"
 #include "qplane3d.h"
@@ -142,7 +143,7 @@ inline qreal QTriangle3D::width() const
 
 inline qreal QTriangle3D::height() const
 {
-    return QRay3D(m_p, m_q - m_p).distance(m_r);
+    return QRay3D(m_p, m_q - m_p).distanceTo(m_r);
 }
 
 inline qreal QTriangle3D::area() const
@@ -179,14 +180,20 @@ inline bool QTriangle3D::intersects(const QRay3D &line) const
 {
     if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
         return false;
-    return contains(plane().intersection(line));
+    qreal t = plane().intersection(line);
+    if (qIsNaN(t))
+        return false;
+    return contains(line.point(t));
 }
 
 inline QResult<QVector3D> QTriangle3D::intersection(const QRay3D &line) const
 {
     if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
         return QResult<QVector3D>();
-    QVector3D inter = plane().intersection(line);
+    qreal t = plane().intersection(line);
+    if (qIsNaN(t))
+        return QResult<QVector3D>();
+    QVector3D inter(line.point(t));
     if (contains(inter))
         return inter;
     return QResult<QVector3D>();

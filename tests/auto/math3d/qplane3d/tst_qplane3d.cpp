@@ -54,21 +54,45 @@ public:
 private slots:
     void create_data();
     void create();
-    void normalized_data();
-    void normalized();
     void intersection_data();
     void intersection();
     void noIntersection_data();
     void noIntersection();
 };
 
+// since all calculations involved QVector3D are producing values with only
+// float precision those calculations can at best be float precision
+// if you assign the results of the calculation to a qreal then qFuzzyCompare
+// will quite happily use a much higher standard of precision than it is
+// possible to acheive - hence redefine it here to always use the float
+// Also while on the job fix the problem where a compared value happens
+// to be zero (and you cannot always predict this, and should not predict it
+// since then you produce self-fulling prophecies instead of tests).
+// In that case qFuzzyCompare has a completely strict criterion since
+// it finds the "fudge factor" by multiplying by zero...
+static inline bool fuzzyCompare(qreal p1, qreal p2)
+{
+    float fac = qMin(qAbs(p1), qAbs(p2));
+    return (qAbs(p1 - p2) <= (qIsNull(fac) ? 0.00001f : 0.00001f * fac));
+}
+
+static inline bool fuzzyCompare(const QVector3D &lhs, const QVector3D &rhs)
+{
+    if (fuzzyCompare(lhs.x(), rhs.x()) &&
+            fuzzyCompare(lhs.y(), rhs.y()) &&
+            fuzzyCompare(lhs.z(), rhs.z()))
+        return true;
+    qWarning() << "actual:" << lhs;
+    qWarning() << "expected:" << rhs;
+    return false;
+}
+
 void tst_QPlane3D::create_data()
 {
     QTest::addColumn<QVector3D>("point");
     QTest::addColumn<QVector3D>("normal");
 
-    // Note - these vectors are all pre-normalized
-    // and therefore should not change on construction
+    // normalized vectors for the normals.
     QTest::newRow("line on x-axis from origin")
             << QVector3D()
             << QVector3D(1.0f, 0.0f, 0.0f);
@@ -84,6 +108,27 @@ void tst_QPlane3D::create_data()
     QTest::newRow("equidistant from all 3 axes")
             << QVector3D(0.5f, 0.0f, 0.5f)
             << QVector3D(0.57735026919f, 0.57735026919f, 0.57735026919f);
+
+    // Unnormalized vectors for the normals.
+    QTest::newRow("line on x-axis from origin")
+            << QVector3D()
+            << QVector3D(2.0f, 0.0f, 0.0f);
+
+    QTest::newRow("line paralell -z-axis from 3,3,3")
+            << QVector3D(3.0f, 3.0f, 3.0f)
+            << QVector3D(0.0f, 0.0f, -0.7f);
+
+    QTest::newRow("vertical line (paralell to y-axis)")
+            << QVector3D(0.5f, 0.0f, 0.5f)
+            << QVector3D(0.0f, 5.3f, 0.0f);
+
+    QTest::newRow("equidistant from all 3 axes")
+            << QVector3D(0.5f, 0.0f, 0.5f)
+            << QVector3D(1.0f, 1.0f, 1.0f);
+
+    QTest::newRow("negative direction")
+            << QVector3D(-3.0f, -3.0f, -3.0f)
+            << QVector3D(-1.2f, -1.8f, -2.4f);
 }
 
 void tst_QPlane3D::create()
@@ -91,51 +136,8 @@ void tst_QPlane3D::create()
     QFETCH(QVector3D, point);
     QFETCH(QVector3D, normal);
     QPlane3D plane(point, normal);
-    QCOMPARE(plane.normal(), normal);
-    QCOMPARE(plane.origin(), point);
-}
-
-void tst_QPlane3D::normalized_data()
-{
-    QTest::addColumn<QVector3D>("point");
-    QTest::addColumn<QVector3D>("normal");
-    QTest::addColumn<QVector3D>("normalized");
-
-    // These direction vectors will get normalized
-    QTest::newRow("line on x-axis from origin")
-            << QVector3D()
-            << QVector3D(2.0f, 0.0f, 0.0f)
-            << QVector3D(1.0f, 0.0f, 0.0f);
-
-    QTest::newRow("line paralell -z-axis from 3,3,3")
-            << QVector3D(3.0f, 3.0f, 3.0f)
-            << QVector3D(0.0f, 0.0f, -0.7f)
-            << QVector3D(0.0f, 0.0f, -1.0f);
-
-    QTest::newRow("vertical line (paralell to y-axis)")
-            << QVector3D(0.5f, 0.0f, 0.5f)
-            << QVector3D(0.0f, 5.3f, 0.0f)
-            << QVector3D(0.0f, 1.0f, 0.0f);
-
-    QTest::newRow("equidistant from all 3 axes")
-            << QVector3D(0.5f, 0.0f, 0.5f)
-            << QVector3D(1.0f, 1.0f, 1.0f)
-            << QVector3D(0.57735026919f, 0.57735026919f, 0.57735026919f);
-
-    QTest::newRow("negative direction")
-            << QVector3D(-3.0f, -3.0f, -3.0f)
-            << QVector3D(-1.2f, -1.8f, -2.4f)
-            << QVector3D(-0.3713906763f, -0.55708601453f, -0.7427813527f);
-}
-
-void tst_QPlane3D::normalized()
-{
-    QFETCH(QVector3D, point);
-    QFETCH(QVector3D, normal);
-    QFETCH(QVector3D, normalized);
-    QPlane3D plane(point, normal);
-    QVERIFY(qFuzzyCompare(plane.normal(), normalized));
-    QCOMPARE(plane.origin(), point);
+    QVERIFY(fuzzyCompare(plane.normal(), normal));
+    QVERIFY(fuzzyCompare(plane.origin(), point));
 }
 
 void tst_QPlane3D::intersection_data()
@@ -199,15 +201,9 @@ void tst_QPlane3D::intersection()
     QRay3D line(point1, direction);
     QPlane3D plane(point2, normal);
 
-    QResult<QVector3D> res = plane.intersection(line);
-    // qDebug("got: %0.10f, %0.10f, %0.10f -- exp: %0.10f, %0.10f, %0.10f",
-    //        res.value().x(), res.value().y(), res.value().z(),
-    //        intersection.x(), intersection.y(), intersection.z());
-    QVERIFY(res.isValid());
-    QCOMPARE(res.value(), intersection);
-    res = plane.intersection(line);
-    QVERIFY(res.isValid());
-    QCOMPARE(res.value(), intersection);
+    qreal t = plane.intersection(line);
+    QVERIFY(!qIsNaN(t));
+    QVERIFY(fuzzyCompare(line.point(t), intersection));
 }
 
 void tst_QPlane3D::noIntersection_data()
@@ -248,12 +244,8 @@ void tst_QPlane3D::noIntersection()
     QPlane3D plane(point1, normal);
     QRay3D line(point2, direction);
 
-    QResult<QVector3D> res = plane.intersection(line);
-    QVERIFY(!res.isValid());
-    QCOMPARE(res.value(), QVector3D());
-    res = plane.intersection(line);
-    QVERIFY(!res.isValid());
-    QCOMPARE(res.value(), QVector3D());
+    qreal t = plane.intersection(line);
+    QVERIFY(qIsNaN(t));
 }
 
 QTEST_APPLESS_MAIN(tst_QPlane3D)

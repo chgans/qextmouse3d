@@ -71,7 +71,7 @@ public:
 
     QVector3D project(const QVector3D &vector) const;
 
-    qreal distance(const QVector3D &point) const;
+    qreal distanceTo(const QVector3D &point) const;
 
     bool operator==(const QRay3D &other);
     bool operator!=(const QRay3D &other);
