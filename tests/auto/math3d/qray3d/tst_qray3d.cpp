@@ -58,6 +58,11 @@ private slots:
     void point();
     void contains_point_data();
     void contains_point();
+    void contains_ray_data();
+    void contains_ray();
+    void distanceTo_data();
+    void distanceTo();
+    void compare();
 };
 
 // since all calculations involved QVector3D are producing values with only
@@ -345,6 +350,96 @@ void tst_QRay3D::contains_point()
 
     QRay3D line(origin, direction);
     QCOMPARE(line.contains(point), contains);
+}
+
+void tst_QRay3D::contains_ray_data()
+{
+    contains_point_data();
+}
+
+void tst_QRay3D::contains_ray()
+{
+    QFETCH(QVector3D, origin);
+    QFETCH(QVector3D, direction);
+    QFETCH(QVector3D, point);
+    QFETCH(bool, contains);
+
+    QRay3D line(origin, direction);
+    if (contains) {
+        QRay3D line2(point, direction);
+        QVERIFY(line.contains(line2));
+        QVERIFY(line2.contains(line));
+
+        // Reversed direction is also contained.
+        QRay3D line3(point, -direction);
+        QVERIFY(line.contains(line2));
+        QVERIFY(line2.contains(line));
+
+        // Different direction.
+        QRay3D line4(point, QVector3D(direction.y(), direction.x(), direction.z()));
+        QVERIFY(!line.contains(line4));
+        QVERIFY(!line4.contains(line));
+    } else {
+        QRay3D line2(point, direction);
+        QVERIFY(!line.contains(line2));
+        QVERIFY(!line2.contains(line));
+    }
+}
+
+void tst_QRay3D::distanceTo_data()
+{
+    QTest::addColumn<QVector3D>("origin");
+    QTest::addColumn<QVector3D>("direction");
+    QTest::addColumn<QVector3D>("point");
+    QTest::addColumn<qreal>("distance");
+
+    QTest::newRow("axis-x")
+        << QVector3D(6.0f, 0.0f, 0.0f)
+        << QVector3D(1.0f, 0.0f, 0.0f)
+        << QVector3D(0.0f, 0.0f, 0.0f)
+        << qreal(0.0f);
+
+    QTest::newRow("axis-x to 1")
+        << QVector3D(6.0f, 0.0f, 0.0f)
+        << QVector3D(1.0f, 0.0f, 0.0f)
+        << QVector3D(0.0f, 1.0f, 0.0f)
+        << qreal(1.0f);
+
+    QTest::newRow("neg-axis-y")
+        << QVector3D(0.0f, 6.0f, 0.0f)
+        << QVector3D(0.0f, -1.5f, 0.0f)
+        << QVector3D(0.0f, 100.0f, 0.0f)
+        << qreal(0.0f);
+
+    QTest::newRow("neg-axis-y to 2")
+        << QVector3D(0.0f, 6.0f, 0.0f)
+        << QVector3D(0.0f, -1.5f, 0.0f)
+        << QVector3D(2.0f, 0.0f, 0.0f)
+        << qreal(2.0f);
+}
+
+void tst_QRay3D::distanceTo()
+{
+    QFETCH(QVector3D, origin);
+    QFETCH(QVector3D, direction);
+    QFETCH(QVector3D, point);
+    QFETCH(qreal, distance);
+
+    QRay3D line(origin, direction);
+    QCOMPARE(line.distanceTo(point), distance);
+}
+
+void tst_QRay3D::compare()
+{
+    QRay3D ray1(QVector3D(10, 20, 30), QVector3D(-3, -4, -5));
+    QRay3D ray2(QVector3D(10, 20, 30), QVector3D(1.5f, 2.0f, 2.5f));
+    QRay3D ray3(QVector3D(0, 20, 30), QVector3D(-3, -4, -5));
+    QVERIFY(ray1 == ray1);
+    QVERIFY(!(ray1 != ray1));
+    QVERIFY(ray1 != ray2);
+    QVERIFY(!(ray1 == ray2));
+    QVERIFY(ray1 != ray3);
+    QVERIFY(!(ray1 == ray3));
 }
 
 QTEST_APPLESS_MAIN(tst_QRay3D)
