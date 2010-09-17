@@ -10,4 +10,8 @@
         <file>images/no-images-yet.png</file>
         <file>images/girder.png</file>
     </qresource>
+    <qresource prefix="/shaders">
+        <file alias="replace_texture.fsh">shaders/replace_texture.fsh</file>
+        <file alias="replace_texture.vsh">shaders/replace_texture.vsh</file>
+    </qresource>
 </RCC>

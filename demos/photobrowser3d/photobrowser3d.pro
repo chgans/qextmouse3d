@@ -12,7 +12,11 @@ SOURCES += main.cpp\
     imageloader.cpp \
     launcher.cpp \
     qframesscene.cpp \
-    qfocusadaptor.cpp
+    qfocusadaptor.cpp \
+    thumbnailableimage.cpp \
+    qatlas.cpp \
+    thumbnailnode.cpp \
+    thumbnaileffect.cpp
 
 HEADERS  += photobrowser3dview.h \
     imagedisplay.h \
@@ -21,7 +25,11 @@ HEADERS  += photobrowser3dview.h \
     imageloader.h \
     launcher.h \
     qframesscene.h \
-    qfocusadaptor.h
+    qfocusadaptor.h \
+    thumbnailableimage.h \
+    qatlas.h \
+    thumbnailnode.h \
+    thumbnaileffect.h
 
 RESOURCES += \
     photobrowser3d.qrc
@@ -30,3 +38,7 @@ LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin
 include(../../threed/threed_dep.pri)
+
+OTHER_FILES += \
+    shaders/replace_texture.fsh \
+    shaders/replace_texture.vsh

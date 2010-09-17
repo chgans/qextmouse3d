@@ -39,45 +39,31 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
+#ifndef QGLFLATTEXTUREEFFECT_H
+#define QGLFLATTEXTUREEFFECT_H
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#include "qglabstracteffect.h"
+#include <QtCore/qscopedpointer.h>
 
-#include <QString>
+class ThumbnailEffectPrivate;
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
-class QGLPainter;
-
-class ImageDisplay : public QGLSceneNode
+class ThumbnailEffect : public QGLAbstractEffect
 {
-    Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
-    ~ImageDisplay();
-    int maxImages() const { return m_maxImages; }
-    void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
-signals:
-    void framesChanged();
-public slots:
-    void addThumbnailNode(const QUrl &url);
+    ThumbnailEffect();
+    virtual ~ThumbnailEffect();
+
+    QList<QGL::VertexAttribute> requiredFields() const;
+    void setActive(QGLPainter *painter, bool flag);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    void setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
+    void setThumbnail(bool enable);
+    bool thumbnail() const;
+
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    QGLAbstractEffect *m_effect;
-    bool m_imageSetToDefault;
-    int m_count;
-    qreal m_size;
-    qreal m_frameSize;
-    int m_maxImages;
-    QImage m_frameImage;
+    ThumbnailEffectPrivate *d;
 };
 
-#endif // IMAGEDISPLAY_H
+#endif

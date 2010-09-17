@@ -1171,6 +1171,7 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
     // more than once.
     d->childNodes.removeOne(node);
     node->unParent(this);
+    node->disconnect(this);
     emit childNodesChanged();
     invalidateBoundingBox();
 }

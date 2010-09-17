@@ -65,8 +65,9 @@ ImageLoader::~ImageLoader()
 {
 }
 
-void ImageLoader::run()
+void ImageLoader::loadFile()
 {
+    // FIXME: actually handle remote files
     QString fn = m_url.toLocalFile();
     int pos = fn.lastIndexOf('.');
     QString ext;
@@ -75,26 +76,29 @@ void ImageLoader::run()
     if (ext.isEmpty() ||
         !QImageReader::supportedImageFormats().contains(ext.toLocal8Bit()))
         ext = QString();
+    QImage im;
     QFile f(fn);
-    if (!f.open(QIODevice::ReadOnly))
+    QString errorMessage;
+    if (f.open(QIODevice::ReadOnly))
     {
-        qWarning("Could not read: %s", qPrintable(m_url.path()));
-        return;
-    }
-    QByteArray bytes;
-    while (!f.atEnd())
-    {
+        QByteArray bytes;
+        while (!f.atEnd())
+        {
+            QThread::yieldCurrentThread();
+            bytes.append(f.read(1024));
+        }
         QThread::yieldCurrentThread();
-        bytes.append(f.read(1024));
+        im = ext.isEmpty() ? QImage::fromData(bytes)
+                           : QImage::fromData(bytes, qPrintable(ext));
     }
-    QThread::yieldCurrentThread();
-    QImage im = ext.isEmpty() ? QImage::fromData(bytes)
-        : QImage::fromData(bytes, qPrintable(ext));
-    if (im.isNull())
-        return;
+    else
+    {
+        errorMessage = tr("Could not read: %1").arg(m_url.toString());
+    }
+
     QString p = m_url.path();
     p = p.section("/", -1);
-    int max = qMax(im.width(), im.height());
+    int max = im.isNull() ? 128 : qMax(im.width(), im.height());
     QImage frm;
     if (max <= 64)
         frm = QImage(QSize(64, 64), QImage::Format_ARGB32);
@@ -110,29 +114,46 @@ void ImageLoader::run()
     QPainter ptr;
     ptr.begin(&frm);
     ptr.setBackgroundMode(Qt::TransparentMode);
-    QRect r;
-    if (max > 1024)
+
+    if (!im.isNull())
     {
-        if (max == im.width())
+        QRect r;
+        if (max > 1024)
         {
-            float h = float(1024) * float(im.height()) / float(im.width());
-            r.setSize(QSize(1024, h));
+            if (max == im.width())
+            {
+                float h = float(1024) * float(im.height()) / float(im.width());
+                r.setSize(QSize(1024, h));
+            }
+            else
+            {
+                float w = float(1024) * float(im.width()) / float(im.height());
+                r.setSize(QSize(w, 1024));
+            }
         }
         else
         {
-            float w = float(1024) * float(im.width()) / float(im.height());
-            r.setSize(QSize(w, 1024));
+            r.setSize(im.size());
         }
+        int left = (frm.width() - r.width()) / 2;
+        int top = (frm.height() - r.height()) / 2;
+        r.moveTopLeft(QPoint(left, top));
+        QThread::yieldCurrentThread();
+        ptr.drawImage(r, im);
     }
     else
     {
-        r.setSize(im.size());
+        if (errorMessage.isEmpty())
+            errorMessage = tr("Could not load: %1").arg(m_url.toString());
+        ptr.setPen(QColor("orange"));
+        ptr.drawText(frm.rect(), errorMessage, Qt::AlignCenter);
     }
-    int left = (frm.width() - r.width()) / 2;
-    int top = (frm.height() - r.height()) / 2;
-    r.moveTopLeft(QPoint(left, top));
-    QThread::yieldCurrentThread();
-    ptr.drawImage(r, im);
+
     ptr.end();
     emit imageLoaded(frm);
+}
+
+void ImageLoader::run()
+{
+    loadFile();
 }

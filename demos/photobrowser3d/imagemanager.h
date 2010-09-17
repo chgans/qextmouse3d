@@ -46,19 +46,25 @@
 #include <QThread>
 #include <QUrl>
 #include <QImage>
+#include <QMutex>
+
+#include "thumbnailableimage.h"
 
 class Launcher;
 class QSemaphore;
+class QAtlas;
 
 class ImageManager : public QThread
 {
     Q_OBJECT
 public:
     explicit ImageManager(QObject *parent = 0);
-    void setImageUrl(QUrl url) { m_url = url; }
-    QUrl imageUrl() const { return m_url; }
+    void setImageBaseUrl(const QUrl &url) { m_url = url; }
+    QUrl imageBaseUrl() const { return m_url; }
+    QAtlas *atlas() const { return m_atlas; }
 signals:
-    void imageReady(const QImage &);
+    void imageUrl(const QUrl &);
+    void imageReady(const ThumbnailableImage &);
     void errorOccurred(const QString &);
 public slots:
     void acquire();
@@ -74,6 +80,7 @@ private:
     int m_threadPoolSize;
     Launcher *m_launcher;
     int m_count;
+    QAtlas *m_atlas;
 };
 
 #endif // IMAGEMANAGER_H

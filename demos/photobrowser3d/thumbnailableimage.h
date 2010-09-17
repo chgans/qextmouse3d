@@ -39,45 +39,55 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
+#ifndef THUMBNAILABLEIMAGE_H
+#define THUMBNAILABLEIMAGE_H
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#include <QRectF>
+#include <QMetaType>
 
-#include <QString>
+class QAtlas;
+class QImage;
+class ThumbnailableImagePrivate;
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
-class QGLPainter;
-
-class ImageDisplay : public QGLSceneNode
+class ThumbnailableImage
 {
-    Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
-    ~ImageDisplay();
-    int maxImages() const { return m_maxImages; }
-    void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
-signals:
-    void framesChanged();
-public slots:
-    void addThumbnailNode(const QUrl &url);
+    explicit ThumbnailableImage(QAtlas *atlas = 0, qreal scale = 15.0);
+    ~ThumbnailableImage();
+
+    ThumbnailableImage(const ThumbnailableImage&);
+    ThumbnailableImage &operator=(const ThumbnailableImage &);
+
+    void setThumbnailed(bool enable);
+    bool isThumbnailed() const;
+
+    QImage *data() const;
+    void setData(QImage *data);
+
+    QUrl url() const;
+    void setUrl(const QUrl &url);
+
+    QAtlas *atlas() const;
+    void setAtlas(QAtlas *atlas);
+
+    QRectF frame() const;
+    qreal scale() const;
+
+    void minimize();
+    void draw(QGLPainter *painter);
+
+    int start() const;
+    void setStart(int start);
+
+    int count() const;
+    void setCount(int count);
+
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    QGLAbstractEffect *m_effect;
-    bool m_imageSetToDefault;
-    int m_count;
-    qreal m_size;
-    qreal m_frameSize;
-    int m_maxImages;
-    QImage m_frameImage;
+    void detach();
+
+    ThumbnailableImagePrivate *d;
 };
 
-#endif // IMAGEDISPLAY_H
+Q_DECLARE_METATYPE(ThumbnailableImage);
+
+#endif // THUMBNAILABLEIMAGE_H

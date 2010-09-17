@@ -45,6 +45,7 @@
 #include "skybox.h"
 #include "qglpicknode.h"
 #include "qfocusadaptor.h"
+#include "thumbnailableimage.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -75,6 +76,8 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_framesDirty(true)
 {
     setOption(QGLView::ObjectPicking, true);
+
+    qRegisterMetaType<ThumbnailableImage>("ThumbnailableImage");
 
     QString path = ":/res";
     int ix = qApp->arguments().indexOf("--skybox");
@@ -171,14 +174,14 @@ void PhotoBrowser3DView::initialise()
         else
             qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
-    connect(m_images, SIGNAL(imageReady(QImage)),
-            m_scene, SLOT(addImage(QImage)));
+    connect(m_images, SIGNAL(imageUrl(QUrl)),
+            m_scene, SLOT(addThumbnailNode(QUrl)));
     connect(m_scene, SIGNAL(framesChanged()),
             this, SLOT(framesDirty()));
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
-    m_images->setImageUrl(url);
+    m_images->setImageBaseUrl(url);
     m_images->start(QThread::IdlePriority);
 
     m_keyTimer->setInterval(100);

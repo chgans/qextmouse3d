@@ -39,45 +39,50 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
+#ifndef QATLAS_H
+#define QATLAS_H
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#include <QSize>
 
-#include <QString>
+#include "qgeometrydata.h"
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
-class QGLPainter;
+class QImage;
+class QAreaAllocator;
+class QTexture2D;
+class QGLMaterial;
 
-class ImageDisplay : public QGLSceneNode
+class QAtlas
 {
-    Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
-    ~ImageDisplay();
-    int maxImages() const { return m_maxImages; }
-    void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
-signals:
-    void framesChanged();
-public slots:
-    void addThumbnailNode(const QUrl &url);
+    QAtlas(QImage *data, QAreaAllocator *allocator)
+        : m_data(data)
+        , m_allocator(allocator)
+    {}
+
+    ~QAtlas();
+
+    QImage *data() const { return m_data; }
+    void setData(QImage *data) { m_data = data; }
+
+    QTexture2D *texture() const { return m_tex; }
+    void setTexture(QTexture2D *texture) { m_tex = texture; }
+
+    QAreaAllocator allocator() const { return m_allocator; }
+    void setAllocator(QAreaAllocator *allocator) { m_allocator = allocator; }
+
+    QRect allocate(const QSize &size);
+
+    void apply(QGLPainter *painter);
+
+    QGeometryData geometry() const { return m_geometry; }
+
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    QGLAbstractEffect *m_effect;
-    bool m_imageSetToDefault;
-    int m_count;
-    qreal m_size;
-    qreal m_frameSize;
-    int m_maxImages;
-    QImage m_frameImage;
+    QSize m_size;
+    QImage *m_data;
+    QAreaAllocator *m_allocator;
+    QTexture2D *m_tex;
+    QGLMaterial *m_material;
+    QGeometryData m_geometry;
 };
 
-#endif // IMAGEDISPLAY_H
+#endif // QATLAS_H

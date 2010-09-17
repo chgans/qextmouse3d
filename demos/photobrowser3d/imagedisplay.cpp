@@ -41,15 +41,33 @@
 
 
 #include "imagedisplay.h"
-
+#include "thumbnailableimage.h"
+#include "thumbnailnode.h"
+#include "thumbnaileffect.h"
 #include "qglbuilder.h"
 #include "qglcube.h"
 #include "qframesscene.h"
+#include "imagemanager.h"
 
 #include <QApplication>
 #include <QChildEvent>
 #include <QUrl>
 #include <QImage>
+
+static QImage makeFrameImage()
+{
+    QImage frm(QSize(128, 128), QImage::Format_ARGB32);
+    frm.fill(qRgba(8, 8, 8, 255));  // dark grey frame
+    QPainter ptr;
+    ptr.begin(&frm);
+    QRect r(8, 8, 112, 112);
+    ptr.setBackgroundMode(Qt::TransparentMode);
+    ptr.fillRect(r, QColor(0, 30, 50, 64));
+    ptr.setPen(QColor("orange"));
+    ptr.drawText(frm.rect(), "Loading...", Qt::AlignCenter);
+    ptr.end();
+    return frm;
+}
 
 ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize)
     : QGLSceneNode(parent)
@@ -61,6 +79,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     , m_count(0)
     , m_size(wallSize)
     , m_frameSize((m_size * 3.0f) / 4.0f)
+    , m_maxImages(500)
 {
     QGLBuilder builder(materials);
     setObjectName("ImageDisplay");
@@ -96,11 +115,13 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     m_wall->setMaterial(mat);
 
     // paint the frames
-    m_frames->setEffect(QGL::FlatReplaceTexture2D);
+    m_effect = new ThumbnailEffect;
+    m_frames->setUserEffect(m_effect);
     m_frames->setEffectEnabled(true);
+    m_frameImage = makeFrameImage();
     mat = new QGLMaterial();
     tex = new QGLTexture2D(mat);
-    tex->setImage(QImage(":/res/images/no-images-yet.png"));
+    tex->setImage();
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);
 
@@ -114,30 +135,39 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     m_imageSetToDefault = true;
 }
 
-void ImageDisplay::addImage(const QImage &image)
+ImageDisplay::~ImageDisplay()
 {
-    // clone the current frame and shift the clone to the left
-    // (or use the place holder frame if this is the first one)
-    Q_ASSERT(m_currentFrame);
-    QGLSceneNode *s = m_currentFrame;
+    delete m_effect;
+}
+
+void ImageDisplay::addThumbnailNode(const QUrl &image)
+{
+    ImageManager *manager = qobject_cast<ImageManager*>(sender());
+    Q_ASSERT(manager);
+
+    ThumbnailNode *thumb = new ThumbnailNode(m_frames);
+    connect(thumb, SIGNAL(imageRequired(QUrl)), manager,
+            SLOT(createLoader(QUrl)));
+    connect(manager, SIGNAL(imageReady(ThumbnailableImage)),
+            thumb, SLOT(setImage(ThumbnailableImage)));
+    thumb->setManager(manager);
+    thumb->setUrl(image);
+    thumb->updateFrom(m_currentFrame);
+    if (m_imageSetToDefault)
+        delete m_currentFrame;
+    m_currentFrame = thumb;
+    thumb->setObjectName(QString("frame %1").arg(m_count));
     if (!m_imageSetToDefault)
     {
-        s = m_currentFrame->clone(m_frames);
-        ++m_count;
-        s->setObjectName(QString("frame %1").arg(m_count));
-        QVector3D p = s->position();
+        QVector3D p = thumb->position();
         p.setX(p.x() - m_size);
-        s->setPosition(p);
-        m_currentFrame = s;
-        int scale = image.width() / 1024;
-        if (scale != 1)
-            s->setScale(QVector3D(scale, scale, scale));
+        thumb->setPosition(p);
 
         // tell the frame scene to make the child pickable
         QChildEvent e(QEvent::ChildAdded, s);
         QApplication::sendEvent(m_frameScene, &e);
 
-        s = m_currentWall->clone(m_wall);
+        QGLSceneNode *s = m_currentWall->clone(m_wall);
         s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
         p.setX(p.x() - m_size);
@@ -145,15 +175,8 @@ void ImageDisplay::addImage(const QImage &image)
         m_currentWall = s;
     }
     m_imageSetToDefault = false;
-
-    // load the image as a new material into the current frame
-    QGLMaterial *mat = new QGLMaterial();
-    QGLTexture2D *tex = new QGLTexture2D(mat);
-    tex->setHorizontalWrap(QGL::Clamp);
-    tex->setImage(image);
-    mat->setTexture(tex);
-    m_currentFrame->setMaterial(mat);
     emit framesChanged();
+    ++m_count;
 }
 
 QList<QGLPickNode *> ImageDisplay::pickNodes() const

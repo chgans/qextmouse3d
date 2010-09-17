@@ -39,45 +39,41 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
+
+#ifndef THUMBNAILNODE_H
+#define THUMBNAILNODE_H
 
 #include "qglscenenode.h"
-#include "qglmaterialcollection.h"
 
-#include <QString>
+#include <QtCore/qmath.h>
+#include <QUrl>
 
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
-class QGLPainter;
+class ThumbnailableImage;
+class ImageManager;
 
-class ImageDisplay : public QGLSceneNode
+class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
-    ~ImageDisplay();
-    int maxImages() const { return m_maxImages; }
-    void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
+    explicit ThumbnailNode(QObject *parent = 0);
+    QUrl url() const { return m_url; }
+    void setUrl(const QUrl &url) { m_url = url; }
+    void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
+    qreal threshold() const { return qSqrt(m_thresholdSquared); }
+    void draw(QGLPainter *painter);
+    ThumbnailableImage *image() const { return m_image; }
+    void setImage(ThumbnailableImage *image);
+    void updateFrom(const QGLSceneNode *node);
+    void setManager(ImageManager *manager) { m_manager = manager; }
 signals:
-    void framesChanged();
-public slots:
-    void addThumbnailNode(const QUrl &url);
+    void imageRequired(const QUrl &);
 private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    QGLAbstractEffect *m_effect;
-    bool m_imageSetToDefault;
-    int m_count;
-    qreal m_size;
-    qreal m_frameSize;
-    int m_maxImages;
-    QImage m_frameImage;
+    ThumbnailableImage *m_image;
+    qreal m_thresholdSquared;
+    ImageManager *m_manager;
+    QUrl m_url;
+    int m_defaultMaterial;
+    bool m_loading;
 };
 
-#endif // IMAGEDISPLAY_H
+#endif // THUMBNAILNODE_H

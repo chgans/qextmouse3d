@@ -39,45 +39,51 @@
 **
 ****************************************************************************/
 
-#ifndef IMAGEDISPLAY_H
-#define IMAGEDISPLAY_H
+#include "qatlas.h"
+#include "qareaallocator_p.h"
+#include "qgltexture2d.h"
+#include "qglpainter.h"
 
-#include "qglscenenode.h"
-#include "qglmaterialcollection.h"
+#include <QImage>
 
-#include <QString>
-
-class QGLBuilder;
-class QGLTexture2D;
-class QFramesScene;
-class QGLPainter;
-
-class ImageDisplay : public QGLSceneNode
+QAtlas::QAtlas()
+    : m_size(1024, 1024)
+    , m_data(new QImage(m_size, QImage::Format_ARGB32))
+    , m_allocator(new QSimpleAreaAllocator(m_size))
+    , m_tex(0)
 {
-    Q_OBJECT
-public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
-    ~ImageDisplay();
-    int maxImages() const { return m_maxImages; }
-    void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
-signals:
-    void framesChanged();
-public slots:
-    void addThumbnailNode(const QUrl &url);
-private:
-    QGLSceneNode *m_wall;
-    QGLSceneNode *m_frames;
-    QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
-    QFramesScene *m_frameScene;
-    QGLAbstractEffect *m_effect;
-    bool m_imageSetToDefault;
-    int m_count;
-    qreal m_size;
-    qreal m_frameSize;
-    int m_maxImages;
-    QImage m_frameImage;
-};
+    // show errors in red
+    m_data->fill(qRgb(255, 0, 0));
+}
 
-#endif // IMAGEDISPLAY_H
+QAtlas::~QAtlas()
+{
+    delete m_data;
+    delete m_allocator;
+    delete m_tex;
+}
+
+QRect QAtlas::allocate(const QSize &size, const QImage &image)
+{
+    QRect a = m_allocator->allocate(size);
+    if (a.isEmpty())
+    {
+        qWarning("QAtlas::allocate: overflowed");
+        return;
+    }
+    QPainter painter;
+    painter.begin(m_data);
+    painter.drawImage(a, image);
+    painter.end();
+}
+
+void QAtlas::apply(QGLPainter *painter)
+{
+    if (m_tex == 0)
+    {
+        m_tex = new QGLTexture2D;
+        m_tex->setImage(m_data);
+    }
+    painter->glActiveTexture(GL_TEXTURE1);
+    m_tex->bind();
+}

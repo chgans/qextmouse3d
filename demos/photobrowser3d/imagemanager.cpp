@@ -43,6 +43,7 @@
 #include "imagemanager.h"
 #include "imageloader.h"
 #include "launcher.h"
+#include "qatlas.h"
 
 #include <QSemaphore>
 #include <QDir>
@@ -59,6 +60,7 @@ ImageManager::ImageManager(QObject *parent)
     , m_sem(0)
     , m_threadPoolSize(0)
     , m_launcher(0)
+    , m_atlas(new QAtlas)
 {
     m_threadPoolSize = QThread::idealThreadCount();
     if (m_threadPoolSize == -1)
@@ -89,7 +91,7 @@ void ImageManager::release()
     }
     m_sem->release();
     if (m_sem->available() == m_threadPoolSize)
-        quit();
+    //    quit();
 }
 
 void ImageManager::createLoader(const QUrl &url)
@@ -97,8 +99,9 @@ void ImageManager::createLoader(const QUrl &url)
     ImageLoader *loader = new ImageLoader(this);
     loader->setUrl(url);
     connect(loader, SIGNAL(finished()), this, SLOT(release()));
-    connect(loader, SIGNAL(imageLoaded(QImage)), this, SIGNAL(imageReady(QImage)));
-    connect(loader, SIGNAL(imageLoaded(QImage)), this, SLOT(incrementCounter()));
+    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
+            SIGNAL(imageReady(ThumbnailableImage)));
+    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this, SLOT(incrementCounter()));
     loader->start(QThread::IdlePriority);
 }
 
@@ -113,7 +116,7 @@ void ImageManager::run()
     m_launcher = new Launcher(this);
     m_launcher->setUrl(m_url);
     connect(m_launcher, SIGNAL(imageUrl(QUrl)),
-            this, SLOT(createLoader(QUrl)));
+            this, SIGNAL(imageUrl(QUrl)));
     connect(m_launcher, SIGNAL(finished()),
             this, SLOT(release()));
     acquire();   // grab a thread for the launcher

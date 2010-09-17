@@ -48,6 +48,8 @@
 #include <QUrl>
 #include <QImage>
 
+#include "thumbnailableimage.h"
+
 class ImageManager;
 
 class ImageLoader : public QThread
@@ -56,15 +58,18 @@ class ImageLoader : public QThread
 public:
     explicit ImageLoader(ImageManager *manager);
     ~ImageLoader();
-    void setUrl(const QUrl &url) { m_url = url; }
     QUrl url() const { return m_url; }
+    void setUrl(const QUrl &url) { m_url = url; }
 signals:
-    void imageLoaded(const QImage &image);
+    void imageLoaded(const QImage &ThumbnailableImage);
     void errorOccurred(const QString &error);
 protected:
     void run();
 private:
+    void loadFile();
+
     QUrl m_url;
+    ThumbnailableImage *m_image;
 };
 
 #endif // IMAGELOADER_H
