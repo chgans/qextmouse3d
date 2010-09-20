@@ -41,8 +41,6 @@
 
 #include "qbox3d.h"
 #include "qplane3d.h"
-#include "qresult.h"
-
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
 
