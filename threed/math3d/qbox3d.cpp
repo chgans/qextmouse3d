@@ -296,18 +296,13 @@ bool QBox3D::intersects(const QBox3D& box) const
 }
 
 /*!
-  Returns true if \a line intersects this box; false otherwise.
+    Returns true if \a ray intersects this box; false otherwise.
 
-  This method is a convenience function that simply returns true if a
-  result exists on evaluating intersection() for this line.  If the
-  intersection point is used, then call intersection() and test the
-  validity of it instead of using this function.
-
-  \sa intersection()
- */
-bool QBox3D::intersects(const QRay3D &line) const
+    \sa intersection()
+*/
+bool QBox3D::intersects(const QRay3D &ray) const
 {
-    return intersection(line).isValid();
+    return !qIsNaN(intersection(ray));
 }
 
 /*!
@@ -321,63 +316,65 @@ bool QBox3D::intersects(const QRay3D &line) const
   to see if it really is a solution (lies in the box) before updating the
   heuristic.
  */
-inline static void trackIntersection(qreal t, qreal *closest_t, QVector3D *closest_p,
+inline static void trackIntersection(qreal t, qreal *closest_t,
                          const QBox3D &box, const QRay3D &line)
 {
-    if ((t > 0.0f && t < *closest_t) || qIsNull(*closest_t))
-    {
+    if ((t > 0.0f && t < *closest_t) || qIsNull(*closest_t)) {
         // only consider non-negative values of t, and ones better than best
         // value found so far
         QVector3D p = line.point(t);
         if (box.contains(p))
-        {
-            *closest_p = p;
             *closest_t = t;
-        }
     }
 }
 
 /*!
-  Returns the point at which the \a line intersects this box.
-  The result is returned as a QResult<QVector3D> instance.
+    Returns the t value at which \a ray intersects this box, or
+    not-a-number if there is no intersection.
 
-  When the line intersects the box at least once, a QResult<QVector3D>
-  instance is returned where QResult::isValid() returns true; and
-  where QResult::value() returns a QVector3D containing the intersection
-  point.
+    When the \a ray intersects this box, the return value is a
+    parametric value that can be passed to QRay3D::point() to determine
+    the actual intersection point, as shown in the following example:
 
-  In the case where the origin point of the line lies on one of the box
-  faces, this point is simply returned (with no floating point operations).
+    \code
+    qreal t = box.intersection(ray);
+    QVector3D pt;
+    if (qIsNaN(t)) {
+        qWarning("no intersection occurred");
+    else
+        pt = ray.point(t);
+    \endcode
 
-  The line might intersect at two points - as the line passes through
-  the box - one on the near side, one on the far side; where near and far
-  are relative to the origin point of the line.  This function only
-  returns the near intersection point.
+    The \a ray might intersect at two points - as the line passes through
+    the box - one on the near side, one on the far side; where near and far
+    are relative to the origin point of the line.  This function only
+    returns the near intersection point.
 
-  Only positive values on the line are considered, that is if
-  \c{qreal t == line.point(intersectionPoint)} then \bold t is positive.
+    Only positive values on the line are considered, that is if
+    \c{t == ray.point(intersectionPoint)} and t is positive.
 
-  This means that if the origin point of the line is inside the box, there
-  is only one solution, not two.  To get the other solution, simply change
-  the sign of the lines direction vector.
+    This means that if the origin point of the line is inside the box, there
+    is only one solution, not two.  To get the other solution, simply change
+    the sign of the ray's direction vector.
 
-  When the line does not intersect the box, the result returned will have
-  a QResult::isValid() value of false.  In the case of an infinite box
-  the result reflects that with QResult::OutOfRange
- */
-QResult<QVector3D> QBox3D::intersection(const QRay3D &line) const
+    When the ray does not intersect the box, or the box is infinite,
+    then the return value is not-a-number.
+
+    \sa intersects(), QRay3D::point()
+*/
+qreal QBox3D::intersection(const QRay3D &ray) const
 {
     if (boxtype == Null)
-        return QResult<QVector3D>();
+        return qSNaN();
     if (boxtype == Infinite)
-        return QResult<QVector3D>(QResult<QVector3D>::OutOfRange);
+        return qSNaN();
 
-    QVector3D org = line.origin();
+    QVector3D org = ray.origin();
     Partition xpos, ypos, zpos;
     partition(org, &xpos, &ypos, &zpos);
     // if the lines origin lies on one of the faces, return it as the intersection
     if ((xpos | ypos | zpos) == (equalMin | equalMax))
-        return org;
+        return 0.0f;
 
     // Could use the line/plane intersection functions, with 6 box planes defined by
     // 3 normals at the min and 3 at the max.  But since the planes are axis-aligned
@@ -386,18 +383,20 @@ QResult<QVector3D> QBox3D::intersection(const QRay3D &line) const
     // t = (c - P.x) / V.x.  Here the value t is the scalar distance along V from P and
     // so it measures the value of the solution - see trackIntersection() above.
     qreal closest_t = 0.0f;
-    QVector3D ln = line.direction();
-    QVector3D closest_p;
+    QVector3D ln = ray.direction();
     for (const QVector3D *p = &maxcorner; p; p = (p == &maxcorner) ? &mincorner : 0)
     {
         if (!qIsNull(ln.x()))
-            trackIntersection(p->x() - org.x() / ln.x(), &closest_t, &closest_p, *this, line);
+            trackIntersection(p->x() - org.x() / ln.x(), &closest_t, *this, ray);
         if (!qIsNull(ln.y()))
-            trackIntersection(p->y() - org.y() / ln.y(), &closest_t, &closest_p, *this, line);
+            trackIntersection(p->y() - org.y() / ln.y(), &closest_t, *this, ray);
         if (!qIsNull(ln.z()))
-            trackIntersection(p->z() - org.z() / ln.z(), &closest_t, &closest_p, *this, line);
+            trackIntersection(p->z() - org.z() / ln.z(), &closest_t, *this, ray);
     }
-    return closest_p;
+    if (!qIsNull(closest_t))
+        return closest_t;
+    else
+        return qSNaN();
 }
 
 /*!
