@@ -276,4 +276,20 @@ QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
     false otherwise.
 */
 
+#ifndef QT_NO_DEBUG_STREAM
+
+QDebug operator<<(QDebug dbg, const QTriangle3D &triangle)
+{
+    dbg.nospace() << "QTriangle3D(("
+        << triangle.p().x() << ", " << triangle.p().y() << ", "
+        << triangle.p().z() << "), ("
+        << triangle.q().x() << ", " << triangle.q().y() << ", "
+        << triangle.q().z() << "), ("
+        << triangle.r().x() << ", " << triangle.r().y() << ", "
+        << triangle.r().z() << "))";
+    return dbg.space();
+}
+
+#endif
+
 QT_END_NAMESPACE

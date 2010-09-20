@@ -161,11 +161,13 @@ inline bool qFuzzyCompare
            qFuzzyCompare(triangle1.r(), triangle2.r());
 }
 
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QTriangle3D &triangle);
+#endif
+
 QT_END_NAMESPACE
 
-#ifndef QT_NO_PLANE3D
 Q_DECLARE_METATYPE(QTriangle3D)
-#endif
 
 QT_END_HEADER
 

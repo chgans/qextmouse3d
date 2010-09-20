@@ -279,4 +279,18 @@ qreal QPlane3D::distanceTo(const QVector3D &point) const
     Returns true if \a plane1 and \a plane2 are almost equal; false otherwise.
 */
 
+#ifndef QT_NO_DEBUG_STREAM
+
+QDebug operator<<(QDebug dbg, const QPlane3D &plane)
+{
+    dbg.nospace() << "QPlane3D(origin("
+        << plane.origin().x() << ", " << plane.origin().y() << ", "
+        << plane.origin().z() << ") - normal("
+        << plane.normal().x() << ", " << plane.normal().y() << ", "
+        << plane.normal().z() << "))";
+    return dbg.space();
+}
+
+#endif
+
 QT_END_NAMESPACE

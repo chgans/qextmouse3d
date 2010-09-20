@@ -256,7 +256,7 @@ QDebug operator<<(QDebug dbg, const QRay3D &ray)
         << ray.origin().x() << ", " << ray.origin().y() << ", "
         << ray.origin().z() << ") - direction("
         << ray.direction().x() << ", " << ray.direction().y() << ", "
-        << ray.direction().z() << ')';
+        << ray.direction().z() << "))";
     return dbg.space();
 }
 

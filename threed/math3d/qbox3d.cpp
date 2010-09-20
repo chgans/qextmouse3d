@@ -761,7 +761,7 @@ QDebug operator<<(QDebug dbg, const QBox3D &box)
             << box.minimum().x() << ", " << box.minimum().y() << ", "
             << box.minimum().z() << ") - ("
             << box.maximum().x() << ", " << box.maximum().y() << ", "
-            << box.maximum().z() << ')';
+            << box.maximum().z() << "))";
         return dbg.space();
     } else if (box.isNull()) {
         dbg << "QBox3D(null)";

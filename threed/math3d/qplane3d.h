@@ -146,6 +146,10 @@ inline bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
            qFuzzyCompare(plane1.normal(), plane2.normal());
 }
 
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QPlane3D &plane);
+#endif
+
 QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(QPlane3D)
