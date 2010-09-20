@@ -165,6 +165,11 @@ inline bool qFuzzyCompare
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QTriangle3D &triangle);
 #endif
 
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QTriangle3D &triangle);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QTriangle3D &triangle);
+#endif
+
 QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(QTriangle3D)

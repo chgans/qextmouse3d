@@ -150,6 +150,11 @@ inline bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QPlane3D &plane);
 #endif
 
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QPlane3D &plane);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QPlane3D &plane);
+#endif
+
 QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(QPlane3D)

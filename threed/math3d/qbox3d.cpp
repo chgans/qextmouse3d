@@ -774,4 +774,55 @@ QDebug operator<<(QDebug dbg, const QBox3D &box)
 
 #endif
 
+#ifndef QT_NO_DATASTREAM
+
+/*!
+    \fn QDataStream &operator<<(QDataStream &stream, const QBox3D &box)
+    \relates QBox3D
+
+    Writes the given \a box to the given \a stream and returns a
+    reference to the stream.
+*/
+
+QDataStream &operator<<(QDataStream &stream, const QBox3D &box)
+{
+    if (box.isNull()) {
+        stream << int(0);
+    } else if (box.isInfinite()) {
+        stream << int(2);
+    } else {
+        stream << int(1);
+        stream << box.minimum();
+        stream << box.maximum();
+    }
+    return stream;
+}
+
+/*!
+    \fn QDataStream &operator>>(QDataStream &stream, QBox3D &box)
+    \relates QBox3D
+
+    Reads a 3D box from the given \a stream into the given \a box
+    and returns a reference to the stream.
+*/
+
+QDataStream &operator>>(QDataStream &stream, QBox3D &box)
+{
+    int type;
+    stream >> type;
+    if (type == 1) {
+        QVector3D minimum, maximum;
+        stream >> minimum;
+        stream >> maximum;
+        box = QBox3D(minimum, maximum);
+    } else if (type == 2) {
+        box.setToInfinite();
+    } else {
+        box.setToNull();
+    }
+    return stream;
+}
+
+#endif // QT_NO_DATASTREAM
+
 QT_END_NAMESPACE

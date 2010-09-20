@@ -256,6 +256,11 @@ inline QBox3D QBox3D::united(const QArray<QVector3D>& points) const
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QBox3D &box);
 #endif
 
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QBox3D &box);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QBox3D &box);
+#endif
+
 QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(QBox3D)
