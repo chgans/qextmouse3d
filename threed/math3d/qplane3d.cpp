@@ -159,7 +159,7 @@ bool QPlane3D::intersects(const QRay3D &ray) const
     \code
     qreal t = plane.intersection(ray);
     QVector3D pt;
-    if (qIsNan(t)) {
+    if (qIsNaN(t)) {
         qWarning("no intersection occurred");
     else
         pt = ray.point(t);

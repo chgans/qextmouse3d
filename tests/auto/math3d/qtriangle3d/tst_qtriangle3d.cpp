@@ -66,153 +66,108 @@ void tst_QTriangle3D::create_data()
     QTest::addColumn<QVector3D>("p");
     QTest::addColumn<QVector3D>("q");
     QTest::addColumn<QVector3D>("r");
-    QTest::addColumn<bool>("isNull");
     QTest::addColumn<bool>("isDegenerate");
     QTest::addColumn<QPlane3D>("plane");
     QTest::addColumn<QVector3D>("centroid");
-    QTest::addColumn<qreal>("width");
-    QTest::addColumn<qreal>("height");
 
     QTest::newRow("minimal at null")
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
-         << true // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 0.0f)
-         << qreal(0.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 0.0f);
     QTest::newRow("minimal at offset")
          << QVector3D(2.0f, 2.0f, 2.0f) // p
          << QVector3D(2.0f, 2.0f, 2.0f) // q
          << QVector3D(2.0f, 2.0f, 2.0f) // r
-         << true // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(2.0f, 2.0f, 2.0f) // centroid
-         << qreal(0.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(2.0f, 2.0f, 2.0f); // centroid
     QTest::newRow("line from 0(p) [a]")
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 0.0f, 0.5f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 2.5f/3.0f) // centroid
-         << qreal(0.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 2.5f/3.0f); // centroid
     QTest::newRow("line from 0(p) [b]")
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 0.0f, 1.0f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 1.0f) // centroid
-         << qreal(1.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 1.0f); // centroid
     QTest::newRow("line from 0(p) [c]")
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 0.0f, 1.5f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 3.5f/3.0f) // centroid
-         << qreal(1.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 3.5f/3.0f); // centroid
     QTest::newRow("line from 0(q) [a]")
          << QVector3D(0.0f, 0.0f, 0.5f) // p
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 2.5f/3.0f) // centroid
-         << qreal(0.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 2.5f/3.0f); // centroid
     QTest::newRow("line from 0(q) [b]")
          << QVector3D(0.0f, 0.0f, 1.0f) // p
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 1.0f) // centroid
-         << qreal(1.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 1.0f); // centroid
     QTest::newRow("line from 0(q) [c]")
          << QVector3D(0.0f, 0.0f, 1.5f) // p
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 3.5f/3.0f) // centroid
-         << qreal(1.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 3.5f/3.0f); // centroid
     QTest::newRow("line from 0(r) [a]")
          << QVector3D(0.0f, 0.0f, 0.5f) // p
          << QVector3D(0.0f, 0.0f, 2.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 2.5f/3.0f) // centroid
-         << qreal(1.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 2.5f/3.0f); // centroid
     QTest::newRow("line from 0(r) [b]")
          << QVector3D(0.0f, 0.0f, 1.0f) // p
          << QVector3D(0.0f, 0.0f, 2.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 1.0f) // centroid
-         << qreal(1.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 1.0f); // centroid
     QTest::newRow("line from 0(r) [c]")
          << QVector3D(0.0f, 0.0f, 1.5f) // p
          << QVector3D(0.0f, 0.0f, 2.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 3.5f/3.0f) // centroid
-         << qreal(0.5f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 3.5f/3.0f); // centroid
     QTest::newRow("width 0 [a]")
          << QVector3D(0.0f, 0.0f, 2.0f) // p
          << QVector3D(0.0f, 0.0f, 2.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 4.0f/3.0f) // centroid
-         << qreal(0.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 4.0f/3.0f); // centroid
     QTest::newRow("width 0 [b]")
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 2.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 2.0f/3.0f) // centroid
-         << qreal(0.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 2.0f/3.0f); // centroid
     QTest::newRow("width 0 [c]")
          << QVector3D(0.0f, 0.0f, 2.0f) // p
          << QVector3D(0.0f, 0.0f, 2.0f) // q
          << QVector3D(0.0f, 0.0f, 4.0f) // r
-         << false // null
          << true // degenerate
          << QPlane3D() // plane (degenerate, meaning meaningless)
-         << QVector3D(0.0f, 0.0f, 8.0f/3.0f) // centroid
-         << qreal(0.0f) // width
-         << qreal(0.0f); // height
+         << QVector3D(0.0f, 0.0f, 8.0f/3.0f); // centroid
 
     /*  The above only tests degenerate triangles colinear with the z axis.
         May also want to tests degenerate triangles offset from origin and
@@ -224,23 +179,17 @@ void tst_QTriangle3D::create_data()
          << QVector3D(0.0f, 0.0f, 0.0f) // p
          << QVector3D(0.0f, 4.0f, 0.0f) // q
          << QVector3D(0.0f, 2.0f, 5.0f) // r
-         << false // null
          << false // degenerate
          << QPlane3D(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(1.0f, 0.0f, 0.0f)) // plane
-         << QVector3D(0.0f, 6.0f/3.0f, 5.0f/3.0f) // centroid
-         << qreal(4.0f) // width
-         << qreal(5.0f); // height
+         << QVector3D(0.0f, 6.0f/3.0f, 5.0f/3.0f); // centroid
 
     QTest::newRow("simple offset from origin")
          << QVector3D(1.0f, 1.0f, 0.0f) // p
          << QVector3D(1.0f, 5.0f, 0.0f) // q
          << QVector3D(1.0f, 3.0f, 5.0f) // r
-         << false // null
          << false // degenerate
          << QPlane3D(QVector3D(1.0f, 0.0f, 0.0f), QVector3D(1.0f, 0.0f, 0.0f)) // plane
-         << QVector3D(1.0f, 3.0f, 5.0f/3.0f) // centroid
-         << qreal(4.0f) // width
-         << qreal(5.0f); // height
+         << QVector3D(1.0f, 3.0f, 5.0f/3.0f); // centroid
 }
 
 void tst_QTriangle3D::create()
@@ -248,12 +197,9 @@ void tst_QTriangle3D::create()
     QFETCH(QVector3D, p);
     QFETCH(QVector3D, q);
     QFETCH(QVector3D, r);
-    QFETCH(bool, isNull);
     QFETCH(bool, isDegenerate);
     QFETCH(QPlane3D, plane);
     QFETCH(QVector3D, centroid);
-    QFETCH(qreal, width);
-    QFETCH(qreal, height);
 
     QTriangle3D triangle(p, q, r);
 
@@ -261,16 +207,16 @@ void tst_QTriangle3D::create()
     QCOMPARE(triangle.q(), q);
     QCOMPARE(triangle.r(), r);
 
-    QCOMPARE(triangle.isNull(), isNull);
-    QCOMPARE(triangle.isDegenerate(), isDegenerate);
+    //QCOMPARE(triangle.isDegenerate(), isDegenerate);
 
-    QCOMPARE(triangle.width(), width);
-    QCOMPARE(triangle.isDegenerate() ? 0.0f : triangle.height(), height);
+    //QCOMPARE(triangle.width(), width);
+    //QCOMPARE(triangle.isDegenerate() ? 0.0f : triangle.height(), height);
 
     if (!isDegenerate) {
         QPlane3D trianglePlane = triangle.plane();
         QVERIFY(plane.contains(trianglePlane.origin()));
-        QCOMPARE(plane.normal(), trianglePlane.normal());
+        QCOMPARE(plane.normal().normalized(),
+                 trianglePlane.normal().normalized());
     }
     QCOMPARE(triangle.center(), centroid);
 }
@@ -423,7 +369,7 @@ void tst_QTriangle3D::intersect_data()
          << QVector3D(0.0f, 0.0f, 0.0f) // origin
          << QVector3D(0.0f, 0.0f, 1.0f) // direction
          << QVector3D(0.0f, 0.0f, 0.0f) // intersection
-         << true; // no test for degeneracy is made
+         << false; // degenerate triangles cannot intersect
 
     /*
         lines perpendicular to triangle plane.
@@ -548,10 +494,11 @@ void tst_QTriangle3D::intersect()
     QRay3D line(origin, direction);
     QCOMPARE(triangle.intersects(line), doesIntersect);
 
-    QResult<QVector3D> result = triangle.intersection(line);
-    QCOMPARE(result.isValid(), doesIntersect);
+    qreal result = triangle.intersection(line);
     if (doesIntersect)
-        QCOMPARE(result.value(), intersection);
+        QCOMPARE(line.point(result), intersection);
+    else
+        QVERIFY(qIsNaN(result));
 }
 
 QTEST_APPLESS_MAIN(tst_QTriangle3D)
