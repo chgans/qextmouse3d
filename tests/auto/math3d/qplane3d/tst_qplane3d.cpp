@@ -58,6 +58,8 @@ private slots:
     void intersection();
     void noIntersection_data();
     void noIntersection();
+    void properties();
+    void metaTypes();
 };
 
 // since all calculations involved QVector3D are producing values with only
@@ -246,6 +248,50 @@ void tst_QPlane3D::noIntersection()
 
     qreal t = plane.intersection(line);
     QVERIFY(qIsNaN(t));
+}
+
+class tst_QPlane3DProperties : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QPlane3D plane READ plane WRITE setPlane)
+public:
+    tst_QPlane3DProperties(QObject *parent = 0) : QObject(parent) {}
+
+    QPlane3D plane() const { return p; }
+    void setPlane(const QPlane3D& value) { p = value; }
+
+private:
+    QPlane3D p;
+};
+
+// Test getting and setting properties via the metaobject system.
+void tst_QPlane3D::properties()
+{
+    tst_QPlane3DProperties obj;
+
+    qRegisterMetaType<QPlane3D>();
+
+    obj.setPlane(QPlane3D(QVector3D(1, 2, 3), QVector3D(4, 5, 6)));
+
+    QPlane3D p = qVariantValue<QPlane3D>(obj.property("plane"));
+    QCOMPARE(p.origin(), QVector3D(1, 2, 3));
+    QCOMPARE(p.normal(), QVector3D(4, 5, 6));
+
+    obj.setProperty("plane",
+                    qVariantFromValue
+                        (QPlane3D(QVector3D(-1, -2, -3), QVector3D(-4, -5, -6))));
+
+    p = qVariantValue<QPlane3D>(obj.property("plane"));
+    QCOMPARE(p.origin(), QVector3D(-1, -2, -3));
+    QCOMPARE(p.normal(), QVector3D(-4, -5, -6));
+}
+
+void tst_QPlane3D::metaTypes()
+{
+    int id = qMetaTypeId<QPlane3D>();
+    QVERIFY(QMetaType::type("QPlane3D") == id);
+    QCOMPARE(QByteArray(QMetaType::typeName(id)), QByteArray("QPlane3D"));
+    QVERIFY(QMetaType::isRegistered(id));
 }
 
 QTEST_APPLESS_MAIN(tst_QPlane3D)

@@ -86,6 +86,8 @@ private slots:
     void scaled();
     void transform();
     void transformed();
+    void properties();
+    void metaTypes();
 };
 
 void tst_QBox3D::create()
@@ -1184,6 +1186,50 @@ void tst_QBox3D::transformed()
     infinite.setToInfinite();
     box2 = infinite.transformed(m);
     QVERIFY(box2.isInfinite());
+}
+
+class tst_QBox3DProperties : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QBox3D box READ box WRITE setBox)
+public:
+    tst_QBox3DProperties(QObject *parent = 0) : QObject(parent) {}
+
+    QBox3D box() const { return b; }
+    void setBox(const QBox3D& value) { b = value; }
+
+private:
+    QBox3D b;
+};
+
+// Test getting and setting properties via the metaobject system.
+void tst_QBox3D::properties()
+{
+    tst_QBox3DProperties obj;
+
+    qRegisterMetaType<QBox3D>();
+
+    obj.setBox(QBox3D(QVector3D(1, 2, 3), QVector3D(4, 5, 6)));
+
+    QBox3D b = qVariantValue<QBox3D>(obj.property("box"));
+    QCOMPARE(b.minimum(), QVector3D(1, 2, 3));
+    QCOMPARE(b.maximum(), QVector3D(4, 5, 6));
+
+    obj.setProperty("box",
+                    qVariantFromValue
+                        (QBox3D(QVector3D(-1, -2, -3), QVector3D(-4, -5, -6))));
+
+    b = qVariantValue<QBox3D>(obj.property("box"));
+    QCOMPARE(b.minimum(), QVector3D(-4, -5, -6));
+    QCOMPARE(b.maximum(), QVector3D(-1, -2, -3));
+}
+
+void tst_QBox3D::metaTypes()
+{
+    int id = qMetaTypeId<QBox3D>();
+    QVERIFY(QMetaType::type("QBox3D") == id);
+    QCOMPARE(QByteArray(QMetaType::typeName(id)), QByteArray("QBox3D"));
+    QVERIFY(QMetaType::isRegistered(id));
 }
 
 QTEST_APPLESS_MAIN(tst_QBox3D)

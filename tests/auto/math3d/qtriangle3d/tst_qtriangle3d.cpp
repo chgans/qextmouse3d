@@ -59,6 +59,9 @@ private slots:
 
     void intersect_data();
     void intersect();
+
+    void properties();
+    void metaTypes();
 };
 
 void tst_QTriangle3D::create_data()
@@ -499,6 +502,55 @@ void tst_QTriangle3D::intersect()
         QCOMPARE(line.point(result), intersection);
     else
         QVERIFY(qIsNaN(result));
+}
+
+class tst_QTriangle3DProperties : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QTriangle3D triangle READ triangle WRITE setTriangle)
+public:
+    tst_QTriangle3DProperties(QObject *parent = 0) : QObject(parent) {}
+
+    QTriangle3D triangle() const { return t; }
+    void setTriangle(const QTriangle3D& value) { t = value; }
+
+private:
+    QTriangle3D t;
+};
+
+// Test getting and setting properties via the metaobject system.
+void tst_QTriangle3D::properties()
+{
+    tst_QTriangle3DProperties obj;
+
+    qRegisterMetaType<QTriangle3D>();
+
+    obj.setTriangle(QTriangle3D(QVector3D(1, 2, 3), QVector3D(4, 5, 6),
+                                QVector3D(7, 8, 9)));
+
+    QTriangle3D t = qVariantValue<QTriangle3D>(obj.property("triangle"));
+    QCOMPARE(t.p(), QVector3D(1, 2, 3));
+    QCOMPARE(t.q(), QVector3D(4, 5, 6));
+    QCOMPARE(t.r(), QVector3D(7, 8, 9));
+
+    obj.setProperty("triangle",
+                    qVariantFromValue
+                        (QTriangle3D(QVector3D(-1, -2, -3),
+                                     QVector3D(-4, -5, -6),
+                                     QVector3D(-7, -8, -9))));
+
+    t = qVariantValue<QTriangle3D>(obj.property("triangle"));
+    QCOMPARE(t.p(), QVector3D(-1, -2, -3));
+    QCOMPARE(t.q(), QVector3D(-4, -5, -6));
+    QCOMPARE(t.r(), QVector3D(-7, -8, -9));
+}
+
+void tst_QTriangle3D::metaTypes()
+{
+    int id = qMetaTypeId<QTriangle3D>();
+    QVERIFY(QMetaType::type("QTriangle3D") == id);
+    QCOMPARE(QByteArray(QMetaType::typeName(id)), QByteArray("QTriangle3D"));
+    QVERIFY(QMetaType::isRegistered(id));
 }
 
 QTEST_APPLESS_MAIN(tst_QTriangle3D)

@@ -63,6 +63,8 @@ private slots:
     void distanceTo_data();
     void distanceTo();
     void compare();
+    void properties();
+    void metaTypes();
 };
 
 // since all calculations involved QVector3D are producing values with only
@@ -440,6 +442,50 @@ void tst_QRay3D::compare()
     QVERIFY(!(ray1 == ray2));
     QVERIFY(ray1 != ray3);
     QVERIFY(!(ray1 == ray3));
+}
+
+class tst_QRay3DProperties : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QRay3D ray READ ray WRITE setRay)
+public:
+    tst_QRay3DProperties(QObject *parent = 0) : QObject(parent) {}
+
+    QRay3D ray() const { return r; }
+    void setRay(const QRay3D& value) { r = value; }
+
+private:
+    QRay3D r;
+};
+
+// Test getting and setting properties via the metaobject system.
+void tst_QRay3D::properties()
+{
+    tst_QRay3DProperties obj;
+
+    qRegisterMetaType<QRay3D>();
+
+    obj.setRay(QRay3D(QVector3D(1, 2, 3), QVector3D(4, 5, 6)));
+
+    QRay3D r = qVariantValue<QRay3D>(obj.property("ray"));
+    QCOMPARE(r.origin(), QVector3D(1, 2, 3));
+    QCOMPARE(r.direction(), QVector3D(4, 5, 6));
+
+    obj.setProperty("ray",
+                    qVariantFromValue
+                        (QRay3D(QVector3D(-1, -2, -3), QVector3D(-4, -5, -6))));
+
+    r = qVariantValue<QRay3D>(obj.property("ray"));
+    QCOMPARE(r.origin(), QVector3D(-1, -2, -3));
+    QCOMPARE(r.direction(), QVector3D(-4, -5, -6));
+}
+
+void tst_QRay3D::metaTypes()
+{
+    int id = qMetaTypeId<QRay3D>();
+    QVERIFY(QMetaType::type("QRay3D") == id);
+    QCOMPARE(QByteArray(QMetaType::typeName(id)), QByteArray("QRay3D"));
+    QVERIFY(QMetaType::isRegistered(id));
 }
 
 QTEST_APPLESS_MAIN(tst_QRay3D)
