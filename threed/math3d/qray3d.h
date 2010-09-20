@@ -44,6 +44,7 @@
 
 #include "qt3dglobal.h"
 #include <QtGui/qvector3d.h>
+#include <QtGui/qmatrix4x4.h>
 
 QT_BEGIN_HEADER
 
@@ -72,6 +73,9 @@ public:
     QVector3D project(const QVector3D &vector) const;
 
     qreal distanceTo(const QVector3D &point) const;
+
+    void transform(const QMatrix4x4 &matrix);
+    QRay3D transformed(const QMatrix4x4 &matrix) const;
 
     bool operator==(const QRay3D &other);
     bool operator!=(const QRay3D &other);
@@ -113,6 +117,17 @@ inline void QRay3D::setDirection(const QVector3D & value)
 inline QVector3D QRay3D::point(qreal t) const
 {
     return m_origin + t * m_direction;
+}
+
+inline void QRay3D::transform(const QMatrix4x4 &matrix)
+{
+    m_origin = matrix * m_origin;
+    m_direction = matrix.mapVector(m_direction);
+}
+
+inline QRay3D QRay3D::transformed(const QMatrix4x4 &matrix) const
+{
+    return QRay3D(matrix * m_origin, matrix.mapVector(m_direction));
 }
 
 inline bool QRay3D::operator==(const QRay3D &other)

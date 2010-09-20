@@ -76,6 +76,9 @@ public:
 
     qreal distanceTo(const QVector3D &point) const;
 
+    void transform(const QMatrix4x4 &matrix);
+    QPlane3D transformed(const QMatrix4x4 &matrix) const;
+
     bool operator==(const QPlane3D &other);
     bool operator!=(const QPlane3D &other);
 
@@ -114,6 +117,17 @@ inline QVector3D QPlane3D::normal() const
 inline void QPlane3D::setNormal(const QVector3D& value)
 {
     m_normal = value;
+}
+
+inline void QPlane3D::transform(const QMatrix4x4 &matrix)
+{
+    m_origin = matrix * m_origin;
+    m_normal = matrix.mapVector(m_normal);
+}
+
+inline QPlane3D QPlane3D::transformed(const QMatrix4x4 &matrix) const
+{
+    return QPlane3D(matrix * m_origin, matrix.mapVector(m_normal));
 }
 
 inline bool QPlane3D::operator==(const QPlane3D &other)

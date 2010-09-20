@@ -208,6 +208,24 @@ qreal QRay3D::distanceTo(const QVector3D &point) const
 }
 
 /*!
+    \fn void QRay3D::transform(const QMatrix4x4 &matrix)
+
+    Transforms this ray using \a matrix, replacing origin() and
+    direction() with the transformed versions.
+
+    \sa transformed()
+*/
+
+/*!
+    \fn QRay3D QRay3D::transformed(const QMatrix4x4 &matrix) const
+
+    Returns a new ray that is formed by transforming origin()
+    and direction() using \a matrix.
+
+    \sa transform()
+*/
+
+/*!
     \fn bool QRay3D::operator==(const QRay3D &other)
 
     Returns true if this ray is the same as \a other; false otherwise.

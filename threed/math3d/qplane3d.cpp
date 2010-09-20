@@ -239,6 +239,24 @@ qreal QPlane3D::distanceTo(const QVector3D &point) const
 }
 
 /*!
+    \fn void QPlane3D::transform(const QMatrix4x4 &matrix)
+
+    Transforms this plane using \a matrix, replacing origin() and
+    normal() with the transformed versions.
+
+    \sa transformed()
+*/
+
+/*!
+    \fn QPlane3D QPlane3D::transformed(const QMatrix4x4 &matrix) const
+
+    Returns a new plane that is formed by transforming origin()
+    and normal() using \a matrix.
+
+    \sa transform()
+*/
+
+/*!
     \fn bool QPlane3D::operator==(const QPlane3D &other)
 
     Returns true if this plane is the same as \a other; false otherwise.
