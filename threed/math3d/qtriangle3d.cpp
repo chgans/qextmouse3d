@@ -268,4 +268,12 @@ QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
     return QTriangle3D(matrix * m_p, matrix * m_q, matrix * m_r);
 }
 
+/*!
+    \fn bool qFuzzyCompare(const QTriangle3D &triangle1, const QTriangle3D &triangle2)
+    \relates QTriangle3D
+
+    Returns true if \a triangle1 and \a triangle2 are almost equal;
+    false otherwise.
+*/
+
 QT_END_NAMESPACE

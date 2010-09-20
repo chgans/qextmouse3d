@@ -140,6 +140,12 @@ inline bool QRay3D::operator!=(const QRay3D &other)
     return m_origin != other.origin() || m_direction != other.direction();
 }
 
+inline bool qFuzzyCompare(const QRay3D &ray1, const QRay3D &ray2)
+{
+    return qFuzzyCompare(ray1.origin(), ray2.origin()) &&
+           qFuzzyCompare(ray1.direction(), ray2.direction());
+}
+
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QRay3D &ray);
 #endif

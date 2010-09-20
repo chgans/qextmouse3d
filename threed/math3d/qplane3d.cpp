@@ -272,4 +272,11 @@ qreal QPlane3D::distanceTo(const QVector3D &point) const
     \sa operator==()
 */
 
+/*!
+    \fn bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
+    \relates QPlane3D
+
+    Returns true if \a plane1 and \a plane2 are almost equal; false otherwise.
+*/
+
 QT_END_NAMESPACE

@@ -140,6 +140,12 @@ inline bool QPlane3D::operator!=(const QPlane3D &other)
     return m_origin != other.origin() || m_normal != other.normal();
 }
 
+inline bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
+{
+    return qFuzzyCompare(plane1.origin(), plane2.origin()) &&
+           qFuzzyCompare(plane1.normal(), plane2.normal());
+}
+
 QT_END_NAMESPACE
 
 Q_DECLARE_METATYPE(QPlane3D)

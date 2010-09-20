@@ -81,6 +81,9 @@ public:
     void transform(const QMatrix4x4 &matrix);
     QTriangle3D transformed(const QMatrix4x4 &matrix) const;
 
+    bool operator==(const QTriangle3D &other);
+    bool operator!=(const QTriangle3D &other);
+
 private:
     QVector3D m_p, m_q, m_r;
 };
@@ -138,6 +141,24 @@ inline QVector3D QTriangle3D::center() const
 inline QVector3D QTriangle3D::faceNormal() const
 {
     return QVector3D::crossProduct(m_q - m_p, m_r - m_q);
+}
+
+inline bool QTriangle3D::operator==(const QTriangle3D &other)
+{
+    return m_p == other.m_p && m_q == other.m_q && m_r == other.m_r;
+}
+
+inline bool QTriangle3D::operator!=(const QTriangle3D &other)
+{
+    return m_p != other.m_p || m_q != other.m_q || m_r != other.m_r;
+}
+
+inline bool qFuzzyCompare
+    (const QTriangle3D &triangle1, const QTriangle3D &triangle2)
+{
+    return qFuzzyCompare(triangle1.p(), triangle2.p()) &&
+           qFuzzyCompare(triangle1.q(), triangle2.q()) &&
+           qFuzzyCompare(triangle1.r(), triangle2.r());
 }
 
 QT_END_NAMESPACE

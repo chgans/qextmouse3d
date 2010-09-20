@@ -241,6 +241,13 @@ qreal QRay3D::distanceTo(const QVector3D &point) const
     \sa operator==()
 */
 
+/*!
+    \fn bool qFuzzyCompare(const QRay3D &ray1, const QRay3D &ray2)
+    \relates QRay3D
+
+    Returns true if \a ray1 and \a ray2 are almost equal; false otherwise.
+*/
+
 #ifndef QT_NO_DEBUG_STREAM
 
 QDebug operator<<(QDebug dbg, const QRay3D &ray)
