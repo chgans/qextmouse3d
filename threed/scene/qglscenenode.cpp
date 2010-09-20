@@ -624,7 +624,7 @@ void QGLSceneNode::setY(qreal y)
 qreal QGLSceneNode::z() const
 {
     Q_D(const QGLSceneNode);
-    return d->translate.y();
+    return d->translate.z();
 }
 
 void QGLSceneNode::setZ(qreal z)
