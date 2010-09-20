@@ -269,6 +269,22 @@ QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
 }
 
 /*!
+    \fn bool QTriangle3D::operator==(const QTriangle3D &other)
+
+    Returns true if this triangle is the same as \a other; false otherwise.
+
+    \sa operator!=()
+*/
+
+/*!
+    \fn bool QTriangle3D::operator!=(const QTriangle3D &other)
+
+    Returns true if this triangle is not the same as \a other; false otherwise.
+
+    \sa operator==()
+*/
+
+/*!
     \fn bool qFuzzyCompare(const QTriangle3D &triangle1, const QTriangle3D &triangle2)
     \relates QTriangle3D
 
