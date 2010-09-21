@@ -63,6 +63,9 @@ private slots:
     void distanceTo_data();
     void distanceTo();
     void compare();
+    void dataStream();
+    void transform_data();
+    void transform();
     void properties();
     void metaTypes();
 };
@@ -438,10 +441,61 @@ void tst_QRay3D::compare()
     QRay3D ray3(QVector3D(0, 20, 30), QVector3D(-3, -4, -5));
     QVERIFY(ray1 == ray1);
     QVERIFY(!(ray1 != ray1));
+    QVERIFY(qFuzzyCompare(ray1, ray1));
     QVERIFY(ray1 != ray2);
     QVERIFY(!(ray1 == ray2));
+    QVERIFY(!qFuzzyCompare(ray1, ray2));
     QVERIFY(ray1 != ray3);
     QVERIFY(!(ray1 == ray3));
+    QVERIFY(!qFuzzyCompare(ray1, ray3));
+}
+
+void tst_QRay3D::dataStream()
+{
+    QRay3D ray(QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+
+    QByteArray data;
+    {
+        QDataStream stream(&data, QIODevice::WriteOnly);
+        stream << ray;
+    }
+
+    QRay3D ray2;
+    {
+        QDataStream stream2(data);
+        stream2 >> ray2;
+    }
+
+    QVERIFY(ray == ray2);
+}
+
+void tst_QRay3D::transform_data()
+{
+    create_data();
+}
+
+void tst_QRay3D::transform()
+{
+    QFETCH(QVector3D, point);
+    QFETCH(QVector3D, direction);
+
+    QMatrix4x4 m;
+    m.translate(-1.0f, 2.5f, 5.0f);
+    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    m.scale(23.5f);
+
+    QRay3D ray1(point, direction);
+    QRay3D ray2(ray1);
+    QRay3D ray3;
+
+    ray1.transform(m);
+    ray3 = ray2.transformed(m);
+
+    QCOMPARE(ray1.origin(), ray3.origin());
+    QCOMPARE(ray1.direction(), ray3.direction());
+
+    QCOMPARE(ray1.origin(), m * point);
+    QCOMPARE(ray1.direction(), m.mapVector(direction));
 }
 
 class tst_QRay3DProperties : public QObject

@@ -194,8 +194,6 @@ bool QTriangle3D::contains(const QVector3D &point) const
 */
 bool QTriangle3D::intersects(const QRay3D &ray) const
 {
-    if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, ray.direction()), qreal(1.0f)))
-        return false;
     qreal t = plane().intersection(ray);
     if (qIsNaN(t))
         return false;
@@ -223,8 +221,6 @@ bool QTriangle3D::intersects(const QRay3D &ray) const
  */
 qreal QTriangle3D::intersection(const QRay3D &ray) const
 {
-    if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, ray.direction()), qreal(1.0f)))
-        return qSNaN();
     qreal t = plane().intersection(ray);
     if (qIsNaN(t) || contains(ray.point(t)))
         return t;
@@ -293,7 +289,7 @@ QVector2D QTriangle3D::uv(const QVector3D &point) const
     qreal dot_rp_pp = QVector3D::dotProduct(rp, pp);
     qreal det = dot_rq_rq * dot_rp_rp - dot_rq_rp * dot_rq_rp;
     if (qFuzzyIsNull(float(det))) {
-        // The point is rpobably not in the triangle, or the triangle
+        // The point is probably not in the triangle, or the triangle
         // is degenerate.  Return an out of range value for (u, v) so
         // that contains() will fail when this case happens.
         return QVector2D(-1.0f, -1.0f);
