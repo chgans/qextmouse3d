@@ -92,55 +92,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QBox3D::QBox3D(const QArray<QVector3D>& points)
-
-    Constructs a finite box that encloses all of the specified \a points.
-*/
-
-void QBox3D::unite(const QVector3D *points, int count)
-{
-    if (count <= 0 || boxtype == Infinite)
-        return;
-    qreal minx, miny, minz;
-    qreal maxx, maxy, maxz;
-    if (boxtype == Null) {
-        boxtype = Finite;
-        minx = maxx = points[0].x();
-        miny = maxy = points[0].y();
-        minz = maxz = points[0].z();
-        ++points;
-        --count;
-    } else {
-        minx = mincorner.x();
-        miny = mincorner.y();
-        minz = mincorner.z();
-        maxx = maxcorner.x();
-        maxy = maxcorner.y();
-        maxz = maxcorner.z();
-    }
-    while (count-- > 0) {
-        qreal x = points[0].x();
-        qreal y = points[0].y();
-        qreal z = points[0].z();
-        if (x < minx)
-            minx = x;
-        if (x > maxx)
-            maxx = x;
-        if (y < miny)
-            miny = y;
-        if (y > maxy)
-            maxy = y;
-        if (z < minz)
-            minz = z;
-        if (z > maxz)
-            maxz = z;
-        ++points;
-    }
-    mincorner = QVector3D(minx, miny, minz);
-    maxcorner = QVector3D(maxx, maxy, maxz);
-}
-
-/*!
     \fn bool QBox3D::isNull() const
 
     Returns true if this box is null; false otherwise.
@@ -214,7 +165,7 @@ void QBox3D::unite(const QVector3D *points, int count)
     Returns the finite size of this box.  If this box is null or
     infinite, the returned value will be zero.
 
-    \sa center(), volume(), isNull(), isInfinite()
+    \sa center(), isNull(), isInfinite()
 */
 
 /*!
@@ -223,16 +174,7 @@ void QBox3D::unite(const QVector3D *points, int count)
     Returns the finite center of this box.  If this box is null
     or infinite, the returned value will be zero.
 
-    \sa size(), volume(), isNull(), isInfinite()
-*/
-
-/*!
-    \fn qreal QBox3D::volume() const
-
-    Returns the finite volume of this box.  If this box is null
-    or infinite, the returned value will be zero.
-
-    \sa size(), center(), isNull(), isInfinite()
+    \sa size(), isNull(), isInfinite()
 */
 
 /*!
@@ -505,14 +447,6 @@ void QBox3D::unite(const QBox3D& box)
 }
 
 /*!
-    \fn void QBox3D::unite(const QArray<QVector3D>& points)
-
-    Unites this box with all of the elements of \a points.
-
-    \sa united(), intersect()
-*/
-
-/*!
     Returns a new box which unites this box with \a point.  The returned
     value will be the smallest box that contains both this box and \a point.
 
@@ -551,138 +485,11 @@ QBox3D QBox3D::united(const QBox3D& box) const
 }
 
 /*!
-    \fn QBox3D QBox3D::united(const QArray<QVector3D>& points) const
-
-    Returns a new box which unites this box with all of the elements of
-    \a points.  The returned value will be the smallest box that contains
-    both this box and all of the \a points.
-
-    \sa unite(), intersected()
-*/
-
-/*!
-    Translates this box by \a vector.
-
-    \sa translated(), scale(), transform()
-*/
-void QBox3D::translate(const QVector3D& vector)
-{
-    if (boxtype == Finite) {
-        mincorner += vector;
-        maxcorner += vector;
-    }
-}
-
-/*!
-    Returns the resuls of translating this box by \a vector.
-
-    \sa translate(), scaled(), transformed()
-*/
-QBox3D QBox3D::translated(const QVector3D& vector) const
-{
-    if (boxtype == Finite)
-        return QBox3D(mincorner + vector, maxcorner + vector);
-    else
-        return *this;
-}
-
-/*!
-    Scales this box by the components of \a vector.
-
-    The minimum() and maximum() extents are multiplied by \a vector.
-    To scale a box about its center(), use the following:
-
-    \code
-    QVector3D c = box.center();
-    box.translate(-c);
-    box.scale(vector);
-    box.translate(c);
-    \endcode
-
-    \sa scaled(), translate(), transform()
-*/
-void QBox3D::scale(const QVector3D& vector)
-{
-    if (boxtype == Finite)
-        setExtents(mincorner * vector, maxcorner * vector);
-}
-
-/*!
-    Scales this box by \a factor.
-
-    The minimum() and maximum() extents are multiplied by \a factor.
-    To scale a box about its center(), use the following:
-
-    \code
-    QVector3D c = box.center();
-    box.translate(-c);
-    box.scale(factor);
-    box.translate(c);
-    \endcode
-
-    \sa scaled(), translate(), transform()
-*/
-void QBox3D::scale(qreal factor)
-{
-    if (boxtype == Finite)
-        setExtents(mincorner * factor, maxcorner * factor);
-}
-
-/*!
-    Returns this box scaled by the components of \a vector.
-
-    The minimum() and maximum() extents of this box are multiplied
-    by \a vector.  To scale a box about its center(), use the following:
-
-    \code
-    QVector3D c = box.center();
-    QBox3D result = box.translated(-c);
-    result.scale(vector);
-    result.translate(c);
-    \endcode
-
-    \sa scale(), translated(), transformed()
-*/
-QBox3D QBox3D::scaled(const QVector3D& vector) const
-{
-    if (boxtype == Finite)
-        return QBox3D(mincorner * vector, maxcorner * vector);
-    else
-        return *this;
-}
-
-/*!
-    Returns this box scaled by \a factor.
-
-    The minimum() and maximum() extents of this box are multiplied
-    by \a factor.  To scale a box about its center(), use the following:
-
-    \code
-    QVector3D c = box.center();
-    QBox3D result = box.translated(-c);
-    result.scale(factor);
-    result.translate(c);
-    \endcode
-
-    \sa scale(), translated(), transformed()
-*/
-QBox3D QBox3D::scaled(qreal factor) const
-{
-    if (boxtype == Finite)
-        return QBox3D(mincorner * factor, maxcorner * factor);
-    else
-        return *this;
-}
-
-/*!
     Transforms this box according to \a matrix.  Each of the 8 box
     corners are transformed and then a new box that encompasses all
     of the transformed corner values is created.
 
-    The scale() and translate() functions are more efficient than
-    this function if the transformation is a simple scale or translate.
-
-    \sa transformed(), scaled(), translated()
+    \sa transformed()
 */
 void QBox3D::transform(const QMatrix4x4& matrix)
 {
@@ -694,10 +501,7 @@ void QBox3D::transform(const QMatrix4x4& matrix)
     corners are transformed and then a new box that encompasses all
     of the transformed corner values is returned.
 
-    The scaled() and translated() functions are more efficient than
-    this function if the transformation is a simple scale or translate.
-
-    \sa transform(), scaled(), translated()
+    \sa transform()
 */
 QBox3D QBox3D::transformed(const QMatrix4x4& matrix) const
 {

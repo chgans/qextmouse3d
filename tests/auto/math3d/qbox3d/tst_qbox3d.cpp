@@ -59,8 +59,6 @@ private slots:
     void size();
     void center_data();
     void center();
-    void volume_data();
-    void volume();
     void containsPoint_data();
     void containsPoint();
     void containsBox_data();
@@ -79,11 +77,6 @@ private slots:
     void unitedPoint();
     void unitedBox_data();
     void unitedBox();
-    void unitePoints();
-    void translate();
-    void translated();
-    void scale();
-    void scaled();
     void transform();
     void transformed();
     void properties();
@@ -134,29 +127,6 @@ void tst_QBox3D::create()
     QVERIFY(box5.isInfinite());
     QVERIFY(box5.minimum() == QVector3D(0, 0, 0));
     QVERIFY(box5.maximum() == QVector3D(0, 0, 0));
-
-    QArray<QVector3D> points;
-    points << QVector3D(1, 2, 3);
-    points << QVector3D(-1, -2, -3);
-    points << QVector3D(-1, 0, -3);
-
-    QBox3D box6(points);
-    QVERIFY(!box6.isNull());
-    QVERIFY(box6.isFinite());
-    QVERIFY(!box6.isInfinite());
-    QVERIFY(box6.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box6.maximum() == QVector3D(1, 2, 3));
-
-    QBox3D box7(points.mid(1));
-    QVERIFY(!box7.isNull());
-    QVERIFY(box7.isFinite());
-    QVERIFY(!box7.isInfinite());
-    QVERIFY(box7.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box7.maximum() == QVector3D(-1, 0, -3));
-
-    QArray<QVector3D> empty;
-    QBox3D box8(empty);
-    QVERIFY(box8.isNull());
 }
 
 void tst_QBox3D::modify()
@@ -330,34 +300,6 @@ void tst_QBox3D::center()
 
     box.setToInfinite();
     QVERIFY(box.center() == QVector3D(0, 0, 0));
-}
-
-void tst_QBox3D::volume_data()
-{
-    // Use the same test data as the size tests.
-    size_data();
-}
-void tst_QBox3D::volume()
-{
-    QFETCH(qreal, x1);
-    QFETCH(qreal, y1);
-    QFETCH(qreal, z1);
-    QFETCH(qreal, x2);
-    QFETCH(qreal, y2);
-    QFETCH(qreal, z2);
-
-    qreal sizex = (x1 < x2) ? (x2 - x1) : (x1 - x2);
-    qreal sizey = (y1 < y2) ? (y2 - y1) : (y1 - y2);
-    qreal sizez = (z1 < z2) ? (z2 - z1) : (z1 - z2);
-
-    QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
-    QCOMPARE(box.volume(), sizex * sizey * sizez);
-
-    box.setToNull();
-    QCOMPARE(box.volume(), (qreal)0.0);
-
-    box.setToInfinite();
-    QCOMPARE(box.volume(), (qreal)0.0);
 }
 
 void tst_QBox3D::containsPoint_data()
@@ -991,163 +933,6 @@ void tst_QBox3D::unitedBox()
     infinite2.setToInfinite();
     ibox = ibox3.united(infinite2);
     QVERIFY(ibox.isInfinite());
-}
-
-void tst_QBox3D::unitePoints()
-{
-    QArray<QVector3D> points;
-    points << QVector3D(1, 2, 3);
-    points << QVector3D(-1, -2, -3);
-    points << QVector3D(-1, 0, -3);
-
-    QArray<QVector3D> points2;
-    points2 << QVector3D(10, 20, 30);
-    points2 << QVector3D(-10, -20, -30);
-    points2 << QVector3D(-10, 0, -30);
-
-    QBox3D box1;
-    box1.unite(points);
-    QVERIFY(!box1.isNull());
-    QVERIFY(box1.isFinite());
-    QVERIFY(!box1.isInfinite());
-    QVERIFY(box1.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box1.maximum() == QVector3D(1, 2, 3));
-
-    box1.unite(points2);
-    QVERIFY(!box1.isNull());
-    QVERIFY(box1.isFinite());
-    QVERIFY(!box1.isInfinite());
-    QVERIFY(box1.minimum() == QVector3D(-10, -20, -30));
-    QVERIFY(box1.maximum() == QVector3D(10, 20, 30));
-
-    QBox3D box2;
-    box2.unite(points.mid(1));
-    QVERIFY(!box2.isNull());
-    QVERIFY(box2.isFinite());
-    QVERIFY(!box2.isInfinite());
-    QVERIFY(box2.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
-
-    box2.unite(points2.mid(1));
-    QVERIFY(!box2.isNull());
-    QVERIFY(box2.isFinite());
-    QVERIFY(!box2.isInfinite());
-    QVERIFY(box2.minimum() == QVector3D(-10, -20, -30));
-    QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
-
-    QBox3D box3;
-    box3.setToInfinite();
-    box3.unite(points);
-    QVERIFY(box3.isInfinite());
-    QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
-    QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
-    box3.unite(points.mid(1));
-    QVERIFY(box3.isInfinite());
-    QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
-    QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
-
-    QBox3D box4;
-    QBox3D box5 = box4.united(points).united(points2);
-    QVERIFY(box5 == box1);
-
-    box5 = box4.united(points.mid(1)).united(points2.mid(1));
-    QVERIFY(box5 == box2);
-}
-
-void tst_QBox3D::translate()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    box.translate(QVector3D(10, -3, 56));
-    QVERIFY(box.minimum() == QVector3D(-1 + 10, -2 - 3, -3 + 56));
-    QVERIFY(box.maximum() == QVector3D(1 + 10, 2 - 3, 3 + 56));
-
-    QBox3D null;
-    null.translate(QVector3D(10, -3, 56));
-    QVERIFY(null.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    infinite.translate(QVector3D(10, -3, 56));
-    QVERIFY(infinite.isInfinite());
-}
-
-void tst_QBox3D::translated()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    QBox3D box2 = box.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.minimum() == QVector3D(-1 + 10, -2 - 3, -3 + 56));
-    QVERIFY(box2.maximum() == QVector3D(1 + 10, 2 - 3, 3 + 56));
-
-    QBox3D null;
-    box2 = null.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    box2 = infinite.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.isInfinite());
-}
-
-void tst_QBox3D::scale()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    box.scale(QVector3D(2, -3, 4));
-    QVERIFY(box.minimum() == QVector3D(-2, -6, -12));
-    QVERIFY(box.maximum() == QVector3D(2, 6, 12));
-
-    box.scale(2);
-    QVERIFY(box.minimum() == QVector3D(-2 * 2, -6 * 2, -12 * 2));
-    QVERIFY(box.maximum() == QVector3D(2 * 2, 6 * 2, 12 * 2));
-
-    box.scale(-2);
-    QVERIFY(box.minimum() == QVector3D(-2 * 4, -6 * 4, -12 * 4));
-    QVERIFY(box.maximum() == QVector3D(2 * 4, 6 * 4, 12 * 4));
-
-    QBox3D null;
-    null.scale(QVector3D(2, -3, 4));
-    QVERIFY(null.isNull());
-
-    null.scale(2);
-    QVERIFY(null.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    infinite.scale(QVector3D(2, -3, 4));
-    QVERIFY(infinite.isInfinite());
-
-    infinite.scale(2);
-    QVERIFY(infinite.isInfinite());
-}
-
-void tst_QBox3D::scaled()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    QBox3D box2 = box.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.minimum() == QVector3D(-2, -6, -12));
-    QVERIFY(box2.maximum() == QVector3D(2, 6, 12));
-
-    box2 = box.scaled(2);
-    QVERIFY(box2.minimum() == QVector3D(-2, -4, -6));
-    QVERIFY(box2.maximum() == QVector3D(2, 4, 6));
-
-    box2 = box.scaled(-2);
-    QVERIFY(box2.minimum() == QVector3D(-2, -4, -6));
-    QVERIFY(box2.maximum() == QVector3D(2, 4, 6));
-
-    QBox3D null;
-    box2 = null.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.isNull());
-
-    box2 = null.scaled(2);
-    QVERIFY(box2.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    box2 = infinite.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.isInfinite());
-
-    box2 = infinite.scaled(2);
-    QVERIFY(box2.isInfinite());
 }
 
 void tst_QBox3D::transform()
