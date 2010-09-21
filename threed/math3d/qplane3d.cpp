@@ -123,7 +123,8 @@ QT_BEGIN_NAMESPACE
 */
 bool QPlane3D::contains(const QVector3D &point) const
 {
-    return qFuzzyIsNull(QVector3D::dotProduct(m_normal, m_origin - point));
+    return qFuzzyIsNull
+        (float(QVector3D::dotProduct(m_normal, m_origin - point)));
 }
 
 /*!
@@ -132,7 +133,8 @@ bool QPlane3D::contains(const QVector3D &point) const
 */
 bool QPlane3D::contains(const QRay3D &ray) const
 {
-    return qFuzzyIsNull(QVector3D::dotProduct(m_normal, ray.direction())) &&
+    return qFuzzyIsNull
+                (float(QVector3D::dotProduct(m_normal, ray.direction()))) &&
             contains(ray.origin());
 }
 

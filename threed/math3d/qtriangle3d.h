@@ -43,6 +43,7 @@
 #define QTRIANGLE3D_H
 
 #include <QtGui/qvector3d.h>
+#include <QtGui/qvector2d.h>
 #include "qray3d.h"
 #include "qplane3d.h"
 
@@ -80,6 +81,8 @@ public:
 
     void transform(const QMatrix4x4 &matrix);
     QTriangle3D transformed(const QMatrix4x4 &matrix) const;
+
+    QVector2D uv(const QVector3D &point) const;
 
     bool operator==(const QTriangle3D &other);
     bool operator!=(const QTriangle3D &other);

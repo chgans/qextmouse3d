@@ -163,7 +163,6 @@ QT_BEGIN_NAMESPACE
         \o coincides with one of the 3 vertices
         \endlist
     \endlist
-    No check is made for a degenerate triangle.
 
     \sa intersects()
 */
@@ -171,31 +170,18 @@ bool QTriangle3D::contains(const QVector3D &point) const
 {
     // Check if the point is on the triangle's plane first.
     QVector3D normal = QVector3D::crossProduct(m_q - m_p, m_r - m_q);
-    if (!qFuzzyIsNull(QVector3D::dotProduct(normal, m_p - point)))
+    if (!qFuzzyIsNull(float(QVector3D::dotProduct(normal, m_p - point))))
         return false;
 
-    // Determine if the point is on the same side of P-Q as R.
-    QVector3D pq = m_q - m_p;
-    if (QVector3D::dotProduct
-            (QVector3D::crossProduct(pq, point - m_p),
-             QVector3D::crossProduct(pq, m_r - m_p)) < 0.0f)
+    // Compute the barycentric co-ordinates and use them to determine
+    // if the point is within the triangle.
+    QVector2D c = uv(point);
+    if (c.x() < 0.0f || c.x() > 1.0f)
         return false;
-
-    // Determine if the point is on the same side of Q-R as P.
-    QVector3D qr = m_r - m_q;
-    if (QVector3D::dotProduct
-            (QVector3D::crossProduct(qr, point - m_q),
-             QVector3D::crossProduct(qr, m_p - m_q)) < 0.0f)
+    if (c.y() < 0.0f || c.y() > 1.0f)
         return false;
-
-    // Determine if the point is on the same side of R-P as Q.
-    QVector3D rp = m_p - m_r;
-    if (QVector3D::dotProduct
-            (QVector3D::crossProduct(rp, point - m_r),
-             QVector3D::crossProduct(rp, m_q - m_r)) < 0.0f)
+    if ((c.x() + c.y()) > 1.0f)
         return false;
-
-    // We have an intersection within the bounds of the triangle.
     return true;
 }
 
@@ -266,6 +252,54 @@ void QTriangle3D::transform(const QMatrix4x4 &matrix)
 QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
 {
     return QTriangle3D(matrix * m_p, matrix * m_q, matrix * m_r);
+}
+
+/*!
+    Returns the (u, v) barycentric co-ordinates of \a point within
+    this triangle.
+
+    The returned barycentric co-ordinates will be (1, 0) at p(),
+    (0, 1) at q(), and (0, 0) at r().  Technically, barycentric
+    co-ordinates have three components with the corners at
+    (1, 0, 0), (0, 1, 0), and (0, 0, 1).  However, the third
+    component is always equal to (1 - u - v) so we do not return it.
+
+    The typical use case for this function is to convert an intersection
+    point on a triangle into the texture co-ordinate corresponding to
+    that point.  If \c p, \c q, and \c r are the points on the triangle,
+    with corresponding texture co-ordinates \c tp, \c tq, and \c tr,
+    then the texture co-ordinate \c tc of \a point can be determined
+    by the following code:
+
+    \code
+    QTriangle3D triangle(p, q, r);
+    QVector2D uv = triangle.uv(point);
+    QVector2D tc = uv.x() * tp + uv.y() * tq + (1 - uv.x() - uv.y()) * tr;
+    \endcode
+
+    \sa contains(), intersection()
+*/
+QVector2D QTriangle3D::uv(const QVector3D &point) const
+{
+    // Algorithm from: http://www.blackpawn.com/texts/pointinpoly/default.html
+    // More: http://en.wikipedia.org/wiki/Barycentric_coordinates_(mathematics)
+    QVector3D rq = m_q - m_r;
+    QVector3D rp = m_p - m_r;
+    QVector3D pp = point - m_r;
+    qreal dot_rq_rq = QVector3D::dotProduct(rq, rq);
+    qreal dot_rq_rp = QVector3D::dotProduct(rq, rp);
+    qreal dot_rq_pp = QVector3D::dotProduct(rq, pp);
+    qreal dot_rp_rp = QVector3D::dotProduct(rp, rp);
+    qreal dot_rp_pp = QVector3D::dotProduct(rp, pp);
+    qreal det = dot_rq_rq * dot_rp_rp - dot_rq_rp * dot_rq_rp;
+    if (qFuzzyIsNull(float(det))) {
+        // The point is rpobably not in the triangle, or the triangle
+        // is degenerate.  Return an out of range value for (u, v) so
+        // that contains() will fail when this case happens.
+        return QVector2D(-1.0f, -1.0f);
+    }
+    return QVector2D((dot_rq_rq * dot_rp_pp - dot_rq_rp * dot_rq_pp) / det,
+                     (dot_rp_rp * dot_rq_pp - dot_rq_rp * dot_rp_pp) / det);
 }
 
 /*!

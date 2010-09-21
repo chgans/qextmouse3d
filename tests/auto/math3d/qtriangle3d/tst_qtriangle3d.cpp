@@ -60,6 +60,9 @@ private slots:
     void intersect_data();
     void intersect();
 
+    void uv_data();
+    void uv();
+
     void properties();
     void metaTypes();
 };
@@ -237,7 +240,7 @@ void tst_QTriangle3D::contains_data()
          << QVector3D(0.0f, 0.0f, 0.0f) // q
          << QVector3D(0.0f, 0.0f, 0.0f) // r
          << QVector3D(0.0f, 0.0f, 0.0f) // point
-         << true; // no check for degeneracy is made on contains
+         << false; // contains
     QTest::newRow("acute at p")
          << QVector3D(1.0f, 2.0f, 2.0f) // p
          << QVector3D(1.0f, 2.0f, 4.0f) // q
@@ -502,6 +505,36 @@ void tst_QTriangle3D::intersect()
         QCOMPARE(line.point(result), intersection);
     else
         QVERIFY(qIsNaN(result));
+}
+
+void tst_QTriangle3D::uv_data()
+{
+    contains_data();
+}
+
+void tst_QTriangle3D::uv()
+{
+    QFETCH(QVector3D, p);
+    QFETCH(QVector3D, q);
+    QFETCH(QVector3D, r);
+
+    if (p == q || p == r || q == r)
+        return;     // Ignore degenerate triangles for this test.
+
+    QTriangle3D triangle(p, q, r);
+
+    QCOMPARE(triangle.uv(p), QVector2D(1, 0));
+    QCOMPARE(triangle.uv(q), QVector2D(0, 1));
+    QCOMPARE(triangle.uv(r), QVector2D(0, 0));
+
+    QCOMPARE(triangle.uv((p + q) / 2.0f), QVector2D(0.5f, 0.5f));
+    QCOMPARE(triangle.uv((p + r) / 2.0f), QVector2D(0.5f, 0.0f));
+    QCOMPARE(triangle.uv((q + r) / 2.0f), QVector2D(0.0f, 0.5f));
+
+    QVector2D v1(triangle.uv((p + q + r) / 3.0f));
+    QVector2D v2(1.0f / 3.0f, 1.0f / 3.0f);
+    QVERIFY(qFuzzyCompare(float(v1.x()), float(v2.x())));
+    QVERIFY(qFuzzyCompare(float(v1.y()), float(v2.y())));
 }
 
 class tst_QTriangle3DProperties : public QObject
