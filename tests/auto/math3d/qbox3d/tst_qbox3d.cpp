@@ -81,6 +81,7 @@ private slots:
     void unitedBox();
     void transform();
     void transformed();
+    void dataStream();
     void properties();
     void metaTypes();
 };
@@ -1218,6 +1219,36 @@ void tst_QBox3D::transformed()
     infinite.setToInfinite();
     box2 = infinite.transformed(m);
     QVERIFY(box2.isInfinite());
+}
+
+void tst_QBox3D::dataStream()
+{
+    QBox3D box1(QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+    QBox3D box2; // null
+    QBox3D box3;
+    box3.setToInfinite();
+
+    QByteArray data;
+    {
+        QDataStream stream(&data, QIODevice::WriteOnly);
+        stream << box1;
+        stream << box2;
+        stream << box3;
+    }
+
+    QBox3D rbox1;
+    QBox3D rbox2;
+    QBox3D rbox3;
+    {
+        QDataStream stream2(data);
+        stream2 >> rbox1;
+        stream2 >> rbox2;
+        stream2 >> rbox3;
+    }
+
+    QVERIFY(box1 == rbox1);
+    QVERIFY(box2 == rbox2);
+    QVERIFY(box3 == rbox3);
 }
 
 class tst_QBox3DProperties : public QObject
