@@ -69,6 +69,8 @@ private slots:
     void intersect();
     void intersected_data();
     void intersected();
+    void intersectRay_data();
+    void intersectRay();
     void unitePoint_data();
     void unitePoint();
     void uniteBox_data();
@@ -723,6 +725,251 @@ void tst_QBox3D::intersected()
 
     QVERIFY(box.intersected(null).isNull());
     QVERIFY(box.intersected(infinite) == box);
+}
+
+void tst_QBox3D::intersectRay_data()
+{
+    QTest::addColumn<qreal>("x1");
+    QTest::addColumn<qreal>("y1");
+    QTest::addColumn<qreal>("z1");
+    QTest::addColumn<qreal>("x2");
+    QTest::addColumn<qreal>("y2");
+    QTest::addColumn<qreal>("z2");
+    QTest::addColumn<bool>("intersects");
+    QTest::addColumn<qreal>("mint");
+    QTest::addColumn<qreal>("maxt");
+    QTest::addColumn<qreal>("originx");
+    QTest::addColumn<qreal>("originy");
+    QTest::addColumn<qreal>("originz");
+    QTest::addColumn<qreal>("directionx");
+    QTest::addColumn<qreal>("directiony");
+    QTest::addColumn<qreal>("directionz");
+
+    QTest::newRow("zero")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-x")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-neg-x")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-x-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-y")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("zero-neg-y")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0);
+
+    QTest::newRow("zero-y-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0);
+
+    QTest::newRow("zero-z")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-1.0);
+
+    QTest::newRow("zero-neg-z")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("zero-z-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-no-ray")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-neg-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-2.0) << qreal(2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-0.5) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-2.0) << qreal(2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-neg-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-4.0) << qreal(4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-0.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-3.0) << qreal(3.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-from-inside-neg-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-6.0) << qreal(6.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-0.5);
+
+    QTest::newRow("normal-from-outside-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(3.0)
+        << qreal(-2.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-neg-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-6.0) << qreal(-2.0)
+        << qreal(-2.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-0.5) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-miss-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(-2.0) << qreal(3.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(5.0)
+        << qreal(0.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-neg-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-10.0) << qreal(-2.0)
+        << qreal(0.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-0.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-miss-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(2.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(7.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-from-outside-neg-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-14.0) << qreal(-2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-0.5);
+
+    QTest::newRow("normal-from-outside-miss-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(3.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.5);
+}
+
+void tst_QBox3D::intersectRay()
+{
+    QFETCH(qreal, x1);
+    QFETCH(qreal, y1);
+    QFETCH(qreal, z1);
+    QFETCH(qreal, x2);
+    QFETCH(qreal, y2);
+    QFETCH(qreal, z2);
+    QFETCH(bool, intersects);
+    QFETCH(qreal, mint);
+    QFETCH(qreal, maxt);
+    QFETCH(qreal, originx);
+    QFETCH(qreal, originy);
+    QFETCH(qreal, originz);
+    QFETCH(qreal, directionx);
+    QFETCH(qreal, directiony);
+    QFETCH(qreal, directionz);
+
+    QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
+    QRay3D ray(QVector3D(originx, originy, originz),
+               QVector3D(directionx, directiony, directionz));
+
+    qreal minimum_t = -1.0f, maximum_t = -1.0f;
+    if (intersects) {
+        QVERIFY(box.intersection(ray, &minimum_t, &maximum_t));
+        QCOMPARE(minimum_t, mint);
+        QCOMPARE(maximum_t, maxt);
+        QVERIFY(box.intersects(ray));
+        qreal t = box.intersection(ray);
+        if (mint >= 0.0f)
+            QCOMPARE(t, mint);
+        else if (maxt >= 0.0f)
+            QCOMPARE(t, maxt);
+        else
+            QVERIFY(qIsNaN(t));
+    } else {
+        QVERIFY(!box.intersection(ray, &minimum_t, &maximum_t));
+        QVERIFY(qIsNaN(minimum_t));
+        QVERIFY(qIsNaN(maximum_t));
+        QVERIFY(!box.intersects(ray));
+        QVERIFY(qIsNaN(box.intersection(ray)));
+    }
 }
 
 void tst_QBox3D::unitePoint_data()

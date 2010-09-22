@@ -77,6 +77,7 @@ public:
     bool contains(const QBox3D& box) const;
 
     bool intersects(const QRay3D& ray) const;
+    bool intersection(const QRay3D &ray, qreal *minimum_t, qreal *maximum_t) const;
     qreal intersection(const QRay3D& ray) const;
 
     bool intersects(const QBox3D& box) const;
@@ -98,17 +99,6 @@ public:
     friend bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2);
 
 private:
-    enum Partition
-    {
-        equalMin = 0x0,
-        between = 0x1,
-        equalMax = 0x2,
-        contained = 0x3,
-        belowMin = 0x4,
-        aboveMax = 0x8
-    };
-    void partition(const QVector3D &point, Partition *xpart, Partition *ypart, Partition *zpart) const;
-
     enum Type
     {
         Null,

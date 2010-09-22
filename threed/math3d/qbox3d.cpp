@@ -242,35 +242,133 @@ bool QBox3D::intersects(const QBox3D& box) const
 */
 bool QBox3D::intersects(const QRay3D &ray) const
 {
-    return !qIsNaN(intersection(ray));
+    qreal minimum_t, maximum_t;
+    return intersection(ray, &minimum_t, &maximum_t);
 }
 
-/*!
-  \internal
-  Use a kind of cheap hill-climbing approach to find the point intersection,
-  where the heuristic is the value of t, the scalar representing the distance
-  from the line's origin point to the intersection under consideration.  If
-  the t for the intersection being considered is less than t's for other
-  intersections then it might be a solution, in which case do the calculation
-  to find the point Q = P + tV on the line.  Once the point is found, test it
-  to see if it really is a solution (lies in the box) before updating the
-  heuristic.
- */
-inline static void trackIntersection(qreal t, qreal *closest_t,
-                         const QBox3D &box, const QRay3D &line)
+static inline void trackIntersectionX
+    (const QBox3D &box, const QRay3D &ray, qreal t,
+     qreal *minimum_t, qreal *maximum_t, bool *found)
 {
-    if ((t > 0.0f && t < *closest_t) || qIsNull(*closest_t)) {
-        // only consider non-negative values of t, and ones better than best
-        // value found so far
-        QVector3D p = line.point(t);
-        if (box.contains(p))
-            *closest_t = t;
+    QVector3D point = ray.point(t);
+    if (point.y() < box.minimum().y() || point.y() > box.maximum().y())
+        return;
+    if (point.z() < box.minimum().z() || point.z() > box.maximum().z())
+        return;
+    if (!(*found)) {
+        *minimum_t = *maximum_t = t;
+        *found = true;
+    } else {
+        if (t < *minimum_t)
+            *minimum_t = t;
+        if (t > *maximum_t)
+            *maximum_t = t;
+    }
+}
+
+static inline void trackIntersectionY
+    (const QBox3D &box, const QRay3D &ray, qreal t,
+     qreal *minimum_t, qreal *maximum_t, bool *found)
+{
+    QVector3D point = ray.point(t);
+    if (point.x() < box.minimum().x() || point.x() > box.maximum().x())
+        return;
+    if (point.z() < box.minimum().z() || point.z() > box.maximum().z())
+        return;
+    if (!(*found)) {
+        *minimum_t = *maximum_t = t;
+        *found = true;
+    } else {
+        if (t < *minimum_t)
+            *minimum_t = t;
+        if (t > *maximum_t)
+            *maximum_t = t;
+    }
+}
+
+static inline void trackIntersectionZ
+    (const QBox3D &box, const QRay3D &ray, qreal t,
+     qreal *minimum_t, qreal *maximum_t, bool *found)
+{
+    QVector3D point = ray.point(t);
+    if (point.x() < box.minimum().x() || point.x() > box.maximum().x())
+        return;
+    if (point.y() < box.minimum().y() || point.y() > box.maximum().y())
+        return;
+    if (!(*found)) {
+        *minimum_t = *maximum_t = t;
+        *found = true;
+    } else {
+        if (t < *minimum_t)
+            *minimum_t = t;
+        if (t > *maximum_t)
+            *maximum_t = t;
     }
 }
 
 /*!
-    Returns the t value at which \a ray intersects this box, or
-    not-a-number if there is no intersection.
+    Finds the \a minimum_t and \a maximum_t values where \a ray intersects
+    this box.  Returns true if intersections were found; or false if there
+    is no intersection.
+
+    If \a minimum_t and \a maximum_t are set to the same value, then the
+    intersection is at a corner or the volume of the box is zero.
+    If the t values are negative, then the intersection occurs before the
+    ray's origin point in the reverse direction of the ray.
+
+    The \a minimum_t and \a maximum_t values can be passed to QRay3D::point()
+    to determine the actual intersection points, as shown in the following
+    example:
+
+    \code
+    qreal minimum_t, maximum_t;
+    if (box.intersection(ray, &minimum_t, &maximum_t)) {
+        qDebug() << "intersections at"
+                 << ray.point(minimum_t) << "and"
+                 << ray.point(maximum_t);
+    }
+    \endcode
+
+    \sa intersects(), QRay3D::point()
+*/
+bool QBox3D::intersection(const QRay3D &ray, qreal *minimum_t, qreal *maximum_t) const
+{
+    bool found = false;
+    QVector3D origin = ray.origin();
+    QVector3D direction = ray.direction();
+    *minimum_t = *maximum_t = qSNaN();
+    if (boxtype == Finite) {
+        if (direction.x() != 0.0f) {
+            trackIntersectionX
+                (*this, ray, (mincorner.x() - origin.x()) / direction.x(),
+                 minimum_t, maximum_t, &found);
+            trackIntersectionX
+                (*this, ray, (maxcorner.x() - origin.x()) / direction.x(),
+                 minimum_t, maximum_t, &found);
+        }
+        if (direction.y() != 0.0f) {
+            trackIntersectionY
+                (*this, ray, (mincorner.y() - origin.y()) / direction.y(),
+                 minimum_t, maximum_t, &found);
+            trackIntersectionY
+                (*this, ray, (maxcorner.y() - origin.y()) / direction.y(),
+                 minimum_t, maximum_t, &found);
+        }
+        if (direction.z() != 0.0f) {
+            trackIntersectionZ
+                (*this, ray, (mincorner.z() - origin.z()) / direction.z(),
+                 minimum_t, maximum_t, &found);
+            trackIntersectionZ
+                (*this, ray, (maxcorner.z() - origin.z()) / direction.z(),
+                 minimum_t, maximum_t, &found);
+        }
+    }
+    return found;
+}
+
+/*!
+    Returns the t value at which \a ray first intersects the sides of
+    this box, or not-a-number if there is no intersection.
 
     When the \a ray intersects this box, the return value is a
     parametric value that can be passed to QRay3D::point() to determine
@@ -285,58 +383,36 @@ inline static void trackIntersection(qreal t, qreal *closest_t,
         pt = ray.point(t);
     \endcode
 
-    The \a ray might intersect at two points - as the line passes through
+    The \a ray might intersect at two points - as the ray passes through
     the box - one on the near side, one on the far side; where near and far
-    are relative to the origin point of the line.  This function only
+    are relative to the origin point of the ray.  This function only
     returns the near intersection point.
 
-    Only positive values on the line are considered, that is if
-    \c{t == ray.point(intersectionPoint)} and t is positive.
+    Only positive values on the ray are considered.  This means that if
+    the origin point of the ray is inside the box, there is only one
+    solution, not two.  To get the other solution, simply change
+    the sign of the ray's direction vector.  If the origin point of
+    the ray is outside the box, and the direction points away from
+    the box, then there will be no intersection.
 
-    This means that if the origin point of the line is inside the box, there
-    is only one solution, not two.  To get the other solution, simply change
-    the sign of the ray's direction vector.
-
-    When the ray does not intersect the box, or the box is infinite,
-    then the return value is not-a-number.
+    When the ray does not intersect the box in the positive direction,
+    or the box is not finite, then the return value is not-a-number.
 
     \sa intersects(), QRay3D::point()
 */
 qreal QBox3D::intersection(const QRay3D &ray) const
 {
-    if (boxtype == Null)
+    qreal minimum_t, maximum_t;
+    if (intersection(ray, &minimum_t, &maximum_t)) {
+        if (minimum_t >= 0.0f)
+            return minimum_t;
+        else if (maximum_t >= 0.0f)
+            return maximum_t;
+        else
+            return qSNaN();
+    } else {
         return qSNaN();
-    if (boxtype == Infinite)
-        return qSNaN();
-
-    QVector3D org = ray.origin();
-    Partition xpos, ypos, zpos;
-    partition(org, &xpos, &ypos, &zpos);
-    // if the lines origin lies on one of the faces, return it as the intersection
-    if ((xpos | ypos | zpos) == (equalMin | equalMax))
-        return 0.0f;
-
-    // Could use the line/plane intersection functions, with 6 box planes defined by
-    // 3 normals at the min and 3 at the max.  But since the planes are axis-aligned
-    // there is a cheap optimization.  If the line P + tV intersects a AA-plane with
-    // x = c at intersection point X, then P.x + tV.x = X.x = c; and therefore
-    // t = (c - P.x) / V.x.  Here the value t is the scalar distance along V from P and
-    // so it measures the value of the solution - see trackIntersection() above.
-    qreal closest_t = 0.0f;
-    QVector3D ln = ray.direction();
-    for (const QVector3D *p = &maxcorner; p; p = (p == &maxcorner) ? &mincorner : 0)
-    {
-        if (!qIsNull(ln.x()))
-            trackIntersection(p->x() - org.x() / ln.x(), &closest_t, *this, ray);
-        if (!qIsNull(ln.y()))
-            trackIntersection(p->y() - org.y() / ln.y(), &closest_t, *this, ray);
-        if (!qIsNull(ln.z()))
-            trackIntersection(p->z() - org.z() / ln.z(), &closest_t, *this, ray);
     }
-    if (!qIsNull(closest_t))
-        return closest_t;
-    else
-        return qSNaN();
 }
 
 /*!
@@ -530,24 +606,6 @@ QBox3D QBox3D::transformed(const QMatrix4x4& matrix) const
 
     Returns true if this box is not identical to \a box.
 */
-
-void QBox3D::partition
-    (const QVector3D &point, Partition *xpart,
-     Partition *ypart, Partition *zpart) const
-{
-    *xpart = point.x() < mincorner.x() ? belowMin : (
-            point.x() == mincorner.x() ? equalMin : (
-                    point.x() < maxcorner.x() ? between : (
-                            point.x() == maxcorner.x() ? equalMax : aboveMax)));
-    *ypart = point.y() < mincorner.y() ? belowMin : (
-            point.y() == mincorner.y() ? equalMin : (
-                    point.y() < maxcorner.y() ? between : (
-                            point.y() == maxcorner.y() ? equalMax : aboveMax)));
-    *zpart = point.z() < mincorner.z() ? belowMin : (
-            point.z() == mincorner.z() ? equalMin : (
-                    point.z() < maxcorner.z() ? between : (
-                            point.z() == maxcorner.z() ? equalMax : aboveMax)));
-}
 
 /*!
     \fn bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2)
