@@ -136,6 +136,45 @@ QT_BEGIN_NAMESPACE
     Ctrl-Left and Ctrl-Right can be used to make the eye separation
     smaller or larger under keyboard control.
 
+    A number of command-line options are available to select the
+    stereo mode of the QGLView so that the application does not
+    need to select the mode itself:
+
+    \table
+    \row \o \c{-stereo-hw} \o \l Hardware.
+    \row \o \c{-stereo-nhd} \o DoubleHighLeftRight, nHD (640x360).
+    \row \o \c{-stereo-vga} \o DoubleHighLeftRight, VGA (640x480).
+    \row \o \c{-stereo-wvga} \o DoubleHighLeftRight, WVGA (800x480).
+    \row \o \c{-stereo-720p} \o DoubleHighLeftRight, 720p (1280x720).
+    \row \o \c{-stereo-nhd-rl} \o DoubleHighRightLeft, nHD (640x360).
+    \row \o \c{-stereo-vga-rl} \o DoubleHighRightLeft, VGA (640x480).
+    \row \o \c{-stereo-wvga-rl} \o DoubleHighRightLeft, WVGA (800x480).
+    \row \o \c{-stereo-720p-rl} \o DoubleHighRightLeft, 720p (1280x720).
+    \row \o \c{-stereo-nhd-wide} \o DoubleWideLeftRight, nHD (640x360).
+    \row \o \c{-stereo-vga-wide} \o DoubleWideLeftRight, VGA (640x480).
+    \row \o \c{-stereo-wvga-wide} \o DoubleWideLeftRight, WVGA (800x480).
+    \row \o \c{-stereo-720p-wide} \o DoubleWideLeftRight, 720p (1280x720).
+    \row \o \c{-stereo-nhd-wide-rl} \o DoubleWideRightLeft, nHD (640x360).
+    \row \o \c{-stereo-vga-wide-rl} \o DoubleWideRightLeft, VGA (640x480).
+    \row \o \c{-stereo-wvga-wide-rl} \o DoubleWideRightLeft, WVGA (800x480).
+    \row \o \c{-stereo-720p-wide-rl} \o DoubleWideRightLeft, 720p (1280x720).
+    \row \o \c{-stereo-lr} \o DoubleHighLeftRight, size set separately.
+    \row \o \c{-stereo-rl} \o DoubleHighRightLeft, size set separately.
+    \row \o \c{-stereo-wide-lr} \o DoubleWideLeftRight, size set separately.
+    \row \o \c{-stereo-wide-rl} \o DoubleWideRightLeft, size set separately.
+    \endtable
+
+    The option can also be supplied in the \c{QT3D_OPTIONS} environment
+    variable:
+
+    \code
+    $ QT3D_OPTIONS="-stereo-nhd" ./cubehouse
+    \endcode
+
+    If the application sets the stereo type with setStereoType(),
+    that will be used.  Next is the command-line setting, and finally
+    the contents of the environment variable.
+
     \sa {Stereo Viewing Example}
 */
 
@@ -253,6 +292,7 @@ public:
     inline void logLeave(const char *message);
 
     void processStereoOptions(QGLView *view);
+    void processStereoOptions(QGLView *view, const QString &arg);
 
     QGLAbstractSurface *leftEyeSurface(const QSize &size);
     QGLAbstractSurface *rightEyeSurface(const QSize &size);
@@ -282,11 +322,33 @@ inline void QGLViewPrivate::logLeave(const char *message)
            (ms / 1000) % 60, ms % 1000, message, duration);
 }
 
+static QString qt_gl_stereo_arg()
+{
+    QStringList args = QApplication::arguments();
+    foreach (QString arg, args) {
+        if (arg.startsWith(QLatin1String("-stereo-")))
+            return arg;
+    }
+    args = QString::fromLocal8Bit
+        (qgetenv("QT3D_OPTIONS")).split(QLatin1Char(' ' ));
+    foreach (QString arg, args) {
+        if (arg.startsWith(QLatin1String("-stereo-")))
+            return arg;
+    }
+    return QString();
+}
+
 void QGLViewPrivate::processStereoOptions(QGLView *view)
 {
     if (stereoType == QGLView::Hardware)
         return;
+    QString arg = qt_gl_stereo_arg();
+    if (!arg.isEmpty())
+        processStereoOptions(view, arg);
+}
 
+void QGLViewPrivate::processStereoOptions(QGLView *view, const QString &arg)
+{
     // If the command-line contains an option that starts with "-stereo-",
     // then convert it into options that define the size and type of
     // stereo window to use for a top-level QGLView.  Possible options:
@@ -295,41 +357,35 @@ void QGLViewPrivate::processStereoOptions(QGLView *view)
     //      wide - use double-wide instead of double-high
     //      rl - use right-left eye order instead of left-right
     //
-    QStringList args = QApplication::arguments();
-    foreach (QString arg, args) {
-        if (!arg.startsWith(QLatin1String("-stereo-")))
-            continue;
-        QStringList opts = arg.mid(8).split(QLatin1Char('-'));
-        QGLView::StereoType stereoType;
-        QSize size(0, 0);
-        if (opts.contains(QLatin1String("hw")))
-            break;  // Hardware mode is selected by makeStereoGLFormat().
-        else if (opts.contains(QLatin1String("nhd")))
-            size = QSize(640, 360);
-        else if (opts.contains(QLatin1String("vga")))
-            size = QSize(640, 480);
-        else if (opts.contains(QLatin1String("wvga")))
-            size = QSize(800, 480);
-        else if (opts.contains(QLatin1String("720p")))
-            size = QSize(1280, 720);
-        if (opts.contains(QLatin1String("wide"))) {
-            size = QSize(size.width() * 2, size.height());
-            if (opts.contains(QLatin1String("rl")))
-                stereoType = QGLView::DoubleWideRightLeft;
-            else
-                stereoType = QGLView::DoubleWideLeftRight;
-        } else {
-            size = QSize(size.width(), size.height() * 2);
-            if (opts.contains(QLatin1String("rl")))
-                stereoType = QGLView::DoubleHighRightLeft;
-            else
-                stereoType = QGLView::DoubleHighLeftRight;
-        }
-        if (size.width() > 0 && size.height() > 0)
-            view->resize(size);
-        view->setStereoType(stereoType);
-        break;
+    QStringList opts = arg.mid(8).split(QLatin1Char('-'));
+    QGLView::StereoType stereoType;
+    QSize size(0, 0);
+    if (opts.contains(QLatin1String("hw")))
+        return; // Hardware mode is selected by makeStereoGLFormat().
+    else if (opts.contains(QLatin1String("nhd")))
+        size = QSize(640, 360);
+    else if (opts.contains(QLatin1String("vga")))
+        size = QSize(640, 480);
+    else if (opts.contains(QLatin1String("wvga")))
+        size = QSize(800, 480);
+    else if (opts.contains(QLatin1String("720p")))
+        size = QSize(1280, 720);
+    if (opts.contains(QLatin1String("wide"))) {
+        size = QSize(size.width() * 2, size.height());
+        if (opts.contains(QLatin1String("rl")))
+            stereoType = QGLView::DoubleWideRightLeft;
+        else
+            stereoType = QGLView::DoubleWideLeftRight;
+    } else {
+        size = QSize(size.width(), size.height() * 2);
+        if (opts.contains(QLatin1String("rl")))
+            stereoType = QGLView::DoubleHighRightLeft;
+        else
+            stereoType = QGLView::DoubleHighLeftRight;
     }
+    if (size.width() > 0 && size.height() > 0)
+        view->resize(size);
+    view->setStereoType(stereoType);
 }
 
 // Returns the surface to use to render the left eye image.
@@ -440,7 +496,7 @@ static QGLFormat makeStereoGLFormat(const QGLFormat& format)
     return format;
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
     QGLFormat fmt(format);
-    if (QApplication::arguments().contains(QLatin1String("-stereo-hw")))
+    if (qt_gl_stereo_arg() == QLatin1String("-stereo-hw"))
         fmt.setOption(QGL::StereoBuffers);
     return fmt;
 #else
