@@ -63,8 +63,6 @@ class ShaderWizardGLWidgetPrivate
 {
 public:
     ShaderWizardGLWidgetPrivate() : effect(0)
-            , fragmentShader("")
-            , vertexShader("")
             , painterColor()
             , ambientLightColor()
             , diffuseLightColor()
@@ -108,7 +106,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     // so use white and 64 for a reasonable default specular effect
     setSpecularMaterialColor(QColor(255, 255, 255, 255));
     setMaterialShininess(64);
-    mMaterial->setObjectName("ShaderWizardGLWidgetMaterial");
+    mMaterial->setObjectName(QLatin1String("ShaderWizardGLWidgetMaterial"));
 
     setTeapotGeometry();
     d->effect = new QGLShaderProgramEffect;
@@ -154,7 +152,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setMainLight(mLightParameters);
     painter->setFaceColor(QGL::AllFaces, d->painterColor);
 
-    mTexture->setImage(QImage (":/qtlogo.png"));
+    mTexture->setImage(QImage(QLatin1String(":/qtlogo.png")));
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -208,7 +206,7 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
         if(!mSceneNode->palette())
             mSceneNode->setPalette(mMaterialCollection);
         mMaterialCollection->setParent(mSceneNode);
-        int materialIndex = mSceneNode->palette()->indexOf("ShaderWizardGLWidgetMaterial");
+        int materialIndex = mSceneNode->palette()->indexOf(QLatin1String("ShaderWizardGLWidgetMaterial"));
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
         mSceneNode->setMaterialIndex(materialIndex);

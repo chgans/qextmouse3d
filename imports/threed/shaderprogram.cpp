@@ -347,7 +347,7 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
     i < parentMetaObject->propertyCount(); i++)
     {
         QMetaProperty metaProperty = parentMetaObject->property(i);
-        QString propertyName = metaProperty.name();
+        QByteArray propertyName = metaProperty.name();
         int location = program->uniformLocation(propertyName);
         // -1 indicates that the program does not use the variable,
         // so ignore those variables.
@@ -537,7 +537,7 @@ void ShaderProgramEffect::update
                 setUniform(i, declarativePixmaps[i]->pixmap(), painter);
             } else
             {
-                qWarning() << "Warning: ShaderProgramEffect failed to apply texture for uniform" << i << (urls.contains(i) ? QString(" url: ") + urls[i] : "");
+                qWarning() << "Warning: ShaderProgramEffect failed to apply texture for uniform" << i << (urls.contains(i) ? QLatin1String(" url: ") + urls[i] : QString());
             }
             changedTextures.remove(i);
         }

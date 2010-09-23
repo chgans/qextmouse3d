@@ -166,12 +166,12 @@ void PageFlipView::initializeGL()
     int height = 320;
     pageSize = QSize(width, height);
 
-    textures[0].setImage(QImage(":/qqpage1.png"));
-    textures[1].setImage(QImage(":/qqpage2.png"));
-    textures[2].setImage(QImage(":/qqpage3.png"));
-    textures[3].setImage(QImage(":/qqpage4.png"));
+    textures[0].setImage(QImage(QLatin1String(":/qqpage1.png")));
+    textures[1].setImage(QImage(QLatin1String(":/qqpage2.png")));
+    textures[2].setImage(QImage(QLatin1String(":/qqpage3.png")));
+    textures[3].setImage(QImage(QLatin1String(":/qqpage4.png")));
 
-    gradientTexture.setImage(QImage(":/gradient.png"));
+    gradientTexture.setImage(QImage(QLatin1String(":/gradient.png")));
 
     if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
         painter.glBlendColor(0, 0, 0, 0);
@@ -465,13 +465,13 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     PageFlipView view;
-    if (QApplication::arguments().contains("-blend"))
+    if (QApplication::arguments().contains(QLatin1String("-blend")))
         view.setBlend(true);
-    if (QApplication::arguments().contains("-vertical"))
+    if (QApplication::arguments().contains(QLatin1String("-vertical")))
         view.setVertical(true);
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         view.showFullScreen();
     else
         view.show();

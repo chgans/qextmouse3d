@@ -52,7 +52,7 @@ void ModelView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
 
-    m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
+    m_scene = QGLAbstractScene::loadScene(QLatin1String(":/penguin.3ds"));
 }
 //! [initialize]
 

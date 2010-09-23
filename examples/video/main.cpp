@@ -49,7 +49,7 @@
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
-    app.setApplicationName("GraphicsView Video Player");
+    app.setApplicationName(QLatin1String("GraphicsView Video Player"));
     app.setQuitOnLastWindowClosed(true);
 
     if (!QGLFormat::hasOpenGL() || !QGLFramebufferObject::hasOpenGLFramebufferObjects()) {

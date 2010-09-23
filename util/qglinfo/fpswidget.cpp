@@ -214,7 +214,7 @@ void FPSWidget::paintGL()
     program.disableAttributeArray(vertexAttr);
     program.disableAttributeArray(normalAttr);
 #endif
-    QString framesPerSecond = QString("%1 fps").arg(1000.0f / ((qreal)totalFrameTime / (qreal)frameCount));
+    QString framesPerSecond = QString::fromLatin1("%1 fps").arg(1000.0f / ((qreal)totalFrameTime / (qreal)frameCount));
 }
 
 void FPSWidget::animate()

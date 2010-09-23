@@ -188,20 +188,20 @@ void QGL3dsSceneHandler::decodeOptions(const QString &options)
     // mesh: string name of a mesh in the file, with no spaces
     // standalone option applies to the whole file - all meshes
     // option: NativeIndices | CorrectNormals | CorrectAcute etc
-    QStringList opList = options.split(' ', QString::SkipEmptyParts);
+    QStringList opList = options.split(QLatin1Char(' '), QString::SkipEmptyParts);
     for (int i = 0; i < opList.count(); ++i)
     {
         QString op = opList.at(i);
         QString mdl;
-        if (op.contains('='))
+        if (op.contains(QLatin1Char('=')))
         {
-            QStringList sl = op.split('=', QString::SkipEmptyParts);
+            QStringList sl = op.split(QLatin1Char('='), QString::SkipEmptyParts);
             mdl = sl[0];
             op = sl[1];
         }
         int k = 0;
         for ( ; optionKeys[k] != -1; ++k)
-            if (op == validOptions[k])
+            if (op == QLatin1String(validOptions[k]))
                 break;
         if (optionKeys[k] != -1) // found
         {

@@ -66,7 +66,7 @@ void Launcher::run()
         qWarning("Launcher::run - empty URL!");
         return;
     }
-    if (m_url.scheme() != "file")
+    if (m_url.scheme() != QLatin1String("file"))
     {
         qWarning("URL scheme %s not yet supported", qPrintable(m_url.scheme()));
         return;
@@ -91,7 +91,7 @@ void Launcher::run()
                 for ( ; it != entries.constEnd(); ++it)
                 {
                     // ignore hidden files, system directories
-                    if ((*it).startsWith("."))
+                    if ((*it).startsWith(QLatin1Char('.')))
                         continue;
                     queue.append(dir.absoluteFilePath(*it));
                 }
@@ -106,7 +106,7 @@ void Launcher::run()
                 // directory to the QImage loader, and let it sort out
                 // if the thing can be loaded as an image.
                 QUrl url2;
-                url2.setScheme("file");
+                url2.setScheme(QLatin1String("file"));
                 url2.setPath(u.absoluteFilePath());
                 m_manager->acquire();
                 emit imageUrl(url2);

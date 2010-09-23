@@ -210,5 +210,22 @@
     adjust the width and height properties in teaservice.qml to
     match the device's screen size.
 
+    \section1 Build tests
+
+    The Qt/3D code base contains a number of \c{#ifdef} statements
+    that may cause the build to fail in non-default Qt configurations
+    or when strict API options are enabled.  It is recommended that
+    these configurations be verified periodically, particularly
+    prior to a release.
+
+    \code
+    qmake opengl.pro \
+            DEFINES+=QT_NO_DEBUG_STREAM \
+            DEFINES+=QT_NO_DATASTREAM \
+            DEFINES+=QT_NO_CAST_FROM_BYTEARRAY \
+            DEFINES+=QT_NO_CAST_TO_ASCII \
+            DEFINES+=QT_NO_CAST_FROM_ASCII
+    \endcode
+
     \l{index.html}{Return to the main Qt/3D page}.
 */

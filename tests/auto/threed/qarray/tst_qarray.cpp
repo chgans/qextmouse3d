@@ -1135,19 +1135,19 @@ void tst_QArray::reverse()
 
     // complex type
     QVERIFY(QTypeInfo<QString>::isComplex);
-    QArray<QString> array3(6, QString("test"));
-    array3[0] = "zero";
-    array3[1] = "one";
-    array3[2] = "two";
-    array3[3] = "three";
-    array3[4] = "four";
-    array3[5] = "five";
+    QArray<QString> array3(6, QLatin1String("test"));
+    array3[0] = QLatin1String("zero");
+    array3[1] = QLatin1String("one");
+    array3[2] = QLatin1String("two");
+    array3[3] = QLatin1String("three");
+    array3[4] = QLatin1String("four");
+    array3[5] = QLatin1String("five");
     array3.reverse();
     QCOMPARE(array3.size(), 6);
-    QCOMPARE(array3.at(0), QString("five"));
-    QCOMPARE(array3.at(2), QString("three"));
-    QCOMPARE(array3.at(3), QString("two"));
-    QCOMPARE(array3.at(5), QString("zero"));
+    QCOMPARE(array3.at(0), QLatin1String("five"));
+    QCOMPARE(array3.at(2), QLatin1String("three"));
+    QCOMPARE(array3.at(3), QLatin1String("two"));
+    QCOMPARE(array3.at(5), QLatin1String("zero"));
 }
 
 void tst_QArray::reversed()
@@ -1851,6 +1851,7 @@ void tst_QArray::exceptions()
 
 void tst_QArray::dataStream()
 {
+#ifndef QT_NO_DATASTREAM
     QArray<float> array;
     for (int index = 0; index < 1024; ++index)
         array.append(float(index));
@@ -1868,6 +1869,7 @@ void tst_QArray::dataStream()
     }
 
     QVERIFY(array == array2);
+#endif
 }
 
 // The following tests check that if QVarLengthArray was typedef'ed
@@ -1893,7 +1895,7 @@ struct Foo
 void tst_QArray::QVarLengthArray_append()
 {
     QVarLengthArray<QString> v;
-    v.append(QString("hello"));
+    v.append(QLatin1String("hello"));
 
     QVarLengthArray<int> v2; // rocket!
     v2.append(5);
@@ -1917,11 +1919,11 @@ void tst_QArray::QVarLengthArray_removeLast()
 
     {
         QVarLengthArray<QString, 2> v;
-        v.append("0");
-        v.append("1");
+        v.append(QLatin1String("0"));
+        v.append(QLatin1String("1"));
         QCOMPARE(v.size(), 2);
-        v.append("2");
-        v.append("3");
+        v.append(QLatin1String("2"));
+        v.append(QLatin1String("3"));
         QCOMPARE(v.size(), 4);
         v.removeLast();
         QCOMPARE(v.size(), 3);
@@ -1950,16 +1952,16 @@ void tst_QArray::QVarLengthArray_oldTests()
     }
     {
 	QVarLengthArray<QString> sa(10);
-	sa[0] = "Hello";
-	sa[9] = "World";
-	QVERIFY(*sa.data() == "Hello");
-	QVERIFY(sa[9] == "World");
+	sa[0] = QLatin1String("Hello");
+	sa[9] = QLatin1String("World");
+	QVERIFY(*sa.data() == QLatin1String("Hello"));
+	QVERIFY(sa[9] == QLatin1String("World"));
 	sa.reserve(512);
-	QVERIFY(*sa.data() == "Hello");
-	QVERIFY(sa[9] == "World");
+	QVERIFY(*sa.data() == QLatin1String("Hello"));
+	QVERIFY(sa[9] == QLatin1String("World"));
 	sa.resize(512);
-	QVERIFY(*sa.data() == "Hello");
-	QVERIFY(sa[9] == "World");
+	QVERIFY(*sa.data() == QLatin1String("Hello"));
+	QVERIFY(sa[9] == QLatin1String("World"));
     }
     {
         int arr[2] = {1, 2};
@@ -1971,17 +1973,17 @@ void tst_QArray::QVarLengthArray_oldTests()
         QCOMPARE(sa[11], 2);
     }
     {
-        QString arr[2] = { QString("hello"), QString("world") };
+        QString arr[2] = { QLatin1String("hello"), QLatin1String("world") };
         QVarLengthArray<QString> sa(10);
         QCOMPARE(sa.size(), 10);
         sa.append(arr, 2);
         QCOMPARE(sa.size(), 12);
-        QCOMPARE(sa[10], QString("hello"));
-        QCOMPARE(sa[11], QString("world"));
+        QCOMPARE(sa[10], QLatin1String("hello"));
+        QCOMPARE(sa[11], QLatin1String("world"));
 
         sa.append(arr, 1);
         QCOMPARE(sa.size(), 13);
-        QCOMPARE(sa[12], QString("hello"));
+        QCOMPARE(sa[12], QLatin1String("hello"));
 
         sa.append(arr, 0);
         QCOMPARE(sa.size(), 13);
@@ -2282,10 +2284,10 @@ void tst_QArray::QList_lengthSignature() const
 void tst_QArray::QList_append() const
 {
     /* test append(const QList<T> &) function */
-    QString one("one");
-    QString two("two");
-    QString three("three");
-    QString four("four");
+    QString one = QLatin1String("one");
+    QString two = QLatin1String("two");
+    QString three = QLatin1String("three");
+    QString four = QLatin1String("four");
     QList<QString> list1;
     QList<QString> list2;
     QList<QString> listTotal;

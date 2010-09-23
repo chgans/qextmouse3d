@@ -69,8 +69,8 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_browse(0)
     , m_pan(0)
 {
-    QString path = ":/res";
-    int ix = qApp->arguments().indexOf("--skybox");
+    QString path = QLatin1String(":/res");
+    int ix = qApp->arguments().indexOf(QLatin1String("--skybox"));
     if (ix != -1)
     {
         if (qApp->arguments().size() > ix+1)
@@ -108,8 +108,8 @@ PhotoBrowser3DView::~PhotoBrowser3DView()
 
 void PhotoBrowser3DView::initialise()
 {
-    QString path = QDir::home().absoluteFilePath("Pictures");
-    int ix = qApp->arguments().indexOf("--pictures");
+    QString path = QDir::home().absoluteFilePath(QLatin1String("Pictures"));
+    int ix = qApp->arguments().indexOf(QLatin1String("--pictures"));
     if (ix != -1)
     {
         if (qApp->arguments().size() > ix+1)
@@ -120,7 +120,7 @@ void PhotoBrowser3DView::initialise()
     connect(m_images, SIGNAL(imageReady(QImage)),
             m_scene, SLOT(addImage(QImage)));
     QUrl url;
-    url.setScheme("file");
+    url.setScheme(QLatin1String("file"));
     url.setPath(path);
     m_images->setImageUrl(url);
     m_images->start(QThread::IdlePriority);
@@ -199,6 +199,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
             QGLView::keyPressEvent(e);
         }
     }
+#ifndef QT_NO_DEBUG_STREAM
     else if (e->key() == Qt::Key_Escape)
     {
         qDumpScene(m_scene);
@@ -206,6 +207,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
         //resetView();
         //emit manualControlEngaged();
     }
+#endif
     else
     {
         QGLView::keyPressEvent(e);

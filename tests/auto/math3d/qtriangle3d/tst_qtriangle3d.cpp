@@ -639,6 +639,7 @@ void tst_QTriangle3D::compare()
 
 void tst_QTriangle3D::dataStream()
 {
+#ifndef QT_NO_DATASTREAM
     QTriangle3D triangle(QVector3D(1.0f, 2.0f, 3.0f),
                          QVector3D(4.0f, 5.0f, 6.0f),
                          QVector3D(7.0f, 8.0f, 9.0f));
@@ -656,6 +657,7 @@ void tst_QTriangle3D::dataStream()
     }
 
     QVERIFY(triangle == triangle2);
+#endif
 }
 
 class tst_QTriangle3DProperties : public QObject

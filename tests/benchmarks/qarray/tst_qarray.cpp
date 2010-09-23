@@ -98,30 +98,30 @@ void tst_QArray::append_data()
     QByteArray name;
     for (int size = 0; size < 1024; size += 12) {
         name = "QDataBuffer--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataBuffer);
 
         name = "QVector--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Vector);
 
 #if TEST_QLIST
         name = "QList--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_List);
 #endif
 
         name = "QVarLengthArray--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
         name = "QArray--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Array);
 
 #ifndef QT_NO_STL
         name = "std::vector--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_STLVector);
 #endif
     }
@@ -288,30 +288,30 @@ void tst_QArray::appendSmall_data()
     QByteArray name;
     for (int size = 0; size < 16; ++size) {
         name = "QDataBuffer--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_DataBuffer);
 
         name = "QVector--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Vector);
 
 #if TEST_QLIST
         name = "QList--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_List);
 #endif
 
         name = "QVarLengthArray--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_VarLengthArray);
 
         name = "QArray--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_Array);
 
 #ifndef QT_NO_STL
         name = "std::vector--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_STLVector);
 #endif
     }

@@ -48,9 +48,9 @@ int main(int argc, char *argv[])
     CubeView view;
     if (view.stereoType() != QGLView::RedCyanAnaglyph)
         view.camera()->setEyeSeparation(0.5f);
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         view.showFullScreen();
     else
         view.show();

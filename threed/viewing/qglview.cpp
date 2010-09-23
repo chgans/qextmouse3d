@@ -329,8 +329,9 @@ static QString qt_gl_stereo_arg()
         if (arg.startsWith(QLatin1String("-stereo-")))
             return arg;
     }
+    QByteArray options(qgetenv("QT3D_OPTIONS"));
     args = QString::fromLocal8Bit
-        (qgetenv("QT3D_OPTIONS")).split(QLatin1Char(' ' ));
+        (options.constData(), options.size()).split(QLatin1Char(' '));
     foreach (QString arg, args) {
         if (arg.startsWith(QLatin1String("-stereo-")))
             return arg;

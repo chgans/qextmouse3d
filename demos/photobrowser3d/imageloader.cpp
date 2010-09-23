@@ -68,7 +68,7 @@ ImageLoader::~ImageLoader()
 void ImageLoader::run()
 {
     QString fn = m_url.toLocalFile();
-    int pos = fn.lastIndexOf('.');
+    int pos = fn.lastIndexOf(QLatin1Char('.'));
     QString ext;
     if (pos != -1)
         ext = fn.mid(pos).toUpper();
@@ -93,7 +93,7 @@ void ImageLoader::run()
     if (im.isNull())
         return;
     QString p = m_url.path();
-    p = p.section("/", -1);
+    p = p.section(QLatin1String("/"), -1);
     int max = qMax(im.width(), im.height());
     QImage frm;
     if (max <= 64)

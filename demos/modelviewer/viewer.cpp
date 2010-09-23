@@ -279,8 +279,8 @@ void Viewer::buildFloor()
     font.setPixelSize(sz / 20);
     painter.setFont(font);
     QFontMetrics fm = painter.fontMetrics();
-    QRectF rmx = fm.boundingRect("-X");
-    QRectF rx = fm.boundingRect("X");
+    QRectF rmx = fm.boundingRect(QLatin1String("-X"));
+    QRectF rx = fm.boundingRect(QLatin1String("X"));
     topMiddle.setX(topMiddle.x() + 2);
     topMiddle.setY(topMiddle.y() - rmx.height());
     bottomMiddle.setX(bottomMiddle.x() + 2);
@@ -289,10 +289,10 @@ void Viewer::buildFloor()
     leftMiddle.setY(leftMiddle.y() + rx.height() + 2);
     rightMiddle.setX(rightMiddle.x() - rx.width() - 4);
     rightMiddle.setY(rightMiddle.y() + rx.height() + 2);
-    painter.drawText(topMiddle, "-Z");
-    painter.drawText(bottomMiddle, "Z");
-    painter.drawText(leftMiddle, "-X");
-    painter.drawText(rightMiddle, "X");
+    painter.drawText(topMiddle, QLatin1String("-Z"));
+    painter.drawText(bottomMiddle, QLatin1String("Z"));
+    painter.drawText(leftMiddle, QLatin1String("-X"));
+    painter.drawText(rightMiddle, QLatin1String("X"));
     painter.end();
     QGLMaterial *mat = new QGLMaterial(m_floor);
     QGLTexture2D *tex = new QGLTexture2D(mat);

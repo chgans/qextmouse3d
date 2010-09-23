@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     PainterWidget widget;
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         widget.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         widget.showFullScreen();
     else
         widget.show();

@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QMainWindow mainw;
     mainw.setMinimumSize(850, 480);
-    mainw.setWindowTitle("Tea Service");
+    mainw.setWindowTitle(QLatin1String("Tea Service"));
 
     TeaServiceView view;
     mainw.setCentralWidget(&view);
@@ -368,21 +368,21 @@ int main(int argc, char *argv[])
 
     view.camera()->setEye(QVector3D(0, 3, 10));
 
-    QMenu *menu = mainw.menuBar()->addMenu("Effects");
+    QMenu *menu = mainw.menuBar()->addMenu(QLatin1String("Effects"));
 
-    QAction *standardLighting = new QAction("Standard lighting", &mainw);
+    QAction *standardLighting = new QAction(QLatin1String("Standard lighting"), &mainw);
     menu->addAction(standardLighting);
     QObject::connect(standardLighting, SIGNAL(triggered()), &view, SLOT(standardLighting()));
 
 #if !defined(QT_OPENGL_ES_1)
-    QAction *perPixelLighting = new QAction("Per-pixel lighting", &mainw);
+    QAction *perPixelLighting = new QAction(QLatin1String("Per-pixel lighting"), &mainw);
     menu->addAction(perPixelLighting);
     QObject::connect(perPixelLighting, SIGNAL(triggered()), &view, SLOT(perPixelLighting()));
 #endif
 
     menu->addSeparator();
 
-    QAction *exitAction = new QAction("E&xit", &mainw);
+    QAction *exitAction = new QAction(QLatin1String("E&xit"), &mainw);
     menu->addAction(exitAction);
     QObject::connect(exitAction, SIGNAL(triggered()), &app, SLOT(quit()));
 

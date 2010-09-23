@@ -47,9 +47,9 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     SphereView window;
     window.resize(480,320);
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         window.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         window.showFullScreen();
     else
         window.show();

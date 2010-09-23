@@ -432,12 +432,14 @@ void Mesh::setScene(QGLAbstractScene *scene)
         //we simply add a null value to indicate that this object is non-drawable 
         addSceneBranch(insertObject);
 
+#ifndef QT_NO_DEBUG_STREAM
         if (insertObject && d->dumpInfo)
         {
             QGLSceneNode *node = qobject_cast<QGLSceneNode*>(insertObject);
             if (node)
                 qDumpScene(node);
         }
+#endif
     }
     emit dataChanged(); 
     d->loaded = true;
@@ -478,7 +480,10 @@ int Mesh::createSceneBranch(QString nodeName, QObject *parent)
     else {
         int branchId = nextSceneBranchId();
         QGLSceneNode *sceneNode = getSceneObject(nodeName);
-        qDumpScene(sceneNode);
+#ifndef QT_NO_DEBUG_STREAM
+        if (d->dumpInfo)
+            qDumpScene(sceneNode);
+#endif
         if (sceneNode) {
             QGLSceneNode *parentNode = qobject_cast<QGLSceneNode *>(sceneNode->parent());
             qDebug() << "retrieved parentNode:" << parentNode << "from:" << sceneNode->parent();

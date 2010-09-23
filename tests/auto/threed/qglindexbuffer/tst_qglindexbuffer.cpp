@@ -395,7 +395,7 @@ void tst_QGLIndexBuffer::appendCombined_data()
 
 static QArray<ushort> stringToUShortArray(const QString &str)
 {
-    QStringList list = str.split(QChar(' '));
+    QStringList list = str.split(QLatin1String(" "));
     QArray<ushort> array;
     if (str.isEmpty())
         return array;
@@ -406,7 +406,7 @@ static QArray<ushort> stringToUShortArray(const QString &str)
 
 static QArray<uint> stringToUIntArray(const QString &str)
 {
-    QStringList list = str.split(QChar(' '));
+    QStringList list = str.split(QLatin1String(" "));
     QArray<uint> array;
     if (str.isEmpty())
         return array;

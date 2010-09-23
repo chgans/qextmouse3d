@@ -56,7 +56,7 @@ void ModelView::initializeGL(QGLPainter *painter)
     Q_UNUSED(painter);
     camera()->setEye(QVector3D(0.0f, 2.0f, 25.0f));
 
-    m_scene = QGLAbstractScene::loadScene(":/penguin.3ds");
+    m_scene = QGLAbstractScene::loadScene(QLatin1String(":/penguin.3ds"));
     if (m_scene)
         m_main = m_scene->defaultObject(QGLSceneNode::Main);
 

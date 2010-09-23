@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
 
     QString source;
     for (int index = 1; index < argc; ++index) {
-        QString arg = argv[index];
-        if (arg.startsWith(QChar('-')))
+        QString arg = QString::fromLocal8Bit(argv[index]);
+        if (arg.startsWith(QLatin1Char('-')))
             continue;   // TODO
         else
             source = arg;

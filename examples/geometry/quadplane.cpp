@@ -59,7 +59,7 @@
 QuadPlane::QuadPlane(QObject *parent, QSizeF size, int level)
     : QGLSceneNode(parent)
 {
-    setObjectName("QuadPlane");
+    setObjectName(QLatin1String("QuadPlane"));
     if (level > 8)
         level = 8;
     if (level < 1)

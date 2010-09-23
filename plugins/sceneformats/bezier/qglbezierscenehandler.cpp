@@ -71,11 +71,11 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
 
             QChar sep;
             stream >> sep;
-            if (sep == '\n' || sep == '\r') {
+            if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r')) {
                 eoln = true;
                 break;
             }
-            if (sep != ',')
+            if (sep != QLatin1Char(','))
                 return 0;
         }
         if (!eoln) {
@@ -105,11 +105,11 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
 
             QChar sep;
             stream >> sep;
-            if (sep == '\n' || sep == '\r') {
+            if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r')) {
                 eoln = true;
                 break;
             }
-            if (sep != ',')
+            if (sep != QLatin1Char(','))
                 return 0;
         }
         vertices.append(coords[0], coords[1], coords[2]);
@@ -120,9 +120,9 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
 
                 QChar sep;
                 stream >> sep;
-                if (sep == '\n' || sep == '\r')
+                if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r'))
                     break;
-                if (sep != ',')
+                if (sep != QLatin1Char(','))
                     return 0;
             }
             patches.setNormal
@@ -135,7 +135,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
     if (!stream.atEnd()) {
         QChar ch;
         stream >> ch;
-        if (ch == '#') {
+        if (ch == QLatin1Char('#')) {
             QString options = stream.readLine();
             if (options.contains(QLatin1String("teapot-adjust"))) {
                 // Perform the "teapot adjustment" to convert the raw

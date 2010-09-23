@@ -96,7 +96,7 @@ public:
     {
         Q_UNUSED(uri);
         QDeclarativeContext *context = engine->rootContext();
-        context->setContextProperty("Qt3d", new Qt3dNamespace);
+        context->setContextProperty(QLatin1String("Qt3d"), new Qt3dNamespace);
     }
 };
 

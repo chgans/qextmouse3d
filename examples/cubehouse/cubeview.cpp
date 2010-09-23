@@ -180,7 +180,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     lightParameters->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
     painter->setMainLight(lightParameters);
 
-    QImage textureImage(":/qtlogo.png");
+    QImage textureImage(QLatin1String(":/qtlogo.png"));
     texture.setImage(textureImage);
 
     if (stereo) {

@@ -58,23 +58,23 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     , m_count(0)
 {
     QGLBuilder builder(materials);
-    setObjectName("ImageDisplay");
+    setObjectName(QLatin1String("ImageDisplay"));
 
     // build the wall
     m_wall = builder.currentNode();
-    m_wall->setObjectName("Wall");
+    m_wall->setObjectName(QLatin1String("Wall"));
     builder.pushNode();
     m_currentWall = builder.currentNode();
-    m_currentWall->setObjectName("wall 0");
+    m_currentWall->setObjectName(QLatin1String("wall 0"));
     builder << QGLCubeFace(QGLCubeFace::Front, 2.0f);
     builder.popNode();
 
     // build the frames
     m_frames = builder.currentNode();
-    m_frames->setObjectName("Frames");
+    m_frames->setObjectName(QLatin1String("Frames"));
     builder.pushNode();
     m_currentFrame = builder.newNode();
-    m_currentFrame->setObjectName("frame 0");
+    m_currentFrame->setObjectName(QLatin1String("frame 0"));
     builder << QGLCubeFace(QGLCubeFace::Front, 1.0f);
     builder.popNode();
 
@@ -94,7 +94,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     m_frames->setEffectEnabled(true);
     mat = new QGLMaterial();
     QGLTexture2D *tex = new QGLTexture2D(mat);
-    tex->setImage(QImage(":/res/images/no-images-yet.png"));
+    tex->setImage(QImage(QLatin1String(":/res/images/no-images-yet.png")));
     mat->setTexture(tex);
     m_currentFrame->setMaterial(mat);
 
@@ -111,7 +111,7 @@ void ImageDisplay::addImage(const QImage &image)
     {
         s = m_currentFrame->clone(m_frames);
         ++m_count;
-        s->setObjectName(QString("frame %1").arg(m_count));
+        s->setObjectName(QString::fromLatin1("frame %1").arg(m_count));
         QVector3D p = s->position();
         p.setX(p.x() - 2.0f);
         s->setPosition(p);
@@ -121,7 +121,7 @@ void ImageDisplay::addImage(const QImage &image)
             s->setScale(QVector3D(scale, scale, scale));
 
         s = m_currentWall->clone(m_wall);
-        s->setObjectName(QString("wall %1").arg(m_count));
+        s->setObjectName(QString::fromLatin1("wall %1").arg(m_count));
         p = s->position();
         p.setX(p.x() - 2.0f);
         s->setPosition(p);

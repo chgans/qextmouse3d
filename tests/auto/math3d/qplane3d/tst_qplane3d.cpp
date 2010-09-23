@@ -84,8 +84,10 @@ static inline bool fuzzyCompare(const QVector3D &lhs, const QVector3D &rhs)
             fuzzyCompare(lhs.y(), rhs.y()) &&
             fuzzyCompare(lhs.z(), rhs.z()))
         return true;
+#ifndef QT_NO_DEBUG_STREAM
     qWarning() << "actual:" << lhs;
     qWarning() << "expected:" << rhs;
+#endif
     return false;
 }
 

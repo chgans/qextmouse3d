@@ -50,17 +50,17 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // for QSettings
-    QCoreApplication::setOrganizationName("Nokia");
-    QCoreApplication::setOrganizationDomain("nokia.com");
-    QCoreApplication::setApplicationName("photobrowser3d");
+    QCoreApplication::setOrganizationName(QLatin1String("Nokia"));
+    QCoreApplication::setOrganizationDomain(QLatin1String("nokia.com"));
+    QCoreApplication::setApplicationName(QLatin1String("photobrowser3d"));
 
     int result = 0;
     {
         PhotoBrowser3DView view;
 
-        if (QApplication::arguments().contains("-maximize"))
+        if (QApplication::arguments().contains(QLatin1String("-maximize")))
             view.showMaximized();
-        else if (QApplication::arguments().contains("-fullscreen"))
+        else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
             view.showFullScreen();
         else
             view.show();

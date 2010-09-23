@@ -92,8 +92,10 @@ static inline bool fuzzyCompare(const QVector3D &lhs, const QVector3D &rhs)
             fuzzyCompare(lhs.y(), rhs.y()) &&
             fuzzyCompare(lhs.z(), rhs.z()))
         return true;
+#ifndef QT_NO_DEBUG_STREAM
     qWarning() << "actual:" << lhs;
     qWarning() << "expected:" << rhs;
+#endif
     return false;
 }
 
@@ -104,7 +106,7 @@ namespace QTest {
 template <>
 inline char *toString(const QVector3D& vec)
 {
-    return qstrdup(qPrintable(QString("(%1, %2, %3)").arg(vec.x()).arg(vec.y()).arg(vec.z())));
+    return qstrdup(qPrintable(QString::fromLatin1("(%1, %2, %3)").arg(vec.x()).arg(vec.y()).arg(vec.z())));
 }
 
 };
@@ -452,6 +454,7 @@ void tst_QRay3D::compare()
 
 void tst_QRay3D::dataStream()
 {
+#ifndef QT_NO_DATASTREAM
     QRay3D ray(QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
 
     QByteArray data;
@@ -467,6 +470,7 @@ void tst_QRay3D::dataStream()
     }
 
     QVERIFY(ray == ray2);
+#endif
 }
 
 void tst_QRay3D::transform_data()

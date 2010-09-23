@@ -68,7 +68,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     QVector2D tl(0.0f, 1.0f);
     {
         QGeometryData q;   // left
-        builder.currentNode()->setObjectName("left");
+        builder.currentNode()->setObjectName(QLatin1String("left"));
         q.appendVertex(blf, blb, tlb, tlf);
         q.appendTexCoord(bl, br, tr, tl);
         builder.addQuads(q);
@@ -77,7 +77,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         builder.newNode();   // top
-        builder.currentNode()->setObjectName("top");
+        builder.currentNode()->setObjectName(QLatin1String("top"));
         QGeometryData q;
         q.appendVertex(trf, tlf, tlb, trb);
         q.appendTexCoord(bl, br, tr, tl);
@@ -87,7 +87,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         builder.newNode();    // right
-        builder.currentNode()->setObjectName("right");
+        builder.currentNode()->setObjectName(QLatin1String("right"));
         QGeometryData q;
         q.appendVertex(brb, brf, trf, trb);
         q.appendTexCoord(bl, br, tr, tl);
@@ -97,7 +97,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         builder.newNode();    // bottom
-        builder.currentNode()->setObjectName("bottom");
+        builder.currentNode()->setObjectName(QLatin1String("bottom"));
         QGeometryData q;
         q.appendVertex(brb, blb, blf, brf);
         q.appendTexCoord(bl, br, tr, tl);
@@ -107,7 +107,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         builder.newNode();    // front
-        builder.currentNode()->setObjectName("front");
+        builder.currentNode()->setObjectName(QLatin1String("front"));
         QGeometryData q;
         q.appendVertex(brf, blf, tlf, trf);
         q.appendTexCoord(bl, br, tr, tl);
@@ -117,7 +117,7 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     }
     {
         builder.newNode();    // back
-        builder.currentNode()->setObjectName("back");
+        builder.currentNode()->setObjectName(QLatin1String("back"));
         QGeometryData q;
         q.appendVertex(blb, brb, trb, tlb);
         q.appendTexCoord(bl, br, tr, tl);
@@ -126,12 +126,12 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
         m_faces[5]->setMaterial(new QGLMaterial);
     }
     m_scene = builder.finalizedSceneNode();
-    m_scene->setObjectName("SkyboxList");
+    m_scene->setObjectName(QLatin1String("SkyboxList"));
     m_scene->setEffect(QGL::FlatReplaceTexture2D);
     m_scene->setEffectEnabled(true);
     m_scene->setParent(this);
 
-    setImagePath(imagePath.isEmpty() ? QString(":/") : imagePath);
+    setImagePath(imagePath.isEmpty() ? QLatin1String(":/") : imagePath);
 }
 
 
@@ -141,9 +141,9 @@ void SkyBox::setImagePath(const QString &imagePath)
     static QStringList expected;
 
     if (expected.isEmpty())
-        expected << "east" << "up" << "west" << "down" << "south" << "north";
+        expected << QLatin1String("east") << QLatin1String("up") << QLatin1String("west") << QLatin1String("down") << QLatin1String("south") << QLatin1String("north");
     if (expected2.isEmpty())
-        expected2 << "right" << "top" << "left" << "bottom" << "front" << "back";
+        expected2 << QLatin1String("right") << QLatin1String("top") << QLatin1String("left") << QLatin1String("bottom") << QLatin1String("front") << QLatin1String("back");
     if (imagePath != m_imagePath)
     {
         m_imagePath = imagePath;
@@ -173,7 +173,7 @@ void SkyBox::setImagePath(const QString &imagePath)
                 {
                     notFound.removeOne(expected.at(ix));
                     QUrl url;
-                    url.setScheme("file");
+                    url.setScheme(QLatin1String("file"));
                     url.setPath(ent.absoluteFilePath());
                     m_faces[ix]->material()->setTextureUrl(url);
                     m_faces[ix]->material()->texture()->setHorizontalWrap(QGL::ClampToEdge);

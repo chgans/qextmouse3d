@@ -1223,6 +1223,7 @@ void tst_QBox3D::transformed()
 
 void tst_QBox3D::dataStream()
 {
+#ifndef QT_NO_DATASTREAM
     QBox3D box1(QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
     QBox3D box2; // null
     QBox3D box3;
@@ -1249,6 +1250,7 @@ void tst_QBox3D::dataStream()
     QVERIFY(box1 == rbox1);
     QVERIFY(box2 == rbox2);
     QVERIFY(box3 == rbox3);
+#endif
 }
 
 class tst_QBox3DProperties : public QObject

@@ -54,52 +54,52 @@ QmlStanza::QmlStanza(const QString &name, QObject *parent)
 
 QString QmlStanza::toString() const
 {
-    static QString indent("    ");
+    QString indent = QLatin1String("    ");
 
     QString result = m_name;
     if (m_content.size() > 0)
     {
-        result += " {\n";
+        result += QLatin1String(" {\n");
         QStringList::const_iterator kit = m_keys.constBegin();
         for ( ; kit != m_keys.constEnd(); ++kit)
         {
             QString k = *kit;
             result += indent.repeated(m_indent + 1);
-            result += k + ": ";
+            result += k + QLatin1String(": ");
             QList<QmlStanza*> values;
             QMap<QString, QmlStanza *>::const_iterator it = m_content.constFind(k);
             for ( ; it != m_content.constEnd() && it.key() == k; ++it)
                 values.append(it.value());
             if (values.count() > 1)
             {
-                result += "[\n";
+                result += QLatin1String("[\n");
                 int ind = m_indent + 1;
                 QList<QmlStanza*>::const_iterator qit = values.constBegin();
-                QString separator = ",";
+                QString separator = QLatin1String(",");
                 for ( ; qit != values.constEnd(); ++qit)
                 {
                     QmlStanza *s = *qit;
                     if (s == values.last())
-                        separator = "";
+                        separator = QString();
                     s->setIndent(ind+1);
                     result += indent.repeated(ind + 1);
                     if (s->isQuoted())
-                        result += QString("\"%1\"%2\n").arg(s->toString()).arg(separator);
+                        result += QString::fromLatin1("\"%1\"%2\n").arg(s->toString()).arg(separator);
                     else
-                        result += s->toString() + QString("%1\n").arg(separator);
+                        result += s->toString() + QString::fromLatin1("%1\n").arg(separator);
                 }
-                result += indent.repeated(m_indent + 1) + "]\n";
+                result += indent.repeated(m_indent + 1) + QLatin1String("]\n");
             }
             else
             {
                 QmlStanza *s = values.at(0);
                 if (s->isQuoted())
-                    result += QString("\"%1\"\n").arg(s->toString());
+                    result += QString::fromLatin1("\"%1\"\n").arg(s->toString());
                 else
-                    result += s->toString() + "\n";
+                    result += s->toString() + QLatin1Char('\n');
             }
         }
-        result += indent.repeated(m_indent) + "}";
+        result += indent.repeated(m_indent) + QLatin1Char('}');
     }
     return result;
 }

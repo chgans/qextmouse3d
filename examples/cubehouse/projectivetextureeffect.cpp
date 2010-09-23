@@ -90,20 +90,22 @@ void ProjectiveTextureEffect::recalulateObjectLinearTexgenMatrix()
 
 void ProjectiveTextureEffect::setupShaders()
 {
-    QString vertexShaderFileName = ":/shaders/objectlineartexgen.vert";
+    QString vertexShaderFileName = QLatin1String(":/shaders/objectlineartexgen.vert");
     QFile vertexShaderFile(vertexShaderFileName);
     if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        setVertexShader(vertexShaderFile.readAll());
+        QByteArray all(vertexShaderFile.readAll());
+        setVertexShader(QString::fromLatin1(all.constData(), all.size()));
     } else {
         qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
     }
 
-    QString fragmentShaderFileName = ":/shaders/objectlineartexgen.frag";
+    QString fragmentShaderFileName = QLatin1String(":/shaders/objectlineartexgen.frag");
     QFile fragmentShaderFile(fragmentShaderFileName);
     if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        setFragmentShader((fragmentShaderFile.readAll()));
+        QByteArray all(fragmentShaderFile.readAll());
+        setFragmentShader(QString::fromLatin1(all.constData(), all.size()));
     } else {
         qWarning() << "Could not open file "<<fragmentShaderFileName<<", failed to load fragment shader";
     }

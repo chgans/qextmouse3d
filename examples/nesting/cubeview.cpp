@@ -57,12 +57,12 @@ CubeView::CubeView(QWidget *parent)
     builder.newSection(QGL::Faceted);
     builder << QGLCube(1.5f);
     cube = builder.currentNode();
-    cube->setObjectName("Cube");
+    cube->setObjectName(QLatin1String("Cube"));
 
     builder.newSection();
     builder << QGLTeapot();
     teapot = builder.currentNode();
-    teapot->setObjectName("Teapot");
+    teapot->setObjectName(QLatin1String("Teapot"));
 
     scene = builder.finalizedSceneNode();
     scene->setParent(this);
@@ -111,7 +111,7 @@ void CubeView::initializeGL(QGLPainter *)
 //! [4]
 
 //! [5]
-    QImage textureImage(":/qtlogo.png");
+    QImage textureImage(QLatin1String(":/qtlogo.png"));
     qtlogo.setImage(textureImage);
 
     glEnable(GL_BLEND);
