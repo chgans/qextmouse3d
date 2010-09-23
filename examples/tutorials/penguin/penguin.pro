@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = model
+TARGET = penguin
 CONFIG += qt \
     debug \
     warn_on

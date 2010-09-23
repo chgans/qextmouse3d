@@ -1,5 +1,6 @@
 TEMPLATE = app
-TARGET = model_advanced
+TARGET = penguin
+DESTDIR = ../../../bin
 CONFIG += qt \
     debug \
     warn_on
