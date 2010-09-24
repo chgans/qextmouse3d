@@ -56,8 +56,6 @@ class ImageLoader : public QThread
 {
     Q_OBJECT
 public:
-    explicit ImageLoader(ImageManager *manager);
-    ~ImageLoader();
     QUrl url() const { return m_url; }
     void setUrl(const QUrl &url) { m_url = url; }
 signals:
@@ -69,7 +67,6 @@ private:
     void loadFile();
 
     QUrl m_url;
-    ThumbnailableImage *m_image;
 };
 
 #endif // IMAGELOADER_H

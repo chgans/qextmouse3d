@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     thumbnailableimage.cpp \
     qatlas.cpp \
     thumbnailnode.cpp \
-    thumbnaileffect.cpp
+    thumbnaileffect.cpp \
+    synchronizedlist.cpp
 
 HEADERS  += photobrowser3dview.h \
     imagedisplay.h \
@@ -29,7 +30,8 @@ HEADERS  += photobrowser3dview.h \
     thumbnailableimage.h \
     qatlas.h \
     thumbnailnode.h \
-    thumbnaileffect.h
+    thumbnaileffect.h \
+    synchronizedlist.h
 
 RESOURCES += \
     photobrowser3d.qrc

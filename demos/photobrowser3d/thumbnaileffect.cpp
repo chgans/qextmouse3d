@@ -39,9 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglflattextureeffect.h"
-#include "qglabstracteffect_p.h"
-#include "qglext_p.h"
+#include "thumbnaileffect.h"
 
 #include <QtOpenGL/qglshaderprogram.h>
 
@@ -53,6 +51,7 @@ public:
         , matrixUniform(-1)
         , thumbnailUniform(-1)
         , thumbnail(false)
+        , thumbnailUpdateRequired(false)
     {
     }
     ~ThumbnailEffectPrivate() { delete program; }
@@ -62,6 +61,7 @@ public:
     int thumbnailUniform;
     // true if we render a thumbnail, false do the large size
     bool thumbnail;
+    bool thumbnailUpdateRequired;
 };
 
 /*!
@@ -99,42 +99,40 @@ void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
 {
 
     Q_UNUSED(painter);
-    Q_D(ThumbnailEffect);
     if (!d->program) {
         if (!flag)
             return;
-        QGLShaderProgram *program = new QGLShaderProgram();
-        program->addShaderFromSourceFile(QGLShader::Vertex, ":/shaders/replace_texture.vsh");
-        program->addShaderFromSourceFile(QGLShader::Fragment, ":/shaders/replace_texture.fsh");
-        program->bindAttributeLocation("vertex", QGL::Position);
-        program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
-        program->bindAttributeLocation("thumbcoord", QGL::TextureCoord1);
-        if (!program->link()) {
-            qWarning("ThumbnailEffect::setActive(): could not link shader program");
-            delete program;
-            program = 0;
+        d->program = new QGLShaderProgram();
+        d->program->addShaderFromSourceFile(QGLShader::Vertex, ":/shaders/replace_texture.vsh");
+        d->program->addShaderFromSourceFile(QGLShader::Fragment, ":/shaders/replace_texture.fsh");
+        d->program->bindAttributeLocation("vertex", QGL::Position);
+        d->program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
+        d->program->bindAttributeLocation("thumbcoord", QGL::TextureCoord1);
+        if (!d->program->link()) {
+            qWarning("ThumbnailEffect::setActive(): could not link shader d->program");
+            delete d->program;
+            d->program = 0;
             return;
         }
-        d->program = program;
-        d->matrixUniform = program->uniformLocation("matrix");
-        d->matrixUniform = program->uniformLocation("thumb");
-        program->bind();
-        program->setUniformValue("texture", 0);
-        program->enableAttributeArray(QGL::Position);
-        program->enableAttributeArray(QGL::TextureCoord0);
-        program->enableAttributeArray(QGL::TextureCoord1);
+        d->matrixUniform = d->program->uniformLocation("matrix");
+        d->thumbnailUniform = d->program->uniformLocation("thumb");
+        d->program->bind();
+        d->program->setUniformValue("texture", 0);
+        d->program->enableAttributeArray(QGL::Position);
+        d->program->enableAttributeArray(QGL::TextureCoord0);
+        d->program->enableAttributeArray(QGL::TextureCoord1);
     } else if (flag) {
-        d->matrixUniform = program->uniformLocation("matrix");
-        program->bind();
-        program->setUniformValue("texture", 0);
-        program->enableAttributeArray(QGL::Position);
-        program->enableAttributeArray(QGL::TextureCoord0);
-        program->enableAttributeArray(QGL::TextureCoord1);
+        d->matrixUniform = d->program->uniformLocation("matrix");
+        d->program->bind();
+        d->program->setUniformValue("texture", 0);
+        d->program->enableAttributeArray(QGL::Position);
+        d->program->enableAttributeArray(QGL::TextureCoord0);
+        d->program->enableAttributeArray(QGL::TextureCoord1);
     } else {
-        program->disableAttributeArray(QGL::Position);
-        program->disableAttributeArray(QGL::TextureCoord0);
-        program->disableAttributeArray(QGL::TextureCoord1);
-        program->release();
+        d->program->disableAttributeArray(QGL::Position);
+        d->program->disableAttributeArray(QGL::TextureCoord0);
+        d->program->disableAttributeArray(QGL::TextureCoord1);
+        d->program->release();
     }
 }
 
@@ -144,13 +142,17 @@ void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
 void ThumbnailEffect::update
         (QGLPainter *painter, QGLPainter::Updates updates)
 {
-    Q_D(ThumbnailEffect);
+    Q_ASSERT(d->program);
     if ((updates & QGLPainter::UpdateMatrices) != 0)
     {
         d->program->setUniformValue(d->matrixUniform,
                                     painter->combinedMatrix());
     }
-    d->program->setUniformValue(d->thumbUniform, d->thumbnail);
+    if (d->thumbnailUpdateRequired)
+    {
+        d->program->setUniformValue(d->thumbnailUniform, d->thumbnail);
+        d->thumbnailUpdateRequired = false;
+    }
 }
 
 /*!
@@ -159,7 +161,7 @@ void ThumbnailEffect::update
 void ThumbnailEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
-    Q_D(ThumbnailEffect);
+    Q_ASSERT(d->program);
     if (attribute == QGL::Position)
         setAttributeArray(d->program, QGL::Position, value);
     else if (attribute == QGL::TextureCoord0)
@@ -170,7 +172,11 @@ void ThumbnailEffect::setVertexAttribute
 
 void ThumbnailEffect::setThumbnail(bool enable)
 {
-    d->thumbnail = enable;
+    if (d->thumbnail != enable)
+    {
+        d->thumbnailUpdateRequired = true;
+        d->thumbnail = enable;
+    }
 }
 
 bool ThumbnailEffect::thumbnail() const

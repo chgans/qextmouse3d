@@ -56,15 +56,6 @@
 #include <QMutex>
 #include <QMutexLocker>
 
-ImageLoader::ImageLoader(ImageManager *manager)
-    : QThread(manager)
-{
-}
-
-ImageLoader::~ImageLoader()
-{
-}
-
 void ImageLoader::loadFile()
 {
     // FIXME: actually handle remote files
@@ -96,61 +87,21 @@ void ImageLoader::loadFile()
         errorMessage = tr("Could not read: %1").arg(m_url.toString());
     }
 
-    QString p = m_url.path();
-    p = p.section("/", -1);
-    int max = im.isNull() ? 128 : qMax(im.width(), im.height());
-    QImage frm;
-    if (max <= 64)
-        frm = QImage(QSize(64, 64), QImage::Format_ARGB32);
-    else if (max <= 128)
-        frm = QImage(QSize(128, 128), QImage::Format_ARGB32);
-    else if (max <= 256)
-        frm = QImage(QSize(256, 256), QImage::Format_ARGB32);
-    else if (max <= 512)
-        frm = QImage(QSize(512, 512), QImage::Format_ARGB32);
-    else
-        frm = QImage(QSize(1024, 1024), QImage::Format_ARGB32);
-    frm.fill(qRgba(0, 30, 50, 64));
-    QPainter ptr;
-    ptr.begin(&frm);
-    ptr.setBackgroundMode(Qt::TransparentMode);
-
-    if (!im.isNull())
+    if (im.isNull())
     {
-        QRect r;
-        if (max > 1024)
-        {
-            if (max == im.width())
-            {
-                float h = float(1024) * float(im.height()) / float(im.width());
-                r.setSize(QSize(1024, h));
-            }
-            else
-            {
-                float w = float(1024) * float(im.width()) / float(im.height());
-                r.setSize(QSize(w, 1024));
-            }
-        }
-        else
-        {
-            r.setSize(im.size());
-        }
-        int left = (frm.width() - r.width()) / 2;
-        int top = (frm.height() - r.height()) / 2;
-        r.moveTopLeft(QPoint(left, top));
-        QThread::yieldCurrentThread();
-        ptr.drawImage(r, im);
-    }
-    else
-    {
+        im = QImage(QSize(128, 128), QImage::Format_ARGB32);
+        im.fill(qRgba(0, 30, 50, 64));
+        QPainter ptr;
+        ptr.begin(&im);
+        ptr.setBackgroundMode(Qt::TransparentMode);
         if (errorMessage.isEmpty())
             errorMessage = tr("Could not load: %1").arg(m_url.toString());
         ptr.setPen(QColor("orange"));
-        ptr.drawText(frm.rect(), errorMessage, Qt::AlignCenter);
+        ptr.drawText(im.rect(), Qt::AlignCenter, errorMessage);
+        ptr.end();
     }
 
-    ptr.end();
-    emit imageLoaded(frm);
+    emit imageLoaded(im);
 }
 
 void ImageLoader::run()

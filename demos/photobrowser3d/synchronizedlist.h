@@ -39,53 +39,48 @@
 **
 ****************************************************************************/
 
+#ifndef SYNCHRONIZEDLIST_H
+#define SYNCHRONIZEDLIST_H
 
-#ifndef IMAGEMANAGER_H
-#define IMAGEMANAGER_H
-
-#include <QThread>
-#include <QUrl>
-#include <QImage>
+#include <QList>
 #include <QMutex>
+#include <QMutexLocker>
 
-#include "thumbnailableimage.h"
-#include "synchronizedlist.h"
-
-class Launcher;
-class QSemaphore;
-class QAtlas;
-class ImageLoader;
-
-class ImageManager : public QThread
+template <typename T>
+class SynchronizedList
 {
-    Q_OBJECT
 public:
-    explicit ImageManager(QObject *parent = 0);
-    void setImageBaseUrl(const QUrl &url) { m_url = url; }
-    QUrl imageBaseUrl() const { return m_url; }
-    QAtlas *atlas() const { return m_atlas; }
-signals:
-    void imageUrl(const QUrl &);
-    void imageReady(const ThumbnailableImage &);
-    void errorOccurred(const QString &);
-public slots:
-    void acquire();
-    void release();
-    void createLoader(const QUrl &);
-protected:
-    void run();
-private slots:
-    void incrementCounter();
+    SynchronizedList() { }
+
+    ~SynchronizedList()
+    {
+        qDeleteAll(m_items);
+    }
+
+    void append(T *item)
+    {
+        QMutexLocker locker(&m_lock);
+        m_items.append(item);
+    }
+
+    T *takeFirst()
+    {
+        T *result = 0;
+        QMutexLocker locker(&m_lock);
+        if (!m_items.isEmpty())
+            result = m_items.takeFirst();
+        return result;
+    }
+
+    void clear()
+    {
+        QMutexLocker locker(&m_lock);
+        m_items.clear();
+    }
+
 private:
-    ImageLoader *getLoader();
-    QUrl m_url;
-    QSemaphore *m_sem;
-    int m_threadPoolSize;
-    SynchronizedList<ImageLoader> *m_freeWorkers;
-    SynchronizedList<ImageLoader> *m_allWorkers;
-    Launcher *m_launcher;
-    int m_count;
-    QAtlas *m_atlas;
+    QList<T *> m_items;
+    QMutex m_lock;
 };
 
-#endif // IMAGEMANAGER_H
+#endif // SYNCHRONIZEDLIST_H

@@ -51,6 +51,7 @@ class QGLBuilder;
 class QGLTexture2D;
 class QFramesScene;
 class QGLPainter;
+class ThumbnailNode;
 
 class ImageDisplay : public QGLSceneNode
 {
@@ -69,7 +70,7 @@ private:
     QGLSceneNode *m_wall;
     QGLSceneNode *m_frames;
     QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
+    ThumbnailNode *m_currentFrame;
     QFramesScene *m_frameScene;
     QGLAbstractEffect *m_effect;
     bool m_imageSetToDefault;
@@ -78,6 +79,9 @@ private:
     qreal m_frameSize;
     int m_maxImages;
     QImage m_frameImage;
+    QGLMaterial *m_frameLoadingMaterial;
+    QGeometryData m_frameGeometry;
+    QVector2DArray m_atlasPlaceHolder;
 };
 
 #endif // IMAGEDISPLAY_H

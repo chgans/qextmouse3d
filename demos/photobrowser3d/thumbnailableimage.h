@@ -45,24 +45,28 @@
 #include <QRectF>
 #include <QMetaType>
 
+#include "qarray.h"
+#include "qgeometrydata.h"
+
 class QAtlas;
 class QImage;
 class ThumbnailableImagePrivate;
+class QGLPainter;
 
 class ThumbnailableImage
 {
 public:
-    explicit ThumbnailableImage(QAtlas *atlas = 0, qreal scale = 15.0);
+    ThumbnailableImage();
+    ThumbnailableImage(const ThumbnailableImage&);
     ~ThumbnailableImage();
 
-    ThumbnailableImage(const ThumbnailableImage&);
     ThumbnailableImage &operator=(const ThumbnailableImage &);
 
     void setThumbnailed(bool enable);
     bool isThumbnailed() const;
 
-    QImage *data() const;
-    void setData(QImage *data);
+    QImage data() const;
+    void setData(QImage data);
 
     QUrl url() const;
     void setUrl(const QUrl &url);
@@ -74,13 +78,12 @@ public:
     qreal scale() const;
 
     void minimize();
-    void draw(QGLPainter *painter);
+    bool isMinimized() const;
 
-    int start() const;
-    void setStart(int start);
+    QGL::IndexArray indices() const;
+    void setIndices(const QGL::IndexArray &indices);
 
-    int count() const;
-    void setCount(int count);
+    bool isNull() { return d  == 0; }
 
 private:
     void detach();

@@ -41,14 +41,16 @@
 
 #include "thumbnailableimage.h"
 #include "qareaallocator_p.h"
-#include "qgeometrydata.h"
+#include "qgltexture2d.h"
+#include "qglmaterial.h"
+#include "qatlas.h"
 
 #include <QUrl>
 
 class ThumbnailableImagePrivate
 {
 public:
-    ThumbnailableImagePrivate(QAtlas *atlas, qreal scale);
+    ThumbnailableImagePrivate();
     ~ThumbnailableImagePrivate();
 
     ThumbnailableImagePrivate *clone() const;
@@ -58,30 +60,26 @@ public:
     bool thumbnailed;
     QUrl url;
     QAtlas *atlas;
-    QImage *data;
+    QImage data;
     QGLTexture2D *tex;
     QGLMaterial *mat;
-    QRectF frame;
+    QRect frame;
     qreal scale;
-    int id;
-    int start;
-    int count;
+    QGL::IndexArray indices;
 };
 
-ThumbnailableImagePrivate::ThumbnailableImagePrivate(QAtlas *atlas, qreal scale)
+ThumbnailableImagePrivate::ThumbnailableImagePrivate()
     : thumbnailed(false)
-    , atlas(atlas)
-    , data(0)
+    , atlas(0)
     , tex(0)
     , mat(0)
-    , scale(scale)
+    , scale(15.0f)
 {
     ref = 0;
 }
 
 ThumbnailableImagePrivate::~ThumbnailableImagePrivate()
 {
-    delete data;
 }
 
 ThumbnailableImagePrivate *ThumbnailableImagePrivate::clone() const
@@ -94,12 +92,11 @@ ThumbnailableImagePrivate *ThumbnailableImagePrivate::clone() const
     temp->mat = mat;
     temp->frame = frame;
     temp->scale = scale;
-    temp->id = id;
-    temp->start = start;
-    temp->count = count;
+    temp->indices = indices;
+    return temp;
 }
 
-ThumbnailableImage::ThumbnailableImage(QAtlas *atlas, qreal scale)
+ThumbnailableImage::ThumbnailableImage()
     : d(0)
 {
 }
@@ -146,21 +143,14 @@ void ThumbnailableImage::setThumbnailed(bool enable)
     {
         if (enable)
         {
-            QSize sz = (d->frame.size() / d->scale).toSize();
-            d->frame = d->atlas->allocate(sz);
-        }
-        else
-        {
-            if (d->data)
+            if (d->frame.isEmpty())
             {
-                d->thumbnailed = false;
-                // its ok, use data which didnt get garbaged collected yet
-            }
-            else
-            {
-
+                Q_ASSERT(!d->data.isNull());
+                QSize sz = (QSizeF(d->frame.size()) / d->scale).toSize();
+                d->frame = d->atlas->allocate(sz, d->data, d->indices);
             }
         }
+        d->thumbnailed = enable;
     }
 }
 
@@ -172,15 +162,15 @@ bool ThumbnailableImage::isThumbnailed() const
     return result;
 }
 
-QImage *ThumbnailableImage::data() const
+QImage ThumbnailableImage::data() const
 {
-    QImage *result = 0;
+    QImage result;
     if (d)
         result = d->data;
     return result;
 }
 
-void ThumbnailableImage::setData(QImage *data)
+void ThumbnailableImage::setData(QImage data)
 {
     detach();
     d->data = data;
@@ -237,50 +227,37 @@ void ThumbnailableImage::minimize()
     detach();
     if (d->thumbnailed)
     {
-        d->atlas->release(d->id);
-        delete d->data;
-        d->data = 0;
+        // If thumbnailed, I don't really need the full size image
+        d->data = QImage();
     }
-}
-
-void ThumbnailableImage::draw(QGLPainter *painter)
-{
-    if (!d)
+    else
     {
-        qDebug() << "ThumbnailableImage::draw -- Attempt to draw null";
-        return;
+        // If not thumbnailed, I don't need the atlas resources
+        d->atlas->release(d->frame);
+        d->frame = QRect();
     }
-    d->atlas->apply(painter);
-    QGeometryData d = d->image->atlas()->geometry();
-    d.draw(painter, d->start, d->count);
 }
 
-int ThumbnailableImage::start() const
+bool ThumbnailableImage::isMinimized() const
 {
-    int result = 0;
+    bool result = true;
     if (d)
-        result = d->start;
+        result = (d->thumbnailed) ? (d->data.isNull()) : (d->frame.isNull());
     return result;
 }
 
-void ThumbnailableImage::setStart(int start)
+void ThumbnailableImage::setIndices(const QGL::IndexArray &indices)
 {
     detach();
-    d->start = start;
+    d->indices = indices;
 }
 
-int ThumbnailableImage::count() const
+QGL::IndexArray ThumbnailableImage::indices() const
 {
-    int result = 0;
+    QGL::IndexArray result;
     if (d)
-        result = d->count;
+        result = d->indices;
     return result;
-}
-
-void ThumbnailableImage::setCount(int count)
-{
-    detach();
-    d->count = count;
 }
 
 /*!
@@ -291,14 +268,14 @@ void ThumbnailableImage::detach()
 {
     if (!d) // lazy creation of data block
     {
-        d = new ThumbnailNodePrivate;
+        d = new ThumbnailableImagePrivate;
         d->ref.ref();
     }
     else
     {
         if (d->ref > 1)  // being shared, must detach
         {
-            ThumbnailNodePrivate *temp = d->clone();
+            ThumbnailableImagePrivate *temp = d->clone();
             d->ref.deref();
             d = temp;
             d->ref.ref();

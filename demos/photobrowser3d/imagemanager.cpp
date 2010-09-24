@@ -59,17 +59,16 @@ ImageManager::ImageManager(QObject *parent)
     : QThread(parent)
     , m_sem(0)
     , m_threadPoolSize(0)
+    , m_freeWorkers(0)
+    , m_allWorkers(0)
     , m_launcher(0)
     , m_atlas(new QAtlas)
 {
     m_threadPoolSize = QThread::idealThreadCount();
-    if (m_threadPoolSize == -1)
-        m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS + 2;
-    // need at least 3 threads - manager, launcher & one loader
-    Q_ASSERT(m_threadPoolSize > 2);
-    // debug ---- remove me
-    m_threadPoolSize = 3;
-    --m_sem;  // take one thread out for this manager objects run()
+    if (m_threadPoolSize < 3)
+        m_threadPoolSize = 3;
+    if (m_threadPoolSize > Q_MAX_CONCURRENT_LOADERS)
+        m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS;
     m_sem = new QSemaphore(m_threadPoolSize);
 }
 
@@ -87,21 +86,31 @@ void ImageManager::release()
     if (loader)
     {
         Q_ASSERT(loader->isFinished());
-        loader->deleteLater();  // delete on return to event loop
+        m_freeWorkers->append(loader);
     }
     m_sem->release();
-    if (m_sem->available() == m_threadPoolSize)
-    //    quit();
+}
+
+ImageLoader *ImageManager::getLoader()
+{
+    ImageLoader *loader = m_freeWorkers->takeFirst();
+    if (loader == 0)
+    {
+        loader = new ImageLoader;
+        m_allWorkers->append(loader);
+    }
+    return loader;
 }
 
 void ImageManager::createLoader(const QUrl &url)
 {
-    ImageLoader *loader = new ImageLoader(this);
+    m_sem->acquire();
+    ImageLoader *loader = getLoader();
     loader->setUrl(url);
     connect(loader, SIGNAL(finished()), this, SLOT(release()));
     connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
             SIGNAL(imageReady(ThumbnailableImage)));
-    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this, SLOT(incrementCounter()));
+    //connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this, SLOT(incrementCounter()));
     loader->start(QThread::IdlePriority);
 }
 
@@ -125,8 +134,13 @@ void ImageManager::run()
     QTime timer;
     timer.start();
     exec();
-    fprintf(stderr, "ImageManager::run - %d images loaded from %s in %d ms\n",
-            m_count, qPrintable(m_url.path()), timer.elapsed());
+    //fprintf(stderr, "ImageManager::run - %d images loaded from %s in %d ms\n",
+    //        m_count, qPrintable(m_url.path()), timer.elapsed());
     delete m_launcher;
     m_launcher = 0;
+    m_freeWorkers->clear();
+    delete m_freeWorkers;
+    m_freeWorkers = 0;
+    delete m_allWorkers;   // delete all workers
+    m_allWorkers = 0;
 }

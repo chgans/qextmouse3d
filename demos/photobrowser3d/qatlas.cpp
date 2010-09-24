@@ -43,6 +43,8 @@
 #include "qareaallocator_p.h"
 #include "qgltexture2d.h"
 #include "qglpainter.h"
+#include "qgeometrydata.h"
+#include "qglmaterial.h"
 
 #include <QImage>
 
@@ -50,10 +52,14 @@ QAtlas::QAtlas()
     : m_size(1024, 1024)
     , m_data(new QImage(m_size, QImage::Format_ARGB32))
     , m_allocator(new QSimpleAreaAllocator(m_size))
-    , m_tex(0)
+    , m_tex(new QGLTexture2D)
+    , m_material(new QGLMaterial)
+    , m_geometry(0)
 {
     // show errors in red
     m_data->fill(qRgb(255, 0, 0));
+    m_tex->setImage(*m_data);
+    m_material->setTexture(m_tex, 1);
 }
 
 QAtlas::~QAtlas()
@@ -63,27 +69,28 @@ QAtlas::~QAtlas()
     delete m_tex;
 }
 
-QRect QAtlas::allocate(const QSize &size, const QImage &image)
+QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices)
 {
     QRect a = m_allocator->allocate(size);
     if (a.isEmpty())
     {
         qWarning("QAtlas::allocate: overflowed");
-        return;
+        return a;
     }
     QPainter painter;
     painter.begin(m_data);
     painter.drawImage(a, image);
     painter.end();
+    m_tex->setImage(*m_data);
+    Q_ASSERT(m_geometry);
+    m_geometry->texCoord(indices.at(0), QGL::TextureCoord1) = QVector2D(a.left(), a.bottom());
+    m_geometry->texCoord(indices.at(1), QGL::TextureCoord1) = QVector2D(a.right(), a.bottom());
+    m_geometry->texCoord(indices.at(2), QGL::TextureCoord1) = QVector2D(a.right(), a.top());
+    m_geometry->texCoord(indices.at(3), QGL::TextureCoord1) = QVector2D(a.left(), a.top());
+    return a;
 }
 
-void QAtlas::apply(QGLPainter *painter)
+void QAtlas::release(QRect frame)
 {
-    if (m_tex == 0)
-    {
-        m_tex = new QGLTexture2D;
-        m_tex->setImage(m_data);
-    }
-    painter->glActiveTexture(GL_TEXTURE1);
-    m_tex->bind();
+    m_allocator->release(frame);
 }

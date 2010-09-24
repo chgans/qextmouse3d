@@ -44,45 +44,46 @@
 
 #include <QSize>
 
+#include "qarray.h"
 #include "qgeometrydata.h"
 
 class QImage;
 class QAreaAllocator;
-class QTexture2D;
+class QGLTexture2D;
 class QGLMaterial;
+class QGeometryData;
 
 class QAtlas
 {
 public:
-    QAtlas(QImage *data, QAreaAllocator *allocator)
-        : m_data(data)
-        , m_allocator(allocator)
-    {}
-
+    QAtlas();
     ~QAtlas();
 
     QImage *data() const { return m_data; }
     void setData(QImage *data) { m_data = data; }
 
-    QTexture2D *texture() const { return m_tex; }
-    void setTexture(QTexture2D *texture) { m_tex = texture; }
+    QGLTexture2D *texture() const { return m_tex; }
+    void setTexture(QGLTexture2D *texture) { m_tex = texture; }
 
-    QAreaAllocator allocator() const { return m_allocator; }
+    QAreaAllocator *allocator() const { return m_allocator; }
     void setAllocator(QAreaAllocator *allocator) { m_allocator = allocator; }
 
-    QRect allocate(const QSize &size);
+    QRect allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices);
 
-    void apply(QGLPainter *painter);
+    void release(QRect frame);
 
-    QGeometryData geometry() const { return m_geometry; }
+    void setGeometry(QGeometryData *geometry) { m_geometry = geometry; }
+    QGeometryData *geometry() { return m_geometry; }
+
+    QGLMaterial *material() { return m_material; }
 
 private:
     QSize m_size;
     QImage *m_data;
     QAreaAllocator *m_allocator;
-    QTexture2D *m_tex;
+    QGLTexture2D *m_tex;
     QGLMaterial *m_material;
-    QGeometryData m_geometry;
+    QGeometryData *m_geometry;
 };
 
 #endif // QATLAS_H

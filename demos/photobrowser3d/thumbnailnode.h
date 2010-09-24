@@ -44,11 +44,11 @@
 #define THUMBNAILNODE_H
 
 #include "qglscenenode.h"
+#include "thumbnailableimage.h"
 
 #include <QtCore/qmath.h>
 #include <QUrl>
 
-class ThumbnailableImage;
 class ImageManager;
 
 class ThumbnailNode : public QGLSceneNode
@@ -61,19 +61,22 @@ public:
     void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
     qreal threshold() const { return qSqrt(m_thresholdSquared); }
     void draw(QGLPainter *painter);
-    ThumbnailableImage *image() const { return m_image; }
-    void setImage(ThumbnailableImage *image);
-    void updateFrom(const QGLSceneNode *node);
-    void setManager(ImageManager *manager) { m_manager = manager; }
+    ThumbnailableImage image() const { return m_image; }
+    void setThumbGeometry(QGeometryData *geometry) { m_geometry = geometry; }
+    QGeometryData *thumbGeometry() { return m_geometry; }
 signals:
     void imageRequired(const QUrl &);
+public slots:
+    void setImage(const ThumbnailableImage &image);
 private:
-    ThumbnailableImage *m_image;
+    void setupLoading(QGLPainter *painter);
+    ThumbnailableImage m_image;
     qreal m_thresholdSquared;
-    ImageManager *m_manager;
     QUrl m_url;
     int m_defaultMaterial;
     bool m_loading;
+    QGeometryData *m_geometry;
+    QGLMaterial *m_fullImageMaterial;
 };
 
 #endif // THUMBNAILNODE_H
