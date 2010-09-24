@@ -91,6 +91,7 @@ public:
     void addQuadsInterleaved(const QGeometryData &top,
                         const QGeometryData &bottom);
     inline void addPane(qreal size = 1.0f);
+    inline void addPane(QSizeF size);
 
 protected:
     // internal and test functions
@@ -109,11 +110,16 @@ private:
 
 inline void QGLBuilder::addPane(qreal size)
 {
-    qreal f = size / 2.0f;
-    QVector2D a(-f, -f);
-    QVector2D b(f, -f);
-    QVector2D c(f, f);
-    QVector2D d(-f, f);
+    addPane(QSizeF(size, size));
+}
+
+inline void QGLBuilder::addPane(QSizeF size)
+{
+    QSizeF f = size / 2.0f;
+    QVector2D a(-f.width(), -f.height());
+    QVector2D b(f.width(), -f.height());
+    QVector2D c(f.width(), f.height());
+    QVector2D d(-f.width(), f.height());
     QVector2D ta(0.0f, 0.0f);
     QVector2D tb(1.0f, 0.0f);
     QVector2D tc(1.0f, 1.0f);

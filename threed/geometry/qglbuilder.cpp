@@ -923,6 +923,19 @@ void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
 
 /*!
     \fn void QGLBuilder::addPane(qreal size)
+    Convenience function to create a quad centered on the origin,
+    lying in the Z=0 plane, with sides \a size long.
+*/
+
+/*!
+    \fn void QGLBuilder::addPane(QSizeF size)
+    Convenience function to create a quad centered on the origin,
+    lying in the Z=0 plane, with width (x dimension) and height
+    (y dimension) specified by \a size.
+*/
+
+/*!
+    \fn void QGLBuilder::addPane(qreal size)
     Convenience method to add a single quad of dimensions \a size wide by
     \a size high in the z = 0 plane, centered on the origin.  The quad has
     texture coordinates of (0, 0) at the bottom left and (1, 1) at the top
