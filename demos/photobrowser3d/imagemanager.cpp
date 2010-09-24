@@ -50,97 +50,129 @@
 #include <QTime>
 #include <QTimer>
 #include <QDebug>
-
-#ifndef Q_MAX_CONCURRENT_LOADERS
-#define Q_MAX_CONCURRENT_LOADERS 8
-#endif
+#include <QCoreApplication>
 
 ImageManager::ImageManager(QObject *parent)
     : QThread(parent)
-    , m_sem(0)
-    , m_threadPoolSize(0)
-    , m_freeWorkers(0)
-    , m_allWorkers(0)
-    , m_launcher(0)
     , m_atlas(new QAtlas)
+    , m_stop(true)
 {
-    m_threadPoolSize = QThread::idealThreadCount();
-    if (m_threadPoolSize < 3)
-        m_threadPoolSize = 3;
-    if (m_threadPoolSize > Q_MAX_CONCURRENT_LOADERS)
-        m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS;
-    m_sem = new QSemaphore(m_threadPoolSize);
 }
 
-void ImageManager::acquire()
+ImageManager::~ImageManager()
 {
-    // block if threads running > m_threadPoolSize
-    QTime time;
-    time.start();
-    m_sem->acquire();
+    delete m_atlas;
 }
 
-void ImageManager::release()
+/*!
+    Stop the running file scan if any, then sit waiting in the event loop
+    for a quit call.
+*/
+void ImageManager::stop()
 {
-    ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    if (loader)
+    m_stop = true;
+}
+
+/*!
+    Stop the running file scan if any, then exit the event loop by calling
+    QThread::quit().
+*/
+void ImageManager::quit()
+{
+    m_stop = true;
+    QThread::quit();
+}
+
+/*!
+    Stop any current scan, and (after a short delay) initiate a new scan
+    for image file names.
+*/
+void ImageManager::rescan()
+{
+    m_stop = true;
+    QTimer::singleShot(20, this, SLOT(scanForFiles()));
+}
+
+void ImageManager::scanForFiles()
+{
+    // debug
+    QTime timer;
+    timer.start();
+
+    m_stop = false;
+    m_count = 0;
+    QStringList queue;
+    queue.append(m_url.path());
+    QSet<QString> loopProtect;
+    while (queue.size() > 0 && !m_stop)
     {
-        Q_ASSERT(loader->isFinished());
-        m_freeWorkers->append(loader);
+        QString path = queue.takeFirst();
+        QFileInfo u(path);
+        if (u.isSymLink())
+            path = u.symLinkTarget();
+        if (u.isDir())
+        {
+            if (!loopProtect.contains(path))
+            {
+                loopProtect.insert(path);
+                QDir dir(path);
+                QStringList entries = dir.entryList();
+                QStringList::const_iterator it = entries.constBegin();
+                for ( ; it != entries.constEnd(); ++it)
+                {
+                    // ignore hidden files, system directories
+                    if ((*it).startsWith("."))
+                        continue;
+                    queue.append(dir.absoluteFilePath(*it));
+                }
+            }
+        }
+        else
+        {
+            if (u.isFile() && u.isReadable())
+            {
+                // do no checking here for file extensions etc - just
+                // forward any readable file found under the pictures
+                // directory to the QImage loader, and let it sort out
+                // if the thing can be loaded as an image.
+                QUrl url2;
+                url2.setScheme("file");
+                url2.setPath(u.absoluteFilePath());
+                emit imageUrl(url2);
+                ++m_count;
+            }
+        }
+        QCoreApplication::processEvents();
     }
-    m_sem->release();
-}
-
-ImageLoader *ImageManager::getLoader()
-{
-    ImageLoader *loader = m_freeWorkers->takeFirst();
-    if (loader == 0)
-    {
-        loader = new ImageLoader;
-        m_allWorkers->append(loader);
-    }
-    return loader;
-}
-
-void ImageManager::createLoader(const QUrl &url)
-{
-    m_sem->acquire();
-    ImageLoader *loader = getLoader();
-    loader->setUrl(url);
-    connect(loader, SIGNAL(finished()), this, SLOT(release()));
-    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
-            SIGNAL(imageReady(ThumbnailableImage)));
-    //connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this, SLOT(incrementCounter()));
-    loader->start(QThread::IdlePriority);
-}
-
-void ImageManager::incrementCounter()
-{
-    m_count++;
+    if (m_stop)
+        qDebug() << "stop / quit detected";
+    fprintf(stderr, "ImageManager::run - %d images found under %s in %d ms\n",
+            m_count, qPrintable(m_url.path()), timer.elapsed());
 }
 
 void ImageManager::run()
 {
+    qDebug() << ">>>>>> ImageManager::run()" << QThread::currentThread();
     m_count = 0;
-    m_launcher = new Launcher(this);
-    m_launcher->setUrl(m_url);
-    connect(m_launcher, SIGNAL(imageUrl(QUrl)),
-            this, SIGNAL(imageUrl(QUrl)));
-    connect(m_launcher, SIGNAL(finished()),
-            this, SLOT(release()));
-    acquire();   // grab a thread for the launcher
-    m_launcher->start(QThread::IdlePriority);
-    //fprintf(stderr, "ImageManager::run - start %p\n", this);
+
+    Launcher launcher;
+    launcher.setUrl(m_url);
+
+    connect(&launcher, SIGNAL(finished()), this, SLOT(release()));
+    connect(this, SIGNAL(createLoader(QUrl)), &launcher, SLOT(createLoader(QUrl)));
+
+    launcher.start(QThread::IdlePriority);
+
+    fprintf(stderr, "ImageManager::run - start %p\n", this);
     QTime timer;
     timer.start();
+
+    // execute once in the event loop below
+    QTimer::singleShot(0, this, SLOT(scanForFiles()));
+
+    qDebug() << ">>> ImageManager - entering event loop";
     exec();
-    //fprintf(stderr, "ImageManager::run - %d images loaded from %s in %d ms\n",
-    //        m_count, qPrintable(m_url.path()), timer.elapsed());
-    delete m_launcher;
-    m_launcher = 0;
-    m_freeWorkers->clear();
-    delete m_freeWorkers;
-    m_freeWorkers = 0;
-    delete m_allWorkers;   // delete all workers
-    m_allWorkers = 0;
+    qDebug() << "<<< ImageManager - exiting event loop";
+
+    qDebug() << "<<<<<< ImageManager::run()" << QThread::currentThread();
 }

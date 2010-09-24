@@ -59,7 +59,7 @@ public:
     QUrl url() const { return m_url; }
     void setUrl(const QUrl &url) { m_url = url; }
 signals:
-    void imageLoaded(const QImage &ThumbnailableImage);
+    void imageLoaded(const ThumbnailableImage &image);
     void errorOccurred(const QString &error);
 protected:
     void run();

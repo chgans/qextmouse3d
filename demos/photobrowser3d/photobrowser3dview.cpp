@@ -165,6 +165,7 @@ void PhotoBrowser3DView::setupStates()
 
 void PhotoBrowser3DView::initialise()
 {
+    qDebug() << ">>>>>> PhotoBrowser3DView::initialise()" << QThread::currentThread();
     QString path = QDir::home().absoluteFilePath("Pictures");
     int ix = qApp->arguments().indexOf("--pictures");
     if (ix != -1)
@@ -175,9 +176,10 @@ void PhotoBrowser3DView::initialise()
             qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
     connect(m_images, SIGNAL(imageUrl(QUrl)),
-            m_scene, SLOT(addThumbnailNode(QUrl)));
-    connect(m_scene, SIGNAL(framesChanged()),
-            this, SLOT(framesDirty()));
+            m_scene, SLOT(addThumbnailNode(QUrl)), Qt::QueuedConnection);
+
+    connect(m_scene, SIGNAL(framesChanged()), this, SLOT(framesDirty()));
+
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
@@ -187,6 +189,7 @@ void PhotoBrowser3DView::initialise()
     m_keyTimer->setInterval(100);
     connect(m_keyTimer, SIGNAL(timeout()),
             this, SLOT(keyTimeOut()));
+    qDebug() << "<<<<<<< PhotoBrowser3DView::initialise()" << QThread::currentThread();
 }
 
 void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)

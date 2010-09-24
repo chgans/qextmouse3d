@@ -52,65 +52,101 @@
 #include <QSet>
 #include <QDebug>
 
-Launcher::Launcher(ImageManager *manager)
-    : m_manager(manager)
-    , m_stop(false)
+#ifndef Q_MAX_CONCURRENT_LOADERS
+#define Q_MAX_CONCURRENT_LOADERS 8
+#endif
+
+Launcher::Launcher()
+    : m_sem(0)
+    , m_threadPoolSize(0)
+    , m_freeWorkers(0)
+    , m_allWorkers(0)
 {
-    Q_ASSERT(m_manager);
+    m_threadPoolSize = QThread::idealThreadCount();
+    if (m_threadPoolSize < 3)
+        m_threadPoolSize = 3;
+    if (m_threadPoolSize > Q_MAX_CONCURRENT_LOADERS)
+        m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS;
+
+    // take a thread out of the pool for myself
+    m_sem = new QSemaphore(m_threadPoolSize - 2);
+}
+
+void Launcher::acquire()
+{
+    // block if threads running > m_threadPoolSize
+    qDebug() << ">>>>>> @@@@@@ ----- acquiring..." << QThread::currentThread();
+    QTime time;
+    time.start();
+    m_sem->acquire();
+    qDebug() << "<<<<<< @@@@@@ ----- acquired!  In" << time.elapsed() << "ms" << QThread::currentThread();
+}
+
+void Launcher::release()
+{
+    ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
+    if (loader)
+    {
+        Q_ASSERT(loader->isFinished());
+        m_freeWorkers->append(loader);
+        qDebug() << "ImageManager::release" << loader << QThread::currentThread();
+    }
+    m_sem->release();
+}
+
+ImageLoader *Launcher::getLoader()
+{
+    ImageLoader *loader = m_freeWorkers->takeFirst();
+    if (loader == 0)
+    {
+        loader = new ImageLoader;
+        m_allWorkers->append(loader);
+        qDebug() << "ImageManager::getLoader() - created new" << loader << "in thread:"
+                 << QThread::currentThread();
+    }
+    return loader;
+}
+
+void Launcher::createLoader(const QUrl &url)
+{
+    ImageManager *manager = qobject_cast<ImageManager*>(sender());
+    Q_ASSERT(manager);
+
+    qDebug() << ">>>>>> ImageManager::createLoader(" << url.toString() << ")" << QThread::currentThread();
+    acquire();
+    ImageLoader *loader = getLoader();
+    loader->setUrl(url);
+    connect(loader, SIGNAL(finished()), this, SLOT(release()));
+    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager, SIGNAL(imageReady(ThumbnailableImage)));
+    connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this, SLOT(incrementCounter()));
+    loader->start(QThread::IdlePriority);
+    qDebug() << "<<<<<< ImageManager::createLoader(" << url.toString() << ")" << QThread::currentThread();
+}
+
+void Launcher::incrementCounter()
+{
+    m_count++;
 }
 
 void Launcher::run()
 {
-    if (m_url.isEmpty())
-    {
-        qWarning("Launcher::run - empty URL!");
-        return;
-    }
+    qDebug() << ">>>>>>> Launcher::run" << m_url << QThread::currentThread();
+
     if (m_url.scheme() != "file")
     {
         qWarning("URL scheme %s not yet supported", qPrintable(m_url.scheme()));
         return;
     }
-    QStringList queue;
-    queue.append(m_url.path());
-    QSet<QString> loopProtect;
-    while (queue.size() > 0 && !m_stop)
-    {
-        QString path = queue.takeFirst();
-        QFileInfo u(path);
-        if (u.isSymLink())
-            path = u.symLinkTarget();
-        if (u.isDir())
-        {
-            if (!loopProtect.contains(path))
-            {
-                loopProtect.insert(path);
-                QDir dir(path);
-                QStringList entries = dir.entryList();
-                QStringList::const_iterator it = entries.constBegin();
-                for ( ; it != entries.constEnd(); ++it)
-                {
-                    // ignore hidden files, system directories
-                    if ((*it).startsWith("."))
-                        continue;
-                    queue.append(dir.absoluteFilePath(*it));
-                }
-            }
-        }
-        else
-        {
-            if (u.isFile() && u.isReadable())
-            {
-                // do no checking here for file extensions etc - just
-                // forward any readable file found under the pictures
-                // directory to the QImage loader, and let it sort out
-                // if the thing can be loaded as an image.
-                QUrl url2;
-                url2.setScheme("file");
-                url2.setPath(u.absoluteFilePath());
-                m_manager->acquire();
-                emit imageUrl(url2);
-            }
-        }
-    }
+
+    SynchronizedList<ImageLoader> freeWorkers;
+    SynchronizedList<ImageLoader> allWorkers;
+
+    m_freeWorkers = &freeWorkers;
+    m_allWorkers = &allWorkers;
+
+    exec();
+
+    freeWorkers.clear();  // otherwise destructor will try double delete
+
+    qDebug() << "<<<<<< Launcher::run" << m_url << QThread::currentThread();
 }

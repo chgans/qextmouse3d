@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include <QtGui/QApplication>
+#include <QtCore/QThread>
 
 #include "photobrowser3dview.h"
 
@@ -54,9 +55,13 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain("nokia.com");
     QCoreApplication::setApplicationName("photobrowser3d");
 
+    qDebug() << "main:" << QThread::currentThread();
+
     int result = 0;
     {
         PhotoBrowser3DView view;
+
+        qDebug() << "construction done:" << QThread::currentThread();
 
         if (QApplication::arguments().contains("-maximize"))
             view.showMaximized();
@@ -64,6 +69,9 @@ int main(int argc, char *argv[])
             view.showFullScreen();
         else
             view.show();
+
+        qDebug() << "show done:" << QThread::currentThread();
+
         result = app.exec();
     }
     return result;

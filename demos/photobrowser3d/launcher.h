@@ -47,25 +47,39 @@
 #include <QUrl>
 #include <QThread>
 
+#include "synchronizedlist.h"
+
 class ImageManager;
+class QSemaphore;
+class ImageLoader;
 
 class Launcher : public QThread
 {
     Q_OBJECT
 public:
-    explicit Launcher(ImageManager *manager);
+    explicit Launcher();
     ~Launcher() {}
     void setUrl(const QUrl &url) { m_url = url; }
-    void stop() { m_stop = true; }
 signals:
     void done();
     void imageUrl(const QUrl &url);
+public slots:
+    void acquire();
+    void release();
+    void createLoader(const QUrl &);
 protected:
     void run();
+private slots:
+    void incrementCounter();
 private:
-    ImageManager *m_manager;
+    ImageLoader *getLoader();
+
     QUrl m_url;
-    bool m_stop;
+    QSemaphore *m_sem;
+    int m_threadPoolSize;
+    SynchronizedList<ImageLoader> *m_freeWorkers;
+    SynchronizedList<ImageLoader> *m_allWorkers;
+    int m_count;
 };
 
 

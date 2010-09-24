@@ -163,6 +163,9 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     if (!m_loading)
         return;
 
+    ImageManager *manager = qobject_cast<ImageManager*>(sender());
+    Q_ASSERT(manager);
+
     // the indices we are about to set will index this thumbnail image
     // into the image that its atlas is based on via the texture coords
     // that the atlas is using - those texture coords must be in the
@@ -171,6 +174,7 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     // matched in the data arrays in the geometry object
 
     m_image = image;
+    m_image.setAtlas(manager->atlas());
 
     QGeometryData *g = thumbGeometry();
     QGL::IndexArray inxs = g->indices();

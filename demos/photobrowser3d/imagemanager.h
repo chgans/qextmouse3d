@@ -49,43 +49,36 @@
 #include <QMutex>
 
 #include "thumbnailableimage.h"
-#include "synchronizedlist.h"
 
 class Launcher;
-class QSemaphore;
 class QAtlas;
-class ImageLoader;
 
 class ImageManager : public QThread
 {
     Q_OBJECT
 public:
     explicit ImageManager(QObject *parent = 0);
+    ~ImageManager();
     void setImageBaseUrl(const QUrl &url) { m_url = url; }
     QUrl imageBaseUrl() const { return m_url; }
     QAtlas *atlas() const { return m_atlas; }
+public slots:
+    void quit();
+    void stop();
+    void rescan();
 signals:
     void imageUrl(const QUrl &);
     void imageReady(const ThumbnailableImage &);
-    void errorOccurred(const QString &);
-public slots:
-    void acquire();
-    void release();
     void createLoader(const QUrl &);
 protected:
     void run();
 private slots:
-    void incrementCounter();
+    void scanForFiles();
 private:
-    ImageLoader *getLoader();
     QUrl m_url;
-    QSemaphore *m_sem;
-    int m_threadPoolSize;
-    SynchronizedList<ImageLoader> *m_freeWorkers;
-    SynchronizedList<ImageLoader> *m_allWorkers;
-    Launcher *m_launcher;
-    int m_count;
     QAtlas *m_atlas;
+    bool m_stop;
+    int m_count;
 };
 
 #endif // IMAGEMANAGER_H

@@ -102,6 +102,8 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     , m_maxImages(500)
     , m_frameLoadingMaterial(0)
 {
+    qDebug() << ">>>>>>> ImageDisplay::ImageDisplay" << QThread::currentThread();
+
     // the real values will get poked in here by the atlas
     m_atlasPlaceHolder.append(QVector2D(), QVector2D(), QVector2D(), QVector2D());
 
@@ -157,6 +159,8 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     qDebug() << *m_currentFrame;
 
     m_imageSetToDefault = true;
+
+    qDebug() << "<<<<<<< ImageDisplay::ImageDisplay" << QThread::currentThread();
 }
 
 ImageDisplay::~ImageDisplay()
@@ -166,6 +170,7 @@ ImageDisplay::~ImageDisplay()
 
 void ImageDisplay::addThumbnailNode(const QUrl &image)
 {
+    qDebug() << ">>>>>>> ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     if (!m_imageSetToDefault)
     {
@@ -197,15 +202,17 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     else
     {
         // first time thru
+        Q_ASSERT(manager);
         manager->atlas()->setGeometry(&m_frameGeometry);
         m_frames->setMaterial(manager->atlas()->material());
     }
     m_currentFrame->setUrl(image);
-    connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SLOT(createLoader(QUrl)));
+    connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(createLoader(QUrl)));
     connect(manager, SIGNAL(imageReady(ThumbnailableImage)), m_currentFrame, SLOT(setImage(ThumbnailableImage)));
     m_imageSetToDefault = false;
     emit framesChanged();
     ++m_count;
+    qDebug() << "<<<<<<< ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
 }
 
 QList<QGLPickNode *> ImageDisplay::pickNodes() const

@@ -101,10 +101,16 @@ void ImageLoader::loadFile()
         ptr.end();
     }
 
-    emit imageLoaded(im);
+    ThumbnailableImage thumb;
+    thumb.setData(im);
+    thumb.setUrl(m_url);
+
+    emit imageLoaded(thumb);
 }
 
 void ImageLoader::run()
 {
+    qDebug() << ">>>>> ImageLoader::run()" << m_url.toString() << QThread::currentThread();
     loadFile();
+    qDebug() << "<<<<< ImageLoader::run()" << m_url.toString() << QThread::currentThread();
 }
