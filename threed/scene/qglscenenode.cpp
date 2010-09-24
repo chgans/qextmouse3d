@@ -1201,15 +1201,23 @@ void QGLSceneNode::invalidateTransform() const
     then this object will also be deleted.
 
     Additionally, if \a parent is a QGLSceneNode then this node is added
-    to it as a child in the scene, the same as calling \c{parent->addNode()}.
+    to it as a child in the scene, the same as calling \c{parent->addNode()};
+    and if this nodes palette is NULL, then this nodes palette is set to
+    that of the parent.
 
     \sa addNode()
 */
 void QGLSceneNode::setParent(QObject *parent)
 {
+    Q_D(QGLSceneNode);
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
+    {
         sceneParent->addNode(this);
+        if (d->palette == 0)
+            d->palette = sceneParent->palette();
+    }
+
     //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
 }
