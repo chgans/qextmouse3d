@@ -305,7 +305,7 @@ qreal QSphere3D::intersection(const QRay3D &ray) const
 QSphere3D QSphere3D::transformed(const QMatrix4x4 &matrix) const
 {
     return QSphere3D(matrix * m_center,
-                     matrix.map(QVector3D(m_radius, 0, 0)).length());
+                     matrix.mapVector(QVector3D(m_radius, 0, 0)).length());
 }
 
 /*!
@@ -336,7 +336,7 @@ QSphere3D QSphere3D::transformed(const QMatrix4x4 &matrix) const
 
 QDebug operator<<(QDebug dbg, const QSphere3D &sphere)
 {
-    dbg.nospace() << "QSphere(center=("
+    dbg.nospace() << "QSphere3D(center=("
         << sphere.center().x() << ", " << sphere.center().y() << ", "
         << sphere.center().z() << "), radius=" << sphere.radius() << ')';
     return dbg.space();
@@ -346,12 +346,28 @@ QDebug operator<<(QDebug dbg, const QSphere3D &sphere)
 
 #ifndef QT_NO_DATASTREAM
 
+/*!
+    \fn QDataStream &operator<<(QDataStream &stream, const QSphere3D &sphere)
+    \relates QSphere3D
+
+    Writes the given \a sphere to the given \a stream and returns a
+    reference to the stream.
+*/
+
 QDataStream &operator<<(QDataStream &stream, const QSphere3D &sphere)
 {
     stream << sphere.center();
     stream << double(sphere.radius());
     return stream;
 }
+
+/*!
+    \fn QDataStream &operator>>(QDataStream &stream, QSphere3D &sphere)
+    \relates QSphere3D
+
+    Reads a 3D sphere from the given \a stream into the given \a sphere
+    and returns a reference to the stream.
+*/
 
 QDataStream &operator>>(QDataStream &stream, QSphere3D &sphere)
 {
