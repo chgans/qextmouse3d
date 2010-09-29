@@ -39,48 +39,41 @@
 **
 ****************************************************************************/
 
-
-#ifndef LAUNCHER_H
-#define LAUNCHER_H
+#ifndef LOADINGJOB_H
+#define LOADINGJOB_H
 
 #include <QObject>
+#include <QAtomicInt>
+#include <QList>
 #include <QUrl>
-#include <QThread>
 
-#include "synchronizedlist.h"
-
-class ImageManager;
-class QSemaphore;
 class ImageLoader;
 
-class Launcher : public QThread
+class ThreadPool : public QObject
 {
     Q_OBJECT
 public:
-    explicit Launcher();
-    ~Launcher() {}
-    void setUrl(const QUrl &url) { m_url = url; }
-signals:
-    void done();
-    void imageUrl(const QUrl &url);
-public slots:
-    void acquire();
-    void release();
-    void createLoader(const QUrl &);
-protected:
-    void run();
-private slots:
-    void incrementCounter();
-private:
-    ImageLoader *getLoader();
+    ThreadPool();
+    ~ThreadPool();
 
-    QUrl m_url;
-    QSemaphore *m_sem;
+signals:
+    void stopped();
+    void stopAll();
+
+public slots:
+    void deployLoader(const QUrl &url);
+    void stop();
+
+private slots:
+    void retrieveLoader();
+    void closeLoader();
+
+private:
+    QList<ImageLoader*> m_freeWorkers;
+    QList<ImageLoader*> m_allWorkers;
+    QList<QUrl> m_workList;
+    QAtomicInt m_stop;
     int m_threadPoolSize;
-    SynchronizedList<ImageLoader> *m_freeWorkers;
-    SynchronizedList<ImageLoader> *m_allWorkers;
-    int m_count;
 };
 
-
-#endif // LAUNCHER_H
+#endif // LOADINGJOB_H

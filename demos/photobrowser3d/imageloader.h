@@ -44,29 +44,35 @@
 #define IMAGELOADER_H
 
 #include <QThread>
-#include <QSemaphore>
 #include <QUrl>
-#include <QImage>
+#include <QMutex>
+#include <QAtomicInt>
 
 #include "thumbnailableimage.h"
 
 class ImageManager;
+class ByteReader;
 
 class ImageLoader : public QThread
 {
     Q_OBJECT
 public:
-    QUrl url() const { return m_url; }
-    void setUrl(const QUrl &url) { m_url = url; }
+    ImageLoader();
+    ~ImageLoader();
+    QUrl url() const;
+    void setUrl(const QUrl &url);
 signals:
     void imageLoaded(const ThumbnailableImage &image);
-    void errorOccurred(const QString &error);
+    void stopLoading();
+    void readRequired(const QUrl &url);
+public slots:
+    void stop();
 protected:
     void run();
 private:
-    void loadFile();
-
     QUrl m_url;
+    QAtomicInt m_stop;
+    ByteReader *m_reader;
 };
 
 #endif // IMAGELOADER_H

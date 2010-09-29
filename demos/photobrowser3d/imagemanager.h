@@ -57,28 +57,27 @@ class ImageManager : public QThread
 {
     Q_OBJECT
 public:
-    explicit ImageManager(QObject *parent = 0);
+    ImageManager();
     ~ImageManager();
-    void setImageBaseUrl(const QUrl &url) { m_url = url; }
+    void setImageBaseUrl(const QUrl &url);
     QUrl imageBaseUrl() const { return m_url; }
     QAtlas *atlas() const { return m_atlas; }
 public slots:
-    void quit();
     void stop();
-    void rescan();
+    void quit();
 signals:
     void imageUrl(const QUrl &);
     void imageReady(const ThumbnailableImage &);
-    void createLoader(const QUrl &);
+    void deployLoader(const QUrl &);
+    void stopAll();
 protected:
     void run();
 private slots:
     void scanForFiles();
+    void debugStuff();
 private:
     QUrl m_url;
     QAtlas *m_atlas;
-    bool m_stop;
-    int m_count;
 };
 
 #endif // IMAGEMANAGER_H

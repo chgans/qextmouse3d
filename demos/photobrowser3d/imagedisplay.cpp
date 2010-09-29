@@ -156,8 +156,6 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     m_frameScene->setRootNode(m_frames);
     m_frameScene->setPickable(true);
 
-    qDebug() << *m_currentFrame;
-
     m_imageSetToDefault = true;
 
     qDebug() << "<<<<<<< ImageDisplay::ImageDisplay" << QThread::currentThread();
@@ -165,12 +163,14 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
 
 ImageDisplay::~ImageDisplay()
 {
+    qDebug() << ">>> ImageDisplay::~ImageDisplay()";
     delete m_effect;
+    qDebug() << "<<< ImageDisplay::~ImageDisplay()";
 }
 
 void ImageDisplay::addThumbnailNode(const QUrl &image)
 {
-    qDebug() << ">>>>>>> ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
+    qDebug() << ">>>>>>> ImageDisplay::addThumbnailNode" << image.toString() << " #" << m_count << "in thread:" << QThread::currentThread();
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     if (!m_imageSetToDefault)
     {
@@ -207,10 +207,12 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
         m_frames->setMaterial(manager->atlas()->material());
     }
     m_currentFrame->setUrl(image);
-    connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(createLoader(QUrl)));
+    connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(deployLoader(QUrl)));
     connect(manager, SIGNAL(imageReady(ThumbnailableImage)), m_currentFrame, SLOT(setImage(ThumbnailableImage)));
     m_imageSetToDefault = false;
     emit framesChanged();
+    //if (m_count == 20)
+    //    qDumpScene(this);
     ++m_count;
     qDebug() << "<<<<<<< ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
 }

@@ -39,48 +39,27 @@
 **
 ****************************************************************************/
 
-#ifndef SYNCHRONIZEDLIST_H
-#define SYNCHRONIZEDLIST_H
+#ifndef BYTEREADER_H
+#define BYTEREADER_H
 
-#include <QList>
-#include <QMutex>
-#include <QMutexLocker>
+#include <QObject>
 
-template <typename T>
-class SynchronizedList
+class ThumbnailableImage;
+class QUrl;
+
+class ByteReader : public QObject
 {
+    Q_OBJECT
 public:
-    SynchronizedList() { }
-
-    ~SynchronizedList()
-    {
-        qDeleteAll(m_items);
-    }
-
-    void append(T *item)
-    {
-        QMutexLocker locker(&m_lock);
-        m_items.append(item);
-    }
-
-    T *takeFirst()
-    {
-        T *result = 0;
-        QMutexLocker locker(&m_lock);
-        if (!m_items.isEmpty())
-            result = m_items.takeFirst();
-        return result;
-    }
-
-    void clear()
-    {
-        QMutexLocker locker(&m_lock);
-        m_items.clear();
-    }
-
+    ByteReader() { m_stop = 0; }
+signals:
+    void imageLoaded(const ThumbnailableImage &image);
+    void stopped();
+public slots:
+    void loadFile(const QUrl &url);
+    void stop() { m_stop.ref(); }
 private:
-    QList<T *> m_items;
-    QMutex m_lock;
+    QAtomicInt m_stop;
 };
 
-#endif // SYNCHRONIZEDLIST_H
+#endif // BYTEREADER_H

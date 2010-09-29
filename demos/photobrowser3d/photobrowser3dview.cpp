@@ -62,7 +62,7 @@
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
     , m_scene(0)
-    , m_images(new ImageManager(this))
+    , m_images(new ImageManager)
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
     , m_velocity(0.0f)
@@ -175,8 +175,8 @@ void PhotoBrowser3DView::initialise()
         else
             qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
-    connect(m_images, SIGNAL(imageUrl(QUrl)),
-            m_scene, SLOT(addThumbnailNode(QUrl)), Qt::QueuedConnection);
+    connect(m_images, SIGNAL(imageUrl(QUrl)), m_scene, SLOT(addThumbnailNode(QUrl)));
+    connect(m_images, SIGNAL(finished()), this, SLOT(waitForExit()));
 
     connect(m_scene, SIGNAL(framesChanged()), this, SLOT(framesDirty()));
 
@@ -184,7 +184,9 @@ void PhotoBrowser3DView::initialise()
     url.setScheme("file");
     url.setPath(path);
     m_images->setImageBaseUrl(url);
-    m_images->start(QThread::IdlePriority);
+    QThread::Priority p = QThread::idealThreadCount() < 2 ?
+                QThread::IdlePriority : QThread::NormalPriority;
+    m_images->start(p);
 
     m_keyTimer->setInterval(100);
     connect(m_keyTimer, SIGNAL(timeout()),
@@ -278,11 +280,34 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     }
 }
 
+void PhotoBrowser3DView::waitForExit()
+{
+    qDebug() << "PhotoBrowser3DView::waitForExit";
+    QThread::yieldCurrentThread();
+    qDebug() << "    waiting for ImageManager to exit";
+    m_images->wait();
+    m_images->deleteLater();
+    m_images = 0;
+    qDebug() << "    done with wait - exiting";
+    close();
+}
+
 void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
 {
-    m_images->quit();
-    m_images->wait();
-    QWidget::closeEvent(e);
+    qDebug() << ">>> PhotoBrowser3DView::closeEvent";
+    if (m_images)
+    {
+        qDebug() << "     closeEvent() - signalling stop";
+        m_images->stop();
+        e->ignore();
+        qDebug() << "     closeEvent() - signalling waitForExit of ImageManager";
+    }
+    else
+    {
+        qDebug() << "ImageManager cleaned up - accepting close";
+        e->accept();
+    }
+    qDebug() << "<<< PhotoBrowser3DView::closeEvent";
 }
 
 void PhotoBrowser3DView::mousePressEvent(QMouseEvent *e)
@@ -312,7 +337,7 @@ void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
-{    
+{
     painter->setClearColor(Qt::blue);
     glEnable(GL_BLEND);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

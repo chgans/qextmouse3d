@@ -10,28 +10,30 @@ SOURCES += main.cpp\
     skybox.cpp \
     imagemanager.cpp \
     imageloader.cpp \
-    launcher.cpp \
     qframesscene.cpp \
     qfocusadaptor.cpp \
     thumbnailableimage.cpp \
     qatlas.cpp \
     thumbnailnode.cpp \
     thumbnaileffect.cpp \
-    synchronizedlist.cpp
+    filescanner.cpp \
+    bytereader.cpp \
+    threadpool.cpp
 
 HEADERS  += photobrowser3dview.h \
     imagedisplay.h \
     skybox.h \
     imagemanager.h \
     imageloader.h \
-    launcher.h \
     qframesscene.h \
     qfocusadaptor.h \
     thumbnailableimage.h \
     qatlas.h \
     thumbnailnode.h \
     thumbnaileffect.h \
-    synchronizedlist.h
+    filescanner.h \
+    bytereader.h \
+    threadpool.h
 
 RESOURCES += \
     photobrowser3d.qrc

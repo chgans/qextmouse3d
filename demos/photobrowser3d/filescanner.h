@@ -39,4 +39,37 @@
 **
 ****************************************************************************/
 
-#include "synchronizedlist.h"
+#ifndef FILESCANNER_H
+#define FILESCANNER_H
+
+#include <QThread>
+#include <QUrl>
+#include <QDebug>
+class FileScanner : public QThread
+{
+    Q_OBJECT
+public:
+    FileScanner();
+    ~FileScanner() { qDebug() << "~FileScanner"; }
+
+    // INVARIANT: never get called when the thread is running
+    void setBaseUrl(const QUrl &url)
+    {
+        Q_ASSERT(!isRunning());
+        m_url = url;
+    }
+
+signals:
+    void imageUrl(const QUrl &url);
+
+public slots:
+    void stop();
+
+protected:
+    void run();
+
+    QUrl m_url;
+    QAtomicInt m_stop;
+};
+
+#endif // FILESCANNER_H

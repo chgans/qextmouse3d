@@ -78,6 +78,7 @@ private slots:
     void framesDirty();
     void stateEnter();
     void stateExit();
+    void waitForExit();
 private:
     void registerFrames();
     void setupStates();

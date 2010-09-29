@@ -41,8 +41,8 @@
 
 
 #include "imageloader.h"
-#include "launcher.h"
 #include "imagemanager.h"
+#include "bytereader.h"
 
 #include <QFileInfo>
 #include <QDebug>
@@ -55,62 +55,54 @@
 #include <QImageReader>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTimer>
 
-void ImageLoader::loadFile()
+ImageLoader::ImageLoader()
 {
-    // FIXME: actually handle remote files
-    QString fn = m_url.toLocalFile();
-    int pos = fn.lastIndexOf('.');
-    QString ext;
-    if (pos != -1)
-        ext = fn.mid(pos).toUpper();
-    if (ext.isEmpty() ||
-        !QImageReader::supportedImageFormats().contains(ext.toLocal8Bit()))
-        ext = QString();
-    QImage im;
-    QFile f(fn);
-    QString errorMessage;
-    if (f.open(QIODevice::ReadOnly))
-    {
-        QByteArray bytes;
-        while (!f.atEnd())
-        {
-            QThread::yieldCurrentThread();
-            bytes.append(f.read(1024));
-        }
-        QThread::yieldCurrentThread();
-        im = ext.isEmpty() ? QImage::fromData(bytes)
-                           : QImage::fromData(bytes, qPrintable(ext));
-    }
-    else
-    {
-        errorMessage = tr("Could not read: %1").arg(m_url.toString());
-    }
+    m_stop = 0;
+}
 
-    if (im.isNull())
+ImageLoader::~ImageLoader()
+{
+    // nothing to do here
+}
+
+QUrl ImageLoader::url() const
+{
+    return m_url;
+}
+
+void ImageLoader::setUrl(const QUrl &url)
+{
+    if (m_url != url)
     {
-        im = QImage(QSize(128, 128), QImage::Format_ARGB32);
-        im.fill(qRgba(0, 30, 50, 64));
-        QPainter ptr;
-        ptr.begin(&im);
-        ptr.setBackgroundMode(Qt::TransparentMode);
-        if (errorMessage.isEmpty())
-            errorMessage = tr("Could not load: %1").arg(m_url.toString());
-        ptr.setPen(QColor("orange"));
-        ptr.drawText(im.rect(), Qt::AlignCenter, errorMessage);
-        ptr.end();
+        m_url = url;
+        if (!m_stop)
+            emit readRequired(m_url);
     }
+}
 
-    ThumbnailableImage thumb;
-    thumb.setData(im);
-    thumb.setUrl(m_url);
+void ImageLoader::stop()
+{
+    m_stop.ref();
+    emit stopLoading();
 
-    emit imageLoaded(thumb);
+    qDebug() << "ImageLoader::stop()" << QThread::currentThread();
 }
 
 void ImageLoader::run()
 {
     qDebug() << ">>>>> ImageLoader::run()" << m_url.toString() << QThread::currentThread();
-    loadFile();
+
+    ByteReader reader;
+    connect(this, SIGNAL(readRequired(QUrl)), &reader, SLOT(loadFile(QUrl)));
+    connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
+            this, SIGNAL(imageLoaded(ThumbnailableImage)));
+    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
+
+    connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
+
+    exec();
+
     qDebug() << "<<<<< ImageLoader::run()" << m_url.toString() << QThread::currentThread();
 }

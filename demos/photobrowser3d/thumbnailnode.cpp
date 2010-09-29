@@ -160,6 +160,16 @@ void ThumbnailNode::draw(QGLPainter *painter)
 
 void ThumbnailNode::setImage(const ThumbnailableImage &image)
 {
+    // the manager will be (potentially) loading a number of images, but
+    // we only want our one, so just check this is our order
+    if (m_url != image.url())
+        return;
+
+    // ok we got the right one, stop listening to the manager
+    disconnect(sender());
+
+    // ok maybe we got what we asked for but in the meantime we decided
+    // we didnt want it anymore
     if (!m_loading)
         return;
 
