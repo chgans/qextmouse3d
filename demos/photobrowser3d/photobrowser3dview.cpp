@@ -46,6 +46,7 @@
 #include "qglpicknode.h"
 #include "qfocusadaptor.h"
 #include "thumbnailableimage.h"
+#include "qatlas.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -74,6 +75,8 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_browse(0)
     , m_pan(0)
     , m_framesDirty(true)
+    , m_done(false)
+    , m_closing(false)
 {
     setOption(QGLView::ObjectPicking, true);
 
@@ -100,7 +103,9 @@ PhotoBrowser3DView::PhotoBrowser3DView()
 
 PhotoBrowser3DView::~PhotoBrowser3DView()
 {
+    qDebug() << "PhotoBrowser3DView::~PhotoBrowser3DView";
     delete m_panTime;
+    delete m_atlas;
 }
 
 void PhotoBrowser3DView::setupStates()
@@ -180,10 +185,12 @@ void PhotoBrowser3DView::initialise()
 
     connect(m_scene, SIGNAL(framesChanged()), this, SLOT(framesDirty()));
 
+    m_atlas = new QAtlas;
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
     m_images->setImageBaseUrl(url);
+    m_images->setAtlas(m_atlas);
     QThread::Priority p = QThread::idealThreadCount() < 2 ?
                 QThread::IdlePriority : QThread::NormalPriority;
     m_images->start(p);
@@ -229,7 +236,8 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     }
     else if (e->key() == Qt::Key_Q)
     {
-        close();
+        m_done = true;
+        emit done();
     }
     else if (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right)
     {
@@ -288,8 +296,15 @@ void PhotoBrowser3DView::waitForExit()
     m_images->wait();
     m_images->deleteLater();
     m_images = 0;
+    if (m_closing)
+    {
+        if (!m_done)
+        {
+            emit done();
+            m_done = true;
+        }
+    }
     qDebug() << "    done with wait - exiting";
-    close();
 }
 
 void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
@@ -297,10 +312,15 @@ void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
     qDebug() << ">>> PhotoBrowser3DView::closeEvent";
     if (m_images)
     {
+        e->ignore();
         qDebug() << "     closeEvent() - signalling stop";
         m_images->stop();
-        e->ignore();
         qDebug() << "     closeEvent() - signalling waitForExit of ImageManager";
+
+        // this was a request to close the main window, so we are closing up shop
+        // set this flag to indicate that when the image manager stops done event
+        // should be signalled to the state machine, resulting in close
+        m_closing = true;
     }
     else
     {
@@ -326,23 +346,31 @@ void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 
 void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 {
-    qreal t = m_panTime->restart();
-    if (!qIsNull(m_velocity))
+    if (!m_done)
     {
-        qreal distance = t * m_velocity / 1000.0f;
-        QVector3D tx = camera()->translation(distance, 0.0f, 0.0f);
-        camera()->setEye(camera()->eye() + tx);
-        camera()->setCenter(camera()->center() + tx);
+        qreal t = m_panTime->restart();
+        if (!qIsNull(m_velocity))
+        {
+            qreal distance = t * m_velocity / 1000.0f;
+            QVector3D tx = camera()->translation(distance, 0.0f, 0.0f);
+            camera()->setEye(camera()->eye() + tx);
+            camera()->setCenter(camera()->center() + tx);
+        }
     }
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {
-    painter->setClearColor(Qt::blue);
-    glEnable(GL_BLEND);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_skybox->draw(painter);
-    m_scene->draw(painter);
+    if (!m_done)
+    {
+        //qDebug() << "paintGL -- eye:" << camera()->eye()
+        //            << "center:" << camera()->center();
+        painter->setClearColor(Qt::blue);
+        glEnable(GL_BLEND);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_skybox->draw(painter);
+        m_scene->draw(painter);
+    }
 }
 
 /*

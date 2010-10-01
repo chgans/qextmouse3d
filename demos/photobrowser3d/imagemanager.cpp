@@ -49,14 +49,13 @@
 #include <QTimer>
 
 ImageManager::ImageManager()
-    : m_atlas(new QAtlas)
+    : m_atlas(0)
 {
 }
 
 ImageManager::~ImageManager()
 {
     qDebug() << "~ImageManager";
-    delete m_atlas;
 }
 
 // INVARIANT: only ever called before the run() function is started
@@ -123,9 +122,12 @@ void ImageManager::run()
     connect(&pool, SIGNAL(stopped()), this, SLOT(quit()));
 
     fprintf(stderr, "ImageManager::run - start %p\n", this);
+
+    /*
     QTimer timer;
     connect(&timer, SIGNAL(timeout()), this, SLOT(debugStuff()));
     timer.start(1000);
+    */
 
     qDebug() << ">>> ImageManager - entering event loop";
     exec();

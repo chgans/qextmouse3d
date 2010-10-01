@@ -74,11 +74,12 @@ QUrl ImageLoader::url() const
 
 void ImageLoader::setUrl(const QUrl &url)
 {
-    if (m_url != url)
+    qDebug() << "###### setUrl:" << url;
+    m_url = url;
+    if (!m_stop && isRunning())
     {
-        m_url = url;
-        if (!m_stop)
-            emit readRequired(m_url);
+        emit readRequired(url);
+        qDebug() << "      emit readRequired:" << url;
     }
 }
 
@@ -88,6 +89,22 @@ void ImageLoader::stop()
     emit stopLoading();
 
     qDebug() << "ImageLoader::stop()" << QThread::currentThread();
+}
+
+void ImageLoader::debugStuff()
+{
+    qDebug() << "ImageLoader::debugStuff" << QThread::currentThread() << m_url;
+}
+
+void ImageLoader::queueInitialUrl()
+{
+    emit readRequired(m_url);
+}
+
+void ImageLoader::unusedTimeout()
+{
+    emit unused();
+    qDebug() << "unusedTimeout" << m_url << QThread::currentThread();
 }
 
 void ImageLoader::run()
@@ -102,6 +119,14 @@ void ImageLoader::run()
 
     connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
 
+    QTimer timer;
+    connect(&timer, SIGNAL(timeout()), this, SLOT(unusedTimeout()));
+    timer.start(2 * 60 * 1000);
+
+    if (!m_url.isEmpty())
+        QTimer::singleShot(0, this, SLOT(queueInitialUrl()));
+
+    qDebug() << "ImageLoader - entering event loop:" << m_url;
     exec();
 
     qDebug() << "<<<<< ImageLoader::run()" << m_url.toString() << QThread::currentThread();

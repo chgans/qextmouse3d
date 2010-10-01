@@ -59,9 +59,10 @@ class ImageManager : public QThread
 public:
     ImageManager();
     ~ImageManager();
-    void setImageBaseUrl(const QUrl &url);
     QUrl imageBaseUrl() const { return m_url; }
+    void setImageBaseUrl(const QUrl &url);
     QAtlas *atlas() const { return m_atlas; }
+    void setAtlas(QAtlas *atlas) { m_atlas = atlas; }
 public slots:
     void stop();
     void quit();

@@ -51,15 +51,16 @@ class ByteReader : public QObject
 {
     Q_OBJECT
 public:
-    ByteReader() { m_stop = 0; }
+    ByteReader();
 signals:
     void imageLoaded(const ThumbnailableImage &image);
     void stopped();
 public slots:
     void loadFile(const QUrl &url);
-    void stop() { m_stop.ref(); }
+    void stop();
 private:
     QAtomicInt m_stop;
+    QAtomicInt m_loading;
 };
 
 #endif // BYTEREADER_H

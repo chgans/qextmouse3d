@@ -77,6 +77,7 @@ private:
     bool m_loading;
     QGeometryData *m_geometry;
     QGLMaterial *m_fullImageMaterial;
+    QBox3D m_boundingBox;
 };
 
 #endif // THUMBNAILNODE_H

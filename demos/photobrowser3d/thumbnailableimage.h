@@ -83,7 +83,9 @@ public:
     QGL::IndexArray indices() const;
     void setIndices(const QGL::IndexArray &indices);
 
-    bool isNull() { return d  == 0; }
+    bool isNull() const { return d  == 0; }
+
+    ThumbnailableImagePrivate *priv() const { return d; } /// debug = remove me
 
 private:
     void detach();

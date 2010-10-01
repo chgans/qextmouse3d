@@ -53,7 +53,20 @@ public:
     ThumbnailableImagePrivate();
     ~ThumbnailableImagePrivate();
 
-    ThumbnailableImagePrivate *clone() const;
+    ThumbnailableImagePrivate *clone() const
+    {
+        ThumbnailableImagePrivate *temp = new ThumbnailableImagePrivate;
+        temp->thumbnailed = thumbnailed;
+        temp->url = url;
+        temp->atlas = atlas;
+        temp->data = data;
+        temp->tex = tex;
+        temp->mat = mat;
+        temp->frame = frame;
+        temp->scale = scale;
+        temp->indices = indices;
+        return temp;
+    }
 
     QBasicAtomicInt ref;
 
@@ -80,20 +93,6 @@ ThumbnailableImagePrivate::ThumbnailableImagePrivate()
 
 ThumbnailableImagePrivate::~ThumbnailableImagePrivate()
 {
-}
-
-ThumbnailableImagePrivate *ThumbnailableImagePrivate::clone() const
-{
-    ThumbnailableImagePrivate *temp = new ThumbnailableImagePrivate;
-    temp->thumbnailed = thumbnailed;
-    temp->atlas = atlas;
-    temp->data = data;
-    temp->tex = tex;
-    temp->mat = mat;
-    temp->frame = frame;
-    temp->scale = scale;
-    temp->indices = indices;
-    return temp;
 }
 
 ThumbnailableImage::ThumbnailableImage()

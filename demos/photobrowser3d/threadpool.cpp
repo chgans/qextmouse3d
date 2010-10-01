@@ -74,24 +74,32 @@ void ThreadPool::deployLoader(const QUrl &url)
     if (m_freeWorkers.size() > 0)
         loader = m_freeWorkers.takeFirst();
 
-    if (!loader && m_allWorkers.size() < m_threadPoolSize)
-    {
-        loader = new ImageLoader;
-        m_allWorkers.append(loader);
-        qDebug() << "ThreadPool::deployLoader - created new" << loader <<
-                    "in thread:" << QThread::currentThread();
-        connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager,
-                SIGNAL(imageReady(ThumbnailableImage)));
-        connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
-                SIGNAL(retrieveLoader()));
-        connect(loader, SIGNAL(finished()), this, SLOT(closeLoader()));
-        connect(this, SIGNAL(stopAll()), loader, SLOT(stop()));
-        loader->start(QThread::IdlePriority);
-    }
     if (loader)
+    {
         loader->setUrl(url);
+    }
     else
-        m_workList.append(url);
+    {
+        if (m_allWorkers.size() < m_threadPoolSize)
+        {
+            loader = new ImageLoader;
+            m_allWorkers.append(loader);
+            loader->setUrl(url);
+            qDebug() << "ThreadPool::deployLoader - created new" << loader <<
+                        "in thread:" << QThread::currentThread();
+            connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager,
+                    SIGNAL(imageReady(ThumbnailableImage)));
+            connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
+                    SLOT(retrieveLoader()));
+            connect(loader, SIGNAL(finished()), this, SLOT(closeLoader()));
+            connect(this, SIGNAL(stopAll()), loader, SLOT(stop()));
+            loader->start();
+        }
+        else
+        {
+            m_workList.append(url);
+        }
+    }
 
     qDebug() << "<<<<<< ThreadPool::deployLoader(" << url.toString() << ")" << QThread::currentThread();
 }
@@ -112,6 +120,7 @@ void ThreadPool::retrieveLoader()
 
 void ThreadPool::stop()
 {
+    qDebug() << "ThreadPool::stop";
     m_stop.ref();
     emit stopAll();
 }
