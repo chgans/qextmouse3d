@@ -46,9 +46,13 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qpropertyanimation.h>
 #include <stdio.h>
+#include <qmath.h>
 #if !defined(QT_OPENGL_ES_1)
 #include "projectivetextureeffect.h"
+
+//#define PROJECTOR_CAMERA_DEBUG_MARKERS
 #endif
+
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent), scene(0), cube(0), teapot(0), room(0),
@@ -293,6 +297,96 @@ void CubeView::paintGL(QGLPainter *painter)
     }
 
     painter->modelViewMatrix().pop();
+#ifdef PROJECTOR_CAMERA_DEBUG_MARKERS
+    if(useProjectiveTextureEffect)
+    {
+
+        painter->modelViewMatrix().push();
+        modelMatrix.push();
+        painter->modelViewMatrix().translate(projectorCamera->eye());
+        painter->modelViewMatrix().scale(0.2);
+        painter->setStandardEffect(QGL::LitMaterial);
+        modelMatrix.translate(projectorCamera->eye());
+        cube->draw(painter);
+
+        modelMatrix.pop();
+        painter->modelViewMatrix().pop();
+
+        painter->modelViewMatrix().push();
+        modelMatrix.push();
+        painter->modelViewMatrix().translate(projectorCamera->center());
+        painter->modelViewMatrix().scale(0.1);
+        painter->setStandardEffect(QGL::LitMaterial);
+        cube->draw(painter);
+        modelMatrix.pop();
+        painter->modelViewMatrix().pop();
+
+        QVector3DArray verts;
+
+        QVector3D origin = projectorCamera->eye();
+
+        QVector3D target = projectorCamera->center();
+        QVector3D direction = projectorCamera->center() - projectorCamera->eye();
+
+        QVector3D normal = projectorCamera->upVector().normalized();
+        qreal nearPlane = projectorCamera->nearPlane();
+        qreal farPlane = projectorCamera->farPlane();
+        qreal fieldOfView = projectorCamera->fieldOfView();
+
+        QVector3D nearTopLeft;
+        QVector3D nearTopRight;
+        QVector3D nearBottomLeft;
+        QVector3D nearBottomRight;
+        QVector3D farTopLeft;
+        QVector3D farTopRight;
+        QVector3D farBottomLeft;
+        QVector3D farBottomRight;
+
+        QSizeF viewSize = projectorCamera->viewSize();
+
+        qreal fieldDepthRatio = farPlane / nearPlane;
+
+        QVector3D rightVector = QVector3D::crossProduct(direction, normal).normalized() * viewSize.width() / 2.0;
+        QVector3D topVector = normal * viewSize.height() / 2.0;
+
+        QVector3D topLeftVector = direction + topVector - rightVector;
+        QVector3D topRightVector = direction + topVector + rightVector;
+        QVector3D bottomLeftVector = direction - topVector - rightVector;
+        QVector3D bottomRightVector = direction - topVector + rightVector;
+
+        verts.append(origin, origin + (direction * (farPlane / direction.length())));
+
+        verts.append(origin, origin + (topLeftVector * fieldDepthRatio));
+        verts.append(origin, origin + (topRightVector * fieldDepthRatio));
+        verts.append(origin, origin + (bottomLeftVector * fieldDepthRatio));
+        verts.append(origin, origin + (bottomRightVector * fieldDepthRatio));
+
+        verts.append(origin + topLeftVector, origin + topRightVector);
+        verts.append(origin + topRightVector, origin + bottomRightVector);
+        verts.append(origin + bottomRightVector, origin + bottomLeftVector);
+        verts.append(origin + bottomLeftVector, origin + topLeftVector);
+
+        verts.append(origin + (topLeftVector * fieldDepthRatio),
+                     (origin + topRightVector * fieldDepthRatio));
+        verts.append(origin + (topRightVector * fieldDepthRatio),
+                     (origin + bottomRightVector * fieldDepthRatio));
+        verts.append(origin + (bottomRightVector * fieldDepthRatio),
+                     (origin + bottomLeftVector * fieldDepthRatio));
+        verts.append(origin + (bottomLeftVector * fieldDepthRatio),
+                     (origin + topLeftVector * fieldDepthRatio));
+
+        verts.append(origin, origin + normal);
+
+        painter->modelViewMatrix().push();
+        painter->setStandardEffect(QGL::FlatColor);
+        painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
+        glLineWidth(1.0f);
+
+        painter->setColor(QColor(255,255,255,255));
+        painter->draw(QGL::Lines, verts.size());
+        painter->modelViewMatrix().pop();
+    }
+#endif
 }
 
 //inline void CubeView::setProjectiveTextureEffect(bool value)
