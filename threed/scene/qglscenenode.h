@@ -171,6 +171,7 @@ public:
     void removeNode(QGLSceneNode *node);
     void setParent(QObject *);
 
+    virtual void geometryDraw(QGLPainter *painter);
     virtual void draw(QGLPainter *painter);
 
     virtual QGLPickNode *pickNode() const;
