@@ -35,6 +35,13 @@ HEADERS  += photobrowser3dview.h \
     bytereader.h \
     threadpool.h
 
+# Uncomment this line to force all file loading is done in the gui thread
+# instead of a background thread - useful for debugging.
+DEFINES += QT_NO_THREADED_FILE_LOAD
+
+# Uncomment this to use test images instead of scanning and loading.
+DEFINES += QT_USE_TEST_IMAGES
+
 RESOURCES += \
     photobrowser3d.qrc
 

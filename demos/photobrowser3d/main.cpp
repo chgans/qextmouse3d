@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     {
         PhotoBrowser3DView view;
 
-        qDebug() << "construction done:" << QThread::currentThread();
+        qDebug() << "main(): construction done:" << QThread::currentThread();
 
         if (QApplication::arguments().contains("-maximize"))
             view.showMaximized();

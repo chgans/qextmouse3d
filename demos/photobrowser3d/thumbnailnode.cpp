@@ -44,6 +44,7 @@
 #include "thumbnaileffect.h"
 #include "imagemanager.h"
 #include "qatlas.h"
+#include "qglrendersequencer.h"
 
 #include <QtGui/qmatrix4x4.h>
 
@@ -52,158 +53,169 @@ ThumbnailNode::ThumbnailNode(QObject *parent)
     , m_thresholdSquared(20.0f * 20.0f)
     , m_defaultMaterial(-1)
     , m_loading(false)
-    , m_geometry(0)
-    , m_fullImageMaterial(0)
+    , m_full(0)
 {
 }
 
-void ThumbnailNode::setupLoading(QGLPainter *painter)
+ThumbnailNode::~ThumbnailNode()
 {
-    if (!m_loading && !m_url.isEmpty())
+    delete m_full;
+}
+
+void ThumbnailNode::setupLoading()
+{
+    if (m_image.isNull() && !m_loading && !m_url.isEmpty())
     {
         qDebug() << "ThumbnailNode::setupLoading" << m_url;
         m_loading = true;
+#ifdef QT_USE_TEST_IMAGES
+        ThumbnailableImage image;
+        image.setUrl(m_url);
+        QImage im(m_url.toLocalFile());
+        if (im.isNull())
+            qDebug() << "############# -- could not load test image:"
+                        << m_url.toLocalFile() << "-- #################";
+        image.setData(im);
+        setImage(image);
+#else
         emit imageRequired(m_url);
-        setMaterialIndex(m_defaultMaterial);
+#endif
     }
-    thumbGeometry()->draw(painter, start(), count());
+}
+
+void ThumbnailNode::createFullNode()
+{
+    qDebug() << "ThumbnailNode::createFullNode" << m_url;
+    qDebug() << *this;
+    m_full = new QGLSceneNode;
+    m_full->setPosition(position());
+    m_full->setGeometry(geometry());
+    m_full->setStart(start());
+    m_full->setCount(count());
+    m_full->setPalette(palette());
+    m_full->setMaterialIndex(m_defaultMaterial);
+}
+
+void ThumbnailNode::destroyFullNode()
+{
+    if (!m_full)
+        return;
+    qDebug() << "ThumbnailNode::destroyFullNode" << m_url << "full node:" << m_full;
+    QGLMaterial *mat = m_full->material();
+    qDebug() << "     material:" << mat;
+    if (m_full->materialIndex() != m_defaultMaterial)
+        m_full->palette()->removeMaterial(mat);
+    delete m_full;
+    m_full = 0;
+}
+
+void ThumbnailNode::loadFullImage()
+{
+    qDebug() << "ThumbnailNode::loadFullImage" << m_url;
+    if (!m_full)
+        createFullNode();
+    Q_CHECK_PTR(m_full);
+    if (!m_image.data().isNull())
+    {
+        m_image.setThumbnailed(true);
+        if (m_full->materialIndex() == m_defaultMaterial)
+        {
+            QGLMaterial *mat = new QGLMaterial;
+            QGLTexture2D *tex = new QGLTexture2D;
+            tex->setImage(m_image.data());
+            qDebug() << "ThumbnailNode::draw" << m_url << "created tex:" << tex
+                    << "setting image on new material:" << mat
+                    << (m_image.isNull() ?
+                        QString("NULL") : m_image.url().toString());
+            mat->setTexture(tex);
+            int ix = palette()->addMaterial(mat);
+            m_full->setMaterialIndex(ix);
+            mat->setParent(m_full);
+        }
+    }
 }
 
 void ThumbnailNode::draw(QGLPainter *painter)
 {
-    ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(painter->effect());
-    Q_ASSERT_X(effect, "ThumbnailNode::draw", "Can only be drawn with custom effect");
-
-    if (m_image.isNull())
-        qDebug() << ">>>> ThumbnailNode::draw - null image" << m_url;
-    else
-    {
-        ::fprintf(stderr, "     ThumbnailNode::draw -- m_image data: %p -- thread: %p\n",
-                  m_image.priv(),
-                  QThread::currentThread());
-        qDebug() << ">>>> ThumbnailNode::draw" << m_image.url() << m_url;
-    }
-
+    // save the material we were given at creation time.  This is the
+    // default material to use when loading, has "Loading..." message.
     if (m_defaultMaterial == -1)
         m_defaultMaterial = materialIndex();
-
-    QMatrix4x4 m = painter->modelViewMatrix().top();
-    QVector3D pos = m.map(position());
-
-    // we know that the only transforms on these nodes are translation so
-    // take some shortcuts with finding cullability
-    painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(position());
-
-    if (m_boundingBox.isNull())
-    {
-        QGL::IndexArray inxs = thumbGeometry()->indices();
-        for (int i = start(); i < start() + count(); ++i)
-            m_boundingBox.unite(thumbGeometry()->vertexAt(inxs.at(i)));
-    }
-    if (painter->isCullable(m_boundingBox))
-    {
-        painter->modelViewMatrix().pop();
-        qDebug() << "<<<< position:" << position() << "culled";
-        return;
-    }
-
-    //qDebug() << "position()" << position() << "-- mapped:" << pos << m_url;
 
     // under the model-view transformation the eye of the camera is located
     // at the origin, so mapping the position of this node will make it into
     // a vector from the origin/camera - taking the magnitude of this gives
-    // the distance from the eye to the node.
+    // the distance from the eye to the node.  This only works because we
+    // know that the parent nodes have not applied any transformations.
+    QMatrix4x4 m = painter->modelViewMatrix().top();
+    QVector3D pos = m.map(position());
     qreal magSquared = pos.lengthSquared();
-    qDebug() << "      magSquared" << magSquared << "-- thresholdSquared" << m_thresholdSquared
+    qDebug() << "ThumbnailNode::draw -- magSquared" << magSquared << "-- thresholdSquared" << m_thresholdSquared
                 << m_url;
 
+    Distance distance = Near;
     if (magSquared > (4.0f * m_thresholdSquared))
-    {
-        // long way from camera - throw away image (if it isn't already)
-        // and just draw the default frame - it will be just a dot in the
-        // distance anyway
-        effect->setThumbnail(false);
-        setMaterialIndex(m_defaultMaterial);
-        m_image = ThumbnailableImage();
-        m_loading = false;
-        thumbGeometry()->draw(painter, start(), count());
-        painter->modelViewMatrix().pop();
-        qDebug() << "<<<< ThumbnailNode::draw -- 4x threshold" << m_url;
-        return;
-    }
+        distance = VeryFar;
+    else if (magSquared > (2.0f * m_thresholdSquared))
+        distance = Far;
+    else if (magSquared > m_thresholdSquared)
+        distance = Middle;
+    else
+        distance = Near;
 
-    if (m_image.isNull() && !m_url.isEmpty())
+    QGLSceneNode *nodeToDraw = this;
+    switch (distance)
     {
-        // still waiting for load
-        setupLoading(painter);
-        painter->modelViewMatrix().pop();
-        qDebug() << "<<<< ThumbnailNode::draw -- null image" << m_url << "loading? " << m_loading;
-        return;
-    }
-
-    // asynchronous call
-    if (magSquared > m_thresholdSquared)
-    {
-        m_image.setThumbnailed(true);
-        if (magSquared > (2.0f * m_thresholdSquared))
+    case Near:
+        qDebug() << "ThumbnailNode::draw:  NEAR" << m_url;
+        setupLoading();
+        loadFullImage();
+        nodeToDraw = m_full;
+        break;
+    case Middle:
+        qDebug() << "ThumbnailNode::draw:  MIDDLE" << m_url;
+        if (m_full)
+            nodeToDraw = m_full;
+        setupLoading();
+        loadFullImage();
+        break;
+    case Far:
+        qDebug() << "ThumbnailNode::draw:  FAR" << m_url;
+        destroyFullNode();
+        if (m_image.isMinimized())
         {
-            qDebug() << "    ThumbnailNode::draw -- over DOUBLE threshold" << m_url;
-            m_image.minimize();
-            delete m_fullImageMaterial->texture();
-            delete m_fullImageMaterial;
-            m_fullImageMaterial = 0;
-        }
-        else if (magSquared < (1.4f * m_thresholdSquared) && m_image.isMinimized())
-        {
-            qDebug() << "    ThumbnailNode::draw -- over *1.4* threshold & minimized" << m_url;
-            // thrown away full-size image, force reload
             m_image = ThumbnailableImage();
-            setupLoading(painter);
-            painter->modelViewMatrix().pop();
-            return;
+            setupLoading();
         }
+        if (!m_image.data().isNull())
+            m_image.setThumbnailed(true);
+        break;
+    case VeryFar:
+        qDebug() << "ThumbnailNode::draw:  VERYFAR" << m_url;
+        destroyFullNode();
+        m_image.minimize();
+        break;
     }
 
-    effect->setThumbnail(m_image.isThumbnailed());
-    if (m_image.isThumbnailed())
+    QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
+    Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
+               "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
+    ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
+    Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
+               "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
+
+    if (nodeToDraw == this)
     {
-        // dont need to set material - it is set on the parent node in the
-        // ImageDisplay class when the first ThumbnailNode is created
-        thumbGeometry()->draw(painter, start(), count());
-        qDebug() << "      TTTTTTTTTTTTTTTT drawing thumbgeometry" << m_url;
+        qDebug() << "drawing thumbnail - thumbnailed:" << m_image.isThumbnailed() << this;
+        effect->setThumbnail(m_image.isThumbnailed());
+        QGLSceneNode::draw(painter);
     }
     else
     {
-        bool just_set = false;  // debug
-        if (!m_image.isNull())
-        {
-            if (m_fullImageMaterial == 0)
-            {
-                m_fullImageMaterial = new QGLMaterial(this);
-                QGLTexture2D *tex = new QGLTexture2D;
-                tex->setImage(m_image.data());
-                qDebug() << "ThumbnailNode::draw" << m_url << "created tex:" << tex
-                         << "setting image"
-                         << (m_image.isNull() ?
-                                 QString("NULL") : m_image.url().toString());
-
-                m_fullImageMaterial->setTexture(tex);
-                just_set = true; // debug
-            }
-            setMaterial(m_fullImageMaterial);
-        }
-        static bool debugged = false;
-        if (!debugged && just_set)
-        {
-            qDumpScene(this);
-            debugged = true;
-        }
-        qDebug() << "FFFFFFFFFFFFFF drawing full material" << m_url;
-        thumbGeometry()->draw(painter, start(), count());
+        qDebug() << "drawing full image - thumbnailed:" << m_image.isThumbnailed() << this;
+        effect->setThumbnail(false);
+        nodeToDraw->draw(painter);
     }
-
-    painter->modelViewMatrix().pop();
 
 }
 
@@ -229,10 +241,8 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
         return;
 
     // ok we got the right one, stop listening to the manager
-    disconnect(sender());
-
-    ImageManager *manager = qobject_cast<ImageManager*>(sender());
-    Q_ASSERT(manager);
+    if (sender())
+        disconnect(sender());
 
     // the indices we are about to set will index this thumbnail image
     // into the image that its atlas is based on via the texture coords
@@ -240,34 +250,34 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     // same geometry that this node is referencing, so that they will
     // arrive at the vertex shader at the same time - ie they are all
     // matched in the data arrays in the geometry object
+    Q_ASSERT(QAtlas::instance()->geometry() == geometry());
 
     m_image = image;
-    m_image.setAtlas(manager->atlas());
+    Q_ASSERT(!m_image.data().isNull());
 
+    // debug - delete me
     ::fprintf(stderr, "     ThumbnailNode::setImage -- m_image data: %p -- thread: %p\n",
               m_image.priv(),
               QThread::currentThread());
 
-    QGeometryData *g = thumbGeometry();
-    QGL::IndexArray inxs = g->indices();
-    Q_ASSERT(m_image.atlas()->geometry() == g);
-
-    QImage im = m_image.data();
-    Q_ASSERT(!im.isNull());
-
-    // this makes a photo of 1024 x 768 display on a 2.0 x 1.5 pane
+    // configure the placeholder for the actual image size
+    // this makes a photo of 1024 x 768 display on approx 2.0 x 1.5 pane
     // add salt to taste
-    QSizeF f = QSizeF(im.size()) / 1000.0f;
+    QSizeF f = QSizeF(m_image.data().size()) / 1000.0f;
     QVector3D a(-f.width(), -f.height(), 0.0f);
     QVector3D b(f.width(), -f.height(), 0.0f);
     QVector3D c(f.width(), f.height(), 0.0f);
     QVector3D d(-f.width(), f.height(), 0.0f);
     int k = start();
-    g->vertex(inxs.at(k)) = a;
-    g->vertex(inxs.at(k+1)) = b;
-    g->vertex(inxs.at(k+2)) = c;
-    g->vertex(inxs.at(k+3)) = d;
+    Q_ASSERT(count() == 6);
+    QGeometryData g = geometry();
+    QGL::IndexArray inxs = g.indices();
+    g.vertex(inxs.at(k)) = a;
+    g.vertex(inxs.at(k+1)) = b;
+    g.vertex(inxs.at(k+2)) = c;
+    g.vertex(inxs.at(k+5)) = d;
 
     m_image.setIndices(inxs.mid(start(), count()));
+    setMaterialIndex(-1);
     m_loading = false;
 }

@@ -111,6 +111,7 @@ void ByteReader::loadFile(const QUrl &url)
             ThumbnailableImage thumb;
             thumb.setData(im);
             thumb.setUrl(url);
+            thumb.setThumbnailed(true);
 
             Q_ASSERT(!im.isNull());
             Q_ASSERT(!thumb.isNull());

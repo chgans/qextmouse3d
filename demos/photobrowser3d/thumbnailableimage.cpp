@@ -58,7 +58,6 @@ public:
         ThumbnailableImagePrivate *temp = new ThumbnailableImagePrivate;
         temp->thumbnailed = thumbnailed;
         temp->url = url;
-        temp->atlas = atlas;
         temp->data = data;
         temp->tex = tex;
         temp->mat = mat;
@@ -72,7 +71,6 @@ public:
 
     bool thumbnailed;
     QUrl url;
-    QAtlas *atlas;
     QImage data;
     QGLTexture2D *tex;
     QGLMaterial *mat;
@@ -83,7 +81,6 @@ public:
 
 ThumbnailableImagePrivate::ThumbnailableImagePrivate()
     : thumbnailed(false)
-    , atlas(0)
     , tex(0)
     , mat(0)
     , scale(15.0f)
@@ -142,11 +139,12 @@ void ThumbnailableImage::setThumbnailed(bool enable)
     {
         if (enable)
         {
-            if (d->frame.isEmpty())
+            if (d->frame.isNull())
             {
                 Q_ASSERT(!d->data.isNull());
-                QSize sz = (QSizeF(d->frame.size()) / d->scale).toSize();
-                d->frame = d->atlas->allocate(sz, d->data, d->indices);
+                QSize sz = (QSizeF(d->data.size()) / d->scale).toSize();
+                QAtlas *atlas = QAtlas::instance();
+                d->frame = atlas->allocate(sz, d->data, d->indices);
             }
         }
         d->thumbnailed = enable;
@@ -189,20 +187,6 @@ void ThumbnailableImage::setUrl(const QUrl &url)
     d->url = url;
 }
 
-QAtlas *ThumbnailableImage::atlas() const
-{
-    QAtlas *result = 0;
-    if (d)
-        result = d->atlas;
-    return result;
-}
-
-void ThumbnailableImage::setAtlas(QAtlas *atlas)
-{
-    detach();
-    d->atlas = atlas;
-}
-
 QRectF ThumbnailableImage::frame() const
 {
     QRectF result;
@@ -232,7 +216,8 @@ void ThumbnailableImage::minimize()
     else
     {
         // If not thumbnailed, I don't need the atlas resources
-        d->atlas->release(d->frame);
+        QAtlas *atlas = QAtlas::instance();
+        atlas->release(d->frame);
         d->frame = QRect();
     }
 }

@@ -79,8 +79,9 @@ private:
     qreal m_frameSize;
     int m_maxImages;
     QImage m_frameImage;
-    QGLMaterial *m_frameLoadingMaterial;
+    int m_frameLoadingMaterial;
     QGeometryData m_frameGeometry;
+    QGeometryData m_wallGeometry;
     QVector2DArray m_atlasPlaceHolder;
 };
 

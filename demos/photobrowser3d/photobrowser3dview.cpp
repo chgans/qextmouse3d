@@ -63,7 +63,7 @@
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
     , m_scene(0)
-    , m_images(new ImageManager)
+    , m_images(0)
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
     , m_velocity(0.0f)
@@ -98,14 +98,29 @@ PhotoBrowser3DView::PhotoBrowser3DView()
 
     setupStates();
 
+    // make sure this only gets created in the GUI thread
+    QAtlas::instance();
+
+#ifndef QT_USE_TEST_IMAGES
     QTimer::singleShot(0, this, SLOT(initialise()));
+#else
+    QDir testImages(":/pictures");
+    QStringList pics = testImages.entryList();
+    for (int i = 0; i < pics.size(); ++i)
+    {
+        QUrl url;
+        url.setScheme("file");
+        url.setPath(testImages.filePath(pics.at(i)));
+        m_scene->addThumbnailNode(url);
+    }
+    qDumpScene(m_scene);
+#endif
 }
 
 PhotoBrowser3DView::~PhotoBrowser3DView()
 {
     qDebug() << "PhotoBrowser3DView::~PhotoBrowser3DView";
     delete m_panTime;
-    delete m_atlas;
 }
 
 void PhotoBrowser3DView::setupStates()
@@ -170,6 +185,8 @@ void PhotoBrowser3DView::setupStates()
 
 void PhotoBrowser3DView::initialise()
 {
+    m_images = new ImageManager;
+
     qDebug() << ">>>>>> PhotoBrowser3DView::initialise()" << QThread::currentThread();
     QString path = QDir::home().absoluteFilePath("Pictures");
     int ix = qApp->arguments().indexOf("--pictures");
@@ -185,12 +202,10 @@ void PhotoBrowser3DView::initialise()
 
     connect(m_scene, SIGNAL(framesChanged()), this, SLOT(framesDirty()));
 
-    m_atlas = new QAtlas;
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
     m_images->setImageBaseUrl(url);
-    m_images->setAtlas(m_atlas);
     QThread::Priority p = QThread::idealThreadCount() < 2 ?
                 QThread::IdlePriority : QThread::NormalPriority;
     m_images->start(p);
@@ -370,6 +385,7 @@ void PhotoBrowser3DView::paintGL(QGLPainter *painter)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_skybox->draw(painter);
         m_scene->draw(painter);
+        //qDebug() << "PhotoBrowser3DView::paintGL";
     }
 }
 

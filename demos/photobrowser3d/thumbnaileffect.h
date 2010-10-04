@@ -62,6 +62,8 @@ public:
     void setThumbnail(bool enable);
     bool thumbnail() const;
 
+    QString name() const { return QLatin1String("ThumbnailEffect"); }
+
 private:
     ThumbnailEffectPrivate *d;
 };

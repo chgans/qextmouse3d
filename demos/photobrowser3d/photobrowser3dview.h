@@ -99,7 +99,6 @@ private:
     QFocusAdaptor *m_fa;
     bool m_framesDirty;
     qreal m_displaySize;
-    QAtlas *m_atlas;
     bool m_done;
     bool m_closing;
 };

@@ -73,6 +73,7 @@ QAtlas::~QAtlas()
 
 QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices)
 {
+    qDebug() << "QAtlas::allocate" << size << "out of" << m_size;
     QRect a = m_allocator->allocate(size);
     if (a.isEmpty())
     {
@@ -84,15 +85,23 @@ QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexA
     painter.drawImage(a, image);
     painter.end();
     m_tex->setImage(*m_data);
-    Q_ASSERT(m_geometry);
-    m_geometry->texCoord(indices.at(0), QGL::TextureCoord1) = QVector2D(a.left(), a.bottom());
-    m_geometry->texCoord(indices.at(1), QGL::TextureCoord1) = QVector2D(a.right(), a.bottom());
-    m_geometry->texCoord(indices.at(2), QGL::TextureCoord1) = QVector2D(a.right(), a.top());
-    m_geometry->texCoord(indices.at(3), QGL::TextureCoord1) = QVector2D(a.left(), a.top());
+    m_geometry.texCoord(indices.at(0), QGL::TextureCoord1) = QVector2D(a.left(), a.bottom());
+    m_geometry.texCoord(indices.at(1), QGL::TextureCoord1) = QVector2D(a.right(), a.bottom());
+    m_geometry.texCoord(indices.at(2), QGL::TextureCoord1) = QVector2D(a.right(), a.top());
+    m_geometry.texCoord(indices.at(3), QGL::TextureCoord1) = QVector2D(a.left(), a.top());
+    qDebug() << "QAtlas::allocate";
+    m_data->save("atlas_allocate.png");
     return a;
 }
 
 void QAtlas::release(QRect frame)
 {
     m_allocator->release(frame);
+}
+
+Q_GLOBAL_STATIC(QAtlas, atlasInstance);
+
+QAtlas *QAtlas::instance()
+{
+    return atlasInstance();
 }

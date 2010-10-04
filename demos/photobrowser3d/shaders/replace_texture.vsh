@@ -14,4 +14,4 @@ void main(void)
     else
         qTexCoord = texcoord;
     gl_Position = matrix * vertex;
-};
+}

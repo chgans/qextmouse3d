@@ -14,4 +14,10 @@
         <file alias="replace_texture.fsh">shaders/replace_texture.fsh</file>
         <file alias="replace_texture.vsh">shaders/replace_texture.vsh</file>
     </qresource>
+    <qresource prefix="/pictures">
+        <file alias="im1.jpg">images/P1000223.JPG</file>
+        <file alias="im2.jpg">images/P1000228.JPG</file>
+        <file alias="im3.jpg">images/P1000441.JPG</file>
+        <file alias="im4.jpg">images/P1000472.JPG</file>
+    </qresource>
 </RCC>

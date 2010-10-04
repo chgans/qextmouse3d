@@ -72,10 +72,12 @@ public:
 
     void release(QRect frame);
 
-    void setGeometry(QGeometryData *geometry) { m_geometry = geometry; }
-    QGeometryData *geometry() { return m_geometry; }
+    void setGeometry(QGeometryData geometry) { m_geometry = geometry; }
+    QGeometryData geometry() { return m_geometry; }
 
     QGLMaterial *material() { return m_material; }
+
+    static QAtlas *instance();
 
 private:
     QSize m_size;
@@ -83,7 +85,7 @@ private:
     QAreaAllocator *m_allocator;
     QGLTexture2D *m_tex;
     QGLMaterial *m_material;
-    QGeometryData *m_geometry;
+    QGeometryData m_geometry;
 };
 
 #endif // QATLAS_H

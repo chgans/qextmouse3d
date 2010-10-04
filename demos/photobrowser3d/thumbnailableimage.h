@@ -48,7 +48,6 @@
 #include "qarray.h"
 #include "qgeometrydata.h"
 
-class QAtlas;
 class QImage;
 class ThumbnailableImagePrivate;
 class QGLPainter;
@@ -70,9 +69,6 @@ public:
 
     QUrl url() const;
     void setUrl(const QUrl &url);
-
-    QAtlas *atlas() const;
-    void setAtlas(QAtlas *atlas);
 
     QRectF frame() const;
     qreal scale() const;

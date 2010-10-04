@@ -97,7 +97,7 @@ QList<QGL::VertexAttribute> ThumbnailEffect::requiredFields() const
 */
 void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
 {
-
+    qDebug() << "ThumbnailEffect::setActive" << flag;
     Q_UNUSED(painter);
     if (!d->program) {
         if (!flag)
@@ -114,6 +114,7 @@ void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
             d->program = 0;
             return;
         }
+        qDebug() << "link successful";
         d->matrixUniform = d->program->uniformLocation("matrix");
         d->thumbnailUniform = d->program->uniformLocation("thumb");
         d->program->bind();

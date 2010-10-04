@@ -55,29 +55,38 @@ class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
 public:
+    enum Distance
+    {
+        Near,
+        Middle,
+        Far,
+        VeryFar
+    };
+
     explicit ThumbnailNode(QObject *parent = 0);
+    ~ThumbnailNode();
     QUrl url() const { return m_url; }
     void setUrl(const QUrl &url) { m_url = url; }
     void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
     qreal threshold() const { return qSqrt(m_thresholdSquared); }
     void draw(QGLPainter *painter);
     ThumbnailableImage image() const { return m_image; }
-    void setThumbGeometry(QGeometryData *geometry) { m_geometry = geometry; }
-    QGeometryData *thumbGeometry() { return m_geometry; }
 signals:
     void imageRequired(const QUrl &);
 public slots:
     void setImage(const ThumbnailableImage &image);
 private:
-    void setupLoading(QGLPainter *painter);
+    void createFullNode();
+    void destroyFullNode();
+    void setupLoading();
+    void loadFullImage();
+
     ThumbnailableImage m_image;
     qreal m_thresholdSquared;
-    QUrl m_url;
     int m_defaultMaterial;
+    QUrl m_url;
     bool m_loading;
-    QGeometryData *m_geometry;
-    QGLMaterial *m_fullImageMaterial;
-    QBox3D m_boundingBox;
+    QGLSceneNode *m_full;
 };
 
 #endif // THUMBNAILNODE_H

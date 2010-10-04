@@ -49,7 +49,6 @@
 #include <QTimer>
 
 ImageManager::ImageManager()
-    : m_atlas(0)
 {
 }
 
@@ -87,6 +86,11 @@ void ImageManager::scanForFiles()
     connect(scanner, SIGNAL(imageUrl(QUrl)), this, SIGNAL(imageUrl(QUrl)));
     connect(scanner, SIGNAL(finished()), scanner, SLOT(deleteLater()));
     connect(this, SIGNAL(stopAll()), scanner, SLOT(stop()));
+
+#ifdef QT_NO_THREADED_FILE_LOAD
+    connect(scanner, SIGNAL(finished()), this, SLOT(quit()));
+#endif
+
     scanner->start();
 }
 
@@ -114,12 +118,14 @@ void ImageManager::run()
     // execute once in the event loop below
     QTimer::singleShot(0, this, SLOT(scanForFiles()));
 
+#ifndef QT_NO_THREADED_FILE_LOAD
     ThreadPool pool;
 
     connect(this, SIGNAL(deployLoader(QUrl)), &pool, SLOT(deployLoader(QUrl)));
     connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
 
     connect(&pool, SIGNAL(stopped()), this, SLOT(quit()));
+#endif
 
     fprintf(stderr, "ImageManager::run - start %p\n", this);
 
