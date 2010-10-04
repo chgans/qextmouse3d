@@ -94,8 +94,7 @@ void ProjectiveTextureEffect::setupShaders()
     QFile vertexShaderFile(vertexShaderFileName);
     if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QByteArray all(vertexShaderFile.readAll());
-        setVertexShader(QString::fromLatin1(all.constData(), all.size()));
+        setVertexShader(vertexShaderFile.readAll());
     } else {
         qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
     }
@@ -104,8 +103,7 @@ void ProjectiveTextureEffect::setupShaders()
     QFile fragmentShaderFile(fragmentShaderFileName);
     if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QByteArray all(fragmentShaderFile.readAll());
-        setFragmentShader(QString::fromLatin1(all.constData(), all.size()));
+        setFragmentShader(fragmentShaderFile.readAll());
     } else {
         qWarning() << "Could not open file "<<fragmentShaderFileName<<", failed to load fragment shader";
     }

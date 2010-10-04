@@ -35,9 +35,6 @@ public:
     QString id();
     QString sid();
 
-    void setVertexShader(QString const & shader);
-    void setFragmentShader(QString const & shader);
-
     void setLighting(int lighting);
     int lighting();
     QGLTexture2D* diffuseTexture();

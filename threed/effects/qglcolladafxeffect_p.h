@@ -87,9 +87,6 @@ public:
     QString vertexShaderMainGlueSnippet;
     QString fragmentShaderEndGlueSnippet;
     QString fragmentShaderMainGlueSnippet;
-
-    bool hasCustomVertexShader;
-    bool hasCustomFragmentShader;
 };
 
 #endif // QGLCOLLADAFXEFFECT_P_H

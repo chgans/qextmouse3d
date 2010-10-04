@@ -30,8 +30,6 @@ QGLColladaFxEffectPrivate::QGLColladaFxEffectPrivate() : id()
         , diffuseTexture(0)
         , specularTexture(0)
         , lighting(QGLColladaFxEffect::NoLighting)
-        , hasCustomVertexShader(false)
-        , hasCustomFragmentShader(false)
 {
     resetGlueSnippets();
 }
@@ -219,22 +217,24 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
 
 void QGLColladaFxEffect::generateShaders()
 {
-    if(!d->hasCustomVertexShader)
+    if(vertexShader().isEmpty())
     {
-        setVertexShader(
+        QString shader =
                 d->vertexShaderDeclarationSnippets.join(QLatin1String("\n"))
                 + QLatin1String("\n") + d->vertexShaderMainGlueSnippet
                 + d->vertexShaderCodeSnippets.join(QLatin1String("\n"))
-                + QLatin1String("\n") + d->vertexShaderEndGlueSnippet);
+                + QLatin1String("\n") + d->vertexShaderEndGlueSnippet;
+        setVertexShader(shader.toLatin1());
     }
 
-    if(!d->hasCustomFragmentShader)
+    if(fragmentShader().isEmpty())
     {
-        setFragmentShader(
+        QString shader =
                 d->fragmentShaderDeclarationSnippets.join(QLatin1String("\n"))
                 + QLatin1String("\n") + d->fragmentShaderMainGlueSnippet
                 +  d->fragmentShaderCodeSnippets.join(QLatin1String("\n"))
-                + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet);
+                + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet;
+        setFragmentShader(shader.toLatin1());
     }
 
     // Set inactive to trigger relinking later
@@ -310,18 +310,6 @@ QString QGLColladaFxEffect::sid()
 QGLTexture2D* QGLColladaFxEffect::diffuseTexture()
 {
     return d->diffuseTexture;
-}
-
-void QGLColladaFxEffect::setVertexShader(QString const &  shader)
-{
-    d->hasCustomVertexShader = shader.length() > 0;
-    QGLShaderProgramEffect::setVertexShader(shader);
-}
-
-void QGLColladaFxEffect::setFragmentShader(QString const & shader)
-{
-    d->hasCustomFragmentShader = shader.length() > 0;
-    QGLShaderProgramEffect::setFragmentShader(shader);
 }
 
 
