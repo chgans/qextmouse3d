@@ -184,10 +184,11 @@ public:
     bool operator==(const QGeometryData &other) const;
     bool isEmpty() const;
     bool isNull() const;
+    void detach();
 protected:
     const QVector3DArray *vertexData() const;
 private:
-    void detach();
+    void create();
 #ifndef QT_NO_DEBUG
     void check() const;
 #else
