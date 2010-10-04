@@ -289,6 +289,7 @@ void QGLRenderSequencer::applyState()
 {
     d->latched = true;
     QGLRenderState s = d->stack.top();
+    qDebug() << "QGLRenderSequencer::applyState" << s;
     if (s.hasEffect() && !d->painter->isPicking())
     {
         if (s.userEffect())
@@ -298,7 +299,8 @@ void QGLRenderSequencer::applyState()
         }
         else
         {
-            if (d->painter->standardEffect() != s.standardEffect())
+            if (d->painter->userEffect() ||
+                    d->painter->standardEffect() != s.standardEffect())
                 d->painter->setStandardEffect(s.standardEffect());
         }
     }
