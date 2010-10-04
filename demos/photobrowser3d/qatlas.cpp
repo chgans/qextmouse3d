@@ -73,23 +73,31 @@ QAtlas::~QAtlas()
 
 QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices)
 {
-    qDebug() << "QAtlas::allocate" << size << "out of" << m_size;
     QRect a = m_allocator->allocate(size);
     if (a.isEmpty())
     {
         qWarning("QAtlas::allocate: overflowed");
         return a;
     }
+    qDebug() << "QAtlas::allocate" << size << "out of" << m_size << "rect:" << a;
     QPainter painter;
     painter.begin(m_data);
     painter.drawImage(a, image);
+    painter.setPen(QColor("orange"));
+    painter.drawText(m_data->rect(), Qt::AlignCenter, "THUMB");
     painter.end();
     m_tex->setImage(*m_data);
-    m_geometry.texCoord(indices.at(0), QGL::TextureCoord1) = QVector2D(a.left(), a.bottom());
-    m_geometry.texCoord(indices.at(1), QGL::TextureCoord1) = QVector2D(a.right(), a.bottom());
-    m_geometry.texCoord(indices.at(2), QGL::TextureCoord1) = QVector2D(a.right(), a.top());
-    m_geometry.texCoord(indices.at(3), QGL::TextureCoord1) = QVector2D(a.left(), a.top());
-    qDebug() << "QAtlas::allocate";
+    QRectF af(a);
+    QSizeF szf(m_size);
+    float l = af.left() / szf.width();
+    float r = af.right() / szf.width();
+    float t = 1.0f - (af.top() / szf.height());
+    float b = 1.0f - (af.bottom() / szf.height());
+    m_geometry.texCoord(indices.at(0), QGL::TextureCoord1) = QVector2D(l, b);
+    m_geometry.texCoord(indices.at(1), QGL::TextureCoord1) = QVector2D(r, b);
+    m_geometry.texCoord(indices.at(2), QGL::TextureCoord1) = QVector2D(r, t);
+    m_geometry.texCoord(indices.at(5), QGL::TextureCoord1) = QVector2D(l, t);
+    qDebug() << "===== QAtlas::allocate ====\n" << m_geometry << "\n===== QAtlas::allocate ====\n";
     m_data->save("atlas_allocate.png");
     return a;
 }
