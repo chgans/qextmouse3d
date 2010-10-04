@@ -273,6 +273,8 @@ void QGLRenderSequencer::endState(QGLSceneNode *node)
 {
 #ifndef QT_NO_DEBUG_STREAM
     const QGLSceneNode *n = d->stack.top().node();
+    Q_UNUSED(n);
+    Q_UNUSED(node);
     Q_ASSERT(n == node);
 #endif
     d->stack.pop();
