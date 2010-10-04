@@ -72,6 +72,8 @@ public:
 
     virtual void setCommonNormal(const QVector3D& value);
 
+    virtual QString name() const { return QString(); }
+
 protected:
     static void setAttributeArray
         (QGLShaderProgram *program, int location,
