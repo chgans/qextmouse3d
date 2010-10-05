@@ -1,12 +1,25 @@
 // Per-pixel lighting - fragment shader side.
 
-uniform mediump vec4 scli;              // Specular intensity of the light
-uniform mediump vec3 sdli;              // Direction of the light
-uniform mediump float srli;             // Spotlight exponent for the light
-uniform mediump float crli;             // Spotlight cutoff for the light
-uniform mediump float ccrli;            // Cosine of spotlight cutoff for the light
-uniform mediump vec4 scm;               // Specular color of the material
-uniform mediump float srm;              // Specular exponent of the material
+struct qgl_MaterialParameters {
+    mediump vec4 emission;
+    mediump vec4 ambient;
+    mediump vec4 diffuse;
+    mediump vec4 specular;
+    mediump float shininess;
+};
+uniform qgl_MaterialParameters qgl_Material;
+
+struct qgl_SingleLightParameters {
+    mediump vec4 position;
+    mediump vec3 spotDirection;
+    mediump float spotExponent;
+    mediump float spotCutoff;
+    mediump float spotCosCutoff;
+    mediump float constantAttenuation;
+    mediump float linearAttenuation;
+    mediump float quadraticAttenuation;
+};
+uniform qgl_SingleLightParameters qgl_Light;
 
 varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
@@ -35,16 +48,17 @@ vec4 qLightPixel(vec4 ambient, vec4 diffuse)
     // Calculate the specular light components.
     if (angle != 0.0) {
         angle = max(dot(normal, qHalfVector), 0.0);
-        component += pow(angle, srm) * scm * scli;
+        component += pow(angle, qgl_Material.shininess) * qgl_Material.specular;
     }
 
     // Apply the spotlight angle and exponent.
-    if (crli != 180.0) {
-        spot = max(dot(normalize(qVertexToLight), normalize(sdli)), 0.0);
-        if (spot < ccrli)
+    if (qgl_Light.spotCutoff != 180.0) {
+        spot = max(dot(normalize(qVertexToLight),
+                       normalize(qgl_Light.spotDirection)), 0.0);
+        if (spot < qgl_Light.spotCosCutoff)
             spot = 0.0;
         else
-            spot = pow(spot, srli);
+            spot = pow(spot, qgl_Light.spotExponent);
         component *= spot;
     }
 

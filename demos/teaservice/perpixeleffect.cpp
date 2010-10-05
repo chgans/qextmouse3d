@@ -40,140 +40,17 @@
 ****************************************************************************/
 
 #include "perpixeleffect.h"
-#include <QtOpenGL/qglshaderprogram.h>
-#include "qglpainter.h"
 
 QT_BEGIN_NAMESPACE
 
-class PerPixelEffectPrivate
-{
-public:
-    PerPixelEffectPrivate()
-    {
-        program = 0;
-        vertexLighting = 0;
-        fragmentLighting = 0;
-        modelViewUniform = 0;
-        matrixUniform = 0;
-        normalMatrixUniform = 0;
-    }
-    ~PerPixelEffectPrivate()
-    {
-        delete program;
-        delete vertexLighting;
-        delete fragmentLighting;
-    }
-
-    QGLShaderProgram *program;
-    QGLShader *vertexLighting;
-    QGLShader *fragmentLighting;
-    int modelViewUniform;
-    int matrixUniform;
-    int normalMatrixUniform;
-};
-
 PerPixelEffect::PerPixelEffect()
 {
-    d = new PerPixelEffectPrivate();
+    setVertexShaderFromFile(":per_pixel_lighting.vsh");
+    setFragmentShaderFromFile(":per_pixel_lighting.fsh");
 }
 
 PerPixelEffect::~PerPixelEffect()
 {
-    delete d;
-}
-
-QList<QGL::VertexAttribute> PerPixelEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    // There are texture co-ordinates too, but we don't require them.
-    return fields;
-}
-
-void PerPixelEffect::setActive(QGLPainter *painter, bool flag)
-{
-    Q_UNUSED(painter);
-    if (!flag) {
-        if (d->program) {
-            d->program->disableAttributeArray(QGL::Position);
-            d->program->disableAttributeArray(QGL::Normal);
-            d->program->release();
-        }
-        return;
-    }
-
-    if (!d->program) {
-        d->vertexLighting = new QGLShader(QGLShader::Vertex);
-        d->vertexLighting->compileSourceFile
-            (QLatin1String(":per_pixel_lighting.vsh"));
-        d->fragmentLighting = new QGLShader(QGLShader::Fragment);
-        d->fragmentLighting->compileSourceFile
-            (QLatin1String(":per_pixel_lighting.fsh"));
-        d->program = new QGLShaderProgram();
-        d->program->addShader(d->vertexLighting);
-        d->program->addShader(d->fragmentLighting);
-    }
-    if (!d->program->isLinked()) {
-        d->program->bindAttributeLocation("vertexAttr", QGL::Position);
-        d->program->bindAttributeLocation("normalAttr", QGL::Normal);
-        d->program->link();
-        d->modelViewUniform = d->program->uniformLocation("modelView");
-        d->matrixUniform = d->program->uniformLocation("matrix");
-        d->normalMatrixUniform = d->program->uniformLocation("normalMatrix");
-    }
-    d->program->bind();
-    d->program->enableAttributeArray(QGL::Position);
-    d->program->enableAttributeArray(QGL::Normal);
-}
-
-void PerPixelEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    // Update the matrix uniforms.
-    if ((updates & QGLPainter::UpdateMatrices) != 0) {
-        d->program->setUniformValue(d->matrixUniform, painter->combinedMatrix());
-        d->program->setUniformValue(d->modelViewUniform, painter->modelViewMatrix());
-        d->program->setUniformValue(d->normalMatrixUniform, painter->normalMatrix());
-    }
-
-    // Bail out if the lights or materials have not changed.
-    if ((updates & (QGLPainter::UpdateLights | QGLPainter::UpdateMaterials)) == 0)
-        return;
-
-    // Find the parameters for the single enabled light.
-    const QGLLightParameters *lparams = painter->mainLight();
-    QMatrix4x4 ltransform = painter->mainLightTransform();
-
-    // Get the front material parameters.
-    const QGLMaterial *mparams = painter->faceMaterial(QGL::FrontFaces);
-
-    // Set the uniform variables on the shader program.
-    d->program->setUniformValue("acli", lparams->ambientColor());
-    d->program->setUniformValue("dcli", lparams->diffuseColor());
-    d->program->setUniformValue("scli", lparams->specularColor());
-    d->program->setUniformValue("sdli", lparams->eyeSpotDirection(ltransform));
-    QVector4D pli = lparams->eyePosition(ltransform);
-    d->program->setUniformValue("pli", QVector3D(pli.x(), pli.y(), pli.z()));
-    d->program->setUniformValue("srli", (GLfloat)(lparams->spotExponent()));
-    d->program->setUniformValue("crli", (GLfloat)(lparams->spotAngle()));
-    d->program->setUniformValue("ccrli", (GLfloat)(lparams->spotCosAngle()));
-    d->program->setUniformValue("acm", mparams->ambientColor());
-    d->program->setUniformValue("dcm", mparams->diffuseColor());
-    d->program->setUniformValue("scm", mparams->specularColor());
-    d->program->setUniformValue("ecm", mparams->emittedLight());
-    d->program->setUniformValue("srm", (GLfloat)(mparams->shininess()));
-    d->program->setUniformValue("acs", painter->lightModel()->ambientSceneColor());
-    d->program->setUniformValue("viewerAtInfinity", (int)(painter->lightModel()->viewerPosition() == QGLLightModel::ViewerAtInfinity));
-}
-
-void PerPixelEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::Normal)
-        setAttributeArray(d->program, QGL::Normal, value);
 }
 
 QT_END_NAMESPACE
