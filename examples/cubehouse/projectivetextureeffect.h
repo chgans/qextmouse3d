@@ -2,7 +2,6 @@
 #define PROJECTIVEDTEXTUREEFFECT_H
 
 //#include <QGLShaderProgramEffect>
-#include "qglshaderprogrameffect.h"
 #include "qglshadereffect.h"
 #include "qglshaderprogram.h"
 //#include "deptheffect.h"
