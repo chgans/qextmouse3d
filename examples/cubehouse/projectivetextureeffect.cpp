@@ -21,12 +21,12 @@ ProjectiveTextureEffect::ProjectiveTextureEffect() :
 
 void ProjectiveTextureEffect::setActive(QGLPainter *painter, bool flag)
 {
-    QGLShaderProgramEffect::setActive(painter, flag);
+    QGLShaderEffect::setActive(painter, flag);
 }
 
 void ProjectiveTextureEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
-    QGLShaderProgramEffect::update(painter, updates);
+    QGLShaderEffect::update(painter, updates);
 
     if(matrixDirty)
     {
@@ -38,10 +38,6 @@ void ProjectiveTextureEffect::update(QGLPainter *painter, QGLPainter::Updates up
                                objectLinearTexgenMatrix);
     program()->setUniformValue("projectorDirection",
                                projectorDirection);
-    program()->setUniformValue("qgl_NormalMatrix", painter->normalMatrix());
-//     TODO:
-//        program()->setUniformValue("inverseCameraModelViewMatrix",
-//                                   inverseCameraModelViewMatrix);
 }
 
 void ProjectiveTextureEffect::setProjectorDirection(const QVector4D &direction)
