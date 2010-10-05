@@ -10,7 +10,6 @@ SOURCES += main.cpp\
     skybox.cpp \
     imagemanager.cpp \
     imageloader.cpp \
-    qframesscene.cpp \
     qfocusadaptor.cpp \
     thumbnailableimage.cpp \
     qatlas.cpp \
@@ -18,14 +17,16 @@ SOURCES += main.cpp\
     thumbnaileffect.cpp \
     filescanner.cpp \
     bytereader.cpp \
-    threadpool.cpp
+    threadpool.cpp \
+    buttons.cpp \
+    qphotobrowser3dscene.cpp \
+    pancontroller.cpp
 
 HEADERS  += photobrowser3dview.h \
     imagedisplay.h \
     skybox.h \
     imagemanager.h \
     imageloader.h \
-    qframesscene.h \
     qfocusadaptor.h \
     thumbnailableimage.h \
     qatlas.h \
@@ -33,14 +34,18 @@ HEADERS  += photobrowser3dview.h \
     thumbnaileffect.h \
     filescanner.h \
     bytereader.h \
-    threadpool.h
+    threadpool.h \
+    buttons.h \
+    qphotobrowser3dscene.h \
+    pancontroller.h
 
 # Uncomment this line to force all file loading is done in the gui thread
 # instead of a background thread - useful for debugging.
-DEFINES += QT_NO_THREADED_FILE_LOAD
+# DEFINES += QT_NO_THREADED_FILE_LOAD
 
-# Uncomment this to use test images instead of scanning and loading.
-DEFINES += QT_USE_TEST_IMAGES
+# Uncomment this to use test images instead of scanning the file-system for
+# pictures.  The test images are stored in in-memory resources "files".
+# DEFINES += QT_USE_TEST_IMAGES
 
 RESOURCES += \
     photobrowser3d.qrc

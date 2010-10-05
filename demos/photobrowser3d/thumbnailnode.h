@@ -70,6 +70,7 @@ public:
     void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
     qreal threshold() const { return qSqrt(m_thresholdSquared); }
     void draw(QGLPainter *painter);
+    void geometryDraw(QGLPainter *painter);
     ThumbnailableImage image() const { return m_image; }
 signals:
     void imageRequired(const QUrl &);
@@ -87,6 +88,7 @@ private:
     QUrl m_url;
     bool m_loading;
     QGLSceneNode *m_full;
+    QSizeF m_max;
 };
 
 #endif // THUMBNAILNODE_H

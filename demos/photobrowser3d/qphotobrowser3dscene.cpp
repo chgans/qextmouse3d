@@ -39,28 +39,19 @@
 **
 ****************************************************************************/
 
+#include "qphotobrowser3dscene.h"
+#include "qglscenenode.h"
 
-#ifndef QFRAMESSCENE_H
-#define QFRAMESSCENE_H
-
-#include "qglabstractscene.h"
-
-class QGLSceneNode;
-
-class QFramesScene : public QGLAbstractScene
+QPhotoBrowser3DScene::QPhotoBrowser3DScene(QObject *parent)
+    : QGLAbstractScene(parent)
+    , m_rootNode(new QGLSceneNode(this))
 {
-    Q_OBJECT
-public:
-    explicit QFramesScene(QObject *parent = 0);
-    virtual QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
-    void setRootNode(QGLSceneNode *node) { m_rootNode = node; }
+}
 
-signals:
-
-public slots:
-
-private:
-    QGLSceneNode *m_rootNode;
-};
-
-#endif // QFRAMESSCENE_H
+QList<QGLSceneNode *> QPhotoBrowser3DScene::objects(QGLSceneNode::Type type) const
+{
+    QList<QGLSceneNode*> objects;
+    if (type == QGLSceneNode::Mesh)
+        objects = m_rootNode->allChildren();
+    return objects;
+}

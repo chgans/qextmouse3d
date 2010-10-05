@@ -107,11 +107,23 @@ void ByteReader::loadFile(const QUrl &url)
                 ptr.drawText(im.rect(), Qt::AlignCenter, errorMessage);
                 ptr.end();
             }
+            else
+            {
+                // TODO: Fix size limit
+                // This arbitrary size limit is really a debugging/development thing
+                // In a real program once you had loaded the full image, the photo-
+                // viewer would allow zooming and panning all around in the image
+                // so loading a 2896 pixel × 1944 pixel photo would make sense even
+                // on a small screen.  For now work with fairly cruddy image quality.
+                if (im.size().width() > 1024 || im.size().height() > 768)
+                    im = im.scaled(QSize(1024, 768), Qt::KeepAspectRatio,
+                                   QThread::idealThreadCount() > 2 ?
+                                       Qt::SmoothTransformation : Qt::FastTransformation);
+            }
 
             ThumbnailableImage thumb;
             thumb.setData(im);
             thumb.setUrl(url);
-            thumb.setThumbnailed(true);
 
             Q_ASSERT(!im.isNull());
             Q_ASSERT(!thumb.isNull());

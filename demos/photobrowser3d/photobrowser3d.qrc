@@ -20,4 +20,7 @@
         <file alias="im3.jpg">images/P1000441.JPG</file>
         <file alias="im4.jpg">images/P1000472.JPG</file>
     </qresource>
+    <qresource prefix="/controls">
+        <file alias="arrows-left.png">images/arrows-left.png</file>
+    </qresource>
 </RCC>

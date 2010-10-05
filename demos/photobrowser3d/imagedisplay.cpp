@@ -46,10 +46,11 @@
 #include "thumbnaileffect.h"
 #include "qglbuilder.h"
 #include "qglcube.h"
-#include "qframesscene.h"
 #include "imagemanager.h"
 #include "qatlas.h"
 #include "qglshaderprogrameffect.h"
+#include "qphotobrowser3dscene.h"
+#include "photobrowser3dview.h"
 
 #include <QApplication>
 #include <QChildEvent>
@@ -165,9 +166,8 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
     // make the frames pickable
-    m_frameScene = new QFramesScene(this);
-    m_frameScene->setRootNode(m_frames);
-    m_frameScene->setPickable(true);
+    PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent);
+    view->scene()->rootNode()->addNode(m_frames);
 
     m_imageSetToDefault = true;
 
@@ -201,10 +201,6 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
         m_currentFrame->setGeometry(m_frameGeometry);
         m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
-        // tell the frame scene to make the child pickable
-        QChildEvent e(QEvent::ChildAdded, m_currentFrame);
-        QApplication::sendEvent(m_frameScene, &e);
-
         QGLSceneNode *s = m_currentWall->clone(m_wall);
         s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
@@ -224,9 +220,4 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     //    qDumpScene(this);
     ++m_count;
     qDebug() << "<<<<<<< ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
-}
-
-QList<QGLPickNode *> ImageDisplay::pickNodes() const
-{
-    return m_frameScene->pickNodes();
 }

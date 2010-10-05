@@ -9,9 +9,15 @@
 #include <QDebug>
 #include <QImageReader>
 
-FileScanner::FileScanner()
+FileScanner::FileScanner(QObject *parent)
+    : QThread(parent)
 {
     m_stop = 0;
+}
+
+FileScanner::~FileScanner()
+{
+    qDebug() << "FileScanner::~FileScanner()";
 }
 
 void FileScanner::stop()
@@ -21,7 +27,12 @@ void FileScanner::stop()
 
 void FileScanner::run()
 {
-    qDebug() << "FileScanner::run" << m_url.toString();
+    scan();
+}
+
+void FileScanner::scan()
+{
+    qDebug() << "FileScanner::scan" << m_url.toString();
 
     // debug - remove me
     QTime timer;
@@ -33,10 +44,6 @@ void FileScanner::run()
     QSet<QString> loopProtect;
     while (queue.size() > 0 && !m_stop)
     {
-        // debug - remove me
-        if (count > 2)
-            break;
-
         QString path = queue.takeFirst();
         QFileInfo u(path);
         if (u.isSymLink())

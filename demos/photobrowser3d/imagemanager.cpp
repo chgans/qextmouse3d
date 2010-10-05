@@ -47,6 +47,7 @@
 
 #include <QTime>
 #include <QTimer>
+#include <QDir>
 
 ImageManager::ImageManager()
 {
@@ -81,17 +82,28 @@ void ImageManager::scanForFiles()
     // and trigger a rescan to pick these new files up.  Here we just scan
     // once and then destroy the scanner, to save on resources.
 
+#ifndef QT_USE_TEST_IMAGES
+    // TODO: If the amount of files is large and the app is quit early the
+    // scanner could still be going when the threadpool quits.  For now
+    // assume its ok...
     FileScanner *scanner = new FileScanner;
     scanner->setBaseUrl(m_url);
     connect(scanner, SIGNAL(imageUrl(QUrl)), this, SIGNAL(imageUrl(QUrl)));
     connect(scanner, SIGNAL(finished()), scanner, SLOT(deleteLater()));
     connect(this, SIGNAL(stopAll()), scanner, SLOT(stop()));
-
-#ifdef QT_NO_THREADED_FILE_LOAD
-    connect(scanner, SIGNAL(finished()), this, SLOT(quit()));
-#endif
-
     scanner->start();
+#else
+    QDir testImages(":/pictures");
+    QStringList pics = testImages.entryList();
+    for (int i = 0; i < pics.size(); ++i)
+    {
+        QUrl url;
+        url.setScheme("file");
+        url.setPath(testImages.filePath(pics.at(i)));
+        emit imageUrl(url);
+    }
+    qDebug() << "== test images loaded ==";
+#endif
 }
 
 void ImageManager::quit()

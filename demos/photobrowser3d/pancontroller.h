@@ -39,41 +39,42 @@
 **
 ****************************************************************************/
 
-#ifndef FILESCANNER_H
-#define FILESCANNER_H
+#ifndef PANCONTROLLER_H
+#define PANCONTROLLER_H
 
-#include <QThread>
-#include <QUrl>
-#include <QDebug>
+#include <QObject>
+#include <Qt>
 
-class FileScanner : public QThread
+class PanControllerPrivate;
+class QGLView;
+
+class PanController : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(qreal speed READ speed WRITE setSpeed NOTIFY speedChanged)
 public:
-    explicit FileScanner(QObject *parent = 0);
-    ~FileScanner();
+    explicit PanController(QObject *parent = 0);
+    ~PanController();
 
-    // INVARIANT: never get called when the thread is running
-    void setBaseUrl(const QUrl &url)
-    {
-        Q_ASSERT(!isRunning());
-        m_url = url;
-    }
+    qreal maxSpeed() const;
+    void setMaxSpeed(qreal maxSpeed);
+
+    qreal speed() const;
+    void setSpeed(qreal speed);
+
+    Qt::ArrowType direction() const;
+    void setDirection(Qt::ArrowType arrow);
+
+    QGLView *view() const;
+    void setView(QGLView *view);
+
+    void pan();
 
 signals:
-    void imageUrl(const QUrl &url);
+    void speedChanged();
 
-public slots:
-    void stop();
-    void scan();
-
-protected:
-    void run();
-
-    QUrl m_url;
-    QAtomicInt m_stop;
 private:
-
+    PanControllerPrivate *d;
 };
 
-#endif // FILESCANNER_H
+#endif // PANCONTROLLER_H

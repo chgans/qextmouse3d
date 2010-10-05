@@ -49,7 +49,6 @@
 
 class QGLBuilder;
 class QGLTexture2D;
-class QFramesScene;
 class QGLPainter;
 class ThumbnailNode;
 
@@ -61,7 +60,6 @@ public:
     ~ImageDisplay();
     int maxImages() const { return m_maxImages; }
     void setMaxImages(int max) { m_maxImages = max; }
-    QList<QGLPickNode *> pickNodes() const;
 signals:
     void framesChanged();
 public slots:
@@ -71,7 +69,6 @@ private:
     QGLSceneNode *m_frames;
     QGLSceneNode *m_currentWall;
     ThumbnailNode *m_currentFrame;
-    QFramesScene *m_frameScene;
     QGLAbstractEffect *m_effect;
     bool m_imageSetToDefault;
     int m_count;

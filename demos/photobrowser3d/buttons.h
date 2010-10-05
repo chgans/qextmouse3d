@@ -39,19 +39,24 @@
 **
 ****************************************************************************/
 
-#include "qframesscene.h"
+
+#ifndef BUTTONS_H
+#define BUTTONS_H
+
 #include "qglscenenode.h"
 
-QFramesScene::QFramesScene(QObject *parent)
-    : QGLAbstractScene(parent)
-    , m_rootNode(0)
-{
-}
+#include <Qt>
 
-QList<QGLSceneNode *> QFramesScene::objects(QGLSceneNode::Type type) const
+class Buttons : public QGLSceneNode
 {
-    QList<QGLSceneNode*> objects;
-    if (m_rootNode && type == QGLSceneNode::Mesh)
-        objects = m_rootNode->allChildren();
-    return objects;
-}
+    Q_OBJECT
+public:
+    explicit Buttons(QObject *parent, QGLMaterialCollection *palette);
+    void draw(QGLPainter *painter);
+private:
+    QGLSceneNode *m_left;
+    QGLSceneNode *m_right;
+    QSize m_size;
+};
+
+#endif // BUTTONS_H

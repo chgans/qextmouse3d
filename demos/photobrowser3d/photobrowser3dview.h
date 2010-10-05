@@ -53,6 +53,9 @@ class QState;
 class QStateMachine;
 class QFocusAdaptor;
 class QAtlas;
+class Buttons;
+class QPhotoBrowser3DScene;
+class PanController;
 
 class PhotoBrowser3DView : public QGLView
 {
@@ -61,6 +64,7 @@ public:
     PhotoBrowser3DView();
     ~PhotoBrowser3DView();
     void initializeGL(QGLPainter *);
+    QPhotoBrowser3DScene *scene() { return m_scene; }
 signals:
     void done();
     void zoom();
@@ -74,30 +78,32 @@ protected:
     void mousePressEvent(QMouseEvent *e);
 private slots:
     void initialise();
-    void keyTimeOut();
     void zoomImage();
-    void framesDirty();
+    void pickableDirty();
     void stateEnter();
     void stateExit();
     void waitForExit();
+    void goPan();
 private:
-    void registerFrames();
+    void registerPickableNodes();
     void setupStates();
+    void nonThreadedFileLoad(const QUrl &url);
+    void initialiseImageManager(const QUrl &url);
 
-    ImageDisplay *m_scene;
+    QPhotoBrowser3DScene *m_scene;
+    ImageDisplay *m_display;
     ImageManager *m_images;
+    Buttons *m_buttons;
     SkyBox *m_skybox;
     QGLMaterialCollection *m_palette;
-    qreal m_velocity;
-    QTimer *m_keyTimer;
-    QTime *m_panTime;
     QStateMachine *m_state;
     QState *m_app;
     QState *m_zoomed;
     QState *m_browse;
     QState *m_pan;
     QFocusAdaptor *m_fa;
-    bool m_framesDirty;
+    PanController *m_pc;
+    bool m_pickableDirty;
     qreal m_displaySize;
     bool m_done;
     bool m_closing;

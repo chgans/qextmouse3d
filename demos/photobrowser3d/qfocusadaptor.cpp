@@ -84,6 +84,7 @@ qreal QFocusAdaptor::progress() const
 
 void QFocusAdaptor::setProgress(qreal progress)
 {
+    // qDebug() << "QFocusAdaptor::setProgress(" << progress << ") -- from:" << d->progress;
     if (d->progress != progress)
     {
         d->progress = progress;

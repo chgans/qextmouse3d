@@ -39,41 +39,22 @@
 **
 ****************************************************************************/
 
-#ifndef FILESCANNER_H
-#define FILESCANNER_H
+#ifndef QFRAMESSCENE_H
+#define QFRAMESSCENE_H
 
-#include <QThread>
-#include <QUrl>
-#include <QDebug>
+#include "qglabstractscene.h"
 
-class FileScanner : public QThread
+class QGLSceneNode;
+
+class QPhotoBrowser3DScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    explicit FileScanner(QObject *parent = 0);
-    ~FileScanner();
-
-    // INVARIANT: never get called when the thread is running
-    void setBaseUrl(const QUrl &url)
-    {
-        Q_ASSERT(!isRunning());
-        m_url = url;
-    }
-
-signals:
-    void imageUrl(const QUrl &url);
-
-public slots:
-    void stop();
-    void scan();
-
-protected:
-    void run();
-
-    QUrl m_url;
-    QAtomicInt m_stop;
+    explicit QPhotoBrowser3DScene(QObject *parent = 0);
+    virtual QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    QGLSceneNode *rootNode() const { return m_rootNode; }
 private:
-
+    QGLSceneNode *m_rootNode;
 };
 
-#endif // FILESCANNER_H
+#endif // QFRAMESSCENE_H

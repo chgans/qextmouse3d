@@ -58,6 +58,7 @@ public:
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     void setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+    bool supportsPicking() const;
 
     void setThumbnail(bool enable);
     bool thumbnail() const;

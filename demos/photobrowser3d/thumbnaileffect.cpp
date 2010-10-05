@@ -59,6 +59,8 @@ public:
     QGLShaderProgram *program;
     int matrixUniform;
     int thumbnailUniform;
+    int colorUniform;
+    int pickingUniform;
     // true if we render a thumbnail, false do the large size
     bool thumbnail;
     bool thumbnailUpdateRequired;
@@ -97,7 +99,6 @@ QList<QGL::VertexAttribute> ThumbnailEffect::requiredFields() const
 */
 void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
 {
-    qDebug() << "ThumbnailEffect::setActive" << flag;
     Q_UNUSED(painter);
     if (!d->program) {
         if (!flag)
@@ -114,9 +115,10 @@ void ThumbnailEffect::setActive(QGLPainter *painter, bool flag)
             d->program = 0;
             return;
         }
-        qDebug() << "link successful";
         d->matrixUniform = d->program->uniformLocation("matrix");
         d->thumbnailUniform = d->program->uniformLocation("thumb");
+        d->colorUniform = d->program->uniformLocation("color");
+        d->pickingUniform = d->program->uniformLocation("picking");
         d->program->bind();
         d->program->setUniformValue("texture", 0);
         d->program->enableAttributeArray(QGL::Position);
@@ -149,6 +151,13 @@ void ThumbnailEffect::update
         d->program->setUniformValue(d->matrixUniform,
                                     painter->combinedMatrix());
     }
+    if ((updates & QGLPainter::UpdateColor) != 0) {
+        d->program->setUniformValue(d->pickingUniform, painter->isPicking());
+        if (painter->isPicking())
+            d->program->setUniformValue(d->colorUniform, painter->pickColor());
+        else
+            d->program->setUniformValue(d->colorUniform, Qt::green);
+    }
     if (d->thumbnailUpdateRequired)
     {
         d->program->setUniformValue(d->thumbnailUniform, d->thumbnail);
@@ -170,6 +179,12 @@ void ThumbnailEffect::setVertexAttribute
     else if (attribute == QGL::TextureCoord1)
         setAttributeArray(d->program, QGL::TextureCoord1, value);
 }
+
+bool ThumbnailEffect::supportsPicking() const
+{
+    return true;
+}
+
 
 void ThumbnailEffect::setThumbnail(bool enable)
 {
