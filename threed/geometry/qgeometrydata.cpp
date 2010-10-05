@@ -282,6 +282,9 @@ QGeometryData &QGeometryData::operator=(const QGeometryData &other)
     Appends the geometry in \a data to this.  If this is empty, then all
     fields of \a data are appended; otherwise (when this has existing fields)
     only those fields that exist in both are appended.
+
+    This does not change the indices - to reference the new geometry add
+    indices via the appendIndices() functions.
 */
 void QGeometryData::appendGeometry(const QGeometryData &data)
 {
