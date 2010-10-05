@@ -263,6 +263,34 @@ QGLSceneNode::~QGLSceneNode()
 }
 
 /*!
+    \property QGLSceneNode::boundingBoxTestEnabled
+    \brief Controls whether or not bounding box tests are performed for this node.
+
+    The default value is true.
+
+    If this is set to false, the node will always be drawn even if it
+    appears outside the viewing volume.
+
+    This is an advanced feature - use with care.  If in doubt leave set
+    to the default value.
+*/
+bool QGLSceneNode::boundingBoxTestEnabled() const
+{
+    Q_D(const QGLSceneNode);
+    return d->boundingBoxTestEnabled;
+}
+
+void QGLSceneNode::setBoundingBoxTestEnabled(bool enabled)
+{
+    Q_D(QGLSceneNode);
+    if (d->boundingBoxTestEnabled != enabled)
+    {
+        d->boundingBoxTestEnabled = enabled;
+        emit boundingBoxTestEnabledChanged();
+    }
+}
+
+/*!
     Returns the geometry associated with this node, or a null QGeometryData
     if no geometry has been associated with it.
 
@@ -1277,18 +1305,32 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
     \endlist
 
     Override this function to perform special processing on this node,
-    after transformation, culling, materials and effects are applied.
+    after transformation & culling are applied and before sequencing of
+    materials & effects are done; but just before (or after) the
+    actual draw step.
+
+    This default implementation simply draws the nodes geometry onto
+    the painter.
+
+    Example:
+    \code
+    void MySpecialNode::geometryDraw(QGLPainter *painter)
+    {
+        // at this point the node has survived culling, the model-view
+        // matrix is transformed into this nodes frame of reference,
+        // materials & effects have been applied as this node appears
+        // in its place in the render sequence
+
+        doMySpecialProcessing();
+
+        // call parent implementation to do actual draw
+        QGLSceneNode::geometryDraw(painter);
+    }
+    \endcode
 */
 void QGLSceneNode::geometryDraw(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
-    qDebug() << "actual draw:" << this << "with material"
-            << painter->faceMaterial(QGL::FrontFaces)
-            << painter->effect()
-            ;
-    if (painter->effect())
-        qDebug() << painter->effect()->name() << "running effect";
-
     if (d->count && d->geometry.count() > 0)
         d->geometry.draw(painter, d->start, d->count, d->drawingMode);
 }
@@ -1321,7 +1363,6 @@ void QGLSceneNode::geometryDraw(QGLPainter *painter)
 */
 void QGLSceneNode::draw(QGLPainter *painter)
 {
-    qDebug() << "QGLSceneNode::draw" << this;
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
 
@@ -1334,13 +1375,15 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    QBox3D bb = boundingBox();
-    if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+    if (d->boundingBoxTestEnabled)
     {
-        if (wasTransformed)
-            painter->modelViewMatrix().pop();
-        qDebug() << "--------- culled";
-        return;
+        QBox3D bb = boundingBox();
+        if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+        {
+            if (wasTransformed)
+                painter->modelViewMatrix().pop();
+            return;
+        }
     }
 
     QGLRenderSequencer *seq = painter->renderSequencer();
@@ -1356,22 +1399,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         seq->reset();
         return;
     }
-    /*
-    const QGLMaterial *saveMat = 0;
-    bool changedTex = false;
-    const QGLMaterial *saveBackMat = 0;
-    bool changedBackTex = false;
-    QGL::Face faces = QGL::AllFaces;
-    if (d->palette && !painter->isPicking())
-    {
-        QGL::Face faces = (d->backMaterial == -1) ? QGL::AllFaces : QGL::FrontFaces;
-        if (d->material != -1)
-            saveMat = setPainterMaterial(d->material, painter, faces, changedTex);
-        if (d->backMaterial != -1)
-            saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
-                                             changedBackTex);
-    }
-    */
     bool stateEntered = false;
     if (d->childNodes.size() > 0)
     {
@@ -1398,7 +1425,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
             stateEntered = true;
             seq->beginState(this);
         }
-        qDebug() << "actual draw for:" << this;
         seq->applyState();
 
         geometryDraw(painter);
@@ -1409,20 +1435,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (d->viewNormals)
             drawNormalIndicators(painter);
     }
-/*
-    if (saveMat)
-    {
-        painter->setFaceMaterial(faces, saveMat);
-        if (changedTex)
-            glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    else if (saveBackMat)
-    {
-        painter->setFaceMaterial(QGL::FrontFaces, saveMat);
-        if (changedBackTex)
-            glBindTexture(GL_TEXTURE_2D, 0);
-    }
-*/
     if (stateEntered)
         seq->endState(this);
     if (wasTransformed)

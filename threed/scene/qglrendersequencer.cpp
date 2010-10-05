@@ -289,7 +289,6 @@ void QGLRenderSequencer::applyState()
 {
     d->latched = true;
     QGLRenderState s = d->stack.top();
-    qDebug() << "QGLRenderSequencer::applyState" << s;
     if (s.hasEffect() && !d->painter->isPicking())
     {
         if (s.userEffect())
