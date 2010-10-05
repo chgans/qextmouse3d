@@ -20,7 +20,8 @@ HEADERS += \
     qglcolladafxeffectfactory.h \
     qglcolladafxeffect.h \
     qglcolladafxeffectloader.h \
-    qglshaderprogrameffect.h
+    qglshaderprogrameffect.h \
+    qglshadereffect.h
 
 PRIVATE_HEADERS += \
     qglcolladafxeffect_p.h
@@ -29,6 +30,7 @@ SOURCES += \
     qglcolladafxeffect.cpp \
     qglcolladafxeffectfactory.cpp \
     qglcolladafxeffectloader.cpp \
-    qglshaderprogrameffect.cpp
+    qglshaderprogrameffect.cpp \
+    qglshadereffect.cpp
 
 }
