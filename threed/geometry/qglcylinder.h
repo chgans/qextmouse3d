@@ -56,8 +56,8 @@ class QVector2D;
 class Q_QT3D_EXPORT QGLCylinder
 {
 public:
-    explicit QGLCylinder(qreal diameterTop = 1.0f, qreal diameterBottom = 1.0f, qreal height = 1.0f, int slices = 6, int layers = 3)
-        : m_diameterTop(diameterTop), m_diameterBottom(diameterBottom), m_height(height), m_slices(slices), m_layers(layers) {}
+    explicit QGLCylinder(qreal diameterTop = 1.0f, qreal diameterBottom = 1.0f, qreal height = 1.0f, int slices = 6, int layers = 3, qreal textureFraction=0.8)
+        : m_diameterTop(diameterTop), m_diameterBottom(diameterBottom), m_height(height), m_slices(slices), m_layers(layers), m_textureFraction(textureFraction) {}
     virtual ~QGLCylinder();
 
     //Cylinder dimensions
@@ -77,10 +77,16 @@ public:
     int layers() const {return m_layers;}
     void setLayers(int layers) {m_layers = layers;}
 
+    //Texture ratio (the fraction of the texture given to the sides of the cylinder - 
+    //the remaining upper and lower sections are used for the endcaps.
+    qreal textureFraction() const {return m_textureFraction;}
+    void setTextureFraction(qreal fraction) {m_textureFraction = fraction;}
+
 protected:
     qreal m_diameterTop;
     qreal m_diameterBottom;
     qreal m_height;
+    qreal m_textureFraction;
     int m_slices;
     int m_layers;
 };
