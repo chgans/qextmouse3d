@@ -356,7 +356,7 @@ void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 {
     if(!d->effect)
         d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
-    d->effect->setVertexShader(shader);
+    d->effect->setVertexShader(shader.toLatin1());
     update();
     emit effectChanged();
 }
@@ -366,7 +366,7 @@ void ShaderWizardGLWidget::setFragmentShader(QString const & shader )
     if(!d->effect)
         d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
 
-    d->effect->setFragmentShader(shader);
+    d->effect->setFragmentShader(shader.toLatin1());
     update();
     emit effectChanged();
 }

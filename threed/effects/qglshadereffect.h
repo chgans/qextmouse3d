@@ -39,20 +39,57 @@
 **
 ****************************************************************************/
 
-#ifndef PERPIXELEFFECT_H
-#define PERPIXELEFFECT_H
+#ifndef QGLSHADEREFFECT_H
+#define QGLSHADEREFFECT_H
 
-#include "qglshadereffect.h"
+#include "qglabstracteffect.h"
 
-class PerPixelEffectPrivate;
-class QGLShader;
+QT_BEGIN_HEADER
 
-class PerPixelEffect : public QGLShaderEffect
+QT_BEGIN_NAMESPACE
+
+class QGLShaderEffectPrivate;
+class QGLShaderProgram;
+
+class Q_QT3D_EXPORT QGLShaderEffect : public QGLAbstractEffect
 {
-    Q_DISABLE_COPY(PerPixelEffect);
 public:
-    PerPixelEffect();
-    virtual ~PerPixelEffect();
+    QGLShaderEffect();
+    virtual ~QGLShaderEffect();
+
+    QList<QGL::VertexAttribute> requiredFields() const;
+    void setActive(QGLPainter *painter, bool flag);
+    void setVertexAttribute(QGL::VertexAttribute attribute,
+                            const QGLAttributeValue &value);
+    void setCommonNormal(const QVector3D &value);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    QByteArray vertexShader() const;
+    void setVertexShader(const QByteArray &source);
+    void setVertexShaderFromFile(const QString &fileName);
+
+    QByteArray fragmentShader() const;
+    void setFragmentShader(const QByteArray &source);
+    void setFragmentShaderFromFile(const QString &fileName);
+
+    int maximumLights() const;
+    void setMaximumLights(int value);
+
+    QGLShaderProgram *program() const;
+
+protected:
+    virtual bool beforeLink();
+    virtual void afterLink();
+
+private:
+    QScopedPointer<QGLShaderEffectPrivate> d_ptr;
+
+    Q_DISABLE_COPY(QGLShaderEffect)
+    Q_DECLARE_PRIVATE(QGLShaderEffect)
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

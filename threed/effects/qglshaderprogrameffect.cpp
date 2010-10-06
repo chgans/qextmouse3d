@@ -166,8 +166,8 @@ public:
     }
     QGLMaterial* material;
     QGLShaderProgram *program;
-    QString vertexShader;
-    QString fragmentShader;
+    QByteArray vertexShader;
+    QByteArray fragmentShader;
 };
 
 /*!
@@ -278,7 +278,7 @@ void QGLShaderProgramEffect::reloadShaders()
 
     program()->removeAllShaders();
 
-    if(d->vertexShader.length() > 0)
+    if(!d->vertexShader.isEmpty())
     {
         program()->addShaderFromSourceCode(QGLShader::Vertex, d->vertexShader);
     }
@@ -287,7 +287,7 @@ void QGLShaderProgramEffect::reloadShaders()
         program()->addShaderFromSourceCode(QGLShader::Vertex, FallbackPerPixelLightingVertexShader);
     }
 
-    if(d->fragmentShader.length() > 0)
+    if(!d->fragmentShader.isEmpty())
     {
         program()->addShaderFromSourceCode(QGLShader::Fragment, d->fragmentShader);
     }
@@ -425,7 +425,7 @@ void QGLShaderProgramEffect::setVertexAttribute
   shaders for this effect.  If \a shader is empty, the effect will use a
   fall-back vertex shader.
   */
-void QGLShaderProgramEffect::setVertexShader(QString const &shader)
+void QGLShaderProgramEffect::setVertexShader(const QByteArray &shader)
 {
     d->vertexShader = shader;
     reloadShaders();
@@ -438,7 +438,7 @@ void QGLShaderProgramEffect::setVertexShader(QString const &shader)
   shaders for this effect. If \a shader is empty, the effect will use a
   fall-back fragment shader.
   */
-void QGLShaderProgramEffect::setFragmentShader(QString const &shader)
+void QGLShaderProgramEffect::setFragmentShader(const QByteArray &shader)
 {
     d->fragmentShader = shader;
     reloadShaders();
@@ -494,7 +494,7 @@ void QGLShaderProgramEffect::setProgram(QGLShaderProgram* program)
 /*!
   Returns the vertex shader used by this effect.
   */
-QString QGLShaderProgramEffect::vertexShader()
+QByteArray QGLShaderProgramEffect::vertexShader() const
 {
     return d->vertexShader;
 }
@@ -502,7 +502,7 @@ QString QGLShaderProgramEffect::vertexShader()
 /*!
   Returns the fragment shader used by this effect.
   */
-QString QGLShaderProgramEffect::fragmentShader()
+QByteArray QGLShaderProgramEffect::fragmentShader() const
 {
     return d->fragmentShader;
 }

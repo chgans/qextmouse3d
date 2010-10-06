@@ -60,13 +60,15 @@ public:
                             const QGLAttributeValue& value);
     virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    virtual void setVertexShader(QString const &  shader);
-    virtual void setFragmentShader(QString const & shader);
     virtual void setMaterial(QGLMaterial* newMaterial);
     virtual QGLMaterial* material();
     virtual void setProgram(QGLShaderProgram* program);
-    virtual QString vertexShader();
-    virtual QString fragmentShader();
+
+    QByteArray vertexShader() const;
+    void setVertexShader(const QByteArray &shader);
+
+    QByteArray fragmentShader() const;
+    void setFragmentShader(const QByteArray &shader);
 
 protected:
     virtual QGLShaderProgram* program();

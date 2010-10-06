@@ -1597,11 +1597,11 @@ void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, Re
                     {
                         if(stage == QLatin1String("VERTEX"))
                         {
-                            effect->setVertexShader( param.value<QString>() );
+                            effect->setVertexShader( param.value<QString>().toLatin1() );
                         }
                         else if (stage == QLatin1String("FRAGMENT"))
                         {
-                            effect->setFragmentShader( param.value<QString>() );
+                            effect->setFragmentShader( param.value<QString>().toLatin1() );
                         } else
                         {
                             qWarning() << "unrecognized shader stage: "

@@ -273,8 +273,8 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
     QTest::newRow("empty effect") << effect << QString::fromLatin1("EmptyEffect") << QString::fromLatin1("EmptyTechnique");
 
     effect = new QGLShaderProgramEffect;
-    effect->setFragmentShader(QLatin1String("test fragment shader"));
-    effect->setVertexShader(QLatin1String("Test vertex shader"));
+    effect->setFragmentShader("test fragment shader");
+    effect->setVertexShader("Test vertex shader");
     QGLMaterial* material = new QGLMaterial;
     material->setAmbientColor(QColor(1,2,3));
     material->setDiffuseColor(QColor(2,3,4));
