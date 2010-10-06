@@ -119,11 +119,11 @@ QGLCylinder::~QGLCylinder()
 
     The default value is 1.
 
-    \sa setDiameter()
+    \sa setDiameterTop()
 */
 
 /*!
-    \fn void QGLCylinder::setDiameter(qreal diameter)
+    \fn void QGLCylinder::setDiameterTop(qreal diameter)
 
     Sets the diameter of the top of this cylinder to \a diameter.
 
@@ -180,7 +180,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn int QGLCylinder::setLayers() const
+    \fn int QGLCylinder::setLayers(int layers) const
 
     Sets the number of cylindrical layers the cylinder is divided into
     along its height.
@@ -206,7 +206,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn int QGLCylinder::setTextureFraction() const
+    \fn int QGLCylinder::setTextureFraction(qreal fraction)
 
     Sets the fraction of the texture for this cylinder which will be used to 
     cover the sides of the cylinder (with the remainder being divided evenly
