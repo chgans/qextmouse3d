@@ -104,7 +104,6 @@ qreal PanController::maxSpeed() const
 
 void PanController::setSpeed(qreal speed)
 {
-    d->animating = true;
     qDebug() << "PanController::setSpeed" << speed << "prevSpeed:" << d->prevSpeed;
     if (d->speed != speed)
     {
@@ -113,8 +112,8 @@ void PanController::setSpeed(qreal speed)
         d->calculateValues();
         if (qIsNull(d->speed) || d->speed == 1.0)
         {
-            d->animating = false;
             d->reset = true;
+            d->animating = false;
             qDebug() << "reset by speed == null";
         }
         emit speedChanged();
@@ -147,8 +146,6 @@ void PanController::pan()
             c.setX(c.x() + distance);
             cam->setEye(e);
             cam->setCenter(c);
-            qDebug() << "PanController::pan() - panning - center:" << cam->center()
-                        << "eye:" << cam->eye();
         }
     }
 }
@@ -163,6 +160,8 @@ void PanControllerPrivate::calculateValues()
         {
             if (defaultZ < 0.0)
                 defaultZ = sourceEye.z();
+
+            animating = true;
 
             sourceCenter = cam->center();
             sourceEye = cam->eye();
