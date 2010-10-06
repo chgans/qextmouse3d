@@ -45,6 +45,7 @@
 #include "qglmaskedsurface.h"
 #include "qglwidgetsurface.h"
 #include "qgldrawbuffersurface_p.h"
+#include "qmouse3deventprovider.h"
 #include <QtGui/qevent.h>
 #include <QtCore/qmap.h>
 #include <QtGui/qapplication.h>
@@ -251,6 +252,10 @@ public:
         QByteArray env = qgetenv("QT3D_LOG_EVENTS");
         if (env == "1")
             options |= QGLView::PaintingLog;
+
+        // Attach a 3D mouse event provider to the QGLView.
+        QMouse3DEventProvider *provider = new QMouse3DEventProvider(parent);
+        provider->setWidget(parent);
     }
     ~QGLViewPrivate()
     {
