@@ -39,58 +39,25 @@
 **
 ****************************************************************************/
 
-#ifndef QGLCYLINDER_H
-#define QGLCYLINDER_H
+#ifndef CYLINDERVIEW_H
+#define CYLINDERVIEW_H
 
-#include "qt3dglobal.h"
-#include "qglmaterialcollection.h"
+#include "qglview.h"
 
-QT_BEGIN_HEADER
+class QGLSceneNode;
 
-QT_BEGIN_NAMESPACE
-
-QT_MODULE(Qt3d)
-
-class QGLBuilder;
-class QVector2D;
-
-class Q_QT3D_EXPORT QGLCylinder
+class CylinderView : public QGLView
 {
+    Q_OBJECT
 public:
-    explicit QGLCylinder(qreal diameterTop = 1.0f, qreal diameterBottom = 1.0f, qreal height = 1.0f, int slices = 6, int layers = 3)
-        : m_diameterTop(diameterTop), m_diameterBottom(diameterBottom), m_height(height), m_slices(slices), m_layers(layers) {}
-    virtual ~QGLCylinder();
-
-    //Cylinder dimensions
-    qreal diameterTop() const {return m_diameterTop;}
-    void setDiameterTop(qreal diameter) {m_diameterTop=diameter;}
-
-    qreal diameterBottom() const {return m_diameterBottom;}
-    void setDiameterBottom(qreal diameter) {m_diameterBottom=diameter;}
-
-    qreal height() const {return m_height;}
-    void setHeight(qreal height) {m_height = height;}
-
-    //Cylinder geometrical subdivisions
-    int slices() const {return m_slices;}
-    void setSlices(int slices) {m_slices = slices;}
-
-    int layers() const {return m_layers;}
-    void setLayers(int layers) {m_layers = layers;}
+    CylinderView(QWidget *parent = 0);
+    ~CylinderView();
 
 protected:
-    qreal m_diameterTop;
-    qreal m_diameterBottom;
-    qreal m_height;
-    
-    int m_slices;
-    int m_layers;
+    void paintGL(QGLPainter *painter);
+
+private:
+    QGLSceneNode *cylinder;
 };
 
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder);
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif // QGLCYLINDER_H
+#endif

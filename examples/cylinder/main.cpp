@@ -40,12 +40,12 @@
 ****************************************************************************/
 
 #include <QApplication>
-#include "cubeview.h"
+#include "cylinderview.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    CubeView view;
+    CylinderView view;
     if (view.stereoType() != QGLView::RedCyanAnaglyph)
         view.camera()->setEyeSeparation(0.3f);
     if (QApplication::arguments().contains(QLatin1String("-maximize")))

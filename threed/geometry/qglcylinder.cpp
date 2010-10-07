@@ -81,32 +81,36 @@ QT_BEGIN_NAMESPACE
 
     The QGLCylinder is divided into slices and layers.  The slices value
     indicate number of triangular sections into which the top and bottom
-    circles of the sphere are broken into.  Consequently it also sets the
-    number of facets which run the length of the cylinder.
+    circles of the cylinder are broken into.  Consequently it also sets the
+    number of facets which run the length of the cylinder.  More slices 
+    results in a smoother circumference.
 
     The layers value indicates the number of longitudinal sections the
-    sphere is broken into.  Fewer layers means that the side facets of the
+    cylinder is broken into.  Fewer layers means that the side facets of the
     cylinder will be made up of fewer, very long, triangles, while a higher
-    number of layers will produce many and smaller triangles.
+    number of layers will produce many and smaller triangles.  Often it is
+    desirable to avoid large triangles as they may cause inefficiencies in
+    texturing/lighting on certain platforms.
 
-    Textures are wrapped around the cylinder in such a way that the texture
-    may distort across the x axis if the top and bottom diameters of the
-    cylinder differ (ie. the cylinder forms a truncated cone).  Textures 
+    The end-caps and sides of the cylinder are independent sections of the
+    scene-graph, and so may be textured separately.
+
+    Textures are wrapped around the sides of thecylinder in such a way that 
+    the texture may distort across the x axis if the top and bottom diameters 
+    of the cylinder differ (ie. the cylinder forms a truncated cone).  Textures 
     begin and end at the centre points of the top and bottom end-caps of the
     cylinder.  This wrapping means that textures on either end-cap may be
     distorted.
 
-    A single texture is used for the entire cylinder, including its end-caps as
-    well as the sides.  The user may specify what fraction of the overall 
-    texture is to be used for the sides of the cylinder.  This is taken from
-    the middle of the texture, with the remaining strips at the top and bottom
-    of the texture being used for the top and bottom endcaps respectively.
+    Texture coordinates are assigned as shown below.
+
+    \image cylinder-texture-coords.png   
 
     \sa QGLBuilder
 */
 
 /*!
-    Destroys this sphere object.
+    Destroys this cylinder object.
 */
 QGLCylinder::~QGLCylinder()
 {
@@ -127,7 +131,7 @@ QGLCylinder::~QGLCylinder()
 
     Sets the diameter of the top of this cylinder to \a diameter.
 
-    \sa diameter()
+    \sa diameterTop()
 */
 
 /*!
@@ -137,7 +141,7 @@ QGLCylinder::~QGLCylinder()
 
     The default value is 1.
 
-    \sa setDiameter()
+    \sa setDiameterBottom()
 */
 
 /*!
@@ -145,7 +149,7 @@ QGLCylinder::~QGLCylinder()
 
     Sets the diameter of the bottom of this cylinder to \a diameter.
 
-    \sa diameter()
+    \sa diameterBottom()
 */
 
 /*!
@@ -180,48 +184,21 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn int QGLCylinder::setLayers(int layers) const
+    \fn int QGLCylinder::setLayers(int layers)
 
-    Sets the number of cylindrical layers the cylinder is divided into
+    Sets the number of stacked layers the cylinder is divided into
     along its height.
 
     \sa layers()
 */
 
 /*!
-    \fn qreal QGLCylinder::textureFraction() const
-
-    When texturing a cylinder we use a single texture image to cover the body
-    and the end-caps of the object.  This function returns the fraction of that
-    image that is to be used to cover the sides of the cylinder (with the 
-    remainder divided evenly between the end-caps.
-
-    For example, if this value is 0.8 then the middle 80% of the texture image
-    is used to texture the sides of the cylinder, while the 10% strips at the 
-    top and bottom are used for the top and bottom end-cap respectively.
-
-    The default value is 0.8
-
-    \sa setTextureFraction()
-*/
-
-/*!
-    \fn int QGLCylinder::setTextureFraction(qreal fraction)
-
-    Sets the fraction of the texture for this cylinder which will be used to 
-    cover the sides of the cylinder (with the remainder being divided evenly
-    between the top and the bottom end-caps).
-
-    \sa textureFraction()
-*/
-
-/*!
     \relates QGLCylinder
 
-    Builds the geometry for \a sphere within the specified
+    Builds the geometry for \a cylinder within the specified
     geometry \a builder.
 */
-///TBD
+
 QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
 {
   /*  ASSERT(cylinder.diameterBottom()>=0 &&
@@ -242,8 +219,9 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     qreal radiusIncrement = qreal(bottomRadius-topRadius)/ numLayers;
     qreal height = qreal(cylinder.height());
     qreal heightDecrement = height/numLayers;
-    qreal textureHeight = 1.0-((1.0-cylinder.textureFraction())/2.0); 
-    qreal textureDecrement = cylinder.textureFraction()/numLayers;
+    
+    qreal textureHeight = 1.0; 
+    qreal textureDecrement = 1.0/numLayers;
 
     QGeometryData oldLayer;
 
@@ -266,41 +244,62 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         // Generate texture coordinates (including an extra seam vertex for textures).
         newLayer.appendVertex(newLayer.vertex(0)); 
         newLayer.generateTextureCoordinates();        
-        for (int i = 0; i < newLayer.count(); ++i)  newLayer.texCoord(i).setY(textureHeight);
+        for (int i = 0; i < newLayer.count(); i++)  newLayer.texCoord(i).setY(textureHeight);
         qDebug()<<"Set texture height for layer " << layerCount << " to " << textureHeight;
-
 
         //Special cases for top end-cap
         if (layerCount==0) {
             //Draw end-cap at top            
+            builder.newSection();
+            builder.currentNode()->setObjectName("Cylinder Top");                        
             top.appendVertex(newLayer.center());
-            top.appendVertexArray(newLayer.vertices());    
-            top.generateTextureCoordinates();
-            top.texCoord(0).setY(1.0);
-            for (int i = 1; i < top.count(); ++i)
-                top.texCoord(i).setY(textureHeight);
-            builder.addTriangleFan(top);
+            top.appendVertexArray(newLayer.vertices());                                        
+            //Generate a circle of texture vertices for this layer.
+            top.appendTexCoord(QVector2D(0.5,0.5));
+            angle = 0;
+            for (int i=1; i<top.count(); i++)
+            {
+                top.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
+                angle+=angleIncrement;
+                qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
+            }   
+            angle = 0;           
+            builder.addTriangulatedFace(top);
+        }
+        
+
+        //Add a new cylinder layer to the mesh
+        if (layerCount>0)
+        {
+            //If it's the first section, create a cylinder sides section
+            if (layerCount==1) {
+                builder.newSection();
+                builder.currentNode()->setObjectName("Cylinder Sides");
+            }
+
+            builder.addQuadsInterleaved(oldLayer, newLayer);
         }
 
         //Special cases for bottom end-cap
         if (layerCount==cylinder.layers()) {
             //Draw end-cap at bottom            
+            builder.newSection();
+            builder.currentNode()->setObjectName("Cylinder Base");
             base.appendVertex(newLayer.center());
             base.appendVertexArray(newLayer.vertices());    
-            base.generateTextureCoordinates();
-            base.texCoord(0).setY(0.0);
-            for (int i = 1; i < base.count(); ++i)
-                base.texCoord(i).setY(textureHeight); 
+            //Generate a circle of texture vertices for this layer.
+            base.appendTexCoord(QVector2D(0.5,0.5));
+            angle = 0;
+            for (int i=1; i<top.count(); i++)
+            {
+                base.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
+                angle+=angleIncrement;
+                qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
+            }   
             base.reversed();  //we need to reverse the above to draw it properly - windings!
             builder.addTriangleFan(base);
         }
-
-        //Add a new cylinder layer to the mesh
-        if (layerCount>0)
-        {
-            builder.addQuadsInterleaved(oldLayer, newLayer);
-        }
-
+        
         //Keep the current layer for drawing the next segment of the cylinder        
         oldLayer.clear();
         oldLayer.appendGeometry(newLayer);
