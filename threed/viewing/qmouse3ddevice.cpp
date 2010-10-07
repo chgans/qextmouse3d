@@ -251,8 +251,7 @@ void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
     Q_D(QMouse3DDevice);
     if (!d->widget)
         return;
-    if (filter && d->flags != (QMouse3DDevice::Mode_Translation |
-                               QMouse3DDevice::Mode_Rotation)) {
+    if (filter) {
         qreal values[6];
         values[0] = event->translateX() * d->sensitivity;
         values[1] = event->translateY() * d->sensitivity;
