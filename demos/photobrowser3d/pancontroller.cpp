@@ -52,30 +52,32 @@ class PanControllerPrivate
 public:
     PanControllerPrivate()
         : speed(0.0f)
-        , prevSpeed(0.0f)
+        , angle(0.0f)
         , arrowDirection(Qt::NoArrow)
         , view(0)
-        , defaultZ(-1.0f)
-        , reset(true)
         , maxSpeed(4.0f)
+        , defaultDistance(0.0f)
+        , panDistance(0.0f)
+        , panViewAngle(M_PI / 4.0f)  // 45 degrees in radians
         , animating(false)
-    {}
+        , elapsed(0.0f)
+    {
+        panTime.start();
+    }
 
     void calculateValues();
 
     qreal speed;
-    qreal prevSpeed;
+    qreal angle;
     Qt::ArrowType arrowDirection;
     QGLView *view;
-    QVector3D targetEye;
-    QVector3D targetCenter;
-    QVector3D sourceEye;
-    QVector3D sourceCenter;
-    qreal defaultZ;
-    bool reset;
     QTime panTime;
     qreal maxSpeed;
+    qreal defaultDistance;
+    qreal panDistance;
+    qreal panViewAngle;
     bool animating;
+    qreal elapsed;
 };
 
 PanController::PanController(QObject *parent)
@@ -92,6 +94,36 @@ PanController::~PanController()
     delete d;
 }
 
+qreal PanController::defaultDistance() const
+{
+    return d->defaultDistance;
+}
+
+void PanController::setDefaultDistance(qreal dist)
+{
+    d->defaultDistance = dist;
+}
+
+qreal PanController::panDistance() const
+{
+    return d->panDistance;
+}
+
+void PanController::setPanDistance(qreal dist)
+{
+    d->panDistance = dist;
+}
+
+qreal PanController::panViewAngle() const
+{
+    return d->panViewAngle;
+}
+
+void PanController::setPanViewAngle(qreal angle)
+{
+    d->panViewAngle = angle;
+}
+
 void PanController::setMaxSpeed(qreal maxSpeed)
 {
     d->maxSpeed = maxSpeed;
@@ -104,100 +136,83 @@ qreal PanController::maxSpeed() const
 
 void PanController::setSpeed(qreal speed)
 {
-    qDebug() << "PanController::setSpeed" << speed << "prevSpeed:" << d->prevSpeed;
+    qreal t = d->panTime.restart();
     if (d->speed != speed)
     {
-        d->prevSpeed = d->speed;
         d->speed = speed;
+        d->angle = speed * d->panViewAngle;
+        if (!qIsNull(d->speed))
+            d->animating = true;
+        d->elapsed += t;
         d->calculateValues();
-        if (qIsNull(d->speed) || d->speed == 1.0)
-        {
-            d->reset = true;
-            d->animating = false;
-            qDebug() << "reset by speed == null";
-        }
         emit speedChanged();
-    }
-    qDebug() << "animating:" << d->animating;
-}
-
-void PanController::pan()
-{
-    QGLCamera *cam = d->view->camera();
-    Q_ASSERT(cam);
-    qreal t = d->panTime.restart();
-    if (d->animating)
-    {
-        cam->setCenter(d->sourceCenter + ((d->targetCenter - d->sourceCenter) * d->speed));
-        cam->setEye(d->sourceEye + ((d->targetEye - d->sourceEye) * d->speed));
-        qDebug() << "PanController::pan() - animating - center:" << cam->center()
-                    << "eye:" << cam->eye();
-    }
-    else
-    {
-        if (d->speed > 0.99)
-        {
-            qreal distance = t * (d->maxSpeed * d->speed) / 1000.0f;
-            if (d->arrowDirection == Qt::LeftArrow)
-                distance = -distance;
-            QVector3D e = cam->eye();
-            QVector3D c = cam->center();
-            e.setX(e.x() + distance);
-            c.setX(c.x() + distance);
-            cam->setEye(e);
-            cam->setCenter(c);
-        }
-    }
-}
-
-void PanControllerPrivate::calculateValues()
-{
-    if (view)
-    {
-        QGLCamera *cam = view->camera();
-        Q_ASSERT(cam);
-        if (reset)
-        {
-            if (defaultZ < 0.0)
-                defaultZ = sourceEye.z();
-
-            animating = true;
-
-            sourceCenter = cam->center();
-            sourceEye = cam->eye();
-
-            qreal desiredPanViewAngle = 70.0f;
-            targetEye = sourceEye;
-            qreal q = cam->nearPlane() * 2.0f;
-            targetEye.setZ(q);
-            targetEye.setY(0.0);
-
-            targetCenter = targetEye;
-            qreal xoff = q * qTan(desiredPanViewAngle);
-            if (arrowDirection == Qt::LeftArrow)
-            {
-                xoff = -xoff;
-                qDebug() << "left arrow - offset:" << xoff;
-            }
-            else if (arrowDirection == Qt::NoArrow)
-            {
-                xoff = 0.0;
-                targetEye.setZ(defaultZ);
-                qDebug() << "no arrow - offset:" << xoff;
-            }
-            targetCenter.setX(targetCenter.x() + xoff);
-            targetCenter.setZ(sourceCenter.z());
-
-            qDebug() << "resetting --- pan from:" << sourceCenter << "( eye:" << sourceEye << ")"
-                        << "to:" << targetCenter << "( eye:" << targetEye << ")";
-            reset = false;
-        }
     }
 }
 
 qreal PanController::speed() const
 {
     return d->speed;
+}
+
+void PanController::pan()
+{
+    if (d->animating)
+    {
+        qreal t = d->panTime.restart();
+        d->elapsed += t;
+        // dont recalculate every single time
+        // 30ms frame time == 33fps - more than enough
+        if (d->elapsed > 30)
+            d->calculateValues();
+    }
+}
+
+void PanControllerPrivate::calculateValues()
+{
+    if (view && animating)
+    {
+        QGLCamera *cam = view->camera();
+        Q_ASSERT(cam);
+
+        QVector3D c = cam->center();
+        QVector3D e = cam->eye();
+
+        if (qFuzzyIsNull(speed))
+        {
+            c.setX(e.x());
+            e.setZ(defaultDistance);
+        }
+        else
+        {
+            // as speed goes from 0 -> 1, eye moves closer to z=0 plane
+            e.setZ(defaultDistance - (speed * (defaultDistance - panDistance)));
+
+            // the view angle is a direct function of the speed see setSpeed() above
+            // and as view angle increases we look further along the x-axis
+            qreal opp = (e.z() - c.z()) * qTan(angle);
+
+            // velocity along the x axis is controlled by speed (a value from 0 -> 1
+            // which is a modifier for the maxSpeed, a constant).  the velocity gives
+            // us the incremental change in x for this unit time
+            qreal dx = (speed * maxSpeed * elapsed);
+
+            if (arrowDirection == Qt::LeftArrow)
+            {
+                e.setX(e.x() - dx);
+                c.setX(e.x() - opp);
+            }
+            else if (arrowDirection == Qt::RightArrow)
+            {
+                e.setX(e.x() + dx);
+                c.setX(e.x() + opp);
+            }
+        }
+        cam->setEye(e);
+        cam->setCenter(c);
+    }
+    elapsed = 0;
+    if (qIsNull(speed))
+        animating = false;
 }
 
 Qt::ArrowType PanController::direction() const
@@ -207,8 +222,8 @@ Qt::ArrowType PanController::direction() const
 
 void PanController::setDirection(Qt::ArrowType arrow)
 {
+    Q_ASSERT(arrow == Qt::LeftArrow || arrow == Qt::RightArrow);
     d->arrowDirection = arrow;
-    d->reset = true;
 }
 
 QGLView *PanController::view() const
@@ -219,6 +234,5 @@ QGLView *PanController::view() const
 void PanController::setView(QGLView *view)
 {
     d->view = view;
-    d->reset = true;
 }
 

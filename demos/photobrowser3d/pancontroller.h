@@ -56,6 +56,15 @@ public:
     explicit PanController(QObject *parent = 0);
     ~PanController();
 
+    qreal defaultDistance() const;
+    void setDefaultDistance(qreal d);
+
+    qreal panDistance() const;
+    void setPanDistance(qreal d);
+
+    qreal panViewAngle() const;
+    void setPanViewAngle(qreal angle);
+
     qreal maxSpeed() const;
     void setMaxSpeed(qreal maxSpeed);
 

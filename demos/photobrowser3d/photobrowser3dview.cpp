@@ -86,6 +86,7 @@ PhotoBrowser3DView::PhotoBrowser3DView()
 {
     setOption(QGLView::ObjectPicking, true);
     // setOption(QGLView::ShowPicking, true);
+    //setOption(QGLView::CameraNavigation, false);
 
     qRegisterMetaType<ThumbnailableImage>("ThumbnailableImage");
 
@@ -139,7 +140,7 @@ void PhotoBrowser3DView::setupStates()
     m_zoomed->assignProperty(m_fa, "progress", 1.0);
 
     m_pc = new PanController(this);
-    m_pc->setMaxSpeed(m_displaySize / 2.8f);
+    m_pc->setMaxSpeed(m_displaySize / 1000.0f);
     m_browse->assignProperty(m_pc, "speed", 0.0);
     m_pan->assignProperty(m_pc, "speed", 1.0);
 
@@ -178,13 +179,13 @@ void PhotoBrowser3DView::setupStates()
 
     transition = m_browse->addTransition(this, SIGNAL(pan()), m_pan);
     a = new QPropertyAnimation(m_pc, "speed");
-    a->setDuration(1200);
+    a->setDuration(500);
     a->setEasingCurve(QEasingCurve::OutQuad);
     transition->addAnimation(a);
 
     transition = m_pan->addTransition(this, SIGNAL(pan()), m_browse);
     a = new QPropertyAnimation(m_pc, "speed");
-    a->setDuration(1200);
+    a->setDuration(500);
     a->setEasingCurve(QEasingCurve::InQuad);
     transition->addAnimation(a);
 
@@ -274,6 +275,7 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
 
 void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 {
+    fprintf(stderr, "Got key code: %d\n", e->key());
     if (e->key() == Qt::Key_Space)
     {
         //emit manualControlEngaged();
@@ -285,29 +287,15 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     }
     else if (e->key() == Qt::Key_Right)
     {
-        if (m_pc->direction() == Qt::LeftArrow && m_pc->speed() >= 0.99f)
-        {
-            m_pc->setDirection(Qt::NoArrow);
-            emit pan();
-        }
-        else if (m_pc->direction() == Qt::NoArrow && qFuzzyIsNull(m_pc->speed()))
-        {
-            m_pc->setDirection(Qt::RightArrow);
-            emit pan();
-        }
+        //QGLView::keyPressEvent(e);
+        m_pc->setDirection(Qt::RightArrow);
+        emit pan();
     }
     else if (e->key() == Qt::Key_Left)
     {
-        if (m_pc->direction() == Qt::RightArrow && m_pc->speed() >= 0.99f)
-        {
-            m_pc->setDirection(Qt::NoArrow);
-            emit pan();
-        }
-        else if (m_pc->direction() == Qt::NoArrow && qFuzzyIsNull(m_pc->speed()))
-        {
-            m_pc->setDirection(Qt::LeftArrow);
-            emit pan();
-        }
+        QGLView::keyPressEvent(e);
+        m_pc->setDirection(Qt::LeftArrow);
+        emit pan();
     }
     else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
     {
@@ -394,6 +382,10 @@ void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
     Q_UNUSED(painter);
     camera()->setEye(QVector3D(0.0f, 0.0f, 4.0f * m_displaySize));
     registerPickableNodes();
+    qreal q = camera()->eye().z();
+    qreal r = qBound(camera()->nearPlane(), q / 2.0f, camera()->nearPlane() * 3.0f);
+    m_pc->setDefaultDistance(q);
+    m_pc->setPanDistance(r);
 }
 
 void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
@@ -404,6 +396,12 @@ void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {
+    static QVector3D eye;
+    if (eye != camera()->eye())
+    {
+        qDebug() << "eye:" << camera()->eye() << " center:" << camera()->center();
+        eye = camera()->eye();
+    }
     if (!m_done)
     {
         painter->setClearColor(Qt::blue);
@@ -440,10 +438,9 @@ void PhotoBrowser3DView::goPan()
     QGLPickNode *pn = qobject_cast<QGLPickNode*>(sender());
     Q_ASSERT(pn);
     QGLSceneNode *n = pn->target();
-    if (m_pc->direction() == Qt::NoArrow)
-        m_pc->setDirection(n->objectName() == "Left Button" ? Qt::LeftArrow : Qt::RightArrow);
-    else
-        m_pc->setDirection(Qt::NoArrow);
+    m_pc->setDirection(n->objectName() == "Left Button" ? Qt::LeftArrow : Qt::RightArrow);
+    qDebug() << "goPan() -- trigger pan() -- setting target direction"
+                << m_pc->direction();
     emit pan();
 }
 

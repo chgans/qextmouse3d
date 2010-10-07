@@ -112,6 +112,9 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     setObjectName("ImageDisplay");
     setPalette(materials);
 
+    // the frames lie in Z = 0, the wall is set back and lies in
+    // the plane Z = (m_size / -4.0)
+
     // build the wall
     qAddPane(QSize(m_size, m_size), &m_wallGeometry);
     m_wall = new QGLSceneNode(this);
