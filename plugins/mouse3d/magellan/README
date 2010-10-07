@@ -1,0 +1,8 @@
+This directory contains a 3D mouse plug-in that supports the
+"Magellan" X11 protocol for mice from 3Dconnexion.
+
+The "3dxsrv" driver must be running on the X server before a
+Qt/3D application that uses the 3D mouse is executed.  The driver
+can be obtained here:
+
+    http://www.3dconnexion.com/service/drivers.html
