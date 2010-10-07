@@ -2,4 +2,5 @@ TEMPLATE = subdirs
 
 !win32:!embedded:!mac:!symbian:CONFIG += x11
 
-x11: SUBDIRS = magellan
+x11:SUBDIRS += magellan
+linux*:SUBDIRS += linuxinput
