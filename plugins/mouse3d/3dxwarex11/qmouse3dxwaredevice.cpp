@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qmouse3dmagellandevice.h"
+#include "qmouse3dxwaredevice.h"
 #include "qglnamespace.h"
 #include <QtGui/qapplication.h>
 #include <QtGui/qwidget.h>
@@ -47,9 +47,9 @@
 
 QT_BEGIN_NAMESPACE
 
-static QMouse3DMagellanDevice *currentDevice = 0;
+static QMouse3DxWareDevice *currentDevice = 0;
 
-QMouse3DMagellanDevice::QMouse3DMagellanDevice(QObject *parent)
+QMouse3DxWareDevice::QMouse3DxWareDevice(QObject *parent)
     : QMouse3DDevice(parent)
     , initialized(false)
     , available(false)
@@ -64,29 +64,29 @@ QMouse3DMagellanDevice::QMouse3DMagellanDevice(QObject *parent)
     init();
 }
 
-QMouse3DMagellanDevice::~QMouse3DMagellanDevice()
+QMouse3DxWareDevice::~QMouse3DxWareDevice()
 {
     currentDevice = 0;
 }
 
-bool QMouse3DMagellanDevice::isAvailable() const
+bool QMouse3DxWareDevice::isAvailable() const
 {
     return available;
 }
 
-QStringList QMouse3DMagellanDevice::deviceNames() const
+QStringList QMouse3DxWareDevice::deviceNames() const
 {
     QStringList names;
     if (available)
-        names += QLatin1String("Magellan");
+        names += QLatin1String("3DxWare");
     return names;
 }
 
-void QMouse3DMagellanDevice::setWidget(QWidget *widget)
+void QMouse3DxWareDevice::setWidget(QWidget *widget)
 {
     QMouse3DDevice::setWidget(widget);
 
-    // If we don't have a Magellan 3D mouse available, then nothing we can do.
+    // If we don't have a 3D mouse available, then nothing we can do.
     if (!available)
         return;
 
@@ -123,6 +123,7 @@ static int magellan_error_handler(Display *, XErrorEvent *)
 
 // Qt event filter for getting the low-level X11 events from Magellan.
 static QApplication::EventFilter prevFilter = 0;
+static bool filterInstalled = false;
 static bool magellan_event_filter(void *message, long *result)
 {
     XEvent *event = reinterpret_cast<XEvent *>(message);
@@ -146,7 +147,7 @@ static bool magellan_event_filter(void *message, long *result)
         return false;
 }
 
-void QMouse3DMagellanDevice::init()
+void QMouse3DxWareDevice::init()
 {
     if (initialized || !qApp)
         return;
@@ -154,8 +155,8 @@ void QMouse3DMagellanDevice::init()
 
     Display *dpy = QX11Info::display();
 
-    // Create the atoms we will need for the Magellan protocol.  If the atoms
-    // aren't on the server, the "3dxsrv" daemon is not running.
+    // Create the atoms we will need for the 3DxWare "Magellan" protocol.
+    // If the atoms aren't on the server, the "3dxsrv" daemon is not running.
     commandEventAtom = XInternAtom(dpy, "CommandEvent", True);
     motionEventAtom = XInternAtom(dpy, "MotionEvent", True);
     buttonPressEventAtom = XInternAtom(dpy, "ButtonPressEvent", True);
@@ -190,13 +191,16 @@ void QMouse3DMagellanDevice::init()
         return;
 
     // Install an event filter so we can get messages back from the server.
-    prevFilter = qApp->setEventFilter(magellan_event_filter);
+    if (!filterInstalled) {
+        prevFilter = qApp->setEventFilter(magellan_event_filter);
+        filterInstalled = true;
+    }
 
     // The "3dxsrv" server is available and running.
     available = true;
 }
 
-void QMouse3DMagellanDevice::motionEvent(XEvent *event)
+void QMouse3DxWareDevice::motionEvent(XEvent *event)
 {
     qreal values[6];
     for (int index = 0; index < 6; ++index) {
@@ -219,14 +223,14 @@ static int magellan_map_key(int code)
         return -1;
 }
 
-void QMouse3DMagellanDevice::buttonPressEvent(int code)
+void QMouse3DxWareDevice::buttonPressEvent(int code)
 {
     code = magellan_map_key(code);
     if (code != -1)
         keyPress(code);
 }
 
-void QMouse3DMagellanDevice::buttonReleaseEvent(int code)
+void QMouse3DxWareDevice::buttonReleaseEvent(int code)
 {
     code = magellan_map_key(code);
     if (code != -1)

@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QMOUSE3DMAGELLANDEVICE_H
-#define QMOUSE3DMAGELLANDEVICE_H
+#ifndef QMOUSE3DXWAREDEVICE_H
+#define QMOUSE3DXWAREDEVICE_H
 
 #include "qmouse3ddevice_p.h"
 #include <QtGui/private/qt_x11_p.h>
@@ -49,12 +49,12 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DMagellanDevice : public QMouse3DDevice
+class QMouse3DxWareDevice : public QMouse3DDevice
 {
     Q_OBJECT
 public:
-    QMouse3DMagellanDevice(QObject *parent = 0);
-    ~QMouse3DMagellanDevice();
+    QMouse3DxWareDevice(QObject *parent = 0);
+    ~QMouse3DxWareDevice();
 
     bool isAvailable() const;
     QStringList deviceNames() const;

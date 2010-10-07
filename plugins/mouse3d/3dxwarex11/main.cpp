@@ -40,30 +40,30 @@
 ****************************************************************************/
 
 #include "qmouse3ddeviceplugin_p.h"
-#include "qmouse3dmagellandevice.h"
+#include "qmouse3dxwaredevice.h"
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DMagellanPlugin : public QMouse3DDevicePlugin
+class QMouse3DxWarePlugin : public QMouse3DDevicePlugin
 {
 public:
     QMouse3DDevice *create() const;
     QStringList keys() const;
 };
 
-QMouse3DDevice *QMouse3DMagellanPlugin::create() const
+QMouse3DDevice *QMouse3DxWarePlugin::create() const
 {
-    return new QMouse3DMagellanDevice();
+    return new QMouse3DxWareDevice();
 }
 
-QStringList QMouse3DMagellanPlugin::keys() const
+QStringList QMouse3DxWarePlugin::keys() const
 {
     QStringList keys;
-    keys += QLatin1String("magellan");
+    keys += QLatin1String("3dxwarex11");
     return keys;
 }
 
-Q_EXPORT_STATIC_PLUGIN(QMouse3DMagellanPlugin)
-Q_EXPORT_PLUGIN2(qmouse3dmagellan, QMouse3DMagellanPlugin)
+Q_EXPORT_STATIC_PLUGIN(QMouse3DxWarePlugin)
+Q_EXPORT_PLUGIN2(qmouse3dxwarex11, QMouse3DxWarePlugin)
 
 QT_END_NAMESPACE
