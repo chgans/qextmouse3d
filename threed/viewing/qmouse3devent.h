@@ -51,6 +51,8 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
+class QMouse3DEventPrivate;
+
 class Q_QT3D_EXPORT QMouse3DEvent : public QEvent
 {
 public:
@@ -71,6 +73,9 @@ public:
 private:
     short m_translateX, m_translateY, m_translateZ;
     short m_rotateX, m_rotateY, m_rotateZ;
+    QMouse3DEventPrivate *d_ptr;    // For future expansion.
+
+    Q_DISABLE_COPY(QMouse3DEvent)   // d_ptr is not default-copiable.
 };
 
 inline QMouse3DEvent::QMouse3DEvent
@@ -83,6 +88,7 @@ inline QMouse3DEvent::QMouse3DEvent
     , m_rotateX(rotateX)
     , m_rotateY(rotateY)
     , m_rotateZ(rotateZ)
+    , d_ptr(0)
 {
 }
 
