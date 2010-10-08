@@ -53,7 +53,12 @@ public:
 
 QMouse3DDevice *QMouse3DxWarePlugin::create() const
 {
-    return new QMouse3DxWareDevice();
+    // If the 3DxWare device is not available, then don't return it.
+    QMouse3DDevice *device = new QMouse3DxWareDevice();
+    if (device->isAvailable())
+        return device;
+    delete device;
+    return 0;
 }
 
 QStringList QMouse3DxWarePlugin::keys() const
