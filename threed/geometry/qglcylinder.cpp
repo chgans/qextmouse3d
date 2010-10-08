@@ -173,6 +173,25 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn qreal QGLCylinder::height() const
+
+    Returns the height of the cylinder.
+
+    The default value is 1.0
+
+    \sa setDiameterBottom()
+*/
+
+/*!
+    \fn void QGLCylinder::setHeight(qreal height)
+
+    Sets the height of this cylinder to \a height.
+
+    \sa diameterBottom()
+*/
+
+
+/*!
     \fn int QGLCylinder::slices() const
 
     Returns the number of triangular slices the cylinder is divided into
