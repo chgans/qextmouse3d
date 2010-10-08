@@ -106,6 +106,15 @@ QT_BEGIN_NAMESPACE
 
     \image cylinder-texture-coords.png   
 
+    It is worth noting that the cylinder class can, in fact, be used to generate
+    any regular solid polygonal prism.  A rectangular prism can be created, for 
+    example, by creating a 4 sided cylinder.  Likewise a hexagonal prism is 
+    simply a 6 sided cylinder.
+
+    With this knowledge, and an understanding of the texture coordinate mapping,
+    it is possible to make custom textures which will be usable with these 
+    three dimensional objects.
+
     \sa QGLBuilder
 */
 
@@ -193,6 +202,46 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
+    \fn  bool topEnabled() const
+
+    Returns true if the top of the cyclinder will be created when
+    building the mesh.
+
+    The default is true.
+
+    \sa setTopEnabled()
+*/
+
+/*!
+    \fn void setTopEnabled(bool top)
+
+    Set whether the top end-cap of the cylinder will be created when
+    building the mesh.
+
+    \sa topEnabled()
+*/
+
+/*!
+    \fn  bool baseEnabled() const
+
+    Returns true if the base of the cyclinder will be created when
+    building the mesh.
+
+    The default is true.
+
+    \sa setBaseEnabled()
+*/
+
+/*!
+    \fn void setBaseEnabled(bool top)
+
+    Set whether the base end-cap of the cylinder will be created when
+    building the mesh.
+
+    \sa baseEnabled()
+*/
+
+/*!
     \relates QGLCylinder
 
     Builds the geometry for \a cylinder within the specified
@@ -208,8 +257,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     qreal numSlices = qreal(cylinder.slices());
     qreal numLayers = qreal(cylinder.layers());
     qreal topRadius = cylinder.diameterTop()/2.0;
-    qreal bottomRadius = cylinder.diameterBottom()/2.0;
-    QGeometryData top, base;
+    qreal bottomRadius = cylinder.diameterBottom()/2.0;   
 
     qDebug()<<"Making cylinder with " << numSlices << " segments and top/bottom radii of " << topRadius << "," << bottomRadius;
 
@@ -240,7 +288,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                                             height));
             angle+=angleIncrement;
         }        
-                
+        angle = 0;        
         // Generate texture coordinates (including an extra seam vertex for textures).
         newLayer.appendVertex(newLayer.vertex(0)); 
         newLayer.generateTextureCoordinates();        
@@ -248,22 +296,23 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         qDebug()<<"Set texture height for layer " << layerCount << " to " << textureHeight;
 
         //Special cases for top end-cap
-        if (layerCount==0) {
+        if (layerCount==0 && cylinder.topEnabled()) {
             //Draw end-cap at top            
+            QGeometryData top;
             builder.newSection();
             builder.currentNode()->setObjectName("Cylinder Top");                        
             top.appendVertex(newLayer.center());
             top.appendVertexArray(newLayer.vertices());                                        
             //Generate a circle of texture vertices for this layer.
             top.appendTexCoord(QVector2D(0.5,0.5));
-            angle = 0;
+            
             for (int i=1; i<top.count(); i++)
             {
                 top.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
                 qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
             }   
-            angle = 0;           
+            angle = 0;            
             builder.addTriangulatedFace(top);
         }
         
@@ -281,23 +330,25 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         }
 
         //Special cases for bottom end-cap
-        if (layerCount==cylinder.layers()) {
+        if (layerCount==cylinder.layers()  && cylinder.baseEnabled()) {
             //Draw end-cap at bottom            
+            QGeometryData base;
             builder.newSection();
             builder.currentNode()->setObjectName("Cylinder Base");
             base.appendVertex(newLayer.center());
             base.appendVertexArray(newLayer.vertices());    
             //Generate a circle of texture vertices for this layer.
             base.appendTexCoord(QVector2D(0.5,0.5));
-            angle = 0;
-            for (int i=1; i<top.count(); i++)
+            
+            for (int i=1; i<base.count(); i++)
             {
                 base.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
                 qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
-            }   
+            }  
+            angle = 0;
             base.reversed();  //we need to reverse the above to draw it properly - windings!
-            builder.addTriangleFan(base);
+            builder.addTriangulatedFace(base);
         }
         
         //Keep the current layer for drawing the next segment of the cylinder        
@@ -306,7 +357,9 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         radius+=radiusIncrement;
         height-=heightDecrement;
         textureHeight-=textureDecrement;
+        qDebug()<<"Moving to next layer"; 
     }
 
+    qDebug()<<"Done building cylinder"; 
     return builder;
 }

@@ -49,8 +49,7 @@ CylinderView::CylinderView(QWidget *parent)
     : QGLView(parent)
 {
     QGLBuilder builder;
-    builder << QGL::Smooth << QGLCylinder(2.0, 1.5, 2.0, 36, 3);
-    
+    builder << QGL::Smooth << QGLCylinder(2.0, 1.5, 2.0, 36, 3, true, true);
 
     QGLMaterial *matLid = new QGLMaterial;
     matLid->setAmbientColor(Qt::gray);

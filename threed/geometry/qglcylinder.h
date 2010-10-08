@@ -57,8 +57,8 @@ class QVector2D;
 class Q_QT3D_EXPORT QGLCylinder
 {
 public:
-    explicit QGLCylinder(qreal diameterTop = 1.0f, qreal diameterBottom = 1.0f, qreal height = 1.0f, int slices = 6, int layers = 3)
-        : m_diameterTop(diameterTop), m_diameterBottom(diameterBottom), m_height(height), m_slices(slices), m_layers(layers) {}
+    explicit QGLCylinder(qreal diameterTop = 1.0f, qreal diameterBottom = 1.0f, qreal height = 1.0f, int slices = 6, int layers = 3, bool top = true, bool base = true)
+        : m_diameterTop(diameterTop), m_diameterBottom(diameterBottom), m_height(height), m_slices(slices), m_layers(layers), m_top(top), m_base(base) {}
     virtual ~QGLCylinder();
 
     //Cylinder dimensions
@@ -78,6 +78,13 @@ public:
     int layers() const {return m_layers;}
     void setLayers(int layers) {m_layers = layers;}
 
+    //Attach end-caps?
+    bool topEnabled() const {return m_top;}
+    void setTopEnabled(bool top) {m_top = top;}
+
+    bool baseEnabled() const {return m_base;}
+    void setBaseEnabled(bool base) {m_base = base;}
+
 protected:
     qreal m_diameterTop;
     qreal m_diameterBottom;
@@ -85,6 +92,9 @@ protected:
     
     int m_slices;
     int m_layers;
+
+    bool m_top;
+    bool m_base;
 };
 
 Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder);
