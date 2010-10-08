@@ -44,6 +44,7 @@
 #include <QtGui/qapplication.h>
 #include <QtGui/qwidget.h>
 #include <QtGui/qx11info_x11.h>
+#include <X11/keysym.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -59,6 +60,12 @@ QMouse3DxWareDevice::QMouse3DxWareDevice(QObject *parent)
     , motionEventAtom(0)
     , buttonPressEventAtom(0)
     , buttonReleaseEventAtom(0)
+    , f1Keycode(0)
+    , f2Keycode(0)
+    , f3Keycode(0)
+    , f4Keycode(0)
+    , f5Keycode(0)
+    , f6Keycode(0)
 {
     currentDevice = this;
     init();
@@ -127,18 +134,28 @@ static bool filterInstalled = false;
 static bool magellan_event_filter(void *message, long *result)
 {
     XEvent *event = reinterpret_cast<XEvent *>(message);
-    if (event->type == ClientMessage && currentDevice) {
-        if (event->xclient.message_type == currentDevice->motionEventAtom) {
-            currentDevice->motionEvent(event);
-            return true;
-        } else if (event->xclient.message_type ==
-                        currentDevice->buttonPressEventAtom) {
-            currentDevice->buttonPressEvent(event->xclient.data.s[2]);
-            return true;
-        } else if (event->xclient.message_type ==
-                        currentDevice->buttonReleaseEventAtom) {
-            currentDevice->buttonReleaseEvent(event->xclient.data.s[2]);
-            return true;
+    if (currentDevice) {
+        if (event->type == ClientMessage) {
+            if (event->xclient.message_type == currentDevice->motionEventAtom) {
+                currentDevice->motionEvent(event);
+                return true;
+            } else if (event->xclient.message_type ==
+                            currentDevice->buttonPressEventAtom) {
+                currentDevice->buttonPressEvent(event->xclient.data.s[2]);
+                return true;
+            } else if (event->xclient.message_type ==
+                            currentDevice->buttonReleaseEventAtom) {
+                currentDevice->buttonReleaseEvent(event->xclient.data.s[2]);
+                return true;
+            }
+        } else if (event->type == 2 /*KeyPress*/ && event->xkey.state == 0x000D) {
+            // Probably a Custom key press event from "3dxsrv", which we
+            // translate using the mappings from the README file.
+            if (currentDevice->customKeyEvent(event->xkey.keycode, true))
+                return true;
+        } else if (event->type == 3 /*KeyRelease*/ && event->xkey.state == 0x000D) {
+            if (currentDevice->customKeyEvent(event->xkey.keycode, false))
+                return true;
         }
     }
     if (prevFilter)
@@ -196,6 +213,14 @@ void QMouse3DxWareDevice::init()
         filterInstalled = true;
     }
 
+    // Fetch the keycodes for F1 ... F6, for mapping Custom keys.
+    f1Keycode = XKeysymToKeycode(dpy, XK_F1);
+    f2Keycode = XKeysymToKeycode(dpy, XK_F2);
+    f3Keycode = XKeysymToKeycode(dpy, XK_F3);
+    f4Keycode = XKeysymToKeycode(dpy, XK_F4);
+    f5Keycode = XKeysymToKeycode(dpy, XK_F5);
+    f6Keycode = XKeysymToKeycode(dpy, XK_F6);
+
     // The "3dxsrv" server is available and running.
     available = true;
 }
@@ -213,13 +238,26 @@ void QMouse3DxWareDevice::motionEvent(XEvent *event)
 
 static int magellan_map_key(int code)
 {
-    // The "3dxsrv" server converts most key codes itself into
-    // raw X11 key events and delivers them to the window.  So we
-    // don't have to do very much here.
-    if (code >= 1 && code <= 10)
-        return QGL::Key_Button1 + code - 1;
-    else
-        return -1;
+    // See the README for more information about the button mappings.
+    switch (code) {
+    case 1:     return QGL::Key_Button1;
+    case 2:     return QGL::Key_Button2;
+    case 3:     return QGL::Key_Button3;
+    case 4:     return QGL::Key_Button4;
+    case 5:     return QGL::Key_Button5;
+    case 6:     return QGL::Key_Button6;
+    case 7:     return QGL::Key_Button7;
+    case 8:     return QGL::Key_Button8;
+    case 9:     return QGL::Key_Button9;
+    case 10:    return QGL::Key_Button10;
+    case 11:    return QGL::Key_TopView;
+    case 12:    return QGL::Key_LeftView;
+    case 13:    return QGL::Key_RightView;
+    case 14:    return QGL::Key_FrontView;
+    case 15:    return QGL::Key_BottomView;
+    case 16:    return QGL::Key_BackView;
+    default:    return -1;
+    }
 }
 
 void QMouse3DxWareDevice::buttonPressEvent(int code)
@@ -234,6 +272,32 @@ void QMouse3DxWareDevice::buttonReleaseEvent(int code)
     code = magellan_map_key(code);
     if (code != -1)
         keyRelease(code);
+}
+
+bool QMouse3DxWareDevice::customKeyEvent(unsigned int keycode, bool press)
+{
+    // See the README for more information about the custom button mappings.
+    int code = -1;
+    if (keycode == f1Keycode)
+        code = Qt::Key_Menu;
+    else if (keycode == f2Keycode)
+        code = QGL::Key_Fit;
+    else if (keycode == f3Keycode)
+        code = QGL::Key_RotateCW90;
+    else if (keycode == f4Keycode)
+        code = QGL::Key_RotateCCW90;
+    else if (keycode == f5Keycode)
+        code = QGL::Key_ISO1;
+    else if (keycode == f6Keycode)
+        code = QGL::Key_ISO2;
+    if (code != -1) {
+        if (press)
+            keyPress(code);
+        else
+            keyRelease(code);
+        return true;
+    }
+    return false;
 }
 
 QT_END_NAMESPACE

@@ -6,3 +6,41 @@ Qt/3D application that uses the 3D mouse is executed.  The driver
 can be obtained here:
 
     http://www.3dconnexion.com/service/drivers.html
+
+If you are using a SpaceNavigator, it is recommended that you use
+the "3dxsrv" driver's UI to configure the button mappings as follows:
+
+    L           Translations
+    R           Rotations
+
+If you are using a SpacePilot PRO, it is recommended that you use
+the "3dxsrv" driver's UI to configure the button mappings as follows:
+
+    Menu        Custom 1                4       Button 4
+    Fit         Custom 2                5       Button 5
+    T           Button 11               6       Button 6
+    L           Button 12               7       Button 7
+    R           Button 13               8       Button 8
+    F           Button 14               9       Button 9
+    B           Button 15               10      Button 10
+    BK          Button 16               Esc     Esc Key
+    Roll +      Custom 3                Alt     Alt Key
+    Roll -      Custom 4                Shift   Shift Key
+    ISO 1       Custom 5                Ctrl    Ctrl Key
+    ISO 2       Custom 6                Rot     Rotations
+    1           Button 1                Tran    Translations
+    2           Button 2                Dom     Dominant Axis
+    3           Button 3                +       Increase Sensitivity
+                                        -       Decrease Sensitivity
+
+Also make sure that the custom keys are mapped as follows (this is
+usually the default in "3dxsrv"):
+
+    Custom 1    <Control_L><Shift_L><Alt_L><F1>
+    Custom 2    <Control_L><Shift_L><Alt_L><F2>
+    Custom 3    <Control_L><Shift_L><Alt_L><F3>
+    Custom 4    <Control_L><Shift_L><Alt_L><F4>
+    Custom 5    <Control_L><Shift_L><Alt_L><F5>
+
+Save the configuration so that the buttons will be automatically mapped
+this way every time your Qt/3D application is executed.

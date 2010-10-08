@@ -69,11 +69,18 @@ public:
     Atom motionEventAtom;
     Atom buttonPressEventAtom;
     Atom buttonReleaseEventAtom;
+    unsigned int f1Keycode;
+    unsigned int f2Keycode;
+    unsigned int f3Keycode;
+    unsigned int f4Keycode;
+    unsigned int f5Keycode;
+    unsigned int f6Keycode;
 
     void init();
     void motionEvent(XEvent *event);
     void buttonPressEvent(int code);
     void buttonReleaseEvent(int code);
+    bool customKeyEvent(unsigned int keycode, bool press);
 };
 
 QT_END_NAMESPACE
