@@ -39,20 +39,25 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include "cylinderview.h"
+#ifndef CYLINDERVIEW_H
+#define CYLINDERVIEW_H
 
-int main(int argc, char *argv[])
+#include "qglview.h"
+
+class QGLSceneNode;
+
+class CylinderView : public QGLView
 {
-    QApplication app(argc, argv);
-    CylinderView view;
-    if (view.stereoType() != QGLView::RedCyanAnaglyph)
-        view.camera()->setEyeSeparation(0.3f);
-    if (QApplication::arguments().contains(QLatin1String("-maximize")))
-        view.showMaximized();
-    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
-        view.showFullScreen();
-    else
-        view.show();
-    return app.exec();
-}
+    Q_OBJECT
+public:
+    CylinderView(QWidget *parent = 0);
+    ~CylinderView();
+
+protected:
+    void paintGL(QGLPainter *painter);
+
+private:
+    QGLSceneNode *cylinder;
+};
+
+#endif
