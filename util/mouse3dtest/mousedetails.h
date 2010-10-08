@@ -43,6 +43,8 @@
 #define MOUSEDETAILS_H
 
 #include <QtGui/qwidget.h>
+#include <QtGui/qevent.h>
+#include <QtCore/qtimer.h>
 #include "ui_mousedetails.h"
 #include "qmouse3deventprovider.h"
 
@@ -55,12 +57,16 @@ public:
 
 private Q_SLOTS:
     void availableChanged();
+    void clearKeyName();
 
 protected:
     bool event(QEvent *e);
+    void keyPressEvent(QKeyEvent *e);
+    void keyReleaseEvent(QKeyEvent *e);
 
 private:
     QMouse3DEventProvider *mouse;
+    QTimer *clearKeyTimer;
 };
 
 #endif

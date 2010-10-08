@@ -41,6 +41,7 @@
 
 #include "mousedetails.h"
 #include "qmouse3devent.h"
+#include "qglnamespace.h"
 
 MouseDetails::MouseDetails(QWidget *parent)
     : QWidget(parent)
@@ -50,6 +51,10 @@ MouseDetails::MouseDetails(QWidget *parent)
     mouse = new QMouse3DEventProvider(this);
     mouse->setWidget(this);
     connect(mouse, SIGNAL(availableChanged()), this, SLOT(availableChanged()));
+
+    clearKeyTimer = new QTimer(this);
+    clearKeyTimer->setSingleShot(true);
+    connect(clearKeyTimer, SIGNAL(timeout()), this, SLOT(clearKeyName()));
 
     availableChanged();
 }
@@ -70,6 +75,12 @@ void MouseDetails::availableChanged()
     rotateX->setText(QLatin1String("0"));
     rotateY->setText(QLatin1String("0"));
     rotateZ->setText(QLatin1String("0"));
+    key->setText(QString());
+}
+
+void MouseDetails::clearKeyName()
+{
+    key->setText(QString());
 }
 
 bool MouseDetails::event(QEvent *e)
@@ -86,4 +97,49 @@ bool MouseDetails::event(QEvent *e)
     } else {
         return QWidget::event(e);
     }
+}
+
+static const char *const keyNames[] = {
+    "Fit",
+    "TopView",
+    "LeftView",
+    "RightView",
+    "FrontView",
+    "BottomView",
+    "BackView",
+    "RotateCW90",
+    "RotateCCW90",
+    "ISO1",
+    "ISO2",
+    "Button1",
+    "Button2",
+    "Button3",
+    "Button4",
+    "Button5",
+    "Button6",
+    "Button7",
+    "Button8",
+    "Button9",
+    "Button10"
+};
+
+void MouseDetails::keyPressEvent(QKeyEvent *e)
+{
+    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_Button10)
+        key->setText(tr("Key: %1").arg(QLatin1String(keyNames[e->key() - QGL::Key_Fit])));
+    else if (e->key() == Qt::Key_Menu)
+        key->setText(tr("Key: Menu"));
+    QWidget::keyPressEvent(e);
+}
+
+void MouseDetails::keyReleaseEvent(QKeyEvent *e)
+{
+    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_Button10) {
+        key->setText(tr("Key: %1").arg(QLatin1String(keyNames[e->key() - QGL::Key_Fit])));
+        clearKeyTimer->start(2000);
+    } else if (e->key() == Qt::Key_Menu) {
+        key->setText(tr("Key: Menu"));
+        clearKeyTimer->start(2000);
+    }
+    QWidget::keyReleaseEvent(e);
 }
