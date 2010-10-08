@@ -66,7 +66,6 @@ QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice(QObject *parent)
 {
     memset(values, 0, sizeof(values));
     memset(tempValues, 0, sizeof(tempValues));
-    memset(range, 0, sizeof(range));
     findDevice(false);
 }
 
@@ -158,22 +157,21 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
     // in the system (particularly the X server) don't get the events.
     ::ioctl(fd, EVIOCGRAB, 1);
 
-    // Get the range values to use to convert the raw events into
-    // values between -1 and 1.
+    // Determine the size of the "flat middle", where we clamp values to
+    // zero to filter out noise when the mouse is in the center position.
     int flat = 0;
     for (int index = 0; index < 6; ++index) {
         struct input_absinfo info;
         if (::ioctl(fd, EVIOCGABS(ABS_X + index), &info) >= 0) {
-            range[index] = qMax(qAbs(info.minimum), qAbs(info.maximum));
-            if (range[index] < 10)
-                range[index] = 500; // Zero protection.
+            int range = qMax(qAbs(info.minimum), qAbs(info.maximum));
+            if (range < 10)
+                range = 500; // Zero protection.
             if (info.flat != 0)
                 flat = qMax(flat, info.flat);
             else
-                flat = qMax(flat, range[index] / 32);
+                flat = qMax(flat, range / 32);
         } else {
-            range[index] = 500; // For 3Dconnexion EV_REL devices.
-            flat = 16;
+            flat = qMax(flat, 16);
         }
     }
     flatMiddle = flat;
@@ -201,10 +199,9 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
     }
 }
 
-static inline qreal adjustAbsValue(int value, int range)
+static inline int clampRange(int value)
 {
-    qreal val = qreal(value) / qreal(range);
-    return qMin(qMax(val, qreal(-1.0f)), qreal(1.0f));
+    return qMin(qMax(value, -32768), 32767);
 }
 
 void QMouse3DLinuxInputDevice::readyRead()
@@ -217,7 +214,7 @@ void QMouse3DLinuxInputDevice::readyRead()
     while (read(fd, &event, sizeof(event)) == int(sizeof(event))) {
         if (event.type == EV_ABS || event.type == EV_REL) {
             if (event.code <= ABS_RZ) {
-                tempValues[event.code] = event.value;
+                tempValues[event.code] = clampRange(event.value);
                 if (event.code >= ABS_RX)
                     sawRotate = true;
                 else
@@ -279,12 +276,8 @@ void QMouse3DLinuxInputDevice::readyRead()
     if (deliverMotion) {
         // Deliver the motion event and ask QMouse3DDevice to filter it.
         QMouse3DEvent mevent
-            (adjustAbsValue(values[0], range[0]),
-             adjustAbsValue(values[1], range[1]),
-             adjustAbsValue(values[2], range[2]),
-             adjustAbsValue(values[3], range[3]),
-             adjustAbsValue(values[4], range[4]),
-             adjustAbsValue(values[5], range[5]));
+            ((short)(values[0]), (short)(values[1]), (short)(values[2]),
+             (short)(values[3]), (short)(values[4]), (short)(values[5]));
         motion(&mevent, true);
     }
 }

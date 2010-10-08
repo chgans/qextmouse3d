@@ -88,6 +88,26 @@ QT_BEGIN_NAMESPACE
     \sa QMouse3DEvent, QMouse3DHandler
 */
 
+// Sensitivity adjustment values, given as Numerator / Denominator.
+static int const mouseSensitivityTable[][2] = {
+    {1, 64},
+    {1, 32},
+    {1, 16},
+    {1, 8},
+    {1, 4},
+    {1, 2},
+    {1, 1},
+    {2, 1},
+    {4, 1},
+    {8, 1},
+    {16, 1},
+    {32, 1},
+    {64, 1}
+};
+static const int MouseSensitivity_Min = 0;
+static const int MouseSensitivity_Middle = 6;
+static const int MouseSensitivity_Max = 12;
+
 class QMouse3DDevicePrivate
 {
 public:
@@ -95,13 +115,13 @@ public:
         : widget(0)
         , flags(QMouse3DDevice::Mode_Translation |
                 QMouse3DDevice::Mode_Rotation)
-        , sensitivity(0.5f)
+        , sensitivity(MouseSensitivity_Middle)
     {
     }
 
     QWidget *widget;
     int flags;
-    qreal sensitivity;
+    int sensitivity;
 };
 
 /*!
@@ -228,14 +248,19 @@ void QMouse3DDevice::changeMode(int mode)
     } else if (mode == Mode_Dominant) {
         d->flags ^= mode;
     } else if (mode == Mode_IncreaseSensitivity) {
-        d->sensitivity += 0.1f;
-        if (d->sensitivity > 1.0f)
-            d->sensitivity = 1.0f;
+        ++(d->sensitivity);
+        if (d->sensitivity > MouseSensitivity_Max)
+            d->sensitivity = MouseSensitivity_Max;
     } else if (mode == Mode_DecreaseSensitivity) {
-        d->sensitivity -= 0.1f;
-        if (d->sensitivity < 0.1f)
-            d->sensitivity = 0.1f;
+        --(d->sensitivity);
+        if (d->sensitivity < MouseSensitivity_Min)
+            d->sensitivity = MouseSensitivity_Min;
     }
+}
+
+static inline short clampRange(int value)
+{
+    return short(qMin(qMax(value, -32768), 32767));
 }
 
 /*!
@@ -252,28 +277,30 @@ void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
     if (!d->widget)
         return;
     if (filter) {
-        qreal values[6];
-        values[0] = event->translateX() * d->sensitivity;
-        values[1] = event->translateY() * d->sensitivity;
-        values[2] = event->translateZ() * d->sensitivity;
-        values[3] = event->rotateX() * d->sensitivity;
-        values[4] = event->rotateY() * d->sensitivity;
-        values[5] = event->rotateZ() * d->sensitivity;
+        int values[6];
+        int numerator = mouseSensitivityTable[d->sensitivity][0];
+        int denominator = mouseSensitivityTable[d->sensitivity][1];
+        values[0] = event->translateX() * numerator / denominator;
+        values[1] = event->translateY() * numerator / denominator;
+        values[2] = event->translateZ() * numerator / denominator;
+        values[3] = event->rotateX() * numerator / denominator;
+        values[4] = event->rotateY() * numerator / denominator;
+        values[5] = event->rotateZ() * numerator / denominator;
         if (!(d->flags & QMouse3DDevice::Mode_Translation)) {
-            values[0] = 0.0f;
-            values[1] = 0.0f;
-            values[2] = 0.0f;
+            values[0] = 0;
+            values[1] = 0;
+            values[2] = 0;
         }
         if (!(d->flags & QMouse3DDevice::Mode_Rotation)) {
-            values[3] = 0.0f;
-            values[4] = 0.0f;
-            values[5] = 0.0f;
+            values[3] = 0;
+            values[4] = 0;
+            values[5] = 0;
         }
         if (d->flags & QMouse3DDevice::Mode_Dominant) {
             int largest = 0;
-            qreal value = qAbs(values[0]);
+            int value = qAbs(values[0]);
             for (int index = 1; index < 6; ++index) {
-                qreal value2 = qAbs(values[index]);
+                int value2 = qAbs(values[index]);
                 if (value2 > value) {
                     largest = index;
                     value = value2;
@@ -281,11 +308,15 @@ void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
             }
             for (int index = 0; index < 6; ++index) {
                 if (index != largest)
-                    values[index] = 0.0f;
+                    values[index] = 0;
             }
         }
-        QMouse3DEvent ev(values[0], values[1], values[2],
-                         values[3], values[4], values[5]);
+        QMouse3DEvent ev(clampRange(values[0]),
+                         clampRange(values[1]),
+                         clampRange(values[2]),
+                         clampRange(values[3]),
+                         clampRange(values[4]),
+                         clampRange(values[5]));
         QApplication::sendEvent(d->widget, &ev);
     } else {
         QApplication::sendEvent(d->widget, event);

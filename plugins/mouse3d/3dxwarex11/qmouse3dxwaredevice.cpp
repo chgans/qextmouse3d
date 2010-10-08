@@ -202,13 +202,12 @@ void QMouse3DxWareDevice::init()
 
 void QMouse3DxWareDevice::motionEvent(XEvent *event)
 {
-    qreal values[6];
-    for (int index = 0; index < 6; ++index) {
-        qreal value = event->xclient.data.s[index + 2] / 32768.0f;
-        values[index] = qMin(qMax(value, qreal(-1.0f)), qreal(1.0f));
-    }
-    QMouse3DEvent mevent(values[0], values[1], values[2],
-                         values[3], values[4], values[5]);
+    QMouse3DEvent mevent(event->xclient.data.s[2],
+                         event->xclient.data.s[3],
+                         event->xclient.data.s[4],
+                         event->xclient.data.s[5],
+                         event->xclient.data.s[6],
+                         event->xclient.data.s[7]);
     motion(&mevent, false); // The events are already filtered by "3dxsrv".
 }
 

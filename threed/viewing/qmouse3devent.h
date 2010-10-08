@@ -54,28 +54,28 @@ QT_MODULE(Qt3d)
 class Q_QT3D_EXPORT QMouse3DEvent : public QEvent
 {
 public:
-    QMouse3DEvent(qreal translateX, qreal translateY, qreal translateZ,
-                   qreal rotateX, qreal rotateY, qreal rotateZ);
+    QMouse3DEvent(short translateX, short translateY, short translateZ,
+                  short rotateX, short rotateY, short rotateZ);
     ~QMouse3DEvent();
 
     static const QEvent::Type type;
 
-    qreal translateX() const { return m_translateX; }
-    qreal translateY() const { return m_translateY; }
-    qreal translateZ() const { return m_translateZ; }
+    short translateX() const { return m_translateX; }
+    short translateY() const { return m_translateY; }
+    short translateZ() const { return m_translateZ; }
 
-    qreal rotateX() const { return m_rotateX; }
-    qreal rotateY() const { return m_rotateY; }
-    qreal rotateZ() const { return m_rotateZ; }
+    short rotateX() const { return m_rotateX; }
+    short rotateY() const { return m_rotateY; }
+    short rotateZ() const { return m_rotateZ; }
 
 private:
-    qreal m_translateX, m_translateY, m_translateZ;
-    qreal m_rotateX, m_rotateY, m_rotateZ;
+    short m_translateX, m_translateY, m_translateZ;
+    short m_rotateX, m_rotateY, m_rotateZ;
 };
 
 inline QMouse3DEvent::QMouse3DEvent
-        (qreal translateX, qreal translateY, qreal translateZ,
-         qreal rotateX, qreal rotateY, qreal rotateZ)
+        (short translateX, short translateY, short translateZ,
+         short rotateX, short rotateY, short rotateZ)
     : QEvent(QMouse3DEvent::type)
     , m_translateX(translateX)
     , m_translateY(translateY)

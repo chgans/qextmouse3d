@@ -74,7 +74,6 @@ private:
     QSocketNotifier *notifier;
     int values[6];
     int tempValues[6];
-    int range[6];
     int flatMiddle;
     int mscKey;
     bool sawTranslate;

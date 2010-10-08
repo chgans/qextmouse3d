@@ -56,27 +56,24 @@ QT_BEGIN_NAMESPACE
     these values for reporting the output of a 3D mouse to a QWidget.
 
     The translation components are given by translateX(), translateY(),
-    and translateZ(), and will be normalized by the device to fall within
-    the range -1 to 1.  A value of -1 on the X axis for example indicates
-    that the 3D mouse is in the maximum left-most position.  The mouse
-    is assumed to automatically self-center back to zero on all axes
-    in the manner of a joystick.
+    and translateZ(), in the range -32768 to 32767.  A value of -32768
+    on the X axis for example indicates that the 3D mouse is in the maximum
+    left-most position at the highest sensitivity.  The rotation components
+    are given by rotateX(), rotateY(), and rotateZ(), and also fall within
+    the range -32768 to 32767.
 
-    The rotation components are given by rotateX(), rotateY(), and
-    rotateZ(), and are also normalized by the device to fall within
-    the range -1 to 1.
+    The mouse is assumed to automatically self-center back to zero on all
+    axes in the manner of a joystick.
 
     \sa QMouse3DEventProvider
 */
 
 /*!
-    \fn QMouse3DEvent::QMouse3DEvent(qreal translateX, qreal translateY, qreal translateZ, qreal rotateX, qreal rotateY, qreal rotateZ)
+    \fn QMouse3DEvent::QMouse3DEvent(short translateX, short translateY, short translateZ, short rotateX, short rotateY, short rotateZ)
 
     Constructs an event representing a motion in 3D space for the six degrees
     of freedom given by \a translateX, \a translateY, \a translateZ,
-    \a rotateX, \a rotateY, and \a rotateZ.  Each value should be between
-    -1 and 1, the minimum and maximum values that can be reported
-    by the device.
+    \a rotateX, \a rotateY, and \a rotateZ.
 */
 
 /*!
@@ -108,55 +105,73 @@ QMouse3DEvent::~QMouse3DEvent()
 const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 
 /*!
-    \fn qreal QMouse3DEvent::translateX() const
+    \fn short QMouse3DEvent::translateX() const
 
-    Returns the X axis translation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the X axis translation value for this motion in 3D space.
+
+    Increasing values of X correspond to the mouse moving right,
+    and decreasing values of X correspond to the mouse moving left.
+    The mouse co-ordinate system is left-handed.
 
     \sa translateY(), translateZ(), rotateX()
 */
 
 /*!
-    \fn qreal QMouse3DEvent::translateY() const
+    \fn short QMouse3DEvent::translateY() const
 
-    Returns the Y axis translation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the Y axis translation value for this motion in 3D space.
+
+    Increasing values of Y correspond to the mouse moving down,
+    and decreasing values of Y correspond to the mouse moving up.
+    The mouse co-ordinate system is left-handed.
 
     \sa translateX(), translateZ(), rotateY()
 */
 
 /*!
-    \fn qreal QMouse3DEvent::translateZ() const
+    \fn short QMouse3DEvent::translateZ() const
 
-    Returns the Z axis translation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the Z axis translation value for this motion in 3D space.
+
+    Increasing values of Z correspond to the mouse knob being pushed
+    down, and decreasing values of Z correspond to the mouse knob
+    being pulled up.  The mouse co-ordinate system is left-handed.
 
     \sa translateX(), translateY(), rotateZ()
 */
 
 /*!
-    \fn qreal QMouse3DEvent::rotateX() const
+    \fn short QMouse3DEvent::rotateX() const
 
-    Returns the X axis rotation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the X axis rotation value for this motion in 3D space.
+
+    Increasing values of X rotation correspond to the mouse being
+    rocked downwards, and decreasing values of X rotation correspond
+    to the mouse being rocked upwards.
 
     \sa rotateY(), rotateZ(), translateX()
 */
 
 /*!
-    \fn qreal QMouse3DEvent::rotateY() const
+    \fn short QMouse3DEvent::rotateY() const
 
-    Returns the Y axis rotation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the Y axis rotation value for this motion in 3D space.
+
+    Increasing values of Y rotation correspond to the mouse being
+    rocked leftwards, and decreasing values of Y rotation correspond
+    to the mouse being rocked rightwards.
 
     \sa rotateX(), rotateZ(), translateY()
 */
 
 /*!
-    \fn qreal QMouse3DEvent::rotateZ() const
+    \fn short QMouse3DEvent::rotateZ() const
 
-    Returns the Z axis rotation value for this motion in 3D space,
-    between -1 and 1.
+    Returns the Z axis rotation value for this motion in 3D space.
+
+    Increasing values of Z rotation correspond to the mouse being
+    twisted rightwards, and decreasing values of Z rotation correspond
+    to the mouse being twisted leftwards.
 
     \sa rotateX(), rotateY(), translateZ()
 */
