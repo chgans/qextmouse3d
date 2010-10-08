@@ -61,7 +61,7 @@ QT_BEGIN_NAMESPACE
 
     \code
     QGLBuilder builder;
-    builder << QGLCylinder();
+    builder << QGLCylinder(1.0,2.0,3.0);
     QGLSceneNode *node = builder.finalizedSceneNode();
 
     painter.translate(10, 25, 0);
@@ -118,12 +118,23 @@ QT_BEGIN_NAMESPACE
     \sa QGLBuilder
 */
 
+
 /*!
-    Destroys this cylinder object.
+    \fn QGLCylinder::QGLCylinder(qreal diameterTop, qreal diameterBase , qreal height, int slices, int layers, bool top, bool base)    
+
+    Constructs the geometry for a cylinder with top of diameter \a diameterTop,
+    a base of diameter \a diameterBase, and a height of \a height.
+
+    The resultant mesh will be divided around the vertical axis of the cylinder
+    into \a slices individual wedges, and shall be formed of \a layers stacked
+    to form the cylinder.
+
+    If the values for \a top or \a base are true, then the cylinder will be 
+    created with solid endcaps.  Otherwise, it shall form a hollow pipe.
+
+    units on a side.
 */
-QGLCylinder::~QGLCylinder()
-{
-}
+
 
 /*!
     \fn qreal QGLCylinder::diameterTop() const
@@ -175,7 +186,7 @@ QGLCylinder::~QGLCylinder()
 /*!
     \fn int QGLCylinder::setSlices(int slices)
 
-    Sets the number of triangular slices the cylinder is divided into
+    Sets the number of triangular \a slices the cylinder is divided into
     around its polar axis.
 
     \sa slices()
@@ -195,7 +206,7 @@ QGLCylinder::~QGLCylinder()
 /*!
     \fn int QGLCylinder::setLayers(int layers)
 
-    Sets the number of stacked layers the cylinder is divided into
+    Sets the number of stacked \a layers the cylinder is divided into
     along its height.
 
     \sa layers()
@@ -216,7 +227,7 @@ QGLCylinder::~QGLCylinder()
     \fn void QGLCylinder::setTopEnabled(bool top)
 
     Set whether the top end-cap of the cylinder will be created when
-    building the mesh.
+    building the mesh.  If \a top is true, the end-cap will be created.
 
     \sa topEnabled()
 */
@@ -233,10 +244,10 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn void QGLCylinder::setBaseEnabled(bool top)
+    \fn void QGLCylinder::setBaseEnabled(bool base)
 
     Set whether the base end-cap of the cylinder will be created when
-    building the mesh.
+    building the mesh.  If \a base is true, the end-cap will be created.
 
     \sa baseEnabled()
 */
