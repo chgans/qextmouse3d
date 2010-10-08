@@ -284,7 +284,8 @@ void QMouse3DLinuxInputDevice::readyRead()
 
 // These are the keycodes that are reported by the 3Dconnection
 // SpacePilot PRO via the Linux input event interface as EV_MSC events.
-// The SpaceNavigator reports similar events, but only has 2 buttons.
+// The SpaceNavigator reports similar events, but only has 2 buttons,
+// which we map to the same behavior as SPKey_Pan and SPKey_Rotation.
 //
 // http://www.3dconnexion.com/products/spacepilot-pro.html
 // http://www.3dconnexion.com/products/spacenavigator.html
@@ -333,18 +334,21 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
 {
     int qtcode = -1;
     switch (code) {
-    case SPKey_Menu:            qtcode = Qt::Key_Menu; break;
-
-    case SPKey_Fit:
-        // The "3Dconnexion SpaceNavigator" only has two buttons,
-        // normally assigned to Menu and Fit, which makes it difficult
-        // to toggle dominant mode from the mouse itself if 3DxWare
-        // is not running.  We therefore remap "Fit" to "Dominant"
-        // on that mouse.  The "3Dconnexion SpacePilot PRO" by contrast
-        // has an explicit dominant button.
+    case SPKey_Menu:
+        // On the SpaceNavigator, map this key to "translation lock".
         if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
-                changeMode(Mode_Dominant);
+                changeMode(Mode_Translation);
+        } else {
+            qtcode = Qt::Key_Menu;
+        }
+        break;
+
+    case SPKey_Fit:
+        // On the SpaceNavigator, map this key to "rotation lock".
+        if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
+            if (press)
+                changeMode(Mode_Rotation);
         } else {
             qtcode = QGL::Key_Fit;
         }
