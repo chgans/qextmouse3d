@@ -69,7 +69,7 @@ QT_BEGIN_NAMESPACE
     Motions in 3D are delivered to widget() in the form of a QMouse3DEvent
     and special purpose buttons are delivered to widget() in the form of a
     QKeyEvent.  Any key code that appears in the Qt::Key enumeration may
-    be delivered from a 3D mouse.  In addition, the QGL::Motion3DKeys
+    be delivered from a 3D mouse.  In addition, the QGL::Mouse3DKeys
     enumeration defines extra key codes that are specific to 3D mice.
 
     Multiple QMouse3DEventProvider objects can be created by an
@@ -77,6 +77,39 @@ QT_BEGIN_NAMESPACE
     the widget that currently has focus will receive 3D mouse events.
     QMouse3DEventProvider can also be used without a widget to
     obtain information about the 3D mice that are attached to the machine.
+
+    Applications use QMouse3DEventProvider to register a QWidget to
+    receive 3D mouse events.  The events will arrive via the
+    QObject::event() and QWidget::keyPressEvent() overrides in
+    the widget subclass:
+
+    \code
+    MyWidget::MyWidget(QWidget *parent)
+        : QWidget(parent)
+    {
+        QMouse3DEventProvider *provider;
+        provider = new QMouse3DEventProvider(this);
+        provider->setWidget(this);
+    }
+
+    bool MyWidget::event(QEvent *e)
+    {
+        if (e->type() == QMouse3DEvent::type) {
+            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+            ...
+            return true;
+        }
+        return QWidget::event(e);
+    }
+
+    void MyWidget::keyPressEvent(QKeyEvent *e)
+    {
+        if (e->key() == QGL::Key_TopView) {
+            ...
+        }
+        QWidget::keyPressEvent(e);
+    }
+    \endcode
 
     \sa QMouse3DEvent
 */

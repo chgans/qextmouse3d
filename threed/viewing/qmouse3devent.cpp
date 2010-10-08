@@ -65,6 +65,30 @@ QT_BEGIN_NAMESPACE
     The mouse is assumed to automatically self-center back to zero on all
     axes in the manner of a joystick.
 
+    Applications use QMouse3DEventProvider to register a QWidget to
+    receive 3D mouse events.  The events will arrive via the
+    QObject::event() override in the widget subclass:
+
+    \code
+    MyWidget::MyWidget(QWidget *parent)
+        : QWidget(parent)
+    {
+        QMouse3DEventProvider *provider;
+        provider = new QMouse3DEventProvider(this);
+        provider->setWidget(this);
+    }
+
+    bool MyWidget::event(QEvent *e)
+    {
+        if (e->type() == QMouse3DEvent::type) {
+            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+            ...
+            return true;
+        }
+        return QWidget::event(e);
+    }
+    \endcode
+
     \sa QMouse3DEventProvider
 */
 
@@ -88,19 +112,7 @@ QMouse3DEvent::~QMouse3DEvent()
 
     This constant defines the QEvent::type() for 3D mouse events.
     It is typically used inside a QWidget::event() override in a
-    subclass to detect 3D mouse events:
-
-    \code
-    bool MyWidget::event(QEvent *e)
-    {
-        if (e->type() == QMouse3DEvent::type) {
-            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
-            ...
-            return true;
-        }
-        return QWidget::event(e);
-    }
-    \endcode
+    subclass to detect 3D mouse events.
 */
 const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 
