@@ -202,7 +202,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn  bool topEnabled() const
+    \fn  bool QGLCylinder::topEnabled() const
 
     Returns true if the top of the cyclinder will be created when
     building the mesh.
@@ -213,7 +213,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn void setTopEnabled(bool top)
+    \fn void QGLCylinder::setTopEnabled(bool top)
 
     Set whether the top end-cap of the cylinder will be created when
     building the mesh.
@@ -222,7 +222,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn  bool baseEnabled() const
+    \fn  bool QGLCylinder::baseEnabled() const
 
     Returns true if the base of the cyclinder will be created when
     building the mesh.
@@ -233,7 +233,7 @@ QGLCylinder::~QGLCylinder()
 */
 
 /*!
-    \fn void setBaseEnabled(bool top)
+    \fn void QGLCylinder::setBaseEnabled(bool top)
 
     Set whether the base end-cap of the cylinder will be created when
     building the mesh.
