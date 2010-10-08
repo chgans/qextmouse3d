@@ -69,7 +69,7 @@ private Q_SLOTS:
 private:
     bool available;
     bool isOpen;
-    QStringList names;
+    QString name;
     int fd;
     QSocketNotifier *notifier;
     int values[6];
@@ -80,6 +80,16 @@ private:
     bool sawTranslate;
     bool sawRotate;
     bool prevWasFlat;
+
+    enum
+    {
+        // Flag bits for the type of mouse - can be more than one.
+        MouseUnknown            = 0x0000,
+        Mouse3Dconnexion        = 0x0001,
+        MouseSpacePilotPRO      = 0x0002,
+        MouseSpaceNavigator     = 0x0004
+    };
+    int mouseType;
 
     void findDevice(bool leaveOpen);
     void initDevice(int fd);

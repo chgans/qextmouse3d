@@ -62,6 +62,7 @@ QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice(QObject *parent)
     , sawTranslate(false)
     , sawRotate(false)
     , prevWasFlat(false)
+    , mouseType(QMouse3DLinuxInputDevice::MouseUnknown)
 {
     memset(values, 0, sizeof(values));
     memset(tempValues, 0, sizeof(tempValues));
@@ -83,7 +84,7 @@ bool QMouse3DLinuxInputDevice::isAvailable() const
 
 QStringList QMouse3DLinuxInputDevice::deviceNames() const
 {
-    return names;
+    return QStringList(name);
 }
 
 void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
@@ -110,7 +111,7 @@ void QMouse3DLinuxInputDevice::findDevice(bool leaveOpen)
     // This should be changed to use HAL so we can detect hot-plugging.
     available = false;
     isOpen = false;
-    names = QStringList();
+    name = QString();
     DIR *dir = ::opendir("/dev/input");
     struct dirent *entry;
     while ((entry = ::readdir(dir)) != 0) {
@@ -132,7 +133,7 @@ void QMouse3DLinuxInputDevice::findDevice(bool leaveOpen)
                     char name[256];
                     memset(name, 0, sizeof(name));
                     if (::ioctl(fd, EVIOCGNAME(sizeof(name)), name) >= 0)
-                        names += QLatin1String(name);
+                        this->name += QLatin1String(name);
                     available = true;
                     if (leaveOpen)
                         initDevice(fd);
@@ -188,6 +189,16 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
     sawTranslate = false;
     sawRotate = false;
     prevWasFlat = false;
+
+    // What type of 3D mouse do we have?
+    mouseType = QMouse3DLinuxInputDevice::MouseUnknown;
+    if (name.contains(QLatin1String("3Dconnexion"))) {
+        mouseType |= QMouse3DLinuxInputDevice::Mouse3Dconnexion;
+        if (name.contains(QLatin1String("SpaceNavigator")))
+            mouseType |= QMouse3DLinuxInputDevice::MouseSpaceNavigator;
+        else if (name.contains(QLatin1String("SpacePilot PRO")))
+            mouseType |= QMouse3DLinuxInputDevice::MouseSpacePilotPRO;
+    }
 }
 
 static inline qreal adjustAbsValue(int value, int range)
@@ -212,7 +223,8 @@ void QMouse3DLinuxInputDevice::readyRead()
                 else
                     sawTranslate = true;
             }
-        } else if (event.type == EV_MSC && event.code == MSC_SCAN) {
+        } else if (event.type == EV_MSC && event.code == MSC_SCAN &&
+                   (mouseType & QMouse3DLinuxInputDevice::Mouse3Dconnexion) != 0) {
             // If the value is between 0x90001 and 0x9001f then we
             // assume that it is a 3Dconnexion special key and then
             // wait for the EV_KEY to tell us the press/release state.
@@ -329,7 +341,22 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
     int qtcode = -1;
     switch (code) {
     case SPKey_Menu:            qtcode = Qt::Key_Menu; break;
-    case SPKey_Fit:             qtcode = QGL::Key_Fit; break;
+
+    case SPKey_Fit:
+        // The "3Dconnexion SpaceNavigator" only has two buttons,
+        // normally assigned to Menu and Fit, which makes it difficult
+        // to toggle dominant mode from the mouse itself if 3DxWare
+        // is not running.  We therefore remap "Fit" to "Dominant"
+        // on that mouse.  The "3Dconnexion SpacePilot PRO" by contrast
+        // has an explicit dominant button.
+        if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
+            if (press)
+                changeMode(Mode_Dominant);
+        } else {
+            qtcode = QGL::Key_Fit;
+        }
+        break;
+
     case SPKey_TopView:         qtcode = QGL::Key_TopView; break;
     case SPKey_LeftView:        qtcode = QGL::Key_LeftView; break;
     case SPKey_RightView:       qtcode = QGL::Key_RightView; break;
