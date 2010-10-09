@@ -124,6 +124,9 @@ public:
     int sensitivity;
 };
 
+QMouse3DDevice *QMouse3DDevice::testDevice1 = 0;
+QMouse3DDevice *QMouse3DDevice::testDevice2 = 0;
+
 /*!
     Constructs a 3D mouse device and attaches it to \a parent.
 */

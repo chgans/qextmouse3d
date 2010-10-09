@@ -90,6 +90,10 @@ public:
         Mode_DecreaseSensitivity    = 0x0010
     };
 
+    // Used for auto-testing only.
+    static QMouse3DDevice *testDevice1;
+    static QMouse3DDevice *testDevice2;
+
 Q_SIGNALS:
     void availableChanged();
 

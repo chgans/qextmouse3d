@@ -147,6 +147,19 @@ QMouse3DDeviceList::QMouse3DDeviceList(QObject *parent)
     , currentWidget(0)
 {
     ref = 1;
+    if (QMouse3DDevice::testDevice1) {
+        // Special hook for auto-testing.
+        devices.append(QMouse3DDevice::testDevice1);
+        connect(QMouse3DDevice::testDevice1, SIGNAL(availableChanged()),
+                this, SIGNAL(availableChanged()));
+        if (QMouse3DDevice::testDevice2) {
+            devices.append(QMouse3DDevice::testDevice2);
+            connect(QMouse3DDevice::testDevice2,
+                    SIGNAL(availableChanged()),
+                    this, SIGNAL(availableChanged()));
+        }
+        return;
+    }
 #if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
     QFactoryLoader *l = loader();
     QStringList keys = l->keys();
