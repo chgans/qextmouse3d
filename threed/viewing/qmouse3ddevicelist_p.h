@@ -39,42 +39,66 @@
 **
 ****************************************************************************/
 
-#ifndef MOUSEDETAILS_H
-#define MOUSEDETAILS_H
+#ifndef QMOUSE3DDEVICELIST_P_H
+#define QMOUSE3DDEVICELIST_P_H
 
-#include <QtGui/qwidget.h>
-#include <QtGui/qevent.h>
-#include <QtCore/qtimer.h>
-#include "ui_mousedetails.h"
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include "qmouse3ddevice_p.h"
 #include "qmouse3deventprovider.h"
+#include <QtCore/qatomic.h>
 
-class MouseDetails : public QWidget, public Ui_MouseDetails
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+QT_MODULE(Qt3d)
+
+class QMouse3DDeviceList : public QObject
 {
     Q_OBJECT
 public:
-    MouseDetails(QWidget *parent = 0);
-    ~MouseDetails();
+    QMouse3DDeviceList(QObject *parent = 0);
+    ~QMouse3DDeviceList();
+
+    QList<QMouse3DDevice *> devices;
+
+    static QMouse3DDeviceList *attach();
+    static void detach(QMouse3DDeviceList *list);
+
+    void attachWidget(QMouse3DEventProvider *provider, QWidget *widget);
+    void detachWidget(QMouse3DEventProvider *provider, QWidget *widget);
+
+    void updateFilters(QMouse3DEventProvider *provider,
+                       QMouse3DEventProvider::Filters value);
+    void updateSensitivity
+        (QMouse3DEventProvider *provider, qreal value);
 
 private Q_SLOTS:
-    void availableChanged();
-    void filtersChanged();
-    void sensitivityChanged();
-    void clearKeyName();
-    void toggleTranslations();
-    void toggleRotations();
-    void toggleDominantAxis();
-    void sliderChanged(int value);
+    void availableDeviceChanged();
 
-protected:
-    bool event(QEvent *e);
-    void keyPressEvent(QKeyEvent *e);
-    void keyReleaseEvent(QKeyEvent *e);
+Q_SIGNALS:
+    void availableChanged();
 
 private:
-    QMouse3DEventProvider *mouse;
-    QTimer *clearKeyTimer;
-    bool changingFilter;
-    bool changingSensitivity;
+    void setWidget(QMouse3DEventProvider *provider, QWidget *widget);
+
+    QBasicAtomicInt ref;
+    QWidget *currentWidget;
+    QMouse3DEventProvider *currentProvider;
 };
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
 
 #endif

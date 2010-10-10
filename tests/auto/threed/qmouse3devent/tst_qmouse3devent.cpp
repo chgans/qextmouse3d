@@ -86,7 +86,6 @@ public:
         { motion(event, filter); }
     void sendKeyPress(int key) { keyPress(key); }
     void sendKeyRelease(int key) { keyRelease(key); }
-    void sendChangeMode(int mode) { changeMode(mode); }
 
 private:
     bool available;
@@ -277,10 +276,18 @@ void tst_QMouse3DEvent::filterEvents()
     QVERIFY(device1->widget() == &widget);
     QVERIFY(device2->widget() == 0);    // device not available
 
+    QSignalSpy filterSpy(&provider, SIGNAL(filtersChanged()));
+    QSignalSpy sensitivitySpy(&provider, SIGNAL(sensitivityChanged()));
+
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+
     QMouse3DEvent event(10, 20, 30, 40, 50, 60);
 
     // Toggle rotation mode (which will turn it off).
-    device1->sendChangeMode(QMouse3DDevice::Mode_Rotation);
+    provider.toggleFilter(QMouse3DEventProvider::Rotations);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 1);
@@ -290,9 +297,13 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 0);
     QCOMPARE(widget.rotateY, 0);
     QCOMPARE(widget.rotateZ, 0);
+    QVERIFY(provider.filters() == QMouse3DEventProvider::Translations);
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+    QCOMPARE(filterSpy.size(), 1);
+    QCOMPARE(sensitivitySpy.size(), 0);
 
     // Turn translation mode off (and rotation mode back on again).
-    device1->sendChangeMode(QMouse3DDevice::Mode_Translation);
+    provider.toggleFilter(QMouse3DEventProvider::Translations);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 2);
@@ -302,9 +313,13 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 40);
     QCOMPARE(widget.rotateY, 50);
     QCOMPARE(widget.rotateZ, 60);
+    QVERIFY(provider.filters() == QMouse3DEventProvider::Rotations);
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+    QCOMPARE(filterSpy.size(), 2);
+    QCOMPARE(sensitivitySpy.size(), 0);
 
     // Turn translation mode back on (rotation should stay on).
-    device1->sendChangeMode(QMouse3DDevice::Mode_Translation);
+    provider.toggleFilter(QMouse3DEventProvider::Translations);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 3);
@@ -314,9 +329,15 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 40);
     QCOMPARE(widget.rotateY, 50);
     QCOMPARE(widget.rotateZ, 60);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+    QCOMPARE(filterSpy.size(), 3);
+    QCOMPARE(sensitivitySpy.size(), 0);
 
     // Turn on dominant mode.
-    device1->sendChangeMode(QMouse3DDevice::Mode_Dominant);
+    provider.toggleFilter(QMouse3DEventProvider::DominantAxis);
 
     QMouse3DEvent eventTXN(-100, 20, 30, 40, 50, 60);
     device1->sendMotion(&eventTXN, true);
@@ -327,6 +348,13 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 0);
     QCOMPARE(widget.rotateY, 0);
     QCOMPARE(widget.rotateZ, 0);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::DominantAxis));
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+    QCOMPARE(filterSpy.size(), 4);
+    QCOMPARE(sensitivitySpy.size(), 0);
 
     QMouse3DEvent eventTXP(100, 20, 30, 40, 50, 60);
     device1->sendMotion(&eventTXP, true);
@@ -440,8 +468,8 @@ void tst_QMouse3DEvent::filterEvents()
 
     // Turn off dominant mode and then increase the sensitivity
     // to double its normal value.
-    device1->sendChangeMode(QMouse3DDevice::Mode_Dominant);
-    device1->sendChangeMode(QMouse3DDevice::Mode_IncreaseSensitivity);
+    provider.toggleFilter(QMouse3DEventProvider::DominantAxis);
+    provider.setSensitivity(2.0f);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 16);
@@ -451,10 +479,15 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 80);
     QCOMPARE(widget.rotateY, 100);
     QCOMPARE(widget.rotateZ, 120);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(2.0f));
+    QCOMPARE(filterSpy.size(), 5);
+    QCOMPARE(sensitivitySpy.size(), 1);
 
     // Decrease sensitivity to half its normal value.
-    device1->sendChangeMode(QMouse3DDevice::Mode_DecreaseSensitivity);
-    device1->sendChangeMode(QMouse3DDevice::Mode_DecreaseSensitivity);
+    provider.setSensitivity(0.5f);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 17);
@@ -464,9 +497,15 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 20);
     QCOMPARE(widget.rotateY, 25);
     QCOMPARE(widget.rotateZ, 30);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(0.5f));
+    QCOMPARE(filterSpy.size(), 5);
+    QCOMPARE(sensitivitySpy.size(), 2);
 
     // Return sensitivity to normal.
-    device1->sendChangeMode(QMouse3DDevice::Mode_IncreaseSensitivity);
+    provider.setSensitivity(1.0f);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 18);
@@ -476,6 +515,12 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 40);
     QCOMPARE(widget.rotateY, 50);
     QCOMPARE(widget.rotateZ, 60);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(1.0f));
+    QCOMPARE(filterSpy.size(), 5);
+    QCOMPARE(sensitivitySpy.size(), 3);
 }
 
 QTEST_MAIN(tst_QMouse3DEvent)

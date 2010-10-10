@@ -70,8 +70,25 @@ public:
     QWidget *widget() const;
     void setWidget(QWidget *widget);
 
+    enum Filter
+    {
+        Translations    = 0x0001,
+        Rotations       = 0x0002,
+        DominantAxis    = 0x0004
+    };
+    Q_DECLARE_FLAGS(Filters, Filter)
+
+    QMouse3DEventProvider::Filters filters() const;
+    void setFilters(QMouse3DEventProvider::Filters filters);
+    void toggleFilter(QMouse3DEventProvider::Filter filter);
+
+    qreal sensitivity() const;
+    void setSensitivity(qreal value);
+
 Q_SIGNALS:
     void availableChanged();
+    void filtersChanged();
+    void sensitivityChanged();
 
 private:
     QScopedPointer<QMouse3DEventProviderPrivate> d_ptr;
@@ -79,6 +96,8 @@ private:
     Q_DISABLE_COPY(QMouse3DEventProvider)
     Q_DECLARE_PRIVATE(QMouse3DEventProvider)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QMouse3DEventProvider::Filters)
 
 QT_END_NAMESPACE
 

@@ -56,6 +56,7 @@
 #include <QtCore/qobject.h>
 #include <QtCore/qstringlist.h>
 #include "qmouse3devent.h"
+#include "qmouse3deventprovider.h"
 
 QT_BEGIN_HEADER
 
@@ -76,19 +77,14 @@ public:
     virtual bool isAvailable() const = 0;
     virtual QStringList deviceNames() const = 0;
 
+    QMouse3DEventProvider *provider() const;
+    void setProvider(QMouse3DEventProvider *provider);
+
     QWidget *widget() const;
     virtual void setWidget(QWidget *widget);
 
-    // Special modes that change the filtering to be applied to the
-    // input motions by this class when "filter" is true.
-    enum
-    {
-        Mode_Rotation               = 0x0001,
-        Mode_Translation            = 0x0002,
-        Mode_Dominant               = 0x0004,
-        Mode_IncreaseSensitivity    = 0x0008,
-        Mode_DecreaseSensitivity    = 0x0010
-    };
+    virtual void updateFilters(QMouse3DEventProvider::Filters filters);
+    virtual void updateSensitivity(qreal sensitivity);
 
     // Used for auto-testing only.
     static QMouse3DDevice *testDevice1;
@@ -100,8 +96,9 @@ Q_SIGNALS:
 protected:
     void keyPress(int key);
     void keyRelease(int key);
-    void changeMode(int mode);
-    void motion(QMouse3DEvent *event, bool filter);
+    void toggleFilter(QMouse3DEventProvider::Filter filter);
+    void adjustSensitivity(qreal factor);
+    void motion(QMouse3DEvent *event, bool filter = true);
 
 private:
     QScopedPointer<QMouse3DDevicePrivate> d_ptr;

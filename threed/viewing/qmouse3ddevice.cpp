@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qmouse3ddevice_p.h"
+#include "qmouse3ddevicelist_p.h"
 #include <QtGui/qapplication.h>
 #include <QtGui/qwidget.h>
 #include <QtGui/qevent.h>
@@ -80,48 +81,25 @@ QT_BEGIN_NAMESPACE
     set to false.
 
     If the driver or subclass does not handle locking itself, then
-    call changeMode() whenever a special key is pressed and then
-    call motion() with the filter argument set to true.  The motion()
-    function will internally filter the event to take the current mode
-    into account.
+    call toggleFilter() or adjustSensitivity() whenever a special
+    key is pressed and then call motion() with the filter argument
+    set to true.  The motion() function will internally filter
+    the event to take the current filters into account.
 
     \sa QMouse3DEvent, QMouse3DHandler
 */
-
-// Sensitivity adjustment values, given as Numerator / Denominator.
-static int const mouseSensitivityTable[][2] = {
-    {1, 64},
-    {1, 32},
-    {1, 16},
-    {1, 8},
-    {1, 4},
-    {1, 2},
-    {1, 1},
-    {2, 1},
-    {4, 1},
-    {8, 1},
-    {16, 1},
-    {32, 1},
-    {64, 1}
-};
-static const int MouseSensitivity_Min = 0;
-static const int MouseSensitivity_Middle = 6;
-static const int MouseSensitivity_Max = 12;
 
 class QMouse3DDevicePrivate
 {
 public:
     QMouse3DDevicePrivate()
         : widget(0)
-        , flags(QMouse3DDevice::Mode_Translation |
-                QMouse3DDevice::Mode_Rotation)
-        , sensitivity(MouseSensitivity_Middle)
+        , provider(0)
     {
     }
 
     QWidget *widget;
-    int flags;
-    int sensitivity;
+    QMouse3DEventProvider *provider;
 };
 
 QMouse3DDevice *QMouse3DDevice::testDevice1 = 0;
@@ -165,6 +143,31 @@ QMouse3DDevice::~QMouse3DDevice()
 */
 
 /*!
+    Returns the event provider that is currently associated
+    with this mouse device and widget().  This can be used to
+    access filtering properties from QMouse3DEventProvider.
+
+    \sa setProvider()
+*/
+QMouse3DEventProvider *QMouse3DDevice::provider() const
+{
+    Q_D(const QMouse3DDevice);
+    return d->provider;
+}
+
+/*!
+    Sets the event \a provider that should be currently associated
+    with this mouse device and widget().
+
+    \sa provider()
+*/
+void QMouse3DDevice::setProvider(QMouse3DEventProvider *provider)
+{
+    Q_D(QMouse3DDevice);
+    d->provider = provider;
+}
+
+/*!
     Returns the widget that should receive 3D mouse events from
     this device; null if 3D mouse event delivery is currently disabled.
 
@@ -188,6 +191,38 @@ void QMouse3DDevice::setWidget(QWidget *widget)
 {
     Q_D(QMouse3DDevice);
     d->widget = widget;
+}
+
+/*!
+    Notifies the subclass that QMouse3DEventProvider::filters()
+    has changed to \a filters.  The default implementation
+    does nothing.
+
+    If the 3D mouse device has state LED's or an LCD screen,
+    then the subclass may override this function to update the
+    state whenever the filters change in the application.
+
+    \sa updateSensitivity()
+*/
+void QMouse3DDevice::updateFilters(QMouse3DEventProvider::Filters filters)
+{
+    Q_UNUSED(filters);
+}
+
+/*!
+    Notifies the subclass that the QMouse3DEventProvider::sensitivity()
+    has changed to \a sensitivity.  The default implementation
+    does nothing.
+
+    If the 3D mouse device has state LED's or an LCD screen,
+    then the subclass may override this function to update the
+    state whenever the sensitivity changes in the application.
+
+    \sa updateFilters()
+*/
+void QMouse3DDevice::updateSensitivity(qreal sensitivity)
+{
+    Q_UNUSED(sensitivity);
 }
 
 /*!
@@ -221,44 +256,24 @@ void QMouse3DDevice::keyRelease(int key)
 }
 
 /*!
-    Changes the event filtering behavior of motion() in response
-    to a special \a mode.  This is typically used with 3D mice that
-    have buttons for locking the mouse into rotation mode,
-    translation mode, to clamp the movement to the dominant axis,
-    or to change the sensitivity of the mouse to wrist movements.
-
-    \sa motion()
+    Toggles the specified \a filter option on provider().
 */
-void QMouse3DDevice::changeMode(int mode)
+void QMouse3DDevice::toggleFilter(QMouse3DEventProvider::Filter filter)
 {
     Q_D(QMouse3DDevice);
-    if (mode == Mode_Rotation) {
-        d->flags ^= mode;
-        if ((d->flags & (QMouse3DDevice::Mode_Translation |
-                         QMouse3DDevice::Mode_Rotation)) == 0) {
-            // If we turned off rotation and translation was already off,
-            // then turn translation back on again.
-            d->flags |= QMouse3DDevice::Mode_Translation;
-        }
-    } else if (mode == Mode_Translation) {
-        d->flags ^= mode;
-        if ((d->flags & (QMouse3DDevice::Mode_Translation |
-                         QMouse3DDevice::Mode_Rotation)) == 0) {
-            // If we turned off translation and rotation was already off,
-            // then turn rotation back on again.
-            d->flags |= QMouse3DDevice::Mode_Rotation;
-        }
-    } else if (mode == Mode_Dominant) {
-        d->flags ^= mode;
-    } else if (mode == Mode_IncreaseSensitivity) {
-        ++(d->sensitivity);
-        if (d->sensitivity > MouseSensitivity_Max)
-            d->sensitivity = MouseSensitivity_Max;
-    } else if (mode == Mode_DecreaseSensitivity) {
-        --(d->sensitivity);
-        if (d->sensitivity < MouseSensitivity_Min)
-            d->sensitivity = MouseSensitivity_Min;
-    }
+    if (d->provider)
+        d->provider->toggleFilter(filter);
+}
+
+/*!
+    Adjusts the sensitivity value on provider() by multiplying
+    it by \a factor.
+*/
+void QMouse3DDevice::adjustSensitivity(qreal factor)
+{
+    Q_D(QMouse3DDevice);
+    if (d->provider)
+        d->provider->setSensitivity(d->provider->sensitivity() * factor);
 }
 
 static inline short clampRange(int value)
@@ -271,35 +286,33 @@ static inline short clampRange(int value)
     then apply filtering for rotation-lock, translation-lock, dominant-lock,
     and mouse sensitivity.  Set \a filter to false if the 3D mouse event
     source has already filtered the data itself.
-
-    \sa changeMode()
 */
 void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
 {
     Q_D(QMouse3DDevice);
-    if (!d->widget)
+    if (!d->widget || !d->provider)
         return;
     if (filter) {
         int values[6];
-        int numerator = mouseSensitivityTable[d->sensitivity][0];
-        int denominator = mouseSensitivityTable[d->sensitivity][1];
-        values[0] = event->translateX() * numerator / denominator;
-        values[1] = event->translateY() * numerator / denominator;
-        values[2] = event->translateZ() * numerator / denominator;
-        values[3] = event->rotateX() * numerator / denominator;
-        values[4] = event->rotateY() * numerator / denominator;
-        values[5] = event->rotateZ() * numerator / denominator;
-        if (!(d->flags & QMouse3DDevice::Mode_Translation)) {
+        qreal sensitivity = d->provider->sensitivity();
+        QMouse3DEventProvider::Filters filters = d->provider->filters();
+        values[0] = int(event->translateX() * sensitivity);
+        values[1] = int(event->translateY() * sensitivity);
+        values[2] = int(event->translateZ() * sensitivity);
+        values[3] = int(event->rotateX() * sensitivity);
+        values[4] = int(event->rotateY() * sensitivity);
+        values[5] = int(event->rotateZ() * sensitivity);
+        if (!(filters & QMouse3DEventProvider::Translations)) {
             values[0] = 0;
             values[1] = 0;
             values[2] = 0;
         }
-        if (!(d->flags & QMouse3DDevice::Mode_Rotation)) {
+        if (!(filters & QMouse3DEventProvider::Rotations)) {
             values[3] = 0;
             values[4] = 0;
             values[5] = 0;
         }
-        if (d->flags & QMouse3DDevice::Mode_Dominant) {
+        if (filters & QMouse3DEventProvider::DominantAxis) {
             int largest = 0;
             int value = qAbs(values[0]);
             for (int index = 1; index < 6; ++index) {

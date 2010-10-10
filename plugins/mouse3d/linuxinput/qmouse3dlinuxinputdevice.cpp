@@ -278,7 +278,7 @@ void QMouse3DLinuxInputDevice::readyRead()
         QMouse3DEvent mevent
             ((short)(values[0]), (short)(values[1]), (short)(values[2]),
              (short)(values[3]), (short)(values[4]), (short)(values[5]));
-        motion(&mevent, true);
+        motion(&mevent);
     }
 }
 
@@ -338,7 +338,7 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
         // On the SpaceNavigator, map this key to "translation lock".
         if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
-                changeMode(Mode_Translation);
+                toggleFilter(QMouse3DEventProvider::Translations);
         } else {
             qtcode = Qt::Key_Menu;
         }
@@ -348,7 +348,7 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
         // On the SpaceNavigator, map this key to "rotation lock".
         if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
-                changeMode(Mode_Rotation);
+                toggleFilter(QMouse3DEventProvider::Rotations);
         } else {
             qtcode = QGL::Key_Fit;
         }
@@ -381,23 +381,23 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
 
     case SPKey_Rotation:
         if (press)
-            changeMode(Mode_Rotation);
+            toggleFilter(QMouse3DEventProvider::Rotations);
         break;
     case SPKey_Pan:
         if (press)
-            changeMode(Mode_Translation);
+            toggleFilter(QMouse3DEventProvider::Translations);
         break;
     case SPKey_Dominant:
         if (press)
-            changeMode(Mode_Dominant);
+            toggleFilter(QMouse3DEventProvider::DominantAxis);
         break;
     case SPKey_IncSensitivity:
         if (press)
-            changeMode(Mode_IncreaseSensitivity);
+            adjustSensitivity(2.0f);
         break;
     case SPKey_DecSensitivity:
         if (press)
-            changeMode(Mode_DecreaseSensitivity);
+            adjustSensitivity(0.5f);
         break;
     default: break;
     }

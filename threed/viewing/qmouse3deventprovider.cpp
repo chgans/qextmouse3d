@@ -41,10 +41,7 @@
 
 #include "qmouse3deventprovider.h"
 #include "qmouse3ddevice_p.h"
-#include "qmouse3ddeviceplugin_p.h"
-#include <QtCore/qatomic.h>
-#include <QtCore/private/qfactoryloader_p.h>
-#include <QtCore/qlibraryinfo.h>
+#include "qmouse3ddevicelist_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -60,7 +57,7 @@ QT_BEGIN_NAMESPACE
     each of those axes.  Such mice also typically have an array of
     special purpose buttons for 3D navigation operations.
 
-    QMouse3DEventProvider simplifies the process of interfacing a widget()
+    QMouse3DEventProvider simplifies the process of interfacing a QWidget
     to a 3D mouse device.  Once initialized, the application can detect
     the presence of a 3D mouse with isAvailable() and availableChanged().
     If there are multiple 3D mice attached to the machine, then this
@@ -111,132 +108,39 @@ QT_BEGIN_NAMESPACE
     }
     \endcode
 
+    The setFilters() and setSensitivity() functions can be used
+    to filter 3D mouse events before they are delivered to the
+    widget(), which can help the user navigate through 3D space
+    more reliably.
+
     \sa QMouse3DEvent
 */
-
-class QMouse3DDeviceList : public QObject
-{
-    Q_OBJECT
-public:
-    QMouse3DDeviceList(QObject *parent = 0);
-    ~QMouse3DDeviceList();
-
-    QBasicAtomicInt ref;
-    QWidget *currentWidget;
-    QList<QMouse3DDevice *> devices;
-
-    void attachWidget(QWidget *widget);
-    void detachWidget(QWidget *widget);
-
-Q_SIGNALS:
-    void availableChanged();
-
-private:
-    void setWidget(QWidget *widget);
-};
-
-static QMouse3DDeviceList *deviceList = 0;
-
-#if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
-Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, loader,
-    (QMouse3DDeviceFactoryInterface_iid, QLatin1String("/mouse3d")))
-#endif
-
-QMouse3DDeviceList::QMouse3DDeviceList(QObject *parent)
-    : QObject(parent)
-    , currentWidget(0)
-{
-    ref = 1;
-    if (QMouse3DDevice::testDevice1) {
-        // Special hook for auto-testing.
-        devices.append(QMouse3DDevice::testDevice1);
-        connect(QMouse3DDevice::testDevice1, SIGNAL(availableChanged()),
-                this, SIGNAL(availableChanged()));
-        if (QMouse3DDevice::testDevice2) {
-            devices.append(QMouse3DDevice::testDevice2);
-            connect(QMouse3DDevice::testDevice2,
-                    SIGNAL(availableChanged()),
-                    this, SIGNAL(availableChanged()));
-        }
-        return;
-    }
-#if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
-    QFactoryLoader *l = loader();
-    QStringList keys = l->keys();
-    for (int index = 0; index < keys.size(); ++index) {
-        if (QMouse3DDeviceFactoryInterface *factory
-                = qobject_cast<QMouse3DDeviceFactoryInterface*>
-                    (l->instance(keys.at(index)))) {
-            QMouse3DDevice *device = factory->create();
-            if (device) {
-                devices.append(device);
-                device->setParent(this);
-                connect(device, SIGNAL(availableChanged()),
-                        this, SIGNAL(availableChanged()));
-            }
-        }
-    }
-#endif
-}
-
-QMouse3DDeviceList::~QMouse3DDeviceList()
-{
-}
-
-void QMouse3DDeviceList::attachWidget(QWidget *widget)
-{
-    // TODO: keep track of the currently active/focused widget.
-    if (currentWidget != widget)
-        setWidget(widget);
-}
-
-void QMouse3DDeviceList::detachWidget(QWidget *widget)
-{
-    if (currentWidget == widget)
-        setWidget(0);
-}
-
-void QMouse3DDeviceList::setWidget(QWidget *widget)
-{
-    currentWidget = widget;
-    for (int index = 0; index < devices.size(); ++index) {
-        QMouse3DDevice *device = devices.at(index);
-        if (device->isAvailable())
-            device->setWidget(widget);
-    }
-}
 
 class QMouse3DEventProviderPrivate
 {
 public:
     QMouse3DEventProviderPrivate()
         : widget(0)
+        , filters(QMouse3DEventProvider::Translations |
+                  QMouse3DEventProvider::Rotations)
+        , sensitivity(1.0f)
     {
-        if (!deviceList) {
-            deviceList = new QMouse3DDeviceList();
-            devices = deviceList;
-        } else {
-            devices = deviceList;
-            devices->ref.ref();
-        }
+        devices = QMouse3DDeviceList::attach();
     }
     ~QMouse3DEventProviderPrivate()
     {
-        if (widget)
-            devices->detachWidget(widget);
-        if (!devices->ref.deref()) {
-            delete deviceList;
-            deviceList = 0;
-        }
+        QMouse3DDeviceList::detach(devices);
     }
 
     QWidget *widget;
     QMouse3DDeviceList *devices;
+    QMouse3DEventProvider::Filters filters;
+    qreal sensitivity;
 };
 
 /*!
     Constructs an event provider for the 3D mice attached to this
-    machine and associate it with \a parent.
+    machine and associates it with \a parent.
 */
 QMouse3DEventProvider::QMouse3DEventProvider(QObject *parent)
     : QObject(parent)
@@ -252,6 +156,8 @@ QMouse3DEventProvider::QMouse3DEventProvider(QObject *parent)
 */
 QMouse3DEventProvider::~QMouse3DEventProvider()
 {
+    Q_D(QMouse3DEventProvider);
+    d->devices->detachWidget(this, d->widget);
 }
 
 /*!
@@ -318,28 +224,156 @@ void QMouse3DEventProvider::setWidget(QWidget *widget)
     Q_D(QMouse3DEventProvider);
     if (d->widget != widget) {
         if (d->widget)
-            d->devices->detachWidget(d->widget);
+            d->devices->detachWidget(this, d->widget);
         d->widget = widget;
         if (widget)
-            d->devices->attachWidget(widget);
+            d->devices->attachWidget(this, widget);
+    }
+}
+
+/*!
+    \enum QMouse3DEventProvider::Filter
+    This enum defines filters that can be applied to incoming
+    3D mouse events to constrain the reported axes.
+
+    \value Translations Report translation axes.
+    \value Rotations Report rotation axes.
+    \value DominantAxis Report only the most dominant axis.
+*/
+
+/*!
+    Returns the currently active event filters for widget().
+    The default value is \l Translations | \l Rotations.
+
+    \sa setFilters(), toggleFilter(), filtersChanged()
+*/
+QMouse3DEventProvider::Filters QMouse3DEventProvider::filters() const
+{
+    Q_D(const QMouse3DEventProvider);
+    return d->filters;
+}
+
+/*!
+    Sets the list of \a filters to apply to incoming 3D mouse events
+    on widget().
+
+    \sa filters(), toggleFilter(), filtersChanged()
+*/
+void QMouse3DEventProvider::setFilters
+    (QMouse3DEventProvider::Filters filters)
+{
+    Q_D(QMouse3DEventProvider);
+    if ((filters & (Translations | Rotations)) == 0)
+        filters |= Rotations;   // Need at least 1 of these set.
+    if (d->filters != filters) {
+        d->filters = filters;
+        d->devices->updateFilters(this, filters);
+        emit filtersChanged();
+    }
+}
+
+/*!
+    Toggles the state of \a filter within filters() for widget().
+    This function will ensure that one of \l Translations
+    and \l Rotations is always enabled.
+
+    \sa filters(), setFilters(), filtersChanged()
+*/
+void QMouse3DEventProvider::toggleFilter
+    (QMouse3DEventProvider::Filter filter)
+{
+    Q_D(QMouse3DEventProvider);
+    QMouse3DEventProvider::Filters newFilters = d->filters ^ filter;
+    if ((newFilters & (QMouse3DEventProvider::Translations |
+                       QMouse3DEventProvider::Rotations)) == 0) {
+        // Cannot turn off both Translations and Rotations, so turn
+        // on the other one that wasn't toggled.
+        if (filter == QMouse3DEventProvider::Translations)
+            newFilters |= QMouse3DEventProvider::Rotations;
+        else if (filter == QMouse3DEventProvider::Rotations)
+            newFilters |= QMouse3DEventProvider::Translations;
+    }
+    setFilters(newFilters);
+}
+
+/*!
+    Returns the sensitivity of the 3D mouse to wrist movements.
+    Larger values have a large effect on the reported events,
+    making the mouse more sensitive to small wrist movements.
+    Smaller values make the mouse less sensitive to small wrist
+    movements, which can help with the accuracy of fine-detail work.
+
+    The return value ranges between 1/64 and 64, with the default
+    value of 1 indicating the normal state where events are reported
+    without any adjustment.  A value of 4 indicates that the
+    mouse is 4 times more sensitive than normal, and a value of 1/4
+    (0.25) indicates that the mouse is 4 times less sensitive
+    than normal.
+
+    \sa setSensitivity(), sensitivityChanged()
+*/
+qreal QMouse3DEventProvider::sensitivity() const
+{
+    Q_D(const QMouse3DEventProvider);
+    return d->sensitivity;
+}
+
+/*!
+    Sets the sensitivity of the 3D mouse to wrist movements
+    to \a value, which is clamped to the range 1/64 to 64.
+    The default value of 1 indicates the normal state where events
+    are reported without any adjustment.
+
+    The \a value is multiplied by incoming axis values to
+    generate the components of the QMouse3DEvent.  A \a value of 4
+    indicates that the mouse is four times more sensitive than
+    normal, and a \a value of 1/4 (0.25) indicates that the mouse
+    is four times less sensitive than normal.
+
+    \sa sensitivity(), sensitivityChanged()
+*/
+void QMouse3DEventProvider::setSensitivity(qreal value)
+{
+    Q_D(QMouse3DEventProvider);
+
+    // Clamp the value to the range 1/64 to 64.
+    value = qMin(qMax(value, qreal(1.0f / 64.0f)), qreal(64.0f));
+    if (d->sensitivity != value) {
+        d->sensitivity = value;
+        d->devices->updateSensitivity(this, d->sensitivity);
+        emit sensitivityChanged();
     }
 }
 
 /*!
     \fn void QMouse3DEventProvider::availableChanged()
 
-    Signal that is emitted when isAvailable() changes.  This can be
-    used by an application to detect when a 3D mouse device is
-    plugged in or unplugged.
+    Signal that is emitted when the set of available 3D mouse
+    devices changes.  This can be used by an application to detect
+    when a 3D mouse device is plugged in or unplugged.
 
-    If there are multiple 3D mice attached to the machine, availableChanged()
-    will be emitted when the first is plugged in, or when all have been
-    unplugged.  Use deviceNames() to fetch the names of all devices that
-    are attached to the machine at present.
+    If there are multiple 3D mice attached to the machine,
+    availableChanged() will be emitted whenever any one of them
+    is plugged in or unplugged.  Use deviceNames() to fetch the
+    names of all devices that are attached to the machine at present.
 
     \sa isAvailable(), deviceNames()
 */
 
-QT_END_NAMESPACE
+/*!
+    \fn void QMouse3DEventProvider::filtersChanged()
 
-#include "qmouse3deventprovider.moc"
+    This signal is emitted when filters() changes.
+
+    \sa filters(), setFilters(), toggleFilter()
+*/
+
+/*!
+    \fn void QMouse3DEventProvider::sensitivityChanged()
+
+    This signal is emitted when sensitivity() changes.
+
+    \sa sensitivity(), setSensitivity()
+*/
+
+QT_END_NAMESPACE

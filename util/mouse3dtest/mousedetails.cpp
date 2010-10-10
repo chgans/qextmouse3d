@@ -42,21 +42,41 @@
 #include "mousedetails.h"
 #include "qmouse3devent.h"
 #include "qglnamespace.h"
+#include <QtCore/qmath.h>
+#include <QtCore/qdebug.h>
 
 MouseDetails::MouseDetails(QWidget *parent)
     : QWidget(parent)
+    , changingFilter(false)
+    , changingSensitivity(false)
 {
     setupUi(this);
 
     mouse = new QMouse3DEventProvider(this);
     mouse->setWidget(this);
-    connect(mouse, SIGNAL(availableChanged()), this, SLOT(availableChanged()));
+    connect(mouse, SIGNAL(availableChanged()),
+            this, SLOT(availableChanged()));
+    connect(mouse, SIGNAL(filtersChanged()),
+            this, SLOT(filtersChanged()));
+    connect(mouse, SIGNAL(sensitivityChanged()),
+            this, SLOT(sensitivityChanged()));
+
+    connect(translations, SIGNAL(clicked()),
+            this, SLOT(toggleTranslations()));
+    connect(rotations, SIGNAL(clicked()),
+            this, SLOT(toggleRotations()));
+    connect(dominantAxis, SIGNAL(clicked()),
+            this, SLOT(toggleDominantAxis()));
+    connect(sensitivity, SIGNAL(valueChanged(int)),
+            this, SLOT(sliderChanged(int)));
 
     clearKeyTimer = new QTimer(this);
     clearKeyTimer->setSingleShot(true);
     connect(clearKeyTimer, SIGNAL(timeout()), this, SLOT(clearKeyName()));
 
     availableChanged();
+    filtersChanged();
+    sensitivityChanged();
 }
 
 MouseDetails::~MouseDetails()
@@ -78,9 +98,65 @@ void MouseDetails::availableChanged()
     key->setText(QString());
 }
 
+void MouseDetails::filtersChanged()
+{
+    changingFilter = true;
+    QMouse3DEventProvider::Filters filters = mouse->filters();
+    translations->setChecked
+        ((filters & QMouse3DEventProvider::Translations) != 0);
+    rotations->setChecked
+        ((filters & QMouse3DEventProvider::Rotations) != 0);
+    dominantAxis->setChecked
+        ((filters & QMouse3DEventProvider::DominantAxis) != 0);
+    changingFilter = false;
+}
+
+void MouseDetails::sensitivityChanged()
+{
+    // Convert the logarithmic value between 1/64 to 64 into a
+    // linear value for the slider between 0 and 120.
+    if (!changingSensitivity) {
+        changingSensitivity = true;
+        qreal sensValue = mouse->sensitivity();
+        qreal value = qreal((::log2(sensValue) + 6.0f) * 10.0f);
+        sensitivity->setValue(int(value));
+        changingSensitivity = false;
+    }
+}
+
 void MouseDetails::clearKeyName()
 {
     key->setText(QString());
+}
+
+void MouseDetails::toggleTranslations()
+{
+    if (!changingFilter)
+        mouse->toggleFilter(QMouse3DEventProvider::Translations);
+}
+
+void MouseDetails::toggleRotations()
+{
+    if (!changingFilter)
+        mouse->toggleFilter(QMouse3DEventProvider::Rotations);
+}
+
+void MouseDetails::toggleDominantAxis()
+{
+    if (!changingFilter)
+        mouse->toggleFilter(QMouse3DEventProvider::DominantAxis);
+}
+
+void MouseDetails::sliderChanged(int value)
+{
+    if (!changingSensitivity) {
+        // Convert the slider value from 0 to 120 into a
+        // logarithmic sensitivity value between 1/64 and 64.
+        changingSensitivity = true;
+        qreal sensValue = qPow(qreal(2.0f), qreal((value - 60) / 10.0f));
+        mouse->setSensitivity(sensValue);
+        changingSensitivity = false;
+    }
 }
 
 bool MouseDetails::event(QEvent *e)
