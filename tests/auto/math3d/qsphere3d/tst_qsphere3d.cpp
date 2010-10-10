@@ -187,7 +187,7 @@ void tst_QSphere3D::transform()
     qreal tradius = m.mapVector(QVector3D(0, radius, 0)).length();
 
     QCOMPARE(sphere1.center(), m * center);
-    QCOMPARE(sphere1.radius(), tradius);
+    QCOMPARE(float(sphere1.radius()), float(tradius));
 }
 
 class tst_QSphere3DProperties : public QObject
