@@ -43,6 +43,8 @@
 #include "qmouse3ddeviceplugin_p.h"
 #include <QtCore/private/qfactoryloader_p.h>
 #include <QtCore/qlibraryinfo.h>
+#include <QtGui/qwidget.h>
+#include <QtGui/qapplication.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -96,15 +98,39 @@ QMouse3DDeviceList::~QMouse3DDeviceList()
 void QMouse3DDeviceList::attachWidget
     (QMouse3DEventProvider *provider, QWidget *widget)
 {
-    // TODO: keep track of the currently active/focused widget.
-    if (currentProvider != provider || currentWidget != widget)
+    // Add the (widget, provider) pair to the map.
+    if (widgets.contains(widget)) {
+        qWarning("QMouse3DEventProvider: multiple providers for single widget");
+        return;
+    }
+    widgets.insert(widget, provider);
+
+    // Install an event filter to track window activate/deactivate events.
+    widget->installEventFilter(this);
+
+    // If the widget is already active, then set it as the current widget.
+    // Also do this if we are running the autotests because activating a
+    // widget during autotests is unstable at best.
+    if (widget->isActiveWindow() || QMouse3DDevice::testDevice1)
         setWidget(provider, widget);
 }
 
 void QMouse3DDeviceList::detachWidget
     (QMouse3DEventProvider *provider, QWidget *widget)
 {
-    if (currentProvider == provider && currentWidget == widget)
+    // Check that this is the provider that was registered for the widget.
+    QMouse3DEventProvider *prov = widgets.value(widget, 0);
+    if (prov != provider)
+        return;
+
+    // Remove the widget from the map.
+    widgets.remove(widget);
+
+    // Remove the window activate/deactivate event filter.
+    widget->removeEventFilter(this);
+
+    // If this was the current widget, then deactivate the device.
+    if (currentWidget == widget)
         setWidget(0, 0);
 }
 
@@ -192,6 +218,25 @@ void QMouse3DDeviceList::availableDeviceChanged()
         }
     }
     emit availableChanged();
+}
+
+bool QMouse3DDeviceList::eventFilter(QObject *watched, QEvent *event)
+{
+    QWidget *widget = qobject_cast<QWidget *>(watched);
+    QMouse3DEventProvider *provider = widgets.value(widget, 0);
+    if (event->type() == QEvent::WindowActivate) {
+        if (provider && widget != currentWidget)
+            setWidget(provider, widget);
+    } else if (event->type() == QEvent::WindowDeactivate) {
+        if (provider && widget == currentWidget) {
+            // Post a zero event to the deactivating widget to center
+            // any actions that were in progress.
+            QMouse3DEvent *mouse = new QMouse3DEvent(0, 0, 0, 0, 0, 0);
+            QApplication::postEvent(widget, mouse);
+            setWidget(0, 0);
+        }
+    }
+    return false;
 }
 
 QT_END_NAMESPACE

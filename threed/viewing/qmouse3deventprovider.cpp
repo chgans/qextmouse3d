@@ -157,7 +157,8 @@ QMouse3DEventProvider::QMouse3DEventProvider(QObject *parent)
 QMouse3DEventProvider::~QMouse3DEventProvider()
 {
     Q_D(QMouse3DEventProvider);
-    d->devices->detachWidget(this, d->widget);
+    if (d->widget)
+        d->devices->detachWidget(this, d->widget);
 }
 
 /*!

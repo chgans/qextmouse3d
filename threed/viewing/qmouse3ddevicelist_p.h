@@ -56,6 +56,7 @@
 #include "qmouse3ddevice_p.h"
 #include "qmouse3deventprovider.h"
 #include <QtCore/qatomic.h>
+#include <QtCore/qmap.h>
 
 QT_BEGIN_HEADER
 
@@ -89,12 +90,16 @@ private Q_SLOTS:
 Q_SIGNALS:
     void availableChanged();
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event);
+
 private:
     void setWidget(QMouse3DEventProvider *provider, QWidget *widget);
 
     QBasicAtomicInt ref;
     QWidget *currentWidget;
     QMouse3DEventProvider *currentProvider;
+    QMap<QWidget *, QMouse3DEventProvider *> widgets;
 };
 
 QT_END_NAMESPACE
