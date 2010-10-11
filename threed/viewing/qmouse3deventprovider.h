@@ -74,7 +74,8 @@ public:
     {
         Translations    = 0x0001,
         Rotations       = 0x0002,
-        DominantAxis    = 0x0004
+        DominantAxis    = 0x0004,
+        Sensitivity     = 0x0008
     };
     Q_DECLARE_FLAGS(Filters, Filter)
 

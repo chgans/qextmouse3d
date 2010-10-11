@@ -122,7 +122,8 @@ public:
     QMouse3DEventProviderPrivate()
         : widget(0)
         , filters(QMouse3DEventProvider::Translations |
-                  QMouse3DEventProvider::Rotations)
+                  QMouse3DEventProvider::Rotations |
+                  QMouse3DEventProvider::Sensitivity)
         , sensitivity(1.0f)
     {
         devices = QMouse3DDeviceList::attach();
@@ -240,11 +241,12 @@ void QMouse3DEventProvider::setWidget(QWidget *widget)
     \value Translations Report translation axes.
     \value Rotations Report rotation axes.
     \value DominantAxis Report only the most dominant axis.
+    \value Sensitivity Apply sensitivity() to the axes.
 */
 
 /*!
     Returns the currently active event filters for widget().
-    The default value is \l Translations | \l Rotations.
+    The default value is \l Translations | \l Rotations | \l Sensitivity.
 
     \sa setFilters(), toggleFilter(), filtersChanged()
 */

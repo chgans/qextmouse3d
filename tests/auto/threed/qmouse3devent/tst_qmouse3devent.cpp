@@ -281,7 +281,8 @@ void tst_QMouse3DEvent::filterEvents()
 
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
-                 QMouse3DEventProvider::Rotations));
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
 
     QMouse3DEvent event(10, 20, 30, 40, 50, 60);
@@ -297,7 +298,9 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 0);
     QCOMPARE(widget.rotateY, 0);
     QCOMPARE(widget.rotateZ, 0);
-    QVERIFY(provider.filters() == QMouse3DEventProvider::Translations);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
     QCOMPARE(filterSpy.size(), 1);
     QCOMPARE(sensitivitySpy.size(), 0);
@@ -313,7 +316,9 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateX, 40);
     QCOMPARE(widget.rotateY, 50);
     QCOMPARE(widget.rotateZ, 60);
-    QVERIFY(provider.filters() == QMouse3DEventProvider::Rotations);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
     QCOMPARE(filterSpy.size(), 2);
     QCOMPARE(sensitivitySpy.size(), 0);
@@ -331,7 +336,8 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 60);
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
-                 QMouse3DEventProvider::Rotations));
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
     QCOMPARE(filterSpy.size(), 3);
     QCOMPARE(sensitivitySpy.size(), 0);
@@ -351,6 +357,7 @@ void tst_QMouse3DEvent::filterEvents()
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
                  QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity |
                  QMouse3DEventProvider::DominantAxis));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
     QCOMPARE(filterSpy.size(), 4);
@@ -481,7 +488,8 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 120);
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
-                 QMouse3DEventProvider::Rotations));
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(2.0f));
     QCOMPARE(filterSpy.size(), 5);
     QCOMPARE(sensitivitySpy.size(), 1);
@@ -499,13 +507,14 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 30);
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
-                 QMouse3DEventProvider::Rotations));
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(0.5f));
     QCOMPARE(filterSpy.size(), 5);
     QCOMPARE(sensitivitySpy.size(), 2);
 
-    // Return sensitivity to normal.
-    provider.setSensitivity(1.0f);
+    // Disable sensitivity filtering.
+    provider.toggleFilter(QMouse3DEventProvider::Sensitivity);
 
     device1->sendMotion(&event, true);
     QCOMPARE(widget.motionsSeen, 18);
@@ -518,8 +527,28 @@ void tst_QMouse3DEvent::filterEvents()
     QVERIFY(provider.filters() ==
                 (QMouse3DEventProvider::Translations |
                  QMouse3DEventProvider::Rotations));
+    QCOMPARE(provider.sensitivity(), qreal(0.5f));
+    QCOMPARE(filterSpy.size(), 6);
+    QCOMPARE(sensitivitySpy.size(), 2);
+
+    // Return sensitivity to normal.
+    provider.toggleFilter(QMouse3DEventProvider::Sensitivity);
+    provider.setSensitivity(1.0f);
+
+    device1->sendMotion(&event, true);
+    QCOMPARE(widget.motionsSeen, 19);
+    QCOMPARE(widget.translateX, 10);
+    QCOMPARE(widget.translateY, 20);
+    QCOMPARE(widget.translateZ, 30);
+    QCOMPARE(widget.rotateX, 40);
+    QCOMPARE(widget.rotateY, 50);
+    QCOMPARE(widget.rotateZ, 60);
+    QVERIFY(provider.filters() ==
+                (QMouse3DEventProvider::Translations |
+                 QMouse3DEventProvider::Rotations |
+                 QMouse3DEventProvider::Sensitivity));
     QCOMPARE(provider.sensitivity(), qreal(1.0f));
-    QCOMPARE(filterSpy.size(), 5);
+    QCOMPARE(filterSpy.size(), 7);
     QCOMPARE(sensitivitySpy.size(), 3);
 }
 

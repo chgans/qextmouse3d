@@ -296,12 +296,21 @@ void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
         int values[6];
         qreal sensitivity = d->provider->sensitivity();
         QMouse3DEventProvider::Filters filters = d->provider->filters();
-        values[0] = int(event->translateX() * sensitivity);
-        values[1] = int(event->translateY() * sensitivity);
-        values[2] = int(event->translateZ() * sensitivity);
-        values[3] = int(event->rotateX() * sensitivity);
-        values[4] = int(event->rotateY() * sensitivity);
-        values[5] = int(event->rotateZ() * sensitivity);
+        if ((filters & QMouse3DEventProvider::Sensitivity) != 0) {
+            values[0] = int(event->translateX() * sensitivity);
+            values[1] = int(event->translateY() * sensitivity);
+            values[2] = int(event->translateZ() * sensitivity);
+            values[3] = int(event->rotateX() * sensitivity);
+            values[4] = int(event->rotateY() * sensitivity);
+            values[5] = int(event->rotateZ() * sensitivity);
+        } else {
+            values[0] = event->translateX();
+            values[1] = event->translateY();
+            values[2] = event->translateZ();
+            values[3] = event->rotateX();
+            values[4] = event->rotateY();
+            values[5] = event->rotateZ();
+        }
         if (!(filters & QMouse3DEventProvider::Translations)) {
             values[0] = 0;
             values[1] = 0;
