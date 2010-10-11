@@ -47,6 +47,8 @@
 #include "qglbuilder.h"
 #include "qglpicknode.h"
 #include "qglabstractscene.h"
+#include "qmouse3devent.h"
+#include "qmouse3deventprovider.h"
 
 #include <QtGui/qmessagebox.h>
 #include <QtGui/qevent.h>
@@ -71,7 +73,14 @@ Viewer::Viewer(QWidget *parent)
     , m_drawFloor(true)
     , m_zoomScale(1)
     , m_pickDirty(true)
+    , m_lastWasZero(true)
 {
+    m_eventProvider = new QMouse3DEventProvider(this);
+    m_eventProvider->setWidget(this);
+    m_eventProvider->toggleFilter(QMouse3DEventProvider::Translations);
+    m_eventProvider->toggleFilter(QMouse3DEventProvider::DominantAxis);
+    m_lastEventTime.start();
+
     setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
                   "Use shift-drag to slide."));
@@ -220,6 +229,53 @@ void Viewer::keyPressEvent(QKeyEvent *e)
     {
         QGLView::keyPressEvent(e);
     }
+}
+
+bool Viewer::event(QEvent *e)
+{
+    if (e->type() == QMouse3DEvent::type) {
+        // Convert the input values into angular velocity at the
+        // rate of 0.008 radians per second.  Also re-order the
+        // incoming values into a right-handed co-ordinate system.
+        QMouse3DEvent *event = static_cast<QMouse3DEvent *>(e);
+        //qreal translateX = 0.008f * event->translateX();
+        //qreal translateY = -0.008f * event->translateZ();
+        //qreal translateZ = 0.008f * event->translateY();
+        qreal rotateX = 0.008f * event->rotateX();
+        qreal rotateY = -0.008f * event->rotateZ();
+        qreal rotateZ = 0.008f * event->rotateY();
+
+        // Determine the number of milliseconds since the last 3D mouse event.
+        int elapsed;
+        if (m_lastWasZero) {
+            elapsed = 10;
+        } else {
+            elapsed = m_lastEventTime.elapsed();
+            if (elapsed > 300)
+                elapsed = 10;   // Probably was released.
+        }
+
+        // Create a quaternion representing the rotation.
+        QQuaternion q;
+        if (rotateX != 0.0f || rotateY != 0.0f || rotateZ != 0.0f) {
+            qreal angleX = (rotateX * elapsed * 180.0f) / (1000.0f * M_PI);
+            qreal angleY = (rotateY * elapsed * 180.0f) / (1000.0f * M_PI);
+            qreal angleZ = (rotateZ * elapsed * 180.0f) / (1000.0f * M_PI);
+            QGLCamera *camera = this->camera();
+            q = camera->tilt(-angleX) *
+                camera->pan(-angleY) *
+                camera->roll(angleZ);
+            camera->rotateCenter(q);
+            m_lastWasZero = false;
+            m_lastEventTime.restart();
+        } else {
+            m_lastWasZero = true;
+        }
+
+        emit manualControlEngaged();
+        return true;
+    }
+    return QGLView::event(e);
 }
 
 void Viewer::buildFloor()

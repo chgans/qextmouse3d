@@ -44,6 +44,7 @@
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qtreeview.h>
+#include <QtCore/qdatetime.h>
 
 #include "qglview.h"
 
@@ -53,6 +54,7 @@ class QGLLightModel;
 class QGLLightParameters;
 class QTimer;
 class QGLSceneNode;
+class QMouse3DEventProvider;
 
 class Viewer : public QGLView
 {
@@ -102,6 +104,7 @@ protected:
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
+    bool event(QEvent *e);
 
 private slots:
     void animate();
@@ -126,6 +129,9 @@ private:
     int m_zoomScale;
     bool m_pickDirty;
     QVector3D m_lastEye;
+    QMouse3DEventProvider *m_eventProvider;
+    QTime m_lastEventTime;
+    bool m_lastWasZero;
 };
 
 
