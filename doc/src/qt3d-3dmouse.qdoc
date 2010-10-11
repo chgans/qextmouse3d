@@ -107,17 +107,19 @@
 
     \section3 Linux
 
-    Under Linux, the \c{linuxinput} plug-in looks for \c{/dev/input/eventN}
-    devices at startup that report six axes of freedom.  It is assumed
-    that the \c{/dev/input/eventN} device node has the correct permissions
-    for the Qt/3D application to access it.  You may need to run your
-    application as root, or modify \c{/etc/udev/rules.d} to allow other
-    users to access the 3D mouse device.
+    Under Linux, the \c{linuxinput} plug-in consults the HAL daemon,
+    looking for \c{/dev/input/eventN} mouse devices that report six axes
+    of freedom.  It is assumed that the \c{/dev/input/eventN} device node
+    has the correct permissions for the Qt/3D application to access it.
+    You may need to run your application as root, or modify
+    \c{/etc/udev/rules.d} to allow other users to access the 3D mouse device.
 
     If your 3D mouse has buttons, and it is not one of the currently
     \l{#Supported_devices}{supported devices}, then you may need to modify
     the \c{linuxinput} plug-in to recognize \c{EV_KEY} events and convert
     them into the appropriate Qt key codes.
+
+    HAL is used to detect hot-plugging of 3D mouse devices.
 
     \section3 Windows
 

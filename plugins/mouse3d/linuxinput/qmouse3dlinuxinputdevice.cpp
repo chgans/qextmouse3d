@@ -51,10 +51,12 @@
 
 QT_BEGIN_NAMESPACE
 
-QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice(QObject *parent)
+QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice
+        (const QString &dName, const QString &realName, QObject *parent)
     : QMouse3DDevice(parent)
-    , available(false)
     , isOpen(false)
+    , devName(dName)
+    , name(realName)
     , fd(-1)
     , notifier(0)
     , flatMiddle(15)
@@ -66,7 +68,6 @@ QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice(QObject *parent)
 {
     memset(values, 0, sizeof(values));
     memset(tempValues, 0, sizeof(tempValues));
-    findDevice(false);
 }
 
 QMouse3DLinuxInputDevice::~QMouse3DLinuxInputDevice()
@@ -78,12 +79,15 @@ QMouse3DLinuxInputDevice::~QMouse3DLinuxInputDevice()
 
 bool QMouse3DLinuxInputDevice::isAvailable() const
 {
-    return available;
+    // Not used - QMouse3DHalDevice reports the availability state.
+    // If the QMouse3DLinuxInputDevice object exists, the device is available.
+    return true;
 }
 
 QStringList QMouse3DLinuxInputDevice::deviceNames() const
 {
-    return QStringList(name);
+    // Not used - QMouse3DHalDevice reports the name.
+    return QStringList();
 }
 
 void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
@@ -96,56 +100,14 @@ void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
         notifier = 0;
         fd = -1;
         isOpen = false;
-    } else if (!isOpen && widget && available) {
+    } else if (!isOpen && widget) {
         // Attempt to open the device.
-        findDevice(true);
-        if (available)
+        int fd = ::open(devName.toLatin1().constData(), O_RDONLY | O_NONBLOCK, 0);
+        if (fd >= 0) {
             isOpen = true;
-    }
-}
-
-void QMouse3DLinuxInputDevice::findDevice(bool leaveOpen)
-{
-    // Scan the /dev/input directory to find a device with 6 axes.
-    // This should be changed to use HAL so we can detect hot-plugging.
-    available = false;
-    isOpen = false;
-    name = QString();
-    DIR *dir = ::opendir("/dev/input");
-    struct dirent *entry;
-    while ((entry = ::readdir(dir)) != 0) {
-        if (!qstrncmp(entry->d_name, "event", 5)) {
-            QByteArray name("/dev/input/");
-            name += entry->d_name;
-            int fd = ::open(name.constData(), O_RDONLY | O_NONBLOCK, 0);
-            if (fd >= 0) {
-                // Look for a device that has X, Y, Z, RX, RY, and RZ.
-                // The device should be EV_ABS, but some 3Dconnexion
-                // mice report as EV_REL instead, so look for both.
-                unsigned long bits = 0;
-                int found = 0;
-                if (::ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(bits)), &bits) >= 0)
-                    found = ((bits & 0x3F) == 0x3F);
-                if (!found && ::ioctl(fd, EVIOCGBIT(EV_REL, sizeof(bits)), &bits) >= 0)
-                    found = ((bits & 0x3F) == 0x3F);
-                if (found) {
-                    char name[256];
-                    memset(name, 0, sizeof(name));
-                    if (::ioctl(fd, EVIOCGNAME(sizeof(name)), name) >= 0)
-                        this->name += QLatin1String(name);
-                    available = true;
-                    if (leaveOpen)
-                        initDevice(fd);
-                    else
-                        ::close(fd);
-                    ::closedir(dir);
-                    return;
-                }
-            }
-            ::close(fd);
+            initDevice(fd);
         }
     }
-    ::closedir(dir);
 }
 
 void QMouse3DLinuxInputDevice::initDevice(int fd)

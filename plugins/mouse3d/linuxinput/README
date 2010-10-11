@@ -1,5 +1,6 @@
 This directory contains a 3D mouse plug-in that uses the Linux
-/dev/input interface to get events from a 3D mouse.
+/dev/input interface to get events from a 3D mouse.  HAL is used
+to detect hot-plugging of 3D mouse devices.
 
 The appropriate Linux kernel driver must be loaded and working, and the
 device node must have its permissions set so that the application can

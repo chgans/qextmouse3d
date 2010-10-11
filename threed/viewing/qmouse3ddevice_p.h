@@ -78,7 +78,7 @@ public:
     virtual QStringList deviceNames() const = 0;
 
     QMouse3DEventProvider *provider() const;
-    void setProvider(QMouse3DEventProvider *provider);
+    virtual void setProvider(QMouse3DEventProvider *provider);
 
     QWidget *widget() const;
     virtual void setWidget(QWidget *widget);

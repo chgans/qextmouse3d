@@ -55,7 +55,8 @@ class QMouse3DLinuxInputDevice : public QMouse3DDevice
 {
     Q_OBJECT
 public:
-    QMouse3DLinuxInputDevice(QObject *parent = 0);
+    QMouse3DLinuxInputDevice
+        (const QString &devName, const QString &realName, QObject *parent = 0);
     ~QMouse3DLinuxInputDevice();
 
     bool isAvailable() const;
@@ -67,8 +68,8 @@ private Q_SLOTS:
     void readyRead();
 
 private:
-    bool available;
     bool isOpen;
+    QString devName;
     QString name;
     int fd;
     QSocketNotifier *notifier;
@@ -90,7 +91,6 @@ private:
     };
     int mouseType;
 
-    void findDevice(bool leaveOpen);
     void initDevice(int fd);
     void translateMscKey(int code, bool press);
 };

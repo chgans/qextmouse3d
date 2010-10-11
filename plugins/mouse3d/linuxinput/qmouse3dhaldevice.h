@@ -39,33 +39,63 @@
 **
 ****************************************************************************/
 
-#include "qmouse3ddeviceplugin_p.h"
+#ifndef QMOUSE3DHALDEVICE_H
+#define QMOUSE3DHALDEVICE_H
+
+#include "qmouse3ddevice_p.h"
 #include "qmouse3dlinuxinputdevice.h"
-#include "qmouse3dhaldevice.h"
+#include <QtDBus/qdbusconnection.h>
+#include <QtDBus/qdbusinterface.h>
+#include <QtDBus/qdbusreply.h>
+
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DLinuxInputPlugin : public QMouse3DDevicePlugin
+class QMouse3DHalDevice : public QMouse3DDevice
 {
+    Q_OBJECT
 public:
-    QMouse3DDevice *create() const;
-    QStringList keys() const;
+    QMouse3DHalDevice(QObject *parent = 0);
+    ~QMouse3DHalDevice();
+
+    bool isAvailable() const;
+    QStringList deviceNames() const;
+
+    void setProvider(QMouse3DEventProvider *provider);
+    void setWidget(QWidget *widget);
+    void updateFilters(QMouse3DEventProvider::Filters filters);
+    void updateSensitivity(qreal sensitivity);
+
+private Q_SLOTS:
+    void deviceAdded(const QString &path);
+    void deviceRemoved(const QString &path);
+
+private:
+    QDBusConnection connection;
+    QDBusInterface *iface;
+
+    class MouseInfo
+    {
+    public:
+        MouseInfo(const QString &path, const QString &dev,
+                  const QString &rName, QMouse3DLinuxInputDevice *idev)
+            : halPath(path), devName(dev), realName(rName), device(idev) {}
+        ~MouseInfo() { delete device; }
+
+        QString halPath;
+        QString devName;
+        QString realName;
+        QMouse3DLinuxInputDevice *device;
+    };
+
+    QList<MouseInfo *> devices;
+
+    void mouseAdded(const QString &path, QDBusInterface *deviceIface);
 };
 
-QMouse3DDevice *QMouse3DLinuxInputPlugin::create() const
-{
-    //return new QMouse3DLinuxInputDevice();
-    return new QMouse3DHalDevice();
-}
-
-QStringList QMouse3DLinuxInputPlugin::keys() const
-{
-    QStringList keys;
-    keys += QLatin1String("linuxinput");
-    return keys;
-}
-
-Q_EXPORT_STATIC_PLUGIN(QMouse3DLinuxInputPlugin)
-Q_EXPORT_PLUGIN2(qmouse3dlinuxinput, QMouse3DLinuxInputPlugin)
-
 QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif
