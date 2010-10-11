@@ -786,11 +786,18 @@ bool QGLPainter::isCullable(const QBox3D& box) const
         // the viewing volume.  Note that it is possible that the box is
         // half in front of the eye and half behind, which we handle now
         // by truncating the box at the eye plane.
-        if (projected.minimum().z() >= 0.0f)
-            return true;
-        projected.setExtents(projected.minimum(),
-                             QVector3D(projected.maximum().x(),
-                                       projected.maximum().y(), 0.0f));
+        //
+        // If the projection is orthographic, we don't need to do this.
+        // Orthographic projections have the last row set to (0, 0, 0, 1).
+        QMatrix4x4 *proj = &(d->projectionMatrix.d_ptr->matrix);
+        if ((*proj)(3, 0) != 0.0f || (*proj)(3, 1) != 0.0f ||
+                (*proj)(3, 2) != 0.0f || (*proj)(3, 3) != 1.0f) {
+            if (projected.minimum().z() >= 0.0f)
+                return true;
+            projected.setExtents(projected.minimum(),
+                                 QVector3D(projected.maximum().x(),
+                                           projected.maximum().y(), 0.0f));
+        }
     }
     projected.transform(d->projectionMatrix);
     return !d->viewingCube.intersects(projected);
