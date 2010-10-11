@@ -79,6 +79,7 @@ Viewer::Viewer(QWidget *parent)
     m_eventProvider->setWidget(this);
     m_eventProvider->toggleFilter(QMouse3DEventProvider::Translations);
     m_eventProvider->toggleFilter(QMouse3DEventProvider::DominantAxis);
+    m_eventProvider->setKeyFilters(QMouse3DEventProvider::Sensitivity);
     m_lastEventTime.start();
 
     setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
@@ -167,6 +168,7 @@ void Viewer::setView(View view)
     {
         m_view = view;
         resetView();
+        emit viewTypeChanged();
     }
 }
 
@@ -216,18 +218,51 @@ void Viewer::wheelEvent(QWheelEvent *e)
 
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Space)
-    {
+    switch (e->key()) {
+    case Qt::Key_Space:
         emit manualControlEngaged();
-    }
-    else if (e->key() == Qt::Key_Escape)
-    {
+        break;
+
+    case Qt::Key_Escape:
         resetView();
         emit manualControlEngaged();
-    }
-    else
-    {
+        break;
+
+    case QGL::Key_FrontView:
+        setView(FrontView);
+        break;
+
+    case QGL::Key_BackView:
+        setView(BackView);
+        break;
+
+    case QGL::Key_TopView:
+        setView(TopView);
+        break;
+
+    case QGL::Key_BottomView:
+        setView(BottomView);
+        break;
+
+    case QGL::Key_LeftView:
+        setView(LeftView);
+        break;
+
+    case QGL::Key_RightView:
+        setView(RightView);
+        break;
+
+    case QGL::Key_ISO1:
+        setView(FrontRightView);
+        break;
+
+    case QGL::Key_ISO2:
+        setView(BackLeftView);
+        break;
+
+    default:
         QGLView::keyPressEvent(e);
+        break;
     }
 }
 
@@ -511,19 +546,46 @@ void Viewer::resetView()
     QVector3D up = camera()->upVector();
     QVector3D viewVec = eye - origin;
     qreal zoomMag = qAbs(viewVec.length());
-    eye = origin;
-    if (m_view == TopView)
-    {
-        eye.setY(eye.y() + zoomMag);
+    switch (m_view) {
+    case TopView:
+        eye = QVector3D(0.0f, zoomMag, 0.0f);
+        up = QVector3D(0.0f, 0.0f, -1.0f);
+        break;
+
+    case BottomView:
+        eye = QVector3D(0.0f, -zoomMag, 0.0f);
         up = QVector3D(0.0f, 0.0f, 1.0f);
-    }
-    else
-    {
-        const qreal FRONT_VIEW_ANGLE = (M_PI / 12.0f);
-        qreal y = zoomMag * qSin(FRONT_VIEW_ANGLE);
-        qreal z = zoomMag * qCos(FRONT_VIEW_ANGLE);
-        eye = QVector3D(0.0f, y, -z);
-        up = QVector3D(0.0f, z, y);
+        break;
+
+    case FrontView:
+        eye = QVector3D(0.0f, 0.0f, zoomMag);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case BackView:
+        eye = QVector3D(0.0f, 0.0f, -zoomMag);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case LeftView:
+        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case RightView:
+        eye = QVector3D(zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case FrontRightView:
+        eye = zoomMag * QVector3D(1, 1, 1).normalized();
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case BackLeftView:
+        eye = zoomMag * QVector3D(-1, 1, -1).normalized();
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
     }
     camera()->setEye(eye);
     camera()->setCenter(QVector3D());

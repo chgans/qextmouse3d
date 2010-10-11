@@ -106,7 +106,37 @@
             </item>
             <item>
              <property name="text">
+              <string>Back View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Top View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bottom View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Left View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Right View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Front/Right View</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Back/Left View</string>
              </property>
             </item>
            </widget>

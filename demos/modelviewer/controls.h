@@ -100,6 +100,7 @@ private slots:
     void fileLoadTimeNotified(int);
     void addRecentFiles(const QString &);
     void load();
+    void viewTypeChanged();
 
 private:
     QString populateModelMenu();

@@ -63,7 +63,13 @@ public:
     enum View
     {
         FrontView,
-        TopView
+        BackView,
+        TopView,
+        BottomView,
+        LeftView,
+        RightView,
+        FrontRightView,
+        BackLeftView
     };
 
     Viewer(QWidget *parent = 0);
@@ -88,6 +94,7 @@ public:
 
 signals:
     void manualControlEngaged();
+    void viewTypeChanged();
 
 public slots:
     void enableAnimation(bool enable);

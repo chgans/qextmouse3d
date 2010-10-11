@@ -105,6 +105,8 @@ Controls::Controls(QWidget *parent)
     m_ui->treeView->setModel(m_model);
     m_view->setTreeView(m_ui->treeView);
 
+    connect(m_view, SIGNAL(viewTypeChanged()), this, SLOT(viewTypeChanged()));
+
     emit openFile(initialModel);
 
     connect(m_ui->actionForce_Smooth, SIGNAL(triggered(bool)),
@@ -147,6 +149,12 @@ void Controls::load()
     {
         m_model->setFullPath(act->text());
     }
+}
+
+void Controls::viewTypeChanged()
+{
+    if (m_ui->viewComboBox->currentIndex() != int(m_view->view()))
+        m_ui->viewComboBox->setCurrentIndex(int(m_view->view()));
 }
 
 QString Controls::populateModelMenu()
