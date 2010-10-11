@@ -67,6 +67,7 @@ signals:
 
 protected:
     void changeEvent(QEvent *e);
+    void closeEvent(QCloseEvent *e);
 
 private slots:
     void on_actionShow_Picking_triggered();

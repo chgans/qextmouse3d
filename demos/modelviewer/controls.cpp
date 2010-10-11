@@ -61,8 +61,6 @@ Controls::Controls(QWidget *parent)
     , m_scaleLinked(true)
 {
     m_ui->setupUi(this);
-    connect(m_ui->actionQuit, SIGNAL(triggered()),
-            this, SLOT(close()));
 
     m_view = new Viewer(m_ui->frame);
     QHBoxLayout *lay = new QHBoxLayout();
@@ -140,6 +138,13 @@ void Controls::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+
+void Controls::closeEvent(QCloseEvent *e)
+{
+    QString model = m_model->fullPath();
+    saveSettings(model);
+    saveModelDefaults(model);
 }
 
 void Controls::load()
@@ -220,7 +225,7 @@ void Controls::loadModelDefaults(const QString &model)
     QByteArray coded = QUrl::toPercentEncoding(model);
     QString modelEncoded = QString::fromLatin1(coded.constData());
 
-    QVector3D p, o, s, e;
+    QVector3D p, o, s, e, up;
     bool spin = false;
     if (settings.childGroups().contains(modelEncoded))
     {
@@ -232,8 +237,11 @@ void Controls::loadModelDefaults(const QString &model)
         s = qvariant_cast<QVector3D>(settings.value(QLatin1String("scale"), QVector3D()));
         m_view->setScale(s);
         e = QVector3D(0.0f, 2.0f, -10.0f);
-        QVector3D e = qvariant_cast<QVector3D>(settings.value(QLatin1String("eye"), e));
+        e = qvariant_cast<QVector3D>(settings.value(QLatin1String("eye"), e));
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        up = qvariant_cast<QVector3D>(settings.value(QLatin1String("upVector"), up));
         m_view->camera()->setEye(e);
+        m_view->camera()->setUpVector(up);
         spin = settings.value(QLatin1String("spin"), false).toBool();
     }
     else
@@ -273,10 +281,12 @@ void Controls::saveModelDefaults(const QString &model)
     QVector3D o = m_view->orientation();
     QVector3D s = m_view->scale();
     QVector3D e = m_view->camera()->eye();
+    QVector3D up = m_view->camera()->upVector();
     settings.setValue(QLatin1String("position"), p);
     settings.setValue(QLatin1String("orientation"), o);
     settings.setValue(QLatin1String("scale"), s);
     settings.setValue(QLatin1String("eye"), e);
+    settings.setValue(QLatin1String("upVector"), up);
     settings.setValue(QLatin1String("spin"), m_ui->spinCheckBox->isChecked());
 }
 
@@ -427,9 +437,6 @@ void Controls::addRecentFiles(const QString &fileName)
 
 void Controls::on_actionQuit_triggered()
 {
-    QString model = m_model->fullPath();
-    saveSettings(model);
-    saveModelDefaults(model);
     close();
 }
 
