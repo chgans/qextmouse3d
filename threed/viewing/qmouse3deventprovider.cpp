@@ -124,6 +124,7 @@ public:
         , filters(QMouse3DEventProvider::Translations |
                   QMouse3DEventProvider::Rotations |
                   QMouse3DEventProvider::Sensitivity)
+        , keyFilters(QMouse3DEventProvider::AllFilters)
         , sensitivity(1.0f)
     {
         devices = QMouse3DDeviceList::attach();
@@ -136,6 +137,7 @@ public:
     QWidget *widget;
     QMouse3DDeviceList *devices;
     QMouse3DEventProvider::Filters filters;
+    QMouse3DEventProvider::Filters keyFilters;
     qreal sensitivity;
 };
 
@@ -238,17 +240,19 @@ void QMouse3DEventProvider::setWidget(QWidget *widget)
     This enum defines filters that can be applied to incoming
     3D mouse events to constrain the reported axes.
 
+    \value NoFilters Special value with no filter bits set.
     \value Translations Report translation axes.
     \value Rotations Report rotation axes.
     \value DominantAxis Report only the most dominant axis.
     \value Sensitivity Apply sensitivity() to the axes.
+    \value AllFilters Special value with all filter bits set.
 */
 
 /*!
     Returns the currently active event filters for widget().
     The default value is \l Translations | \l Rotations | \l Sensitivity.
 
-    \sa setFilters(), toggleFilter(), filtersChanged()
+    \sa setFilters(), toggleFilter(), filtersChanged(), keyFilters()
 */
 QMouse3DEventProvider::Filters QMouse3DEventProvider::filters() const
 {
@@ -297,6 +301,40 @@ void QMouse3DEventProvider::toggleFilter
             newFilters |= QMouse3DEventProvider::Translations;
     }
     setFilters(newFilters);
+}
+
+/*!
+    Returns the filters that can be modified by special keys on the
+    mouse device.  The default is AllFilters.
+
+    If a key-based filter is disabled, then only the application
+    can modify the filter.  This can be useful when the application
+    only wants the translation or rotation components from the
+    3D mouse and does not want the user to alter this restriction
+    using the special keys.
+
+    Special keys will still be delivered to widget() as a QKeyEvent,
+    even if the corresponding filter bit is disabled.
+
+    \sa setKeyFilters(), filters()
+*/
+QMouse3DEventProvider::Filters QMouse3DEventProvider::keyFilters() const
+{
+    Q_D(const QMouse3DEventProvider);
+    return d->keyFilters;
+}
+
+/*!
+    Sets the \a filters that can be modified by special keys on
+    the mouse device.
+
+    \sa keyFilters()
+*/
+void QMouse3DEventProvider::setKeyFilters
+    (QMouse3DEventProvider::Filters filters)
+{
+    Q_D(QMouse3DEventProvider);
+    d->keyFilters = filters;
 }
 
 /*!

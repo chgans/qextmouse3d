@@ -301,6 +301,7 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
         if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
                 toggleFilter(QMouse3DEventProvider::Translations);
+            qtcode = QGL::Key_Translations;
         } else {
             qtcode = Qt::Key_Menu;
         }
@@ -311,6 +312,7 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
         if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
                 toggleFilter(QMouse3DEventProvider::Rotations);
+            qtcode = QGL::Key_Rotations;
         } else {
             qtcode = QGL::Key_Fit;
         }
@@ -344,22 +346,27 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
     case SPKey_Rotation:
         if (press)
             toggleFilter(QMouse3DEventProvider::Rotations);
+        qtcode = QGL::Key_Rotations;
         break;
     case SPKey_Pan:
         if (press)
             toggleFilter(QMouse3DEventProvider::Translations);
+        qtcode = QGL::Key_Translations;
         break;
     case SPKey_Dominant:
         if (press)
             toggleFilter(QMouse3DEventProvider::DominantAxis);
+        qtcode = QGL::Key_DominantAxis;
         break;
     case SPKey_IncSensitivity:
         if (press)
             adjustSensitivity(2.0f);
+        qtcode = QGL::Key_IncreaseSensitivity;
         break;
     case SPKey_DecSensitivity:
         if (press)
             adjustSensitivity(0.5f);
+        qtcode = QGL::Key_DecreaseSensitivity;
         break;
     default: break;
     }

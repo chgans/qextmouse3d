@@ -256,24 +256,28 @@ void QMouse3DDevice::keyRelease(int key)
 }
 
 /*!
-    Toggles the specified \a filter option on provider().
+    Toggles the specified \a filter option on provider(), if permitted
+    by QMouse3DEventProvider::keyFilters().
 */
 void QMouse3DDevice::toggleFilter(QMouse3DEventProvider::Filter filter)
 {
     Q_D(QMouse3DDevice);
-    if (d->provider)
+    if (d->provider && (d->provider->keyFilters() & filter) != 0)
         d->provider->toggleFilter(filter);
 }
 
 /*!
     Adjusts the sensitivity value on provider() by multiplying
-    it by \a factor.
+    it by \a factor, if permitted by QMouse3DEventProvider::keyFilters().
 */
 void QMouse3DDevice::adjustSensitivity(qreal factor)
 {
     Q_D(QMouse3DDevice);
-    if (d->provider)
+    if (d->provider &&
+            (d->provider->keyFilters() &
+                    QMouse3DEventProvider::Sensitivity) != 0) {
         d->provider->setSensitivity(d->provider->sensitivity() * factor);
+    }
 }
 
 static inline short clampRange(int value)

@@ -196,12 +196,21 @@ static const char *const keyNames[] = {
     "Button7",
     "Button8",
     "Button9",
-    "Button10"
+    "Button10",
+    "0x01200017",
+    "0x01200018",
+    "0x01200019",
+    "0x0120001a",
+    "Rotations",
+    "Translations",
+    "DominantAxis",
+    "IncreaseSensitivity",
+    "DecreaseSensitivity"
 };
 
 void MouseDetails::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_Button10)
+    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_DecreaseSensitivity)
         key->setText(tr("Key: %1").arg(QLatin1String(keyNames[e->key() - QGL::Key_Fit])));
     else if (e->key() == Qt::Key_Menu)
         key->setText(tr("Key: Menu"));
@@ -210,7 +219,7 @@ void MouseDetails::keyPressEvent(QKeyEvent *e)
 
 void MouseDetails::keyReleaseEvent(QKeyEvent *e)
 {
-    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_Button10) {
+    if (e->key() >= QGL::Key_Fit && e->key() <= QGL::Key_DecreaseSensitivity) {
         key->setText(tr("Key: %1").arg(QLatin1String(keyNames[e->key() - QGL::Key_Fit])));
         clearKeyTimer->start(2000);
     } else if (e->key() == Qt::Key_Menu) {

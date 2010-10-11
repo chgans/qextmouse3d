@@ -241,6 +241,16 @@ QT_BEGIN_NAMESPACE
     \value Key_Button8 Special function button 8.
     \value Key_Button9 Special function button 9.
     \value Key_Button10 Special function button 10.
+    \value Key_Rotations Toggles whether or not the rotation axes on a
+           3D mouse will be filtered.
+    \value Key_Translations Toggles whether or not the translation axes
+           on a 3D mouse will be filtered.
+    \value Key_DominantAxis Toggles whether or not 3D mouse movements
+           should be constrained to the dominant axis.
+    \value Key_IncreaseSensitivity Increase the sensitivity of the mouse
+           to wrist movements.
+    \value Key_DecreaseSensitivity Decrease the sensitivity of the mouse
+           to wrist movements.
 */
 
 QT_END_NAMESPACE

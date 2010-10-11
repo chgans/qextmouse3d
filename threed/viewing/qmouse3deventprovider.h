@@ -72,16 +72,21 @@ public:
 
     enum Filter
     {
+        NoFilters       = 0x0000,
         Translations    = 0x0001,
         Rotations       = 0x0002,
         DominantAxis    = 0x0004,
-        Sensitivity     = 0x0008
+        Sensitivity     = 0x0008,
+        AllFilters      = 0xFFFF
     };
     Q_DECLARE_FLAGS(Filters, Filter)
 
     QMouse3DEventProvider::Filters filters() const;
     void setFilters(QMouse3DEventProvider::Filters filters);
     void toggleFilter(QMouse3DEventProvider::Filter filter);
+
+    QMouse3DEventProvider::Filters keyFilters() const;
+    void setKeyFilters(QMouse3DEventProvider::Filters filters);
 
     qreal sensitivity() const;
     void setSensitivity(qreal value);

@@ -142,7 +142,12 @@ namespace QGL
         Key_Button7             = 0x01200013,
         Key_Button8             = 0x01200014,
         Key_Button9             = 0x01200015,
-        Key_Button10            = 0x01200016
+        Key_Button10            = 0x01200016,
+        Key_Rotations           = 0x0120001b,
+        Key_Translations        = 0x0120001c,
+        Key_DominantAxis        = 0x0120001d,
+        Key_IncreaseSensitivity = 0x0120001e,
+        Key_DecreaseSensitivity = 0x0120001f
     };
 };
 
