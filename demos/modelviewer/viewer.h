@@ -120,6 +120,7 @@ private slots:
 private:
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
+    void engageManualControl();
 
     QVector3D m_orientation;
     QVector3D m_position;

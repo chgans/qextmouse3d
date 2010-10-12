@@ -162,6 +162,15 @@ void Viewer::setScale(const QVector3D &s)
     }
 }
 
+void Viewer::engageManualControl()
+{
+    if (m_view != SelectView) {
+        m_view = SelectView;
+        emit viewTypeChanged();
+    }
+    emit manualControlEngaged();
+}
+
 void Viewer::setView(View view)
 {
     if (m_view != view && view != SelectView)
@@ -188,19 +197,19 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     QGLView::mousePressEvent(e);
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     QGLView::mouseReleaseEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     e->accept();
     QVector3D viewVec = camera()->eye() - camera()->center();
     qreal zoomMag = viewVec.length();
@@ -220,12 +229,12 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {
     case Qt::Key_Space:
-        emit manualControlEngaged();
+        engageManualControl();
         break;
 
     case Qt::Key_Escape:
         resetView();
-        emit manualControlEngaged();
+        engageManualControl();
         break;
 
     case QGL::Key_FrontView:
@@ -307,7 +316,7 @@ bool Viewer::event(QEvent *e)
             m_lastWasZero = true;
         }
 
-        emit manualControlEngaged();
+        engageManualControl();
         return true;
     }
     return QGLView::event(e);
