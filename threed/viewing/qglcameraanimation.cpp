@@ -67,7 +67,9 @@ public:
     enum PointOfRotation
     {
         Center,
+        CenterDual,
         Eye,
+        EyeDual,
         Both
     };
 
@@ -115,6 +117,13 @@ public:
     void deriveRotations();
 };
 
+static inline bool fuzzyCompareVectors(const QVector3D &v1, const QVector3D &v2)
+{
+    return qAbs(v1.x() - v2.x()) <= 0.00001 &&
+           qAbs(v1.y() - v2.y()) <= 0.00001 &&
+           qAbs(v1.z() - v2.z()) <= 0.00001;
+}
+
 // Determine how to rotate between the "start" and "end" vectors.
 // We use the cross-product of the two vectors as the axis of rotation
 // or "defaultAxis" if the cross-product is zero (180 degree rotation).
@@ -148,10 +157,6 @@ void QGLCameraAnimationPrivate::rotateBetween
 
 void QGLCameraAnimationPrivate::deriveRotations()
 {
-    // Determine how to rotate the up vector between the start and end.
-    rotateBetween(startUpVector, endUpVector, startCenter - startEye,
-                  &upVectorAxis, &upVectorAngle);
-
     // If the center points are the same, rotate the eye around the center.
     // If the eye points are the same, rotate the center around the eye.
     // If both are different, then interpolate along linear vectors.
@@ -168,6 +173,19 @@ void QGLCameraAnimationPrivate::deriveRotations()
                           startUpVector, &pointAxis, &pointAngle);
             lengthStart = (startEye - startCenter).length();
             lengthEnd = (endEye - startCenter).length();
+
+            // Rotate the start up vector to the final position.  If it is
+            // different than the end up vector, we need to perform the
+            // animation in two steps: rotate eye, then rotate up.
+            QQuaternion q =
+                QQuaternion::fromAxisAndAngle(pointAxis, pointAngle);
+            QVector3D up = q.rotatedVector(startUpVector);
+            if (!fuzzyCompareVectors(startUpVector, endUpVector) &&
+                    !fuzzyCompareVectors(up, endUpVector)) {
+                pointOfRotation = CenterDual;
+                rotateBetween(up, endUpVector, endEye - endCenter,
+                              &upVectorAxis, &upVectorAngle);
+            }
         }
     } else if (qFuzzyCompare(startEye, endEye)) {
         // Eyes are the same, rotate the center position.
@@ -176,11 +194,31 @@ void QGLCameraAnimationPrivate::deriveRotations()
                       startUpVector, &pointAxis, &pointAngle);
         lengthStart = (startCenter - startEye).length();
         lengthEnd = (startCenter - endEye).length();
+
+        // Rotate the start up vector to the final position.  If it is
+        // different than the end up vector, we need to perform the
+        // animation in two steps: rotate eye, then rotate up.
+        QQuaternion q =
+            QQuaternion::fromAxisAndAngle(pointAxis, pointAngle);
+        QVector3D up = q.rotatedVector(startUpVector);
+        if (!fuzzyCompareVectors(startUpVector, endUpVector) &&
+                !fuzzyCompareVectors(up, endUpVector)) {
+            pointOfRotation = EyeDual;
+            rotateBetween(up, endUpVector, endCenter - endEye,
+                          &upVectorAxis, &upVectorAngle);
+        }
     } else {
         // Both center and eye are changing, so perform a linear translation.
         pointOfRotation = Both;
         centerTranslate = endCenter - startCenter;
         eyeTranslate = endEye - startEye;
+    }
+
+    // If we are doing a single movement, then determine how to
+    // rotate the up vector during the movement.
+    if (pointOfRotation != CenterDual) {
+        rotateBetween(startUpVector, endUpVector, startCenter - startEye,
+                      &upVectorAxis, &upVectorAngle);
     }
 }
 
@@ -411,17 +449,10 @@ void QGLCameraAnimation::updateCurrentTime(int currentTime)
         qreal progress = d->easingCurve.valueForProgress
             (qreal(currentTime) / qreal(d->duration));
 
-        // Calculate the new up vector.
-        QVector3D upVector = d->startUpVector;
-        if (d->upVectorAngle != 0.0f) {
-            QQuaternion q = QQuaternion::fromAxisAndAngle
-                (d->upVectorAxis, d->upVectorAngle * progress);
-            upVector = q.rotatedVector(upVector);
-        }
-
         // Calculate the new eye and center locations.
         QVector3D eye = d->startEye;
         QVector3D center = d->startCenter;
+        QVector3D upVector = d->startUpVector;
         if (d->pointOfRotation == QGLCameraAnimationPrivate::Center) {
             QQuaternion q = QQuaternion::fromAxisAndAngle
                 (d->pointAxis, d->pointAngle * progress);
@@ -432,6 +463,29 @@ void QGLCameraAnimation::updateCurrentTime(int currentTime)
                 eye = eye.normalized() * length;
             }
             eye += d->startCenter;
+        } else if (d->pointOfRotation == QGLCameraAnimationPrivate::CenterDual) {
+            if (progress < 0.5f) {
+                // First half of the animation - rotate the eye position.
+                QQuaternion q = QQuaternion::fromAxisAndAngle
+                    (d->pointAxis, d->pointAngle * progress * 2.0f);
+                eye = q.rotatedVector(eye - d->startCenter);
+                if (d->lengthStart != d->lengthEnd) {
+                    qreal length = (1.0f - progress) * d->lengthStart +
+                                   progress * d->lengthEnd;
+                    eye = eye.normalized() * length;
+                }
+                eye += d->startCenter;
+                upVector = q.rotatedVector(upVector);
+            } else {
+                // Second half of the animation - rotate the up vector.
+                QQuaternion q = QQuaternion::fromAxisAndAngle
+                        (d->upVectorAxis,
+                         d->upVectorAngle * (progress - 0.5f) * 2.0f) *
+                    QQuaternion::fromAxisAndAngle
+                        (d->pointAxis, d->pointAngle);
+                eye = d->endEye;
+                upVector = q.rotatedVector(upVector);
+            }
         } else if (d->pointOfRotation == QGLCameraAnimationPrivate::Eye) {
             QQuaternion q = QQuaternion::fromAxisAndAngle
                 (d->pointAxis, d->pointAngle * progress);
@@ -442,10 +496,44 @@ void QGLCameraAnimation::updateCurrentTime(int currentTime)
                 center = center.normalized() * length;
             }
             center += d->startEye;
+        } else if (d->pointOfRotation == QGLCameraAnimationPrivate::EyeDual) {
+            if (progress < 0.5f) {
+                // First half of the animation - rotate the center position.
+                QQuaternion q = QQuaternion::fromAxisAndAngle
+                    (d->pointAxis, d->pointAngle * progress * 2.0f);
+                center = q.rotatedVector(center - d->startEye);
+                if (d->lengthStart != d->lengthEnd) {
+                    qreal length = (1.0f - progress) * d->lengthStart +
+                                   progress * d->lengthEnd;
+                    center = center.normalized() * length;
+                }
+                center += d->startEye;
+                upVector = q.rotatedVector(upVector);
+            } else {
+                // Second half of the animation - rotate the up vector.
+                QQuaternion q = QQuaternion::fromAxisAndAngle
+                        (d->upVectorAxis,
+                         d->upVectorAngle * (progress - 0.5f) * 2.0f) *
+                    QQuaternion::fromAxisAndAngle
+                        (d->pointAxis, d->pointAngle);
+                center = d->endCenter;
+                upVector = q.rotatedVector(upVector);
+            }
         } else {
             eye += d->eyeTranslate * progress;
             center += d->centerTranslate * progress;
         }
+
+        // Calculate the new up vector for single-step animations.
+        if (d->pointOfRotation != QGLCameraAnimationPrivate::CenterDual &&
+                d->pointOfRotation != QGLCameraAnimationPrivate::EyeDual) {
+            if (d->upVectorAngle != 0.0f) {
+                QQuaternion q = QQuaternion::fromAxisAndAngle
+                    (d->upVectorAxis, d->upVectorAngle * progress);
+                upVector = q.rotatedVector(upVector);
+            }
+        }
+
         d->camera->setEye(eye);
         d->camera->setUpVector(upVector);
         d->camera->setCenter(center);
