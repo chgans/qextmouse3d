@@ -121,6 +121,7 @@ private:
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
     void engageManualControl();
+    void rotateView(qreal angle);
 
     QVector3D m_orientation;
     QVector3D m_position;

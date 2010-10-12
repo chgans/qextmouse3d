@@ -269,10 +269,24 @@ void Viewer::keyPressEvent(QKeyEvent *e)
         setView(BackLeftView);
         break;
 
+    case QGL::Key_RotateCW90:
+        rotateView(-90.0f);
+        break;
+
+    case QGL::Key_RotateCCW90:
+        rotateView(90.0f);
+        break;
+
     default:
         QGLView::keyPressEvent(e);
         break;
     }
+}
+
+void Viewer::rotateView(qreal angle)
+{
+    camera()->rotateCenter(camera()->roll(angle));
+    engageManualControl();
 }
 
 bool Viewer::event(QEvent *e)
