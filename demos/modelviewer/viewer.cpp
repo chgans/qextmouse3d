@@ -43,6 +43,7 @@
 #include "model.h"
 #include "qglscenenode.h"
 #include "qglcamera.h"
+#include "qglcameraanimation.h"
 #include "qglpainter.h"
 #include "qglbuilder.h"
 #include "qglpicknode.h"
@@ -81,6 +82,9 @@ Viewer::Viewer(QWidget *parent)
     m_eventProvider->toggleFilter(QMouse3DEventProvider::DominantAxis);
     m_eventProvider->setKeyFilters(QMouse3DEventProvider::Sensitivity);
     m_lastEventTime.start();
+
+    m_cameraAnimation = new QGLCameraAnimation(this);
+    m_cameraAnimation->setCamera(camera());
 
     setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
@@ -612,10 +616,19 @@ void Viewer::resetView()
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
     }
-    camera()->setEye(eye);
-    camera()->setCenter(QVector3D());
-    camera()->setUpVector(up);
-    update();
+
+    // Perform a short animation from the current camera position
+    // to the new position.
+    m_cameraAnimation->stop();
+    m_cameraAnimation->setStartEye(camera()->eye());
+    m_cameraAnimation->setStartUpVector(camera()->upVector());
+    m_cameraAnimation->setStartCenter(camera()->center());
+    m_cameraAnimation->setEndEye(eye);
+    m_cameraAnimation->setEndUpVector(up);
+    m_cameraAnimation->setEndCenter(QVector3D());
+    m_cameraAnimation->setDuration(500);
+    m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
+    m_cameraAnimation->start();
 }
 
 void Viewer::resetWarnings()

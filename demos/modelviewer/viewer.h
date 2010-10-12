@@ -55,6 +55,7 @@ class QGLLightParameters;
 class QTimer;
 class QGLSceneNode;
 class QMouse3DEventProvider;
+class QGLCameraAnimation;
 
 class Viewer : public QGLView
 {
@@ -142,6 +143,7 @@ private:
     QMouse3DEventProvider *m_eventProvider;
     QTime m_lastEventTime;
     bool m_lastWasZero;
+    QGLCameraAnimation *m_cameraAnimation;
 };
 
 

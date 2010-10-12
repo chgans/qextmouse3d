@@ -4,12 +4,14 @@ VPATH += $$PWD
 
 HEADERS += \
     qglcamera.h \
+    qglcameraanimation.h \
     qglview.h \
     qmouse3devent.h \
     qmouse3deventprovider.h
 
 SOURCES += \
     qglcamera.cpp \
+    qglcameraanimation.cpp \
     qglview.cpp \
     qmouse3ddevice.cpp \
     qmouse3ddevicelist.cpp \
