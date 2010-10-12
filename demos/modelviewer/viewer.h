@@ -62,6 +62,7 @@ class Viewer : public QGLView
 public:
     enum View
     {
+        SelectView,
         FrontView,
         BackView,
         TopView,

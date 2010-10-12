@@ -164,7 +164,7 @@ void Viewer::setScale(const QVector3D &s)
 
 void Viewer::setView(View view)
 {
-    if (m_view != view)
+    if (m_view != view && view != SelectView)
     {
         m_view = view;
         resetView();
@@ -547,6 +547,8 @@ void Viewer::resetView()
     QVector3D viewVec = eye - origin;
     qreal zoomMag = qAbs(viewVec.length());
     switch (m_view) {
+    case SelectView: break;
+
     case TopView:
         eye = QVector3D(0.0f, zoomMag, 0.0f);
         up = QVector3D(0.0f, 0.0f, -1.0f);
