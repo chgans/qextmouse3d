@@ -8,6 +8,7 @@ SUBDIRS = \
     qvectorarray \
     qglabstractsurface \
     qglcamera \
+    qglcameraanimation \
     qglcube \
     qglindexbuffer \
     qgllightmodel \

@@ -392,14 +392,14 @@ void QGLCameraAnimation::updateCurrentTime(int currentTime)
     Q_D(QGLCameraAnimation);
     if (!d->camera)
         return;     // Nothing to do if no camera to modify.
-    if (currentTime <= 0) {
-        d->camera->setEye(d->startEye);
-        d->camera->setUpVector(d->startUpVector);
-        d->camera->setCenter(d->startCenter);
-    } else if (currentTime >= d->duration) {
+    if (currentTime >= d->duration) {
         d->camera->setEye(d->endEye);
         d->camera->setUpVector(d->endUpVector);
         d->camera->setCenter(d->endCenter);
+    } else if (currentTime <= 0) {
+        d->camera->setEye(d->startEye);
+        d->camera->setUpVector(d->startUpVector);
+        d->camera->setCenter(d->startCenter);
     } else {
         // Derive the rotation parameters we need if arguments have changed.
         if (d->dirty) {
