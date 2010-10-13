@@ -111,6 +111,18 @@ void MouseDetails::filtersChanged()
     changingFilter = false;
 }
 
+static inline qreal qLog2(qreal x)
+{
+#ifdef Q_OS_SYMBIAN
+    TReal result, lg2;
+    Math::Ln(result, static_cast<TReal>(x));
+    Math::Ln(lg2, static_cast<TReal>(2.0f));
+    return static_cast<qreal>(result) / static_cast<qreal>(lg2);
+#else
+    return ::log(x) / ::log(2.0f);
+#endif
+}
+
 void MouseDetails::sensitivityChanged()
 {
     // Convert the logarithmic value between 1/64 to 64 into a
@@ -118,7 +130,7 @@ void MouseDetails::sensitivityChanged()
     if (!changingSensitivity) {
         changingSensitivity = true;
         qreal sensValue = mouse->sensitivity();
-        qreal value = qreal((::log2(sensValue) + 6.0f) * 10.0f);
+        qreal value = qreal((qLog2(sensValue) + 6.0f) * 10.0f);
         sensitivity->setValue(int(value));
         changingSensitivity = false;
     }
