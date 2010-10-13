@@ -71,7 +71,7 @@ QT_BEGIN_NAMESPACE
 
     Multiple QMouse3DEventProvider objects can be created by an
     application, each associated with a separate widget().  Internally,
-    the widget that currently has focus will receive 3D mouse events.
+    the widget that is currently active will receive 3D mouse events.
     QMouse3DEventProvider can also be used without a widget to
     obtain information about the 3D mice that are attached to the machine.
 
