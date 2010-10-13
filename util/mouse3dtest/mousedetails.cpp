@@ -181,6 +181,60 @@ bool MouseDetails::event(QEvent *e)
         rotateX->setText(QString::number(event->rotateX()));
         rotateY->setText(QString::number(event->rotateY()));
         rotateZ->setText(QString::number(event->rotateZ()));
+
+        // Determine which axis is dominant.
+        int values[6] = {event->translateX(), event->translateY(),
+                         event->translateZ(), event->rotateX(),
+                         event->rotateY(), event->rotateZ()};
+        int largest = 0;
+        int value = qAbs(values[0]);
+        for (int index = 1; index < 6; ++index) {
+            int value2 = qAbs(values[index]);
+            if (value2 > value) {
+                largest = index;
+                value = value2;
+            }
+        }
+        switch (largest) {
+        case 0:
+            if (values[0] < 0)
+                dominantMovement->setText(tr("Move left"));
+            else if (values[0] > 0)
+                dominantMovement->setText(tr("Move right"));
+            else
+                dominantMovement->setText(tr("Centered"));
+            break;
+        case 1:
+            if (values[1] < 0)
+                dominantMovement->setText(tr("Move forward"));
+            else
+                dominantMovement->setText(tr("Move back"));
+            break;
+        case 2:
+            if (values[2] < 0)
+                dominantMovement->setText(tr("Pulled up"));
+            else
+                dominantMovement->setText(tr("Pushed down"));
+            break;
+        case 3:
+            if (values[3] < 0)
+                dominantMovement->setText(tr("Rocked forward"));
+            else
+                dominantMovement->setText(tr("Rocked back"));
+            break;
+        case 4:
+            if (values[4] < 0)
+                dominantMovement->setText(tr("Rocked right"));
+            else
+                dominantMovement->setText(tr("Rocked left"));
+            break;
+        case 5:
+            if (values[5] < 0)
+                dominantMovement->setText(tr("Twist left"));
+            else
+                dominantMovement->setText(tr("Twist right"));
+            break;
+        }
         return true;
     } else {
         return QWidget::event(e);
