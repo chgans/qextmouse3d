@@ -625,22 +625,22 @@ void Viewer::resetView()
         break;
 
     case LeftView:
-        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
-        up = QVector3D(0.0f, 1.0f, 0.0f);
-        break;
-
-    case RightView:
         eye = QVector3D(zoomMag, 0.0f, 0.0f);
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
 
+    case RightView:
+        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
     case FrontRightView:
-        eye = zoomMag * QVector3D(1, 1, 1).normalized();
+        eye = zoomMag * QVector3D(-1, 1, 1).normalized();
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
 
     case BackLeftView:
-        eye = zoomMag * QVector3D(-1, 1, -1).normalized();
+        eye = zoomMag * QVector3D(1, 1, -1).normalized();
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
     }
