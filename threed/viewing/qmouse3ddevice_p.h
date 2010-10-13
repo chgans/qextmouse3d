@@ -98,7 +98,7 @@ protected:
     void keyRelease(int key);
     void toggleFilter(QMouse3DEventProvider::Filter filter);
     void adjustSensitivity(qreal factor);
-    void motion(QMouse3DEvent *event, bool filter = true);
+    void motion(QMouse3DEvent *event);
 
 private:
     QScopedPointer<QMouse3DDevicePrivate> d_ptr;
