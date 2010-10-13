@@ -298,7 +298,20 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::rotateView(qreal angle)
 {
-    camera()->rotateCenter(camera()->roll(angle));
+    QQuaternion q = camera()->roll(angle);
+    QVector3D upVector = q.rotatedVector(camera()->upVector());
+
+    m_cameraAnimation->stop();
+    m_cameraAnimation->setStartEye(camera()->eye());
+    m_cameraAnimation->setStartUpVector(camera()->upVector());
+    m_cameraAnimation->setStartCenter(camera()->center());
+    m_cameraAnimation->setEndEye(camera()->eye());
+    m_cameraAnimation->setEndUpVector(upVector);
+    m_cameraAnimation->setEndCenter(camera()->center());
+    m_cameraAnimation->setDuration(500);
+    m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
+    m_cameraAnimation->start();
+
     engageManualControl();
 }
 
