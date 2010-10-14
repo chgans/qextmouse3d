@@ -53,6 +53,10 @@ private slots:
     void create();
     void modify();
     void minViewSize();
+    void translation_data();
+    void translation();
+    void rotate_data();
+    void rotate();
 };
 
 void tst_QGLCamera::create()
@@ -170,6 +174,152 @@ void tst_QGLCamera::minViewSize()
     QCOMPARE(camera.viewSize(), QSizeF(-1.0f, 0.05f));
     camera.setViewSize(QSizeF(-1.0f, -0.01f));
     QCOMPARE(camera.viewSize(), QSizeF(-1.0f, -0.05f));
+}
+
+static bool fuzzyCompare(const QVector3D &v1, const QVector3D &v2)
+{
+    if (qAbs(v1.x() - v2.x()) <= 0.00001 &&
+            qAbs(v1.y() - v2.y()) <= 0.00001 &&
+            qAbs(v1.z() - v2.z()) <= 0.00001) {
+        return true;
+    }
+    qWarning() << "actual:" << v1 << "expected:" << v2;
+    return false;
+}
+
+static bool fuzzyCompare(const QQuaternion &q1, const QQuaternion &q2)
+{
+    if (qAbs(q1.x() - q2.x()) <= 0.00001 &&
+            qAbs(q1.y() - q2.y()) <= 0.00001 &&
+            qAbs(q1.z() - q2.z()) <= 0.00001 &&
+            qAbs(q1.scalar() - q2.scalar()) <= 0.00001) {
+        return true;
+    }
+    qWarning() << "actual:" << q1 << "expected:" << q2;
+    return false;
+}
+
+void tst_QGLCamera::translation_data()
+{
+    QTest::addColumn<QVector3D>("eye");
+    QTest::addColumn<QVector3D>("upVector");
+    QTest::addColumn<QVector3D>("center");
+
+    QTest::newRow("default")
+        << QVector3D(0, 0, 10) << QVector3D(0, 1, 0) << QVector3D(0, 0, 0);
+    QTest::newRow("random")
+        << QVector3D(2, -3, 5) << QVector3D(1, -1, 1) << QVector3D(-1, 6, -2);
+}
+
+void tst_QGLCamera::translation()
+{
+    QFETCH(QVector3D, eye);
+    QFETCH(QVector3D, upVector);
+    QFETCH(QVector3D, center);
+
+    QGLCamera camera;
+    camera.setEye(eye);
+    camera.setUpVector(upVector);
+    camera.setCenter(center);
+
+    QVector3D viewVector = center - eye;
+    QVector3D sideVector = QVector3D::crossProduct(viewVector, upVector);
+
+    QVector3D nup = upVector.normalized();
+    QVector3D nview = viewVector.normalized();
+    QVector3D nside = sideVector.normalized();
+
+    QVERIFY(fuzzyCompare(camera.translation(0, 0, 0), QVector3D(0, 0, 0)));
+
+    QVERIFY(fuzzyCompare(camera.translation(2.5f, 0, 0), 2.5f * nside));
+    QVERIFY(fuzzyCompare(camera.translation(0, -1.5f, 0), -1.5f * nup));
+    QVERIFY(fuzzyCompare(camera.translation(0, 0, 2.0f), 2.0f * nview));
+
+    QVector3D t = camera.translation(2.5f, -1.5f, 2.0f);
+    QVERIFY(fuzzyCompare(t, 2.5f * nside - 1.5f * nup + 2.0f * nview));
+
+    camera.translateEye(2.5f, -1.5f, 2.0f);
+    QVERIFY(fuzzyCompare(camera.eye(), eye + t));
+    QVERIFY(fuzzyCompare(camera.center(), center));
+    QVERIFY(fuzzyCompare(camera.upVector(), upVector));
+
+    camera.setEye(eye);
+
+    camera.translateCenter(2.5f, -1.5f, 2.0f);
+    QVERIFY(fuzzyCompare(camera.eye(), eye));
+    QVERIFY(fuzzyCompare(camera.center(), center + t));
+    QVERIFY(fuzzyCompare(camera.upVector(), upVector));
+}
+
+void tst_QGLCamera::rotate_data()
+{
+    translation_data();
+}
+
+void tst_QGLCamera::rotate()
+{
+    QFETCH(QVector3D, eye);
+    QFETCH(QVector3D, upVector);
+    QFETCH(QVector3D, center);
+
+    QGLCamera camera;
+    camera.setEye(eye);
+    camera.setUpVector(upVector);
+    camera.setCenter(center);
+
+    QVector3D viewVector = center - eye;
+    QVector3D sideVector = QVector3D::crossProduct(viewVector, upVector);
+
+    QQuaternion tilt = camera.tilt(-30.0f);
+    QQuaternion pan = camera.pan(125.0f);
+    QQuaternion roll = camera.roll(45.0f);
+
+    QVERIFY(fuzzyCompare(tilt, QQuaternion::fromAxisAndAngle(sideVector, -30.0f)));
+    QVERIFY(fuzzyCompare(pan, QQuaternion::fromAxisAndAngle(upVector, 125.0f)));
+    QVERIFY(fuzzyCompare(roll, QQuaternion::fromAxisAndAngle(viewVector, 45.0f)));
+
+    QQuaternion combined = tilt * pan * roll;
+    camera.rotateEye(combined);
+
+    QVERIFY(fuzzyCompare(camera.eye(), eye));
+    QVERIFY(fuzzyCompare(camera.upVector(), combined.rotatedVector(upVector)));
+    QVERIFY(fuzzyCompare(camera.center(), eye  + combined.rotatedVector(viewVector)));
+
+    camera.setEye(eye);
+    camera.setUpVector(upVector);
+    camera.setCenter(center);
+
+    camera.rotateCenter(combined);
+    QVERIFY(fuzzyCompare(camera.eye(), center - combined.rotatedVector(viewVector)));
+    QVERIFY(fuzzyCompare(camera.upVector(), combined.rotatedVector(upVector)));
+    QVERIFY(fuzzyCompare(camera.center(), center));
+
+#define TestTiltPanRoll(order, combine) \
+    do { \
+        combined = combine; \
+        camera.setEye(eye); \
+        camera.setUpVector(upVector); \
+        camera.setCenter(center); \
+        camera.tiltPanRollEye(-30.0f, 125.0f, 45.0f, QGLCamera::order); \
+        QVERIFY(fuzzyCompare(camera.eye(), eye)); \
+        QVERIFY(fuzzyCompare(camera.upVector(), combined.rotatedVector(upVector))); \
+        QVERIFY(fuzzyCompare(camera.center(), eye  + combined.rotatedVector(viewVector))); \
+        camera.setEye(eye); \
+        camera.setUpVector(upVector); \
+        camera.setCenter(center); \
+        camera.tiltPanRollCenter(-30.0f, 125.0f, 45.0f, QGLCamera::order); \
+        QVERIFY(fuzzyCompare(camera.eye(), center - combined.rotatedVector(viewVector))); \
+        QVERIFY(fuzzyCompare(camera.upVector(), combined.rotatedVector(upVector))); \
+        QVERIFY(fuzzyCompare(camera.center(), center)); \
+    } while (0)
+
+    // Quaternions are multiplied in the reverse order of applying them.
+    TestTiltPanRoll(TiltPanRoll, roll * pan * tilt);
+    TestTiltPanRoll(TiltRollPan, pan * roll * tilt);
+    TestTiltPanRoll(PanTiltRoll, roll * tilt * pan);
+    TestTiltPanRoll(PanRollTilt, tilt * roll * pan);
+    TestTiltPanRoll(RollTiltPan, pan * tilt * roll);
+    TestTiltPanRoll(RollPanTilt, tilt * pan * roll);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLCamera)

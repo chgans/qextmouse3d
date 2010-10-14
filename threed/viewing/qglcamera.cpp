@@ -1215,45 +1215,6 @@ QVector3D QGLCamera::mapPoint
 */
 
 /*!
-    Tilts the center() up or down by \a angle degrees.  This is
-    equivalent to calling \c{rotateCenter(tilt(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa tilt(), panCenter(), rollCenter()
-*/
-void QGLCamera::tiltCenter(qreal angle)
-{
-    rotateCenter(tilt(angle));
-}
-
-/*!
-    Pans the center() left or right by \a angle degrees.  This is
-    equivalent to calling \c{rotateCenter(pan(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa pan(), tiltCenter(), rollCenter()
-*/
-void QGLCamera::panCenter(qreal angle)
-{
-    rotateCenter(pan(angle));
-}
-
-/*!
-    Rolls the center() left or right by \a angle degrees.  This is
-    equivalent to calling \c{rotateCenter(roll(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa roll(), tiltCenter(), panCenter()
-*/
-void QGLCamera::rollCenter(qreal angle)
-{
-    rotateCenter(roll(angle));
-}
-
-/*!
     \enum QGLCamera::RotateOrder
     This enum defines the order to perform a tilt, pan, and roll
     of a QGLCamera eye or center.
@@ -1278,7 +1239,7 @@ void QGLCamera::rollCenter(qreal angle)
     rotate the center in multiple directions at the same time
     based on mouse movements.
 
-    \sa tiltCenter(), panCenter(), rollCenter(), tiltPanRollEye()
+    \sa tiltPanRollEye()
 */
 void QGLCamera::tiltPanRollCenter
     (qreal tiltAngle, qreal panAngle, qreal rollAngle,
@@ -1307,45 +1268,6 @@ void QGLCamera::tiltPanRollCenter
 }
 
 /*!
-    Tilts the eye() up or down by \a angle degrees.  This is
-    equivalent to calling \c{rotateEye(tilt(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa tilt(), panEye(), rollEye()
-*/
-void QGLCamera::tiltEye(qreal angle)
-{
-    rotateEye(tilt(angle));
-}
-
-/*!
-    Pans the eye() left or right by \a angle degrees.  This is
-    equivalent to calling \c{rotateEye(pan(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa pan(), tiltEye(), rollEye()
-*/
-void QGLCamera::panEye(qreal angle)
-{
-    rotateEye(pan(angle));
-}
-
-/*!
-    Rolls the eye() left or right by \a angle degrees.  This is
-    equivalent to calling \c{rotateEye(roll(angle))}.
-
-    This function is accessible to QML on the Camera item.
-
-    \sa roll(), tiltEye(), panEye()
-*/
-void QGLCamera::rollEye(qreal angle)
-{
-    rotateEye(roll(angle));
-}
-
-/*!
     Tilts the eye() up or down by \a tiltAngle degrees,
     pans the eye() left or right by \a panAngle degrees,
     and rolls the eye() left or right by \a rollAngle degrees,
@@ -1357,7 +1279,7 @@ void QGLCamera::rollEye(qreal angle)
     rotate the eye in multiple directions at the same time
     based on mouse movements.
 
-    \sa tiltEye(), panEye(), rollEye(), tiltPanRollCenter()
+    \sa tiltPanRollCenter()
 */
 void QGLCamera::tiltPanRollEye
     (qreal tiltAngle, qreal panAngle, qreal rollAngle,

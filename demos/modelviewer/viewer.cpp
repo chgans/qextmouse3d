@@ -589,7 +589,7 @@ void Viewer::enableAnimation(bool enabled)
         m_spinAnimation->start();
     } else {
         m_spinAnimation->stop();
-        camera()->panCenter(-m_spinAngle);
+        camera()->rotateCenter(camera()->pan(-m_spinAngle));
         m_spinAngle = 0.0f;
     }
 }
