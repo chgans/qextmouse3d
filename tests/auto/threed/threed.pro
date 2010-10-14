@@ -8,6 +8,7 @@ SUBDIRS = \
     qvectorarray \
     qglabstractsurface \
     qglattributedescription \
+    qglattributevalue \
     qglcamera \
     qglcameraanimation \
     qglcube \

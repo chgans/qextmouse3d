@@ -76,8 +76,8 @@ QT_BEGIN_NAMESPACE
     \fn QGLAttributeValue::QGLAttributeValue()
 
     Constructs a null attribute value with default parameters of
-    tupleSize(), stride(), and offset() set to zero, type() set to
-    GL_FLOAT, and data() set to null.
+    tupleSize(), and stride() set to zero, type() set to GL_FLOAT,
+    and data() set to null.
 
     \sa isNull()
 */
@@ -141,34 +141,25 @@ QT_BEGIN_NAMESPACE
     value is no longer required.
 */
 QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
-    : m_data(array.data()), m_count(0)
+    : m_tupleSize(0), m_type(GL_FLOAT), m_stride(0)
+    , m_data(array.data()), m_count(array.count())
 {
     switch (array.elementType()) {
     case QCustomDataArray::Float:
-        m_description.setTupleSize(1);
-        m_description.setType(GL_FLOAT);
+        m_tupleSize = 1;
         break;
     case QCustomDataArray::Vector2D:
-        m_description.setTupleSize(2);
-        m_description.setType(GL_FLOAT);
+        m_tupleSize = 2;
         break;
     case QCustomDataArray::Vector3D:
-        m_description.setTupleSize(3);
-        m_description.setType(GL_FLOAT);
+        m_tupleSize = 3;
         break;
     case QCustomDataArray::Vector4D:
-        m_description.setTupleSize(4);
-        m_description.setType(GL_FLOAT);
+        m_tupleSize = 4;
         break;
     case QCustomDataArray::Color:
-        m_description.setTupleSize(4);
-        m_description.setType(GL_UNSIGNED_BYTE);
-        break;
-    default:
-        // Just in case: set the object to null.
-        m_description.setTupleSize(0);
-        m_description.setType(GL_FLOAT);
-        m_data = 0;
+        m_tupleSize = 4;
+        m_type = GL_UNSIGNED_BYTE;
         break;
     }
 }
@@ -208,16 +199,14 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
     attribute value; false otherwise.
 
     Note: it is possible for data() to be null, but isNull() returns true.
-    This can happen when data() is actually a zero offset() into a
+    This can happen when data() is actually a zero offset into a
     vertex buffer.
-
-    \sa offset()
 */
 
 /*!
-    \fn const QGLAttributeDescription &QGLAttributeValue::description() const
+    \fn QGLAttributeDescription QGLAttributeValue::description(QGL::VertexAttribute attribute) const
 
-    Returns a reference to the description of this attribute.
+    Returns the description of this value, tagged with \a attribute.
 
     \sa type()
 */
@@ -238,7 +227,7 @@ QGLAttributeValue::QGLAttributeValue(const QCustomDataArray& array)
 */
 int QGLAttributeValue::sizeOfType() const
 {
-    switch (m_description.type()) {
+    switch (m_type) {
     case GL_BYTE:           return int(sizeof(GLbyte));
     case GL_UNSIGNED_BYTE:  return int(sizeof(GLubyte));
     case GL_SHORT:          return int(sizeof(GLshort));
@@ -272,34 +261,9 @@ int QGLAttributeValue::sizeOfType() const
 */
 
 /*!
-    \fn int QGLAttributeValue::offset() const
-
-    Returns the vertex buffer offset for this attribute value.
-
-    This function is a convenience that returns data() cast
-    to an integer offset value.
-
-    \sa data()
-*/
-
-/*!
     \fn const void *QGLAttributeValue::data() const
 
     Returns the data pointer for the elements in this attribute value.
-
-    \sa offset(), floatData()
-*/
-
-/*!
-    \fn const float *QGLAttributeValue::floatData() const
-
-    Returns the data pointer for the elements in this attribute value
-    as a pointer to float.
-
-    This is a convenience for the common case of passing data() to a
-    function that expects a GLfloat * argument.
-
-    \sa data()
 */
 
 /*!
