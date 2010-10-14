@@ -7,6 +7,7 @@ SUBDIRS = \
     qgraphicstransform3d \
     qvectorarray \
     qglabstractsurface \
+    qglattributedescription \
     qglcamera \
     qglcameraanimation \
     qglcube \
