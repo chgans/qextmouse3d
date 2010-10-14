@@ -3,7 +3,7 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglfunctions.cpp
+SOURCES += tst_qopenglfunctions.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 

@@ -10,11 +10,7 @@ INCLUDEPATH += $$PWD/scene
 INCLUDEPATH += $$PWD/graphicsview
 INCLUDEPATH += $$PWD/other
 INCLUDEPATH += $$PWD/surfaces
-
-# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
-contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
-    INCLUDEPATH += $$PWD/api
-}
+INCLUDEPATH += $$PWD/api
 
 gcov {
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

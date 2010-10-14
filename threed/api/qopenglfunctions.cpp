@@ -39,14 +39,14 @@
 **
 ****************************************************************************/
 
-#include "qglfunctions.h"
+#include "qopenglfunctions.h"
 #include <QtOpenGL/private/qgl_p.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QGLFunctions
-    \brief The QGLFunctions class provides cross-platform access to the OpenGL/ES 2.0 API.
+    \class QOpenGLFunctions
+    \brief The QOpenGLFunctions class provides cross-platform access to the OpenGL/ES 2.0 API.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::enablers
@@ -56,13 +56,13 @@ QT_BEGIN_NAMESPACE
     However, it can be difficult to use the functions from that subset
     because they need to be resolved manually on desktop systems.
 
-    QGLFunctions provides a guaranteed API that is available on all
+    QOpenGLFunctions provides a guaranteed API that is available on all
     OpenGL systems and takes care of function resolution on systems
-    that need it.  The recommended way to use QGLFunctions is by
+    that need it.  The recommended way to use QOpenGLFunctions is by
     direct inheritance:
 
     \code
-    class MyGLWidget : public QGLWidget, protected QGLFunctions
+    class MyGLWidget : public QGLWidget, protected QOpenGLFunctions
     {
         Q_OBJECT
     public:
@@ -92,19 +92,19 @@ QT_BEGIN_NAMESPACE
     }
     \endcode
 
-    QGLFunctions can also be used directly for ad-hoc invocation
+    QOpenGLFunctions can also be used directly for ad-hoc invocation
     of OpenGL/ES 2.0 functions on all platforms:
 
     \code
-    QGLFunctions glFuncs(QGLContext::currentContext());
+    QOpenGLFunctions glFuncs(QGLContext::currentContext());
     glFuncs.glActiveTexture(GL_TEXTURE1);
     \endcode
 
-    QGLFunctions provides wrappers for all OpenGL/ES 2.0 functions,
+    QOpenGLFunctions provides wrappers for all OpenGL/ES 2.0 functions,
     except those like \c{glDrawArrays()}, \c{glViewport()}, and
     \c{glBindTexture()} that don't have portability issues.
 
-    Including the header for QGLFunctions will also define all of
+    Including the header for QOpenGLFunctions will also define all of
     the OpenGL/ES 2.0 macro constants that are not already defined by
     the system's OpenGL headers, such as \c{GL_TEXTURE1} above.
 
@@ -114,13 +114,13 @@ QT_BEGIN_NAMESPACE
     textures are available:
 
     \code
-    QGLFunctions funcs(QGLContext::currentContext());
-    bool npot = funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures);
+    QOpenGLFunctions funcs(QGLContext::currentContext());
+    bool npot = funcs.hasOpenGLFeature(QOpenGLFunctions::NPOTTextures);
     \endcode
 */
 
 /*!
-    \enum QGLFunctions::OpenGLFeature
+    \enum QOpenGLFunctions::OpenGLFeature
     This enum defines OpenGL/ES 2.0 features that may be optional
     on other platforms.
 
@@ -140,36 +140,36 @@ QT_BEGIN_NAMESPACE
 */
 
 // Hidden private fields for additional extension data.
-struct QGLFunctionsPrivateEx : public QGLFunctionsPrivate
+struct QOpenGLFunctionsPrivateEx : public QOpenGLFunctionsPrivate
 {
-    QGLFunctionsPrivateEx(const QGLContext *context = 0)
-        : QGLFunctionsPrivate(context)
+    QOpenGLFunctionsPrivateEx(const QGLContext *context = 0)
+        : QOpenGLFunctionsPrivate(context)
         , m_features(-1) {}
 
     int m_features;
 };
 
 #if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLFunctionsPrivateEx>, qt_gl_functions_resource)
+Q_GLOBAL_STATIC(QGLContextGroupResource<QOpenGLFunctionsPrivateEx>, qt_gl_functions_resource)
 #else
 static void qt_gl_functions_free(void *data)
 {
-    delete reinterpret_cast<QGLFunctionsPrivateEx *>(data);
+    delete reinterpret_cast<QOpenGLFunctionsPrivateEx *>(data);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_functions_resource, (qt_gl_functions_free))
 #endif
-static QGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
+static QOpenGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
 {
     if (!context)
         context = QGLContext::currentContext();
     Q_ASSERT(context);
-    QGLFunctionsPrivateEx *funcs =
-        reinterpret_cast<QGLFunctionsPrivateEx *>
+    QOpenGLFunctionsPrivateEx *funcs =
+        reinterpret_cast<QOpenGLFunctionsPrivateEx *>
             (qt_gl_functions_resource()->value(context));
 #if QT_VERSION < 0x040800
     if (!funcs) {
-        funcs = new QGLFunctionsPrivateEx();
+        funcs = new QOpenGLFunctionsPrivateEx();
         qt_gl_functions_resource()->insert(context, funcs);
     }
 #endif
@@ -183,7 +183,7 @@ static QGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
 
     \sa initializeGLFunctions()
 */
-QGLFunctions::QGLFunctions()
+QOpenGLFunctions::QOpenGLFunctions()
     : d_ptr(0)
 {
 }
@@ -198,13 +198,13 @@ QGLFunctions::QGLFunctions()
 
     \sa initializeGLFunctions()
 */
-QGLFunctions::QGLFunctions(const QGLContext *context)
+QOpenGLFunctions::QOpenGLFunctions(const QGLContext *context)
     : d_ptr(qt_gl_functions(context))
 {
 }
 
 /*!
-    \fn QGLFunctions::~QGLFunctions()
+    \fn QOpenGLFunctions::~QOpenGLFunctions()
 
     Destroys this function resolver.
 */
@@ -212,35 +212,35 @@ QGLFunctions::QGLFunctions(const QGLContext *context)
 static int qt_gl_resolve_features()
 {
 #if defined(QT_OPENGL_ES_2)
-    return QGLFunctions::Multitexture |
-           QGLFunctions::Shaders |
-           QGLFunctions::Buffers |
-           QGLFunctions::Framebuffers |
-           QGLFunctions::BlendColor |
-           QGLFunctions::BlendEquation |
-           QGLFunctions::BlendEquationSeparate |
-           QGLFunctions::BlendFuncSeparate |
-           QGLFunctions::BlendSubtract |
-           QGLFunctions::CompressedTextures |
-           QGLFunctions::Multisample |
-           QGLFunctions::StencilSeparate |
-           QGLFunctions::NPOTTextures;
+    return QOpenGLFunctions::Multitexture |
+           QOpenGLFunctions::Shaders |
+           QOpenGLFunctions::Buffers |
+           QOpenGLFunctions::Framebuffers |
+           QOpenGLFunctions::BlendColor |
+           QOpenGLFunctions::BlendEquation |
+           QOpenGLFunctions::BlendEquationSeparate |
+           QOpenGLFunctions::BlendFuncSeparate |
+           QOpenGLFunctions::BlendSubtract |
+           QOpenGLFunctions::CompressedTextures |
+           QOpenGLFunctions::Multisample |
+           QOpenGLFunctions::StencilSeparate |
+           QOpenGLFunctions::NPOTTextures;
 #elif defined(QT_OPENGL_ES)
-    int features = QGLFunctions::Multitexture |
-                   QGLFunctions::Buffers |
-                   QGLFunctions::CompressedTextures |
-                   QGLFunctions::Multisample;
+    int features = QOpenGLFunctions::Multitexture |
+                   QOpenGLFunctions::Buffers |
+                   QOpenGLFunctions::CompressedTextures |
+                   QOpenGLFunctions::Multisample;
     QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     if (extensions.match("GL_OES_framebuffer_object"))
-        features |= QGLFunctions::Framebuffers;
+        features |= QOpenGLFunctions::Framebuffers;
     if (extensions.match("GL_OES_blend_equation_separate"))
-        features |= QGLFunctions::BlendEquationSeparate;
+        features |= QOpenGLFunctions::BlendEquationSeparate;
     if (extensions.match("GL_OES_blend_func_separate"))
-        features |= QGLFunctions::BlendFuncSeparate;
+        features |= QOpenGLFunctions::BlendFuncSeparate;
     if (extensions.match("GL_OES_blend_subtract"))
-        features |= QGLFunctions::BlendSubtract;
+        features |= QOpenGLFunctions::BlendSubtract;
     if (extensions.match("GL_OES_texture_npot"))
-        features |= QGLFunctions::NPOTTextures;
+        features |= QOpenGLFunctions::NPOTTextures;
     return features;
 #else
     int features = 0;
@@ -249,46 +249,46 @@ static int qt_gl_resolve_features()
 
     // Recognize features by extension name.
     if (extensions.match("GL_ARB_multitexture"))
-        features |= QGLFunctions::Multitexture;
+        features |= QOpenGLFunctions::Multitexture;
     if (extensions.match("GL_ARB_shader_objects"))
-        features |= QGLFunctions::Shaders;
+        features |= QOpenGLFunctions::Shaders;
     if (extensions.match("GL_EXT_framebuffer_object") ||
             extensions.match("GL_ARB_framebuffer_object"))
-        features |= QGLFunctions::Framebuffers;
+        features |= QOpenGLFunctions::Framebuffers;
     if (extensions.match("GL_EXT_blend_color"))
-        features |= QGLFunctions::BlendColor;
+        features |= QOpenGLFunctions::BlendColor;
     if (extensions.match("GL_EXT_blend_equation_separate"))
-        features |= QGLFunctions::BlendEquationSeparate;
+        features |= QOpenGLFunctions::BlendEquationSeparate;
     if (extensions.match("GL_EXT_blend_func_separate"))
-        features |= QGLFunctions::BlendFuncSeparate;
+        features |= QOpenGLFunctions::BlendFuncSeparate;
     if (extensions.match("GL_EXT_blend_subtract"))
-        features |= QGLFunctions::BlendSubtract;
+        features |= QOpenGLFunctions::BlendSubtract;
     if (extensions.match("GL_ARB_texture_compression"))
-        features |= QGLFunctions::CompressedTextures;
+        features |= QOpenGLFunctions::CompressedTextures;
     if (extensions.match("GL_ARB_multisample"))
-        features |= QGLFunctions::Multisample;
+        features |= QOpenGLFunctions::Multisample;
     if (extensions.match("GL_ARB_texture_non_power_of_two"))
-        features |= QGLFunctions::NPOTTextures;
+        features |= QOpenGLFunctions::NPOTTextures;
 
     // Recognize features by minimum OpenGL version.
     if (versions & QGLFormat::OpenGL_Version_1_2) {
-        features |= QGLFunctions::BlendColor |
-                    QGLFunctions::BlendEquation;
+        features |= QOpenGLFunctions::BlendColor |
+                    QOpenGLFunctions::BlendEquation;
     }
     if (versions & QGLFormat::OpenGL_Version_1_3) {
-        features |= QGLFunctions::Multitexture |
-                    QGLFunctions::CompressedTextures |
-                    QGLFunctions::Multisample;
+        features |= QOpenGLFunctions::Multitexture |
+                    QOpenGLFunctions::CompressedTextures |
+                    QOpenGLFunctions::Multisample;
     }
     if (versions & QGLFormat::OpenGL_Version_1_4)
-        features |= QGLFunctions::BlendFuncSeparate;
+        features |= QOpenGLFunctions::BlendFuncSeparate;
     if (versions & QGLFormat::OpenGL_Version_1_5)
-        features |= QGLFunctions::Buffers;
+        features |= QOpenGLFunctions::Buffers;
     if (versions & QGLFormat::OpenGL_Version_2_0) {
-        features |= QGLFunctions::Shaders |
-                    QGLFunctions::StencilSeparate |
-                    QGLFunctions::BlendEquationSeparate |
-                    QGLFunctions::NPOTTextures;
+        features |= QOpenGLFunctions::Shaders |
+                    QOpenGLFunctions::StencilSeparate |
+                    QOpenGLFunctions::BlendEquationSeparate |
+                    QOpenGLFunctions::NPOTTextures;
     }
     return features;
 #endif
@@ -303,14 +303,14 @@ static int qt_gl_resolve_features()
 
     \sa hasOpenGLFeature()
 */
-QGLFunctions::OpenGLFeatures QGLFunctions::openGLFeatures() const
+QOpenGLFunctions::OpenGLFeatures QOpenGLFunctions::openGLFeatures() const
 {
-    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    QOpenGLFunctionsPrivateEx *d = static_cast<QOpenGLFunctionsPrivateEx *>(d_ptr);
     if (!d)
         return 0;
     if (d->m_features == -1)
         d->m_features = qt_gl_resolve_features();
-    return QGLFunctions::OpenGLFeatures(d->m_features);
+    return QOpenGLFunctions::OpenGLFeatures(d->m_features);
 }
 
 /*!
@@ -322,9 +322,9 @@ QGLFunctions::OpenGLFeatures QGLFunctions::openGLFeatures() const
 
     \sa openGLFeatures()
 */
-bool QGLFunctions::hasOpenGLFeature(QGLFunctions::OpenGLFeature feature) const
+bool QOpenGLFunctions::hasOpenGLFeature(QOpenGLFunctions::OpenGLFeature feature) const
 {
-    QGLFunctionsPrivateEx *d = static_cast<QGLFunctionsPrivateEx *>(d_ptr);
+    QOpenGLFunctionsPrivateEx *d = static_cast<QOpenGLFunctionsPrivateEx *>(d_ptr);
     if (!d)
         return false;
     if (d->m_features == -1)
@@ -336,18 +336,18 @@ bool QGLFunctions::hasOpenGLFeature(QGLFunctions::OpenGLFeature feature) const
     Initializes GL function resolution for \a context.  If \a context
     is null, then the current QGLContext will be used.
 
-    After calling this function, the QGLFunctions object can only be
+    After calling this function, the QOpenGLFunctions object can only be
     used with \a context and other contexts that share with it.
     Call initializeGLFunctions() again to change the object's context
     association.
 */
-void QGLFunctions::initializeGLFunctions(const QGLContext *context)
+void QOpenGLFunctions::initializeGLFunctions(const QGLContext *context)
 {
     d_ptr = qt_gl_functions(context);
 }
 
 /*!
-    \fn void QGLFunctions::glActiveTexture(GLenum texture)
+    \fn void QOpenGLFunctions::glActiveTexture(GLenum texture)
 
     Convenience function that calls glActiveTexture(\a texture).
 
@@ -356,7 +356,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glAttachShader(GLuint program, GLuint shader)
+    \fn void QOpenGLFunctions::glAttachShader(GLuint program, GLuint shader)
 
     Convenience function that calls glAttachShader(\a program, \a shader).
 
@@ -367,7 +367,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBindAttribLocation(GLuint program, GLuint index, const char* name)
+    \fn void QOpenGLFunctions::glBindAttribLocation(GLuint program, GLuint index, const char* name)
 
     Convenience function that calls glBindAttribLocation(\a program, \a index, \a name).
 
@@ -378,7 +378,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBindBuffer(GLenum target, GLuint buffer)
+    \fn void QOpenGLFunctions::glBindBuffer(GLenum target, GLuint buffer)
 
     Convenience function that calls glBindBuffer(\a target, \a buffer).
 
@@ -387,7 +387,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBindFramebuffer(GLenum target, GLuint framebuffer)
+    \fn void QOpenGLFunctions::glBindFramebuffer(GLenum target, GLuint framebuffer)
 
     Convenience function that calls glBindFramebuffer(\a target, \a framebuffer).
 
@@ -396,7 +396,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBindRenderbuffer(GLenum target, GLuint renderbuffer)
+    \fn void QOpenGLFunctions::glBindRenderbuffer(GLenum target, GLuint renderbuffer)
 
     Convenience function that calls glBindRenderbuffer(\a target, \a renderbuffer).
 
@@ -405,7 +405,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+    \fn void QOpenGLFunctions::glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 
     Convenience function that calls glBlendColor(\a red, \a green, \a blue, \a alpha).
 
@@ -414,7 +414,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBlendEquation(GLenum mode)
+    \fn void QOpenGLFunctions::glBlendEquation(GLenum mode)
 
     Convenience function that calls glBlendEquation(\a mode).
 
@@ -423,7 +423,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
+    \fn void QOpenGLFunctions::glBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
 
     Convenience function that calls glBlendEquationSeparate(\a modeRGB, \a modeAlpha).
 
@@ -432,7 +432,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+    \fn void QOpenGLFunctions::glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 
     Convenience function that calls glBlendFuncSeparate(\a srcRGB, \a dstRGB, \a srcAlpha, \a dstAlpha).
 
@@ -441,7 +441,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
+    \fn void QOpenGLFunctions::glBufferData(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage)
 
     Convenience function that calls glBufferData(\a target, \a size, \a data, \a usage).
 
@@ -450,7 +450,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
+    \fn void QOpenGLFunctions::glBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data)
 
     Convenience function that calls glBufferSubData(\a target, \a offset, \a size, \a data).
 
@@ -459,7 +459,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLenum QGLFunctions::glCheckFramebufferStatus(GLenum target)
+    \fn GLenum QOpenGLFunctions::glCheckFramebufferStatus(GLenum target)
 
     Convenience function that calls glCheckFramebufferStatus(\a target).
 
@@ -468,7 +468,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glClearDepthf(GLclampf depth)
+    \fn void QOpenGLFunctions::glClearDepthf(GLclampf depth)
 
     Convenience function that calls glClearDepth(\a depth) on
     desktop OpenGL systems and glClearDepthf(\a depth) on
@@ -479,7 +479,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glCompileShader(GLuint shader)
+    \fn void QOpenGLFunctions::glCompileShader(GLuint shader)
 
     Convenience function that calls glCompileShader(\a shader).
 
@@ -490,7 +490,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data)
+    \fn void QOpenGLFunctions::glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data)
 
     Convenience function that calls glCompressedTexImage2D(\a target, \a level, \a internalformat, \a width, \a height, \a border, \a imageSize, \a data).
 
@@ -499,7 +499,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
+    \fn void QOpenGLFunctions::glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
 
     Convenience function that calls glCompressedTexSubImage2D(\a target, \a level, \a xoffset, \a yoffset, \a width, \a height, \a format, \a imageSize, \a data).
 
@@ -508,7 +508,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLuint QGLFunctions::glCreateProgram()
+    \fn GLuint QOpenGLFunctions::glCreateProgram()
 
     Convenience function that calls glCreateProgram().
 
@@ -519,7 +519,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLuint QGLFunctions::glCreateShader(GLenum type)
+    \fn GLuint QOpenGLFunctions::glCreateShader(GLenum type)
 
     Convenience function that calls glCreateShader(\a type).
 
@@ -530,7 +530,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDeleteBuffers(GLsizei n, const GLuint* buffers)
+    \fn void QOpenGLFunctions::glDeleteBuffers(GLsizei n, const GLuint* buffers)
 
     Convenience function that calls glDeleteBuffers(\a n, \a buffers).
 
@@ -539,7 +539,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
+    \fn void QOpenGLFunctions::glDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
 
     Convenience function that calls glDeleteFramebuffers(\a n, \a framebuffers).
 
@@ -548,7 +548,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDeleteProgram(GLuint program)
+    \fn void QOpenGLFunctions::glDeleteProgram(GLuint program)
 
     Convenience function that calls glDeleteProgram(\a program).
 
@@ -559,7 +559,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
+    \fn void QOpenGLFunctions::glDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffers)
 
     Convenience function that calls glDeleteRenderbuffers(\a n, \a renderbuffers).
 
@@ -568,7 +568,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDeleteShader(GLuint shader)
+    \fn void QOpenGLFunctions::glDeleteShader(GLuint shader)
 
     Convenience function that calls glDeleteShader(\a shader).
 
@@ -579,7 +579,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDepthRangef(GLclampf zNear, GLclampf zFar)
+    \fn void QOpenGLFunctions::glDepthRangef(GLclampf zNear, GLclampf zFar)
 
     Convenience function that calls glDepthRange(\a zNear, \a zFar) on
     desktop OpenGL systems and glDepthRangef(\a zNear, \a zFar) on
@@ -590,7 +590,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDetachShader(GLuint program, GLuint shader)
+    \fn void QOpenGLFunctions::glDetachShader(GLuint program, GLuint shader)
 
     Convenience function that calls glDetachShader(\a program, \a shader).
 
@@ -601,7 +601,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glDisableVertexAttribArray(GLuint index)
+    \fn void QOpenGLFunctions::glDisableVertexAttribArray(GLuint index)
 
     Convenience function that calls glDisableVertexAttribArray(\a index).
 
@@ -612,7 +612,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glEnableVertexAttribArray(GLuint index)
+    \fn void QOpenGLFunctions::glEnableVertexAttribArray(GLuint index)
 
     Convenience function that calls glEnableVertexAttribArray(\a index).
 
@@ -623,7 +623,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+    \fn void QOpenGLFunctions::glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 
     Convenience function that calls glFramebufferRenderbuffer(\a target, \a attachment, \a renderbuffertarget, \a renderbuffer).
 
@@ -632,7 +632,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+    \fn void QOpenGLFunctions::glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
 
     Convenience function that calls glFramebufferTexture2D(\a target, \a attachment, \a textarget, \a texture, \a level).
 
@@ -641,7 +641,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGenBuffers(GLsizei n, GLuint* buffers)
+    \fn void QOpenGLFunctions::glGenBuffers(GLsizei n, GLuint* buffers)
 
     Convenience function that calls glGenBuffers(\a n, \a buffers).
 
@@ -650,7 +650,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGenerateMipmap(GLenum target)
+    \fn void QOpenGLFunctions::glGenerateMipmap(GLenum target)
 
     Convenience function that calls glGenerateMipmap(\a target).
 
@@ -659,7 +659,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
+    \fn void QOpenGLFunctions::glGenFramebuffers(GLsizei n, GLuint* framebuffers)
 
     Convenience function that calls glGenFramebuffers(\a n, \a framebuffers).
 
@@ -668,7 +668,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
+    \fn void QOpenGLFunctions::glGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
 
     Convenience function that calls glGenRenderbuffers(\a n, \a renderbuffers).
 
@@ -677,7 +677,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
+    \fn void QOpenGLFunctions::glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
 
     Convenience function that calls glGetActiveAttrib(\a program, \a index, \a bufsize, \a length, \a size, \a type, \a name).
 
@@ -688,7 +688,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
+    \fn void QOpenGLFunctions::glGetActiveUniform(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name)
 
     Convenience function that calls glGetActiveUniform(\a program, \a index, \a bufsize, \a length, \a size, \a type, \a name).
 
@@ -699,7 +699,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetAttachedShaders(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
+    \fn void QOpenGLFunctions::glGetAttachedShaders(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
 
     Convenience function that calls glGetAttachedShaders(\a program, \a maxcount, \a count, \a shaders).
 
@@ -710,7 +710,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn int QGLFunctions::glGetAttribLocation(GLuint program, const char* name)
+    \fn int QOpenGLFunctions::glGetAttribLocation(GLuint program, const char* name)
 
     Convenience function that calls glGetAttribLocation(\a program, \a name).
 
@@ -721,7 +721,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetBufferParameteriv(GLenum target, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetBufferParameteriv(GLenum target, GLenum pname, GLint* params)
 
     Convenience function that calls glGetBufferParameteriv(\a target, \a pname, \a params).
 
@@ -730,7 +730,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* params)
 
     Convenience function that calls glGetFramebufferAttachmentParameteriv(\a target, \a attachment, \a pname, \a params).
 
@@ -739,7 +739,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetProgramiv(GLuint program, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetProgramiv(GLuint program, GLenum pname, GLint* params)
 
     Convenience function that calls glGetProgramiv(\a program, \a pname, \a params).
 
@@ -750,7 +750,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog)
+    \fn void QOpenGLFunctions::glGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog)
 
     Convenience function that calls glGetProgramInfoLog(\a program, \a bufsize, \a length, \a infolog).
 
@@ -761,7 +761,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* params)
 
     Convenience function that calls glGetRenderbufferParameteriv(\a target, \a pname, \a params).
 
@@ -770,7 +770,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetShaderiv(GLuint shader, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetShaderiv(GLuint shader, GLenum pname, GLint* params)
 
     Convenience function that calls glGetShaderiv(\a shader, \a pname, \a params).
 
@@ -781,7 +781,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog)
+    \fn void QOpenGLFunctions::glGetShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog)
 
     Convenience function that calls glGetShaderInfoLog(\a shader, \a bufsize, \a length, \a infolog).
 
@@ -792,7 +792,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
+    \fn void QOpenGLFunctions::glGetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
 
     Convenience function that calls glGetShaderPrecisionFormat(\a shadertype, \a precisiontype, \a range, \a precision).
 
@@ -803,7 +803,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetShaderSource(GLuint shader, GLsizei bufsize, GLsizei* length, char* source)
+    \fn void QOpenGLFunctions::glGetShaderSource(GLuint shader, GLsizei bufsize, GLsizei* length, char* source)
 
     Convenience function that calls glGetShaderSource(\a shader, \a bufsize, \a length, \a source).
 
@@ -814,7 +814,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetUniformfv(GLuint program, GLint location, GLfloat* params)
+    \fn void QOpenGLFunctions::glGetUniformfv(GLuint program, GLint location, GLfloat* params)
 
     Convenience function that calls glGetUniformfv(\a program, \a location, \a params).
 
@@ -825,7 +825,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetUniformiv(GLuint program, GLint location, GLint* params)
+    \fn void QOpenGLFunctions::glGetUniformiv(GLuint program, GLint location, GLint* params)
 
     Convenience function that calls glGetUniformiv(\a program, \a location, \a params).
 
@@ -836,7 +836,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn int QGLFunctions::glGetUniformLocation(GLuint program, const char* name)
+    \fn int QOpenGLFunctions::glGetUniformLocation(GLuint program, const char* name)
 
     Convenience function that calls glGetUniformLocation(\a program, \a name).
 
@@ -847,7 +847,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* params)
+    \fn void QOpenGLFunctions::glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* params)
 
     Convenience function that calls glGetVertexAttribfv(\a index, \a pname, \a params).
 
@@ -858,7 +858,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetVertexAttribiv(GLuint index, GLenum pname, GLint* params)
+    \fn void QOpenGLFunctions::glGetVertexAttribiv(GLuint index, GLenum pname, GLint* params)
 
     Convenience function that calls glGetVertexAttribiv(\a index, \a pname, \a params).
 
@@ -869,7 +869,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glGetVertexAttribPointerv(GLuint index, GLenum pname, void** pointer)
+    \fn void QOpenGLFunctions::glGetVertexAttribPointerv(GLuint index, GLenum pname, void** pointer)
 
     Convenience function that calls glGetVertexAttribPointerv(\a index, \a pname, \a pointer).
 
@@ -880,7 +880,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::glIsBuffer(GLuint buffer)
+    \fn GLboolean QOpenGLFunctions::glIsBuffer(GLuint buffer)
 
     Convenience function that calls glIsBuffer(\a buffer).
 
@@ -889,7 +889,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::glIsFramebuffer(GLuint framebuffer)
+    \fn GLboolean QOpenGLFunctions::glIsFramebuffer(GLuint framebuffer)
 
     Convenience function that calls glIsFramebuffer(\a framebuffer).
 
@@ -898,7 +898,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::glIsProgram(GLuint program)
+    \fn GLboolean QOpenGLFunctions::glIsProgram(GLuint program)
 
     Convenience function that calls glIsProgram(\a program).
 
@@ -909,7 +909,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::glIsRenderbuffer(GLuint renderbuffer)
+    \fn GLboolean QOpenGLFunctions::glIsRenderbuffer(GLuint renderbuffer)
 
     Convenience function that calls glIsRenderbuffer(\a renderbuffer).
 
@@ -918,7 +918,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn GLboolean QGLFunctions::glIsShader(GLuint shader)
+    \fn GLboolean QOpenGLFunctions::glIsShader(GLuint shader)
 
     Convenience function that calls glIsShader(\a shader).
 
@@ -929,7 +929,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glLinkProgram(GLuint program)
+    \fn void QOpenGLFunctions::glLinkProgram(GLuint program)
 
     Convenience function that calls glLinkProgram(\a program).
 
@@ -940,7 +940,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glReleaseShaderCompiler()
+    \fn void QOpenGLFunctions::glReleaseShaderCompiler()
 
     Convenience function that calls glReleaseShaderCompiler().
 
@@ -951,7 +951,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+    \fn void QOpenGLFunctions::glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
 
     Convenience function that calls glRenderbufferStorage(\a target, \a internalformat, \a width, \a height).
 
@@ -960,7 +960,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glSampleCoverage(GLclampf value, GLboolean invert)
+    \fn void QOpenGLFunctions::glSampleCoverage(GLclampf value, GLboolean invert)
 
     Convenience function that calls glSampleCoverage(\a value, \a invert).
 
@@ -969,7 +969,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
+    \fn void QOpenGLFunctions::glShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length)
 
     Convenience function that calls glShaderBinary(\a n, \a shaders, \a binaryformat, \a binary, \a length).
 
@@ -980,7 +980,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glShaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
+    \fn void QOpenGLFunctions::glShaderSource(GLuint shader, GLsizei count, const char** string, const GLint* length)
 
     Convenience function that calls glShaderSource(\a shader, \a count, \a string, \a length).
 
@@ -991,7 +991,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
+    \fn void QOpenGLFunctions::glStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask)
 
     Convenience function that calls glStencilFuncSeparate(\a face, \a func, \a ref, \a mask).
 
@@ -1000,7 +1000,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glStencilMaskSeparate(GLenum face, GLuint mask)
+    \fn void QOpenGLFunctions::glStencilMaskSeparate(GLenum face, GLuint mask)
 
     Convenience function that calls glStencilMaskSeparate(\a face, \a mask).
 
@@ -1009,7 +1009,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+    \fn void QOpenGLFunctions::glStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
 
     Convenience function that calls glStencilOpSeparate(\a face, \a fail, \a zfail, \a zpass).
 
@@ -1018,7 +1018,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform1f(GLint location, GLfloat x)
+    \fn void QOpenGLFunctions::glUniform1f(GLint location, GLfloat x)
 
     Convenience function that calls glUniform1f(\a location, \a x).
 
@@ -1029,7 +1029,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform1fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QOpenGLFunctions::glUniform1fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform1fv(\a location, \a count, \a v).
 
@@ -1040,7 +1040,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform1i(GLint location, GLint x)
+    \fn void QOpenGLFunctions::glUniform1i(GLint location, GLint x)
 
     Convenience function that calls glUniform1i(\a location, \a x).
 
@@ -1051,7 +1051,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform1iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QOpenGLFunctions::glUniform1iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform1iv(\a location, \a count, \a v).
 
@@ -1062,7 +1062,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform2f(GLint location, GLfloat x, GLfloat y)
+    \fn void QOpenGLFunctions::glUniform2f(GLint location, GLfloat x, GLfloat y)
 
     Convenience function that calls glUniform2f(\a location, \a x, \a y).
 
@@ -1073,7 +1073,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform2fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QOpenGLFunctions::glUniform2fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform2fv(\a location, \a count, \a v).
 
@@ -1084,7 +1084,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform2i(GLint location, GLint x, GLint y)
+    \fn void QOpenGLFunctions::glUniform2i(GLint location, GLint x, GLint y)
 
     Convenience function that calls glUniform2i(\a location, \a x, \a y).
 
@@ -1095,7 +1095,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform2iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QOpenGLFunctions::glUniform2iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform2iv(\a location, \a count, \a v).
 
@@ -1106,7 +1106,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z)
+    \fn void QOpenGLFunctions::glUniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z)
 
     Convenience function that calls glUniform3f(\a location, \a x, \a y, \a z).
 
@@ -1117,7 +1117,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform3fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QOpenGLFunctions::glUniform3fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform3fv(\a location, \a count, \a v).
 
@@ -1128,7 +1128,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform3i(GLint location, GLint x, GLint y, GLint z)
+    \fn void QOpenGLFunctions::glUniform3i(GLint location, GLint x, GLint y, GLint z)
 
     Convenience function that calls glUniform3i(\a location, \a x, \a y, \a z).
 
@@ -1139,7 +1139,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform3iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QOpenGLFunctions::glUniform3iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform3iv(\a location, \a count, \a v).
 
@@ -1150,7 +1150,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+    \fn void QOpenGLFunctions::glUniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
     Convenience function that calls glUniform4f(\a location, \a x, \a y, \a z, \a w).
 
@@ -1161,7 +1161,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform4fv(GLint location, GLsizei count, const GLfloat* v)
+    \fn void QOpenGLFunctions::glUniform4fv(GLint location, GLsizei count, const GLfloat* v)
 
     Convenience function that calls glUniform4fv(\a location, \a count, \a v).
 
@@ -1172,7 +1172,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform4i(GLint location, GLint x, GLint y, GLint z, GLint w)
+    \fn void QOpenGLFunctions::glUniform4i(GLint location, GLint x, GLint y, GLint z, GLint w)
 
     Convenience function that calls glUniform4i(\a location, \a x, \a y, \a z, \a w).
 
@@ -1183,7 +1183,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniform4iv(GLint location, GLsizei count, const GLint* v)
+    \fn void QOpenGLFunctions::glUniform4iv(GLint location, GLsizei count, const GLint* v)
 
     Convenience function that calls glUniform4iv(\a location, \a count, \a v).
 
@@ -1194,7 +1194,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QOpenGLFunctions::glUniformMatrix2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix2fv(\a location, \a count, \a transpose, \a value).
 
@@ -1205,7 +1205,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QOpenGLFunctions::glUniformMatrix3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix3fv(\a location, \a count, \a transpose, \a value).
 
@@ -1216,7 +1216,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+    \fn void QOpenGLFunctions::glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 
     Convenience function that calls glUniformMatrix4fv(\a location, \a count, \a transpose, \a value).
 
@@ -1227,7 +1227,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glUseProgram(GLuint program)
+    \fn void QOpenGLFunctions::glUseProgram(GLuint program)
 
     Convenience function that calls glUseProgram(\a program).
 
@@ -1238,7 +1238,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glValidateProgram(GLuint program)
+    \fn void QOpenGLFunctions::glValidateProgram(GLuint program)
 
     Convenience function that calls glValidateProgram(\a program).
 
@@ -1249,7 +1249,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib1f(GLuint indx, GLfloat x)
+    \fn void QOpenGLFunctions::glVertexAttrib1f(GLuint indx, GLfloat x)
 
     Convenience function that calls glVertexAttrib1f(\a indx, \a x).
 
@@ -1260,7 +1260,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib1fv(GLuint indx, const GLfloat* values)
+    \fn void QOpenGLFunctions::glVertexAttrib1fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib1fv(\a indx, \a values).
 
@@ -1271,7 +1271,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
+    \fn void QOpenGLFunctions::glVertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
 
     Convenience function that calls glVertexAttrib2f(\a indx, \a x, \a y).
 
@@ -1282,7 +1282,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib2fv(GLuint indx, const GLfloat* values)
+    \fn void QOpenGLFunctions::glVertexAttrib2fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib2fv(\a indx, \a values).
 
@@ -1293,7 +1293,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+    \fn void QOpenGLFunctions::glVertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
 
     Convenience function that calls glVertexAttrib3f(\a indx, \a x, \a y, \a z).
 
@@ -1304,7 +1304,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib3fv(GLuint indx, const GLfloat* values)
+    \fn void QOpenGLFunctions::glVertexAttrib3fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib3fv(\a indx, \a values).
 
@@ -1315,7 +1315,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+    \fn void QOpenGLFunctions::glVertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
     Convenience function that calls glVertexAttrib4f(\a indx, \a x, \a y, \a z, \a w).
 
@@ -1326,7 +1326,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttrib4fv(GLuint indx, const GLfloat* values)
+    \fn void QOpenGLFunctions::glVertexAttrib4fv(GLuint indx, const GLfloat* values)
 
     Convenience function that calls glVertexAttrib4fv(\a indx, \a values).
 
@@ -1337,7 +1337,7 @@ void QGLFunctions::initializeGLFunctions(const QGLContext *context)
 */
 
 /*!
-    \fn void QGLFunctions::glVertexAttribPointer(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr)
+    \fn void QOpenGLFunctions::glVertexAttribPointer(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr)
 
     Convenience function that calls glVertexAttribPointer(\a indx, \a size, \a type, \a normalized, \a stride, \a ptr).
 
@@ -1354,7 +1354,7 @@ static void qglfResolveActiveTexture(GLenum texture)
     typedef void (QGLF_APIENTRYP type_glActiveTexture)(GLenum texture);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->activeTexture = (type_glActiveTexture)
         context->getProcAddress(QLatin1String("glActiveTexture"));
@@ -1374,7 +1374,7 @@ static void qglfResolveAttachShader(GLuint program, GLuint shader)
     typedef void (QGLF_APIENTRYP type_glAttachShader)(GLuint program, GLuint shader);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->attachShader = (type_glAttachShader)
         context->getProcAddress(QLatin1String("glAttachShader"));
@@ -1394,7 +1394,7 @@ static void qglfResolveBindAttribLocation(GLuint program, GLuint index, const ch
     typedef void (QGLF_APIENTRYP type_glBindAttribLocation)(GLuint program, GLuint index, const char* name);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bindAttribLocation = (type_glBindAttribLocation)
         context->getProcAddress(QLatin1String("glBindAttribLocation"));
@@ -1414,7 +1414,7 @@ static void qglfResolveBindBuffer(GLenum target, GLuint buffer)
     typedef void (QGLF_APIENTRYP type_glBindBuffer)(GLenum target, GLuint buffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bindBuffer = (type_glBindBuffer)
         context->getProcAddress(QLatin1String("glBindBuffer"));
@@ -1444,7 +1444,7 @@ static void qglfResolveBindFramebuffer(GLenum target, GLuint framebuffer)
     typedef void (QGLF_APIENTRYP type_glBindFramebuffer)(GLenum target, GLuint framebuffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bindFramebuffer = (type_glBindFramebuffer)
         context->getProcAddress(QLatin1String("glBindFramebuffer"));
@@ -1474,7 +1474,7 @@ static void qglfResolveBindRenderbuffer(GLenum target, GLuint renderbuffer)
     typedef void (QGLF_APIENTRYP type_glBindRenderbuffer)(GLenum target, GLuint renderbuffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bindRenderbuffer = (type_glBindRenderbuffer)
         context->getProcAddress(QLatin1String("glBindRenderbuffer"));
@@ -1504,7 +1504,7 @@ static void qglfResolveBlendColor(GLclampf red, GLclampf green, GLclampf blue, G
     typedef void (QGLF_APIENTRYP type_glBlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->blendColor = (type_glBlendColor)
         context->getProcAddress(QLatin1String("glBlendColor"));
@@ -1534,7 +1534,7 @@ static void qglfResolveBlendEquation(GLenum mode)
     typedef void (QGLF_APIENTRYP type_glBlendEquation)(GLenum mode);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->blendEquation = (type_glBlendEquation)
         context->getProcAddress(QLatin1String("glBlendEquation"));
@@ -1564,7 +1564,7 @@ static void qglfResolveBlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha)
     typedef void (QGLF_APIENTRYP type_glBlendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->blendEquationSeparate = (type_glBlendEquationSeparate)
         context->getProcAddress(QLatin1String("glBlendEquationSeparate"));
@@ -1594,7 +1594,7 @@ static void qglfResolveBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum sr
     typedef void (QGLF_APIENTRYP type_glBlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->blendFuncSeparate = (type_glBlendFuncSeparate)
         context->getProcAddress(QLatin1String("glBlendFuncSeparate"));
@@ -1624,7 +1624,7 @@ static void qglfResolveBufferData(GLenum target, qgl_GLsizeiptr size, const void
     typedef void (QGLF_APIENTRYP type_glBufferData)(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bufferData = (type_glBufferData)
         context->getProcAddress(QLatin1String("glBufferData"));
@@ -1654,7 +1654,7 @@ static void qglfResolveBufferSubData(GLenum target, qgl_GLintptr offset, qgl_GLs
     typedef void (QGLF_APIENTRYP type_glBufferSubData)(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->bufferSubData = (type_glBufferSubData)
         context->getProcAddress(QLatin1String("glBufferSubData"));
@@ -1684,7 +1684,7 @@ static GLenum qglfResolveCheckFramebufferStatus(GLenum target)
     typedef GLenum (QGLF_APIENTRYP type_glCheckFramebufferStatus)(GLenum target);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->checkFramebufferStatus = (type_glCheckFramebufferStatus)
         context->getProcAddress(QLatin1String("glCheckFramebufferStatus"));
@@ -1714,7 +1714,7 @@ static void qglfResolveCompileShader(GLuint shader)
     typedef void (QGLF_APIENTRYP type_glCompileShader)(GLuint shader);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->compileShader = (type_glCompileShader)
         context->getProcAddress(QLatin1String("glCompileShader"));
@@ -1734,7 +1734,7 @@ static void qglfResolveCompressedTexImage2D(GLenum target, GLint level, GLenum i
     typedef void (QGLF_APIENTRYP type_glCompressedTexImage2D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->compressedTexImage2D = (type_glCompressedTexImage2D)
         context->getProcAddress(QLatin1String("glCompressedTexImage2D"));
@@ -1764,7 +1764,7 @@ static void qglfResolveCompressedTexSubImage2D(GLenum target, GLint level, GLint
     typedef void (QGLF_APIENTRYP type_glCompressedTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->compressedTexSubImage2D = (type_glCompressedTexSubImage2D)
         context->getProcAddress(QLatin1String("glCompressedTexSubImage2D"));
@@ -1794,7 +1794,7 @@ static GLuint qglfResolveCreateProgram()
     typedef GLuint (QGLF_APIENTRYP type_glCreateProgram)();
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->createProgram = (type_glCreateProgram)
         context->getProcAddress(QLatin1String("glCreateProgram"));
@@ -1814,7 +1814,7 @@ static GLuint qglfResolveCreateShader(GLenum type)
     typedef GLuint (QGLF_APIENTRYP type_glCreateShader)(GLenum type);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->createShader = (type_glCreateShader)
         context->getProcAddress(QLatin1String("glCreateShader"));
@@ -1834,7 +1834,7 @@ static void qglfResolveDeleteBuffers(GLsizei n, const GLuint* buffers)
     typedef void (QGLF_APIENTRYP type_glDeleteBuffers)(GLsizei n, const GLuint* buffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->deleteBuffers = (type_glDeleteBuffers)
         context->getProcAddress(QLatin1String("glDeleteBuffers"));
@@ -1864,7 +1864,7 @@ static void qglfResolveDeleteFramebuffers(GLsizei n, const GLuint* framebuffers)
     typedef void (QGLF_APIENTRYP type_glDeleteFramebuffers)(GLsizei n, const GLuint* framebuffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->deleteFramebuffers = (type_glDeleteFramebuffers)
         context->getProcAddress(QLatin1String("glDeleteFramebuffers"));
@@ -1894,7 +1894,7 @@ static void qglfResolveDeleteProgram(GLuint program)
     typedef void (QGLF_APIENTRYP type_glDeleteProgram)(GLuint program);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->deleteProgram = (type_glDeleteProgram)
         context->getProcAddress(QLatin1String("glDeleteProgram"));
@@ -1914,7 +1914,7 @@ static void qglfResolveDeleteRenderbuffers(GLsizei n, const GLuint* renderbuffer
     typedef void (QGLF_APIENTRYP type_glDeleteRenderbuffers)(GLsizei n, const GLuint* renderbuffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->deleteRenderbuffers = (type_glDeleteRenderbuffers)
         context->getProcAddress(QLatin1String("glDeleteRenderbuffers"));
@@ -1944,7 +1944,7 @@ static void qglfResolveDeleteShader(GLuint shader)
     typedef void (QGLF_APIENTRYP type_glDeleteShader)(GLuint shader);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->deleteShader = (type_glDeleteShader)
         context->getProcAddress(QLatin1String("glDeleteShader"));
@@ -1964,7 +1964,7 @@ static void qglfResolveDetachShader(GLuint program, GLuint shader)
     typedef void (QGLF_APIENTRYP type_glDetachShader)(GLuint program, GLuint shader);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->detachShader = (type_glDetachShader)
         context->getProcAddress(QLatin1String("glDetachShader"));
@@ -1984,7 +1984,7 @@ static void qglfResolveDisableVertexAttribArray(GLuint index)
     typedef void (QGLF_APIENTRYP type_glDisableVertexAttribArray)(GLuint index);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->disableVertexAttribArray = (type_glDisableVertexAttribArray)
         context->getProcAddress(QLatin1String("glDisableVertexAttribArray"));
@@ -2004,7 +2004,7 @@ static void qglfResolveEnableVertexAttribArray(GLuint index)
     typedef void (QGLF_APIENTRYP type_glEnableVertexAttribArray)(GLuint index);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->enableVertexAttribArray = (type_glEnableVertexAttribArray)
         context->getProcAddress(QLatin1String("glEnableVertexAttribArray"));
@@ -2024,7 +2024,7 @@ static void qglfResolveFramebufferRenderbuffer(GLenum target, GLenum attachment,
     typedef void (QGLF_APIENTRYP type_glFramebufferRenderbuffer)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->framebufferRenderbuffer = (type_glFramebufferRenderbuffer)
         context->getProcAddress(QLatin1String("glFramebufferRenderbuffer"));
@@ -2054,7 +2054,7 @@ static void qglfResolveFramebufferTexture2D(GLenum target, GLenum attachment, GL
     typedef void (QGLF_APIENTRYP type_glFramebufferTexture2D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->framebufferTexture2D = (type_glFramebufferTexture2D)
         context->getProcAddress(QLatin1String("glFramebufferTexture2D"));
@@ -2084,7 +2084,7 @@ static void qglfResolveGenBuffers(GLsizei n, GLuint* buffers)
     typedef void (QGLF_APIENTRYP type_glGenBuffers)(GLsizei n, GLuint* buffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->genBuffers = (type_glGenBuffers)
         context->getProcAddress(QLatin1String("glGenBuffers"));
@@ -2114,7 +2114,7 @@ static void qglfResolveGenerateMipmap(GLenum target)
     typedef void (QGLF_APIENTRYP type_glGenerateMipmap)(GLenum target);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->generateMipmap = (type_glGenerateMipmap)
         context->getProcAddress(QLatin1String("glGenerateMipmap"));
@@ -2144,7 +2144,7 @@ static void qglfResolveGenFramebuffers(GLsizei n, GLuint* framebuffers)
     typedef void (QGLF_APIENTRYP type_glGenFramebuffers)(GLsizei n, GLuint* framebuffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->genFramebuffers = (type_glGenFramebuffers)
         context->getProcAddress(QLatin1String("glGenFramebuffers"));
@@ -2174,7 +2174,7 @@ static void qglfResolveGenRenderbuffers(GLsizei n, GLuint* renderbuffers)
     typedef void (QGLF_APIENTRYP type_glGenRenderbuffers)(GLsizei n, GLuint* renderbuffers);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->genRenderbuffers = (type_glGenRenderbuffers)
         context->getProcAddress(QLatin1String("glGenRenderbuffers"));
@@ -2204,7 +2204,7 @@ static void qglfResolveGetActiveAttrib(GLuint program, GLuint index, GLsizei buf
     typedef void (QGLF_APIENTRYP type_glGetActiveAttrib)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getActiveAttrib = (type_glGetActiveAttrib)
         context->getProcAddress(QLatin1String("glGetActiveAttrib"));
@@ -2224,7 +2224,7 @@ static void qglfResolveGetActiveUniform(GLuint program, GLuint index, GLsizei bu
     typedef void (QGLF_APIENTRYP type_glGetActiveUniform)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getActiveUniform = (type_glGetActiveUniform)
         context->getProcAddress(QLatin1String("glGetActiveUniform"));
@@ -2244,7 +2244,7 @@ static void qglfResolveGetAttachedShaders(GLuint program, GLsizei maxcount, GLsi
     typedef void (QGLF_APIENTRYP type_glGetAttachedShaders)(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getAttachedShaders = (type_glGetAttachedShaders)
         context->getProcAddress(QLatin1String("glGetAttachedShaders"));
@@ -2264,7 +2264,7 @@ static int qglfResolveGetAttribLocation(GLuint program, const char* name)
     typedef int (QGLF_APIENTRYP type_glGetAttribLocation)(GLuint program, const char* name);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getAttribLocation = (type_glGetAttribLocation)
         context->getProcAddress(QLatin1String("glGetAttribLocation"));
@@ -2284,7 +2284,7 @@ static void qglfResolveGetBufferParameteriv(GLenum target, GLenum pname, GLint* 
     typedef void (QGLF_APIENTRYP type_glGetBufferParameteriv)(GLenum target, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getBufferParameteriv = (type_glGetBufferParameteriv)
         context->getProcAddress(QLatin1String("glGetBufferParameteriv"));
@@ -2314,7 +2314,7 @@ static void qglfResolveGetFramebufferAttachmentParameteriv(GLenum target, GLenum
     typedef void (QGLF_APIENTRYP type_glGetFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getFramebufferAttachmentParameteriv = (type_glGetFramebufferAttachmentParameteriv)
         context->getProcAddress(QLatin1String("glGetFramebufferAttachmentParameteriv"));
@@ -2344,7 +2344,7 @@ static void qglfResolveGetProgramiv(GLuint program, GLenum pname, GLint* params)
     typedef void (QGLF_APIENTRYP type_glGetProgramiv)(GLuint program, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getProgramiv = (type_glGetProgramiv)
         context->getProcAddress(QLatin1String("glGetProgramiv"));
@@ -2364,7 +2364,7 @@ static void qglfResolveGetProgramInfoLog(GLuint program, GLsizei bufsize, GLsize
     typedef void (QGLF_APIENTRYP type_glGetProgramInfoLog)(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getProgramInfoLog = (type_glGetProgramInfoLog)
         context->getProcAddress(QLatin1String("glGetProgramInfoLog"));
@@ -2384,7 +2384,7 @@ static void qglfResolveGetRenderbufferParameteriv(GLenum target, GLenum pname, G
     typedef void (QGLF_APIENTRYP type_glGetRenderbufferParameteriv)(GLenum target, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getRenderbufferParameteriv = (type_glGetRenderbufferParameteriv)
         context->getProcAddress(QLatin1String("glGetRenderbufferParameteriv"));
@@ -2414,7 +2414,7 @@ static void qglfResolveGetShaderiv(GLuint shader, GLenum pname, GLint* params)
     typedef void (QGLF_APIENTRYP type_glGetShaderiv)(GLuint shader, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getShaderiv = (type_glGetShaderiv)
         context->getProcAddress(QLatin1String("glGetShaderiv"));
@@ -2434,7 +2434,7 @@ static void qglfResolveGetShaderInfoLog(GLuint shader, GLsizei bufsize, GLsizei*
     typedef void (QGLF_APIENTRYP type_glGetShaderInfoLog)(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getShaderInfoLog = (type_glGetShaderInfoLog)
         context->getProcAddress(QLatin1String("glGetShaderInfoLog"));
@@ -2461,7 +2461,7 @@ static void qglfResolveGetShaderPrecisionFormat(GLenum shadertype, GLenum precis
     typedef void (QGLF_APIENTRYP type_glGetShaderPrecisionFormat)(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getShaderPrecisionFormat = (type_glGetShaderPrecisionFormat)
         context->getProcAddress(QLatin1String("glGetShaderPrecisionFormat"));
@@ -2491,7 +2491,7 @@ static void qglfResolveGetShaderSource(GLuint shader, GLsizei bufsize, GLsizei* 
     typedef void (QGLF_APIENTRYP type_glGetShaderSource)(GLuint shader, GLsizei bufsize, GLsizei* length, char* source);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getShaderSource = (type_glGetShaderSource)
         context->getProcAddress(QLatin1String("glGetShaderSource"));
@@ -2511,7 +2511,7 @@ static void qglfResolveGetUniformfv(GLuint program, GLint location, GLfloat* par
     typedef void (QGLF_APIENTRYP type_glGetUniformfv)(GLuint program, GLint location, GLfloat* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getUniformfv = (type_glGetUniformfv)
         context->getProcAddress(QLatin1String("glGetUniformfv"));
@@ -2531,7 +2531,7 @@ static void qglfResolveGetUniformiv(GLuint program, GLint location, GLint* param
     typedef void (QGLF_APIENTRYP type_glGetUniformiv)(GLuint program, GLint location, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getUniformiv = (type_glGetUniformiv)
         context->getProcAddress(QLatin1String("glGetUniformiv"));
@@ -2551,7 +2551,7 @@ static int qglfResolveGetUniformLocation(GLuint program, const char* name)
     typedef int (QGLF_APIENTRYP type_glGetUniformLocation)(GLuint program, const char* name);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getUniformLocation = (type_glGetUniformLocation)
         context->getProcAddress(QLatin1String("glGetUniformLocation"));
@@ -2571,7 +2571,7 @@ static void qglfResolveGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* pa
     typedef void (QGLF_APIENTRYP type_glGetVertexAttribfv)(GLuint index, GLenum pname, GLfloat* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getVertexAttribfv = (type_glGetVertexAttribfv)
         context->getProcAddress(QLatin1String("glGetVertexAttribfv"));
@@ -2591,7 +2591,7 @@ static void qglfResolveGetVertexAttribiv(GLuint index, GLenum pname, GLint* para
     typedef void (QGLF_APIENTRYP type_glGetVertexAttribiv)(GLuint index, GLenum pname, GLint* params);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getVertexAttribiv = (type_glGetVertexAttribiv)
         context->getProcAddress(QLatin1String("glGetVertexAttribiv"));
@@ -2611,7 +2611,7 @@ static void qglfResolveGetVertexAttribPointerv(GLuint index, GLenum pname, void*
     typedef void (QGLF_APIENTRYP type_glGetVertexAttribPointerv)(GLuint index, GLenum pname, void** pointer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->getVertexAttribPointerv = (type_glGetVertexAttribPointerv)
         context->getProcAddress(QLatin1String("glGetVertexAttribPointerv"));
@@ -2631,7 +2631,7 @@ static GLboolean qglfResolveIsBuffer(GLuint buffer)
     typedef GLboolean (QGLF_APIENTRYP type_glIsBuffer)(GLuint buffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->isBuffer = (type_glIsBuffer)
         context->getProcAddress(QLatin1String("glIsBuffer"));
@@ -2661,7 +2661,7 @@ static GLboolean qglfResolveIsFramebuffer(GLuint framebuffer)
     typedef GLboolean (QGLF_APIENTRYP type_glIsFramebuffer)(GLuint framebuffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->isFramebuffer = (type_glIsFramebuffer)
         context->getProcAddress(QLatin1String("glIsFramebuffer"));
@@ -2696,7 +2696,7 @@ static GLboolean qglfResolveIsProgram(GLuint program)
     typedef GLboolean (QGLF_APIENTRYP type_glIsProgram)(GLuint program);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->isProgram = (type_glIsProgram)
         context->getProcAddress(QLatin1String("glIsProgram"));
@@ -2716,7 +2716,7 @@ static GLboolean qglfResolveIsRenderbuffer(GLuint renderbuffer)
     typedef GLboolean (QGLF_APIENTRYP type_glIsRenderbuffer)(GLuint renderbuffer);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->isRenderbuffer = (type_glIsRenderbuffer)
         context->getProcAddress(QLatin1String("glIsRenderbuffer"));
@@ -2751,7 +2751,7 @@ static GLboolean qglfResolveIsShader(GLuint shader)
     typedef GLboolean (QGLF_APIENTRYP type_glIsShader)(GLuint shader);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->isShader = (type_glIsShader)
         context->getProcAddress(QLatin1String("glIsShader"));
@@ -2771,7 +2771,7 @@ static void qglfResolveLinkProgram(GLuint program)
     typedef void (QGLF_APIENTRYP type_glLinkProgram)(GLuint program);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->linkProgram = (type_glLinkProgram)
         context->getProcAddress(QLatin1String("glLinkProgram"));
@@ -2795,7 +2795,7 @@ static void qglfResolveReleaseShaderCompiler()
     typedef void (QGLF_APIENTRYP type_glReleaseShaderCompiler)();
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->releaseShaderCompiler = (type_glReleaseShaderCompiler)
         context->getProcAddress(QLatin1String("glReleaseShaderCompiler"));
@@ -2815,7 +2815,7 @@ static void qglfResolveRenderbufferStorage(GLenum target, GLenum internalformat,
     typedef void (QGLF_APIENTRYP type_glRenderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->renderbufferStorage = (type_glRenderbufferStorage)
         context->getProcAddress(QLatin1String("glRenderbufferStorage"));
@@ -2845,7 +2845,7 @@ static void qglfResolveSampleCoverage(GLclampf value, GLboolean invert)
     typedef void (QGLF_APIENTRYP type_glSampleCoverage)(GLclampf value, GLboolean invert);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->sampleCoverage = (type_glSampleCoverage)
         context->getProcAddress(QLatin1String("glSampleCoverage"));
@@ -2875,7 +2875,7 @@ static void qglfResolveShaderBinary(GLint n, const GLuint* shaders, GLenum binar
     typedef void (QGLF_APIENTRYP type_glShaderBinary)(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->shaderBinary = (type_glShaderBinary)
         context->getProcAddress(QLatin1String("glShaderBinary"));
@@ -2895,7 +2895,7 @@ static void qglfResolveShaderSource(GLuint shader, GLsizei count, const char** s
     typedef void (QGLF_APIENTRYP type_glShaderSource)(GLuint shader, GLsizei count, const char** string, const GLint* length);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->shaderSource = (type_glShaderSource)
         context->getProcAddress(QLatin1String("glShaderSource"));
@@ -2915,7 +2915,7 @@ static void qglfResolveStencilFuncSeparate(GLenum face, GLenum func, GLint ref, 
     typedef void (QGLF_APIENTRYP type_glStencilFuncSeparate)(GLenum face, GLenum func, GLint ref, GLuint mask);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->stencilFuncSeparate = (type_glStencilFuncSeparate)
         context->getProcAddress(QLatin1String("glStencilFuncSeparate"));
@@ -2945,7 +2945,7 @@ static void qglfResolveStencilMaskSeparate(GLenum face, GLuint mask)
     typedef void (QGLF_APIENTRYP type_glStencilMaskSeparate)(GLenum face, GLuint mask);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->stencilMaskSeparate = (type_glStencilMaskSeparate)
         context->getProcAddress(QLatin1String("glStencilMaskSeparate"));
@@ -2975,7 +2975,7 @@ static void qglfResolveStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail,
     typedef void (QGLF_APIENTRYP type_glStencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->stencilOpSeparate = (type_glStencilOpSeparate)
         context->getProcAddress(QLatin1String("glStencilOpSeparate"));
@@ -3005,7 +3005,7 @@ static void qglfResolveUniform1f(GLint location, GLfloat x)
     typedef void (QGLF_APIENTRYP type_glUniform1f)(GLint location, GLfloat x);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform1f = (type_glUniform1f)
         context->getProcAddress(QLatin1String("glUniform1f"));
@@ -3025,7 +3025,7 @@ static void qglfResolveUniform1fv(GLint location, GLsizei count, const GLfloat* 
     typedef void (QGLF_APIENTRYP type_glUniform1fv)(GLint location, GLsizei count, const GLfloat* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform1fv = (type_glUniform1fv)
         context->getProcAddress(QLatin1String("glUniform1fv"));
@@ -3045,7 +3045,7 @@ static void qglfResolveUniform1i(GLint location, GLint x)
     typedef void (QGLF_APIENTRYP type_glUniform1i)(GLint location, GLint x);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform1i = (type_glUniform1i)
         context->getProcAddress(QLatin1String("glUniform1i"));
@@ -3065,7 +3065,7 @@ static void qglfResolveUniform1iv(GLint location, GLsizei count, const GLint* v)
     typedef void (QGLF_APIENTRYP type_glUniform1iv)(GLint location, GLsizei count, const GLint* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform1iv = (type_glUniform1iv)
         context->getProcAddress(QLatin1String("glUniform1iv"));
@@ -3085,7 +3085,7 @@ static void qglfResolveUniform2f(GLint location, GLfloat x, GLfloat y)
     typedef void (QGLF_APIENTRYP type_glUniform2f)(GLint location, GLfloat x, GLfloat y);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform2f = (type_glUniform2f)
         context->getProcAddress(QLatin1String("glUniform2f"));
@@ -3105,7 +3105,7 @@ static void qglfResolveUniform2fv(GLint location, GLsizei count, const GLfloat* 
     typedef void (QGLF_APIENTRYP type_glUniform2fv)(GLint location, GLsizei count, const GLfloat* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform2fv = (type_glUniform2fv)
         context->getProcAddress(QLatin1String("glUniform2fv"));
@@ -3125,7 +3125,7 @@ static void qglfResolveUniform2i(GLint location, GLint x, GLint y)
     typedef void (QGLF_APIENTRYP type_glUniform2i)(GLint location, GLint x, GLint y);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform2i = (type_glUniform2i)
         context->getProcAddress(QLatin1String("glUniform2i"));
@@ -3145,7 +3145,7 @@ static void qglfResolveUniform2iv(GLint location, GLsizei count, const GLint* v)
     typedef void (QGLF_APIENTRYP type_glUniform2iv)(GLint location, GLsizei count, const GLint* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform2iv = (type_glUniform2iv)
         context->getProcAddress(QLatin1String("glUniform2iv"));
@@ -3165,7 +3165,7 @@ static void qglfResolveUniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z
     typedef void (QGLF_APIENTRYP type_glUniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform3f = (type_glUniform3f)
         context->getProcAddress(QLatin1String("glUniform3f"));
@@ -3185,7 +3185,7 @@ static void qglfResolveUniform3fv(GLint location, GLsizei count, const GLfloat* 
     typedef void (QGLF_APIENTRYP type_glUniform3fv)(GLint location, GLsizei count, const GLfloat* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform3fv = (type_glUniform3fv)
         context->getProcAddress(QLatin1String("glUniform3fv"));
@@ -3205,7 +3205,7 @@ static void qglfResolveUniform3i(GLint location, GLint x, GLint y, GLint z)
     typedef void (QGLF_APIENTRYP type_glUniform3i)(GLint location, GLint x, GLint y, GLint z);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform3i = (type_glUniform3i)
         context->getProcAddress(QLatin1String("glUniform3i"));
@@ -3225,7 +3225,7 @@ static void qglfResolveUniform3iv(GLint location, GLsizei count, const GLint* v)
     typedef void (QGLF_APIENTRYP type_glUniform3iv)(GLint location, GLsizei count, const GLint* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform3iv = (type_glUniform3iv)
         context->getProcAddress(QLatin1String("glUniform3iv"));
@@ -3245,7 +3245,7 @@ static void qglfResolveUniform4f(GLint location, GLfloat x, GLfloat y, GLfloat z
     typedef void (QGLF_APIENTRYP type_glUniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform4f = (type_glUniform4f)
         context->getProcAddress(QLatin1String("glUniform4f"));
@@ -3265,7 +3265,7 @@ static void qglfResolveUniform4fv(GLint location, GLsizei count, const GLfloat* 
     typedef void (QGLF_APIENTRYP type_glUniform4fv)(GLint location, GLsizei count, const GLfloat* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform4fv = (type_glUniform4fv)
         context->getProcAddress(QLatin1String("glUniform4fv"));
@@ -3285,7 +3285,7 @@ static void qglfResolveUniform4i(GLint location, GLint x, GLint y, GLint z, GLin
     typedef void (QGLF_APIENTRYP type_glUniform4i)(GLint location, GLint x, GLint y, GLint z, GLint w);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform4i = (type_glUniform4i)
         context->getProcAddress(QLatin1String("glUniform4i"));
@@ -3305,7 +3305,7 @@ static void qglfResolveUniform4iv(GLint location, GLsizei count, const GLint* v)
     typedef void (QGLF_APIENTRYP type_glUniform4iv)(GLint location, GLsizei count, const GLint* v);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniform4iv = (type_glUniform4iv)
         context->getProcAddress(QLatin1String("glUniform4iv"));
@@ -3325,7 +3325,7 @@ static void qglfResolveUniformMatrix2fv(GLint location, GLsizei count, GLboolean
     typedef void (QGLF_APIENTRYP type_glUniformMatrix2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniformMatrix2fv = (type_glUniformMatrix2fv)
         context->getProcAddress(QLatin1String("glUniformMatrix2fv"));
@@ -3345,7 +3345,7 @@ static void qglfResolveUniformMatrix3fv(GLint location, GLsizei count, GLboolean
     typedef void (QGLF_APIENTRYP type_glUniformMatrix3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniformMatrix3fv = (type_glUniformMatrix3fv)
         context->getProcAddress(QLatin1String("glUniformMatrix3fv"));
@@ -3365,7 +3365,7 @@ static void qglfResolveUniformMatrix4fv(GLint location, GLsizei count, GLboolean
     typedef void (QGLF_APIENTRYP type_glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->uniformMatrix4fv = (type_glUniformMatrix4fv)
         context->getProcAddress(QLatin1String("glUniformMatrix4fv"));
@@ -3385,7 +3385,7 @@ static void qglfResolveUseProgram(GLuint program)
     typedef void (QGLF_APIENTRYP type_glUseProgram)(GLuint program);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->useProgram = (type_glUseProgram)
         context->getProcAddress(QLatin1String("glUseProgram"));
@@ -3405,7 +3405,7 @@ static void qglfResolveValidateProgram(GLuint program)
     typedef void (QGLF_APIENTRYP type_glValidateProgram)(GLuint program);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->validateProgram = (type_glValidateProgram)
         context->getProcAddress(QLatin1String("glValidateProgram"));
@@ -3425,7 +3425,7 @@ static void qglfResolveVertexAttrib1f(GLuint indx, GLfloat x)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib1f)(GLuint indx, GLfloat x);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib1f = (type_glVertexAttrib1f)
         context->getProcAddress(QLatin1String("glVertexAttrib1f"));
@@ -3445,7 +3445,7 @@ static void qglfResolveVertexAttrib1fv(GLuint indx, const GLfloat* values)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib1fv)(GLuint indx, const GLfloat* values);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib1fv = (type_glVertexAttrib1fv)
         context->getProcAddress(QLatin1String("glVertexAttrib1fv"));
@@ -3465,7 +3465,7 @@ static void qglfResolveVertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib2f = (type_glVertexAttrib2f)
         context->getProcAddress(QLatin1String("glVertexAttrib2f"));
@@ -3485,7 +3485,7 @@ static void qglfResolveVertexAttrib2fv(GLuint indx, const GLfloat* values)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib2fv)(GLuint indx, const GLfloat* values);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib2fv = (type_glVertexAttrib2fv)
         context->getProcAddress(QLatin1String("glVertexAttrib2fv"));
@@ -3505,7 +3505,7 @@ static void qglfResolveVertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat
     typedef void (QGLF_APIENTRYP type_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib3f = (type_glVertexAttrib3f)
         context->getProcAddress(QLatin1String("glVertexAttrib3f"));
@@ -3525,7 +3525,7 @@ static void qglfResolveVertexAttrib3fv(GLuint indx, const GLfloat* values)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib3fv)(GLuint indx, const GLfloat* values);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib3fv = (type_glVertexAttrib3fv)
         context->getProcAddress(QLatin1String("glVertexAttrib3fv"));
@@ -3545,7 +3545,7 @@ static void qglfResolveVertexAttrib4f(GLuint indx, GLfloat x, GLfloat y, GLfloat
     typedef void (QGLF_APIENTRYP type_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib4f = (type_glVertexAttrib4f)
         context->getProcAddress(QLatin1String("glVertexAttrib4f"));
@@ -3565,7 +3565,7 @@ static void qglfResolveVertexAttrib4fv(GLuint indx, const GLfloat* values)
     typedef void (QGLF_APIENTRYP type_glVertexAttrib4fv)(GLuint indx, const GLfloat* values);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttrib4fv = (type_glVertexAttrib4fv)
         context->getProcAddress(QLatin1String("glVertexAttrib4fv"));
@@ -3585,7 +3585,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
     typedef void (QGLF_APIENTRYP type_glVertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
 
     const QGLContext *context = QGLContext::currentContext();
-    QGLFunctionsPrivate *funcs = qt_gl_functions(context);
+    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);
 
     funcs->vertexAttribPointer = (type_glVertexAttribPointer)
         context->getProcAddress(QLatin1String("glVertexAttribPointer"));
@@ -3602,7 +3602,7 @@ static void qglfResolveVertexAttribPointer(GLuint indx, GLint size, GLenum type,
 
 #endif // !QT_OPENGL_ES_2
 
-QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)
+QOpenGLFunctionsPrivate::QOpenGLFunctionsPrivate(const QGLContext *)
 {
 #ifndef QT_OPENGL_ES_2
     activeTexture = qglfResolveActiveTexture;

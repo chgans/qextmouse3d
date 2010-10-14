@@ -400,7 +400,7 @@ bool QGLPainter::begin
     d_ptr->modelViewMatrix.setDirty(true);
     d_ptr->projectionMatrix.setDirty(true);
 
-    // Initialize the QGLFunctions parent class.
+    // Initialize the QOpenGLFunctions parent class.
     initializeGLFunctions(context);
     return true;
 }

@@ -164,12 +164,12 @@ void PageFlipView::initializeGL()
 
     gradientTexture.setImage(QImage(QLatin1String(":/gradient.png")));
 
-    if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+    if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendColor))
         painter.glBlendColor(0, 0, 0, 0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+    if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquation))
         painter.glBlendEquation(GL_FUNC_ADD);
-    else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+    else if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
         painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
     glEnable(GL_BLEND);

@@ -40,14 +40,14 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
-#include "qglfunctions.h"
+#include "qopenglfunctions.h"
 
-class tst_QGLFunctions : public QObject
+class tst_QOpenGLFunctions : public QObject
 {
     Q_OBJECT
 public:
-    tst_QGLFunctions() {}
-    ~tst_QGLFunctions() {}
+    tst_QOpenGLFunctions() {}
+    ~tst_QOpenGLFunctions() {}
 
 private slots:
     void features();
@@ -58,7 +58,7 @@ private:
     static bool hasExtension(const char *name);
 };
 
-bool tst_QGLFunctions::hasExtension(const char *name)
+bool tst_QOpenGLFunctions::hasExtension(const char *name)
 {
     QString extensions =
         QString::fromLatin1
@@ -68,25 +68,25 @@ bool tst_QGLFunctions::hasExtension(const char *name)
 }
 
 // Check that the reported features are consistent with the platform.
-void tst_QGLFunctions::features()
+void tst_QOpenGLFunctions::features()
 {
     // Before being associated with a context, there should be
     // no features enabled.
-    QGLFunctions funcs;
+    QOpenGLFunctions funcs;
     QVERIFY(!funcs.openGLFeatures());
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Multitexture));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Shaders));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Buffers));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Framebuffers));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendColor));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendEquation));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::CompressedTextures));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Multisample));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::StencilSeparate));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Multitexture));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Shaders));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Buffers));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Framebuffers));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendColor));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquation));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendFuncSeparate));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendSubtract));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::CompressedTextures));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Multisample));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::StencilSeparate));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::NPOTTextures));
 
     // Make a context current.
     QGLWidget glw;
@@ -95,53 +95,53 @@ void tst_QGLFunctions::features()
 
     // Validate the features against what we expect for this platform.
 #if defined(QT_OPENGL_ES_2)
-    QGLFunctions::OpenGLFeatures allFeatures =
-        (QGLFunctions::Multitexture |
-         QGLFunctions::Shaders |
-         QGLFunctions::Buffers |
-         QGLFunctions::Framebuffers |
-         QGLFunctions::BlendColor |
-         QGLFunctions::BlendEquation |
-         QGLFunctions::BlendEquationSeparate |
-         QGLFunctions::BlendFuncSeparate |
-         QGLFunctions::BlendSubtract |
-         QGLFunctions::CompressedTextures |
-         QGLFunctions::Multisample |
-         QGLFunctions::StencilSeparate |
-         QGLFunctions::NPOTTextures);
+    QOpenGLFunctions::OpenGLFeatures allFeatures =
+        (QOpenGLFunctions::Multitexture |
+         QOpenGLFunctions::Shaders |
+         QOpenGLFunctions::Buffers |
+         QOpenGLFunctions::Framebuffers |
+         QOpenGLFunctions::BlendColor |
+         QOpenGLFunctions::BlendEquation |
+         QOpenGLFunctions::BlendEquationSeparate |
+         QOpenGLFunctions::BlendFuncSeparate |
+         QOpenGLFunctions::BlendSubtract |
+         QOpenGLFunctions::CompressedTextures |
+         QOpenGLFunctions::Multisample |
+         QOpenGLFunctions::StencilSeparate |
+         QOpenGLFunctions::NPOTTextures);
     QVERIFY((funcs.openGLFeatures() & allFeatures) == allFeatures);
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Multitexture));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Shaders));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Buffers));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Framebuffers));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendColor));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendEquation));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::CompressedTextures));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Multisample));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::StencilSeparate));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Multitexture));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Shaders));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Buffers));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Framebuffers));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendColor));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquation));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendFuncSeparate));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendSubtract));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::CompressedTextures));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Multisample));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::StencilSeparate));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::NPOTTextures));
 #elif defined(QT_OPENGL_ES)
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Multitexture));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Buffers));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::CompressedTextures));
-    QVERIFY(funcs.hasOpenGLFeature(QGLFunctions::Multisample));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Multitexture));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Buffers));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::CompressedTextures));
+    QVERIFY(funcs.hasOpenGLFeature(QOpenGLFunctions::Multisample));
 
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::Shaders));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::BlendColor));
-    QVERIFY(!funcs.hasOpenGLFeature(QGLFunctions::StencilSeparate));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::Shaders));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendColor));
+    QVERIFY(!funcs.hasOpenGLFeature(QOpenGLFunctions::StencilSeparate));
 
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Framebuffers),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Framebuffers),
              hasExtension("GL_OES_framebuffer_object"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate),
              hasExtension("GL_OES_blend_equation_separate"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendFuncSeparate),
              hasExtension("GL_OES_blend_func_separate"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendSubtract),
              hasExtension("GL_OES_blend_subtract"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::NPOTTextures),
              hasExtension("GL_OES_texture_npot"));
 #else
     // We check for both the extension name and the minimum OpenGL version
@@ -149,53 +149,53 @@ void tst_QGLFunctions::features()
     // doesn't list an extension by name but does have the feature by virtue
     // of its version number.
     QGLFormat::OpenGLVersionFlags versions = QGLFormat::openGLVersionFlags();
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Multitexture),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Multitexture),
              hasExtension("GL_ARB_multitexture") ||
              (versions & QGLFormat::OpenGL_Version_1_3) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Shaders),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Shaders),
              hasExtension("GL_ARB_shader_objects") ||
              (versions & QGLFormat::OpenGL_Version_2_0) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Buffers),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Buffers),
              (versions & QGLFormat::OpenGL_Version_1_5) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Framebuffers),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Framebuffers),
              hasExtension("GL_EXT_framebuffer_object") ||
              hasExtension("GL_ARB_framebuffer_object"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendColor),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendColor),
              hasExtension("GL_EXT_blend_color") ||
              (versions & QGLFormat::OpenGL_Version_1_2) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendEquation),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquation),
              (versions & QGLFormat::OpenGL_Version_1_2) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate),
              hasExtension("GL_EXT_blend_equation_separate") ||
              (versions & QGLFormat::OpenGL_Version_2_0) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendFuncSeparate),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendFuncSeparate),
              hasExtension("GL_EXT_blend_func_separate") ||
              (versions & QGLFormat::OpenGL_Version_1_4) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::BlendSubtract),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::BlendSubtract),
              hasExtension("GL_EXT_blend_subtract"));
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::CompressedTextures),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::CompressedTextures),
              hasExtension("GL_ARB_texture_compression") ||
              (versions & QGLFormat::OpenGL_Version_1_3) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::Multisample),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::Multisample),
              hasExtension("GL_ARB_multisample") ||
              (versions & QGLFormat::OpenGL_Version_1_3) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::StencilSeparate),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::StencilSeparate),
              (versions & QGLFormat::OpenGL_Version_2_0) != 0);
-    QCOMPARE(funcs.hasOpenGLFeature(QGLFunctions::NPOTTextures),
+    QCOMPARE(funcs.hasOpenGLFeature(QOpenGLFunctions::NPOTTextures),
              hasExtension("GL_ARB_texture_non_power_of_two") ||
              (versions & QGLFormat::OpenGL_Version_2_0) != 0);
 #endif
 }
 
 // Verify that the multitexture functions appear to resolve and work.
-void tst_QGLFunctions::multitexture()
+void tst_QOpenGLFunctions::multitexture()
 {
-    QGLFunctions funcs;
+    QOpenGLFunctions funcs;
     QGLWidget glw;
     glw.makeCurrent();
     funcs.initializeGLFunctions();
 
-    if (!funcs.hasOpenGLFeature(QGLFunctions::Multitexture))
+    if (!funcs.hasOpenGLFeature(QOpenGLFunctions::Multitexture))
         QSKIP("Multitexture functions are not supported", SkipSingle);
 
     funcs.glActiveTexture(GL_TEXTURE1);
@@ -212,14 +212,14 @@ void tst_QGLFunctions::multitexture()
 }
 
 // Verify that the glBlendColor() function appears to resolve and work.
-void tst_QGLFunctions::blendColor()
+void tst_QOpenGLFunctions::blendColor()
 {
-    QGLFunctions funcs;
+    QOpenGLFunctions funcs;
     QGLWidget glw;
     glw.makeCurrent();
     funcs.initializeGLFunctions();
 
-    if (!funcs.hasOpenGLFeature(QGLFunctions::BlendColor))
+    if (!funcs.hasOpenGLFeature(QOpenGLFunctions::BlendColor))
         QSKIP("glBlendColor() is not supported", SkipSingle);
 
     funcs.glBlendColor(0.0f, 1.0f, 0.0f, 1.0f);
@@ -233,6 +233,6 @@ void tst_QGLFunctions::blendColor()
     QCOMPARE(colors[3], 1.0f);
 }
 
-QTEST_MAIN(tst_QGLFunctions)
+QTEST_MAIN(tst_QOpenGLFunctions)
 
-#include "tst_qglfunctions.moc"
+#include "tst_qopenglfunctions.moc"
