@@ -47,7 +47,7 @@
 
 class QGLColladaFxEffect;
 
-Q_DECLARE_METATYPE(QGLShaderProgramEffect*)
+Q_DECLARE_METATYPE(QGLColladaFxEffect*)
 
 static void cleanupEffectList(QList<QGLColladaFxEffect*> &effects)
 {
@@ -265,14 +265,14 @@ void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
 
 void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
 {
-    QTest::addColumn<QGLShaderProgramEffect*>("effect");
+    QTest::addColumn<QGLColladaFxEffect*>("effect");
     QTest::addColumn<QString>("effectId");
     QTest::addColumn<QString>("techniqueSid");
 
-    QGLShaderProgramEffect* effect = new QGLShaderProgramEffect;
+    QGLColladaFxEffect* effect = new QGLColladaFxEffect;
     QTest::newRow("empty effect") << effect << QString::fromLatin1("EmptyEffect") << QString::fromLatin1("EmptyTechnique");
 
-    effect = new QGLShaderProgramEffect;
+    effect = new QGLColladaFxEffect;
     effect->setFragmentShader("test fragment shader");
     effect->setVertexShader("Test vertex shader");
     QGLMaterial* material = new QGLMaterial;
@@ -288,7 +288,7 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
 
 void tst_QGLColladaFxEffectFactory::exportImportEffect()
 {
-    QFETCH(QGLShaderProgramEffect*, effect);
+    QFETCH(QGLColladaFxEffect*, effect);
     QFETCH(QString, effectId);
     QFETCH(QString, techniqueSid);
     QString colladaEffectString = QGLColladaFxEffectFactory::exportEffect(effect, effectId, techniqueSid);
