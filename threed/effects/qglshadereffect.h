@@ -60,7 +60,6 @@ public:
     void setActive(QGLPainter *painter, bool flag);
     void setVertexAttribute(QGL::VertexAttribute attribute,
                             const QGLAttributeValue &value);
-    void setCommonNormal(const QVector3D &value);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     QByteArray vertexShader() const;

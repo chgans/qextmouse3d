@@ -138,28 +138,6 @@ void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 // Implemented in qglpainter.cpp.
 
 /*!
-    Sets the common normal value for all vertices to \a value and
-    disable any active normal arrays.
-
-    The default implementation calls \c{glNormal3f()} to set \a value
-    on the GL fixed function pipeline.
-
-    OpenGL/ES 2.0 implementations do not have a fixed function
-    pipeline, so subclasses must override this function and
-    use QGLShaderProgram::setAttributeValue() to set the normal
-    attribute on the shader program to \a value.
-*/
-void QGLAbstractEffect::setCommonNormal(const QVector3D& value)
-{
-#if !defined(QT_OPENGL_ES_2)
-    glNormal3f(value.x(), value.y(), value.z());
-    glDisableClientState(GL_NORMAL_ARRAY);
-#else
-    Q_UNUSED(value)
-#endif
-}
-
-/*!
     Sets the vertex attribute at \a location on \a program to \a value.
     It is assumed that \a program is bound to the current context.
     Has no effect on systems without shader support.

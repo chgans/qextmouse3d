@@ -1163,7 +1163,7 @@ void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const
     on the GL state.  If the effect() does not need \a attribute,
     it will be ignored.
 
-    \sa setVertexBundle(), draw(), setCommonNormal()
+    \sa setVertexBundle(), draw()
 */
 void QGLPainter::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
@@ -1187,7 +1187,7 @@ void QGLPainter::setVertexAttribute
     on the GL state.  If the effect() does not need an attribute
     that is stored within \a buffer, it will be ignored.
 
-    \sa setVertexAttribute(), draw(), setCommonNormal()
+    \sa setVertexAttribute(), draw()
 */
 void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
 {
@@ -1209,20 +1209,6 @@ void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
         QGLVertexBundleAttribute *attr = bd->attributes[index];
         d->effect->setVertexAttribute(attr->attribute, attr->value);
     }
-}
-
-/*!
-    Sets the common normal value on the current effect() for all
-    vertices to \a value and disable any active normal arrays.
-
-    \sa setVertexAttribute()
-*/
-void QGLPainter::setCommonNormal(const QVector3D& value)
-{
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-    d->ensureEffect(this);
-    d->effect->setCommonNormal(value);
 }
 
 /*!

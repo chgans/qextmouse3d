@@ -714,11 +714,8 @@ void ShaderProgramEffect::setVertexAttribute
             setAttributeArray(program, vertexAttr, value);
         break;
     case QGL::Normal:
-        if (normalAttr != -1) {
+        if (normalAttr != -1)
             setAttributeArray(program, normalAttr, value);
-            // Must explicitly enable in case setCommonNormal() was called.
-            program->enableAttributeArray(normalAttr);
-        }
         break;
     case QGL::Color:
         if (colorAttr != -1)
@@ -745,17 +742,6 @@ void ShaderProgramEffect::setVertexAttribute
             setAttributeArray(program, customVertex1Attr, value);
         break;
     default: break;
-    }
-}
-
-/*
-  Sets the common normal (a QVector3d) for the ShaderProgramEffect to \a value.
-*/
-void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
-{
-    if (normalAttr != -1) {
-        program->disableAttributeArray(normalAttr);
-        program->setAttributeValue(normalAttr, value);
     }
 }
 

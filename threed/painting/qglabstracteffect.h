@@ -68,8 +68,6 @@ public:
     virtual void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
-    virtual void setCommonNormal(const QVector3D& value);
-
 protected:
     static void setAttributeArray
         (QGLShaderProgram *program, int location,

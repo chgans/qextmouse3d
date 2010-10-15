@@ -703,10 +703,7 @@ void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
         for (attr = 0; attr < numAttributes; ++attr) {
             if ((d->attributes & (1 << attr)) == 0)
                 continue;
-            if (attr == int(QGL::Normal))
-                d->program->disableAttributeArray(attr);
-            else
-                d->program->enableAttributeArray(attr);
+            d->program->enableAttributeArray(attr);
         }
         if (d->texture0 != -1)
             d->program->setUniformValue(d->texture0, 0);
@@ -730,21 +727,7 @@ void QGLShaderEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue &value)
 {
     Q_D(const QGLShaderEffect);
-    if (attribute == QGL::Normal && (d->attributes & (1 << QGL::Normal)) != 0)
-        d->program->enableAttributeArray(attribute);
     setAttributeArray(d->program, attribute, value);
-}
-
-/*!
-    \reimp
-*/
-void QGLShaderEffect::setCommonNormal(const QVector3D& value)
-{
-    Q_D(const QGLShaderEffect);
-    if ((d->attributes & (1 << QGL::Normal)) != 0) {
-        d->program->disableAttributeArray(QGL::Normal);
-        d->program->setAttributeValue(QGL::Normal, value);
-    }
 }
 
 /*!

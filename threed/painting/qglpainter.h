@@ -154,8 +154,6 @@ public:
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setVertexBundle(const QGLVertexBundle& buffer);
 
-    void setCommonNormal(const QVector3D& value);
-
     void update();
     void updateFixedFunction(QGLPainter::Updates updates);
 

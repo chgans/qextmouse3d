@@ -78,7 +78,6 @@ public:
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
-    void setCommonNormal(const QVector3D& value);
     void setPropertiesDirty();
     void setPropertyDirty(int property);
 
