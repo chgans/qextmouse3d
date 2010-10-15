@@ -3,12 +3,11 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-INCLUDEPATH += ../../../../threed/painting
-VPATH += ../../../../threed/painting
+INCLUDEPATH += ../../../../threed/viewing
+VPATH += ../../../../threed/viewing
 
-SOURCES += \
-    tst_qglpickcolors.cpp \
-    qglpickcolors.cpp
+SOURCES += tst_qglpickcolors.cpp
 
-HEADERS += \
-    qglpickcolors_p.h
+LIBS += -L../../../../lib -L../../../../bin
+
+include(../../../../threed/threed_dep.pri)
