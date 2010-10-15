@@ -52,7 +52,6 @@ class Q_QT3D_EXPORT QGLShaderProgramEffect : public QGLAbstractEffect
 public:
     QGLShaderProgramEffect();
     virtual ~QGLShaderProgramEffect();
-    virtual QList<QGL::VertexAttribute> requiredFields() const;
     virtual bool supportsPicking() const;
     virtual void setActive(QGLPainter *painter, bool flag);
     virtual bool isActive();

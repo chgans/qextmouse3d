@@ -362,17 +362,6 @@ QGLLitMaterialEffect::~QGLLitMaterialEffect()
 /*!
     \reimp
 */
-QList<QGL::VertexAttribute> QGLLitMaterialEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    return fields;
-}
-
-/*!
-    \reimp
-*/
 void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
 {
 #if defined(QGL_FIXED_FUNCTION_ONLY)

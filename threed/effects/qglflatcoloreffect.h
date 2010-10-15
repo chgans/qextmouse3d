@@ -56,7 +56,6 @@ public:
     QGLFlatColorEffect();
     virtual ~QGLFlatColorEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
     bool supportsPicking() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
@@ -77,7 +76,6 @@ public:
     QGLPerVertexColorEffect();
     virtual ~QGLPerVertexColorEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 

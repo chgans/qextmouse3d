@@ -148,23 +148,6 @@ public:
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }
     void createEffect(QGLPainter *painter);
-
-#ifndef QT_NO_DEBUG
-    // Required field checking is only done in debug builds.
-    QList<QGL::VertexAttribute> requiredFields;
-    inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
-        { requiredFields = fields; }
-    void removeRequiredFields(const QList<QGL::VertexAttribute>& array);
-    void removeRequiredField(QGL::VertexAttribute attribute)
-        { requiredFields.removeAll(attribute); }
-#else
-    inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
-        { Q_UNUSED(fields); }
-    inline void removeRequiredFields(const QList<QGL::VertexAttribute>& array)
-        { Q_UNUSED(array); }
-    inline void removeRequiredField(QGL::VertexAttribute attribute)
-        { Q_UNUSED(attribute); }
-#endif
 };
 
 class QGLPainterPrivateCache : public QObject

@@ -711,10 +711,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes)
 {
     QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
-#ifndef QT_NO_DEBUG
-    // FIXME
-    //checkRequiredFields();
-#endif
     GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)
@@ -753,10 +749,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes, int 
 {
     QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
-#ifndef QT_NO_DEBUG
-    // FIXME
-    //checkRequiredFields();
-#endif
     GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)

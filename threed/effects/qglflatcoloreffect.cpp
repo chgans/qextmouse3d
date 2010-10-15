@@ -96,16 +96,6 @@ QGLFlatColorEffect::~QGLFlatColorEffect()
 /*!
     \reimp
 */
-QList<QGL::VertexAttribute> QGLFlatColorEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    return fields;
-}
-
-/*!
-    \reimp
-*/
 bool QGLFlatColorEffect::supportsPicking() const
 {
     return true;
@@ -266,17 +256,6 @@ QGLPerVertexColorEffect::QGLPerVertexColorEffect()
 */
 QGLPerVertexColorEffect::~QGLPerVertexColorEffect()
 {
-}
-
-/*!
-    \reimp
-*/
-QList<QGL::VertexAttribute> QGLPerVertexColorEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Color;
-    return fields;
 }
 
 /*!

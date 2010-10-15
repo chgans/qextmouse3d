@@ -57,7 +57,6 @@ public:
     QGLShaderEffect();
     virtual ~QGLShaderEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void setVertexAttribute(QGL::VertexAttribute attribute,
                             const QGLAttributeValue &value);

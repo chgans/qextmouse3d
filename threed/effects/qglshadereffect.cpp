@@ -637,20 +637,6 @@ QGLShaderEffect::~QGLShaderEffect()
 /*!
     \reimp
 */
-QList<QGL::VertexAttribute> QGLShaderEffect::requiredFields() const
-{
-    Q_D(const QGLShaderEffect);
-    QList<QGL::VertexAttribute> list;
-    for (int attr = 0; attr < int(QGL::UserVertex); ++attr) {
-        if ((d->attributes & (1 << attr)) != 0)
-            list += QGL::VertexAttribute(attr);
-    }
-    return list;
-}
-
-/*!
-    \reimp
-*/
 void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
 {
     Q_UNUSED(painter);

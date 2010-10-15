@@ -384,34 +384,6 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 
 /*!
   \internal
-  This function returns a list of the requisite parameter fields for the shader program currently defined.
-  This assists by clearly identifying the items which need to be specified for correct funcitoning of the
-  program.
-*/
-QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    if (vertexAttr != -1)
-        fields.append(QGL::Position);
-    if (normalAttr != -1)
-        fields.append(QGL::Normal);
-    if (colorAttr != -1)
-        fields.append(QGL::Color);
-    if (texCoord0Attr != -1)
-        fields.append(QGL::TextureCoord0);
-    if (texCoord1Attr != -1)
-        fields.append(QGL::TextureCoord1);
-    if (texCoord2Attr != -1)
-        fields.append(QGL::TextureCoord2);
-    if (customVertex0Attr != -1)
-        fields.append(QGL::CustomVertex0);
-    if (customVertex1Attr != -1)
-        fields.append(QGL::CustomVertex1);
-    return fields;
-}
-
-/*!
-  \internal
     This activates or deactivates the shader based on the \a flag paramter.
     This effectively binds or releases the QGLShaderProgram to \a painter.
 */

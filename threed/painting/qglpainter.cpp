@@ -896,7 +896,6 @@ void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
     if (effect && (!d->pick || !d->pick->isPicking)) {
         d->effect = effect;
         d->effect->setActive(this, true);
-        d->setRequiredFields(effect->requiredFields());
         d->updates = UpdateAll;
     } else {
         // Revert to the effect associated with standardEffect().
@@ -1025,20 +1024,17 @@ void QGLPainterPrivate::createEffect(QGLPainter *painter)
         if (!pick || !pick->isPicking) {
             effect = userEffect;
             effect->setActive(painter, true);
-            setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         if (userEffect->supportsPicking()) {
             effect = userEffect;
             effect->setActive(painter, true);
-            setRequiredFields(effect->requiredFields());
             updates = QGLPainter::UpdateAll;
             return;
         }
         effect = pick->defaultPickEffect;
         effect->setActive(painter, true);
-        setRequiredFields(effect->requiredFields());
         updates = QGLPainter::UpdateAll;
         return;
     }
@@ -1081,57 +1077,8 @@ void QGLPainterPrivate::createEffect(QGLPainter *painter)
         effect = pick->defaultPickEffect;
         effect->setActive(painter, true);
     }
-    setRequiredFields(effect->requiredFields());
     updates = QGLPainter::UpdateAll;
 }
-
-#ifndef QT_NO_DEBUG
-
-void QGLPainterPrivate::removeRequiredFields
-    (const QList<QGL::VertexAttribute>& array)
-{
-    for (int index = 0; index < array.size(); ++index)
-        requiredFields.removeAll(array[index]);
-}
-
-void QGLPainter::checkRequiredFields()
-{
-    Q_D(QGLPainter);
-    if (d->requiredFields.isEmpty())
-        return;
-    for (int index = 0; index < d->requiredFields.size(); ++index) {
-        QGL::VertexAttribute attr = d->requiredFields[index];
-        switch (attr) {
-        case QGL::Position:
-            qWarning("Attribute QGL::Position is missing"); break;
-        case QGL::Normal:
-            qWarning("Attribute QGL::Normal is missing"); break;
-        case QGL::Color:
-            qWarning("Attribute QGL::Color is missing"); break;
-        case QGL::TextureCoord0:
-            qWarning("Attribute QGL::TextureCoord0 is missing"); break;
-        case QGL::TextureCoord1:
-            qWarning("Attribute QGL::TextureCoord1 is missing"); break;
-        case QGL::TextureCoord2:
-            qWarning("Attribute QGL::TextureCoord2 is missing"); break;
-        case QGL::CustomVertex0:
-            qWarning("Attribute QGL::CustomVertex0 is missing"); break;
-        case QGL::CustomVertex1:
-            qWarning("Attribute QGL::CustomVertex1 is missing"); break;
-        case QGL::UserVertex:
-            qWarning("Attribute QGL::UserVertex is missing"); break;
-        default:
-            qWarning("Attribute UserVertex + %d is missing",
-                     (int)(attr - QGL::UserVertex)); break;
-        }
-    }
-}
-
-#else
-
-static inline void checkRequiredFields() {}
-
-#endif
 
 /*!
     Returns the last color that was set with setColor().  The default
@@ -1229,7 +1176,6 @@ void QGLPainter::setVertexAttribute
         d->boundVertexBuffer = 0;
     }
     d->effect->setVertexAttribute(attribute, value);
-    d->removeRequiredField(attribute);
 }
 
 /*!
@@ -1262,9 +1208,6 @@ void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
     for (int index = 0; index < bd->attributes.size(); ++index) {
         QGLVertexBundleAttribute *attr = bd->attributes[index];
         d->effect->setVertexAttribute(attr->attribute, attr->value);
-#ifndef QT_NO_DEBUG
-        d->removeRequiredField(attr->attribute);
-#endif
     }
 }
 
@@ -1280,9 +1223,6 @@ void QGLPainter::setCommonNormal(const QVector3D& value)
     QGLPAINTER_CHECK_PRIVATE();
     d->ensureEffect(this);
     d->effect->setCommonNormal(value);
-#ifndef QT_NO_DEBUG
-    d->requiredFields.removeAll(QGL::Normal);
-#endif
 }
 
 /*!
@@ -1558,7 +1498,6 @@ void QGLPainter::updateFixedFunction(QGLPainter::Updates updates)
 void QGLPainter::draw(QGL::DrawingMode mode, int count, int index)
 {
     update();
-    checkRequiredFields();
     glDrawArrays((GLenum)mode, index, count);
 }
 
@@ -1579,7 +1518,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
     update();
-    checkRequiredFields();
     if (d->boundIndexBuffer) {
         QGLBuffer::release(QGLBuffer::IndexBuffer);
         d->boundIndexBuffer = 0;

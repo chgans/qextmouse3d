@@ -302,7 +302,6 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect()
     QCOMPARE(effect->vertexShader(), importedEffect->vertexShader());
     QEXPECT_FAIL("Test Effect", "QGLColladaFxEffect import/export does not respect materials", Continue);
     QCOMPARE(effect->material(), importedEffect->material());
-    QCOMPARE(effect->requiredFields(), importedEffect->requiredFields());
     QCOMPARE(effect->supportsPicking(), importedEffect->supportsPicking());
 }
 

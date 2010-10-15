@@ -54,7 +54,6 @@ public:
     QGLLitMaterialEffect();
     virtual ~QGLLitMaterialEffect();
    
-    QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 

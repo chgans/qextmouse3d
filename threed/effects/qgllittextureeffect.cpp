@@ -87,18 +87,6 @@ QGLLitTextureEffect::~QGLLitTextureEffect()
 {
 }
 
-/*!
-    \reimp
-*/
-QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    fields += QGL::TextureCoord0;
-    return fields;
-}
-
 #if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 static char const litTextureVertexShader[] =

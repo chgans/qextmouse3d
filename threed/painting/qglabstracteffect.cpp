@@ -68,17 +68,6 @@ QGLAbstractEffect::~QGLAbstractEffect()
 }
 
 /*!
-    \fn QList<QGL::VertexAttribute> QGLAbstractEffect::requiredFields() const
-
-    Returns a list of the vertex array fields that are required
-    to be provided via setVertexAttribute().  QGLPainter::draw()
-    uses this to warn when the application has not supplied
-    sufficient arguments to use the effect.
-
-    \sa setVertexAttribute(), QGLPainter::draw()
-*/
-
-/*!
     Returns true if this effect supports object picking; false otherwise.
     The default implementation returns false, which causes QGLPainter
     to use the effect associated with QGL::FlatColor to perform

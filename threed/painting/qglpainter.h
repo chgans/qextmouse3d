@@ -202,10 +202,6 @@ private:
 
     friend class QGLAbstractEffect;
 
-#ifndef QT_NO_DEBUG
-    void checkRequiredFields();
-#endif
-
     bool begin(const QGLContext *context, QGLAbstractSurface *surface,
                bool destroySurface = true);
 };
