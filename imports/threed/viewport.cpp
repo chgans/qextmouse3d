@@ -690,9 +690,17 @@ QObject *Viewport::objectForPoint(int x, int y)
     if (!d->viewWidget)
         return 0;
 
+    QPainter qpainter;
     QGLPainter painter;
-    if (!painter.begin(d->viewWidget))
-        return 0;
+    QGLWidget *glw = qobject_cast<QGLWidget *>(d->viewWidget);
+    if (glw) {
+        if (!painter.begin(glw))
+            return 0;
+    } else {
+        qpainter.begin(d->viewWidget);
+        if (!painter.begin(&qpainter))
+            return 0;
+    }
 
     int objectId = 0;
 

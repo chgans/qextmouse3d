@@ -59,8 +59,6 @@
 #include <QtCore/qatomic.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qstack.h>
-#include <QtGui/private/qpaintengineex_p.h>
-#include <QtOpenGL/private/qglextensions_p.h>
 
 QT_BEGIN_NAMESPACE
 
