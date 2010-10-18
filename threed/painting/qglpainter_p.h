@@ -124,9 +124,9 @@ public:
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
-    const QGLLightParameters *mainLight;
-    QMatrix4x4 mainLightTransform;
     QGLLightParameters *defaultLight;
+    QArray<const QGLLightParameters *> lights;
+    QArray<QMatrix4x4> lightTransforms;
     const QGLMaterial *frontMaterial;
     const QGLMaterial *backMaterial;
     QGLMaterial *defaultMaterial;

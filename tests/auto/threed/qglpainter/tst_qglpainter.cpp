@@ -64,6 +64,7 @@ private slots:
     void projectionMatrixStack();
     void modelViewMatrixStack();
     void isCullable();
+    void lights();
 
 public slots:
     void clearPaint();
@@ -555,6 +556,77 @@ void tst_QGLPainter::isCullable()
     // Box that is beyond the far plane.
     QBox3D box8(QVector3D(-1, -1, -1000), QVector3D(1, 1, -1001));
     QVERIFY(painter.isCullable(box8));
+}
+
+void tst_QGLPainter::lights()
+{
+    QGLPainter painter(widget);
+
+    // Make sure the mainLight() is not present before we start these tests.
+    painter.removeLight(0);
+
+    QCOMPARE(painter.maximumLightId(), -1);
+    QVERIFY(painter.light(0) == 0);
+    QVERIFY(painter.lightTransform(0).isIdentity());
+    QVERIFY(painter.light(-1) == 0);
+    QVERIFY(painter.lightTransform(-1).isIdentity());
+
+    QGLLightParameters lparams1;
+    QGLLightParameters lparams2;
+    QGLLightParameters lparams3;
+
+    int lightId1 = painter.addLight(&lparams1);
+    QCOMPARE(lightId1, 0);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(lightId1) == &lparams1);
+    QVERIFY(painter.lightTransform(lightId1) == painter.modelViewMatrix());
+
+    QMatrix4x4 m(painter.modelViewMatrix());
+    m.translate(-1, 2, -5);
+
+    int lightId2 = painter.addLight(&lparams2, m);
+    QCOMPARE(lightId2, 1);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId1) == &lparams1);
+    QVERIFY(painter.lightTransform(lightId1) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    painter.removeLight(lightId1);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId1) == 0);
+    QVERIFY(painter.lightTransform(lightId1).isIdentity());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    int lightId3 = painter.addLight(&lparams3);
+    QCOMPARE(lightId3, 0);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId3) == &lparams3);
+    QVERIFY(painter.lightTransform(lightId3) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    painter.removeLight(lightId2);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(lightId3) == &lparams3);
+    QVERIFY(painter.lightTransform(lightId3) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == 0);
+    QVERIFY(painter.lightTransform(lightId2).isIdentity());
+
+    painter.removeLight(lightId3);
+    QCOMPARE(painter.maximumLightId(), -1);
+    QVERIFY(painter.light(lightId3) == 0);
+    QVERIFY(painter.lightTransform(lightId3).isIdentity());
+    QVERIFY(painter.light(lightId2) == 0);
+    QVERIFY(painter.lightTransform(lightId2).isIdentity());
+
+    // Check default construction of the main light.
+    const QGLLightParameters *mainLight = painter.mainLight();
+    QVERIFY(mainLight != 0);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(0) == mainLight);
+    QVERIFY(painter.lightTransform(0).isIdentity());
 }
 
 QTEST_MAIN(tst_QGLPainter)

@@ -115,7 +115,6 @@ QGLPainterPrivate::QGLPainterPrivate()
       eye(QGL::NoEye),
       lightModel(0),
       defaultLightModel(0),
-      mainLight(0),
       defaultLight(0),
       frontMaterial(0),
       backMaterial(0),
@@ -1669,19 +1668,29 @@ void QGLPainter::setLightModel(const QGLLightModel *value)
     the point when setMainLight() was called.  The mainLightTransform()
     must be applied to obtain eye co-ordinates.
 
-    \sa setMainLight(), mainLightTransform()
+    This function is a convenience that returns the light with
+    identifier 0.  If light 0 is not currently enabled, then a
+    default light is added to the painter with an identity
+    transform and then returned as the main light.
+
+    \sa setMainLight(), mainLightTransform(), addLight()
 */
 const QGLLightParameters *QGLPainter::mainLight() const
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    if (!d->mainLight) {
+    if (d->lights.isEmpty()) {
         if (!d->defaultLight)
             d->defaultLight = new QGLLightParameters();
-        return d->defaultLight;
-    } else {
-        return d->mainLight;
+        d->lights.append(d->defaultLight);
+        d->lightTransforms.append(QMatrix4x4());
+    } else if (!d->lights[0]) {
+        if (!d->defaultLight)
+            d->defaultLight = new QGLLightParameters();
+        d->lights[0] = d->defaultLight;
+        d->lightTransforms[0] = QMatrix4x4();
     }
+    return d->lights[0];
 }
 
 /*!
@@ -1699,18 +1708,29 @@ const QGLLightParameters *QGLPainter::mainLight() const
     The light settings in the GL server will not be changed until
     update() is called.
 
-    If \a parameters is null, then mainLight() will be set to a
-    default internal light object.
+    This function is a convenience that sets the light with
+    identifier 0.  If \a parameters is null, then light 0
+    will be removed.
 
-    \sa mainLight(), mainLightTransform()
+    \sa mainLight(), mainLightTransform(), addLight()
 */
 void QGLPainter::setMainLight(const QGLLightParameters *parameters)
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->mainLight = parameters;
-    d->mainLightTransform = modelViewMatrix();
-    d->updates |= QGLPainter::UpdateLights;
+    if (d->lights.isEmpty()) {
+        if (parameters) {
+            d->lights.append(parameters);
+            d->lightTransforms.append(modelViewMatrix());
+            d->updates |= QGLPainter::UpdateLights;
+        }
+    } else if (parameters) {
+        d->lights[0] = parameters;
+        d->lightTransforms[0] = modelViewMatrix();
+        d->updates |= QGLPainter::UpdateLights;
+    } else {
+        removeLight(0);
+    }
 }
 
 /*!
@@ -1727,8 +1747,9 @@ void QGLPainter::setMainLight(const QGLLightParameters *parameters)
     The light settings in the GL server will not be changed until
     update() is called.
 
-    If \a parameters is null, then mainLight() will be set to a
-    default internal light object.
+    This function is a convenience that sets the light with
+    identifier 0.  If \a parameters is null, then light 0
+    will be removed.
 
     \sa mainLight(), mainLightTransform()
 */
@@ -1737,9 +1758,19 @@ void QGLPainter::setMainLight
 {
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->mainLight = parameters;
-    d->mainLightTransform = transform;
-    d->updates |= QGLPainter::UpdateLights;
+    if (d->lights.isEmpty()) {
+        if (parameters) {
+            d->lights.append(parameters);
+            d->lightTransforms.append(transform);
+            d->updates |= QGLPainter::UpdateLights;
+        }
+    } else if (parameters) {
+        d->lights[0] = parameters;
+        d->lightTransforms[0] = transform;
+        d->updates |= QGLPainter::UpdateLights;
+    } else {
+        removeLight(0);
+    }
 }
 
 /*!
@@ -1750,13 +1781,162 @@ void QGLPainter::setMainLight
     convert the light from world co-ordinates into eye co-ordinates.
     The eye transformation is set when the light is specified.
 
-    \sa mainLight(), setMainLight()
+    This function is a convenience that returns the tranform for the
+    light with identifier 0.  If light 0 is not enabled, then the
+    function returns the identity matrix.
+
+    \sa mainLight(), setMainLight(), addLight()
 */
 QMatrix4x4 QGLPainter::mainLightTransform() const
 {
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (!d->lights.isEmpty() && d->lights[0])
+        return d->lightTransforms[0];
+    else
+        return QMatrix4x4();
+}
+
+/*!
+    Adds a light to this painter, with the specified \a parameters.
+    The lightTransform() for the light is set to the current
+    modelViewMatrix().  Returns an identifier for the light.
+
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The lightTransform() specifies the transformation to apply to
+    convert the world co-ordinates into eye co-ordinates when the light
+    is used.
+
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
+
+    The light settings in the GL server will not be changed until
+    update() is called.
+
+    \sa removeLight(), light(), mainLight()
+*/
+int QGLPainter::addLight(const QGLLightParameters *parameters)
+{
+    return addLight(parameters, modelViewMatrix());
+}
+
+/*!
+    Adds a light to this painter, with the specified \a parameters.
+    The lightTransform() for the light is set to \a transform.
+    Returns an identifier for the light.
+
+    Light parameters are stored in world co-ordinates, not eye co-ordinates.
+    The \a transform specifies the transformation to apply to
+    convert the world co-ordinates into eye co-ordinates when the light
+    is used.
+
+    Note: the \a parameters may be ignored by effect() if it
+    has some other way to determine the lighting conditions.
+
+    The light settings in the GL server will not be changed until
+    update() is called.
+
+    \sa removeLight(), light(), mainLight()
+*/
+int QGLPainter::addLight(const QGLLightParameters *parameters, const QMatrix4x4 &transform)
+{
+    Q_ASSERT(parameters);
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    return d->mainLightTransform;
+    int lightId = 0;
+    while (lightId < d->lights.size() && d->lights[lightId] != 0)
+        ++lightId;
+    if (lightId < d->lights.size()) {
+        d->lights[lightId] = parameters;
+        d->lightTransforms[lightId] = transform;
+    } else {
+        d->lights.append(parameters);
+        d->lightTransforms.append(transform);
+    }
+    d->updates |= QGLPainter::UpdateLights;
+    return lightId;
+}
+
+/*!
+    Removes the light with the specified \a lightId.
+
+    \sa addLight(), light()
+*/
+void QGLPainter::removeLight(int lightId)
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (lightId >= 0 && lightId < d->lights.size()) {
+        d->lights[lightId] = 0;
+        if (lightId >= (d->lights.size() - 1)) {
+            do {
+                d->lights.resize(lightId);
+                d->lightTransforms.resize(lightId);
+                --lightId;
+            } while (lightId >= 0 && d->lights[lightId] == 0);
+        }
+        d->updates |= QGLPainter::UpdateLights;
+    }
+}
+
+/*!
+    Returns the maximum light identifier currently in use on this painter;
+    or -1 if there are no lights.
+
+    It is possible that some light identifiers less than maximumLightId()
+    may be invalid because the lights have been removed.  Use the following
+    code to locate all enabled lights:
+
+    \code
+    int maxLightId = painter.maximumLightId();
+    for (int lightId = 0; index <= maxLightId; ++index) {
+        const QGLLightParameters *params = painter.light(lightId);
+        if (params) {
+            ...
+        }
+    }
+    \endcode
+
+    \sa addLight(), light()
+*/
+int QGLPainter::maximumLightId() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return d->lights.size() - 1;
+}
+
+/*!
+    Returns the parameters for the light with the identifier \a lightId;
+    or null if \a lightId is not valid or has been removed.
+
+    \sa addLight(), removeLight(), lightTransform()
+*/
+const QGLLightParameters *QGLPainter::light(int lightId) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (lightId >= 0 && lightId < d->lights.size())
+        return d->lights[lightId];
+    else
+        return 0;
+}
+
+/*!
+    Returns the modelview transformation for the light with the identifier
+    \a lightId; or the identity matrix if \a lightId is not valid or has
+    been removed.
+
+    \sa addLight(), removeLight(), light()
+*/
+QMatrix4x4 QGLPainter::lightTransform(int lightId) const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    if (lightId >= 0 && lightId < d->lights.size() && d->lights[lightId])
+        return d->lightTransforms[lightId];
+    else
+        return QMatrix4x4();
 }
 
 /*!

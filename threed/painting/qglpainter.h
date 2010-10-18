@@ -176,6 +176,14 @@ public:
         (const QGLLightParameters *parameters, const QMatrix4x4& transform);
     QMatrix4x4 mainLightTransform() const;
 
+    int addLight(const QGLLightParameters *parameters);
+    int addLight(const QGLLightParameters *parameters, const QMatrix4x4 &transform);
+    void removeLight(int lightId);
+
+    int maximumLightId() const;
+    const QGLLightParameters *light(int lightId) const;
+    QMatrix4x4 lightTransform(int lightId) const;
+
     const QGLMaterial *faceMaterial(QGL::Face face) const;
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
     void setFaceColor(QGL::Face face, const QColor& color);
