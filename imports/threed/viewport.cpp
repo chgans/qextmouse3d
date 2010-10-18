@@ -49,6 +49,7 @@
 #include "qglframebufferobjectsurface.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsview.h>
+#include <QtGui/qgraphicsscene.h>
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtCore/qtimer.h>
 
@@ -795,6 +796,17 @@ void Viewport::cameraChanged()
 */
 void Viewport::switchToOpenGL()
 {
+    // If there are multiple Viewport items in the QML, then it is
+    // possible that another Viewport has already switched to QGLWidget.
+    QList<QGraphicsView *> views = scene()->views();
+    if (!views.isEmpty()) {
+        QGLWidget *glw = qobject_cast<QGLWidget *>(views[0]->viewport());
+        if (glw) {
+            d->viewWidget = glw;
+            return;
+        }
+    }
+
     QGraphicsView *view =
         qobject_cast<QGraphicsView *>(d->viewWidget->parentWidget());
     if (view) {
