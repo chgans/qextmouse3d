@@ -124,11 +124,8 @@ QGLPainterPrivate::QGLPainterPrivate()
       updates(QGLPainter::UpdateAll),
       pick(0),
       boundVertexBuffer(0),
-      boundIndexBuffer(0)
-#if QT_VERSION < 0x040700
-      , vertexAttribPointer(0)
-#endif
-      , renderSequencer(0)
+      boundIndexBuffer(0),
+      renderSequencer(0)
 {
     context = 0;
     effect = 0;

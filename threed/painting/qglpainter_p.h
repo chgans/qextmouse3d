@@ -62,24 +62,6 @@
 
 QT_BEGIN_NAMESPACE
 
-#ifndef Q_WS_MAC
-# ifndef APIENTRYP
-#   ifdef APIENTRY
-#     define APIENTRYP APIENTRY *
-#   else
-#     define APIENTRY
-#     define APIENTRYP *
-#   endif
-# endif
-#else
-# define APIENTRY
-# define APIENTRYP *
-#endif
-
-#if QT_VERSION < 0x040700
-typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
-#endif
-
 #define QGL_MAX_LIGHTS      32
 #define QGL_MAX_STD_EFFECTS 16
 
@@ -138,9 +120,6 @@ public:
     QStack<QGLPainterSurfaceInfo> surfaceStack;
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
-#if QT_VERSION < 0x040700
-    q_glVertexAttribPointer vertexAttribPointer;
-#endif
     QGLRenderSequencer *renderSequencer;
 
     inline void ensureEffect(QGLPainter *painter)
