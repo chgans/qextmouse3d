@@ -54,7 +54,7 @@
     to a 3D mouse device.  Motions in 3D are delivered to the widget in the
     form of a QMouse3DEvent and special purpose buttons are delivered
     in the form of a QKeyEvent.  Applications use QMouse3DEventProvider to
-    register a QWidget to receive such events, as show in the following
+    register a QWidget to receive such events, as shown in the following
     example:
 
     \code

@@ -71,22 +71,50 @@ void tst_QGLLightModel::modify()
 {
     // Test modifying each field individually.
     QGLLightModel model;
+    QSignalSpy modelSpy(&model, SIGNAL(modelChanged()));
+    QSignalSpy controlSpy(&model, SIGNAL(colorControlChanged()));
+    QSignalSpy viewerSpy(&model, SIGNAL(viewerPositionChanged()));
+    QSignalSpy ambientSpy(&model, SIGNAL(ambientSceneColorChanged()));
+    QSignalSpy objectSpy(&model, SIGNAL(lightModelChanged()));
+
     model.setModel(QGLLightModel::TwoSided);
     QVERIFY(model.model() == QGLLightModel::TwoSided);
+    QCOMPARE(modelSpy.size(), 1);
+    QCOMPARE(objectSpy.size(), 1);
+
     model.setColorControl(QGLLightModel::SeparateSpecularColor);
     QVERIFY(model.colorControl() == QGLLightModel::SeparateSpecularColor);
+    QCOMPARE(controlSpy.size(), 1);
+    QCOMPARE(objectSpy.size(), 2);
+
     model.setViewerPosition(QGLLightModel::LocalViewer);
     QVERIFY(model.viewerPosition() == QGLLightModel::LocalViewer);
+    QCOMPARE(viewerSpy.size(), 1);
+    QCOMPARE(objectSpy.size(), 3);
+
     model.setAmbientSceneColor(Qt::red);
     QCOMPARE(model.ambientSceneColor().red(), 255);
     QCOMPARE(model.ambientSceneColor().green(), 0);
     QCOMPARE(model.ambientSceneColor().blue(), 0);
     QCOMPARE(model.ambientSceneColor().alpha(), 255);
+    QCOMPARE(ambientSpy.size(), 1);
+    QCOMPARE(objectSpy.size(), 4);
 
     // Test that we don't get any side effects between properties.
     QVERIFY(model.model() == QGLLightModel::TwoSided);
     QVERIFY(model.colorControl() == QGLLightModel::SeparateSpecularColor);
     QVERIFY(model.viewerPosition() == QGLLightModel::LocalViewer);
+
+    // Set the properties to same values and check for no further signals.
+    model.setModel(QGLLightModel::TwoSided);
+    model.setColorControl(QGLLightModel::SeparateSpecularColor);
+    model.setViewerPosition(QGLLightModel::LocalViewer);
+    model.setAmbientSceneColor(Qt::red);
+    QCOMPARE(modelSpy.size(), 1);
+    QCOMPARE(controlSpy.size(), 1);
+    QCOMPARE(viewerSpy.size(), 1);
+    QCOMPARE(ambientSpy.size(), 1);
+    QCOMPARE(objectSpy.size(), 4);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLLightModel)

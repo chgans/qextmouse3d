@@ -49,7 +49,6 @@
 #include "qglheightmap.h"
 #include "rippleheightmap.h"
 #include "qglabstracteffect.h"
-#include "qglshaderprogrameffect.h"
 #include <QGLShader>
 #include <QtCore/qmath.h>
 #include "qglabstractscene.h"
@@ -70,7 +69,7 @@ public:
     {
     }
 
-    QGLShaderProgramEffect *effect;
+    QGLColladaFxEffect *effect;
     QString fragmentShader;
     QString vertexShader;
 
@@ -109,7 +108,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     mMaterial->setObjectName(QLatin1String("ShaderWizardGLWidgetMaterial"));
 
     setTeapotGeometry();
-    d->effect = new QGLShaderProgramEffect;
+    d->effect = new QGLColladaFxEffect;
 }
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
@@ -225,7 +224,7 @@ void ShaderWizardGLWidget::clearScene()
     update();
 }
 
-void ShaderWizardGLWidget::setEffect(QGLShaderProgramEffect *effect)
+void ShaderWizardGLWidget::setEffect(QGLColladaFxEffect *effect)
 {
     d->effect = effect;
 }
@@ -355,7 +354,7 @@ void ShaderWizardGLWidget::setHeightMapGeometry()
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 {
     if(!d->effect)
-        d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
+        d->effect = new QGLColladaFxEffect(); // QGLPainter will delete the old one;
     d->effect->setVertexShader(shader.toLatin1());
     update();
     emit effectChanged();
@@ -364,7 +363,7 @@ void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 void ShaderWizardGLWidget::setFragmentShader(QString const & shader )
 {
     if(!d->effect)
-        d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
+        d->effect = new QGLColladaFxEffect(); // QGLPainter will delete the old one;
 
     d->effect->setFragmentShader(shader.toLatin1());
     update();
@@ -492,4 +491,4 @@ QColor ShaderWizardGLWidget::ambientMaterialColor() { return mMaterial->ambientC
 QColor ShaderWizardGLWidget::diffuseMaterialColor() { return mMaterial->diffuseColor(); }
 QColor ShaderWizardGLWidget::specularMaterialColor() { return mMaterial->specularColor(); }
 int ShaderWizardGLWidget::materialShininess() { return mMaterial->shininess(); }
-QGLShaderProgramEffect* ShaderWizardGLWidget::effect() { return d->effect; }
+QGLColladaFxEffect* ShaderWizardGLWidget::effect() { return d->effect; }

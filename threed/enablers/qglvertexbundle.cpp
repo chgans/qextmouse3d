@@ -389,7 +389,8 @@ bool QGLVertexBundle::upload()
             int components = attr->elementSize() / sizeof(float);
             vertexBufferInterleave
                 (dst + attrPosn, stride,
-                 attr->value.floatData() + vertex * components,
+                 reinterpret_cast<const float *>(attr->value.data()) +
+                        vertex * components,
                  components, count);
             attrPosn += attr->elementSize() / sizeof(float);
         }

@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglshadereffect.h"
+#include "qglabstracteffect_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
 #include <QtCore/qfile.h>
 
@@ -76,10 +77,6 @@ QT_BEGIN_NAMESPACE
     on desktop systems.  The programmer should also restrict themselves
     to just features that are present in GLSL/ES, and avoid
     standard variable names that only work on the desktop.
-
-    If the \c{GL_ARB_ES2_compatibility} extension is present,
-    then the above prefix is not added because the desktop OpenGL
-    implementation supports precision qualifiers.
 
     QGLShaderEffect also defines some standard attribute and uniform
     variable names that all shaders are expected to use.  The following
@@ -426,15 +423,26 @@ QT_BEGIN_NAMESPACE
         gl_FragColor = clamp(color + qLitSecondaryColor, 0.0, 1.0);
     }
     \endcode
+
+    \section1 Fixed function operation
+
+    If the OpenGL implementation does not support shaders, then
+    QGLShaderEffect will fall back to a flat color effect based
+    on QGLPainter::color().  It is recommended that the application
+    consult QGLPainter::isFixedFunction() to determine if some
+    other effect should be used instead.
 */
 
 class QGLShaderEffectPrivate
 {
 public:
     QGLShaderEffectPrivate()
-        : program(0)
-        , maximumLights(8)
+        : maximumLights(8)
         , attributes(0)
+        , regenerate(true)
+        , fixedFunction(false)
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
+        , program(0)
         , matrix(-1)
         , mvMatrix(-1)
         , projMatrix(-1)
@@ -448,18 +456,24 @@ public:
         , haveLights(0)
         , haveMaterial(0)
         , haveMaterials(0)
+#endif
     {
     }
     ~QGLShaderEffectPrivate()
     {
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
         delete program;
+#endif
     }
 
     QByteArray vertexShader;
     QByteArray fragmentShader;
-    QGLShaderProgram *program;
     int maximumLights;
     int attributes;
+    bool regenerate;
+    bool fixedFunction;
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
+    QGLShaderProgram *program;
     int matrix;
     int mvMatrix;
     int projMatrix;
@@ -489,7 +503,10 @@ public:
     void setMaterial
         (const QGLMaterial *mparams, const QGLLightModel *model,
          const QGLLightParameters *lparams, const char *array, int index);
+#endif
 };
+
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
 
 void QGLShaderEffectPrivate::setUniformValue
     (const char *array, int index, const char *field, GLfloat v)
@@ -613,6 +630,8 @@ void QGLShaderEffectPrivate::setMaterial
         (array, index, "shininess", GLfloat(mparams->shininess()));
 }
 
+#endif // !QGL_FIXED_FUNCTION_ONLY
+
 /*!
     Constructs a new shader program effect.  This constructor is typically
     followed by calls to setVertexShader() and setFragmentShader().
@@ -637,23 +656,23 @@ QGLShaderEffect::~QGLShaderEffect()
 /*!
     \reimp
 */
-QList<QGL::VertexAttribute> QGLShaderEffect::requiredFields() const
-{
-    Q_D(const QGLShaderEffect);
-    QList<QGL::VertexAttribute> list;
-    for (int attr = 0; attr < int(QGL::UserVertex); ++attr) {
-        if ((d->attributes & (1 << attr)) != 0)
-            list += QGL::VertexAttribute(attr);
-    }
-    return list;
-}
-
-/*!
-    \reimp
-*/
 void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
 {
-    Q_UNUSED(painter);
+    Q_D(QGLShaderEffect);
+
+#if !defined(QGL_SHADERS_ONLY)
+    d->fixedFunction = painter->isFixedFunction();
+    if (d->fixedFunction) {
+        // Fixed function emulation is flat color only.
+        if (flag)
+            glEnableClientState(GL_VERTEX_ARRAY);
+        else
+            glDisableClientState(GL_VERTEX_ARRAY);
+        return;
+    }
+#endif
+
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
     static const char *const attributes[] = {
         "qgl_Vertex",
         "qgl_Normal",
@@ -665,8 +684,14 @@ void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
         "qgl_Custom1"
     };
     const int numAttributes = 8;
-    Q_D(QGLShaderEffect);
+    Q_UNUSED(painter);
     int attr;
+    if (d->regenerate) {
+        // The shader source has changed since the last call to setActive().
+        delete d->program;
+        d->program = 0;
+        d->regenerate = false;
+    }
     if (!d->program) {
         if (!flag)
             return;
@@ -717,10 +742,7 @@ void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
         for (attr = 0; attr < numAttributes; ++attr) {
             if ((d->attributes & (1 << attr)) == 0)
                 continue;
-            if (attr == int(QGL::Normal))
-                d->program->disableAttributeArray(attr);
-            else
-                d->program->enableAttributeArray(attr);
+            d->program->enableAttributeArray(attr);
         }
         if (d->texture0 != -1)
             d->program->setUniformValue(d->texture0, 0);
@@ -735,6 +757,7 @@ void QGLShaderEffect::setActive(QGLPainter *painter, bool flag)
         }
         d->program->release();
     }
+#endif
 }
 
 /*!
@@ -744,21 +767,15 @@ void QGLShaderEffect::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue &value)
 {
     Q_D(const QGLShaderEffect);
-    if (attribute == QGL::Normal && (d->attributes & (1 << QGL::Normal)) != 0)
-        d->program->enableAttributeArray(attribute);
-    setAttributeArray(d->program, attribute, value);
-}
-
-/*!
-    \reimp
-*/
-void QGLShaderEffect::setCommonNormal(const QVector3D& value)
-{
-    Q_D(const QGLShaderEffect);
-    if ((d->attributes & (1 << QGL::Normal)) != 0) {
-        d->program->disableAttributeArray(QGL::Normal);
-        d->program->setAttributeValue(QGL::Normal, value);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->fixedFunction) {
+        QGLAbstractEffect::setVertexAttribute(attribute, value);
+        return;
     }
+#endif
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
+    setAttributeArray(d->program, attribute, value);
+#endif
 }
 
 /*!
@@ -767,6 +784,15 @@ void QGLShaderEffect::setCommonNormal(const QVector3D& value)
 void QGLShaderEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     Q_D(QGLShaderEffect);
+#if !defined(QGL_SHADERS_ONLY)
+    if (d->fixedFunction) {
+        // Fixed function emulation is flat color only.
+        painter->updateFixedFunction
+            (updates & (QGLPainter::UpdateColor | QGLPainter::UpdateMatrices));
+        return;
+    }
+#endif
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
     if ((updates & QGLPainter::UpdateColor) != 0 && d->color != -1)
         d->program->setUniformValue(d->color, painter->color());
     if ((updates & QGLPainter::UpdateMatrices) != 0) {
@@ -784,15 +810,36 @@ void QGLShaderEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
             d->program->setUniformValue(d->projMatrix, painter->projectionMatrix());
     }
     if ((updates & QGLPainter::UpdateLights) != 0) {
-        // TODO: multiple light sources, and clamping at maximumLights().
         if (d->haveLight) {
+            // Only one light needed so make it the main light.
             d->setLight(painter->mainLight(), painter->mainLightTransform(),
                         "qgl_Light", -1);
         } else if (d->haveLights) {
-            d->setLight(painter->mainLight(), painter->mainLightTransform(),
-                        "qgl_Lights", 0);
+            // Shader supports multiple light sources.
+            int numLights = 0;
+            int maxLightId = painter->maximumLightId();
+            if (maxLightId < 0) {
+                // No lights - re-enable the main light so we have something.
+                painter->mainLight();
+                maxLightId = 0;
+            }
+            for (int lightId = 0; lightId <= maxLightId; ++lightId) {
+                // Is this light currently enabled?
+                const QGLLightParameters *lparams = painter->light(lightId);
+                if (!lparams)
+                    continue;
+
+                // Set the parameters for the next shader light number.
+                d->setLight(lparams, painter->lightTransform(lightId),
+                            "qgl_Lights", numLights);
+
+                // Bail out if we've hit the maximum shader light limit.
+                ++numLights;
+                if (numLights >= d->maximumLights)
+                    break;
+            }
             if (d->numLights != -1)
-                d->program->setUniformValue(d->numLights, 1);
+                d->program->setUniformValue(d->numLights, numLights);
         }
     }
     if ((updates & QGLPainter::UpdateMaterials) != 0 ||
@@ -825,6 +872,7 @@ void QGLShaderEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
             }
         }
     }
+#endif
 }
 
 /*!
@@ -847,6 +895,7 @@ void QGLShaderEffect::setVertexShader(const QByteArray &source)
 {
     Q_D(QGLShaderEffect);
     d->vertexShader = source;
+    d->regenerate = true;
 }
 
 /*!
@@ -859,10 +908,12 @@ void QGLShaderEffect::setVertexShaderFromFile(const QString &fileName)
 {
     Q_D(QGLShaderEffect);
     QFile file(fileName);
-    if (file.open(QIODevice::ReadOnly))
+    if (file.open(QIODevice::ReadOnly)) {
         d->vertexShader = file.readAll();
-    else
+        d->regenerate = true;
+    } else {
         qWarning() << "QGLShaderEffect::setVertexShaderFromFile: could not open " << fileName;
+    }
 }
 
 /*!
@@ -886,10 +937,12 @@ void QGLShaderEffect::setFragmentShaderFromFile(const QString &fileName)
 {
     Q_D(QGLShaderEffect);
     QFile file(fileName);
-    if (file.open(QIODevice::ReadOnly))
+    if (file.open(QIODevice::ReadOnly)) {
         d->fragmentShader = file.readAll();
-    else
+        d->regenerate = true;
+    } else {
         qWarning() << "QGLShaderEffect::setFragmentShaderFromFile: could not open " << fileName;
+    }
 }
 
 /*!
@@ -901,6 +954,7 @@ void QGLShaderEffect::setFragmentShader(const QByteArray &source)
 {
     Q_D(QGLShaderEffect);
     d->fragmentShader = source;
+    d->regenerate = true;
 }
 
 /*!
@@ -945,8 +999,12 @@ void QGLShaderEffect::setMaximumLights(int value)
 */
 QGLShaderProgram *QGLShaderEffect::program() const
 {
+#if !defined(QGL_FIXED_FUNCTION_ONLY)
     Q_D(const QGLShaderEffect);
     return d->program;
+#else
+    return 0;
+#endif
 }
 
 /*!

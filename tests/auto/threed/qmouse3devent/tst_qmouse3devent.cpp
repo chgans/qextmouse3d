@@ -82,8 +82,7 @@ public:
     QStringList deviceNames() const { return names; }
     void setDeviceNames(const QStringList &value) { names = value; }
 
-    void sendMotion(QMouse3DEvent *event, bool filter)
-        { motion(event, filter); }
+    void sendMotion(QMouse3DEvent *event) { motion(event); }
     void sendKeyPress(int key) { keyPress(key); }
     void sendKeyRelease(int key) { keyRelease(key); }
 
@@ -248,7 +247,7 @@ void tst_QMouse3DEvent::deliverEvents()
     QVERIFY(device2->widget() == 0);    // device not available
 
     QMouse3DEvent event(1, -2, 3, -4, 5, -6);
-    device1->sendMotion(&event, false);
+    device1->sendMotion(&event);
 
     QCOMPARE(widget.motionsSeen, 1);
     QCOMPARE(widget.translateX, 1);
@@ -290,7 +289,7 @@ void tst_QMouse3DEvent::filterEvents()
     // Toggle rotation mode (which will turn it off).
     provider.toggleFilter(QMouse3DEventProvider::Rotations);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 1);
     QCOMPARE(widget.translateX, 10);
     QCOMPARE(widget.translateY, 20);
@@ -308,7 +307,7 @@ void tst_QMouse3DEvent::filterEvents()
     // Turn translation mode off (and rotation mode back on again).
     provider.toggleFilter(QMouse3DEventProvider::Translations);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 2);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -326,7 +325,7 @@ void tst_QMouse3DEvent::filterEvents()
     // Turn translation mode back on (rotation should stay on).
     provider.toggleFilter(QMouse3DEventProvider::Translations);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 3);
     QCOMPARE(widget.translateX, 10);
     QCOMPARE(widget.translateY, 20);
@@ -346,7 +345,7 @@ void tst_QMouse3DEvent::filterEvents()
     provider.toggleFilter(QMouse3DEventProvider::DominantAxis);
 
     QMouse3DEvent eventTXN(-100, 20, 30, 40, 50, 60);
-    device1->sendMotion(&eventTXN, true);
+    device1->sendMotion(&eventTXN);
     QCOMPARE(widget.motionsSeen, 4);
     QCOMPARE(widget.translateX, -100);
     QCOMPARE(widget.translateY, 0);
@@ -364,7 +363,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(sensitivitySpy.size(), 0);
 
     QMouse3DEvent eventTXP(100, 20, 30, 40, 50, 60);
-    device1->sendMotion(&eventTXP, true);
+    device1->sendMotion(&eventTXP);
     QCOMPARE(widget.motionsSeen, 5);
     QCOMPARE(widget.translateX, 100);
     QCOMPARE(widget.translateY, 0);
@@ -374,7 +373,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventTYN(10, -200, 30, 40, 50, 60);
-    device1->sendMotion(&eventTYN, true);
+    device1->sendMotion(&eventTYN);
     QCOMPARE(widget.motionsSeen, 6);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, -200);
@@ -384,7 +383,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventTYP(10, 200, 30, 40, 50, 60);
-    device1->sendMotion(&eventTYP, true);
+    device1->sendMotion(&eventTYP);
     QCOMPARE(widget.motionsSeen, 7);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 200);
@@ -394,7 +393,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventTZN(10, 20, -300, 40, 50, 60);
-    device1->sendMotion(&eventTZN, true);
+    device1->sendMotion(&eventTZN);
     QCOMPARE(widget.motionsSeen, 8);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -404,7 +403,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventTZP(10, 20, 300, 40, 50, 60);
-    device1->sendMotion(&eventTZP, true);
+    device1->sendMotion(&eventTZP);
     QCOMPARE(widget.motionsSeen, 9);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -414,7 +413,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventRXN(10, 20, 30, -400, 50, 60);
-    device1->sendMotion(&eventRXN, true);
+    device1->sendMotion(&eventRXN);
     QCOMPARE(widget.motionsSeen, 10);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -424,7 +423,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventRXP(10, 20, 30, 400, 50, 60);
-    device1->sendMotion(&eventRXP, true);
+    device1->sendMotion(&eventRXP);
     QCOMPARE(widget.motionsSeen, 11);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -434,7 +433,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventRYN(10, 20, 30, 40, -500, 60);
-    device1->sendMotion(&eventRYN, true);
+    device1->sendMotion(&eventRYN);
     QCOMPARE(widget.motionsSeen, 12);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -444,7 +443,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventRYP(10, 20, 30, 40, 500, 60);
-    device1->sendMotion(&eventRYP, true);
+    device1->sendMotion(&eventRYP);
     QCOMPARE(widget.motionsSeen, 13);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -454,7 +453,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, 0);
 
     QMouse3DEvent eventRZN(10, 20, 30, 40, 50, -600);
-    device1->sendMotion(&eventRZN, true);
+    device1->sendMotion(&eventRZN);
     QCOMPARE(widget.motionsSeen, 14);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -464,7 +463,7 @@ void tst_QMouse3DEvent::filterEvents()
     QCOMPARE(widget.rotateZ, -600);
 
     QMouse3DEvent eventRZP(10, 20, 30, 40, 50, 600);
-    device1->sendMotion(&eventRZP, true);
+    device1->sendMotion(&eventRZP);
     QCOMPARE(widget.motionsSeen, 15);
     QCOMPARE(widget.translateX, 0);
     QCOMPARE(widget.translateY, 0);
@@ -478,7 +477,7 @@ void tst_QMouse3DEvent::filterEvents()
     provider.toggleFilter(QMouse3DEventProvider::DominantAxis);
     provider.setSensitivity(2.0f);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 16);
     QCOMPARE(widget.translateX, 20);
     QCOMPARE(widget.translateY, 40);
@@ -497,7 +496,7 @@ void tst_QMouse3DEvent::filterEvents()
     // Decrease sensitivity to half its normal value.
     provider.setSensitivity(0.5f);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 17);
     QCOMPARE(widget.translateX, 5);
     QCOMPARE(widget.translateY, 10);
@@ -516,7 +515,7 @@ void tst_QMouse3DEvent::filterEvents()
     // Disable sensitivity filtering.
     provider.toggleFilter(QMouse3DEventProvider::Sensitivity);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 18);
     QCOMPARE(widget.translateX, 10);
     QCOMPARE(widget.translateY, 20);
@@ -535,7 +534,7 @@ void tst_QMouse3DEvent::filterEvents()
     provider.toggleFilter(QMouse3DEventProvider::Sensitivity);
     provider.setSensitivity(1.0f);
 
-    device1->sendMotion(&event, true);
+    device1->sendMotion(&event);
     QCOMPARE(widget.motionsSeen, 19);
     QCOMPARE(widget.translateX, 10);
     QCOMPARE(widget.translateY, 20);

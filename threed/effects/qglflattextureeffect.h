@@ -56,7 +56,6 @@ public:
     QGLFlatTextureEffect();
     virtual ~QGLFlatTextureEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
@@ -76,7 +75,6 @@ public:
     QGLFlatDecalTextureEffect();
     virtual ~QGLFlatDecalTextureEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 

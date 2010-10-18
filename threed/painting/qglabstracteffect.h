@@ -59,8 +59,6 @@ public:
     QGLAbstractEffect();
     virtual ~QGLAbstractEffect();
 
-    virtual QList<QGL::VertexAttribute> requiredFields() const = 0;
-
     virtual bool supportsPicking() const;
 
     virtual void setActive(QGLPainter *painter, bool flag) = 0;
@@ -69,8 +67,6 @@ public:
 
     virtual void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
-    virtual void setCommonNormal(const QVector3D& value);
 
 protected:
     static void setAttributeArray

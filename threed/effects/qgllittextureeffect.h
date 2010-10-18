@@ -51,8 +51,6 @@ class Q_QT3D_EXPORT QGLLitTextureEffect : public QGLLitMaterialEffect
 public:
     virtual ~QGLLitTextureEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-
 protected:
     QGLLitTextureEffect(GLenum mode, const char *vshader, const char *fshader,
                         const QString& programName);

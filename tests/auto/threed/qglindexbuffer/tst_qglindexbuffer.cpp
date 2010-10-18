@@ -42,7 +42,7 @@
 #include <QtTest/QtTest>
 #include <QtOpenGL/qgl.h>
 #include "qglindexbuffer.h"
-#include "qglfunctions.h"
+#include "qopenglfunctions.h"
 
 class tst_QGLIndexBuffer : public QObject
 {

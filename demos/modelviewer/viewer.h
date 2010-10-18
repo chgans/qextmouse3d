@@ -56,10 +56,12 @@ class QTimer;
 class QGLSceneNode;
 class QMouse3DEventProvider;
 class QGLCameraAnimation;
+class QPropertyAnimation;
 
 class Viewer : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal spinAngle READ spinAngle WRITE setSpinAngle)
 public:
     enum View
     {
@@ -94,6 +96,9 @@ public:
     int zoomScale() { return m_zoomScale; }
     void setZoomScale(int scale);
 
+    qreal spinAngle() const { return m_spinAngle; }
+    void setSpinAngle(qreal angle) { m_spinAngle = angle; update(); }
+
 signals:
     void manualControlEngaged();
     void viewTypeChanged();
@@ -115,9 +120,6 @@ protected:
     void keyPressEvent(QKeyEvent *e);
     bool event(QEvent *e);
 
-private slots:
-    void animate();
-
 private:
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
@@ -127,7 +129,6 @@ private:
     QVector3D m_orientation;
     QVector3D m_position;
     QVector3D m_scale;
-    QTimer *m_timer;
     Model *m_model;
     QTreeView *m_treeView;
     QGLLightModel *m_lightModel;
@@ -144,6 +145,8 @@ private:
     QTime m_lastEventTime;
     bool m_lastWasZero;
     QGLCameraAnimation *m_cameraAnimation;
+    QPropertyAnimation *m_spinAnimation;
+    qreal m_spinAngle;
 };
 
 

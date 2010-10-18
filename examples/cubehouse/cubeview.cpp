@@ -214,8 +214,8 @@ void CubeView::paintGL(QGLPainter *painter)
     // Animate the projector position so the effect can be seen
     if(useProjectiveTextureEffect)
     {
-        projectorCamera->panCenter(-0.3);
-        projectorCamera->tiltCenter(-0.1);
+        projectorCamera->tiltPanRollCenter
+            (-0.1f, -0.3f, 0.0f, QGLCamera::PanTiltRoll);
     }
 
     painter->modelViewMatrix().push();

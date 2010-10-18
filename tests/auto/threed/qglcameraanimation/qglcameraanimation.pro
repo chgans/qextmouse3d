@@ -3,7 +3,10 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglfunctions.cpp
+INCLUDEPATH += ../../../../threed/viewing
+VPATH += ../../../../threed/viewing
+
+SOURCES += tst_qglcameraanimation.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 

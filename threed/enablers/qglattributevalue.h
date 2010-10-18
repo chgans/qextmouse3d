@@ -70,22 +70,22 @@ public:
 
     bool isNull() const;
 
-    const QGLAttributeDescription &description() const;
+    QGLAttributeDescription description(QGL::VertexAttribute attribute) const;
     GLenum type() const;
     int sizeOfType() const;
     int tupleSize() const;
     int stride() const;
-    int offset() const;
     const void *data() const;
-    const float *floatData() const;
     int count() const;
 
 private:
-    QGLAttributeDescription m_description;
+    int m_tupleSize;
+    GLenum m_type;
+    int m_stride;
     const void *m_data;
     int m_count;
 
-    void setStride(int stride) { m_description.setStride(stride); }
+    void setStride(int stride) { m_stride = stride; }
     void setOffset(int offset)
         { m_data = reinterpret_cast<const void *>(offset); }
 
@@ -93,99 +93,106 @@ private:
 };
 
 inline QGLAttributeValue::QGLAttributeValue()
-    : m_data(0), m_count(0)
+    : m_tupleSize(0), m_type(GL_FLOAT), m_stride(0), m_data(0), m_count(0)
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<float>& array)
-    : m_description(QGL::Position, 1, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
+    : m_tupleSize(1), m_type(GL_FLOAT), m_stride(0)
+    , m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector2D>& array)
-    : m_description(QGL::Position, 2, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
+    : m_tupleSize(2), m_type(GL_FLOAT), m_stride(0)
+    , m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector3D>& array)
-    : m_description(QGL::Position, 3, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
+    : m_tupleSize(3), m_type(GL_FLOAT), m_stride(0)
+    , m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QVector4D>& array)
-    : m_description(QGL::Position, 4, GL_FLOAT, 0), m_data(array.constData()), m_count(array.count())
+    : m_tupleSize(4), m_type(GL_FLOAT), m_stride(0)
+    , m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue(const QArray<QColor4ub>& array)
-    : m_description(QGL::Position, 4, GL_UNSIGNED_BYTE, 0), m_data(array.constData()), m_count(array.count())
+    : m_tupleSize(4), m_type(GL_UNSIGNED_BYTE), m_stride(0)
+    , m_data(array.constData()), m_count(array.count())
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue
         (int tupleSize, GLenum type, int stride, const void *data, int count)
-    : m_description(QGL::Position, tupleSize, type, stride), m_data(data), m_count(count)
+    : m_tupleSize(tupleSize), m_type(type), m_stride(stride)
+    , m_data(data), m_count(count)
 {
+    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
 }
 
 inline QGLAttributeValue::QGLAttributeValue
         (int tupleSize, GLenum type, int stride, int offset, int count)
-    : m_description(QGL::Position, tupleSize, type, stride),
-      m_data(reinterpret_cast<const void *>(offset)), m_count(count)
+    : m_tupleSize(tupleSize), m_type(type), m_stride(stride)
+    , m_data(reinterpret_cast<const void *>(offset)), m_count(count)
 {
+    Q_ASSERT(tupleSize >= 1 && tupleSize <= 4);
 }
 
 inline QGLAttributeValue::QGLAttributeValue
         (const QGLAttributeDescription& description, const void *data, int count)
-    : m_description(description), m_data(data), m_count(count)
+    : m_tupleSize(description.tupleSize()), m_type(description.type())
+    , m_stride(description.stride()), m_data(data), m_count(count)
 {
 }
 
 inline QGLAttributeValue::QGLAttributeValue
         (const QGLAttributeDescription& description, int offset, int count)
-    : m_description(description),
-      m_data(reinterpret_cast<const void *>(offset)), m_count(count)
+    : m_tupleSize(description.tupleSize()), m_type(description.type())
+    , m_stride(description.stride())
+    , m_data(reinterpret_cast<const void *>(offset))
+    , m_count(count)
 {
 }
 
 inline bool QGLAttributeValue::isNull() const
 {
-    return m_description.isNull();
+    return m_tupleSize == 0;
 }
 
-inline const QGLAttributeDescription &QGLAttributeValue::description() const
+inline QGLAttributeDescription QGLAttributeValue::description(QGL::VertexAttribute attribute) const
 {
-    return m_description;
+    if (!isNull()) {
+        return QGLAttributeDescription(attribute, m_tupleSize, m_type, m_stride);
+    } else {
+        QGLAttributeDescription desc;
+        desc.setAttribute(attribute);
+        return desc;
+    }
 }
 
 inline GLenum QGLAttributeValue::type() const
 {
-    return m_description.type();
+    return m_type;
 }
 
 inline int QGLAttributeValue::tupleSize() const
 {
-    return m_description.tupleSize();
+    return m_tupleSize;
 }
 
 inline int QGLAttributeValue::stride() const
 {
-    return m_description.stride();
-}
-
-inline int QGLAttributeValue::offset() const
-{
-    return int(reinterpret_cast<size_t>(m_data));
+    return m_stride;
 }
 
 inline const void *QGLAttributeValue::data() const
 {
     return m_data;
-}
-
-inline const float *QGLAttributeValue::floatData() const
-{
-    return reinterpret_cast<const float *>(m_data);
 }
 
 inline int QGLAttributeValue::count() const

@@ -88,6 +88,8 @@ void tst_QGLPickColors::distinctColors()
         QVERIFY(qRed(rgb) || qGreen(rgb) || qBlue(rgb)); // Not black.
         ++index;
     }
+    QCOMPARE(rgb, QRgb(0));
+    QCOMPARE(qt_qgl_pick_color(-1), QRgb(0));
     QVERIFY(index >= 1024);
 }
 

@@ -227,5 +227,26 @@
             DEFINES+=QT_NO_CAST_FROM_ASCII
     \endcode
 
+    \section1 3D Mouse Support
+
+    If the machine has a supported \l{3D Mouse Support in Qt/3D}{3D mouse},
+    then run the \c{mouse3dtest} application.  Check that the
+    device is detected and produces events as the mouse is moved,
+    and that those events are correctly filtered as the checkboxes
+    and sliders are modified.
+
+    \image mouse3dtest-screenshot.png
+
+    The QMouse3DEvent documentation describes the values that are expected
+    for each of the fields: moving the mouse right increases the X value,
+    rocking the mouse left increases the Y axis rotation, etc.  The
+    "Dominant Movement" field can be used to verify this.
+
+    If the machine has multiple mice, then they should all be detected
+    and show up in the "Device" name list.  Also try plugging in and
+    unplugging the mouse while \c{mouse3dtest} is running to test
+    hot-plugging.  Some mice may take a while to be recognized by the
+    operating system.
+
     \l{index.html}{Return to the main Qt/3D page}.
 */

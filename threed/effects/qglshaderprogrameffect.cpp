@@ -192,17 +192,6 @@ QGLShaderProgramEffect::~QGLShaderProgramEffect()
 }
 
 /*!
-  Returns the minimum fields required by this effect.
-*/
-QList<QGL::VertexAttribute> QGLShaderProgramEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    return fields;
-}
-
-/*!
   Returns false.  QGLShaderProgramEffects do not support object picking.
 */
 bool QGLShaderProgramEffect::supportsPicking() const

@@ -120,6 +120,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void cameraChanged();
+    void switchToOpenGL();
 
 private:
     ViewportPrivate *d;

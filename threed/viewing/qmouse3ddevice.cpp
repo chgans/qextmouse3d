@@ -75,16 +75,11 @@ QT_BEGIN_NAMESPACE
     Certain special keys on 3D mice can be used for locking the
     mouse into rotation mode, translation mode, to clamp the
     movement to the dominant axis, or to change the sensitivity of
-    the mouse to wrist movements.  If the operating system's
-    3D mouse driver or the subclass takes care of this detail itself,
-    then the subclass should call motion() with the filter argument
-    set to false.
+    the mouse to wrist movements.
 
-    If the driver or subclass does not handle locking itself, then
-    call toggleFilter() or adjustSensitivity() whenever a special
-    key is pressed and then call motion() with the filter argument
-    set to true.  The motion() function will internally filter
-    the event to take the current filters into account.
+    The subclass should call toggleFilter() or adjustSensitivity()
+    whenever a special key is pressed.  The motion() function will
+    internally filter the event to take the current filters into account.
 
     \sa QMouse3DEvent, QMouse3DHandler
 */
@@ -286,70 +281,64 @@ static inline short clampRange(int value)
 }
 
 /*!
-    Delivers a 3D mouse \a event to widget().  If \a filter is true,
-    then apply filtering for rotation-lock, translation-lock, dominant-lock,
-    and mouse sensitivity.  Set \a filter to false if the 3D mouse event
-    source has already filtered the data itself.
+    Delivers a 3D mouse \a event to widget() after applying filtering for
+    rotation-lock, translation-lock, dominant-lock, and mouse sensitivity.
 */
-void QMouse3DDevice::motion(QMouse3DEvent *event, bool filter)
+void QMouse3DDevice::motion(QMouse3DEvent *event)
 {
     Q_D(QMouse3DDevice);
     if (!d->widget || !d->provider)
         return;
-    if (filter) {
-        int values[6];
-        qreal sensitivity = d->provider->sensitivity();
-        QMouse3DEventProvider::Filters filters = d->provider->filters();
-        if ((filters & QMouse3DEventProvider::Sensitivity) != 0) {
-            values[0] = int(event->translateX() * sensitivity);
-            values[1] = int(event->translateY() * sensitivity);
-            values[2] = int(event->translateZ() * sensitivity);
-            values[3] = int(event->rotateX() * sensitivity);
-            values[4] = int(event->rotateY() * sensitivity);
-            values[5] = int(event->rotateZ() * sensitivity);
-        } else {
-            values[0] = event->translateX();
-            values[1] = event->translateY();
-            values[2] = event->translateZ();
-            values[3] = event->rotateX();
-            values[4] = event->rotateY();
-            values[5] = event->rotateZ();
-        }
-        if (!(filters & QMouse3DEventProvider::Translations)) {
-            values[0] = 0;
-            values[1] = 0;
-            values[2] = 0;
-        }
-        if (!(filters & QMouse3DEventProvider::Rotations)) {
-            values[3] = 0;
-            values[4] = 0;
-            values[5] = 0;
-        }
-        if (filters & QMouse3DEventProvider::DominantAxis) {
-            int largest = 0;
-            int value = qAbs(values[0]);
-            for (int index = 1; index < 6; ++index) {
-                int value2 = qAbs(values[index]);
-                if (value2 > value) {
-                    largest = index;
-                    value = value2;
-                }
-            }
-            for (int index = 0; index < 6; ++index) {
-                if (index != largest)
-                    values[index] = 0;
-            }
-        }
-        QMouse3DEvent ev(clampRange(values[0]),
-                         clampRange(values[1]),
-                         clampRange(values[2]),
-                         clampRange(values[3]),
-                         clampRange(values[4]),
-                         clampRange(values[5]));
-        QApplication::sendEvent(d->widget, &ev);
+    int values[6];
+    qreal sensitivity = d->provider->sensitivity();
+    QMouse3DEventProvider::Filters filters = d->provider->filters();
+    if ((filters & QMouse3DEventProvider::Sensitivity) != 0) {
+        values[0] = int(event->translateX() * sensitivity);
+        values[1] = int(event->translateY() * sensitivity);
+        values[2] = int(event->translateZ() * sensitivity);
+        values[3] = int(event->rotateX() * sensitivity);
+        values[4] = int(event->rotateY() * sensitivity);
+        values[5] = int(event->rotateZ() * sensitivity);
     } else {
-        QApplication::sendEvent(d->widget, event);
+        values[0] = event->translateX();
+        values[1] = event->translateY();
+        values[2] = event->translateZ();
+        values[3] = event->rotateX();
+        values[4] = event->rotateY();
+        values[5] = event->rotateZ();
     }
+    if (!(filters & QMouse3DEventProvider::Translations)) {
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = 0;
+    }
+    if (!(filters & QMouse3DEventProvider::Rotations)) {
+        values[3] = 0;
+        values[4] = 0;
+        values[5] = 0;
+    }
+    if (filters & QMouse3DEventProvider::DominantAxis) {
+        int largest = 0;
+        int value = qAbs(values[0]);
+        for (int index = 1; index < 6; ++index) {
+            int value2 = qAbs(values[index]);
+            if (value2 > value) {
+                largest = index;
+                value = value2;
+            }
+        }
+        for (int index = 0; index < 6; ++index) {
+            if (index != largest)
+                values[index] = 0;
+        }
+    }
+    QMouse3DEvent ev(clampRange(values[0]),
+                     clampRange(values[1]),
+                     clampRange(values[2]),
+                     clampRange(values[3]),
+                     clampRange(values[4]),
+                     clampRange(values[5]));
+    QApplication::sendEvent(d->widget, &ev);
 }
 
 QT_END_NAMESPACE

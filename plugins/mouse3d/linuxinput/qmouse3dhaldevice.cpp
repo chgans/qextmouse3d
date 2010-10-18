@@ -91,7 +91,7 @@ QMouse3DHalDevice::QMouse3DHalDevice(QObject *parent)
 
     // Find all mouse devices that are currently connected.
     QDBusReply<QStringList> reply = iface->call
-        (QLatin1String("FindDeviceByCapability"), QLatin1String("input.mouse"));
+        (QLatin1String("FindDeviceByCapability"), QLatin1String("input"));
     if (reply.isValid()) {
         QStringList devices = reply.value();
         for (int index = 0; index < devices.size(); ++index) {
@@ -162,7 +162,7 @@ void QMouse3DHalDevice::deviceAdded(const QString &path)
         return;
     }
     QDBusReply<bool> reply = deviceIface->call
-        (QLatin1String("QueryCapability"), QLatin1String("input.mouse"));
+        (QLatin1String("QueryCapability"), QLatin1String("input"));
     if (reply.isValid() && reply.value())
         mouseAdded(path, deviceIface);
     delete deviceIface;

@@ -55,7 +55,7 @@ class QGLSceneNode;
 class QGLSceneNode;
 class QGLHeightMap;
 class QGLSphere;
-class QGLShaderProgramEffect;
+class QGLColladaFxEffect;
 
 class ShaderWizardGLWidget : public QGLView
 {
@@ -83,7 +83,7 @@ public:
     QColor specularMaterialColor();
 
     int materialShininess();
-    QGLShaderProgramEffect* effect();
+    QGLColladaFxEffect* effect();
 
 public slots:
     void setSceneNode(QGLSceneNode *geom);
@@ -111,7 +111,7 @@ public slots:
     void setTextureImage(const QImage &image);
 
     void clearScene();
-    void setEffect(QGLShaderProgramEffect* effect);
+    void setEffect(QGLColladaFxEffect* effect);
 
 signals:
     void effectChanged();

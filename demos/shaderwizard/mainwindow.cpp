@@ -270,7 +270,7 @@ void MainWindow::loadEffect(const QString& fileName)
 
 bool MainWindow::saveEffect()
 {
-    QGLShaderProgramEffect *effectToExport = glDisplayWidget->effect();
+    QGLColladaFxEffect *effectToExport = glDisplayWidget->effect();
 
     if(effectToExport == 0)
     {

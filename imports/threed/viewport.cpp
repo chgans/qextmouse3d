@@ -48,7 +48,9 @@
 #include "qglsubsurface.h"
 #include "qglframebufferobjectsurface.h"
 #include <QtGui/qpainter.h>
+#include <QtGui/qgraphicsview.h>
 #include <QtOpenGL/qglframebufferobject.h>
+#include <QtCore/qtimer.h>
 
 /*!
     \qmlclass Viewport Viewport
@@ -441,6 +443,18 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     QGLPainter painter;
     if (!painter.begin(p)) {
+        if (widget) {
+            // Probably running with a plain QDeclarativeView (e.g. qmlviewer).
+            // Switch the surrounding QGraphicsView to use a QGLWidget as its
+            // viewport.  We cannot do it here during painting, so schedule a
+            // slot to switch it the next time we reach the event loop.
+            QGraphicsView *view =
+                qobject_cast<QGraphicsView *>(widget->parentWidget());
+            if (view) {
+                QTimer::singleShot(0, this, SLOT(switchToOpenGL()));
+                return;
+            }
+        }
         qWarning("GL graphics system is not active; cannot use 3D items");
         return;
     }
@@ -558,12 +572,12 @@ void Viewport::draw(QGLPainter *painter)
         glEnable(GL_BLEND);
     else
         glDisable(GL_BLEND);
-    if (painter->hasOpenGLFeature(QGLFunctions::BlendColor))
+    if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendColor))
         painter->glBlendColor(0, 0, 0, 0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (painter->hasOpenGLFeature(QGLFunctions::BlendEquation))
+    if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendEquation))
         painter->glBlendEquation(GL_FUNC_ADD);
-    else if (painter->hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+    else if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
         painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     glDisable(GL_CULL_FACE);
     if (!d->view)
@@ -715,12 +729,12 @@ QObject *Viewport::objectForPoint(int x, int y)
         glDepthRange(0.0f, 1.0f);
 #endif
         glDisable(GL_BLEND);
-        if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+        if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendColor))
             painter.glBlendColor(0, 0, 0, 0);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+        if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquation))
             painter.glBlendEquation(GL_FUNC_ADD);
-        else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+        else if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
             painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
         glDisable(GL_CULL_FACE);
         if (d->camera) {
@@ -766,6 +780,17 @@ void Viewport::cameraChanged()
         d->view->setCamera(d->camera);  // Calls queueUpdate() internally.
     else
         update();
+}
+
+/*!
+    \internal
+*/
+void Viewport::switchToOpenGL()
+{
+    QGraphicsView *view =
+        qobject_cast<QGraphicsView *>(d->viewWidget->parentWidget());
+    if (view)
+        view->setViewport(new QGLWidget(view));
 }
 
 QT_END_NAMESPACE

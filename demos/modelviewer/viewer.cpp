@@ -58,12 +58,12 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 #include <QtCore/qmath.h>
+#include <QtCore/qpropertyanimation.h>
 
 #include <math.h>
 
 Viewer::Viewer(QWidget *parent)
     : QGLView(parent)
-    , m_timer(new QTimer(this))
     , m_model(0)
     , m_treeView(0)
     , m_lightModel(0)
@@ -75,6 +75,7 @@ Viewer::Viewer(QWidget *parent)
     , m_zoomScale(1)
     , m_pickDirty(true)
     , m_lastWasZero(true)
+    , m_spinAngle(0.0f)
 {
     m_eventProvider = new QMouse3DEventProvider(this);
     m_eventProvider->setWidget(this);
@@ -85,6 +86,12 @@ Viewer::Viewer(QWidget *parent)
 
     m_cameraAnimation = new QGLCameraAnimation(this);
     m_cameraAnimation->setCamera(camera());
+
+    m_spinAnimation = new QPropertyAnimation(this, "spinAngle", this);
+    m_spinAnimation->setStartValue(qreal(0.0f));
+    m_spinAnimation->setEndValue(qreal(360.0f));
+    m_spinAnimation->setLoopCount(-1);
+    m_spinAnimation->setDuration(5000);
 
     setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
@@ -181,6 +188,8 @@ void Viewer::setView(View view)
     {
         m_view = view;
         resetView();
+        if (m_animate)
+            m_view = SelectView;
         emit viewTypeChanged();
     }
 }
@@ -289,7 +298,20 @@ void Viewer::keyPressEvent(QKeyEvent *e)
 
 void Viewer::rotateView(qreal angle)
 {
-    camera()->rotateCenter(camera()->roll(angle));
+    QQuaternion q = camera()->roll(angle);
+    QVector3D upVector = q.rotatedVector(camera()->upVector());
+
+    m_cameraAnimation->stop();
+    m_cameraAnimation->setStartEye(camera()->eye());
+    m_cameraAnimation->setStartUpVector(camera()->upVector());
+    m_cameraAnimation->setStartCenter(camera()->center());
+    m_cameraAnimation->setEndEye(camera()->eye());
+    m_cameraAnimation->setEndUpVector(upVector);
+    m_cameraAnimation->setEndCenter(camera()->center());
+    m_cameraAnimation->setDuration(500);
+    m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
+    m_cameraAnimation->start();
+
     engageManualControl();
 }
 
@@ -438,9 +460,6 @@ void Viewer::initializeGL(QGLPainter *painter)
         m_lightParameters = new QGLLightParameters(this);
     m_lightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
     painter->setMainLight(m_lightParameters);
-
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
-    m_timer->start(25);
 }
 
 void Viewer::paintGL(QGLPainter *painter)
@@ -449,6 +468,11 @@ void Viewer::paintGL(QGLPainter *painter)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter->modelViewMatrix().push();
+
+        if (m_spinAngle != 0.0f) {
+            painter->modelViewMatrix().rotate
+                (m_spinAngle, camera()->upVector());
+        }
 
         if (m_drawFloor)
             m_floor->draw(painter);
@@ -551,19 +575,23 @@ bool Viewer::needsPickGL()
 }
 */
 
-void Viewer::animate()
-{
-    if (m_model->scene())
-    {
-        if (m_animate)
-            camera()->panCenter(0.5f);
-    }
-}
-
 void Viewer::enableAnimation(bool enabled)
 {
-    resetView();
+    if (m_animate == enabled)
+        return;
     m_animate = enabled;
+    if (m_view != SelectView) {
+        m_view = SelectView;
+        emit viewTypeChanged();
+    }
+    if (enabled) {
+        m_spinAngle = 0.0f;
+        m_spinAnimation->start();
+    } else {
+        m_spinAnimation->stop();
+        camera()->rotateCenter(camera()->pan(-m_spinAngle));
+        m_spinAngle = 0.0f;
+    }
 }
 
 void Viewer::resetView()
@@ -597,22 +625,22 @@ void Viewer::resetView()
         break;
 
     case LeftView:
-        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
-        up = QVector3D(0.0f, 1.0f, 0.0f);
-        break;
-
-    case RightView:
         eye = QVector3D(zoomMag, 0.0f, 0.0f);
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
 
+    case RightView:
+        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
     case FrontRightView:
-        eye = zoomMag * QVector3D(1, 1, 1).normalized();
+        eye = zoomMag * QVector3D(-1, 1, 1).normalized();
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
 
     case BackLeftView:
-        eye = zoomMag * QVector3D(-1, 1, -1).normalized();
+        eye = zoomMag * QVector3D(1, 1, -1).normalized();
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
     }

@@ -4,7 +4,7 @@
 #include <QWeakPointer>
 #include <QGLShaderProgram>
 #include "effect.h"
-#include "qglabstracteffect.h"
+#include "qglshadereffect.h"
 #include "private/qdeclarativepixmapcache_p.h"
 
 class ShaderProgram;
@@ -61,7 +61,7 @@ private:
   It contains the actual QGLShaderProgram along with all of the necessary
   parameters to use that program.
 */
-class ShaderProgramEffect : public QGLAbstractEffect
+class ShaderProgramEffect : public QGLShaderEffect
 {
 public:
     ShaderProgramEffect(ShaderProgram* parent);
@@ -69,18 +69,9 @@ public:
 
     bool create(const QString& vertexShader, const QString& fragmentShader);
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-
-    void setActive(QGLPainter *painter, bool flag);
-
     void update(QGLPainter *painter, QGLPainter::Updates updates);
     bool setUniformForPropertyIndex(int propertyIndex, QGLPainter *painter);
 
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
-    void setCommonNormal(const QVector3D& value);
     void setPropertiesDirty();
     void setPropertyDirty(int property);
 
@@ -88,9 +79,9 @@ public:
     void setAttributeFields(QGL::VertexAttribute fields);
 protected:
     void processTextureUrl(int uniformLocation, QString urlString);
+    void afterLink();
 
 private:
-    void setUniformLocationsFromParentProperties();
     void setUniform(int uniformValue, const QImage& image,
                              QGLPainter* painter);
     void setUniform(int uniformValue, const QPixmap pixmap,
@@ -99,22 +90,6 @@ private:
     int textureUnitForUniformValue(int uniformLocation);
 
     QWeakPointer<ShaderProgram> parent;
-    QGLShaderProgram *program;
-    int vertexAttr;
-    int normalAttr;
-    int colorAttr;
-    int texCoord0Attr;
-    int texCoord1Attr;
-    int texCoord2Attr;
-    int customVertex0Attr;
-    int customVertex1Attr;
-    int matrixUniform;
-    int modelViewMatrixUniform;
-    int normalMatrixUniform;
-    int texture0;
-    int colorUniform;
-    int lightPositionUniform;
-    int spotDirectionUniform;
     int nextTextureUnit;
     QMap<int, int> propertyIdsToUniformLocations;
     QMap<int, int> uniformLocationsToTextureUnits;
