@@ -789,8 +789,10 @@ void Viewport::switchToOpenGL()
 {
     QGraphicsView *view =
         qobject_cast<QGraphicsView *>(d->viewWidget->parentWidget());
-    if (view)
-        view->setViewport(new QGLWidget(view));
+    if (view) {
+        d->viewWidget = new QGLWidget(view);
+        view->setViewport(d->viewWidget);
+    }
 }
 
 QT_END_NAMESPACE
