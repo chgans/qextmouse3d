@@ -1,0 +1,17 @@
+This directory contains a 3D mouse plug-in that uses the Linux
+/dev/input interface to get events from a 3D mouse.  HAL is used
+to detect hot-plugging of 3D mouse devices.
+
+The appropriate Linux kernel driver must be loaded and working, and the
+device node must have its permissions set so that the application can
+open the input device.
+
+The following devices have been tested:
+
+    - 3Dconnexion SpacePilot PRO
+            http://www.3dconnexion.com/products/spacepilot-pro.html
+    - 3Dconnexion SpaceNavigator
+            http://www.3dconnexion.com/products/spacenavigator.html
+
+Please forward any information and patches for other /dev/input based
+devices to the Qt/3D development team.
