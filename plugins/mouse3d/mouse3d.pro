@@ -1,3 +1,3 @@
 TEMPLATE = subdirs
 
-linux*:SUBDIRS += linuxinput
+SUBDIRS += linuxinput win32input
