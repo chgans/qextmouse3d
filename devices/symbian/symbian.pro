@@ -37,7 +37,6 @@ symbian {
     contains(QT_CONFIG, declarative): {
         qt3dthreedImports.sources = \
                                 qthreedqmlplugin.dll \
-                                DefaultNavigator.qml \
                                 qmldir
         qt3dthreedImports.path = $$QT_IMPORTS_BASE_DIR/Qt3D
         qt3dshapesImports.sources = \

@@ -35,8 +35,7 @@ HEADERS += \
 }
 
 qdeclarativesources.files += \
-    qmldir \
-    DefaultNavigator.qml
+    qmldir
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
