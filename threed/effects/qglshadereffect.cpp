@@ -753,15 +753,36 @@ void QGLShaderEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
             d->program->setUniformValue(d->projMatrix, painter->projectionMatrix());
     }
     if ((updates & QGLPainter::UpdateLights) != 0) {
-        // TODO: multiple light sources, and clamping at maximumLights().
         if (d->haveLight) {
+            // Only one light needed so make it the main light.
             d->setLight(painter->mainLight(), painter->mainLightTransform(),
                         "qgl_Light", -1);
         } else if (d->haveLights) {
-            d->setLight(painter->mainLight(), painter->mainLightTransform(),
-                        "qgl_Lights", 0);
+            // Shader supports multiple light sources.
+            int numLights = 0;
+            int maxLightId = painter->maximumLightId();
+            if (maxLightId < 0) {
+                // No lights - re-enable the main light so we have something.
+                painter->mainLight();
+                maxLightId = 0;
+            }
+            for (int lightId = 0; lightId <= maxLightId; ++lightId) {
+                // Is this light currently enabled?
+                const QGLLightParameters *lparams = painter->light(lightId);
+                if (!lparams)
+                    continue;
+
+                // Set the parameters for the next shader light number.
+                d->setLight(lparams, painter->lightTransform(lightId),
+                            "qgl_Lights", numLights);
+
+                // Bail out if we've hit the maximum shader light limit.
+                ++numLights;
+                if (numLights >= d->maximumLights)
+                    break;
+            }
             if (d->numLights != -1)
-                d->program->setUniformValue(d->numLights, 1);
+                d->program->setUniformValue(d->numLights, numLights);
         }
     }
     if ((updates & QGLPainter::UpdateMaterials) != 0 ||
