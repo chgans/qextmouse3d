@@ -119,6 +119,8 @@ Q_SIGNALS:
 
 private:
     friend class QGLMaterialCollection;
+
+    QScopedPointer<QGLMaterialPrivate> d_ptr;
 };
 
 #ifndef QT_NO_DEBUG_STREAM

@@ -65,9 +65,8 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::qml3d
 */
 
-QGLMaterialPrivate::QGLMaterialPrivate(int version)
-    : QObjectPrivate(version),
-      basicColor(255, 255, 255, 255),
+QGLMaterialPrivate::QGLMaterialPrivate()
+    : basicColor(255, 255, 255, 255),
       specularColor(0, 0, 0, 255),
       emittedLight(0, 0, 0, 255),
       shininess(0),
@@ -84,7 +83,8 @@ QGLMaterialPrivate::QGLMaterialPrivate(int version)
     and attaches it to \a parent.
 */
 QGLMaterial::QGLMaterial(QObject *parent)
-    : QObject(*new QGLMaterialPrivate(), parent)
+    : QObject(parent)
+    , d_ptr(new QGLMaterialPrivate)
 {
 }
 
