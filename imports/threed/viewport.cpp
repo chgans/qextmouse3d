@@ -50,8 +50,11 @@
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsview.h>
 #include <QtGui/qgraphicsscene.h>
+#include <QtGui/qgraphicssceneevent.h>
+#include <QtGui/qevent.h>
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtCore/qtimer.h>
+#include <QtCore/qcoreapplication.h>
 
 /*!
     \qmlclass Viewport Viewport
@@ -106,6 +109,16 @@ public:
     int pickId;
     QGLFramebufferObject *pickFbo;
     QMap<int, QObject *> objects;
+    QObject *pressedObject;
+    Qt::MouseButton pressedButton;
+    QObject *enteredObject;
+    bool panning;
+    QPointF startPan;
+    QPointF lastPan;
+    QVector3D startEye;
+    QVector3D startCenter;
+    QVector3D startUpVector;
+    Qt::KeyboardModifiers panModifiers;
 };
 
 ViewportPrivate::ViewportPrivate()
@@ -124,6 +137,13 @@ ViewportPrivate::ViewportPrivate()
     , viewWidget(0)
     , pickId(1)
     , pickFbo(0)
+    , pressedObject(0)
+    , pressedButton(Qt::NoButton)
+    , enteredObject(0)
+    , panning(false)
+    , startPan(-1, -1)
+    , lastPan(-1, -1)
+    , panModifiers(Qt::NoModifier)
 {
     // Construct the vertices for a quad with (0, 0) as the
     // texture co-ordinate for the bottom-left of the screen
@@ -176,6 +196,9 @@ Viewport::Viewport(QDeclarativeItem *parent)
 
     setCamera(new QGLCamera(this));
     setLight(new QGLLightParameters(this));
+
+    setAcceptedMouseButtons(Qt::LeftButton);
+    setAcceptHoverEvents(true);
 }
 
 /*!
@@ -813,6 +836,453 @@ void Viewport::switchToOpenGL()
         d->viewWidget = new QGLWidget(view);
         view->setViewport(d->viewWidget);
     }
+}
+
+static inline void sendEnterEvent(QObject *object)
+{
+    QEvent event(QEvent::Enter);
+    QCoreApplication::sendEvent(object, &event);
+}
+
+static inline void sendLeaveEvent(QObject *object)
+{
+    QEvent event(QEvent::Leave);
+    QCoreApplication::sendEvent(object, &event);
+}
+
+/*!
+    \internal
+*/
+void Viewport::mousePressEvent(QGraphicsSceneMouseEvent *e)
+{
+    QObject *object;
+    if (!d->panning && d->picking)
+        object = objectForPoint(e->pos());
+    else
+        object = 0;
+    if (d->pressedObject) {
+        // Send the press event to the pressed object.  Use a position
+        // of (0, 0) if the mouse is still within the pressed object,
+        // or (-1, -1) if the mouse is no longer within the pressed object.
+        QMouseEvent event
+            (QEvent::MouseButtonPress,
+             (d->pressedObject == object) ? QPoint(0, 0) : QPoint(-1, -1),
+             e->screenPos(), e->button(), e->buttons(), e->modifiers());
+        QCoreApplication::sendEvent(d->pressedObject, &event);
+    } else if (object) {
+        // Record the object that was pressed and forward the event.
+        d->pressedObject = object;
+        d->enteredObject = 0;
+        d->pressedButton = e->button();
+
+        // Send a mouse press event for (0, 0).
+        QMouseEvent event(QEvent::MouseButtonPress, QPoint(0, 0),
+                          e->screenPos(), e->button(), e->buttons(),
+                          e->modifiers());
+        QCoreApplication::sendEvent(object, &event);
+    } else if (d->navigation && e->button() == Qt::LeftButton) {
+        d->panning = true;
+        d->lastPan = d->startPan = e->pos();
+        d->startEye = d->camera->eye();
+        d->startCenter = d->camera->center();
+        d->startUpVector = d->camera->upVector();
+        d->panModifiers = e->modifiers();
+#ifndef QT_NO_CURSOR
+        setCursor(Qt::ClosedHandCursor);
+#endif
+    } else {
+        QDeclarativeItem::mousePressEvent(e);
+        return;
+    }
+    e->setAccepted(true);
+}
+
+/*!
+    \internal
+*/
+void Viewport::mouseReleaseEvent(QGraphicsSceneMouseEvent *e)
+{
+    if (d->panning && e->button() == Qt::LeftButton) {
+        d->panning = false;
+#ifndef QT_NO_CURSOR
+        unsetCursor();
+#endif
+    }
+    if (d->pressedObject) {
+        // Notify the previously pressed object about the release.
+        QObject *object = objectForPoint(e->pos());
+        QObject *pressed = d->pressedObject;
+        if (e->button() == d->pressedButton) {
+            d->pressedObject = 0;
+            d->pressedButton = Qt::NoButton;
+            d->enteredObject = object;
+
+            // Send the release event to the pressed object.  Use a position
+            // of (0, 0) if the mouse is still within the pressed object,
+            // or (-1, -1) if the mouse is no longer within the pressed object.
+            QMouseEvent event
+                (QEvent::MouseButtonRelease,
+                 (pressed == object) ? QPoint(0, 0) : QPoint(-1, -1),
+                 e->screenPos(), e->button(), e->buttons(), e->modifiers());
+            QCoreApplication::sendEvent(pressed, &event);
+
+            // Send leave and enter events if necessary.
+            if (object != pressed) {
+                sendLeaveEvent(pressed);
+                if (object)
+                    sendEnterEvent(object);
+            }
+        } else {
+            // Some other button than the original was released.
+            // Forward the event to the pressed object.
+            QMouseEvent event
+                (QEvent::MouseButtonRelease,
+                 (pressed == object) ? QPoint(0, 0) : QPoint(-1, -1),
+                 e->screenPos(), e->button(), e->buttons(), e->modifiers());
+            QCoreApplication::sendEvent(pressed, &event);
+        }
+        e->setAccepted(true);
+    } else {
+        QDeclarativeItem::mouseReleaseEvent(e);
+    }
+}
+
+/*!
+    \internal
+*/
+void Viewport::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e)
+{
+    if (d->picking) {
+        QObject *object = objectForPoint(e->pos());
+        if (object) {
+            // Simulate a double click event for (0, 0).
+            QMouseEvent event
+                (QEvent::MouseButtonDblClick, QPoint(0, 0),
+                 e->screenPos(), e->button(), e->buttons(), e->modifiers());
+            QCoreApplication::sendEvent(object, &event);
+            e->setAccepted(true);
+            return;
+        }
+    }
+    QDeclarativeItem::mouseDoubleClickEvent(e);
+}
+
+/*!
+    \internal
+*/
+void Viewport::mouseMoveEvent(QGraphicsSceneMouseEvent *e)
+{
+    if (d->panning) {
+        QPointF delta = e->pos() - d->startPan;
+        if (e->modifiers() == d->panModifiers) {
+            d->camera->setEye(d->startEye);
+            d->camera->setCenter(d->startCenter);
+            d->camera->setUpVector(d->startUpVector);
+        } else {
+            d->startPan = d->lastPan;
+            delta = e->pos() - d->startPan;
+            d->startEye = d->camera->eye();
+            d->startCenter = d->camera->center();
+            d->startUpVector = d->camera->upVector();
+            d->panModifiers = e->modifiers();
+        }
+        d->lastPan = e->pos();
+        if ((e->modifiers() & Qt::ControlModifier) != 0)
+            wheel(delta.y() * -60);
+        else if ((e->modifiers() & Qt::ShiftModifier) != 0)
+            pan(delta.x(), delta.y());
+        else
+            rotate(delta.x(), delta.y());
+    } else if (d->picking) {
+        QObject *object = objectForPoint(e->pos());
+        if (d->pressedObject) {
+            // Send the move event to the pressed object.  Use a position
+            // of (0, 0) if the mouse is still within the pressed object,
+            // or (-1, -1) if the mouse is no longer within the pressed object.
+            QMouseEvent event
+                (QEvent::MouseMove,
+                 (d->pressedObject == object) ? QPoint(0, 0) : QPoint(-1, -1),
+                 e->screenPos(), e->button(), e->buttons(), e->modifiers());
+            QCoreApplication::sendEvent(d->pressedObject, &event);
+        } else if (object) {
+            if (object != d->enteredObject) {
+                if (d->enteredObject)
+                    sendLeaveEvent(d->enteredObject);
+                d->enteredObject = object;
+                sendEnterEvent(d->enteredObject);
+            }
+            QMouseEvent event
+                (QEvent::MouseMove, QPoint(0, 0),
+                 e->screenPos(), e->button(), e->buttons(), e->modifiers());
+            QCoreApplication::sendEvent(object, &event);
+        } else if (d->enteredObject) {
+            sendLeaveEvent(d->enteredObject);
+            d->enteredObject = 0;
+        } else {
+            QDeclarativeItem::mouseMoveEvent(e);
+            return;
+        }
+    } else {
+        QDeclarativeItem::mouseMoveEvent(e);
+        return;
+    }
+    e->setAccepted(true);
+}
+
+/*!
+    \internal
+*/
+void Viewport::hoverEnterEvent(QGraphicsSceneHoverEvent *e)
+{
+    if (hoverEvent(e))
+        e->setAccepted(true);
+    else
+        QDeclarativeItem::hoverEnterEvent(e);
+}
+
+/*!
+    \internal
+*/
+void Viewport::hoverMoveEvent(QGraphicsSceneHoverEvent *e)
+{
+    if (hoverEvent(e))
+        e->setAccepted(true);
+    else
+        QDeclarativeItem::hoverMoveEvent(e);
+}
+
+/*!
+    \internal
+*/
+void Viewport::hoverLeaveEvent(QGraphicsSceneHoverEvent *e)
+{
+    if (!d->pressedObject && d->enteredObject) {
+        sendLeaveEvent(d->enteredObject);
+        d->enteredObject = 0;
+        e->setAccepted(true);
+    } else {
+        QDeclarativeItem::hoverLeaveEvent(e);
+    }
+}
+
+/*!
+    \internal
+*/
+void Viewport::wheelEvent(QGraphicsSceneWheelEvent *e)
+{
+    if (d->navigation) {
+        wheel(e->delta());
+        e->setAccepted(true);
+    } else {
+        QDeclarativeItem::wheelEvent(e);
+    }
+}
+
+/*!
+    \internal
+*/
+void Viewport::keyPressEvent(QKeyEvent *e)
+{
+    qreal sep;
+
+    if (!d->navigation) {
+        QDeclarativeItem::keyPressEvent(e);
+        return;
+    }
+
+    switch (e->key()) {
+
+    case Qt::Key_Left:
+    {
+        if ((e->modifiers() & Qt::ShiftModifier) != 0) {
+            pan(-10, 0);
+        } else if ((e->modifiers() & Qt::ControlModifier) != 0) {
+            sep = d->camera->eyeSeparation();
+            sep -= (sep / 10.0f);
+            if (sep < 0.0f)
+                sep = 0.0f;
+            d->camera->setEyeSeparation(sep);
+        } else {
+            rotate(-10, 0);
+        }
+    }
+    break;
+
+    case Qt::Key_Right:
+    {
+        if ((e->modifiers() & Qt::ShiftModifier) != 0) {
+            pan(10, 0);
+        } else if ((e->modifiers() & Qt::ControlModifier) != 0) {
+            sep = d->camera->eyeSeparation();
+            sep += (sep / 10.0f);
+            d->camera->setEyeSeparation(sep);
+        } else {
+            rotate(10, 0);
+        }
+    }
+    break;
+
+    case Qt::Key_Up:
+    {
+        if ((e->modifiers() & Qt::ControlModifier) != 0)
+            wheel(120);
+        else if ((e->modifiers() & Qt::ShiftModifier) != 0)
+            pan(0, -10);
+        else
+            rotate(0, -10);
+    }
+    break;
+
+    case Qt::Key_Down:
+    {
+        if ((e->modifiers() & Qt::ControlModifier) != 0)
+            wheel(-120);
+        else if ((e->modifiers() & Qt::ShiftModifier) != 0)
+            pan(0, 10);
+        else
+            rotate(0, 10);
+    }
+    break;
+
+    default:
+        QDeclarativeItem::keyPressEvent(e);
+        return;
+    }
+
+    e->setAccepted(true);
+}
+
+/*!
+    \internal
+*/
+bool Viewport::hoverEvent(QGraphicsSceneHoverEvent *e)
+{
+    if (!d->panning && d->picking) {
+        QObject *object = objectForPoint(e->pos());
+        if (d->pressedObject) {
+            // Send the move event to the pressed object.  Use a position
+            // of (0, 0) if the mouse is still within the pressed object,
+            // or (-1, -1) if the mouse is no longer within the pressed object.
+            QMouseEvent event
+                (QEvent::MouseMove,
+                 (d->pressedObject == object) ? QPoint(0, 0) : QPoint(-1, -1),
+                 e->screenPos(), Qt::NoButton, Qt::NoButton, e->modifiers());
+            QCoreApplication::sendEvent(d->pressedObject, &event);
+        } else if (object) {
+            if (object != d->enteredObject) {
+                if (d->enteredObject)
+                    sendLeaveEvent(d->enteredObject);
+                d->enteredObject = object;
+                sendEnterEvent(d->enteredObject);
+            }
+            QMouseEvent event
+                (QEvent::MouseMove, QPoint(0, 0),
+                 e->screenPos(), Qt::NoButton, Qt::NoButton, e->modifiers());
+            QCoreApplication::sendEvent(object, &event);
+        } else if (d->enteredObject) {
+            sendLeaveEvent(d->enteredObject);
+            d->enteredObject = 0;
+        }
+        return true;
+    }
+    return false;
+}
+
+// Zoom in and out according to the change in wheel delta.
+void Viewport::wheel(qreal delta)
+{
+    qreal scale = qAbs(viewDelta(delta, delta).x());
+    if (delta < 0)
+        scale = -scale;
+    if (scale >= 0.0f)
+        scale += 1.0f;
+    else
+        scale = 1.0f / (1.0f - scale);
+    qreal fov = d->camera->fieldOfView();
+    if (fov != 0.0f)
+        d->camera->setFieldOfView(d->camera->fieldOfView() / scale);
+    else
+        d->camera->setViewSize(d->camera->viewSize() / scale);
+}
+
+// Pan left/right/up/down without rotating about the object.
+void Viewport::pan(qreal deltax, qreal deltay)
+{
+    QPointF delta = viewDelta(deltax, deltay);
+    QVector3D t = d->camera->translation(delta.x(), -delta.y(), 0.0f);
+
+    // Technically panning the eye left should make the object appear to
+    // move off to the right, but this looks weird on-screen where the user
+    // actually thinks they are picking up the object and dragging it rather
+    // than moving the eye.  We therefore apply the inverse of the translation
+    // to make it "look right".
+    d->camera->setEye(d->camera->eye() - t);
+    d->camera->setCenter(d->camera->center() - t);
+}
+
+// Rotate about the object being viewed.
+void Viewport::rotate(qreal deltax, qreal deltay)
+{
+    QRectF rect = boundingRect();
+    int rotation = d->camera->screenRotation();
+    if (rotation == 90 || rotation == 270) {
+        qSwap(deltax, deltay);
+    }
+    if (rotation == 90 || rotation == 180) {
+        deltax = -deltax;
+    }
+    if (rotation == 180 || rotation == 270) {
+        deltay = -deltay;
+    }
+    qreal anglex = deltax * 90.0f / rect.width();
+    qreal angley = deltay * 90.0f / rect.height();
+    QQuaternion q = d->camera->pan(-anglex);
+    q *= d->camera->tilt(-angley);
+    d->camera->rotateCenter(q);
+}
+
+// Convert deltas in the X and Y directions into percentages of
+// the view width and height.
+QPointF Viewport::viewDelta(qreal deltax, qreal deltay)
+{
+    QRectF rect = boundingRect();
+    qreal w = rect.width();
+    qreal h = rect.height();
+    bool scaleToWidth;
+    qreal scaleFactor, scaleX, scaleY;
+    QSizeF viewSize = d->camera->viewSize();
+    if (w >= h) {
+        if (viewSize.width() >= viewSize.height())
+            scaleToWidth = true;
+        else
+            scaleToWidth = false;
+    } else {
+        if (viewSize.width() >= viewSize.height())
+            scaleToWidth = false;
+        else
+            scaleToWidth = true;
+    }
+    int rotation = d->camera->screenRotation();
+    if (rotation == 90 || rotation == 270) {
+        scaleToWidth = !scaleToWidth;
+        qSwap(deltax, deltay);
+    }
+    if (rotation == 90 || rotation == 180) {
+        deltax = -deltax;
+    }
+    if (rotation == 180 || rotation == 270) {
+        deltay = -deltay;
+    }
+    if (scaleToWidth) {
+        scaleFactor = 2.0f / viewSize.width();
+        scaleX = scaleFactor * h / w;
+        scaleY = scaleFactor;
+    } else {
+        scaleFactor = 2.0f / viewSize.height();
+        scaleX = scaleFactor;
+        scaleY = scaleFactor * w / h;
+    }
+    return QPointF(deltax * scaleX / w, deltay * scaleY / h);
 }
 
 QT_END_NAMESPACE
