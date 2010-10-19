@@ -67,7 +67,7 @@ public:
     void updateSensitivity(qreal sensitivity);
 
 private Q_SLOTS:
-    void deviceAdded(const QString &path);
+    void deviceAdded(HANDLE deviceHandle);
     void deviceRemoved(HANDLE deviceHandle);
 
 private:

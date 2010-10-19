@@ -47,9 +47,9 @@ pGetRawInputData _GetRawInputData;
 pGetRawInputDeviceInfoA _GetRawInputDeviceInfo;
 pGetRawInputDeviceList _GetRawInputDeviceList;
 
-QMouseData mouseSignaller;
+QMouseEventTransmitter mouseSignaller;
 
-bool InitialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary() 
+bool initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary() 
 {
 	//Initialise raw input functions from the user32.dll.
 	HMODULE user32DLL = LoadLibrary(L"user32.dll");
@@ -92,101 +92,22 @@ bool mouse3dEventFilterFunction(void *newMessage, long *result)
     switch(message->message){
     case WM_INPUT:
         {   
-            qDebug() << "Raw Input Recieved!\n";
-            //OnRawInput(newMessage);
+			//OnRawInput(newMessage);
             // This feature requires Windows XP or greater.
-            // The symbol _WIN32_WINNT must be >= 0x0501.
-
-            HRAWINPUT hRawInput = (HRAWINPUT)message->lParam;
-
-			mouseSignaller.sendDetectedSignal(hRawInput);
-   //         int dwSize;
-
-   //         (*_GetRawInputData)(hRawInput, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
-
-   //         LPBYTE lpb = new BYTE[dwSize];
-   //         if (lpb == NULL)
-   //         {
-   //             qDebug()<< "Error allocating memory for raw input data!\n";
-   //             return true;
-   //         }
-
-   //         if ((*_GetRawInputData)(hRawInput, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
-   //             qDebug()<<"GetRawInputData doesn't return correct size !\n";
-   //         }
-
-   //         //RAWINPUT* raw = (RAWINPUT*)lpb;
-   //         RAWINPUT* pRawInput = (RAWINPUT*)lpb;		
-			//
-			//HANDLE thisDevice = pRawInput->header.hDevice;
-
-   //         if (pRawInput->header.dwType!= RIM_TYPEHID) 
-   //         {
-   //             delete[] lpb; 
-   //             qDebug()<<"Mouse/Keyboard...";
-   //             return true;  //the data is from either keyboard or mouse, so ignore it.
-   //         }
-   //         else
-   //             qDebug()<<"Other...";
-
-
-   //         RID_DEVICE_INFO sRidDeviceInfo;
-
-   //         sRidDeviceInfo.cbSize = sizeof(RID_DEVICE_INFO);
-   //         dwSize = sizeof(RID_DEVICE_INFO);
-   //         
-   //         if ((*_GetRawInputDeviceInfo)(pRawInput->header.hDevice, RIDI_DEVICEINFO, &sRidDeviceInfo, &dwSize)!=0)
-   //         //if ((*_GetRawInputDeviceInfo)(pRawInput->header.hDevice, RIDI_DEVICENAME, &sRidDeviceInfo, &dwSize) == dwSize ) 
-   //         {
-
-   //             if (sRidDeviceInfo.hid.dwVendorId == LOGITECH_VENDOR_ID)
-   //             {
-   //                 //motion data comes in 2 packages
-   //                 //orientation is right handed coord system with z down
-   //                 //this is the standard HID orientation
-   //                 if (pRawInput->data.hid.bRawData[0]==0x01)
-   //                 {
-   //                     //translation vector
-   //                     short *pnData = reinterpret_cast <short*>(&pRawInput->data.hid.bRawData[1]);
-   //                     short X = pnData[0];
-   //                     short Y = pnData[1];
-   //                     short Z = pnData[2];
-   //                     qDebug() << "PanZoom RI Data = " << X << "," << Y << "," << Z;
-   //                 }
-   //                 else if (pRawInput->data.hid.bRawData[0]==0x02)
-   //                 {
-   //                     //directed rotation vector
-   //                     short *pnData = reinterpret_cast <short*>(&pRawInput->data.hid.bRawData[1]);
-   //                     short rX = pnData[0];
-   //                     short rY = pnData[1];
-   //                     short rZ = pnData[2];
-   //                     qDebug() << "Rotation RI Data = " << rX << "," << rY << "," << rZ;                
-   //                 }
-   //                 else if (pRawInput->data.hid.bRawData[0]==0x03)
-   //                 {
-   //                     //state of the keys
-   //                     unsigned long dwKeystate= *reinterpret_cast<unsigned long *>(&pRawInput->data.hid.bRawData[1]);                                 
-   //                     int nVirtualKeyCode = HidToVirtualKey(sRidDeviceInfo.hid.dwProductId, dwKeystate);                                                         
-   //                 }
-   //             }
-   //         }
-
-   //         delete[] lpb; 
+            // The symbol _WIN32_WINNT must be >= 0x0501.            
+			mouseSignaller.sendDetectedSignal((HRAWINPUT)message->lParam);   
         }
         return true;
     }
     return false;
 }
 
-QMouseData::QMouseData(QObject *parent) {
-	qDebug() << "Made a QMouseData object.";
+QMouseEventTransmitter::QMouseEventTransmitter(QObject *parent) : QObject(parent) {
 }
 
-QMouseData::~QMouseData() {
-	qDebug() << "Killed a QMouseData object.";
+QMouseEventTransmitter::~QMouseEventTransmitter() {
 }
 
-void QMouseData::sendDetectedSignal(HRAWINPUT hRawInput) {
-	qDebug()<< "Emitting detection...";
+void QMouseEventTransmitter::sendDetectedSignal(HRAWINPUT hRawInput) {
 	emit rawInputDetected(hRawInput);	
 }
