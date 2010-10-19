@@ -187,9 +187,8 @@
 
     \image teapot-china-screenshot.png
 
-    When run with qml3d, it will be possible to rotate the teapot
-    using the mouse and keyboard.  When run with qmlviewer, rotation
-    will not be possible.  This is expected.
+    It should be possible to rotate the teapot using the mouse
+    and keyboard.
 
     Note that when running QML/3D examples on a device that both the
     QML files and the model files must be copied to the device (the model
