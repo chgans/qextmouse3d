@@ -74,6 +74,7 @@ public:
     QGLTexture2D* diffuseTexture;
     QGLTexture2D* specularTexture;
     int lighting;
+    QGLMaterial* material;
 
     QStringList vertexShaderCodeSnippets;
     QStringList vertexShaderDeclarationSnippets;
@@ -87,6 +88,8 @@ public:
     QString vertexShaderMainGlueSnippet;
     QString fragmentShaderEndGlueSnippet;
     QString fragmentShaderMainGlueSnippet;
+
+    bool currentlyActive;
 };
 
 #endif // QGLCOLLADAFXEFFECT_P_H

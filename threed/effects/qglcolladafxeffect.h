@@ -3,13 +3,13 @@
 #include <QStack>
 #include <QList>
 #include <QGLShaderProgram>
-#include "qglshaderprogrameffect.h"
+#include "qglshadereffect.h"
 
 class QXmlStreamReader;
 class QGLColladaParam;
 class QGLColladaFxEffectPrivate;
 
-class Q_QT3D_EXPORT QGLColladaFxEffect : public QGLShaderProgramEffect
+class Q_QT3D_EXPORT QGLColladaFxEffect : public QGLShaderEffect
 {
     friend class QGLColladaFxEffectFactory;
 
@@ -37,9 +37,15 @@ public:
 
     void setLighting(int lighting);
     int lighting();
+    void setMaterial(QGLMaterial* newMaterial);
+    QGLMaterial* material();
+
     QGLTexture2D* diffuseTexture();
 
+    bool isActive();
+    void setActive(QGLPainter *painter, bool flag);
 private:
+    QGLColladaFxEffect(const QGLColladaFxEffect&);
     QGLColladaFxEffectPrivate* d;
 };
 
