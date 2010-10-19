@@ -21,12 +21,12 @@ ProjectiveTextureEffect::ProjectiveTextureEffect() :
 
 void ProjectiveTextureEffect::setActive(QGLPainter *painter, bool flag)
 {
-    QGLShaderEffect::setActive(painter, flag);
+    QGLShaderProgramEffect::setActive(painter, flag);
 }
 
 void ProjectiveTextureEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
-    QGLShaderEffect::update(painter, updates);
+    QGLShaderProgramEffect::update(painter, updates);
 
     if(matrixDirty)
     {

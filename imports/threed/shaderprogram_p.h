@@ -4,7 +4,7 @@
 #include <QWeakPointer>
 #include <QGLShaderProgram>
 #include "effect.h"
-#include "qglshadereffect.h"
+#include "qglshaderprogrameffect.h"
 #include "private/qdeclarativepixmapcache_p.h"
 
 class ShaderProgram;
@@ -61,7 +61,7 @@ private:
   It contains the actual QGLShaderProgram along with all of the necessary
   parameters to use that program.
 */
-class ShaderProgramEffect : public QGLShaderEffect
+class ShaderProgramEffect : public QGLShaderProgramEffect
 {
 public:
     ShaderProgramEffect(ShaderProgram* parent);

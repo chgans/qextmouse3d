@@ -1,13 +1,11 @@
 #ifndef PROJECTIVEDTEXTUREEFFECT_H
 #define PROJECTIVEDTEXTUREEFFECT_H
 
-//#include <QGLShaderProgramEffect>
-#include "qglshadereffect.h"
-#include "qglshaderprogram.h"
+#include "qglshaderprogrameffect.h"
 //#include "deptheffect.h"
 #include "qmatrix4x4.h"
 
-class ProjectiveTextureEffect : public QGLShaderEffect
+class ProjectiveTextureEffect : public QGLShaderProgramEffect
 {
 public:
     explicit ProjectiveTextureEffect();

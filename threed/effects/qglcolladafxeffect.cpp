@@ -13,6 +13,10 @@ QGLColladaFxEffect::QGLColladaFxEffect() : QGLShaderProgramEffect()
 {
 }
 
+QGLColladaFxEffect::QGLColladaFxEffect(const QGLColladaFxEffect&) : QGLShaderProgramEffect()
+{
+    Q_ASSERT(false);
+};
 
 
 QGLColladaFxEffect::~QGLColladaFxEffect()
@@ -30,6 +34,7 @@ QGLColladaFxEffectPrivate::QGLColladaFxEffectPrivate() : id()
         , diffuseTexture(0)
         , specularTexture(0)
         , lighting(QGLColladaFxEffect::NoLighting)
+        , material(0)
 {
     resetGlueSnippets();
 }
@@ -46,6 +51,9 @@ QGLColladaFxEffectPrivate::~QGLColladaFxEffectPrivate()
     diffuseTexture = 0;
     delete specularTexture;
     specularTexture = 0;
+    delete material;
+    material = 0;
+
 }
 
 
@@ -321,4 +329,41 @@ void QGLColladaFxEffect::setLighting(int lighting)
 int QGLColladaFxEffect::lighting()
 {
     return d->lighting;
+}
+
+/*!
+  Sets this effect to use \a newMaterial.  If \a newMaterial is 0, sets this
+  effect to have no material, and instead use whatever material is set
+  on the QGLPainter.
+
+  \sa QGLPainter, material()
+*/
+void QGLColladaFxEffect::setMaterial(QGLMaterial* newMaterial)
+{
+    d->material = newMaterial;
+}
+
+/*!
+    Returns a pointer to the material of this effect.  If the effect has no material,
+    this function returns 0;
+*/
+QGLMaterial* QGLColladaFxEffect::material()
+{
+    return d->material;
+}
+
+/*!
+  Returns true if the effect is currently active (applied to a QGLPainter)
+  and false if it is not.
+  */
+bool QGLColladaFxEffect::isActive()
+{
+    return d->currentlyActive;
+}
+
+void QGLColladaFxEffect::setActive(QGLPainter *painter, bool flag)
+{
+    d->currentlyActive = flag && !vertexShader().isEmpty() &&
+                         !fragmentShader().isEmpty();
+    QGLShaderProgramEffect::setActive(painter, d->currentlyActive);
 }

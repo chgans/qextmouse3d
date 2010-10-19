@@ -44,7 +44,6 @@
 #include "qglabstracteffect.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglpixelbuffer.h>
-#include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/qpainter.h>
@@ -60,7 +59,6 @@
 #include "qgllittextureeffect.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
-#include "qgltexture2d_p.h"
 #include "qgltexturecube.h"
 #include "qgeometrydata.h"
 #include "qglvertexbundle_p.h"

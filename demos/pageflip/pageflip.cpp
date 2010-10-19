@@ -48,7 +48,7 @@
 
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
-#include "qglshadereffect.h"
+#include "qglshaderprogrameffect.h"
 #endif
 #include "pageflipmath_p.h"
 
@@ -101,7 +101,7 @@ private:
 
 #if !defined(QT_OPENGL_ES_1)
 
-class PageFlipGradientEffect : public QGLShaderEffect
+class PageFlipGradientEffect : public QGLShaderProgramEffect
 {
 public:
     PageFlipGradientEffect();

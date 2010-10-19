@@ -147,7 +147,7 @@
     Other lighting and material values, such as the ambient, diffuse,
     and specular colors, can be passed to the shader program using
     custom uniform variables, or the standard variable names described
-    in the QGLShaderEffect documentation.
+    in the QGLShaderProgramEffect documentation.
 
     \section1 Custom uniform variables
 
@@ -411,7 +411,7 @@ void ShaderProgramEffect::update
     }
 
     // Update the standard uniform variables.
-    QGLShaderEffect::update(painter, updates);
+    QGLShaderProgramEffect::update(painter, updates);
 
     // Assign custom properties if they exist
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)

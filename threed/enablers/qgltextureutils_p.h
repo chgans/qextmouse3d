@@ -54,7 +54,6 @@
 //
 
 #include <QtOpenGL/qgl.h>
-#include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qdatetime.h>
 #include "qglnamespace.h"
 
@@ -125,10 +124,10 @@ public:
     QGLBoundTexture(const QGLContext *ctx);
     ~QGLBoundTexture();
 
-    const QGLContext *context() const { return m_guard.context(); }
+    const QGLContext *context() const { return m_context; }
 
-    GLuint textureId() const { return m_guard.id(); }
-    void setTextureId(GLuint id) { m_guard.setId(id); }
+    GLuint textureId() const { return m_id; }
+    void setTextureId(GLuint id) { m_id = id; }
 
     QGLContext::BindOptions options() const { return m_options; }
     void setOptions(QGLContext::BindOptions options) { m_options = options; }
@@ -152,8 +151,11 @@ public:
     bool bindCompressedTextureDDS(const char *buf, int len);
     bool bindCompressedTexturePVR(const char *buf, int len);
 
+    void contextDestroyed(const QGLContext *ctx);
+
 private:
-    QGLSharedResourceGuard m_guard;
+    const QGLContext *m_context;
+    GLuint m_id;
     QGLContext::BindOptions m_options;
     QSize m_size;
     bool m_hasAlpha;

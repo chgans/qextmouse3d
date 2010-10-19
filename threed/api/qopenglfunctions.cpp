@@ -41,7 +41,6 @@
 
 #include "qopenglfunctions.h"
 #include "qglext_p.h"
-#include <QtOpenGL/private/qgl_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -150,31 +149,14 @@ struct QOpenGLFunctionsPrivateEx : public QOpenGLFunctionsPrivate
     int m_features;
 };
 
-#if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QOpenGLFunctionsPrivateEx>, qt_gl_functions_resource)
-#else
-static void qt_gl_functions_free(void *data)
-{
-    delete reinterpret_cast<QOpenGLFunctionsPrivateEx *>(data);
-}
+Q_GLOBAL_STATIC(QGLResource<QOpenGLFunctionsPrivateEx>, qt_gl_functions_resource)
 
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_functions_resource, (qt_gl_functions_free))
-#endif
 static QOpenGLFunctionsPrivateEx *qt_gl_functions(const QGLContext *context = 0)
 {
     if (!context)
         context = QGLContext::currentContext();
     Q_ASSERT(context);
-    QOpenGLFunctionsPrivateEx *funcs =
-        reinterpret_cast<QOpenGLFunctionsPrivateEx *>
-            (qt_gl_functions_resource()->value(context));
-#if QT_VERSION < 0x040800
-    if (!funcs) {
-        funcs = new QOpenGLFunctionsPrivateEx();
-        qt_gl_functions_resource()->insert(context, funcs);
-    }
-#endif
-    return funcs;
+    return qt_gl_functions_resource()->value(context);
 }
 
 /*!

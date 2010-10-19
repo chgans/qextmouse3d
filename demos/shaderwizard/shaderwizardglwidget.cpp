@@ -108,7 +108,7 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     mMaterial->setObjectName(QLatin1String("ShaderWizardGLWidgetMaterial"));
 
     setTeapotGeometry();
-    d->effect = new QGLColladaFxEffect;
+    ensureEffect();
 }
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
@@ -131,11 +131,6 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
         sphere = 0;
     }
 
-    if( mMaterialCollection)
-    {
-        delete mMaterialCollection;
-        mMaterialCollection = 0;
-    }
 }
 
 void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
@@ -209,6 +204,12 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
         mSceneNode->setMaterialIndex(materialIndex);
+
+        if(mSceneNode->effect() == 0 && mSceneNode->userEffect() == 0)
+        {
+            ensureEffect();
+            mSceneNode->setUserEffect(effect());
+        }
     }
 
     clearScene();
@@ -353,8 +354,7 @@ void ShaderWizardGLWidget::setHeightMapGeometry()
 
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 {
-    if(!d->effect)
-        d->effect = new QGLColladaFxEffect(); // QGLPainter will delete the old one;
+    ensureEffect();
     d->effect->setVertexShader(shader.toLatin1());
     update();
     emit effectChanged();
@@ -362,9 +362,7 @@ void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 
 void ShaderWizardGLWidget::setFragmentShader(QString const & shader )
 {
-    if(!d->effect)
-        d->effect = new QGLColladaFxEffect(); // QGLPainter will delete the old one;
-
+    ensureEffect();
     d->effect->setFragmentShader(shader.toLatin1());
     update();
     emit effectChanged();
@@ -427,6 +425,15 @@ void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* sceneNode)
     this->camera()->setEye(QVector3D(0.0, 0.0, viewDistance));
     this->camera()->setCenter(boxOrigin);
     update();
+}
+
+void ShaderWizardGLWidget::ensureEffect()
+{
+    if(!d->effect)
+    {
+        d->effect = new QGLColladaFxEffect;
+        d->effect->generateShaders();
+    }
 }
 
 void ShaderWizardGLWidget::setPainterColor(QColor color)
