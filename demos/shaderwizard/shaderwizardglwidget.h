@@ -121,6 +121,7 @@ private:
     void paintGL(QGLPainter *painter);
 
     void setDefaultCamera(QGLSceneNode* geometry);
+    void ensureEffect();
 
     ShaderWizardGLWidgetPrivate* d;
     QGLSceneNode *mSceneNode;

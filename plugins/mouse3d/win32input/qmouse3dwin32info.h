@@ -4,13 +4,37 @@
 #include <windows.h>
 #include <math.h>
 #include <QDebug>
+#include <QObject>
 
-#define _WIN32_WINNT 0x501   // This says that we are using WinXP or later - raw input is only available on such system.
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+//#define _WIN32_WINNT 0x501   // This says that we are using WinXP or later - raw input is only available on such system.
 #define LOGITECH_VENDOR_ID 0x46d
 #define WM_INPUT 0x00FF      // This is the code for WM_INPUT messages.
 
+typedef WINUSERAPI BOOL (WINAPI *pRegisterRawInputDevices)(IN PCRAWINPUTDEVICE pRawInputDevices, IN UINT uiNumDevices, IN UINT cbSize);
+typedef WINUSERAPI INT (WINAPI *pGetRawInputData)(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData,  PINT pcbSize, UINT cbSizeHeader);
+typedef WINUSERAPI INT (WINAPI *pGetRawInputDeviceInfoA)(IN HANDLE hDevice, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize);
+typedef WINUSERAPI INT (WINAPI *pGetRawInputDeviceList)(OUT PRAWINPUTDEVICELIST pRawInputDeviceList, IN OUT PINT puiNumDevices, IN UINT cbSize);
+
 bool InitialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary();
-bool Mouse3dEventFilterFunction(void *newMessage, long *result);
+
+bool mouse3dEventFilterFunction(void *newMessage, long *result);
+
+class QMouseData : public QObject
+{
+    Q_OBJECT
+public:
+    QMouseData(QObject *parent = 0);
+    ~QMouseData();
+	
+	void sendDetectedSignal(HRAWINPUT hRawInput);
+
+Q_SIGNALS:
+     void rawInputDetected(HRAWINPUT hRawInput);
+};
 
 enum e3dconnexion_pid {
   eSpacePilot = 0xc625,
@@ -140,4 +164,9 @@ __inline unsigned short HidToVirtualKey(unsigned long pid, int hidKeyCode)
 	  return virtualkey;  
 
 }
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
 #endif // QMOUSE3DWIN32INFO_H
