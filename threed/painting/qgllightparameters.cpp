@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qgllightparameters.h"
-#include <QtCore/private/qobject_p.h>
 #include <QtCore/qmath.h>
 #include <QtGui/qmatrix4x4.h>
 
@@ -134,12 +133,10 @@ QT_BEGIN_NAMESPACE
     \sa LightModel
 */
 
-class QGLLightParametersPrivate : public QObjectPrivate
+class QGLLightParametersPrivate
 {
-    Q_DECLARE_PUBLIC(QGLLightParameters)
 public:
-    QGLLightParametersPrivate(int version = QObjectPrivateVersion) :
-        QObjectPrivate(version),
+    QGLLightParametersPrivate() :
         type(QGLLightParameters::Directional),
         position(0.0f, 0.0f, 1.0f),
         ambientColor(0, 0, 0, 255),
@@ -188,7 +185,8 @@ public:
     and attaches it to \a parent.
 */
 QGLLightParameters::QGLLightParameters(QObject *parent)
-    : QObject(*new QGLLightParametersPrivate(), parent)
+    : QObject(parent)
+    , d_ptr(new QGLLightParametersPrivate)
 {
 }
 

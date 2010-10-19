@@ -219,7 +219,8 @@ void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list
     a QGLSceneNode then this node is added to it as a child.
 */
 QGLSceneNode::QGLSceneNode(QObject *parent)
-    : QObject(*new QGLSceneNodePrivate(QGLSceneNode::Mesh), parent)
+    : QObject(parent)
+    , d_ptr(new QGLSceneNodePrivate(QGLSceneNode::Mesh))
 {
     setParent(parent);
 }
@@ -230,7 +231,8 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
     as a child.
 */
 QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
-    : QObject(*new QGLSceneNodePrivate(QGLSceneNode::Mesh), parent)
+    : QObject(parent)
+    , d_ptr(new QGLSceneNodePrivate(QGLSceneNode::Mesh))
 {
     Q_D(QGLSceneNode);
     d->geometry = geometry;
@@ -238,21 +240,6 @@ QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
     if (sceneParent)
         sceneParent->addNode(this);
 }
-
-/*!
-    \internal
-    Constructor for use by QObjectPrivate-using subclasses of QGLSceneNode.
-    If parent is a QGLSceneNode then this node is added to it
-    as a child.
-*/
-QGLSceneNode::QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent)
-    : QObject(dd, parent)
-{
-    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
-    if (sceneParent)
-        sceneParent->addNode(this);
-}
-
 
 /*!
     Destroys this scene node.
@@ -1088,8 +1075,10 @@ void QGLSceneNode::parentOnto(QGLSceneNode *parent)
 void QGLSceneNode::unParent(QGLSceneNode *parent)
 {
     Q_D(QGLSceneNode);
-    Q_ASSERT(d->parentNodes.contains(parent));
-    d->parentNodes.removeOne(parent);
+    if (d) {    // May be null if called via deleteChild().
+        Q_ASSERT(d->parentNodes.contains(parent));
+        d->parentNodes.removeOne(parent);
+    }
 }
 
 /*!

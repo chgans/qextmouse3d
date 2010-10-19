@@ -47,8 +47,6 @@
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtOpenGL/qglshaderprogram.h>
 #include <QtOpenGL/qglframebufferobject.h>
-#include <QtGui/private/qwidget_p.h>
-#include <QtGui/private/qwindowsurface_p.h>
 #include <QtGui/qpainter.h>
 #include <QtGui/qpaintengine.h>
 #include <QtCore/qvarlengtharray.h>
@@ -126,11 +124,8 @@ QGLPainterPrivate::QGLPainterPrivate()
       updates(QGLPainter::UpdateAll),
       pick(0),
       boundVertexBuffer(0),
-      boundIndexBuffer(0)
-#if QT_VERSION < 0x040700
-      , vertexAttribPointer(0)
-#endif
-      , renderSequencer(0)
+      boundIndexBuffer(0),
+      renderSequencer(0)
 {
     context = 0;
     effect = 0;
@@ -255,22 +250,15 @@ QGLPainter::QGLPainter(const QGLContext *context)
 
 /*!
     Constructs a new GL painter and attaches it to the GL
-    context associated with \a device.  It is not necessary to
+    context associated with \a widget.  It is not necessary to
     call begin() after construction.
-
-    If \a device does not have a GL context, then isActive()
-    will return false; true otherwise.
-
-    This constructor can be used to paint into QGLWidget and QGLPixelBuffer
-    paint devices, or into any QWidget if the OpenGL graphics system
-    is active.
 
     \sa begin(), isActive()
 */
-QGLPainter::QGLPainter(QPaintDevice *device)
+QGLPainter::QGLPainter(QGLWidget *widget)
     : d_ptr(0)
 {
-    begin(device);
+    begin(widget);
 }
 
 /*!
@@ -405,33 +393,17 @@ bool QGLPainter::begin
 }
 
 /*!
-    Begins painting on the GL context associated with \a device.
-    Returns false if \a device does not have a GL context.
-
-    This function can be used to paint into QGLWidget and QGLPixelBuffer
-    paint devices, or into any QWidget if the OpenGL graphics system
-    is active.
+    Begins painting on the GL context associated with \a widget.
+    Returns false if \a widget is null.
 
     \sa end()
 */
-bool QGLPainter::begin(QPaintDevice *device)
+bool QGLPainter::begin(QGLWidget *widget)
 {
-    if (!device)
+    if (!widget)
         return false;
     end();
-    int devType = device->devType();
-    if (devType == QInternal::Widget) {
-        QWidget *widget = static_cast<QWidget *>(device);
-        QGLWidget *glWidget = qobject_cast<QGLWidget *>(widget);
-        if (glWidget)
-            return begin(glWidget->context(), new QGLWidgetSurface(widget));
-        else
-            return begin(0, new QGLWidgetSurface(widget));
-    } else if (devType == QInternal::Pbuffer) {
-        QGLPixelBuffer *pbuffer = static_cast<QGLPixelBuffer *>(device);
-        return begin(0, new QGLPixelBufferSurface(pbuffer));
-    }
-    return false;
+    return begin(widget->context(), new QGLWidgetSurface(widget));
 }
 
 /*!

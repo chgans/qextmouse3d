@@ -1,6 +1,9 @@
 import Qt 4.7
 import Qt3D 1.0
 
+// This is an example of how to implement a custom navigation strategy
+// to replace the default strategy implemented by "Viewport".
+
 MouseArea {
     // Set this property to the "Viewport" item to be controlled
     // by this navigator.  By default we assume that it is our parent.

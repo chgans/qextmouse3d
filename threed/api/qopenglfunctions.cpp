@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qopenglfunctions.h"
+#include "qglext_p.h"
 #include <QtOpenGL/private/qgl_p.h>
 
 QT_BEGIN_NAMESPACE
@@ -230,7 +231,7 @@ static int qt_gl_resolve_features()
                    QOpenGLFunctions::Buffers |
                    QOpenGLFunctions::CompressedTextures |
                    QOpenGLFunctions::Multisample;
-    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    QGLExtensionChecker extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     if (extensions.match("GL_OES_framebuffer_object"))
         features |= QOpenGLFunctions::Framebuffers;
     if (extensions.match("GL_OES_blend_equation_separate"))
@@ -245,7 +246,7 @@ static int qt_gl_resolve_features()
 #else
     int features = 0;
     QGLFormat::OpenGLVersionFlags versions = QGLFormat::openGLVersionFlags();
-    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    QGLExtensionChecker extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
 
     // Recognize features by extension name.
     if (extensions.match("GL_ARB_multitexture"))

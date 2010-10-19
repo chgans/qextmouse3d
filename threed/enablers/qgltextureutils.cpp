@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qgltextureutils_p.h"
+#include "qglext_p.h"
 #include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qfile.h>
 
@@ -109,7 +110,7 @@ QGLTextureExtensions::QGLTextureExtensions(const QGLContext *ctx)
     , compressedTexImage2D(0)
 {
     Q_UNUSED(ctx);
-    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    QGLExtensionChecker extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     if (extensions.match("GL_ARB_texture_non_power_of_two"))
         npotTextures = true;
     if (extensions.match("GL_SGIS_generate_mipmap"))

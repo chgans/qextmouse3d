@@ -60,7 +60,6 @@
 #include <QtCore/qlist.h>
 #include <QtCore/qstringlist.h>
 #include <QtCore/qset.h>
-#include <QtCore/private/qobject_p.h>
 
 #if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
 #include <QtDeclarative/qdeclarativelist.h>
@@ -69,13 +68,11 @@
 class QGLAbstractEffect;
 class QGLPickNode;
 
-class QGLSceneNodePrivate : public QObjectPrivate
+class QGLSceneNodePrivate
 {
-    Q_DECLARE_PUBLIC(QGLSceneNode)
 public:
-    QGLSceneNodePrivate(QGLSceneNode::Type t, int version = QObjectPrivateVersion)
-        : QObjectPrivate(version)
-        , type(t)
+    QGLSceneNodePrivate(QGLSceneNode::Type t)
+        : type(t)
         , geometry(0)
         , palette(0)
         , localEffect(QGL::FlatColor)   // 0 - zero

@@ -122,8 +122,31 @@ private Q_SLOTS:
     void cameraChanged();
     void switchToOpenGL();
 
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
+    void hoverMoveEvent(QGraphicsSceneHoverEvent *event);
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+    void wheelEvent(QGraphicsSceneWheelEvent *event);
+    void keyPressEvent(QKeyEvent *event);
+
 private:
     ViewportPrivate *d;
+
+    bool hoverEvent(QGraphicsSceneHoverEvent *event);
+
+    QObject *objectForPoint(const QPointF &pos)
+    {
+        return objectForPoint(qRound(pos.x()), qRound(pos.y()));
+    }
+
+    void wheel(qreal delta);
+    void pan(qreal deltax, qreal deltay);
+    void rotate(qreal deltax, qreal deltay);
+    QPointF viewDelta(qreal deltax, qreal deltay);
 };
 
 QML_DECLARE_TYPE(Viewport)

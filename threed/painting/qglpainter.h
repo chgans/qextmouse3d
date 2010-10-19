@@ -84,14 +84,14 @@ class Q_QT3D_EXPORT QGLPainter : public QOpenGLFunctions
 public:
     QGLPainter();
     explicit QGLPainter(const QGLContext *context);
-    explicit QGLPainter(QPaintDevice *device);
+    explicit QGLPainter(QGLWidget *widget);
     explicit QGLPainter(QPainter *painter);
     explicit QGLPainter(QGLAbstractSurface *surface);
     virtual ~QGLPainter();
 
     bool begin();
     bool begin(const QGLContext *context);
-    bool begin(QPaintDevice *device);
+    bool begin(QGLWidget *widget);
     bool begin(QPainter *painter);
     bool begin(QGLAbstractSurface *surface);
     bool end();
