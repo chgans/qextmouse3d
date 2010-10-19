@@ -123,7 +123,8 @@ QGLPainterPrivate::QGLPainterPrivate()
       pick(0),
       boundVertexBuffer(0),
       boundIndexBuffer(0),
-      renderSequencer(0)
+      renderSequencer(0),
+      isFixedFunction(true) // Updated by QGLPainter::begin()
 {
     context = 0;
     effect = 0;
@@ -387,6 +388,9 @@ bool QGLPainter::begin
 
     // Initialize the QOpenGLFunctions parent class.
     initializeGLFunctions(context);
+
+    // Determine if the OpenGL implementation is fixed-function or not.
+    d_ptr->isFixedFunction = !hasOpenGLFeature(QOpenGLFunctions::Shaders);
     return true;
 }
 
@@ -560,7 +564,11 @@ bool QGLPainter::isFixedFunction() const
 #elif defined(QT_OPENGL_ES_1)
     return true;
 #else
-    return !QGLShaderProgram::hasOpenGLShaderPrograms();
+    Q_D(const QGLPainter);
+    if (d)
+        return d->isFixedFunction;
+    else
+        return true;
 #endif
 }
 

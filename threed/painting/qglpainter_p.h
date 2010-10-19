@@ -121,6 +121,7 @@ public:
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
     QGLRenderSequencer *renderSequencer;
+    bool isFixedFunction;
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }
