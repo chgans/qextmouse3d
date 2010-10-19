@@ -41,7 +41,6 @@
 
 #include "qgltextureutils_p.h"
 #include "qglext_p.h"
-#include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qfile.h>
 
 QT_BEGIN_NAMESPACE
@@ -141,28 +140,14 @@ QGLTextureExtensions::~QGLTextureExtensions()
 {
 }
 
-#if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLTextureExtensions>, qt_gl_texture_extensions)
-#else
-static void QGLTextureExtensions_free(void *ptr)
-{
-    delete reinterpret_cast<QGLTextureExtensions *>(ptr);
-}
-
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_texture_extensions, (QGLTextureExtensions_free))
-#endif
+Q_GLOBAL_STATIC(QGLResource<QGLTextureExtensions>, qt_gl_texture_extensions)
 
 QGLTextureExtensions *QGLTextureExtensions::extensions()
 {
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
         return 0;
-    QGLTextureExtensions *extns = reinterpret_cast<QGLTextureExtensions *>(qt_gl_texture_extensions()->value(ctx));
-    if (!extns) {
-        extns = new QGLTextureExtensions(ctx);
-        qt_gl_texture_extensions()->insert(ctx, extns);
-    }
-    return extns;
+    return qt_gl_texture_extensions()->value(ctx);
 }
 
 QGLBoundTexture::QGLBoundTexture(const QGLContext *ctx)

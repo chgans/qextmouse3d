@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qglext_p.h"
-#include <QtOpenGL/private/qgl_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -61,27 +60,12 @@ public:
     bool multiTextureResolved;
 };
 
-#if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLMultiTextureExtensions>, qt_multitexture_funcs)
-#else
-static void qt_multitexture_funcs_free(void *data)
-{
-    delete reinterpret_cast<QGLMultiTextureExtensions *>(data);
-}
-
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_multitexture_funcs, (qt_multitexture_funcs_free))
-#endif
+Q_GLOBAL_STATIC(QGLResource<QGLMultiTextureExtensions>, qt_multitexture_funcs)
 
 static QGLMultiTextureExtensions *resolveMultiTextureExtensions
     (const QGLContext *ctx)
 {
-    QGLMultiTextureExtensions *extn =
-        reinterpret_cast<QGLMultiTextureExtensions *>
-            (qt_multitexture_funcs()->value(ctx));
-    if (!extn) {
-        extn = new QGLMultiTextureExtensions();
-        qt_multitexture_funcs()->insert(ctx, extn);
-    }
+    QGLMultiTextureExtensions *extn = qt_multitexture_funcs()->value(ctx);
     if (!(extn->multiTextureResolved)) {
         extn->multiTextureResolved = true;
         if (!extn->clientActiveTexture) {

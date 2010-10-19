@@ -49,8 +49,6 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
 // Provide some useful OpenGL extension definitions.
 
 #if !defined(QT_OPENGL_ES)
@@ -97,6 +95,112 @@ private:
     const char *gl_extensions;
     int gl_extensions_length;
 };
+
+// Copy of some definitions from <QtOpenGL/private/qgl_p.h> so that
+// we can avoid a direct dependency upon private headers in Qt.
+
+#if QT_VERSION >= 0x040800
+
+class QGLContextGroup;
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLContextGroupResourceBase
+{
+public:
+    QGLContextGroupResourceBase();
+    virtual ~QGLContextGroupResourceBase();
+    void insert(const QGLContext *context, void *value);
+    void *value(const QGLContext *context);
+    void cleanup(const QGLContext *context, void *value);
+    virtual void freeResource(void *value) = 0;
+
+protected:
+    QList<QGLContextGroup *> m_groups;
+
+private:
+    QAtomicInt active;
+};
+
+#endif
+
+template <class T>
+class QGLResource : public QGLContextGroupResourceBase
+{
+public:
+    T *value(const QGLContext *context) {
+        T *resource = reinterpret_cast<T *>(QGLContextGroupResourceBase::value(context));
+        if (!resource) {
+            resource = new T(context);
+            insert(context, resource);
+        }
+        return resource;
+    }
+
+protected:
+    void freeResource(void *resource) {
+        delete reinterpret_cast<T *>(resource);
+    }
+};
+
+#else
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLContextResource
+{
+public:
+    typedef void (*FreeFunc)(void *);
+    QGLContextResource(FreeFunc f);
+    ~QGLContextResource();
+    void insert(const QGLContext *key, void *value);
+    void *value(const QGLContext *key);
+    void cleanup(const QGLContext *ctx, void *value);
+private:
+    FreeFunc free;
+    QAtomicInt active;
+};
+
+#endif
+
+template <class T>
+class QGLResource : public QGLContextResource
+{
+public:
+    static void freeResource(void *resource) {
+        delete reinterpret_cast<T *>(resource);
+    }
+
+    QGLResource() : QGLContextResource(freeResource) {}
+
+    T *value(const QGLContext *context) {
+        T *resource = reinterpret_cast<T *>(QGLContextResource::value(context));
+        if (!resource) {
+            resource = new T(context);
+            insert(context, resource);
+        }
+        return resource;
+    }
+};
+
+#endif
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLSignalProxy : public QObject
+{
+    Q_OBJECT
+public:
+    QGLSignalProxy() : QObject() {}
+    void emitAboutToDestroyContext(const QGLContext *context) {
+        emit aboutToDestroyContext(context);
+    }
+    static QGLSignalProxy *instance();
+Q_SIGNALS:
+    void aboutToDestroyContext(const QGLContext *context);
+};
+
+#endif
 
 QT_END_NAMESPACE
 
