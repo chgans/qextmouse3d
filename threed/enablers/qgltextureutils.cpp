@@ -151,7 +151,8 @@ QGLTextureExtensions *QGLTextureExtensions::extensions()
 }
 
 QGLBoundTexture::QGLBoundTexture(const QGLContext *ctx)
-    : m_guard(ctx)
+    : m_context(ctx)
+    , m_id(0)
     , m_options(QGLContext::DefaultBindOption)
     , m_hasAlpha(false)
 {
@@ -184,15 +185,13 @@ void QGLBoundTexture::startUpload(GLenum target, const QSize &imageSize)
 
     // Create the texture id for the target, which should be one of
     // GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP.
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(target, 0);   // Just in case texture is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    id = 0;
-    glGenTextures(1, &id);
-    m_guard.setId(id);
-    glBindTexture(target, m_guard.id());
+    m_id = 0;
+    glGenTextures(1, &m_id);
+    glBindTexture(target, m_id);
 
     GLuint filtering = m_options & QGLContext::LinearFilteringBindOption ? GL_LINEAR : GL_NEAREST;
 
@@ -623,16 +622,14 @@ bool QGLBoundTexture::bindCompressedTextureDDS(const char *buf, int len)
     const GLubyte *pixels =
         reinterpret_cast<const GLubyte *>(buf + ddsHeader->dwSize + 4);
 
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(GL_TEXTURE_2D, 0);    // Just in case it is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
     q_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     q_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    m_guard.setId(id);
 
     int size;
     int offset = 0;
@@ -728,13 +725,12 @@ bool QGLBoundTexture::bindCompressedTexturePVR(const char *buf, int len)
 
     // Create the texture.
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(GL_TEXTURE_2D, 0);    // Just in case it is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
     if (pvrHeader->mipMapCount) {
         if ((m_options & QGLContext::LinearFilteringBindOption) != 0) {
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -786,6 +782,20 @@ bool QGLBoundTexture::bindCompressedTexturePVR(const char *buf, int len)
     m_size = QSize(pvrHeader->width, pvrHeader->height);
     m_hasAlpha = (pvrHeader->alphaMask != 0);
     return true;
+}
+
+Q_OPENGL_EXPORT const QGLContext *qt_gl_transfer_context(const QGLContext *);
+
+void QGLBoundTexture::contextDestroyed(const QGLContext *ctx)
+{
+    // If our owning context has been destroyed, then transfer ownership
+    // to another context in the same sharing group.  If there are no more
+    // contexts in the sharing group then the texture has been destroyed.
+    if (ctx == m_context) {
+        m_context = qt_gl_transfer_context(ctx);
+        if (!m_context)
+            m_id = 0;
+    }
 }
 
 QT_END_NAMESPACE

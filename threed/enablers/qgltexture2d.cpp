@@ -43,6 +43,7 @@
 #include "qgltexture2d_p.h"
 #include "qgltextureutils_p.h"
 #include "qglpainter_p.h"
+#include "qglext_p.h"
 
 #include <QtCore/qfile.h>
 #include <QtCore/qfileinfo.h>
@@ -97,6 +98,10 @@ QGLTexture2DPrivate::QGLTexture2DPrivate()
     imageGeneration = 0;
     parameterGeneration = 0;
     infos = 0;
+
+    connect(QGLSignalProxy::instance(),
+            SIGNAL(aboutToDestroyContext(const QGLContext *)),
+            this, SLOT(destroyContext(const QGLContext *)));
 }
 
 QGLTexture2DPrivate::~QGLTexture2DPrivate()
@@ -127,6 +132,15 @@ QGLTexture2DPrivate::~QGLTexture2DPrivate()
             const_cast<QGLContext *>(firstContext)->makeCurrent();
         else if (currentContext)
             const_cast<QGLContext *>(currentContext)->doneCurrent();
+    }
+}
+
+void QGLTexture2DPrivate::destroyContext(const QGLContext *context)
+{
+    QGLTexture2DTextureInfo *current = infos;
+    while (current != 0) {
+        current->tex.contextDestroyed(context);
+        current = current->next;
     }
 }
 

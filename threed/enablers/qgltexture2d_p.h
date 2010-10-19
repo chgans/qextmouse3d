@@ -111,6 +111,9 @@ public:
 
     bool bind(GLenum target);
     virtual void bindImages(QGLTexture2DTextureInfo *info);
+
+private Q_SLOTS:
+    void destroyContext(const QGLContext *context);
 };
 
 QT_END_NAMESPACE
