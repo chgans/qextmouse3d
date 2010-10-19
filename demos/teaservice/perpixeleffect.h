@@ -42,12 +42,12 @@
 #ifndef PERPIXELEFFECT_H
 #define PERPIXELEFFECT_H
 
-#include "qglshadereffect.h"
+#include "qglshaderprogrameffect.h"
 
 class PerPixelEffectPrivate;
 class QGLShader;
 
-class PerPixelEffect : public QGLShaderEffect
+class PerPixelEffect : public QGLShaderProgramEffect
 {
     Q_DISABLE_COPY(PerPixelEffect);
 public:

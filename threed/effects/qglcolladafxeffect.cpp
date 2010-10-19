@@ -8,12 +8,12 @@
 #include "qglcolladafxeffect.h"
 #include "qglcolladafxeffect_p.h"
 
-QGLColladaFxEffect::QGLColladaFxEffect() : QGLShaderEffect()
+QGLColladaFxEffect::QGLColladaFxEffect() : QGLShaderProgramEffect()
         , d( new QGLColladaFxEffectPrivate )
 {
 }
 
-QGLColladaFxEffect::QGLColladaFxEffect(const QGLColladaFxEffect&) : QGLShaderEffect()
+QGLColladaFxEffect::QGLColladaFxEffect(const QGLColladaFxEffect&) : QGLShaderProgramEffect()
 {
     Q_ASSERT(false);
 };
@@ -118,7 +118,7 @@ inline void QGLColladaFxEffectPrivate::setTextureUniform(QGLShaderProgram *progr
 
 void QGLColladaFxEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
-    QGLShaderEffect::update(painter, updates);
+    QGLShaderProgramEffect::update(painter, updates);
 
     if(updates && QGLPainter::UpdateMaterials)
     {
@@ -365,5 +365,5 @@ void QGLColladaFxEffect::setActive(QGLPainter *painter, bool flag)
 {
     d->currentlyActive = flag && !vertexShader().isEmpty() &&
                          !fragmentShader().isEmpty();
-    QGLShaderEffect::setActive(painter, d->currentlyActive);
+    QGLShaderProgramEffect::setActive(painter, d->currentlyActive);
 }
