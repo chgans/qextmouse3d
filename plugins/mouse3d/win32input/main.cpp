@@ -54,7 +54,7 @@ public:
 
 QMouse3DWin32InputPlugin::QMouse3DWin32InputPlugin () 
 {
-	if (!InitialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary())
+	if (!initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary())
 		qWarning()<<"Unable to initialise raw input functions.";
 }
 

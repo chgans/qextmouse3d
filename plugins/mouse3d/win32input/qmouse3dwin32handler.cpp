@@ -44,7 +44,7 @@
 #include "qmouse3dwin32info.h"
 #include <QtCore/qdebug.h>
 
-
+//Raw input function pointers
 extern pRegisterRawInputDevices _RegisterRawInputDevices;
 extern pGetRawInputData _GetRawInputData;
 extern pGetRawInputDeviceInfoA _GetRawInputDeviceInfo;
@@ -76,11 +76,10 @@ QMouse3DWin32Handler::QMouse3DWin32Handler(QObject *parent)
         return;
 	}
     
-	qDebug() << "Initialising " << inputDeviceCount << " objects.";
     devices.clear();
-    
+    	
 	for (int i = 0; i < inputDeviceCount; i++) {
-        //if the device is a generid HID (ie. not mouse or keyboard)
+        //if the device is a generid HID (ie. not mouse or keyboard)		
 		if (inputDeviceList[i].dwType == RIM_TYPEHID) {				
 			mouseAdded(inputDeviceList[i].hDevice);			
         }
@@ -133,7 +132,7 @@ void QMouse3DWin32Handler::updateSensitivity(qreal sensitivity)
         devices[index]->device->updateSensitivity(sensitivity);
 }
 
-void QMouse3DWin32Handler::deviceAdded(const QString &path)
+void QMouse3DWin32Handler::deviceAdded(HANDLE deviceHandle)
 {
 	//
 	//
@@ -160,7 +159,6 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
 	//Check if we already have this device in our list and bail out if we do
 	for(int i=0; i< devices.size(); i++) {
 		if (devices[i]->deviceHandle == deviceHandle) {
-			qDebug() << "Human input device " << deviceHandle << " was already detected.  Discarding.";
 			return;
 		}
 	}
@@ -178,18 +176,14 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
 		if (deviceInfo.hid.usUsage==0x08)                
 		{
 			//Set 3d device information and add it to the list of available devices.
-			
-			qDebug() << "3d mouse detected!";
-		    
 			QString devName = "Unknown";                     
 			QString devBrand = "Unknown";
-			devName = ProductName(deviceInfo.hid.dwProductId);                    
+			devName = ProductName(deviceInfo.hid.dwProductId);   
 			if (deviceInfo.hid.dwVendorId == LOGITECH_VENDOR_ID)  {
 				devBrand = "Logitech";
-				qDebug() << "Brand: Logitech";
 			}
 		   
-			QMouse3DWin32InputDevice *device = new QMouse3DWin32InputDevice();    	
+			QMouse3DWin32InputDevice *device = new QMouse3DWin32InputDevice(devName, devBrand, deviceHandle, this);    	
 			MouseInfo *info = new MouseInfo(deviceHandle, devName, devBrand, device);
 
 			devices.append(info);
@@ -207,6 +201,5 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
     // Tell the application that there is a new mouse attached.
     emit availableChanged();
 }
-
 
 QT_END_NAMESPACE
