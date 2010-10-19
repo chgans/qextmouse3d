@@ -244,10 +244,6 @@ void QGLColladaFxEffect::generateShaders()
                 + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet;
         setFragmentShader(shader.toLatin1());
     }
-
-    // Set inactive to trigger relinking later
-    if(isActive())
-        setActive(0, false);    // FIXME - really needs a painter
 }
 
 
