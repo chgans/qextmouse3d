@@ -189,7 +189,7 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
 				qDebug() << "Brand: Logitech";
 			}
 		   
-			QMouse3DWin32InputDevice *device = new QMouse3DWin32InputDevice();    		
+			QMouse3DWin32InputDevice *device = new QMouse3DWin32InputDevice();    	
 			MouseInfo *info = new MouseInfo(deviceHandle, devName, devBrand, device);
 
 			devices.append(info);
@@ -201,10 +201,12 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
 
 	// if there is a valid mouse, set the message filter
 	if (devices.size()>0)
-		QApplication::instance()->setEventFilter(Mouse3dEventFilterFunction);	
+		QApplication::instance()->setEventFilter(mouse3dEventFilterFunction);	
 
+	//QCoreApplication::EventFilter(
     // Tell the application that there is a new mouse attached.
     emit availableChanged();
 }
+
 
 QT_END_NAMESPACE
