@@ -68,13 +68,8 @@ public:
     virtual void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
-<<<<<<< HEAD:threed/painting/qglabstracteffect.h
-    virtual void setCommonNormal(const QVector3D& value);
-
     virtual QString name() const { return QString(); }
 
-=======
->>>>>>> master:threed/painting/qglabstracteffect.h
 protected:
     static void setAttributeArray
         (QGLShaderProgram *program, int location,
