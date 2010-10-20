@@ -58,7 +58,6 @@ ByteReader::ByteReader()
 
 void ByteReader::loadFile(const QUrl &url)
 {
-    qDebug() << ">>> ByteReader::loadFile()" << url << QThread::currentThread();
     if (!url.isEmpty() && !m_stop)
     {
         m_loading.ref();
@@ -117,7 +116,7 @@ void ByteReader::loadFile(const QUrl &url)
                 // on a small screen.  For now work with fairly cruddy image quality.
                 if (im.size().width() > 1024 || im.size().height() > 768)
                     im = im.scaled(QSize(1024, 768), Qt::KeepAspectRatio,
-                                   QThread::idealThreadCount() > 2 ?
+                                   QThread::idealThreadCount() > 1 ?
                                        Qt::SmoothTransformation : Qt::FastTransformation);
             }
 
@@ -128,11 +127,8 @@ void ByteReader::loadFile(const QUrl &url)
             Q_ASSERT(!im.isNull());
             Q_ASSERT(!thumb.isNull());
 
+            qDebug() << "emit imageLoaded" << thumb.url();
             emit imageLoaded(thumb);
-            qDebug() << "ByteReader::loadFile -- emit image loaded" << thumb.url()
-                     << "thread:" << QThread::currentThread();
-            ::fprintf(stderr, "     ByteReader::loadFile -- image data: %p -- thread: %p\n", thumb.priv(),
-                      QThread::currentThread());
         }
 
         m_loading.deref();
@@ -141,7 +137,6 @@ void ByteReader::loadFile(const QUrl &url)
     if (m_stop)
         emit stopped();
 
-    qDebug() << "<<< ByteReader::loadFile()" << url << QThread::currentThread();
 }
 
 void ByteReader::stop()

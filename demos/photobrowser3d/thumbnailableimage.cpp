@@ -141,6 +141,7 @@ void ThumbnailableImage::setThumbnailed(bool enable)
         {
             if (d->frame.isNull())
             {
+                qDebug() << "setThumbnailed:" << d->url << "to:" << enable;
                 Q_ASSERT(!d->data.isNull());
                 QSize sz = (QSizeF(d->data.size()) / d->scale).toSize();
                 QAtlas *atlas = QAtlas::instance();
@@ -208,17 +209,22 @@ void ThumbnailableImage::minimize()
     if (!d)
         return;
     detach();
-    if (d->thumbnailed)
+    if (!isMinimized())
     {
-        // If thumbnailed, I don't really need the full size image
-        d->data = QImage();
-    }
-    else
-    {
-        // If not thumbnailed, I don't need the atlas resources
-        QAtlas *atlas = QAtlas::instance();
-        atlas->release(d->frame);
-        d->frame = QRect();
+        if (d->thumbnailed)
+        {
+            // If thumbnailed, I don't really need the full size image
+            d->data = QImage();
+            qDebug() << "minimize - setting to data to empty image:" << d->url;
+        }
+        else
+        {
+            // If not thumbnailed, I don't need the atlas resources
+            QAtlas *atlas = QAtlas::instance();
+            atlas->release(d->frame);
+            d->frame = QRect();
+            qDebug() << "minimize - setting to frame to empty:" << d->url;
+        }
     }
 }
 
@@ -266,3 +272,14 @@ void ThumbnailableImage::detach()
         }
     }
 }
+
+#ifndef QT_NO_DEBUG_STREAM
+QDebug operator<<(QDebug dbg, const ThumbnailableImage &image)
+{
+    dbg << "ThumbnailableImage" << image.url() << "size:" << image.data().size() <<
+            "minimized:" << image.isMinimized() << "-- thumbnailed:" << image.isThumbnailed()
+            << "-- null:" << image.isNull() << "-- image loaded:" << (!image.data().isNull())
+               << "-- index count:" << image.indices().count();
+    return dbg;
+}
+#endif

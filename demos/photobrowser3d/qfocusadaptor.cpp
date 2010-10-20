@@ -43,6 +43,7 @@
 #include "qglscenenode.h"
 #include "qglview.h"
 #include "qglcamera.h"
+#include "thumbnailnode.h"
 
 class QFocusAdaptorPrivate
 {
@@ -84,7 +85,6 @@ qreal QFocusAdaptor::progress() const
 
 void QFocusAdaptor::setProgress(qreal progress)
 {
-    // qDebug() << "QFocusAdaptor::setProgress(" << progress << ") -- from:" << d->progress;
     if (d->progress != progress)
     {
         d->progress = progress;
@@ -111,7 +111,6 @@ QGLSceneNode *QFocusAdaptor::target() const
 
 void QFocusAdaptor::setTarget(QGLSceneNode *target)
 {
-    qDebug() << "setTarget" << target << "was:" << d->target;
     if (d->target != target)
     {
         d->target = target;
@@ -146,12 +145,28 @@ void QFocusAdaptor::calculateValues()
             // wont work very well if the target is not axis-aligned
             // find the distance q for the eye to be away from this object
             // in order that it is a tight fit in the viewport
-            QBox3D box = d->target->boundingBox();
+            QGeometryData g = d->target->geometry();
+            QGL::IndexArray inxs = g.indices();
+            QBox3D box;
+            for (int i = d->target->start(); i < (d->target->start() + d->target->count()); ++i)
+                box.unite(g.vertexAt(inxs.at(i)));
             QVector3D sz = box.size();
 
             qreal near = cam->nearPlane();
 
             QSizeF v = cam->viewSize();
+
+            qreal vh = d->view->rect().height();
+            qreal vw = d->view->rect().width();
+            if (!qFuzzyIsNull(vw - vh))
+            {
+                qreal asp = vh / vw;
+                if (vh > vw)
+                    v.setHeight(v.height() * asp);
+                else
+                    v.setWidth(v.width() / asp);
+            }
+
             qreal qh = (near * sz.y()) / v.height();
             qreal qw = (near * sz.x()) / v.width();
 
@@ -162,8 +177,7 @@ void QFocusAdaptor::calculateValues()
 
             d->targetCenter = d->target->position();
             d->targetEye = d->targetCenter + (toCam * q);
-            qDebug() << "resetting --- zoom from:" << d->sourceCenter << "( eye:" << d->sourceEye << ")"
-                        << "to:" << d->targetCenter << "( eye:" << d->targetEye << ")";
+
             d->reset = false;
         }
         cam->setCenter(d->sourceCenter + ((d->targetCenter - d->sourceCenter) * d->progress));

@@ -49,8 +49,6 @@
 #include <QtCore/qmath.h>
 #include <QUrl>
 
-class ImageManager;
-
 class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
@@ -74,12 +72,15 @@ public:
     ThumbnailableImage image() const { return m_image; }
 signals:
     void imageRequired(const QUrl &);
+    void thumbnailRequired(const ThumbnailableImage &);
 public slots:
     void setImage(const ThumbnailableImage &image);
+    void updateImage(const ThumbnailableImage &image);
 private:
     void createFullNode();
     void destroyFullNode();
     void setupLoading();
+    void setupThumbnailing();
     void loadFullImage();
 
     ThumbnailableImage m_image;
@@ -89,6 +90,9 @@ private:
     bool m_loading;
     QGLSceneNode *m_full;
     QSizeF m_max;
+    QObject *m_manager;
+    Distance m_lastDistance;
+    bool m_thumbnailing;
 };
 
 #endif // THUMBNAILNODE_H

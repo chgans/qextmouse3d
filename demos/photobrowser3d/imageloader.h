@@ -65,13 +65,14 @@ signals:
     void imageLoaded(const ThumbnailableImage &image);
     void stopLoading();
     void readRequired(const QUrl &url);
+    void thumbnailRequired(const ThumbnailableImage &image);
+    void thumbnailDone(const ThumbnailableImage &image);
     void unused();
 public slots:
     void stop();
 protected:
     void run();
 private slots:
-    void debugStuff();
     void queueInitialUrl();
     void unusedTimeout();
 private:
