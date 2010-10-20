@@ -56,6 +56,7 @@
 #include <QtOpenGL/qgl.h>
 #include <QtCore/qdatetime.h>
 #include "qglnamespace.h"
+#include <QtOpenGL/private/qglextensions_p.h>
 
 QT_BEGIN_NAMESPACE
 
