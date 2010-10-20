@@ -57,9 +57,6 @@ public:
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
 protected:
     QGLLitMaterialEffect
         (GLenum mode, const char *vshader, const char *fshader,

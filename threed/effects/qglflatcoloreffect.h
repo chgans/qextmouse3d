@@ -60,9 +60,6 @@ public:
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
 private:
     QScopedPointer<QGLFlatColorEffectPrivate> d_ptr;
 
@@ -78,9 +75,6 @@ public:
 
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
 private:
     QScopedPointer<QGLPerVertexColorEffectPrivate> d_ptr;

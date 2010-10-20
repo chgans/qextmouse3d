@@ -567,30 +567,4 @@ void QGLLitMaterialEffect::update
 #endif
 }
 
-/*!
-    \reimp
-*/
-void QGLLitMaterialEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLLitMaterialEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position) {
-        setAttributeArray(d->program, QGL::Position, value);
-    } else if (attribute == QGL::Normal) {
-        setAttributeArray(d->program, QGL::Normal, value);
-    } else if (attribute == QGL::TextureCoord0 && d->textureMode != 0) {
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
-    }
-#endif
-}
-
 QT_END_NAMESPACE

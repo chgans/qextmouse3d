@@ -58,8 +58,6 @@ public:
     virtual ~QGLShaderProgramEffect();
 
     void setActive(QGLPainter *painter, bool flag);
-    void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue &value);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     QByteArray vertexShader() const;

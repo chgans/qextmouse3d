@@ -227,29 +227,6 @@ void QGLFlatTextureEffect::update
 #endif
 }
 
-/*!
-    \reimp
-*/
-void QGLFlatTextureEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLFlatTextureEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
-#endif
-}
-
 class QGLFlatDecalTextureEffectPrivate
 {
 public:
@@ -388,29 +365,6 @@ void QGLFlatDecalTextureEffect::update
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLFlatDecalTextureEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLFlatDecalTextureEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
 #endif
 }
 
