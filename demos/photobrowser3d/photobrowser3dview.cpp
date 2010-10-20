@@ -264,7 +264,7 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
         zoomMag += inc;
         if (zoomMag < 2.0f)
             zoomMag = 2.0f;
-        QLine3D viewLine(camera()->center(), viewVec);
+        QRay3D viewLine(camera()->center(), viewVec);
         camera()->setEye(viewLine.point(zoomMag));
         update();
     }
@@ -302,7 +302,7 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
             zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
             if (zoomMag < 5.0f)
                 zoomMag = 5.0f;
-            QLine3D viewLine(camera()->center(), viewVec);
+            QRay3D viewLine(camera()->center(), viewVec);
             camera()->setEye(viewLine.point(zoomMag));
             update();
         }
