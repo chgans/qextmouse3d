@@ -55,6 +55,7 @@ ThumbnailNode::ThumbnailNode(QObject *parent)
     , m_defaultMaterial(-1)
     , m_loading(false)
     , m_full(0)
+    , m_manager(0)
 {
 }
 
@@ -81,10 +82,12 @@ void ThumbnailNode::setupLoading()
         image.setData(im);
         setImage(image);
 #else
+        if (m_manager)
+            // reconnect the signal we disconnnected in setImage() below
+            connect(m_manager, SIGNAL(imageReady(ThumbnailableImage)), this, SLOT(setImage(ThumbnailableImage)));
         emit imageRequired(m_url);
+        setMaterialIndex(m_defaultMaterial);
 #endif
-        if (m_url.toString().contains("1"))
-            qDebug() << "ThumbnailNode::setupLoading" << m_url;
     }
 }
 
@@ -170,14 +173,11 @@ void ThumbnailNode::draw(QGLPainter *painter)
         loadFullImage();
         break;
     case Far:
-        destroyFullNode();
         if (m_image.isMinimized() && !m_loading)
         {
             m_image = ThumbnailableImage();
             setupLoading();
         }
-        if (!m_image.data().isNull())
-            m_image.setThumbnailed(true);
         break;
     case VeryFar:
         destroyFullNode();
@@ -186,11 +186,11 @@ void ThumbnailNode::draw(QGLPainter *painter)
     }
 
     QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
-    //Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
-    //           "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
+    Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
+               "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
     ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
-    //Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
-    //           "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
+    Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
+               "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
 
     if (nodeToDraw == this)
     {
@@ -211,16 +211,6 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
 {
     Q_ASSERT(!image.isNull());
 
-    if (m_url.toString().contains("basket-screenshot.jpg"))
-    {
-        qDebug() << "ThumbnailNode::setImage"
-                 << m_url << "-- got:" << image.url()
-                 << "loading? --" << m_loading
-                 << "thread:" << QThread::currentThread();
-        ::fprintf(stderr, "     ThumbnailNode::setImage -- image data: %p -- thread: %p\n", image.priv(),
-                  QThread::currentThread());
-    }
-
     // ok maybe we got what we asked for but in the meantime we decided
     // we didnt want it anymore
     if (!m_loading)
@@ -233,7 +223,10 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
 
     // ok we got the right one, stop listening to the manager
     if (sender())
-        disconnect(sender());
+    {
+        m_manager = sender();
+        m_manager->disconnect(this);
+    }
 
     // the indices we are about to set will index this thumbnail image
     // into the image that its atlas is based on via the texture coords
@@ -245,11 +238,6 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
 
     m_image = image;
     Q_ASSERT(!m_image.data().isNull());
-
-    // debug - delete me
-    ::fprintf(stderr, "     ThumbnailNode::setImage -- m_image data: %p -- thread: %p\n",
-              m_image.priv(),
-              QThread::currentThread());
 
     // configure the placeholder for the actual image size
     // this makes a photo of 1024 x 768 display on approx 3.0 x 2.8 pane

@@ -49,8 +49,6 @@
 #include <QtCore/qmath.h>
 #include <QUrl>
 
-class ImageManager;
-
 class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
@@ -89,6 +87,7 @@ private:
     bool m_loading;
     QGLSceneNode *m_full;
     QSizeF m_max;
+    QObject *m_manager;
 };
 
 #endif // THUMBNAILNODE_H

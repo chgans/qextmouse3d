@@ -58,7 +58,6 @@ ByteReader::ByteReader()
 
 void ByteReader::loadFile(const QUrl &url)
 {
-    qDebug() << ">>> ByteReader::loadFile()" << url << QThread::currentThread();
     if (!url.isEmpty() && !m_stop)
     {
         m_loading.ref();
@@ -129,10 +128,6 @@ void ByteReader::loadFile(const QUrl &url)
             Q_ASSERT(!thumb.isNull());
 
             emit imageLoaded(thumb);
-            qDebug() << "ByteReader::loadFile -- emit image loaded" << thumb.url()
-                     << "thread:" << QThread::currentThread();
-            ::fprintf(stderr, "     ByteReader::loadFile -- image data: %p -- thread: %p\n", thumb.priv(),
-                      QThread::currentThread());
         }
 
         m_loading.deref();
@@ -141,7 +136,6 @@ void ByteReader::loadFile(const QUrl &url)
     if (m_stop)
         emit stopped();
 
-    qDebug() << "<<< ByteReader::loadFile()" << url << QThread::currentThread();
 }
 
 void ByteReader::stop()

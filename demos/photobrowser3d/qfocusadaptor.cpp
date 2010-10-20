@@ -84,7 +84,6 @@ qreal QFocusAdaptor::progress() const
 
 void QFocusAdaptor::setProgress(qreal progress)
 {
-    // qDebug() << "QFocusAdaptor::setProgress(" << progress << ") -- from:" << d->progress;
     if (d->progress != progress)
     {
         d->progress = progress;
@@ -111,7 +110,6 @@ QGLSceneNode *QFocusAdaptor::target() const
 
 void QFocusAdaptor::setTarget(QGLSceneNode *target)
 {
-    qDebug() << "setTarget" << target << "was:" << d->target;
     if (d->target != target)
     {
         d->target = target;
@@ -162,8 +160,6 @@ void QFocusAdaptor::calculateValues()
 
             d->targetCenter = d->target->position();
             d->targetEye = d->targetCenter + (toCam * q);
-            qDebug() << "resetting --- zoom from:" << d->sourceCenter << "( eye:" << d->sourceEye << ")"
-                        << "to:" << d->targetCenter << "( eye:" << d->targetEye << ")";
             d->reset = false;
         }
         cam->setCenter(d->sourceCenter + ((d->targetCenter - d->sourceCenter) * d->progress));

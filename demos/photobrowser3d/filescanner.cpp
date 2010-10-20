@@ -6,7 +6,6 @@
 #include <QSet>
 #include <QDir>
 #include <QCoreApplication>
-#include <QDebug>
 #include <QImageReader>
 
 FileScanner::FileScanner(QObject *parent)
@@ -17,7 +16,7 @@ FileScanner::FileScanner(QObject *parent)
 
 FileScanner::~FileScanner()
 {
-    qDebug() << "FileScanner::~FileScanner()";
+    // nothing to do here
 }
 
 void FileScanner::stop()
@@ -32,13 +31,6 @@ void FileScanner::run()
 
 void FileScanner::scan()
 {
-    qDebug() << "FileScanner::scan" << m_url.toString();
-
-    // debug - remove me
-    QTime timer;
-    timer.start();
-    int count = 0;
-
     QStringList queue;
     queue.append(m_url.path());
     QSet<QString> loopProtect;
@@ -79,15 +71,10 @@ void FileScanner::scan()
                     url2.setScheme("file");
                     url2.setPath(u.absoluteFilePath());
                     emit imageUrl(url2);
-                    ++count;
                 }
             }
         }
         QCoreApplication::processEvents();
         QThread::yieldCurrentThread();
     }
-    if (m_stop)
-        qDebug() << "stop detected";
-    fprintf(stderr, "FileScanner::run - %d images found under %s in %d ms\n",
-            count, qPrintable(m_url.path()), timer.elapsed());
 }

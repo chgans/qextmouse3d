@@ -72,7 +72,6 @@ protected:
     void run();
 private slots:
     void scanForFiles();
-    void debugStuff();
 private:
     QUrl m_url;
 };

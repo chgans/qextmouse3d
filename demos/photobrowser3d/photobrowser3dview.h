@@ -72,6 +72,7 @@ signals:
 protected:
     void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
+    void resizeGL(int w, int h);
     void wheelEvent(QWheelEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void closeEvent(QCloseEvent *e);

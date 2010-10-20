@@ -71,7 +71,6 @@ public slots:
 protected:
     void run();
 private slots:
-    void debugStuff();
     void queueInitialUrl();
     void unusedTimeout();
 private:

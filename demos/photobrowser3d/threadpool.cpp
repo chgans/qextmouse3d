@@ -48,7 +48,7 @@
 ThreadPool::ThreadPool()
 {
     m_threadPoolSize = QThread::idealThreadCount();
-    if (m_threadPoolSize < 1)
+    if (m_threadPoolSize < 2)
         m_threadPoolSize = 2;
     m_stop = 0;
 }
@@ -63,9 +63,6 @@ void ThreadPool::deployLoader(const QUrl &url)
     // INVARIANT: this critical section is only ever executed from its
     // own thread - thus access to it is serialized
     Q_ASSERT(QThread::currentThread() == thread());
-
-    qDebug() << ">>>>>> ThreadPool::deployLoader(" << url.toString() << ")"
-             << QThread::currentThread();
 
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     Q_ASSERT(manager);
@@ -85,8 +82,6 @@ void ThreadPool::deployLoader(const QUrl &url)
             loader = new ImageLoader;
             m_allWorkers.append(loader);
             loader->setUrl(url);
-            qDebug() << "ThreadPool::deployLoader - created new" << loader <<
-                        "in thread:" << QThread::currentThread();
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager,
                     SIGNAL(imageReady(ThumbnailableImage)));
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
@@ -100,14 +95,11 @@ void ThreadPool::deployLoader(const QUrl &url)
             m_workList.append(url);
         }
     }
-
-    qDebug() << "<<<<<< ThreadPool::deployLoader(" << url.toString() << ")" << QThread::currentThread();
 }
 
 void ThreadPool::retrieveLoader()
 {
     ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    qDebug() << "ThreadPool::retrieveLoader()" << loader;
     Q_ASSERT(loader);
     if (!m_stop)
     {
@@ -120,7 +112,6 @@ void ThreadPool::retrieveLoader()
 
 void ThreadPool::stop()
 {
-    qDebug() << "ThreadPool::stop";
     m_stop.ref();
     emit stopAll();
 }
@@ -128,7 +119,6 @@ void ThreadPool::stop()
 void ThreadPool::closeLoader()
 {
     ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    qDebug() << "ThreadPool::closeLoader()" << loader;
     Q_ASSERT(loader);
     m_allWorkers.removeOne(loader);
     loader->deleteLater();
