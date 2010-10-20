@@ -142,6 +142,7 @@ void Controls::changeEvent(QEvent *e)
 
 void Controls::closeEvent(QCloseEvent *e)
 {
+    Q_UNUSED(e);
     QString model = m_model->fullPath();
     saveSettings(model);
     saveModelDefaults(model);
