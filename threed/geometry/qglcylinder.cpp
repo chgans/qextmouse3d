@@ -377,8 +377,8 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                 qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
             }  
             angle = 0;
-            base.reversed();  //we need to reverse the above to draw it properly - windings!
-            builder.addTriangulatedFace(base);
+            //we need to reverse the above to draw it properly - windings!
+            builder.addTriangulatedFace(base.reversed());
         }
         
         //Keep the current layer for drawing the next segment of the cylinder        
