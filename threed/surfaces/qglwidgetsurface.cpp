@@ -112,6 +112,7 @@ QPaintDevice *QGLWidgetSurface::device() const
 */
 bool QGLWidgetSurface::activate(QGLAbstractSurface *prevSurface)
 {
+    Q_UNUSED(prevSurface);
     if (m_widget) {
         const QGLContext *context = m_widget->context();
         if (QGLContext::currentContext() != context)
