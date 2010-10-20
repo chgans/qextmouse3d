@@ -185,7 +185,7 @@ public:
 
 #endif
 
-#if !defined(QGL_P_H)
+#if !defined(QGL_P_H) && !defined(Q_MOC_RUN)
 
 class Q_OPENGL_EXPORT QGLSignalProxy : public QObject
 {
