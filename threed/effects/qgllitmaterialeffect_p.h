@@ -39,47 +39,34 @@
 **
 ****************************************************************************/
 
-#ifndef QGLFLATTEXTUREEFFECT_H
-#define QGLFLATTEXTUREEFFECT_H
+#ifndef QGLLITCOLOREFFECT_H
+#define QGLLITCOLOREFFECT_H
 
 #include "qglabstracteffect.h"
-#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_NAMESPACE
 
-class QGLFlatTextureEffectPrivate;
-class QGLFlatDecalTextureEffectPrivate;
+class QGLLitMaterialEffectPrivate;
 
-class Q_QT3D_EXPORT QGLFlatTextureEffect : public QGLAbstractEffect
+class QGLLitMaterialEffect : public QGLAbstractEffect
 {
 public:
-    QGLFlatTextureEffect();
-    virtual ~QGLFlatTextureEffect();
-
+    QGLLitMaterialEffect();
+    virtual ~QGLLitMaterialEffect();
+   
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-private:
-    QScopedPointer<QGLFlatTextureEffectPrivate> d_ptr;
-
-    Q_DECLARE_PRIVATE(QGLFlatTextureEffect)
-    Q_DISABLE_COPY(QGLFlatTextureEffect)
-};
-
-class Q_QT3D_EXPORT QGLFlatDecalTextureEffect : public QGLAbstractEffect
-{
-public:
-    QGLFlatDecalTextureEffect();
-    virtual ~QGLFlatDecalTextureEffect();
-
-    void setActive(QGLPainter *painter, bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+protected:
+    QGLLitMaterialEffect
+        (GLenum mode, const char *vshader, const char *fshader,
+         const QString& programName);
 
 private:
-    QScopedPointer<QGLFlatDecalTextureEffectPrivate> d_ptr;
+    QScopedPointer<QGLLitMaterialEffectPrivate> d_ptr;
 
-    Q_DECLARE_PRIVATE(QGLFlatDecalTextureEffect)
-    Q_DISABLE_COPY(QGLFlatDecalTextureEffect)
+    Q_DECLARE_PRIVATE(QGLLitMaterialEffect)
+    Q_DISABLE_COPY(QGLLitMaterialEffect)
 };
 
 QT_END_NAMESPACE

@@ -45,7 +45,6 @@
 #include "qgltestwidget.h"
 #include "qglpainter.h"
 #include "qglsimulator.h"
-#include "qglflatcoloreffect.h"
 
 class tst_QGLPainter : public QObject
 {
@@ -130,12 +129,10 @@ void tst_QGLPainter::drawTrianglePaint()
     vertices.append(500, 100);
     vertices.append(500, 500);
 
-    QGLFlatColorEffect effect;
-    painter.setUserEffect(&effect);
+    painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
-    painter.setUserEffect(0);
 }
 
 void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
@@ -219,8 +216,7 @@ void tst_QGLPainter::scissorPaint()
     vertices.append(500, 500);
 
     // Paint a green triangle.
-    QGLFlatColorEffect effect;
-    painter.setUserEffect(&effect);
+    painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
@@ -251,8 +247,6 @@ void tst_QGLPainter::scissorPaint()
     painter.setScissor(scissor);
     painter.setColor(Qt::yellow);
     painter.draw(QGL::Triangles, 3);
-
-    painter.setUserEffect(0);
 
     glDisable(GL_SCISSOR_TEST);
 }

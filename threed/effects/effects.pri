@@ -3,10 +3,6 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 
 HEADERS += \
-    qglflatcoloreffect.h \
-    qglflattextureeffect.h \
-    qgllitmaterialeffect.h \
-    qgllittextureeffect.h \
     qglshaderprogrameffect.h
 
 SOURCES += \
@@ -15,6 +11,12 @@ SOURCES += \
     qgllitmaterialeffect.cpp \
     qgllittextureeffect.cpp \
     qglshaderprogrameffect.cpp
+
+PRIVATE_HEADERS += \
+    qglflatcoloreffect_p.h \
+    qglflattextureeffect_p.h \
+    qgllitmaterialeffect_p.h \
+    qgllittextureeffect_p.h
 
 !contains(QT_CONFIG,opengles1) {
 

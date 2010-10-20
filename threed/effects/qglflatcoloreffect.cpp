@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglflatcoloreffect.h"
+#include "qglflatcoloreffect_p.h"
 #include "qglabstracteffect_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
 
@@ -51,6 +51,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatColorEffect class provides a standard effect that draws fragments with a flat unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -59,6 +60,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLPerVertexColorEffect class provides a standard effect that draws fragments with a per-vertex unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 class QGLFlatColorEffectPrivate

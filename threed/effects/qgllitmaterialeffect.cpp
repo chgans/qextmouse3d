@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgllitmaterialeffect.h"
+#include "qgllitmaterialeffect_p.h"
 #include "qglabstracteffect_p.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
@@ -53,6 +53,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitMaterialEffect class provides a standard effect that draws fragments with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 #if !defined(QGL_FIXED_FUNCTION_ONLY)

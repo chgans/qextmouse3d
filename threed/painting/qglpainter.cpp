@@ -53,10 +53,10 @@
 #if !defined(QT_NO_THREAD)
 #include <QtCore/qthreadstorage.h>
 #endif
-#include "qglflatcoloreffect.h"
-#include "qglflattextureeffect.h"
-#include "qgllitmaterialeffect.h"
-#include "qgllittextureeffect.h"
+#include "qglflatcoloreffect_p.h"
+#include "qglflattextureeffect_p.h"
+#include "qgllitmaterialeffect_p.h"
+#include "qgllittextureeffect_p.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
 #include "qgltexturecube.h"

@@ -50,7 +50,7 @@ QT_BEGIN_NAMESPACE
 class QGLFlatColorEffectPrivate;
 class QGLPerVertexColorEffectPrivate;
 
-class Q_QT3D_EXPORT QGLFlatColorEffect : public QGLAbstractEffect
+class QGLFlatColorEffect : public QGLAbstractEffect
 {
 public:
     QGLFlatColorEffect();
@@ -67,7 +67,7 @@ private:
     Q_DISABLE_COPY(QGLFlatColorEffect)
 };
 
-class Q_QT3D_EXPORT QGLPerVertexColorEffect : public QGLAbstractEffect
+class QGLPerVertexColorEffect : public QGLAbstractEffect
 {
 public:
     QGLPerVertexColorEffect();

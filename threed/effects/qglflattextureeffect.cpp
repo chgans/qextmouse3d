@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglflattextureeffect.h"
+#include "qglflattextureeffect_p.h"
 #include "qglabstracteffect_p.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
@@ -52,6 +52,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatTextureEffect class provides a standard effect that draws fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -60,6 +61,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatDecalTextureEffect class provides a standard effect that decals fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 class QGLFlatTextureEffectPrivate

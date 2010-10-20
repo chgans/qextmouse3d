@@ -39,34 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef QGLLITCOLOREFFECT_H
-#define QGLLITCOLOREFFECT_H
+#ifndef QGLLITTEXTUREEFFECT_H
+#define QGLLITTEXTUREEFFECT_H
 
-#include "qglabstracteffect.h"
+#include "qgllitmaterialeffect_p.h"
 
 QT_BEGIN_NAMESPACE
 
-class QGLLitMaterialEffectPrivate;
-
-class Q_QT3D_EXPORT QGLLitMaterialEffect : public QGLAbstractEffect
+class QGLLitTextureEffect : public QGLLitMaterialEffect
 {
 public:
-    QGLLitMaterialEffect();
-    virtual ~QGLLitMaterialEffect();
-   
-    void setActive(QGLPainter *painter, bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
+    virtual ~QGLLitTextureEffect();
 
 protected:
-    QGLLitMaterialEffect
-        (GLenum mode, const char *vshader, const char *fshader,
-         const QString& programName);
+    QGLLitTextureEffect(GLenum mode, const char *vshader, const char *fshader,
+                        const QString& programName);
+};
 
-private:
-    QScopedPointer<QGLLitMaterialEffectPrivate> d_ptr;
+class QGLLitDecalTextureEffect : public QGLLitTextureEffect
+{
+public:
+    QGLLitDecalTextureEffect();
+    virtual ~QGLLitDecalTextureEffect();
+};
 
-    Q_DECLARE_PRIVATE(QGLLitMaterialEffect)
-    Q_DISABLE_COPY(QGLLitMaterialEffect)
+class QGLLitModulateTextureEffect : public QGLLitTextureEffect
+{
+public:
+    QGLLitModulateTextureEffect();
+    virtual ~QGLLitModulateTextureEffect();
 };
 
 QT_END_NAMESPACE
