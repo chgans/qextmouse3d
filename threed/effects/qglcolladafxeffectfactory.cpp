@@ -120,7 +120,7 @@ QList<QGLColladaFxEffect*> QGLColladaFxEffectFactory::loadEffectsFromFile( const
 
 
 
-QString QGLColladaFxEffectFactory::exportEffect(QGLShaderProgramEffect *effect, QString effectId, QString techniqueSid)
+QString QGLColladaFxEffectFactory::exportEffect(QGLColladaFxEffect *effect, QString effectId, QString techniqueSid)
 {
     QStringList result;
 
@@ -1378,7 +1378,7 @@ void QGLColladaFxEffectFactory::processImageElement( QXmlStreamReader& xml, Resu
     findEndTag( xml, QLatin1String("image"));
 }
 
-QStringList QGLColladaFxEffectFactory::glslProfileFromEffect(QGLShaderProgramEffect* effect, QString sid)
+QStringList QGLColladaFxEffectFactory::glslProfileFromEffect(QGLColladaFxEffect* effect, QString sid)
 {
     Q_UNUSED(effect)
     Indent indent;
@@ -1400,7 +1400,7 @@ QStringList QGLColladaFxEffectFactory::glslProfileFromEffect(QGLShaderProgramEff
     return result;
 }
 
-QStringList QGLColladaFxEffectFactory::generateProgramElement(QGLShaderProgramEffect* effect, QString techniqueSid)
+QStringList QGLColladaFxEffectFactory::generateProgramElement(QGLColladaFxEffect* effect, QString techniqueSid)
 {
     QStringList result;
     QString vertexShaderRefSid = QLatin1String("VertexShaderRefSidRefsCodeOrIncludeAtProfileOrEffectLevel");
@@ -1416,7 +1416,7 @@ QStringList QGLColladaFxEffectFactory::generateProgramElement(QGLShaderProgramEf
     return result;
 }
 
-QStringList QGLColladaFxEffectFactory::generateShaderElement( QGLShaderProgramEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid )
+QStringList QGLColladaFxEffectFactory::generateShaderElement( QGLColladaFxEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid )
 {
     Q_UNUSED(effect);
     QStringList result;
@@ -1450,7 +1450,7 @@ QStringList QGLColladaFxEffectFactory::generateShaderElement( QGLShaderProgramEf
     return result;
 }
 
-QStringList QGLColladaFxEffectFactory::generateBindAttributeElement( QGLShaderProgramEffect* effect )
+QStringList QGLColladaFxEffectFactory::generateBindAttributeElement( QGLColladaFxEffect* effect )
 {
     // Currently no need for bind_attribute elements.
     Q_UNUSED(effect);
@@ -1504,18 +1504,19 @@ QStringList generateBindUniformParamElement( QString symbol, const QColor& value
 }
 
 
-QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderProgramEffect* effect )
+QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLColladaFxEffect* effect )
 {
     QStringList result;
     if(effect == 0)
         return result;
-//    // 0 or more <bind_uniform> elements
+    //    // 0 or more <bind_uniform> elements
+    // Example uniforms
+    //        result += generateBindUniformParamElement( "exampleRefSymbol", QString("exampleRef"));
+    //        result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
+
     if(effect->material() != 0)
     {
         QGLMaterial* material = effect->material();
-        // Example uniforms
-//        result += generateBindUniformParamElement( "exampleRefSymbol", QString("exampleRef"));
-//        result += generateBindUniformParamElement( "exampleFloat3Symbol", QVector3D(0.1, 0.2, 0.3) );
 
         // Actual uniforms:
         result += generateBindUniformParamElement( QLatin1String("ambientColor"), material->ambientColor());
@@ -1524,16 +1525,16 @@ QStringList QGLColladaFxEffectFactory::generateBindUniformElements( QGLShaderPro
         result += generateBindUniformParamElement( QLatin1String("objectName"), material->objectName());
         result += generateBindUniformParamElement( QLatin1String("shininess"), material->shininess());
         result += generateBindUniformParamElement( QLatin1String("specularColor"), material->specularColor());
+
+        effect->supportsPicking();
+
+        // TODO: Find and store effect uniforms
+        //    effect->bindProgramUniforms();
     }
-    effect->supportsPicking();
-
-    // TODO: Find and store effect uniforms
-//    effect->bindProgramUniforms();
-
     return result;
 }
 
-QStringList QGLColladaFxEffectFactory::generateCodeElements( QGLShaderProgramEffect* effect, QString baseSid )
+QStringList QGLColladaFxEffectFactory::generateCodeElements( QGLColladaFxEffect* effect, QString baseSid )
 {
     QStringList result;
     // 0 or more <bind_uniform> elements
@@ -1597,11 +1598,11 @@ void QGLColladaFxEffectFactory::processProgramElement( QXmlStreamReader& xml, Re
                     {
                         if(stage == QLatin1String("VERTEX"))
                         {
-                            effect->setVertexShader( param.value<QString>() );
+                            effect->setVertexShader( param.value<QString>().toLatin1() );
                         }
                         else if (stage == QLatin1String("FRAGMENT"))
                         {
-                            effect->setFragmentShader( param.value<QString>() );
+                            effect->setFragmentShader( param.value<QString>().toLatin1() );
                         } else
                         {
                             qWarning() << "unrecognized shader stage: "

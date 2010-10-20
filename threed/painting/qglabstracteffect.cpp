@@ -68,17 +68,6 @@ QGLAbstractEffect::~QGLAbstractEffect()
 }
 
 /*!
-    \fn QList<QGL::VertexAttribute> QGLAbstractEffect::requiredFields() const
-
-    Returns a list of the vertex array fields that are required
-    to be provided via setVertexAttribute().  QGLPainter::draw()
-    uses this to warn when the application has not supplied
-    sufficient arguments to use the effect.
-
-    \sa setVertexAttribute(), QGLPainter::draw()
-*/
-
-/*!
     Returns true if this effect supports object picking; false otherwise.
     The default implementation returns false, which causes QGLPainter
     to use the effect associated with QGL::FlatColor to perform
@@ -149,28 +138,6 @@ void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 // Implemented in qglpainter.cpp.
 
 /*!
-    Sets the common normal value for all vertices to \a value and
-    disable any active normal arrays.
-
-    The default implementation calls \c{glNormal3f()} to set \a value
-    on the GL fixed function pipeline.
-
-    OpenGL/ES 2.0 implementations do not have a fixed function
-    pipeline, so subclasses must override this function and
-    use QGLShaderProgram::setAttributeValue() to set the normal
-    attribute on the shader program to \a value.
-*/
-void QGLAbstractEffect::setCommonNormal(const QVector3D& value)
-{
-#if !defined(QT_OPENGL_ES_2)
-    glNormal3f(value.x(), value.y(), value.z());
-    glDisableClientState(GL_NORMAL_ARRAY);
-#else
-    Q_UNUSED(value)
-#endif
-}
-
-/*!
     Sets the vertex attribute at \a location on \a program to \a value.
     It is assumed that \a program is bound to the current context.
     Has no effect on systems without shader support.
@@ -182,7 +149,7 @@ void QGLAbstractEffect::setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value)
 {
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     program->setAttributeArray
         (location, value.type(), value.data(),
          value.tupleSize(), value.stride());

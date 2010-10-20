@@ -60,17 +60,17 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // for QSettings
-    QCoreApplication::setOrganizationName("Nokia");
-    QCoreApplication::setOrganizationDomain("nokia.com");
-    QCoreApplication::setApplicationName("modelviewer");
+    QCoreApplication::setOrganizationName(QLatin1String("Nokia"));
+    QCoreApplication::setOrganizationDomain(QLatin1String("nokia.com"));
+    QCoreApplication::setApplicationName(QLatin1String("modelviewer"));
 
     int result = 0;
     {
         Controls controls;
 
-        if (QApplication::arguments().contains("-maximize"))
+        if (QApplication::arguments().contains(QLatin1String("-maximize")))
             controls.showMaximized();
-        else if (QApplication::arguments().contains("-fullscreen"))
+        else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
             controls.showFullScreen();
         else
             controls.show();

@@ -149,7 +149,6 @@ void TriPlane::draw(QGLPainter *painter)
 {
     painter->setFaceMaterial(QGL::AllFaces, mat);
 
-    painter->setCommonNormal(mNormal);
     QVector<QGLGeometry*>::iterator it = mStrips.begin();
     for ( ; it != mStrips.end(); ++it)
     {

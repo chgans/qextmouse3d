@@ -135,7 +135,7 @@ void QGL3dsMesh::processNodeForMaterial(int matIx, QGLSceneNode *node)
     node->setMaterialIndex(matIx);
     node->setObjectName(baseName + QLatin1String("::") +
                         ((matIx == -1)
-                         ? QString("No_Material")
+                         ? QLatin1String("No_Material")
                              : s->palette()->materialName(matIx)));
     checkTextures(matIx);
     generateVertices();
@@ -158,7 +158,7 @@ void QGL3dsMesh::initAdjacencyMap()
 void QGL3dsMesh::initialize()
 {
     QGLSceneNode *s = sceneNode();
-    s->setObjectName(m_mesh->name);
+    s->setObjectName(QString::fromLatin1(m_mesh->name));
     if ((m_options & QGL::ForceSmooth) && (m_options & QGL::ForceFaceted))
     {
         if (m_options & QGL::ShowWarnings)
@@ -204,7 +204,7 @@ void QGL3dsMesh::initialize()
     if (mixedTexturedAndPlain)
     {
         node->setEffect(QGL::LitMaterial);
-        node->setObjectName(s->objectName() + "::Materials");
+        node->setObjectName(s->objectName() + QLatin1String("::Materials"));
         //qDebug() << ">>> mixed:" << node;
         pushNode();
         //qDebug() << "   pushed - current now:" << currentNode();
@@ -229,7 +229,7 @@ void QGL3dsMesh::initialize()
         //qDebug() << "   popped - current now:" << currentNode();
         node = currentNode();
         node->setEffect(QGL::LitModulateTexture2D);
-        node->setObjectName(s->objectName() + "::Textures");
+        node->setObjectName(s->objectName() + QLatin1String("::Textures"));
     }
     while (matList.count() > 0)
     {
@@ -568,7 +568,7 @@ int QGL3dsMesh::cachedMaterialLookup(const char *material)
     }
     if (qstrncmp(lastName, material, 510) != 0)
     {
-        lastLookup = sceneNode()->palette()->indexOf(material);
+        lastLookup = sceneNode()->palette()->indexOf(QString::fromLatin1(material));
         qstrncpy(lastName, material, 510);
     }
     return lastLookup;
@@ -711,7 +711,7 @@ void QGL3dsMesh::generateVertices()
                 currentSection()->setSmoothing(QGL::Faceted);
             keyCount -= 1;
             currentNode()->setMaterialIndex(matIx);
-            currentNode()->setObjectName(baseName + "::" + QString::number(key));
+            currentNode()->setObjectName(baseName + QLatin1String("::") + QString::number(key));
             QGeometryData tri;
             int cur = 0;
             for (Lib3dsDword f = 0; f < m_mesh->faces; ++f)

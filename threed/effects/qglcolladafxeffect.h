@@ -35,14 +35,17 @@ public:
     QString id();
     QString sid();
 
-    void setVertexShader(QString const & shader);
-    void setFragmentShader(QString const & shader);
-
     void setLighting(int lighting);
     int lighting();
+    void setMaterial(QGLMaterial* newMaterial);
+    QGLMaterial* material();
+
     QGLTexture2D* diffuseTexture();
 
+    bool isActive();
+    void setActive(QGLPainter *painter, bool flag);
 private:
+    QGLColladaFxEffect(const QGLColladaFxEffect&);
     QGLColladaFxEffectPrivate* d;
 };
 

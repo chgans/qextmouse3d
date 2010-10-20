@@ -49,8 +49,6 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
 // Provide some useful OpenGL extension definitions.
 
 #if !defined(QT_OPENGL_ES)
@@ -60,6 +58,147 @@ extern void Q_QT3D_EXPORT qt_gl_ClientActiveTexture(GLenum texture);
 #elif !defined(QT_OPENGL_ES_2)
 
 #define qt_gl_ClientActiveTexture   glClientActiveTexture
+
+#endif
+
+class QGLExtensionChecker
+{
+public:
+    QGLExtensionChecker(const char *str)
+        : gl_extensions(str), gl_extensions_length(qstrlen(str))
+    {}
+
+    bool match(const char *str) {
+        int str_length = qstrlen(str);
+        const char *extensions = gl_extensions;
+        int extensions_length = gl_extensions_length;
+
+        while (1) {
+            // the total length that needs to be matched is the str_length +
+            // the space character that terminates the extension name
+            if (extensions_length < str_length + 1)
+                return false;
+            if (qstrncmp(extensions, str, str_length) == 0 && extensions[str_length] == ' ')
+                return true;
+
+            int split_pos = 0;
+            while (split_pos < extensions_length && extensions[split_pos] != ' ')
+                ++split_pos;
+            ++split_pos; // added for the terminating space character
+            extensions += split_pos;
+            extensions_length -= split_pos;
+        }
+        return false;
+    }
+
+private:
+    const char *gl_extensions;
+    int gl_extensions_length;
+};
+
+// Copy of some definitions from <QtOpenGL/private/qgl_p.h> so that
+// we can avoid a direct dependency upon private headers in Qt.
+
+#if QT_VERSION >= 0x040800
+
+class QGLContextGroup;
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLContextGroupResourceBase
+{
+public:
+    QGLContextGroupResourceBase();
+    virtual ~QGLContextGroupResourceBase();
+    void insert(const QGLContext *context, void *value);
+    void *value(const QGLContext *context);
+    void cleanup(const QGLContext *context, void *value);
+    virtual void freeResource(void *value) = 0;
+
+protected:
+    QList<QGLContextGroup *> m_groups;
+
+private:
+    QAtomicInt active;
+};
+
+#endif
+
+template <class T>
+class QGLResource : public QGLContextGroupResourceBase
+{
+public:
+    T *value(const QGLContext *context) {
+        T *resource = reinterpret_cast<T *>(QGLContextGroupResourceBase::value(context));
+        if (!resource) {
+            resource = new T(context);
+            insert(context, resource);
+        }
+        return resource;
+    }
+
+protected:
+    void freeResource(void *resource) {
+        delete reinterpret_cast<T *>(resource);
+    }
+};
+
+#else
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLContextResource
+{
+public:
+    typedef void (*FreeFunc)(void *);
+    QGLContextResource(FreeFunc f);
+    ~QGLContextResource();
+    void insert(const QGLContext *key, void *value);
+    void *value(const QGLContext *key);
+    void cleanup(const QGLContext *ctx, void *value);
+private:
+    FreeFunc free;
+    QAtomicInt active;
+};
+
+#endif
+
+template <class T>
+class QGLResource : public QGLContextResource
+{
+public:
+    static void freeResource(void *resource) {
+        delete reinterpret_cast<T *>(resource);
+    }
+
+    QGLResource() : QGLContextResource(freeResource) {}
+
+    T *value(const QGLContext *context) {
+        T *resource = reinterpret_cast<T *>(QGLContextResource::value(context));
+        if (!resource) {
+            resource = new T(context);
+            insert(context, resource);
+        }
+        return resource;
+    }
+};
+
+#endif
+
+#if !defined(QGL_P_H)
+
+class Q_OPENGL_EXPORT QGLSignalProxy : public QObject
+{
+    Q_OBJECT
+public:
+    QGLSignalProxy() : QObject() {}
+    void emitAboutToDestroyContext(const QGLContext *context) {
+        emit aboutToDestroyContext(context);
+    }
+    static QGLSignalProxy *instance();
+Q_SIGNALS:
+    void aboutToDestroyContext(const QGLContext *context);
+};
 
 #endif
 

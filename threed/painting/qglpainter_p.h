@@ -59,28 +59,8 @@
 #include <QtCore/qatomic.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qstack.h>
-#include <QtGui/private/qpaintengineex_p.h>
-#include <QtOpenGL/private/qglextensions_p.h>
 
 QT_BEGIN_NAMESPACE
-
-#ifndef Q_WS_MAC
-# ifndef APIENTRYP
-#   ifdef APIENTRY
-#     define APIENTRYP APIENTRY *
-#   else
-#     define APIENTRY
-#     define APIENTRYP *
-#   endif
-# endif
-#else
-# define APIENTRY
-# define APIENTRYP *
-#endif
-
-#if QT_VERSION < 0x040700
-typedef void (APIENTRY *q_glVertexAttribPointer) (GLuint, GLint, GLenum, GLboolean, GLsizei, const GLvoid *);
-#endif
 
 #define QGL_MAX_LIGHTS      32
 #define QGL_MAX_STD_EFFECTS 16
@@ -124,9 +104,9 @@ public:
     QGLAbstractEffect *stdeffects[QGL_MAX_STD_EFFECTS];
     const QGLLightModel *lightModel;
     QGLLightModel *defaultLightModel;
-    const QGLLightParameters *mainLight;
-    QMatrix4x4 mainLightTransform;
     QGLLightParameters *defaultLight;
+    QArray<const QGLLightParameters *> lights;
+    QArray<QMatrix4x4> lightTransforms;
     const QGLMaterial *frontMaterial;
     const QGLMaterial *backMaterial;
     QGLMaterial *defaultMaterial;
@@ -140,31 +120,12 @@ public:
     QStack<QGLPainterSurfaceInfo> surfaceStack;
     GLuint boundVertexBuffer;
     GLuint boundIndexBuffer;
-#if QT_VERSION < 0x040700
-    q_glVertexAttribPointer vertexAttribPointer;
-#endif
     QGLRenderSequencer *renderSequencer;
+    bool isFixedFunction;
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }
     void createEffect(QGLPainter *painter);
-
-#ifndef QT_NO_DEBUG
-    // Required field checking is only done in debug builds.
-    QList<QGL::VertexAttribute> requiredFields;
-    inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
-        { requiredFields = fields; }
-    void removeRequiredFields(const QList<QGL::VertexAttribute>& array);
-    void removeRequiredField(QGL::VertexAttribute attribute)
-        { requiredFields.removeAll(attribute); }
-#else
-    inline void setRequiredFields(const QList<QGL::VertexAttribute>& fields)
-        { Q_UNUSED(fields); }
-    inline void removeRequiredFields(const QList<QGL::VertexAttribute>& array)
-        { Q_UNUSED(array); }
-    inline void removeRequiredField(QGL::VertexAttribute attribute)
-        { Q_UNUSED(attribute); }
-#endif
 };
 
 class QGLPainterPrivateCache : public QObject

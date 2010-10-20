@@ -106,13 +106,13 @@ SphereView::SphereView(QWidget *parent)
     mdl->setAmbientSceneColor(QColor(196,196,196));
 
     QImage image;
-    if (!image.load(":faceUV.jpg"))
+    if (!image.load(QLatin1String(":faceUV.jpg")))
         qDebug("Failed to load cylinder wrap grid texture");
     uvTexture.setImage(image);
-    if (!image.load(":faceIco.png"))
+    if (!image.load(QLatin1String(":faceIco.png")))
         qDebug("Failed to load icosphere grid texture");
     icoTexture.setImage(image);
-    if (!image.load(":faceCube.jpg"))
+    if (!image.load(QLatin1String(":faceCube.jpg")))
         qDebug("Failed to load cube texture");
     cubeTexture.setImage(image);
 

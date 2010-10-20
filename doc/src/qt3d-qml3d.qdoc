@@ -44,5 +44,26 @@
 \title QML Support in Qt/3D 
 \keyword Qt/3D QML
 
+The following QML elements are provided by the \c{Qt3D} namespace
+for importing 3D elements into QML applications:
+
 \generatelist{related}
+
+See the \l{Teapot Example in QML/3D}{Teapot} example for an introduction
+to using these elements in QML.
+
+QML/3D also provides some \l{Standard Shapes for QML/3D}{standard shapes}
+in the \c{Qt3D.Shapes} namespace as convenience elements.
+*/
+
+/*!
+\group qt3d::qml3d::shapes
+\title Standard Shapes for QML/3D 
+
+The following QML elements are provided by the \c{Qt3D.Shapes} namespace
+as convenience elements:
+
+\generatelist{related}
+
+See the \l{Applying transformations and materials to objects#Cube in QML/3D}{Cube} example for an introduction to using these convenience shapes in QML.
 */

@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
 
 
     QGLInfoWindow w;
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         w.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         w.showFullScreen();
     else
         w.show();

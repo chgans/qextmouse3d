@@ -6,7 +6,7 @@
 
 #include <QStringList>
 
-Q_DECLARE_METATYPE(QGLColladaFxEffect)
+//Q_DECLARE_METATYPE(QGLColladaFxEffect)
 
 /*!
     \class QGLColladaFxEffectLoader

@@ -44,6 +44,7 @@
 
 #include <QtOpenGL/qgl.h>
 #include <QtGui/qtreeview.h>
+#include <QtCore/qdatetime.h>
 
 #include "qglview.h"
 
@@ -53,15 +54,26 @@ class QGLLightModel;
 class QGLLightParameters;
 class QTimer;
 class QGLSceneNode;
+class QMouse3DEventProvider;
+class QGLCameraAnimation;
+class QPropertyAnimation;
 
 class Viewer : public QGLView
 {
     Q_OBJECT
+    Q_PROPERTY(qreal spinAngle READ spinAngle WRITE setSpinAngle)
 public:
     enum View
     {
+        SelectView,
         FrontView,
-        TopView
+        BackView,
+        TopView,
+        BottomView,
+        LeftView,
+        RightView,
+        FrontRightView,
+        BackLeftView
     };
 
     Viewer(QWidget *parent = 0);
@@ -84,8 +96,12 @@ public:
     int zoomScale() { return m_zoomScale; }
     void setZoomScale(int scale);
 
+    qreal spinAngle() const { return m_spinAngle; }
+    void setSpinAngle(qreal angle) { m_spinAngle = angle; update(); }
+
 signals:
     void manualControlEngaged();
+    void viewTypeChanged();
 
 public slots:
     void enableAnimation(bool enable);
@@ -102,18 +118,17 @@ protected:
     void mouseMoveEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void keyPressEvent(QKeyEvent *e);
-
-private slots:
-    void animate();
+    bool event(QEvent *e);
 
 private:
     void mouseDrag(QMouseEvent *e);
     void buildFloor();
+    void engageManualControl();
+    void rotateView(qreal angle);
 
     QVector3D m_orientation;
     QVector3D m_position;
     QVector3D m_scale;
-    QTimer *m_timer;
     Model *m_model;
     QTreeView *m_treeView;
     QGLLightModel *m_lightModel;
@@ -126,6 +141,12 @@ private:
     int m_zoomScale;
     bool m_pickDirty;
     QVector3D m_lastEye;
+    QMouse3DEventProvider *m_eventProvider;
+    QTime m_lastEventTime;
+    bool m_lastWasZero;
+    QGLCameraAnimation *m_cameraAnimation;
+    QPropertyAnimation *m_spinAnimation;
+    qreal m_spinAngle;
 };
 
 

@@ -155,15 +155,8 @@ public Q_SLOTS:
     void translateEye(qreal x, qreal y, qreal z);
     void translateCenter(qreal x, qreal y, qreal z);
 
-    void tiltCenter(qreal angle);
-    void panCenter(qreal angle);
-    void rollCenter(qreal angle);
     void tiltPanRollCenter(qreal tiltAngle, qreal panAngle, qreal rollAngle,
                            QGLCamera::RotateOrder order = TiltPanRoll);
-
-    void tiltEye(qreal angle);
-    void panEye(qreal angle);
-    void rollEye(qreal angle);
     void tiltPanRollEye(qreal tiltAngle, qreal panAngle, qreal rollAngle,
                         QGLCamera::RotateOrder order = TiltPanRoll);
 

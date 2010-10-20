@@ -119,10 +119,6 @@ void tst_QGLBuilder::newSection()
 
 class TestEffect : public QGLAbstractEffect
 {
-    QList<QGL::VertexAttribute> requiredFields() const
-    {
-        return QList<QGL::VertexAttribute>();
-    }
     void setActive(QGLPainter *, bool)
     {
     }

@@ -55,13 +55,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationDomain("nokia.com");
     QCoreApplication::setApplicationName("photobrowser3d");
 
-    qDebug() << "main:" << QThread::currentThread();
-
     int result = 0;
     {
         PhotoBrowser3DView view;
-
-        qDebug() << "main(): construction done:" << QThread::currentThread();
 
         if (QApplication::arguments().contains("-maximize"))
             view.showMaximized();
@@ -69,8 +65,6 @@ int main(int argc, char *argv[])
             view.showFullScreen();
         else
             view.show();
-
-        qDebug() << "show done:" << QThread::currentThread();
 
         result = app.exec();
     }

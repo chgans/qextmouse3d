@@ -119,6 +119,36 @@ namespace QGL
         Smooth,
         Faceted
     };
+
+    enum Mouse3DKeys
+    {
+        Key_Fit                 = 0x01200002,
+        Key_TopView             = 0x01200003,
+        Key_LeftView            = 0x01200004,
+        Key_RightView           = 0x01200005,
+        Key_FrontView           = 0x01200006,
+        Key_BottomView          = 0x01200007,
+        Key_BackView            = 0x01200008,
+        Key_RotateCW90          = 0x01200009,
+        Key_RotateCCW90         = 0x0120000a,
+        Key_ISO1                = 0x0120000b,
+        Key_ISO2                = 0x0120000c,
+        Key_Button1             = 0x0120000d,
+        Key_Button2             = 0x0120000e,
+        Key_Button3             = 0x0120000f,
+        Key_Button4             = 0x01200010,
+        Key_Button5             = 0x01200011,
+        Key_Button6             = 0x01200012,
+        Key_Button7             = 0x01200013,
+        Key_Button8             = 0x01200014,
+        Key_Button9             = 0x01200015,
+        Key_Button10            = 0x01200016,
+        Key_Rotations           = 0x0120001b,
+        Key_Translations        = 0x0120001c,
+        Key_DominantAxis        = 0x0120001d,
+        Key_IncreaseSensitivity = 0x0120001e,
+        Key_DecreaseSensitivity = 0x0120001f
+    };
 };
 
 QT_END_NAMESPACE

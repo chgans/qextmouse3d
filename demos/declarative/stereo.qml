@@ -1,5 +1,5 @@
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 Viewport {
     width: 640; height: 480
@@ -8,7 +8,7 @@ Viewport {
         eyeSeparation: 0.2
     }
 
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "meshes/teapot.bez" }
         effect: Effect {

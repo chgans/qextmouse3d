@@ -40,189 +40,178 @@
 ****************************************************************************/
 
 #include "qplane3d.h"
-
 #include <QtCore/qmath.h>
+#include <QtCore/qnumeric.h>
+
+QT_BEGIN_NAMESPACE
 
 /*!
-  \class QPlane3D
-  \brief The QPlane3D class models the mathematics of planes in 3D space.
-  \since 4.8
-  \ingroup qt3d
-  \ingroup qt3d::math
+    \class QPlane3D
+    \brief The QPlane3D class models the mathematics of planes in 3D space.
+    \since 4.8
+    \ingroup qt3d
+    \ingroup qt3d::math
 
-  A plane is defined by:
+    A plane is defined by an origin() point lying on the plane, and a
+    normal() vector, which is perpendicular to the surface of the plane.
+    The normal() vector does not need to be normalized.  QPlane3D is an
+    infinite surface, from which the normal() vector points out perpendicular
+    from the origin() point.
 
-  \list
-    \o a point, which can be thought of as an origin point, lying on the plane
-    \o a normal vector, which is perpendicular to the surface of the plane
-  \endlist
-
-  The normal vector is normalized to be a unit length vector.
-
-  The QPlane3D is an infinite surface, from which the unit long normal vector points
-  out perpendicular from the origin point.
-
-  Methods are provided for setting and returning the defining values of the plane.
-  \list
-    \o QVector3D QPlane3D::origin() const
-    \o void QPlane3D::setOrigin(const QVector3D &point)
-    \o QVector3D QPlane3D::normal() const
-    \o void QPlane3D::setNormal(const QVector3D &vec)
-  \endlist
-
-  Determine if a given point or line is contained wholly within the plane using
-  the contains() methods.
-  \list
-    \o bool QPlane3D::contains(const QVector3D &point) const
-    \o bool QPlane3D::contains(const QLine3D &line) const
-  \endlist
-
-  \image qplane3d.png
-
-  Find a point where a line intersects with the plane using the intersection() method.
-  If a mere test of whether or not the line intersects is all that is required, use
-  the intersects() method which is much cheaper.
-
-  The project() methods project a point, vector or a line onto this plane.
-
-  In this diagram a QLine3D intsects with the Z-X plane:
-  \code
-  QVector3D planeOrigin(1.0f, 0.0f, 1.0f);
-  QVector3D planeNormal(0.0f, 1.0f, 0.0f);
-  QPlane3D zxPlane(planeOrigin, planeNormal);
-  QVector3D lineOrigin(24.0f, 32.0f, -22.0f);
-  QVector3D lineDirection(2.0f, 1.0f, -1.5f);
-  QLine3D ray(lineOrigin, lineDirection);
-  QVector3D intersection = zxPlane.intersection(ray);
-  QVector3D projection = zxPlane.project(ray);
-  \endcode
-
-  The projection is useful for forming coordinate systems and translating other geometry
-  onto the plane.
- */
+    \sa QRay3D
+*/
 
 /*!
-  \fn QPlane3D::QPlane3D()
-  Construct a default QPlane3D object.
-  The defining point of the plane is set to the origin of the world co-ordinate system
-  (0, 0, 0) and the normal vector (which is not allowed to be null) is set arbitrarily
-  to a unit vector lying on the x-axis (1, 0, 0).
- */
+    \fn QPlane3D::QPlane3D()
+
+    Constructs a default plane object.  The defining origin() of the plane
+    is set to (0, 0, 0) and the normal() vector is to (1, 0, 0).
+*/
 
 /*!
-  \fn QPlane3D::QPlane3D(const QVector3D &point, const QVector3D &normal)
-  Construct a new QPlane3D.
-  The \a point lies on the new plane, and the \a normal vector is perpendicular to it.
-  Together the point and the normal vector completely define the plane.  The vector is
-  normalized to a unit length vector before setting it as the normal.
- */
+    \fn QPlane3D::QPlane3D(const QVector3D &point, const QVector3D &normal)
+
+    Constructs a new plane, where \a point lies on the plane, and \a normal
+    is perpendicular to it.  The \a normal does not have to be normalized.
+    If \a normal is zero, the behavior of the plane is undefined.
+*/
 
 /*!
-  \fn QPlane3D::QPlane3D(const QVector3D &p, const QVector3D &q, const QVector3D &r)
-  Construct a new QPlane3D containing the three given points.
-  The point \a p is the planes origin point, and a normal is constructed from the
-  other points \a q and \a r using the vector cross-product.  If P-Q-R forms a
-  counter-clockwise triangle as viewed, then the normal vector will point out toward
-  the viewer.  The vector is normalized to a unit length vector before setting it as
-  the normal.
+    \fn QPlane3D::QPlane3D(const QVector3D &p, const QVector3D &q, const QVector3D &r)
 
-  This method effectively discards information in that the values of the points
-  \a q and \a r cannot be reconstructed from the plane.
- */
+    Constructs a new plane defined by the three points \a p, \a q, and \a r.
+    The point \a p is used as the plane's origin() point, and a normal()
+    is constructed from the cross-product of \a q - \a p and \a r - \a q.
+*/
 
 /*!
-  \fn QVector3D QPlane3D::origin() const
-  Return this plane's defining point.
-  \sa setOrigin()
- */
+    \fn QVector3D QPlane3D::origin() const
+
+    Returns this plane's defining origin point.  The default value is (0, 0, 0).
+
+    \sa setOrigin(), normal()
+*/
 
 /*!
-  \fn void QPlane3D::setOrigin(const QVector3D& value)
-  Set this plane's defining point to be \a value.
-  \sa origin()
- */
+    \fn void QPlane3D::setOrigin(const QVector3D& value)
+
+    Set this plane's defining origin point to \a value.
+
+    \sa origin(), setNormal()
+*/
 
 /*!
-  \fn QVector3D QPlane3D::normal() const
-  Return this plane's normal vector.
-  The normal returned is guaranteed to be normalized to a unit vector.
-  \sa setNormal()
- */
+    \fn QVector3D QPlane3D::normal() const
+
+    Returns this plane's normal vector.  The default value is (1, 0, 0).
+
+    \sa setNormal(), origin()
+*/
 
 /*!
-  \fn void QPlane3D::setNormal(const QVector3D& value)
-  Set this plane's defining point to be \a value
-  This method ensures that the \a value is normalized to a unit vector
-  before setting it as the normal.
- */
+    \fn void QPlane3D::setNormal(const QVector3D& value)
+
+    Set this plane's normal vector to \a value.  The \a value does
+    not have to be normalized.  If \a value is zero, the behavior
+    of the plane is undefined.
+
+    \sa normal(), setOrigin()
+*/
 
 /*!
-  \fn bool QPlane3D::contains(const QVector3D &point) const
-  Return true if the \a point lies in this plane.
- */
-
-/*!
-  \fn bool QPlane3D::contains(const QLine3D &line) const
-  Return true if the \a line lies in this plane.  Note that this is
-  only true if all points on the line are contained in the plane.
- */
-
-/*!
-  \fn bool QPlane3D::intersects(const QLine3D &line) const
-  Return true if an intersection of the \a line with this plane exists,
-  and false otherwise.  When the actual intersection point is not required,
-  this method is cheaper than calling QPlane3D::intersection.  However the
-  intermediate result is not retained, so if the result is needed on an
-  intersection being present, use intersection() instead.
-  \sa intersection()
- */
-
-/*!
-  Find the point at which the \a line intersects this plane.
-  The result is returned as a QResult<QVector3D> instance.
-
-  When the line intersects this plane, a QResult<QVector3D> class instance is
-  returned where QResult::validity() returns QResult<QVector3D>::ResultExists.
-  QResult<QVector3D>::value() on the instance will return the intersection.
-
-  There are a number of failure cases where no single intersection point
-  exists.  The cases are:
-  \list
-     \o when the line is paralell to the plane (but does not lie on it)
-     \o the line lies entirely in the plane (thus every point "intersects")
-  \endlist
-
-  This method does not distinguish between these two failure cases and
-  simply returns QResult<QVector3D>::NoResult in both cases.
- */
-QResult<QVector3D> QPlane3D::intersection(const QLine3D& line) const
+    Returns true if \a point lies in this plane; false otherwise.
+*/
+bool QPlane3D::contains(const QVector3D &point) const
 {
-    qreal dotLineAndPlane = QVector3D::dotProduct(m_normal, line.direction());
-    if (qIsNull(dotLineAndPlane))
-    {
-        // degenerate case - line & plane-normal vectors are at
-        // 90 degrees to each other, so either plane and line never meet
-        // or the line lies in the plane - return failure case.
-        return QResult<QVector3D>();
-    }
-    QVector3D ppVec = m_origin - line.origin();
-    if (ppVec.isNull())
-        return m_origin;
-    qreal t =  QVector3D::dotProduct(ppVec, m_normal) / dotLineAndPlane;
-    return line.origin() + (t * line.direction());
+    return qFuzzyIsNull
+        (float(QVector3D::dotProduct(m_normal, m_origin - point)));
 }
 
 /*!
-  \fn QLine3D QPlane3D::project(const QLine3D &line) const
-  Returns the projection of the \a line onto this plane.
- */
+    Returns true if all of the points on \a ray lie in this plane;
+    false otherwise.
+*/
+bool QPlane3D::contains(const QRay3D &ray) const
+{
+    return qFuzzyIsNull
+                (float(QVector3D::dotProduct(m_normal, ray.direction()))) &&
+            contains(ray.origin());
+}
 
 /*!
-  Returns the projection of the \a point onto this plane.
-  If the plane is visualized as a platform in 3D space, then the projection
-  of the \a point above the plane is the shadow of the point, cast on the plane cast
-  by an infinitely distant light source with its rays parallel to the normal.
- */
+    Returns true if an intersection of \a ray with this plane exists;
+    false otherwise.
+
+    \sa intersection()
+*/
+bool QPlane3D::intersects(const QRay3D &ray) const
+{
+    return !qFuzzyIsNull
+        (float(QVector3D::dotProduct(m_normal, ray.direction())));
+}
+
+/*!
+    Returns the t value at which \a ray intersects this plane, or
+    not-a-number if there is no intersection.
+
+    When the \a ray intersects this plane, the return value is a
+    parametric value that can be passed to QRay3D::point() to determine
+    the actual intersection point, as shown in the following example:
+
+    \code
+    qreal t = plane.intersection(ray);
+    QVector3D pt;
+    if (qIsNaN(t)) {
+        qWarning("no intersection occurred");
+    else
+        pt = ray.point(t);
+    \endcode
+
+    If the return value is positive, then the QRay3D::origin() of
+    \a ray begins below the plane and then extends through it.
+    If the return value is negative, then the origin begins
+    above the plane.
+
+    There are two failure cases where no single intersection point exists:
+
+    \list
+    \o when the ray is parallel to the plane (but does not lie on it)
+    \o the ray lies entirely in the plane (thus every point "intersects")
+    \endlist
+
+    This method does not distinguish between these two failure cases and
+    simply returns not-a-number for both.
+
+    \sa intersects()
+*/
+qreal QPlane3D::intersection(const QRay3D& ray) const
+{
+    qreal dotLineAndPlane = QVector3D::dotProduct(m_normal, ray.direction());
+    if (qFuzzyIsNull(float(dotLineAndPlane))) {
+        // degenerate case - ray & plane-normal vectors are at
+        // 90 degrees to each other, so either plane and ray never meet
+        // or the ray lies in the plane - return failure case.
+        return qSNaN();
+    }
+    return QVector3D::dotProduct(m_origin - ray.origin(), m_normal) /
+                dotLineAndPlane;
+}
+
+/*!
+    Returns the projection of \a ray onto this plane.
+*/
+QRay3D QPlane3D::project(const QRay3D &ray) const
+{
+    return QRay3D(project(ray.origin()), project(ray.direction()));
+}
+
+/*!
+    Returns the projection of \a point onto this plane, by extending a
+    ray from \a point back to the plane, where the ray is parallel to the
+    normal().
+
+    \sa distanceTo()
+*/
 QVector3D QPlane3D::project(const QVector3D &point) const
 {
     QVector3D ppVec = m_origin - point;
@@ -239,7 +228,107 @@ QVector3D QPlane3D::project(const QVector3D &point) const
 }
 
 /*!
-  \fn bool QPlane3D::sameSide(const QVector3D &pointA, const QVector3D &pointB) const
-  Returns true if \a pointA and \a pointB lie on the same side of this plane.  If either one
-  lies in the plane, or they are on opposite sides of the plane returns false.
- */
+    Returns the distance from this plane to \a point.  The value will
+    be positive if \a point is above the plane in the direction
+    of normal(), and negative if \a point is below the plane.
+
+    \sa project()
+*/
+qreal QPlane3D::distanceTo(const QVector3D &point) const
+{
+    return QVector3D::dotProduct(point - m_origin, m_normal) /
+                m_normal.length();
+}
+
+/*!
+    \fn void QPlane3D::transform(const QMatrix4x4 &matrix)
+
+    Transforms this plane using \a matrix, replacing origin() and
+    normal() with the transformed versions.
+
+    \sa transformed()
+*/
+
+/*!
+    \fn QPlane3D QPlane3D::transformed(const QMatrix4x4 &matrix) const
+
+    Returns a new plane that is formed by transforming origin()
+    and normal() using \a matrix.
+
+    \sa transform()
+*/
+
+/*!
+    \fn bool QPlane3D::operator==(const QPlane3D &other)
+
+    Returns true if this plane is the same as \a other; false otherwise.
+
+    \sa operator!=()
+*/
+
+/*!
+    \fn bool QPlane3D::operator!=(const QPlane3D &other)
+
+    Returns true if this plane is not the same as \a other; false otherwise.
+
+    \sa operator==()
+*/
+
+/*!
+    \fn bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
+    \relates QPlane3D
+
+    Returns true if \a plane1 and \a plane2 are almost equal; false otherwise.
+*/
+
+#ifndef QT_NO_DEBUG_STREAM
+
+QDebug operator<<(QDebug dbg, const QPlane3D &plane)
+{
+    dbg.nospace() << "QPlane3D(origin("
+        << plane.origin().x() << ", " << plane.origin().y() << ", "
+        << plane.origin().z() << ") - normal("
+        << plane.normal().x() << ", " << plane.normal().y() << ", "
+        << plane.normal().z() << "))";
+    return dbg.space();
+}
+
+#endif
+
+#ifndef QT_NO_DATASTREAM
+
+/*!
+    \fn QDataStream &operator<<(QDataStream &stream, const QPlane3D &plane)
+    \relates QPlane3D
+
+    Writes the given \a plane to the given \a stream and returns a
+    reference to the stream.
+*/
+
+QDataStream &operator<<(QDataStream &stream, const QPlane3D &plane)
+{
+    stream << plane.origin();
+    stream << plane.normal();
+    return stream;
+}
+
+/*!
+    \fn QDataStream &operator>>(QDataStream &stream, QPlane3D &plane)
+    \relates QPlane3D
+
+    Reads a 3D plane from the given \a stream into the given \a plane
+    and returns a reference to the stream.
+*/
+
+QDataStream &operator>>(QDataStream &stream, QPlane3D &plane)
+{
+    QVector3D origin, normal;
+    stream >> origin;
+    stream >> normal;
+    plane = QPlane3D(origin, normal);
+    return stream;
+}
+
+#endif // QT_NO_DATASTREAM
+
+QT_END_NAMESPACE

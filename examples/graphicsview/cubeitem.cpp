@@ -42,8 +42,9 @@
 #include "cubeitem.h"
 #include "qglpainter.h"
 #include "qglcube.h"
-#include "qline3d.h"
+#include "qray3d.h"
 #include "qplane3d.h"
+#include "qtriangle3d.h"
 #include <QtOpenGL/qglframebufferobject.h>
 #include <QtGui/qgraphicsscene.h>
 #include <QtGui/qgraphicssceneevent.h>
@@ -298,22 +299,26 @@ QPoint CubeItem::cubeIntersection
     qreal aspectRatio = (bounds.width() * dpiY) / (bounds.height() * dpiX);
     QMatrix4x4 mv = camera()->modelViewMatrix();
     QMatrix4x4 proj = camera()->projectionMatrix(aspectRatio);
-    QMatrix4x4 combined = proj * mv;
 
     // Find the relative position of the point within (-1, -1) to (1, 1).
     QPointF relativePoint =
         QPointF((point.x() - bounds.center().x()) * 2 / bounds.width(),
                 -(point.y() - bounds.center().y()) * 2 / bounds.height());
 
+    // Get the ray extending from the eye through the point the user selected.
+    QVector3D eyept = proj.inverted().map
+        (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
+    QRay3D ray(QVector3D(0, 0, 0), eyept);
+
     // Determine which face of the cube contains the point.
     QVector3D pt1, pt2, pt3, pt4;
+    QVector2D tc1, tc2, tc3;
     bool singleFace = (pressedFace != -1);
     for (int face = 0; face < 6; ++face) {
         if (singleFace && face != pressedFace)
             continue;
 
-        // Create a polygon from the projected version of the face
-        // so that we can test for point membership.
+        // Test the two triangles on the face for an intersection.
         pt1 = QVector3D(vertexData[face * 4 * 3],
                         vertexData[face * 4 * 3 + 1],
                         vertexData[face * 4 * 3 + 2]);
@@ -326,73 +331,47 @@ QPoint CubeItem::cubeIntersection
         pt4 = QVector3D(vertexData[face * 4 * 3 + 9],
                         vertexData[face * 4 * 3 + 10],
                         vertexData[face * 4 * 3 + 11]);
-        QVector<QPointF> points2d;
-        points2d.append((combined * pt1).toPointF());
-        points2d.append((combined * pt2).toPointF());
-        points2d.append((combined * pt3).toPointF());
-        points2d.append((combined * pt4).toPointF());
-        QPolygonF polygon(points2d);
-        if (!singleFace) {
-            if (!polygon.containsPoint(relativePoint, Qt::OddEvenFill))
-                continue;
+        pt1 = mv.map(pt1);
+        pt2 = mv.map(pt2);
+        pt3 = mv.map(pt3);
+        pt4 = mv.map(pt4);
+        QTriangle3D triangle(pt1, pt2, pt3);
+        qreal t = triangle.intersection(ray);
+        if (qIsNaN(t)) {
+            triangle.setQ(pt3);
+            triangle.setR(pt4);
+            t = triangle.intersection(ray);
+            if (qIsNaN(t)) {
+                if (!singleFace)
+                    continue;
+                // The mouse probably moved outside the face while the
+                // mouse button was held down.  Use the triangle's plane
+                // to compute a virtual texture co-ordinate.
+                t = triangle.plane().intersection(ray);
+            }
+            tc1 = QVector2D(1.0f, 0.0f);
+            tc2 = QVector2D(0.0f, 1.0f);
+            tc3 = QVector2D(0.0f, 0.0f);
+        } else {
+            tc1 = QVector2D(1.0f, 0.0f);
+            tc2 = QVector2D(1.0f, 1.0f);
+            tc3 = QVector2D(0.0f, 1.0f);
         }
 
         // We want the face that is pointing towards the user.
-        QVector3D v = mv.mapVector
-            (QVector3D::crossProduct(pt2 - pt1, pt3 - pt1));
+        QVector3D v = QVector3D::crossProduct(pt2 - pt1, pt3 - pt1);
         if (!singleFace && v.z() <= 0.0f)
             continue;
 
-        // Determine the intersection between the cube face and
-        // the ray coming from the eye position.
-        QVector3D eyept = proj.inverted().map
-            (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
-        QLine3D ray(QVector3D(0, 0, 0), eyept);
-        QPlane3D plane(mv * pt1, v);
-        QResult<QVector3D> intersection = plane.intersection(ray);
-        if (!intersection.isValid())
-            continue;
-        QVector3D worldpt = mv.inverted().map(intersection.value());
-
-        // Map the world point to the range 0..1.
-        worldpt = (worldpt / CubeSize) + QVector3D(0.5f, 0.5f, 0.5f);
-
-        // Figure out the texture co-ordinates on the face that
-        // correspond to the point.
-        qreal xtex, ytex;
-        switch (face) {
-        case 0:
-            xtex = 1.0f - worldpt.y();
-            ytex = 1.0f - worldpt.z();
-            break;
-        case 1:
-            xtex = 1.0f - worldpt.x();
-            ytex = 1.0f - worldpt.z();
-            break;
-        case 2:
-            xtex = worldpt.y();
-            ytex = 1.0f - worldpt.z();
-            break;
-        case 3:
-            xtex = worldpt.x();
-            ytex = 1.0f - worldpt.z();
-            break;
-        case 4:
-            xtex = worldpt.x();
-            ytex = 1.0f - worldpt.y();
-            break;
-        case 5: default:
-            xtex = worldpt.x();
-            ytex = worldpt.y();
-            break;
-        }
+        // Get the texture co-ordinate corresponding to the intersection.
+        QVector2D uv = triangle.uv(ray.point(t));
+        QVector2D tc =
+            uv.x() * tc1 + uv.y() * tc2 + (1 - uv.x() - uv.y()) * tc3;
 
         // Turn the texture co-ordinates into scene co-ordinates.
         bounds = mScene->sceneRect();
-        xtex *= bounds.width();
-        ytex *= bounds.height();
-        int x = qRound(xtex);
-        int y = qRound(ytex);
+        int x = qRound(tc.x() * bounds.width());
+        int y = qRound((1.0f - tc.y()) * bounds.height());
         if (x < 0)
             x = 0;
         else if (x >= bounds.width())

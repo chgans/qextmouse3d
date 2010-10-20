@@ -70,9 +70,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QCoreApplication::setOrganizationName("Nokia");
-    QCoreApplication::setOrganizationDomain("nokia.com");
-    QCoreApplication::setApplicationName("Shader Wizard");
+    QCoreApplication::setOrganizationName(QLatin1String("Nokia"));
+    QCoreApplication::setOrganizationDomain(QLatin1String("nokia.com"));
+    QCoreApplication::setApplicationName(QLatin1String("shaderwizard"));
 
     glDisplayWidget = new ShaderWizardGLWidget;
     mainWindowLayout = new QVBoxLayout();
@@ -108,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->materialInspectorWidget->setDiffuseColor(glDisplayWidget->diffuseMaterialColor());
     ui->materialInspectorWidget->setSpecularColor(glDisplayWidget->specularMaterialColor());
     ui->materialInspectorWidget->setShininess(glDisplayWidget->materialShininess());
-    ui->materialInspectorWidget->setTexture(QImage(":/qtlogo.png"));
+    ui->materialInspectorWidget->setTexture(QImage(QLatin1String(":/qtlogo.png")));
 
     readSettings();
 
@@ -161,27 +161,27 @@ void MainWindow::on_pushButtonApplyFragmentShader_clicked()
 
 void MainWindow::on_actionFlat_Shader_triggered(bool)
 {
-    setShadersFromFiles(":/shaders/flat_color_shader.vsh",":/shaders/flat_color_shader.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/flat_color_shader.vsh"),QLatin1String(":/shaders/flat_color_shader.fsh"));
 }
 
 void MainWindow::on_actionToon_Shader_triggered(bool)
 {
-    setShadersFromFiles(":/shaders/toon_shader.vsh",":/shaders/toon_shader.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/toon_shader.vsh"),QLatin1String(":/shaders/toon_shader.fsh"));
 }
 
 void MainWindow::on_actionPer_Pixel_Lighting_Shader_triggered(bool)
 {
-    setShadersFromFiles(":/shaders/per_pixel_lighting.vsh",":/shaders/per_pixel_lighting.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/per_pixel_lighting.vsh"),QLatin1String(":/shaders/per_pixel_lighting.fsh"));
 }
 
 void MainWindow::on_actionMinimal_Texture_Shader_triggered()
 {
-    setShadersFromFiles(":/shaders/minimal_texture_shader.vsh",":/shaders/minimal_texture_shader.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/minimal_texture_shader.vsh"),QLatin1String(":/shaders/minimal_texture_shader.fsh"));
 }
 
 void MainWindow::on_actionPer_Pixel_Lit_Texture_Shader_triggered()
 {
-    setShadersFromFiles(":/shaders/per_pixel_texture.vsh",":/shaders/per_pixel_texture.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/per_pixel_texture.vsh"),QLatin1String(":/shaders/per_pixel_texture.fsh"));
 }
 
 void MainWindow::on_actionLoad_From_File_triggered()
@@ -201,7 +201,8 @@ void MainWindow::setShadersFromFiles(QString vertexShaderFileName, QString fragm
     QFile vertexShaderFile(vertexShaderFileName);
     if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        ui->textEditVertexShader->setText(QString(vertexShaderFile.readAll()));
+        QByteArray all(vertexShaderFile.readAll());
+        ui->textEditVertexShader->setText(QString::fromLatin1(all.constData(), all.size()));
         glDisplayWidget->setVertexShader(ui->textEditVertexShader->toPlainText());
     } else {
         qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
@@ -209,7 +210,8 @@ void MainWindow::setShadersFromFiles(QString vertexShaderFileName, QString fragm
     QFile fragmentShaderFile(fragmentShaderFileName);
     if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        ui->textEditFragmentShader->setText(QString(fragmentShaderFile.readAll()));
+        QByteArray all(fragmentShaderFile.readAll());
+        ui->textEditFragmentShader->setText(QString::fromLatin1(all.constData(), all.size()));
         glDisplayWidget->setFragmentShader(ui->textEditFragmentShader->toPlainText());
     } else {
         qWarning() << "Could not open file "<<fragmentShaderFileName<<", failed to load fragment shader";
@@ -268,12 +270,12 @@ void MainWindow::loadEffect(const QString& fileName)
 
 bool MainWindow::saveEffect()
 {
-    QGLShaderProgramEffect *effectToExport = glDisplayWidget->effect();
+    QGLColladaFxEffect *effectToExport = glDisplayWidget->effect();
 
     if(effectToExport == 0)
     {
         QErrorMessage* noEffectMessage = new QErrorMessage(this);
-        noEffectMessage->setWindowTitle("ShaderWizard");
+        noEffectMessage->setWindowTitle(tr("Shader Wizard"));
         noEffectMessage->showMessage(tr("Unable to find effect to export, aborting export"), tr("Error Getting Effect"));
         return false;
     }
@@ -285,12 +287,12 @@ bool MainWindow::saveEffect()
     if(!saveFile.open(QFile::WriteOnly))
     {
         QErrorMessage* fileOpenError = new QErrorMessage(this);
-        fileOpenError->setWindowTitle("ShaderWizard");
-        fileOpenError->showMessage("Unable to open file for writing: " + fileName, "Error Opening File");
+        fileOpenError->setWindowTitle(tr("Shader Wizard"));
+        fileOpenError->showMessage(tr("Unable to open file for writing: ") + fileName, tr("Error Opening File"));
         return false;
     }
 
-    QString colladaString = QGLColladaFxEffectFactory::exportEffect(effectToExport, QFileInfo(saveFile).fileName() + "Effect", QFileInfo(saveFile).fileName() + "Technique");
+    QString colladaString = QGLColladaFxEffectFactory::exportEffect(effectToExport, QFileInfo(saveFile).fileName() + QLatin1String("Effect"), QFileInfo(saveFile).fileName() + QLatin1String("Technique"));
     QTextStream out(&saveFile);
     out << colladaString;
     return true;
@@ -391,13 +393,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
  {
      QSettings settings;
 
-     settings.beginGroup("MainWindow");
-     resize(settings.value("size", QSize(1280, 640)).toSize());
-     move(settings.value("pos", QPoint(100, 100)).toPoint());
+     settings.beginGroup(QLatin1String("MainWindow"));
+     resize(settings.value(QLatin1String("size"), QSize(1280, 640)).toSize());
+     move(settings.value(QLatin1String("pos"), QPoint(100, 100)).toPoint());
      settings.endGroup();
 
-     settings.beginGroup("Recent Files");
-     this->recentFiles = settings.value("recentFileList", QStringList()).toStringList();
+     settings.beginGroup(QLatin1String("Recent Files"));
+     this->recentFiles = settings.value(QLatin1String("recentFileList"), QStringList()).toStringList();
      settings.endGroup();
  }
 
@@ -405,13 +407,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
  {
      QSettings settings;
 
-     settings.beginGroup("MainWindow");
-     settings.setValue("size", size());
-     settings.setValue("pos", pos());
+     settings.beginGroup(QLatin1String("MainWindow"));
+     settings.setValue(QLatin1String("size"), size());
+     settings.setValue(QLatin1String("pos"), pos());
      settings.endGroup();
 
-     settings.beginGroup("Recent Files");
-     settings.setValue("recentFileList", recentFiles);
+     settings.beginGroup(QLatin1String("Recent Files"));
+     settings.setValue(QLatin1String("recentFileList"), recentFiles);
      settings.endGroup();
  }
 
@@ -467,7 +469,7 @@ void MainWindow::recentFileActionTriggered()
 
 void MainWindow::on_actionMultiTexture_Shader_triggered()
 {    
-    setShadersFromFiles(":/shaders/per_pixel_texture.vsh",":/shaders/multitexture.fsh");
+    setShadersFromFiles(QLatin1String(":/shaders/per_pixel_texture.vsh"),QLatin1String(":/shaders/multitexture.fsh"));
 }
 
 void MainWindow::on_actionLoad_Collada_Effect_triggered()

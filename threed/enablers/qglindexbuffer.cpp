@@ -42,8 +42,8 @@
 #include "qglindexbuffer.h"
 #include "qglpainter.h"
 #include "qglpainter_p.h"
+#include "qglext_p.h"
 #include <QtOpenGL/qgl.h>
-#include <QtOpenGL/private/qgl_p.h>
 #include <QtCore/qatomic.h>
 
 QT_BEGIN_NAMESPACE
@@ -63,7 +63,7 @@ static bool qt_has_uint_buffers()
     static bool done = false;
     static bool answer = false;
     if (!done) {
-        QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+        QGLExtensionChecker extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         answer = extensions.match("GL_OES_element_index_uint");
         done = true;
     }
@@ -711,10 +711,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes)
 {
     QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
-#ifndef QT_NO_DEBUG
-    // FIXME
-    //checkRequiredFields();
-#endif
     GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)
@@ -753,10 +749,6 @@ void QGLPainter::draw(QGL::DrawingMode mode, const QGLIndexBuffer& indexes, int 
 {
     QGLIndexBufferPrivate *d = const_cast<QGLIndexBufferPrivate *>(indexes.d_func());
     update();
-#ifndef QT_NO_DEBUG
-    // FIXME
-    //checkRequiredFields();
-#endif
     GLuint id = d->buffer.bufferId();
     if (id != d_ptr->boundIndexBuffer) {
         if (id)

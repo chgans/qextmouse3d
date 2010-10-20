@@ -45,7 +45,6 @@
 #include "bytereader.h"
 
 #include <QFileInfo>
-#include <QDebug>
 #include <QTime>
 #include <QDir>
 #include <QStringList>
@@ -74,26 +73,15 @@ QUrl ImageLoader::url() const
 
 void ImageLoader::setUrl(const QUrl &url)
 {
-    qDebug() << "###### setUrl:" << url;
     m_url = url;
     if (!m_stop && isRunning())
-    {
         emit readRequired(url);
-        qDebug() << "      emit readRequired:" << url;
-    }
 }
 
 void ImageLoader::stop()
 {
     m_stop.ref();
     emit stopLoading();
-
-    qDebug() << "ImageLoader::stop()" << QThread::currentThread();
-}
-
-void ImageLoader::debugStuff()
-{
-    qDebug() << "ImageLoader::debugStuff" << QThread::currentThread() << m_url;
 }
 
 void ImageLoader::queueInitialUrl()
@@ -104,19 +92,16 @@ void ImageLoader::queueInitialUrl()
 void ImageLoader::unusedTimeout()
 {
     emit unused();
-    qDebug() << "unusedTimeout" << m_url << QThread::currentThread();
 }
 
 void ImageLoader::run()
 {
-    qDebug() << ">>>>> ImageLoader::run()" << m_url.toString() << QThread::currentThread();
-
     ByteReader reader;
     connect(this, SIGNAL(readRequired(QUrl)), &reader, SLOT(loadFile(QUrl)));
     connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
             this, SIGNAL(imageLoaded(ThumbnailableImage)));
-    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
 
+    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
     connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
 
     QTimer timer;
@@ -126,8 +111,5 @@ void ImageLoader::run()
     if (!m_url.isEmpty())
         QTimer::singleShot(0, this, SLOT(queueInitialUrl()));
 
-    qDebug() << "ImageLoader - entering event loop:" << m_url;
     exec();
-
-    qDebug() << "<<<<< ImageLoader::run()" << m_url.toString() << QThread::currentThread();
 }

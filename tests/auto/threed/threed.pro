@@ -7,14 +7,17 @@ SUBDIRS = \
     qgraphicstransform3d \
     qvectorarray \
     qglabstractsurface \
+    qglattributedescription \
+    qglattributevalue \
     qglcamera \
+    qglcameraanimation \
     qglcube \
     qglindexbuffer \
     qgllightmodel \
     qgllightparameters \
     qglmaterial \
     qglmaterialcollection \
-    qglvertexbuffer \
+    qglvertexbundle \
     qglpainter \
     qglbuilder \
     qglsection \
@@ -22,9 +25,6 @@ SUBDIRS = \
     qgeometrydata \
     qglpickcolors \
     qstereoimage \
-    qglrender
-
-# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
-contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
-    SUBDIRS += qglfunctions
-}
+    qglrender \
+    qmouse3devent \
+    qopenglfunctions

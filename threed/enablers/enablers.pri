@@ -6,7 +6,7 @@ HEADERS += \
     qglindexbuffer.h \
     qgltexture2d.h \
     qgltexturecube.h \
-    qglvertexbuffer.h \
+    qglvertexbundle.h \
     qarray.h \
     qcolor4ub.h \
     qcustomdataarray.h \
@@ -23,7 +23,7 @@ SOURCES += \
     qgltexture2d.cpp \
     qgltexturecube.cpp \
     qgltextureutils.cpp \
-    qglvertexbuffer.cpp \
+    qglvertexbundle.cpp \
     qarray.cpp \
     qcolor4ub.cpp \
     qmatrix4x4stack.cpp \
@@ -35,5 +35,5 @@ PRIVATE_HEADERS += \
     qglext_p.h \
     qgltexture2d_p.h \
     qgltextureutils_p.h \
-    qglvertexbuffer_p.h \
+    qglvertexbundle_p.h \
     qmatrix4x4stack_p.h

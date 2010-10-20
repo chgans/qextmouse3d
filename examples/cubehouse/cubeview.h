@@ -75,7 +75,7 @@ private slots:
     void accelerometerTimeout();
     void updateProjectorViewMatrix();
     void updateProjectorProjectionMatrix();
-    void updateObjectLinearTexgenMatrix();
+    void updateProjectiveTextureEffect();
 
 private:
     QGLTexture2D texture;
@@ -98,9 +98,6 @@ private:
     mutable bool havePrev;
 
     QVector3D gravity() const;
-
-    QMatrix4x4 projectorProjectionMatrix;
-    QMatrix4x4 projectorViewMatrix;
 
     ProjectiveTextureEffect* projectiveTextureEffect;
     QMatrix4x4 biasMatrix;

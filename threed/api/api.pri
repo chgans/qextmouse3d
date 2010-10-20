@@ -1,4 +1,4 @@
 INCLUDEPATH += $$PWD
 VPATH += $$PWD
-HEADERS += qglfunctions.h 
-SOURCES += qglfunctions.cpp
+HEADERS += qopenglfunctions.h 
+SOURCES += qopenglfunctions.cpp

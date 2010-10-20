@@ -1,5 +1,5 @@
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 Rectangle {
 	width: 800
@@ -147,7 +147,7 @@ Rectangle {
 			farPlane: 2000
 		}
 
-		Item3d {
+		Item3D {
 				id: mainItem
 				scale: 50
 				//y: -20

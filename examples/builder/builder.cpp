@@ -153,7 +153,7 @@ QGLSceneNode *BuilderView::buildGeometry()
     //! [3]
     // create the flat top lid of the can
     builder.newSection();
-    builder.currentNode()->setObjectName("CanTop");
+    builder.currentNode()->setObjectName(QLatin1String("CanTop"));
     QGeometryData top;
     top.appendVertex(canRim.center());
     top.appendVertexArray(canRim.vertices());
@@ -161,7 +161,7 @@ QGLSceneNode *BuilderView::buildGeometry()
 
     // create the sides of the can
     builder.newSection();
-    builder.currentNode()->setObjectName("CanSides");
+    builder.currentNode()->setObjectName(QLatin1String("CanSides"));
     builder.currentNode()->setMaterialIndex(canMat);
     builder.currentNode()->setEffect(QGL::LitModulateTexture2D);
     QGeometryData canTop = canRim;
@@ -174,7 +174,7 @@ QGLSceneNode *BuilderView::buildGeometry()
 
     // create the flat bottom lid of the can
     builder.newSection();
-    builder.currentNode()->setObjectName("CanBottom");
+    builder.currentNode()->setObjectName(QLatin1String("CanBottom"));
     builder.currentNode()->setEffect(QGL::LitMaterial);
     QGeometryData rimReversed = canRim.translated(canExtrudeVec).reversed();
     QGeometryData canBottom;

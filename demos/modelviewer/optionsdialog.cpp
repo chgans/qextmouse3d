@@ -96,38 +96,38 @@ void OptionsDialog::changeEvent(QEvent *e)
 void OptionsDialog::saveSettings()
 {
     QSettings settings;
-    QString group = (m_component == m_name) ? m_name : m_name + "/" + m_component;
+    QString group = (m_component == m_name) ? m_name : m_name + QLatin1Char('/') + m_component;
     settings.beginGroup(group);
     bool forceSmooth = ui->forceSmoothCheckBox->isChecked();
-    settings.setValue("ForceSmooth", forceSmooth);
+    settings.setValue(QLatin1String("ForceSmooth"), forceSmooth);
     bool forceFaceted = ui->forceFacetedCheckBox->isChecked();
-    settings.setValue("ForceFaceted", forceFaceted);
+    settings.setValue(QLatin1String("ForceFaceted"), forceFaceted);
     bool nativeIndices = ui->nativeIndicesCheckBox->isChecked();
-    settings.setValue("NativeIndices", nativeIndices);
+    settings.setValue(QLatin1String("NativeIndices"), nativeIndices);
     bool correctNormals = ui->correctNormalsCheckBox->isChecked();
-    settings.setValue("CorrectNormals", correctNormals);
+    settings.setValue(QLatin1String("CorrectNormals"), correctNormals);
     bool correctAcute = ui->correctActuteCheckBox->isChecked();
-    settings.setValue("CorrectAcute", correctAcute);
+    settings.setValue(QLatin1String("CorrectAcute"), correctAcute);
     bool showWarnings = ui->showWarningsCheckBox->isChecked();
-    settings.setValue("ShowWarnings", showWarnings);
+    settings.setValue(QLatin1String("ShowWarnings"), showWarnings);
 }
 
 void OptionsDialog::loadSettings()
 {
     QSettings settings;
-    QString group = (m_component == m_name) ? m_name : m_name + "/" + m_component;
+    QString group = (m_component == m_name) ? m_name : m_name + QLatin1Char('/') + m_component;
     settings.beginGroup(group);
-    bool forceSmooth = settings.value("ForceSmooth", false).toBool();
+    bool forceSmooth = settings.value(QLatin1String("ForceSmooth"), false).toBool();
     ui->forceSmoothCheckBox->setChecked(forceSmooth);
-    bool forceFaceted = settings.value("ForceFaceted", false).toBool();
+    bool forceFaceted = settings.value(QLatin1String("ForceFaceted"), false).toBool();
     ui->forceFacetedCheckBox->setChecked(forceFaceted);
-    bool nativeIndices = settings.value("NativeIndices", false).toBool();
+    bool nativeIndices = settings.value(QLatin1String("NativeIndices"), false).toBool();
     ui->nativeIndicesCheckBox->setChecked(nativeIndices);
-    bool correctNormals = settings.value("CorrectNormals", false).toBool();
+    bool correctNormals = settings.value(QLatin1String("CorrectNormals"), false).toBool();
     ui->correctNormalsCheckBox->setChecked(correctNormals);
-    bool correctAcute = settings.value("CorrectAcute", false).toBool();
+    bool correctAcute = settings.value(QLatin1String("CorrectAcute"), false).toBool();
     ui->correctActuteCheckBox->setChecked(correctAcute);
-    bool showWarnings = settings.value("ShowWarnings", false).toBool();
+    bool showWarnings = settings.value(QLatin1String("ShowWarnings"), false).toBool();
     ui->showWarningsCheckBox->setChecked(showWarnings);
     m_modified = false;
 }

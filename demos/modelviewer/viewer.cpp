@@ -43,10 +43,13 @@
 #include "model.h"
 #include "qglscenenode.h"
 #include "qglcamera.h"
+#include "qglcameraanimation.h"
 #include "qglpainter.h"
 #include "qglbuilder.h"
 #include "qglpicknode.h"
 #include "qglabstractscene.h"
+#include "qmouse3devent.h"
+#include "qmouse3deventprovider.h"
 
 #include <QtGui/qmessagebox.h>
 #include <QtGui/qevent.h>
@@ -55,12 +58,12 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qdatetime.h>
 #include <QtCore/qmath.h>
+#include <QtCore/qpropertyanimation.h>
 
 #include <math.h>
 
 Viewer::Viewer(QWidget *parent)
     : QGLView(parent)
-    , m_timer(new QTimer(this))
     , m_model(0)
     , m_treeView(0)
     , m_lightModel(0)
@@ -71,7 +74,25 @@ Viewer::Viewer(QWidget *parent)
     , m_drawFloor(true)
     , m_zoomScale(1)
     , m_pickDirty(true)
+    , m_lastWasZero(true)
+    , m_spinAngle(0.0f)
 {
+    m_eventProvider = new QMouse3DEventProvider(this);
+    m_eventProvider->setWidget(this);
+    m_eventProvider->toggleFilter(QMouse3DEventProvider::Translations);
+    m_eventProvider->toggleFilter(QMouse3DEventProvider::DominantAxis);
+    m_eventProvider->setKeyFilters(QMouse3DEventProvider::Sensitivity);
+    m_lastEventTime.start();
+
+    m_cameraAnimation = new QGLCameraAnimation(this);
+    m_cameraAnimation->setCamera(camera());
+
+    m_spinAnimation = new QPropertyAnimation(this, "spinAngle", this);
+    m_spinAnimation->setStartValue(qreal(0.0f));
+    m_spinAnimation->setEndValue(qreal(360.0f));
+    m_spinAnimation->setLoopCount(-1);
+    m_spinAnimation->setDuration(5000);
+
     setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
                   "or use the mouse-wheel to move the camera nearer/farther.\n"
                   "Use shift-drag to slide."));
@@ -152,12 +173,24 @@ void Viewer::setScale(const QVector3D &s)
     }
 }
 
+void Viewer::engageManualControl()
+{
+    if (m_view != SelectView) {
+        m_view = SelectView;
+        emit viewTypeChanged();
+    }
+    emit manualControlEngaged();
+}
+
 void Viewer::setView(View view)
 {
-    if (m_view != view)
+    if (m_view != view && view != SelectView)
     {
         m_view = view;
         resetView();
+        if (m_animate)
+            m_view = SelectView;
+        emit viewTypeChanged();
     }
 }
 
@@ -177,19 +210,19 @@ void Viewer::mouseMoveEvent(QMouseEvent *e)
 
 void Viewer::mousePressEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     QGLView::mousePressEvent(e);
 }
 
 void Viewer::mouseReleaseEvent(QMouseEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     QGLView::mouseReleaseEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent *e)
 {
-    emit manualControlEngaged();
+    engageManualControl();
     e->accept();
     QVector3D viewVec = camera()->eye() - camera()->center();
     qreal zoomMag = viewVec.length();
@@ -199,7 +232,7 @@ void Viewer::wheelEvent(QWheelEvent *e)
         zoomMag += inc;
         if (zoomMag < 5.0f)
             zoomMag = 5.0f;
-        QLine3D viewLine(camera()->center(), viewVec);
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
         camera()->setEye(viewLine.point(zoomMag));
         update();
     }
@@ -207,19 +240,126 @@ void Viewer::wheelEvent(QWheelEvent *e)
 
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Space)
-    {
-        emit manualControlEngaged();
-    }
-    else if (e->key() == Qt::Key_Escape)
-    {
+    switch (e->key()) {
+    case Qt::Key_Space:
+        engageManualControl();
+        break;
+
+    case Qt::Key_Escape:
         resetView();
-        emit manualControlEngaged();
-    }
-    else
-    {
+        engageManualControl();
+        break;
+
+    case QGL::Key_FrontView:
+        setView(FrontView);
+        break;
+
+    case QGL::Key_BackView:
+        setView(BackView);
+        break;
+
+    case QGL::Key_TopView:
+        setView(TopView);
+        break;
+
+    case QGL::Key_BottomView:
+        setView(BottomView);
+        break;
+
+    case QGL::Key_LeftView:
+        setView(LeftView);
+        break;
+
+    case QGL::Key_RightView:
+        setView(RightView);
+        break;
+
+    case QGL::Key_ISO1:
+        setView(FrontRightView);
+        break;
+
+    case QGL::Key_ISO2:
+        setView(BackLeftView);
+        break;
+
+    case QGL::Key_RotateCW90:
+        rotateView(-90.0f);
+        break;
+
+    case QGL::Key_RotateCCW90:
+        rotateView(90.0f);
+        break;
+
+    default:
         QGLView::keyPressEvent(e);
+        break;
     }
+}
+
+void Viewer::rotateView(qreal angle)
+{
+    QQuaternion q = camera()->roll(angle);
+    QVector3D upVector = q.rotatedVector(camera()->upVector());
+
+    m_cameraAnimation->stop();
+    m_cameraAnimation->setStartEye(camera()->eye());
+    m_cameraAnimation->setStartUpVector(camera()->upVector());
+    m_cameraAnimation->setStartCenter(camera()->center());
+    m_cameraAnimation->setEndEye(camera()->eye());
+    m_cameraAnimation->setEndUpVector(upVector);
+    m_cameraAnimation->setEndCenter(camera()->center());
+    m_cameraAnimation->setDuration(500);
+    m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
+    m_cameraAnimation->start();
+
+    engageManualControl();
+}
+
+bool Viewer::event(QEvent *e)
+{
+    if (e->type() == QMouse3DEvent::type) {
+        // Convert the input values into angular velocity at the
+        // rate of 0.008 radians per second.  Also re-order the
+        // incoming values into a right-handed co-ordinate system.
+        QMouse3DEvent *event = static_cast<QMouse3DEvent *>(e);
+        //qreal translateX = 0.008f * event->translateX();
+        //qreal translateY = -0.008f * event->translateZ();
+        //qreal translateZ = 0.008f * event->translateY();
+        qreal rotateX = 0.008f * event->rotateX();
+        qreal rotateY = -0.008f * event->rotateZ();
+        qreal rotateZ = 0.008f * event->rotateY();
+
+        // Determine the number of milliseconds since the last 3D mouse event.
+        int elapsed;
+        if (m_lastWasZero) {
+            elapsed = 10;
+        } else {
+            elapsed = m_lastEventTime.elapsed();
+            if (elapsed > 300)
+                elapsed = 10;   // Probably was released.
+        }
+
+        // Create a quaternion representing the rotation.
+        QQuaternion q;
+        if (rotateX != 0.0f || rotateY != 0.0f || rotateZ != 0.0f) {
+            qreal angleX = (rotateX * elapsed * 180.0f) / (1000.0f * M_PI);
+            qreal angleY = (rotateY * elapsed * 180.0f) / (1000.0f * M_PI);
+            qreal angleZ = (rotateZ * elapsed * 180.0f) / (1000.0f * M_PI);
+            QGLCamera *camera = this->camera();
+            q = camera->tilt(-angleX) *
+                camera->pan(-angleY) *
+                camera->roll(angleZ);
+            camera->rotateCenter(q);
+            m_lastWasZero = false;
+            m_lastEventTime.restart();
+        } else {
+            m_lastWasZero = true;
+        }
+
+        engageManualControl();
+        return true;
+    }
+    return QGLView::event(e);
 }
 
 void Viewer::buildFloor()
@@ -279,8 +419,8 @@ void Viewer::buildFloor()
     font.setPixelSize(sz / 20);
     painter.setFont(font);
     QFontMetrics fm = painter.fontMetrics();
-    QRectF rmx = fm.boundingRect("-X");
-    QRectF rx = fm.boundingRect("X");
+    QRectF rmx = fm.boundingRect(QLatin1String("-X"));
+    QRectF rx = fm.boundingRect(QLatin1String("X"));
     topMiddle.setX(topMiddle.x() + 2);
     topMiddle.setY(topMiddle.y() - rmx.height());
     bottomMiddle.setX(bottomMiddle.x() + 2);
@@ -289,10 +429,10 @@ void Viewer::buildFloor()
     leftMiddle.setY(leftMiddle.y() + rx.height() + 2);
     rightMiddle.setX(rightMiddle.x() - rx.width() - 4);
     rightMiddle.setY(rightMiddle.y() + rx.height() + 2);
-    painter.drawText(topMiddle, "-Z");
-    painter.drawText(bottomMiddle, "Z");
-    painter.drawText(leftMiddle, "-X");
-    painter.drawText(rightMiddle, "X");
+    painter.drawText(topMiddle, QLatin1String("-Z"));
+    painter.drawText(bottomMiddle, QLatin1String("Z"));
+    painter.drawText(leftMiddle, QLatin1String("-X"));
+    painter.drawText(rightMiddle, QLatin1String("X"));
     painter.end();
     QGLMaterial *mat = new QGLMaterial(m_floor);
     QGLTexture2D *tex = new QGLTexture2D(mat);
@@ -320,9 +460,6 @@ void Viewer::initializeGL(QGLPainter *painter)
         m_lightParameters = new QGLLightParameters(this);
     m_lightParameters->setPosition(QVector3D(-0.5, 1.0, 3.0));
     painter->setMainLight(m_lightParameters);
-
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
-    m_timer->start(25);
 }
 
 void Viewer::paintGL(QGLPainter *painter)
@@ -331,6 +468,11 @@ void Viewer::paintGL(QGLPainter *painter)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter->modelViewMatrix().push();
+
+        if (m_spinAngle != 0.0f) {
+            painter->modelViewMatrix().rotate
+                (m_spinAngle, camera()->upVector());
+        }
 
         if (m_drawFloor)
             m_floor->draw(painter);
@@ -433,19 +575,23 @@ bool Viewer::needsPickGL()
 }
 */
 
-void Viewer::animate()
-{
-    if (m_model->scene())
-    {
-        if (m_animate)
-            camera()->panCenter(0.5f);
-    }
-}
-
 void Viewer::enableAnimation(bool enabled)
 {
-    resetView();
+    if (m_animate == enabled)
+        return;
     m_animate = enabled;
+    if (m_view != SelectView) {
+        m_view = SelectView;
+        emit viewTypeChanged();
+    }
+    if (enabled) {
+        m_spinAngle = 0.0f;
+        m_spinAnimation->start();
+    } else {
+        m_spinAnimation->stop();
+        camera()->rotateCenter(camera()->pan(-m_spinAngle));
+        m_spinAngle = 0.0f;
+    }
 }
 
 void Viewer::resetView()
@@ -455,24 +601,62 @@ void Viewer::resetView()
     QVector3D up = camera()->upVector();
     QVector3D viewVec = eye - origin;
     qreal zoomMag = qAbs(viewVec.length());
-    eye = origin;
-    if (m_view == TopView)
-    {
-        eye.setY(eye.y() + zoomMag);
+    switch (m_view) {
+    case SelectView: break;
+
+    case TopView:
+        eye = QVector3D(0.0f, zoomMag, 0.0f);
+        up = QVector3D(0.0f, 0.0f, -1.0f);
+        break;
+
+    case BottomView:
+        eye = QVector3D(0.0f, -zoomMag, 0.0f);
         up = QVector3D(0.0f, 0.0f, 1.0f);
+        break;
+
+    case FrontView:
+        eye = QVector3D(0.0f, 0.0f, zoomMag);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case BackView:
+        eye = QVector3D(0.0f, 0.0f, -zoomMag);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case LeftView:
+        eye = QVector3D(zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case RightView:
+        eye = QVector3D(-zoomMag, 0.0f, 0.0f);
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case FrontRightView:
+        eye = zoomMag * QVector3D(-1, 1, 1).normalized();
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
+
+    case BackLeftView:
+        eye = zoomMag * QVector3D(1, 1, -1).normalized();
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        break;
     }
-    else
-    {
-        const qreal FRONT_VIEW_ANGLE = (M_PI / 12.0f);
-        qreal y = zoomMag * qSin(FRONT_VIEW_ANGLE);
-        qreal z = zoomMag * qCos(FRONT_VIEW_ANGLE);
-        eye = QVector3D(0.0f, y, -z);
-        up = QVector3D(0.0f, z, y);
-    }
-    camera()->setEye(eye);
-    camera()->setCenter(QVector3D());
-    camera()->setUpVector(up);
-    update();
+
+    // Perform a short animation from the current camera position
+    // to the new position.
+    m_cameraAnimation->stop();
+    m_cameraAnimation->setStartEye(camera()->eye());
+    m_cameraAnimation->setStartUpVector(camera()->upVector());
+    m_cameraAnimation->setStartCenter(camera()->center());
+    m_cameraAnimation->setEndEye(eye);
+    m_cameraAnimation->setEndUpVector(up);
+    m_cameraAnimation->setEndCenter(QVector3D());
+    m_cameraAnimation->setDuration(500);
+    m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
+    m_cameraAnimation->start();
 }
 
 void Viewer::resetWarnings()

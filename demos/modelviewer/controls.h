@@ -67,6 +67,7 @@ signals:
 
 protected:
     void changeEvent(QEvent *e);
+    void closeEvent(QCloseEvent *e);
 
 private slots:
     void on_actionShow_Picking_triggered();
@@ -100,6 +101,7 @@ private slots:
     void fileLoadTimeNotified(int);
     void addRecentFiles(const QString &);
     void load();
+    void viewTypeChanged();
 
 private:
     QString populateModelMenu();

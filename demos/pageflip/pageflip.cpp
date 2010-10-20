@@ -48,6 +48,7 @@
 
 #if !defined(QT_OPENGL_ES_1)
 #include <QtOpenGL/qglshaderprogram.h>
+#include "qglshaderprogrameffect.h"
 #endif
 #include "pageflipmath_p.h"
 
@@ -100,23 +101,13 @@ private:
 
 #if !defined(QT_OPENGL_ES_1)
 
-class PageFlipGradientEffect : public QGLAbstractEffect
+class PageFlipGradientEffect : public QGLShaderProgramEffect
 {
 public:
     PageFlipGradientEffect();
     ~PageFlipGradientEffect();
 
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(QGLPainter *painter, bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
     void setAlphaValue(GLfloat value);
-
-private:
-    QGLShaderProgram *program;
-    int matrixUniform;
 };
 
 #endif
@@ -166,19 +157,19 @@ void PageFlipView::initializeGL()
     int height = 320;
     pageSize = QSize(width, height);
 
-    textures[0].setImage(QImage(":/qqpage1.png"));
-    textures[1].setImage(QImage(":/qqpage2.png"));
-    textures[2].setImage(QImage(":/qqpage3.png"));
-    textures[3].setImage(QImage(":/qqpage4.png"));
+    textures[0].setImage(QImage(QLatin1String(":/qqpage1.png")));
+    textures[1].setImage(QImage(QLatin1String(":/qqpage2.png")));
+    textures[2].setImage(QImage(QLatin1String(":/qqpage3.png")));
+    textures[3].setImage(QImage(QLatin1String(":/qqpage4.png")));
 
-    gradientTexture.setImage(QImage(":/gradient.png"));
+    gradientTexture.setImage(QImage(QLatin1String(":/gradient.png")));
 
-    if (painter.hasOpenGLFeature(QGLFunctions::BlendColor))
+    if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendColor))
         painter.glBlendColor(0, 0, 0, 0);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    if (painter.hasOpenGLFeature(QGLFunctions::BlendEquation))
+    if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquation))
         painter.glBlendEquation(GL_FUNC_ADD);
-    else if (painter.hasOpenGLFeature(QGLFunctions::BlendEquationSeparate))
+    else if (painter.hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
         painter.glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 
     glEnable(GL_BLEND);
@@ -347,116 +338,46 @@ void PageFlipView::setAlphaValue(GLfloat value)
 
 #if !defined(QT_OPENGL_ES_1)
 
+static char const gradientVertexShader[] =
+    "attribute highp vec4 qgl_Vertex;\n"
+    "attribute highp vec4 qgl_TexCoord0;\n"
+    "attribute highp float qgl_Custom0;\n"
+    "uniform mediump mat4 qgl_ModelViewProjectionMatrix;\n"
+    "varying highp vec4 qTexCoord0;\n"
+    "varying highp float qGradCtrl;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;\n"
+    "    qTexCoord0 = qgl_TexCoord0;\n"
+    "    qGradCtrl = qgl_Custom0;\n"
+    "}\n";
+
+static char const gradientFragmentShader[] =
+    "uniform sampler2D qgl_Texture0;\n"
+    "uniform sampler2D qgl_Texture1;\n"
+    "uniform mediump float alphaValue;\n"
+    "varying highp vec4 qTexCoord0;\n"
+    "varying highp float qGradCtrl;\n"
+    "void main(void)\n"
+    "{\n"
+    "    mediump vec4 col = texture2D(qgl_Texture0, qTexCoord0.st);\n"
+    "    mediump vec4 gradcol = texture2D(qgl_Texture1, vec2(qGradCtrl, qTexCoord0.t));\n"
+    "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
+    "}\n";
+
 PageFlipGradientEffect::PageFlipGradientEffect()
 {
-    program = 0;
-    matrixUniform = -1;
+    setVertexShader(gradientVertexShader);
+    setFragmentShader(gradientFragmentShader);
 }
 
 PageFlipGradientEffect::~PageFlipGradientEffect()
 {
-    delete program;
-}
-
-QList<QGL::VertexAttribute> PageFlipGradientEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::TextureCoord0;
-    fields += QGL::CustomVertex0;
-    return fields;
-}
-
-static char const gradientVertexShader[] =
-    "attribute highp vec4 vertex;\n"
-    "attribute highp vec4 texcoord;\n"
-    "attribute highp float gradctrl;\n"
-    "uniform mediump mat4 matrix;\n"
-    "varying highp vec4 qTexCoord;\n"
-    "varying highp float qGradCtrl;\n"
-    "void main(void)\n"
-    "{\n"
-    "    gl_Position = matrix * vertex;\n"
-    "    qTexCoord = texcoord;\n"
-    "    qGradCtrl = gradctrl;\n"
-    "}\n";
-
-static char const gradientFragmentShader[] =
-    "uniform sampler2D tex;\n"
-    "uniform sampler2D gradient;\n"
-    "uniform mediump float alphaValue;\n"
-    "varying highp vec4 qTexCoord;\n"
-    "varying highp float qGradCtrl;\n"
-    "void main(void)\n"
-    "{\n"
-    "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
-    "    mediump vec4 gradcol = texture2D(gradient, vec2(qGradCtrl, qTexCoord.t));\n"
-    "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
-    "}\n";
-
-void PageFlipGradientEffect::setActive(QGLPainter *painter, bool flag)
-{
-    Q_UNUSED(painter);
-    if (!program) {
-        if (!flag)
-            return;
-        program = new QGLShaderProgram();
-        program->addShaderFromSourceCode(QGLShader::Vertex, gradientVertexShader);
-        program->addShaderFromSourceCode(QGLShader::Fragment, gradientFragmentShader);
-        program->bindAttributeLocation("vertex", QGL::Position);
-        program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
-        program->bindAttributeLocation("gradctrl", QGL::CustomVertex0);
-        if (!program->link()) {
-            qWarning("PageFlipGradientEffect::setActive(): could not link shader program");
-            delete program;
-            program = 0;
-            return;
-        }
-        matrixUniform = program->uniformLocation("matrix");
-        program->bind();
-        program->setUniformValue("tex", 0);
-        program->setUniformValue("gradient", 1);
-        program->setUniformValue("alphaValue", 1.0f);
-        program->enableAttributeArray(QGL::Position);
-        program->enableAttributeArray(QGL::TextureCoord0);
-        program->enableAttributeArray(QGL::CustomVertex0);
-    } else if (flag) {
-        program->bind();
-        program->setUniformValue("tex", 0);
-        program->setUniformValue("gradient", 1);
-        program->setUniformValue("alphaValue", 1.0f);
-        program->enableAttributeArray(QGL::Position);
-        program->enableAttributeArray(QGL::TextureCoord0);
-        program->enableAttributeArray(QGL::CustomVertex0);
-    } else {
-        program->disableAttributeArray(QGL::Position);
-        program->disableAttributeArray(QGL::TextureCoord0);
-        program->disableAttributeArray(QGL::CustomVertex0);
-        program->release();
-    }
-}
-
-void PageFlipGradientEffect::update
-        (QGLPainter *painter, QGLPainter::Updates updates)
-{
-    if ((updates & QGLPainter::UpdateMatrices) != 0)
-        program->setUniformValue(matrixUniform, painter->combinedMatrix());
-}
-
-void PageFlipGradientEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    if (attribute == QGL::Position)
-        setAttributeArray(program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(program, QGL::TextureCoord0, value);
-    else if (attribute == QGL::CustomVertex0)
-        setAttributeArray(program, QGL::CustomVertex0, value);
 }
 
 void PageFlipGradientEffect::setAlphaValue(GLfloat value)
 {
-    program->setUniformValue("alphaValue", value);
+    program()->setUniformValue("alphaValue", value);
 }
 
 #endif // !QT_OPENGL_ES_1
@@ -465,13 +386,13 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     PageFlipView view;
-    if (QApplication::arguments().contains("-blend"))
+    if (QApplication::arguments().contains(QLatin1String("-blend")))
         view.setBlend(true);
-    if (QApplication::arguments().contains("-vertical"))
+    if (QApplication::arguments().contains(QLatin1String("-vertical")))
         view.setVertical(true);
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         view.showFullScreen();
     else
         view.show();

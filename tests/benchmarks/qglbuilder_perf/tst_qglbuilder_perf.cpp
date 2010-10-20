@@ -85,19 +85,19 @@ void tst_QGLBuilder::addQuadRandom_data()
     for (int size = 10; size < 10000; size += 10)
     {
         name = "T3--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_3);
 
         name = "T7--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_7);
 
         name = "T10--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_10);
 
         name = "T20--";
-        name += QString::number(size);
+        name += QByteArray::number(size);
         QTest::newRow(name.constData()) << size << int(Test_20);
     }
 }

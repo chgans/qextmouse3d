@@ -1,12 +1,12 @@
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
-Item3d {
+Item3D {
     id: top
     property real spoonY
     property bool bounce: false
 
-    Item3d {
+    Item3D {
         mesh: teacup_mesh
         effect: Effect {
             material: china

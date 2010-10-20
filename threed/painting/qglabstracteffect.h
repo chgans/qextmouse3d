@@ -51,15 +51,13 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLShaderProgram;
-class QGLVertexBuffer;
+class QGLVertexBundle;
 
 class Q_QT3D_EXPORT QGLAbstractEffect
 {
 public:
     QGLAbstractEffect();
     virtual ~QGLAbstractEffect();
-
-    virtual QList<QGL::VertexAttribute> requiredFields() const = 0;
 
     virtual bool supportsPicking() const;
 
@@ -70,16 +68,19 @@ public:
     virtual void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
 
+<<<<<<< HEAD:threed/painting/qglabstracteffect.h
     virtual void setCommonNormal(const QVector3D& value);
 
     virtual QString name() const { return QString(); }
 
+=======
+>>>>>>> master:threed/painting/qglabstracteffect.h
 protected:
     static void setAttributeArray
         (QGLShaderProgram *program, int location,
          const QGLAttributeValue& value);
 
-    friend class QGLVertexBuffer;
+    friend class QGLVertexBundle;
     friend class QGLPainter;
 };
 

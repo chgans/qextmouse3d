@@ -1,8 +1,8 @@
 //![1]
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
-Item3d {
+Item3D {
     id: tree
     mesh: Mesh { source: "tree.obj" }
     effect: Effect {

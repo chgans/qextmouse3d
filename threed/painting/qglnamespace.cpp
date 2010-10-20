@@ -211,4 +211,46 @@ QT_BEGIN_NAMESPACE
     \value Faceted Lighting normals seperate for each face for a faceted appearance.
 */
 
+/*!
+    \enum QGL::Mouse3DKeys
+    \since 4.8
+    This enum defines extra key codes for QKeyEvent related to 3D mice
+    devices.  See QMouse3DEventProvider for further details.
+
+    \value Key_Fit Reset the transform so the model is centered to
+           fit within the view.
+    \value Key_TopView Switch to the top view.
+    \value Key_LeftView Switch to the left view.
+    \value Key_RightView Switch to the right view.
+    \value Key_FrontView Switch to the front view.
+    \value Key_BottomView Switch to the bottom view.
+    \value Key_BackView Switch to the back view.
+    \value Key_RotateCW90 Rotate clockwise by 90 degrees.
+    \value Key_RotateCCW90 Rotate counter-clockwise by 90 degrees.
+    \value Key_ISO1 Show an isometric view of the model with top, front,
+           and right sides.
+    \value Key_ISO2 Show an isometric view of the model with top, back
+           and left sides.
+    \value Key_Button1 Special function button 1.
+    \value Key_Button2 Special function button 2.
+    \value Key_Button3 Special function button 3.
+    \value Key_Button4 Special function button 4.
+    \value Key_Button5 Special function button 5.
+    \value Key_Button6 Special function button 6.
+    \value Key_Button7 Special function button 7.
+    \value Key_Button8 Special function button 8.
+    \value Key_Button9 Special function button 9.
+    \value Key_Button10 Special function button 10.
+    \value Key_Rotations Toggles whether or not the rotation axes on a
+           3D mouse will be filtered.
+    \value Key_Translations Toggles whether or not the translation axes
+           on a 3D mouse will be filtered.
+    \value Key_DominantAxis Toggles whether or not 3D mouse movements
+           should be constrained to the dominant axis.
+    \value Key_IncreaseSensitivity Increase the sensitivity of the mouse
+           to wrist movements.
+    \value Key_DecreaseSensitivity Decrease the sensitivity of the mouse
+           to wrist movements.
+*/
+
 QT_END_NAMESPACE

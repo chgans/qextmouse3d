@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     format.setOption(QGL::StereoBuffers);
     StereoView view(format);
 
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         view.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         view.showFullScreen();
     else
         view.show();

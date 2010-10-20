@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "qgltextureutils_p.h"
-#include <QtOpenGL/private/qgl_p.h>
+#include "qglext_p.h"
 #include <QtCore/qfile.h>
 
 QT_BEGIN_NAMESPACE
@@ -109,7 +109,7 @@ QGLTextureExtensions::QGLTextureExtensions(const QGLContext *ctx)
     , compressedTexImage2D(0)
 {
     Q_UNUSED(ctx);
-    QGLExtensionMatcher extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+    QGLExtensionChecker extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     if (extensions.match("GL_ARB_texture_non_power_of_two"))
         npotTextures = true;
     if (extensions.match("GL_SGIS_generate_mipmap"))
@@ -140,32 +140,19 @@ QGLTextureExtensions::~QGLTextureExtensions()
 {
 }
 
-#if QT_VERSION >= 0x040800
-Q_GLOBAL_STATIC(QGLContextGroupResource<QGLTextureExtensions>, qt_gl_texture_extensions)
-#else
-static void QGLTextureExtensions_free(void *ptr)
-{
-    delete reinterpret_cast<QGLTextureExtensions *>(ptr);
-}
-
-Q_GLOBAL_STATIC_WITH_ARGS(QGLContextResource, qt_gl_texture_extensions, (QGLTextureExtensions_free))
-#endif
+Q_GLOBAL_STATIC(QGLResource<QGLTextureExtensions>, qt_gl_texture_extensions)
 
 QGLTextureExtensions *QGLTextureExtensions::extensions()
 {
     const QGLContext *ctx = QGLContext::currentContext();
     if (!ctx)
         return 0;
-    QGLTextureExtensions *extns = reinterpret_cast<QGLTextureExtensions *>(qt_gl_texture_extensions()->value(ctx));
-    if (!extns) {
-        extns = new QGLTextureExtensions(ctx);
-        qt_gl_texture_extensions()->insert(ctx, extns);
-    }
-    return extns;
+    return qt_gl_texture_extensions()->value(ctx);
 }
 
 QGLBoundTexture::QGLBoundTexture(const QGLContext *ctx)
-    : m_guard(ctx)
+    : m_context(ctx)
+    , m_id(0)
     , m_options(QGLContext::DefaultBindOption)
     , m_hasAlpha(false)
 {
@@ -198,15 +185,13 @@ void QGLBoundTexture::startUpload(GLenum target, const QSize &imageSize)
 
     // Create the texture id for the target, which should be one of
     // GL_TEXTURE_2D or GL_TEXTURE_CUBE_MAP.
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(target, 0);   // Just in case texture is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    id = 0;
-    glGenTextures(1, &id);
-    m_guard.setId(id);
-    glBindTexture(target, m_guard.id());
+    m_id = 0;
+    glGenTextures(1, &m_id);
+    glBindTexture(target, m_id);
 
     GLuint filtering = m_options & QGLContext::LinearFilteringBindOption ? GL_LINEAR : GL_NEAREST;
 
@@ -637,16 +622,14 @@ bool QGLBoundTexture::bindCompressedTextureDDS(const char *buf, int len)
     const GLubyte *pixels =
         reinterpret_cast<const GLubyte *>(buf + ddsHeader->dwSize + 4);
 
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(GL_TEXTURE_2D, 0);    // Just in case it is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
     q_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     q_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    m_guard.setId(id);
 
     int size;
     int offset = 0;
@@ -742,13 +725,12 @@ bool QGLBoundTexture::bindCompressedTexturePVR(const char *buf, int len)
 
     // Create the texture.
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    GLuint id = m_guard.id();
-    if (id) {
+    if (m_id) {
         glBindTexture(GL_TEXTURE_2D, 0);    // Just in case it is bound.
-        glDeleteTextures(1, &id);
+        glDeleteTextures(1, &m_id);
     }
-    glGenTextures(1, &id);
-    glBindTexture(GL_TEXTURE_2D, id);
+    glGenTextures(1, &m_id);
+    glBindTexture(GL_TEXTURE_2D, m_id);
     if (pvrHeader->mipMapCount) {
         if ((m_options & QGLContext::LinearFilteringBindOption) != 0) {
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -800,6 +782,20 @@ bool QGLBoundTexture::bindCompressedTexturePVR(const char *buf, int len)
     m_size = QSize(pvrHeader->width, pvrHeader->height);
     m_hasAlpha = (pvrHeader->alphaMask != 0);
     return true;
+}
+
+Q_OPENGL_EXPORT const QGLContext *qt_gl_transfer_context(const QGLContext *);
+
+void QGLBoundTexture::contextDestroyed(const QGLContext *ctx)
+{
+    // If our owning context has been destroyed, then transfer ownership
+    // to another context in the same sharing group.  If there are no more
+    // contexts in the sharing group then the texture has been destroyed.
+    if (ctx == m_context) {
+        m_context = qt_gl_transfer_context(ctx);
+        if (!m_context)
+            m_id = 0;
+    }
 }
 
 QT_END_NAMESPACE

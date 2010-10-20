@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE
     3D items in QML can have a simple scale applied directly as follows:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         scale: 0.5
     }
@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE
     to an item as part of a sequence of transformations:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         transform: [
             Translation3D { translate: Qt.vector3D(5, 0, 0) },
@@ -89,7 +89,7 @@ QT_BEGIN_NAMESPACE
     original size and then translates it by 5 units along the x-axis:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         transform: [
             Scale3D { scale: 0.5 },
@@ -102,7 +102,7 @@ QT_BEGIN_NAMESPACE
     any of the transforms.  So the previous example is equivalent to:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         scale: 0.5
         transform: [

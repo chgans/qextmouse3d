@@ -59,8 +59,6 @@ private slots:
     void size();
     void center_data();
     void center();
-    void volume_data();
-    void volume();
     void containsPoint_data();
     void containsPoint();
     void containsBox_data();
@@ -71,6 +69,8 @@ private slots:
     void intersect();
     void intersected_data();
     void intersected();
+    void intersectRay_data();
+    void intersectRay();
     void unitePoint_data();
     void unitePoint();
     void uniteBox_data();
@@ -79,13 +79,11 @@ private slots:
     void unitedPoint();
     void unitedBox_data();
     void unitedBox();
-    void unitePoints();
-    void translate();
-    void translated();
-    void scale();
-    void scaled();
     void transform();
     void transformed();
+    void dataStream();
+    void properties();
+    void metaTypes();
 };
 
 void tst_QBox3D::create()
@@ -132,29 +130,6 @@ void tst_QBox3D::create()
     QVERIFY(box5.isInfinite());
     QVERIFY(box5.minimum() == QVector3D(0, 0, 0));
     QVERIFY(box5.maximum() == QVector3D(0, 0, 0));
-
-    QArray<QVector3D> points;
-    points << QVector3D(1, 2, 3);
-    points << QVector3D(-1, -2, -3);
-    points << QVector3D(-1, 0, -3);
-
-    QBox3D box6(points);
-    QVERIFY(!box6.isNull());
-    QVERIFY(box6.isFinite());
-    QVERIFY(!box6.isInfinite());
-    QVERIFY(box6.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box6.maximum() == QVector3D(1, 2, 3));
-
-    QBox3D box7(points.mid(1));
-    QVERIFY(!box7.isNull());
-    QVERIFY(box7.isFinite());
-    QVERIFY(!box7.isInfinite());
-    QVERIFY(box7.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box7.maximum() == QVector3D(-1, 0, -3));
-
-    QArray<QVector3D> empty;
-    QBox3D box8(empty);
-    QVERIFY(box8.isNull());
 }
 
 void tst_QBox3D::modify()
@@ -328,34 +303,6 @@ void tst_QBox3D::center()
 
     box.setToInfinite();
     QVERIFY(box.center() == QVector3D(0, 0, 0));
-}
-
-void tst_QBox3D::volume_data()
-{
-    // Use the same test data as the size tests.
-    size_data();
-}
-void tst_QBox3D::volume()
-{
-    QFETCH(qreal, x1);
-    QFETCH(qreal, y1);
-    QFETCH(qreal, z1);
-    QFETCH(qreal, x2);
-    QFETCH(qreal, y2);
-    QFETCH(qreal, z2);
-
-    qreal sizex = (x1 < x2) ? (x2 - x1) : (x1 - x2);
-    qreal sizey = (y1 < y2) ? (y2 - y1) : (y1 - y2);
-    qreal sizez = (z1 < z2) ? (z2 - z1) : (z1 - z2);
-
-    QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
-    QCOMPARE(box.volume(), sizex * sizey * sizez);
-
-    box.setToNull();
-    QCOMPARE(box.volume(), (qreal)0.0);
-
-    box.setToInfinite();
-    QCOMPARE(box.volume(), (qreal)0.0);
 }
 
 void tst_QBox3D::containsPoint_data()
@@ -781,6 +728,251 @@ void tst_QBox3D::intersected()
     QVERIFY(box.intersected(infinite) == box);
 }
 
+void tst_QBox3D::intersectRay_data()
+{
+    QTest::addColumn<qreal>("x1");
+    QTest::addColumn<qreal>("y1");
+    QTest::addColumn<qreal>("z1");
+    QTest::addColumn<qreal>("x2");
+    QTest::addColumn<qreal>("y2");
+    QTest::addColumn<qreal>("z2");
+    QTest::addColumn<bool>("intersects");
+    QTest::addColumn<qreal>("mint");
+    QTest::addColumn<qreal>("maxt");
+    QTest::addColumn<qreal>("originx");
+    QTest::addColumn<qreal>("originy");
+    QTest::addColumn<qreal>("originz");
+    QTest::addColumn<qreal>("directionx");
+    QTest::addColumn<qreal>("directiony");
+    QTest::addColumn<qreal>("directionz");
+
+    QTest::newRow("zero")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-x")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-neg-x")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-x-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("zero-y")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("zero-neg-y")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0);
+
+    QTest::newRow("zero-y-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-1.0) << qreal(0.0);
+
+    QTest::newRow("zero-z")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-1.0);
+
+    QTest::newRow("zero-neg-z")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << true << qreal(-1.0) << qreal(-1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("zero-z-miss")
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-no-ray")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-1.0) << qreal(1.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-neg-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-2.0) << qreal(2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-0.5) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-2.0) << qreal(2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-neg-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-4.0) << qreal(4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-0.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-inside-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-3.0) << qreal(3.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-from-inside-neg-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-6.0) << qreal(6.0)
+        << qreal(0.0) << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-0.5);
+
+    QTest::newRow("normal-from-outside-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(3.0)
+        << qreal(-2.0) << qreal(0.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-neg-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-6.0) << qreal(-2.0)
+        << qreal(-2.0) << qreal(0.0) << qreal(0.0)
+        << qreal(-0.5) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-miss-x")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(-2.0) << qreal(3.0) << qreal(0.0)
+        << qreal(1.0) << qreal(0.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(5.0)
+        << qreal(0.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.0) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-neg-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-10.0) << qreal(-2.0)
+        << qreal(0.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(-0.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-miss-y")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(2.0) << qreal(-3.0) << qreal(0.0)
+        << qreal(0.0) << qreal(1.5) << qreal(0.0);
+
+    QTest::newRow("normal-from-outside-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(1.0) << qreal(7.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.0);
+
+    QTest::newRow("normal-from-outside-neg-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << true << qreal(-14.0) << qreal(-2.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(-0.5);
+
+    QTest::newRow("normal-from-outside-miss-z")
+        << qreal(-1.0) << qreal(-2.0) << qreal(-3.0)
+        << qreal(1.0) << qreal(2.0) << qreal(3.0)
+        << false << qreal(0.0) << qreal(0.0)
+        << qreal(0.0) << qreal(3.0) << qreal(-4.0)
+        << qreal(0.0) << qreal(0.0) << qreal(1.5);
+}
+
+void tst_QBox3D::intersectRay()
+{
+    QFETCH(qreal, x1);
+    QFETCH(qreal, y1);
+    QFETCH(qreal, z1);
+    QFETCH(qreal, x2);
+    QFETCH(qreal, y2);
+    QFETCH(qreal, z2);
+    QFETCH(bool, intersects);
+    QFETCH(qreal, mint);
+    QFETCH(qreal, maxt);
+    QFETCH(qreal, originx);
+    QFETCH(qreal, originy);
+    QFETCH(qreal, originz);
+    QFETCH(qreal, directionx);
+    QFETCH(qreal, directiony);
+    QFETCH(qreal, directionz);
+
+    QBox3D box(QVector3D(x1, y1, z1), QVector3D(x2, y2, z2));
+    QRay3D ray(QVector3D(originx, originy, originz),
+               QVector3D(directionx, directiony, directionz));
+
+    qreal minimum_t = -1.0f, maximum_t = -1.0f;
+    if (intersects) {
+        QVERIFY(box.intersection(ray, &minimum_t, &maximum_t));
+        QCOMPARE(minimum_t, mint);
+        QCOMPARE(maximum_t, maxt);
+        QVERIFY(box.intersects(ray));
+        qreal t = box.intersection(ray);
+        if (mint >= 0.0f)
+            QCOMPARE(t, mint);
+        else if (maxt >= 0.0f)
+            QCOMPARE(t, maxt);
+        else
+            QVERIFY(qIsNaN(t));
+    } else {
+        QVERIFY(!box.intersection(ray, &minimum_t, &maximum_t));
+        QVERIFY(qIsNaN(minimum_t));
+        QVERIFY(qIsNaN(maximum_t));
+        QVERIFY(!box.intersects(ray));
+        QVERIFY(qIsNaN(box.intersection(ray)));
+    }
+}
+
 void tst_QBox3D::unitePoint_data()
 {
     // Use the same test data as containsPoint().
@@ -991,163 +1183,6 @@ void tst_QBox3D::unitedBox()
     QVERIFY(ibox.isInfinite());
 }
 
-void tst_QBox3D::unitePoints()
-{
-    QArray<QVector3D> points;
-    points << QVector3D(1, 2, 3);
-    points << QVector3D(-1, -2, -3);
-    points << QVector3D(-1, 0, -3);
-
-    QArray<QVector3D> points2;
-    points2 << QVector3D(10, 20, 30);
-    points2 << QVector3D(-10, -20, -30);
-    points2 << QVector3D(-10, 0, -30);
-
-    QBox3D box1;
-    box1.unite(points);
-    QVERIFY(!box1.isNull());
-    QVERIFY(box1.isFinite());
-    QVERIFY(!box1.isInfinite());
-    QVERIFY(box1.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box1.maximum() == QVector3D(1, 2, 3));
-
-    box1.unite(points2);
-    QVERIFY(!box1.isNull());
-    QVERIFY(box1.isFinite());
-    QVERIFY(!box1.isInfinite());
-    QVERIFY(box1.minimum() == QVector3D(-10, -20, -30));
-    QVERIFY(box1.maximum() == QVector3D(10, 20, 30));
-
-    QBox3D box2;
-    box2.unite(points.mid(1));
-    QVERIFY(!box2.isNull());
-    QVERIFY(box2.isFinite());
-    QVERIFY(!box2.isInfinite());
-    QVERIFY(box2.minimum() == QVector3D(-1, -2, -3));
-    QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
-
-    box2.unite(points2.mid(1));
-    QVERIFY(!box2.isNull());
-    QVERIFY(box2.isFinite());
-    QVERIFY(!box2.isInfinite());
-    QVERIFY(box2.minimum() == QVector3D(-10, -20, -30));
-    QVERIFY(box2.maximum() == QVector3D(-1, 0, -3));
-
-    QBox3D box3;
-    box3.setToInfinite();
-    box3.unite(points);
-    QVERIFY(box3.isInfinite());
-    QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
-    QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
-    box3.unite(points.mid(1));
-    QVERIFY(box3.isInfinite());
-    QVERIFY(box3.minimum() == QVector3D(0, 0, 0));
-    QVERIFY(box3.maximum() == QVector3D(0, 0, 0));
-
-    QBox3D box4;
-    QBox3D box5 = box4.united(points).united(points2);
-    QVERIFY(box5 == box1);
-
-    box5 = box4.united(points.mid(1)).united(points2.mid(1));
-    QVERIFY(box5 == box2);
-}
-
-void tst_QBox3D::translate()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    box.translate(QVector3D(10, -3, 56));
-    QVERIFY(box.minimum() == QVector3D(-1 + 10, -2 - 3, -3 + 56));
-    QVERIFY(box.maximum() == QVector3D(1 + 10, 2 - 3, 3 + 56));
-
-    QBox3D null;
-    null.translate(QVector3D(10, -3, 56));
-    QVERIFY(null.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    infinite.translate(QVector3D(10, -3, 56));
-    QVERIFY(infinite.isInfinite());
-}
-
-void tst_QBox3D::translated()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    QBox3D box2 = box.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.minimum() == QVector3D(-1 + 10, -2 - 3, -3 + 56));
-    QVERIFY(box2.maximum() == QVector3D(1 + 10, 2 - 3, 3 + 56));
-
-    QBox3D null;
-    box2 = null.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    box2 = infinite.translated(QVector3D(10, -3, 56));
-    QVERIFY(box2.isInfinite());
-}
-
-void tst_QBox3D::scale()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    box.scale(QVector3D(2, -3, 4));
-    QVERIFY(box.minimum() == QVector3D(-2, -6, -12));
-    QVERIFY(box.maximum() == QVector3D(2, 6, 12));
-
-    box.scale(2);
-    QVERIFY(box.minimum() == QVector3D(-2 * 2, -6 * 2, -12 * 2));
-    QVERIFY(box.maximum() == QVector3D(2 * 2, 6 * 2, 12 * 2));
-
-    box.scale(-2);
-    QVERIFY(box.minimum() == QVector3D(-2 * 4, -6 * 4, -12 * 4));
-    QVERIFY(box.maximum() == QVector3D(2 * 4, 6 * 4, 12 * 4));
-
-    QBox3D null;
-    null.scale(QVector3D(2, -3, 4));
-    QVERIFY(null.isNull());
-
-    null.scale(2);
-    QVERIFY(null.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    infinite.scale(QVector3D(2, -3, 4));
-    QVERIFY(infinite.isInfinite());
-
-    infinite.scale(2);
-    QVERIFY(infinite.isInfinite());
-}
-
-void tst_QBox3D::scaled()
-{
-    QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
-    QBox3D box2 = box.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.minimum() == QVector3D(-2, -6, -12));
-    QVERIFY(box2.maximum() == QVector3D(2, 6, 12));
-
-    box2 = box.scaled(2);
-    QVERIFY(box2.minimum() == QVector3D(-2, -4, -6));
-    QVERIFY(box2.maximum() == QVector3D(2, 4, 6));
-
-    box2 = box.scaled(-2);
-    QVERIFY(box2.minimum() == QVector3D(-2, -4, -6));
-    QVERIFY(box2.maximum() == QVector3D(2, 4, 6));
-
-    QBox3D null;
-    box2 = null.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.isNull());
-
-    box2 = null.scaled(2);
-    QVERIFY(box2.isNull());
-
-    QBox3D infinite;
-    infinite.setToInfinite();
-    box2 = infinite.scaled(QVector3D(2, -3, 4));
-    QVERIFY(box2.isInfinite());
-
-    box2 = infinite.scaled(2);
-    QVERIFY(box2.isInfinite());
-}
-
 void tst_QBox3D::transform()
 {
     QBox3D box(QVector3D(-1, -2, -3), QVector3D(1, 2, 3));
@@ -1184,6 +1219,82 @@ void tst_QBox3D::transformed()
     infinite.setToInfinite();
     box2 = infinite.transformed(m);
     QVERIFY(box2.isInfinite());
+}
+
+void tst_QBox3D::dataStream()
+{
+#ifndef QT_NO_DATASTREAM
+    QBox3D box1(QVector3D(1.0f, 2.0f, 3.0f), QVector3D(4.0f, 5.0f, 6.0f));
+    QBox3D box2; // null
+    QBox3D box3;
+    box3.setToInfinite();
+
+    QByteArray data;
+    {
+        QDataStream stream(&data, QIODevice::WriteOnly);
+        stream << box1;
+        stream << box2;
+        stream << box3;
+    }
+
+    QBox3D rbox1;
+    QBox3D rbox2;
+    QBox3D rbox3;
+    {
+        QDataStream stream2(data);
+        stream2 >> rbox1;
+        stream2 >> rbox2;
+        stream2 >> rbox3;
+    }
+
+    QVERIFY(box1 == rbox1);
+    QVERIFY(box2 == rbox2);
+    QVERIFY(box3 == rbox3);
+#endif
+}
+
+class tst_QBox3DProperties : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QBox3D box READ box WRITE setBox)
+public:
+    tst_QBox3DProperties(QObject *parent = 0) : QObject(parent) {}
+
+    QBox3D box() const { return b; }
+    void setBox(const QBox3D& value) { b = value; }
+
+private:
+    QBox3D b;
+};
+
+// Test getting and setting properties via the metaobject system.
+void tst_QBox3D::properties()
+{
+    tst_QBox3DProperties obj;
+
+    qRegisterMetaType<QBox3D>();
+
+    obj.setBox(QBox3D(QVector3D(1, 2, 3), QVector3D(4, 5, 6)));
+
+    QBox3D b = qVariantValue<QBox3D>(obj.property("box"));
+    QCOMPARE(b.minimum(), QVector3D(1, 2, 3));
+    QCOMPARE(b.maximum(), QVector3D(4, 5, 6));
+
+    obj.setProperty("box",
+                    qVariantFromValue
+                        (QBox3D(QVector3D(-1, -2, -3), QVector3D(-4, -5, -6))));
+
+    b = qVariantValue<QBox3D>(obj.property("box"));
+    QCOMPARE(b.minimum(), QVector3D(-4, -5, -6));
+    QCOMPARE(b.maximum(), QVector3D(-1, -2, -3));
+}
+
+void tst_QBox3D::metaTypes()
+{
+    int id = qMetaTypeId<QBox3D>();
+    QVERIFY(QMetaType::type("QBox3D") == id);
+    QCOMPARE(QByteArray(QMetaType::typeName(id)), QByteArray("QBox3D"));
+    QVERIFY(QMetaType::isRegistered(id));
 }
 
 QTEST_APPLESS_MAIN(tst_QBox3D)

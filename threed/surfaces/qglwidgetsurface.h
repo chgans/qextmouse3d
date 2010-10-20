@@ -56,11 +56,11 @@ class Q_QT3D_EXPORT QGLWidgetSurface : public QGLAbstractSurface
 {
 public:
     QGLWidgetSurface();
-    explicit QGLWidgetSurface(QWidget *widget);
+    explicit QGLWidgetSurface(QGLWidget *widget);
     ~QGLWidgetSurface();
 
-    QWidget *widget() const;
-    void setWidget(QWidget *widget);
+    QGLWidget *widget() const;
+    void setWidget(QGLWidget *widget);
 
     QPaintDevice *device() const;
     bool activate(QGLAbstractSurface *prevSurface = 0);
@@ -68,9 +68,8 @@ public:
     QRect viewportGL() const;
 
 private:
-    QScopedPointer<QGLWidgetSurfacePrivate> d_ptr;
+    QGLWidget *m_widget;
 
-    Q_DECLARE_PRIVATE(QGLWidgetSurface)
     Q_DISABLE_COPY(QGLWidgetSurface)
 };
 

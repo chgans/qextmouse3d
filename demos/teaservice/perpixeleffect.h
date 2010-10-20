@@ -42,28 +42,17 @@
 #ifndef PERPIXELEFFECT_H
 #define PERPIXELEFFECT_H
 
-#include "qglabstracteffect.h"
+#include "qglshaderprogrameffect.h"
 
 class PerPixelEffectPrivate;
 class QGLShader;
 
-class PerPixelEffect : public QGLAbstractEffect
+class PerPixelEffect : public QGLShaderProgramEffect
 {
+    Q_DISABLE_COPY(PerPixelEffect);
 public:
     PerPixelEffect();
     virtual ~PerPixelEffect();
-
-    QList<QGL::VertexAttribute> requiredFields() const;
-    void setActive(QGLPainter *painter, bool flag);
-    void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute
-        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-
-private:
-    PerPixelEffectPrivate *d;
-
-    Q_DISABLE_COPY(PerPixelEffect);
 };
 
 #endif

@@ -43,10 +43,9 @@
 #define QTRIANGLE3D_H
 
 #include <QtGui/qvector3d.h>
-#include "qresult.h"
-#include "qline3d.h"
+#include <QtGui/qvector2d.h>
+#include "qray3d.h"
 #include "qplane3d.h"
-#include "qlinesegment3d.h"
 
 QT_BEGIN_HEADER
 
@@ -63,20 +62,13 @@ public:
     QTriangle3D(const QVector3D &p, const QVector3D &q, const QVector3D &r);
 
     QVector3D p() const;
-    void setP(const QVector3D& point);
+    void setP(const QVector3D & point);
 
     QVector3D q() const;
-    void setQ(const QVector3D& point);
+    void setQ(const QVector3D & point);
 
     QVector3D r() const;
-    void setR(const QVector3D& point);
-
-    qreal width() const;
-    qreal height() const;
-    qreal area() const;
-
-    bool isDegenerate() const;
-    bool isNull() const;
+    void setR(const QVector3D & point);
 
     QPlane3D plane() const;
     QVector3D center() const;
@@ -84,16 +76,19 @@ public:
 
     bool contains(const QVector3D &point) const;
 
-    bool intersects(const QLine3D &line) const;
-    QResult<QVector3D> intersection(const QLine3D &line) const;
-
-    QVector3D interpolate(qreal s, qreal t) const;
+    bool intersects(const QRay3D &ray) const;
+    qreal intersection(const QRay3D &ray) const;
 
     void transform(const QMatrix4x4 &matrix);
     QTriangle3D transformed(const QMatrix4x4 &matrix) const;
 
+    QVector2D uv(const QVector3D &point) const;
+
+    bool operator==(const QTriangle3D &other);
+    bool operator!=(const QTriangle3D &other);
+
 private:
-    QVector3D m_p, m_q, m_r;   // vertex points of a triangle in 3D space
+    QVector3D m_p, m_q, m_r;
 };
 
 inline QTriangle3D::QTriangle3D()
@@ -136,31 +131,6 @@ inline void QTriangle3D::setR(const QVector3D &point)
     m_r = point;
 }
 
-inline qreal QTriangle3D::width() const
-{
-    return (m_q - m_p).length();
-}
-
-inline qreal QTriangle3D::height() const
-{
-    return QLine3D(m_p, m_q - m_p).distance(m_r);
-}
-
-inline qreal QTriangle3D::area() const
-{
-    return 0.5f * width() * height();
-}
-
-inline bool QTriangle3D::isDegenerate() const
-{
-    return qIsNull(width()) || qIsNull(height());
-}
-
-inline bool QTriangle3D::isNull() const
-{
-    return m_p == m_q && m_p == m_r;
-}
-
 inline QPlane3D QTriangle3D::plane() const
 {
     return QPlane3D(m_p, m_q, m_r);
@@ -176,39 +146,36 @@ inline QVector3D QTriangle3D::faceNormal() const
     return QVector3D::crossProduct(m_q - m_p, m_r - m_q);
 }
 
-inline bool QTriangle3D::intersects(const QLine3D &line) const
+inline bool QTriangle3D::operator==(const QTriangle3D &other)
 {
-    if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
-        return false;
-    return contains(plane().intersection(line));
+    return m_p == other.m_p && m_q == other.m_q && m_r == other.m_r;
 }
 
-inline QResult<QVector3D> QTriangle3D::intersection(const QLine3D &line) const
+inline bool QTriangle3D::operator!=(const QTriangle3D &other)
 {
-    if (qFuzzyCompare(QVector3D::dotProduct(m_q - m_p, line.direction()), qreal(1.0f)))
-        return QResult<QVector3D>();
-    QVector3D inter = plane().intersection(line);
-    if (contains(inter))
-        return inter;
-    return QResult<QVector3D>();
+    return m_p != other.m_p || m_q != other.m_q || m_r != other.m_r;
 }
 
-inline QVector3D QTriangle3D::interpolate(qreal s, qreal t) const
+inline bool qFuzzyCompare
+    (const QTriangle3D &triangle1, const QTriangle3D &triangle2)
 {
-    QLineSegment3D base(m_p, m_q);
-    QVector3D inter = base.toLine3D().point(t);
-    QLineSegment3D apexToPoint(m_r, inter);
-    return apexToPoint.toLine3D().point(s);
-    // afaict this method from the parametric definition of a plane using three points
-    // actually results in a bias, such that the s coefficient is out of proportion to t.
-    // return (1.0f - s) * (((1.0f - t) * m_p) + (t * m_q)) + s * m_r;
+    return qFuzzyCompare(triangle1.p(), triangle2.p()) &&
+           qFuzzyCompare(triangle1.q(), triangle2.q()) &&
+           qFuzzyCompare(triangle1.r(), triangle2.r());
 }
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QTriangle3D &triangle);
+#endif
+
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QTriangle3D &triangle);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QTriangle3D &triangle);
+#endif
 
 QT_END_NAMESPACE
 
-#ifndef QT_NO_PLANE3D
 Q_DECLARE_METATYPE(QTriangle3D)
-#endif
 
 QT_END_HEADER
 

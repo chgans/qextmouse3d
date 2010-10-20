@@ -1,10 +1,10 @@
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 Viewport {
     width: 640; height: 480
 
-    Item3d {
+    Item3D {
         id: button_mesh
         name: "button_mesh"
         mesh: Mesh {
@@ -13,7 +13,7 @@ Viewport {
         }
         cullFaces: "CullBackFaces"
 
-        Item3d {
+        Item3D {
             id: top_node
             objectName: "top_node"
             name: "top_node"
@@ -30,7 +30,7 @@ Viewport {
             textureUrl: "textures/button/face.png"
         }
 
-        Item3d {
+        Item3D {
             id: side_plate_node
             objectName: "side_plate_node"
             name: "side_plate_node"

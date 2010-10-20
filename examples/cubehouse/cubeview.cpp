@@ -46,7 +46,13 @@
 #include <QtCore/qtimer.h>
 #include <QtCore/qpropertyanimation.h>
 #include <stdio.h>
+#include <qmath.h>
+#if !defined(QT_OPENGL_ES_1)
 #include "projectivetextureeffect.h"
+
+//#define PROJECTOR_CAMERA_DEBUG_MARKERS
+#endif
+
 
 CubeView::CubeView(QWidget *parent)
     : QGLView(parent), scene(0), cube(0), teapot(0), room(0),
@@ -59,18 +65,13 @@ CubeView::CubeView(QWidget *parent)
       prevX(0),
       prevY(0),
       prevZ(0),
-      havePrev(false)
+      havePrev(false),
+      projectiveTextureEffect(0)
 {
     setOption(CameraNavigation, false);
 
     roomCamera = new QGLCamera(this);
     roomCamera->setAdjustForAspectRatio(false);
-
-    if(useProjectiveTextureEffect)
-    {
-        projectorCamera = new QGLCamera(this);
-        projectorCamera->setAdjustForAspectRatio(false);
-    }
 
     QPropertyAnimation *animation;
 
@@ -82,14 +83,6 @@ CubeView::CubeView(QWidget *parent)
     animation->start();
 
     time.start();
-
-    projectiveTextureEffect = new ProjectiveTextureEffect;
-    biasMatrix = QMatrix4x4(0.5, 0.0, 0.0, 0.5,
-                          0.0, 0.5, 0.0, 0.5,
-                          0.0, 0.0, 0.5, 0.5,
-                          0.0, 0.0, 0.0, 1.0);
-
-//    modelMatrix.setToIdentity();
 }
 
 void CubeView::initializeGL(QGLPainter *painter)
@@ -191,7 +184,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     lightParameters->setPosition(QVector3D(0.0f, 0.0f, 3.0f));
     painter->setMainLight(lightParameters);
 
-    QImage textureImage(":/qtlogo.png");
+    QImage textureImage(QLatin1String(":/qtlogo.png"));
     texture.setImage(textureImage);
 
     if (stereo) {
@@ -203,6 +196,7 @@ void CubeView::initializeGL(QGLPainter *painter)
     {
         // initialize the projector camera
         projectorCamera = new QGLCamera(this);
+        projectiveTextureEffect = new ProjectiveTextureEffect;
         connect(projectorCamera, SIGNAL(viewChanged()),
                 this, SLOT(updateProjectorViewMatrix()));
         connect(projectorCamera, SIGNAL(projectionChanged()),
@@ -220,8 +214,8 @@ void CubeView::paintGL(QGLPainter *painter)
     // Animate the projector position so the effect can be seen
     if(useProjectiveTextureEffect)
     {
-        projectorCamera->panCenter(-0.2);
-        projectorCamera->tiltCenter(-0.1);
+        projectorCamera->tiltPanRollCenter
+            (-0.1f, -0.3f, 0.0f, QGLCamera::PanTiltRoll);
     }
 
     painter->modelViewMatrix().push();
@@ -236,24 +230,26 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->projectionMatrix().pop();
 
     painter->modelViewMatrix().push();
-    modelMatrix.push();
     // These are the model transformations
     painter->modelViewMatrix().translate(-0.8f, -1.5f, -3.0f);
     painter->setLightModel(normalModel);
+#if !defined(QT_OPENGL_ES_1)
     if(useProjectiveTextureEffect)
     {
+        modelMatrix.push();
         // For an effect that looks like we have only one projector
         // Over the whole screen, we duplicate transformations into the
         // projector's model matrix.  For now, we don't apply the transform
         // to center the effect on each object and see it more clearly.
 //        modelMatrix.translate(-0.8f, -1.5f, -3.0f);
 
-        updateObjectLinearTexgenMatrix();
+        updateProjectiveTextureEffect();
 
         painter->setUserEffect(projectiveTextureEffect);
         texture.bind();
     }
     else
+#endif
         painter->setStandardEffect(QGL::LitMaterial);
     teapot->draw(painter);
 
@@ -268,6 +264,7 @@ void CubeView::paintGL(QGLPainter *painter)
     painter->modelViewMatrix().rotate(cangle, 1.0f, 1.0f, 1.0f);
 
     texture.bind();
+#if !defined(QT_OPENGL_ES_1)
     if(useProjectiveTextureEffect)
     {
         modelMatrix.push();
@@ -277,12 +274,14 @@ void CubeView::paintGL(QGLPainter *painter)
         // to center the effect on each object and see it more clearly.
 //        modelMatrix.translate(1.0f, -0.5f, 0.0f);
         modelMatrix.rotate(cangle, 1.0f, 1.0f, 1.0f);
-        updateObjectLinearTexgenMatrix();
+        updateProjectiveTextureEffect();
         painter->setUserEffect(projectiveTextureEffect);
 //        painter->setStandardEffect(QGL::FlatDecalTexture2D);
         cube->draw(painter);
         modelMatrix.pop();
-    } else {
+    } else
+#endif
+    {
         glEnable(GL_BLEND);
         painter->setStandardEffect(QGL::LitDecalTexture2D);
         painter->setFaceColor(QGL::AllFaces, QColor(170, 202, 0, 120));
@@ -298,6 +297,96 @@ void CubeView::paintGL(QGLPainter *painter)
     }
 
     painter->modelViewMatrix().pop();
+#ifdef PROJECTOR_CAMERA_DEBUG_MARKERS
+    if(useProjectiveTextureEffect)
+    {
+
+        painter->modelViewMatrix().push();
+        modelMatrix.push();
+        painter->modelViewMatrix().translate(projectorCamera->eye());
+        painter->modelViewMatrix().scale(0.2);
+        painter->setStandardEffect(QGL::LitMaterial);
+        modelMatrix.translate(projectorCamera->eye());
+        cube->draw(painter);
+
+        modelMatrix.pop();
+        painter->modelViewMatrix().pop();
+
+        painter->modelViewMatrix().push();
+        modelMatrix.push();
+        painter->modelViewMatrix().translate(projectorCamera->center());
+        painter->modelViewMatrix().scale(0.1);
+        painter->setStandardEffect(QGL::LitMaterial);
+        cube->draw(painter);
+        modelMatrix.pop();
+        painter->modelViewMatrix().pop();
+
+        QVector3DArray verts;
+
+        QVector3D origin = projectorCamera->eye();
+
+        QVector3D target = projectorCamera->center();
+        QVector3D direction = projectorCamera->center() - projectorCamera->eye();
+
+        QVector3D normal = projectorCamera->upVector().normalized();
+        qreal nearPlane = projectorCamera->nearPlane();
+        qreal farPlane = projectorCamera->farPlane();
+        qreal fieldOfView = projectorCamera->fieldOfView();
+
+        QVector3D nearTopLeft;
+        QVector3D nearTopRight;
+        QVector3D nearBottomLeft;
+        QVector3D nearBottomRight;
+        QVector3D farTopLeft;
+        QVector3D farTopRight;
+        QVector3D farBottomLeft;
+        QVector3D farBottomRight;
+
+        QSizeF viewSize = projectorCamera->viewSize();
+
+        qreal fieldDepthRatio = farPlane / nearPlane;
+
+        QVector3D rightVector = QVector3D::crossProduct(direction, normal).normalized() * viewSize.width() / 2.0;
+        QVector3D topVector = normal * viewSize.height() / 2.0;
+
+        QVector3D topLeftVector = direction + topVector - rightVector;
+        QVector3D topRightVector = direction + topVector + rightVector;
+        QVector3D bottomLeftVector = direction - topVector - rightVector;
+        QVector3D bottomRightVector = direction - topVector + rightVector;
+
+        verts.append(origin, origin + (direction * (farPlane / direction.length())));
+
+        verts.append(origin, origin + (topLeftVector * fieldDepthRatio));
+        verts.append(origin, origin + (topRightVector * fieldDepthRatio));
+        verts.append(origin, origin + (bottomLeftVector * fieldDepthRatio));
+        verts.append(origin, origin + (bottomRightVector * fieldDepthRatio));
+
+        verts.append(origin + topLeftVector, origin + topRightVector);
+        verts.append(origin + topRightVector, origin + bottomRightVector);
+        verts.append(origin + bottomRightVector, origin + bottomLeftVector);
+        verts.append(origin + bottomLeftVector, origin + topLeftVector);
+
+        verts.append(origin + (topLeftVector * fieldDepthRatio),
+                     (origin + topRightVector * fieldDepthRatio));
+        verts.append(origin + (topRightVector * fieldDepthRatio),
+                     (origin + bottomRightVector * fieldDepthRatio));
+        verts.append(origin + (bottomRightVector * fieldDepthRatio),
+                     (origin + bottomLeftVector * fieldDepthRatio));
+        verts.append(origin + (bottomLeftVector * fieldDepthRatio),
+                     (origin + topLeftVector * fieldDepthRatio));
+
+        verts.append(origin, origin + normal);
+
+        painter->modelViewMatrix().push();
+        painter->setStandardEffect(QGL::FlatColor);
+        painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
+        glLineWidth(1.0f);
+
+        painter->setColor(QColor(255,255,255,255));
+        painter->draw(QGL::Lines, verts.size());
+        painter->modelViewMatrix().pop();
+    }
+#endif
 }
 
 //inline void CubeView::setProjectiveTextureEffect(bool value)
@@ -355,22 +444,21 @@ QVector3D CubeView::gravity() const
 void CubeView::updateProjectorViewMatrix()
 {
     Q_ASSERT_X(projectorCamera != 0, Q_FUNC_INFO, "Null projector camera in updateProjectorViewMatrix()");
-    projectorViewMatrix = projectorCamera->modelViewMatrix();
-    updateObjectLinearTexgenMatrix();
+    projectiveTextureEffect->setProjectorViewMatrix(projectorCamera->modelViewMatrix());
+    updateProjectiveTextureEffect();
 }
 
 void CubeView::updateProjectorProjectionMatrix()
 {
     qreal projectorAspectRatio = 1.0;
-    projectorProjectionMatrix = projectorCamera->projectionMatrix(projectorAspectRatio);
-    updateObjectLinearTexgenMatrix();
+    projectiveTextureEffect->setProjectorProjectionMatrix(projectorCamera->projectionMatrix(projectorAspectRatio));
+    updateProjectiveTextureEffect();
 }
 
-void CubeView::updateObjectLinearTexgenMatrix()
+void CubeView::updateProjectiveTextureEffect()
 {
-    objectLinearTexgenMatrix = biasMatrix *
-            projectorProjectionMatrix *
-            projectorViewMatrix *
-            modelMatrix;
-    projectiveTextureEffect->setObjectLinearTexgenMatrix(objectLinearTexgenMatrix);
+#if !defined(QT_OPENGL_ES_1)
+    projectiveTextureEffect->setProjectorDirection(projectorCamera->center() - projectorCamera->eye());
+    projectiveTextureEffect->setModelMatrix(modelMatrix);
+#endif
 }

@@ -68,7 +68,7 @@ void QGLSLSyntaxHighlighter::setupHighlightingRules()
     HighlightingRule rule;
 
     //    variableFormat.setFontItalic(true);
-    rule.pattern = QRegExp("[_a-zA-Z][_a-zA-Z0-9]*");
+    rule.pattern = QRegExp(QLatin1String("[_a-zA-Z][_a-zA-Z0-9]*"));
     rule.format = variableFormat;
     highlightingRules.append(rule);
 
@@ -76,40 +76,102 @@ void QGLSLSyntaxHighlighter::setupHighlightingRules()
     QStringList keywordPatterns;
     QStringList attributePatterns;
     // Keywords from GLSL ES Specification 1.0.17
-    keywordPatterns << "\\battribute\\b"  << "\\bconst\\b"  << "\\buniform\\b"
-            << "\\bvarying\\b" << "\\bbreak\\b" << "\\bcontinue\\b"
-            << "\\bdo\\b" << "\\bfor\\b" << "\\bwhile\\b" << "\\bif\\b"
-            << "\\belse\\b" << "\\bin\\b" << "\\bout\\b" << "\\binout\\b"
-            << "\\bstruct\\b" << "\\btrue\\b" << "\\bfalse\\b"
-            << "\\bdiscard\\b" << "\\breturn\\b" << "\\blowp\\b"
-            << "\\bmediump\\b" << "\\bhighp\\b" << "\\bprecision\\b"
-            << "\\binvariant\\b";
+    keywordPatterns << QLatin1String("\\battribute\\b")
+            << QLatin1String("\\bconst\\b")
+            << QLatin1String("\\buniform\\b")
+            << QLatin1String("\\bvarying\\b")
+            << QLatin1String("\\bbreak\\b")
+            << QLatin1String("\\bcontinue\\b")
+            << QLatin1String("\\bdo\\b")
+            << QLatin1String("\\bfor\\b")
+            << QLatin1String("\\bwhile\\b")
+            << QLatin1String("\\bif\\b")
+            << QLatin1String("\\belse\\b")
+            << QLatin1String("\\bin\\b")
+            << QLatin1String("\\bout\\b")
+            << QLatin1String("\\binout\\b")
+            << QLatin1String("\\bstruct\\b")
+            << QLatin1String("\\btrue\\b")
+            << QLatin1String("\\bfalse\\b")
+            << QLatin1String("\\bdiscard\\b")
+            << QLatin1String("\\breturn\\b")
+            << QLatin1String("\\blowp\\b")
+            << QLatin1String("\\bmediump\\b")
+            << QLatin1String("\\bhighp\\b")
+            << QLatin1String("\\bprecision\\b")
+            << QLatin1String("\\binvariant\\b");
 
 
     // Reserved words from GLSL ES Specification 1.0.17
-    keywordPatterns << "\\basm\\b" << "\bclass\\b" << "\\bunion\\b"
-            << "\\benum\\b" << "\\btypedef\\b" << "\\btemplate\\b"
-            << "\\bthis\\b" << "\\bpacked\\b" << "\\bgoto\\b"
-            << "\\bswitch\\b" << "\\bdefault\\b" << "\\binline\\b"
-            << "\\bnoinline\\b" << "\\bvolatile\\b" << "\\bpublic\\b"
-            << "\\bstatic\\b" << "\\bextern\\b" << "\\bexternal\\b"
-            << "\\binterface\\b" << "\\bflat\\b" << "\\blong\\b"
-            << "\\bshort\\b" << "\\bdouble\\b" << "\\bhalf\\b" << "\\bfixed\\b"
-            << "\\bunsigned\\b" << "\\bsuperp\\b" << "\\binput\\b"
-            << "\\boutput\\b" << "\\bhvec2\\b" << "\\bhvec3\\b"
-            << "\\bhvec4\\b" << "\\bdvec2\\b" << "\\bdvec3\\b" << "\\bdvec4\\b"
-            << "\\bfvec2\\b" << "\\bfvec3\\b" << "\\bfvec4\\b"
-            << "\\bsampler1D\\b" << "\\bsampler3D\\b"
-            << "\\bsampler1DShadow\\b" << "\\bsampler2DShadow\\b"
-            << "\\bsampler2DRect\\b" << "\\bsampler3DRect\\b"
-            << "\\bsampler2DRectShadow\\b" << "\\bsizeof\\b" << "\\bcast\\b"
-            << "\\bnamespace\\b" << "\\busing\\b";
+    keywordPatterns << QLatin1String("\\basm\\b")
+            << QLatin1String("\bclass\\b")
+            << QLatin1String("\\bunion\\b")
+            << QLatin1String("\\benum\\b")
+            << QLatin1String("\\btypedef\\b")
+            << QLatin1String("\\btemplate\\b")
+            << QLatin1String("\\bthis\\b")
+            << QLatin1String("\\bpacked\\b")
+            << QLatin1String("\\bgoto\\b")
+            << QLatin1String("\\bswitch\\b")
+            << QLatin1String("\\bdefault\\b")
+            << QLatin1String("\\binline\\b")
+            << QLatin1String("\\bnoinline\\b")
+            << QLatin1String("\\bvolatile\\b")
+            << QLatin1String("\\bpublic\\b")
+            << QLatin1String("\\bstatic\\b")
+            << QLatin1String("\\bextern\\b")
+            << QLatin1String("\\bexternal\\b")
+            << QLatin1String("\\binterface\\b")
+            << QLatin1String("\\bflat\\b")
+            << QLatin1String("\\blong\\b")
+            << QLatin1String("\\bshort\\b")
+            << QLatin1String("\\bdouble\\b")
+            << QLatin1String("\\bhalf\\b")
+            << QLatin1String("\\bfixed\\b")
+            << QLatin1String("\\bunsigned\\b")
+            << QLatin1String("\\bsuperp\\b")
+            << QLatin1String("\\binput\\b")
+            << QLatin1String("\\boutput\\b")
+            << QLatin1String("\\bhvec2\\b")
+            << QLatin1String("\\bhvec3\\b")
+            << QLatin1String("\\bhvec4\\b")
+            << QLatin1String("\\bdvec2\\b")
+            << QLatin1String("\\bdvec3\\b")
+            << QLatin1String("\\bdvec4\\b")
+            << QLatin1String("\\bfvec2\\b")
+            << QLatin1String("\\bfvec3\\b")
+            << QLatin1String("\\bfvec4\\b")
+            << QLatin1String("\\bsampler1D\\b")
+            << QLatin1String("\\bsampler3D\\b")
+            << QLatin1String("\\bsampler1DShadow\\b")
+            << QLatin1String("\\bsampler2DShadow\\b")
+            << QLatin1String("\\bsampler2DRect\\b")
+            << QLatin1String("\\bsampler3DRect\\b")
+            << QLatin1String("\\bsampler2DRectShadow\\b")
+            << QLatin1String("\\bsizeof\\b")
+            << QLatin1String("\\bcast\\b")
+            << QLatin1String("\\bnamespace\\b")
+            << QLatin1String("\\busing\\b");
 
     attributePatterns
-            << "\\bfloat\\b"  << "\\bint\\b"  << "\\bvoid\\b"  << "\\bbool\\b"
-            << "\\bmat2\\b"  << "\\bmat3\\b"  << "\\bmat4\\b"
-            << "\\bvec2\\b"  << "\\bvec3\\b"  << "\\bvec4\\b"  << "\\bivec2\\b"  << "\\bivec3\\b"  << "\\bivec4\\b"  << "\\bbvec2\\b"  << "\\bbvec3\\b"  << "\\bbvec4\\b"
-            << "\\bsampler2D\\b"  << "\\bsamplerCube\\b";
+            << QLatin1String("\\bfloat\\b")
+            << QLatin1String("\\bint\\b")
+            << QLatin1String("\\bvoid\\b")
+            << QLatin1String("\\bbool\\b")
+            << QLatin1String("\\bmat2\\b")
+            << QLatin1String("\\bmat3\\b")
+            << QLatin1String("\\bmat4\\b")
+            << QLatin1String("\\bvec2\\b")
+            << QLatin1String("\\bvec3\\b")
+            << QLatin1String("\\bvec4\\b")
+            << QLatin1String("\\bivec2\\b")
+            << QLatin1String("\\bivec3\\b")
+            << QLatin1String("\\bivec4\\b")
+            << QLatin1String("\\bbvec2\\b")
+            << QLatin1String("\\bbvec3\\b")
+            << QLatin1String("\\bbvec4\\b")
+            << QLatin1String("\\bsampler2D\\b")
+            << QLatin1String("\\bsamplerCube\\b");
 
     foreach (const QString &pattern, keywordPatterns) {
         rule.pattern = QRegExp(pattern);
@@ -119,7 +181,7 @@ void QGLSLSyntaxHighlighter::setupHighlightingRules()
 
     glvariableFormat.setFontWeight(QFont::Bold);
     glvariableFormat.setForeground(QColor(0x80,0x00,0x80));
-    rule.pattern = QRegExp("gl_[_a-zA-Z0-9]*");
+    rule.pattern = QRegExp(QLatin1String("gl_[_a-zA-Z0-9]*"));
     rule.format = glvariableFormat;
     highlightingRules.append(rule);
 
@@ -134,17 +196,17 @@ void QGLSLSyntaxHighlighter::setupHighlightingRules()
 
 
     functionFormat.setFontWeight(QFont::Bold);
-    rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
+    rule.pattern = QRegExp(QLatin1String("\\b[A-Za-z0-9_]+(?=\\()"));
     rule.format = functionFormat;
     highlightingRules.append(rule);
 
     singleLineCommentFormat.setForeground(Qt::darkGreen);
-    rule.pattern = QRegExp("//[^\n]*");
+    rule.pattern = QRegExp(QLatin1String("//[^\n]*"));
     rule.format = singleLineCommentFormat;
     highlightingRules.append(rule);
 
-    commentStartExpression = QRegExp("/\\*");
-    commentEndExpression = QRegExp("\\*/");
+    commentStartExpression = QRegExp(QLatin1String("/\\*"));
+    commentEndExpression = QRegExp(QLatin1String("\\*/"));
 
 }
 

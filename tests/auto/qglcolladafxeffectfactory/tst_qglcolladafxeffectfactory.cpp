@@ -47,7 +47,7 @@
 
 class QGLColladaFxEffect;
 
-Q_DECLARE_METATYPE(QGLShaderProgramEffect*)
+Q_DECLARE_METATYPE(QGLColladaFxEffect*)
 
 static void cleanupEffectList(QList<QGLColladaFxEffect*> &effects)
 {
@@ -233,7 +233,7 @@ void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
     // should be well formed:
     QVariant param = state.paramNames.values().at(0);
     QCOMPARE(param.type(), QVariant::Image);
-    QCOMPARE(state.paramNames.value("Rose"), param);
+    QCOMPARE(state.paramNames.value(QLatin1String("Rose")), param);
     QImage image = param.value<QImage>();
     QCOMPARE(image.size(), QSize(50,75));
 }
@@ -241,16 +241,16 @@ void tst_QGLColladaFxEffectFactory::processLibraryImagesElement()
 void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
 {
     QList<QGLColladaFxEffect*> cubeResult =
-            QGLColladaFxEffectFactory::loadEffectsFromFile(":/collada_cube.xml");
+            QGLColladaFxEffectFactory::loadEffectsFromFile(QLatin1String(":/collada_cube.xml"));
 
     QCOMPARE(cubeResult.count(), 1);
 
     QGLColladaFxEffect* cubeEffect = cubeResult.at(0);
 
     QEXPECT_FAIL("", "Missing functionality", Continue);
-    QCOMPARE(cubeEffect->id(), QString("whitePhong"));
+    QCOMPARE(cubeEffect->id(), QLatin1String("whitePhong"));
 
-    QCOMPARE(cubeEffect->sid(), QString("phong1"));
+    QCOMPARE(cubeEffect->sid(), QLatin1String("phong1"));
     QVERIFY2(cubeEffect->material()->emittedLight() ==
              QColor::fromRgbF(0.0f, 0.0f, 0.3f, 1.0f), "Emission color doesn't match");
     QVERIFY2(cubeEffect->material()->ambientColor() ==
@@ -265,14 +265,14 @@ void tst_QGLColladaFxEffectFactory::loadEffectsFromFile()
 
 void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
 {
-    QTest::addColumn<QGLShaderProgramEffect*>("effect");
+    QTest::addColumn<QGLColladaFxEffect*>("effect");
     QTest::addColumn<QString>("effectId");
     QTest::addColumn<QString>("techniqueSid");
 
-    QGLShaderProgramEffect* effect = new QGLShaderProgramEffect;
-    QTest::newRow("empty effect") << effect << QString("EmptyEffect") << QString("EmptyTechnique");
+    QGLColladaFxEffect* effect = new QGLColladaFxEffect;
+    QTest::newRow("empty effect") << effect << QString::fromLatin1("EmptyEffect") << QString::fromLatin1("EmptyTechnique");
 
-    effect = new QGLShaderProgramEffect;
+    effect = new QGLColladaFxEffect;
     effect->setFragmentShader("test fragment shader");
     effect->setVertexShader("Test vertex shader");
     QGLMaterial* material = new QGLMaterial;
@@ -283,12 +283,12 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect_data()
     material->setSpecularColor(QColor(3,4,5));
     effect->setMaterial(material);
 
-    QTest::newRow("Test Effect") << effect << QString("TestEffect") << QString("TestTechnique");
+    QTest::newRow("Test Effect") << effect << QString::fromLatin1("TestEffect") << QString::fromLatin1("TestTechnique");
 }
 
 void tst_QGLColladaFxEffectFactory::exportImportEffect()
 {
-    QFETCH(QGLShaderProgramEffect*, effect);
+    QFETCH(QGLColladaFxEffect*, effect);
     QFETCH(QString, effectId);
     QFETCH(QString, techniqueSid);
     QString colladaEffectString = QGLColladaFxEffectFactory::exportEffect(effect, effectId, techniqueSid);
@@ -302,7 +302,6 @@ void tst_QGLColladaFxEffectFactory::exportImportEffect()
     QCOMPARE(effect->vertexShader(), importedEffect->vertexShader());
     QEXPECT_FAIL("Test Effect", "QGLColladaFxEffect import/export does not respect materials", Continue);
     QCOMPARE(effect->material(), importedEffect->material());
-    QCOMPARE(effect->requiredFields(), importedEffect->requiredFields());
     QCOMPARE(effect->supportsPicking(), importedEffect->supportsPicking());
 }
 

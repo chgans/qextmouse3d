@@ -62,7 +62,7 @@ static int objSkipWS(const QByteArray& line, int posn)
     return posn;
 }
 
-static int objSkipNonWS(const QByteArray& line, int posn, QChar stopch)
+static int objSkipNonWS(const QByteArray& line, int posn, int stopch)
 {
     while (posn < line.size() &&
             line[posn] != ' ' && line[posn] != '\t' && line[posn] != stopch)
@@ -235,7 +235,8 @@ QGLAbstractScene *QGLObjSceneHandler::read()
         } else if (keyword == "usemtl") {
             // Specify a material for the faces that follow.
             posn = objSkipWS(line, posn);
-            QString materialName = QString::fromLocal8Bit(line.mid(posn));
+            QByteArray rest = line.mid(posn);
+            QString materialName = QString::fromLocal8Bit(rest.constData(), rest.size());
             if (!materialName.isEmpty() &&
                 materialName != QLatin1String("(null)")) {
                 index = palette->indexOf(materialName);
@@ -256,7 +257,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             // Load a material library.
             posn = objSkipWS(line, posn);
             QByteArray filename = line.mid(posn);
-            loadMaterialLibrary(QString::fromLocal8Bit(filename));
+            loadMaterialLibrary(QString::fromLocal8Bit(filename.constData(), filename.size()));
         } else if (keyword == "s") {
             // Set smoothing on or off.
             posn = objSkipWS(line, posn);
@@ -274,7 +275,8 @@ QGLAbstractScene *QGLObjSceneHandler::read()
         } else if (keyword == "g" || keyword == "o") {
             // Label the faces that follow as part of a named group or object.
             posn = objSkipWS(line, posn);
-            QString objectName = QString::fromLocal8Bit(line.mid(posn));
+            QByteArray rest = line.mid(posn);
+            QString objectName = QString::fromLocal8Bit(rest.constData(), rest.size());
             builder.popNode();
             QGLSceneNode *node = builder.pushNode();
             node->setObjectName(objectName);
@@ -334,7 +336,8 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
         if (keyword == "newmtl") {
             // Start a new material definition.
             posn = objSkipWS(line, posn);
-            materialName = QString::fromLocal8Bit(line.mid(posn));
+            QByteArray rest = line.mid(posn);
+            materialName = QString::fromLocal8Bit(rest.constData(), rest.size());
             index = palette->indexOf(materialName);
             if (index != -1) {
                 qWarning() << "redefining obj material:" << materialName;
@@ -359,7 +362,8 @@ void QGLObjSceneHandler::loadMaterials(QIODevice *device)
         } else if (keyword == "map_Kd") {
             // Texture associated with the material.
             posn = objSkipWS(line, posn);
-            textureName = QString::fromLocal8Bit(line.mid(posn));
+            QByteArray rest = line.mid(posn);
+            textureName = QString::fromLocal8Bit(rest.constData(), rest.size());
             QGLTexture2D *texture = loadTexture(textureName);
             if (texture) {
                 index = palette->indexOf(materialName);

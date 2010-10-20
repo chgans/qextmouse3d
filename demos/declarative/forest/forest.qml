@@ -1,6 +1,6 @@
 //![1]
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 Viewport {
     id: viewport
@@ -11,7 +11,7 @@ Viewport {
         eye: Qt.vector3d(0, 4, 12)
     }
 
-    Item3d {
+    Item3D {
         id: ground
         mesh: Mesh { source: "ground.obj" }
         effect: Effect {

@@ -1,5 +1,4 @@
 TEMPLATE = lib
-#DESTDIR = Qt/labs/threed
 TARGET  = qthreedqmlplugin
 CONFIG += qt plugin
 symbian {
@@ -20,7 +19,6 @@ SOURCES += \
     item3d.cpp \
     mesh.cpp \
     qt3dnamespace.cpp \
-    shaderprogram.cpp \
     viewport.cpp
 HEADERS += \
     redcyaneffect.h \
@@ -28,19 +26,20 @@ HEADERS += \
     item3d.h \
     mesh.h \
     qt3dnamespace.h \
-    shaderprogram.h \
-    shaderprogram_p.h \
     viewport.h
 
+!contains(QT_CONFIG, opengles1) {
+    SOURCES += shaderprogram.cpp
+    HEADERS += shaderprogram.h \
+               shaderprogram_p.h
+}
+
 qdeclarativesources.files += \
-    qmldir \
-    DefaultNavigator.qml \
-    Cube.qml \
-    cube.obj
+    qmldir
 
-qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
+qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
-target.path += $$[QT_INSTALL_IMPORTS]/Qt/labs/threed
+target.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
 INSTALLS += qdeclarativesources target
 

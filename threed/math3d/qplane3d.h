@@ -43,8 +43,8 @@
 #define QPLANE3D_H
 
 #include <QtGui/qvector3d.h>
-#include "qresult.h"
-#include "qline3d.h"
+#include <QtCore/qnumeric.h>
+#include "qray3d.h"
 
 QT_BEGIN_HEADER
 
@@ -66,35 +66,37 @@ public:
     void setNormal(const QVector3D& value);
 
     bool contains(const QVector3D &point) const;
-    bool contains(const QLine3D &line) const;
+    bool contains(const QRay3D &ray) const;
 
-    bool intersects(const QLine3D &line) const;
-    QResult<QVector3D> intersection(const QLine3D &line) const;
+    bool intersects(const QRay3D &ray) const;
+    qreal intersection(const QRay3D &ray) const;
 
     QVector3D project(const QVector3D &point) const;
-    QLine3D project(const QLine3D &line) const;
-    bool sameSide(const QVector3D &pointA, const QVector3D &pointB) const;
+    QRay3D project(const QRay3D &ray) const;
+
+    qreal distanceTo(const QVector3D &point) const;
+
+    void transform(const QMatrix4x4 &matrix);
+    QPlane3D transformed(const QMatrix4x4 &matrix) const;
+
+    bool operator==(const QPlane3D &other);
+    bool operator!=(const QPlane3D &other);
 
 private:
-    QVector3D m_origin; // a point on the plane
-    QVector3D m_normal; // a normal, perpendicular to the plane
+    QVector3D m_origin;
+    QVector3D m_normal;
 };
 
-inline QPlane3D::QPlane3D()
-    : m_normal(1.0f, 0.0f, 0.0f)
-{
-}
+inline QPlane3D::QPlane3D() : m_normal(1.0f, 0.0f, 0.0f) {}
 
 inline QPlane3D::QPlane3D(const QVector3D &point, const QVector3D &normal)
-    : m_origin(point)
+    : m_origin(point), m_normal(normal)
 {
-    setNormal(normal);
 }
 
 inline QPlane3D::QPlane3D(const QVector3D &p, const QVector3D &q, const QVector3D &r)
-    : m_origin(p)
+    : m_origin(p), m_normal(QVector3D::crossProduct(q - p, r - q))
 {
-    setNormal(QVector3D::crossProduct(q-p, r-q));
 }
 
 inline QVector3D QPlane3D::origin() const
@@ -114,46 +116,48 @@ inline QVector3D QPlane3D::normal() const
 
 inline void QPlane3D::setNormal(const QVector3D& value)
 {
-    // ensure normal is a unit vector
-    if (value != m_normal)
-        m_normal = value.normalized();
+    m_normal = value;
 }
 
-inline bool QPlane3D::contains(const QVector3D &point) const
+inline void QPlane3D::transform(const QMatrix4x4 &matrix)
 {
-    return qIsNull(QVector3D::dotProduct(m_normal, m_origin - point));
+    m_origin = matrix * m_origin;
+    m_normal = matrix.mapVector(m_normal);
 }
 
-inline bool QPlane3D::contains(const QLine3D &line) const
+inline QPlane3D QPlane3D::transformed(const QMatrix4x4 &matrix) const
 {
-    return qIsNull(QVector3D::dotProduct(m_normal, line.direction())) &&
-            contains(line.origin());
+    return QPlane3D(matrix * m_origin, matrix.mapVector(m_normal));
 }
 
-inline bool QPlane3D::intersects(const QLine3D &line) const
+inline bool QPlane3D::operator==(const QPlane3D &other)
 {
-    return !qIsNull(QVector3D::dotProduct(m_normal, line.direction()));
+    return m_origin == other.origin() && m_normal == other.normal();
 }
 
-inline QLine3D QPlane3D::project(const QLine3D &line) const
+inline bool QPlane3D::operator!=(const QPlane3D &other)
 {
-    return QLine3D(project(line.origin()), project(line.direction()));
+    return m_origin != other.origin() || m_normal != other.normal();
 }
 
-inline bool QPlane3D::sameSide(const QVector3D &pointA, const QVector3D &pointB) const
+inline bool qFuzzyCompare(const QPlane3D &plane1, const QPlane3D &plane2)
 {
-    qreal dpA = QVector3D::dotProduct(pointA - m_origin, m_normal);
-    qreal dpB = QVector3D::dotProduct(pointB - m_origin, m_normal);
-    if (qIsNull(dpA) || qIsNull(dpB))
-        return false;
-    return true;
+    return qFuzzyCompare(plane1.origin(), plane2.origin()) &&
+           qFuzzyCompare(plane1.normal(), plane2.normal());
 }
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QPlane3D &plane);
+#endif
+
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QPlane3D &plane);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QPlane3D &plane);
+#endif
 
 QT_END_NAMESPACE
 
-#ifndef QT_NO_PLANE3D
 Q_DECLARE_METATYPE(QPlane3D)
-#endif
 
 QT_END_HEADER
 

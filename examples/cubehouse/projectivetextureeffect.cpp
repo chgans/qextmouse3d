@@ -2,7 +2,19 @@
 #include "projectivetextureeffect.h"
 #include <QtOpenGL/qglshaderprogram.h>
 
-ProjectiveTextureEffect::ProjectiveTextureEffect()
+static const QMatrix4x4 biasMatrix = QMatrix4x4(0.5, 0.0, 0.0, 0.5,
+                                         0.0, 0.5, 0.0, 0.5,
+                                         0.0, 0.0, 0.5, 0.5,
+                                         0.0, 0.0, 0.0, 1.0);
+
+/*!
+  The ProjectiveTextureEffect mimics the effect of shining a projector onto
+  a scene from a specific direction.  Vertex coordinates in object space are
+  transformed into eye-space coordinates relative to the light direction,
+  using the objectLinearTexgenMatrix.
+*/
+ProjectiveTextureEffect::ProjectiveTextureEffect() :
+    matrixDirty(true)
 {
     setupShaders();
 }
@@ -16,14 +28,25 @@ void ProjectiveTextureEffect::update(QGLPainter *painter, QGLPainter::Updates up
 {
     QGLShaderProgramEffect::update(painter, updates);
 
+    if(matrixDirty)
+    {
+        recalulateObjectLinearTexgenMatrix();
+        matrixDirty = false;
+    }
+
     program()->setUniformValue("objectLinearTexgenMatrix",
                                objectLinearTexgenMatrix);
-//     TODO:
-//        program()->setUniformValue("inverseCameraModelViewMatrix",
-//                                   inverseCameraModelViewMatrix);
+    program()->setUniformValue("projectorDirection",
+                               projectorDirection);
 }
 
-void ProjectiveTextureEffect::setCameraModelViewMatrix(const QMatrix4x4 newCameraModelViewMatrix)
+void ProjectiveTextureEffect::setProjectorDirection(const QVector4D &direction)
+{
+    this->projectorDirection = direction;
+    matrixDirty = true;
+}
+
+void ProjectiveTextureEffect::setCameraModelViewMatrix(const QMatrix4x4 &newCameraModelViewMatrix)
 {
     cameraModelViewMatrix = newCameraModelViewMatrix;
     bool invertible;
@@ -32,31 +55,53 @@ void ProjectiveTextureEffect::setCameraModelViewMatrix(const QMatrix4x4 newCamer
     Q_ASSERT(invertible);
     if(!invertible)
         qWarning() << "camera Model view matrix not invertible in ProjectiveDepthTestEffect::setCameraModelViewMatrix()";
+    matrixDirty = true;
 }
 
-void ProjectiveTextureEffect::setObjectLinearTexgenMatrix(const QMatrix4x4 newObjectLinearTexgenMatrix)
+void ProjectiveTextureEffect::setProjectorProjectionMatrix(const QMatrix4x4 &newMatrix)
 {
-            objectLinearTexgenMatrix = newObjectLinearTexgenMatrix;
+    projectorProjectionMatrix = newMatrix;
+    matrixDirty = true;
+}
+
+void ProjectiveTextureEffect::setProjectorViewMatrix(const QMatrix4x4 &newMatrix)
+{
+    projectorViewMatrix = newMatrix;
+    matrixDirty = true;
+}
+
+void ProjectiveTextureEffect::setModelMatrix(const QMatrix4x4 &newMatrix)
+{
+    modelMatrix = newMatrix;
+    matrixDirty = true;
+}
+
+void ProjectiveTextureEffect::recalulateObjectLinearTexgenMatrix()
+{
+    objectLinearTexgenMatrix = biasMatrix *
+                projectorProjectionMatrix *
+                projectorViewMatrix *
+                modelMatrix;
 }
 
 void ProjectiveTextureEffect::setupShaders()
 {
-        QString vertexShaderFileName = ":/shaders/objectlineartexgen.vert";
-        QFile vertexShaderFile(vertexShaderFileName);
-        if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            setVertexShader(vertexShaderFile.readAll());
-        } else {
-            qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
-        }
+    QString vertexShaderFileName = QLatin1String(":/shaders/objectlineartexgen.vert");
+    QFile vertexShaderFile(vertexShaderFileName);
+    if (vertexShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        setVertexShader(vertexShaderFile.readAll());
+    } else {
+        qWarning() << "Could not open file "<<vertexShaderFileName<<", failed to load vertex shader";
+    }
 
-                QString fragmentShaderFileName = ":/shaders/objectlineartexgen.frag";
-        QFile fragmentShaderFile(fragmentShaderFileName);
-        if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            setFragmentShader((fragmentShaderFile.readAll()));
-        } else {
-            qWarning() << "Could not open file "<<fragmentShaderFileName<<", failed to load fragment shader";
-        }
+    QString fragmentShaderFileName = QLatin1String(":/shaders/objectlineartexgen.frag");
+    QFile fragmentShaderFile(fragmentShaderFileName);
+    if (fragmentShaderFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        setFragmentShader(fragmentShaderFile.readAll());
+    } else {
+        qWarning() << "Could not open file "<<fragmentShaderFileName<<", failed to load fragment shader";
+    }
 
 }

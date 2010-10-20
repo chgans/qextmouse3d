@@ -17,8 +17,8 @@ QGLInfoWindow::QGLInfoWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     setStatusBar(0);
-    if (QApplication::arguments().contains("-maximize") ||
-        QApplication::arguments().contains("-fullscreen"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")) ||
+        QApplication::arguments().contains(QLatin1String("-fullscreen")))
     {
         ui->verticalLayout->setMargin(1);
         ui->verticalLayout->setContentsMargins(1, 1, 1, 1);
@@ -70,7 +70,7 @@ void QGLInfoWindow::on_actionQuit_triggered()
 
 void QGLInfoWindow::on_action_Save_As_triggered()
 {
-    QString defName = QDir::home().absoluteFilePath("qglinfo.txt");
+    QString defName = QDir::home().absoluteFilePath(QLatin1String("qglinfo.txt"));
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                 defName,

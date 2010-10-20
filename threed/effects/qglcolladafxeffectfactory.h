@@ -50,6 +50,7 @@
 
 #include "qglcolladafxeffect.h"
 
+class QGLColladaFxEffect;
 class QGLColladaImageParam;
 class QGLColladaSurfaceParam;
 class QGLColladaSampler2DParam;
@@ -97,16 +98,16 @@ protected:
 
     // Collada generation functions
 public:
-    static QString exportEffect(QGLShaderProgramEffect *effect, QString effectId, QString techniqueSid);
+    static QString exportEffect(QGLColladaFxEffect *effect, QString effectId, QString techniqueSid);
 
 protected:
-    static QStringList glslProfileFromEffect(QGLShaderProgramEffect* effect, QString techniqueSid);
-    static QStringList generateProgramElement(QGLShaderProgramEffect* effect, QString techniqueSid);
-    static QStringList generateShaderElement( QGLShaderProgramEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid );
-    static QStringList generateBindUniformElement( QGLShaderProgramEffect* effect );
-    static QStringList generateBindAttributeElement( QGLShaderProgramEffect* effect );
-    static QStringList generateBindUniformElements( QGLShaderProgramEffect* effect );
-    static QStringList generateCodeElements( QGLShaderProgramEffect* effect, QString baseSid );
+    static QStringList glslProfileFromEffect(QGLColladaFxEffect* effect, QString techniqueSid);
+    static QStringList generateProgramElement(QGLColladaFxEffect* effect, QString techniqueSid);
+    static QStringList generateShaderElement( QGLColladaFxEffect* effect, QString vertexShaderRefSid, QString fragmentShaderRefSid );
+    static QStringList generateBindUniformElement( QGLColladaFxEffect* effect );
+    static QStringList generateBindAttributeElement( QGLColladaFxEffect* effect );
+    static QStringList generateBindUniformElements( QGLColladaFxEffect* effect );
+    static QStringList generateCodeElements( QGLColladaFxEffect* effect, QString baseSid );
 
     static QImage resolveImageURI(ResultState *resultState, QString imageFileName);
     static bool resolveTexture2DImage(QGLTexture2D *result, ResultState *resultState, QString paramName);

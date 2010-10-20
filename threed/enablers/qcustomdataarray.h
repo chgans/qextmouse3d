@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLVertexBufferCustomAttribute;
+class QGLVertexBundleCustomAttribute;
 class QGeometryData;
 
 class Q_QT3D_EXPORT QCustomDataArray
@@ -143,7 +143,7 @@ private:
     QCustomDataArray::ElementType m_elementType;
     int m_elementComponents;
 
-    friend class QGLVertexBufferCustomAttribute;
+    friend class QGLVertexBundleCustomAttribute;
     friend class QGeometryData;
 };
 

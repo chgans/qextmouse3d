@@ -43,11 +43,7 @@
 #define QBOX3D_H
 
 #include "qt3dglobal.h"
-#include <QtGui/qvector3d.h>
-
-#include "qarray.h"
-#include "qresult.h"
-#include "qline3d.h"
+#include "qray3d.h"
 
 QT_BEGIN_HEADER
 
@@ -62,7 +58,6 @@ class Q_QT3D_EXPORT QBox3D
 public:
     QBox3D();
     QBox3D(const QVector3D& corner1, const QVector3D& corner2);
-    explicit QBox3D(const QArray<QVector3D>& points);
 
     bool isNull() const;
     bool isFinite() const;
@@ -78,13 +73,12 @@ public:
     QVector3D size() const;
     QVector3D center() const;
 
-    qreal volume() const;
-
     bool contains(const QVector3D& point) const;
     bool contains(const QBox3D& box) const;
 
-    bool intersects(const QLine3D& line) const;
-    QResult<QVector3D> intersection(const QLine3D& line) const;
+    bool intersects(const QRay3D& ray) const;
+    bool intersection(const QRay3D &ray, qreal *minimum_t, qreal *maximum_t) const;
+    qreal intersection(const QRay3D& ray) const;
 
     bool intersects(const QBox3D& box) const;
     void intersect(const QBox3D& box);
@@ -92,19 +86,9 @@ public:
 
     void unite(const QVector3D& point);
     void unite(const QBox3D& box);
-    void unite(const QArray<QVector3D>& points);
 
     QBox3D united(const QVector3D& point) const;
     QBox3D united(const QBox3D& box) const;
-    QBox3D united(const QArray<QVector3D>& points) const;
-
-    void translate(const QVector3D& vector);
-    QBox3D translated(const QVector3D& vector) const;
-
-    void scale(const QVector3D& vector);
-    void scale(qreal factor);
-    QBox3D scaled(const QVector3D& vector) const;
-    QBox3D scaled(qreal factor) const;
 
     void transform(const QMatrix4x4& matrix);
     QBox3D transformed(const QMatrix4x4& matrix) const;
@@ -115,17 +99,6 @@ public:
     friend bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2);
 
 private:
-    enum Partition
-    {
-        equalMin = 0x0,
-        between = 0x1,
-        equalMax = 0x2,
-        contained = 0x3,
-        belowMin = 0x4,
-        aboveMax = 0x8
-    };
-    void partition(const QVector3D &point, Partition *xpart, Partition *ypart, Partition *zpart) const;
-
     enum Type
     {
         Null,
@@ -135,8 +108,6 @@ private:
 
     QBox3D::Type boxtype;
     QVector3D mincorner, maxcorner;
-
-    void unite(const QVector3D *points, int count);
 };
 
 inline QBox3D::QBox3D() : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0) {}
@@ -149,12 +120,6 @@ inline QBox3D::QBox3D(const QVector3D& corner1, const QVector3D& corner2)
       maxcorner(qMax(corner1.x(), corner2.x()),
                 qMax(corner1.y(), corner2.y()),
                 qMax(corner1.z(), corner2.z())) {}
-
-inline QBox3D::QBox3D(const QArray<QVector3D>& points)
-    : boxtype(Null), mincorner(0, 0, 0), maxcorner(0, 0, 0)
-{
-    unite(points.constData(), points.size());
-}
 
 inline bool QBox3D::isNull() const { return (boxtype == Null); }
 inline bool QBox3D::isFinite() const { return (boxtype == Finite); }
@@ -190,12 +155,6 @@ inline void QBox3D::setToInfinite()
 
 inline QVector3D QBox3D::size() const { return maxcorner - mincorner; }
 inline QVector3D QBox3D::center() const { return (mincorner + maxcorner) * 0.5f; }
-inline qreal QBox3D::volume() const
-{
-    return (maxcorner.x() - mincorner.x()) *
-           (maxcorner.y() - mincorner.y()) *
-           (maxcorner.z() - mincorner.z());
-}
 
 inline bool QBox3D::contains(const QVector3D& point) const
 {
@@ -241,20 +200,13 @@ inline bool qFuzzyCompare(const QBox3D& box1, const QBox3D& box2)
            qFuzzyCompare(box1.maxcorner, box2.maxcorner);
 }
 
-inline void QBox3D::unite(const QArray<QVector3D>& points)
-{
-    unite(points.constData(), points.size());
-}
-
-inline QBox3D QBox3D::united(const QArray<QVector3D>& points) const
-{
-    QBox3D box(*this);
-    box.unite(points.constData(), points.size());
-    return box;
-}
-
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const QBox3D &box);
+#endif
+
+#ifndef QT_NO_DATASTREAM
+Q_QT3D_EXPORT QDataStream &operator<<(QDataStream &stream, const QBox3D &box);
+Q_QT3D_EXPORT QDataStream &operator>>(QDataStream &stream, QBox3D &box);
 #endif
 
 QT_END_NAMESPACE

@@ -90,9 +90,9 @@ Model::Model(QObject *parent)
 QString Model::getOptions() const
 {
     QSettings settings;
-    settings.beginGroup("ModelSettings");
+    settings.beginGroup(QLatin1String("ModelSettings"));
     QByteArray coded = QUrl::toPercentEncoding(m_fullPath);
-    QString modelEncoded(coded);
+    QString modelEncoded = QString::fromLatin1(coded.constData());
     settings.beginGroup(modelEncoded);
 
     QString options;
@@ -105,13 +105,13 @@ QString Model::getOptions() const
         if (keys.size() > 0)
         {
             key = keys.takeFirst();
-            if (!key.startsWith("UI_"))
+            if (!key.startsWith(QLatin1String("UI_")))
             {
                 bool value = settings.value(key, false).toBool();
                 if (value)
                 {
-                    QString op = group.isEmpty() ? key : QString("%1=%2").arg(group).arg(key);
-                    options = options.isEmpty() ? op : options + " " + op;
+                    QString op = group.isEmpty() ? key : QString::fromLatin1("%1=%2").arg(group).arg(key);
+                    options = options.isEmpty() ? op : options + QLatin1Char(' ') + op;
                 }
             }
         }
@@ -297,11 +297,11 @@ QVariant Model::data(const QModelIndex & index, int role) const
     else if (role == Qt::DecorationRole)
     {
         if (d->node == m_sceneRoot)
-            result = QIcon(":/images/file16x16.png");
+            result = QIcon(QLatin1String(":/images/file16x16.png"));
         else if (d->node->childNodeList().count() > 0)
-            result = QIcon(":/images/mesh16x16.png");
+            result = QIcon(QLatin1String(":/images/mesh16x16.png"));
         else
-            result = QIcon(":/images/red-dot.png");
+            result = QIcon(QLatin1String(":/images/red-dot.png"));
     }
     return result;
 }

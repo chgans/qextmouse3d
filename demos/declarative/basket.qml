@@ -1,6 +1,6 @@
 //! [1]
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 Viewport {
     width: 640; height: 480
@@ -11,7 +11,7 @@ Viewport {
 //! [1]
 
 //! [2]
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "meshes/basket.bez" }
         effect: Effect { texture: "textures/basket.jpg" }
 //! [2]

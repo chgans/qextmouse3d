@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         // Create two QGraphicsView's showing the left and right eyes.
         StereoGraphicsView view;
         view.setScene(&scene);
-        QPixmap cheese(":/images/cheese.jpg");
+        QPixmap cheese(QLatin1String(":/images/cheese.jpg"));
         view.leftEye()->setBackgroundBrush(cheese);
         view.rightEye()->setBackgroundBrush(cheese);
         QSize size = view.leftEye()->size();
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         TeapotItem *teapot = new TeapotItem();
         teapot->setRect(0, 0, 640, 480);
         teapot->setScene(&scene);
-        teapot->setBackgroundBrush(QPixmap(":/images/cheese.jpg"));
+        teapot->setBackgroundBrush(QPixmap(QLatin1String(":/images/cheese.jpg")));
         outerScene.addItem(teapot);
 
         QGLGraphicsNavigationItem *navigator = new QGLGraphicsNavigationItem();
@@ -126,11 +126,10 @@ int main(int argc, char **argv)
         QGraphicsView view(&scene);
         view.setViewport(new QGLWidget());
         view.setRenderHint(QPainter::Antialiasing);
-        view.setBackgroundBrush(QPixmap(":/images/cheese.jpg"));
+        view.setBackgroundBrush(QPixmap(QLatin1String(":/images/cheese.jpg")));
         view.setCacheMode(QGraphicsView::CacheBackground);
         view.setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
         view.setDragMode(QGraphicsView::ScrollHandDrag);
-        view.setWindowTitle(QT_TRANSLATE_NOOP(QGraphicsView, "Colliding Mice"));
         view.resize(400, 300);
         view.show();
 

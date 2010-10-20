@@ -223,6 +223,24 @@ void tst_QColor4ub::copy()
     QCOMPARE(c3.green(), 54);
     QCOMPARE(c3.blue(), 39);
     QCOMPARE(c3.alpha(), 41);
+
+    c1 = Qt::red;
+    QCOMPARE(c1.red(), 255);
+    QCOMPARE(c1.green(), 0);
+    QCOMPARE(c1.blue(), 0);
+    QCOMPARE(c1.alpha(), 255);
+
+    c2 = QColor(162, 54, 39, 41);
+    QCOMPARE(c2.red(), 162);
+    QCOMPARE(c2.green(), 54);
+    QCOMPARE(c2.blue(), 39);
+    QCOMPARE(c2.alpha(), 41);
+
+    c1 = c2;
+    QCOMPARE(c1.red(), 162);
+    QCOMPARE(c1.green(), 54);
+    QCOMPARE(c1.blue(), 39);
+    QCOMPARE(c1.alpha(), 41);
 }
 
 void tst_QColor4ub::compare_data()
