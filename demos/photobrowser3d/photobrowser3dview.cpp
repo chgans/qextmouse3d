@@ -272,7 +272,6 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
 
 void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 {
-    fprintf(stderr, "Got key code: %d\n", e->key());
     if (e->key() == Qt::Key_Space)
     {
         //emit manualControlEngaged();
@@ -402,15 +401,6 @@ void PhotoBrowser3DView::resizeGL(int w, int h)
     Q_UNUSED(h);
     m_buttons->clearPositions();
 }
-
-/*
-void PhotoBrowser3DView::paintEvent(QPaintEvent *e)
-{
-    // TODO: paint 2D controls on top
-    //m_painter->updateContent();
-    View::paintEvent(e);
-}
-*/
 
 void PhotoBrowser3DView::zoomImage()
 {

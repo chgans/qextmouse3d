@@ -61,6 +61,8 @@ QAtlas::QAtlas()
     m_data->fill(qRgb(255, 0, 0));
     m_tex->setImage(*m_data);
     m_material->setTexture(m_tex, 1);
+    m_material->setObjectName("Atlas material");
+    qDebug() << "atlas texture is:" << m_material;
 }
 
 QAtlas::~QAtlas()

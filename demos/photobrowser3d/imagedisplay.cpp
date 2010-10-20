@@ -130,6 +130,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     QGLTexture2D *tex = new QGLTexture2D(mat);
     tex->setImage(QImage(":/res/images/girder.png"));
     mat->setTexture(tex);
+    mat->setObjectName("girder material");
     m_wall->setMaterial(mat);
 
     // build the frames
@@ -159,6 +160,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     tex->setHorizontalWrap(QGL::Clamp);
     tex->setImage(m_frameImage);
     mat->setTexture(tex);
+    mat->setObjectName("loading image material - default");
     m_frameLoadingMaterial = materials->addMaterial(mat);
     m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
@@ -204,6 +206,7 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     if (manager)
     {
         connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(deployLoader(QUrl)));
+        connect(m_currentFrame, SIGNAL(thumbnailRequired(ThumbnailableImage)), manager, SIGNAL(thumbnailRequired(ThumbnailableImage)));
         connect(manager, SIGNAL(imageReady(ThumbnailableImage)), m_currentFrame, SLOT(setImage(ThumbnailableImage)));
     }
     m_imageSetToDefault = false;

@@ -71,6 +71,7 @@ void ThreadPool::deployLoader(const QUrl &url)
     if (m_freeWorkers.size() > 0)
         loader = m_freeWorkers.takeFirst();
 
+    qDebug() << "deployLoader" << url;
     if (loader)
     {
         loader->setUrl(url);
@@ -95,6 +96,16 @@ void ThreadPool::deployLoader(const QUrl &url)
             m_workList.append(url);
         }
     }
+}
+
+void ThreadPool::thumbnailImage(const ThumbnailableImage &image)
+{
+    qDebug() << "processing request to thumbnail:" << image.url();
+    // YUK - should write a seperate class, this is not in my job description...
+    Q_ASSERT(image.indices().count() > 0);
+    ThumbnailableImage thumb = image;
+    thumb.setThumbnailed(true);
+    emit imageThumbnailed(thumb);
 }
 
 void ThreadPool::retrieveLoader()
@@ -123,5 +134,7 @@ void ThreadPool::closeLoader()
     m_allWorkers.removeOne(loader);
     loader->deleteLater();
     if (m_allWorkers.isEmpty() && m_stop)
+    {
         emit stopped();
+    }
 }

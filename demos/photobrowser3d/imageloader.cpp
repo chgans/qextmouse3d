@@ -100,8 +100,8 @@ void ImageLoader::run()
     connect(this, SIGNAL(readRequired(QUrl)), &reader, SLOT(loadFile(QUrl)));
     connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
             this, SIGNAL(imageLoaded(ThumbnailableImage)));
-    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
 
+    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
     connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
 
     QTimer timer;

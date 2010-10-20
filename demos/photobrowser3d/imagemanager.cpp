@@ -124,8 +124,15 @@ void ImageManager::run()
     ThreadPool pool;
 
     connect(this, SIGNAL(deployLoader(QUrl)), &pool, SLOT(deployLoader(QUrl)));
-    connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
 
+    // ok, this is a bit out of its job description but I'm going to get the
+    // thread pool to moonlight as a thumbnailer as well
+    connect(this, SIGNAL(thumbnailRequired(ThumbnailableImage)),
+            &pool, SLOT(thumbnailImage(ThumbnailableImage)));
+    connect(&pool, SIGNAL(imageThumbnailed(ThumbnailableImage)),
+            this, SIGNAL(thumbnailReady(ThumbnailableImage)));
+
+    connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
     connect(&pool, SIGNAL(stopped()), this, SLOT(quit()));
 #endif
 

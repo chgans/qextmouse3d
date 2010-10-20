@@ -116,7 +116,7 @@ void ByteReader::loadFile(const QUrl &url)
                 // on a small screen.  For now work with fairly cruddy image quality.
                 if (im.size().width() > 1024 || im.size().height() > 768)
                     im = im.scaled(QSize(1024, 768), Qt::KeepAspectRatio,
-                                   QThread::idealThreadCount() > 2 ?
+                                   QThread::idealThreadCount() > 1 ?
                                        Qt::SmoothTransformation : Qt::FastTransformation);
             }
 
@@ -127,6 +127,7 @@ void ByteReader::loadFile(const QUrl &url)
             Q_ASSERT(!im.isNull());
             Q_ASSERT(!thumb.isNull());
 
+            qDebug() << "emit imageLoaded" << thumb.url();
             emit imageLoaded(thumb);
         }
 

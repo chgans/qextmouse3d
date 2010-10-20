@@ -65,6 +65,8 @@ signals:
     void imageLoaded(const ThumbnailableImage &image);
     void stopLoading();
     void readRequired(const QUrl &url);
+    void thumbnailRequired(const ThumbnailableImage &image);
+    void thumbnailDone(const ThumbnailableImage &image);
     void unused();
 public slots:
     void stop();

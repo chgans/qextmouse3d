@@ -34,7 +34,8 @@ void FileScanner::scan()
     QStringList queue;
     queue.append(m_url.path());
     QSet<QString> loopProtect;
-    while (queue.size() > 0 && !m_stop)
+    int count = 0;
+    while (queue.size() > 0 && !m_stop && count < 5)
     {
         QString path = queue.takeFirst();
         QFileInfo u(path);
@@ -71,6 +72,7 @@ void FileScanner::scan()
                     url2.setScheme("file");
                     url2.setPath(u.absoluteFilePath());
                     emit imageUrl(url2);
+                    ++count;
                 }
             }
         }

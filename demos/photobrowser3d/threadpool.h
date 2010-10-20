@@ -47,6 +47,8 @@
 #include <QList>
 #include <QUrl>
 
+#include "thumbnailableimage.h"
+
 class ImageLoader;
 
 class ThreadPool : public QObject
@@ -59,9 +61,11 @@ public:
 signals:
     void stopped();
     void stopAll();
+    void imageThumbnailed(const ThumbnailableImage &image);
 
 public slots:
     void deployLoader(const QUrl &url);
+    void thumbnailImage(const ThumbnailableImage &image);
     void stop();
 
 private slots:
