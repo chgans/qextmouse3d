@@ -41,6 +41,8 @@
 
 #include "qglext_p.h"
 
+#include <QtOpenGL/private/qglextensions_p.h>
+
 QT_BEGIN_NAMESPACE
 
 #if !defined(QT_OPENGL_ES)
