@@ -45,11 +45,8 @@
 #include "qglpainter.h"
 #include "qglabstracteffect.h"
 #include "qgltexture2d.h"
-
-#if !defined(QT_OPENGL_ES_1)
-#include <QtOpenGL/qglshaderprogram.h>
 #include "qglshaderprogrameffect.h"
-#endif
+#include <QtOpenGL/qglshaderprogram.h>
 #include "pageflipmath_p.h"
 
 class PageFlipGradientEffect;
@@ -92,14 +89,10 @@ private:
 
     PageFlipMath pageFlipMath;
 
-#if !defined(QT_OPENGL_ES_1)
     PageFlipGradientEffect *effect;
-#endif
 
-    void setAlphaValue(GLfloat value);
+    void setAlphaValue(QGLPainter *painter, GLfloat value);
 };
-
-#if !defined(QT_OPENGL_ES_1)
 
 class PageFlipGradientEffect : public QGLShaderProgramEffect
 {
@@ -109,8 +102,6 @@ public:
 
     void setAlphaValue(GLfloat value);
 };
-
-#endif
 
 PageFlipView::PageFlipView(QWidget *parent)
     : QGLWidget(parent)
@@ -129,16 +120,12 @@ PageFlipView::PageFlipView(QWidget *parent)
     connect(timer, SIGNAL(timeout()), this, SLOT(animate()));
     timer->start(40);
 
-#if !defined(QT_OPENGL_ES_1)
     effect = new PageFlipGradientEffect();
-#endif
 }
 
 PageFlipView::~PageFlipView()
 {
-#if !defined(QT_OPENGL_ES_1)
     delete effect;
-#endif
 }
 
 void PageFlipView::resizeGL(int width, int height)
@@ -194,7 +181,6 @@ void PageFlipView::paintGL()
     painter.projectionMatrix() = projm;
     painter.modelViewMatrix().setToIdentity();
 
-#if !defined(QT_OPENGL_ES_1)
     if (vertical) {
         pageRect2 = QRect(QPoint(midx - pageSize.width() / 2, topy), pageSize);
         pageRect1 = QRect(QPoint(pageRect2.x() - pageSize.width(), topy), pageSize);
@@ -202,10 +188,6 @@ void PageFlipView::paintGL()
         pageRect1 = QRect(QPoint(midx - pageSize.width(), topy), pageSize);
         pageRect2 = QRect(QPoint(midx, topy), pageSize);
     }
-#else
-    pageRect1 = QRect(QPoint(-pageSize.width(), 0), pageSize);
-    pageRect2 = QRect(QPoint(0, 0), pageSize);
-#endif
     pageFlipMath.setPageRect(pageRect2);
     pageFlipMath.setShowPageReverse(false);
     pageFlipMath.compute(posn);
@@ -217,27 +199,28 @@ void PageFlipView::paintGL()
     QGLAttributeValue gradientCoords
         (1, GL_FLOAT, pageFlipMath.stride(), pageFlipMath.vertexArray() + 4);
 
-#if defined(QT_OPENGL_ES_1)
-    painter.setStandardEffect(QGL::FlatReplaceTexture2D);
-#else
-    painter.setUserEffect(effect);
-#endif
+    if (painter.isFixedFunction())
+        painter.setStandardEffect(QGL::FlatReplaceTexture2D);
+    else
+        painter.setUserEffect(effect);
     painter.setColor(colors[colorIndex]);
     painter.glActiveTexture(GL_TEXTURE0);
     textures[colorIndex].bind();
-    painter.glActiveTexture(GL_TEXTURE1);
-    gradientTexture.bind();
+    if (!painter.isFixedFunction()) {
+        painter.glActiveTexture(GL_TEXTURE1);
+        gradientTexture.bind();
+    }
     painter.setVertexAttribute(QGL::Position, positions);
     painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
     painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
-    setAlphaValue(1.0f);
+    setAlphaValue(&painter, 1.0f);
     painter.update();
     pageFlipMath.drawPage(0);
 
     painter.setColor(colors[(colorIndex + 1) % 4]);
     painter.glActiveTexture(GL_TEXTURE0);
     textures[(colorIndex + 1) % 4].bind();
-    setAlphaValue(1.0f);
+    setAlphaValue(&painter, 1.0f);
     painter.update();
     pageFlipMath.drawPage(1);
 
@@ -245,15 +228,15 @@ void PageFlipView::paintGL()
     if (!pageFlipMath.showPageReverse())
         textures[(colorIndex + 2) % 4].bind();
     if (blend)
-        setAlphaValue(0.75f);
+        setAlphaValue(&painter, 0.75f);
     else
-        setAlphaValue(1.0f);
+        setAlphaValue(&painter, 1.0f);
     painter.update();
     pageFlipMath.drawPage(2);
 
     painter.setColor(colors[(colorIndex + 3) % 4]);
     textures[(colorIndex + 3) % 4].bind();
-    setAlphaValue(1.0f);
+    setAlphaValue(&painter, 1.0f);
     painter.update();
     pageFlipMath.drawPage(3);
 
@@ -327,16 +310,11 @@ void PageFlipView::animate()
     updateGL();
 }
 
-void PageFlipView::setAlphaValue(GLfloat value)
+void PageFlipView::setAlphaValue(QGLPainter *painter, GLfloat value)
 {
-#if !defined(QT_OPENGL_ES_1)
-    effect->setAlphaValue(value);
-#else
-    Q_UNUSED(value);
-#endif
+    if (!painter->isFixedFunction())
+        effect->setAlphaValue(value);
 }
-
-#if !defined(QT_OPENGL_ES_1)
 
 static char const gradientVertexShader[] =
     "attribute highp vec4 qgl_Vertex;\n"
@@ -377,10 +355,12 @@ PageFlipGradientEffect::~PageFlipGradientEffect()
 
 void PageFlipGradientEffect::setAlphaValue(GLfloat value)
 {
+#if !defined(QT_OPENGL_ES_1)
     program()->setUniformValue("alphaValue", value);
+#else
+    Q_UNUSED(value);
+#endif
 }
-
-#endif // !QT_OPENGL_ES_1
 
 int main(int argc, char *argv[])
 {
