@@ -42,7 +42,7 @@
 #ifndef TANKVIEW_H
 #define TANKVIEW_H
 
-#include <Qt3D/qglview.h>
+#include "qglview.h"
 
 class QGLSceneNode;
 class Tank;

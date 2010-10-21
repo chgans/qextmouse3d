@@ -52,10 +52,10 @@
 #include <QCoreApplication>
 #endif
 
-#include <Qt3D/qglbuilder.h>
-#include <Qt3D/qglcylinder.h>
-#include <Qt3D/qglmaterial.h>
-#include <Qt3D/qgltexture2d.h>
+#include "qglbuilder.h"
+#include "qglcylinder.h"
+#include "qglmaterial.h"
+#include "qgltexture2d.h"
 
 static inline int rval()
 {

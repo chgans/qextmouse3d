@@ -42,7 +42,7 @@
 #ifndef TANK_H
 #define TANK_H
 
-#include <Qt3D/qglscenenode.h>
+#include "qglscenenode.h"
 
 class Tank : public QGLSceneNode
 {

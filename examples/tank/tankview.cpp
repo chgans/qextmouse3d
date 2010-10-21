@@ -43,9 +43,9 @@
 #include "tank.h"
 #include "quadplane.h"
 
-#include <Qt3D/qglscenenode.h>
-#include <Qt3D/qray3d.h>
-#include <Qt3D/qplane3d.h>
+#include "qglscenenode.h"
+#include "qray3d.h"
+#include "qplane3d.h"
 
 #include <QMouseEvent>
 

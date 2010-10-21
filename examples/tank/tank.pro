@@ -6,11 +6,8 @@
 
 QT       += core gui opengl
 
-LIBS += -lQt3D
-
 TARGET = tank
 TEMPLATE = app
-
 
 SOURCES += main.cpp\
         tankview.cpp \
@@ -20,3 +17,7 @@ SOURCES += main.cpp\
 HEADERS  += tankview.h \
     tank.h \
     quadplane.h
+
+LIBS += -L../../lib -L../../bin
+DESTDIR = ../../bin
+include(../../threed/threed_dep.pri)

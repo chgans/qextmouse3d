@@ -42,7 +42,7 @@
 #ifndef QUADPLANE_H
 #define QUADPLANE_H
 
-#include <Qt3D/qglbuilder.h>
+#include "qglbuilder.h"
 
 #include <QSizeF>
 
