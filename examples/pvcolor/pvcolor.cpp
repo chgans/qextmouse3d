@@ -88,23 +88,6 @@ PVColorView::PVColorView(QWidget *parent)
     //! [0]
 }
 
-void PVColorView::wheelEvent(QWheelEvent *e)
-{
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal zoomMag = viewVec.length();
-    qreal inc = float(0.3 * e->delta()) / 50.0f;
-    if (!qFuzzyIsNull(inc))
-    {
-        zoomMag += inc;
-        if (zoomMag < 5.0f)
-            zoomMag = 5.0f;
-        QRay3D viewLine(camera()->center(), viewVec.normalized());
-        camera()->setEye(viewLine.point(zoomMag));
-        update();
-    }
-    e->accept();
-}
-
 void PVColorView::initializeGL(QGLPainter *painter)
 {
     QGLLightParameters *light0 = new QGLLightParameters(this);

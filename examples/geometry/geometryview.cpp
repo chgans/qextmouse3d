@@ -96,23 +96,6 @@ GeometryView::~GeometryView()
     delete timer;
 }
 
-void GeometryView::wheelEvent(QWheelEvent *e)
-{
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal zoomMag = viewVec.length();
-    qreal inc = float(0.3 * e->delta()) / 50.0f;
-    if (!qFuzzyIsNull(inc))
-    {
-        zoomMag += inc;
-        if (zoomMag < 5.0f)
-            zoomMag = 5.0f;
-        QRay3D viewLine(camera()->center(), viewVec.normalized());
-        camera()->setEye(viewLine.point(zoomMag));
-        update();
-    }
-    e->accept();
-}
-
 void GeometryView::initializeGL(QGLPainter *painter)
 {
     painter->setLightModel(mdl);

@@ -93,23 +93,6 @@ void TankView::initializeGL(QGLPainter *painter)
     glEnable(GL_BLEND);
 }
 
-void TankView::wheelEvent(QWheelEvent *e)
-{
-    e->accept();
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal zoomMag = viewVec.length();
-    qreal inc = float(e->delta()) / 50.0f;
-    if (!qFuzzyIsNull(inc))
-    {
-        zoomMag += inc;
-        if (zoomMag < 2.0f)
-            zoomMag = 2.0f;
-        QRay3D viewLine(camera()->center(), viewVec.normalized());
-        camera()->setEye(viewLine.point(zoomMag));
-        update();
-    }
-}
-
 void TankView::mouseDoubleClickEvent(QMouseEvent *e)
 {
     Tank *t = addTank();

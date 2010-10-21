@@ -64,7 +64,6 @@ signals:
 protected:
     void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
-    void wheelEvent(QWheelEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void closeEvent(QCloseEvent *e);
 private slots:

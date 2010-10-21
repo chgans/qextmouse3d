@@ -64,7 +64,6 @@ public:
 protected:
     void initializeGL(QGLPainter *painter);
     void paintGL(QGLPainter *painter);
-    void wheelEvent(QWheelEvent *e);
 
 private slots:
     void rotate();

@@ -126,23 +126,6 @@ void PhotoBrowser3DView::initialise()
     m_images->start(QThread::IdlePriority);
 }
 
-void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
-{
-    e->accept();
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal zoomMag = viewVec.length();
-    qreal inc = float(e->delta()) / 50.0f;
-    if (!qFuzzyIsNull(inc))
-    {
-        zoomMag += inc;
-        if (zoomMag < 2.0f)
-            zoomMag = 2.0f;
-        QRay3D viewLine(camera()->center(), viewVec.normalized());
-        camera()->setEye(viewLine.point(zoomMag));
-        update();
-    }
-}
-
 void PhotoBrowser3DView::keyTimeOut()
 {
     m_velocity = (m_velocity < 0.0f) ? (m_velocity + 1.0f) : (m_velocity - 1.0f);
