@@ -109,8 +109,13 @@ Item {
             }
         } catch (e) {
             testCaseResult = []
-            if (e.message == "QtTest::fail")
+            if (e.message == "QtTest::fail") {
                 success = false
+            } else if (e.message.indexOf("QtTest::") != 0) {
+                // Test threw an unrecognized exception - fail.
+                TestLogger.log_fail(currentTestCase, e.message)
+                success = false
+            }
         }
         return success
     }
