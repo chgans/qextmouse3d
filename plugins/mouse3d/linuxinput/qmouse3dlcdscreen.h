@@ -39,63 +39,69 @@
 **
 ****************************************************************************/
 
-#ifndef QMOUSE3DLINUXINPUTDEVICE_H
-#define QMOUSE3DLINUXINPUTDEVICE_H
+#ifndef QMOUSE3DLCDSCREEN_H
+#define QMOUSE3DLCDSCREEN_H
 
-#include "qmouse3ddevice_p.h"
-#include <QtCore/qsocketnotifier.h>
-#include <QtCore/qtimer.h>
-#include <linux/input.h>
+#include "qmouse3deventprovider.h"
+#include <QtCore/qobject.h>
+#include <QtGui/qimage.h>
+
+#ifdef QT_HAVE_LIBUSB
+#include <usb.h>
+#endif
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DLcdScreen;
-
-class QMouse3DLinuxInputDevice : public QMouse3DDevice
+class QMouse3DLcdScreen : public QObject
 {
     Q_OBJECT
 public:
-    QMouse3DLinuxInputDevice
-        (const QString &devName, const QString &realName, QObject *parent = 0);
-    ~QMouse3DLinuxInputDevice();
+    QMouse3DLcdScreen(QObject *parent = 0);
+    ~QMouse3DLcdScreen();
 
-    bool isAvailable() const;
-    QStringList deviceNames() const;
+    void setImage(const QImage &image) { m_image = image; }
+    void setTitle(const QString &title) { m_title = title; }
+    void setFilters(QMouse3DEventProvider::Filters filters) { m_filters = filters; }
 
-    void setWidget(QWidget *widget);
+    virtual void setActive(bool enable) = 0;
+    void update();
 
-private Q_SLOTS:
-    void readyRead();
+protected:
+    virtual QImage::Format screenFormat() const = 0;
+    virtual QSize screenSize() const = 0;
+    virtual void setScreen(const QImage &screen) = 0;
 
 private:
-    bool isOpen;
-    QString devName;
-    QString name;
-    int fd;
-    QSocketNotifier *notifier;
-    int values[6];
-    int tempValues[6];
-    int flatMiddle;
-    int mscKey;
-    bool sawTranslate;
-    bool sawRotate;
-    bool prevWasFlat;
-    QMouse3DLcdScreen *lcdScreen;
+    QImage m_defaultImage;
+    QImage m_image;
+    QString m_title;
+    QMouse3DEventProvider::Filters m_filters;
+};
 
-    enum
-    {
-        // Flag bits for the type of mouse - can be more than one.
-        MouseUnknown            = 0x0000,
-        Mouse3Dconnexion        = 0x0001,
-        MouseSpacePilotPRO      = 0x0002,
-        MouseSpaceNavigator     = 0x0004
-    };
-    int mouseType;
+class QMouse3DSpacePilotPROScreen : public QMouse3DLcdScreen
+{
+    Q_OBJECT
+public:
+    QMouse3DSpacePilotPROScreen(QObject *parent = 0);
+    ~QMouse3DSpacePilotPROScreen();
 
-    void initDevice(int fd);
-    void translateMscKey(int code, bool press);
+    void setActive(bool enable);
+
+protected:
+    QImage::Format screenFormat() const;
+    QSize screenSize() const;
+    void setScreen(const QImage &screen);
+
+private:
+#ifdef QT_HAVE_LIBUSB
+    usb_dev_handle *m_handle;
+    int m_interface;
+#endif
+
+    void clearScreen();
+    void writeImage(const QImage &image);
 };
 
 QT_END_NAMESPACE

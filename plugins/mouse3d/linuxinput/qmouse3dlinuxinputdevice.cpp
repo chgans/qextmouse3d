@@ -40,7 +40,10 @@
 ****************************************************************************/
 
 #include "qmouse3dlinuxinputdevice.h"
+#include "qmouse3dlcdscreen.h"
 #include "qglnamespace.h"
+#include <QtGui/qwidget.h>
+#include <QtGui/qicon.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -64,6 +67,7 @@ QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice
     , sawTranslate(false)
     , sawRotate(false)
     , prevWasFlat(false)
+    , lcdScreen(0)
     , mouseType(QMouse3DLinuxInputDevice::MouseUnknown)
 {
     memset(values, 0, sizeof(values));
@@ -106,6 +110,24 @@ void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
         if (fd >= 0) {
             isOpen = true;
             initDevice(fd);
+        }
+    }
+    if (lcdScreen) {
+        lcdScreen->setActive(widget != 0);
+        if (widget) {
+            QWidget *window = widget->window();
+            QString title = window->windowIconText();
+            if (title.isEmpty())
+                title = window->windowTitle();
+            lcdScreen->setTitle(title);
+            QIcon icon = window->windowIcon();
+            if (icon.isNull())
+                lcdScreen->setImage(QImage());
+            else
+                lcdScreen->setImage(icon.pixmap(128, 128).toImage());
+            lcdScreen->update();
+        } else {
+            lcdScreen->setTitle(QString());
         }
     }
 }
@@ -159,6 +181,10 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
         else if (name.contains(QLatin1String("SpacePilot PRO")))
             mouseType |= QMouse3DLinuxInputDevice::MouseSpacePilotPRO;
     }
+
+    // Create a LCD screen handler if we have a SpacePilot PRO.
+    if (!lcdScreen && (mouseType & MouseSpacePilotPRO) != 0)
+        lcdScreen = new QMouse3DSpacePilotPROScreen(this);
 }
 
 static inline int clampRange(int value)

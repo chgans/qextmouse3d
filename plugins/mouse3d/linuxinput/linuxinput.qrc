@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/Qt3D/Icons">
+    <file>qt3dlogo.png</file>
+</qresource>
+</RCC>
