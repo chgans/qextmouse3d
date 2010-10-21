@@ -44,6 +44,7 @@
 
 int main(int argc, char *argv[])
 {
+    QApplication::setGraphicsSystem(QLatin1String("opengl"));
     QApplication app(argc, argv);
     PainterWidget widget;
     if (QApplication::arguments().contains(QLatin1String("-maximize")))
