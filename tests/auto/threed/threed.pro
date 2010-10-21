@@ -29,6 +29,7 @@ SUBDIRS = \
     qopenglfunctions \
     qplane3d \
     qray3d \
+    qglcylinder \
     qsphere3d \
     qstereoimage \
     qtriangle3d \

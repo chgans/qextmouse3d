@@ -17,7 +17,9 @@ INSTALLS += target
 LIBS += -L../../../lib -L../../../bin
 QT += opengl network dbus
 
-DEFINES += QT_HAVE_LIBUSB
-LIBS += -lusb
+have_libusb {
+    DEFINES += QT_HAVE_LIBUSB
+    LIBS += -lusb
+}
 
 include(../../../threed/threed_dep.pri)
