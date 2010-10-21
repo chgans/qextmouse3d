@@ -32,7 +32,7 @@ SOURCES += \
     qvector3darray.cpp \
     qvector4darray.cpp
 PRIVATE_HEADERS += \
-    qglext_p.h \
+#    qglext_p.h \    # stop moc from running on this file
     qgltexture2d_p.h \
     qgltextureutils_p.h \
     qglvertexbundle_p.h \
