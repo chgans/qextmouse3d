@@ -1,18 +1,19 @@
+CACHE_FILE=$$OUT_PWD/.qmake.cache
 
-# writeVar(filename, name, value)
-defineTest(writeVar) {
-    system(echo "$$2 = $$3" >>\"$$1\")
+# writeCacheVar(name, value)
+defineTest(writeCacheVar) {
+    system(echo "$$1 = $$2" >>\"$$CACHE_FILE\")
 }
 
-# writeAppendVar(filename, name, value)
-defineTest(writeAppendVar) {
-    system(echo "$$2 += $$3" >>\"$$1\")
+# writeCacheAppendVar(name, value)
+defineTest(writeCacheAppendVar) {
+    system(echo "$$1 += $$2" >>\"$$CACHE_FILE\")
 }
 
 # configTest(name, qmake_vars)
 defineTest(configTest) {
     NAME=$$1
-    IN_DIR="$$PWD/config.tests/$$NAME"
+    IN_DIR="$$PWD/$$NAME"
     OUT_DIR="$$OUT_PWD/config.tests/$$NAME"
     !exists($$OUT_DIR): system(mkdir -p "$$OUT_DIR")
     verbose {
@@ -53,8 +54,4 @@ CONFIG_TEST_INCLUDES =
 CONFIG_TEST_DEFINES =
 CONFIG_TEST_CONFIGS =
 
-CACHE_FILE=$$OUT_PWD/.qmake.cache
-configTest(libusb) {
-    writeAppendVar($$CACHE_FILE, CONFIG, have_libusb)
-}
-writeVar($$CACHE_FILE, LIBUSB_DETECT_DONE, yes)
+CONFIG_TEST_LOADED = yes
