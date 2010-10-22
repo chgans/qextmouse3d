@@ -56,7 +56,7 @@
 #include <QtOpenGL/qgl.h>
 #include <QtCore/qdatetime.h>
 #include "qglnamespace.h"
-#include <QtOpenGL/private/qglextensions_p.h>
+#include "qopenglfunctions.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -99,7 +99,7 @@ int qt_gl_next_power_of_two(int v);
 // Modify a wrapping mode to account for platform differences.
 QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value);
 
-typedef void (APIENTRY *q_glCompressedTexImage2DARB)
+typedef void (QGLF_APIENTRYP q_glCompressedTexImage2DARB)
     (GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
 
 class QGLTextureExtensions
