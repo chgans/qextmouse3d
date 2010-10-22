@@ -40,14 +40,13 @@
 ****************************************************************************/
 
 #include "qglext_p.h"
-
-#include <QtOpenGL/private/qglextensions_p.h>
+#include "qopenglfunctions.h"
 
 QT_BEGIN_NAMESPACE
 
 #if !defined(QT_OPENGL_ES)
 
-typedef void (APIENTRY *q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
+typedef void (QGLF_APIENTRYP q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
 
 class QGLMultiTextureExtensions
 {
