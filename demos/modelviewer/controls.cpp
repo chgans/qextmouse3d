@@ -121,11 +121,68 @@ Controls::Controls(QWidget *parent)
             this, SLOT(optionMenuToggled(bool)));
     connect(m_ui->generateQmlPushButton, SIGNAL(clicked()),
             m_ui->actionSave_QML, SIGNAL(triggered()));
+
+    //View signals/slots
+    connect(m_ui->CustomView, SIGNAL(clicked()),
+            this, SLOT(on_custom_view_triggered()));
+    connect(m_ui->FrontView, SIGNAL(clicked()),
+            this, SLOT(on_front_view_triggered()));
+    connect(m_ui->BackView, SIGNAL(clicked()),
+            this, SLOT(on_back_view_triggered()));
+    connect(m_ui->LeftView, SIGNAL(clicked()),
+            this, SLOT(on_left_view_triggered()));
+    connect(m_ui->RightView, SIGNAL(clicked()),
+            this, SLOT(on_right_view_triggered()));
+    connect(m_ui->TopView, SIGNAL(clicked()),
+            this, SLOT(on_top_view_triggered()));
+    connect(m_ui->BottomView, SIGNAL(clicked()),
+            this, SLOT(on_bottom_view_triggered()));
+    connect(m_ui->FrontQuarterView, SIGNAL(clicked()),
+            this, SLOT(on_frontquarter_view_triggered()));
+    connect(m_ui->RearQuarterView, SIGNAL(clicked()),
+            this, SLOT(on_rearquarter_view_triggered()));
 }
 
 Controls::~Controls()
 {
     delete m_ui;
+}
+
+
+void Controls::on_custom_view_triggered() {
+    m_view->setView(Viewer::SelectView);
+}
+
+void Controls::on_front_view_triggered() {
+    m_view->setView(Viewer::FrontView);
+}
+
+void Controls::on_back_view_triggered() {
+    m_view->setView(Viewer::BackView);
+}
+
+void Controls::on_top_view_triggered() {
+    m_view->setView(Viewer::TopView);
+}
+
+void Controls::on_bottom_view_triggered() {
+    m_view->setView(Viewer::BottomView);
+}
+
+void Controls::on_left_view_triggered() {
+    m_view->setView(Viewer::LeftView);
+}
+
+void Controls::on_right_view_triggered() {
+    m_view->setView(Viewer::RightView);
+}
+
+void Controls::on_frontquarter_view_triggered() {
+    m_view->setView(Viewer::FrontRightView);
+}
+
+void Controls::on_rearquarter_view_triggered() {
+    m_view->setView(Viewer::BackLeftView);
 }
 
 void Controls::changeEvent(QEvent *e)
