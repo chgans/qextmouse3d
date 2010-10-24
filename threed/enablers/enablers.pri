@@ -10,7 +10,6 @@ HEADERS += \
     qarray.h \
     qcolor4ub.h \
     qcustomdataarray.h \
-    qmatrix4x4stack.h \
     qvector2darray.h \
     qvector3darray.h \
     qvector4darray.h \
@@ -26,7 +25,6 @@ SOURCES += \
     qglvertexbundle.cpp \
     qarray.cpp \
     qcolor4ub.cpp \
-    qmatrix4x4stack.cpp \
     qcustomdataarray.cpp \
     qvector2darray.cpp \
     qvector3darray.cpp \
@@ -35,5 +33,4 @@ PRIVATE_HEADERS += \
 #    qglext_p.h \    # stop moc from running on this file
     qgltexture2d_p.h \
     qgltextureutils_p.h \
-    qglvertexbundle_p.h \
-    qmatrix4x4stack_p.h
+    qglvertexbundle_p.h
