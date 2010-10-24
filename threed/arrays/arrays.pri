@@ -15,7 +15,6 @@ HEADERS += \
 SOURCES += \
     qglattributedescription.cpp \
     qglattributevalue.cpp \
-    qglext.cpp \
     qglindexbuffer.cpp \
     qglvertexbundle.cpp \
     qarray.cpp \
@@ -25,5 +24,4 @@ SOURCES += \
     qvector3darray.cpp \
     qvector4darray.cpp
 PRIVATE_HEADERS += \
-#    qglext_p.h \    # stop moc from running on this file
     qglvertexbundle_p.h

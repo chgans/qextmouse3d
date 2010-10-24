@@ -12,6 +12,7 @@ HEADERS += \
 
 SOURCES += \
     qglabstracteffect.cpp \
+    qglext.cpp \
     qgllightmodel.cpp \
     qgllightparameters.cpp \
     qglmaterial.cpp \
@@ -25,3 +26,7 @@ PRIVATE_HEADERS += \
     qglmaterial_p.h \
     qglabstracteffect_p.h \
     qmatrix4x4stack_p.h
+
+# Don't add this file to PRIVATE_HEADERS because we don't
+# want moc to run over it:
+#    qglext_p.h

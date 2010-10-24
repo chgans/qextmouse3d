@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLAttributeValue class encapsulates information about an OpenGL attribute value.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::arrays
 
     OpenGL has many functions that take a pointer to vertex attribute
     values: \c{glVertexPointer()}, \c{glNormalPointer()},

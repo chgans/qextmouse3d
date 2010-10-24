@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLVertexBundle class bundles vertex attribute arrays for efficient uploading into a GL server.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::arrays
 
     QGLVertexBundle provides an implementation of a static vertex
     buffer, where the vertex attributes are supplied once at construction

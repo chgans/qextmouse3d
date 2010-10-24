@@ -1,6 +1,6 @@
 include(global/global.pri)
 include(painting/painting.pri)
-include(enablers/enablers.pri)
+include(arrays/arrays.pri)
 include(effects/effects.pri)
 include(geometry/geometry.pri)
 include(viewing/viewing.pri)

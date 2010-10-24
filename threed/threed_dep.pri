@@ -2,7 +2,7 @@ QT += opengl
 
 INCLUDEPATH += $$PWD/global
 INCLUDEPATH += $$PWD/painting
-INCLUDEPATH += $$PWD/enablers
+INCLUDEPATH += $$PWD/arrays
 INCLUDEPATH += $$PWD/effects
 INCLUDEPATH += $$PWD/geometry
 INCLUDEPATH += $$PWD/viewing
