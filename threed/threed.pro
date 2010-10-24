@@ -50,6 +50,7 @@ DEFINES += QT_BUILD_QT3D_LIB
 
     qt3dMwHeaders = painting/* \
                        enablers/* \
+                       global/* \
                        effects/* \
                        geometry/* \
                        viewing/* \

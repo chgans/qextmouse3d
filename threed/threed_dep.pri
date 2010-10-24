@@ -1,5 +1,6 @@
 QT += opengl
 
+INCLUDEPATH += $$PWD/global
 INCLUDEPATH += $$PWD/painting
 INCLUDEPATH += $$PWD/enablers
 INCLUDEPATH += $$PWD/effects

@@ -1,3 +1,4 @@
+include(global/global.pri)
 include(painting/painting.pri)
 include(enablers/enablers.pri)
 include(effects/effects.pri)
