@@ -50,6 +50,8 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
+class QSize;
+
 namespace QGL
 {
     enum VertexAttribute {
@@ -149,6 +151,9 @@ namespace QGL
         Key_IncreaseSensitivity = 0x0120001e,
         Key_DecreaseSensitivity = 0x0120001f
     };
+
+    int nextPowerOfTwo(int value);
+    QSize nextPowerOfTwo(const QSize& value);
 };
 
 QT_END_NAMESPACE

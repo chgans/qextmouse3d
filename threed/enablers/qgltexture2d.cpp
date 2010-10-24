@@ -204,8 +204,7 @@ void QGLTexture2D::setSize(const QSize& value)
         return;
     if (!(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)
         && !(QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_ES_Version_2_0))
-        d->size = QSize(qt_gl_next_power_of_two(value.width()),
-                        qt_gl_next_power_of_two(value.height()));
+        d->size = QGL::nextPowerOfTwo(value);
     else
         d->size = value;
     d->requestedSize = value;
@@ -630,8 +629,7 @@ void QGLTexture2DPrivate::bindImages(QGLTexture2DTextureInfo *info)
             verticalWrap != QGL::ClampToEdge) {
         // ES 2.0 does not support NPOT textures when mipmaps are in use,
         // or if the wrap mode isn't ClampToEdge.
-        scaledSize = QSize(qt_gl_next_power_of_two(scaledSize.width()),
-                           qt_gl_next_power_of_two(scaledSize.height()));
+        scaledSize = QGL::nextPowerOfTwo(scaledSize);
     }
 #endif
     if (!image.isNull())
