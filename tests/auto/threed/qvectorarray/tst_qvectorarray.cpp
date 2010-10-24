@@ -96,6 +96,16 @@ void tst_QVectorArray::create2DArray()
 
     for (int index = 0; index < array.size(); ++index)
         QVERIFY(array[index] == QVector2D(index * 2 + 1, index * 2 + 2));
+
+    QVector2DArray array2(34);
+    QCOMPARE(array2.size(), 34);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], QVector2D(0.0f, 0.0f));
+
+    QVector2DArray array3(15, QVector2D(1.0f, 2.0f));
+    QCOMPARE(array3.size(), 15);
+    for (int index = 0; index < array3.size(); ++index)
+        QCOMPARE(array3[index], QVector2D(1.0f, 2.0f));
 }
 
 void tst_QVectorArray::create3DArray()
@@ -126,6 +136,16 @@ void tst_QVectorArray::create3DArray()
                                           index * 2 + 2,
                                           index * 2 + 3));
     }
+
+    QVector3DArray array2(34);
+    QCOMPARE(array2.size(), 34);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], QVector3D(0.0f, 0.0f, 0.0f));
+
+    QVector3DArray array3(15, QVector3D(1.0f, 2.0f, 3.0f));
+    QCOMPARE(array3.size(), 15);
+    for (int index = 0; index < array3.size(); ++index)
+        QCOMPARE(array3[index], QVector3D(1.0f, 2.0f, 3.0f));
 }
 
 void tst_QVectorArray::create4DArray()
@@ -157,6 +177,16 @@ void tst_QVectorArray::create4DArray()
                                           index * 2 + 3,
                                           index * 2 + 4));
     }
+
+    QVector4DArray array2(34);
+    QCOMPARE(array2.size(), 34);
+    for (int index = 0; index < array2.size(); ++index)
+        QCOMPARE(array2[index], QVector4D(0.0f, 0.0f, 0.0f, 0.0f));
+
+    QVector4DArray array3(15, QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
+    QCOMPARE(array3.size(), 15);
+    for (int index = 0; index < array3.size(); ++index)
+        QCOMPARE(array3[index], QVector4D(1.0f, 2.0f, 3.0f, 4.0f));
 }
 
 void tst_QVectorArray::scale_data()
