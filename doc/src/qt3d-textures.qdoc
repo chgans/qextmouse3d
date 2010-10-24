@@ -40,9 +40,9 @@
 ****************************************************************************/
 
 /*!
-    \group qt3d::arrays
-    \title Qt/3D Arrays and Vertex Buffers
-    \keyword Vertex Buffer
+    \group qt3d::textures
+    \title Qt/3D Texture Handling
+    \keyword Qt/3D Texture Handling
 
     \generatelist{related}
 */
