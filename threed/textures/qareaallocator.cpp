@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
     \brief The QAreaAllocator class provides facilities for allocating sub-regions from a rectangular image.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     Performance on a system can sometimes be improved by storing
@@ -75,7 +75,7 @@ QT_BEGIN_NAMESPACE
     \brief The QSimpleAreaAllocator class provides a simple allocation policy for simple-sized sub-allocations.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QSimpleAreaAllocator uses a trivial allocation strategy whereby
@@ -96,7 +96,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGeneralAreaAllocator class provides a general allocation policy for sub-regions in an image.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QGeneralAreaAllocator can handle arbitrary-sized allocations up to
@@ -123,7 +123,7 @@ QT_BEGIN_NAMESPACE
     \brief The QUniformAreaAllocator class provides an allocation policy for uniform-sized areas.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QUniformAreaAllocator allocates any size up to uniformSize()

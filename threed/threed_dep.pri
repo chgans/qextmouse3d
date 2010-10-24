@@ -8,7 +8,7 @@ INCLUDEPATH += $$PWD/viewing
 INCLUDEPATH += $$PWD/math3d
 INCLUDEPATH += $$PWD/scene
 INCLUDEPATH += $$PWD/graphicsview
-INCLUDEPATH += $$PWD/other
+INCLUDEPATH += $$PWD/textures
 INCLUDEPATH += $$PWD/surfaces
 INCLUDEPATH += $$PWD/api
 

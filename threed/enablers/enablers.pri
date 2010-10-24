@@ -4,8 +4,6 @@ HEADERS += \
     qglattributedescription.h \
     qglattributevalue.h \
     qglindexbuffer.h \
-    qgltexture2d.h \
-    qgltexturecube.h \
     qglvertexbundle.h \
     qarray.h \
     qcolor4ub.h \
@@ -19,9 +17,6 @@ SOURCES += \
     qglattributevalue.cpp \
     qglext.cpp \
     qglindexbuffer.cpp \
-    qgltexture2d.cpp \
-    qgltexturecube.cpp \
-    qgltextureutils.cpp \
     qglvertexbundle.cpp \
     qarray.cpp \
     qcolor4ub.cpp \
@@ -31,6 +26,4 @@ SOURCES += \
     qvector4darray.cpp
 PRIVATE_HEADERS += \
 #    qglext_p.h \    # stop moc from running on this file
-    qgltexture2d_p.h \
-    qgltextureutils_p.h \
     qglvertexbundle_p.h

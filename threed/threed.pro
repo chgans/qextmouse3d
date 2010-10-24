@@ -57,7 +57,7 @@ DEFINES += QT_BUILD_QT3D_LIB
                        scene/* \
                        graphicsview/* \
                        animation/* \
-                       other/* \
+                       textures/* \
                        surfaces/*
 
     for(api, qt3dMwHeaders) {

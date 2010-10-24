@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLTexture2D class represents a 2D texture object for GL painting operations.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
 
     QGLTexture2D contains a QImage and settings for texture filters,
     wrap modes, and mipmap generation.  When bind() is called, this

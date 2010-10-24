@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLTextureCube class represents a cube map texture object for GL painting operations.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
 
     QGLTextureCube contains six QImage objects for each of the cube
     map faces and settings for texture filters, wrap modes, and mipmap
