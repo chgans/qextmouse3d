@@ -615,12 +615,12 @@ void QGLBezierPatches::setSubdivisionDepth(int value)
     Returns true if the subdivision algorithm will generate a more
     compact set of triangles; false otherwise.
 
-    The default value is true, which indicates that the patches
-    will be decomposed into two triangles at the lowest level
-    of subdivision.  A value of false indicates that the patches
+    The default value is false, which indicates that the patches
     will be decomposed into four triangles at the lowest level
     of subdivision, which may give better visual results at
-    the cost of extra memory.
+    the cost of extra memory.  If the value is true, then the patches
+    will be decomposed into two triangles at the lowest level
+    of subdivision.
 
     \sa setCompactSubdivision()
 */
