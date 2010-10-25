@@ -77,7 +77,7 @@ public:
     int layers() const {return m_layers;}
     void setLayers(int layers) {m_layers = layers;}
 
-    //Attach end-caps?
+    //End-caps attached?
     bool topEnabled() const {return m_top;}
     void setTopEnabled(bool top) {m_top = top;}
 
