@@ -123,7 +123,22 @@
 
     \section3 Windows
 
-    Windows support is still in-progress.
+    Under windows the \c {win32input} plug-in registers the application (or,
+	more accurately, the specified widget) as the recipient of Raw Input 
+	events for the underlying Windows system.  This registration is for all
+	3D mouse Human Input Devices (HID) based on the standard usage enumeration
+	in the Raw Input data structures.  As part of this process the plugin sets 
+	an event filter for the main application class.  If users wish to use their
+	own event filters for capturing Operating System messages they must keep 
+	this in mind.
+	
+	The \l{#Supported_devices}{supported devices} currently decode the custom button inputs on the 3D 
+	mouse and convert them into Qt key-press events based on a specific set of
+	bit-masks for those Raw Input events.  If these do not correspond to the 
+	type of mouse being used, it may be necessary to modify the \c{win32input}
+	plug-in to recognise your alternative input events.
+	
+	Currently there is no support for hot-plugging of 3D mouse devices.
 
     \section3 MacOSX
 
@@ -139,9 +154,9 @@
     \table
     \header \o Device \o Linux \o Windows \o MacOSX
     \row \o \l{http://www.3dconnexion.com/products/spacepilot-pro.html}{3Dconnexion SpacePilot PRO}
-         \o Yes \o TBD \o TBD
+         \o Yes \o Yes \o TBD
     \row \o \l{http://www.3dconnexion.com/products/spacenavigator.html}{3Dconnexion SpaceNavigator}
-         \o Yes \o TBD \o TBD
+         \o Yes \o Yes \o TBD
     \endtable
 
     \l{index.html}{Return to the main Qt/3D page}.
