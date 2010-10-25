@@ -1795,13 +1795,8 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     {
         if (node->userEffect())
         {
-            if (node->userEffect()->name().isEmpty())
-                fprintf(stderr, "%s user effect (unnamed) %p\n", qPrintable(ind),
-                        node->userEffect());
-            else
-                fprintf(stderr, "%s user effect: %s (%p)\n", qPrintable(ind),
-                        qPrintable(node->userEffect()->name()),
-                        node->userEffect());
+            fprintf(stderr, "%s user effect %p\n", qPrintable(ind),
+                    node->userEffect());
         }
         else
         {
@@ -1867,10 +1862,7 @@ QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
     {
         if (node.userEffect())
         {
-            if (node.userEffect()->name().isEmpty())
-                dbg << "\n   user effect (unnamed)";
-            else
-                dbg << "\n   user effect:" << node.userEffect()->name();
+            dbg << "\n   user effect";
         }
         else
         {
