@@ -49,7 +49,7 @@ QT_BEGIN_NAMESPACE
     \brief The QMatrix4x4Stack class manages stacks of transformation matrices in GL applications.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::painting
 
     Transformation matrices are one of the basic building blocks of
     3D applications, allowing object models to be positioned, scaled,

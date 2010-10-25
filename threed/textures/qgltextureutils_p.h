@@ -92,10 +92,6 @@ QT_BEGIN_NAMESPACE
         glTexParameterf((target), (name), GLfloat(int(value)))
 #endif
 
-// returns the highest number closest to v, which is a power of 2
-// NB! assumes 32 bit ints
-int qt_gl_next_power_of_two(int v);
-
 // Modify a wrapping mode to account for platform differences.
 QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value);
 

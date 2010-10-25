@@ -39,66 +39,84 @@
 **
 ****************************************************************************/
 
-#ifndef QSTEREOPIXMAP_H
-#define QSTEREOPIXMAP_H
+#ifndef QSTEREOIMAGE_H
+#define QSTEREOIMAGE_H
 
-#include <QtGui/qpixmap.h>
-#include "qstereoimage.h"
+#include <QtGui/qimage.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
-class QStereoPixmapPrivate;
+class QStereoImagePrivate;
 class QPainter;
 
-class Q_QT3D_EXPORT QStereoPixmap
+class QStereoImage
 {
 public:
-    QStereoPixmap() : d_ptr(0) {}
-    QStereoPixmap(const QStereoPixmap &other);
-    QStereoPixmap(int width, int height);
-    explicit QStereoPixmap(const QSize &size);
-    explicit QStereoPixmap
-        (const QString &fileName, const char *format = 0,
-         QStereoImage::Layout layout = QStereoImage::LeftRight,
-         Qt::ImageConversionFlags flags = Qt::AutoColor);
-    ~QStereoPixmap();
+    enum Layout
+    {
+        Separate,
+        LeftRight,
+        RightLeft,
+        TopBottom,
+        BottomTop
+    };
 
-    QStereoPixmap &operator=(const QStereoPixmap &other);
+    QStereoImage() : d_ptr(0) {}
+    QStereoImage(const QStereoImage &other);
+    QStereoImage(const QSize &size, QImage::Format format,
+                 QStereoImage::Layout layout = LeftRight);
+    QStereoImage(int width, int height, QImage::Format format,
+                 QStereoImage::Layout layout = LeftRight);
+    explicit QStereoImage(const QString &fileName, const char *format = 0,
+                          QStereoImage::Layout layout = LeftRight);
+    ~QStereoImage();
+
+    QStereoImage &operator=(const QStereoImage &other);
 
     bool isNull() const { return d_ptr == 0; }
     QSize size() const;
     int width() const;
     int height() const;
-    QStereoImage::Layout layout() const;
 
-    QPixmap leftPixmap() const;
-    QPixmap rightPixmap() const;
-    QPixmap wholePixmap() const;
+    QStereoImage::Layout layout() const;
+    void setLayout(QStereoImage::Layout layout);
+
+    QImage leftImage() const;
+    void setLeftImage(const QImage &image);
+
+    QImage rightImage() const;
+    void setRightImage(const QImage &image);
+
+    QImage wholeImage() const;
+    void setWholeImage
+        (const QImage &image, QStereoImage::Layout layout = LeftRight);
 
     bool beginPaintingLeft(QPainter *painter);
     bool beginPaintingRight(QPainter *painter);
 
-    void drawLeft(QPainter *painter, const QRectF &targetRect,
-                  const QRectF &sourceRect = QRectF());
-    void drawRight(QPainter *painter, const QRectF &targetRect,
-                   const QRectF &sourceRect = QRectF());
+    bool load(QIODevice *device, const char *format,
+              QStereoImage::Layout layout = LeftRight);
+    bool load(const QString &fileName, const char *format = 0,
+              QStereoImage::Layout layout = LeftRight);
+    bool save(const QString &fileName, const char *format = 0, int quality = -1) const;
+    bool save(QIODevice *device, const char *format = 0, int quality = -1) const;
 
-    static QStereoPixmap fromStereoImage
-        (const QStereoImage &image,
-         Qt::ImageConversionFlags flags = Qt::AutoColor);
-    QStereoImage toStereoImage() const;
+    void drawLeft(QPainter *painter, const QRectF &targetRect,
+                  const QRectF &sourceRect = QRectF(),
+                  Qt::ImageConversionFlags flags = Qt::AutoColor);
+    void drawRight(QPainter *painter, const QRectF &targetRect,
+                   const QRectF &sourceRect = QRectF(),
+                   Qt::ImageConversionFlags flags = Qt::AutoColor);
+
+    QImage toAnaglyph();
 
 private:
-    QStereoPixmapPrivate *d_ptr;
+    mutable QStereoImagePrivate *d_ptr;
 
-    QStereoPixmap(QStereoPixmapPrivate *d) : d_ptr(d) {}
-
-    QStereoPixmapPrivate *d_func();
-    const QStereoPixmapPrivate *d_func() const { return d_ptr; }
+    QStereoImagePrivate *d_func();
+    const QStereoImagePrivate *d_func() const { return d_ptr; }
 };
 
 QT_END_NAMESPACE

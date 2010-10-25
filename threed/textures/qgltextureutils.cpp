@@ -45,18 +45,6 @@
 
 QT_BEGIN_NAMESPACE
 
-int qt_gl_next_power_of_two(int v)
-{
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    ++v;
-    return v;
-}
-
 QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value)
 {
     switch (value) {
@@ -256,10 +244,8 @@ void QGLBoundTexture::uploadFace
 
     // Adjust the image size for scaling and power of two.
     QSize size = (!scaleSize.isEmpty() ? scaleSize : image.size());
-    if (!extensions->npotTextures) {
-        size = QSize(qt_gl_next_power_of_two(size.width()),
-                     qt_gl_next_power_of_two(size.height()));
-    }
+    if (!extensions->npotTextures)
+        size = QGL::nextPowerOfTwo(size);
     QImage img(image);
     if (size != image.size()) {
 #ifdef QGL_BIND_TEXTURE_DEBUG

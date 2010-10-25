@@ -1,8 +1,13 @@
 TEMPLATE = app
 TARGET = stereophoto
-HEADERS = imageviewer.h imageview.h
+HEADERS = imageviewer.h \
+          imageview.h \
+          qstereoimage.h \
+          qstereopixmap.h
 SOURCES = imageviewer.cpp \
           imageview.cpp \
+          qstereoimage.cpp \
+          qstereopixmap.cpp \
           main.cpp
 CONFIG += qt debug warn_on
 QT += opengl

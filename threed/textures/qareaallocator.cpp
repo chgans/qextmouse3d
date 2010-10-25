@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qareaallocator_p.h"
+#include "qglnamespace.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -48,7 +49,7 @@ QT_BEGIN_NAMESPACE
     \brief The QAreaAllocator class provides facilities for allocating sub-regions from a rectangular image.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     Performance on a system can sometimes be improved by storing
@@ -74,7 +75,7 @@ QT_BEGIN_NAMESPACE
     \brief The QSimpleAreaAllocator class provides a simple allocation policy for simple-sized sub-allocations.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QSimpleAreaAllocator uses a trivial allocation strategy whereby
@@ -95,7 +96,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGeneralAreaAllocator class provides a general allocation policy for sub-regions in an image.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QGeneralAreaAllocator can handle arbitrary-sized allocations up to
@@ -122,7 +123,7 @@ QT_BEGIN_NAMESPACE
     \brief The QUniformAreaAllocator class provides an allocation policy for uniform-sized areas.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::enablers
+    \ingroup qt3d::textures
     \internal
 
     QUniformAreaAllocator allocates any size up to uniformSize()
@@ -420,23 +421,6 @@ QRect QSimpleAreaAllocator::allocate(const QSize &size)
     return QRect(column, row, size.width(), size.height());
 }
 
-static inline int nextPowerOfTwo(int v)
-{
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    ++v;
-    return v;
-}
-
-static inline QSize nextPowerOfTwo(const QSize &v)
-{
-    return QSize(nextPowerOfTwo(v.width()), nextPowerOfTwo(v.height()));
-}
-
 /*!
     \internal
 
@@ -448,7 +432,7 @@ static inline QSize nextPowerOfTwo(const QSize &v)
     housekeeping overhead of the internal data structures.
 */
 QGeneralAreaAllocator::QGeneralAreaAllocator(const QSize &size)
-    : QAreaAllocator(nextPowerOfTwo(size))
+    : QAreaAllocator(QGL::nextPowerOfTwo(size))
 {
     m_root = new Node();
     m_root->rect = QRect(0, 0, m_size.width(), m_size.height());
@@ -490,7 +474,7 @@ void QGeneralAreaAllocator::freeNode(Node *node)
 */
 void QGeneralAreaAllocator::expand(const QSize &size)
 {
-    QAreaAllocator::expand(nextPowerOfTwo(size));
+    QAreaAllocator::expand(QGL::nextPowerOfTwo(size));
 
     if (m_root->rect.size() == m_size)
         return;     // No change.
@@ -557,8 +541,7 @@ static inline bool fitsWithin(const QSize &size1, const QSize &size2)
 QRect QGeneralAreaAllocator::allocate(const QSize &size)
 {
     QSize rounded = roundAllocation(size);
-    rounded = QSize(nextPowerOfTwo(rounded.width()),
-                    nextPowerOfTwo(rounded.height()));
+    rounded = QGL::nextPowerOfTwo(rounded);
     if (rounded.width() <= 0 || rounded.width() > m_size.width() ||
             rounded.height() <= 0 || rounded.height() > m_size.height())
         return QRect();

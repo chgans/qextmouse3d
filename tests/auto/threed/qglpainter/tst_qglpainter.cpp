@@ -64,6 +64,8 @@ private slots:
     void modelViewMatrixStack();
     void isCullable();
     void lights();
+    void nextPowerOfTwo_data();
+    void nextPowerOfTwo();
 
 public slots:
     void clearPaint();
@@ -621,6 +623,49 @@ void tst_QGLPainter::lights()
     QCOMPARE(painter.maximumLightId(), 0);
     QVERIFY(painter.light(0) == mainLight);
     QVERIFY(painter.lightTransform(0).isIdentity());
+}
+
+void tst_QGLPainter::nextPowerOfTwo_data()
+{
+    QTest::addColumn<int>("value");
+    QTest::addColumn<int>("result");
+
+    QTest::newRow("0") << 0 << 0;
+    QTest::newRow("1") << 1 << 1;
+    QTest::newRow("2") << 2 << 2;
+    QTest::newRow("3") << 3 << 4;
+    QTest::newRow("4") << 4 << 4;
+    QTest::newRow("5") << 5 << 8;
+    QTest::newRow("6") << 6 << 8;
+    QTest::newRow("7") << 7 << 8;
+    QTest::newRow("13") << 13 << 16;
+    QTest::newRow("16") << 16 << 16;
+    QTest::newRow("23") << 23 << 32;
+    QTest::newRow("32") << 32 << 32;
+    QTest::newRow("63") << 63 << 64;
+    QTest::newRow("64") << 64 << 64;
+    QTest::newRow("65") << 65 << 128;
+    QTest::newRow("120") << 120 << 128;
+    QTest::newRow("128") << 128 << 128;
+    QTest::newRow("129") << 129 << 256;
+
+    for (int bit = 8; bit <= 30; ++bit) {
+        int value = (1 << bit);
+        QByteArray str;
+        str = QByteArray::number(value);
+        QTest::newRow(str.constData()) << (value - 23) << value;
+        QTest::newRow(str.constData()) << value << value;
+    }
+}
+
+void tst_QGLPainter::nextPowerOfTwo()
+{
+    QFETCH(int, value);
+    QFETCH(int, result);
+
+    QCOMPARE(QGL::nextPowerOfTwo(value), result);
+    QCOMPARE(QGL::nextPowerOfTwo(QSize(value, 0)), QSize(result, 0));
+    QCOMPARE(QGL::nextPowerOfTwo(QSize(0, value)), QSize(0, result));
 }
 
 QTEST_MAIN(tst_QGLPainter)

@@ -40,6 +40,7 @@
 ****************************************************************************/
 
 #include "qglnamespace.h"
+#include <QtCore/qsize.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -252,5 +253,38 @@ QT_BEGIN_NAMESPACE
     \value Key_DecreaseSensitivity Decrease the sensitivity of the mouse
            to wrist movements.
 */
+
+/*!
+    Returns the next power of two that is greater than or
+    equal to \a value.  The \a value must be positive or the
+    result is undefined.
+
+    This is a convenience function for use with GL texture
+    handling code.
+*/
+int QGL::nextPowerOfTwo(int value)
+{
+    value--;
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    ++value;
+    return value;
+}
+
+/*!
+    Returns the next power of two that is greater than or
+    equal to the width and height components of \a value.
+
+    This is a convenience function for use with GL texture
+    handling code.
+*/
+QSize QGL::nextPowerOfTwo(const QSize& value)
+{
+    return QSize(nextPowerOfTwo(value.width()),
+                 nextPowerOfTwo(value.height()));
+}
 
 QT_END_NAMESPACE
