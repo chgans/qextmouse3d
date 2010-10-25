@@ -1202,8 +1202,10 @@ void QGLSceneNode::deleteChild(QObject *object)
 void QGLSceneNode::invalidateBoundingBox() const
 {
     Q_D(const QGLSceneNode);
-    d->boxValid = false;
-    d->invalidateParentBoundingBox();
+    if (d) {    // May be null when called via deleteChild().
+        d->boxValid = false;
+        d->invalidateParentBoundingBox();
+    }
 }
 
 void QGLSceneNode::invalidateTransform() const

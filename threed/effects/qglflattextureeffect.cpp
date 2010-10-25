@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglflattextureeffect.h"
+#include "qglflattextureeffect_p.h"
 #include "qglabstracteffect_p.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
@@ -52,6 +52,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatTextureEffect class provides a standard effect that draws fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -60,6 +61,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatDecalTextureEffect class provides a standard effect that decals fragments with a flat unlit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 class QGLFlatTextureEffectPrivate
@@ -227,29 +229,6 @@ void QGLFlatTextureEffect::update
 #endif
 }
 
-/*!
-    \reimp
-*/
-void QGLFlatTextureEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLFlatTextureEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
-#endif
-}
-
 class QGLFlatDecalTextureEffectPrivate
 {
 public:
@@ -388,29 +367,6 @@ void QGLFlatDecalTextureEffect::update
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLFlatDecalTextureEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLFlatDecalTextureEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
 #endif
 }
 

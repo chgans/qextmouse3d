@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglflatcoloreffect.h"
+#include "qglflatcoloreffect_p.h"
 #include "qglabstracteffect_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
 
@@ -51,6 +51,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLFlatColorEffect class provides a standard effect that draws fragments with a flat unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -59,6 +60,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLPerVertexColorEffect class provides a standard effect that draws fragments with a per-vertex unlit color.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 class QGLFlatColorEffectPrivate
@@ -207,27 +209,6 @@ void QGLFlatColorEffect::update
 #endif
 }
 
-/*!
-    \reimp
-*/
-void QGLFlatColorEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLFlatColorEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-#endif
-}
-
 class QGLPerVertexColorEffectPrivate
 {
 public:
@@ -363,29 +344,6 @@ void QGLPerVertexColorEffect::update
         d->program->setUniformValue
             (d->matrixUniform, painter->combinedMatrix());
     }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLPerVertexColorEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLPerVertexColorEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::Color)
-        setAttributeArray(d->program, QGL::Color, value);
 #endif
 }
 

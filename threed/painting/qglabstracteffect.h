@@ -50,9 +50,6 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QGLShaderProgram;
-class QGLVertexBundle;
-
 class Q_QT3D_EXPORT QGLAbstractEffect
 {
 public:
@@ -60,9 +57,7 @@ public:
     virtual ~QGLAbstractEffect();
 
     virtual bool supportsPicking() const;
-
     virtual void setActive(QGLPainter *painter, bool flag) = 0;
-
     virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
     virtual void setVertexAttribute

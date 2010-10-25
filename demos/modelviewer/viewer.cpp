@@ -223,19 +223,7 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 void Viewer::wheelEvent(QWheelEvent *e)
 {
     engageManualControl();
-    e->accept();
-    QVector3D viewVec = camera()->eye() - camera()->center();
-    qreal zoomMag = viewVec.length();
-    qreal inc = float(m_zoomScale * e->delta()) / 50.0f;
-    if (!qFuzzyIsNull(inc))
-    {
-        zoomMag += inc;
-        if (zoomMag < 5.0f)
-            zoomMag = 5.0f;
-        QRay3D viewLine(camera()->center(), viewVec.normalized());
-        camera()->setEye(viewLine.point(zoomMag));
-        update();
-    }
+    QGLView::wheelEvent(e);
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)

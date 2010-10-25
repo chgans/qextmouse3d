@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgllitmaterialeffect.h"
+#include "qgllitmaterialeffect_p.h"
 #include "qglabstracteffect_p.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
@@ -53,6 +53,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitMaterialEffect class provides a standard effect that draws fragments with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 #if !defined(QGL_FIXED_FUNCTION_ONLY)
@@ -563,32 +564,6 @@ void QGLLitMaterialEffect::update
         program->setUniformValueArray("scm", (const GLfloat *)scm, MaxMaterials, 4);
         program->setUniformValueArray("ecm", (const GLfloat *)ecm, MaxMaterials, 4);
         program->setUniformValueArray("srm", srm, MaxMaterials, 1);
-    }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLLitMaterialEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLLitMaterialEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position) {
-        setAttributeArray(d->program, QGL::Position, value);
-    } else if (attribute == QGL::Normal) {
-        setAttributeArray(d->program, QGL::Normal, value);
-    } else if (attribute == QGL::TextureCoord0 && d->textureMode != 0) {
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
     }
 #endif
 }

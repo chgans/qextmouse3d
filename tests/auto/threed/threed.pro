@@ -2,13 +2,15 @@ TEMPLATE = subdirs
 SUBDIRS = \
     qareaallocator \
     qarray \
+    qbox3d \
     qcolor4ub \
     qcustomdataarray \
-    qgraphicstransform3d \
-    qvectorarray \
+    qgeometrydata \
     qglabstractsurface \
     qglattributedescription \
     qglattributevalue \
+    qglbezierpatches \
+    qglbuilder \
     qglcamera \
     qglcameraanimation \
     qglcube \
@@ -17,14 +19,21 @@ SUBDIRS = \
     qgllightparameters \
     qglmaterial \
     qglmaterialcollection \
-    qglvertexbundle \
     qglpainter \
-    qglbuilder \
+    qglpickcolors \
+    qglrender \
     qglsection \
     qglsphere \
-    qgeometrydata \
-    qglpickcolors \
-    qstereoimage \
-    qglrender \
+    qglvertexbundle \
+    qgraphicstransform3d \
     qmouse3devent \
-    qopenglfunctions
+    qopenglfunctions \
+    qplane3d \
+    qray3d \
+    qglcylinder \
+    qsphere3d \
+    qstereoimage \
+    qtriangle3d \
+    qvectorarray
+
+!contains(QT_CONFIG, opengles1): SUBDIRS += qglcolladafxeffectfactory

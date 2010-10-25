@@ -69,7 +69,7 @@ protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *e);
 
-private slots:
+private slots:    
     void on_actionShow_Picking_triggered();
     void on_lockButton_clicked();
     void on_zScaleSpin_valueChanged(QString );
@@ -102,6 +102,15 @@ private slots:
     void addRecentFiles(const QString &);
     void load();
     void viewTypeChanged();
+    void on_custom_view_triggered();
+    void on_front_view_triggered();
+    void on_back_view_triggered();
+    void on_top_view_triggered();
+    void on_bottom_view_triggered();
+    void on_left_view_triggered();
+    void on_right_view_triggered();
+    void on_frontquarter_view_triggered();
+    void on_rearquarter_view_triggered();
 
 private:
     QString populateModelMenu();

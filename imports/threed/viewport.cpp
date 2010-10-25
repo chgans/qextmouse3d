@@ -218,9 +218,9 @@ Viewport::~Viewport()
     mouse is clicked.
 
     If this property is set to true, picking will be supported for this
-    viewport, while if the property is false, no picking will b applied.
+    viewport, while if the property is false, no picking will be applied.
 
-    The default value for this property is false.
+    The default value for this property is true.
 
     \sa showPicking
 */
@@ -304,8 +304,9 @@ void Viewport::setBlending(bool value)
     \qmlproperty Camera Viewport::camera
 
     This property sets the camera parameters which will be used for
-    the appropriate viewing transforms in OpenGL.  By default the camera
-    is undefined.
+    the appropriate viewing transforms in OpenGL.  The default is
+    a perspective camera with its eye located at (0, 0, 10) looking
+    at the center (0, 0, 0), with the y axis as up.
 */
 QGLCamera *Viewport::camera() const
 {

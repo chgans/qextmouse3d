@@ -51,6 +51,8 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
+class QMouse3DLcdScreen;
+
 class QMouse3DLinuxInputDevice : public QMouse3DDevice
 {
     Q_OBJECT
@@ -80,6 +82,7 @@ private:
     bool sawTranslate;
     bool sawRotate;
     bool prevWasFlat;
+    QMouse3DLcdScreen *lcdScreen;
 
     enum
     {

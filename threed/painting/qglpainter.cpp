@@ -53,10 +53,10 @@
 #if !defined(QT_NO_THREAD)
 #include <QtCore/qthreadstorage.h>
 #endif
-#include "qglflatcoloreffect.h"
-#include "qglflattextureeffect.h"
-#include "qgllitmaterialeffect.h"
-#include "qgllittextureeffect.h"
+#include "qglflatcoloreffect_p.h"
+#include "qglflattextureeffect_p.h"
+#include "qgllitmaterialeffect_p.h"
+#include "qgllittextureeffect_p.h"
 #include "qglpickcolors_p.h"
 #include "qgltexture2d.h"
 #include "qgltexturecube.h"
@@ -855,10 +855,6 @@ QGLAbstractEffect *QGLPainter::userEffect() const
     in the current GL context.  If \a effect is null, this will
     disable user-defined effects and return to using standardEffect().
 
-    An effect must be selected before any vertex attributes are
-    specified that apply to that effect.  The caller must re-establish
-    the vertex attribute state after changing effects.
-
     \sa effect(), draw(), setStandardEffect()
 */
 void QGLPainter::setUserEffect(QGLAbstractEffect *effect)
@@ -1085,7 +1081,7 @@ void QGLPainter::setColor(const QColor& color)
     d->updates |= UpdateColor;
 }
 
-void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
+static void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
 {
 #if !defined(QT_OPENGL_ES_2)
     switch (attribute) {
@@ -1127,18 +1123,16 @@ void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttribute
 #endif
 }
 
-void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    qt_gl_setVertexAttribute(attribute, value);
-}
-
 /*!
     Sets a vertex \a attribute on the current GL context to \a value.
 
-    The effect() is notified via QGLAbstractEffect::setVertexAttribute()
-    about the new attribute value, and is responsible for setting it
-    on the GL state.  If the effect() does not need \a attribute,
-    it will be ignored.
+    The vertex attribute is bound to the GL state on the index
+    corresponding to \a attribute.  For example, QGL::Position
+    will be bound to index 0, QGL::TextureCoord0 will be bound
+    to index 3, etc.
+
+    Vertex attributes are independent of the effect() and can be
+    bound once and then used with multiple effects.
 
     \sa setVertexBundle(), draw()
 */
@@ -1152,17 +1146,25 @@ void QGLPainter::setVertexAttribute
         QGLBuffer::release(QGLBuffer::VertexBuffer);
         d->boundVertexBuffer = 0;
     }
-    d->effect->setVertexAttribute(attribute, value);
+    if (d->isFixedFunction) {
+        qt_gl_setVertexAttribute(attribute, value);
+    } else {
+        glVertexAttribPointer(GLuint(attribute), value.tupleSize(),
+                              value.type(), GL_TRUE,
+                              value.stride(), value.data());
+    }
 }
 
 /*!
     Sets the vertex attributes on the current GL context that are
     stored in \a buffer.
 
-    The effect() is notified via QGLAbstractEffect::setVertexAttribute()
-    about the new attribute values, and is responsible for setting it
-    on the GL state.  If the effect() does not need an attribute
-    that is stored within \a buffer, it will be ignored.
+    The vertex attributes are bound to the GL state on the indexes
+    that are specified within \a buffer; QGL::Position will be
+    bound to index 0, QGL::TextureCoord0 will be bound to index 3, etc.
+
+    Vertex attributes are independent of the effect() and can be
+    bound once and then used with multiple effects.
 
     \sa setVertexAttribute(), draw()
 */
@@ -1184,7 +1186,14 @@ void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
     }
     for (int index = 0; index < bd->attributes.size(); ++index) {
         QGLVertexBundleAttribute *attr = bd->attributes[index];
-        d->effect->setVertexAttribute(attr->attribute, attr->value);
+        if (d->isFixedFunction) {
+            qt_gl_setVertexAttribute(attr->attribute, attr->value);
+        } else {
+            glVertexAttribPointer(GLuint(attr->attribute),
+                                  attr->value.tupleSize(),
+                                  attr->value.type(), GL_TRUE,
+                                  attr->value.stride(), attr->value.data());
+        }
     }
 }
 

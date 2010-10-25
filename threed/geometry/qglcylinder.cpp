@@ -289,8 +289,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     qreal topRadius = cylinder.diameterTop()/2.0;
     qreal bottomRadius = cylinder.diameterBottom()/2.0;   
 
-    qDebug()<<"Making cylinder with " << numSlices << " segments and top/bottom radii of " << topRadius << "," << bottomRadius;
-
     qreal angle = 0;
     qreal angleIncrement = (2.0 * M_PI) / numSlices;
     qreal radius = topRadius;
@@ -305,9 +303,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
 
     //Generate vertices for the next layer of cylinder
     for (int layerCount=0; layerCount<=cylinder.layers(); layerCount++) {        
-        
-        qDebug() << "Generating layer " << layerCount << " of " << numLayers;
-        
         QGeometryData newLayer;
 
         //Generate a circle of vertices for this layer.
@@ -323,7 +318,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         newLayer.appendVertex(newLayer.vertex(0)); 
         newLayer.generateTextureCoordinates();        
         for (int i = 0; i < newLayer.count(); i++)  newLayer.texCoord(i).setY(textureHeight);
-        qDebug()<<"Set texture height for layer " << layerCount << " to " << textureHeight;
 
         //Special cases for top end-cap
         if (layerCount==0 && cylinder.topEnabled()) {
@@ -340,7 +334,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             {
                 top.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
-                qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
             }   
             angle = 0;            
             builder.addTriangulatedFace(top);
@@ -355,7 +348,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                 builder.newSection();
                 builder.currentNode()->setObjectName("Cylinder Sides");
             }
-
             builder.addQuadsInterleaved(oldLayer, newLayer);
         }
 
@@ -374,7 +366,6 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             {
                 base.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
-                qDebug()<<"Set texture X,Y for rim #" << i << " is " << qCos(angle)+0.5 << "," << qSin(angle)+0.5; 
             }  
             angle = 0;
             //we need to reverse the above to draw it properly - windings!
@@ -387,9 +378,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         radius+=radiusIncrement;
         height-=heightDecrement;
         textureHeight-=textureDecrement;
-        qDebug()<<"Moving to next layer"; 
     }
 
-    qDebug()<<"Done building cylinder"; 
     return builder;
 }

@@ -1327,7 +1327,7 @@ QString Item3D::meshNode() const
 
 void Item3D::setMeshNode(const QString &node)
 {
-    //the actual instanciation of the node as the mesh itself is undertaken in the initialize function.
+    //the actual instantiation of the node as the mesh itself is undertaken in the initialize function.
     d->meshNode = node;
 }
 
@@ -1344,8 +1344,9 @@ void Item3D::update()
 /*!
     \qmlproperty bool Item3D::isVisible
 
-    A simple boolean property indicating whether the item is visible (and so should be 
-    drawn), or not visible.
+    A simple boolean property indicating whether the item is visible (and so
+    should be drawn), or not visible.  The default value for this property is
+    true.
 
     \sa mesh
 */

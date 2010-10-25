@@ -49,7 +49,8 @@ DEFINES += QT_BUILD_QT3D_LIB
     load(data_caging_paths)
 
     qt3dMwHeaders = painting/* \
-                       enablers/* \
+                       arrays/* \
+                       global/* \
                        effects/* \
                        geometry/* \
                        viewing/* \
@@ -57,7 +58,7 @@ DEFINES += QT_BUILD_QT3D_LIB
                        scene/* \
                        graphicsview/* \
                        animation/* \
-                       other/* \
+                       textures/* \
                        surfaces/*
 
     for(api, qt3dMwHeaders) {

@@ -763,24 +763,6 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 /*!
     \reimp
 */
-void QGLShaderProgramEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue &value)
-{
-    Q_D(const QGLShaderProgramEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->fixedFunction) {
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-#if !defined(QGL_FIXED_FUNCTION_ONLY)
-    setAttributeArray(d->program, attribute, value);
-#endif
-}
-
-/*!
-    \reimp
-*/
 void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     Q_D(QGLShaderProgramEffect);
