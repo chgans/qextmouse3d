@@ -164,6 +164,7 @@ QGLSceneNode *BuilderView::buildGeometry()
     builder.currentNode()->setMaterialIndex(canMat);
     builder.currentNode()->setEffect(QGL::LitModulateTexture2D);
     QGeometryData canTop = canRim;
+    canTop.detach();
     canTop.appendVertex(canTop.vertex(0));       // doubled vert for texture seam
     canTop.generateTextureCoordinates();            // generate x texture coords
     QGeometryData canBase = canTop.translated(canExtrudeVec);  // base has tex.y == 0

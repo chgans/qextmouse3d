@@ -56,8 +56,6 @@ public:
     QList<QGL::VertexAttribute> requiredFields() const;
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
-
-    void setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     bool supportsPicking() const;
 
     void setThumbnail(bool enable);

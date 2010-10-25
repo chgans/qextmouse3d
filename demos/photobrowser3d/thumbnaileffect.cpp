@@ -165,21 +165,6 @@ void ThumbnailEffect::update
     }
 }
 
-/*!
-    \reimp
-*/
-void ThumbnailEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    Q_ASSERT(d->program);
-    if (attribute == QGL::Position)
-        setAttributeArray(d->program, QGL::Position, value);
-    else if (attribute == QGL::TextureCoord0)
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
-    else if (attribute == QGL::TextureCoord1)
-        setAttributeArray(d->program, QGL::TextureCoord1, value);
-}
-
 bool ThumbnailEffect::supportsPicking() const
 {
     return true;

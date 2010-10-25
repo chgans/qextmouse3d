@@ -93,6 +93,7 @@ QuadPlane::QuadPlane(QObject *parent, QSizeF size, int level)
         if (yy > 0)
             builder.addQuadsInterleaved(zip, zip2);
         zip2 = zip;
+        zip2.detach();
         zip.clear();
     }
     QGLSceneNode *n = builder.finalizedSceneNode();

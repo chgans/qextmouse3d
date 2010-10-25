@@ -137,8 +137,6 @@ bool QGLAbstractEffect::supportsPicking() const
 */
 
 /*!
-    \fn void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
-
     Updates the current GL context with information from \a painter
     just prior to the drawing of triangles, quads, etc.
 
@@ -147,5 +145,10 @@ bool QGLAbstractEffect::supportsPicking() const
 
     \sa setActive()
 */
+void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
+{
+    Q_UNUSED(painter);
+    Q_UNUSED(updates);
+}
 
 QT_END_NAMESPACE

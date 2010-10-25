@@ -111,6 +111,7 @@
      Since QGeometryData is explicitly shared, variables of type
      QGeometryData behave like references, and the underlying data is modified
      by calling a non-const function on any variable which shares that data.
+
      To force an explicit copy call the detach() function.
 */
 
@@ -454,6 +455,7 @@ QGeometryData QGeometryData::reversed() const
 QGeometryData QGeometryData::translated(const QVector3D &t) const
 {
     QGeometryData r(*this);
+    r.detach();
     for (int i = 0; i < count(); ++i)
     {
         r.vertex(i) = r.vertexAt(i) + t;
@@ -1890,8 +1892,8 @@ void QGeometryData::create()
 }
 
 /*!
-    \internal
-    You know what this is for.  No user serviceable parts below here.
+    Force this geometry to ensure it has its own unshared internal data
+    block, making a copy in the case that it is currently shared.
 */
 void QGeometryData::detach()
 {
