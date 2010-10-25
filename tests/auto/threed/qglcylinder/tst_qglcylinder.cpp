@@ -240,14 +240,16 @@ bool tst_QGLCylinder::validateCylinder(QGLSceneNode *node, qreal topDiameter, qr
     }
 
     //Sides of the cylinder - just a basic test of the normals here.
-	if (!sides)
+	if (!sides) {
 		return false;
-    QGeometryData dataSides = base->geometry();
-    int start = base->start();
-    int count = base->count();
+	}
+    QGeometryData dataSides = sides->geometry();
+    int start = sides->start();
+    int count = sides->count();
 
-	if (count <= 0)
+	if (count <= 0) {
 		return false;
+	}
 	QGL::IndexArray indices = dataSides.indices();
     for (int index = 0; index < count; ++index) {
 		QVector3D n = dataSides.normalAt(indices.at(index + start));
@@ -263,11 +265,17 @@ bool tst_QGLCylinder::validateCylinder(QGLSceneNode *node, qreal topDiameter, qr
 
 void tst_QGLCylinder::build()
 {
-    QGLBuilder builder;
-    builder << QGLCylinder(0.5f, 1.5f, 3.0f);
-	QGLSceneNode *root = builder.finalizedSceneNode();
-	QVERIFY(validateCylinder(root, 0.5f, 1.5f, 3.0f, true, true));
-	delete root;
+    QGLBuilder builder1;
+    builder1 << QGLCylinder(0.5f, 1.5f, 3.0f);
+	QGLSceneNode *root1 = builder1.finalizedSceneNode();
+	QVERIFY(validateCylinder(root1, 0.5f, 1.5f, 3.0f, true, true));
+	delete root1;
+	
+	QGLBuilder builder2;
+	builder2 << QGLCylinder(0.5f, 1.5f, 3.0f, 6,3,false, false);
+	QGLSceneNode *root2 = builder2.finalizedSceneNode();
+	QVERIFY(validateCylinder(root2, 0.5f, 1.5f, 3.0f, false, false));
+	delete root2;
 }
 
 QTEST_APPLESS_MAIN(tst_QGLCylinder)
