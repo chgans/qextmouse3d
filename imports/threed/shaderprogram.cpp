@@ -120,6 +120,8 @@
     \row \o \c qgl_ModelViewMatrix
          \o Modelview matrix without the projection.  This is typically
             used for performing calculations in eye co-ordinates.
+    \row \o \c qgl_ProjectionMatrix
+         \o Projection matrix without the modelview.
     \row \o \c qgl_NormalMatrix
          \o Normal matrix, which is the transpose of the inverse of the
             top-left 3x3 part of the modelview matrix.  This is typically
@@ -128,12 +130,6 @@
          \o Sampler holding the texture from the Effect::texture property.
     \row \o \c qgl_Color
          \o Set to the value of the Effect::color property.
-    \row \o \c qgl_LightPosition
-         \o Position or direction of the main scene light in eye
-            co-ordinates.  If the w component is 0, then the
-            value is directional, otherwise it is positional.
-    \row \o \c qgl_SpotDirection
-         \o Eye co-ordinate direction that the spot-light is shining in.
     \endtable
 
     The above variables are usually declared in the shaders as follows
@@ -146,13 +142,12 @@
     uniform highp mat3 qgl_NormalMatrix;
     uniform sampler2D qgl_Texture0;
     uniform highp vec4 qgl_Color;
-    uniform highp vec4 qgl_LightPosition;
-    uniform highp vec3 qgl_SpotDirection;
     \endcode
 
     Other lighting and material values, such as the ambient, diffuse,
     and specular colors, can be passed to the shader program using
-    custom uniform variables.
+    custom uniform variables, or the standard variable names described
+    in the QGLShaderProgramEffect documentation.
 
     \section1 Custom uniform variables
 
@@ -231,22 +226,6 @@ public:
 ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 {
     this->parent = parent;
-    program = 0;
-    vertexAttr = -1;
-    normalAttr = -1;
-    colorAttr = -1;
-    texCoord0Attr = -1;
-    texCoord1Attr = -1;
-    texCoord2Attr = -1;
-    customVertex0Attr = -1;
-    customVertex1Attr = -1;
-    matrixUniform = -1;
-    modelViewMatrixUniform = -1;
-    normalMatrixUniform = -1;
-    texture0 = -1;
-    colorUniform = -1;
-    lightPositionUniform = -1;
-    spotDirectionUniform = -1;
     nextTextureUnit = 1;
     propertyListener = new ShaderProgramPropertyListenerEx(parent, this);
 }
@@ -258,7 +237,6 @@ ShaderProgramEffect::ShaderProgramEffect(ShaderProgram* parent)
 */
 ShaderProgramEffect::~ShaderProgramEffect()
 {
-    delete program;
     QList<QGLTexture2D*> textures = texture2Ds.values();
     QGLTexture2D* texture;
     foreach(texture, textures)
@@ -282,44 +260,10 @@ bool ShaderProgramEffect::create
 {
     if (!QGLShaderProgram::hasOpenGLShaderPrograms())
         return false;
-    delete program;
-    program = new QGLShaderProgram();
-    bool compiled = true;
-    if (!program->addShaderFromSourceCode(QGLShader::Vertex, vertexShader)) {
-        qWarning("Could not compile vertex shader");
-        compiled = false;
-    }
-    if (!program->addShaderFromSourceCode(QGLShader::Fragment, fragmentShader)) {
-        qWarning("Could not compile fragment shader");
-        compiled = false;
-    }
-    // Some systems require the position to be at location 0.
-    program->bindAttributeLocation("qgl_Vertex", 0);
-    if (!program->link()) {
-        qWarning("Could not link shader program");
-        compiled = false;
-    }
-    if (!compiled) {
-        delete program;
-        program = 0;
-        return false;
-    }
-    vertexAttr = program->attributeLocation("qgl_Vertex");
-    normalAttr = program->attributeLocation("qgl_Normal");
-    colorAttr = program->attributeLocation("qgl_Color");
-    texCoord0Attr = program->attributeLocation("qgl_TexCoord0");
-    texCoord1Attr = program->attributeLocation("qgl_TexCoord1");
-    texCoord2Attr = program->attributeLocation("qgl_TexCoord2");
-    customVertex0Attr = program->attributeLocation("qgl_Custom0");
-    customVertex1Attr = program->attributeLocation("qgl_Custom1");
-    matrixUniform = program->uniformLocation("qgl_ModelViewProjectionMatrix");
-    modelViewMatrixUniform = program->uniformLocation("qgl_ModelViewMatrix");
-    normalMatrixUniform = program->uniformLocation("qgl_NormalMatrix");
-    texture0 = program->uniformLocation("qgl_Texture0");
-    colorUniform = program->uniformLocation("qgl_Color");
-    lightPositionUniform = program->uniformLocation("qgl_LightPosition");
-    spotDirectionUniform = program->uniformLocation("qgl_SpotDirection");
-    setUniformLocationsFromParentProperties();
+
+    setVertexShader(vertexShader.toLatin1());
+    setFragmentShader(fragmentShader.toLatin1());
+
     return true;
 }
 
@@ -328,7 +272,7 @@ bool ShaderProgramEffect::create
   Convenience function to setup the relationship between object properties
   and shader uniforms for later use.
   */
-inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
+void ShaderProgramEffect::afterLink()
 {
     propertyIdsToUniformLocations.clear();
     uniformLocationsToTextureUnits.clear();
@@ -347,8 +291,8 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
     i < parentMetaObject->propertyCount(); i++)
     {
         QMetaProperty metaProperty = parentMetaObject->property(i);
-        QString propertyName = metaProperty.name();
-        int location = program->uniformLocation(propertyName);
+        QByteArray propertyName = metaProperty.name();
+        int location = program()->uniformLocation(propertyName);
         // -1 indicates that the program does not use the variable,
         // so ignore those variables.
         if(location != -1)
@@ -380,83 +324,6 @@ inline void ShaderProgramEffect::setUniformLocationsFromParentProperties()
 
     // Refresh everything
     this->setPropertiesDirty();
-}
-
-/*!
-  \internal
-  This function returns a list of the requisite parameter fields for the shader program currently defined.
-  This assists by clearly identifying the items which need to be specified for correct funcitoning of the
-  program.
-*/
-QList<QGL::VertexAttribute> ShaderProgramEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    if (vertexAttr != -1)
-        fields.append(QGL::Position);
-    if (normalAttr != -1)
-        fields.append(QGL::Normal);
-    if (colorAttr != -1)
-        fields.append(QGL::Color);
-    if (texCoord0Attr != -1)
-        fields.append(QGL::TextureCoord0);
-    if (texCoord1Attr != -1)
-        fields.append(QGL::TextureCoord1);
-    if (texCoord2Attr != -1)
-        fields.append(QGL::TextureCoord2);
-    if (customVertex0Attr != -1)
-        fields.append(QGL::CustomVertex0);
-    if (customVertex1Attr != -1)
-        fields.append(QGL::CustomVertex1);
-    return fields;
-}
-
-/*!
-  \internal
-    This activates or deactivates the shader based on the \a flag paramter.
-    This effectively binds or releases the QGLShaderProgram to \a painter.
-*/
-void ShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
-{
-    Q_UNUSED(painter);
-    if (flag) {
-        program->bind();
-        if (vertexAttr != -1)
-            program->enableAttributeArray(vertexAttr);
-        if (normalAttr != -1)
-            program->enableAttributeArray(normalAttr);
-        if (colorAttr != -1)
-            program->enableAttributeArray(colorAttr);
-        if (texCoord0Attr != -1)
-            program->enableAttributeArray(texCoord0Attr);
-        if (texCoord1Attr != -1)
-            program->enableAttributeArray(texCoord1Attr);
-        if (texCoord2Attr != -1)
-            program->enableAttributeArray(texCoord2Attr);
-        if (customVertex0Attr != -1)
-            program->enableAttributeArray(customVertex0Attr);
-        if (customVertex1Attr != -1)
-            program->enableAttributeArray(customVertex1Attr);
-        if (texture0 != -1)
-            program->setUniformValue(texture0, 0);
-    } else {
-        if (vertexAttr != -1)
-            program->disableAttributeArray(vertexAttr);
-        if (normalAttr != -1)
-            program->disableAttributeArray(normalAttr);
-        if (colorAttr != -1)
-            program->disableAttributeArray(colorAttr);
-        if (texCoord0Attr != -1)
-            program->disableAttributeArray(texCoord0Attr);
-        if (texCoord1Attr != -1)
-            program->disableAttributeArray(texCoord1Attr);
-        if (texCoord2Attr != -1)
-            program->disableAttributeArray(texCoord2Attr);
-        if (customVertex0Attr != -1)
-            program->disableAttributeArray(customVertex0Attr);
-        if (customVertex1Attr != -1)
-            program->disableAttributeArray(customVertex1Attr);
-        program->release();
-    }
 }
 
 /*!
@@ -537,41 +404,14 @@ void ShaderProgramEffect::update
                 setUniform(i, declarativePixmaps[i]->pixmap(), painter);
             } else
             {
-                qWarning() << "Warning: ShaderProgramEffect failed to apply texture for uniform" << i << (urls.contains(i) ? QString(" url: ") + urls[i] : "");
+                qWarning() << "Warning: ShaderProgramEffect failed to apply texture for uniform" << i << (urls.contains(i) ? QLatin1String(" url: ") + urls[i] : QString());
             }
             changedTextures.remove(i);
         }
     }
 
-    // Update the matrix uniforms.
-    if ((updates & QGLPainter::UpdateMatrices) != 0) {
-        if (matrixUniform != -1)
-            program->setUniformValue(matrixUniform, painter->combinedMatrix());
-        if (modelViewMatrixUniform != -1)
-            program->setUniformValue(modelViewMatrixUniform, painter->modelViewMatrix());
-        if (normalMatrixUniform != -1)
-            program->setUniformValue(normalMatrixUniform, painter->normalMatrix());
-    }
-
-    // Update the static color in if "qgl_Color" is a uniform.
-    if ((updates & QGLPainter::UpdateColor) != 0 && colorUniform != -1) {
-        program->setUniformValue(colorUniform, painter->color());
-    }
-
-    // Update the lighting values.
-    if ((updates & QGLPainter::UpdateLights) != 0 &&
-            (lightPositionUniform != -1 || spotDirectionUniform != -1)) {
-        const QGLLightParameters *lparams = painter->mainLight();
-        QMatrix4x4 ltransform = painter->mainLightTransform();
-        if (lightPositionUniform != -1) {
-            program->setUniformValue
-                (lightPositionUniform, lparams->eyePosition(ltransform));
-        }
-        if (spotDirectionUniform != -1) {
-            program->setUniformValue
-                (spotDirectionUniform, lparams->eyeSpotDirection(ltransform));
-        }
-    }
+    // Update the standard uniform variables.
+    QGLShaderProgramEffect::update(painter, updates);
 
     // Assign custom properties if they exist
     if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
@@ -610,6 +450,7 @@ inline QGLTexture2D* ShaderProgramEffect::textureForUniformValue(int uniformLoca
 
 inline bool ShaderProgramEffect::setUniformForPropertyIndex(int propertyIndex, QGLPainter *painter)
 {
+    QGLShaderProgram *program = this->program();
     int uniformLocation = propertyIdsToUniformLocations[propertyIndex];
 
     QVariant value =
@@ -694,7 +535,7 @@ void ShaderProgramEffect::setUniform
         texture->setPixmap(pixmap);
         painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, unit);
+        program()->setUniformValue(uniformLocation, unit);
     }
 }
 
@@ -712,7 +553,7 @@ void ShaderProgramEffect::setUniform
         texture->setImage(image);
         painter->glActiveTexture(GL_TEXTURE0 + unit);
         texture->bind();
-        program->setUniformValue(uniformLocation, unit);
+        program()->setUniformValue(uniformLocation, unit);
     }
 }
 
@@ -727,64 +568,6 @@ int ShaderProgramEffect::textureUnitForUniformValue(int uniformLocation)
         uniformLocationsToTextureUnits[uniformLocation] = unit;
     }
     return unit;
-}
-
-/*
-  The function facilitates setting of a given vertex attribute \attribute with the value defined by
-  \a value.
-*/
-void ShaderProgramEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-    switch (attribute) {
-    case QGL::Position:
-        if (vertexAttr != -1)
-            setAttributeArray(program, vertexAttr, value);
-        break;
-    case QGL::Normal:
-        if (normalAttr != -1) {
-            setAttributeArray(program, normalAttr, value);
-            // Must explicitly enable in case setCommonNormal() was called.
-            program->enableAttributeArray(normalAttr);
-        }
-        break;
-    case QGL::Color:
-        if (colorAttr != -1)
-            setAttributeArray(program, colorAttr, value);
-        break;
-    case QGL::TextureCoord0:
-        if (texCoord0Attr != -1)
-            setAttributeArray(program, texCoord0Attr, value);
-        break;
-    case QGL::TextureCoord1:
-        if (texCoord1Attr != -1)
-            setAttributeArray(program, texCoord1Attr, value);
-        break;
-    case QGL::TextureCoord2:
-        if (texCoord2Attr != -1)
-            setAttributeArray(program, texCoord2Attr, value);
-        break;
-    case QGL::CustomVertex0:
-        if (customVertex0Attr != -1)
-            setAttributeArray(program, customVertex0Attr, value);
-        break;
-    case QGL::CustomVertex1:
-        if (customVertex1Attr != -1)
-            setAttributeArray(program, customVertex1Attr, value);
-        break;
-    default: break;
-    }
-}
-
-/*
-  Sets the common normal (a QVector3d) for the ShaderProgramEffect to \a value.
-*/
-void ShaderProgramEffect::setCommonNormal(const QVector3D& value)
-{
-    if (normalAttr != -1) {
-        program->disableAttributeArray(normalAttr);
-        program->setAttributeValue(normalAttr, value);
-    }
 }
 
 /*!

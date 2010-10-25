@@ -49,7 +49,6 @@
 #include "qglheightmap.h"
 #include "rippleheightmap.h"
 #include "qglabstracteffect.h"
-#include "qglshaderprogrameffect.h"
 #include <QGLShader>
 #include <QtCore/qmath.h>
 #include "qglabstractscene.h"
@@ -63,8 +62,6 @@ class ShaderWizardGLWidgetPrivate
 {
 public:
     ShaderWizardGLWidgetPrivate() : effect(0)
-            , fragmentShader("")
-            , vertexShader("")
             , painterColor()
             , ambientLightColor()
             , diffuseLightColor()
@@ -72,7 +69,7 @@ public:
     {
     }
 
-    QGLShaderProgramEffect *effect;
+    QGLColladaFxEffect *effect;
     QString fragmentShader;
     QString vertexShader;
 
@@ -108,10 +105,10 @@ ShaderWizardGLWidget::ShaderWizardGLWidget() :
     // so use white and 64 for a reasonable default specular effect
     setSpecularMaterialColor(QColor(255, 255, 255, 255));
     setMaterialShininess(64);
-    mMaterial->setObjectName("ShaderWizardGLWidgetMaterial");
+    mMaterial->setObjectName(QLatin1String("ShaderWizardGLWidgetMaterial"));
 
     setTeapotGeometry();
-    d->effect = new QGLShaderProgramEffect;
+    ensureEffect();
 }
 
 ShaderWizardGLWidget::~ShaderWizardGLWidget()
@@ -134,11 +131,6 @@ ShaderWizardGLWidget::~ShaderWizardGLWidget()
         sphere = 0;
     }
 
-    if( mMaterialCollection)
-    {
-        delete mMaterialCollection;
-        mMaterialCollection = 0;
-    }
 }
 
 void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
@@ -154,7 +146,7 @@ void ShaderWizardGLWidget::initializeGL(QGLPainter *painter)
     painter->setMainLight(mLightParameters);
     painter->setFaceColor(QGL::AllFaces, d->painterColor);
 
-    mTexture->setImage(QImage (":/qtlogo.png"));
+    mTexture->setImage(QImage(QLatin1String(":/qtlogo.png")));
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -208,10 +200,16 @@ void ShaderWizardGLWidget::setSceneNode(QGLSceneNode *newNode)
         if(!mSceneNode->palette())
             mSceneNode->setPalette(mMaterialCollection);
         mMaterialCollection->setParent(mSceneNode);
-        int materialIndex = mSceneNode->palette()->indexOf("ShaderWizardGLWidgetMaterial");
+        int materialIndex = mSceneNode->palette()->indexOf(QLatin1String("ShaderWizardGLWidgetMaterial"));
         if(materialIndex == -1)
             materialIndex = mSceneNode->palette()->addMaterial(mMaterial);
         mSceneNode->setMaterialIndex(materialIndex);
+
+        if(mSceneNode->effect() == 0 && mSceneNode->userEffect() == 0)
+        {
+            ensureEffect();
+            mSceneNode->setUserEffect(effect());
+        }
     }
 
     clearScene();
@@ -227,7 +225,7 @@ void ShaderWizardGLWidget::clearScene()
     update();
 }
 
-void ShaderWizardGLWidget::setEffect(QGLShaderProgramEffect *effect)
+void ShaderWizardGLWidget::setEffect(QGLColladaFxEffect *effect)
 {
     d->effect = effect;
 }
@@ -356,19 +354,16 @@ void ShaderWizardGLWidget::setHeightMapGeometry()
 
 void ShaderWizardGLWidget::setVertexShader(QString const &shader)
 {
-    if(!d->effect)
-        d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
-    d->effect->setVertexShader(shader);
+    ensureEffect();
+    d->effect->setVertexShader(shader.toLatin1());
     update();
     emit effectChanged();
 }
 
 void ShaderWizardGLWidget::setFragmentShader(QString const & shader )
 {
-    if(!d->effect)
-        d->effect = new QGLShaderProgramEffect(); // QGLPainter will delete the old one;
-
-    d->effect->setFragmentShader(shader);
+    ensureEffect();
+    d->effect->setFragmentShader(shader.toLatin1());
     update();
     emit effectChanged();
 }
@@ -430,6 +425,15 @@ void ShaderWizardGLWidget::setDefaultCamera(QGLSceneNode* sceneNode)
     this->camera()->setEye(QVector3D(0.0, 0.0, viewDistance));
     this->camera()->setCenter(boxOrigin);
     update();
+}
+
+void ShaderWizardGLWidget::ensureEffect()
+{
+    if(!d->effect)
+    {
+        d->effect = new QGLColladaFxEffect;
+        d->effect->generateShaders();
+    }
 }
 
 void ShaderWizardGLWidget::setPainterColor(QColor color)
@@ -494,4 +498,4 @@ QColor ShaderWizardGLWidget::ambientMaterialColor() { return mMaterial->ambientC
 QColor ShaderWizardGLWidget::diffuseMaterialColor() { return mMaterial->diffuseColor(); }
 QColor ShaderWizardGLWidget::specularMaterialColor() { return mMaterial->specularColor(); }
 int ShaderWizardGLWidget::materialShininess() { return mMaterial->shininess(); }
-QGLShaderProgramEffect* ShaderWizardGLWidget::effect() { return d->effect; }
+QGLColladaFxEffect* ShaderWizardGLWidget::effect() { return d->effect; }

@@ -40,7 +40,6 @@
 ****************************************************************************/
 
 #include "qgllightmodel.h"
-#include <QtCore/private/qobject_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -86,13 +85,11 @@ QT_BEGIN_NAMESPACE
     \value LocalViewer The viewer is at the local origin in eye coordinates.
 */
 
-class QGLLightModelPrivate : public QObjectPrivate
+class QGLLightModelPrivate
 {
-    Q_DECLARE_PUBLIC(QGLLightModel)
 public:
-    QGLLightModelPrivate(int version = QObjectPrivateVersion)
-        : QObjectPrivate(version),
-          model(QGLLightModel::OneSided),
+    QGLLightModelPrivate()
+        : model(QGLLightModel::OneSided),
           colorControl(QGLLightModel::SingleColor),
           viewerPosition(QGLLightModel::ViewerAtInfinity)
     {
@@ -110,7 +107,8 @@ public:
     it to \a parent.
 */
 QGLLightModel::QGLLightModel(QObject *parent)
-    : QObject(*new QGLLightModelPrivate(), parent)
+    : QObject(parent)
+    , d_ptr(new QGLLightModelPrivate)
 {
 }
 

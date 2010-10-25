@@ -1,2 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS += threed
+SUBDIRS += threed shapes
+CONFIG += ordered

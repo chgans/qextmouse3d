@@ -55,7 +55,6 @@ ImageManager::ImageManager()
 
 ImageManager::~ImageManager()
 {
-    qDebug() << "~ImageManager";
 }
 
 // INVARIANT: only ever called before the run() function is started
@@ -73,7 +72,6 @@ void ImageManager::setImageBaseUrl(const QUrl &url)
 void ImageManager::stop()
 {
     emit stopAll();
-    qDebug() << "ImageManager::stop" << QThread::currentThread();
 }
 
 void ImageManager::scanForFiles()
@@ -108,19 +106,11 @@ void ImageManager::scanForFiles()
 
 void ImageManager::quit()
 {
-    qDebug() << "ImageManager::quit";
     QThread::quit();
-}
-
-void ImageManager::debugStuff()
-{
-    qDebug() << "ImageManager::debugStuff()  -- Got a signal from:" << sender();
 }
 
 void ImageManager::run()
 {
-    qDebug() << ">>>>>> ImageManager::run()" << QThread::currentThread();
-
     if (m_url.scheme() != "file")
     {
         qWarning("URL scheme %s not yet supported", qPrintable(m_url.scheme()));
@@ -133,23 +123,12 @@ void ImageManager::run()
 #ifndef QT_NO_THREADED_FILE_LOAD
     ThreadPool pool;
 
-    connect(this, SIGNAL(deployLoader(QUrl)), &pool, SLOT(deployLoader(QUrl)));
-    connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
+    connect(this, SIGNAL(deployLoader(ThumbnailableImage)),
+            &pool, SLOT(deployLoader(ThumbnailableImage)));
 
+    connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
     connect(&pool, SIGNAL(stopped()), this, SLOT(quit()));
 #endif
 
-    fprintf(stderr, "ImageManager::run - start %p\n", this);
-
-    /*
-    QTimer timer;
-    connect(&timer, SIGNAL(timeout()), this, SLOT(debugStuff()));
-    timer.start(1000);
-    */
-
-    qDebug() << ">>> ImageManager - entering event loop";
     exec();
-    qDebug() << "<<< ImageManager - exiting event loop";
-
-    qDebug() << "<<<<<< ImageManager::run()" << QThread::currentThread();
 }

@@ -49,8 +49,6 @@
 #include <QtCore/qmath.h>
 #include <QUrl>
 
-class ImageManager;
-
 class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
@@ -66,20 +64,22 @@ public:
     explicit ThumbnailNode(QObject *parent = 0);
     ~ThumbnailNode();
     QUrl url() const { return m_url; }
-    void setUrl(const QUrl &url) { m_url = url; }
+    void setUrl(const QUrl &url);
     void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
     qreal threshold() const { return qSqrt(m_thresholdSquared); }
     void draw(QGLPainter *painter);
     void geometryDraw(QGLPainter *painter);
     ThumbnailableImage image() const { return m_image; }
 signals:
-    void imageRequired(const QUrl &);
+    void imageRequired(const ThumbnailableImage &);
+    void nodeChanged();
 public slots:
     void setImage(const ThumbnailableImage &image);
 private:
     void createFullNode();
     void destroyFullNode();
     void setupLoading();
+    void setupThumbnailing();
     void loadFullImage();
 
     ThumbnailableImage m_image;
@@ -89,6 +89,8 @@ private:
     bool m_loading;
     QGLSceneNode *m_full;
     QSizeF m_max;
+    QObject *m_manager;
+    Distance m_lastDistance;
 };
 
 #endif // THUMBNAILNODE_H

@@ -51,6 +51,35 @@ QT_BEGIN_NAMESPACE
     \brief The QGLAbstractEffect class provides a standard interface for rendering surface material effects with GL.
     \ingroup qt3d
     \ingroup qt3d::painting
+
+    \section1 Vertex attributes
+
+    Vertex attributes for the effect are specified using
+    QGLPainter::setVertexAttribute() and QGLPainter::setVertexBundle(),
+    and may be independent of the effect itself.  Those functions
+    will bind standard attributes to specific indexes within the
+    GL state.  For example, the QGL::Position will be bound
+    to index 0, QGL::TextureCoord0 will be bound to index 3, etc.
+
+    Effect subclasses that use vertex shaders should bind their attributes
+    to these indexes using QGLShaderProgram::bindAttributeLocation()
+    just before the program is linked.  For example:
+
+    \code
+    QGLShaderProgram *program = new QGLShaderProgram();
+    program->addShaderFromSourceCode(QGLShader::Vertex, vshaderSource);
+    program->addShaderFromSourceCode(QGLShader::Fragment, fshaderSource);
+    program->bindAttributeLocation("vertex", QGL::Position);
+    program->bindAttributeLocation("normal", QGL::Normal);
+    program->bindAttributeLocation("texcoord", QGL::TextureCoord0);
+    program->link();
+    \endcode
+
+    The QGLShaderProgramEffect class can assist with writing
+    shader-based effects.  It will automatically bind special
+    variable names, such as \c{qgl_Vertex}, \c{qgl_TexCoord0}, etc,
+    to the standard indexes.  This alleviates the need for the
+    application to bind the names itself.
 */
 
 /*!
@@ -66,17 +95,6 @@ QGLAbstractEffect::QGLAbstractEffect()
 QGLAbstractEffect::~QGLAbstractEffect()
 {
 }
-
-/*!
-    \fn QList<QGL::VertexAttribute> QGLAbstractEffect::requiredFields() const
-
-    Returns a list of the vertex array fields that are required
-    to be provided via setVertexAttribute().  QGLPainter::draw()
-    uses this to warn when the application has not supplied
-    sufficient arguments to use the effect.
-
-    \sa setVertexAttribute(), QGLPainter::draw()
-*/
 
 /*!
     Returns true if this effect supports object picking; false otherwise.
@@ -131,66 +149,6 @@ void QGLAbstractEffect::update(QGLPainter *painter, QGLPainter::Updates updates)
 {
     Q_UNUSED(painter);
     Q_UNUSED(updates);
-}
-
-/*!
-    \fn void QGLAbstractEffect::setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-
-    Sets the specified vertex \a attribute to \a value.
-
-    The default implementation sets the attribute on the GL fixed
-    function pipeline.  For example, the attribute QGL::Normal will
-    be set using \c{glNormalPointer()}.
-
-    OpenGL/ES 2.0 implementations do not have a fixed function
-    pipeline, so subclasses must handle all relevant attributes
-    themselves on that platform.
-*/
-// Implemented in qglpainter.cpp.
-
-/*!
-    Sets the common normal value for all vertices to \a value and
-    disable any active normal arrays.
-
-    The default implementation calls \c{glNormal3f()} to set \a value
-    on the GL fixed function pipeline.
-
-    OpenGL/ES 2.0 implementations do not have a fixed function
-    pipeline, so subclasses must override this function and
-    use QGLShaderProgram::setAttributeValue() to set the normal
-    attribute on the shader program to \a value.
-*/
-void QGLAbstractEffect::setCommonNormal(const QVector3D& value)
-{
-#if !defined(QT_OPENGL_ES_2)
-    glNormal3f(value.x(), value.y(), value.z());
-    glDisableClientState(GL_NORMAL_ARRAY);
-#else
-    Q_UNUSED(value)
-#endif
-}
-
-/*!
-    Sets the vertex attribute at \a location on \a program to \a value.
-    It is assumed that \a program is bound to the current context.
-    Has no effect on systems without shader support.
-
-    This function is provided as a convenience for use by subclasses
-    that want to implement an effect using shaders.
-*/
-void QGLAbstractEffect::setAttributeArray
-        (QGLShaderProgram *program, int location,
-         const QGLAttributeValue& value)
-{
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
-    program->setAttributeArray
-        (location, value.type(), value.data(),
-         value.tupleSize(), value.stride());
-#else
-    Q_UNUSED(program);
-    Q_UNUSED(location);
-    Q_UNUSED(value);
-#endif
 }
 
 QT_END_NAMESPACE

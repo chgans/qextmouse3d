@@ -45,7 +45,6 @@
 #include "bytereader.h"
 
 #include <QFileInfo>
-#include <QDebug>
 #include <QTime>
 #include <QDir>
 #include <QStringList>
@@ -67,67 +66,51 @@ ImageLoader::~ImageLoader()
     // nothing to do here
 }
 
-QUrl ImageLoader::url() const
+ThumbnailableImage ImageLoader::image() const
 {
-    return m_url;
+    return m_image;
 }
 
-void ImageLoader::setUrl(const QUrl &url)
+void ImageLoader::setImage(const ThumbnailableImage &image)
 {
-    qDebug() << "###### setUrl:" << url;
-    m_url = url;
+    m_image = image;
     if (!m_stop && isRunning())
-    {
-        emit readRequired(url);
-        qDebug() << "      emit readRequired:" << url;
-    }
+        emit readRequired(image);
 }
 
 void ImageLoader::stop()
 {
     m_stop.ref();
     emit stopLoading();
-
-    qDebug() << "ImageLoader::stop()" << QThread::currentThread();
 }
 
-void ImageLoader::debugStuff()
+void ImageLoader::queueInitialImage()
 {
-    qDebug() << "ImageLoader::debugStuff" << QThread::currentThread() << m_url;
-}
-
-void ImageLoader::queueInitialUrl()
-{
-    emit readRequired(m_url);
+    emit readRequired(m_image);
 }
 
 void ImageLoader::unusedTimeout()
 {
     emit unused();
-    qDebug() << "unusedTimeout" << m_url << QThread::currentThread();
 }
 
 void ImageLoader::run()
 {
-    qDebug() << ">>>>> ImageLoader::run()" << m_url.toString() << QThread::currentThread();
-
     ByteReader reader;
-    connect(this, SIGNAL(readRequired(QUrl)), &reader, SLOT(loadFile(QUrl)));
+    connect(this, SIGNAL(readRequired(ThumbnailableImage)),
+            &reader, SLOT(loadFile(ThumbnailableImage)));
     connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
             this, SIGNAL(imageLoaded(ThumbnailableImage)));
-    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
 
+    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
     connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
 
     QTimer timer;
     connect(&timer, SIGNAL(timeout()), this, SLOT(unusedTimeout()));
     timer.start(2 * 60 * 1000);
 
-    if (!m_url.isEmpty())
-        QTimer::singleShot(0, this, SLOT(queueInitialUrl()));
+    if (!m_image.isNull())
+        QTimer::singleShot(0, this, SLOT(queueInitialImage()));
 
-    qDebug() << "ImageLoader - entering event loop:" << m_url;
     exec();
-
-    qDebug() << "<<<<< ImageLoader::run()" << m_url.toString() << QThread::currentThread();
 }

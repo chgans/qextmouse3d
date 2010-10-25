@@ -45,7 +45,6 @@
 #include "qgltestwidget.h"
 #include "qglpainter.h"
 #include "qglsimulator.h"
-#include "qglflatcoloreffect.h"
 
 class tst_QGLPainter : public QObject
 {
@@ -64,6 +63,9 @@ private slots:
     void projectionMatrixStack();
     void modelViewMatrixStack();
     void isCullable();
+    void lights();
+    void nextPowerOfTwo_data();
+    void nextPowerOfTwo();
 
 public slots:
     void clearPaint();
@@ -129,12 +131,10 @@ void tst_QGLPainter::drawTrianglePaint()
     vertices.append(500, 100);
     vertices.append(500, 500);
 
-    QGLFlatColorEffect effect;
-    painter.setUserEffect(&effect);
+    painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
-    painter.setUserEffect(0);
 }
 
 void tst_QGLPainter::drawTrianglePaintQ(QPainter *painter, const QSize& size)
@@ -218,8 +218,7 @@ void tst_QGLPainter::scissorPaint()
     vertices.append(500, 500);
 
     // Paint a green triangle.
-    QGLFlatColorEffect effect;
-    painter.setUserEffect(&effect);
+    painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
@@ -250,8 +249,6 @@ void tst_QGLPainter::scissorPaint()
     painter.setScissor(scissor);
     painter.setColor(Qt::yellow);
     painter.draw(QGL::Triangles, 3);
-
-    painter.setUserEffect(0);
 
     glDisable(GL_SCISSOR_TEST);
 }
@@ -555,6 +552,120 @@ void tst_QGLPainter::isCullable()
     // Box that is beyond the far plane.
     QBox3D box8(QVector3D(-1, -1, -1000), QVector3D(1, 1, -1001));
     QVERIFY(painter.isCullable(box8));
+}
+
+void tst_QGLPainter::lights()
+{
+    QGLPainter painter(widget);
+
+    // Make sure the mainLight() is not present before we start these tests.
+    painter.removeLight(0);
+
+    QCOMPARE(painter.maximumLightId(), -1);
+    QVERIFY(painter.light(0) == 0);
+    QVERIFY(painter.lightTransform(0).isIdentity());
+    QVERIFY(painter.light(-1) == 0);
+    QVERIFY(painter.lightTransform(-1).isIdentity());
+
+    QGLLightParameters lparams1;
+    QGLLightParameters lparams2;
+    QGLLightParameters lparams3;
+
+    int lightId1 = painter.addLight(&lparams1);
+    QCOMPARE(lightId1, 0);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(lightId1) == &lparams1);
+    QVERIFY(painter.lightTransform(lightId1) == painter.modelViewMatrix());
+
+    QMatrix4x4 m(painter.modelViewMatrix());
+    m.translate(-1, 2, -5);
+
+    int lightId2 = painter.addLight(&lparams2, m);
+    QCOMPARE(lightId2, 1);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId1) == &lparams1);
+    QVERIFY(painter.lightTransform(lightId1) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    painter.removeLight(lightId1);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId1) == 0);
+    QVERIFY(painter.lightTransform(lightId1).isIdentity());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    int lightId3 = painter.addLight(&lparams3);
+    QCOMPARE(lightId3, 0);
+    QCOMPARE(painter.maximumLightId(), 1);
+    QVERIFY(painter.light(lightId3) == &lparams3);
+    QVERIFY(painter.lightTransform(lightId3) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == &lparams2);
+    QVERIFY(painter.lightTransform(lightId2) == m);
+
+    painter.removeLight(lightId2);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(lightId3) == &lparams3);
+    QVERIFY(painter.lightTransform(lightId3) == painter.modelViewMatrix());
+    QVERIFY(painter.light(lightId2) == 0);
+    QVERIFY(painter.lightTransform(lightId2).isIdentity());
+
+    painter.removeLight(lightId3);
+    QCOMPARE(painter.maximumLightId(), -1);
+    QVERIFY(painter.light(lightId3) == 0);
+    QVERIFY(painter.lightTransform(lightId3).isIdentity());
+    QVERIFY(painter.light(lightId2) == 0);
+    QVERIFY(painter.lightTransform(lightId2).isIdentity());
+
+    // Check default construction of the main light.
+    const QGLLightParameters *mainLight = painter.mainLight();
+    QVERIFY(mainLight != 0);
+    QCOMPARE(painter.maximumLightId(), 0);
+    QVERIFY(painter.light(0) == mainLight);
+    QVERIFY(painter.lightTransform(0).isIdentity());
+}
+
+void tst_QGLPainter::nextPowerOfTwo_data()
+{
+    QTest::addColumn<int>("value");
+    QTest::addColumn<int>("result");
+
+    QTest::newRow("0") << 0 << 0;
+    QTest::newRow("1") << 1 << 1;
+    QTest::newRow("2") << 2 << 2;
+    QTest::newRow("3") << 3 << 4;
+    QTest::newRow("4") << 4 << 4;
+    QTest::newRow("5") << 5 << 8;
+    QTest::newRow("6") << 6 << 8;
+    QTest::newRow("7") << 7 << 8;
+    QTest::newRow("13") << 13 << 16;
+    QTest::newRow("16") << 16 << 16;
+    QTest::newRow("23") << 23 << 32;
+    QTest::newRow("32") << 32 << 32;
+    QTest::newRow("63") << 63 << 64;
+    QTest::newRow("64") << 64 << 64;
+    QTest::newRow("65") << 65 << 128;
+    QTest::newRow("120") << 120 << 128;
+    QTest::newRow("128") << 128 << 128;
+    QTest::newRow("129") << 129 << 256;
+
+    for (int bit = 8; bit <= 30; ++bit) {
+        int value = (1 << bit);
+        QByteArray str;
+        str = QByteArray::number(value);
+        QTest::newRow(str.constData()) << (value - 23) << value;
+        QTest::newRow(str.constData()) << value << value;
+    }
+}
+
+void tst_QGLPainter::nextPowerOfTwo()
+{
+    QFETCH(int, value);
+    QFETCH(int, result);
+
+    QCOMPARE(QGL::nextPowerOfTwo(value), result);
+    QCOMPARE(QGL::nextPowerOfTwo(QSize(value, 0)), QSize(result, 0));
+    QCOMPARE(QGL::nextPowerOfTwo(QSize(0, value)), QSize(0, result));
 }
 
 QTEST_MAIN(tst_QGLPainter)

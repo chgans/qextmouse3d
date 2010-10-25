@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgllittextureeffect.h"
+#include "qgllittextureeffect_p.h"
 #include "qglabstracteffect_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -50,6 +50,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitTextureEffect class provides a standard effect base class for drawing fragments with a lit texture.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 
     \sa QGLLitDecalTextureEffect, QGLLitModulateTextureEffect
 */
@@ -60,6 +61,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitDecalTextureEffect class provides a standard effect for drawing fragments with a texture decaled over a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -68,6 +70,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitModulateTextureEffect class provides a standard effect for drawing fragments with a texture modulated with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 /*!
@@ -85,18 +88,6 @@ QGLLitTextureEffect::QGLLitTextureEffect
 */
 QGLLitTextureEffect::~QGLLitTextureEffect()
 {
-}
-
-/*!
-    \reimp
-*/
-QList<QGL::VertexAttribute> QGLLitTextureEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    fields += QGL::TextureCoord0;
-    return fields;
 }
 
 #if !defined(QGL_FIXED_FUNCTION_ONLY)

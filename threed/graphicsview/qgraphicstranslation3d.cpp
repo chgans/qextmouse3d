@@ -72,7 +72,7 @@ QT_BEGIN_NAMESPACE
     3D items in QML are typically positioned directly as follows:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         position: Qt.vector3d(0, 5, 10)
     }
@@ -85,7 +85,7 @@ QT_BEGIN_NAMESPACE
     the right of its original position, and then back again:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "chair.3ds" }
         position: Qt.vector3d(0, 5, 10)
         transform: [

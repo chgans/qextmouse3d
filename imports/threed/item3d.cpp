@@ -53,15 +53,15 @@
 #include <QtDeclarative/private/qdeclarativeitem_p.h>
 
 /*!
-    \qmlclass Item3d Item3d
-    \brief The Item3d item encapsulates 3D objects and contains all of the properties and methods needed for simple 3D operations.
+    \qmlclass Item3D Item3D
+    \brief The Item3D item encapsulates 3D objects and contains all of the properties and methods needed for simple 3D operations.
     part of a QML/3d script.
     \since 4.8
     \ingroup qt3d::qml3d
 
     \section1 Simple 3D Object Definition
 
-    The most basic use case for the Item3d class is the creation and display of a 
+    The most basic use case for the Item3D class is the creation and display of a 
     single simple item in the 3D environment.
 
     Many such items within a 3D environment are defined as a single logical component
@@ -71,7 +71,7 @@
     Such an object can easily be defined in QML using the following code:
 
     \code
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "teapot.bez" }
         effect: Effect {}
@@ -87,18 +87,18 @@
     defining items simplifies the resultant code and makes modification of
     the QML easier.
 
-    \section1 Embedding Item3d Objects
+    \section1 Embedding Item3D Objects
 
     Consider the following:
 
     \code
-    Item3d {
+    Item3D {
         id: cup
         mesh:  Mesh { source: "teacup.bez" }
 		effect: Effect {}
 		cullFaces: "CullBackFaces"
 
-        Item3d {
+        Item3D {
             id: saucer
             mesh: Mesh { source: "saucer.bez" }
             cullFaces: "CullBackFaces"
@@ -108,7 +108,7 @@
     }
     \endcode
 
-    This demonstrates the capability of embedding one Item3d within another.  In
+    This demonstrates the capability of embedding one Item3D within another.  In
     this case the \i saucer item is a child of the \i cup item.
 
     All transformations applied to the parent item are also applied to the child, 
@@ -129,13 +129,13 @@
     into a tree like structure.  In this case they may wish to interact with, 
     animate, or otherwise modify individual sub-nodes of a mesh.
 
-    Item3d leverages the existing \bold {Qt Object Model} in order to allow QML/3d users
+    Item3D leverages the existing \bold {Qt Object Model} in order to allow QML/3d users
     this type of control over their 3D items.
 
     Consider the following QML script:
 
     \code
-    Item3d {
+    Item3D {
         id: helicoptor
         mesh:  helicoptorMesh
 		effect: Effect {}
@@ -159,11 +159,11 @@
 			}
 		]
 
-        Item3d {
+        Item3D {
 			id: rotor
 			property bool spin: false				
 			meshNode: "rotorBladesNode"
-			Item3d {meshNode: "rotorHubNode"}
+			Item3D {meshNode: "rotorHubNode"}
             			
 			transform: [
 				Rotation3D {
@@ -219,10 +219,10 @@
 
 QT_BEGIN_NAMESPACE
 
-class Item3dPrivate
+class Item3DPrivate
 {
 public:
-    Item3dPrivate(Item3d *_item)
+    Item3DPrivate(Item3D *_item)
         : item(_item)
         , viewport(0)
         , position(0.0f, 0.0f, 0.0f)
@@ -233,7 +233,7 @@ public:
         , effect(0)
         , light(0)
         , objectPickId(-1)
-        , cullFaces(Item3d::CullDisabled)
+        , cullFaces(Item3D::CullDisabled)
         , _stateGroup(0)
         , inheritEvents(false)
         , isVisible(true)
@@ -241,7 +241,7 @@ public:
     {
     }
 
-    Item3d *item;
+    Item3D *item;
     Viewport *viewport;
     QVector3D position;
     QVector3D pivot;
@@ -251,7 +251,7 @@ public:
     Effect *effect;    
     QGLLightParameters *light;
     int objectPickId;
-    Item3d::CullFaces cullFaces;
+    Item3D::CullFaces cullFaces;
     QDeclarativeStateGroup *states();
     QDeclarativeStateGroup *_stateGroup;
 
@@ -271,9 +271,9 @@ public:
     static int resources_count(QDeclarativeListProperty<QObject> *);
 
     //// children property
-    static Item3d *children_at(QDeclarativeListProperty<Item3d> *, int);
-    static void children_append(QDeclarativeListProperty<Item3d> *, Item3d *);
-    static int children_count(QDeclarativeListProperty<Item3d> *);
+    static Item3D *children_at(QDeclarativeListProperty<Item3D> *, int);
+    static void children_append(QDeclarativeListProperty<Item3D> *, Item3D *);
+    static int children_count(QDeclarativeListProperty<Item3D> *);
 
     // transform property
     static int transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list);
@@ -292,20 +292,20 @@ public:
 };
 
 
-int Item3dPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
+int Item3DPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {  
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         return object->d->transforms.count();
     } else {
-        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
+        qWarning()<<"Warning: could not find Item3D to query for transformation count.";
         return 0;
     }
 }
 
-void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
+void Item3DPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
 {
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     QList<QGraphicsTransform3D *> *ptrans;
     if (object)
     {
@@ -319,47 +319,47 @@ void Item3dPrivate::transform_append(QDeclarativeListProperty<QGraphicsTransform
         }
     }
     else
-        qWarning()<<"Warning: could not find Item3d to add transformation to.";
+        qWarning()<<"Warning: could not find Item3D to add transformation to.";
 }
 
-QGraphicsTransform3D *Item3dPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
+QGraphicsTransform3D *Item3DPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
 {    
-   Item3d *object = qobject_cast<Item3d *>(list->object);
+   Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         return object->d->transforms.at(idx);
     } else {
-        qWarning()<<"Warning: could not find Item3d to query for transformations";
+        qWarning()<<"Warning: could not find Item3D to query for transformations";
         return 0;
     }
     return 0;
 }
 
-void Item3dPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
+void Item3DPrivate::transform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {
 
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         object->d->transforms.clear();
         object->update();
     }
     else
-        qWarning()<<"Warning: could not find Item3d to clear of transformations";
+        qWarning()<<"Warning: could not find Item3D to clear of transformations";
 }
 
-int Item3dPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
+int Item3DPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {  
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         return object->d->pretransforms.count();
     } else {
-        qWarning()<<"Warning: could not find Item3d to query for transformation count.";
+        qWarning()<<"Warning: could not find Item3D to query for transformation count.";
         return 0;
     }
 }
 
-void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
+void Item3DPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransform3D> *list, QGraphicsTransform3D *item)
 {
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     QList<QGraphicsTransform3D *> *ptrans;
     if (object)
     {
@@ -373,46 +373,46 @@ void Item3dPrivate::pretransform_append(QDeclarativeListProperty<QGraphicsTransf
         }
     }
     else
-        qWarning()<<"Warning: could not find Item3d to add transformation to.";
+        qWarning()<<"Warning: could not find Item3D to add transformation to.";
 }
 
-QGraphicsTransform3D *Item3dPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
+QGraphicsTransform3D *Item3DPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
 {    
-   Item3d *object = qobject_cast<Item3d *>(list->object);
+   Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         return object->d->pretransforms.at(idx);
     } else {
-        qWarning()<<"Warning: could not find Item3d to query for transformations";
+        qWarning()<<"Warning: could not find Item3D to query for transformations";
         return 0;
     }
     return 0;
 }
 
-void Item3dPrivate::pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
+void Item3DPrivate::pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {
 
-    Item3d *object = qobject_cast<Item3d *>(list->object);
+    Item3D *object = qobject_cast<Item3D *>(list->object);
     if (object) {
         object->d->pretransforms.clear();
         object->update();
     }
     else
-        qWarning()<<"Warning: could not find Item3d to clear of transformations";
+        qWarning()<<"Warning: could not find Item3D to clear of transformations";
 }
 
 
 
-void Item3dPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
+void Item3DPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
-    Item3d *i = qobject_cast<Item3d *>(o);
+    Item3D *i = qobject_cast<Item3D *>(o);
     if (i) 
-        i->setParent(static_cast<Item3d *>(prop->object));
+        i->setParent(static_cast<Item3D *>(prop->object));
     else
-        o->setParent(static_cast<Item3d *>(prop->object));
+        o->setParent(static_cast<Item3D *>(prop->object));
 }
 
 
-QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, int index)
+QObject *Item3DPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, int index)
 {
     QObjectList children = prop->object->children();
     if (index < children.count())
@@ -421,34 +421,34 @@ QObject *Item3dPrivate::resources_at(QDeclarativeListProperty<QObject> *prop, in
         return 0;
 }
 
-void Item3dPrivate::resources_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
+void Item3DPrivate::resources_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
     o->setParent(prop->object);
 }
 
-int Item3dPrivate::resources_count(QDeclarativeListProperty<QObject> *prop)
+int Item3DPrivate::resources_count(QDeclarativeListProperty<QObject> *prop)
 {
     return prop->object->children().count();
 }
 
-Item3d *Item3dPrivate::children_at(QDeclarativeListProperty<Item3d> *prop, int index)
+Item3D *Item3DPrivate::children_at(QDeclarativeListProperty<Item3D> *prop, int index)
 {
-    QObjectList thechildren = static_cast<Item3d*>(prop->object)->children();
+    QObjectList thechildren = static_cast<Item3D*>(prop->object)->children();
 
     if (index < thechildren.count())
-        return qobject_cast<Item3d *>(thechildren.at(index));
+        return qobject_cast<Item3D *>(thechildren.at(index));
     else
         return 0;
 }
 
-void Item3dPrivate::children_append(QDeclarativeListProperty<Item3d> *prop, Item3d *i)
+void Item3DPrivate::children_append(QDeclarativeListProperty<Item3D> *prop, Item3D *i)
 {
     if (i)
     {
         i->setParent(static_cast<QObject*>(prop->object));
 
         //Because this is now a static function, we can no longer apply the following :-(
-        //however it is still carried out in the "initialize" function of Item3d.
+        //however it is still carried out in the "initialize" function of Item3D.
         /*
         if (inheritEvents) {
             QObject::connect(i, SIGNAL(clicked()), item, SIGNAL(clicked()));
@@ -462,13 +462,13 @@ void Item3dPrivate::children_append(QDeclarativeListProperty<Item3d> *prop, Item
     }
 }
 
-int Item3dPrivate::children_count(QDeclarativeListProperty<Item3d> *prop)
+int Item3DPrivate::children_count(QDeclarativeListProperty<Item3D> *prop)
 {
-    return static_cast<Item3d*>(prop->object)->children().count();
+    return static_cast<Item3D*>(prop->object)->children().count();
 }
 
 
-QDeclarativeStateGroup *Item3dPrivate::states()
+QDeclarativeStateGroup *Item3DPrivate::states()
 {
     if (!_stateGroup) {
         _stateGroup = new QDeclarativeStateGroup(item);
@@ -482,20 +482,20 @@ QDeclarativeStateGroup *Item3dPrivate::states()
 
 /*!
     \internal
-    Constructs an \l Item3d with the default properties and
+    Constructs an \l Item3D with the default properties and
     attaches it to \a parent.
 */
-Item3d::Item3d(QObject *parent)
+Item3D::Item3D(QObject *parent)
     : QObject(parent)
 {
-    d = new Item3dPrivate(this);
+    d = new Item3DPrivate(this);
 }
 
 /*!
     \internal
-    Destroys this \l Item3d object.
+    Destroys this \l Item3D object.
 */
-Item3d::~Item3d()
+Item3D::~Item3D()
 {
     delete d;
 }
@@ -503,7 +503,7 @@ Item3d::~Item3d()
 
 
 /*!
-    \qmlproperty vector3D Item3d::position
+    \qmlproperty vector3D Item3D::position
 
     The position in 3D space of this item.  The default value for this
     property is (0, 0, 0).
@@ -511,12 +511,12 @@ Item3d::~Item3d()
     \sa x, y, z
 */
 
-QVector3D Item3d::position() const
+QVector3D Item3D::position() const
 {
     return d->position;
 }
 
-void Item3d::setPosition(const QVector3D& value)
+void Item3D::setPosition(const QVector3D& value)
 {
     d->position = value;
     emit positionChanged();
@@ -524,7 +524,7 @@ void Item3d::setPosition(const QVector3D& value)
 }
 
 /*!
-    \qmlproperty real Item3d::x
+    \qmlproperty real Item3D::x
 
     The x position of this item in 3D space.  The default value for this
     property is 0.
@@ -532,12 +532,12 @@ void Item3d::setPosition(const QVector3D& value)
     \sa position, y, z
 */
 
-qreal Item3d::x() const
+qreal Item3D::x() const
 {
     return d->position.x();
 }
 
-void Item3d::setX(qreal value)
+void Item3D::setX(qreal value)
 {
     d->position.setX(value);
     emit positionChanged();
@@ -545,7 +545,7 @@ void Item3d::setX(qreal value)
 }
 
 /*!
-    \qmlproperty real Item3d::y
+    \qmlproperty real Item3D::y
 
     The y position of this item in 3D space.  The default value for this
     property is 0.
@@ -553,12 +553,12 @@ void Item3d::setX(qreal value)
     \sa position, x, z
 */
 
-qreal Item3d::y() const
+qreal Item3D::y() const
 {
     return d->position.y();
 }
 
-void Item3d::setY(qreal value)
+void Item3D::setY(qreal value)
 {
     d->position.setY(value);
     emit positionChanged();
@@ -566,7 +566,7 @@ void Item3d::setY(qreal value)
 }
 
 /*!
-    \qmlproperty real Item3d::z
+    \qmlproperty real Item3D::z
 
     The z position of this item in 3D space.  The default value for
     this property is 0.
@@ -574,12 +574,12 @@ void Item3d::setY(qreal value)
     \sa position, x, y
 */
 
-qreal Item3d::z() const
+qreal Item3D::z() const
 {
     return d->position.z();
 }
 
-void Item3d::setZ(qreal value)
+void Item3D::setZ(qreal value)
 {
     d->position.setZ(value);
     emit positionChanged();
@@ -587,21 +587,21 @@ void Item3d::setZ(qreal value)
 }
 
 /*!
-    \qmlproperty real Item3d::scale
+    \qmlproperty real Item3D::scale
 
     The scaling factor to apply to the item after the transformations
-    from the Item3d::transform property.  The default value for this
+    from the Item3D::transform property.  The default value for this
     property is 1.
 
     \sa transform
 */
 
-qreal Item3d::scale() const
+qreal Item3D::scale() const
 {
     return d->scale;
 }
 
-void Item3d::setScale(qreal value)
+void Item3D::setScale(qreal value)
 {
     d->scale = value;
     emit scaleChanged();
@@ -609,17 +609,17 @@ void Item3d::setScale(qreal value)
 }
 
 /*!
-    \qmlproperty list<Transform> Item3d::transform
+    \qmlproperty list<Transform> Item3D::transform
 
     Generally objects in 3D space will have undergone some number
     of 3D transformation prior to display.  Examples of such transformations
     include rotations about the x, y, and z axes, translation, and so on.
 
-    Each Item3d maintains a list of transforms to apply to it through this 
+    Each Item3D maintains a list of transforms to apply to it through this 
     property.  In scripting terms a transform can be applied as follows:
 
     \code
-    Item3d {
+    Item3D {
         id: teapot
         mesh: Mesh { source: "teapot.bez" }
         transform: [
@@ -649,14 +649,14 @@ void Item3d::setScale(qreal value)
 */
 
 
-QDeclarativeListProperty<QGraphicsTransform3D> Item3d::transform()
+QDeclarativeListProperty<QGraphicsTransform3D> Item3D::transform()
 {
     return QDeclarativeListProperty<QGraphicsTransform3D>(this, 0, d->transform_append, d->transform_count,
                                                d->transform_at, d->transform_clear);
 }
 
 /*!
-    \qmlproperty list<Transform> Item3d::pretransform
+    \qmlproperty list<Transform> Item3D::pretransform
 
     The transformations to apply before all others.
 
@@ -675,23 +675,23 @@ QDeclarativeListProperty<QGraphicsTransform3D> Item3d::transform()
     \sa transform, scale, position
 */
 
-QDeclarativeListProperty<QGraphicsTransform3D> Item3d::pretransform()
+QDeclarativeListProperty<QGraphicsTransform3D> Item3D::pretransform()
 {
     return QDeclarativeListProperty<QGraphicsTransform3D>(this, 0, d->pretransform_append, d->pretransform_count,
                                                d->pretransform_at, d->pretransform_clear);
 }
 
 /*!
-    \qmlproperty bool Item3d::inheritEvents
+    \qmlproperty bool Item3D::inheritEvents
 
     Users are able to interact with 3d items in a scene through (for example) the
-    use of the mouse.  These, and other, Qt events can be captured by an \l Item3d using the
+    use of the mouse.  These, and other, Qt events can be captured by an \l Item3D using the
     same underlying QObject architecture shared by all of Qt.
 
     Often a user will only want an item to capture mouse events for itself, leaving
     child items to handle their mouse events locally.  Under many circumstances, however, it 
     is necessary for a parent object to collect all mouse events for itself and its child 
-    items.  Usually this inheritance of events is only defined at initialisation for an \l Item3d
+    items.  Usually this inheritance of events is only defined at initialisation for an \l Item3D
     
     The inheritEvents property, however, is a simple boolean property which provides a mechanism
     for both initialisation time and programmatic modification of this.
@@ -702,12 +702,12 @@ QDeclarativeListProperty<QGraphicsTransform3D> Item3d::pretransform()
 
     The default value for this property is false.
 */
-bool Item3d::inheritEvents() const
+bool Item3D::inheritEvents() const
 {
     return d->inheritEvents;
 }
 
-void Item3d::setInheritEvents(bool inherit)
+void Item3D::setInheritEvents(bool inherit)
 {
     d->inheritEvents = inherit;
 
@@ -716,7 +716,7 @@ void Item3d::setInheritEvents(bool inherit)
     if (inherit)
     {
         foreach (QObject *child, list) {
-		    Item3d *subItem =qobject_cast<Item3d *>(child);	
+		    Item3D *subItem =qobject_cast<Item3D *>(child);	
             if (subItem)
             {   
                 // Proxy the mouse event signals to the parent so that
@@ -733,7 +733,7 @@ void Item3d::setInheritEvents(bool inherit)
     else
     {
         foreach (QObject *child, list) {
-		    Item3d *subItem =qobject_cast<Item3d *>(child);	
+		    Item3D *subItem =qobject_cast<Item3D *>(child);	
             if (subItem)
             {   
                 // Proxy the mouse event signals to the parent so that
@@ -750,7 +750,7 @@ void Item3d::setInheritEvents(bool inherit)
 }
 
 /*!
-    \qmlproperty Mesh Item3d::mesh
+    \qmlproperty Mesh Item3D::mesh
 
     Objects in most 3D environments are almost invariably defined as meshes - sets of 
     vertices which when linked as polygons form a recognisable 3D object.  Qt3d currently 
@@ -758,7 +758,7 @@ void Item3d::setInheritEvents(bool inherit)
     \i {(.bez)}, and \i {.3ds} files.
 
     These meshes are abstracted into the \l Mesh class, which is defined for
-    an \l Item3d through this property.    
+    an \l Item3D through this property.    
 
     The default value for this property is null, so a mesh must be defined in
     order for the item to be displayed
@@ -766,12 +766,12 @@ void Item3d::setInheritEvents(bool inherit)
     \sa effect
 */
 
-Mesh *Item3d::mesh() const
+Mesh *Item3D::mesh() const
 {
     return d->mesh;
 }
 
-void Item3d::setMesh(Mesh *value)
+void Item3D::setMesh(Mesh *value)
 {
     if (d->mesh) {
         if (!d->mesh->deref())
@@ -794,7 +794,7 @@ void Item3d::setMesh(Mesh *value)
 }
 
 /*!
-    \qmlproperty Effect Item3d::effect
+    \qmlproperty Effect Item3D::effect
 
     QML 3D items support the use of effects for modifying the display
     of items - texture effects, fog effects, material effects, and so on.
@@ -806,12 +806,12 @@ void Item3d::setMesh(Mesh *value)
 
     \sa Effect, mesh
 */
-Effect *Item3d::effect() const
+Effect *Item3D::effect() const
 {
     return d->effect;
 }
 
-void Item3d::setEffect(Effect *value)
+void Item3D::setEffect(Effect *value)
 {
     if (d->effect == value)
         return;
@@ -825,7 +825,7 @@ void Item3d::setEffect(Effect *value)
 }
 
 /*!
-    \qmlproperty Light Item3d::light
+    \qmlproperty Light Item3D::light
 
     This property defines an item-specific light that will be used
     intead of Viewport::light for rendering this item and its children
@@ -834,12 +834,12 @@ void Item3d::setEffect(Effect *value)
     \sa Viewport::light
 */
 
-QGLLightParameters *Item3d::light() const
+QGLLightParameters *Item3D::light() const
 {
     return d->light;
 }
 
-void Item3d::setLight(QGLLightParameters *value)
+void Item3D::setLight(QGLLightParameters *value)
 {
     if (d->light != value) {
         if (d->light) {
@@ -857,8 +857,8 @@ void Item3d::setLight(QGLLightParameters *value)
 }
 
 /*!
-    \qmlproperty list<Item3d> Item3d::children
-    \qmlproperty list<Object> Item3d::resources
+    \qmlproperty list<Item3D> Item3D::children
+    \qmlproperty list<Object> Item3D::resources
 
     The children property contains a list of all 3D child items for
     this item.  This provides logical grouping of items in a 3D scene.
@@ -866,7 +866,7 @@ void Item3d::setLight(QGLLightParameters *value)
     child items.
 
     The resources property holds all other children that do not
-    directly inherit from Item3d, such as effects, meshes, and
+    directly inherit from Item3D, such as effects, meshes, and
     other supporting objects.
 
     Normally it isn't necessary to assign to the children or resources
@@ -875,40 +875,40 @@ void Item3d::setLight(QGLLightParameters *value)
 
     \sa transform
 */
-QDeclarativeListProperty<Item3d> Item3d::fxChildren()
+QDeclarativeListProperty<Item3D> Item3D::fxChildren()
 {
-    return QDeclarativeListProperty<Item3d>(this, 0, Item3dPrivate::children_append,
-                                                     Item3dPrivate::children_count, 
-                                                     Item3dPrivate::children_at); 
+    return QDeclarativeListProperty<Item3D>(this, 0, Item3DPrivate::children_append,
+                                                     Item3DPrivate::children_count, 
+                                                     Item3DPrivate::children_at); 
 }
 
-QDeclarativeListProperty<QObject> Item3d::resources()
+QDeclarativeListProperty<QObject> Item3D::resources()
 {
-    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::resources_append, 
-                                             Item3dPrivate::resources_count, 
-                                             Item3dPrivate::resources_at); 
+    return QDeclarativeListProperty<QObject>(this, 0, Item3DPrivate::resources_append, 
+                                             Item3DPrivate::resources_count, 
+                                             Item3DPrivate::resources_at); 
 }
 
 
 
 /*!
-    \qmlproperty list<Object> Item3d::data
+    \qmlproperty list<Object> Item3D::data
 
-    This property exists to allow future expansion of the Item3d class to
+    This property exists to allow future expansion of the Item3D class to
     include additional data and resources.  Currently there is no underlying
     implementation for this.
 */
-QDeclarativeListProperty<QObject> Item3d::data() 
+QDeclarativeListProperty<QObject> Item3D::data() 
 {
-    return QDeclarativeListProperty<QObject>(this, 0, Item3dPrivate::data_append);
+    return QDeclarativeListProperty<QObject>(this, 0, Item3DPrivate::data_append);
 }
 
 /*!
-    \qmlproperty list<State> Item3d::states
+    \qmlproperty list<State> Item3D::states
 
-    QML allows users to define any number of states for objects, including \l Item3d objects.
+    QML allows users to define any number of states for objects, including \l Item3D objects.
     These states are arbitrarily assigned and can be used to represent anything the user desires.
-    An \l Item3d representing a door, for example, may have an \i "open" and \i "closed" state.
+    An \l Item3D representing a door, for example, may have an \i "open" and \i "closed" state.
 
     States can be connected by transitions, which define an animation or other transitional change
     which occurs during the change from one state to another.  In our open and closed door state,
@@ -919,7 +919,7 @@ QDeclarativeListProperty<QObject> Item3d::data()
 
     \sa state, transitions
 */
-QDeclarativeListProperty<QDeclarativeState> Item3d::states()
+QDeclarativeListProperty<QDeclarativeState> Item3D::states()
 {    
     return d->states()->statesProperty();
 }
@@ -930,7 +930,7 @@ QDeclarativeListProperty<QDeclarativeState> Item3d::states()
     string.  This function allows users to do so by providing a QString name, and returning
     a corresponding QDeclarativeState.
 */
-QDeclarativeState *Item3d::findState(const QString &name) const
+QDeclarativeState *Item3D::findState(const QString &name) const
 {
     if (!d->_stateGroup)
         return 0;
@@ -939,7 +939,7 @@ QDeclarativeState *Item3d::findState(const QString &name) const
 }
 
 /*!
-    \qmlproperty list<Transition> Item3d::transitions
+    \qmlproperty list<Transition> Item3D::transitions
 
     When an object in QML moves from one state to another its behavior during this 
     change can be defined using transitions.  These transitions may define changes to one or
@@ -953,16 +953,16 @@ QDeclarativeState *Item3d::findState(const QString &name) const
     \sa state, states
     
 */
-QDeclarativeListProperty<QDeclarativeTransition> Item3d::transitions()
+QDeclarativeListProperty<QDeclarativeTransition> Item3D::transitions()
 {    
     return d->states()->transitionsProperty();
 }
 
 
 /*!
-    \qmlproperty string Item3d::state
+    \qmlproperty string Item3D::state
 
-    This property describes the current state of the \l Item3d as defined in the list of
+    This property describes the current state of the \l Item3D as defined in the list of
     allowable states for this item.
 
     By default an item's state is undefined and irrelevant.  It is only when the states property 
@@ -971,7 +971,7 @@ QDeclarativeListProperty<QDeclarativeTransition> Item3d::transitions()
     \sa states
 */
 
-QString Item3d::state() const
+QString Item3D::state() const
 {
     if (!d->_stateGroup)
         return QString();
@@ -979,14 +979,14 @@ QString Item3d::state() const
         return d->_stateGroup->state();
 }
 
-void Item3d::setState(const QString &state)
+void Item3D::setState(const QString &state)
 {
     d->states()->setState(state);
 }
 
 
 /*!
-    \qmlproperty enumeration Item3d::cullFaces
+    \qmlproperty enumeration Item3D::cullFaces
 
     This property defines the culling method to be use on fragments
     within the item's mesh.  Culling of an item in 3D space can be
@@ -1000,12 +1000,12 @@ void Item3d::setState(const QString &state)
     \o CullClockwise Cull faces based on clockwise winding of vertices.
     \endlist
 */
-Item3d::CullFaces Item3d::cullFaces() const
+Item3D::CullFaces Item3D::cullFaces() const
 {
     return d->cullFaces;
 }
 
-void Item3d::setCullFaces(Item3d::CullFaces value)
+void Item3D::setCullFaces(Item3D::CullFaces value)
 {
     if (d->cullFaces != value) {
         d->cullFaces = value;
@@ -1014,17 +1014,17 @@ void Item3d::setCullFaces(Item3d::CullFaces value)
 }
 
 /*!
-    \qmlproperty string Item3d::name
+    \qmlproperty string Item3D::name
 
     A simple string name for the object.  This is useful for debugging, but also as a
     meaningful way of describing items in a manner which can be easily displayed/printed.
 */
-QString Item3d::name() const
+QString Item3D::name() const
 {
     return d->name;
 }
 
-void Item3d::setName(QString nameString)
+void Item3D::setName(QString nameString)
 {
     d->name = nameString;
     if (objectName().isEmpty())
@@ -1034,7 +1034,7 @@ void Item3d::setName(QString nameString)
 /*!
     \internal
     This function allows the user to get a scene object from the underlying mesh which forms
-    an \l Item3d.  
+    an \l Item3D.  
 
     By passing the \a type of node (defined as a \l QGLSceneNode::Type enumeration), along
     with the \a name of the scene object, the user can access the corresponding \l QGLSceneNode
@@ -1042,14 +1042,14 @@ void Item3d::setName(QString nameString)
 
     Failure to find the scene object will return \i null.
 */
-QGLSceneNode *Item3d::getSceneObject(QGLSceneNode::Type type, const QString& name) const
+QGLSceneNode *Item3D::getSceneObject(QGLSceneNode::Type type, const QString& name) const
 {
     return mesh()->getSceneObject(type, name);
 }
 
 /*!
     \internal
-    Performs the actual drawing of the Item3d using \a painter.
+    Performs the actual drawing of the Item3D using \a painter.
 
     If the item is set to object picking mode this includes all of the infrastructure needed
     to support picking of objects.
@@ -1070,7 +1070,7 @@ QGLSceneNode *Item3d::getSceneObject(QGLSceneNode::Type type, const QString& nam
     \sa drawItem()
 */
 
-void Item3d::draw(QGLPainter *painter)
+void Item3D::draw(QGLPainter *painter)
 {
     int prevId = painter->objectPickId();
     painter->setObjectPickId(d->objectPickId);
@@ -1145,7 +1145,7 @@ void Item3d::draw(QGLPainter *painter)
     //Drawing
     if (d->isVisible ) drawItem(painter);
     foreach (QObject *child, list) {
-        Item3d *item = qobject_cast<Item3d *>(child);
+        Item3D *item = qobject_cast<Item3D *>(child);
         if (item)
             item->draw(painter);
     }
@@ -1176,11 +1176,11 @@ void Item3d::draw(QGLPainter *painter)
     During the initialisation process objects are registered as being \i pickable (ie. able
     to be clicked on with the mouse.
 
-    Additionally, in the case of \l Item3d objects which refer to sub-nodes of a mesh, this
+    Additionally, in the case of \l Item3D objects which refer to sub-nodes of a mesh, this
     function performs all of the splitting of meshes into sub-branches ready for local
     control by the item.
 */
-void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
+void Item3D::initialize(Viewport *viewport, QGLPainter *painter)
 {
     if (d->isInitialized) return;
 
@@ -1200,7 +1200,7 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
 
     QObjectList list = QObject::children();
     foreach (QObject *child, list) {
-        Item3d *item = qobject_cast<Item3d *>(child);
+        Item3D *item = qobject_cast<Item3D *>(child);
         if (item) {   
             //Event inheritance is generally only declared at initialization, but can also be done at runtime
             //if the user wishes (though not recommended).
@@ -1227,20 +1227,20 @@ void Item3d::initialize(Viewport *viewport, QGLPainter *painter)
 
 /*!
     \internal
-    Each \l Item3d which has a mesh associated with it contains an index value into that \l Mesh
+    Each \l Item3D which has a mesh associated with it contains an index value into that \l Mesh
     object which indicates which \i "branch" of the scene is being drawn by the item.
 
-    This is generally relevant when \l Mesh objects have been split across a number of \l Item3d
+    This is generally relevant when \l Mesh objects have been split across a number of \l Item3D
     objects at specific mesh nodes.  In this case the mesh will have a number of drawable branches, 
     only one of which will corrsepond to the item currently being drawn.
 
-    These branch IDs are set up at initialisation of the \l Item3d.
+    These branch IDs are set up at initialisation of the \l Item3D.
 
     Returns the ID number of the main branch for this item.
 
     \sa initialize()
 */
-int Item3d::mainBranchId() const
+int Item3D::mainBranchId() const
 {
     return d->mainBranchId;
 }
@@ -1250,7 +1250,7 @@ int Item3d::mainBranchId() const
     \internal
     Sets the ID number of the main scene branch in the item to \a objectID.
 */
-void Item3d::setMainBranchId(int objectID)
+void Item3D::setMainBranchId(int objectID)
 {
     d->mainBranchId = objectID;
 }
@@ -1258,7 +1258,7 @@ void Item3d::setMainBranchId(int objectID)
 /*!
     \internal
 */
-void Item3d::classBegin()
+void Item3D::classBegin()
 {
     d->states()->classBegin();
 }
@@ -1266,7 +1266,7 @@ void Item3d::classBegin()
 /*!
     \internal
 */
-void Item3d::componentComplete()
+void Item3D::componentComplete()
 {
     d->states()->componentComplete();
 }
@@ -1274,9 +1274,9 @@ void Item3d::componentComplete()
 /*!
     \internal
     The \c drawItem function performs the actual drawing of the mesh branch which corresponds
-    to the section of the mesh being drawn by the \l Item3d to a specific \a painter.
+    to the section of the mesh being drawn by the \l Item3D to a specific \a painter.
 */
-void Item3d::drawItem(QGLPainter *painter)
+void Item3D::drawItem(QGLPainter *painter)
 {
     if (d->mesh)
         d->mesh->draw(painter, d->mainBranchId);
@@ -1288,7 +1288,7 @@ void Item3d::drawItem(QGLPainter *painter)
 
     Returns the boolean value of the regular QObject::event() function.oo
 */
-bool Item3d::event(QEvent *e)
+bool Item3D::event(QEvent *e)
 {
     // Convert the raw event into a signal representing the user's action.
     if (e->type() == QEvent::MouseButtonPress) {
@@ -1313,21 +1313,21 @@ bool Item3d::event(QEvent *e)
 }
 
 /*!
-    \qmlproperty string Item3d::meshNode
+    \qmlproperty string Item3D::meshNode
 
     This property is a simple string which refers to the node in the \l Mesh object which
-    is associated with this \l Item3d.
+    is associated with this \l Item3D.
 
     \sa mesh
 */
-QString Item3d::meshNode() const
+QString Item3D::meshNode() const
 {
     return d->meshNode;
 }
 
-void Item3d::setMeshNode(const QString &node)
+void Item3D::setMeshNode(const QString &node)
 {
-    //the actual instanciation of the node as the mesh itself is undertaken in the initialize function.
+    //the actual instantiation of the node as the mesh itself is undertaken in the initialize function.
     d->meshNode = node;
 }
 
@@ -1335,39 +1335,40 @@ void Item3d::setMeshNode(const QString &node)
     \internal
     Update the \l Viewport with which this item is associated.
 */
-void Item3d::update()
+void Item3D::update()
 {
     if (d->viewport)
         d->viewport->update3d();
 }
 
 /*!
-    \qmlproperty bool Item3d::isVisible
+    \qmlproperty bool Item3D::isVisible
 
-    A simple boolean property indicating whether the item is visible (and so should be 
-    drawn), or not visible.
+    A simple boolean property indicating whether the item is visible (and so
+    should be drawn), or not visible.  The default value for this property is
+    true.
 
     \sa mesh
 */
-bool Item3d::isVisible() const
+bool Item3D::isVisible() const
 {
     return d->isVisible;
 }
 
-void Item3d::setIsVisible(bool visibility)
+void Item3D::setIsVisible(bool visibility)
 {
     d->isVisible = visibility;
 }
 
 /*!
-  \qmlsignal Item3d::onClicked()
+  \qmlsignal Item3D::onClicked()
 
   This signal is emitted when the item is clicked.  Picking must be enabled for this to have any effect.
 */
 
 
 /*!
-  \qmlsignal Item3d::onDoubleClicked()
+  \qmlsignal Item3D::onDoubleClicked()
 
   This signal is emitted when the item is double clicked.  Picking must be enabled for this to have any effect.
 
@@ -1375,7 +1376,7 @@ void Item3d::setIsVisible(bool visibility)
 
 
 /*!
-  \qmlsignal Item3d::onPressed()
+  \qmlsignal Item3D::onPressed()
 
   This signal is emitted when the item detects a mouse-button-down event.  Picking must be enabled
   for this to have any effect.
@@ -1383,7 +1384,7 @@ void Item3d::setIsVisible(bool visibility)
 
 
 /*!
-  \qmlsignal Item3d::onReleased()
+  \qmlsignal Item3D::onReleased()
 
   This signal is emitted when the item detects a mouse-button-released event.  Picking must be enabled
   for this to have any effect.
@@ -1391,7 +1392,7 @@ void Item3d::setIsVisible(bool visibility)
 
 
 /*!
-  \qmlsignal Item3d::onHoverEnter()
+  \qmlsignal Item3D::onHoverEnter()
 
   This signal is emitted when a mouseover of the item is detected.  It relies on object picking to be
   of use.
@@ -1399,7 +1400,7 @@ void Item3d::setIsVisible(bool visibility)
 
 
 /*!
-  \qmlsignal Item3d::onHoverLeave()
+  \qmlsignal Item3D::onHoverLeave()
 
   This signal is emitted when the mouseover of the item ceases.  It relies on object picking to be
   used.

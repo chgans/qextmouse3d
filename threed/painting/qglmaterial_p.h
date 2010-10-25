@@ -54,18 +54,16 @@
 //
 
 #include "qglmaterial.h"
-#include <QtCore/private/qobject_p.h>
 #include <QtCore/qmap.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QGLMaterialPrivate : public QObjectPrivate
+class QGLMaterialPrivate
 {
-    Q_DECLARE_PUBLIC(QGLMaterial)
 public:
-    explicit QGLMaterialPrivate(int version = QObjectPrivateVersion);
+    explicit QGLMaterialPrivate();
 
     QColor basicColor;
     QColor ambientColor;

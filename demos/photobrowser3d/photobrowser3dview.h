@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt scene graph research project.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -72,6 +72,7 @@ signals:
 protected:
     void earlyPaintGL(QGLPainter *);
     void paintGL(QGLPainter *);
+    void resizeGL(int w, int h);
     void wheelEvent(QWheelEvent *e);
     void keyPressEvent(QKeyEvent *e);
     void closeEvent(QCloseEvent *e);
@@ -80,8 +81,6 @@ private slots:
     void initialise();
     void zoomImage();
     void pickableDirty();
-    void stateEnter();
-    void stateExit();
     void waitForExit();
     void goPan();
 private:
@@ -107,6 +106,7 @@ private:
     qreal m_displaySize;
     bool m_done;
     bool m_closing;
+    bool m_updateRequired;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H

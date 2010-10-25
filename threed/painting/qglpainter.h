@@ -49,8 +49,8 @@
 #include <QtGui/qvector4d.h>
 #include <QtGui/qmatrix4x4.h>
 #include "qbox3d.h"
-#include "qglfunctions.h"
-#include "qglvertexbuffer.h"
+#include "qopenglfunctions.h"
+#include "qglvertexbundle.h"
 #include "qglindexbuffer.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
@@ -79,19 +79,19 @@ class QGLSceneNode;
 class QGLRenderSequencer;
 class QGLAbstractSurface;
 
-class Q_QT3D_EXPORT QGLPainter : public QGLFunctions
+class Q_QT3D_EXPORT QGLPainter : public QOpenGLFunctions
 {
 public:
     QGLPainter();
     explicit QGLPainter(const QGLContext *context);
-    explicit QGLPainter(QPaintDevice *device);
+    explicit QGLPainter(QGLWidget *widget);
     explicit QGLPainter(QPainter *painter);
     explicit QGLPainter(QGLAbstractSurface *surface);
     virtual ~QGLPainter();
 
     bool begin();
     bool begin(const QGLContext *context);
-    bool begin(QPaintDevice *device);
+    bool begin(QGLWidget *widget);
     bool begin(QPainter *painter);
     bool begin(QGLAbstractSurface *surface);
     bool end();
@@ -152,9 +152,7 @@ public:
 
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
-    void setVertexBuffer(const QGLVertexBuffer& buffer);
-
-    void setCommonNormal(const QVector3D& value);
+    void setVertexBundle(const QGLVertexBundle& buffer);
 
     void update();
     void updateFixedFunction(QGLPainter::Updates updates);
@@ -177,6 +175,14 @@ public:
     void setMainLight
         (const QGLLightParameters *parameters, const QMatrix4x4& transform);
     QMatrix4x4 mainLightTransform() const;
+
+    int addLight(const QGLLightParameters *parameters);
+    int addLight(const QGLLightParameters *parameters, const QMatrix4x4 &transform);
+    void removeLight(int lightId);
+
+    int maximumLightId() const;
+    const QGLLightParameters *light(int lightId) const;
+    QMatrix4x4 lightTransform(int lightId) const;
 
     const QGLMaterial *faceMaterial(QGL::Face face) const;
     void setFaceMaterial(QGL::Face face, const QGLMaterial *value);
@@ -201,10 +207,6 @@ private:
     QGLPainterPrivate *d_func() const { return d_ptr; }
 
     friend class QGLAbstractEffect;
-
-#ifndef QT_NO_DEBUG
-    void checkRequiredFields();
-#endif
 
     bool begin(const QGLContext *context, QGLAbstractSurface *surface,
                bool destroySurface = true);

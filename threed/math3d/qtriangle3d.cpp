@@ -41,204 +41,191 @@
 
 #include "qtriangle3d.h"
 #include <QtGui/qmatrix4x4.h>
+#include <QtCore/qnumeric.h>
+
+QT_BEGIN_NAMESPACE
 
 /*!
-  \class QTriangle3D
-  \brief The QTriangle3D class models 3 points in 3D space.
-  \since 4.8
-  \ingroup qt3d
-  \ingroup qt3d::math
+    \class QTriangle3D
+    \brief The QTriangle3D class represents a triangle as three points in 3D space.
+    \since 4.8
+    \ingroup qt3d
+    \ingroup qt3d::math
 
-  A triangle is defined by 3 points in 3D space.  Since any 3 points define a plane,
-  the triangle can be thought of as defining a plane, and forming a geometric region
-  in that plane.
+    A triangle is defined by 3 points in 3D space.  Since any 3 points define
+    a plane, the triangle can be thought of as defining a plane, and forming a
+    geometric region in that plane.
+    
+    If you need a simple plane, with no particular geometry, then
+    QPlane3D is a more compact and mathematically sufficient class.
+    
+    The three points are labelled p(), q() and r() for consistency with
+    textbook treatments.  It is recommended that the points be supplied
+    in counter-clockwise order for correct orientation of the
+    triangle's plane().
 
-  If a simple plane, with no particular geometry is required the QPlane3D class is a
-  more compact and mathematically sufficient definition of a plane.
-
-  The three points are labelled P, Q and R for consistency with textbook treatments.
-  For compatibility with counter-clockwise winding on 3D rendering systems, the three
-  points should be thought of as producing an "outward facing" triangle, when P, Q
-  and R are counter-clockwise vertices.
-
-  The class provides a default constructor which produces a null triangle; and also
-  a constructor taking initial assignments for P, Q and R.  The three defining points
-  can be individually read or set.
-
-  The width() function simply returns the length of P - Q, the base of the triangle
-  (given its counter-clockwise winding), while the height() function returns the
-  distance of the point R from the line PQ.  See the QLine3D class for definition of
-  the distance from a line.
-
-  \image triangle3d-dimensions.png
-
-  A null triangle is one where all the three vertices P, Q and R are (0, 0, 0).  Test
-  for this condition withe the isNull() function.
-
-  A degenerate triangle is one with an area of zero.  This implies that either the
-  width or the height is zero.  Apart from the case where at least two of P, Q and R
-  are equal, the triangle is also degenerate if P, Q and R lie on the same line.
-  A null triangle is a special case of a degenerate triangle.
-
- */
-
-/*!
-  \fn QTriangle3D::QTriangle3D()
-  Construct a default triangle which lies in the x-z plane, and has P at the origin,
-  Q at x = 1, y = 0; and R at x = 0, y = 1.
- */
-
-/*!
-  \fn QTriangle3D::QTriangle3D(const QVector3D &p, const QVector3D &q, const QVector3D &r)
-  Construct a triangle with the supplied \a p, \a q and \a r vertices.
- */
-
-/*!
-  \fn QVector3D QTriangle3D::p() const
-  Returns the value of the P vertex on the triangle.
- */
-
-/*!
-  \fn void QTriangle3D::setP(const QVector3D &point)
-  Sets the value of the P vertex on the triangle to \a point.
- */
-
-
-/*!
-  \fn QVector3D QTriangle3D::q() const
-  Returns the value of the Q vertex on the triangle.
- */
-
-/*!
-  \fn void QTriangle3D::setQ(const QVector3D &point)
-  Sets the value of the Q vertex on the triangle \a point.
- */
-
-
-/*!
-  \fn QVector3D QTriangle3D::r() const
-  Returns the value of the R vertex on the triangle.
- */
-
-/*!
-  \fn void QTriangle3D::setR(const QVector3D &point)
-  Sets the value of the R vertex on the triangle \a point.
- */
-
-/*!
-  \fn qreal QTriangle3D::width() const
-  Returns the width of the triangle.
-  This is the distance from P to Q.
- */
-
-/*!
-  \fn qreal QTriangle3D::height() const
-  Returns the height of the triangle.  This is the distance from the point R,
-  to the line P-Q.  Here distance has the same definition as for QLine3D: the minimum
-  distance of R from the P-Q, or equivalently, the length of a line perpendicular
-  to the line P-Q which passes through R.
- */
-
-/*!
-  \fn qreal QTriangle3D::area() const
-  Returns the area of the triangle.  This is calculated from the formulae
-  \c {width() * height() * 0.5f}.
+    \sa QPlane3D
 */
 
 /*!
-  \fn bool QTriangle3D::isDegenerate() const
-  Returns true if the triangle is degenerate, that is if its area is zero.
+    \fn QTriangle3D::QTriangle3D()
 
-  A degenerate triangle cannot contain any point or intersect with any line.
- */
-
-/*!
-  \fn bool QTriangle3D::isNull() const
-  Returns true if the triangle is null, that is if its vertices all coincide.  In this
-  case width, height and area are all zero.  A null triangle is a special case of a
-  degenerate triangle, in the case where it collapses to a point.
- */
+    Constructs a default triangle which lies in the x-z plane,
+    with the three vertices (0, 0, 0), (1, 0, 0), and (0, 1, 0).
+*/
 
 /*!
-  \fn QPlane3D QTriangle3D::plane() const
-  Returns the plane in which the triangle lies.
- */
+    \fn QTriangle3D::QTriangle3D(const QVector3D &p, const QVector3D &q, const QVector3D &r)
+
+    Constructs a triangle with the supplied \a p, \a q and \a r vertices.
+*/
 
 /*!
-  \fn QVector3D QTriangle3D::center() const
-  Returns the center of the triangle.  This point is the geometric average of the
-  vertices, and is a point guaranteed to lie inside the triangle.
+    \fn QVector3D QTriangle3D::p() const
 
-  \image triangle3d-center.png
- */
+    Returns the value of the P vertex on the triangle.
+
+    \sa q(), r(), setP()
+*/
+
+/*!
+    \fn void QTriangle3D::setP(const QVector3D &point)
+
+    Sets the value of the P vertex on the triangle to \a point.
+
+    \sa setQ(), setR(), p()
+*/
+
+/*!
+    \fn QVector3D QTriangle3D::q() const
+
+    Returns the value of the Q vertex on the triangle.
+
+    \sa p(), r(), setQ()
+*/
+
+/*!
+    \fn void QTriangle3D::setQ(const QVector3D &point)
+
+    Sets the value of the Q vertex on the triangle \a point.
+
+    \sa setP(), setR(), q()
+*/
+
+
+/*!
+    \fn QVector3D QTriangle3D::r() const
+
+    Returns the value of the R vertex on the triangle.
+
+    \sa p(), q(), setR()
+*/
+
+/*!
+    \fn void QTriangle3D::setR(const QVector3D &point)
+
+    Sets the value of the R vertex on the triangle \a point.
+
+    \sa setP(), setQ(), r()
+*/
+
+/*!
+    \fn QPlane3D QTriangle3D::plane() const
+
+    Returns the plane in which the triangle lies.
+
+    \sa QPlane3D
+*/
+
+/*!
+    \fn QVector3D QTriangle3D::center() const
+
+    Returns the center of the triangle, which is the geometric average of the
+    three vertices.
+*/
 
 /*!
     \fn QVector3D QTriangle3D::faceNormal() const
-    Returns a vector normal to this triangle.  The returned normal vector is based
-    on a right-handed coordinate system, so that if P, Q and R are specified in a
-    counter-clockwise rotation around the triangle as the viewer faces it, then the
-    normal vector projects perpendicular out of the triangle toward the viewer.
 
-    The vector is not normalized.  If unit length normal vectors are required, apply
-    the QVector3D::normalize() function.
+    Returns the vector normal to this triangle, computed from the
+    cross-product of P-Q and Q-R.  The result is not normalized.
 */
 
 /*!
-  Returns true if this triange contains the \a point, false otherwise.  To contain
-  the \a point means that:
-  \list
-  \o the point lies on the same plane as the triangle, and
-  \o the point
+    Returns true if this triangle contains \a point; false otherwise.
+    To contain the \a point means that:
     \list
-      \o lies either wholly within the triangle, or
-      \o lies on one of the sides, or
-      \o coincides with one of the 3 vertices
+    \o the point lies on the same plane as the triangle, and
+    \o the point
+        \list
+        \o lies either wholly within the triangle, or
+        \o lies on one of the sides, or
+        \o coincides with one of the 3 vertices
+        \endlist
     \endlist
-  No check is made for a degenerate triangle.
-  \endlist
- */
+
+    \sa intersects()
+*/
 bool QTriangle3D::contains(const QVector3D &point) const
 {
-    if (qFuzzyCompare(point, m_p) || qFuzzyCompare(point, m_q) || qFuzzyCompare(point, m_r))
-        return true;
-    QLine3D apexToPoint(m_r, point - m_r);
-    QLineSegment3D base(m_p, m_q);
-    QResult<QVector3D> res = base.intersection(apexToPoint);
-    if (!res.isValid())
+    // Check if the point is on the triangle's plane first.
+    QVector3D normal = QVector3D::crossProduct(m_q - m_p, m_r - m_q);
+    if (!qFuzzyIsNull(float(QVector3D::dotProduct(normal, m_p - point))))
         return false;
-    return apexToPoint.distanceFromOrigin(point) <= apexToPoint.distanceFromOrigin(res.value());
+
+    // Compute the barycentric co-ordinates and use them to determine
+    // if the point is within the triangle.
+    QVector2D c = uv(point);
+    if (c.x() < 0.0f || c.x() > 1.0f)
+        return false;
+    if (c.y() < 0.0f || c.y() > 1.0f)
+        return false;
+    if ((c.x() + c.y()) > 1.0f)
+        return false;
+    return true;
 }
 
 /*!
-  \fn bool QTriangle3D::intersects(const QLine3D &line) const
-  Returns true if the \a line intersects with this triangle, false otherwise.
-  This test constructs a point which is the intersection of the \a line with the
-  plane this triangle lies in and tests that for containment.  Therefore the conditions
-  that apply for containment apply for intersection as well.
-  \sa contains(), intersection()
- */
+    Returns true if the \a ray intersects this triangle; false otherwise.
+
+    This function will return false if the triangle is degenerate.
+
+    \sa contains(), intersection()
+*/
+bool QTriangle3D::intersects(const QRay3D &ray) const
+{
+    qreal t = plane().intersection(ray);
+    if (qIsNaN(t))
+        return false;
+    return contains(ray.point(t));
+}
 
 /*!
-  \fn QResult<QVector3D> QTriangle3D::intersection(const QLine3D &line) const
-  Returns the intersection point of the \a line on this triangle.  Call
-  QResult::resultExists on the returned value to check if an intersection exists.
-  This test constructs a point which is the intersection of the \a line with the
-  plane this triangle lies in and tests that for containment.  Therefore the
-  conditions that apply for containment apply for intersection as well.
- */
+    Returns the t value at which \a ray intersects this triangle, or
+    not-a-number if there is no intersection.
 
-/*!
-  \fn QVector3D QTriangle3D::interpolate(qreal s, qreal t) const
-  Returns a point on the plane defined by the triangle.  The properties of the point are:
-  \list
-  \o if \a s and \a t are between 0.0 and 1.0 inclusive then the point return lies in the triangle.
-  \o as \a s approaches 1.0 the point is closer to point R
-  \o as \a s approaches 0.0 the point is closer to the base, line P-Q
-  \o as \a t approaches 1.0 the point is closer to Q
-  \o as \a t approaches 0.0 the point is closer to the point P
-  \endlist
-  This result may be used to interpolate effects across the triangle.
+    When the \a ray intersects this triangle, the return value is a
+    parametric value that can be passed to QRay3D::point() to determine
+    the actual intersection point, as shown in the following example:
+
+    \code
+    qreal t = triangle.intersection(ray);
+    QVector3D pt;
+    if (qIsNaN(t)) {
+        qWarning("no intersection occurred");
+    else
+        pt = ray.point(t);
+    \endcode
+
+    \sa intersects(), contains(), QRay3D::point()
  */
+qreal QTriangle3D::intersection(const QRay3D &ray) const
+{
+    qreal t = plane().intersection(ray);
+    if (qIsNaN(t) || contains(ray.point(t)))
+        return t;
+    return qSNaN();
+}
 
 /*!
     Transforms the points of this triangle according to \a matrix.
@@ -262,3 +249,131 @@ QTriangle3D QTriangle3D::transformed(const QMatrix4x4 &matrix) const
 {
     return QTriangle3D(matrix * m_p, matrix * m_q, matrix * m_r);
 }
+
+/*!
+    Returns the (u, v) barycentric co-ordinates of \a point within
+    this triangle.
+
+    The returned barycentric co-ordinates will be (1, 0) at p(),
+    (0, 1) at q(), and (0, 0) at r().  Technically, barycentric
+    co-ordinates have three components with the corners at
+    (1, 0, 0), (0, 1, 0), and (0, 0, 1).  However, the third
+    component is always equal to (1 - u - v) so we do not return it.
+
+    The typical use case for this function is to convert an intersection
+    point on a triangle into the texture co-ordinate corresponding to
+    that point.  If \c p, \c q, and \c r are the points on the triangle,
+    with corresponding texture co-ordinates \c tp, \c tq, and \c tr,
+    then the texture co-ordinate \c tc of \a point can be determined
+    by the following code:
+
+    \code
+    QTriangle3D triangle(p, q, r);
+    QVector2D uv = triangle.uv(point);
+    QVector2D tc = uv.x() * tp + uv.y() * tq + (1 - uv.x() - uv.y()) * tr;
+    \endcode
+
+    \sa contains(), intersection()
+*/
+QVector2D QTriangle3D::uv(const QVector3D &point) const
+{
+    // Algorithm from: http://www.blackpawn.com/texts/pointinpoly/default.html
+    // More: http://en.wikipedia.org/wiki/Barycentric_coordinates_(mathematics)
+    QVector3D rq = m_q - m_r;
+    QVector3D rp = m_p - m_r;
+    QVector3D pp = point - m_r;
+    qreal dot_rq_rq = QVector3D::dotProduct(rq, rq);
+    qreal dot_rq_rp = QVector3D::dotProduct(rq, rp);
+    qreal dot_rq_pp = QVector3D::dotProduct(rq, pp);
+    qreal dot_rp_rp = QVector3D::dotProduct(rp, rp);
+    qreal dot_rp_pp = QVector3D::dotProduct(rp, pp);
+    qreal det = dot_rq_rq * dot_rp_rp - dot_rq_rp * dot_rq_rp;
+    if (qFuzzyIsNull(float(det))) {
+        // The point is probably not in the triangle, or the triangle
+        // is degenerate.  Return an out of range value for (u, v) so
+        // that contains() will fail when this case happens.
+        return QVector2D(-1.0f, -1.0f);
+    }
+    return QVector2D((dot_rq_rq * dot_rp_pp - dot_rq_rp * dot_rq_pp) / det,
+                     (dot_rp_rp * dot_rq_pp - dot_rq_rp * dot_rp_pp) / det);
+}
+
+/*!
+    \fn bool QTriangle3D::operator==(const QTriangle3D &other)
+
+    Returns true if this triangle is the same as \a other; false otherwise.
+
+    \sa operator!=()
+*/
+
+/*!
+    \fn bool QTriangle3D::operator!=(const QTriangle3D &other)
+
+    Returns true if this triangle is not the same as \a other; false otherwise.
+
+    \sa operator==()
+*/
+
+/*!
+    \fn bool qFuzzyCompare(const QTriangle3D &triangle1, const QTriangle3D &triangle2)
+    \relates QTriangle3D
+
+    Returns true if \a triangle1 and \a triangle2 are almost equal;
+    false otherwise.
+*/
+
+#ifndef QT_NO_DEBUG_STREAM
+
+QDebug operator<<(QDebug dbg, const QTriangle3D &triangle)
+{
+    dbg.nospace() << "QTriangle3D(("
+        << triangle.p().x() << ", " << triangle.p().y() << ", "
+        << triangle.p().z() << "), ("
+        << triangle.q().x() << ", " << triangle.q().y() << ", "
+        << triangle.q().z() << "), ("
+        << triangle.r().x() << ", " << triangle.r().y() << ", "
+        << triangle.r().z() << "))";
+    return dbg.space();
+}
+
+#endif
+
+#ifndef QT_NO_DATASTREAM
+
+/*!
+    \fn QDataStream &operator<<(QDataStream &stream, const QTriangle3D &triangle)
+    \relates QTriangle3D
+
+    Writes the given \a triangle to the given \a stream and returns a
+    reference to the stream.
+*/
+
+QDataStream &operator<<(QDataStream &stream, const QTriangle3D &triangle)
+{
+    stream << triangle.p();
+    stream << triangle.q();
+    stream << triangle.r();
+    return stream;
+}
+
+/*!
+    \fn QDataStream &operator>>(QDataStream &stream, QTriangle3D &triangle)
+    \relates QTriangle3D
+
+    Reads a 3D triangle from the given \a stream into the given \a triangle
+    and returns a reference to the stream.
+*/
+
+QDataStream &operator>>(QDataStream &stream, QTriangle3D &triangle)
+{
+    QVector3D p, q, r;
+    stream >> p;
+    stream >> q;
+    stream >> r;
+    triangle = QTriangle3D(p, q, r);
+    return stream;
+}
+
+#endif // QT_NO_DATASTREAM
+
+QT_END_NAMESPACE

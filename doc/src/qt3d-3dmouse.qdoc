@@ -1,0 +1,149 @@
+/****************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+**
+** This file is part of the documentation of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:FDL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
+** GNU Free Documentation License
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of this
+** file.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+    \page qt3d-3dmouse.html
+    \title 3D Mouse Support in Qt/3D
+
+    Qt/3D has support for 3D mouse devices, which have six degrees of freedom
+    of motion, corresponding to translations along the X, Y, and Z axes,
+    and rotations around each of those axes.  Such mice also typically
+    have an array of special purpose buttons for 3D navigation operations.
+
+    \section2 Processing events from a 3D mouse
+
+    QMouse3DEventProvider simplifies the process of interfacing a QWidget
+    to a 3D mouse device.  Motions in 3D are delivered to the widget in the
+    form of a QMouse3DEvent and special purpose buttons are delivered
+    in the form of a QKeyEvent.  Applications use QMouse3DEventProvider to
+    register a QWidget to receive such events, as shown in the following
+    example:
+
+    \code
+    MyWidget::MyWidget(QWidget *parent)
+        : QWidget(parent)
+    {
+        QMouse3DEventProvider *provider;
+        provider = new QMouse3DEventProvider(this);
+        provider->setWidget(this);
+    }
+
+    bool MyWidget::event(QEvent *e)
+    {
+        if (e->type() == QMouse3DEvent::type) {
+            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+            ...
+            return true;
+        }
+        return QWidget::event(e);
+    }
+
+    void MyWidget::keyPressEvent(QKeyEvent *e)
+    {
+        if (e->key() == QGL::Key_TopView) {
+            ...
+        }
+        QWidget::keyPressEvent(e);
+    }
+    \endcode
+
+    See the documentation for QMouse3DEventProvider for more information
+    on processing the events from a 3D mouse in an application.
+
+    \section2 Hardware interfacing
+
+    Qt/3D uses a plug-in mechanism to interface to the operating
+    system specific USB HID API's.  The 3D mouse needs to conform
+    with the USB HID multi-axis controller specification.
+
+    The following sections describe the level of support that is
+    currently available on each operating system.  New plug-ins
+    can be written, or existing plug-ins modified, to support
+    new mice.
+
+    The \c{mouse3dtest} utility that comes with Qt/3D can be used
+    to test if the 3D mouse device is operating properly.  It displays
+    the axis values, event filtering modes, and special keys:
+
+    \image mouse3dtest-screenshot.png
+
+    \section3 Linux
+
+    Under Linux, the \c{linuxinput} plug-in consults the HAL daemon,
+    looking for \c{/dev/input/eventN} mouse devices that report six axes
+    of freedom.  It is assumed that the \c{/dev/input/eventN} device node
+    has the correct permissions for the Qt/3D application to access it.
+    You may need to run your application as root, or modify
+    \c{/etc/udev/rules.d} to allow other users to access the 3D mouse device.
+
+    If your 3D mouse has buttons, and it is not one of the currently
+    \l{#Supported_devices}{supported devices}, then you may need to modify
+    the \c{linuxinput} plug-in to recognize \c{EV_KEY} events and convert
+    them into the appropriate Qt key codes.
+
+    HAL is used to detect hot-plugging of 3D mouse devices.
+
+    \section3 Windows
+
+    Under windows the \c {win32input} plug-in registers the application (or,
+	more accurately, the specified widget) as the recipient of Raw Input 
+	events for the underlying Windows system.  This registration is for all
+	3D mouse Human Input Devices (HID) based on the standard usage enumeration
+	in the Raw Input data structures.  As part of this process the plugin sets 
+	an event filter for the main application class.  If users wish to use their
+	own event filters for capturing Operating System messages they must keep 
+	this in mind.
+	
+	The \l{#Supported_devices}{supported devices} currently decode the custom button inputs on the 3D 
+	mouse and convert them into Qt key-press events based on a specific set of
+	bit-masks for those Raw Input events.  If these do not correspond to the 
+	type of mouse being used, it may be necessary to modify the \c{win32input}
+	plug-in to recognise your alternative input events.
+	
+	Currently there is no support for hot-plugging of 3D mouse devices.
+
+    \section3 MacOSX
+
+    MaxOSX support is still in-progress.
+
+    \section2 Supported devices
+
+    The following 3D mouse devices have been tested on the indicated
+    operating systems.  It is possible that other devices will also
+    work if they conform to the USB HID multi-axis controller
+    specification.
+
+    \table
+    \header \o Device \o Linux \o Windows \o MacOSX
+    \row \o \l{http://www.3dconnexion.com/products/spacepilot-pro.html}{3Dconnexion SpacePilot PRO}
+         \o Yes \o Yes \o TBD
+    \row \o \l{http://www.3dconnexion.com/products/spacenavigator.html}{3Dconnexion SpaceNavigator}
+         \o Yes \o Yes \o TBD
+    \endtable
+
+    \l{index.html}{Return to the main Qt/3D page}.
+*/

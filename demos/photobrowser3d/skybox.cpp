@@ -51,7 +51,12 @@
 SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     : m_scene(0)
     , m_view(view)
+    , m_camera(new QGLCamera(this))
 {
+    m_camera->setEye(QVector3D());
+    m_camera->setNearPlane(0.3f);
+    m_camera->setViewSize(QSizeF(0.3f, 0.3f));
+
     QGLBuilder builder;
     builder.newSection(QGL::Faceted);
     QVector3D blb(-1.0, -1.0, -1.0);
@@ -201,15 +206,8 @@ void SkyBox::draw(QGLPainter *painter) const
     painter->modelViewMatrix().setToIdentity();
 
     QGLCamera *cam = m_view->camera();
-    QVector3D eye = cam->eye();
-    QVector3D center = cam->center();
-    qreal nearPlane = cam->nearPlane();
-    QSizeF size = cam->viewSize();
-    cam->setCenter(-eye);
-    cam->setEye(QVector3D());
-    cam->setNearPlane(0.3f);
-    cam->setViewSize(QSizeF(0.3f, 0.3f));
-    painter->setCamera(cam);
+    m_camera->setCenter(-cam->eye());
+    painter->setCamera(m_camera);
 
     glDisable(GL_DEPTH_TEST);
 
@@ -217,11 +215,6 @@ void SkyBox::draw(QGLPainter *painter) const
 
     glEnable(GL_DEPTH_TEST);
 
-    cam->setCenter(center);
-    cam->setEye(eye);
-    cam->setNearPlane(nearPlane);
-    cam->setViewSize(size);
     painter->setCamera(cam);
-
     painter->modelViewMatrix().pop();
 }

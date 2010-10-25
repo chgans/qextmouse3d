@@ -66,7 +66,7 @@ QT_BEGIN_NAMESPACE
     in QML using the following code:
 
     \code
-    Item3d {
+    Item3D {
         id: helicoptor
         mesh:  {source: "bellUH1.3ds"}
         effect: Effect {}
@@ -235,10 +235,6 @@ void QGraphicsRotation3D::setAxis(const QVector3D &value)
 void QGraphicsRotation3D::applyTo(QMatrix4x4 *matrix) const
 {
     Q_D(const QGraphicsRotation3D);
-
-    if (d->angle == 0.0f || d->axis.isNull())
-        return;
-
     matrix->translate(d->origin);
     matrix->rotate(d->angle, d->axis.x(), d->axis.y(), d->axis.z());
     matrix->translate(-d->origin);

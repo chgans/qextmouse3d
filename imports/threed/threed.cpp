@@ -1,10 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the plugins of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -70,12 +70,12 @@ class QThreedQmlModule : public QDeclarativeExtensionPlugin
 public:
     virtual void registerTypes(const char *uri)
     {
-        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt.labs.threed"));
+        Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D"));
         qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
         qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");
-        qmlRegisterType<Item3d>(uri,1,0,"Item3d");
+        qmlRegisterType<Item3D>(uri,1,0,"Item3D");
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
@@ -85,7 +85,9 @@ public:
         qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGraphicsBillboardTransform>(uri,1,0,"BillboardTransform");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
+#if !defined(QT_OPENGL_ES_1)
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
+#endif
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();
@@ -94,7 +96,7 @@ public:
     {
         Q_UNUSED(uri);
         QDeclarativeContext *context = engine->rootContext();
-        context->setContextProperty("Qt3d", new Qt3dNamespace);
+        context->setContextProperty(QLatin1String("Qt3d"), new Qt3dNamespace);
     }
 };
 

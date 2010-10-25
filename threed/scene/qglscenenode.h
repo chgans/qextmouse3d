@@ -203,9 +203,6 @@ Q_SIGNALS:
     void centerChanged();
     void boundingBoxTestEnabledChanged();
 
-protected:
-    QGLSceneNode(QGLSceneNodePrivate &dd, QObject *parent = 0);
-
 private Q_SLOTS:
     void deleteChild(QObject *object);
 
@@ -220,6 +217,8 @@ private:
                                     QGL::Face faces, bool &changedTex);
 
     Q_DISABLE_COPY(QGLSceneNode)
+
+    QScopedPointer<QGLSceneNodePrivate> d_ptr;
 };
 
 #ifndef QT_NO_DEBUG_STREAM

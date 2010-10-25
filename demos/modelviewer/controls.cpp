@@ -61,8 +61,6 @@ Controls::Controls(QWidget *parent)
     , m_scaleLinked(true)
 {
     m_ui->setupUi(this);
-    connect(m_ui->actionQuit, SIGNAL(triggered()),
-            this, SLOT(close()));
 
     m_view = new Viewer(m_ui->frame);
     QHBoxLayout *lay = new QHBoxLayout();
@@ -105,6 +103,8 @@ Controls::Controls(QWidget *parent)
     m_ui->treeView->setModel(m_model);
     m_view->setTreeView(m_ui->treeView);
 
+    connect(m_view, SIGNAL(viewTypeChanged()), this, SLOT(viewTypeChanged()));
+
     emit openFile(initialModel);
 
     connect(m_ui->actionForce_Smooth, SIGNAL(triggered(bool)),
@@ -121,11 +121,68 @@ Controls::Controls(QWidget *parent)
             this, SLOT(optionMenuToggled(bool)));
     connect(m_ui->generateQmlPushButton, SIGNAL(clicked()),
             m_ui->actionSave_QML, SIGNAL(triggered()));
+
+    //View signals/slots
+    connect(m_ui->CustomView, SIGNAL(clicked()),
+            this, SLOT(on_custom_view_triggered()));
+    connect(m_ui->FrontView, SIGNAL(clicked()),
+            this, SLOT(on_front_view_triggered()));
+    connect(m_ui->BackView, SIGNAL(clicked()),
+            this, SLOT(on_back_view_triggered()));
+    connect(m_ui->LeftView, SIGNAL(clicked()),
+            this, SLOT(on_left_view_triggered()));
+    connect(m_ui->RightView, SIGNAL(clicked()),
+            this, SLOT(on_right_view_triggered()));
+    connect(m_ui->TopView, SIGNAL(clicked()),
+            this, SLOT(on_top_view_triggered()));
+    connect(m_ui->BottomView, SIGNAL(clicked()),
+            this, SLOT(on_bottom_view_triggered()));
+    connect(m_ui->FrontQuarterView, SIGNAL(clicked()),
+            this, SLOT(on_frontquarter_view_triggered()));
+    connect(m_ui->RearQuarterView, SIGNAL(clicked()),
+            this, SLOT(on_rearquarter_view_triggered()));
 }
 
 Controls::~Controls()
 {
     delete m_ui;
+}
+
+
+void Controls::on_custom_view_triggered() {
+    m_view->setView(Viewer::SelectView);
+}
+
+void Controls::on_front_view_triggered() {
+    m_view->setView(Viewer::FrontView);
+}
+
+void Controls::on_back_view_triggered() {
+    m_view->setView(Viewer::BackView);
+}
+
+void Controls::on_top_view_triggered() {
+    m_view->setView(Viewer::TopView);
+}
+
+void Controls::on_bottom_view_triggered() {
+    m_view->setView(Viewer::BottomView);
+}
+
+void Controls::on_left_view_triggered() {
+    m_view->setView(Viewer::LeftView);
+}
+
+void Controls::on_right_view_triggered() {
+    m_view->setView(Viewer::RightView);
+}
+
+void Controls::on_frontquarter_view_triggered() {
+    m_view->setView(Viewer::FrontRightView);
+}
+
+void Controls::on_rearquarter_view_triggered() {
+    m_view->setView(Viewer::BackLeftView);
 }
 
 void Controls::changeEvent(QEvent *e)
@@ -140,6 +197,14 @@ void Controls::changeEvent(QEvent *e)
     }
 }
 
+void Controls::closeEvent(QCloseEvent *e)
+{
+    Q_UNUSED(e);
+    QString model = m_model->fullPath();
+    saveSettings(model);
+    saveModelDefaults(model);
+}
+
 void Controls::load()
 {
     QAction *act = qobject_cast<QAction*>(sender());
@@ -149,19 +214,25 @@ void Controls::load()
     }
 }
 
+void Controls::viewTypeChanged()
+{
+    if (m_ui->viewComboBox->currentIndex() != int(m_view->view()))
+        m_ui->viewComboBox->setCurrentIndex(int(m_view->view()));
+}
+
 QString Controls::populateModelMenu()
 {
     QString first;
     QMenu *menu = m_ui->menuModels;
     QStringList searchDirs;
-    searchDirs << ":/" << "./";
+    searchDirs << QLatin1String(":/") << QLatin1String("./");
     QStringList::const_iterator it = searchDirs.begin();
     for ( ; it != searchDirs.end(); ++it)
     {
         if (it != searchDirs.begin())
             menu->addSeparator();
         QDir modelDir(*it);
-        QStringList filters("*.3ds");
+        QStringList filters(QLatin1String("*.3ds"));
         modelDir.setNameFilters(filters);
         QStringList models = modelDir.entryList();
         QStringList::const_iterator mit = models.begin();
@@ -178,8 +249,8 @@ QString Controls::populateModelMenu()
     }
     QString cmdlineModel;
     QSettings settings;
-    settings.beginGroup("General");
-    cmdlineModel = settings.value("LastModel").toString();
+    settings.beginGroup(QLatin1String("General"));
+    cmdlineModel = settings.value(QLatin1String("LastModel")).toString();
     QStringList args = qApp->arguments();
     int ix = args.indexOf(QLatin1String("--model"));
     if (ix == -1)
@@ -207,26 +278,29 @@ QString Controls::populateModelMenu()
 void Controls::loadModelDefaults(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup("ModelDefaults");
+    settings.beginGroup(QLatin1String("ModelDefaults"));
 
     QByteArray coded = QUrl::toPercentEncoding(model);
-    QString modelEncoded(coded);
+    QString modelEncoded = QString::fromLatin1(coded.constData());
 
-    QVector3D p, o, s, e;
+    QVector3D p, o, s, e, up;
     bool spin = false;
     if (settings.childGroups().contains(modelEncoded))
     {
         settings.beginGroup(modelEncoded);
-        p = qvariant_cast<QVector3D>(settings.value("position", QVector3D()));
+        p = qvariant_cast<QVector3D>(settings.value(QLatin1String("position"), QVector3D()));
         m_view->setPosition(p);
-        o = qvariant_cast<QVector3D>(settings.value("orientation", QVector3D()));
+        o = qvariant_cast<QVector3D>(settings.value(QLatin1String("orientation"), QVector3D()));
         m_view->setOrientation(o);
-        s = qvariant_cast<QVector3D>(settings.value("scale", QVector3D()));
+        s = qvariant_cast<QVector3D>(settings.value(QLatin1String("scale"), QVector3D()));
         m_view->setScale(s);
         e = QVector3D(0.0f, 2.0f, -10.0f);
-        QVector3D e = qvariant_cast<QVector3D>(settings.value("eye", e));
+        e = qvariant_cast<QVector3D>(settings.value(QLatin1String("eye"), e));
+        up = QVector3D(0.0f, 1.0f, 0.0f);
+        up = qvariant_cast<QVector3D>(settings.value(QLatin1String("upVector"), up));
         m_view->camera()->setEye(e);
-        spin = settings.value("spin", false).toBool();
+        m_view->camera()->setUpVector(up);
+        spin = settings.value(QLatin1String("spin"), false).toBool();
     }
     else
     {
@@ -252,24 +326,26 @@ void Controls::loadModelDefaults(const QString &model)
 void Controls::saveModelDefaults(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup("General");
-    settings.setValue("LastModel", model);
+    settings.beginGroup(QLatin1String("General"));
+    settings.setValue(QLatin1String("LastModel"), model);
     settings.endGroup();
-    settings.beginGroup("ModelDefaults");
+    settings.beginGroup(QLatin1String("ModelDefaults"));
 
     QByteArray coded = QUrl::toPercentEncoding(model);
-    QString modelEncoded(coded);
+    QString modelEncoded = QString::fromLatin1(coded.constData());
     settings.beginGroup(modelEncoded);
 
     QVector3D p = m_view->position();
     QVector3D o = m_view->orientation();
     QVector3D s = m_view->scale();
     QVector3D e = m_view->camera()->eye();
-    settings.setValue("position", p);
-    settings.setValue("orientation", o);
-    settings.setValue("scale", s);
-    settings.setValue("eye", e);
-    settings.setValue("spin", m_ui->spinCheckBox->isChecked());
+    QVector3D up = m_view->camera()->upVector();
+    settings.setValue(QLatin1String("position"), p);
+    settings.setValue(QLatin1String("orientation"), o);
+    settings.setValue(QLatin1String("scale"), s);
+    settings.setValue(QLatin1String("eye"), e);
+    settings.setValue(QLatin1String("upVector"), up);
+    settings.setValue(QLatin1String("spin"), m_ui->spinCheckBox->isChecked());
 }
 
 void Controls::on_spinCheckBox_stateChanged(int state)
@@ -325,46 +401,46 @@ void Controls::optionMenuToggled(bool checked)
 void Controls::saveSettings(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup("ModelSettings");
+    settings.beginGroup(QLatin1String("ModelSettings"));
 
     QByteArray coded = QUrl::toPercentEncoding(model);
-    QString modelEncoded(coded);
+    QString modelEncoded = QString::fromLatin1(coded.constData());
     settings.beginGroup(modelEncoded);
 
     bool forceSmooth = m_ui->actionForce_Smooth->isChecked();
-    settings.setValue("ForceSmooth", forceSmooth);
+    settings.setValue(QLatin1String("ForceSmooth"), forceSmooth);
     bool forceFaceted = m_ui->actionForce_Faceted->isChecked();
-    settings.setValue("ForceFaceted", forceFaceted);
+    settings.setValue(QLatin1String("ForceFaceted"), forceFaceted);
     bool nativeIndices = m_ui->actionNative_Indices->isChecked();
-    settings.setValue("NativeIndices", nativeIndices);
+    settings.setValue(QLatin1String("NativeIndices"), nativeIndices);
     bool correctNormals = m_ui->actionCorrect_Normals->isChecked();
-    settings.setValue("CorrectNormals", correctNormals);
+    settings.setValue(QLatin1String("CorrectNormals"), correctNormals);
     bool correctAcute = m_ui->actionCorrect_Acute->isChecked();
-    settings.setValue("CorrectAcute", correctAcute);
+    settings.setValue(QLatin1String("CorrectAcute"), correctAcute);
     bool showWarnings = m_ui->actionShow_Warnings->isChecked();
-    settings.setValue("ShowWarnings", showWarnings);
+    settings.setValue(QLatin1String("ShowWarnings"), showWarnings);
 }
 
 void Controls::loadSettings(const QString &model)
 {
     QSettings settings;
-    settings.beginGroup("ModelSettings");
+    settings.beginGroup(QLatin1String("ModelSettings"));
 
     QByteArray coded = QUrl::toPercentEncoding(model);
-    QString modelEncoded(coded);
+    QString modelEncoded = QString::fromLatin1(coded.constData());
     settings.beginGroup(modelEncoded);
 
-    bool forceSmooth = settings.value("ForceSmooth", false).toBool();
+    bool forceSmooth = settings.value(QLatin1String("ForceSmooth"), false).toBool();
     m_ui->actionForce_Smooth->setChecked(forceSmooth);
-    bool forceFaceted = settings.value("ForceFaceted", false).toBool();
+    bool forceFaceted = settings.value(QLatin1String("ForceFaceted"), false).toBool();
     m_ui->actionForce_Faceted->setChecked(forceFaceted);
-    bool nativeIndices = settings.value("NativeIndices", false).toBool();
+    bool nativeIndices = settings.value(QLatin1String("NativeIndices"), false).toBool();
     m_ui->actionNative_Indices->setChecked(nativeIndices);
-    bool correctNormals = settings.value("CorrectNormals", false).toBool();
+    bool correctNormals = settings.value(QLatin1String("CorrectNormals"), false).toBool();
     m_ui->actionCorrect_Normals->setChecked(correctNormals);
-    bool correctAcute = settings.value("CorrectAcute", false).toBool();
+    bool correctAcute = settings.value(QLatin1String("CorrectAcute"), false).toBool();
     m_ui->actionCorrect_Acute->setChecked(correctAcute);
-    bool showWarnings = settings.value("ShowWarnings", false).toBool();
+    bool showWarnings = settings.value(QLatin1String("ShowWarnings"), false).toBool();
     m_ui->actionShow_Warnings->setChecked(showWarnings);
 }
 
@@ -374,12 +450,12 @@ void Controls::addRecentFiles(const QString &fileName)
     QStringList files;
     {
         QSettings settings;
-        settings.beginGroup("General");
-        int numFiles = settings.beginReadArray("RecentFiles");
+        settings.beginGroup(QLatin1String("General"));
+        int numFiles = settings.beginReadArray(QLatin1String("RecentFiles"));
         for (int i = 0; i < numFiles; ++i)
         {
             settings.setArrayIndex(i);
-            QByteArray coded = settings.value("file").toByteArray();
+            QByteArray coded = settings.value(QLatin1String("file")).toByteArray();
             files.append(QUrl::fromPercentEncoding(coded));
         }
     }
@@ -403,13 +479,13 @@ void Controls::addRecentFiles(const QString &fileName)
     }
     {
         QSettings settings;
-        settings.beginGroup("General");
-        settings.beginWriteArray("RecentFiles", files.count());
+        settings.beginGroup(QLatin1String("General"));
+        settings.beginWriteArray(QLatin1String("RecentFiles"), files.count());
         for (int i = 0; i < files.count(); ++i)
         {
             settings.setArrayIndex(i);
             QByteArray coded = QUrl::toPercentEncoding(files.at(i));
-            settings.setValue("file", coded);
+            settings.setValue(QLatin1String("file"), coded);
         }
         settings.endArray();
         settings.endGroup();
@@ -419,9 +495,6 @@ void Controls::addRecentFiles(const QString &fileName)
 
 void Controls::on_actionQuit_triggered()
 {
-    QString model = m_model->fullPath();
-    saveSettings(model);
-    saveModelDefaults(model);
     close();
 }
 
@@ -430,7 +503,7 @@ void Controls::on_actionSave_QML_triggered()
     QString modelFileName = m_model->fullPath();
     QFileInfo fi(modelFileName);
     QString qmlName = fi.baseName();
-    qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + ".qml";
+    qmlName = qmlName.mid(1).prepend(qmlName[0].toUpper()) + QLatin1String(".qml");
     QString path = fi.absoluteDir().absoluteFilePath(qmlName);
     QFileDialog::Options options = 0;
 #ifdef Q_OS_LINUX
@@ -445,35 +518,35 @@ void Controls::on_actionSave_QML_triggered()
         QDir d = fi2.absoluteDir();
         QString relName = d.relativeFilePath(modelFileName);
         QString n2 = fi2.baseName();
-        n2 = n2.mid(1).prepend((n2[0].toUpper())) + ".qml";
-        file = fi2.absolutePath() + "/" + n2;
+        n2 = n2.mid(1).prepend((n2[0].toUpper())) + QLatin1String(".qml");
+        file = fi2.absolutePath() + QLatin1Char('/') + n2;
         QmlGenerator gen(file);
-        gen.setProperty("modelFileName", relName);
+        gen.setProperty(QLatin1String("modelFileName"), relName);
         saveSettings(modelFileName);
         QString options = m_model->getOptions();
         if (!options.isEmpty())
-            gen.setProperty("options", options);
+            gen.setProperty(QLatin1String("options"), options);
         QVector3D p = m_view->position();
         if (!qFuzzyIsNull(p.x()))
-            gen.setProperty("x_translation", QString::number(p.x()));
+            gen.setProperty(QLatin1String("x_translation"), QString::number(p.x()));
         if (!qFuzzyIsNull(p.y()))
-            gen.setProperty("y_translation", QString::number(p.y()));
+            gen.setProperty(QLatin1String("y_translation"), QString::number(p.y()));
         if (!qFuzzyIsNull(p.z()))
-            gen.setProperty("z_translation", QString::number(p.z()));
+            gen.setProperty(QLatin1String("z_translation"), QString::number(p.z()));
         QVector3D o = m_view->orientation();
         if (!qFuzzyIsNull(o.x()))
-            gen.setProperty("x_rotation", QString::number(o.x()));
+            gen.setProperty(QLatin1String("x_rotation"), QString::number(o.x()));
         if (!qFuzzyIsNull(o.y()))
-            gen.setProperty("y_rotation", QString::number(o.y()));
+            gen.setProperty(QLatin1String("y_rotation"), QString::number(o.y()));
         if (!qFuzzyIsNull(o.z()))
-            gen.setProperty("z_rotation", QString::number(o.z()));
+            gen.setProperty(QLatin1String("z_rotation"), QString::number(o.z()));
         QVector3D s = m_view->scale();
         if (!qFuzzyIsNull(s.x()))
-            gen.setProperty("x_scale", ((s.x() < 0.0f) ? QString::number(1.0f / qAbs(s.x())) : QString::number(s.x())));
+            gen.setProperty(QLatin1String("x_scale"), ((s.x() < 0.0f) ? QString::number(1.0f / qAbs(s.x())) : QString::number(s.x())));
         if (!qFuzzyIsNull(s.y()))
-            gen.setProperty("y_scale", ((s.y() < 0.0f) ? QString::number(1.0f / qAbs(s.y())) : QString::number(s.y())));
+            gen.setProperty(QLatin1String("y_scale"), ((s.y() < 0.0f) ? QString::number(1.0f / qAbs(s.y())) : QString::number(s.y())));
         if (!qFuzzyIsNull(s.z()))
-            gen.setProperty("z_scale", ((s.z() < 0.0f) ? QString::number(1.0f / qAbs(s.z())) : QString::number(s.z())));
+            gen.setProperty(QLatin1String("z_scale"), ((s.z() < 0.0f) ? QString::number(1.0f / qAbs(s.z())) : QString::number(s.z())));
         gen.save();
     }
 }
@@ -647,13 +720,13 @@ void Controls::on_lockButton_clicked()
 {
     if (m_scaleLinked)
     {
-        m_ui->lockButton->setIcon(QIcon(":/images/linked-broken-32x32.png"));
+        m_ui->lockButton->setIcon(QIcon(QLatin1String(":/images/linked-broken-32x32.png")));
         m_ui->lockButton->setToolTip(tr("Click to link X, Y & Z scale values"));
         m_scaleLinked = false;
     }
     else
     {
-        m_ui->lockButton->setIcon(QIcon(":/images/linked-32x32.png"));
+        m_ui->lockButton->setIcon(QIcon(QLatin1String(":/images/linked-32x32.png")));
         m_ui->lockButton->setToolTip(tr("Click to unlink X, Y & Z scale values"));
         m_scaleLinked = true;
         m_ui->yScaleSpin->setValue(m_ui->xScaleSpin->value());

@@ -136,7 +136,7 @@ public:
     QList<QCustomDataArray> attributes;
     QList<QVector2DArray> textures;
     QGL::IndexArray indices;
-    QGLVertexBuffer vertexBuffer;
+    QGLVertexBundle vertexBundle;
     QGLIndexBuffer indexBuffer;
     bool uploadsViable;
     bool modified;
@@ -178,7 +178,7 @@ QGeometryDataPrivate *QGeometryDataPrivate::clone() const
     temp->attributes = attributes;
     temp->textures = textures;
     temp->indices = indices;
-    temp->vertexBuffer = vertexBuffer;
+    temp->vertexBundle = vertexBundle;
     temp->indexBuffer = indexBuffer;
     temp->uploadsViable = uploadsViable;
     temp->modified = modified;
@@ -864,7 +864,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode)
     if (d && d->indices.size() && d->count)
     {
         upload();
-        painter->setVertexBuffer(d->vertexBuffer);
+        painter->setVertexBundle(d->vertexBundle);
         if (count == 0)
             count = d->indexBuffer.indexCount();
         painter->draw(QGL::DrawingMode(mode), d->indexBuffer, start, count);
@@ -894,12 +894,12 @@ bool QGeometryData::upload()
     if (!d)
         return false;
     if (!d->modified)
-        return d->vertexBuffer.isUploaded() && d->indexBuffer.isUploaded();
+        return d->vertexBundle.isUploaded() && d->indexBuffer.isUploaded();
 
     check();
 
     // Need to recreate the buffers from the modified data.
-    d->vertexBuffer = QGLVertexBuffer();
+    d->vertexBundle = QGLVertexBundle();
     d->indexBuffer = QGLIndexBuffer();
 
     // Copy the geometry data to the vertex buffer.
@@ -911,22 +911,22 @@ bool QGeometryData::upload()
             continue;
         QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
         if (attr == QGL::Position)
-            d->vertexBuffer.addAttribute(attr, d->vertices);
+            d->vertexBundle.addAttribute(attr, d->vertices);
         else if (attr == QGL::Normal)
-            d->vertexBuffer.addAttribute(attr, d->normals);
+            d->vertexBundle.addAttribute(attr, d->normals);
         else if (attr == QGL::Color)
-            d->vertexBuffer.addAttribute(attr, d->colors);
+            d->vertexBundle.addAttribute(attr, d->colors);
         else if (attr < QGL::CustomVertex0)
-            d->vertexBuffer.addAttribute(attr, d->textures.at(d->key[field]));
+            d->vertexBundle.addAttribute(attr, d->textures.at(d->key[field]));
         else
-            d->vertexBuffer.addAttribute(attr, d->attributes.at(d->key[field]));
+            d->vertexBundle.addAttribute(attr, d->attributes.at(d->key[field]));
     }
 
     // Upload the buffer if requested, otherwise keep it client-side.
-    // Note: QGLVertexBuffer will act as a client-side buffer if not uploaded.
+    // Note: QGLVertexBundle will act as a client-side buffer if not uploaded.
     if ((d->bufferStrategy & BufferIfPossible) != 0)
     {
-        if (d->vertexBuffer.upload())
+        if (d->vertexBundle.upload())
             vboUploaded = true;
     }
 
@@ -979,15 +979,15 @@ QGeometryData::BufferStrategy QGeometryData::bufferStrategy() const
 
     \sa indexBuffer()
 */
-QGLVertexBuffer QGeometryData::vertexBuffer() const
+QGLVertexBundle QGeometryData::vertexBundle() const
 {
-    return d->vertexBuffer;
+    return d->vertexBundle;
 }
 
 /*!
     Returns a reference to the index buffer for this geometry.
 
-    \sa vertexBuffer()
+    \sa vertexBundle()
 */
 QGLIndexBuffer QGeometryData::indexBuffer() const
 {

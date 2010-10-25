@@ -4,7 +4,7 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the test suite of the Qt Toolkit.
+** This file is part of the Qt3D module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
 ** No Commercial Usage
@@ -73,9 +73,9 @@ private slots:
 private:
 };
 
-inline QUrl TEST_FILE(const QString &filename)
+inline QUrl TEST_FILE(const char *filename)
 {
-    return QUrl::fromLocalFile(QLatin1String(SRCDIR) + QLatin1String("/data/") + filename);
+    return QUrl::fromLocalFile(QLatin1String(SRCDIR) + QLatin1String("/data/") + QLatin1String(filename));
 }
 
 void tst_matrix_properties::initTestCase()
@@ -100,7 +100,7 @@ void tst_matrix_properties::create()
 
     QVERIFY(item != 0);
 
-    int index = item->metaObject()->indexOfMethod(methodName.toUtf8());
+    int index = item->metaObject()->indexOfMethod(methodName.toUtf8().constData());
     QVERIFY(index != -1);
     QMetaMethod method = item->metaObject()->method(index);
 
@@ -132,12 +132,12 @@ void tst_matrix_properties::modify()
     QVERIFY(item != 0);
 
     // Set the test property to a matrix or variantlist as appropriate.
-    int index = item->metaObject()->indexOfMethod(initMethodName.toUtf8());
+    int index = item->metaObject()->indexOfMethod(initMethodName.toUtf8().constData());
     QVERIFY(index != -1);
     QMetaMethod method = item->metaObject()->method(index);
     method.invoke(item, Qt::DirectConnection);
 
-    index = item->metaObject()->indexOfMethod(methodName.toUtf8());
+    index = item->metaObject()->indexOfMethod(methodName.toUtf8().constData());
     QVERIFY(index != -1);
     method = item->metaObject()->method(index);
 
@@ -168,11 +168,11 @@ void tst_matrix_properties::boundVariableChange()
 
     QVERIFY(item != 0);
 
-    QByteArray propertyNameByteArray = propertyName.toUtf8();
+    QByteArray propertyNameByteArray = propertyName.toUtf8().constData();
     qreal value = 1.0;
 
     QBENCHMARK {
-        item->setProperty(propertyNameByteArray, (value += 0.1));
+        item->setProperty(propertyNameByteArray.constData(), (value += 0.1));
     }
 
     delete item;

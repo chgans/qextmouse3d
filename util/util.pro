@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = meshcvt qglinfo
+SUBDIRS = meshcvt qglinfo mouse3dtest

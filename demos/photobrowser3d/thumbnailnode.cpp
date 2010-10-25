@@ -46,6 +46,7 @@
 #include "qatlas.h"
 #include "qglrendersequencer.h"
 #include "qglpicknode.h"
+#include "qlogicalvertex.h"
 
 #include <QtGui/qmatrix4x4.h>
 
@@ -55,6 +56,8 @@ ThumbnailNode::ThumbnailNode(QObject *parent)
     , m_defaultMaterial(-1)
     , m_loading(false)
     , m_full(0)
+    , m_manager(0)
+    , m_lastDistance(ThumbnailNode::Far)
 {
 }
 
@@ -63,9 +66,18 @@ ThumbnailNode::~ThumbnailNode()
     delete m_full;
 }
 
+void ThumbnailNode::setUrl(const QUrl &url)
+{
+    m_url = url;
+    m_image = ThumbnailableImage();
+    m_image.setUrl(m_url);
+    QGL::IndexArray inxs = geometry().indices();
+    m_image.setIndices(inxs.mid(start(), count()));
+}
+
 void ThumbnailNode::setupLoading()
 {
-    if (m_image.isNull() && !m_loading && !m_url.isEmpty())
+    if (!m_loading && !m_url.isEmpty() && m_image.data().isNull())
     {
         m_loading = true;
 #ifdef QT_NO_THREADED_FILE_LOAD
@@ -81,10 +93,13 @@ void ThumbnailNode::setupLoading()
         image.setData(im);
         setImage(image);
 #else
-        emit imageRequired(m_url);
+        if (m_manager)
+            // reconnect the signal we disconnnected in setImage() below
+            connect(m_manager, SIGNAL(imageReady(ThumbnailableImage)),
+                    this, SLOT(setImage(ThumbnailableImage)));
+        emit imageRequired(m_image);
+        setMaterialIndex(m_defaultMaterial);
 #endif
-        if (m_url.toString().contains("1"))
-            qDebug() << "ThumbnailNode::setupLoading" << m_url;
     }
 }
 
@@ -115,19 +130,20 @@ void ThumbnailNode::loadFullImage()
     if (!m_full)
         createFullNode();
     Q_CHECK_PTR(m_full);
-    if (!m_image.data().isNull())
+    // if we have a valid image, and the full node still has the
+    // default material, switch to a new material which displays
+    // the full size image
+    if (!m_image.data().isNull() &&
+            m_full->materialIndex() == m_defaultMaterial)
     {
-        m_image.setThumbnailed(true);
-        if (m_full->materialIndex() == m_defaultMaterial)
-        {
-            QGLMaterial *mat = new QGLMaterial;
-            QGLTexture2D *tex = new QGLTexture2D;
-            tex->setImage(m_image.data());
-            mat->setTexture(tex);
-            int ix = palette()->addMaterial(mat);
-            m_full->setMaterialIndex(ix);
-            mat->setParent(m_full);
-        }
+        QGLMaterial *mat = new QGLMaterial;
+        QGLTexture2D *tex = new QGLTexture2D;
+        tex->setImage(m_image.data());
+        mat->setTexture(tex);
+        mat->setObjectName(m_image.url().path());
+        int ix = palette()->addMaterial(mat);
+        m_full->setMaterialIndex(ix);
+        mat->setParent(m_full);
     }
 }
 
@@ -146,6 +162,7 @@ void ThumbnailNode::draw(QGLPainter *painter)
     qreal magSquared = pos.lengthSquared();
 
     Distance distance = Near;
+
     if (magSquared > (4.0f * m_thresholdSquared))
         distance = VeryFar;
     else if (magSquared > (2.0f * m_thresholdSquared))
@@ -155,29 +172,20 @@ void ThumbnailNode::draw(QGLPainter *painter)
     else
         distance = Near;
 
-    QGLSceneNode *nodeToDraw = this;
+    m_image.setThumbnailed(distance > Near);
+
     switch (distance)
     {
     case Near:
         setupLoading();
         loadFullImage();
-        nodeToDraw = m_full;
         break;
     case Middle:
-        if (m_full)
-            nodeToDraw = m_full;
         setupLoading();
         loadFullImage();
         break;
     case Far:
-        destroyFullNode();
-        if (m_image.isMinimized() && !m_loading)
-        {
-            m_image = ThumbnailableImage();
-            setupLoading();
-        }
-        if (!m_image.data().isNull())
-            m_image.setThumbnailed(true);
+        setupLoading();
         break;
     case VeryFar:
         destroyFullNode();
@@ -186,45 +194,32 @@ void ThumbnailNode::draw(QGLPainter *painter)
     }
 
     QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
-    //Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
-    //           "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
+    Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
+               "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
     ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
-    //Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
-    //           "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
+    Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
+               "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
 
-    if (nodeToDraw == this)
+    effect->setThumbnail(m_image.isThumbnailed());
+    if (m_image.isThumbnailed() || !m_full)
     {
-        effect->setThumbnail(m_image.isThumbnailed());
         QGLSceneNode::draw(painter);
     }
     else
     {
-        effect->setThumbnail(false);
+        if (m_image.data().isNull())
+            m_full->setMaterialIndex(m_defaultMaterial);
         if (pickNode() && painter->isPicking())
             painter->setObjectPickId(pickNode()->id());
-        nodeToDraw->draw(painter);
+        m_full->draw(painter);
     }
 
 }
 
 void ThumbnailNode::setImage(const ThumbnailableImage &image)
 {
+    Q_ASSERT(QThread::currentThread() == thread());
     Q_ASSERT(!image.isNull());
-
-    if (m_url.toString().contains("basket-screenshot.jpg"))
-    {
-        qDebug() << "ThumbnailNode::setImage"
-                 << m_url << "-- got:" << image.url()
-                 << "loading? --" << m_loading
-                 << "thread:" << QThread::currentThread();
-        ::fprintf(stderr, "     ThumbnailNode::setImage -- image data: %p -- thread: %p\n", image.priv(),
-                  QThread::currentThread());
-    }
-
-    // ok maybe we got what we asked for but in the meantime we decided
-    // we didnt want it anymore
-    if (!m_loading)
-        return;
 
     // the manager will be (potentially) loading a number of images, but
     // we only want our one, so just check this is our order
@@ -233,7 +228,15 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
 
     // ok we got the right one, stop listening to the manager
     if (sender())
-        disconnect(sender());
+    {
+        m_manager = sender();
+        m_manager->disconnect(this, SLOT(setImage(ThumbnailableImage)));
+    }
+
+    // ok maybe we got what we asked for but in the meantime we decided
+    // we didnt want it anymore
+    if (!m_loading)
+        return;
 
     // the indices we are about to set will index this thumbnail image
     // into the image that its atlas is based on via the texture coords
@@ -241,15 +244,10 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     // same geometry that this node is referencing, so that they will
     // arrive at the vertex shader at the same time - ie they are all
     // matched in the data arrays in the geometry object
-    Q_ASSERT(QAtlas::instance()->geometry() == geometry());
+    //Q_ASSERT(QAtlas::instance()->geometry() == geometry());
 
     m_image = image;
     Q_ASSERT(!m_image.data().isNull());
-
-    // debug - delete me
-    ::fprintf(stderr, "     ThumbnailNode::setImage -- m_image data: %p -- thread: %p\n",
-              m_image.priv(),
-              QThread::currentThread());
 
     // configure the placeholder for the actual image size
     // this makes a photo of 1024 x 768 display on approx 3.0 x 2.8 pane
@@ -268,7 +266,8 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     g.vertex(inxs.at(k+2)) = c;
     g.vertex(inxs.at(k+5)) = d;
 
-    m_image.setIndices(inxs.mid(start(), count()));
     setMaterialIndex(-1);
     m_loading = false;
+
+    emit nodeChanged();
 }

@@ -1,4 +1,44 @@
 #!/usr/bin/perl
+#############################################################################
+##
+## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+## All rights reserved.
+## Contact: Nokia Corporation (qt-info@nokia.com)
+##
+## This file is part of the Qt3D module of the Qt Toolkit.
+##
+## $QT_BEGIN_LICENSE:LGPL$
+## No Commercial Usage
+## This file contains pre-release code and may not be distributed.
+## You may use this file in accordance with the terms and conditions
+## contained in the Technology Preview License Agreement accompanying
+## this package.
+##
+## GNU Lesser General Public License Usage
+## Alternatively, this file may be used under the terms of the GNU Lesser
+## General Public License version 2.1 as published by the Free Software
+## Foundation and appearing in the file LICENSE.LGPL included in the
+## packaging of this file.  Please review the following information to
+## ensure the GNU Lesser General Public License version 2.1 requirements
+## will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+##
+## In addition, as a special exception, Nokia gives you certain additional
+## rights.  These rights are described in the Nokia Qt LGPL Exception
+## version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+##
+## If you have questions regarding the use of this file, please contact
+## Nokia at qt-info@nokia.com.
+##
+##
+##
+##
+##
+##
+##
+##
+## $QT_END_LICENSE$
+##
+#############################################################################
 
 use strict;
 use warnings;
@@ -62,8 +102,8 @@ if ($func_info{'name'}) {
     push @functions, { %func_info };
 }
 
-# Generate the declarations for qglfunctions.h.
-print "// qglfunctions.h\n\n";
+# Generate the declarations for qopenglfunctions.h.
+print "// qopenglfunctions.h\n\n";
 print "#ifndef Q_WS_MAC\n";
 print "# ifndef QGLF_APIENTRYP\n";
 print "#   ifdef QGLF_APIENTRY\n";
@@ -78,11 +118,11 @@ print "# define QGLF_APIENTRY\n";
 print "# define QGLF_APIENTRYP *\n";
 print "#endif\n";
 print "\n";
-print "struct QGLFunctionsPrivate;\n";
+print "struct QOpenGLFunctionsPrivate;\n";
 print "\n";
 
 print "// Undefine any macros from GLEW, qglextensions_p.h, etc that\n";
-print "// may interfere with the definition of QGLFunctions.\n";
+print "// may interfere with the definition of QOpenGLFunctions.\n";
 foreach ( @functions ) {
     my $inline = $_->{'inline'};
     next if ($inline && $inline eq 'all');
@@ -91,13 +131,13 @@ foreach ( @functions ) {
 }
 print "\n";
 
-# Output the prototypes into the QGLFunctions class.
-print "class Q_QT3D_EXPORT QGLFunctions\n";
+# Output the prototypes into the QOpenGLFunctions class.
+print "class Q_QT3D_EXPORT QOpenGLFunctions\n";
 print "{\n";
 print "public:\n";
-print "    QGLFunctions();\n";
-print "    explicit QGLFunctions(const QGLContext *context);\n";
-print "    ~QGLFunctions() {}\n";
+print "    QOpenGLFunctions();\n";
+print "    explicit QOpenGLFunctions(const QGLContext *context);\n";
+print "    ~QOpenGLFunctions() {}\n";
 print "\n";
 print "    enum OpenGLFeature\n";
 print "    {\n";
@@ -117,8 +157,8 @@ print "        NPOTTextures          = 0x1000\n";
 print "    };\n";
 print "    Q_DECLARE_FLAGS(OpenGLFeatures, OpenGLFeature)\n";
 print "\n";
-print "    QGLFunctions::OpenGLFeatures openGLFeatures() const;\n";
-print "    bool hasOpenGLFeature(QGLFunctions::OpenGLFeature feature) const;\n";
+print "    QOpenGLFunctions::OpenGLFeatures openGLFeatures() const;\n";
+print "    bool hasOpenGLFeature(QOpenGLFunctions::OpenGLFeature feature) const;\n";
 print "\n";
 print "    void initializeGLFunctions(const QGLContext *context = 0);\n";
 print "\n";
@@ -137,20 +177,20 @@ foreach ( @functions ) {
 
 print "\n";
 print "private:\n";
-print "    QGLFunctionsPrivate *d_ptr;\n";
-print "    static bool isInitialized(const QGLFunctionsPrivate *d) { return d != 0; }\n";
+print "    QOpenGLFunctionsPrivate *d_ptr;\n";
+print "    static bool isInitialized(const QOpenGLFunctionsPrivate *d) { return d != 0; }\n";
 print "};\n";
 print "\n";
-print "Q_DECLARE_OPERATORS_FOR_FLAGS(QGLFunctions::OpenGLFeatures)\n";
+print "Q_DECLARE_OPERATORS_FOR_FLAGS(QOpenGLFunctions::OpenGLFeatures)\n";
 print "\n";
-print "struct QGLFunctionsPrivate\n";
+print "struct QOpenGLFunctionsPrivate\n";
 print "{\n";
-print "    QGLFunctionsPrivate(const QGLContext *context = 0);\n";
+print "    QOpenGLFunctionsPrivate(const QGLContext *context = 0);\n";
 print "\n";
 print "#ifndef QT_OPENGL_ES_2";
 print "\n";
 
-# Output the function pointers into the QGLFunctionsPrivate class.
+# Output the function pointers into the QOpenGLFunctionsPrivate class.
 $last_shader_only = 0;
 foreach ( @functions ) {
     my $shader_only = ($_->{'shader_only'} && $_->{'shader_only'} eq 'yes');
@@ -187,7 +227,7 @@ foreach ( @functions ) {
     next if ($inline && $inline eq 'all');
     #print "#ifndef QT_OPENGL_ES_1\n\n" if ($shader_only && !$last_shader_only);
     #print "#endif\n\n" if (!$shader_only && $last_shader_only);
-    print "inline $_->{'returnType'} QGLFunctions::$funcname($_->{'argstr'})\n";
+    print "inline $_->{'returnType'} QOpenGLFunctions::$funcname($_->{'argstr'})\n";
     print "{\n";
     if ($_->{'es_name'}) {
         # Functions like glClearDepth() that are inline, but named differently.
@@ -221,7 +261,7 @@ foreach ( @functions ) {
         }
         print "::$_->{'name'}($_->{'argnamestr'});\n";
         print "#else\n";
-        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
+        print "    Q_ASSERT(QOpenGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
@@ -231,7 +271,7 @@ foreach ( @functions ) {
         print "#endif\n";
     } else {
         # Resolve on all platforms.
-        print "    Q_ASSERT(QGLFunctions::isInitialized(d_ptr));\n";
+        print "    Q_ASSERT(QOpenGLFunctions::isInitialized(d_ptr));\n";
         if ($is_void) {
             print ("    ");
         } else {
@@ -254,7 +294,7 @@ foreach ( @macros ) {
 }
 print "\n";
 
-print "// qglfunctions.cpp\n\n";
+print "// qopenglfunctions.cpp\n\n";
 
 # Generate qdoc documentation for all of the functions.
 foreach ( @functions ) {
@@ -277,7 +317,7 @@ foreach ( @functions ) {
     }
 
     print "/*!\n";
-    print "    \\fn $_->{'returnType'} QGLFunctions::$name($_->{'argstr'})\n";
+    print "    \\fn $_->{'returnType'} QOpenGLFunctions::$name($_->{'argstr'})\n";
     print "\n";
     if ($khronos_name eq $_->{'name'}) {
         print "    Convenience function that calls $khronos_name($docargs).\n";
@@ -342,7 +382,7 @@ foreach ( @functions ) {
     my $type_name = "type_$_->{'name'}";
     print "    typedef $_->{'returnType'} (QGLF_APIENTRYP $type_name)($_->{'argstr'});\n\n";
     print "    const QGLContext *context = QGLContext::currentContext();\n";
-    print "    QGLFunctionsPrivate *funcs = qt_gl_functions(context);\n";
+    print "    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);\n";
     print "\n";
     print "    funcs->$name = ($type_name)\n";
     print "        context->getProcAddress(QLatin1String(\"$_->{'name'}\"));\n";
@@ -396,8 +436,8 @@ foreach ( @functions ) {
 #print "#endif\n" if $last_shader_only;
 print "#endif // !QT_OPENGL_ES_2\n\n";
 
-# Generate the initialization code for QGLFunctionsPrivate.
-print "QGLFunctionsPrivate::QGLFunctionsPrivate(const QGLContext *)\n";
+# Generate the initialization code for QOpenGLFunctionsPrivate.
+print "QOpenGLFunctionsPrivate::QOpenGLFunctionsPrivate(const QGLContext *)\n";
 print "{\n";
 print "#ifndef QT_OPENGL_ES_2\n";
 $last_shader_only = 0;

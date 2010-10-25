@@ -104,8 +104,6 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     , m_maxImages(500)
     , m_frameLoadingMaterial(-1)
 {
-    qDebug() << ">>>>>>> ImageDisplay::ImageDisplay" << QThread::currentThread();
-
     // the real values will get poked in here by the atlas
     m_atlasPlaceHolder.append(QVector2D(), QVector2D(), QVector2D(), QVector2D());
 
@@ -130,9 +128,9 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     m_wall->setEffect(QGL::FlatReplaceTexture2D);
     QGLMaterial *mat = new QGLMaterial();
     QGLTexture2D *tex = new QGLTexture2D(mat);
-    qDebug() << "created girder texture" << tex << QThread::currentThread();
     tex->setImage(QImage(":/res/images/girder.png"));
     mat->setTexture(tex);
+    mat->setObjectName("girder material");
     m_wall->setMaterial(mat);
 
     // build the frames
@@ -151,20 +149,18 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
 
     // generally the frames use the thumbnail material & effect
     m_effect = new ThumbnailEffect;
-    qDebug() << "created thumbnail effect:" << m_effect;
     m_frames->setUserEffect(m_effect);
     m_frames->setEffectEnabled(true);
-    //m_frames->setEffect(QGL::FlatDecalTexture2D);
     m_frames->setMaterial(atlas->material());
 
     // unless they're loading, in which case use the "loading" image
     m_frameImage = qMakeFrameImage();
     mat = new QGLMaterial();
     tex = new QGLTexture2D(mat);
-    qDebug() << "created frame texture" << tex << QThread::currentThread();
     tex->setHorizontalWrap(QGL::Clamp);
     tex->setImage(m_frameImage);
     mat->setTexture(tex);
+    mat->setObjectName("loading image material - default");
     m_frameLoadingMaterial = materials->addMaterial(mat);
     m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
@@ -173,20 +169,16 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
     view->scene()->rootNode()->addNode(m_frames);
 
     m_imageSetToDefault = true;
-
-    qDebug() << "<<<<<<< ImageDisplay::ImageDisplay" << QThread::currentThread();
 }
 
 ImageDisplay::~ImageDisplay()
 {
-    qDebug() << ">>> ImageDisplay::~ImageDisplay()";
     delete m_effect;
-    qDebug() << "<<< ImageDisplay::~ImageDisplay()";
 }
 
 void ImageDisplay::addThumbnailNode(const QUrl &image)
 {
-    qDebug() << ">>>>>>> ImageDisplay::addThumbnailNode" << image.toString() << " #" << m_count << "in thread:" << QThread::currentThread();
+    Q_ASSERT(QThread::currentThread() == thread());
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     if (!m_imageSetToDefault)
     {
@@ -214,13 +206,16 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     m_currentFrame->setUrl(image);
     if (manager)
     {
-        connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(deployLoader(QUrl)));
-        connect(manager, SIGNAL(imageReady(ThumbnailableImage)), m_currentFrame, SLOT(setImage(ThumbnailableImage)));
+        connect(m_currentFrame, SIGNAL(imageRequired(ThumbnailableImage)),
+                manager, SIGNAL(deployLoader(ThumbnailableImage)));
+        connect(manager, SIGNAL(imageReady(ThumbnailableImage)),
+                m_currentFrame, SLOT(setImage(ThumbnailableImage)));
     }
+    PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
+    Q_ASSERT(view);
+    connect(m_currentFrame, SIGNAL(nodeChanged()), view, SLOT(queueUpdate()));
+
     m_imageSetToDefault = false;
     emit framesChanged();
-    //if (m_count == 20)
-    //    qDumpScene(this);
     ++m_count;
-    qDebug() << "<<<<<<< ImageDisplay::addThumbnailNode" << image.toString() << QThread::currentThread();
 }

@@ -1,3 +1,8 @@
+
+# Detect libusb on Linux systems.
+linux*:!isEqual(LIBUSB_DETECT_DONE,yes): include(config.tests/libusb_detect.pri)
+QMAKE_DISTCLEAN += .qmake.cache
+
 TEMPLATE = subdirs
 SUBDIRS += threed plugins
 !gcov: SUBDIRS += util examples demos

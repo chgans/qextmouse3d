@@ -4,37 +4,23 @@
 ** All rights reserved.
 ** Contact: Nokia Corporation (qt-info@nokia.com)
 **
-** This file is part of the Qt3D module of the Qt Toolkit.
+** This file is part of the documentation of the Qt Toolkit.
 **
-** $QT_BEGIN_LICENSE:LGPL$
+** $QT_BEGIN_LICENSE:FDL$
 ** No Commercial Usage
 ** This file contains pre-release code and may not be distributed.
 ** You may use this file in accordance with the terms and conditions
 ** contained in the Technology Preview License Agreement accompanying
 ** this package.
 **
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** In addition, as a special exception, Nokia gives you certain additional
-** rights.  These rights are described in the Nokia Qt LGPL Exception
-** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+** GNU Free Documentation License
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of this
+** file.
 **
 ** If you have questions regarding the use of this file, please contact
 ** Nokia at qt-info@nokia.com.
-**
-**
-**
-**
-**
-**
-**
-**
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
@@ -65,7 +51,7 @@
 
     This is because Qt/3D requires access to source files that do not ship
     with an SDK.  Until Qt/3D becomes a regular part of Qt, either download an official
-    \l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.0-beta1.zip}{Qt 4.7 source package},
+    Qt 4.7 source package (\l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.0.tar.gz}{tar.gz}, \l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.0.zip}{zip}),
     or a source tarball from our 
     \l{http://qt.gitorious.org/qt/qt/}{gitorious repository}.
 
@@ -73,7 +59,7 @@
     \code
     mkdir $HOME/build/qt
     cd $HOME/build/qt
-    tar zxf qt-everywhere-opensource-src-4.7.0-beta1.tar.gz
+    tar zxf qt-everywhere-opensource-src-4.7.0.tar.gz
     ln -s qt* 4.7
     cd qt*
     ./configure -opengl
@@ -81,7 +67,7 @@
     \endcode
 
     On Windows refer to the
-    \l{http://doc.trolltech.com/4.7-snapshot/install-win.html}{build documentation}
+    \l{http://doc.qt.nokia.com/4.7/install-win.html}{build documentation}
     (but do not use the \c{-opengl} command line option).
 
     \section1 Obtaining Qt Declarative UI for Qt/3D with QML bindings

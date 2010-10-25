@@ -42,8 +42,6 @@
 #include "buttons.h"
 #include "qglpainter.h"
 
-#include <QDebug>
-
 Buttons::Buttons(QObject *parent, QGLMaterialCollection *palette)
     : QGLSceneNode(parent)
 {
@@ -127,4 +125,10 @@ void Buttons::draw(QGLPainter *painter)
 
     painter->projectionMatrix().pop();
     painter->modelViewMatrix().pop();
+}
+
+void Buttons::clearPositions()
+{
+    m_left->setPosition(QVector3D());
+    m_right->setPosition(QVector3D());
 }

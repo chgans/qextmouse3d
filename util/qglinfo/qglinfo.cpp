@@ -1,3 +1,44 @@
+/****************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+**
+** This file is part of the Qt3D module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** In addition, as a special exception, Nokia gives you certain additional
+** rights.  These rights are described in the Nokia Qt LGPL Exception
+** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
+**
+**
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #include "qglinfo.h"
 
 #include <QtOpenGL/qgl.h>
@@ -22,9 +63,9 @@ QGLInfo::QGLInfo(QObject *parent)
 static QString nice(const QString &s)
 {
     QString r(s);
-    r.replace("\n", "<br>\n");
-    r.replace("true", "<span style=\"color: green\">true</span>");
-    r.replace("false", "<span style=\"color: red\">false</span>");
+    r.replace(QLatin1String("\n"), QLatin1String("<br>\n"));
+    r.replace(QLatin1String("true"), QLatin1String("<span style=\"color: green\">true</span>"));
+    r.replace(QLatin1String("false"), QLatin1String("<span style=\"color: red\">false</span>"));
     return r;
 }
 
@@ -77,7 +118,7 @@ QString QGLInfo::report() const
 {
     QString report;
     report += m_qtGLVersionInfo;
-    report += QChar('\n');
+    report += QLatin1Char('\n');
     report += m_qtGLFeatures;
     report += m_glVersionInfo;
     report += tr("OpenGL extensions:\n");
@@ -150,12 +191,13 @@ QString QGLInfo::reportQtGLVersionInfo() const
                QGLFormat::OpenGL_ES_Version_2_0);
     if (flags != 0)
         version += "Other=0x" + QByteArray::number(int(flags), 16);
-    return QString("QGLFormat::openGLVersionFlags: ") + version;
+    return QLatin1String("QGLFormat::openGLVersionFlags: ") +
+           QString::fromLatin1(version.constData());
 }
 
 static QString printBool(const char *text, bool value)
 {
-    return QString(text) + (value ? "true\n" : "false\n");
+    return QLatin1String(text) + (value ? QLatin1String("true\n") : QLatin1String("false\n"));
 }
 
 QString QGLInfo::reportQtGLFeatures() const
@@ -168,7 +210,7 @@ QString QGLInfo::reportQtGLFeatures() const
               QGLFramebufferObject::hasOpenGLFramebufferObjects());
     d += printBool("QGLFramebufferObject::hasOpenGLFramebufferBlit: ",
               QGLFramebufferObject::hasOpenGLFramebufferBlit());
-#if !defined(QT_OPENGL_ES_1_CL) && !defined(QT_OPENGL_ES_1)
+#if !defined(QT_OPENGL_ES_1)
     d += printBool("QGLShaderProgram::hasOpenGLShaderPrograms: ",
               QGLShaderProgram::hasOpenGLShaderPrograms());
 #endif
@@ -178,15 +220,15 @@ QString QGLInfo::reportQtGLFeatures() const
 QString QGLInfo::reportGLVersionInfo() const
 {
     QString d;
-    d += "OpenGL vendor string: ";
-    d += reinterpret_cast<const char *>(glGetString(GL_VENDOR));
-    d += "\n";
-    d += "OpenGL renderer string: ";
-    d += reinterpret_cast<const char *>(glGetString(GL_RENDERER));
-    d += "\n";
-    d += "OpenGL version string: ";
-    d += reinterpret_cast<const char *>(glGetString(GL_VERSION));
-    d += "\n";
+    d += QLatin1String("OpenGL vendor string: ");
+    d += QLatin1String(reinterpret_cast<const char *>(glGetString(GL_VENDOR)));
+    d += QLatin1String("\n");
+    d += QLatin1String("OpenGL renderer string: ");
+    d += QLatin1String(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    d += QLatin1String("\n");
+    d += QLatin1String("OpenGL version string: ");
+    d += QLatin1String(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+    d += QLatin1String("\n");
     return d;
 }
 
@@ -207,14 +249,19 @@ QString QGLInfo::formatExtensions(const QByteArray& extString) const
         if (extn.isEmpty())
             continue;
         if (!line.isEmpty() && (line.size() + extn.size() + 1) > 70) {
-            d += "    " + line + "\n";
+            d += QLatin1String("    ") +
+                 QString::fromLatin1(line.constData()) +
+                 QLatin1String("\n");
             line = QByteArray();
         }
         line += extn;
         line += char(' ');
     }
-    if (!line.isEmpty())
-        d += "    " + line + "\n";
+    if (!line.isEmpty()) {
+        d += QLatin1String("    ") +
+             QString::fromLatin1(line.constData()) +
+             QLatin1String("\n");
+    }
     return d;
 }
 

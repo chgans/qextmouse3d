@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qgllitmaterialeffect.h"
+#include "qgllitmaterialeffect_p.h"
 #include "qglabstracteffect_p.h"
 #include "qglext_p.h"
 #include <QtOpenGL/qglshaderprogram.h>
@@ -53,6 +53,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLLitMaterialEffect class provides a standard effect that draws fragments with a lit material.
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 */
 
 #if !defined(QGL_FIXED_FUNCTION_ONLY)
@@ -362,17 +363,6 @@ QGLLitMaterialEffect::~QGLLitMaterialEffect()
 /*!
     \reimp
 */
-QList<QGL::VertexAttribute> QGLLitMaterialEffect::requiredFields() const
-{
-    QList<QGL::VertexAttribute> fields;
-    fields += QGL::Position;
-    fields += QGL::Normal;
-    return fields;
-}
-
-/*!
-    \reimp
-*/
 void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
 {
 #if defined(QGL_FIXED_FUNCTION_ONLY)
@@ -382,7 +372,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
         glEnable(GL_LIGHTING);
         glEnable(GL_LIGHT0);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
+        glEnableClientState(GL_NORMAL_ARRAY);
         if (d->textureMode) {
             qt_gl_ClientActiveTexture(GL_TEXTURE0);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -410,7 +400,7 @@ void QGLLitMaterialEffect::setActive(QGLPainter *painter, bool flag)
             glEnable(GL_LIGHTING);
             glEnable(GL_LIGHT0);
             glEnableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY); // Enable when normals set.
+            glEnableClientState(GL_NORMAL_ARRAY);
             if (d->textureMode) {
                 qt_gl_ClientActiveTexture(GL_TEXTURE0);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -575,69 +565,6 @@ void QGLLitMaterialEffect::update
         program->setUniformValueArray("ecm", (const GLfloat *)ecm, MaxMaterials, 4);
         program->setUniformValueArray("srm", srm, MaxMaterials, 1);
     }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLLitMaterialEffect::setVertexAttribute
-    (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    if (attribute == QGL::Position) {
-        // Disable the normal array when the positions are set because
-        // we may need to use the common normal.  Positions always need
-        // to be specified before an array of normals.
-        glDisableClientState(GL_NORMAL_ARRAY);
-    } else if (attribute == QGL::Normal) {
-        glEnableClientState(GL_NORMAL_ARRAY);
-    }
-    QGLAbstractEffect::setVertexAttribute(attribute, value);
-#else
-    Q_D(QGLLitMaterialEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        if (attribute == QGL::Position) {
-            // Disable the normal array when the positions are set because
-            // we may need to use the common normal.  Positions always need
-            // to be specified before an array of normals.
-            glDisableClientState(GL_NORMAL_ARRAY);
-        } else if (attribute == QGL::Normal) {
-            glEnableClientState(GL_NORMAL_ARRAY);
-        }
-        QGLAbstractEffect::setVertexAttribute(attribute, value);
-        return;
-    }
-#endif
-    if (attribute == QGL::Position) {
-        setAttributeArray(d->program, QGL::Position, value);
-    } else if (attribute == QGL::Normal) {
-        d->program->enableAttributeArray(QGL::Normal);
-        setAttributeArray(d->program, QGL::Normal, value);
-    } else if (attribute == QGL::TextureCoord0 && d->textureMode != 0) {
-        setAttributeArray(d->program, QGL::TextureCoord0, value);
-    }
-#endif
-}
-
-/*!
-    \reimp
-*/
-void QGLLitMaterialEffect::setCommonNormal(const QVector3D& value)
-{
-#if defined(QGL_FIXED_FUNCTION_ONLY)
-    QGLAbstractEffect::setCommonNormal(value);
-#else
-    Q_D(QGLLitMaterialEffect);
-#if !defined(QGL_SHADERS_ONLY)
-    if (d->isFixedFunction) {
-        QGLAbstractEffect::setCommonNormal(value);
-        return;
-    }
-#endif
-    d->program->disableAttributeArray(QGL::Normal);
-    d->program->setAttributeValue(QGL::Normal, value);
 #endif
 }
 

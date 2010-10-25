@@ -89,6 +89,9 @@ public:
 
 private Q_SLOTS:
     void materialDeleted();
+
+private:
+    QScopedPointer<QGLMaterialCollectionPrivate> d_ptr;
 };
 
 QT_END_NAMESPACE

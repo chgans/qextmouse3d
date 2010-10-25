@@ -2,29 +2,38 @@ TEMPLATE = subdirs
 SUBDIRS = \
     qareaallocator \
     qarray \
+    qbox3d \
     qcolor4ub \
     qcustomdataarray \
-    qgraphicstransform3d \
-    qvectorarray \
+    qgeometrydata \
     qglabstractsurface \
+    qglattributedescription \
+    qglattributevalue \
+    qglbezierpatches \
+    qglbuilder \
     qglcamera \
+    qglcameraanimation \
     qglcube \
     qglindexbuffer \
     qgllightmodel \
     qgllightparameters \
     qglmaterial \
     qglmaterialcollection \
-    qglvertexbuffer \
     qglpainter \
-    qglbuilder \
+    qglpickcolors \
+    qglrender \
     qglsection \
     qglsphere \
-    qgeometrydata \
-    qglpickcolors \
+    qglvertexbundle \
+    qgraphicstransform3d \
+    qmouse3devent \
+    qopenglfunctions \
+    qplane3d \
+    qray3d \
+    qglcylinder \
+    qsphere3d \
     qstereoimage \
-    qglrender
+    qtriangle3d \
+    qvectorarray
 
-# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
-contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
-    SUBDIRS += qglfunctions
-}
+!contains(QT_CONFIG, opengles1): SUBDIRS += qglcolladafxeffectfactory

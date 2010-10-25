@@ -201,6 +201,7 @@ void ShapesWidget::paintTriangles(QGLPainter *painter, const QRect& rect)
     painter->setStandardEffect(QGL::LitMaterial);
 
     QVector2DArray vertices;
+    QVector3DArray normals;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -209,12 +210,20 @@ void ShapesWidget::paintTriangles(QGLPainter *painter, const QRect& rect)
     vertices.append(midx - step * 3, midy + step * 2);
     vertices.append(midx - step, midy + step * 2);
 
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+
     vertices.append(midx - step * 2, midy - step);
     vertices.append(midx + step / 2, midy + step * 2);
     vertices.append(midx + step * 3, midy - step);
 
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+
     painter->setVertexAttribute(QGL::Position, vertices);
-    painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
+    painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::Triangles, 6);
 
     drawText(painter, rect, tr("Triangles"));
@@ -225,6 +234,7 @@ void ShapesWidget::paintTriangleStrip(QGLPainter *painter, const QRect& rect)
     painter->setStandardEffect(QGL::LitMaterial);
 
     QVector2DArray vertices;
+    QVector3DArray normals;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -236,8 +246,15 @@ void ShapesWidget::paintTriangleStrip(QGLPainter *painter, const QRect& rect)
     vertices.append(midx + step, midy - step * 2);
     vertices.append(midx + step * 2, midy + step * 2);
 
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+
     painter->setVertexAttribute(QGL::Position, vertices);
-    painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
+    painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::TriangleStrip, 6);
 
     // Overpaint some lines to show the triangle boundaries.
@@ -254,6 +271,7 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     painter->setStandardEffect(QGL::LitMaterial);
 
     QVector2DArray vertices;
+    QVector3DArray normals;
     int step = qMin(rect.width() / 8, rect.height() / 8);
     int midx = rect.x() + rect.width() / 2;
     int midy = rect.y() + rect.height() / 2;
@@ -264,8 +282,14 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     vertices.append(midx + step, midy - step);
     vertices.append(midx - step, midy - step * 2);
 
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+    normals.append(0.0f, 0.0f, 1.0f);
+
     painter->setVertexAttribute(QGL::Position, vertices);
-    painter->setCommonNormal(QVector3D(0.0f, 0.0f, 1.0f));
+    painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::TriangleFan, 5);
 
     // Overpaint some lines to show the triangle boundaries.
@@ -378,9 +402,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     ShapesWidget w;
-    if (QApplication::arguments().contains("-maximize"))
+    if (QApplication::arguments().contains(QLatin1String("-maximize")))
         w.showMaximized();
-    else if (QApplication::arguments().contains("-fullscreen"))
+    else if (QApplication::arguments().contains(QLatin1String("-fullscreen")))
         w.showFullScreen();
     else
         w.show();

@@ -42,8 +42,12 @@
 #ifndef QGLSHADERPROGRAMEFFECT_H
 #define QGLSHADERPROGRAMEFFECT_H
 
-#include <QList>
 #include "qglabstracteffect.h"
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
 class QGLShaderProgramEffectPrivate;
 class QGLShaderProgram;
 
@@ -52,33 +56,36 @@ class Q_QT3D_EXPORT QGLShaderProgramEffect : public QGLAbstractEffect
 public:
     QGLShaderProgramEffect();
     virtual ~QGLShaderProgramEffect();
-    virtual QList<QGL::VertexAttribute> requiredFields() const;
-    virtual bool supportsPicking() const;
-    virtual void setActive(QGLPainter *painter, bool flag);
-    virtual bool isActive();
-    virtual void setVertexAttribute(QGL::VertexAttribute attribute,
-                            const QGLAttributeValue& value);
-    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
 
-    virtual void setVertexShader(QString const &  shader);
-    virtual void setFragmentShader(QString const & shader);
-    virtual void setMaterial(QGLMaterial* newMaterial);
-    virtual QGLMaterial* material();
-    virtual void setProgram(QGLShaderProgram* program);
-    virtual QString vertexShader();
-    virtual QString fragmentShader();
+    void setActive(QGLPainter *painter, bool flag);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    QByteArray vertexShader() const;
+    void setVertexShader(const QByteArray &source);
+    void setVertexShaderFromFile(const QString &fileName);
+
+    QByteArray fragmentShader() const;
+    void setFragmentShader(const QByteArray &source);
+    void setFragmentShaderFromFile(const QString &fileName);
+
+    int maximumLights() const;
+    void setMaximumLights(int value);
+
+    QGLShaderProgram *program() const;
 
 protected:
-    virtual QGLShaderProgram* program();
-    virtual void reloadShaders();
-    virtual void bindProgramAttributes();
+    virtual bool beforeLink();
+    virtual void afterLink();
 
 private:
-    int colorAttribute;
-    bool currentlyActive;
-    bool textureAttributeSet;
-    int textureId;
-    QGLShaderProgramEffectPrivate *d;
+    QScopedPointer<QGLShaderProgramEffectPrivate> d_ptr;
+
+    Q_DISABLE_COPY(QGLShaderProgramEffect)
+    Q_DECLARE_PRIVATE(QGLShaderProgramEffect)
 };
 
-#endif // QGLSHADERPROGRAMEFFECT_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

@@ -77,7 +77,7 @@ QT_BEGIN_NAMESPACE
     to orient a pane to point towards the viewer:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
         transform: BillboardTransform {}
@@ -91,7 +91,7 @@ QT_BEGIN_NAMESPACE
     reverse order of their appearance in \c transform):
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
         transform: [
@@ -108,7 +108,7 @@ QT_BEGIN_NAMESPACE
     as follows:
 
     \code
-    Item3d {
+    Item3D {
         mesh: Mesh { source: "pane.obj" }
         position: Qt.vector3d(2, 0, -20)
         scale: 0.5

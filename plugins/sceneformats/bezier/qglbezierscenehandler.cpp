@@ -61,21 +61,21 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
 
     // Read the patch indices.
     int depth = 0;
-    QArray<ushort> indices;
+    QArray<int> indices;
     for (int patch = 0; patch < patchCount; ++patch) {
         bool eoln = false;
         for (int index = 0; index < 16; ++index) {
             int value;
             stream >> value;
-            indices.append(ushort(value - 1));
+            indices.append(value - 1);
 
             QChar sep;
             stream >> sep;
-            if (sep == '\n' || sep == '\r') {
+            if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r')) {
                 eoln = true;
                 break;
             }
-            if (sep != ',')
+            if (sep != QLatin1Char(','))
                 return 0;
         }
         if (!eoln) {
@@ -105,28 +105,26 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
 
             QChar sep;
             stream >> sep;
-            if (sep == '\n' || sep == '\r') {
+            if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r')) {
                 eoln = true;
                 break;
             }
-            if (sep != ',')
+            if (sep != QLatin1Char(','))
                 return 0;
         }
         vertices.append(coords[0], coords[1], coords[2]);
         if (!eoln) {
-            // Optional normal on the end.
+            // Optional normal on the end: read it but discard.
             for (int index = 0; index < 3; ++index) {
                 stream >> coords[index];
 
                 QChar sep;
                 stream >> sep;
-                if (sep == '\n' || sep == '\r')
+                if (sep == QLatin1Char('\n') || sep == QLatin1Char('\r'))
                     break;
-                if (sep != ',')
+                if (sep != QLatin1Char(','))
                     return 0;
             }
-            patches.setNormal
-                (vertex, QVector3D(coords[0], coords[1], coords[2]));
         }
         stream.skipWhiteSpace();
     }
@@ -135,7 +133,7 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
     if (!stream.atEnd()) {
         QChar ch;
         stream >> ch;
-        if (ch == '#') {
+        if (ch == QLatin1Char('#')) {
             QString options = stream.readLine();
             if (options.contains(QLatin1String("teapot-adjust"))) {
                 // Perform the "teapot adjustment" to convert the raw
@@ -163,13 +161,13 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
             if (options.contains(QLatin1String("reverse-patches"))) {
                 // Reverse the patch order to convert clockwise
                 // patches into standard anti-clockwise patches.
-                QArray<ushort> newIndices;
+                QArray<int> newIndices;
                 for (int patch = 0; patch < patchCount; ++patch) {
                     int temp[16];
                     for (int index = 0; index < 16; ++index)
                         temp[index] = indices[patch * 16 + index];
                     for (int i = 0; i < 16; ++i)
-                        newIndices.append(ushort(temp[(i & 0x0C) + (3 - (i % 4))]));
+                        newIndices.append(temp[(i & 0x0C) + (3 - (i % 4))]);
                 }
                 indices = newIndices;
             }
@@ -183,8 +181,10 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
     // Create the geometry node from the Bezier patch data.
     if (depth != 0)
         patches.setSubdivisionDepth(depth);
-    patches.setPositions(vertices);
-    patches.setIndices(indices);
+    QVector3DArray positions;
+    for (int pindex = 0; pindex < indices.size(); ++pindex)
+        positions += vertices[indices[pindex]];
+    patches.setPositions(positions);
     QGLBuilder geometry;
     geometry << patches;
 

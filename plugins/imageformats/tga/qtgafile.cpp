@@ -48,38 +48,47 @@
 struct TgaReader
 {
     virtual ~TgaReader() {}
-    virtual QRgb operator()(QDataStream *s) const = 0;
-    mutable quint8 r, g, b, a;
+    virtual QRgb operator()(QIODevice *s) const = 0;
 };
 
 struct Tga16Reader : public TgaReader
 {
     ~Tga16Reader() {}
-    QRgb operator()(QDataStream *s) const
+    QRgb operator()(QIODevice *s) const
     {
-        *s >> d;
-        QRgb result = (d & 0x8000) ? 0xFF000000 : 0x00000000;
-        result |= (d & 0x7C00 << 6) | (d & 0x03E0 << 3) | (d & 0x001F);
-        return result;
+        char ch1, ch2;
+        if (s->getChar(&ch1) && s->getChar(&ch2)) {
+            quint16 d = (int(ch1) & 0xFF) | ((int(ch2) & 0xFF) << 8);
+            QRgb result = (d & 0x8000) ? 0xFF000000 : 0x00000000;
+            result |= (d & 0x7C00 << 6) | (d & 0x03E0 << 3) | (d & 0x001F);
+            return result;
+        } else {
+            return 0;
+        }
     }
-    mutable quint16 d;
 };
 
 struct Tga24Reader : public TgaReader
 {
-    QRgb operator()(QDataStream *s) const
+    QRgb operator()(QIODevice *s) const
     {
-        *s >> b >> g >> r;
-        return qRgb(r, g, b);
+        char r, g, b;
+        if (s->getChar(&b) && s->getChar(&g) && s->getChar(&r))
+            return qRgb(uchar(r), uchar(g), uchar(b));
+        else
+            return 0;
     }
 };
 
 struct Tga32Reader : public TgaReader
 {
-    QRgb operator()(QDataStream *s) const
+    QRgb operator()(QIODevice *s) const
     {
-        *s >> b >> g >> r >> a;
-        return qRgba(r, g, b, a);
+        char r, g, b, a;
+        if (s->getChar(&b) && s->getChar(&g) && s->getChar(&r) && s->getChar(&a))
+            return qRgba(uchar(r), uchar(g), uchar(b), uchar(a));
+        else
+            return 0;
     }
 };
 
@@ -186,13 +195,9 @@ QImage QTgaFile::readImage()
 
     mDevice->seek(HeaderSize + offset);
 
-    // TGA file format is always little endian for its int's
-    QDataStream s(mDevice);
-    s.setByteOrder(QDataStream::LittleEndian);
-
-    quint8 dummy;
+    char dummy;
     for (int i = 0; i < offset; ++i)
-        s >> dummy;
+        mDevice->getChar(&dummy);
 
     int bitsPerPixel = mHeader[PixelDepth];
     int imageWidth = width();
@@ -218,13 +223,13 @@ QImage QTgaFile::readImage()
     {
         for (int y = 0; y < imageHeight; ++y)
             for (int x = 0; x < imageWidth; ++x)
-                im.setPixel(x, y, read(&s));
+                im.setPixel(x, y, read(mDevice));
     }
     else
     {
         for (int y = imageHeight - 1; y >= 0; --y)
             for (int x = 0; x < imageWidth; ++x)
-                im.setPixel(x, y, read(&s));
+                im.setPixel(x, y, read(mDevice));
     }
 
     // TODO: add processing of TGA extension information - ie TGA 2.0 files

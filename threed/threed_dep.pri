@@ -1,21 +1,17 @@
 QT += opengl
 
+INCLUDEPATH += $$PWD/global
 INCLUDEPATH += $$PWD/painting
-INCLUDEPATH += $$PWD/enablers
+INCLUDEPATH += $$PWD/arrays
 INCLUDEPATH += $$PWD/effects
 INCLUDEPATH += $$PWD/geometry
 INCLUDEPATH += $$PWD/viewing
 INCLUDEPATH += $$PWD/math3d
 INCLUDEPATH += $$PWD/scene
 INCLUDEPATH += $$PWD/graphicsview
-INCLUDEPATH += $$PWD/animation
-INCLUDEPATH += $$PWD/other
+INCLUDEPATH += $$PWD/textures
 INCLUDEPATH += $$PWD/surfaces
-
-# Qt 4.8 has QGLFunctions, but Qt 4.7 doesn't.
-contains(QT_MAJOR_VERSION,4):contains(QT_MINOR_VERSION,7) {
-    INCLUDEPATH += $$PWD/api
-}
+INCLUDEPATH += $$PWD/api
 
 gcov {
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage

@@ -1,6 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = \
-    math3d \
-    threed \
-    compareimage \
-    qglcolladafxeffectfactory
+SUBDIRS = threed qml3d

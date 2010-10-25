@@ -108,6 +108,8 @@ Q_SIGNALS:
 
 private:
     Q_DISABLE_COPY(QGLLightModel)
+
+    QScopedPointer<QGLLightModelPrivate> d_ptr;
 };
 
 QT_END_NAMESPACE

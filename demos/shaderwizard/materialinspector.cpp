@@ -213,13 +213,13 @@ void MaterialInspector::selectTexture()
 {
     QList<QByteArray> formats = QImageReader::supportedImageFormats();
     QStringList supportedFormats;
-    QString format;
+    QByteArray format;
     foreach (format, formats)
-        supportedFormats << "*." + format.toLower();
+        supportedFormats << QLatin1String("*.") + QString::fromLatin1(format.constData()).toLower();
 
     static QDir path  = QDir::homePath();
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open Texture Image"),
-                            path.path(), tr("Images") + " ("+ supportedFormats.join(" ") + ")");
+                            path.path(), tr("Images") + QLatin1String(" (")+ supportedFormats.join(QLatin1String(" ")) + QLatin1Char(')'));
     if (fileName.isEmpty())
         return;
 

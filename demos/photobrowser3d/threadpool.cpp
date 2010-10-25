@@ -48,7 +48,7 @@
 ThreadPool::ThreadPool()
 {
     m_threadPoolSize = QThread::idealThreadCount();
-    if (m_threadPoolSize < 1)
+    if (m_threadPoolSize < 2)
         m_threadPoolSize = 2;
     m_stop = 0;
 }
@@ -58,14 +58,11 @@ ThreadPool::~ThreadPool()
     Q_ASSERT(m_allWorkers.size() == 0);
 }
 
-void ThreadPool::deployLoader(const QUrl &url)
+void ThreadPool::deployLoader(const ThumbnailableImage &image)
 {
     // INVARIANT: this critical section is only ever executed from its
-    // own thread - thus access to it is serialized
+    // own thread via queued signals - thus access to it is serialized
     Q_ASSERT(QThread::currentThread() == thread());
-
-    qDebug() << ">>>>>> ThreadPool::deployLoader(" << url.toString() << ")"
-             << QThread::currentThread();
 
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     Q_ASSERT(manager);
@@ -76,7 +73,7 @@ void ThreadPool::deployLoader(const QUrl &url)
 
     if (loader)
     {
-        loader->setUrl(url);
+        loader->setImage(image);
     }
     else
     {
@@ -84,9 +81,7 @@ void ThreadPool::deployLoader(const QUrl &url)
         {
             loader = new ImageLoader;
             m_allWorkers.append(loader);
-            loader->setUrl(url);
-            qDebug() << "ThreadPool::deployLoader - created new" << loader <<
-                        "in thread:" << QThread::currentThread();
+            loader->setImage(image);
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager,
                     SIGNAL(imageReady(ThumbnailableImage)));
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
@@ -97,22 +92,19 @@ void ThreadPool::deployLoader(const QUrl &url)
         }
         else
         {
-            m_workList.append(url);
+            m_workList.append(image);
         }
     }
-
-    qDebug() << "<<<<<< ThreadPool::deployLoader(" << url.toString() << ")" << QThread::currentThread();
 }
 
 void ThreadPool::retrieveLoader()
 {
     ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    qDebug() << "ThreadPool::retrieveLoader()" << loader;
     Q_ASSERT(loader);
     if (!m_stop)
     {
         if (!m_workList.isEmpty())
-            loader->setUrl(m_workList.takeFirst());
+            loader->setImage(m_workList.takeFirst());
         else
             m_freeWorkers.append(loader);
     }
@@ -120,7 +112,6 @@ void ThreadPool::retrieveLoader()
 
 void ThreadPool::stop()
 {
-    qDebug() << "ThreadPool::stop";
     m_stop.ref();
     emit stopAll();
 }
@@ -128,10 +119,11 @@ void ThreadPool::stop()
 void ThreadPool::closeLoader()
 {
     ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    qDebug() << "ThreadPool::closeLoader()" << loader;
     Q_ASSERT(loader);
     m_allWorkers.removeOne(loader);
     loader->deleteLater();
     if (m_allWorkers.isEmpty() && m_stop)
+    {
         emit stopped();
+    }
 }

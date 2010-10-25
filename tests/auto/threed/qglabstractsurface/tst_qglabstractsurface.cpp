@@ -46,7 +46,7 @@
 #include "qglpixelbuffersurface.h"
 #include "qglsubsurface.h"
 #include "qglmaskedsurface.h"
-#include "qglfunctions.h"
+#include "qopenglfunctions.h"
 
 class tst_QGLAbstractSurface : public QObject
 {

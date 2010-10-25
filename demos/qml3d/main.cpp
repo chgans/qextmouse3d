@@ -41,7 +41,9 @@
 
 #include <QApplication>
 #include <QtDeclarative/qdeclarativeview.h>
+#ifdef QT_BUILD_INTERNAL
 #include <QtGui/private/qapplication_p.h>
+#endif
 #include <QtDeclarative/qdeclarativeengine.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/qdeclarativecomponent.h>
@@ -62,22 +64,24 @@ int main(int argc, char *argv[])
     // If "-graphicssystem OpenGL" was supplied, then enable "mixed mode".
     bool mixed = false;
     bool glViewport = false;
+#ifdef QT_BUILD_INTERNAL
     if (QApplicationPrivate::graphics_system_name.compare
             (QLatin1String("opengl"), Qt::CaseInsensitive) == 0)
         mixed = true;
+#endif
     if (QApplication::arguments().contains(QLatin1String("-opengl")))
         glViewport = true;
 
     QString source;
     for (int index = 1; index < argc; ++index) {
-        QString arg = argv[index];
-        if (arg.startsWith(QChar('-')))
+        QString arg = QString::fromLocal8Bit(argv[index]);
+        if (arg.startsWith(QLatin1Char('-')))
             continue;   // TODO
         else
             source = arg;
     }
     if (source.isEmpty()) {
-        qWarning() << "Usage: qml3d file.qml [-graphicssystem opengl]";
+        qWarning() << "Usage: qml3d [-opengl] file.qml";
         return 1;
     }
     QUrl url(source);

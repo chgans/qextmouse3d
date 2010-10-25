@@ -56,85 +56,83 @@ void QmlGenerator::save() const
 {
     QFile f(m_filePath);
     // flags: Write + throw away previous + do eol conversions on windows
-    QString indent = "    ";
+    QString indent = QLatin1String("    ");
     if (f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
     {
         QTextStream os(&f);
-        os << "import Qt 4.7" << endl;
-        os << "import Qt.labs.threed 1.0" << endl << endl;
+        os << QLatin1String("import Qt 4.7") << endl;
+        os << QLatin1String("import Qt3D 1.0") << endl << endl;
 
-        QmlStanza item3d("Item3d");
+        QmlStanza item3d(QLatin1String("Item3D"));
 
-        QmlStanza mesh("Mesh");
-        item3d.addProperty("mesh", &mesh);
+        QmlStanza mesh(QLatin1String("Mesh"));
+        item3d.addProperty(QLatin1String("mesh"), &mesh);
 
-        mesh.addProperty("source", property("modelFileName"), true);
-        mesh.addProperty("options", property("options", Optional), true);
+        mesh.addProperty(QLatin1String("source"), property("modelFileName"), true);
+        mesh.addProperty(QLatin1String("options"), property("options", Optional), true);
 
         QString x_t = property("x_translation", Optional);
         QString y_t = property("y_translation", Optional);
         QString z_t = property("z_translation", Optional);
-        QmlStanza tq("Translation3D");
+        QmlStanza tq(QLatin1String("Translation3D"));
         if (!x_t.isEmpty() || !y_t.isEmpty() || !z_t.isEmpty())
         {
-            x_t = x_t.isEmpty() ? QString("0") : x_t;
-            y_t = y_t.isEmpty() ? QString("0") : y_t;
-            z_t = z_t.isEmpty() ? QString("0") : z_t;
-            QString vec = QString("Qt.vector3d(%1, %2, %3)"
+            x_t = x_t.isEmpty() ? QLatin1String("0") : x_t;
+            y_t = y_t.isEmpty() ? QLatin1String("0") : y_t;
+            z_t = z_t.isEmpty() ? QLatin1String("0") : z_t;
+            QString vec = QString::fromLatin1("Qt.vector3d(%1, %2, %3)"
                                   ).arg(x_t).arg(y_t).arg(z_t);
-            tq.addProperty("translate", vec);
-            item3d.addProperty("transform", &tq);
+            tq.addProperty(QLatin1String("translate"), vec);
+            item3d.addProperty(QLatin1String("transform"), &tq);
         }
 
-        QmlStanza xrq("Rotation3D");
+        QmlStanza xrq(QLatin1String("Rotation3D"));
         QString x_r = property("x_rotation", Optional);
         if (!x_r.isEmpty())
         {
-            xrq.addProperty("angle", x_r);
-            xrq.addProperty("axis", "Qt.vector3d(1, 0, 0)");
-            item3d.addProperty("transform", &xrq);
+            xrq.addProperty(QLatin1String("angle"), x_r);
+            xrq.addProperty(QLatin1String("axis"), QLatin1String("Qt.vector3d(1, 0, 0)"));
+            item3d.addProperty(QLatin1String("transform"), &xrq);
         }
 
-        QmlStanza yrq("Rotation3D");
+        QmlStanza yrq(QLatin1String("Rotation3D"));
         QString y_r = property("y_rotation", Optional);
         if (!y_r.isEmpty())
         {
-            yrq.addProperty("angle", y_r);
-            yrq.addProperty("axis", "Qt.vector3d(0, 1, 0)");
-            item3d.addProperty("transform", &yrq);
+            yrq.addProperty(QLatin1String("angle"), y_r);
+            yrq.addProperty(QLatin1String("axis"), QLatin1String("Qt.vector3d(0, 1, 0)"));
+            item3d.addProperty(QLatin1String("transform"), &yrq);
         }
 
-        QmlStanza zrq("Rotation3D");
+        QmlStanza zrq(QLatin1String("Rotation3D"));
         QString z_r = property("z_rotation", Optional);
         if (!z_r.isEmpty())
         {
-            zrq.addProperty("angle", z_r);
-            zrq.addProperty("axis", "Qt.vector3d(0, 0, 1)");
-            item3d.addProperty("transform", &xrq);
+            zrq.addProperty(QLatin1String("angle"), z_r);
+            zrq.addProperty(QLatin1String("axis"), QLatin1String("Qt.vector3d(0, 0, 1)"));
+            item3d.addProperty(QLatin1String("transform"), &xrq);
         }
 
-        QmlStanza xsq("Scale3D");
+        QmlStanza sq(QLatin1String("Scale3D"));
         QString x_s = property("x_scale", Optional);
-        if (!x_s.isEmpty())
-        {
-            xsq.addProperty("xScale", x_s);
-            item3d.addProperty("transform", &xsq);
-        }
-
-        QmlStanza ysq("Scale3D");
         QString y_s = property("y_scale", Optional);
-        if (!y_s.isEmpty())
-        {
-            ysq.addProperty("yScale", y_s);
-            item3d.addProperty("transform", &ysq);
-        }
-
-        QmlStanza zsq("Scale3D");
         QString z_s = property("z_scale", Optional);
-        if (!z_s.isEmpty())
+        if (x_s.isEmpty()) x_s = QLatin1String("1");
+        if (y_s.isEmpty()) y_s = QLatin1String("1");
+        if (z_s.isEmpty()) z_s = QLatin1String("1");
+        if (x_s != QLatin1String("1") || y_s != QLatin1String("1") ||
+                z_s != QLatin1String("1"))
         {
-            zsq.addProperty("zScale", z_s);
-            item3d.addProperty("transform", &zsq);
+            QString scale;
+            if (x_s != y_s || x_s != z_s || y_s != z_s) {
+                scale = QLatin1String("Qt.vector3d(") + x_s +
+                        QLatin1String(", ") + y_s +
+                        QLatin1String(", ") + z_s + QLatin1String(")");
+            } else {
+                scale = x_s;
+            }
+            sq.addProperty(QLatin1String("scale"), x_s);
+            item3d.addProperty(QLatin1String("transform"), &sq);
         }
 
         os << item3d;
@@ -149,13 +147,13 @@ void QmlGenerator::save() const
 QString QmlGenerator::property(const char *propertyName,
                                        QmlGenerator::OptionStatus required) const
 {
-    QString result = m_content.value(propertyName, QString());
+    QString result = m_content.value(QString::fromLatin1(propertyName), QString());
     if (result.isEmpty() && required)
     {
         m_hasError = true;
         if (!m_errorString.isEmpty())
-            m_errorString += "\n";
-        m_errorString += QObject::tr("Expected property %1: none defined").arg(propertyName);
+            m_errorString += QLatin1Char('\n');
+        m_errorString += QObject::tr("Expected property %1: none defined").arg(QString::fromLatin1(propertyName));
     }
     return result;
 }

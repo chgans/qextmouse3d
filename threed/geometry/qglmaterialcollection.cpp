@@ -43,7 +43,6 @@
 #include "qglmaterial_p.h"
 #include <QtCore/qlist.h>
 #include <QtCore/qhash.h>
-#include <QtCore/private/qobject_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -81,12 +80,10 @@ QT_BEGIN_NAMESPACE
     objects will be destroyed when the collection is destroyed.
 */
 
-class QGLMaterialCollectionPrivate : public QObjectPrivate
+class QGLMaterialCollectionPrivate
 {
-    Q_DECLARE_PUBLIC(QGLMaterialCollection)
 public:
-    QGLMaterialCollectionPrivate(int version = QObjectPrivateVersion)
-        : QObjectPrivate(version)
+    QGLMaterialCollectionPrivate()
     {
     }
 
@@ -99,7 +96,8 @@ public:
     is set as the parent of this object.
 */
 QGLMaterialCollection::QGLMaterialCollection(QObject *parent)
-    : QObject(*new QGLMaterialCollectionPrivate, parent)
+    : QObject(parent)
+    , d_ptr(new QGLMaterialCollectionPrivate)
 {
 }
 

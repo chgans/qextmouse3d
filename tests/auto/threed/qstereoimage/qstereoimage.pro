@@ -3,8 +3,8 @@ TEMPLATE=app
 QT += testlib
 CONFIG += unittest warn_on
 
-SOURCES += tst_qstereoimage.cpp
+INCLUDEPATH += ../../../../examples/stereophoto
+VPATH += ../../../../examples/stereophoto
 
-LIBS += -L../../../../lib -L../../../../bin
-
-include(../../../../threed/threed_dep.pri)
+HEADERS += qstereoimage.h
+SOURCES += tst_qstereoimage.cpp qstereoimage.cpp

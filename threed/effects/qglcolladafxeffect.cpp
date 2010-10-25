@@ -1,3 +1,44 @@
+/****************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+**
+** This file is part of the Qt3D module of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:LGPL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** In addition, as a special exception, Nokia gives you certain additional
+** rights.  These rights are described in the Nokia Qt LGPL Exception
+** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
+**
+**
+**
+**
+**
+**
+**
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
 #include <QString>
 #include <QXmlStreamReader>
 #include <QFile>
@@ -13,6 +54,10 @@ QGLColladaFxEffect::QGLColladaFxEffect() : QGLShaderProgramEffect()
 {
 }
 
+QGLColladaFxEffect::QGLColladaFxEffect(const QGLColladaFxEffect&) : QGLShaderProgramEffect()
+{
+    Q_ASSERT(false);
+};
 
 
 QGLColladaFxEffect::~QGLColladaFxEffect()
@@ -30,8 +75,7 @@ QGLColladaFxEffectPrivate::QGLColladaFxEffectPrivate() : id()
         , diffuseTexture(0)
         , specularTexture(0)
         , lighting(QGLColladaFxEffect::NoLighting)
-        , hasCustomVertexShader(false)
-        , hasCustomFragmentShader(false)
+        , material(0)
 {
     resetGlueSnippets();
 }
@@ -48,6 +92,9 @@ QGLColladaFxEffectPrivate::~QGLColladaFxEffectPrivate()
     diffuseTexture = 0;
     delete specularTexture;
     specularTexture = 0;
+    delete material;
+    material = 0;
+
 }
 
 
@@ -219,27 +266,25 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
 
 void QGLColladaFxEffect::generateShaders()
 {
-    if(!d->hasCustomVertexShader)
+    if(vertexShader().isEmpty())
     {
-        setVertexShader(
+        QString shader =
                 d->vertexShaderDeclarationSnippets.join(QLatin1String("\n"))
                 + QLatin1String("\n") + d->vertexShaderMainGlueSnippet
                 + d->vertexShaderCodeSnippets.join(QLatin1String("\n"))
-                + QLatin1String("\n") + d->vertexShaderEndGlueSnippet);
+                + QLatin1String("\n") + d->vertexShaderEndGlueSnippet;
+        setVertexShader(shader.toLatin1());
     }
 
-    if(!d->hasCustomFragmentShader)
+    if(fragmentShader().isEmpty())
     {
-        setFragmentShader(
+        QString shader =
                 d->fragmentShaderDeclarationSnippets.join(QLatin1String("\n"))
                 + QLatin1String("\n") + d->fragmentShaderMainGlueSnippet
                 +  d->fragmentShaderCodeSnippets.join(QLatin1String("\n"))
-                + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet);
+                + QLatin1String("\n") + d->fragmentShaderEndGlueSnippet;
+        setFragmentShader(shader.toLatin1());
     }
-
-    // Set inactive to trigger relinking later
-    if(isActive())
-        setActive(0, false);    // FIXME - really needs a painter
 }
 
 
@@ -312,18 +357,6 @@ QGLTexture2D* QGLColladaFxEffect::diffuseTexture()
     return d->diffuseTexture;
 }
 
-void QGLColladaFxEffect::setVertexShader(QString const &  shader)
-{
-    d->hasCustomVertexShader = shader.length() > 0;
-    QGLShaderProgramEffect::setVertexShader(shader);
-}
-
-void QGLColladaFxEffect::setFragmentShader(QString const & shader)
-{
-    d->hasCustomFragmentShader = shader.length() > 0;
-    QGLShaderProgramEffect::setFragmentShader(shader);
-}
-
 
 void QGLColladaFxEffect::setLighting(int lighting)
 {
@@ -333,4 +366,41 @@ void QGLColladaFxEffect::setLighting(int lighting)
 int QGLColladaFxEffect::lighting()
 {
     return d->lighting;
+}
+
+/*!
+  Sets this effect to use \a newMaterial.  If \a newMaterial is 0, sets this
+  effect to have no material, and instead use whatever material is set
+  on the QGLPainter.
+
+  \sa QGLPainter, material()
+*/
+void QGLColladaFxEffect::setMaterial(QGLMaterial* newMaterial)
+{
+    d->material = newMaterial;
+}
+
+/*!
+    Returns a pointer to the material of this effect.  If the effect has no material,
+    this function returns 0;
+*/
+QGLMaterial* QGLColladaFxEffect::material()
+{
+    return d->material;
+}
+
+/*!
+  Returns true if the effect is currently active (applied to a QGLPainter)
+  and false if it is not.
+  */
+bool QGLColladaFxEffect::isActive()
+{
+    return d->currentlyActive;
+}
+
+void QGLColladaFxEffect::setActive(QGLPainter *painter, bool flag)
+{
+    d->currentlyActive = flag && !vertexShader().isEmpty() &&
+                         !fragmentShader().isEmpty();
+    QGLShaderProgramEffect::setActive(painter, d->currentlyActive);
 }

@@ -91,4 +91,8 @@ private:
 
 Q_DECLARE_METATYPE(ThumbnailableImage);
 
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const ThumbnailableImage &image);
+#endif
+
 #endif // THUMBNAILABLEIMAGE_H

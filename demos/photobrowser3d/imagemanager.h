@@ -66,13 +66,12 @@ public slots:
 signals:
     void imageUrl(const QUrl &);
     void imageReady(const ThumbnailableImage &);
-    void deployLoader(const QUrl &);
+    void deployLoader(const ThumbnailableImage &);
     void stopAll();
 protected:
     void run();
 private slots:
     void scanForFiles();
-    void debugStuff();
 private:
     QUrl m_url;
 };

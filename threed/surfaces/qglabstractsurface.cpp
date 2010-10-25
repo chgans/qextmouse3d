@@ -247,8 +247,14 @@ QGLAbstractSurface *QGLAbstractSurface::createSurfaceForDevice
 {
     Q_ASSERT(device);
     switch (device->devType()) {
-    case QInternal::Widget:
-        return new QGLWidgetSurface(static_cast<QWidget *>(device));
+    case QInternal::Widget: {
+        QGLWidget *glw = qobject_cast<QGLWidget *>
+                (static_cast<QWidget *>(device));
+        if (glw)
+            return new QGLWidgetSurface(glw);
+        else
+            return 0;
+    }
     case QInternal::Pbuffer:
         return new QGLPixelBufferSurface(static_cast<QGLPixelBuffer *>(device));
     case QInternal::FramebufferObject:
