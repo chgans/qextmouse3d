@@ -58,7 +58,20 @@ public:
 
     virtual bool supportsPicking() const;
     virtual void setActive(QGLPainter *painter, bool flag) = 0;
-    virtual void update(QGLPainter *painter, QGLPainter::Updates updates) = 0;
+    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    virtual void setVertexAttribute
+        (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+
+    virtual QString name() const { return QString(); }
+
+protected:
+    static void setAttributeArray
+        (QGLShaderProgram *program, int location,
+         const QGLAttributeValue& value);
+
+    friend class QGLVertexBundle;
+    friend class QGLPainter;
 };
 
 QT_END_NAMESPACE

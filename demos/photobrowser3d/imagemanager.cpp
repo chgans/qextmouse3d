@@ -41,89 +41,94 @@
 
 
 #include "imagemanager.h"
-#include "imageloader.h"
-#include "launcher.h"
+#include "qatlas.h"
+#include "filescanner.h"
+#include "threadpool.h"
 
-#include <QSemaphore>
-#include <QDir>
 #include <QTime>
 #include <QTimer>
-#include <QDebug>
+#include <QDir>
 
-#ifndef Q_MAX_CONCURRENT_LOADERS
-#define Q_MAX_CONCURRENT_LOADERS 8
-#endif
-
-ImageManager::ImageManager(QObject *parent)
-    : QThread(parent)
-    , m_sem(0)
-    , m_threadPoolSize(0)
-    , m_launcher(0)
+ImageManager::ImageManager()
 {
-    m_threadPoolSize = QThread::idealThreadCount();
-    if (m_threadPoolSize == -1)
-        m_threadPoolSize = Q_MAX_CONCURRENT_LOADERS + 2;
-    // need at least 3 threads - manager, launcher & one loader
-    Q_ASSERT(m_threadPoolSize > 2);
-    // debug ---- remove me
-    m_threadPoolSize = 3;
-    --m_sem;  // take one thread out for this manager objects run()
-    m_sem = new QSemaphore(m_threadPoolSize);
 }
 
-void ImageManager::acquire()
+ImageManager::~ImageManager()
 {
-    // block if threads running > m_threadPoolSize
-    QTime time;
-    time.start();
-    m_sem->acquire();
 }
 
-void ImageManager::release()
+// INVARIANT: only ever called before the run() function is started
+// therefore no need for synchronized url
+void ImageManager::setImageBaseUrl(const QUrl &url)
 {
-    ImageLoader *loader = qobject_cast<ImageLoader*>(sender());
-    if (loader)
+    Q_ASSERT(!isRunning());
+    m_url = url;
+}
+
+/*!
+    Stop the running threads if any, then sit waiting in the event loop
+    for a quit call.
+*/
+void ImageManager::stop()
+{
+    emit stopAll();
+}
+
+void ImageManager::scanForFiles()
+{
+    // TODO: In a real app there would be a way to detect new files arriving
+    // and trigger a rescan to pick these new files up.  Here we just scan
+    // once and then destroy the scanner, to save on resources.
+
+#ifndef QT_USE_TEST_IMAGES
+    // TODO: If the amount of files is large and the app is quit early the
+    // scanner could still be going when the threadpool quits.  For now
+    // assume its ok...
+    FileScanner *scanner = new FileScanner;
+    scanner->setBaseUrl(m_url);
+    connect(scanner, SIGNAL(imageUrl(QUrl)), this, SIGNAL(imageUrl(QUrl)));
+    connect(scanner, SIGNAL(finished()), scanner, SLOT(deleteLater()));
+    connect(this, SIGNAL(stopAll()), scanner, SLOT(stop()));
+    scanner->start();
+#else
+    QDir testImages(":/pictures");
+    QStringList pics = testImages.entryList();
+    for (int i = 0; i < pics.size(); ++i)
     {
-        Q_ASSERT(loader->isFinished());
-        loader->deleteLater();  // delete on return to event loop
+        QUrl url;
+        url.setScheme("file");
+        url.setPath(testImages.filePath(pics.at(i)));
+        emit imageUrl(url);
     }
-    m_sem->release();
-    if (m_sem->available() == m_threadPoolSize)
-        quit();
+    qDebug() << "== test images loaded ==";
+#endif
 }
 
-void ImageManager::createLoader(const QUrl &url)
+void ImageManager::quit()
 {
-    ImageLoader *loader = new ImageLoader(this);
-    loader->setUrl(url);
-    connect(loader, SIGNAL(finished()), this, SLOT(release()));
-    connect(loader, SIGNAL(imageLoaded(QImage)), this, SIGNAL(imageReady(QImage)));
-    connect(loader, SIGNAL(imageLoaded(QImage)), this, SLOT(incrementCounter()));
-    loader->start(QThread::IdlePriority);
-}
-
-void ImageManager::incrementCounter()
-{
-    m_count++;
+    QThread::quit();
 }
 
 void ImageManager::run()
 {
-    m_count = 0;
-    m_launcher = new Launcher(this);
-    m_launcher->setUrl(m_url);
-    connect(m_launcher, SIGNAL(imageUrl(QUrl)),
-            this, SLOT(createLoader(QUrl)));
-    connect(m_launcher, SIGNAL(finished()),
-            this, SLOT(release()));
-    acquire();   // grab a thread for the launcher
-    m_launcher->start(QThread::IdlePriority);
-    //fprintf(stderr, "ImageManager::run - start %p\n", this);
-    QTime timer;
-    timer.start();
+    if (m_url.scheme() != "file")
+    {
+        qWarning("URL scheme %s not yet supported", qPrintable(m_url.scheme()));
+        return;
+    }
+
+    // execute once in the event loop below
+    QTimer::singleShot(0, this, SLOT(scanForFiles()));
+
+#ifndef QT_NO_THREADED_FILE_LOAD
+    ThreadPool pool;
+
+    connect(this, SIGNAL(deployLoader(ThumbnailableImage)),
+            &pool, SLOT(deployLoader(ThumbnailableImage)));
+
+    connect(this, SIGNAL(stopAll()), &pool, SLOT(stop()));
+    connect(&pool, SIGNAL(stopped()), this, SLOT(quit()));
+#endif
+
     exec();
-    fprintf(stderr, "ImageManager::run - %d images loaded from %s in %d ms\n",
-            m_count, qPrintable(m_url.path()), timer.elapsed());
-    delete m_launcher;
-    m_launcher = 0;
 }

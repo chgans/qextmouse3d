@@ -41,14 +41,57 @@
 
 
 #include "imagedisplay.h"
-
+#include "thumbnailableimage.h"
+#include "thumbnailnode.h"
+#include "thumbnaileffect.h"
 #include "qglbuilder.h"
 #include "qglcube.h"
+#include "imagemanager.h"
+#include "qatlas.h"
+#include "qglshaderprogrameffect.h"
+#include "qphotobrowser3dscene.h"
+#include "photobrowser3dview.h"
 
+#include <QApplication>
+#include <QChildEvent>
 #include <QUrl>
 #include <QImage>
 
-ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
+static inline QImage qMakeFrameImage()
+{
+    QImage frm(QSize(128, 128), QImage::Format_ARGB32);
+    frm.fill(qRgba(8, 8, 8, 255));  // dark grey frame
+    QPainter ptr;
+    ptr.begin(&frm);
+    QRect r(8, 8, 112, 112);
+    ptr.setBackgroundMode(Qt::TransparentMode);
+    ptr.fillRect(r, QColor(0, 30, 50, 64));
+    ptr.setPen(QColor("orange"));
+    ptr.drawText(frm.rect(), Qt::AlignCenter, "Loading...");
+    ptr.end();
+    return frm;
+}
+
+static inline void qAddPane(QSizeF size, QGeometryData *data)
+{
+    Q_ASSERT(data);
+    QSizeF f = size / 2.0f;
+    QVector2D a(-f.width(), -f.height());
+    QVector2D b(f.width(), -f.height());
+    QVector2D c(f.width(), f.height());
+    QVector2D d(-f.width(), f.height());
+    QVector2D ta(0.0f, 0.0f);
+    QVector2D tb(1.0f, 0.0f);
+    QVector2D tc(1.0f, 1.0f);
+    QVector2D td(0.0f, 1.0f);
+    int k = data->count();
+    data->appendVertex(a, b, c, d);
+    data->appendTexCoord(ta, tb, tc, td);
+    data->appendIndices(k, k+1, k+2);
+    data->appendIndices(k, k+2, k+3);
+}
+
+ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize)
     : QGLSceneNode(parent)
     , m_wall(0)
     , m_frames(0)
@@ -56,84 +99,123 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials)
     , m_currentFrame(0)
     , m_imageSetToDefault(false)
     , m_count(0)
+    , m_size(wallSize)
+    , m_frameSize((m_size * 3.0f) / 4.0f)
+    , m_maxImages(500)
+    , m_frameLoadingMaterial(-1)
 {
-    QGLBuilder builder(materials);
-    setObjectName(QLatin1String("ImageDisplay"));
+    // the real values will get poked in here by the atlas
+    m_atlasPlaceHolder.append(QVector2D(), QVector2D(), QVector2D(), QVector2D());
+
+    setObjectName("ImageDisplay");
+    setPalette(materials);
+
+    // the frames lie in Z = 0, the wall is set back and lies in
+    // the plane Z = (m_size / -4.0)
 
     // build the wall
-    m_wall = builder.currentNode();
-    m_wall->setObjectName(QLatin1String("Wall"));
-    builder.pushNode();
-    m_currentWall = builder.currentNode();
-    m_currentWall->setObjectName(QLatin1String("wall 0"));
-    builder << QGLCubeFace(QGLCubeFace::Front, 2.0f);
-    builder.popNode();
-
-    // build the frames
-    m_frames = builder.currentNode();
-    m_frames->setObjectName(QLatin1String("Frames"));
-    builder.pushNode();
-    m_currentFrame = builder.newNode();
-    m_currentFrame->setObjectName(QLatin1String("frame 0"));
-    builder << QGLCubeFace(QGLCubeFace::Front, 1.0f);
-    builder.popNode();
-
-    QGLSceneNode *top = builder.finalizedSceneNode();
-    top->setParent(this);
+    qAddPane(QSize(m_size, m_size), &m_wallGeometry);
+    m_wall = new QGLSceneNode(this);
+    m_wall->setObjectName("Wall");
+    m_wall->setPalette(materials);
+    m_currentWall = new QGLSceneNode(m_wall);
+    m_currentWall->setObjectName("wall 0");
+    m_currentWall->setGeometry(m_wallGeometry);
+    m_currentWall->setCount(m_wallGeometry.indexCount());
+    m_wall->setPosition(QVector3D(0.0f, 0.0f, m_size / -4.0));
 
     // paint the wall
-    m_wall->setEffect(QGL::LitMaterial);
+    m_wall->setEffect(QGL::FlatReplaceTexture2D);
     QGLMaterial *mat = new QGLMaterial();
-    mat->setAmbientColor(Qt::darkGray);
-    mat->setDiffuseColor(Qt::darkGray);
-    m_wall->setMaterial(mat);
-    m_wall->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
-
-    // paint the frames
-    m_frames->setEffect(QGL::FlatReplaceTexture2D);
-    m_frames->setEffectEnabled(true);
-    mat = new QGLMaterial();
     QGLTexture2D *tex = new QGLTexture2D(mat);
-    tex->setImage(QImage(QLatin1String(":/res/images/no-images-yet.png")));
+    tex->setImage(QImage(":/res/images/girder.png"));
     mat->setTexture(tex);
-    m_currentFrame->setMaterial(mat);
+    mat->setObjectName("girder material");
+    m_wall->setMaterial(mat);
+
+    // build the frames
+    qAddPane(QSize(m_frameSize, m_frameSize), &m_frameGeometry);
+    m_frameGeometry.appendTexCoordArray(m_atlasPlaceHolder, QGL::TextureCoord1);
+    m_frames = new QGLSceneNode(this);
+    m_frames->setObjectName("Frames");
+    m_currentFrame = new ThumbnailNode(m_frames);
+    m_currentFrame->setObjectName("frame 0");
+    m_currentFrame->setGeometry(m_frameGeometry);
+    m_currentFrame->setCount(m_frameGeometry.indexCount());
+
+    // use the frames geometry to put the atlas data into
+    QAtlas *atlas = QAtlas::instance();
+    atlas->setGeometry(m_frameGeometry);
+
+    // generally the frames use the thumbnail material & effect
+    m_effect = new ThumbnailEffect;
+    m_frames->setUserEffect(m_effect);
+    m_frames->setEffectEnabled(true);
+    m_frames->setMaterial(atlas->material());
+
+    // unless they're loading, in which case use the "loading" image
+    m_frameImage = qMakeFrameImage();
+    mat = new QGLMaterial();
+    tex = new QGLTexture2D(mat);
+    tex->setHorizontalWrap(QGL::Clamp);
+    tex->setImage(m_frameImage);
+    mat->setTexture(tex);
+    mat->setObjectName("loading image material - default");
+    m_frameLoadingMaterial = materials->addMaterial(mat);
+    m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
+
+    // make the frames pickable
+    PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent);
+    view->scene()->rootNode()->addNode(m_frames);
 
     m_imageSetToDefault = true;
 }
 
-void ImageDisplay::addImage(const QImage &image)
+ImageDisplay::~ImageDisplay()
 {
-    // clone the current frame and shift the clone to the left
-    // (or use the place holder frame if this is the first one)
-    Q_ASSERT(m_currentFrame);
-    QGLSceneNode *s = m_currentFrame;
+    delete m_effect;
+}
+
+void ImageDisplay::addThumbnailNode(const QUrl &image)
+{
+    Q_ASSERT(QThread::currentThread() == thread());
+    ImageManager *manager = qobject_cast<ImageManager*>(sender());
     if (!m_imageSetToDefault)
     {
-        s = m_currentFrame->clone(m_frames);
-        ++m_count;
-        s->setObjectName(QString::fromLatin1("frame %1").arg(m_count));
-        QVector3D p = s->position();
-        p.setX(p.x() - 2.0f);
-        s->setPosition(p);
-        m_currentFrame = s;
-        int scale = image.width() / 1024;
-        if (scale != 1)
-            s->setScale(QVector3D(scale, scale, scale));
+        QVector3D p = m_currentFrame->position();
+        p.setX(p.x() - m_size);
+        int start = m_frameGeometry.indexCount();
+        qAddPane(QSize(m_frameSize, m_frameSize), &m_frameGeometry);
+        int count = m_frameGeometry.indexCount() - start;
+        m_frameGeometry.appendTexCoordArray(m_atlasPlaceHolder, QGL::TextureCoord1);
+        m_currentFrame = new ThumbnailNode(m_frames);
+        m_currentFrame->setObjectName(QString("frame %1").arg(m_count));
+        m_currentFrame->setPosition(p);
+        m_currentFrame->setStart(start);
+        m_currentFrame->setCount(count);
+        m_currentFrame->setGeometry(m_frameGeometry);
+        m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
-        s = m_currentWall->clone(m_wall);
-        s->setObjectName(QString::fromLatin1("wall %1").arg(m_count));
+        QGLSceneNode *s = m_currentWall->clone(m_wall);
+        s->setObjectName(QString("wall %1").arg(m_count));
         p = s->position();
-        p.setX(p.x() - 2.0f);
+        p.setX(p.x() - m_size);
         s->setPosition(p);
         m_currentWall = s;
     }
-    m_imageSetToDefault = false;
+    m_currentFrame->setUrl(image);
+    if (manager)
+    {
+        connect(m_currentFrame, SIGNAL(imageRequired(ThumbnailableImage)),
+                manager, SIGNAL(deployLoader(ThumbnailableImage)));
+        connect(manager, SIGNAL(imageReady(ThumbnailableImage)),
+                m_currentFrame, SLOT(setImage(ThumbnailableImage)));
+    }
+    PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
+    Q_ASSERT(view);
+    connect(m_currentFrame, SIGNAL(nodeChanged()), view, SLOT(queueUpdate()));
 
-    // load the image as a new material into the current frame
-    QGLMaterial *mat = new QGLMaterial();
-    QGLTexture2D *tex = new QGLTexture2D(mat);
-    tex->setHorizontalWrap(QGL::Clamp);
-    tex->setImage(image);
-    mat->setTexture(tex);
-    m_currentFrame->setMaterial(mat);
+    m_imageSetToDefault = false;
+    emit framesChanged();
+    ++m_count;
 }

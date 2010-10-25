@@ -39,46 +39,60 @@
 **
 ****************************************************************************/
 
+#ifndef THUMBNAILABLEIMAGE_H
+#define THUMBNAILABLEIMAGE_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#include <QRectF>
+#include <QMetaType>
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+#include "qarray.h"
+#include "qgeometrydata.h"
 
-#include "thumbnailableimage.h"
+class QImage;
+class ThumbnailableImagePrivate;
+class QGLPainter;
 
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class ThumbnailableImage
 {
-    Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
-signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    ThumbnailableImage();
+    ThumbnailableImage(const ThumbnailableImage&);
+    ~ThumbnailableImage();
+
+    ThumbnailableImage &operator=(const ThumbnailableImage &);
+
+    void setThumbnailed(bool enable);
+    bool isThumbnailed() const;
+
+    QImage data() const;
+    void setData(QImage data);
+
+    QUrl url() const;
+    void setUrl(const QUrl &url);
+
+    QRectF frame() const;
+    qreal scale() const;
+
+    void minimize();
+    bool isMinimized() const;
+
+    QGL::IndexArray indices() const;
+    void setIndices(const QGL::IndexArray &indices);
+
+    bool isNull() const { return d  == 0; }
+
+    ThumbnailableImagePrivate *priv() const { return d; } /// debug = remove me
+
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    void detach();
+
+    ThumbnailableImagePrivate *d;
 };
 
-#endif // IMAGELOADER_H
+Q_DECLARE_METATYPE(ThumbnailableImage);
+
+#ifndef QT_NO_DEBUG_STREAM
+Q_QT3D_EXPORT QDebug operator<<(QDebug dbg, const ThumbnailableImage &image);
+#endif
+
+#endif // THUMBNAILABLEIMAGE_H

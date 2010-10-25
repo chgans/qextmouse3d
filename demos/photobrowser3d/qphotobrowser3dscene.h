@@ -39,46 +39,22 @@
 **
 ****************************************************************************/
 
+#ifndef QFRAMESSCENE_H
+#define QFRAMESSCENE_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#include "qglabstractscene.h"
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+class QGLSceneNode;
 
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class QPhotoBrowser3DScene : public QGLAbstractScene
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
-signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    explicit QPhotoBrowser3DScene(QObject *parent = 0);
+    virtual QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    QGLSceneNode *rootNode() const { return m_rootNode; }
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    QGLSceneNode *m_rootNode;
 };
 
-#endif // IMAGELOADER_H
+#endif // QFRAMESSCENE_H

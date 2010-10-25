@@ -39,46 +39,19 @@
 **
 ****************************************************************************/
 
+#include "qphotobrowser3dscene.h"
+#include "qglscenenode.h"
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
-
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
-
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+QPhotoBrowser3DScene::QPhotoBrowser3DScene(QObject *parent)
+    : QGLAbstractScene(parent)
+    , m_rootNode(new QGLSceneNode(this))
 {
-    Q_OBJECT
-public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
-signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
-private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
-};
+}
 
-#endif // IMAGELOADER_H
+QList<QGLSceneNode *> QPhotoBrowser3DScene::objects(QGLSceneNode::Type type) const
+{
+    QList<QGLSceneNode*> objects;
+    if (type == QGLSceneNode::Mesh)
+        objects = m_rootNode->allChildren();
+    return objects;
+}

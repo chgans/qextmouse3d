@@ -39,46 +39,51 @@
 **
 ****************************************************************************/
 
+#ifndef PANCONTROLLER_H
+#define PANCONTROLLER_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#include <QObject>
+#include <Qt>
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+class PanControllerPrivate;
+class QGLView;
 
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class PanController : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(qreal speed READ speed WRITE setSpeed NOTIFY speedChanged)
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    explicit PanController(QObject *parent = 0);
+    ~PanController();
+
+    qreal defaultDistance() const;
+    void setDefaultDistance(qreal d);
+
+    qreal panDistance() const;
+    void setPanDistance(qreal d);
+
+    qreal panViewAngle() const;
+    void setPanViewAngle(qreal angle);
+
+    qreal maxSpeed() const;
+    void setMaxSpeed(qreal maxSpeed);
+
+    qreal speed() const;
+    void setSpeed(qreal speed);
+
+    Qt::ArrowType direction() const;
+    void setDirection(Qt::ArrowType arrow);
+
+    QGLView *view() const;
+    void setView(QGLView *view);
+
+    void pan();
+
 signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    void speedChanged();
+
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    PanControllerPrivate *d;
 };
 
-#endif // IMAGELOADER_H
+#endif // PANCONTROLLER_H

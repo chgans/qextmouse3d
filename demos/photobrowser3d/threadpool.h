@@ -39,46 +39,43 @@
 **
 ****************************************************************************/
 
+#ifndef LOADINGJOB_H
+#define LOADINGJOB_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
-
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
+#include <QObject>
 #include <QAtomicInt>
+#include <QList>
+#include <QUrl>
 
 #include "thumbnailableimage.h"
 
-class ImageManager;
-class ByteReader;
+class ImageLoader;
 
-class ImageLoader : public QThread
+class ThreadPool : public QObject
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    ThreadPool();
+    ~ThreadPool();
+
 signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
+    void stopped();
+    void stopAll();
+
 public slots:
+    void deployLoader(const ThumbnailableImage &url);
     void stop();
-protected:
-    void run();
+
 private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    void retrieveLoader();
+    void closeLoader();
+
 private:
-    ThumbnailableImage m_image;
+    QList<ImageLoader*> m_freeWorkers;
+    QList<ImageLoader*> m_allWorkers;
+    QList<ThumbnailableImage> m_workList;
     QAtomicInt m_stop;
-    ByteReader *m_reader;
+    int m_threadPoolSize;
 };
 
-#endif // IMAGELOADER_H
+#endif // LOADINGJOB_H

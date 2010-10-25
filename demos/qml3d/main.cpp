@@ -94,14 +94,24 @@ int main(int argc, char *argv[])
         if (glViewport)
             view.setViewport(new QGLWidget());
         view.setSource(url);        
-        view.show();
+        if (QApplication::arguments().contains("-maximize"))
+            view.showMaximized();
+        else if (QApplication::arguments().contains("-fullscreen"))
+            view.showFullScreen();
+        else
+            view.show();
 
         return app.exec();
     } else {
         Qml3dView view;
         view.setSource(url);
-        view.show();
-        
+        if (QApplication::arguments().contains("-maximize"))
+            view.showMaximized();
+        else if (QApplication::arguments().contains("-fullscreen"))
+            view.showFullScreen();
+        else
+            view.show();
+
         return app.exec();
     }
 }

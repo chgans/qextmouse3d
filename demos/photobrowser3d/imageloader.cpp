@@ -41,11 +41,10 @@
 
 
 #include "imageloader.h"
-#include "launcher.h"
 #include "imagemanager.h"
+#include "bytereader.h"
 
 #include <QFileInfo>
-#include <QDebug>
 #include <QTime>
 #include <QDir>
 #include <QStringList>
@@ -55,84 +54,63 @@
 #include <QImageReader>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTimer>
 
-ImageLoader::ImageLoader(ImageManager *manager)
-    : QThread(manager)
+ImageLoader::ImageLoader()
 {
+    m_stop = 0;
 }
 
 ImageLoader::~ImageLoader()
 {
+    // nothing to do here
+}
+
+ThumbnailableImage ImageLoader::image() const
+{
+    return m_image;
+}
+
+void ImageLoader::setImage(const ThumbnailableImage &image)
+{
+    m_image = image;
+    if (!m_stop && isRunning())
+        emit readRequired(image);
+}
+
+void ImageLoader::stop()
+{
+    m_stop.ref();
+    emit stopLoading();
+}
+
+void ImageLoader::queueInitialImage()
+{
+    emit readRequired(m_image);
+}
+
+void ImageLoader::unusedTimeout()
+{
+    emit unused();
 }
 
 void ImageLoader::run()
 {
-    QString fn = m_url.toLocalFile();
-    int pos = fn.lastIndexOf(QLatin1Char('.'));
-    QString ext;
-    if (pos != -1)
-        ext = fn.mid(pos).toUpper();
-    if (ext.isEmpty() ||
-        !QImageReader::supportedImageFormats().contains(ext.toLocal8Bit()))
-        ext = QString();
-    QFile f(fn);
-    if (!f.open(QIODevice::ReadOnly))
-    {
-        qWarning("Could not read: %s", qPrintable(m_url.path()));
-        return;
-    }
-    QByteArray bytes;
-    while (!f.atEnd())
-    {
-        QThread::yieldCurrentThread();
-        bytes.append(f.read(1024));
-    }
-    QThread::yieldCurrentThread();
-    QImage im = ext.isEmpty() ? QImage::fromData(bytes)
-        : QImage::fromData(bytes, qPrintable(ext));
-    if (im.isNull())
-        return;
-    QString p = m_url.path();
-    p = p.section(QLatin1String("/"), -1);
-    int max = qMax(im.width(), im.height());
-    QImage frm;
-    if (max <= 64)
-        frm = QImage(QSize(64, 64), QImage::Format_ARGB32);
-    else if (max <= 128)
-        frm = QImage(QSize(128, 128), QImage::Format_ARGB32);
-    else if (max <= 256)
-        frm = QImage(QSize(256, 256), QImage::Format_ARGB32);
-    else if (max <= 512)
-        frm = QImage(QSize(512, 512), QImage::Format_ARGB32);
-    else
-        frm = QImage(QSize(1024, 1024), QImage::Format_ARGB32);
-    frm.fill(qRgba(0, 0, 0, 0));
-    QPainter ptr;
-    ptr.begin(&frm);
-    ptr.setBackgroundMode(Qt::TransparentMode);
-    QRect r;
-    if (max > 1024)
-    {
-        if (max == im.width())
-        {
-            float h = float(1024) * float(im.height()) / float(im.width());
-            r.setSize(QSize(1024, h));
-        }
-        else
-        {
-            float w = float(1024) * float(im.width()) / float(im.height());
-            r.setSize(QSize(w, 1024));
-        }
-    }
-    else
-    {
-        r.setSize(im.size());
-    }
-    int left = (frm.width() - r.width()) / 2;
-    int top = (frm.height() - r.height()) / 2;
-    r.moveTopLeft(QPoint(left, top));
-    QThread::yieldCurrentThread();
-    ptr.drawImage(r, im);
-    ptr.end();
-    emit imageLoaded(frm);
+    ByteReader reader;
+    connect(this, SIGNAL(readRequired(ThumbnailableImage)),
+            &reader, SLOT(loadFile(ThumbnailableImage)));
+    connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
+            this, SIGNAL(imageLoaded(ThumbnailableImage)));
+
+    connect(this, SIGNAL(stopLoading()), &reader, SLOT(stop()));
+    connect(&reader, SIGNAL(stopped()), this, SLOT(quit()));
+
+    QTimer timer;
+    connect(&timer, SIGNAL(timeout()), this, SLOT(unusedTimeout()));
+    timer.start(2 * 60 * 1000);
+
+    if (!m_image.isNull())
+        QTimer::singleShot(0, this, SLOT(queueInitialImage()));
+
+    exec();
 }

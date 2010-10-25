@@ -206,6 +206,8 @@ public:
 
     void mapVertex(const QVector3D &v, int ix)
     {
+        Q_UNUSED(ix);
+        Q_UNUSED(v);
         static bool seeded = false;
         if (!seeded)
             qsrand(31415);

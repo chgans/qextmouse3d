@@ -46,34 +46,34 @@
 #include <QThread>
 #include <QUrl>
 #include <QImage>
+#include <QMutex>
+
+#include "thumbnailableimage.h"
 
 class Launcher;
-class QSemaphore;
 
 class ImageManager : public QThread
 {
     Q_OBJECT
 public:
-    explicit ImageManager(QObject *parent = 0);
-    void setImageUrl(QUrl url) { m_url = url; }
-    QUrl imageUrl() const { return m_url; }
-signals:
-    void imageReady(const QImage &);
-    void errorOccurred(const QString &);
+    ImageManager();
+    ~ImageManager();
+    QUrl imageBaseUrl() const { return m_url; }
+    void setImageBaseUrl(const QUrl &url);
 public slots:
-    void acquire();
-    void release();
-    void createLoader(const QUrl &);
+    void stop();
+    void quit();
+signals:
+    void imageUrl(const QUrl &);
+    void imageReady(const ThumbnailableImage &);
+    void deployLoader(const ThumbnailableImage &);
+    void stopAll();
 protected:
     void run();
 private slots:
-    void incrementCounter();
+    void scanForFiles();
 private:
     QUrl m_url;
-    QSemaphore *m_sem;
-    int m_threadPoolSize;
-    Launcher *m_launcher;
-    int m_count;
 };
 
 #endif // IMAGEMANAGER_H

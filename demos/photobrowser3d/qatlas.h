@@ -39,34 +39,53 @@
 **
 ****************************************************************************/
 
+#ifndef QATLAS_H
+#define QATLAS_H
 
-#ifndef LAUNCHER_H
-#define LAUNCHER_H
+#include <QSize>
 
-#include <QObject>
-#include <QUrl>
-#include <QThread>
+#include "qarray.h"
+#include "qgeometrydata.h"
 
-class ImageManager;
+class QImage;
+class QAreaAllocator;
+class QGLTexture2D;
+class QGLMaterial;
+class QGeometryData;
 
-class Launcher : public QThread
+class QAtlas
 {
-    Q_OBJECT
 public:
-    explicit Launcher(ImageManager *manager);
-    ~Launcher() {}
-    void setUrl(const QUrl &url) { m_url = url; }
-    void stop() { m_stop = true; }
-signals:
-    void done();
-    void imageUrl(const QUrl &url);
-protected:
-    void run();
+    QAtlas();
+    ~QAtlas();
+
+    QImage *data() const { return m_data; }
+    void setData(QImage *data) { m_data = data; }
+
+    QGLTexture2D *texture() const { return m_tex; }
+    void setTexture(QGLTexture2D *texture) { m_tex = texture; }
+
+    QAreaAllocator *allocator() const { return m_allocator; }
+    void setAllocator(QAreaAllocator *allocator) { m_allocator = allocator; }
+
+    QRect allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices);
+
+    void release(QRect frame);
+
+    void setGeometry(QGeometryData geometry) { m_geometry = geometry; }
+    QGeometryData geometry() { return m_geometry; }
+
+    QGLMaterial *material() { return m_material; }
+
+    static QAtlas *instance();
+
 private:
-    ImageManager *m_manager;
-    QUrl m_url;
-    bool m_stop;
+    QSize m_size;
+    QImage *m_data;
+    QAreaAllocator *m_allocator;
+    QGLTexture2D *m_tex;
+    QGLMaterial *m_material;
+    QGeometryData m_geometry;
 };
 
-
-#endif // LAUNCHER_H
+#endif // QATLAS_H

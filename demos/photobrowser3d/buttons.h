@@ -40,45 +40,24 @@
 ****************************************************************************/
 
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#ifndef BUTTONS_H
+#define BUTTONS_H
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+#include "qglscenenode.h"
 
-#include "thumbnailableimage.h"
+#include <Qt>
 
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class Buttons : public QGLSceneNode
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
-signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    explicit Buttons(QObject *parent, QGLMaterialCollection *palette);
+    void draw(QGLPainter *painter);
+    void clearPositions();
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    QGLSceneNode *m_left;
+    QGLSceneNode *m_right;
+    QSize m_size;
 };
 
-#endif // IMAGELOADER_H
+#endif // BUTTONS_H

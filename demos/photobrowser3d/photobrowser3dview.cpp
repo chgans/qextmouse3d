@@ -43,6 +43,15 @@
 #include "imagemanager.h"
 #include "imagedisplay.h"
 #include "skybox.h"
+#include "qglpicknode.h"
+#include "qfocusadaptor.h"
+#include "thumbnailableimage.h"
+#include "qatlas.h"
+#include "filescanner.h"
+#include "buttons.h"
+#include "qphotobrowser3dscene.h"
+#include "pancontroller.h"
+#include "thumbnailnode.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -53,24 +62,36 @@
 #include <QStateMachine>
 #include <QState>
 #include <QFinalState>
+#include <QSignalTransition>
+#include <QPropertyAnimation>
 
 PhotoBrowser3DView::PhotoBrowser3DView()
     : QGLView()
     , m_scene(0)
-    , m_images(new ImageManager(this))
+    , m_display(0)
+    , m_images(0)
+    , m_buttons(0)
     , m_skybox(0)
     , m_palette(new QGLMaterialCollection(this))
-    , m_velocity(0.0f)
-    , m_keyTimer(new QTimer(this))
-    , m_panTime(new QTime())
     , m_state(0)
     , m_app(0)
     , m_zoomed(0)
     , m_browse(0)
     , m_pan(0)
+    , m_fa(0)
+    , m_pc(0)
+    , m_pickableDirty(true)
+    , m_done(false)
+    , m_closing(false)
 {
-    QString path = QLatin1String(":/res");
-    int ix = qApp->arguments().indexOf(QLatin1String("--skybox"));
+    setOption(QGLView::ObjectPicking, true);
+    // setOption(QGLView::ShowPicking, true);
+    //setOption(QGLView::CameraNavigation, false);
+
+    qRegisterMetaType<ThumbnailableImage>("ThumbnailableImage");
+
+    QString path = ":/res";
+    int ix = qApp->arguments().indexOf("--skybox");
     if (ix != -1)
     {
         if (qApp->arguments().size() > ix+1)
@@ -79,15 +100,29 @@ PhotoBrowser3DView::PhotoBrowser3DView()
             qWarning("Expected path/to/skybox/files after \"--skybox\" switch\n");
     }
 
+    m_displaySize = 4.0;
+    m_scene = new QPhotoBrowser3DScene(this);
+    m_buttons = new Buttons(this, m_palette);
+    m_scene->rootNode()->addNode(m_buttons);
+    m_scene->setPickable(true);
     m_skybox = new SkyBox(this, path);
-    m_scene = new ImageDisplay(this, m_palette);
+    m_display = new ImageDisplay(this, m_palette, m_displaySize);
+
+    setupStates();
+
+    // make sure this only gets created in the GUI thread
+    QAtlas::instance();
 
     QTimer::singleShot(0, this, SLOT(initialise()));
+}
 
-    m_keyTimer->setInterval(100);
-    connect(m_keyTimer, SIGNAL(timeout()),
-            this, SLOT(keyTimeOut()));
+PhotoBrowser3DView::~PhotoBrowser3DView()
+{
+    // nothing to be done here
+}
 
+void PhotoBrowser3DView::setupStates()
+{
     m_state = new QStateMachine(this);
     m_app = new QState;
     m_zoomed = new QState(m_app);
@@ -99,40 +134,126 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_app->addTransition(this, SIGNAL(done()), end_state);
     m_state->addState(end_state);
     connect(m_state, SIGNAL(finished()), this, SLOT(close()));
-}
 
-PhotoBrowser3DView::~PhotoBrowser3DView()
-{
-    delete m_panTime;
+    m_fa = new QFocusAdaptor(this);
+    m_browse->assignProperty(m_fa, "progress", 0.0);
+    m_zoomed->assignProperty(m_fa, "progress", 1.0);
+
+    m_pc = new PanController(this);
+    m_pc->setMaxSpeed(m_displaySize / 1000.0f);
+    m_browse->assignProperty(m_pc, "speed", 0.0);
+    m_pan->assignProperty(m_pc, "speed", 1.0);
+
+    m_state->setObjectName("StateMachine");
+    m_app->setObjectName("Application");
+    m_zoomed->setObjectName("Zoomed");
+    m_browse->setObjectName("Browse");
+    m_pan->setObjectName("Pan");
+    end_state->setObjectName("EndState");
+
+    QSignalTransition *transition = m_browse->addTransition(this, SIGNAL(zoom()), m_zoomed);
+    QPropertyAnimation *a = new QPropertyAnimation(m_fa, "progress");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::OutQuad);
+    transition->addAnimation(a);
+
+    transition = m_zoomed->addTransition(this, SIGNAL(zoom()), m_browse);
+    a = new QPropertyAnimation(m_fa, "progress");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::InQuad);
+    transition->addAnimation(a);
+
+    transition = m_browse->addTransition(this, SIGNAL(pan()), m_pan);
+    a = new QPropertyAnimation(m_pc, "speed");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::OutQuad);
+    transition->addAnimation(a);
+
+    transition = m_pan->addTransition(this, SIGNAL(pan()), m_browse);
+    a = new QPropertyAnimation(m_pc, "speed");
+    a->setDuration(500);
+    a->setEasingCurve(QEasingCurve::InQuad);
+    transition->addAnimation(a);
+
+    m_state->setInitialState(m_app);
+    m_state->start();
 }
 
 void PhotoBrowser3DView::initialise()
 {
-    QString path = QDir::home().absoluteFilePath(QLatin1String("Pictures"));
-    int ix = qApp->arguments().indexOf(QLatin1String("--pictures"));
+    QString path = QDir::home().absoluteFilePath("Pictures");
+    int ix = qApp->arguments().indexOf("--pictures");
     if (ix != -1)
     {
         if (qApp->arguments().size() > ix+1)
             path = qApp->arguments().at(ix+1);
         else
-            qWarning("Expected path/to/image/files after \"--pictures\" switch\n");
+            qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
-    connect(m_images, SIGNAL(imageReady(QImage)),
-            m_scene, SLOT(addImage(QImage)));
     QUrl url;
-    url.setScheme(QLatin1String("file"));
+    url.setScheme("file");
     url.setPath(path);
-    m_images->setImageUrl(url);
-    m_images->start(QThread::IdlePriority);
+
+#ifdef QT_NO_THREADED_FILE_LOAD
+    nonThreadedFileLoad(url);
+#else
+    initialiseImageManager(url);
+#endif
 }
 
-void PhotoBrowser3DView::keyTimeOut()
+void PhotoBrowser3DView::initialiseImageManager(const QUrl &url)
 {
-    m_velocity = (m_velocity < 0.0f) ? (m_velocity + 1.0f) : (m_velocity - 1.0f);
-    if (qFuzzyIsNull(m_velocity))
+    m_images = new ImageManager;
+
+    connect(m_images, SIGNAL(imageUrl(QUrl)), m_display, SLOT(addThumbnailNode(QUrl)));
+    connect(m_images, SIGNAL(finished()), this, SLOT(waitForExit()));
+
+    connect(m_display, SIGNAL(framesChanged()), this, SLOT(pickableDirty()));
+    connect(m_display, SIGNAL(framesChanged()), this, SLOT(queueUpdate()));
+
+    m_images->setImageBaseUrl(url);
+    QThread::Priority p = QThread::idealThreadCount() < 2 ?
+                QThread::IdlePriority : QThread::NormalPriority;
+    m_images->start(p);
+}
+
+void PhotoBrowser3DView::nonThreadedFileLoad(const QUrl &url)
+{
+#if defined(QT_USE_TEST_IMAGES)
+    Q_UNUSED(url);
+    QDir testImages(":/pictures");
+    QStringList pics = testImages.entryList();
+    for (int i = 0; i < pics.size(); ++i)
     {
-        m_velocity = 0.0f;
-        m_keyTimer->stop();
+        QUrl url;
+        url.setScheme("file");
+        url.setPath(testImages.filePath(pics.at(i)));
+        m_display->addThumbnailNode(url);
+    }
+    pickableDirty();
+    qDumpScene(m_display);
+#else
+    FileScanner *scanner = new FileScanner(this);
+    scanner->setBaseUrl(url);
+    QTimer::singleShot(0, scanner, SLOT(scan()));
+    connect(scanner, SIGNAL(imageUrl(QUrl)), m_display, SLOT(addThumbnailNode(QUrl)));
+#endif
+}
+
+void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
+{
+    e->accept();
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal zoomMag = viewVec.length();
+    qreal inc = float(e->delta()) / 50.0f;
+    if (!qFuzzyIsNull(inc))
+    {
+        zoomMag += inc;
+        if (zoomMag < 2.0f)
+            zoomMag = 2.0f;
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
+        camera()->setEye(viewLine.point(zoomMag));
+        update();
     }
 }
 
@@ -144,36 +265,31 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
     }
     else if (e->key() == Qt::Key_Q)
     {
-        close();
+        m_done = true;
+        emit done();
     }
-    else if (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right)
+    else if (e->key() == Qt::Key_Right)
     {
-        m_velocity += (e->key() == Qt::Key_Left) ? -1.0f : 1.0f;
-        if (m_velocity >= 5.0f)
-            m_velocity = 5.0f;
-        if (m_velocity <= -5.0f)
-            m_velocity = -5.0f;
-        if (qFuzzyIsNull(m_velocity))
-        {
-            m_velocity = 0.0f;
-        }
-        else
-        {
-            m_panTime->start();
-            m_keyTimer->start();
-            update();
-        }
+        //QGLView::keyPressEvent(e);
+        m_pc->setDirection(Qt::RightArrow);
+        emit pan();
+    }
+    else if (e->key() == Qt::Key_Left)
+    {
+        QGLView::keyPressEvent(e);
+        m_pc->setDirection(Qt::LeftArrow);
+        emit pan();
     }
     else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
     {
-        if (e->modifiers() & Qt::ControlModifier)
+        if ((e->modifiers() & Qt::ControlModifier) != 0)
         {
             QVector3D viewVec = camera()->eye() - camera()->center();
             qreal zoomMag = viewVec.length();
             zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
             if (zoomMag < 5.0f)
                 zoomMag = 5.0f;
-            QRay3D viewLine(camera()->center(), viewVec.normalized());
+            QRay3D viewLine(camera()->center(), viewVec);
             camera()->setEye(viewLine.point(zoomMag));
             update();
         }
@@ -182,60 +298,139 @@ void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
             QGLView::keyPressEvent(e);
         }
     }
-#ifndef QT_NO_DEBUG_STREAM
     else if (e->key() == Qt::Key_Escape)
     {
-        qDumpScene(m_scene);
+        qDumpScene(m_display);
         QGLView::keyPressEvent(e);
         //resetView();
         //emit manualControlEngaged();
     }
-#endif
     else
     {
         QGLView::keyPressEvent(e);
     }
 }
 
+void PhotoBrowser3DView::waitForExit()
+{
+    QThread::yieldCurrentThread();
+    m_images->wait();
+    m_images->deleteLater();
+    m_images = 0;
+    if (m_closing)
+    {
+        if (!m_done)
+        {
+            emit done();
+            m_done = true;
+        }
+    }
+}
+
 void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
 {
-    m_images->quit();
-    m_images->wait();
-    QWidget::closeEvent(e);
+    if (m_images)
+    {
+        e->ignore();
+        m_images->stop();
+
+        // this was a request to close the main window, so we are closing up shop
+        // set this flag to indicate that when the image manager stops done event
+        // should be signalled to the state machine, resulting in close
+        m_closing = true;
+    }
+    else
+    {
+        e->accept();
+    }
+}
+
+void PhotoBrowser3DView::mousePressEvent(QMouseEvent *e)
+{
+    Q_UNUSED(e);
+    registerPickableNodes();
+    QGLView::mousePressEvent(e);
 }
 
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
-    //camera()->setEye(QVector3D(0.0f, 0.0f, -10.0f));
+    camera()->setEye(QVector3D(0.0f, 0.0f, 4.0f * m_displaySize));
+    registerPickableNodes();
+    qreal q = camera()->eye().z();
+    qreal r = qBound(camera()->nearPlane(), q / 2.0f, camera()->nearPlane() * 3.0f);
+    m_pc->setDefaultDistance(q);
+    m_pc->setPanDistance(r);
 }
 
 void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
 {
-    qreal t = m_panTime->restart();
-    if (!qIsNull(m_velocity))
-    {
-        qreal distance = t * m_velocity / 1000.0f;
-        QVector3D tx = camera()->translation(distance, 0.0f, 0.0f);
-        camera()->setEye(camera()->eye() + tx);
-        camera()->setCenter(camera()->center() + tx);
-    }
+    if (!m_done)
+        m_pc->pan();
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
-{    
-    painter->setClearColor(Qt::blue);
-    glEnable(GL_BLEND);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    m_skybox->draw(painter);
-    m_scene->draw(painter);
+{
+    if (!m_done)
+    {
+        painter->setClearColor(Qt::blue);
+        glEnable(GL_BLEND);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        m_skybox->draw(painter);
+        m_display->draw(painter);
+        m_buttons->draw(painter);
+    }
 }
 
-/*
-void PhotoBrowser3DView::paintEvent(QPaintEvent *e)
+void PhotoBrowser3DView::resizeGL(int w, int h)
 {
-    // TODO: paint 2D controls on top
-    //m_painter->updateContent();
-    View::paintEvent(e);
+    Q_UNUSED(w);
+    Q_UNUSED(h);
+    m_buttons->clearPositions();
+    m_updateRequired = true;
 }
-*/
+
+void PhotoBrowser3DView::zoomImage()
+{
+    QGLPickNode *pn = qobject_cast<QGLPickNode*>(sender());
+    Q_ASSERT(pn);
+    QGLSceneNode *n = pn->target();
+    m_fa->setTarget(n);
+    emit zoom();
+}
+
+void PhotoBrowser3DView::goPan()
+{
+    QGLPickNode *pn = qobject_cast<QGLPickNode*>(sender());
+    Q_ASSERT(pn);
+    QGLSceneNode *n = pn->target();
+    m_pc->setDirection(n->objectName() == "Left Button" ? Qt::LeftArrow : Qt::RightArrow);
+    emit pan();
+}
+
+void PhotoBrowser3DView::pickableDirty()
+{
+    m_pickableDirty = true;
+}
+
+void PhotoBrowser3DView::registerPickableNodes()
+{
+    if (m_pickableDirty)
+    {
+        m_scene->generatePickNodes();
+        QList<QGLPickNode*> pickList = m_scene->pickNodes();
+        QList<QGLPickNode*>::const_iterator it = pickList.constBegin();
+        for ( ; it != pickList.constEnd(); ++it)
+        {
+            QGLPickNode *pn = *it;
+            pn->disconnect(this);
+            ThumbnailNode *node = qobject_cast<ThumbnailNode*>(pn->target());
+            if (node)
+                QObject::connect(pn, SIGNAL(clicked()), this, SLOT(zoomImage()));
+            else
+                QObject::connect(pn, SIGNAL(clicked()), this, SLOT(goPan()));
+            registerObject(pn->id(), pn);
+        }
+        m_pickableDirty = false;
+    }
+}

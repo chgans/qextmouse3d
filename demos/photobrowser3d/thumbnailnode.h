@@ -40,45 +40,57 @@
 ****************************************************************************/
 
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#ifndef THUMBNAILNODE_H
+#define THUMBNAILNODE_H
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
-
+#include "qglscenenode.h"
 #include "thumbnailableimage.h"
 
-class ImageManager;
-class ByteReader;
+#include <QtCore/qmath.h>
+#include <QUrl>
 
-class ImageLoader : public QThread
+class ThumbnailNode : public QGLSceneNode
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    enum Distance
+    {
+        Near,
+        Middle,
+        Far,
+        VeryFar
+    };
+
+    explicit ThumbnailNode(QObject *parent = 0);
+    ~ThumbnailNode();
+    QUrl url() const { return m_url; }
+    void setUrl(const QUrl &url);
+    void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
+    qreal threshold() const { return qSqrt(m_thresholdSquared); }
+    void draw(QGLPainter *painter);
+    void geometryDraw(QGLPainter *painter);
+    ThumbnailableImage image() const { return m_image; }
 signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
+    void imageRequired(const ThumbnailableImage &);
+    void nodeChanged();
 public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    void setImage(const ThumbnailableImage &image);
 private:
+    void createFullNode();
+    void destroyFullNode();
+    void setupLoading();
+    void setupThumbnailing();
+    void loadFullImage();
+
     ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    qreal m_thresholdSquared;
+    int m_defaultMaterial;
+    QUrl m_url;
+    bool m_loading;
+    QGLSceneNode *m_full;
+    QSizeF m_max;
+    QObject *m_manager;
+    Distance m_lastDistance;
 };
 
-#endif // IMAGELOADER_H
+#endif // THUMBNAILNODE_H

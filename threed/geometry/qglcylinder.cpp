@@ -368,8 +368,8 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                 angle+=angleIncrement;
             }  
             angle = 0;
-            base.reversed();  //we need to reverse the above to draw it properly - windings!
-            builder.addTriangulatedFace(base);
+            //we need to reverse the above to draw it properly - windings!
+            builder.addTriangulatedFace(base.reversed());
         }
         
         //Keep the current layer for drawing the next segment of the cylinder        

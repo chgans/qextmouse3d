@@ -39,46 +39,41 @@
 **
 ****************************************************************************/
 
-
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#ifndef FILESCANNER_H
+#define FILESCANNER_H
 
 #include <QThread>
 #include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+#include <QDebug>
 
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class FileScanner : public QThread
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    explicit FileScanner(QObject *parent = 0);
+    ~FileScanner();
+
+    // INVARIANT: never get called when the thread is running
+    void setBaseUrl(const QUrl &url)
+    {
+        Q_ASSERT(!isRunning());
+        m_url = url;
+    }
+
 signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
+    void imageUrl(const QUrl &url);
+
 public slots:
     void stop();
+    void scan();
+
 protected:
     void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
-private:
-    ThumbnailableImage m_image;
+
+    QUrl m_url;
     QAtomicInt m_stop;
-    ByteReader *m_reader;
+private:
+
 };
 
-#endif // IMAGELOADER_H
+#endif // FILESCANNER_H

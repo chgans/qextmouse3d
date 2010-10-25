@@ -273,6 +273,8 @@ void QGLRenderSequencer::endState(QGLSceneNode *node)
 {
 #ifndef QT_NO_DEBUG_STREAM
     const QGLSceneNode *n = d->stack.top().node();
+    Q_UNUSED(n);
+    Q_UNUSED(node);
     Q_ASSERT(n == node);
 #endif
     d->stack.pop();
@@ -296,7 +298,8 @@ void QGLRenderSequencer::applyState()
         }
         else
         {
-            if (d->painter->standardEffect() != s.standardEffect())
+            if (d->painter->userEffect() ||
+                    d->painter->standardEffect() != s.standardEffect())
                 d->painter->setStandardEffect(s.standardEffect());
         }
     }

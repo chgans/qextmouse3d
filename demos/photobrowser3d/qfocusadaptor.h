@@ -40,45 +40,41 @@
 ****************************************************************************/
 
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#ifndef QFOCUSADAPTOR_H
+#define QFOCUSADAPTOR_H
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+#include <QObject>
 
-#include "thumbnailableimage.h"
+class QGLView;
+class QGLSceneNode;
+class QFocusAdaptorPrivate;
 
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class QFocusAdaptor : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(qreal progress READ progress WRITE setProgress NOTIFY progressChanged)
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    explicit QFocusAdaptor(QObject *parent = 0);
+    ~QFocusAdaptor();
+
+    qreal progress() const;
+    void setProgress(qreal progress);
+
+    QGLView *view() const;
+    void setView(QGLView *view);
+
+    QGLSceneNode *target() const;
+    void setTarget(QGLSceneNode *target);
+
 signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
+    void progressChanged();
+
 public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    void calculateValues();
+
+    QFocusAdaptorPrivate *d;
 };
 
-#endif // IMAGELOADER_H
+#endif // QFOCUSADAPTOR_H

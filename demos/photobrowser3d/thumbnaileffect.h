@@ -39,46 +39,34 @@
 **
 ****************************************************************************/
 
+#ifndef QGLFLATTEXTUREEFFECT_H
+#define QGLFLATTEXTUREEFFECT_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#include "qglabstracteffect.h"
+#include <QtCore/qscopedpointer.h>
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+class ThumbnailEffectPrivate;
 
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class ThumbnailEffect : public QGLAbstractEffect
 {
-    Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
-signals:
-    void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
-public slots:
-    void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
+    ThumbnailEffect();
+    virtual ~ThumbnailEffect();
+
+    QList<QGL::VertexAttribute> requiredFields() const;
+    void setActive(QGLPainter *painter, bool flag);
+    void update(QGLPainter *painter, QGLPainter::Updates updates);
+
+    void setVertexAttribute(QGL::VertexAttribute attribute, const QGLAttributeValue& value);
+    bool supportsPicking() const;
+
+    void setThumbnail(bool enable);
+    bool thumbnail() const;
+
+    QString name() const { return QLatin1String("ThumbnailEffect"); }
+
 private:
-    ThumbnailableImage m_image;
-    QAtomicInt m_stop;
-    ByteReader *m_reader;
+    ThumbnailEffectPrivate *d;
 };
 
-#endif // IMAGELOADER_H
+#endif

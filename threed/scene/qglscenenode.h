@@ -83,6 +83,7 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
     Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
     Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
     Q_PROPERTY(DrawingMode drawingMode READ drawingMode WRITE setDrawingMode NOTIFY drawingModeChanged)
+    Q_PROPERTY(bool boundingBoxTestEnabled READ boundingBoxTestEnabled WRITE setBoundingBoxTestEnabled NOTIFY boundingBoxTestEnabledChanged)
     Q_ENUMS(DrawingMode)
 public:
     explicit QGLSceneNode(QObject *parent = 0);
@@ -101,6 +102,9 @@ public:
         Mesh,
         Main
     };
+
+    bool boundingBoxTestEnabled() const;
+    void setBoundingBoxTestEnabled(bool enabled);
 
     QGeometryData geometry() const;
     void setGeometry(QGeometryData);
@@ -171,6 +175,7 @@ public:
     void removeNode(QGLSceneNode *node);
     void setParent(QObject *);
 
+    virtual void geometryDraw(QGLPainter *painter);
     virtual void draw(QGLPainter *painter);
 
     virtual QGLPickNode *pickNode() const;
@@ -196,6 +201,7 @@ Q_SIGNALS:
     void countChanged();
     void drawingModeChanged();
     void centerChanged();
+    void boundingBoxTestEnabledChanged();
 
 private Q_SLOTS:
     void deleteChild(QObject *object);

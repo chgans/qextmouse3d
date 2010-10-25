@@ -39,46 +39,28 @@
 **
 ****************************************************************************/
 
+#ifndef BYTEREADER_H
+#define BYTEREADER_H
 
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#include <QObject>
 
-#include <QThread>
-#include <QUrl>
-#include <QMutex>
-#include <QAtomicInt>
+class ThumbnailableImage;
+class QUrl;
 
-#include "thumbnailableimage.h"
-
-class ImageManager;
-class ByteReader;
-
-class ImageLoader : public QThread
+class ByteReader : public QObject
 {
     Q_OBJECT
 public:
-    ImageLoader();
-    ~ImageLoader();
-    ThumbnailableImage image() const;
-    void setImage(const ThumbnailableImage &image);
+    ByteReader();
 signals:
     void imageLoaded(const ThumbnailableImage &image);
-    void stopLoading();
-    void readRequired(const ThumbnailableImage &image);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailDone(const ThumbnailableImage &image);
-    void unused();
+    void stopped();
 public slots:
+    void loadFile(const ThumbnailableImage &url);
     void stop();
-protected:
-    void run();
-private slots:
-    void queueInitialImage();
-    void unusedTimeout();
 private:
-    ThumbnailableImage m_image;
     QAtomicInt m_stop;
-    ByteReader *m_reader;
+    QAtomicInt m_loading;
 };
 
-#endif // IMAGELOADER_H
+#endif // BYTEREADER_H

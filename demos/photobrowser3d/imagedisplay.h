@@ -49,21 +49,37 @@
 
 class QGLBuilder;
 class QGLTexture2D;
+class QGLPainter;
+class ThumbnailNode;
 
 class ImageDisplay : public QGLSceneNode
 {
     Q_OBJECT
 public:
-    ImageDisplay(QObject *parent, QGLMaterialCollection *materials);
+    ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qreal wallSize = 4.0);
+    ~ImageDisplay();
+    int maxImages() const { return m_maxImages; }
+    void setMaxImages(int max) { m_maxImages = max; }
+signals:
+    void framesChanged();
 public slots:
-    void addImage(const QImage &image);
+    void addThumbnailNode(const QUrl &url);
 private:
     QGLSceneNode *m_wall;
     QGLSceneNode *m_frames;
     QGLSceneNode *m_currentWall;
-    QGLSceneNode *m_currentFrame;
+    ThumbnailNode *m_currentFrame;
+    QGLAbstractEffect *m_effect;
     bool m_imageSetToDefault;
     int m_count;
+    qreal m_size;
+    qreal m_frameSize;
+    int m_maxImages;
+    QImage m_frameImage;
+    int m_frameLoadingMaterial;
+    QGeometryData m_frameGeometry;
+    QGeometryData m_wallGeometry;
+    QVector2DArray m_atlasPlaceHolder;
 };
 
 #endif // IMAGEDISPLAY_H

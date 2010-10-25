@@ -48,6 +48,7 @@
 #include "qglmaterialcollection.h"
 #include "qmatrix4x4.h"
 #include "qglrendersequencer.h"
+#include "qglabstracteffect.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qthread.h>
@@ -246,6 +247,34 @@ QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
 */
 QGLSceneNode::~QGLSceneNode()
 {
+}
+
+/*!
+    \property QGLSceneNode::boundingBoxTestEnabled
+    \brief Controls whether or not bounding box tests are performed for this node.
+
+    The default value is true.
+
+    If this is set to false, the node will always be drawn even if it
+    appears outside the viewing volume.
+
+    This is an advanced feature - use with care.  If in doubt leave set
+    to the default value.
+*/
+bool QGLSceneNode::boundingBoxTestEnabled() const
+{
+    Q_D(const QGLSceneNode);
+    return d->boundingBoxTestEnabled;
+}
+
+void QGLSceneNode::setBoundingBoxTestEnabled(bool enabled)
+{
+    Q_D(QGLSceneNode);
+    if (d->boundingBoxTestEnabled != enabled)
+    {
+        d->boundingBoxTestEnabled = enabled;
+        emit boundingBoxTestEnabledChanged();
+    }
 }
 
 /*!
@@ -1160,6 +1189,7 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
     // more than once.
     d->childNodes.removeOne(node);
     node->unParent(this);
+    node->disconnect(this);
     emit childNodesChanged();
     invalidateBoundingBox();
 }
@@ -1191,15 +1221,23 @@ void QGLSceneNode::invalidateTransform() const
     then this object will also be deleted.
 
     Additionally, if \a parent is a QGLSceneNode then this node is added
-    to it as a child in the scene, the same as calling \c{parent->addNode()}.
+    to it as a child in the scene, the same as calling \c{parent->addNode()};
+    and if this nodes palette is NULL, then this nodes palette is set to
+    that of the parent.
 
     \sa addNode()
 */
 void QGLSceneNode::setParent(QObject *parent)
 {
+    Q_D(QGLSceneNode);
     QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
     if (sceneParent)
+    {
         sceneParent->addNode(this);
+        if (d->palette == 0)
+            d->palette = sceneParent->palette();
+    }
+
     //In all cases perform a normal QObject parent assignment.
     QObject::setParent(parent);
 }
@@ -1248,6 +1286,47 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
 }
 
 /*!
+    Draws the geometry of the node onto the painter.
+
+    This is the function which performs the actual drawing step in the
+    draw function below.
+
+    \list
+    \o calls draw(start, count) on this nodes geometry object (if any)
+    \endlist
+
+    Override this function to perform special processing on this node,
+    after transformation & culling are applied and before sequencing of
+    materials & effects are done; but just before (or after) the
+    actual draw step.
+
+    This default implementation simply draws the nodes geometry onto
+    the painter.
+
+    Example:
+    \code
+    void MySpecialNode::geometryDraw(QGLPainter *painter)
+    {
+        // at this point the node has survived culling, the model-view
+        // matrix is transformed into this nodes frame of reference,
+        // materials & effects have been applied as this node appears
+        // in its place in the render sequence
+
+        doMySpecialProcessing();
+
+        // call parent implementation to do actual draw
+        QGLSceneNode::geometryDraw(painter);
+    }
+    \endcode
+*/
+void QGLSceneNode::geometryDraw(QGLPainter *painter)
+{
+    Q_D(QGLSceneNode);
+    if (d->count && d->geometry.count() > 0)
+        d->geometry.draw(painter, d->start, d->count, d->drawingMode);
+}
+
+/*!
     Draws this scene node on the \a painter.
 
     In detail this function:
@@ -1287,12 +1366,15 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    QBox3D bb = boundingBox();
-    if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+    if (d->boundingBoxTestEnabled)
     {
-        if (wasTransformed)
-            painter->modelViewMatrix().pop();
-        return;
+        QBox3D bb = boundingBox();
+        if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+        {
+            if (wasTransformed)
+                painter->modelViewMatrix().pop();
+            return;
+        }
     }
 
     QGLRenderSequencer *seq = painter->renderSequencer();
@@ -1307,20 +1389,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
         seq->reset();
         return;
-    }
-    const QGLMaterial *saveMat = 0;
-    bool changedTex = false;
-    const QGLMaterial *saveBackMat = 0;
-    bool changedBackTex = false;
-    QGL::Face faces = QGL::AllFaces;
-    if (d->palette && !painter->isPicking())
-    {
-        QGL::Face faces = (d->backMaterial == -1) ? QGL::AllFaces : QGL::FrontFaces;
-        if (d->material != -1)
-            saveMat = setPainterMaterial(d->material, painter, faces, changedTex);
-        if (d->backMaterial != -1)
-            saveBackMat = setPainterMaterial(d->backMaterial, painter, QGL::BackFaces,
-                                             changedBackTex);
     }
     bool stateEntered = false;
     if (d->childNodes.size() > 0)
@@ -1349,7 +1417,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
             seq->beginState(this);
         }
         seq->applyState();
-        d->geometry.draw(painter, d->start, d->count, d->drawingMode);
+
+        geometryDraw(painter);
 
         if (idSaved)
             painter->setObjectPickId(id);
@@ -1357,20 +1426,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (d->viewNormals)
             drawNormalIndicators(painter);
     }
-
-    if (saveMat)
-    {
-        painter->setFaceMaterial(faces, saveMat);
-        if (changedTex)
-            glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    else if (saveBackMat)
-    {
-        painter->setFaceMaterial(QGL::FrontFaces, saveMat);
-        if (changedBackTex)
-            glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
     if (stateEntered)
         seq->endState(this);
     if (wasTransformed)
@@ -1691,7 +1746,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-    if (!node->geometry().isNull())
+    if (node->geometry() == 0 || !node->geometry().isNull())
     {
         fprintf(stderr, "%s geometry: %d verts\n", qPrintable(ind), node->geometry().count());
     }
@@ -1738,22 +1793,35 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
 
     if (node->hasEffect())
     {
-        switch (node->effect())
+        if (node->userEffect())
         {
-        case QGL::FlatColor:
-            fprintf(stderr, "%s flat color effect\n", qPrintable(ind)); break;
-        case QGL::FlatPerVertexColor:
-            fprintf(stderr, "%s flat per vertex color effect\n", qPrintable(ind)); break;
-        case QGL::FlatReplaceTexture2D:
-            fprintf(stderr, "%s flat replace texture 2D effect\n", qPrintable(ind)); break;
-        case QGL::FlatDecalTexture2D:
-            fprintf(stderr, "%s flat decal texture 2D effect\n", qPrintable(ind)); break;
-        case QGL::LitMaterial:
-            fprintf(stderr, "%s lit material effect\n", qPrintable(ind)); break;
-        case QGL::LitDecalTexture2D:
-            fprintf(stderr, "%s lit decal texture 2D effect\n", qPrintable(ind)); break;
-        case QGL::LitModulateTexture2D:
-            fprintf(stderr, "%s lit modulate texture 2D effect\n", qPrintable(ind)); break;
+            if (node->userEffect()->name().isEmpty())
+                fprintf(stderr, "%s user effect (unnamed) %p\n", qPrintable(ind),
+                        node->userEffect());
+            else
+                fprintf(stderr, "%s user effect: %s (%p)\n", qPrintable(ind),
+                        qPrintable(node->userEffect()->name()),
+                        node->userEffect());
+        }
+        else
+        {
+            switch (node->effect())
+            {
+            case QGL::FlatColor:
+                fprintf(stderr, "%s flat color effect\n", qPrintable(ind)); break;
+            case QGL::FlatPerVertexColor:
+                fprintf(stderr, "%s flat per vertex color effect\n", qPrintable(ind)); break;
+            case QGL::FlatReplaceTexture2D:
+                fprintf(stderr, "%s flat replace texture 2D effect\n", qPrintable(ind)); break;
+            case QGL::FlatDecalTexture2D:
+                fprintf(stderr, "%s flat decal texture 2D effect\n", qPrintable(ind)); break;
+            case QGL::LitMaterial:
+                fprintf(stderr, "%s lit material effect\n", qPrintable(ind)); break;
+            case QGL::LitDecalTexture2D:
+                fprintf(stderr, "%s lit decal texture 2D effect\n", qPrintable(ind)); break;
+            case QGL::LitModulateTexture2D:
+                fprintf(stderr, "%s lit modulate texture 2D effect\n", qPrintable(ind)); break;
+            }
         }
     }
     else
@@ -1797,22 +1865,32 @@ QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
 
     if (node.hasEffect())
     {
-        switch (node.effect())
+        if (node.userEffect())
         {
-        case QGL::FlatColor:
-            dbg << "\n    flat color effect"; break;
-        case QGL::FlatPerVertexColor:
-            dbg << "\n    flat per vertex color effect"; break;
-        case QGL::FlatReplaceTexture2D:
-            dbg << "\n    flat replace texture 2D effect"; break;
-        case QGL::FlatDecalTexture2D:
-            dbg << "\n    flat decal texture 2D effect"; break;
-        case QGL::LitMaterial:
-            dbg << "\n    lit material effect"; break;
-        case QGL::LitDecalTexture2D:
-            dbg << "\n    lit decal texture 2D effect"; break;
-        case QGL::LitModulateTexture2D:
-            dbg << "\n    lit modulate texture 2D effect"; break;
+            if (node.userEffect()->name().isEmpty())
+                dbg << "\n   user effect (unnamed)";
+            else
+                dbg << "\n   user effect:" << node.userEffect()->name();
+        }
+        else
+        {
+            switch (node.effect())
+            {
+            case QGL::FlatColor:
+                dbg << "\n    flat color effect"; break;
+            case QGL::FlatPerVertexColor:
+                dbg << "\n    flat per vertex color effect"; break;
+            case QGL::FlatReplaceTexture2D:
+                dbg << "\n    flat replace texture 2D effect"; break;
+            case QGL::FlatDecalTexture2D:
+                dbg << "\n    flat decal texture 2D effect"; break;
+            case QGL::LitMaterial:
+                dbg << "\n    lit material effect"; break;
+            case QGL::LitDecalTexture2D:
+                dbg << "\n    lit decal texture 2D effect"; break;
+            case QGL::LitModulateTexture2D:
+                dbg << "\n    lit modulate texture 2D effect"; break;
+            }
         }
     }
     else
