@@ -152,8 +152,8 @@ namespace QGL
         Key_DecreaseSensitivity = 0x0120001f
     };
 
-    int nextPowerOfTwo(int value);
-    QSize nextPowerOfTwo(const QSize& value);
+    Q_QT3D_EXPORT int nextPowerOfTwo(int value);
+    Q_QT3D_EXPORT QSize nextPowerOfTwo(const QSize& value);
 };
 
 QT_END_NAMESPACE
