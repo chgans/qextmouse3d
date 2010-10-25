@@ -9,6 +9,7 @@ SUBDIRS = \
     qglabstractsurface \
     qglattributedescription \
     qglattributevalue \
+    qglbezierpatches \
     qglbuilder \
     qglcamera \
     qglcameraanimation \

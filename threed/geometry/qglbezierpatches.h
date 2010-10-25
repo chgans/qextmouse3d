@@ -42,9 +42,8 @@
 #ifndef QGLBEZIERPATCHES_H
 #define QGLBEZIERPATCHES_H
 
-#include "qarray.h"
-#include <QtGui/qvector2d.h>
-#include <QtGui/qvector3d.h>
+#include "qvector2darray.h"
+#include "qvector3darray.h"
 #include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_HEADER
@@ -60,25 +59,16 @@ class Q_QT3D_EXPORT QGLBezierPatches
 {
 public:
     QGLBezierPatches();
-    explicit QGLBezierPatches(const QArray<QVector3D>& positions);
-    QGLBezierPatches(const QArray<QVector3D>& positions,
-                     const QArray<ushort>& indices);
-    QGLBezierPatches(const QGLBezierPatches& other);
+    QGLBezierPatches(const QGLBezierPatches &other);
     virtual ~QGLBezierPatches();
 
-    QGLBezierPatches& operator=(const QGLBezierPatches& other);
+    QGLBezierPatches &operator=(const QGLBezierPatches &other);
 
-    QArray<QVector3D> positions() const;
-    void setPositions(const QArray<QVector3D>& positions);
+    QVector3DArray positions() const;
+    void setPositions(const QVector3DArray &positions);
 
-    QArray<QVector2D> textureCoords() const;
-    void setTextureCoords(const QArray<QVector2D>& textureCoords);
-
-    QArray<ushort> indices() const;
-    void setIndices(const QArray<ushort>& indices);
-
-    QVector3D normal(int index) const;
-    void setNormal(int index, const QVector3D& value);
+    QVector2DArray textureCoords() const;
+    void setTextureCoords(const QVector2DArray &textureCoords);
 
     int subdivisionDepth() const;
     void setSubdivisionDepth(int value);
@@ -91,10 +81,10 @@ private:
 
     Q_DECLARE_PRIVATE(QGLBezierPatches)
 
-    friend Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLBezierPatches& patches);
+    friend Q_QT3D_EXPORT QGLBuilder &operator<<(QGLBuilder &list, const QGLBezierPatches &patches);
 };
 
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& list, const QGLBezierPatches& patches);
+Q_QT3D_EXPORT QGLBuilder &operator<<(QGLBuilder &list, const QGLBezierPatches &patches);
 
 QT_END_NAMESPACE
 

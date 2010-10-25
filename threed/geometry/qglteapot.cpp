@@ -82,16 +82,16 @@ QT_BEGIN_NAMESPACE
     Constructs a new 3D teapot geometry object.
 */
 QGLTeapot::QGLTeapot()
-    : QGLBezierPatches
-        (QArray<QVector3D>::fromRawData
-            (reinterpret_cast<const QVector3D *>(teapotBezierVertexData),
-             teapotBezierVertexCount),
-         QArray<ushort>::fromRawData
-            (teapotPatchData, teapotPatchCount * 16))
 {
+    QVector3DArray positions;
+    for (int pindex = 0; pindex < teapotPatchCount * 16; ++pindex) {
+        int vindex = teapotPatchData[pindex];
+        positions.append(teapotBezierVertexData[vindex * 3],
+                         teapotBezierVertexData[vindex * 3 + 1],
+                         teapotBezierVertexData[vindex * 3 + 2]);
+    }
+    setPositions(positions);
     setSubdivisionDepth(teapotDepth);
-    setNormal(210, QVector3D(0.000000f, 0.000000f, 1.000000f));
-    setNormal(269, QVector3D(0.000000f, 0.000000f, -1.000000f));
 }
 
 /*!
