@@ -122,6 +122,9 @@ class TestEffect : public QGLAbstractEffect
     void setActive(QGLPainter *, bool)
     {
     }
+    void update(QGLPainter *, QGLPainter::Updates)
+    {
+    }
 };
 
 void tst_QGLBuilder::newNode()

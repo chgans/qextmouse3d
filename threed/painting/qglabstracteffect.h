@@ -58,7 +58,7 @@ public:
 
     virtual bool supportsPicking() const;
     virtual void setActive(QGLPainter *painter, bool flag) = 0;
-    virtual void update(QGLPainter *painter, QGLPainter::Updates updates);
+    virtual void update(QGLPainter *painter, QGLPainter::Updates updates) = 0;
 };
 
 QT_END_NAMESPACE
