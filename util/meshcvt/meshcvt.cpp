@@ -63,8 +63,7 @@ int main(int argc, char *argv[])
     char buffer[BUFSIZ];
     char *filename;
     char *name;
-    static QArray<QVector3D> vertices;
-    static QArray<QVector3D> normals;
+    QArray<QVector3D> vertices;
 
     // Validate the command-line arguments.
     if (argc < 3) {
@@ -141,12 +140,6 @@ int main(int argc, char *argv[])
                    &x, &y, &z, &xnormal, &ynormal, &znormal) != 6) {
             if (sscanf(buffer, "%f, %f, %f\n", &x, &y, &z) != 3)
                 meshError(filename);
-        } else {
-            if (normals.isEmpty())
-                normals.resize(numVertices);
-            normals[vertex].setX(xnormal);
-            normals[vertex].setY(ynormal);
-            normals[vertex].setZ(znormal);
         }
         if (teapotAdjust) {
             // Do the equivalent of the following transformation:
@@ -198,21 +191,16 @@ int main(int argc, char *argv[])
     printf("class %sPatches : public QGLBezierPatches\n{\n", name);
     printf("public:\n");
     printf("    %sPatches()\n", name);
-    printf("        : QGLBezierPatches(");
-    printf("QArray<QVector3D>::fromRawData(");
-    printf("reinterpret_cast<const QVector3D *>(%sBezierVertexData), %sBezierVertexCount),\n", name, name);
-    printf("                           ");
-    printf("QArray<ushort>::fromRawData(%sPatchData, %sPatchCount * 16))\n", name, name);
     printf("    {\n");
+    printf("        QVector3DArray positions;\n");
+    printf("        for (int pindex = 0; pindex < %sPatchCount * 16; ++pindex) {\n", name);
+    printf("            int vindex = %sPatchData[pindex];\n", name);
+    printf("            positions.append(%sBezierVertexData[vindex * 3],\n", name);
+    printf("                             %sBezierVertexData[vindex * 3 + 1],\n", name);
+    printf("                             %sBezierVertexData[vindex * 3 + 2]);\n", name);
+    printf("        }\n");
+    printf("        setPositions(positions);\n");
     printf("        setSubdivisionDepth(%sDepth);\n", name);
-    if (!normals.isEmpty()) {
-        // Some of the Bezier patch vertices had specified normals.
-        for (int vertex = 0; vertex < numVertices; ++vertex) {
-            QVector3D n = normals[vertex];
-            if (!n.isNull())
-                printf("        setNormal(%d, QVector3D(%ff, %ff, %ff));\n", vertex, n.x(), n.y(), n.z());
-        }
-    }
     printf("    }\n");
     printf("};\n");
 
