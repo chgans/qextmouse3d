@@ -56,7 +56,7 @@ signals:
     void imageLoaded(const ThumbnailableImage &image);
     void stopped();
 public slots:
-    void loadFile(const QUrl &url);
+    void loadFile(const ThumbnailableImage &url);
     void stop();
 private:
     QAtomicInt m_stop;

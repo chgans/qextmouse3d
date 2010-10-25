@@ -82,7 +82,7 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     , m_pc(0)
     , m_pickableDirty(true)
     , m_done(false)
-    , m_closing(false)    
+    , m_closing(false)
 {
     setOption(QGLView::ObjectPicking, true);
     // setOption(QGLView::ShowPicking, true);
@@ -151,20 +151,6 @@ void PhotoBrowser3DView::setupStates()
     m_pan->setObjectName("Pan");
     end_state->setObjectName("EndState");
 
-    // DEBUG - REMOVE ME
-    QObject::connect(m_state, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(m_state, SIGNAL(exited()), this, SLOT(stateExit()));
-    QObject::connect(m_app, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(m_app, SIGNAL(exited()), this, SLOT(stateExit()));
-    QObject::connect(m_browse, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(m_browse, SIGNAL(exited()), this, SLOT(stateExit()));
-    QObject::connect(m_pan, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(m_pan, SIGNAL(exited()), this, SLOT(stateExit()));
-    QObject::connect(m_zoomed, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(m_zoomed, SIGNAL(exited()), this, SLOT(stateExit()));
-    QObject::connect(end_state, SIGNAL(entered()), this, SLOT(stateEnter()));
-    QObject::connect(end_state, SIGNAL(exited()), this, SLOT(stateExit()));
-
     QSignalTransition *transition = m_browse->addTransition(this, SIGNAL(zoom()), m_zoomed);
     QPropertyAnimation *a = new QPropertyAnimation(m_fa, "progress");
     a->setDuration(500);
@@ -223,6 +209,7 @@ void PhotoBrowser3DView::initialiseImageManager(const QUrl &url)
     connect(m_images, SIGNAL(finished()), this, SLOT(waitForExit()));
 
     connect(m_display, SIGNAL(framesChanged()), this, SLOT(pickableDirty()));
+    connect(m_display, SIGNAL(framesChanged()), this, SLOT(queueUpdate()));
 
     m_images->setImageBaseUrl(url);
     QThread::Priority p = QThread::idealThreadCount() < 2 ?
@@ -264,7 +251,7 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
         zoomMag += inc;
         if (zoomMag < 2.0f)
             zoomMag = 2.0f;
-        QRay3D viewLine(camera()->center(), viewVec);
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
         camera()->setEye(viewLine.point(zoomMag));
         update();
     }
@@ -400,6 +387,7 @@ void PhotoBrowser3DView::resizeGL(int w, int h)
     Q_UNUSED(w);
     Q_UNUSED(h);
     m_buttons->clearPositions();
+    m_updateRequired = true;
 }
 
 void PhotoBrowser3DView::zoomImage()
@@ -423,16 +411,6 @@ void PhotoBrowser3DView::goPan()
 void PhotoBrowser3DView::pickableDirty()
 {
     m_pickableDirty = true;
-}
-
-void PhotoBrowser3DView::stateEnter()
-{
-    qDebug() << "Entered state:" << sender()->objectName();
-}
-
-void PhotoBrowser3DView::stateExit()
-{
-    qDebug() << "Exited state:" << sender()->objectName();
 }
 
 void PhotoBrowser3DView::registerPickableNodes()

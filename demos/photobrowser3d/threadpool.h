@@ -61,11 +61,9 @@ public:
 signals:
     void stopped();
     void stopAll();
-    void imageThumbnailed(const ThumbnailableImage &image);
 
 public slots:
-    void deployLoader(const QUrl &url);
-    void thumbnailImage(const ThumbnailableImage &image);
+    void deployLoader(const ThumbnailableImage &url);
     void stop();
 
 private slots:
@@ -75,7 +73,7 @@ private slots:
 private:
     QList<ImageLoader*> m_freeWorkers;
     QList<ImageLoader*> m_allWorkers;
-    QList<QUrl> m_workList;
+    QList<ThumbnailableImage> m_workList;
     QAtomicInt m_stop;
     int m_threadPoolSize;
 };

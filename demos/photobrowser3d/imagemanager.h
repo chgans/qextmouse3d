@@ -66,9 +66,7 @@ public slots:
 signals:
     void imageUrl(const QUrl &);
     void imageReady(const ThumbnailableImage &);
-    void deployLoader(const QUrl &);
-    void thumbnailRequired(const ThumbnailableImage &image);
-    void thumbnailReady(const ThumbnailableImage &image);
+    void deployLoader(const ThumbnailableImage &);
     void stopAll();
 protected:
     void run();

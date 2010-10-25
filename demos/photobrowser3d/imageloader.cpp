@@ -66,16 +66,16 @@ ImageLoader::~ImageLoader()
     // nothing to do here
 }
 
-QUrl ImageLoader::url() const
+ThumbnailableImage ImageLoader::image() const
 {
-    return m_url;
+    return m_image;
 }
 
-void ImageLoader::setUrl(const QUrl &url)
+void ImageLoader::setImage(const ThumbnailableImage &image)
 {
-    m_url = url;
+    m_image = image;
     if (!m_stop && isRunning())
-        emit readRequired(url);
+        emit readRequired(image);
 }
 
 void ImageLoader::stop()
@@ -84,9 +84,9 @@ void ImageLoader::stop()
     emit stopLoading();
 }
 
-void ImageLoader::queueInitialUrl()
+void ImageLoader::queueInitialImage()
 {
-    emit readRequired(m_url);
+    emit readRequired(m_image);
 }
 
 void ImageLoader::unusedTimeout()
@@ -97,7 +97,8 @@ void ImageLoader::unusedTimeout()
 void ImageLoader::run()
 {
     ByteReader reader;
-    connect(this, SIGNAL(readRequired(QUrl)), &reader, SLOT(loadFile(QUrl)));
+    connect(this, SIGNAL(readRequired(ThumbnailableImage)),
+            &reader, SLOT(loadFile(ThumbnailableImage)));
     connect(&reader, SIGNAL(imageLoaded(ThumbnailableImage)),
             this, SIGNAL(imageLoaded(ThumbnailableImage)));
 
@@ -108,8 +109,8 @@ void ImageLoader::run()
     connect(&timer, SIGNAL(timeout()), this, SLOT(unusedTimeout()));
     timer.start(2 * 60 * 1000);
 
-    if (!m_url.isEmpty())
-        QTimer::singleShot(0, this, SLOT(queueInitialUrl()));
+    if (!m_image.isNull())
+        QTimer::singleShot(0, this, SLOT(queueInitialImage()));
 
     exec();
 }

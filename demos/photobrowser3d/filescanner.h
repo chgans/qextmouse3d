@@ -44,6 +44,7 @@
 
 #include <QThread>
 #include <QUrl>
+#include <QDebug>
 
 class FileScanner : public QThread
 {

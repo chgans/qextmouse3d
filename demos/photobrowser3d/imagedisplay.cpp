@@ -178,6 +178,7 @@ ImageDisplay::~ImageDisplay()
 
 void ImageDisplay::addThumbnailNode(const QUrl &image)
 {
+    Q_ASSERT(QThread::currentThread() == thread());
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     if (!m_imageSetToDefault)
     {
@@ -205,10 +206,15 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     m_currentFrame->setUrl(image);
     if (manager)
     {
-        connect(m_currentFrame, SIGNAL(imageRequired(QUrl)), manager, SIGNAL(deployLoader(QUrl)));
-        connect(m_currentFrame, SIGNAL(thumbnailRequired(ThumbnailableImage)), manager, SIGNAL(thumbnailRequired(ThumbnailableImage)));
-        connect(manager, SIGNAL(imageReady(ThumbnailableImage)), m_currentFrame, SLOT(setImage(ThumbnailableImage)));
+        connect(m_currentFrame, SIGNAL(imageRequired(ThumbnailableImage)),
+                manager, SIGNAL(deployLoader(ThumbnailableImage)));
+        connect(manager, SIGNAL(imageReady(ThumbnailableImage)),
+                m_currentFrame, SLOT(setImage(ThumbnailableImage)));
     }
+    PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
+    Q_ASSERT(view);
+    connect(m_currentFrame, SIGNAL(nodeChanged()), view, SLOT(queueUpdate()));
+
     m_imageSetToDefault = false;
     emit framesChanged();
     ++m_count;

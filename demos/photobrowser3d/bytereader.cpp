@@ -56,13 +56,14 @@ ByteReader::ByteReader()
     m_loading = 0;
 }
 
-void ByteReader::loadFile(const QUrl &url)
+void ByteReader::loadFile(const ThumbnailableImage &image)
 {
-    if (!url.isEmpty() && !m_stop)
+    if (!m_stop)
     {
         m_loading.ref();
 
         // FIXME: actually handle remote files
+        QUrl url = image.url();
         QString fn = url.toLocalFile();
         int pos = fn.lastIndexOf('.');
         QString ext;
@@ -120,15 +121,18 @@ void ByteReader::loadFile(const QUrl &url)
                                        Qt::SmoothTransformation : Qt::FastTransformation);
             }
 
-            ThumbnailableImage thumb;
-            thumb.setData(im);
-            thumb.setUrl(url);
-
             Q_ASSERT(!im.isNull());
-            Q_ASSERT(!thumb.isNull());
+            ThumbnailableImage result(image);
+            result.setData(im);
 
-            qDebug() << "emit imageLoaded" << thumb.url();
-            emit imageLoaded(thumb);
+            // it would be nice to incur the cost of setThumbnailed() on the image
+            // at this point - in the background thread.  Trouble is the atlas is
+            // constantly being accessed by the draw loop and to do anything about
+            // that would mean locking the GUI thread...
+
+            Q_ASSERT(!result.isNull());
+
+            emit imageLoaded(result);
         }
 
         m_loading.deref();

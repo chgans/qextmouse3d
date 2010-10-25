@@ -57,12 +57,14 @@ QAtlas::QAtlas()
     , m_material(new QGLMaterial)
     , m_geometry(0)
 {
-    // show errors in red
-    m_data->fill(qRgb(255, 0, 0));
+    m_data->fill(qRgb(0, 0, 0));
+
+    // uncomment to show errors in red
+    // m_data->fill(qRgb(255, 0, 0));
+
     m_tex->setImage(*m_data);
     m_material->setTexture(m_tex, 1);
     m_material->setObjectName("Atlas material");
-    qDebug() << "atlas texture is:" << m_material;
 }
 
 QAtlas::~QAtlas()
@@ -85,8 +87,8 @@ QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexA
     painter.drawImage(a, image);
 
     // debug - remove me
-    painter.setPen(QColor("orange"));
-    painter.drawText(a, Qt::AlignCenter, "THUMB");
+    // painter.setPen(QColor("orange"));
+    // painter.drawText(a, Qt::AlignCenter, "THUMB");
 
     painter.end();
     m_tex->setImage(*m_data);

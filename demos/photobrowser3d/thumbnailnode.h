@@ -64,18 +64,17 @@ public:
     explicit ThumbnailNode(QObject *parent = 0);
     ~ThumbnailNode();
     QUrl url() const { return m_url; }
-    void setUrl(const QUrl &url) { m_url = url; }
+    void setUrl(const QUrl &url);
     void setThreshold(qreal threshold) { m_thresholdSquared = threshold * threshold; }
     qreal threshold() const { return qSqrt(m_thresholdSquared); }
     void draw(QGLPainter *painter);
     void geometryDraw(QGLPainter *painter);
     ThumbnailableImage image() const { return m_image; }
 signals:
-    void imageRequired(const QUrl &);
-    void thumbnailRequired(const ThumbnailableImage &);
+    void imageRequired(const ThumbnailableImage &);
+    void nodeChanged();
 public slots:
     void setImage(const ThumbnailableImage &image);
-    void updateImage(const ThumbnailableImage &image);
 private:
     void createFullNode();
     void destroyFullNode();
@@ -92,7 +91,6 @@ private:
     QSizeF m_max;
     QObject *m_manager;
     Distance m_lastDistance;
-    bool m_thumbnailing;
 };
 
 #endif // THUMBNAILNODE_H

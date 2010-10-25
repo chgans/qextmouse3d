@@ -59,12 +59,12 @@ class ImageLoader : public QThread
 public:
     ImageLoader();
     ~ImageLoader();
-    QUrl url() const;
-    void setUrl(const QUrl &url);
+    ThumbnailableImage image() const;
+    void setImage(const ThumbnailableImage &image);
 signals:
     void imageLoaded(const ThumbnailableImage &image);
     void stopLoading();
-    void readRequired(const QUrl &url);
+    void readRequired(const ThumbnailableImage &image);
     void thumbnailRequired(const ThumbnailableImage &image);
     void thumbnailDone(const ThumbnailableImage &image);
     void unused();
@@ -73,10 +73,10 @@ public slots:
 protected:
     void run();
 private slots:
-    void queueInitialUrl();
+    void queueInitialImage();
     void unusedTimeout();
 private:
-    QUrl m_url;
+    ThumbnailableImage m_image;
     QAtomicInt m_stop;
     ByteReader *m_reader;
 };

@@ -42,6 +42,8 @@
 #include "pancontroller.h"
 #include "qglview.h"
 #include "qglcamera.h"
+#include "photobrowser3dview.h"
+
 #include <qmath.h>
 
 #include <QtGlobal>
@@ -164,6 +166,10 @@ void PanController::pan()
         // 30ms frame time == 33fps - more than enough
         if (d->elapsed > 30)
             d->calculateValues();
+
+        PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
+        Q_ASSERT(view);
+        view->queueUpdate();
     }
 }
 

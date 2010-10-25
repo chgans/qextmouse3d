@@ -81,8 +81,6 @@ private slots:
     void initialise();
     void zoomImage();
     void pickableDirty();
-    void stateEnter();
-    void stateExit();
     void waitForExit();
     void goPan();
 private:
@@ -108,6 +106,7 @@ private:
     qreal m_displaySize;
     bool m_done;
     bool m_closing;
+    bool m_updateRequired;
 };
 
 #endif // PHOTOBROWSER3DVIEW_H

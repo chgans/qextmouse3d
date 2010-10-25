@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QImageReader>
+#include <QDebug>
 
 FileScanner::FileScanner(QObject *parent)
     : QThread(parent)
@@ -35,12 +36,15 @@ void FileScanner::scan()
     queue.append(m_url.path());
     QSet<QString> loopProtect;
     int count = 0;
-    while (queue.size() > 0 && !m_stop && count < 5)
+    while (queue.size() > 0 && !m_stop && count < 300)
     {
         QString path = queue.takeFirst();
         QFileInfo u(path);
         if (u.isSymLink())
+        {
             path = u.symLinkTarget();
+            u = QFileInfo(path);
+        }
         if (u.isDir())
         {
             if (!loopProtect.contains(path))

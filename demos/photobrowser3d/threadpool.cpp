@@ -58,10 +58,10 @@ ThreadPool::~ThreadPool()
     Q_ASSERT(m_allWorkers.size() == 0);
 }
 
-void ThreadPool::deployLoader(const QUrl &url)
+void ThreadPool::deployLoader(const ThumbnailableImage &image)
 {
     // INVARIANT: this critical section is only ever executed from its
-    // own thread - thus access to it is serialized
+    // own thread via queued signals - thus access to it is serialized
     Q_ASSERT(QThread::currentThread() == thread());
 
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
@@ -71,10 +71,9 @@ void ThreadPool::deployLoader(const QUrl &url)
     if (m_freeWorkers.size() > 0)
         loader = m_freeWorkers.takeFirst();
 
-    qDebug() << "deployLoader" << url;
     if (loader)
     {
-        loader->setUrl(url);
+        loader->setImage(image);
     }
     else
     {
@@ -82,7 +81,7 @@ void ThreadPool::deployLoader(const QUrl &url)
         {
             loader = new ImageLoader;
             m_allWorkers.append(loader);
-            loader->setUrl(url);
+            loader->setImage(image);
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), manager,
                     SIGNAL(imageReady(ThumbnailableImage)));
             connect(loader, SIGNAL(imageLoaded(ThumbnailableImage)), this,
@@ -93,19 +92,9 @@ void ThreadPool::deployLoader(const QUrl &url)
         }
         else
         {
-            m_workList.append(url);
+            m_workList.append(image);
         }
     }
-}
-
-void ThreadPool::thumbnailImage(const ThumbnailableImage &image)
-{
-    qDebug() << "processing request to thumbnail:" << image.url();
-    // YUK - should write a seperate class, this is not in my job description...
-    Q_ASSERT(image.indices().count() > 0);
-    ThumbnailableImage thumb = image;
-    thumb.setThumbnailed(true);
-    emit imageThumbnailed(thumb);
 }
 
 void ThreadPool::retrieveLoader()
@@ -115,7 +104,7 @@ void ThreadPool::retrieveLoader()
     if (!m_stop)
     {
         if (!m_workList.isEmpty())
-            loader->setUrl(m_workList.takeFirst());
+            loader->setImage(m_workList.takeFirst());
         else
             m_freeWorkers.append(loader);
     }

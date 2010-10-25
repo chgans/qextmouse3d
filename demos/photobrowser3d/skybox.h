@@ -49,6 +49,7 @@ class QGLBuilder;
 class QGLSceneNode;
 class QGLPainter;
 class QGLView;
+class QGLCamera;
 
 class SkyBox : public QObject
 {
@@ -63,6 +64,7 @@ private:
     QString m_imagePath;
     QGLSceneNode *m_faces[6];
     QGLView *m_view;
+    QGLCamera *m_camera;
 };
 
 #endif // SKYBOX_H
