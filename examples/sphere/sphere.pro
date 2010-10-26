@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = sphere
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl
 SOURCES = sphereview.cpp \

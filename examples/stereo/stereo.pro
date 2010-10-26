@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = stereo
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = stereoview.cpp main.cpp
 HEADERS = stereoview.h

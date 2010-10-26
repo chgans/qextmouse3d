@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = photobrowser3d
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl
 SOURCES += main.cpp\

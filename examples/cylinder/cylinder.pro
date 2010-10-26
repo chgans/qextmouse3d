@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = cylinder
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = cylinderview.cpp main.cpp
 HEADERS = cylinderview.h

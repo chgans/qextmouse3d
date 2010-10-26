@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = modelviewer
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl network
 SOURCES += main.cpp \

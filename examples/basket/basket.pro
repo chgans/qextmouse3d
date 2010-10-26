@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = basket
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = basketview.cpp main.cpp
 HEADERS = basketview.h basket_data.h

@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = teaservice
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl network
 SOURCES = teaservice.cpp meshobject.cpp sceneobject.cpp
 HEADERS = meshobject.h sceneobject.h
