@@ -57,3 +57,11 @@ include(../../threed/threed_dep.pri)
 OTHER_FILES += \
     shaders/replace_texture.fsh \
     shaders/replace_texture.vsh
+
+symbian {
+    symbian-abld|symbian-sbsv2 {
+        # ro-section in photobrowser3d can exceed default allocated space, so move rw-section a little further
+        QMAKE_LFLAGS.ARMCC += --rw-base 0x800000
+        QMAKE_LFLAGS.GCCE += -Tdata 0xC00000
+    }
+}
