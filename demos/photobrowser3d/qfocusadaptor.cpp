@@ -152,7 +152,7 @@ void QFocusAdaptor::calculateValues()
                 box.unite(g.vertexAt(inxs.at(i)));
             QVector3D sz = box.size();
 
-            qreal near = cam->nearPlane();
+            qreal nearDist = cam->nearPlane();
 
             QSizeF v = cam->viewSize();
 
@@ -167,8 +167,8 @@ void QFocusAdaptor::calculateValues()
                     v.setWidth(v.width() / asp);
             }
 
-            qreal qh = (near * sz.y()) / v.height();
-            qreal qw = (near * sz.x()) / v.width();
+            qreal qh = (nearDist * sz.y()) / v.height();
+            qreal qw = (nearDist * sz.x()) / v.width();
 
             qreal q = qMax(qh, qw);
 
