@@ -922,12 +922,6 @@ void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
 }
 
 /*!
-    \fn void QGLBuilder::addPane(qreal size)
-    Convenience function to create a quad centered on the origin,
-    lying in the Z=0 plane, with sides \a size long.
-*/
-
-/*!
     \fn void QGLBuilder::addPane(QSizeF size)
     Convenience function to create a quad centered on the origin,
     lying in the Z=0 plane, with width (x dimension) and height

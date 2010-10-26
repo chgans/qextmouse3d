@@ -87,7 +87,7 @@ public:
         , boxValid(false)
         , transformValid(false)
         , drawingMode(QGLSceneNode::Triangles)
-        , boundingBoxTestEnabled(true)
+        , boundingBoxEnabled(true)
     {
     }
 
@@ -127,7 +127,7 @@ public:
     mutable QMatrix4x4 transform;
     mutable bool transformValid;
     QGLSceneNode::DrawingMode drawingMode;
-    bool boundingBoxTestEnabled;
+    bool boundingBoxEnabled;
 };
 
 #endif // QGLSCENENODE_P_H

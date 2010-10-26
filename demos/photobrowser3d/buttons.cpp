@@ -47,7 +47,7 @@ Buttons::Buttons(QObject *parent, QGLMaterialCollection *palette)
 {
     setObjectName("Buttons");
     setPalette(palette);
-    setBoundingBoxTestEnabled(false);
+    setboundingBoxEnabled(false);
 
     m_left = new QGLSceneNode(this);
     m_left->setObjectName("Left Button");
@@ -90,12 +90,12 @@ Buttons::Buttons(QObject *parent, QGLMaterialCollection *palette)
 
     m_left->setGeometry(data);
     m_left->setCount(6);
-    m_left->setBoundingBoxTestEnabled(false);
+    m_left->setboundingBoxEnabled(false);
 
     m_right->setGeometry(data);
     m_right->setStart(6);
     m_right->setCount(6);
-    m_right->setBoundingBoxTestEnabled(false);
+    m_right->setboundingBoxEnabled(false);
 }
 
 void Buttons::draw(QGLPainter *painter)

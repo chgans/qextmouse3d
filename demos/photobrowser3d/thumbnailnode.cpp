@@ -147,9 +147,9 @@ void ThumbnailNode::loadFullImage()
     }
 }
 
-void ThumbnailNode::geometryDraw(QGLPainter *painter)
+void ThumbnailNode::drawGeometry(QGLPainter *painter)
 {
-    QGLSceneNode::geometryDraw(painter);
+    QGLSceneNode::drawGeometry(painter);
 }
 
 void ThumbnailNode::draw(QGLPainter *painter)
@@ -196,6 +196,7 @@ void ThumbnailNode::draw(QGLPainter *painter)
     QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
     Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
                "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
+
     ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
     Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
                "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");

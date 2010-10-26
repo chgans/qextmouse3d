@@ -250,7 +250,7 @@ QGLSceneNode::~QGLSceneNode()
 }
 
 /*!
-    \property QGLSceneNode::boundingBoxTestEnabled
+    \property QGLSceneNode::boundingBoxEnabled
     \brief Controls whether or not bounding box tests are performed for this node.
 
     The default value is true.
@@ -261,19 +261,19 @@ QGLSceneNode::~QGLSceneNode()
     This is an advanced feature - use with care.  If in doubt leave set
     to the default value.
 */
-bool QGLSceneNode::boundingBoxTestEnabled() const
+bool QGLSceneNode::boundingBoxEnabled() const
 {
     Q_D(const QGLSceneNode);
-    return d->boundingBoxTestEnabled;
+    return d->boundingBoxEnabled;
 }
 
-void QGLSceneNode::setBoundingBoxTestEnabled(bool enabled)
+void QGLSceneNode::setboundingBoxEnabled(bool enabled)
 {
     Q_D(QGLSceneNode);
-    if (d->boundingBoxTestEnabled != enabled)
+    if (d->boundingBoxEnabled != enabled)
     {
-        d->boundingBoxTestEnabled = enabled;
-        emit boundingBoxTestEnabledChanged();
+        d->boundingBoxEnabled = enabled;
+        emit boundingBoxEnabledChanged();
     }
 }
 
@@ -1286,7 +1286,7 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
 }
 
 /*!
-    Draws the geometry of the node onto the painter.
+    Draws the geometry of the node onto the \a painter.
 
     This is the function which performs the actual drawing step in the
     draw function below.
@@ -1319,7 +1319,7 @@ const QGLMaterial *QGLSceneNode::setPainterMaterial(int material, QGLPainter *pa
     }
     \endcode
 */
-void QGLSceneNode::geometryDraw(QGLPainter *painter)
+void QGLSceneNode::drawGeometry(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
     if (d->count && d->geometry.count() > 0)
@@ -1366,7 +1366,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    if (d->boundingBoxTestEnabled)
+    if (d->boundingBoxEnabled)
     {
         QBox3D bb = boundingBox();
         if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
@@ -1418,7 +1418,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         }
         seq->applyState();
 
-        geometryDraw(painter);
+        drawGeometry(painter);
 
         if (idSaved)
             painter->setObjectPickId(id);
@@ -1692,6 +1692,11 @@ bool QGLSceneNode::normalViewEnabled() const
 /*!
     \fn QGLSceneNode::centerChanged()
     Signals that the center() property for this scene node has changed.
+*/
+
+/*!
+    \fn void QGLSceneNode::boundingBoxEnabledChanged()
+    Signals that the boundingBoxEnabled() property for this scene node has changed.
 */
 
 #ifndef QT_NO_DEBUG_STREAM
