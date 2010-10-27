@@ -158,43 +158,6 @@ QT_BEGIN_NAMESPACE
     \sa QGLAbstractScene
 */
 
-#if 0
-
-void QGLSceneNodePrivate::appendFunc(QDeclarativeListProperty<QGLSceneNode> *list,
-                                             QGLSceneNode *node)
-{
-    QGLSceneNodePrivate *q = reinterpret_cast<QGLSceneNodePrivate*>(list->data);
-    q->childNodes.append(node);
-    QGLSceneNode *parent = qobject_cast<QGLSceneNode*>(list->object);
-    Q_ASSERT(parent);
-    parent->childNodesChanged();
-}
-
-int QGLSceneNodePrivate::countFunc(QDeclarativeListProperty<QGLSceneNode> *list)
-{
-    QGLSceneNodePrivate *q = reinterpret_cast<QGLSceneNodePrivate*>(list->data);
-    return q->childNodes.count();
-}
-
-QGLSceneNode *QGLSceneNodePrivate::atFunc(QDeclarativeListProperty<QGLSceneNode> *list,
-                                                       int index)
-{
-    QGLSceneNodePrivate *q = reinterpret_cast<QGLSceneNodePrivate*>(list->data);
-    QGLSceneNode *node = q->childNodes.at(index);
-    return node;
-}
-
-void QGLSceneNodePrivate::clearFunc(QDeclarativeListProperty<QGLSceneNode> *list)
-{
-    QGLSceneNodePrivate *q = reinterpret_cast<QGLSceneNodePrivate*>(list->data);
-    q->childNodes.clear();
-    QGLSceneNode *parent = qobject_cast<QGLSceneNode*>(list->object);
-    Q_ASSERT(parent);
-    parent->childNodesChanged();
-}
-
-#endif
-
 /*!
     \enum QGLSceneNode::Type
     This enum covers the types of QGLSceneNode objects that may exist in
@@ -1073,26 +1036,6 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
     d->childNodes = children;
     emit childNodesChanged();
 }
-
-#if 0
-
-/*!
-    \property QGLSceneNode::childNodes
-    \brief A list of all child nodes directly under this node.
-
-    Note that this is not a recursively generated list, just the first level
-    children under this node.
-*/
-QDeclarativeListProperty<QGLSceneNode> QGLSceneNode::childNodes()
-{
-    return QDeclarativeListProperty<QGLSceneNode>(this, 0,
-                                                  QGLSceneNodePrivate::appendFunc,
-                                                  QGLSceneNodePrivate::countFunc,
-                                                  QGLSceneNodePrivate::atFunc,
-                                                  QGLSceneNodePrivate::clearFunc);
-}
-
-#endif
 
 void QGLSceneNode::parentOnto(QGLSceneNode *parent)
 {

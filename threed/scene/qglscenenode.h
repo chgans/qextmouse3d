@@ -47,10 +47,6 @@
 #include "qgeometrydata.h"
 #include "qglmaterialcollection.h"
 
-#if 0
-#include <QtDeclarative/qdeclarativelist.h>
-#endif
-
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
@@ -65,9 +61,6 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLSceneNode);
-#if 0
-    Q_PROPERTY(QDeclarativeListProperty<QGLSceneNode> childNodes READ childNodes DESIGNABLE false NOTIFY childNodesChanged)
-#endif
     Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged)
     Q_PROPERTY(qreal rotX READ rotX WRITE setRotX NOTIFY rotationChanged)
     Q_PROPERTY(qreal rotY READ rotY WRITE setRotY NOTIFY rotationChanged)
@@ -163,10 +156,6 @@ public:
 
     QGLMaterialCollection *palette() const;
     void setPalette(QGLMaterialCollection *palette);
-
-#if 0
-    QDeclarativeListProperty<QGLSceneNode> childNodes();
-#endif
 
     QList<QGLSceneNode*> allChildren() const;
     QList<QGLSceneNode *> childNodeList() const;

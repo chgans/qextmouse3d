@@ -61,10 +61,6 @@
 #include <QtCore/qstringlist.h>
 #include <QtCore/qset.h>
 
-#if QT_VERSION >= 0x040700 && !defined(QT_NO_DECLARATIVE)
-#include <QtDeclarative/qdeclarativelist.h>
-#endif
-
 class QGLAbstractEffect;
 class QGLPickNode;
 
@@ -91,12 +87,6 @@ public:
     {
     }
 
-#if 0
-    static void appendFunc(QDeclarativeListProperty<QGLSceneNode> *list, QGLSceneNode*node);
-    static int countFunc(QDeclarativeListProperty<QGLSceneNode> *list);
-    static QGLSceneNode *atFunc(QDeclarativeListProperty<QGLSceneNode> *list, int index);
-    static void clearFunc(QDeclarativeListProperty<QGLSceneNode> *list);
-#endif
     void invalidateParentBoundingBox() const
     {
         QList<QGLSceneNode*>::const_iterator it = parentNodes.constBegin();
