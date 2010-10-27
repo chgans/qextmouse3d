@@ -79,7 +79,7 @@ static QGLMaterial *qCreateFluid()
     white.setAlpha(128);
     mat->setAmbientColor(white);
     mat->setDiffuseColor(white);
-    QGLTexture2D *tex = new QGLTexture2D;
+    QGLTexture2D *tex = new QGLTexture2D(mat);
     tex->setImage(image);
     mat->setTexture(tex);
     return mat;

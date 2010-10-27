@@ -58,7 +58,7 @@ QGLMaterial *qCreateFloor()
     }
     painter.end();
     QGLMaterial *mat = new QGLMaterial;
-    QGLTexture2D *tex = new QGLTexture2D;
+    QGLTexture2D *tex = new QGLTexture2D(mat);
     tex->setImage(image);
     mat->setTexture(tex);
     return mat;

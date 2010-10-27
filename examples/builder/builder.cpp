@@ -95,6 +95,11 @@ BuilderView::BuilderView(QWidget *parent)
     }
 }
 
+BuilderView::~BuilderView()
+{
+    delete canScene;
+}
+
 void BuilderView::initializeGL(QGLPainter *painter)
 {
     QGLLightParameters *light0 = new QGLLightParameters(this);
