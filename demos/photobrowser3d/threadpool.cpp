@@ -64,6 +64,9 @@ void ThreadPool::deployLoader(const ThumbnailableImage &image)
     // own thread via queued signals - thus access to it is serialized
     Q_ASSERT(QThread::currentThread() == thread());
 
+    if (m_stop)
+        return;
+
     ImageManager *manager = qobject_cast<ImageManager*>(sender());
     Q_ASSERT(manager);
 

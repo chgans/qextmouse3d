@@ -55,6 +55,7 @@ class ThumbnailNode : public QGLSceneNode
 public:
     enum Distance
     {
+        Unknown,
         Near,
         Middle,
         Far,

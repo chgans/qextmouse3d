@@ -190,9 +190,19 @@ void PhotoBrowser3DView::initialise()
         else
             qWarning("Expected /path/to/image/files after \"--pictures\" switch\n");
     }
+
     QUrl url;
     url.setScheme("file");
     url.setPath(path);
+
+    QFileInfo fi(path);
+    if (!fi.exists() || !fi.isDir())
+    {
+        qWarning("No pictures directory found at %s\n"
+                 "using test images", qPrintable(path));
+
+        url.setPath(":/pictures");
+    }
 
 #ifdef QT_NO_THREADED_FILE_LOAD
     nonThreadedFileLoad(url);
@@ -259,51 +269,31 @@ void PhotoBrowser3DView::wheelEvent(QWheelEvent *e)
 
 void PhotoBrowser3DView::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Space)
-    {
-        //emit manualControlEngaged();
-    }
-    else if (e->key() == Qt::Key_Q)
+    if (e->key() == Qt::Key_Q)
     {
         m_done = true;
         emit done();
     }
     else if (e->key() == Qt::Key_Right)
     {
-        //QGLView::keyPressEvent(e);
         m_pc->setDirection(Qt::RightArrow);
         emit pan();
     }
     else if (e->key() == Qt::Key_Left)
     {
-        QGLView::keyPressEvent(e);
         m_pc->setDirection(Qt::LeftArrow);
         emit pan();
     }
     else if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)
     {
-        if ((e->modifiers() & Qt::ControlModifier) != 0)
-        {
-            QVector3D viewVec = camera()->eye() - camera()->center();
-            qreal zoomMag = viewVec.length();
-            zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
-            if (zoomMag < 5.0f)
-                zoomMag = 5.0f;
-            QRay3D viewLine(camera()->center(), viewVec);
-            camera()->setEye(viewLine.point(zoomMag));
-            update();
-        }
-        else
-        {
-            QGLView::keyPressEvent(e);
-        }
-    }
-    else if (e->key() == Qt::Key_Escape)
-    {
-        qDumpScene(m_display);
-        QGLView::keyPressEvent(e);
-        //resetView();
-        //emit manualControlEngaged();
+        QVector3D viewVec = camera()->eye() - camera()->center();
+        qreal zoomMag = viewVec.length();
+        zoomMag += (e->key() == Qt::Key_Up) ? -0.5f : 0.5f;
+        if (zoomMag < 5.0f)
+            zoomMag = 5.0f;
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
+        camera()->setEye(viewLine.point(zoomMag));
+        update();
     }
     else
     {
@@ -338,9 +328,11 @@ void PhotoBrowser3DView::closeEvent(QCloseEvent *e)
         // set this flag to indicate that when the image manager stops done event
         // should be signalled to the state machine, resulting in close
         m_closing = true;
+        fprintf(stderr, "Closing down........");
     }
     else
     {
+        fprintf(stderr, " done\n");
         e->accept();
     }
 }
@@ -355,6 +347,7 @@ void PhotoBrowser3DView::mousePressEvent(QMouseEvent *e)
 void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
+    QAtlas::instance()->initialize(painter);
     camera()->setEye(QVector3D(0.0f, 0.0f, 4.0f * m_displaySize));
     registerPickableNodes();
     qreal q = camera()->eye().z();
@@ -363,8 +356,10 @@ void PhotoBrowser3DView::initializeGL(QGLPainter *painter)
     m_pc->setPanDistance(r);
 }
 
-void PhotoBrowser3DView::earlyPaintGL(QGLPainter *)
+void PhotoBrowser3DView::earlyPaintGL(QGLPainter *painter)
 {
+    Q_UNUSED(painter);
+
     if (!m_done)
         m_pc->pan();
 }
@@ -373,6 +368,9 @@ void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {
     if (!m_done)
     {
+        if (!painter->isPicking())
+            QAtlas::instance()->paint(painter);
+
         painter->setClearColor(Qt::blue);
         glEnable(GL_BLEND);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

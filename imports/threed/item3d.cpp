@@ -1026,9 +1026,12 @@ QString Item3D::name() const
 
 void Item3D::setName(QString nameString)
 {
+    if(d->name == nameString)
+        return;
     d->name = nameString;
     if (objectName().isEmpty())
         setObjectName(nameString);
+    emit nameChanged();
 }
 
 /*!
@@ -1357,7 +1360,10 @@ bool Item3D::isVisible() const
 
 void Item3D::setIsVisible(bool visibility)
 {
+    if(d->isVisible == visibility)
+        return;
     d->isVisible = visibility;
+    emit isVisibleChanged();
 }
 
 /*!

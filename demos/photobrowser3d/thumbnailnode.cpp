@@ -48,7 +48,8 @@
 #include "qglpicknode.h"
 #include "qlogicalvertex.h"
 
-#include <QtGui/qmatrix4x4.h>
+#include <QMatrix4x4>
+#include <QTimer>
 
 ThumbnailNode::ThumbnailNode(QObject *parent)
     : QGLSceneNode(parent)
@@ -57,7 +58,7 @@ ThumbnailNode::ThumbnailNode(QObject *parent)
     , m_loading(false)
     , m_full(0)
     , m_manager(0)
-    , m_lastDistance(ThumbnailNode::Far)
+    , m_lastDistance(ThumbnailNode::Unknown)
 {
 }
 
@@ -154,6 +155,14 @@ void ThumbnailNode::drawGeometry(QGLPainter *painter)
 
 void ThumbnailNode::draw(QGLPainter *painter)
 {
+    QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
+    Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
+               "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
+
+    ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
+    Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
+               "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
+
     if (m_defaultMaterial == -1)
         m_defaultMaterial = materialIndex();
 
@@ -161,7 +170,7 @@ void ThumbnailNode::draw(QGLPainter *painter)
     QVector3D pos = m.map(position());
     qreal magSquared = pos.lengthSquared();
 
-    Distance distance = Near;
+    Distance distance = Unknown;
 
     if (magSquared > (4.0f * m_thresholdSquared))
         distance = VeryFar;
@@ -172,34 +181,29 @@ void ThumbnailNode::draw(QGLPainter *painter)
     else
         distance = Near;
 
-    m_image.setThumbnailed(distance > Near);
-
-    switch (distance)
+    if (true) // distance != m_lastDistance)
     {
-    case Near:
-        setupLoading();
-        loadFullImage();
-        break;
-    case Middle:
-        setupLoading();
-        loadFullImage();
-        break;
-    case Far:
-        setupLoading();
-        break;
-    case VeryFar:
-        destroyFullNode();
-        m_image.minimize();
-        break;
+        m_lastDistance = distance;
+        m_image.setThumbnailed(m_lastDistance > Near);
+        switch (distance)
+        {
+        case Unknown:
+        case Near:
+            setupLoading();
+            loadFullImage();
+            break;
+        case Middle:
+            setupLoading();
+            loadFullImage();
+            break;
+        case Far:
+            setupLoading();
+            break;
+        case VeryFar:
+            destroyFullNode();
+            break;
+        }
     }
-
-    QGLSceneNode *p = qobject_cast<QGLSceneNode*>(parent());
-    Q_ASSERT_X(p && p->userEffect() && (!hasEffect()),
-               "ThumbnailNode::draw", "Should only inherit parents ThumbnailEffect");
-
-    ThumbnailEffect *effect = static_cast<ThumbnailEffect*>(p->userEffect());
-    Q_ASSERT_X(effect && effect->name() == QLatin1String("ThumbnailEffect"),
-               "ThumbnailNode::draw", "Can only be drawn with custom ThumbnailEffect");
 
     effect->setThumbnail(m_image.isThumbnailed());
     if (m_image.isThumbnailed() || !m_full)
@@ -253,7 +257,9 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     // configure the placeholder for the actual image size
     // this makes a photo of 1024 x 768 display on approx 3.0 x 2.8 pane
     // add salt to taste
-    QSizeF f = QSizeF(m_image.data().size()) / 600.0f;
+    //QSizeF f = QSizeF(m_image.data().size()) / 600.0f;
+    QSizeF f = QSizeF(m_image.data().size());
+    f.scale(1.6, 1.2, Qt::KeepAspectRatio);
     QVector3D a(-f.width(), -f.height(), 0.0f);
     QVector3D b(f.width(), -f.height(), 0.0f);
     QVector3D c(f.width(), f.height(), 0.0f);

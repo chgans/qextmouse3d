@@ -47,11 +47,19 @@
 #include "qarray.h"
 #include "qgeometrydata.h"
 
-class QImage;
 class QAreaAllocator;
 class QGLTexture2D;
 class QGLMaterial;
 class QGeometryData;
+class QGLFramebufferObject;
+class QGLFramebufferObjectSurface;
+
+struct QAtlasEntry
+{
+    QAtlasEntry(QImage i, QRect r) : image(i), rect(r) {}
+    QImage image;
+    QRect rect;
+};
 
 class QAtlas
 {
@@ -59,16 +67,13 @@ public:
     QAtlas();
     ~QAtlas();
 
-    QImage *data() const { return m_data; }
-    void setData(QImage *data) { m_data = data; }
-
-    QGLTexture2D *texture() const { return m_tex; }
-    void setTexture(QGLTexture2D *texture) { m_tex = texture; }
-
     QAreaAllocator *allocator() const { return m_allocator; }
     void setAllocator(QAreaAllocator *allocator) { m_allocator = allocator; }
 
     QRect allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices);
+
+    void initialize(QGLPainter *painter);
+    void paint(QGLPainter *painter);
 
     void release(QRect frame);
 
@@ -81,11 +86,15 @@ public:
 
 private:
     QSize m_size;
-    QImage *m_data;
+    QGLFramebufferObject *m_data;
+    QGLFramebufferObjectSurface *m_renderTarget;
     QAreaAllocator *m_allocator;
     QGLTexture2D *m_tex;
     QGLMaterial *m_material;
     QGeometryData m_geometry;
+    bool m_initialized;
+    QList<QAtlasEntry> m_allocationQueue;
+    int m_count;
 };
 
 #endif // QATLAS_H
