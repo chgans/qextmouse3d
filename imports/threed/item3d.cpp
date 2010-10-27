@@ -1360,7 +1360,10 @@ bool Item3D::isVisible() const
 
 void Item3D::setIsVisible(bool visibility)
 {
+    if(d->isVisible == visibility)
+        return;
     d->isVisible = visibility;
+    emit isVisibleChanged();
 }
 
 /*!
