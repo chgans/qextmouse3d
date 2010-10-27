@@ -1026,9 +1026,12 @@ QString Item3D::name() const
 
 void Item3D::setName(QString nameString)
 {
+    if(d->name == nameString)
+        return;
     d->name = nameString;
     if (objectName().isEmpty())
         setObjectName(nameString);
+    emit nameChanged();
 }
 
 /*!
