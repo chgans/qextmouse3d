@@ -76,7 +76,6 @@ QAtlas::~QAtlas()
     delete m_data;
     delete m_renderTarget;
     delete m_allocator;
-    delete m_tex;
 }
 
 void QAtlas::initialize(QGLPainter *painter)
