@@ -2,8 +2,7 @@
 # Project created by QtCreator 2009-09-28T09:59:40
 # -------------------------------------------------
 QT += opengl network
-CONFIG += qt \
-    debug
+CONFIG += qt
 TARGET = shaderwizard
 TEMPLATE = app
 SOURCES += main.cpp \

@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = converting
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = converting.cpp
 LIBS += -L../../../lib -L../../../bin

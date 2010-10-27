@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = cube2
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = cubeview.cpp main.cpp
 HEADERS = cubeview.h

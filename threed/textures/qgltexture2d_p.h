@@ -67,10 +67,9 @@ public:
     QGLTexture2DTextureInfo
             (const QGLContext *context, GLuint textureId, uint imageGeneration,
              uint parameterGeneration, bool isLiteral = false)
-        : tex(context)
     {
         if (textureId)
-            tex.setTextureId(textureId);
+            tex.setTextureId(context, textureId);
         this->imageGeneration = imageGeneration;
         this->parameterGeneration = parameterGeneration;
         this->isLiteral = isLiteral;
@@ -86,9 +85,8 @@ public:
 
 class DDSFormat;
 
-class QGLTexture2DPrivate : public QObject
+class QGLTexture2DPrivate
 {
-    Q_OBJECT
 public:
     QGLTexture2DPrivate();
     ~QGLTexture2DPrivate();
@@ -111,9 +109,6 @@ public:
 
     bool bind(GLenum target);
     virtual void bindImages(QGLTexture2DTextureInfo *info);
-
-private Q_SLOTS:
-    void destroyContext(const QGLContext *context);
 };
 
 QT_END_NAMESPACE

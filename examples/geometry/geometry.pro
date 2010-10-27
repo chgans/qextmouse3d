@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = geometry
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl
 SOURCES = geometryview.cpp \

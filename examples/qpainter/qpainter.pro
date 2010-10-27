@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = qpainter
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = painterwidget.cpp main.cpp
 HEADERS = painterwidget.h

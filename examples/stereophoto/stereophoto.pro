@@ -9,7 +9,7 @@ SOURCES = imageviewer.cpp \
           qstereoimage.cpp \
           qstereopixmap.cpp \
           main.cpp
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 RESOURCES = stereophoto.qrc
 LIBS += -L../../lib -L../../bin

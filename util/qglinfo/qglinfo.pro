@@ -1,4 +1,5 @@
 TARGET = qglinfo
+CONFIG += debug_and_release
 SOURCES += main.cpp \
     qglinfowindow.cpp \
     qglinfo.cpp \

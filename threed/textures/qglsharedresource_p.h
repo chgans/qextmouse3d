@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef QGLCOLLADAFXEFFECT_P_H
-#define QGLCOLLADAFXEFFECT_P_H
+#ifndef QGLSHAREDRESOURCE_P_H
+#define QGLSHAREDRESOURCE_P_H
 
 //
 //  W A R N I N G
@@ -53,55 +53,44 @@
 // We mean it.
 //
 
-#include <QString>
-#include <QMap>
-#include <QColor>
-#include "qgltexture2d.h"
-#include "qglcolladafxeffect.h"
+#include <QtOpenGL/qgl.h>
 
-class QGLPainter;
-class QGLShaderProgram;
-class QGLMaterial;
+QT_BEGIN_HEADER
 
-class QGLColladaFxEffectPrivate
+QT_BEGIN_NAMESPACE
+
+class QGLContextManager;
+class QGLContextInfo;
+
+class QGLSharedResource
 {
-    friend class QGLColladaFxEffectFactory;
 public:
-    QGLColladaFxEffectPrivate();
-    ~QGLColladaFxEffectPrivate();
+    typedef void (*DestroyResourceFunc)(GLuint id);
+    QGLSharedResource(DestroyResourceFunc destroyFunc)
+        : m_destroyFunc(destroyFunc), m_contextInfo(0), m_id(0)
+        , m_next(0), m_prev(0) {}
+    ~QGLSharedResource() { destroy(); }
 
-    void addMaterialChannelsToShaderSnippets(const QGLMaterial *material);
-    void resetGlueSnippets();
-    void setTextureUniform(QGLShaderProgram *program, QGLPainter* painter, QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor);
-    void updateMaterialChannelSnippets(QString channelName, QGLTexture2D* texture, int* textureUnit, QColor fallbackColor);
+    const QGLContext *context() const;
+    GLuint id() const { return m_id; }
+    void clearId() { m_id = 0; }
 
-    QString id;
-    QString sid;
-    QString name;
+    void attach(const QGLContext *context, GLuint id);
+    void destroy();
 
-    // The spec allows for 3D textures as well, but for now only 2D is
-    // supported
-    QGLTexture2D* emissiveTexture;
-    QGLTexture2D* ambientTexture;
-    QGLTexture2D* diffuseTexture;
-    QGLTexture2D* specularTexture;
-    int lighting;
-    QGLMaterial* material;
+private:
+    DestroyResourceFunc m_destroyFunc;
+    QGLContextInfo *m_contextInfo;
+    GLuint m_id;
+    QGLSharedResource *m_next;
+    QGLSharedResource *m_prev;
 
-    QStringList vertexShaderCodeSnippets;
-    QStringList vertexShaderDeclarationSnippets;
-    QStringList vertexShaderVariableNames;
-
-    QStringList fragmentShaderCodeSnippets;
-    QStringList fragmentShaderDeclarationSnippets;
-    QStringList fragmentShaderVariableNames;
-
-    QString vertexShaderEndGlueSnippet;
-    QString vertexShaderMainGlueSnippet;
-    QString fragmentShaderEndGlueSnippet;
-    QString fragmentShaderMainGlueSnippet;
-
-    bool currentlyActive;
+    friend class QGLContextManager;
+    friend class QGLContextInfo;
 };
 
-#endif // QGLCOLLADAFXEFFECT_P_H
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

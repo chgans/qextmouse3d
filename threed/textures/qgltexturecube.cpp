@@ -94,7 +94,6 @@ QT_BEGIN_NAMESPACE
 
 class QGLTextureCubePrivate : public QGLTexture2DPrivate
 {
-    Q_OBJECT
 public:
     QGLTextureCubePrivate();
     ~QGLTextureCubePrivate();
@@ -523,13 +522,7 @@ QGLTextureCube *QGLTextureCube::fromTextureId(GLuint id, const QSize& size)
         (ctx, id, texture->d_ptr->imageGeneration,
          texture->d_ptr->parameterGeneration, true);
     texture->d_ptr->infos = info;
-    QObject::connect(QGLPainterPrivateCache::instance(),
-                     SIGNAL(destroyedContext(const QGLContext *)),
-                     texture->d_ptr.data(),
-                     SLOT(destroyedContext(const QGLContext *)));
     return texture;
 }
 
 QT_END_NAMESPACE
-
-#include "qgltexturecube.moc"

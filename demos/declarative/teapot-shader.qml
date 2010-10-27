@@ -108,7 +108,7 @@ Item3D {
             uniform sampler2D qgl_Texture0;
             uniform sampler2D texture2;
             uniform mediump vec4 qgl_Color;
-            uniform float interpolationFactor;
+            uniform mediump float interpolationFactor;
 
             void main(void)
             {

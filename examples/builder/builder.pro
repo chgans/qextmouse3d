@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = builder
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl
 SOURCES = builder.cpp \

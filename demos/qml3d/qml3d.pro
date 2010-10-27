@@ -1,8 +1,6 @@
 TEMPLATE = app
 TARGET = qml3d
-CONFIG += qt \
-    debug \
-    warn_on
+CONFIG += warn_on
 QT += opengl \
     declarative \
     network

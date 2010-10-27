@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = pageflip
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = pageflip.cpp pageflipmath.cpp
 HEADERS = pageflipmath_p.h

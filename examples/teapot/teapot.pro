@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = teapot
-CONFIG += qt debug warn_on
+CONFIG += qt warn_on
 QT += opengl
 SOURCES = teapotview.cpp main.cpp
 HEADERS = teapotview.h

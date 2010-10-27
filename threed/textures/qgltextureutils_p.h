@@ -57,6 +57,7 @@
 #include <QtCore/qdatetime.h>
 #include "qglnamespace.h"
 #include "qopenglfunctions.h"
+#include "qglsharedresource_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -118,13 +119,15 @@ public:
 class QGLBoundTexture
 {
 public:
-    QGLBoundTexture(const QGLContext *ctx);
+    QGLBoundTexture();
     ~QGLBoundTexture();
 
-    const QGLContext *context() const { return m_context; }
+    const QGLContext *context() const { return m_resource.context(); }
 
-    GLuint textureId() const { return m_id; }
-    void setTextureId(GLuint id) { m_id = id; }
+    GLuint textureId() const { return m_resource.id(); }
+    void setTextureId(const QGLContext *ctx, GLuint id)
+        { m_resource.attach(ctx, id); }
+    void clearId() { m_resource.clearId(); }
 
     QGLContext::BindOptions options() const { return m_options; }
     void setOptions(QGLContext::BindOptions options) { m_options = options; }
@@ -132,7 +135,7 @@ public:
     QSize size() const { return m_size; }
     bool hasAlpha() const { return m_hasAlpha; }
 
-    void startUpload(GLenum target, const QSize &imageSize);
+    void startUpload(const QGLContext *ctx, GLenum target, const QSize &imageSize);
     void uploadFace(GLenum target, const QImage &image, const QSize &scaleSize,
                     GLenum format = GL_RGBA);
     void createFace(GLenum target, const QSize &size, GLenum format = GL_RGBA);
@@ -148,11 +151,8 @@ public:
     bool bindCompressedTextureDDS(const char *buf, int len);
     bool bindCompressedTexturePVR(const char *buf, int len);
 
-    void contextDestroyed(const QGLContext *ctx);
-
 private:
-    const QGLContext *m_context;
-    GLuint m_id;
+    QGLSharedResource m_resource;
     QGLContext::BindOptions m_options;
     QSize m_size;
     bool m_hasAlpha;

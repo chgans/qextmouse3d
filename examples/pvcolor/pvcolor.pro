@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = pvcolor
 CONFIG += qt \
-    debug \
     warn_on
 QT += opengl
 SOURCES = pvcolor.cpp \

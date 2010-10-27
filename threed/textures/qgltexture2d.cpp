@@ -98,10 +98,6 @@ QGLTexture2DPrivate::QGLTexture2DPrivate()
     imageGeneration = 0;
     parameterGeneration = 0;
     infos = 0;
-
-    connect(QGLSignalProxy::instance(),
-            SIGNAL(aboutToDestroyContext(const QGLContext *)),
-            this, SLOT(destroyContext(const QGLContext *)));
 }
 
 QGLTexture2DPrivate::~QGLTexture2DPrivate()
@@ -114,16 +110,8 @@ QGLTexture2DPrivate::~QGLTexture2DPrivate()
     const QGLContext *firstContext = currentContext;
     while (current != 0) {
         next = current->next;
-        if (!current->isLiteral && current->tex.textureId()) {
-            const QGLContext *context = current->tex.context();
-            if (context && context != currentContext &&
-                    !QGLContext::areSharing(context, currentContext)) {
-                const_cast<QGLContext *>(context)->makeCurrent();
-                currentContext = context;
-            }
-            GLuint textureId = current->tex.textureId();
-            glDeleteTextures(1, &textureId);
-        }
+        if (current->isLiteral)
+            current->tex.clearId(); // Don't delete literal id's.
         delete current;
         current = next;
     }
@@ -132,15 +120,6 @@ QGLTexture2DPrivate::~QGLTexture2DPrivate()
             const_cast<QGLContext *>(firstContext)->makeCurrent();
         else if (currentContext)
             const_cast<QGLContext *>(currentContext)->doneCurrent();
-    }
-}
-
-void QGLTexture2DPrivate::destroyContext(const QGLContext *context)
-{
-    QGLTexture2DTextureInfo *current = infos;
-    while (current != 0) {
-        current->tex.contextDestroyed(context);
-        current = current->next;
     }
 }
 
@@ -599,7 +578,7 @@ bool QGLTexture2DPrivate::bind(GLenum target)
             info->tex.bindCompressedTexture
                 (compressedData.constData(), compressedData.size());
         } else {
-            info->tex.startUpload(target, image.size());
+            info->tex.startUpload(ctx, target, image.size());
             bindImages(info);
             info->tex.finishUpload(target);
         }
