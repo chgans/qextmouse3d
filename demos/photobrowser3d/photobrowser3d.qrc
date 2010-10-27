@@ -7,7 +7,6 @@
         <file alias="south.png">images/default_sky_south.png</file>
         <file alias="up.png">images/default_sky_up.png</file>
         <file alias="east.png">images/default_sky_west.png</file>
-        <file>images/no-images-yet.png</file>
         <file>images/girder.png</file>
     </qresource>
     <qresource prefix="/shaders">
@@ -17,8 +16,7 @@
     <qresource prefix="/pictures">
         <file alias="im1.jpg">images/P1000223.JPG</file>
         <file alias="im2.jpg">images/P1000228.JPG</file>
-        <file alias="im3.jpg">images/P1000441.JPG</file>
-        <file alias="im4.jpg">images/P1000472.JPG</file>
+        <file alias="im3.jpg">images/P1000472.JPG</file>
     </qresource>
     <qresource prefix="/controls">
         <file alias="arrows-left.png">images/arrows-left.png</file>
