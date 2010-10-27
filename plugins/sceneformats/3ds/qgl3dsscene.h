@@ -64,7 +64,8 @@ public:
     explicit QGL3dsScene(Lib3dsFile *file, QGL3dsSceneHandler *h);
     virtual ~QGL3dsScene();
 
-    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    QList<QObject *> objects() const;
+    QGLSceneNode *mainNode() const;
 
     QUrl url() const { return mUrl; }
 

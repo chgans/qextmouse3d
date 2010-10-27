@@ -159,16 +159,6 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \enum QGLSceneNode::Type
-    This enum covers the types of QGLSceneNode objects that may exist in
-    a scene.  At present only two types exist, however this enum exists
-    to allow for future development of, for example, light or camera type
-    objects.
-    \value Mesh A geometry object representing a mesh of vertices
-    \value Main The main geometry object of the scene
-*/
-
-/*!
     \enum QGLSceneNode::DrawingMode
     This enum covers the supported drawing modes for a QGLSceneNode.  This
     value is set on a node using the setDrawingMode() function, and will be
@@ -184,7 +174,7 @@ QT_BEGIN_NAMESPACE
 */
 QGLSceneNode::QGLSceneNode(QObject *parent)
     : QObject(parent)
-    , d_ptr(new QGLSceneNodePrivate(QGLSceneNode::Mesh))
+    , d_ptr(new QGLSceneNodePrivate())
 {
     setParent(parent);
 }
@@ -196,7 +186,7 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
 */
 QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
     : QObject(parent)
-    , d_ptr(new QGLSceneNodePrivate(QGLSceneNode::Mesh))
+    , d_ptr(new QGLSceneNodePrivate())
 {
     Q_D(QGLSceneNode);
     d->geometry = geometry;

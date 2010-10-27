@@ -77,11 +77,11 @@ QT_BEGIN_NAMESPACE
     \list
     \o Camera objects define a viewing position in world-coordinates and a
        projection that maps 3D world co-ordinates to 2D screen co-ordinates.
-       It is recommended that camera objects inherit from QGLCamera.
+       Camera objects should inherit from QGLCamera.
     \o Main objects designate the major elements of the scene besides
-       cameras, lights, and effects.
+       cameras, lights, and effects.  Usually they inherit from QGLSceneNode.
     \o Light objects define positions and parameters for lighting the scene.
-       It is recommended that light objects inherit from QGLLightParameters.
+       Light objects should inherit from QGLLightParameters.
     \o Effect objects define materials, shaders, and textures for use in
        rendering the surface of objects.  Normally effects are activated
        automatically when main objects are drawn.  But effects can be used
@@ -89,19 +89,19 @@ QT_BEGIN_NAMESPACE
     \o Mesh objects define geometry information independently of effects.
        Normally meshes are drawn automatically with an appropriate effect
        when main objects are drawn.  But meshes can be used independently
-       if the 3D format is acting as a library of meshes.
-    \o World objects define collections of objects such that the entire
-       scene can be drawn just by drawing the World object.
+       if the 3D format is acting as a library of meshes.  Mesh objects
+       should inherit from QGLSceneNode.
     \endlist
 
-    Typically, the full scene represented by the World object is not
-    interesting to the application.  3D modelling packages regularly
-    insert cameras, lights, effects, and other library objects that
-    are useful to the modelling package, but not the application.
-    The Main objects are usually the most interesting to applications.
+    Typically, the full scene represented by an external model format
+    is not interesting to the application.  3D modelling packages
+    regularly insert cameras, lights, effects, and other library
+    objects that are useful to the modelling package, but not the
+    application.  The mainNode() is usually the most interesting
+    to applications.
 
     QGLAbstractScene makes it easy to access the major scene elements
-    with object(), objects(), and defaultObject().
+    with object(), objects(), and mainNode().
 
     There are many other kinds of objects in the scene that may not
     be accessible via QGLAbstractScene because they are not considered
@@ -110,7 +110,7 @@ QT_BEGIN_NAMESPACE
     wheels, texturing effects, animations, and so on.  The application
     may only be interested in the skateboard as a whole, and not its
     sub-components.  The skateboard would be considered an important
-    Main object in this case, which can be easily accessed and
+    main object in this case, which can be easily accessed and
     incorporated into the application's logic.
 
     Each Subclass needs to provide its own policy for deciding which
@@ -145,7 +145,6 @@ QGLAbstractScene::QGLAbstractScene(QObject *parent)
 */
 QGLAbstractScene::~QGLAbstractScene()
 {
-    delete d_ptr;
 }
 
 /*!
@@ -153,10 +152,9 @@ QGLAbstractScene::~QGLAbstractScene()
 */
 void QGLAbstractScene::childEvent(QChildEvent *event)
 {
+    Q_D(QGLAbstractScene);
     if (event->type() == QEvent::ChildAdded)
-    {
-        d_ptr->pickNodesDirty = true;
-    }
+        d->pickNodesDirty = true;
 }
 
 /*!
@@ -168,10 +166,11 @@ void QGLAbstractScene::childEvent(QChildEvent *event)
 */
 void QGLAbstractScene::setPickable(bool enable)
 {
-    if (enable != d_ptr->picking)
+    Q_D(QGLAbstractScene);
+    if (enable != d->picking)
     {
-        d_ptr->picking = enable;
-        if (d_ptr->picking)
+        d->picking = enable;
+        if (d->picking)
             generatePickNodes();
     }
 }
@@ -183,14 +182,15 @@ void QGLAbstractScene::setPickable(bool enable)
 */
 bool QGLAbstractScene::pickable() const
 {
-    return d_ptr->picking;
+    Q_D(const QGLAbstractScene);
+    return d->picking;
 }
 
 /*!
-    Generates QGLPickNode instances for important scene objects that are
+    Generates QGLPickNode instances for important QGLSceneNode instances that are
     pickable.  Objects that are either not important or not pickable can
     be omitted.  The default implementation simply generates pick nodes
-    for every top level object of type QGLSceneNode::Mesh.
+    for every top level object of type QGLSceneNode.
 
     Sub-classes may implement different schemes for picking.  When doing
     so parent the QGLPickNode objects onto the scene, so that they will
@@ -200,18 +200,20 @@ bool QGLAbstractScene::pickable() const
 */
 void QGLAbstractScene::generatePickNodes()
 {
-    QList<QGLSceneNode *> objs = objects(QGLSceneNode::Mesh);
-    QList<QGLSceneNode *>::iterator it = objs.begin();
-    d_ptr->pickNodes.clear();
+    Q_D(QGLAbstractScene);
+    QList<QObject *> objs = objects();
+    QList<QObject *>::iterator it = objs.begin();
+    d->pickNodes.clear();
     for ( ; it != objs.end(); ++it)
     {
-        QGLSceneNode *n = *it;
-        if (!d_ptr->pickable.contains(n))
-        {
-            n->setPickNode(new QGLPickNode(this));
-            d_ptr->pickable.insert(n);
+        QGLSceneNode *n = qobject_cast<QGLSceneNode *>(*it);
+        if (d) {
+            if (!d->pickable.contains(n)) {
+                n->setPickNode(new QGLPickNode(this));
+                d->pickable.insert(n);
+            }
+            d->pickNodes.append(n->pickNode());
         }
-        d_ptr->pickNodes.append(n->pickNode());
     }
 }
 
@@ -240,34 +242,35 @@ QList<QGLPickNode *> QGLAbstractScene::pickNodes() const
 }
 
 /*!
-    \fn QList<QGLSceneNode *> QGLAbstractScene::objects(QGLSceneNode::Type type) const
+    \fn QList<QObject *> QGLAbstractScene::objects() const
 
-    Returns a list of all objects in the scene that have the specified \a type
-    and which are considered important.
+    Returns a list of all objects in the scene which are considered
+    important.
 
-    Important objects will typically be the world object, cameras, lights,
-    and other top-level objects.  Sub-meshes and effects are normally
-    not considered important unless the scene is acting as a library of
-    meshes and effects.
+    Important objects will typically be the main mesh object, cameras,
+    lights, and other top-level objects.  Sub-meshes and effects
+    are normally not considered important unless the scene is
+    acting as a library of meshes and effects.
 
-    \sa objectNames(), object(), defaultObject()
+    \sa objectNames(), object(), mainNode()
 */
 
 /*!
-    Returns a list of the names of all objects in the scene that have the
-    specified \a type, which are considered important, and which have
-    non-empty names associated with them.
+    Returns a list of the names of all objects in the scene which
+    are considered important, and which have non-empty names
+    associated with them.
 
     The default implementation calls objects() and then compiles a list
     of all non-empty object names.
 
     \sa objects()
 */
-QStringList QGLAbstractScene::objectNames(QGLSceneNode::Type type) const
+QStringList QGLAbstractScene::objectNames() const
 {
-    QList<QGLSceneNode *> objs = objects(type);
+    QList<QObject *> objs = objects();
     QStringList names;
-    foreach (QGLSceneNode *object, objs) {
+    for (int index = 0; index < objs.count(); ++index) {
+        QObject *object = objs.at(index);
         if (object) {
             QString name = object->objectName();
             if (!name.isEmpty())
@@ -278,7 +281,7 @@ QStringList QGLAbstractScene::objectNames(QGLSceneNode::Type type) const
 }
 
 /*!
-    Returns the scene object that has the specified \a type and \a name;
+    Returns the scene object that has the specified \a name;
     or null if the object was not found.
 
     The default implementation searches objects() for an object that
@@ -286,13 +289,13 @@ QStringList QGLAbstractScene::objectNames(QGLSceneNode::Type type) const
 
     \sa objects()
 */
-QGLSceneNode *QGLAbstractScene::object
-        (QGLSceneNode::Type type, const QString& name) const
+QObject *QGLAbstractScene::object(const QString& name) const
 {
     if (name.isEmpty())
         return 0;
-    QList<QGLSceneNode *> objs = objects(type);
-    foreach (QGLSceneNode *object, objs) {
+    QList<QObject *> objs = objects();
+    for (int index = 0; index < objs.count(); ++index) {
+        QObject *object = objs.at(index);
         if (object && object->objectName() == name)
             return object;
     }
@@ -301,24 +304,13 @@ QGLSceneNode *QGLAbstractScene::object
 
 
 /*!
-    Returns the default object with the specified \a type.  This is typically
-    used to find objects like the world and camera objects that are usually
-    unique within the scene.  Returns null if no default object for \a type
-    was found.
+    \fn QGLSceneNode *QGLAbstractScene::mainNode() const
 
-    The default implementation returns the first element of objects(),
-    or null if objects() returns an empty list.
+    Returns the main mesh node in the scene, or null if the scene
+    does not contain a main mesh node.
 
     \sa objects()
 */
-QGLSceneNode *QGLAbstractScene::defaultObject(QGLSceneNode::Type type)
-{
-    QList<QGLSceneNode *> objs = objects(type);
-    if (objs.size() >= 1)
-        return objs[0];
-    else
-        return 0;
-}
 
 #if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
 Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, loader,

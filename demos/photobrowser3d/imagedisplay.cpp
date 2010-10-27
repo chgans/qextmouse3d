@@ -166,7 +166,7 @@ ImageDisplay::ImageDisplay(QObject *parent, QGLMaterialCollection *materials, qr
 
     // make the frames pickable
     PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent);
-    view->scene()->rootNode()->addNode(m_frames);
+    view->scene()->mainNode()->addNode(m_frames);
 
     m_imageSetToDefault = true;
 }

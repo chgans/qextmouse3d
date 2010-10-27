@@ -54,7 +54,8 @@ public:
     explicit QGLBezierScene(QGLSceneNode *geometry, QObject *parent = 0);
     virtual ~QGLBezierScene();
 
-    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    QList<QObject *> objects() const;
+    QGLSceneNode *mainNode() const;
 
 private:
     QGLSceneNode *mainObject;

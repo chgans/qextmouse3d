@@ -51,8 +51,8 @@ class QPhotoBrowser3DScene : public QGLAbstractScene
     Q_OBJECT
 public:
     explicit QPhotoBrowser3DScene(QObject *parent = 0);
-    virtual QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
-    QGLSceneNode *rootNode() const { return m_rootNode; }
+    virtual QList<QObject *> objects() const;
+    QGLSceneNode *mainNode() const { return m_rootNode; }
 private:
     QGLSceneNode *m_rootNode;
 };

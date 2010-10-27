@@ -92,20 +92,26 @@ QGL3dsScene::~QGL3dsScene()
     \internal
     \reimp
 */
-QList<QGLSceneNode *> QGL3dsScene::objects(QGLSceneNode::Type type) const
+QList<QObject *> QGL3dsScene::objects() const
 {
-    QList<QGLSceneNode *> objs;
-    if (type == QGLSceneNode::Main)
-    {
-        objs.append(mRootNode);
+    QList<QObject *> objs;
+    if (!mRootNode)
         return objs;
-    }
-
+    objs.append(mRootNode);
     QList<QGLSceneNode*> children = mRootNode->allChildren();
     QList<QGLSceneNode*>::const_iterator it = children.constBegin();
     for ( ; it != children.constEnd(); ++it)
         objs.append(*it);
     return objs;
+}
+
+/*!
+    \internal
+    \reimp
+*/
+QGLSceneNode *QGL3dsScene::mainNode() const
+{
+    return mRootNode;
 }
 
 QT_END_NAMESPACE

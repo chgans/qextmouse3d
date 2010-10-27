@@ -61,7 +61,7 @@ MeshObject::MeshObject(QGLAbstractScene *scene, QObject *parent)
 {
     scene->setParent(this);
     m_mesh = 0;
-    m_meshObject = scene->defaultObject(QGLSceneNode::Mesh);
+    m_meshObject = scene->mainNode();
     m_scale = 1.0f;
     m_rotationAngle = 0.0f;
     m_effect = 0;

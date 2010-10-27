@@ -92,6 +92,11 @@
     The scene object can also override QGLAbstractScene::object()
     if it has an efficient method to quickly look up an object by name.
 
+    The scene should also override QGLAbstractScene::mainNode()
+    to return the main mesh node in the scene.  Usually this is
+    the first element in the list returned by QGLAbstractScene::objects()
+    but doesn't have to be.
+
     Note: the plug-in does not need to use QGLBuilder and the
     other Qt/3D classes to load the model if it doesn't want to.
     It can instantiate subclasses of QGLSceneNode that override

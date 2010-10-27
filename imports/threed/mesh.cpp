@@ -282,10 +282,16 @@ void Mesh::dataRequestFinished()
 void Mesh::initSceneObjectList()
 {
     d->sceneObjects.clear();
-    if (d->scene)
-        d->sceneObjects = d->scene->objects(QGLSceneNode::Mesh);
+    if (d->scene) {
+        QList<QObject *> objs = d->scene->objects();
+        for (int index = 0; index < objs.count(); ++index) {
+            QGLSceneNode *node = qobject_cast<QGLSceneNode *>(objs.at(index));
+            if (node)
+                d->sceneObjects.append(node);
+        }
+    }
 
-    d->mainSceneObject = d->scene->defaultObject(QGLSceneNode::Main);
+    d->mainSceneObject = d->scene->mainNode();
 }
 
 /*!
@@ -343,27 +349,6 @@ QStringList Mesh::getSceneObjectNames()
         }
     }
     return names;
-}
-
-/*!
-    \internal
-    Sometimes we want objects in a scene other than meshes - this is usually at start-up or
-    similar and does not generally need a whole mesh tree, this function, then, is a generic
-    mesh tree searcher for a given scene object \a name of a specific \a type.
-
-    This works by traversing the main trunk of the scene object, and so should generally be
-    applied before the splitting of a mesh into sub-branches.  Failure to adhere to this
-    will result in only those sections of the scene graph being checked which had not been
-    previously split away.
-*/
-
-QGLSceneNode *Mesh::getSceneObject(QGLSceneNode::Type type, const QString& name) const
-{    
-	if (d->scene)
-		return d->scene->object(type, name);
-	else
-		qWarning() << "No scene initialised - attempt to get scene object failed.";
-	return NULL;
 }
 
 /*!

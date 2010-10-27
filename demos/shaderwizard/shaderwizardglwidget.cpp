@@ -379,7 +379,7 @@ void ShaderWizardGLWidget::setSceneManager(QObject* object)
     mSceneNode = 0; // Don't show models and geometry at the same time
 
     // Get basic information for default object.
-    mDefaultSceneObject = mSceneManager->defaultObject(QGLSceneNode::Main);
+    mDefaultSceneObject = mSceneManager->mainNode();
 
     setSceneObject(mDefaultSceneObject);
 

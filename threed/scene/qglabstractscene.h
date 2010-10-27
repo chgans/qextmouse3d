@@ -47,6 +47,7 @@
 
 #include <QtCore/qstringlist.h>
 #include <QtCore/qurl.h>
+#include <QtCore/qscopedpointer.h>
 
 QT_BEGIN_HEADER
 
@@ -71,13 +72,10 @@ public:
     QList<QGLPickNode *> pickNodes() const;
     int nextPickId();
 
-    virtual QList<QGLSceneNode *> objects
-        (QGLSceneNode::Type type) const = 0;
-
-    virtual QStringList objectNames(QGLSceneNode::Type type) const;
-    virtual QGLSceneNode *object
-        (QGLSceneNode::Type type, const QString& name) const;
-    virtual QGLSceneNode *defaultObject(QGLSceneNode::Type type);
+    virtual QList<QObject *> objects() const = 0;
+    virtual QStringList objectNames() const;
+    virtual QObject *object(const QString& name) const;
+    virtual QGLSceneNode *mainNode() const = 0;
 
     static QGLAbstractScene *loadScene
         (QIODevice *device, const QUrl& url, const QString& format = QString(),
@@ -90,9 +88,10 @@ protected:
     void childEvent(QChildEvent * event);
 
 private:
-    QGLAbstractScenePrivate *d_ptr;
+    QScopedPointer<QGLAbstractScenePrivate> d_ptr;
 
     Q_DISABLE_COPY(QGLAbstractScene)
+    Q_DECLARE_PRIVATE(QGLAbstractScene)
 };
 
 QT_END_NAMESPACE

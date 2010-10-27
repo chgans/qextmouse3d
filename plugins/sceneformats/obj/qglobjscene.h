@@ -59,13 +59,12 @@ public:
     virtual ~QGLObjScene();
 
 //! [2]
-    QList<QGLSceneNode *> objects(QGLSceneNode::Type type) const;
+    QList<QObject *> objects() const;
+    QGLSceneNode *mainNode() const;
 //! [2]
 
 private:
-    QGLBuilder *displayList;
     QGLSceneNode *mainObject;
-    QList<QGLSceneNode *> meshes;
 //! [3]
 };
 //! [3]

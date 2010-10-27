@@ -67,9 +67,8 @@ class QGLPickNode;
 class QGLSceneNodePrivate
 {
 public:
-    QGLSceneNodePrivate(QGLSceneNode::Type t)
-        : type(t)
-        , geometry(0)
+    QGLSceneNodePrivate()
+        : geometry(0)
         , palette(0)
         , localEffect(QGL::FlatColor)   // 0 - zero
         , customEffect(0)
@@ -94,7 +93,6 @@ public:
             (*it)->invalidateBoundingBox();
     }
 
-    QGLSceneNode::Type type;
     QGeometryData geometry;
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;

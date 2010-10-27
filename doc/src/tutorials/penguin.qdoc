@@ -53,7 +53,7 @@
     \snippet tutorials/penguin/modelview.cpp paint
 
     Here in the paint function we call the \c{draw()} function of
-    the scene's \c{Main} object, in order to display the fully
+    the scene's main object, in order to display the fully
     loaded model.
 
     This was really just two lines of code: one to load the model

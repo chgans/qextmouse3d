@@ -93,7 +93,6 @@ public:
     QStringList getSceneObjectNames();
     QGLSceneNode *getSceneObject();
     QGLSceneNode *getSceneObject(const QString &name);
-    QGLSceneNode *getSceneObject(QGLSceneNode::Type type, const QString& name) const;
     
     //The following functions relate to splitting the main scene into sub-branches
     int nextSceneBranchId() const;    

@@ -48,10 +48,9 @@ QPhotoBrowser3DScene::QPhotoBrowser3DScene(QObject *parent)
 {
 }
 
-QList<QGLSceneNode *> QPhotoBrowser3DScene::objects(QGLSceneNode::Type type) const
+QList<QObject *> QPhotoBrowser3DScene::objects() const
 {
-    QList<QGLSceneNode*> objects;
-    if (type == QGLSceneNode::Mesh)
-        objects = m_rootNode->allChildren();
+    QList<QObject *> objects;
+    objects.append(m_rootNode);
     return objects;
 }

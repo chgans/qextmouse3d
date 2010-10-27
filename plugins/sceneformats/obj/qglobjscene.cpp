@@ -56,19 +56,19 @@ QGLObjScene::~QGLObjScene()
 {
 }
 
-QList<QGLSceneNode *> QGLObjScene::objects(QGLSceneNode::Type type) const
+QList<QObject *> QGLObjScene::objects() const
 {
-    QList<QGLSceneNode *> objs;
-    if (type == QGLSceneNode::Mesh)
-    {
-        objs.append(mainObject);
-        objs.append(mainObject->allChildren());
-    }
-    else if (type == QGLSceneNode::Main)
-    {
-        objs.append(mainObject);
-    }
+    QList<QObject *> objs;
+    objs.append(mainObject);
+    QList<QGLSceneNode *> children = mainObject->allChildren();
+    for (int index = 0; index < children.count(); ++index)
+        objs.append(children.at(index));
     return objs;
+}
+
+QGLSceneNode *QGLObjScene::mainNode() const
+{
+    return mainObject;
 }
 
 QT_END_NAMESPACE

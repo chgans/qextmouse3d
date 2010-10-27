@@ -90,12 +90,6 @@ public:
         Triangles = QGL::Triangles
     };
 
-    enum Type
-    {
-        Mesh,
-        Main
-    };
-
     bool boundingBoxEnabled() const;
     void setboundingBoxEnabled(bool enabled);
 

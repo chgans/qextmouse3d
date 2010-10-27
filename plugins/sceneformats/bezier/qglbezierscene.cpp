@@ -56,12 +56,16 @@ QGLBezierScene::~QGLBezierScene()
 {
 }
 
-QList<QGLSceneNode *> QGLBezierScene::objects(QGLSceneNode::Type type) const
+QList<QObject *> QGLBezierScene::objects() const
 {
-    QList<QGLSceneNode *> objs;
-    if (type == QGLSceneNode::Mesh || type == QGLSceneNode::Main)
-        objs.append(mainObject);
+    QList<QObject *> objs;
+    objs.append(mainObject);
     return objs;
+}
+
+QGLSceneNode *QGLBezierScene::mainNode() const
+{
+    return mainObject;
 }
 
 QT_END_NAMESPACE

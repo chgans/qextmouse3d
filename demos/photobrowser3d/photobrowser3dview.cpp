@@ -103,7 +103,7 @@ PhotoBrowser3DView::PhotoBrowser3DView()
     m_displaySize = 4.0;
     m_scene = new QPhotoBrowser3DScene(this);
     m_buttons = new Buttons(this, m_palette);
-    m_scene->rootNode()->addNode(m_buttons);
+    m_scene->mainNode()->addNode(m_buttons);
     m_scene->setPickable(true);
     m_skybox = new SkyBox(this, path);
     m_display = new ImageDisplay(this, m_palette, m_displaySize);

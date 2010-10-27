@@ -58,7 +58,7 @@ void ModelView::initializeGL(QGLPainter *painter)
 //! [paint]
 void ModelView::paintGL(QGLPainter *painter)
 {
-    QGLSceneNode *o = m_scene->defaultObject(QGLSceneNode::Main);
+    QGLSceneNode *o = m_scene->mainNode();
     o->draw(painter);
 }
 //! [paint]

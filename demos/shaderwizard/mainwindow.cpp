@@ -238,7 +238,7 @@ void MainWindow::loadScene(const QString& fileName)
     if(!mScene)
         return;
 
-    QGLSceneNode* defaultSceneObject = mScene->defaultObject(QGLSceneNode::Main);
+    QGLSceneNode* defaultSceneObject = mScene->mainNode();
     if(qobject_cast<QGLSceneNode *>(defaultSceneObject))
         handleScene(qobject_cast<QGLSceneNode *>(defaultSceneObject));
     else
@@ -334,27 +334,32 @@ void MainWindow::handleScene(QGLAbstractScene* scene)
     else
         sceneModel = new QStandardItemModel();
 
-    QList<QString> typeStrings;
-    QList<QGLSceneNode::Type> types;
-
-    types << QGLSceneNode::Main;
-    typeStrings << tr("Main Objects");
-    types << QGLSceneNode::Mesh;
-    typeStrings << tr("Meshes");
-
     QStandardItem *parentItem;
     QStandardItem *workingItem;
 
-    for(int i=0; i < types.size() && i < typeStrings.size(); i++)
-    {
-        QList<QGLSceneNode *> objectList = scene->objects(types.at(i));
+    QGLSceneNode *mainNode = scene->mainNode();
 
-        if(!objectList.size())
-            continue;
+    if (mainNode) {
+        parentItem = new QStandardItem( tr("Main Objects") );
+        parentItem->setData(QVariant::fromValue(qobject_cast<QObject*>(mainNode)), SceneObjectRole);
 
+        workingItem = new QStandardItem(mainNode->objectName());
+        workingItem->setData(QVariant::fromValue(qobject_cast<QObject*>(mainNode)), SceneObjectRole);
+        parentItem->appendRow(workingItem);
+    }
+
+    QList<QObject *> objects = scene->objects();
+    QList<QGLSceneNode *> objectList;
+    for (int index = 0; index < objects.count(); ++index) {
+        QGLSceneNode *node = qobject_cast<QGLSceneNode *>(objects.at(index));
+        if (node)
+            objectList.append(node);
+    }
+
+    if (!objectList.isEmpty()) {
         // create the parent item
-        parentItem = new QStandardItem( typeStrings.at(i) );
-        parentItem->setData(QVariant::fromValue(qobject_cast<QObject*>(scene->defaultObject(types.at(i)))), SceneObjectRole);
+        parentItem = new QStandardItem( tr("Meshes") );
+        parentItem->setData(QVariant::fromValue(qobject_cast<QObject*>(mainNode)), SceneObjectRole);
 
         // create the children items
         foreach( QGLSceneNode *sceneObject , objectList )
