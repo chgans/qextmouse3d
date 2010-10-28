@@ -99,6 +99,8 @@ void QAtlas::paint(QGLPainter *painter)
     if (m_allocationQueue.isEmpty() || painter->isPicking())
         return;
 
+    glDisable(GL_DEPTH_TEST);
+
     painter->pushSurface(m_renderTarget);
     painter->setStandardEffect(QGL::FlatReplaceTexture2D);
     painter->projectionMatrix().push();
@@ -111,40 +113,39 @@ void QAtlas::paint(QGLPainter *painter)
 
     painter->update();
 
-    for (int i = 0; i < m_allocationQueue.count(); ++i)
+    QAtlasEntry entry = m_allocationQueue.takeFirst();
+
+    QRect a = entry.rect;
+    QImage image = entry.image;
+
+    if (a.left() == 0 && a.top() == 0) // first one - paint fill color
     {
-        QAtlasEntry entry = m_allocationQueue.at(i);
-        QRect a = entry.rect;
-        QImage image = entry.image;
-
-        if (a.left() == 0 && a.top() == 0) // first one - paint fill color
-        {
-            painter->setClearColor(Qt::red);
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-
-        QGLTexture2D t;
-        t.setImage(image);
-        t.bind();
-        QVector3D va(a.left(), a.bottom()+1, 0);
-        QVector3D vb(a.right()+1, a.bottom()+1, 0);
-        QVector3D vc(a.right()+1, a.top(), 0);
-        QVector3D vd(a.left(), a.top(), 0);
-        QVector2D ta(0.0f, 0.0f);
-        QVector2D tb(1.0f, 0.0f);
-        QVector2D tc(1.0f, 1.0f);
-        QVector2D td(0.0f, 1.0f);
-        QGeometryData quad;
-        quad.setBufferStrategy(QGeometryData::KeepClientData);
-        quad.appendVertex(va, vb, vc, vd);
-        quad.appendTexCoord(ta, tb, tc, td);
-        quad.appendIndices(0, 1, 2);
-        quad.appendIndices(0, 2, 3);
-        quad.draw(painter, 0, 6);
+        painter->setClearColor(Qt::red);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
-    m_allocationQueue.clear();
+
+    QGLTexture2D t;
+    t.setImage(image);
+    t.bind();
+    QVector3D va(a.left(), a.bottom()+1, 0);
+    QVector3D vb(a.right()+1, a.bottom()+1, 0);
+    QVector3D vc(a.right()+1, a.top(), 0);
+    QVector3D vd(a.left(), a.top(), 0);
+    QVector2D ta(0.0f, 0.0f);
+    QVector2D tb(1.0f, 0.0f);
+    QVector2D tc(1.0f, 1.0f);
+    QVector2D td(0.0f, 1.0f);
+    QGeometryData quad;
+    quad.setBufferStrategy(QGeometryData::KeepClientData);
+    quad.appendVertex(va, vb, vc, vd);
+    quad.appendTexCoord(ta, tb, tc, td);
+    quad.appendIndices(0, 1, 2);
+    quad.appendIndices(0, 2, 3);
+    quad.draw(painter, 0, 6);
 
     painter->popSurface();
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 QRect QAtlas::allocate(const QSize &size, const QImage &image, const QGL::IndexArray &indices)

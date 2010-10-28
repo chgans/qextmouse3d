@@ -82,6 +82,8 @@ public:
 
     QGLMaterial *material() { return m_material; }
 
+    QList<QAtlasEntry> allocationQueue() const { return m_allocationQueue; }
+
     static QAtlas *instance();
 
 private:

@@ -360,6 +360,11 @@ void PhotoBrowser3DView::earlyPaintGL(QGLPainter *painter)
 {
     Q_UNUSED(painter);
 
+    if (!painter->isPicking())
+    {
+        QAtlas::instance()->paint(painter);
+    }
+
     if (!m_done)
         m_pc->pan();
 }
@@ -368,9 +373,6 @@ void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {
     if (!m_done)
     {
-        if (!painter->isPicking())
-            QAtlas::instance()->paint(painter);
-
         painter->setClearColor(Qt::blue);
         glEnable(GL_BLEND);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

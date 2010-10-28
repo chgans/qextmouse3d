@@ -115,10 +115,17 @@ void ByteReader::loadFile(const ThumbnailableImage &image)
                 // viewer would allow zooming and panning all around in the image
                 // so loading a 2896 pixel × 1944 pixel photo would make sense even
                 // on a small screen.  For now work with fairly cruddy image quality.
-                if (im.size().width() > 1024 || im.size().height() > 768)
-                    im = im.scaled(QSize(1024, 768), Qt::KeepAspectRatio,
-                                   QThread::idealThreadCount() > 1 ?
-                                       Qt::SmoothTransformation : Qt::FastTransformation);
+                // Probably the fix is to have a separate load call that re-fetches
+                // the full image on a zoom
+                QSize workSize(1024, 768);
+                Qt::TransformationMode mode = Qt::SmoothTransformation;
+                if (QThread::idealThreadCount() < 2)
+                {
+                    workSize = workSize / 2;
+                    mode = Qt::FastTransformation;
+                }
+                if (im.size().width() > workSize.width() || im.size().height() > workSize.height())
+                    im = im.scaled(workSize, Qt::KeepAspectRatio, mode);
             }
 
             Q_ASSERT(!im.isNull());
