@@ -50,7 +50,9 @@ QPhotoBrowser3DScene::QPhotoBrowser3DScene(QObject *parent)
 
 QList<QObject *> QPhotoBrowser3DScene::objects() const
 {
+    QList<QGLSceneNode *> children = m_rootNode->allChildren();
     QList<QObject *> objects;
-    objects.append(m_rootNode);
+    for (int index = 0; index < children.size(); ++index)
+        objects.append(children.at(index));
     return objects;
 }
