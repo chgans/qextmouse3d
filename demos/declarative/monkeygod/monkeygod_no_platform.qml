@@ -39,15 +39,16 @@
 ****************************************************************************/
 
 import Qt 4.7
-import Qt.labs.threed 1.0
+import Qt3D 1.0
 
 	Viewport  {
+		backgroundColor: "#AAAA22"
 		width: 1000
 		height: 800
 		
 		camera: Camera { eye: Qt.vector3d(21,7,19)}
 			
-		Item3d {
+		Item3D {
 			id: monkey
 			scale: 2
 			position: Qt.vector3d(0, 1.5, -6)
@@ -56,7 +57,7 @@ import Qt.labs.threed 1.0
 			effect: Effect { material: gold}
 		}
 		
-		Item3d
+		Item3D
 		{
 			Penguin {position: Qt.vector3d(-1.5,0,1)}
 			Penguin {position: Qt.vector3d(1.5,0,1)}
@@ -75,7 +76,7 @@ import Qt.labs.threed 1.0
 			}
 		}
 		
-		Item3d
+		Item3D
 		{
 			Penguin {position: Qt.vector3d(-2.5,0,2)}
 			Penguin {position: Qt.vector3d(2.5,0,2)}

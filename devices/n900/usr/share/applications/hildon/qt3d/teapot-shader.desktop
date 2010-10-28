@@ -1,10 +1,10 @@
 [Desktop Entry]
 Encoding=UTF-8
 Version=1.0
-Name=qml3d
-Comment=qml3d
-Exec=/opt/desktop/scripts/run-qt.sh /opt/qt3d/bin/qml3d -fullscreen
-Icon=teapot-logo
+Name=teashader
+Comment=teashader
+Exec=/opt/desktop/scripts/run-qt.sh /opt/qt3d/bin/qml3d -fullscreen /opt/desktop/declarative/teapot-shader.qml
+Icon=qml3d-logo
 Terminal=false
 Type=Application
 Categories=System;TerminalEmulator;
