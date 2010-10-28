@@ -155,17 +155,39 @@ QT_BEGIN_NAMESPACE
     To help debug a scene, use the qDumpScene() function to get a printout
     on stderr of the entire structure of the scene below the argument node.
 
+    \section1 Debugging Lighting Normals
+
+    The ViewNormals option is an advanced feature for use when inspecting
+    and debugging models or geometry in a scene.  The lighting normals
+    are displayed as a straight line from the vertex pointing in
+    the direction of the lighting normal.  This is useful for
+    example to show where normals are inverted or wrongly
+    calculated.
+
+    The setting of the ViewNormals flag is not propagated to child nodes,
+    instead set the flag to true for the node or nodes where its
+    needed.  To set the flag on all child nodes use code like:
+
+    \code
+    foreach(QGLSceneNode *node, scene.allChildren())
+        node->setNormalViewEnabled(true);
+    \endcode
+
+    \image spiky-teapot.png
+
     \sa QGLAbstractScene
 */
 
 /*!
-    \enum QGLSceneNode::DrawingMode
-    This enum covers the supported drawing modes for a QGLSceneNode.  This
-    value is set on a node using the setDrawingMode() function, and will be
-    passed when drawing the underlying geometry.  If in doubt use Triangles.
-    \value Points draw the node as a point cloud
-    \value Lines draw the node as lines
-    \value Triangles draw the node as triangles
+    \enum QGLSceneNode::Option
+    This enum defines option flags for QGLSceneNode.
+
+    \value CullBoundingBox Perform a cull using boundingBox() before
+        attempting to draw the geometry().  Default is true.
+    \value ViewNormals Enables the display of lighting normals for
+        debugging purposes.  Default is false.
+
+    \sa setOptions()
 */
 
 /*!
@@ -203,30 +225,47 @@ QGLSceneNode::~QGLSceneNode()
 }
 
 /*!
-    \property QGLSceneNode::boundingBoxEnabled
-    \brief Controls whether or not bounding box tests are performed for this node.
+    Returns the drawing options associated with this node.
+    The default is CullBoundingBox.
 
-    The default value is true.
-
-    If this is set to false, the node will always be drawn even if it
-    appears outside the viewing volume.
-
-    This is an advanced feature - use with care.  If in doubt leave set
-    to the default value.
+    \sa setOptions(), setOption()
 */
-bool QGLSceneNode::boundingBoxEnabled() const
+QGLSceneNode::Options QGLSceneNode::options() const
 {
     Q_D(const QGLSceneNode);
-    return d->boundingBoxEnabled;
+    return d->options;
 }
 
-void QGLSceneNode::setboundingBoxEnabled(bool enabled)
+/*!
+    Sets the drawing \a options associated with this node.
+
+    \sa options(), setOption()
+*/
+void QGLSceneNode::setOptions(QGLSceneNode::Options options)
 {
     Q_D(QGLSceneNode);
-    if (d->boundingBoxEnabled != enabled)
-    {
-        d->boundingBoxEnabled = enabled;
-        emit boundingBoxEnabledChanged();
+    if (d->options != options) {
+        d->options = options;
+        emit updated();
+    }
+}
+
+/*!
+    Enables or disables \a option according to \a value.
+
+    \sa options(), setOptions()
+*/
+void QGLSceneNode::setOption(QGLSceneNode::Option option, bool value)
+{
+    Q_D(QGLSceneNode);
+    QGLSceneNode::Options opts = d->options;
+    if (value)
+        opts |= option;
+    else
+        opts &= ~option;
+    if (d->options != opts) {
+        d->options = opts;
+        emit updated();
     }
 }
 
@@ -254,6 +293,7 @@ void QGLSceneNode::setGeometry(QGeometryData geometry)
 {
     Q_D(QGLSceneNode);
     d->geometry = geometry;
+    emit updated();
 }
 
 /*!
@@ -304,46 +344,6 @@ QBox3D QGLSceneNode::boundingBox() const
     return d->bb;
 }
 
-/*!
-    \property QGLSceneNode::center
-    \brief Returns the coordinates of the center of the portion of the geometry
-    referenced by this scene node.
-
-    The center is calculated as the centroid or geometric barycenter
-    of the vertices (the average of the vertices).  For a convex hull this
-    is guaranteed to be inside the figure.
-
-    If the value of start() is 0, and count() is the same
-    as geometry()->size() then the center will be the same as
-    geometry()->center().  However if the scene node only references
-    some part of the geometry, a center for this part is calculated.
-
-    Note also that the center is relative to the transformed frame of reference
-    for this node.  To get the absolute value, add the center and the position.
-*/
-QVector3D QGLSceneNode::center() const
-{
-    Q_D(const QGLSceneNode);
-    QVector3D center;
-    if (d->geometry.count() > 0)
-    {
-        if (d->start == 0 && (d->count == d->geometry.count() || d->count == 0))
-        {
-            center = d->geometry.center();
-        }
-        else
-        {
-            QGL::IndexArray ix = d->geometry.indices();
-            for (int i = d->start; i < (d->start + d->count); ++i)
-            {
-                center += d->geometry.vertexAt(ix[i]);
-            }
-            center /= (float)d->geometry.count();
-        }
-    }
-    return center;
-}
-
 // Calculate the resulting matrix from the position, rotation, scale and
 // local transform.  Cache the result for future calls.
 QMatrix4x4 QGLSceneNode::transform() const
@@ -362,7 +362,7 @@ QMatrix4x4 QGLSceneNode::transform() const
         QQuaternion res = rz * ry * rx;
         d->transform.rotate(res);
     }
-    if (!d->scale.isNull())
+    if (d->scale.x() != 1.0f || d->scale.y() != 1.0f || d->scale.z() != 1.0f)
         d->transform.scale(d->scale);
     if (!d->localTransform.isIdentity())
         d->transform *= d->localTransform;
@@ -403,6 +403,7 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
     if (d->localTransform != transform)
     {
         d->localTransform = transform;
+        emit updated();
         invalidateTransform();
         d->invalidateParentBoundingBox();
     }
@@ -434,7 +435,7 @@ void QGLSceneNode::setRotation(const QVector3D &r)
     if (r != d->rotate)
     {
         d->rotate = r;
-        emit rotationChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -457,7 +458,7 @@ void QGLSceneNode::setRotX(qreal rx)
     if (rx != d->rotate.x())
     {
         d->rotate.setX(rx);
-        emit rotationChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -480,7 +481,7 @@ void QGLSceneNode::setRotY(qreal ry)
     if (d->rotate.y() != ry)
     {
         d->rotate.setY(ry);
-        emit rotationChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -503,7 +504,7 @@ void QGLSceneNode::setRotZ(qreal rz)
     if (d->rotate.z() != rz)
     {
         d->rotate.setZ(rz);
-        emit rotationChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -533,7 +534,7 @@ void QGLSceneNode::setPosition(const QVector3D &p)
     if (p != d->translate)
     {
         d->translate = p;
-        emit positionChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -556,7 +557,7 @@ void QGLSceneNode::setX(qreal x)
     if (x != d->translate.x())
     {
         d->translate.setX(x);
-        emit positionChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -579,7 +580,7 @@ void QGLSceneNode::setY(qreal y)
     if (y != d->translate.y())
     {
         d->translate.setY(y);
-        emit positionChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -602,7 +603,7 @@ void QGLSceneNode::setZ(qreal z)
     if (z != d->translate.z())
     {
         d->translate.setZ(z);
-        emit positionChanged();
+        emit updated();
         invalidateTransform();
     }
 }
@@ -618,8 +619,7 @@ void QGLSceneNode::setZ(qreal z)
     and rotation() properties, since scale changes effect lighting normals
     and change the magnitude of other transformations.
 
-    The default value of scale is the null vector, \c{(0, 0, 0)} meaning
-    that no scale is applied.
+    The default value is \c{(1, 1, 1)} meaning that no scale is applied.
 
     \sa position(), rotation()
 */
@@ -635,31 +635,42 @@ void QGLSceneNode::setScale(const QVector3D &scale)
     if (scale != d->scale)
     {
         d->scale = scale;
-        emit scaleChanged();
+        emit updated();
         invalidateTransform();
     }
 }
 
 /*!
-    \property QGLSceneNode::drawingMode
-    \brief The drawing mode for this node.
+    Returns the drawing mode to use to render geometry().  The default
+    is QGL::Triangles.
 
-    This property holds the current drawing mode for this node.  The default is
-    QGL::Triangles.
+    \sa setDrawingMode()
 */
-QGLSceneNode::DrawingMode QGLSceneNode::drawingMode() const
+QGL::DrawingMode QGLSceneNode::drawingMode() const
 {
     Q_D(const QGLSceneNode);
     return d->drawingMode;
 }
 
-void QGLSceneNode::setDrawingMode(QGLSceneNode::DrawingMode mode)
+/*!
+    Sets the drawing \a mode to use to render geometry().
+
+    Note: this function changes the drawing mode, but the underlying
+    geometry() still consists of the triangles that were added.
+    Thus, this function is only useful for converting the drawing mode
+    into QGL::Points to display the geometry() as a point cloud
+    instead of a triangle mesh.  The other enums from QGL::DrawingMode
+    will give unpredictable results.
+
+    \sa drawingMode()
+*/
+void QGLSceneNode::setDrawingMode(QGL::DrawingMode mode)
 {
     Q_D(QGLSceneNode);
     if (d->drawingMode != mode)
     {
         d->drawingMode = mode;
-        emit drawingModeChanged();
+        emit updated();
     }
 }
 
@@ -688,8 +699,11 @@ QGL::StandardEffect QGLSceneNode::effect() const
 void QGLSceneNode::setEffect(QGL::StandardEffect effect)
 {
     Q_D(QGLSceneNode);
-    d->localEffect = effect;
-    d->hasEffect = true;
+    if (d->localEffect != effect || !d->hasEffect) {
+        d->localEffect = effect;
+        d->hasEffect = true;
+        emit updated();
+    }
 }
 
 /*!
@@ -723,8 +737,11 @@ QGLAbstractEffect *QGLSceneNode::userEffect() const
 void QGLSceneNode::setUserEffect(QGLAbstractEffect *effect)
 {
     Q_D(QGLSceneNode);
-    d->customEffect = effect;
-    d->hasEffect = true;
+    if (d->customEffect != effect || !d->hasEffect) {
+        d->customEffect = effect;
+        d->hasEffect = true;
+        emit updated();
+    }
 }
 
 
@@ -750,17 +767,18 @@ bool QGLSceneNode::hasEffect() const
 void QGLSceneNode::setEffectEnabled(bool enabled)
 {
     Q_D(QGLSceneNode);
-    d->hasEffect = enabled;
+    if (d->hasEffect != enabled) {
+        d->hasEffect = enabled;
+        emit updated();
+    }
 }
 
 /*!
-    \property QGLSceneNode::start
-    \brief The start index for this scene node.
+    Returns the starting index within geometry() that should be used
+    to render fragments for this scene node.  The default value is 0,
+    indicating that the 0'th logical vertex in geometry() is the start.
 
-    By default this value is zero meaning that this node references all
-    vertices from the 0'th logical vertex in the underlying geometry.
-
-    \sa count()
+    \sa setStart(), count()
 */
 int QGLSceneNode::start() const
 {
@@ -768,25 +786,30 @@ int QGLSceneNode::start() const
     return d->start;
 }
 
+/*!
+    Sets the \a start index within geometry() that should be used
+    to render fragments for this scene node.
+
+    \sa start(), setCount()
+*/
 void QGLSceneNode::setStart(int start)
 {
     Q_D(QGLSceneNode);
     if (start != d->start)
     {
         d->start = start;
-        emit startChanged();
+        emit updated();
         invalidateBoundingBox();
     }
 }
 
 /*!
-    \property QGLSceneNode::count
-    \brief The count of vertices referenced for this scene node.
+    Returns the count of the vertices to render from geometry()
+    for this scene node.  The default is zero, meaning that this node
+    uses all vertices from start() up to the last logical vertex
+    in the underlying geometry().
 
-    By default this value is zero meaning that this node references all
-    vertices up to the last logical vertex in the underlying geometry.
-
-    \sa start()
+    \sa setCount(), start()
 */
 int QGLSceneNode::count() const
 {
@@ -794,13 +817,19 @@ int QGLSceneNode::count() const
     return d->count;
 }
 
+/*!
+    Sets the \a count of the vertices to render from geometry()
+    for this scene node.
+
+    \sa count(), setStart()
+*/
 void QGLSceneNode::setCount(int count)
 {
     Q_D(QGLSceneNode);
     if (count != d->count)
     {
         d->count = count;
-        emit countChanged();
+        emit updated();
         invalidateBoundingBox();
     }
 }
@@ -824,8 +853,10 @@ int QGLSceneNode::materialIndex() const
 void QGLSceneNode::setMaterialIndex(int material)
 {
     Q_D(QGLSceneNode);
-    d->material = material;
-    emit materialChanged();
+    if (d->material != material) {
+        d->material = material;
+        emit updated();
+    }
 }
 
 /*!
@@ -836,7 +867,7 @@ void QGLSceneNode::setMaterialIndex(int material)
 int QGLSceneNode::backMaterialIndex() const
 {
     Q_D(const QGLSceneNode);
-    return d->material;
+    return d->backMaterial;
 }
 
 /*!
@@ -847,8 +878,10 @@ int QGLSceneNode::backMaterialIndex() const
 void QGLSceneNode::setBackMaterialIndex(int material)
 {
     Q_D(QGLSceneNode);
-    d->material = material;
-    emit materialChanged();
+    if (d->backMaterial != material) {
+        d->backMaterial = material;
+        emit updated();
+    }
 }
 
 /*!
@@ -896,12 +929,8 @@ QGLMaterial *QGLSceneNode::material() const
 void QGLSceneNode::setMaterial(QGLMaterial *material)
 {
     Q_D(QGLSceneNode);
-    if (d->palette == NULL)
+    if (!d->palette)
         d->palette = new QGLMaterialCollection(this);
-#ifndef QT_NO_DEBUG_STREAM
-    if (d->palette == NULL)
-        qDebug() << "Warning: setting material without a palette";
-#endif
     int ix = d->palette->indexOf(material);
     if (ix == -1)
         ix = d->palette->addMaterial(material);
@@ -943,6 +972,8 @@ QGLMaterial *QGLSceneNode::backMaterial() const
 void QGLSceneNode::setBackMaterial(QGLMaterial *material)
 {
     Q_D(QGLSceneNode);
+    if (!d->palette)
+        d->palette = new QGLMaterialCollection(this);
     int ix = d->palette->indexOf(material);
     if (ix == -1)
         ix = d->palette->addMaterial(material);
@@ -968,7 +999,10 @@ QGLMaterialCollection *QGLSceneNode::palette() const
 void QGLSceneNode::setPalette(QGLMaterialCollection *palette)
 {
     Q_D(QGLSceneNode);
-    d->palette = palette;
+    if (d->palette != palette) {
+        d->palette = palette;
+        emit updated();
+    }
 }
 
 /*!
@@ -1024,7 +1058,7 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
         node->d_func()->parentNodes.removeOne(this);
     }
     d->childNodes = children;
-    emit childNodesChanged();
+    emit updated();
 }
 
 void QGLSceneNode::parentOnto(QGLSceneNode *parent)
@@ -1104,7 +1138,7 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
     d->childNodes.append(node);
     node->parentOnto(this);
     connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
-    emit childNodesChanged();
+    emit updated();
 }
 
 /*!
@@ -1123,7 +1157,7 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
     d->childNodes.removeOne(node);
     node->unParent(this);
     node->disconnect(this);
-    emit childNodesChanged();
+    emit updated();
     invalidateBoundingBox();
 }
 
@@ -1299,7 +1333,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
          wasTransformed = true;
     }
 
-    if (d->boundingBoxEnabled)
+    if (d->options & CullBoundingBox)
     {
         QBox3D bb = boundingBox();
         if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
@@ -1356,7 +1390,7 @@ void QGLSceneNode::draw(QGLPainter *painter)
         if (idSaved)
             painter->setObjectPickId(id);
 
-        if (d->viewNormals)
+        if (d->options & ViewNormals)
             drawNormalIndicators(painter);
     }
     if (stateEntered)
@@ -1535,101 +1569,9 @@ QGLSceneNode *QGLSceneNode::only(const QStringList &names, QObject *parent) cons
 }
 
 /*!
-    If \a enabled is true, the viewing of normals on this scene
-    nodes geometry is turned on; otherwise it is turned off.  The
-    normal view is an advanced feature for use when inspecting and
-    debugging models or geometry in a scene.  The lighting normals
-    are displayed as a straight line from the vertex pointing in
-    the direction of the lighting normal.  This is useful for
-    example to show where normals are inverted or wrongly
-    calculated.
-
-    The setting of this flag is not propagated to child nodes,
-    instead set the flag to true for the node or nodes where its
-    needed.
-
-    To set the flag on all child nodes use code like:
-    \code
-    foreach(QGLSceneNode *node, scene.allChildren())
-        node->setNormalViewEnabled(true);
-    \endcode
-
-    \image spiky-teapot.png
-
-    \sa normalViewEnabled()
-*/
-void QGLSceneNode::setNormalViewEnabled(bool enabled)
-{
-    Q_D(QGLSceneNode);
-    d->viewNormals = enabled;
-}
-
-/*!
-    Returns true if the viewing of normals on this scene nodes geometry
-    is turned on; false otherwise.  See setNormalViewEnabled() for more
-    details.
-
-    \sa setNormalViewEnabled()
-*/
-bool QGLSceneNode::normalViewEnabled() const
-{
-    Q_D(const QGLSceneNode);
-    return d->viewNormals;
-}
-
-/*!
-    \fn QGLSceneNode::childNodesChanged()
-    Signals that the childNodes() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::positionChanged()
-    Signals that the position() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::rotationChanged()
-    Signals that the rotation() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::scaleChanged()
-    Signals that the count() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::materialChanged()
-    Signals that the material() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::backMaterialChanged()
-    Signals that the backMaterial() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::countChanged()
-    Signals that the count() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::startChanged()
-    Signals that the count() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::drawingModeChanged()
-    Signals that the drawingMode() property for this scene node has changed.
-*/
-
-/*!
-    \fn QGLSceneNode::centerChanged()
-    Signals that the center() property for this scene node has changed.
-*/
-
-/*!
-    \fn void QGLSceneNode::boundingBoxEnabledChanged()
-    Signals that the boundingBoxEnabled() property for this scene node has changed.
+    \fn QGLSceneNode::updated()
+    Signals that some property of this scene node, or one of its children,
+    has changed in a manner that will require that the node be redrawn.
 */
 
 #ifndef QT_NO_DEBUG_STREAM

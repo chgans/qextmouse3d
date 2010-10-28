@@ -22,6 +22,7 @@ SUBDIRS = \
     qglpainter \
     qglpickcolors \
     qglrender \
+    qglscenenode \
     qglsection \
     qglsharedresource \
     qglsphere \

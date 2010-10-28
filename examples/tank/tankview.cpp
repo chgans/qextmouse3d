@@ -58,7 +58,7 @@ TankView::TankView(QWidget *parent)
     m_tankScene->setEffect(QGL::LitDecalTexture2D);
     m_tankScene->addNode(new QuadPlane(0, QSizeF(25, 25)));
     Tank *tank = addTank();
-    connect(tank, SIGNAL(scaleChanged()), this, SLOT(queueUpdate()));
+    connect(tank, SIGNAL(updated()), this, SLOT(queueUpdate()));
 
     qDumpScene(m_tankScene);
 
@@ -75,7 +75,7 @@ Tank *TankView::addTank()
     Tank *tank = new Tank(m_tankScene);
     tank->setObjectName(QString("Tank %1").arg(m_count));
     ++m_count;
-    connect(tank, SIGNAL(scaleChanged()), this, SLOT(queueUpdate()));
+    connect(tank, SIGNAL(updated()), this, SLOT(queueUpdate()));
     return tank;
 }
 

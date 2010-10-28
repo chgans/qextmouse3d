@@ -68,8 +68,8 @@ class QGLSceneNodePrivate
 {
 public:
     QGLSceneNodePrivate()
-        : geometry(0)
-        , palette(0)
+        : palette(0)
+        , scale(1.0f, 1.0f, 1.0f)
         , localEffect(QGL::FlatColor)   // 0 - zero
         , customEffect(0)
         , hasEffect(false)
@@ -77,12 +77,12 @@ public:
         , backMaterial(-1)
         , start(0)
         , count(0)
+        , options(QGLSceneNode::CullBoundingBox)
         , viewNormals(false)
         , pickNode(0)
         , boxValid(false)
         , transformValid(false)
-        , drawingMode(QGLSceneNode::Triangles)
-        , boundingBoxEnabled(true)
+        , drawingMode(QGL::Triangles)
     {
     }
 
@@ -108,14 +108,14 @@ public:
     int backMaterial;
     int start;
     int count;
+    QGLSceneNode::Options options;
     bool viewNormals;
     QGLPickNode *pickNode;
     mutable QBox3D bb;
     mutable bool boxValid;
     mutable QMatrix4x4 transform;
     mutable bool transformValid;
-    QGLSceneNode::DrawingMode drawingMode;
-    bool boundingBoxEnabled;
+    QGL::DrawingMode drawingMode;
 };
 
 #endif // QGLSCENENODE_P_H

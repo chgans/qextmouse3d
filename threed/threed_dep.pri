@@ -1,4 +1,4 @@
-QT += opengl
+QT += opengl network
 
 INCLUDEPATH += $$PWD/global
 INCLUDEPATH += $$PWD/painting
