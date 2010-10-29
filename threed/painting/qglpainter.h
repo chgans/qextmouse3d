@@ -122,6 +122,7 @@ public:
     QMatrix4x4Stack& modelViewMatrix();
     QMatrix4x4 combinedMatrix() const;
     QMatrix3x3 normalMatrix() const;
+    QMatrix4x4 worldMatrix() const;
 
     QGL::Eye eye() const;
     void setEye(QGL::Eye eye);

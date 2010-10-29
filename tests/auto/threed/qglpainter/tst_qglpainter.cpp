@@ -62,6 +62,7 @@ private slots:
     void userMatrixStack();
     void projectionMatrixStack();
     void modelViewMatrixStack();
+    void worldMatrix();
     void isCullable();
     void lights();
     void nextPowerOfTwo_data();
@@ -486,6 +487,47 @@ void tst_QGLPainter::modelViewMatrixStack()
 
     // Check that the server received the value we set.
     QVERIFY(checkGLMatrix(GL_MODELVIEW_MATRIX, m));
+}
+
+static bool fuzzyCompare(const QMatrix4x4 &m1, const QMatrix4x4 &m2)
+{
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 4; ++col) {
+            if (qAbs(m1(row, col) - m2(row, col)) >= 0.00001f)
+                return false;
+        }
+    }
+    return true;
+}
+
+void tst_QGLPainter::worldMatrix()
+{
+    QGLPainter painter(widget);
+
+    QGLCamera camera;
+    camera.setEye(QVector3D(1, 2, 10));
+    camera.setCenter(QVector3D(20, 3, -4));
+    camera.setUpVector(QVector3D(1, 1, 1));
+    painter.setCamera(&camera);
+
+    // The modelview matrix should be the eye look-at component.
+    QMatrix4x4 mv;
+    mv.lookAt(camera.eye(), camera.center(), camera.upVector());
+    QVERIFY(fuzzyCompare(painter.modelViewMatrix(), mv));
+
+    // The world matrix should currently be the identity.
+    QVERIFY(fuzzyCompare(painter.worldMatrix(), QMatrix4x4()));
+
+    // Change the modelview.
+    painter.modelViewMatrix().translate(0.0f, 5.0f, 0.0f);
+    painter.modelViewMatrix().scale(1.5f);
+
+    // Check the modelview and world matrices against their expected values.
+    QMatrix4x4 world;
+    world.translate(0.0f, 5.0f, 0.0f);
+    world.scale(1.5f);
+    QVERIFY(fuzzyCompare(painter.modelViewMatrix(), mv * world));
+    QVERIFY(fuzzyCompare(painter.worldMatrix(), world));
 }
 
 void tst_QGLPainter::isCullable()
