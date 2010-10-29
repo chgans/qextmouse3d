@@ -126,6 +126,10 @@
          \o Normal matrix, which is the transpose of the inverse of the
             top-left 3x3 part of the modelview matrix.  This is typically
             used in lighting calcuations to transform \c qgl_Normal.
+    \row \o \c qgl_WorldMatrix
+         \o Modelview matrix without the eye position and orientation
+            component.  See QGLPainter::worldMatrix() for further
+            information.
     \row \o \c qgl_Texture0
          \o Sampler holding the texture from the Effect::texture property.
     \row \o \c qgl_Color

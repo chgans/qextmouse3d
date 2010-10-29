@@ -144,6 +144,10 @@ QT_BEGIN_NAMESPACE
          \o Normal matrix, which is the transpose of the inverse of the
             top-left 3x3 part of the modelview matrix.  This is typically
             used in lighting calcuations to transform \c qgl_Normal.
+    \row \o \c qgl_WorldMatrix
+         \o Modelview matrix without the eye position and orientation
+            component.  See QGLPainter::worldMatrix() for further
+            information.
     \row \o \c qgl_Texture0
          \o Sampler corresponding to the texture on unit 0.
     \row \o \c qgl_Texture1
@@ -447,6 +451,7 @@ public:
         , mvMatrix(-1)
         , projMatrix(-1)
         , normalMatrix(-1)
+        , worldMatrix(-1)
         , texture0(-1)
         , texture1(-1)
         , texture2(-1)
@@ -478,6 +483,7 @@ public:
     int mvMatrix;
     int projMatrix;
     int normalMatrix;
+    int worldMatrix;
     int texture0;
     int texture1;
     int texture2;
@@ -723,6 +729,7 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
         d->mvMatrix = d->program->uniformLocation("qgl_ModelViewMatrix");
         d->projMatrix = d->program->uniformLocation("qgl_ProjectionMatrix");
         d->normalMatrix = d->program->uniformLocation("qgl_NormalMatrix");
+        d->worldMatrix = d->program->uniformLocation("qgl_WorldMatrix");
         d->texture0 = d->program->uniformLocation("qgl_Texture0");
         d->texture1 = d->program->uniformLocation("qgl_Texture1");
         d->texture2 = d->program->uniformLocation("qgl_Texture2");
@@ -786,6 +793,8 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
             d->program->setUniformValue(d->mvMatrix, painter->modelViewMatrix());
         if (d->normalMatrix != -1)
             d->program->setUniformValue(d->normalMatrix, painter->normalMatrix());
+        if (d->worldMatrix != -1)
+            d->program->setUniformValue(d->worldMatrix, painter->worldMatrix());
     }
     if ((updates & QGLPainter::UpdateProjectionMatrix) != 0) {
         if (d->projMatrix != -1)
