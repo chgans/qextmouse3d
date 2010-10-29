@@ -169,7 +169,7 @@ QT_BEGIN_NAMESPACE
     needed.  To set the flag on all child nodes use code like:
 
     \code
-    foreach(QGLSceneNode *node, scene.allChildren())
+    foreach (QGLSceneNode *node, scene.allChildren())
         node->setNormalViewEnabled(true);
     \endcode
 
