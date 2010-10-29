@@ -150,7 +150,6 @@ public:
     void setChildNodeList(const QList<QGLSceneNode*> &children);
     void addNode(QGLSceneNode *node);
     void removeNode(QGLSceneNode *node);
-    void setParent(QObject *);
 
     virtual void draw(QGLPainter *painter);
 

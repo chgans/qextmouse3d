@@ -56,7 +56,7 @@ BuilderView::BuilderView(QWidget *parent)
 {
     //! [0]
     QGLSceneNode *can = buildGeometry();
-    can->setParent(canScene);
+    canScene->addNode(can);
     {
         // rotate the can around so its label shows; and down
         // so the base is facing down

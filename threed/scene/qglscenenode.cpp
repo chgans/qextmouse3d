@@ -137,10 +137,9 @@ QT_BEGIN_NAMESPACE
     \section1 Scene Graph
 
     Use childNodes() to obtain the list of child nodes, and add and remove
-    child nodes by the addNode() and removeNode() methods.  Also if the normal
-    QObject child-parent connection is made (via the setParent() function, or by
-    passing the scene node to the childs constructor), and the child is itself
-    a QGLSceneNode, then addNode() will be called on it.
+    child nodes by the addNode() and removeNode() methods.  If a QGLSceneNode
+    is constructed with a QGLSceneNode parent, then addNode() will be
+    called implicitly on the parent.
 
     A child may be a child multiple times, a child may be under more than one
     parent, and several parents may reference the same child.  There is however
@@ -198,7 +197,9 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
     : QObject(parent)
     , d_ptr(new QGLSceneNodePrivate())
 {
-    setParent(parent);
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
 }
 
 /*!
@@ -1074,6 +1075,13 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
     if (d) {    // May be null if called via deleteChild().
         Q_ASSERT(d->parentNodes.contains(parent));
         d->parentNodes.removeOne(parent);
+        if (this->parent() == parent) {
+            // Transfer QObject ownership to another parent, or null.
+            if (!d->parentNodes.isEmpty())
+                setParent(d->parentNodes[0]);
+            else
+                setParent(0);
+        }
     }
 }
 
@@ -1113,22 +1121,11 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
     \endcode
 
     Because a child node can be validly added to many different nodes,
-    adding as a child does not affect the QObject::parent() ownership.  To
-    manage ownership, either:
-    \list
-        \o call the setParent() function, or
-        \o pass a parent QGLSceneNode to the \l{QGLSceneNode::QGLSceneNode()}{constructor}
-    \endlist
-    Doing either of these will create a QObject::parent relationship as
-    well as calling addNode().
+    calling addNode() does not normally affect the QObject::parent()
+    ownership.  However, if \a node does not currently have a
+    QObject::parent(), the parent will be set to this node.
 
-    This function \bold{does not} make this node a parent of \a node for the
-    purposes of memory management, because a \a node could have many parents
-    in a scene graph.
-
-    See setParent() if you want to parent nodes for memory management.
-
-    \sa removeNode(), clone(), setParent()
+    \sa removeNode(), clone()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
@@ -1137,14 +1134,25 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
     invalidateBoundingBox();
     d->childNodes.append(node);
     node->parentOnto(this);
+    if (!node->parent())
+        node->setParent(this);
     connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
     emit updated();
 }
 
 /*!
-    Detaches the child node matching \a node from this node.
+    Removes the child node matching \a node from this node.
 
-    This does not affect the QObject::parent() ownership.
+    If the QObject::parent() ownership of \a node was set to this
+    node, then its parent will be changed to another parent node if it
+    had multiple parents.
+
+    If \a node had only a single parent, then its parent will be set to null,
+    effectively detaching it from the QObject ownership rules of the scene
+    graph.  The caller is then responsible for deleting \a node.
+
+    If the QObject::parent() of \a node was not a scene node parent,
+    then it will be left unmodified.
 
     \sa addNode()
 */
@@ -1180,33 +1188,6 @@ void QGLSceneNode::invalidateTransform() const
     Q_D(const QGLSceneNode);
     d->transformValid = false;
     d->invalidateParentBoundingBox();
-}
-
-/*!
-    Sets the \a parent to be the parent of this object, exactly the
-    same as QObject::setParent(), meaning that if \a parent is deleted
-    then this object will also be deleted.
-
-    Additionally, if \a parent is a QGLSceneNode then this node is added
-    to it as a child in the scene, the same as calling \c{parent->addNode()};
-    and if this nodes palette is NULL, then this nodes palette is set to
-    that of the parent.
-
-    \sa addNode()
-*/
-void QGLSceneNode::setParent(QObject *parent)
-{
-    Q_D(QGLSceneNode);
-    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
-    if (sceneParent)
-    {
-        sceneParent->addNode(this);
-        if (d->palette == 0)
-            d->palette = sceneParent->palette();
-    }
-
-    //In all cases perform a normal QObject parent assignment.
-    QObject::setParent(parent);
 }
 
 void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)

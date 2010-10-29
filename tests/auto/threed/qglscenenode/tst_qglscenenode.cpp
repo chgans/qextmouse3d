@@ -55,6 +55,8 @@ public:
 private slots:
     void defaultValues();
     void modify();
+    void addNode();
+    void removeNode();
 };
 
 // Check that all properties have their expected defaults.
@@ -255,6 +257,137 @@ void tst_QGLSceneNode::modify()
     QCOMPARE(node.materialIndex(), 0);
     QCOMPARE(node.backMaterialIndex(), 1);
     QVERIFY(node.pickNode() == &pick);
+}
+
+// Add nodes to build a scene graph.
+void tst_QGLSceneNode::addNode()
+{
+    QGLSceneNode *node1 = new QGLSceneNode();
+
+    // Add a node via the constructor.
+    QGLSceneNode *node2 = new QGLSceneNode(node1);
+    QVERIFY(node2->parent() == node1);
+    QCOMPARE(node1->childNodeList().count(), 1);
+    QVERIFY(node1->childNodeList()[0] == node2);
+
+    // Add a node explicitly, not parented into the graph yet.
+    // Because node3's parent is null, it will be parented in.
+    QGLSceneNode *node3 = new QGLSceneNode();
+    node1->addNode(node3);
+    QVERIFY(node3->parent() == node1);
+    QCOMPARE(node1->childNodeList().count(), 2);
+    QVERIFY(node1->childNodeList()[0] == node2);
+    QVERIFY(node1->childNodeList()[1] == node3);
+
+    // Add a node explicily that is parented elsewhere.  Because
+    // node4's parent is not null, it will *not* be parented in.
+    QGLSceneNode *node4 = new QGLSceneNode(this);
+    node1->addNode(node4);
+    QVERIFY(node4->parent() == this);
+    QCOMPARE(node1->childNodeList().count(), 3);
+    QVERIFY(node1->childNodeList()[0] == node2);
+    QVERIFY(node1->childNodeList()[1] == node3);
+    QVERIFY(node1->childNodeList()[2] == node4);
+
+    // Add node3 under node2 as well so that it has multiple parents.
+    node2->addNode(node3);
+    QVERIFY(node3->parent() == node1);  // parent is unchanged
+    QCOMPARE(node1->childNodeList().count(), 3);
+    QVERIFY(node1->childNodeList()[0] == node2);
+    QVERIFY(node1->childNodeList()[1] == node3);
+    QVERIFY(node1->childNodeList()[2] == node4);
+    QCOMPARE(node2->childNodeList().count(), 1);
+    QVERIFY(node2->childNodeList()[0] == node3);
+
+    // Recursively fetch all children.
+    QList<QGLSceneNode *> children = node1->allChildren();
+    QCOMPARE(children.count(), 3);
+    QVERIFY(children[0] == node2);
+    QVERIFY(children[1] == node3);
+    QVERIFY(children[2] == node4);
+    children = node2->allChildren();
+    QCOMPARE(children.count(), 1);
+    QVERIFY(children[0] == node3);
+    QVERIFY(node3->allChildren().isEmpty());
+    QVERIFY(node4->allChildren().isEmpty());
+
+    // Delete the top node and ensure that the right objects are destroyed.
+    QSignalSpy node1Spy(node1, SIGNAL(destroyed()));
+    QSignalSpy node2Spy(node2, SIGNAL(destroyed()));
+    QSignalSpy node3Spy(node3, SIGNAL(destroyed()));
+    QSignalSpy node4Spy(node4, SIGNAL(destroyed()));
+    delete node1;
+    QCOMPARE(node1Spy.count(), 1);
+    QCOMPARE(node2Spy.count(), 1);
+    QCOMPARE(node3Spy.count(), 1);
+    QCOMPARE(node4Spy.count(), 0);
+
+    // Clean up the separate node.
+    delete node4;
+    QCOMPARE(node4Spy.count(), 1);
+}
+
+// Remove nodes from an existing scene graph.
+void tst_QGLSceneNode::removeNode()
+{
+    QGLSceneNode *node1 = new QGLSceneNode();
+    QGLSceneNode *node2 = new QGLSceneNode();
+    QGLSceneNode *node3 = new QGLSceneNode();
+    QGLSceneNode *node4 = new QGLSceneNode();
+    QGLSceneNode *node5 = new QGLSceneNode(this);
+
+    node1->addNode(node2);
+    node1->addNode(node3);
+    node1->addNode(node4);
+    node2->addNode(node3);
+    node2->addNode(node5);
+
+    QSignalSpy node1Spy(node1, SIGNAL(destroyed()));
+    QSignalSpy node2Spy(node2, SIGNAL(destroyed()));
+    QSignalSpy node3Spy(node3, SIGNAL(destroyed()));
+    QSignalSpy node4Spy(node4, SIGNAL(destroyed()));
+    QSignalSpy node5Spy(node5, SIGNAL(destroyed()));
+
+    // Removing a node will set its parent pointer back to null
+    // if it was removed from its last parent.
+    QVERIFY(node4->parent() == node1);
+    node1->removeNode(node4);
+    QVERIFY(node4->parent() == 0);
+
+    // The node should still exist, just detached.
+    QCOMPARE(node4Spy.count(), 0);
+    delete node4;
+    QCOMPARE(node4Spy.count(), 1);
+
+    // Remove node3, which should transfer ownership.
+    QVERIFY(node3->parent() == node1);
+    node1->removeNode(node3);
+    QVERIFY(node3->parent() == node2);
+
+    // Add node3 back, and check non-transfer of ownership.
+    node1->addNode(node3);
+    QVERIFY(node3->parent() == node2);
+    node1->removeNode(node3);
+    QVERIFY(node3->parent() == node2);
+
+    // Remove a node that wasn't parented to the scene graph.
+    node2->removeNode(node5);
+    QVERIFY(node5->parent() == this);
+
+    // Clean up the rest of the graph.
+    QCOMPARE(node1Spy.count(), 0);
+    QCOMPARE(node2Spy.count(), 0);
+    QCOMPARE(node3Spy.count(), 0);
+    QCOMPARE(node4Spy.count(), 1);
+    QCOMPARE(node5Spy.count(), 0);
+    delete node1;
+    QCOMPARE(node1Spy.count(), 1);
+    QCOMPARE(node2Spy.count(), 1);
+    QCOMPARE(node3Spy.count(), 1);
+    QCOMPARE(node4Spy.count(), 1);
+    QCOMPARE(node5Spy.count(), 0);
+    delete node5;
+    QCOMPARE(node5Spy.count(), 1);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSceneNode)

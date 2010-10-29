@@ -97,7 +97,7 @@ QuadPlane::QuadPlane(QObject *parent, QSizeF size, int level)
         zip.clear();
     }
     QGLSceneNode *n = builder.finalizedSceneNode();
-    n->setParent(this);
+    addNode(n);
     n->setMaterial(qCreateFloor());
     n->setRotX(90.0f);
 }
