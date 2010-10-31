@@ -184,6 +184,8 @@ private:
     Q_DISABLE_COPY(QGLSceneNode)
 
     QScopedPointer<QGLSceneNodePrivate> d_ptr;
+
+    QGLSceneNode(QGLSceneNodePrivate *d, QObject *parent);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGLSceneNode::Options)

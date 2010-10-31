@@ -57,6 +57,7 @@ private slots:
     void modify();
     void addNode();
     void removeNode();
+    void clone();
 };
 
 // Check that all properties have their expected defaults.
@@ -388,6 +389,100 @@ void tst_QGLSceneNode::removeNode()
     QCOMPARE(node5Spy.count(), 0);
     delete node5;
     QCOMPARE(node5Spy.count(), 1);
+}
+
+void tst_QGLSceneNode::clone()
+{
+    QGLSceneNode nodeParent;
+    QGLSceneNode node1(&nodeParent);
+
+    QGLSceneNode *node2 = node1.clone();
+    QVERIFY(node2 != 0 && node2 != &node1);
+    QVERIFY(node2->parent() == &nodeParent);
+    QVERIFY(node2->options() == node1.options());
+    QVERIFY(node2->geometry().isEmpty());
+    QVERIFY(node2->localTransform().isIdentity());
+    QVERIFY(node2->rotation() == QVector3D(0, 0, 0));
+    QVERIFY(node2->position() == QVector3D(0, 0, 0));
+    QVERIFY(node2->scale() == QVector3D(1, 1, 1));
+    QVERIFY(node2->drawingMode() == QGL::Triangles);
+    QVERIFY(node2->effect() == QGL::FlatColor);
+    QVERIFY(!node2->userEffect());
+    QVERIFY(!node2->hasEffect());
+    QCOMPARE(node2->start(), 0);
+    QCOMPARE(node2->count(), 0);
+    QCOMPARE(node2->materialIndex(), -1);
+    QCOMPARE(node2->backMaterialIndex(), -1);
+    QVERIFY(!node2->palette());
+    QVERIFY(!node2->pickNode());
+    QVERIFY(node2->childNodeList().isEmpty());
+    delete node2;
+
+    QGeometryData data1;
+    data1.appendVertex(QVector3D(1, -2, 3));
+    QMatrix4x4 m;
+    m.translate(-1.0f, 2.5f, 5.0f);
+    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    m.scale(23.5f);
+    TestEffect userEffect;
+    QGLPickNode pick;
+
+    node1.setOptions(QGLSceneNode::ViewNormals);
+    node1.setGeometry(data1);
+    node1.setLocalTransform(m);
+    node1.setRotation(QVector3D(-1, 2, -3));
+    node1.setPosition(QVector3D(1, -2, 3));
+    node1.setScale(QVector3D(1.5f, -2.0f, 1.0f));
+    node1.setDrawingMode(QGL::Points);
+    node1.setEffect(QGL::LitMaterial);
+    node1.setUserEffect(&userEffect);
+    node1.setStart(10);
+    node1.setCount(20);
+    QGLMaterial *mat1 = new QGLMaterial();
+    QGLMaterial *mat2 = new QGLMaterial();
+    node1.setMaterial(mat1);
+    node1.setBackMaterial(mat2);
+    node1.setPickNode(&pick);
+    QGLSceneNode *node3 = new QGLSceneNode();
+    QGLSceneNode *node4 = new QGLSceneNode();
+    node1.addNode(node3);
+    node1.addNode(node4);
+
+    // Clone onto the same parent.
+    node2 = node1.clone();
+    QVERIFY(node2 != 0 && node2 != &node1);
+    QVERIFY(node2->parent() == &nodeParent);
+    QVERIFY(node2->options() == node1.options());
+    QCOMPARE(node2->geometry().count(), 1);
+    QVERIFY(node2->localTransform() == m);
+    QVERIFY(node2->rotation() == QVector3D(-1, 2, -3));
+    QVERIFY(node2->position() == QVector3D(1, -2, 3));
+    QVERIFY(node2->scale() == QVector3D(1.5f, -2.0f, 1.0f));
+    QVERIFY(node2->drawingMode() == QGL::Points);
+    QVERIFY(node2->effect() == QGL::LitMaterial);
+    QVERIFY(node2->userEffect() == &userEffect);
+    QVERIFY(node2->hasEffect());
+    QCOMPARE(node2->start(), 10);
+    QCOMPARE(node2->count(), 20);
+    QCOMPARE(node2->materialIndex(), 0);
+    QCOMPARE(node2->backMaterialIndex(), 1);
+    QVERIFY(node2->material() == mat1);
+    QVERIFY(node2->backMaterial() == mat2);
+    QVERIFY(node2->palette() != 0);
+    QVERIFY(node2->palette() == node1.palette());
+    QVERIFY(!node2->pickNode());    // Pick node should not be cloned
+    QCOMPARE(node2->childNodeList().count(), 2);
+    QVERIFY(node2->childNodeList()[0] == node3);
+    QVERIFY(node2->childNodeList()[1] == node4);
+    delete node2;
+
+    // Clone onto a different parent.
+    QGLSceneNode node2Parent;
+    node2 = node1.clone(&node2Parent);
+    QVERIFY(node2->parent() == &node2Parent);
+    QCOMPARE(node2Parent.childNodeList().count(), 1);
+    QVERIFY(node2Parent.childNodeList()[0] == node2);
+    delete node2;
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSceneNode)

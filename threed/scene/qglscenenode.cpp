@@ -203,6 +203,19 @@ QGLSceneNode::QGLSceneNode(QObject *parent)
 }
 
 /*!
+    \internal
+    Used by clone().
+*/
+QGLSceneNode::QGLSceneNode(QGLSceneNodePrivate *d, QObject *parent)
+    : QObject(parent)
+    , d_ptr(d)
+{
+    QGLSceneNode *sceneParent = qobject_cast<QGLSceneNode*>(parent);
+    if (sceneParent)
+        sceneParent->addNode(this);
+}
+
+/*!
     Constructs a new scene node referencing \a geometry and attaches it to
     \a parent.    If parent is a QGLSceneNode then this node is added to it
     as a child.
@@ -1413,26 +1426,14 @@ void QGLSceneNode::setPickNode(QGLPickNode *node)
 
     The copy will reference the same underlying geometry, child nodes, and
     have all effects, transforms and other properties copied from this node.
+    The only property that is not copied is pickNode().
 */
 QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 {
     Q_D(const QGLSceneNode);
-    QGLSceneNode *node = new QGLSceneNode(parent ? parent : this->parent());
-    node->setGeometry(d->geometry);
-    node->setPalette(d->palette);
-    node->setLocalTransform(d->localTransform);
-    node->setPosition(d->translate);
-    node->setRotation(d->rotate);
-    node->setScale(d->scale);
-    node->setEffect(d->localEffect);
-    node->setUserEffect(d->customEffect);
-    node->setEffectEnabled(d->hasEffect);
-    node->setMaterialIndex(d->material);
-    node->setStart(d->start);
-    node->setCount(d->count);
+    QGLSceneNode *node = new QGLSceneNode
+        (new QGLSceneNodePrivate(d), parent ? parent : this->parent());
     node->setChildNodeList(d->childNodes);
-    node->d_func()->bb = d->bb;
-    node->d_func()->boxValid = d->boxValid;
     return node;
 }
 

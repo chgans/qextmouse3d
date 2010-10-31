@@ -78,11 +78,35 @@ public:
         , start(0)
         , count(0)
         , options(QGLSceneNode::CullBoundingBox)
-        , viewNormals(false)
         , pickNode(0)
         , boxValid(false)
         , transformValid(false)
         , drawingMode(QGL::Triangles)
+    {
+    }
+
+    // This constructor is used by QGLSceneNode::clone().
+    QGLSceneNodePrivate(const QGLSceneNodePrivate *other)
+        : geometry(other->geometry)
+        , palette(other->palette)
+        , localTransform(other->localTransform)
+        , translate(other->translate)
+        , rotate(other->rotate)
+        , scale(other->scale)
+        , localEffect(other->localEffect)
+        , customEffect(other->customEffect)
+        , hasEffect(other->hasEffect)
+        , material(other->material)
+        , backMaterial(other->backMaterial)
+        , start(other->start)
+        , count(other->count)
+        , options(other->options)
+        , pickNode(0)   // Explicitly not cloned.
+        , bb(other->bb)
+        , boxValid(other->boxValid)
+        , transform(other->transform)
+        , transformValid(other->transformValid)
+        , drawingMode(other->drawingMode)
     {
     }
 
@@ -109,7 +133,6 @@ public:
     int start;
     int count;
     QGLSceneNode::Options options;
-    bool viewNormals;
     QGLPickNode *pickNode;
     mutable QBox3D bb;
     mutable bool boxValid;
