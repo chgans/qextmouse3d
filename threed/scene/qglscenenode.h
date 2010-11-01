@@ -146,8 +146,8 @@ public:
     void setPalette(QGLMaterialCollection *palette);
 
     QList<QGLSceneNode*> allChildren() const;
-    QList<QGLSceneNode *> childNodeList() const;
-    void setChildNodeList(const QList<QGLSceneNode*> &children);
+    QList<QGLSceneNode *> children() const;
+
     void addNode(QGLSceneNode *node);
     void addNodes(const QList<QGLSceneNode *> &nodes);
     void removeNode(QGLSceneNode *node);

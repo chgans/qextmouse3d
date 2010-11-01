@@ -1042,7 +1042,7 @@ void QGLSceneNode::setPalette(QGLMaterialCollection *palette)
 
     \sa allChildren()
 */
-QList<QGLSceneNode*> QGLSceneNode::childNodeList() const
+QList<QGLSceneNode*> QGLSceneNode::children() const
 {
     Q_D(const QGLSceneNode);
     return d->childNodes;
@@ -1052,6 +1052,8 @@ QList<QGLSceneNode*> QGLSceneNode::childNodeList() const
     Returns a list including recursively all child nodes under
     this node.  Each child node only appears once, even if it is included
     multiple times in the scene graph.
+
+    \sa children()
 */
 QList<QGLSceneNode*> QGLSceneNode::allChildren() const
 {
@@ -1068,19 +1070,10 @@ QList<QGLSceneNode*> QGLSceneNode::allChildren() const
         if (!allSceneNodes.contains(node))
         {
             allSceneNodes.append(node);
-            gather.append(node->childNodeList());
+            gather.append(node->children());
         }
     }
     return allSceneNodes;
-}
-
-/*!
-    Sets the list of child nodes for this node to be \a children.
-*/
-void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
-{
-    removeNodes(childNodeList());
-    addNodes(children);
 }
 
 /*!
@@ -1476,7 +1469,7 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 
     The copy will reference the same underlying geometry, and
     have all effects, transforms and other properties copied from this node.
-    The childNodeList() and pickNodes() are not cloned.
+    The children() and pickNodes() are not cloned.
 
     \sa clone()
 */
@@ -1619,7 +1612,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
         fprintf(stderr, "\n%s        from thread: %p\n", qPrintable(ind), node->thread());
     fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
     {
-        QList<QGLSceneNode*> children = node->childNodeList();
+        QList<QGLSceneNode*> children = node->children();
         QList<QGLSceneNode*>::const_iterator it = children.constBegin();
         for (int i = 0; it != children.constEnd(); ++it, ++i)
             fprintf(stderr, "%d: %p  ", i, *it);
@@ -1726,7 +1719,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     {
         fprintf(stderr, "%s no effect set\n", qPrintable(ind));
     }
-    QList<QGLSceneNode*> children = node->childNodeList();
+    QList<QGLSceneNode*> children = node->children();
     QList<QGLSceneNode*>::const_iterator it = children.constBegin();
     for ( ; it != children.constEnd(); ++it)
         if (!lp.contains(*it))
@@ -1736,7 +1729,7 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
 QDebug operator<<(QDebug dbg, const QGLSceneNode &node)
 {
     dbg << &node << "\n    start:" << node.start() << " count:" << node.count();
-    QList<QGLSceneNode*> children = node.childNodeList();
+    QList<QGLSceneNode*> children = node.children();
     QList<QGLSceneNode*>::const_iterator it = children.constBegin();
     for ( ; it != children.constEnd(); ++it)
         dbg << "\n        child:" << *it;

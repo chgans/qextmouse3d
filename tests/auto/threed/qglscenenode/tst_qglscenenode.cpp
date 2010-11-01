@@ -98,7 +98,7 @@ void tst_QGLSceneNode::defaultValues()
     QVERIFY(node.pickNode() == 0);
 
     QVERIFY(node.allChildren().isEmpty());
-    QVERIFY(node.childNodeList().isEmpty());
+    QVERIFY(node.children().isEmpty());
 }
 
 class TestEffect : public QGLAbstractEffect
@@ -268,52 +268,52 @@ void tst_QGLSceneNode::addNode()
     // Add a node via the constructor.
     QGLSceneNode *node2 = new QGLSceneNode(node1);
     QVERIFY(node2->parent() == node1);
-    QCOMPARE(node1->childNodeList().count(), 1);
-    QVERIFY(node1->childNodeList()[0] == node2);
+    QCOMPARE(node1->children().count(), 1);
+    QVERIFY(node1->children()[0] == node2);
 
     // Add a node explicitly, not parented into the graph yet.
     // Because node3's parent is null, it will be parented in.
     QGLSceneNode *node3 = new QGLSceneNode();
     node1->addNode(node3);
     QVERIFY(node3->parent() == node1);
-    QCOMPARE(node1->childNodeList().count(), 2);
-    QVERIFY(node1->childNodeList()[0] == node2);
-    QVERIFY(node1->childNodeList()[1] == node3);
+    QCOMPARE(node1->children().count(), 2);
+    QVERIFY(node1->children()[0] == node2);
+    QVERIFY(node1->children()[1] == node3);
 
     // Add a node explicily that is parented elsewhere.  Because
     // node4's parent is not null, it will *not* be parented in.
     QGLSceneNode *node4 = new QGLSceneNode(this);
     node1->addNode(node4);
     QVERIFY(node4->parent() == this);
-    QCOMPARE(node1->childNodeList().count(), 3);
-    QVERIFY(node1->childNodeList()[0] == node2);
-    QVERIFY(node1->childNodeList()[1] == node3);
-    QVERIFY(node1->childNodeList()[2] == node4);
+    QCOMPARE(node1->children().count(), 3);
+    QVERIFY(node1->children()[0] == node2);
+    QVERIFY(node1->children()[1] == node3);
+    QVERIFY(node1->children()[2] == node4);
 
     // Try adding node4 again (should do nothing).
     node1->addNode(node4);
     QVERIFY(node4->parent() == this);
-    QCOMPARE(node1->childNodeList().count(), 3);
-    QVERIFY(node1->childNodeList()[0] == node2);
-    QVERIFY(node1->childNodeList()[1] == node3);
-    QVERIFY(node1->childNodeList()[2] == node4);
+    QCOMPARE(node1->children().count(), 3);
+    QVERIFY(node1->children()[0] == node2);
+    QVERIFY(node1->children()[1] == node3);
+    QVERIFY(node1->children()[2] == node4);
 
     // Add a null child (should do nothing).
     node1->addNode(0);
-    QCOMPARE(node1->childNodeList().count(), 3);
-    QVERIFY(node1->childNodeList()[0] == node2);
-    QVERIFY(node1->childNodeList()[1] == node3);
-    QVERIFY(node1->childNodeList()[2] == node4);
+    QCOMPARE(node1->children().count(), 3);
+    QVERIFY(node1->children()[0] == node2);
+    QVERIFY(node1->children()[1] == node3);
+    QVERIFY(node1->children()[2] == node4);
 
     // Add node3 under node2 as well so that it has multiple parents.
     node2->addNode(node3);
     QVERIFY(node3->parent() == node1);  // parent is unchanged
-    QCOMPARE(node1->childNodeList().count(), 3);
-    QVERIFY(node1->childNodeList()[0] == node2);
-    QVERIFY(node1->childNodeList()[1] == node3);
-    QVERIFY(node1->childNodeList()[2] == node4);
-    QCOMPARE(node2->childNodeList().count(), 1);
-    QVERIFY(node2->childNodeList()[0] == node3);
+    QCOMPARE(node1->children().count(), 3);
+    QVERIFY(node1->children()[0] == node2);
+    QVERIFY(node1->children()[1] == node3);
+    QVERIFY(node1->children()[2] == node4);
+    QCOMPARE(node2->children().count(), 1);
+    QVERIFY(node2->children()[0] == node3);
 
     // Recursively fetch all children.
     QList<QGLSceneNode *> children = node1->allChildren();
@@ -430,7 +430,7 @@ void tst_QGLSceneNode::clone()
     QCOMPARE(node2->backMaterialIndex(), -1);
     QVERIFY(!node2->palette());
     QVERIFY(!node2->pickNode());
-    QVERIFY(node2->childNodeList().isEmpty());
+    QVERIFY(node2->children().isEmpty());
     delete node2;
 
     QGeometryData data1;
@@ -486,17 +486,17 @@ void tst_QGLSceneNode::clone()
     QVERIFY(node2->palette() != 0);
     QVERIFY(node2->palette() == node1.palette());
     QVERIFY(!node2->pickNode());    // Pick node should not be cloned
-    QCOMPARE(node2->childNodeList().count(), 2);
-    QVERIFY(node2->childNodeList()[0] == node3);
-    QVERIFY(node2->childNodeList()[1] == node4);
+    QCOMPARE(node2->children().count(), 2);
+    QVERIFY(node2->children()[0] == node3);
+    QVERIFY(node2->children()[1] == node4);
     delete node2;
 
     // Clone onto a different parent.
     QGLSceneNode node2Parent;
     node2 = node1.clone(&node2Parent);
     QVERIFY(node2->parent() == &node2Parent);
-    QCOMPARE(node2Parent.childNodeList().count(), 1);
-    QVERIFY(node2Parent.childNodeList()[0] == node2);
+    QCOMPARE(node2Parent.children().count(), 1);
+    QVERIFY(node2Parent.children()[0] == node2);
     delete node2;
 }
 
