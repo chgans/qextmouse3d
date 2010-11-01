@@ -49,6 +49,7 @@
 #include "qmatrix4x4.h"
 #include "qglrendersequencer.h"
 #include "qglabstracteffect.h"
+#include "qgraphicstransform3d.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qthread.h>
@@ -379,25 +380,22 @@ QBox3D QGLSceneNode::boundingBox() const
 QMatrix4x4 QGLSceneNode::transform() const
 {
     Q_D(const QGLSceneNode);
-    if (d->transformValid)
-        return d->transform;
-    d->transform = QMatrix4x4();
+    QMatrix4x4 m;
     if (!d->translate.isNull())
-        d->transform.translate(d->translate);
+        m.translate(d->translate);
     if (!d->rotate.isNull())
     {
         QQuaternion rx = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, d->rotate.x());
         QQuaternion ry = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, d->rotate.y());
         QQuaternion rz = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, d->rotate.z());
         QQuaternion res = rz * ry * rx;
-        d->transform.rotate(res);
+        m.rotate(res);
     }
-    if (d->scale.x() != 1.0f || d->scale.y() != 1.0f || d->scale.z() != 1.0f)
-        d->transform.scale(d->scale);
     if (!d->localTransform.isIdentity())
-        d->transform *= d->localTransform;
-    d->transformValid = true;
-    return d->transform;
+        m *= d->localTransform;
+    for (int index = d->transforms.size() - 1; index >= 0; --index)
+        d->transforms.at(index)->applyTo(&m);
+    return m;
 }
 
 /*!
@@ -639,35 +637,93 @@ void QGLSceneNode::setZ(qreal z)
 }
 
 /*!
-    \property QGLSceneNode::scale
-    \brief The amounts of x, y and z axis scaling for this node.
+    Returns the list of transformations to apply to this node.
+    The default is the empty list.
 
-    If the scale vector is all zeroes (it is equal to the null vector)
-    then no scaling is applied.
+    The transformations are applied to the node itself, so a
+    QGraphicsScale3D followed by a QGraphicsTranslation3D will
+    first scale the node in its local co-ordinate system,
+    and then translate the node a new location.
 
-    Use of the scale property is more advanced than both the position()
-    and rotation() properties, since scale changes effect lighting normals
-    and change the magnitude of other transformations.
+    In the mathematical sense, the transformations are applied to
+    the modelview matrix in the reverse order in which they appear
+    in this list.
 
-    The default value is \c{(1, 1, 1)} meaning that no scale is applied.
+    The position() is applied after all other transformations
+    have been applied.
 
-    \sa position(), rotation()
+    \sa setTransforms(), addTransform(), position()
 */
-QVector3D QGLSceneNode::scale() const
+QList<QGraphicsTransform3D *> QGLSceneNode::transforms() const
 {
     Q_D(const QGLSceneNode);
-    return d->scale;
+    return d->transforms;
 }
 
-void QGLSceneNode::setScale(const QVector3D &scale)
+/*!
+    Sets the list of transformations to apply to this node to \a transforms.
+
+    The transformations are applied to the node itself, so a
+    QGraphicsScale3D followed by a QGraphicsTranslation3D will
+    first scale the node in its local co-ordinate system,
+    and then translate the node a new location.
+
+    In the mathematical sense, the transformations are applied to
+    the modelview matrix in the reverse order in which they appear
+    in \a transforms.
+
+    The position() is applied after all other transformations
+    have been applied.
+
+    \sa transforms(), addTransform(), position()
+*/
+void QGLSceneNode::setTransforms(const QList<QGraphicsTransform3D *> &transforms)
 {
     Q_D(QGLSceneNode);
-    if (scale != d->scale)
-    {
-        d->scale = scale;
-        emit updated();
-        invalidateTransform();
+    for (int index = 0; index < d->transforms.size(); ++index) {
+        QGraphicsTransform3D *transform = d->transforms.at(index);
+        disconnect(transform, SIGNAL(transformChanged()), this, SLOT(transformChanged()));
     }
+    d->transforms.clear();
+    for (int index = 0; index < transforms.size(); ++index) {
+        QGraphicsTransform3D *transform = transforms.at(index);
+        if (transform) {
+            connect(transform, SIGNAL(transformChanged()), this, SLOT(transformChanged()));
+            d->transforms.append(transform);
+        }
+    }
+    emit updated();
+    invalidateTransform();
+}
+
+/*!
+    Adds a single \a transform to this node, to be applied to the
+    node after all current members of transformations() have been applied.
+
+    In the mathematical sense, \a transform is applied to the modelview
+    matrix before the current members of transformations() are applied
+    in reverse order.
+
+    \sa transforms(), setTransforms()
+*/
+void QGLSceneNode::addTransform(QGraphicsTransform3D *transform)
+{
+    Q_D(QGLSceneNode);
+    if (!transform)
+        return;     // Avoid nulls getting into the transform list.
+    connect(transform, SIGNAL(transformChanged()), this, SLOT(transformChanged()));
+    d->transforms.append(transform);
+    emit updated();
+    invalidateTransform();
+}
+
+/*!
+    \internal
+*/
+void QGLSceneNode::transformChanged()
+{
+    invalidateTransform();
+    emit updated();
 }
 
 /*!
@@ -1222,7 +1278,6 @@ void QGLSceneNode::invalidateBoundingBox() const
 void QGLSceneNode::invalidateTransform() const
 {
     Q_D(const QGLSceneNode);
-    d->transformValid = false;
     d->invalidateParentBoundingBox();
 }
 
@@ -1319,8 +1374,7 @@ void QGLSceneNode::drawGeometry(QGLPainter *painter)
     \o sets the nodes materials onto the painter, if valid materials are present
     \o moves the model-view to the x, y, z position
     \o rotates the model-view by the rotX, rotY and rotZ rotations
-    \o scales the node by the scale factor, in x, y and z directions
-    \o applies any local transformation that may be set for this node
+    \o applies any local transforms() that may be set for this node
     \o calls draw() for all the child nodes
     \o calls draw(start, count) on this nodes geometry object (if any)
     \o restores the geometry's original materials if they were changed

@@ -44,6 +44,9 @@
 #include "qglpainter.h"
 #include "qglabstracteffect.h"
 #include "qglpicknode.h"
+#include "qgraphicstransform3d.h"
+#include "qgraphicsscale3d.h"
+#include "qgraphicsrotation3d.h"
 
 class tst_QGLSceneNode : public QObject
 {
@@ -79,7 +82,7 @@ void tst_QGLSceneNode::defaultValues()
     QCOMPARE(node.y(), qreal(0.0f));
     QCOMPARE(node.z(), qreal(0.0f));
 
-    QVERIFY(node.scale() == QVector3D(1, 1, 1));
+    QVERIFY(node.transforms().isEmpty());
 
     QVERIFY(node.drawingMode() == QGL::Triangles);
     QVERIFY(node.effect() == QGL::FlatColor);
@@ -140,29 +143,38 @@ void tst_QGLSceneNode::modify()
     QCOMPARE(updatedSpy.count(), 5);
     QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, -3));
 
-    node.setRotZ(23.5f);
-    QCOMPARE(updatedSpy.count(), 6);
-    QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, 23.5f));
+    //node.setRotZ(23.5f);
+    //QCOMPARE(updatedSpy.count(), 6);
+    //QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, 23.5f));
 
     node.setPosition(QVector3D(1, -2, 3));
-    QCOMPARE(updatedSpy.count(), 7);
+    QCOMPARE(updatedSpy.count(), 6);
     QVERIFY(node.position() == QVector3D(1, -2, 3));
 
     node.setX(-45.0f);
-    QCOMPARE(updatedSpy.count(), 8);
+    QCOMPARE(updatedSpy.count(), 7);
     QVERIFY(node.position() == QVector3D(-45.0f, -2, 3));
 
     node.setY(67.0f);
-    QCOMPARE(updatedSpy.count(), 9);
+    QCOMPARE(updatedSpy.count(), 8);
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, 3));
 
     node.setZ(-23.5f);
-    QCOMPARE(updatedSpy.count(), 10);
+    QCOMPARE(updatedSpy.count(), 9);
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, -23.5f));
 
-    node.setScale(QVector3D(1.5f, -2.0f, 1.0f));
+    QList<QGraphicsTransform3D *> transforms;
+    transforms.append(new QGraphicsScale3D(this));
+    transforms.append(new QGraphicsRotation3D(this));
+    node.setTransforms(transforms);
+    QCOMPARE(updatedSpy.count(), 10);
+    QVERIFY(node.transforms() == transforms);
+
+    QGraphicsScale3D *scale = new QGraphicsScale3D(this);
+    transforms.append(scale);
+    node.addTransform(scale);
     QCOMPARE(updatedSpy.count(), 11);
-    QVERIFY(node.scale() == QVector3D(1.5f, -2.0f, 1.0f));
+    QVERIFY(node.transforms() == transforms);
 
     node.setDrawingMode(QGL::Points);
     QCOMPARE(updatedSpy.count(), 12);
@@ -248,9 +260,9 @@ void tst_QGLSceneNode::modify()
     // e.g. the position actually changing the rotation, etc.
     QVERIFY(node.options() == QGLSceneNode::ViewNormals);
     QVERIFY(node.localTransform() == m);
-    QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, 23.5f));
+    QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, -3.0f));
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, -23.5f));
-    QVERIFY(node.scale() == QVector3D(1.5f, -2.0f, 1.0f));
+    QVERIFY(node.transforms() == transforms);
     QVERIFY(node.drawingMode() == QGL::Points);
     QVERIFY(node.effect() == QGL::LitMaterial);
     QVERIFY(node.userEffect() == &userEffect);
@@ -419,7 +431,7 @@ void tst_QGLSceneNode::clone()
     QVERIFY(node2->localTransform().isIdentity());
     QVERIFY(node2->rotation() == QVector3D(0, 0, 0));
     QVERIFY(node2->position() == QVector3D(0, 0, 0));
-    QVERIFY(node2->scale() == QVector3D(1, 1, 1));
+    QVERIFY(node2->transforms().isEmpty());
     QVERIFY(node2->drawingMode() == QGL::Triangles);
     QVERIFY(node2->effect() == QGL::FlatColor);
     QVERIFY(!node2->userEffect());
@@ -441,13 +453,16 @@ void tst_QGLSceneNode::clone()
     m.scale(23.5f);
     TestEffect userEffect;
     QGLPickNode pick;
+    QList<QGraphicsTransform3D *> transforms;
+    transforms.append(new QGraphicsScale3D(this));
+    transforms.append(new QGraphicsRotation3D(this));
 
     node1.setOptions(QGLSceneNode::ViewNormals);
     node1.setGeometry(data1);
     node1.setLocalTransform(m);
     node1.setRotation(QVector3D(-1, 2, -3));
     node1.setPosition(QVector3D(1, -2, 3));
-    node1.setScale(QVector3D(1.5f, -2.0f, 1.0f));
+    node1.setTransforms(transforms);
     node1.setDrawingMode(QGL::Points);
     node1.setEffect(QGL::LitMaterial);
     node1.setUserEffect(&userEffect);
@@ -472,7 +487,7 @@ void tst_QGLSceneNode::clone()
     QVERIFY(node2->localTransform() == m);
     QVERIFY(node2->rotation() == QVector3D(-1, 2, -3));
     QVERIFY(node2->position() == QVector3D(1, -2, 3));
-    QVERIFY(node2->scale() == QVector3D(1.5f, -2.0f, 1.0f));
+    QVERIFY(node2->transforms() == transforms);
     QVERIFY(node2->drawingMode() == QGL::Points);
     QVERIFY(node2->effect() == QGL::LitMaterial);
     QVERIFY(node2->userEffect() == &userEffect);

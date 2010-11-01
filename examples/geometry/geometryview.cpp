@@ -53,6 +53,7 @@
 #include "quadplane.h"
 #include "qplane3d.h"
 #include "qglmaterialcollection.h"
+#include "qgraphicsscale3d.h"
 
 GeometryView::GeometryView(QWidget *parent)
     : QGLView(parent)
@@ -82,7 +83,9 @@ GeometryView::GeometryView(QWidget *parent)
     parms->setTexture(tex);
     floor->setMaterialIndex(m);
     floor->setPosition(QVector3D(0, 0, -5));
-    floor->setScale(QVector3D(0.2, 0.2, 0.1));
+    QGraphicsScale3D *scale = new QGraphicsScale3D(floor);
+    scale->setScale(QVector3D(0.2, 0.2, 0.1));
+    floor->addTransform(scale);
 
     mdl = new QGLLightModel(this);
     mdl->setAmbientSceneColor(QColor(196,196,196));

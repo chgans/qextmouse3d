@@ -80,7 +80,6 @@ public:
         , options(QGLSceneNode::CullBoundingBox)
         , pickNode(0)
         , boxValid(false)
-        , transformValid(false)
         , drawingMode(QGL::Triangles)
     {
     }
@@ -93,6 +92,7 @@ public:
         , translate(other->translate)
         , rotate(other->rotate)
         , scale(other->scale)
+        , transforms(other->transforms)
         , localEffect(other->localEffect)
         , customEffect(other->customEffect)
         , hasEffect(other->hasEffect)
@@ -104,8 +104,6 @@ public:
         , pickNode(0)   // Explicitly not cloned.
         , bb(other->bb)
         , boxValid(other->boxValid)
-        , transform(other->transform)
-        , transformValid(other->transformValid)
         , drawingMode(other->drawingMode)
     {
     }
@@ -123,6 +121,7 @@ public:
     QVector3D translate;
     QVector3D rotate;
     QVector3D scale;
+    QList<QGraphicsTransform3D *> transforms;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     QList<QGLSceneNode*> childNodes;
@@ -136,8 +135,6 @@ public:
     QGLPickNode *pickNode;
     mutable QBox3D bb;
     mutable bool boxValid;
-    mutable QMatrix4x4 transform;
-    mutable bool transformValid;
     QGL::DrawingMode drawingMode;
 };
 

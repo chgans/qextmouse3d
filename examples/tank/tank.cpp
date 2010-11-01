@@ -55,6 +55,7 @@
 #include "qglcylinder.h"
 #include "qglmaterial.h"
 #include "qgltexture2d.h"
+#include "qgraphicsscale3d.h"
 
 static inline int rval()
 {
@@ -89,14 +90,16 @@ Tank::Tank(QObject *parent) :
     QGLSceneNode(parent)
 {
     QSequentialAnimationGroup *seq = new QSequentialAnimationGroup(this);
-    QPropertyAnimation *anim = new QPropertyAnimation(this, "scale");
+    QGraphicsScale3D *scale = new QGraphicsScale3D(this);
+    addTransform(scale);
+    QPropertyAnimation *anim = new QPropertyAnimation(scale, "scale");
     anim->setDuration(10000);
     anim->setStartValue(QVector3D(1.0f, 0.1f, 1.0f));
     anim->setEndValue(QVector3D(1.0f, 1.2f, 1.0f));
     anim->setEasingCurve(QEasingCurve(QEasingCurve::InOutQuad));
     seq->addAnimation(anim);
     seq->addPause(2000);
-    anim = new QPropertyAnimation(this, "scale");
+    anim = new QPropertyAnimation(scale, "scale");
     anim->setDuration(10000);
     anim->setStartValue(QVector3D(1.0f, 1.2f, 1.0f));
     anim->setEndValue(QVector3D(1.0f, 0.1f, 1.0f));

@@ -56,6 +56,7 @@ QT_MODULE(Qt3d)
 class QGLSceneNodePrivate;
 class QGLAbstractEffect;
 class QGLPickNode;
+class QGraphicsTransform3D;
 
 class Q_QT3D_EXPORT QGLSceneNode : public QObject
 {
@@ -69,7 +70,6 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY updated)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY updated)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY updated)
-    Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY updated)
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY updated)
     Q_PROPERTY(QGLMaterial *backMaterial READ backMaterial WRITE setBackMaterial NOTIFY updated)
 public:
@@ -111,8 +111,10 @@ public:
     void setY(qreal y);
     qreal z() const;
     void setZ(qreal z);
-    QVector3D scale() const;
-    void setScale(const QVector3D &scale);
+
+    QList<QGraphicsTransform3D *> transforms() const;
+    void setTransforms(const QList<QGraphicsTransform3D *> &transforms);
+    void addTransform(QGraphicsTransform3D *transform);
 
     QGL::DrawingMode drawingMode() const;
     void setDrawingMode(QGL::DrawingMode mode);
@@ -170,6 +172,9 @@ Q_SIGNALS:
 
 protected:
     virtual void drawGeometry(QGLPainter *painter);
+
+private Q_SLOTS:
+    void transformChanged();
 
 private:
     QMatrix4x4 transform() const;
