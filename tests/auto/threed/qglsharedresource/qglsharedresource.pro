@@ -1,10 +1,10 @@
 load(qttest_p4.prf)
 TEMPLATE=app
-QT += testlib
+QT += testlib opengl
 CONFIG += unittest warn_on
 
-SOURCES += tst_qglsharedresource.cpp
+INCLUDEPATH += ../../../../threed/textures
+VPATH += ../../../../threed/textures
 
-LIBS += -L../../../../lib -L../../../../bin
-
-include(../../../../threed/threed_dep.pri)
+HEADERS += qglsharedresource_p.h
+SOURCES += tst_qglsharedresource.cpp qglsharedresource.cpp
