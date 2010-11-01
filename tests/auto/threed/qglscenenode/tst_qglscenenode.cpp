@@ -290,6 +290,21 @@ void tst_QGLSceneNode::addNode()
     QVERIFY(node1->childNodeList()[1] == node3);
     QVERIFY(node1->childNodeList()[2] == node4);
 
+    // Try adding node4 again (should do nothing).
+    node1->addNode(node4);
+    QVERIFY(node4->parent() == this);
+    QCOMPARE(node1->childNodeList().count(), 3);
+    QVERIFY(node1->childNodeList()[0] == node2);
+    QVERIFY(node1->childNodeList()[1] == node3);
+    QVERIFY(node1->childNodeList()[2] == node4);
+
+    // Add a null child (should do nothing).
+    node1->addNode(0);
+    QCOMPARE(node1->childNodeList().count(), 3);
+    QVERIFY(node1->childNodeList()[0] == node2);
+    QVERIFY(node1->childNodeList()[1] == node3);
+    QVERIFY(node1->childNodeList()[2] == node4);
+
     // Add node3 under node2 as well so that it has multiple parents.
     node2->addNode(node3);
     QVERIFY(node3->parent() == node1);  // parent is unchanged

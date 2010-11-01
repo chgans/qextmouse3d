@@ -236,6 +236,22 @@ QGLSceneNode::QGLSceneNode(const QGeometryData &geometry, QObject *parent)
 */
 QGLSceneNode::~QGLSceneNode()
 {
+    Q_D(QGLSceneNode);
+
+    // Detach ourselves from our children.  The children will be
+    // deleted separately when their QObject::parent() deletes them.
+    for (int index = 0; index < d->childNodes.count(); ++index)
+        d->childNodes.at(index)->d_ptr->parentNodes.removeOne(this);
+
+    // Detach ourselves from our remaining parents, and notify them
+    // to update their bounding boxes.  This won't be needed if we
+    // are recursively destroying a tree of nodes because the parent
+    // already detached from this node above.
+    for (int index = 0; index < d->parentNodes.count(); ++index) {
+        QGLSceneNode *parent = d->parentNodes.at(index);
+        parent->d_ptr->childNodes.removeOne(this);
+        parent->invalidateBoundingBox();
+    }
 }
 
 /*!
@@ -1075,40 +1091,11 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
     emit updated();
 }
 
-void QGLSceneNode::parentOnto(QGLSceneNode *parent)
-{
-    Q_D(QGLSceneNode);
-    Q_ASSERT(!d->parentNodes.contains(parent));
-    d->parentNodes.append(parent);
-}
-
-void QGLSceneNode::unParent(QGLSceneNode *parent)
-{
-    Q_D(QGLSceneNode);
-    if (d) {    // May be null if called via deleteChild().
-        Q_ASSERT(d->parentNodes.contains(parent));
-        d->parentNodes.removeOne(parent);
-        if (this->parent() == parent) {
-            // Transfer QObject ownership to another parent, or null.
-            if (!d->parentNodes.isEmpty())
-                setParent(d->parentNodes[0]);
-            else
-                setParent(0);
-        }
-    }
-}
-
 /*!
     Adds the \a node to the list of child nodes for this node.
 
-    Adding the same child node more than once is not supported, and will
-    lead to undefined results.
-
-    It makes no sense to add a node as a direct child to another node
-    more than once, since it would appear in the same place and overdraw
-    with no perceptible result.
-
-    If the aim is to have the same geometry displayed several times under a
+    This function does nothing if \a node is null or is already a child
+    of this node.  If the aim is to have the same geometry displayed several times under a
     given node, each time with different transformations, use the clone()
     call to create copies of the node and then apply the transformations to
     the copies.
@@ -1143,13 +1130,14 @@ void QGLSceneNode::unParent(QGLSceneNode *parent)
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
-    Q_ASSERT(!d->childNodes.contains(node));
+    if (!node || node->d_ptr->parentNodes.contains(this))
+        return;     // Invalid node, or already under this parent.
     invalidateBoundingBox();
     d->childNodes.append(node);
-    node->parentOnto(this);
+    node->d_ptr->parentNodes.append(this);
     if (!node->parent())
         node->setParent(this);
-    connect(node, SIGNAL(destroyed(QObject*)), this, SLOT(deleteChild(QObject*)));
+    connect(node, SIGNAL(updated()), this, SIGNAL(updated()));
     emit updated();
 }
 
@@ -1172,28 +1160,27 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
 void QGLSceneNode::removeNode(QGLSceneNode *node)
 {
     Q_D(QGLSceneNode);
-    // we always remove the correct node here because each node is unique
-    // under a given parent due to the requirement that no node be addNode()'ed
-    // more than once.
+    if (!node || !node->d_ptr->parentNodes.contains(this))
+        return;     // Invalid node or not attached to this parent.
     d->childNodes.removeOne(node);
-    node->unParent(this);
-    node->disconnect(this);
-    emit updated();
+    node->d_ptr->parentNodes.removeOne(this);
+    if (node->parent() == this) {
+        // Transfer QObject ownership to another parent, or null.
+        if (!node->d_ptr->parentNodes.isEmpty())
+            node->setParent(node->d_ptr->parentNodes[0]);
+        else
+            node->setParent(0);
+    }
+    disconnect(node, SIGNAL(updated()), this, SIGNAL(updated()));
     invalidateBoundingBox();
-}
-
-void QGLSceneNode::deleteChild(QObject *object)
-{
-    removeNode(reinterpret_cast<QGLSceneNode*>(object));
+    emit updated();
 }
 
 void QGLSceneNode::invalidateBoundingBox() const
 {
     Q_D(const QGLSceneNode);
-    if (d) {    // May be null when called via deleteChild().
-        d->boxValid = false;
-        d->invalidateParentBoundingBox();
-    }
+    d->boxValid = false;
+    d->invalidateParentBoundingBox();
 }
 
 void QGLSceneNode::invalidateTransform() const
