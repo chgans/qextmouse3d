@@ -1079,16 +1079,8 @@ QList<QGLSceneNode*> QGLSceneNode::allChildren() const
 */
 void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
 {
-    Q_D(QGLSceneNode);
-    invalidateBoundingBox();
-    QList<QGLSceneNode*>::iterator it = d->childNodes.begin();
-    for ( ; it != d->childNodes.end(); ++it)
-    {
-        QGLSceneNode *node = *it;
-        node->d_func()->parentNodes.removeOne(this);
-    }
-    d->childNodes = children;
-    emit updated();
+    removeNodes(childNodeList());
+    addNodes(children);
 }
 
 /*!
@@ -1125,7 +1117,7 @@ void QGLSceneNode::setChildNodeList(const QList<QGLSceneNode*> &children)
     ownership.  However, if \a node does not currently have a
     QObject::parent(), the parent will be set to this node.
 
-    \sa removeNode(), clone()
+    \sa removeNode(), clone(), addNodes()
 */
 void QGLSceneNode::addNode(QGLSceneNode *node)
 {
@@ -1138,6 +1130,29 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
     if (!node->parent())
         node->setParent(this);
     connect(node, SIGNAL(updated()), this, SIGNAL(updated()));
+    emit updated();
+}
+
+/*!
+    Adds the members of \a nodes to the list of child nodes
+    for this node.
+
+    \sa addNode(), removeNodes()
+*/
+void QGLSceneNode::addNodes(const QList<QGLSceneNode *> &nodes)
+{
+    Q_D(QGLSceneNode);
+    for (int index = 0; index < nodes.count(); ++index) {
+        QGLSceneNode *node = nodes.at(index);
+        if (!node || node->d_ptr->parentNodes.contains(this))
+            continue;   // Invalid node, or already under this parent.
+        d->childNodes.append(node);
+        node->d_ptr->parentNodes.append(this);
+        if (!node->parent())
+            node->setParent(this);
+        connect(node, SIGNAL(updated()), this, SIGNAL(updated()));
+    }
+    invalidateBoundingBox();
     emit updated();
 }
 
@@ -1155,7 +1170,7 @@ void QGLSceneNode::addNode(QGLSceneNode *node)
     If the QObject::parent() of \a node was not a scene node parent,
     then it will be left unmodified.
 
-    \sa addNode()
+    \sa addNode(), removeNodes()
 */
 void QGLSceneNode::removeNode(QGLSceneNode *node)
 {
@@ -1172,6 +1187,34 @@ void QGLSceneNode::removeNode(QGLSceneNode *node)
             node->setParent(0);
     }
     disconnect(node, SIGNAL(updated()), this, SIGNAL(updated()));
+    invalidateBoundingBox();
+    emit updated();
+}
+
+/*!
+    Removes the members of \a nodes from the list of child nodes
+    for this node.
+
+    \sa removeNode(), addNodes()
+*/
+void QGLSceneNode::removeNodes(const QList<QGLSceneNode *> &nodes)
+{
+    Q_D(QGLSceneNode);
+    for (int index = 0; index < nodes.count(); ++index) {
+        QGLSceneNode *node = nodes.at(index);
+        if (!node || !node->d_ptr->parentNodes.contains(this))
+            continue;   // Invalid node or not attached to this parent.
+        d->childNodes.removeOne(node);
+        node->d_ptr->parentNodes.removeOne(this);
+        if (node->parent() == this) {
+            // Transfer QObject ownership to another parent, or null.
+            if (!node->d_ptr->parentNodes.isEmpty())
+                node->setParent(node->d_ptr->parentNodes[0]);
+            else
+                node->setParent(0);
+        }
+        disconnect(node, SIGNAL(updated()), this, SIGNAL(updated()));
+    }
     invalidateBoundingBox();
     emit updated();
 }
@@ -1414,14 +1457,34 @@ void QGLSceneNode::setPickNode(QGLPickNode *node)
     The copy will reference the same underlying geometry, child nodes, and
     have all effects, transforms and other properties copied from this node.
     The only property that is not copied is pickNode().
+
+    \sa cloneNoChildren()
 */
 QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 {
     Q_D(const QGLSceneNode);
     QGLSceneNode *node = new QGLSceneNode
         (new QGLSceneNodePrivate(d), parent ? parent : this->parent());
-    node->setChildNodeList(d->childNodes);
+    node->addNodes(d->childNodes);
     return node;
+}
+
+/*!
+    Creates a new QGLSceneNode that is a copy of this scene node, with
+    \a parent as the parent of the new copy.  If parent is NULL then parent
+    is set to this nodes parent.
+
+    The copy will reference the same underlying geometry, and
+    have all effects, transforms and other properties copied from this node.
+    The childNodeList() and pickNodes() are not cloned.
+
+    \sa clone()
+*/
+QGLSceneNode *QGLSceneNode::cloneNoChildren(QObject *parent) const
+{
+    Q_D(const QGLSceneNode);
+    return new QGLSceneNode
+        (new QGLSceneNodePrivate(d), parent ? parent : this->parent());
 }
 
 /*!
@@ -1433,21 +1496,20 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     have all effects, transforms and other properties copied from this node.
 
     The copy returned will have the same child nodes, except all child nodes
-    whose objectName() is equal to \a name are removed.
+    whose objectName() is equal to \a name.
 
     \sa clone(), only()
 */
 QGLSceneNode *QGLSceneNode::allExcept(const QString &name, QObject *parent) const
 {
-    QGLSceneNode *n = clone(parent);
-    QList<QGLSceneNode*> ch = n->childNodeList();
-    for (int i = 0; i < ch.count(); ++i)
-    {
-        QGLSceneNode *kn = ch.at(i);
-        if (kn->objectName() == name)
-            n->removeNode(kn);
+    Q_D(const QGLSceneNode);
+    QGLSceneNode *node = cloneNoChildren(parent);
+    for (int index = 0; index < d->childNodes.count(); ++index) {
+        QGLSceneNode *child = d->childNodes.at(index);
+        if (child->objectName() != name)
+            node->addNode(child);
     }
-    return n;
+    return node;
 }
 
 /*!
@@ -1465,20 +1527,16 @@ QGLSceneNode *QGLSceneNode::allExcept(const QString &name, QObject *parent) cons
 */
 QGLSceneNode *QGLSceneNode::only(const QString &name, QObject *parent) const
 {
-    QGLSceneNode *n = clone(parent);
-    QList<QGLSceneNode*> ch = n->childNodeList();
-    QList<QGLSceneNode*> result;
-    for (int i = 0; i < ch.count(); ++i)
-    {
-        QGLSceneNode *kn = ch.at(i);
-        if (kn->objectName() == name)
-        {
-            result.append(kn);
+    Q_D(const QGLSceneNode);
+    QGLSceneNode *node = cloneNoChildren(parent);
+    for (int index = 0; index < d->childNodes.count(); ++index) {
+        QGLSceneNode *child = d->childNodes.at(index);
+        if (child->objectName() == name) {
+            node->addNode(child);
             break;
         }
     }
-    n->setChildNodeList(result);
-    return n;
+    return node;
 }
 
 /*!
@@ -1490,22 +1548,21 @@ QGLSceneNode *QGLSceneNode::only(const QString &name, QObject *parent) const
     have all effects, transforms and other properties copied from this node.
 
     The copy returned will have the same child nodes, except all child nodes
-    whose objectName() is in the list of \a names are removed.
+    whose objectName() is in the list of \a names.
 
     \sa clone(), only()
 */
 QGLSceneNode *QGLSceneNode::allExcept(const QStringList &names, QObject *parent) const
 {
-    QGLSceneNode *n = clone(parent);
-    QList<QGLSceneNode*> ch = n->childNodeList();
+    Q_D(const QGLSceneNode);
+    QGLSceneNode *node = cloneNoChildren(parent);
     QSet<QString> chk = QSet<QString>::fromList(names);
-    for (int i = 0; i < ch.count(); ++i)
-    {
-        QGLSceneNode *kn = ch.at(i);
-        if (chk.contains(kn->objectName()))
-            n->removeNode(kn);
+    for (int index = 0; index < d->childNodes.count(); ++index) {
+        QGLSceneNode *child = d->childNodes.at(index);
+        if (!chk.contains(child->objectName()))
+            node->addNode(child);
     }
-    return n;
+    return node;
 }
 
 /*!
@@ -1517,24 +1574,21 @@ QGLSceneNode *QGLSceneNode::allExcept(const QStringList &names, QObject *parent)
     have all effects, transforms and other properties copied from this node.
 
     The copy returned will have only the child nodes from this
-    whose objectName() is in the list of \a names are removed.
+    whose objectName() is in the list of \a names.
 
     \sa clone(), allExcept()
 */
 QGLSceneNode *QGLSceneNode::only(const QStringList &names, QObject *parent) const
 {
-    QGLSceneNode *n = clone(parent);
-    QList<QGLSceneNode*> ch = n->childNodeList();
-    QList<QGLSceneNode*> result;
+    Q_D(const QGLSceneNode);
+    QGLSceneNode *node = cloneNoChildren(parent);
     QSet<QString> chk = QSet<QString>::fromList(names);
-    for (int i = 0; i < ch.count(); ++i)
-    {
-        QGLSceneNode *kn = ch.at(i);
-        if (chk.contains(kn->objectName()))
-            result.append(kn);
+    for (int index = 0; index < d->childNodes.count(); ++index) {
+        QGLSceneNode *child = d->childNodes.at(index);
+        if (chk.contains(child->objectName()))
+            node->addNode(child);
     }
-    n->setChildNodeList(result);
-    return n;
+    return node;
 }
 
 /*!

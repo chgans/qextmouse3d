@@ -1310,8 +1310,7 @@ QGLSceneNode *QGLBuilder::popNode()
     QGLSceneNode *parentNode = dptr->rootNode;
     if (dptr->nodeStack.count() > 0)
         parentNode = dptr->nodeStack.last();
-    dptr->currentNode = s->clone(parentNode);
-    dptr->currentNode->setChildNodeList(QList<QGLSceneNode*>());
+    dptr->currentNode = s->cloneNoChildren(parentNode);
     dptr->currentNode->setStart(cnt);
     dptr->currentNode->setCount(0);
     dptr->currentNode->setPalette(parentNode->palette());
