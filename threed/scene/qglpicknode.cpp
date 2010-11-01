@@ -103,16 +103,19 @@
     \a parent to assign a pick id to this new node.
 */
 QGLPickNode::QGLPickNode(QGLAbstractScene *parent) :
-    QObject(parent)
+    QObject(parent), m_id(-1), m_target(0)
 {
-    m_id = parent->nextPickId();
+    if (parent)
+        m_id = parent->nextPickId();
 }
 
 /*!
     \fn int QGLPickNode::id() const
     Returns the unique id for this node.  This value is assigned by
     the parent scene for this node and should be different for every
-    node in the scene.
+    node in the scene.  Returns -1 if the id has not been set yet.
+
+    \sa setId()
 */
 
 /*!
@@ -121,16 +124,23 @@ QGLPickNode::QGLPickNode(QGLAbstractScene *parent) :
     be needed, since the constructor causes a unique id to be obtained
     from the parent scene.  This function exists mainly for testing
     purposes.
+
+    \sa id()
 */
 
 /*!
     \fn QGLSceneNode *QGLPickNode::target() const
-    Returns the QGLSceneNode which is the target of this pick node.
+    Returns the QGLSceneNode which is the target of this pick node;
+    null if the target has not been set yet.
+
+    \sa setTarget()
 */
 
 /*!
     \fn void QGLPickNode::setTarget(QGLSceneNode *target)
     Sets the \a target for this pick node.
+
+    \sa target()
 */
 
 /*!

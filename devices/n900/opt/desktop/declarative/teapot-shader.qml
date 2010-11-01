@@ -1,0 +1,1 @@
+../../../../../demos/declarative/teapot-shader.qml

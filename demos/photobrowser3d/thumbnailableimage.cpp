@@ -57,6 +57,7 @@ public:
     {
         ThumbnailableImagePrivate *temp = new ThumbnailableImagePrivate;
         temp->thumbnailed = thumbnailed;
+        temp->pending = pending;
         temp->url = url;
         temp->data = data;
         temp->tex = tex;
@@ -70,6 +71,7 @@ public:
     QBasicAtomicInt ref;
 
     bool thumbnailed;
+    bool pending;
     QUrl url;
     QImage data;
     QGLTexture2D *tex;
@@ -81,6 +83,7 @@ public:
 
 ThumbnailableImagePrivate::ThumbnailableImagePrivate()
     : thumbnailed(false)
+    , pending(false)
     , tex(0)
     , mat(0)
     , scale(15.0f)
@@ -145,9 +148,11 @@ void ThumbnailableImage::setThumbnailed(bool enable)
                 QSize sz = (QSizeF(d->data.size()) / d->scale).toSize();
                 QAtlas *atlas = QAtlas::instance();
                 d->frame = atlas->allocate(sz, d->data, d->indices);
+                d->pending = true;
             }
         }
-        d->thumbnailed = enable;
+        if (!d->pending)
+            d->thumbnailed = enable;
     }
 }
 
@@ -155,7 +160,22 @@ bool ThumbnailableImage::isThumbnailed() const
 {
     bool result = false;
     if (d)
+    {
+        if (d->pending)
+        {
+            QList<QAtlasEntry> queue = QAtlas::instance()->allocationQueue();
+            int i = 0;
+            for ( ; i < queue.count(); ++i)
+                if (d->frame == queue.at(i).rect)
+                    break;
+            if (i == queue.count())
+            {
+                d->pending = false;
+                d->thumbnailed = true;
+            }
+        }
         result = d->thumbnailed;
+    }
     return result;
 }
 

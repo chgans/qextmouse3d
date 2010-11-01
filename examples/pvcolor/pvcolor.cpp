@@ -59,7 +59,7 @@ PVColorView::PVColorView(QWidget *parent)
 {
     //! [0]
     QGLSceneNode *scene = buildGeometry();
-    scene->setParent(pvScene);
+    pvScene->addNode(scene);
 
     // display a copy of the q to the left
     QGLSceneNode *node = scene->clone(pvScene);
@@ -79,7 +79,7 @@ PVColorView::PVColorView(QWidget *parent)
     builder.addTriangles(p);
     node = builder.finalizedSceneNode();
     node->setEffect(QGL::FlatPerVertexColor);
-    node->setParent(pvScene);
+    pvScene->addNode(node);
 
     // rotate the whole scene about x-axis so that
     // q tops are visible when scene is first displayed

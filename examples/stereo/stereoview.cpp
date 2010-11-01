@@ -66,9 +66,9 @@ StereoView::StereoView(const QGLFormat &format, QWidget *parent)
         cube = builder.finalizedSceneNode();
     }
 
-    teapot->setParent(scene);
+    scene->addNode(teapot);
     cube->setPosition(QVector3D(-1.0f, 0.0f, 2.0f));
-    cube->setParent(scene);
+    scene->addNode(cube);
 
     QGLMaterial *china = new QGLMaterial(this);
     china->setAmbientColor(QColor(192, 150, 128));

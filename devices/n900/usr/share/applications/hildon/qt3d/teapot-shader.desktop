@@ -1,9 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
 Version=1.0
-Name=teaservice
-Comment=teaservice
-Exec=/opt/desktop/scripts/run-qt.sh /opt/qt3d/bin/qml3d -fullscreen opt/desktop/declarative/teaservice/teaservice.qml
+Name=teashader
+Comment=teashader
+Exec=/opt/desktop/scripts/run-qt.sh /opt/qt3d/bin/qml3d -fullscreen /opt/desktop/declarative/teapot-shader.qml
 Icon=qml3d-logo
 Terminal=false
 Type=Application

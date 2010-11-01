@@ -631,6 +631,7 @@ QMatrix4x4Stack& QGLPainter::projectionMatrix()
     Returns a reference to the modelview matrix stack.
 
     \sa projectionMatrix(), combinedMatrix(), normalMatrix(), setCamera()
+    \sa worldMatrix()
 */
 QMatrix4x4Stack& QGLPainter::modelViewMatrix()
 {
@@ -660,6 +661,64 @@ QMatrix4x4 QGLPainter::combinedMatrix() const
     const QMatrix4x4StackPrivate *proj = d->projectionMatrix.d_func();
     const QMatrix4x4StackPrivate *mv = d->modelViewMatrix.d_func();
     return proj->matrix * mv->matrix;
+}
+
+// Inverting the eye transformation will often result in values like
+// 1.5e-15 in the world matrix.  Clamp these to zero to make worldMatrix()
+// more stable when removing the eye component of the modelViewMatrix().
+static inline qreal qt_gl_stablize_value(qreal value)
+{
+    return (qAbs(value) >= 0.00001f) ? value : 0.0f;
+}
+static inline QMatrix4x4 qt_gl_stablize_matrix(const QMatrix4x4 &m)
+{
+    return QMatrix4x4(qt_gl_stablize_value(m(0, 0)),
+                      qt_gl_stablize_value(m(0, 1)),
+                      qt_gl_stablize_value(m(0, 2)),
+                      qt_gl_stablize_value(m(0, 3)),
+                      qt_gl_stablize_value(m(1, 0)),
+                      qt_gl_stablize_value(m(1, 1)),
+                      qt_gl_stablize_value(m(1, 2)),
+                      qt_gl_stablize_value(m(1, 3)),
+                      qt_gl_stablize_value(m(2, 0)),
+                      qt_gl_stablize_value(m(2, 1)),
+                      qt_gl_stablize_value(m(2, 2)),
+                      qt_gl_stablize_value(m(2, 3)),
+                      qt_gl_stablize_value(m(3, 0)),
+                      qt_gl_stablize_value(m(3, 1)),
+                      qt_gl_stablize_value(m(3, 2)),
+                      qt_gl_stablize_value(m(3, 3)));
+}
+
+/*!
+    Returns the world matrix, which is the modelViewMatrix() without
+    the eye transformation that was set in the previous call to
+    setCamera().
+
+    In the following example, the \c{world} variable will be set to the
+    translation and scale component of the modelview transformation,
+    without the "look at" component from the camera:
+
+    \code
+    painter.setCamera(camera);
+    painter.modelViewMatrix().translate(0.0f, 5.0f, 0.0f);
+    painter.modelViewMatrix().scale(1.5f);
+    QMatrix4x4 world = painter.worldMatrix();
+    \endcode
+
+    Note: the world matrix is determined by multiplying the inverse of
+    the camera's look at component with the current modelview matrix.
+    Thus, the result may not be precisely the same as constructing a
+    matrix from translate and scale operations starting with the identity.
+
+    \sa modelViewMatrix(), setCamera()
+*/
+QMatrix4x4 QGLPainter::worldMatrix() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return qt_gl_stablize_matrix
+        (d->inverseEyeMatrix * d->modelViewMatrix.top());
 }
 
 /*!
@@ -722,15 +781,17 @@ void QGLPainter::setEye(QGL::Eye eye)
     This function is typically called at the beginning of a scene rendering
     pass to initialize the modelview and projection matrices.
 
-    \sa eye(), modelViewMatrix(), projectionMatrix()
+    \sa eye(), modelViewMatrix(), projectionMatrix(), worldMatrix()
 */
 void QGLPainter::setCamera(const QGLCamera *camera)
 {
     Q_ASSERT(camera);
     Q_D(QGLPainter);
     QGLPAINTER_CHECK_PRIVATE();
-    d->modelViewMatrix = camera->modelViewMatrix(d->eye);
+    QMatrix4x4 lookAt = camera->modelViewMatrix(d->eye);
+    d->modelViewMatrix = lookAt;
     d->projectionMatrix = camera->projectionMatrix(aspectRatio());
+    d->inverseEyeMatrix = lookAt.inverted();
 }
 
 /*!

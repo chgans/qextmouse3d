@@ -60,44 +60,38 @@ class QGLPickNode;
 class Q_QT3D_EXPORT QGLSceneNode : public QObject
 {
     Q_OBJECT
-    Q_DECLARE_PRIVATE(QGLSceneNode);
-    Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged)
-    Q_PROPERTY(qreal rotX READ rotX WRITE setRotX NOTIFY rotationChanged)
-    Q_PROPERTY(qreal rotY READ rotY WRITE setRotY NOTIFY rotationChanged)
-    Q_PROPERTY(qreal rotZ READ rotZ WRITE setRotZ NOTIFY rotationChanged)
-    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
-    Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
-    Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
-    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
-    Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY scaleChanged)
-    Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY materialChanged)
-    Q_PROPERTY(QGLMaterial *backMaterial READ backMaterial WRITE setBackMaterial NOTIFY backMaterialChanged)
-    Q_PROPERTY(int start READ start WRITE setStart NOTIFY startChanged)
-    Q_PROPERTY(int count READ count WRITE setCount NOTIFY countChanged)
-    Q_PROPERTY(QVector3D center READ center NOTIFY centerChanged)
-    Q_PROPERTY(DrawingMode drawingMode READ drawingMode WRITE setDrawingMode NOTIFY drawingModeChanged)
-    Q_PROPERTY(bool boundingBoxEnabled READ boundingBoxEnabled WRITE setboundingBoxEnabled NOTIFY boundingBoxEnabledChanged)
-    Q_ENUMS(DrawingMode)
+    Q_DECLARE_PRIVATE(QGLSceneNode)
+    Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY updated)
+    Q_PROPERTY(qreal rotX READ rotX WRITE setRotX NOTIFY updated)
+    Q_PROPERTY(qreal rotY READ rotY WRITE setRotY NOTIFY updated)
+    Q_PROPERTY(qreal rotZ READ rotZ WRITE setRotZ NOTIFY updated)
+    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY updated)
+    Q_PROPERTY(qreal x READ x WRITE setX NOTIFY updated)
+    Q_PROPERTY(qreal y READ y WRITE setY NOTIFY updated)
+    Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY updated)
+    Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY updated)
+    Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY updated)
+    Q_PROPERTY(QGLMaterial *backMaterial READ backMaterial WRITE setBackMaterial NOTIFY updated)
 public:
     explicit QGLSceneNode(QObject *parent = 0);
     explicit QGLSceneNode(const QGeometryData &geometry, QObject *parent = 0);
     virtual ~QGLSceneNode();
 
-    enum DrawingMode
+    enum Option
     {
-        Points = QGL::Points,
-        Lines  = QGL::Lines,
-        Triangles = QGL::Triangles
+        CullBoundingBox = 0x0001,
+        ViewNormals     = 0x0002
     };
+    Q_DECLARE_FLAGS(Options, Option)
 
-    bool boundingBoxEnabled() const;
-    void setboundingBoxEnabled(bool enabled);
+    QGLSceneNode::Options options() const;
+    void setOptions(QGLSceneNode::Options options);
+    void setOption(QGLSceneNode::Option option, bool value);
 
     QGeometryData geometry() const;
     void setGeometry(QGeometryData);
 
     QBox3D boundingBox() const;
-    QVector3D center() const;
 
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &);
@@ -120,8 +114,8 @@ public:
     QVector3D scale() const;
     void setScale(const QVector3D &scale);
 
-    DrawingMode drawingMode() const;
-    void setDrawingMode(DrawingMode mode);
+    QGL::DrawingMode drawingMode() const;
+    void setDrawingMode(QGL::DrawingMode mode);
 
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
@@ -156,12 +150,11 @@ public:
     void setChildNodeList(const QList<QGLSceneNode*> &children);
     void addNode(QGLSceneNode *node);
     void removeNode(QGLSceneNode *node);
-    void setParent(QObject *);
 
     virtual void draw(QGLPainter *painter);
 
-    virtual QGLPickNode *pickNode() const;
-    virtual void setPickNode(QGLPickNode *node);
+    QGLPickNode *pickNode() const;
+    void setPickNode(QGLPickNode *node);
 
     Q_INVOKABLE QGLSceneNode *clone(QObject *parent = 0) const;
     Q_INVOKABLE QGLSceneNode *allExcept(const QString &name, QObject *parent = 0) const;
@@ -169,21 +162,8 @@ public:
     Q_INVOKABLE QGLSceneNode *allExcept(const QStringList &names, QObject *parent = 0) const;
     Q_INVOKABLE QGLSceneNode *only(const QStringList &names, QObject *parent = 0) const;
 
-    void setNormalViewEnabled(bool enabled);
-    bool normalViewEnabled() const;
-
 Q_SIGNALS:
-    void childNodesChanged();
-    void rotationChanged();
-    void positionChanged();
-    void scaleChanged();
-    void materialChanged();
-    void backMaterialChanged();
-    void startChanged();
-    void countChanged();
-    void drawingModeChanged();
-    void centerChanged();
-    void boundingBoxEnabledChanged();
+    void updated();
 
 protected:
     virtual void drawGeometry(QGLPainter *painter);
@@ -205,6 +185,8 @@ private:
 
     QScopedPointer<QGLSceneNodePrivate> d_ptr;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGLSceneNode::Options)
 
 #ifndef QT_NO_DEBUG_STREAM
 Q_QT3D_EXPORT void qDumpScene(QGLSceneNode *, int indent = 0, const QSet<QGLSceneNode*> &loop = QSet<QGLSceneNode*>());
