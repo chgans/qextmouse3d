@@ -56,7 +56,8 @@ class Q_QT3D_EXPORT QGraphicsScale3D : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged)
-    Q_PROPERTY(QVariant scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(QVector3D scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(qreal uniformScale READ uniformScale WRITE setUniformScale NOTIFY scaleChanged)
 public:
     QGraphicsScale3D(QObject *parent = 0);
     ~QGraphicsScale3D();
@@ -64,8 +65,11 @@ public:
     QVector3D origin() const;
     void setOrigin(const QVector3D &value);
 
-    QVariant scale() const;
-    void setScale(const QVariant &value);
+    QVector3D scale() const;
+    void setScale(const QVector3D &value);
+
+    qreal uniformScale() const;
+    void setUniformScale(qreal value);
 
     void applyTo(QMatrix4x4 *matrix) const;
 
