@@ -169,7 +169,7 @@ void PanController::pan()
 
         PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
         Q_ASSERT(view);
-        view->queueUpdate();
+        view->update();
     }
 }
 

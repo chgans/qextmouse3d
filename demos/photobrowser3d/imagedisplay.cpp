@@ -213,7 +213,7 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
     }
     PhotoBrowser3DView *view = qobject_cast<PhotoBrowser3DView*>(parent());
     Q_ASSERT(view);
-    connect(m_currentFrame, SIGNAL(nodeChanged()), view, SLOT(queueUpdate()));
+    connect(m_currentFrame, SIGNAL(nodeChanged()), view, SLOT(update()));
 
     m_imageSetToDefault = false;
     emit framesChanged();

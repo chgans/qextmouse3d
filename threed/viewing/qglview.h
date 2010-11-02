@@ -96,9 +96,6 @@ public:
 
     QVector3D mapPoint(const QPoint &point) const;
 
-public Q_SLOTS:
-    void queueUpdate();
-
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
@@ -123,7 +120,6 @@ protected:
 
 private Q_SLOTS:
     void cameraChanged();
-    void performUpdate();
 
 private:
     QGLViewPrivate *d;

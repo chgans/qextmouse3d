@@ -802,7 +802,7 @@ QObject *Viewport::objectForPoint(int x, int y)
 void Viewport::update3d()
 {
     if (d->view)
-        d->view->queueUpdate();
+        d->view->update();
     else
         update();
 }
@@ -817,7 +817,7 @@ void Viewport::update3d()
 void Viewport::cameraChanged()
 {
     if (d->view)
-        d->view->setCamera(d->camera);  // Calls queueUpdate() internally.
+        d->view->setCamera(d->camera);  // Calls update() internally.
     else
         update();
 }

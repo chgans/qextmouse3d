@@ -398,7 +398,7 @@ void CubeView::setCubeAngle(qreal angle)
 {
     cangle = angle;
     accelerometerTimeout();
-    queueUpdate();
+    update();
 }
 
 void CubeView::accelerometerTimeout()

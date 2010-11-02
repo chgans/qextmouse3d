@@ -58,7 +58,7 @@ void ImageView::load(const QString &fileName)
     if (!m_image.load(fileName))
         qWarning() << "Could not load" << fileName;
     else
-        queueUpdate();
+        update();
 }
 
 void ImageView::paintGL(QGLPainter *painter)

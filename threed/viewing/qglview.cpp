@@ -661,7 +661,7 @@ QGLCamera *QGLView::camera() const
 
     If \a value is null, then the default camera object will be used.
 
-    This function will call queueUpdate() to force the view to
+    This function will call update() to force the view to
     update with the new camera parameters upon the next event loop.
 
     \sa camera()
@@ -732,26 +732,7 @@ void QGLView::cameraChanged()
     d->pickBufferForceUpdate = true;
 
     // Queue an update for the next event loop.
-    queueUpdate();
-}
-
-/*!
-    Queues an updateGL() to happen during the next event loop.
-    If multiple calls are made to this function, only one
-    call to updateGL() occurs during the next event loop.
-*/
-void QGLView::queueUpdate()
-{
-    if (!d->updateQueued) {
-        d->updateQueued = true;
-        QTimer::singleShot(0, this, SLOT(performUpdate()));
-    }
-}
-
-void QGLView::performUpdate()
-{
-    d->updateQueued = false;
-    updateGL();
+    update();
 }
 
 /*!

@@ -219,7 +219,7 @@ void PhotoBrowser3DView::initialiseImageManager(const QUrl &url)
     connect(m_images, SIGNAL(finished()), this, SLOT(waitForExit()));
 
     connect(m_display, SIGNAL(framesChanged()), this, SLOT(pickableDirty()));
-    connect(m_display, SIGNAL(framesChanged()), this, SLOT(queueUpdate()));
+    connect(m_display, SIGNAL(framesChanged()), this, SLOT(update()));
 
     m_images->setImageBaseUrl(url);
     QThread::Priority p = QThread::idealThreadCount() < 2 ?
