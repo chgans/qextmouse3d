@@ -11,7 +11,7 @@ SOURCES += \
 
 LIBS += -L../../../../lib -L../../../../bin
 
-include(../../../../threed/threed_dep.pri)
+include(../../../../src/threed/threed_dep.pri)
 
 OTHER_FILES += collada_cube.xml
 RESOURCES += tst_qglcolladafxeffectfactory.qrc

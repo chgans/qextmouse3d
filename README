@@ -11,21 +11,22 @@ build some parts of Qt/3D.
 
 Directory structure:
 
-threed/
+src/threed/
     This is the main library of the Qt/3D project, containing abstractions
     for cross-platform GL, shaders, lighting models, and so on.
-util/
-    Contains the "meshcvt" utility, for converting raw bezier and triangle
-    meshes into a form that can be loaded as static const data.
-plugins/
+src/plugins/
     Scene format loading plugins.
+src/imports/
+    QML import plugins.
+util/
+    Various utilities that are useful when working with Qt/3D.
 examples/
     Some examples of using the Qt/3D library.
 demos/
     More complex demos of Qt/3D, including QML/3D for integrating
-    Qt/3D with the Declarative UI component of Kinetic.
+    Qt/3D with the "Qt Quick" Declarative UI component of Qt 4.7.
 tests/
-    Unit tests for the Math3D and Qt/3D libraries.
+    Unit tests for the Qt/3D libraries.
 doc/
     Documentation.
 

@@ -10,4 +10,4 @@ SOURCES += tst_qglattributevalue.cpp
 
 LIBS += -L../../../../lib -L../../../../bin
 
-include(../../../../threed/threed_dep.pri)
+include(../../../../src/threed/threed_dep.pri)

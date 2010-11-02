@@ -34,4 +34,4 @@ OTHER_FILES += qtlogo.png \
     shaders/minimal_texture_shader.fsh \
     shaders/flat_color_shader.vsh \
     shaders/flat_color_shader.fsh
-include(../../threed/threed_dep.pri)
+include(../../src/threed/threed_dep.pri)

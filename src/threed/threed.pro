@@ -9,11 +9,11 @@ gcov {
 }
 QT += opengl \
     network
-DESTDIR = ../lib
+DESTDIR = ../../lib
 
 win32 {
     CONFIG += debug_and_release debug_and_release_config build_all
-    DLLDESTDIR = ../bin
+    DLLDESTDIR = ../../bin
     !static:DEFINES += QT_MAKEDLL
 
     CONFIG(debug, debug|release) {

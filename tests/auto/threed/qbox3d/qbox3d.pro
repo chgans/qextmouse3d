@@ -5,6 +5,6 @@ CONFIG += unittest warn_on
 
 LIBS += -L../../../../lib -L../../../../bin
 
-include(../../../../threed/threed_dep.pri)
+include(../../../../src/threed/threed_dep.pri)
 
 SOURCES += tst_qbox3d.cpp

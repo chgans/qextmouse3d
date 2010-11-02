@@ -12,7 +12,7 @@ RESOURCES = cube.qrc
 LIBS += -L../../lib -L../../bin
 DESTDIR = ../../bin
 
-include(../../threed/threed_dep.pri)
+include(../../src/threed/threed_dep.pri)
 
 OTHER_FILES += \
     shaders/objectlineartexgen.frag \

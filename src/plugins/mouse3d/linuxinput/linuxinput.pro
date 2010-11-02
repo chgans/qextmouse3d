@@ -14,7 +14,7 @@ QTDIR_build:DESTDIR = $$QT_BUILD_TREE/plugins/mouse3d
 target.path += $$[QT_INSTALL_PLUGINS]/mouse3d
 INSTALLS += target
 
-LIBS += -L../../../lib -L../../../bin
+LIBS += -L../../../../lib -L../../../../bin
 QT += opengl network dbus
 
 have_libusb {
@@ -22,4 +22,4 @@ have_libusb {
     LIBS += -lusb
 }
 
-include(../../../threed/threed_dep.pri)
+include(../../../../src/threed/threed_dep.pri)

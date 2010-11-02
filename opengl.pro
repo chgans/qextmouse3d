@@ -4,10 +4,9 @@ linux*:!isEqual(LIBUSB_DETECT_DONE,yes): include(config.tests/libusb_detect.pri)
 QMAKE_DISTCLEAN += .qmake.cache
 
 TEMPLATE = subdirs
-SUBDIRS += threed plugins
+SUBDIRS += src
 !gcov: SUBDIRS += util examples demos
 SUBDIRS += tests
-contains(QT_CONFIG, declarative): SUBDIRS += imports
 CONFIG += ordered
 
 include(doc/doc.pri)

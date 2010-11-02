@@ -9,4 +9,4 @@ HEADERS = modelview.h
 RESOURCES = model_advanced.qrc
 LIBS += -L../../../lib \
     -L../../../bin
-include(../../../threed/threed_dep.pri)
+include(../../../src/threed/threed_dep.pri)

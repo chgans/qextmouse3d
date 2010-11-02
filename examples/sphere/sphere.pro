@@ -10,4 +10,4 @@ RESOURCES = sphere.qrc
 LIBS += -L../../lib \
     -L../../bin
 DESTDIR = ../../bin
-include(../../threed/threed_dep.pri)
+include(../../src/threed/threed_dep.pri)

@@ -20,12 +20,12 @@ system_3ds {
         else:LIBS += -l3ds
     }
 } else {
-    include(../../../3rdparty/lib3ds/lib3ds.pri)
+    include(../../../../3rdparty/lib3ds/lib3ds.pri)
 }
 
 QTDIR_build:DESTDIR = $$QT_BUILD_TREE/plugins/sceneformats
 target.path += $$[QT_INSTALL_PLUGINS]/sceneformats
 INSTALLS += target
-LIBS += -L../../../lib \
-    -L../../../bin
-include(../../../threed/threed_dep.pri)
+LIBS += -L../../../../lib \
+    -L../../../../bin
+include(../../../../src/threed/threed_dep.pri)

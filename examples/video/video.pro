@@ -9,6 +9,6 @@ SOURCES   += main.cpp \
              videoview.cpp \
              fbovideosurface.cpp
 
-include(../../threed/threed_dep.pri)
+include(../../src/threed/threed_dep.pri)
 LIBS += -L../../lib -L../../bin
 DESTDIR = ../../bin
