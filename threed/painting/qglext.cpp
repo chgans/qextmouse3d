@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
 
 #if !defined(QT_OPENGL_ES)
 
-typedef void (QGLF_APIENTRYP q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
+typedef void (QT3D_GLF_APIENTRYP q_PFNGLCLIENTACTIVETEXTUREPROC) (GLenum);
 
 class QGLMultiTextureExtensions
 {

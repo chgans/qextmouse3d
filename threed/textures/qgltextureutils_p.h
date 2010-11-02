@@ -96,7 +96,7 @@ QT_BEGIN_NAMESPACE
 // Modify a wrapping mode to account for platform differences.
 QGL::TextureWrap qt_gl_modify_texture_wrap(QGL::TextureWrap value);
 
-typedef void (QGLF_APIENTRYP q_glCompressedTexImage2DARB)
+typedef void (QT3D_GLF_APIENTRYP q_glCompressedTexImage2DARB)
     (GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid *);
 
 class QGLTextureExtensions
