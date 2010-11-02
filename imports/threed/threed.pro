@@ -10,7 +10,7 @@ symbian {
     }
 }
 QT += declarative opengl network
-VERSION = 1.0.0
+//VERSION = 1.0.0
 
 SOURCES += \
     threed.cpp \

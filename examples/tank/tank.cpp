@@ -55,6 +55,8 @@
 #include "qglcylinder.h"
 #include "qglmaterial.h"
 #include "qgltexture2d.h"
+#include "qgraphicsscale3d.h"
+#include "qgraphicsrotation3d.h"
 
 static inline int rval()
 {
@@ -89,14 +91,16 @@ Tank::Tank(QObject *parent) :
     QGLSceneNode(parent)
 {
     QSequentialAnimationGroup *seq = new QSequentialAnimationGroup(this);
-    QPropertyAnimation *anim = new QPropertyAnimation(this, "scale");
+    QGraphicsScale3D *scale = new QGraphicsScale3D(this);
+    addTransform(scale);
+    QPropertyAnimation *anim = new QPropertyAnimation(scale, "scale");
     anim->setDuration(10000);
     anim->setStartValue(QVector3D(1.0f, 0.1f, 1.0f));
     anim->setEndValue(QVector3D(1.0f, 1.2f, 1.0f));
     anim->setEasingCurve(QEasingCurve(QEasingCurve::InOutQuad));
     seq->addAnimation(anim);
     seq->addPause(2000);
-    anim = new QPropertyAnimation(this, "scale");
+    anim = new QPropertyAnimation(scale, "scale");
     anim->setDuration(10000);
     anim->setStartValue(QVector3D(1.0f, 1.2f, 1.0f));
     anim->setEndValue(QVector3D(1.0f, 0.1f, 1.0f));
@@ -122,7 +126,10 @@ QGLSceneNode *Tank::tankObject()
         build << QGLCylinder(1.0f, 1.0f, 1.0f, 32);
         theTank = build.finalizedSceneNode();
         theTank->setObjectName("Tank Component");
-        theTank->setRotX(-90.0f);
+        QGraphicsRotation3D *rot = new QGraphicsRotation3D(theTank);
+        rot->setAxis(QVector3D(1, 0, 0));
+        rot->setAngle(-90.0f);
+        theTank->addTransform(rot);
         theTank->setY(-theTank->boundingBox().minimum().y());
     }
     return theTank;

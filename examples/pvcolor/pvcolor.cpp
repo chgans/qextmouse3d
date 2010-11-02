@@ -42,6 +42,7 @@
 #include "qglbuilder.h"
 #include "qglscenenode.h"
 #include "qgllightmodel.h"
+#include "qgraphicsrotation3d.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qmath.h>
@@ -59,7 +60,7 @@ PVColorView::PVColorView(QWidget *parent)
 {
     //! [0]
     QGLSceneNode *scene = buildGeometry();
-    scene->setParent(pvScene);
+    pvScene->addNode(scene);
 
     // display a copy of the q to the left
     QGLSceneNode *node = scene->clone(pvScene);
@@ -79,11 +80,14 @@ PVColorView::PVColorView(QWidget *parent)
     builder.addTriangles(p);
     node = builder.finalizedSceneNode();
     node->setEffect(QGL::FlatPerVertexColor);
-    node->setParent(pvScene);
+    pvScene->addNode(node);
 
     // rotate the whole scene about x-axis so that
     // q tops are visible when scene is first displayed
-    pvScene->setRotation(QVector3D(20.0f, 0.0f, 0.0f));
+    QGraphicsRotation3D *rot = new QGraphicsRotation3D(pvScene);
+    rot->setAxis(QVector3D(1, 0, 0));
+    rot->setAngle(20.0f);
+    pvScene->addTransform(rot);
     //! [0]
 }
 
@@ -320,6 +324,9 @@ QGLSceneNode *PVColorView::buildGeometry()
     }
 
     QGLSceneNode *node = builder.finalizedSceneNode();
-    node->setRotation(QVector3D(0.0f, 0.0f, -45.0f));
+    QGraphicsRotation3D *rot = new QGraphicsRotation3D(node);
+    rot->setAxis(QVector3D(0, 0, 1));
+    rot->setAngle(-45.0f);
+    node->addTransform(rot);
     return node;
 }

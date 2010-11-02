@@ -58,7 +58,7 @@ struct MVCNode
     void addMVCChildren(QGLSceneNode *node)
     {
         QList<QGLSceneNode*> ch;
-        ch = node->childNodeList();
+        ch = node->children();
         for (int row = 0; row < ch.size(); ++row)
         {
             QGLSceneNode *c = ch.at(row);
@@ -298,7 +298,7 @@ QVariant Model::data(const QModelIndex & index, int role) const
     {
         if (d->node == m_sceneRoot)
             result = QIcon(QLatin1String(":/images/file16x16.png"));
-        else if (d->node->childNodeList().count() > 0)
+        else if (d->node->children().count() > 0)
             result = QIcon(QLatin1String(":/images/mesh16x16.png"));
         else
             result = QIcon(QLatin1String(":/images/red-dot.png"));

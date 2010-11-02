@@ -512,6 +512,9 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     draw(&painter);
     painter.setPicking(false);
     painter.popSurface();
+
+    // Disable the effect to return control to the GL paint engine.
+    painter.disableEffect();
 }
 
 /*!
@@ -532,6 +535,10 @@ void Viewport::earlyDraw(QGLPainter *painter)
             painter->setClearColor(d->backgroundColor);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
+
+    // Force the effect to be updated.  The GL paint engine
+    // has left the GL state in an unknown condition.
+    painter->disableEffect();
 
     // If we have a scene backdrop, then draw it now.
     if (d->backdrop) {

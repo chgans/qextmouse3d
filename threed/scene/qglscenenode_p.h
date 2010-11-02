@@ -68,8 +68,7 @@ class QGLSceneNodePrivate
 {
 public:
     QGLSceneNodePrivate()
-        : geometry(0)
-        , palette(0)
+        : palette(0)
         , localEffect(QGL::FlatColor)   // 0 - zero
         , customEffect(0)
         , hasEffect(false)
@@ -77,12 +76,32 @@ public:
         , backMaterial(-1)
         , start(0)
         , count(0)
-        , viewNormals(false)
+        , options(QGLSceneNode::CullBoundingBox)
         , pickNode(0)
         , boxValid(false)
-        , transformValid(false)
-        , drawingMode(QGLSceneNode::Triangles)
-        , boundingBoxEnabled(true)
+        , drawingMode(QGL::Triangles)
+    {
+    }
+
+    // This constructor is used by QGLSceneNode::clone().
+    QGLSceneNodePrivate(const QGLSceneNodePrivate *other)
+        : geometry(other->geometry)
+        , palette(other->palette)
+        , localTransform(other->localTransform)
+        , translate(other->translate)
+        , transforms(other->transforms)
+        , localEffect(other->localEffect)
+        , customEffect(other->customEffect)
+        , hasEffect(other->hasEffect)
+        , material(other->material)
+        , backMaterial(other->backMaterial)
+        , start(other->start)
+        , count(other->count)
+        , options(other->options)
+        , pickNode(0)   // Explicitly not cloned.
+        , bb(other->bb)
+        , boxValid(other->boxValid)
+        , drawingMode(other->drawingMode)
     {
     }
 
@@ -97,8 +116,7 @@ public:
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
     QVector3D translate;
-    QVector3D rotate;
-    QVector3D scale;
+    QList<QGraphicsTransform3D *> transforms;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;
     QList<QGLSceneNode*> childNodes;
@@ -108,14 +126,11 @@ public:
     int backMaterial;
     int start;
     int count;
-    bool viewNormals;
+    QGLSceneNode::Options options;
     QGLPickNode *pickNode;
     mutable QBox3D bb;
     mutable bool boxValid;
-    mutable QMatrix4x4 transform;
-    mutable bool transformValid;
-    QGLSceneNode::DrawingMode drawingMode;
-    bool boundingBoxEnabled;
+    QGL::DrawingMode drawingMode;
 };
 
 #endif // QGLSCENENODE_P_H

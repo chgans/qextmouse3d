@@ -57,7 +57,7 @@ Viewport {
 //! [2]
 //! [3]
         transform: [
-            Scale3D { scale: 1.5 },
+            Scale3D { uniformScale: 1.5 },
             Rotation3D {
                 axis: Qt.vector3d(0, 1, 0)
                 NumberAnimation on angle {

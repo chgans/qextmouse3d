@@ -97,6 +97,7 @@ public:
     const QGLContext *context;
     QMatrix4x4Stack projectionMatrix;
     QMatrix4x4Stack modelViewMatrix;
+    QMatrix4x4 inverseEyeMatrix;
     QGL::Eye eye;
     QGLAbstractEffect *effect;
     QGLAbstractEffect *userEffect;
