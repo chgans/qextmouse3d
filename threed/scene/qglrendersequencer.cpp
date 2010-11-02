@@ -306,7 +306,7 @@ void QGLRenderSequencer::applyState()
     if (s.material() && !d->painter->isPicking())
     {
         QGLMaterial *mat = s.material();
-        if (d->painter->faceMaterial(QGL::FrontFaces) != mat)
+        if (1) //FIXME: d->painter->faceMaterial(QGL::FrontFaces) != mat)
         {
             d->painter->setFaceMaterial(QGL::FrontFaces, mat);
             int texUnit = 0;
