@@ -46,7 +46,7 @@ Item3D {
     id: cube
     property real size: 1
     pretransform: Scale3D {
-        scale: size
+        uniformScale: size
     }
     mesh: Mesh { source: "cube.obj" }
 }
