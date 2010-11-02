@@ -435,7 +435,7 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
     The x, y and z axis translations can also be specified individually as
     seperate properties \l x, \l y, and \l z
 
-    \sa rotX(), rotY(), rotZ()
+    \sa x(), y(), z()
 */
 QVector3D QGLSceneNode::position() const
 {
