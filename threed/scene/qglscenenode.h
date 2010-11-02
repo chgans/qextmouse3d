@@ -62,10 +62,6 @@ class Q_QT3D_EXPORT QGLSceneNode : public QObject
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLSceneNode)
-    Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY updated)
-    Q_PROPERTY(qreal rotX READ rotX WRITE setRotX NOTIFY updated)
-    Q_PROPERTY(qreal rotY READ rotY WRITE setRotY NOTIFY updated)
-    Q_PROPERTY(qreal rotZ READ rotZ WRITE setRotZ NOTIFY updated)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY updated)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY updated)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY updated)
@@ -95,14 +91,6 @@ public:
 
     QMatrix4x4 localTransform() const;
     void setLocalTransform(const QMatrix4x4 &);
-    QVector3D rotation() const;
-    void setRotation(const QVector3D &r);
-    qreal rotX() const;
-    void setRotX(qreal rx);
-    qreal rotY() const;
-    void setRotY(qreal ry);
-    qreal rotZ() const;
-    void setRotZ(qreal rz);
     QVector3D position() const;
     void setPosition(const QVector3D &p);
     qreal x() const;

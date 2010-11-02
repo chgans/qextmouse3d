@@ -56,6 +56,7 @@
 #include "qglmaterial.h"
 #include "qgltexture2d.h"
 #include "qgraphicsscale3d.h"
+#include "qgraphicsrotation3d.h"
 
 static inline int rval()
 {
@@ -125,7 +126,10 @@ QGLSceneNode *Tank::tankObject()
         build << QGLCylinder(1.0f, 1.0f, 1.0f, 32);
         theTank = build.finalizedSceneNode();
         theTank->setObjectName("Tank Component");
-        theTank->setRotX(-90.0f);
+        QGraphicsRotation3D *rot = new QGraphicsRotation3D(theTank);
+        rot->setAxis(QVector3D(1, 0, 0));
+        rot->setAngle(-90.0f);
+        theTank->addTransform(rot);
         theTank->setY(-theTank->boundingBox().minimum().y());
     }
     return theTank;

@@ -128,12 +128,8 @@ QT_BEGIN_NAMESPACE
     Typically the local transformation matrix is set by the process that
     constructed the node:  in the case of an imported model, it is likely
     to have been specified by the model file.  To make individual changes
-    to the location or orientation of this node, use the position and
-    rotation properties - modifying the local transformation is an
-    advanced usage and undesirable results may be obtained.
-
-    Note that modifying scale can effect lighting calculations due to normals
-    so usage of the scale attribute is also advanced.
+    to the location or orientation of this node, use the position() and
+    transforms() properties.
 
     \section1 Scene Graph
 
@@ -375,22 +371,14 @@ QBox3D QGLSceneNode::boundingBox() const
     return d->bb;
 }
 
-// Calculate the resulting matrix from the position, rotation, scale and
-// local transform.  Cache the result for future calls.
+// Calculate the resulting matrix from the position, local transform,
+// and list of transforms.
 QMatrix4x4 QGLSceneNode::transform() const
 {
     Q_D(const QGLSceneNode);
     QMatrix4x4 m;
     if (!d->translate.isNull())
         m.translate(d->translate);
-    if (!d->rotate.isNull())
-    {
-        QQuaternion rx = QQuaternion::fromAxisAndAngle(1.0f, 0.0f, 0.0f, d->rotate.x());
-        QQuaternion ry = QQuaternion::fromAxisAndAngle(0.0f, 1.0f, 0.0f, d->rotate.y());
-        QQuaternion rz = QQuaternion::fromAxisAndAngle(0.0f, 0.0f, 1.0f, d->rotate.z());
-        QQuaternion res = rz * ry * rx;
-        m.rotate(res);
-    }
     if (!d->localTransform.isIdentity())
         m *= d->localTransform;
     for (int index = d->transforms.size() - 1; index >= 0; --index)
@@ -406,11 +394,10 @@ QMatrix4x4 QGLSceneNode::transform() const
     The local transform is typically set during model loading or
     geometry construction, and is a feature of the geometry.
 
-    In general to change the \l {QGLSceneNode::position}{location}
-    or \l {QGLSceneNode::rotation}{orientation} of the node
-    use the position() or rotation() properties instead.
+    In general to change the location or orientation of the node
+    use the position() or transforms() properties instead.
 
-    \sa setLocalTransform(), position(), rotation()
+    \sa setLocalTransform(), position(), transforms()
 */
 QMatrix4x4 QGLSceneNode::localTransform() const
 {
@@ -434,106 +421,6 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
         emit updated();
         invalidateTransform();
         d->invalidateParentBoundingBox();
-    }
-}
-
-/*!
-    \property QGLSceneNode::rotation
-    \brief The amounts of x, y and z axis rotation for this node.
-
-    The x, y and z axis rotations can also be specified individually as
-    seperate properties \l rotX, \l rotY, and \l rotZ
-
-    These values are calculated as seperate axial rotations and then applied
-    in the order x, y and then z: this means that a rotation like
-    \c{(90.0f, 45.0f, 0.0f)} may not do what is intended, since the 90.0f around
-    x will map the y axis onto the z axis.
-
-    \sa rotX(), rotY(), rotZ()
-*/
-QVector3D QGLSceneNode::rotation() const
-{
-    Q_D(const QGLSceneNode);
-    return d->rotate;
-}
-
-void QGLSceneNode::setRotation(const QVector3D &r)
-{
-    Q_D(QGLSceneNode);
-    if (r != d->rotate)
-    {
-        d->rotate = r;
-        emit updated();
-        invalidateTransform();
-    }
-}
-
-/*!
-    \property QGLSceneNode::rotX
-    \brief The amount of x axis rotation for this node.
-
-    \sa rotation()
-*/
-qreal QGLSceneNode::rotX() const
-{
-    Q_D(const QGLSceneNode);
-    return d->rotate.x();
-}
-
-void QGLSceneNode::setRotX(qreal rx)
-{
-    Q_D(QGLSceneNode);
-    if (rx != d->rotate.x())
-    {
-        d->rotate.setX(rx);
-        emit updated();
-        invalidateTransform();
-    }
-}
-
-/*!
-    \property QGLSceneNode::rotY
-    \brief The amount of y axis rotation for this node.
-
-    \sa rotation()
-*/
-qreal QGLSceneNode::rotY() const
-{
-    Q_D(const QGLSceneNode);
-    return d->rotate.y();
-}
-
-void QGLSceneNode::setRotY(qreal ry)
-{
-    Q_D(QGLSceneNode);
-    if (d->rotate.y() != ry)
-    {
-        d->rotate.setY(ry);
-        emit updated();
-        invalidateTransform();
-    }
-}
-
-/*!
-    \property QGLSceneNode::rotZ
-    \brief The amount of z axis rotation for this node.
-
-    \sa rotation()
-*/
-qreal QGLSceneNode::rotZ() const
-{
-    Q_D(const QGLSceneNode);
-    return d->rotate.z();
-}
-
-void QGLSceneNode::setRotZ(qreal rz)
-{
-    Q_D(QGLSceneNode);
-    if (d->rotate.z() != rz)
-    {
-        d->rotate.setZ(rz);
-        emit updated();
-        invalidateTransform();
     }
 }
 
@@ -1373,7 +1260,6 @@ void QGLSceneNode::drawGeometry(QGLPainter *painter)
     \o ensures the effect specified by effect() is current on the painter
     \o sets the nodes materials onto the painter, if valid materials are present
     \o moves the model-view to the x, y, z position
-    \o rotates the model-view by the rotX, rotY and rotZ rotations
     \o applies any local transforms() that may be set for this node
     \o calls draw() for all the child nodes
     \o calls draw(start, count) on this nodes geometry object (if any)
@@ -1677,12 +1563,6 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
         QVector3D p = node->position();
         fprintf(stderr, "%s position: (%0.4f, %0.4f, %0.4f)\n", qPrintable(ind),
                 p.x(), p.y(), p.z());
-    }
-    if (!node->rotation().isNull())
-    {
-        QVector3D r = node->rotation();
-        fprintf(stderr, "%s rotation: (%0.4f, %0.4f, %0.4f)\n", qPrintable(ind),
-                r.x(), r.y(), r.z());
     }
     if (node->localTransform().isIdentity())
     {

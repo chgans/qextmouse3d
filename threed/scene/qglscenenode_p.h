@@ -69,7 +69,6 @@ class QGLSceneNodePrivate
 public:
     QGLSceneNodePrivate()
         : palette(0)
-        , scale(1.0f, 1.0f, 1.0f)
         , localEffect(QGL::FlatColor)   // 0 - zero
         , customEffect(0)
         , hasEffect(false)
@@ -90,8 +89,6 @@ public:
         , palette(other->palette)
         , localTransform(other->localTransform)
         , translate(other->translate)
-        , rotate(other->rotate)
-        , scale(other->scale)
         , transforms(other->transforms)
         , localEffect(other->localEffect)
         , customEffect(other->customEffect)
@@ -119,8 +116,6 @@ public:
     QGLMaterialCollection *palette;
     QMatrix4x4 localTransform;
     QVector3D translate;
-    QVector3D rotate;
-    QVector3D scale;
     QList<QGraphicsTransform3D *> transforms;
     QGL::StandardEffect localEffect;
     QGLAbstractEffect *customEffect;

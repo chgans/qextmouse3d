@@ -72,11 +72,6 @@ void tst_QGLSceneNode::defaultValues()
     QVERIFY(node.boundingBox().isNull());
     QVERIFY(node.localTransform().isIdentity());
 
-    QVERIFY(node.rotation() == QVector3D(0, 0, 0));
-    QCOMPARE(node.rotX(), qreal(0.0f));
-    QCOMPARE(node.rotY(), qreal(0.0f));
-    QCOMPARE(node.rotZ(), qreal(0.0f));
-
     QVERIFY(node.position() == QVector3D(0, 0, 0));
     QCOMPARE(node.x(), qreal(0.0f));
     QCOMPARE(node.y(), qreal(0.0f));
@@ -131,79 +126,63 @@ void tst_QGLSceneNode::modify()
     QCOMPARE(updatedSpy.count(), 2);
     QVERIFY(node.localTransform() == m);
 
-    node.setRotation(QVector3D(-1, 2, -3));
-    QCOMPARE(updatedSpy.count(), 3);
-    QVERIFY(node.rotation() == QVector3D(-1, 2, -3));
-
-    node.setRotX(45.0f);
-    QCOMPARE(updatedSpy.count(), 4);
-    QVERIFY(node.rotation() == QVector3D(45.0f, 2, -3));
-
-    node.setRotY(-67.0f);
-    QCOMPARE(updatedSpy.count(), 5);
-    QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, -3));
-
-    //node.setRotZ(23.5f);
-    //QCOMPARE(updatedSpy.count(), 6);
-    //QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, 23.5f));
-
     node.setPosition(QVector3D(1, -2, 3));
-    QCOMPARE(updatedSpy.count(), 6);
+    QCOMPARE(updatedSpy.count(), 3);
     QVERIFY(node.position() == QVector3D(1, -2, 3));
 
     node.setX(-45.0f);
-    QCOMPARE(updatedSpy.count(), 7);
+    QCOMPARE(updatedSpy.count(), 4);
     QVERIFY(node.position() == QVector3D(-45.0f, -2, 3));
 
     node.setY(67.0f);
-    QCOMPARE(updatedSpy.count(), 8);
+    QCOMPARE(updatedSpy.count(), 5);
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, 3));
 
     node.setZ(-23.5f);
-    QCOMPARE(updatedSpy.count(), 9);
+    QCOMPARE(updatedSpy.count(), 6);
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, -23.5f));
 
     QList<QGraphicsTransform3D *> transforms;
     transforms.append(new QGraphicsScale3D(this));
     transforms.append(new QGraphicsRotation3D(this));
     node.setTransforms(transforms);
-    QCOMPARE(updatedSpy.count(), 10);
+    QCOMPARE(updatedSpy.count(), 7);
     QVERIFY(node.transforms() == transforms);
 
     QGraphicsScale3D *scale = new QGraphicsScale3D(this);
     transforms.append(scale);
     node.addTransform(scale);
-    QCOMPARE(updatedSpy.count(), 11);
+    QCOMPARE(updatedSpy.count(), 8);
     QVERIFY(node.transforms() == transforms);
 
     node.setDrawingMode(QGL::Points);
-    QCOMPARE(updatedSpy.count(), 12);
+    QCOMPARE(updatedSpy.count(), 9);
     QVERIFY(node.drawingMode() == QGL::Points);
 
     node.setEffect(QGL::LitMaterial);
-    QCOMPARE(updatedSpy.count(), 13);
+    QCOMPARE(updatedSpy.count(), 10);
     QVERIFY(node.effect() == QGL::LitMaterial);
     QVERIFY(node.hasEffect());
 
     node.setEffectEnabled(false);
-    QCOMPARE(updatedSpy.count(), 14);
+    QCOMPARE(updatedSpy.count(), 11);
     QVERIFY(node.effect() == QGL::LitMaterial);
     QVERIFY(!node.hasEffect());
 
     TestEffect userEffect;
     node.setUserEffect(&userEffect);
-    QCOMPARE(updatedSpy.count(), 15);
+    QCOMPARE(updatedSpy.count(), 12);
     QVERIFY(node.effect() == QGL::LitMaterial);
     QVERIFY(node.userEffect() == &userEffect);
     QVERIFY(node.hasEffect());
 
     node.setMaterialIndex(3);
-    QCOMPARE(updatedSpy.count(), 16);
+    QCOMPARE(updatedSpy.count(), 13);
     QCOMPARE(node.materialIndex(), 3);
     QVERIFY(node.material() == 0);  // material index is out of range
 
     node.setBackMaterialIndex(5);
-    QCOMPARE(updatedSpy.count(), 17);
+    QCOMPARE(updatedSpy.count(), 14);
     QCOMPARE(node.backMaterialIndex(), 5);
     QVERIFY(node.backMaterial() == 0);  // material index is out of range
 
@@ -211,7 +190,7 @@ void tst_QGLSceneNode::modify()
 
     QGLMaterial *mat1 = new QGLMaterial();
     node.setMaterial(mat1);
-    QCOMPARE(updatedSpy.count(), 18);
+    QCOMPARE(updatedSpy.count(), 15);
     QCOMPARE(node.materialIndex(), 0);
     QCOMPARE(node.backMaterialIndex(), 5);
     QVERIFY(node.material() == mat1);
@@ -220,7 +199,7 @@ void tst_QGLSceneNode::modify()
 
     QGLMaterial *mat2 = new QGLMaterial();
     node.setBackMaterial(mat2);
-    QCOMPARE(updatedSpy.count(), 19);
+    QCOMPARE(updatedSpy.count(), 16);
     QCOMPARE(node.materialIndex(), 0);
     QCOMPARE(node.backMaterialIndex(), 1);
     QVERIFY(node.material() == mat1);
@@ -228,14 +207,14 @@ void tst_QGLSceneNode::modify()
 
     QGLMaterial *mat3 = new QGLMaterial();
     node.setMaterial(mat3);
-    QCOMPARE(updatedSpy.count(), 20);
+    QCOMPARE(updatedSpy.count(), 17);
     QCOMPARE(node.materialIndex(), 2);
     QCOMPARE(node.backMaterialIndex(), 1);
     QVERIFY(node.material() == mat3);
     QVERIFY(node.backMaterial() == mat2);
 
     node.setMaterial(mat1);
-    QCOMPARE(updatedSpy.count(), 21);
+    QCOMPARE(updatedSpy.count(), 18);
     QCOMPARE(node.materialIndex(), 0);
     QCOMPARE(node.backMaterialIndex(), 1);
     QVERIFY(node.material() == mat1);
@@ -260,7 +239,6 @@ void tst_QGLSceneNode::modify()
     // e.g. the position actually changing the rotation, etc.
     QVERIFY(node.options() == QGLSceneNode::ViewNormals);
     QVERIFY(node.localTransform() == m);
-    QVERIFY(node.rotation() == QVector3D(45.0f, -67.0f, -3.0f));
     QVERIFY(node.position() == QVector3D(-45.0f, 67.0f, -23.5f));
     QVERIFY(node.transforms() == transforms);
     QVERIFY(node.drawingMode() == QGL::Points);
@@ -429,7 +407,6 @@ void tst_QGLSceneNode::clone()
     QVERIFY(node2->options() == node1.options());
     QVERIFY(node2->geometry().isEmpty());
     QVERIFY(node2->localTransform().isIdentity());
-    QVERIFY(node2->rotation() == QVector3D(0, 0, 0));
     QVERIFY(node2->position() == QVector3D(0, 0, 0));
     QVERIFY(node2->transforms().isEmpty());
     QVERIFY(node2->drawingMode() == QGL::Triangles);
@@ -460,7 +437,6 @@ void tst_QGLSceneNode::clone()
     node1.setOptions(QGLSceneNode::ViewNormals);
     node1.setGeometry(data1);
     node1.setLocalTransform(m);
-    node1.setRotation(QVector3D(-1, 2, -3));
     node1.setPosition(QVector3D(1, -2, 3));
     node1.setTransforms(transforms);
     node1.setDrawingMode(QGL::Points);
@@ -485,7 +461,6 @@ void tst_QGLSceneNode::clone()
     QVERIFY(node2->options() == node1.options());
     QCOMPARE(node2->geometry().count(), 1);
     QVERIFY(node2->localTransform() == m);
-    QVERIFY(node2->rotation() == QVector3D(-1, 2, -3));
     QVERIFY(node2->position() == QVector3D(1, -2, 3));
     QVERIFY(node2->transforms() == transforms);
     QVERIFY(node2->drawingMode() == QGL::Points);
