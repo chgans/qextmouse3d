@@ -52,6 +52,7 @@ DEFINES += QT_BUILD_QT3D_LIB
                        arrays/* \
                        global/* \
                        effects/* \
+                       materials/* \
                        geometry/* \
                        viewing/* \
                        math3d/* \

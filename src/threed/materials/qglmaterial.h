@@ -42,7 +42,7 @@
 #ifndef QGLMATERIAL_H
 #define QGLMATERIAL_H
 
-#include "qt3dglobal.h"
+#include "qglabstractmaterial.h"
 #include <QtCore/qobject.h>
 #include <QtCore/qscopedpointer.h>
 #include <QtGui/qcolor.h>
@@ -60,7 +60,7 @@ class QGLTextureCube;
 class QGLPainter;
 class QGLMaterialCollection;
 
-class Q_QT3D_EXPORT QGLMaterial : public QObject
+class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
 {
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLMaterial)
@@ -106,6 +106,9 @@ public:
     void setTextureUrl(const QUrl &url, int layer = 0);
 
     int textureLayerCount() const;
+
+    void bind(QGLPainter *painter);
+    void release(QGLPainter *painter, QGLAbstractMaterial *next);
 
 Q_SIGNALS:
     void basicColorChanged();

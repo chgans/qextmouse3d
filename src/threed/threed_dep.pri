@@ -4,6 +4,7 @@ INCLUDEPATH += $$PWD/global
 INCLUDEPATH += $$PWD/painting
 INCLUDEPATH += $$PWD/arrays
 INCLUDEPATH += $$PWD/effects
+INCLUDEPATH += $$PWD/materials
 INCLUDEPATH += $$PWD/geometry
 INCLUDEPATH += $$PWD/viewing
 INCLUDEPATH += $$PWD/math3d

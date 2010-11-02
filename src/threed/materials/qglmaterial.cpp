@@ -83,7 +83,7 @@ QGLMaterialPrivate::QGLMaterialPrivate()
     and attaches it to \a parent.
 */
 QGLMaterial::QGLMaterial(QObject *parent)
-    : QObject(parent)
+    : QGLAbstractMaterial(parent)
     , d_ptr(new QGLMaterialPrivate)
 {
 }
@@ -409,7 +409,6 @@ QUrl QGLMaterial::textureUrl(int layer) const
 void QGLMaterial::setTextureUrl(const QUrl &url, int layer)
 {
     Q_ASSERT(layer >= 0);
-    Q_D(QGLMaterial);
     if (textureUrl(layer) != url)
     {
         QGLTexture2D *tex = 0;
@@ -439,6 +438,41 @@ int QGLMaterial::textureLayerCount() const
     if (!d->textures.isEmpty())
         maxLayer = qMax(maxLayer, (d->textures.end() - 1).key());
     return maxLayer + 1;
+}
+
+/*!
+    \reimp
+*/
+void QGLMaterial::bind(QGLPainter *painter)
+{
+    Q_D(const QGLMaterial);
+    QMap<int, QGLTexture2D *>::ConstIterator it;
+    QGL::StandardEffect effect = QGL::LitMaterial;
+    painter->setFaceMaterial(QGL::AllFaces, this);
+    for (it = d->textures.begin(); it != d->textures.end(); ++it) {
+        QGLTexture2D *tex = it.value();
+        painter->glActiveTexture(GL_TEXTURE0 + it.key());
+        if (tex)
+            tex->bind();
+        else
+            glBindTexture(GL_TEXTURE_2D, 0);
+        effect = QGL::LitModulateTexture2D;
+    }
+    painter->setStandardEffect(effect);
+}
+
+/*!
+    \reimp
+*/
+void QGLMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
+{
+    Q_UNUSED(next);
+    Q_D(const QGLMaterial);
+    QMap<int, QGLTexture2D *>::ConstIterator it;
+    for (it = d->textures.begin(); it != d->textures.end(); ++it) {
+        painter->glActiveTexture(GL_TEXTURE0 + it.key());
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 /*!
@@ -511,7 +545,6 @@ int QGLMaterial::textureLayerCount() const
 */
 
 #ifndef QT_NO_DEBUG_STREAM
-#include "qgltexture2d.h"
 
 QDebug operator<<(QDebug dbg, const QGLMaterial &material)
 {
