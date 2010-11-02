@@ -40,6 +40,22 @@
 ##
 #############################################################################
 
+#
+# USAGE:
+#
+# perl gl-gen-funcs.pl < gl-functs.txt > output.txt
+#
+# This will automatically generate the qopenglfunctions.h/.cpp files for Qt3D
+# based on the platform and available functions/capabilities.
+#
+# The file output.txt will contain the text for the header and implementation
+# files - it is left to the user to manually cut and paste this content into
+# their own qopenglfunctions.h and qopenglfunctions.cpp files.
+#
+# Note: this script is intended for perl version 5.10.1 or better, and has not
+# been tested on previous versions of perl.
+#
+
 use strict;
 use warnings;
 
@@ -104,18 +120,22 @@ if ($func_info{'name'}) {
 
 # Generate the declarations for qopenglfunctions.h.
 print "// qopenglfunctions.h\n\n";
+print "#ifdef Q_WS_WIN\n";
+print "#    define QT3d_GLF_APIENTRY APIENTRY\n";
+print "#endif\n";
+print "\n";
 print "#ifndef Q_WS_MAC\n";
-print "# ifndef QGLF_APIENTRYP\n";
-print "#   ifdef QGLF_APIENTRY\n";
-print "#     define QGLF_APIENTRYP QGLF_APIENTRY *\n";
+print "# ifndef QT3D_GLF_APIENTRYP\n";
+print "#   ifdef QT3D_GLF_APIENTRY\n";
+print "#     define QT3D_GLF_APIENTRYP QT3D_GLF_APIENTRY *\n";
 print "#   else\n";
-print "#     define QGLF_APIENTRY\n";
-print "#     define QGLF_APIENTRYP *\n";
+print "#     define QT3D_GLF_APIENTRY\n";
+print "#     define QT3D_GLF_APIENTRYP *\n";
 print "#   endif\n";
 print "# endif\n";
 print "#else\n";
-print "# define QGLF_APIENTRY\n";
-print "# define QGLF_APIENTRYP *\n";
+print "# define QT3D_GLF_APIENTRY\n";
+print "# define QT3D_GLF_APIENTRYP *\n";
 print "#endif\n";
 print "\n";
 print "struct QOpenGLFunctionsPrivate;\n";
@@ -200,7 +220,7 @@ foreach ( @functions ) {
     my $name = $_->{'varname'};
     #print "#ifndef QT_OPENGL_ES_1\n" if ($shader_only && !$last_shader_only);
     #print "#endif\n" if (!$shader_only && $last_shader_only);
-    print "    $_->{'returnType'} (QGLF_APIENTRYP $name)($_->{'argstr'});\n";
+    print "    $_->{'returnType'} (QT3D_GLF_APIENTRYP $name)($_->{'argstr'});\n";
     $last_shader_only = $shader_only;
 }
 #print "#endif\n" if $last_shader_only;
@@ -359,28 +379,28 @@ foreach ( @functions ) {
     if ($special_handling) {
         # Output special fallback implementations for certain functions.
         if ($name eq "getShaderPrecisionFormat") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
+            print "static $_->{'returnType'} QT3D_GLF_APIENTRY $special_name($_->{'argstr'})\n";
             print "{\n";
             print "    Q_UNUSED(shadertype);\n";
             print "    Q_UNUSED(precisiontype);\n";
             print "    range[0] = range[1] = precision[0] = 0;\n";
             print "}\n\n";
         } elsif ($name eq "isProgram" || $name eq "isShader") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
+            print "static $_->{'returnType'} QT3D_GLF_APIENTRY $special_name($_->{'argstr'})\n";
             print "{\n";
             print "    return $_->{'argnamestr'} != 0;\n";
             print "}\n\n";
         } elsif ($name eq "releaseShaderCompiler") {
-            print "static $_->{'returnType'} $special_name($_->{'argstr'})\n";
+            print "static $_->{'returnType'} QT3D_GLF_APIENTRY $special_name($_->{'argstr'})\n";
             print "{\n";
             print "}\n\n";
         }
     }
 
-    print "static $_->{'returnType'} $resolver_name($_->{'argstr'})\n";
+    print "static $_->{'returnType'} QT3D_GLF_APIENTRY $resolver_name($_->{'argstr'})\n";
     print "{\n";
     my $type_name = "type_$_->{'name'}";
-    print "    typedef $_->{'returnType'} (QGLF_APIENTRYP $type_name)($_->{'argstr'});\n\n";
+    print "    typedef $_->{'returnType'} (QT3D_GLF_APIENTRYP $type_name)($_->{'argstr'});\n\n";
     print "    const QGLContext *context = QGLContext::currentContext();\n";
     print "    QOpenGLFunctionsPrivate *funcs = qt_gl_functions(context);\n";
     print "\n";

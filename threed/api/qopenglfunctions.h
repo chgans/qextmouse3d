@@ -44,6 +44,7 @@
 
 #include <QtOpenGL/qgl.h>
 #include "qt3dglobal.h"
+#include <QDebug>
 
 QT_BEGIN_HEADER
 
@@ -55,18 +56,22 @@ QT_MODULE(Qt3d)
 typedef ptrdiff_t qgl_GLintptr;
 typedef ptrdiff_t qgl_GLsizeiptr;
 
+#ifdef Q_WS_WIN
+#    define QT3D_GLF_APIENTRY APIENTRY
+#endif
+
 #ifndef Q_WS_MAC
-# ifndef QGLF_APIENTRYP
-#   ifdef QGLF_APIENTRY
-#     define QGLF_APIENTRYP QGLF_APIENTRY *
+# ifndef QT3D_GLF_APIENTRYP
+#   ifdef QT3D_GLF_APIENTRY
+#     define QT3D_GLF_APIENTRYP QT3D_GLF_APIENTRY *
 #   else
-#     define QGLF_APIENTRY
-#     define QGLF_APIENTRYP *
+#     define QT3D_GLF_APIENTRY
+#     define QT3D_GLF_APIENTRYP *
 #   endif
 # endif
 #else
-# define QGLF_APIENTRY
-# define QGLF_APIENTRYP *
+# define QT3D_GLF_APIENTRY
+# define QT3D_GLF_APIENTRYP *
 #endif
 
 struct QOpenGLFunctionsPrivate;
@@ -311,101 +316,101 @@ struct QOpenGLFunctionsPrivate
     QOpenGLFunctionsPrivate(const QGLContext *context = 0);
 
 #ifndef QT_OPENGL_ES_2
-    void (QGLF_APIENTRYP activeTexture)(GLenum texture);
-    void (QGLF_APIENTRYP attachShader)(GLuint program, GLuint shader);
-    void (QGLF_APIENTRYP bindAttribLocation)(GLuint program, GLuint index, const char* name);
-    void (QGLF_APIENTRYP bindBuffer)(GLenum target, GLuint buffer);
-    void (QGLF_APIENTRYP bindFramebuffer)(GLenum target, GLuint framebuffer);
-    void (QGLF_APIENTRYP bindRenderbuffer)(GLenum target, GLuint renderbuffer);
-    void (QGLF_APIENTRYP blendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-    void (QGLF_APIENTRYP blendEquation)(GLenum mode);
-    void (QGLF_APIENTRYP blendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
-    void (QGLF_APIENTRYP blendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-    void (QGLF_APIENTRYP bufferData)(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
-    void (QGLF_APIENTRYP bufferSubData)(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
-    GLenum (QGLF_APIENTRYP checkFramebufferStatus)(GLenum target);
-    void (QGLF_APIENTRYP compileShader)(GLuint shader);
-    void (QGLF_APIENTRYP compressedTexImage2D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
-    void (QGLF_APIENTRYP compressedTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
-    GLuint (QGLF_APIENTRYP createProgram)();
-    GLuint (QGLF_APIENTRYP createShader)(GLenum type);
-    void (QGLF_APIENTRYP deleteBuffers)(GLsizei n, const GLuint* buffers);
-    void (QGLF_APIENTRYP deleteFramebuffers)(GLsizei n, const GLuint* framebuffers);
-    void (QGLF_APIENTRYP deleteProgram)(GLuint program);
-    void (QGLF_APIENTRYP deleteRenderbuffers)(GLsizei n, const GLuint* renderbuffers);
-    void (QGLF_APIENTRYP deleteShader)(GLuint shader);
-    void (QGLF_APIENTRYP detachShader)(GLuint program, GLuint shader);
-    void (QGLF_APIENTRYP disableVertexAttribArray)(GLuint index);
-    void (QGLF_APIENTRYP enableVertexAttribArray)(GLuint index);
-    void (QGLF_APIENTRYP framebufferRenderbuffer)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-    void (QGLF_APIENTRYP framebufferTexture2D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-    void (QGLF_APIENTRYP genBuffers)(GLsizei n, GLuint* buffers);
-    void (QGLF_APIENTRYP generateMipmap)(GLenum target);
-    void (QGLF_APIENTRYP genFramebuffers)(GLsizei n, GLuint* framebuffers);
-    void (QGLF_APIENTRYP genRenderbuffers)(GLsizei n, GLuint* renderbuffers);
-    void (QGLF_APIENTRYP getActiveAttrib)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
-    void (QGLF_APIENTRYP getActiveUniform)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
-    void (QGLF_APIENTRYP getAttachedShaders)(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders);
-    int (QGLF_APIENTRYP getAttribLocation)(GLuint program, const char* name);
-    void (QGLF_APIENTRYP getBufferParameteriv)(GLenum target, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getProgramiv)(GLuint program, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getProgramInfoLog)(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog);
-    void (QGLF_APIENTRYP getRenderbufferParameteriv)(GLenum target, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getShaderiv)(GLuint shader, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getShaderInfoLog)(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog);
-    void (QGLF_APIENTRYP getShaderPrecisionFormat)(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision);
-    void (QGLF_APIENTRYP getShaderSource)(GLuint shader, GLsizei bufsize, GLsizei* length, char* source);
-    void (QGLF_APIENTRYP getUniformfv)(GLuint program, GLint location, GLfloat* params);
-    void (QGLF_APIENTRYP getUniformiv)(GLuint program, GLint location, GLint* params);
-    int (QGLF_APIENTRYP getUniformLocation)(GLuint program, const char* name);
-    void (QGLF_APIENTRYP getVertexAttribfv)(GLuint index, GLenum pname, GLfloat* params);
-    void (QGLF_APIENTRYP getVertexAttribiv)(GLuint index, GLenum pname, GLint* params);
-    void (QGLF_APIENTRYP getVertexAttribPointerv)(GLuint index, GLenum pname, void** pointer);
-    GLboolean (QGLF_APIENTRYP isBuffer)(GLuint buffer);
-    GLboolean (QGLF_APIENTRYP isFramebuffer)(GLuint framebuffer);
-    GLboolean (QGLF_APIENTRYP isProgram)(GLuint program);
-    GLboolean (QGLF_APIENTRYP isRenderbuffer)(GLuint renderbuffer);
-    GLboolean (QGLF_APIENTRYP isShader)(GLuint shader);
-    void (QGLF_APIENTRYP linkProgram)(GLuint program);
-    void (QGLF_APIENTRYP releaseShaderCompiler)();
-    void (QGLF_APIENTRYP renderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-    void (QGLF_APIENTRYP sampleCoverage)(GLclampf value, GLboolean invert);
-    void (QGLF_APIENTRYP shaderBinary)(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length);
-    void (QGLF_APIENTRYP shaderSource)(GLuint shader, GLsizei count, const char** string, const GLint* length);
-    void (QGLF_APIENTRYP stencilFuncSeparate)(GLenum face, GLenum func, GLint ref, GLuint mask);
-    void (QGLF_APIENTRYP stencilMaskSeparate)(GLenum face, GLuint mask);
-    void (QGLF_APIENTRYP stencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
-    void (QGLF_APIENTRYP uniform1f)(GLint location, GLfloat x);
-    void (QGLF_APIENTRYP uniform1fv)(GLint location, GLsizei count, const GLfloat* v);
-    void (QGLF_APIENTRYP uniform1i)(GLint location, GLint x);
-    void (QGLF_APIENTRYP uniform1iv)(GLint location, GLsizei count, const GLint* v);
-    void (QGLF_APIENTRYP uniform2f)(GLint location, GLfloat x, GLfloat y);
-    void (QGLF_APIENTRYP uniform2fv)(GLint location, GLsizei count, const GLfloat* v);
-    void (QGLF_APIENTRYP uniform2i)(GLint location, GLint x, GLint y);
-    void (QGLF_APIENTRYP uniform2iv)(GLint location, GLsizei count, const GLint* v);
-    void (QGLF_APIENTRYP uniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z);
-    void (QGLF_APIENTRYP uniform3fv)(GLint location, GLsizei count, const GLfloat* v);
-    void (QGLF_APIENTRYP uniform3i)(GLint location, GLint x, GLint y, GLint z);
-    void (QGLF_APIENTRYP uniform3iv)(GLint location, GLsizei count, const GLint* v);
-    void (QGLF_APIENTRYP uniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-    void (QGLF_APIENTRYP uniform4fv)(GLint location, GLsizei count, const GLfloat* v);
-    void (QGLF_APIENTRYP uniform4i)(GLint location, GLint x, GLint y, GLint z, GLint w);
-    void (QGLF_APIENTRYP uniform4iv)(GLint location, GLsizei count, const GLint* v);
-    void (QGLF_APIENTRYP uniformMatrix2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
-    void (QGLF_APIENTRYP uniformMatrix3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
-    void (QGLF_APIENTRYP uniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
-    void (QGLF_APIENTRYP useProgram)(GLuint program);
-    void (QGLF_APIENTRYP validateProgram)(GLuint program);
-    void (QGLF_APIENTRYP vertexAttrib1f)(GLuint indx, GLfloat x);
-    void (QGLF_APIENTRYP vertexAttrib1fv)(GLuint indx, const GLfloat* values);
-    void (QGLF_APIENTRYP vertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y);
-    void (QGLF_APIENTRYP vertexAttrib2fv)(GLuint indx, const GLfloat* values);
-    void (QGLF_APIENTRYP vertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z);
-    void (QGLF_APIENTRYP vertexAttrib3fv)(GLuint indx, const GLfloat* values);
-    void (QGLF_APIENTRYP vertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-    void (QGLF_APIENTRYP vertexAttrib4fv)(GLuint indx, const GLfloat* values);
-    void (QGLF_APIENTRYP vertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
+    void (QT3D_GLF_APIENTRYP activeTexture)(GLenum texture);
+    void (QT3D_GLF_APIENTRYP attachShader)(GLuint program, GLuint shader);
+    void (QT3D_GLF_APIENTRYP bindAttribLocation)(GLuint program, GLuint index, const char* name);
+    void (QT3D_GLF_APIENTRYP bindBuffer)(GLenum target, GLuint buffer);
+    void (QT3D_GLF_APIENTRYP bindFramebuffer)(GLenum target, GLuint framebuffer);
+    void (QT3D_GLF_APIENTRYP bindRenderbuffer)(GLenum target, GLuint renderbuffer);
+    void (QT3D_GLF_APIENTRYP blendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+    void (QT3D_GLF_APIENTRYP blendEquation)(GLenum mode);
+    void (QT3D_GLF_APIENTRYP blendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha);
+    void (QT3D_GLF_APIENTRYP blendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
+    void (QT3D_GLF_APIENTRYP bufferData)(GLenum target, qgl_GLsizeiptr size, const void* data, GLenum usage);
+    void (QT3D_GLF_APIENTRYP bufferSubData)(GLenum target, qgl_GLintptr offset, qgl_GLsizeiptr size, const void* data);
+    GLenum (QT3D_GLF_APIENTRYP checkFramebufferStatus)(GLenum target);
+    void (QT3D_GLF_APIENTRYP compileShader)(GLuint shader);
+    void (QT3D_GLF_APIENTRYP compressedTexImage2D)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data);
+    void (QT3D_GLF_APIENTRYP compressedTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
+    GLuint (QT3D_GLF_APIENTRYP createProgram)();
+    GLuint (QT3D_GLF_APIENTRYP createShader)(GLenum type);
+    void (QT3D_GLF_APIENTRYP deleteBuffers)(GLsizei n, const GLuint* buffers);
+    void (QT3D_GLF_APIENTRYP deleteFramebuffers)(GLsizei n, const GLuint* framebuffers);
+    void (QT3D_GLF_APIENTRYP deleteProgram)(GLuint program);
+    void (QT3D_GLF_APIENTRYP deleteRenderbuffers)(GLsizei n, const GLuint* renderbuffers);
+    void (QT3D_GLF_APIENTRYP deleteShader)(GLuint shader);
+    void (QT3D_GLF_APIENTRYP detachShader)(GLuint program, GLuint shader);
+    void (QT3D_GLF_APIENTRYP disableVertexAttribArray)(GLuint index);
+    void (QT3D_GLF_APIENTRYP enableVertexAttribArray)(GLuint index);
+    void (QT3D_GLF_APIENTRYP framebufferRenderbuffer)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    void (QT3D_GLF_APIENTRYP framebufferTexture2D)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    void (QT3D_GLF_APIENTRYP genBuffers)(GLsizei n, GLuint* buffers);
+    void (QT3D_GLF_APIENTRYP generateMipmap)(GLenum target);
+    void (QT3D_GLF_APIENTRYP genFramebuffers)(GLsizei n, GLuint* framebuffers);
+    void (QT3D_GLF_APIENTRYP genRenderbuffers)(GLsizei n, GLuint* renderbuffers);
+    void (QT3D_GLF_APIENTRYP getActiveAttrib)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
+    void (QT3D_GLF_APIENTRYP getActiveUniform)(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, char* name);
+    void (QT3D_GLF_APIENTRYP getAttachedShaders)(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders);
+    int (QT3D_GLF_APIENTRYP getAttribLocation)(GLuint program, const char* name);
+    void (QT3D_GLF_APIENTRYP getBufferParameteriv)(GLenum target, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getProgramiv)(GLuint program, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getProgramInfoLog)(GLuint program, GLsizei bufsize, GLsizei* length, char* infolog);
+    void (QT3D_GLF_APIENTRYP getRenderbufferParameteriv)(GLenum target, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getShaderiv)(GLuint shader, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getShaderInfoLog)(GLuint shader, GLsizei bufsize, GLsizei* length, char* infolog);
+    void (QT3D_GLF_APIENTRYP getShaderPrecisionFormat)(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision);
+    void (QT3D_GLF_APIENTRYP getShaderSource)(GLuint shader, GLsizei bufsize, GLsizei* length, char* source);
+    void (QT3D_GLF_APIENTRYP getUniformfv)(GLuint program, GLint location, GLfloat* params);
+    void (QT3D_GLF_APIENTRYP getUniformiv)(GLuint program, GLint location, GLint* params);
+    int (QT3D_GLF_APIENTRYP getUniformLocation)(GLuint program, const char* name);
+    void (QT3D_GLF_APIENTRYP getVertexAttribfv)(GLuint index, GLenum pname, GLfloat* params);
+    void (QT3D_GLF_APIENTRYP getVertexAttribiv)(GLuint index, GLenum pname, GLint* params);
+    void (QT3D_GLF_APIENTRYP getVertexAttribPointerv)(GLuint index, GLenum pname, void** pointer);
+    GLboolean (QT3D_GLF_APIENTRYP isBuffer)(GLuint buffer);
+    GLboolean (QT3D_GLF_APIENTRYP isFramebuffer)(GLuint framebuffer);
+    GLboolean (QT3D_GLF_APIENTRYP isProgram)(GLuint program);
+    GLboolean (QT3D_GLF_APIENTRYP isRenderbuffer)(GLuint renderbuffer);
+    GLboolean (QT3D_GLF_APIENTRYP isShader)(GLuint shader);
+    void (QT3D_GLF_APIENTRYP linkProgram)(GLuint program);
+    void (QT3D_GLF_APIENTRYP releaseShaderCompiler)();
+    void (QT3D_GLF_APIENTRYP renderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    void (QT3D_GLF_APIENTRYP sampleCoverage)(GLclampf value, GLboolean invert);
+    void (QT3D_GLF_APIENTRYP shaderBinary)(GLint n, const GLuint* shaders, GLenum binaryformat, const void* binary, GLint length);
+    void (QT3D_GLF_APIENTRYP shaderSource)(GLuint shader, GLsizei count, const char** string, const GLint* length);
+    void (QT3D_GLF_APIENTRYP stencilFuncSeparate)(GLenum face, GLenum func, GLint ref, GLuint mask);
+    void (QT3D_GLF_APIENTRYP stencilMaskSeparate)(GLenum face, GLuint mask);
+    void (QT3D_GLF_APIENTRYP stencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
+    void (QT3D_GLF_APIENTRYP uniform1f)(GLint location, GLfloat x);
+    void (QT3D_GLF_APIENTRYP uniform1fv)(GLint location, GLsizei count, const GLfloat* v);
+    void (QT3D_GLF_APIENTRYP uniform1i)(GLint location, GLint x);
+    void (QT3D_GLF_APIENTRYP uniform1iv)(GLint location, GLsizei count, const GLint* v);
+    void (QT3D_GLF_APIENTRYP uniform2f)(GLint location, GLfloat x, GLfloat y);
+    void (QT3D_GLF_APIENTRYP uniform2fv)(GLint location, GLsizei count, const GLfloat* v);
+    void (QT3D_GLF_APIENTRYP uniform2i)(GLint location, GLint x, GLint y);
+    void (QT3D_GLF_APIENTRYP uniform2iv)(GLint location, GLsizei count, const GLint* v);
+    void (QT3D_GLF_APIENTRYP uniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z);
+    void (QT3D_GLF_APIENTRYP uniform3fv)(GLint location, GLsizei count, const GLfloat* v);
+    void (QT3D_GLF_APIENTRYP uniform3i)(GLint location, GLint x, GLint y, GLint z);
+    void (QT3D_GLF_APIENTRYP uniform3iv)(GLint location, GLsizei count, const GLint* v);
+    void (QT3D_GLF_APIENTRYP uniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+    void (QT3D_GLF_APIENTRYP uniform4fv)(GLint location, GLsizei count, const GLfloat* v);
+    void (QT3D_GLF_APIENTRYP uniform4i)(GLint location, GLint x, GLint y, GLint z, GLint w);
+    void (QT3D_GLF_APIENTRYP uniform4iv)(GLint location, GLsizei count, const GLint* v);
+    void (QT3D_GLF_APIENTRYP uniformMatrix2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+    void (QT3D_GLF_APIENTRYP uniformMatrix3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+    void (QT3D_GLF_APIENTRYP uniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+    void (QT3D_GLF_APIENTRYP useProgram)(GLuint program);
+    void (QT3D_GLF_APIENTRYP validateProgram)(GLuint program);
+    void (QT3D_GLF_APIENTRYP vertexAttrib1f)(GLuint indx, GLfloat x);
+    void (QT3D_GLF_APIENTRYP vertexAttrib1fv)(GLuint indx, const GLfloat* values);
+    void (QT3D_GLF_APIENTRYP vertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y);
+    void (QT3D_GLF_APIENTRYP vertexAttrib2fv)(GLuint indx, const GLfloat* values);
+    void (QT3D_GLF_APIENTRYP vertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z);
+    void (QT3D_GLF_APIENTRYP vertexAttrib3fv)(GLuint indx, const GLfloat* values);
+    void (QT3D_GLF_APIENTRYP vertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+    void (QT3D_GLF_APIENTRYP vertexAttrib4fv)(GLuint indx, const GLfloat* values);
+    void (QT3D_GLF_APIENTRYP vertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* ptr);
 #endif
 };
 
@@ -2283,9 +2288,5 @@ inline void QOpenGLFunctions::glVertexAttribPointer(GLuint indx, GLint size, GLe
 #ifndef GL_ZERO
 #define GL_ZERO 0
 #endif
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif
