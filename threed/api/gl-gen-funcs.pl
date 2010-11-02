@@ -121,7 +121,7 @@ if ($func_info{'name'}) {
 # Generate the declarations for qopenglfunctions.h.
 print "// qopenglfunctions.h\n\n";
 print "#ifdef Q_WS_WIN\n";
-print "#    define QT3d_GLF_APIENTRY APIENTRY\n";
+print "#    define QT3D_GLF_APIENTRY APIENTRY\n";
 print "#endif\n";
 print "\n";
 print "#ifndef Q_WS_MAC\n";
