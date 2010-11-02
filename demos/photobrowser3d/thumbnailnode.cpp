@@ -60,6 +60,7 @@ ThumbnailNode::ThumbnailNode(QObject *parent)
     , m_manager(0)
     , m_lastDistance(ThumbnailNode::Unknown)
 {
+    setPalette(new QGLMaterialCollection(this));
 }
 
 ThumbnailNode::~ThumbnailNode()
