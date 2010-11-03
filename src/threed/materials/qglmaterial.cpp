@@ -69,8 +69,7 @@ QT_BEGIN_NAMESPACE
 */
 
 QGLMaterialPrivate::QGLMaterialPrivate()
-    : basicColor(255, 255, 255, 255),
-      specularColor(0, 0, 0, 255),
+    : specularColor(0, 0, 0, 255),
       emittedLight(0, 0, 0, 255),
       shininess(0),
       collection(0),
@@ -96,46 +95,6 @@ QGLMaterial::QGLMaterial(QObject *parent)
 */
 QGLMaterial::~QGLMaterial()
 {
-}
-
-/*!
-    \property QGLMaterial::basicColor
-    \brief the basic color of the material.  The default value
-    is (1.0, 1.0, 1.0, 1.0).
-
-    The basic color is used by effects that don't implement
-    material-based lighting.  It is ignored by material-based
-    lighting effects.
-
-    \sa ambientColor(), diffuseColor(), basicColorChanged(), setColor()
-*/
-
-/*!
-    \qmlproperty color Material::basicColor
-    The basic color of the material.  The default value
-    is (1.0, 1.0, 1.0, 1.0).
-
-    The basic color is used by effects that don't implement
-    material-based lighting.  It is ignored by material-based
-    lighting effects.
-
-    \sa ambientColor, diffuseColor, color
-*/
-
-QColor QGLMaterial::basicColor() const
-{
-    Q_D(const QGLMaterial);
-    return d->basicColor;
-}
-
-void QGLMaterial::setBasicColor(const QColor& value)
-{
-    Q_D(QGLMaterial);
-    if (d->basicColor != value) {
-        d->basicColor = value;
-        emit basicColorChanged();
-        emit materialChanged();
-    }
 }
 
 /*!
@@ -267,50 +226,21 @@ void QGLMaterial::setEmittedLight(const QColor& value)
 }
 
 /*!
-    \property QGLMaterial::color
-    \brief the overall color of the material.  The default value
-    is (1.0, 1.0, 1.0, 1.0).
+    Sets ambientColor() to 20% of \a value, and diffuseColor() to 80% of
+    \a value.  This is a convenience function for quickly setting ambient
+    and diffuse lighting colors based on a flat color.
 
-    This is a convenience property.  When read it returns basicColor().
-    When written, it sets basicColor() to the value, ambientColor()
-    to 20% of the value, and diffuseColor() to 80% of the value.
-    The result is that regardless of whether lighting is used or not,
-    the material will appear to have a similar color.
-
-    \sa basicColor(), ambientColor(), diffuseColor()
+    \sa ambientColor(), diffuseColor()
 */
-
-/*!
-    \qmlproperty color Material::color
-    The overall color of the material.  The default value
-    is (1.0, 1.0, 1.0, 1.0).
-
-    This is a convenience property.  When read it returns basicColor.
-    When written, it sets basicColor to the value, ambientColor
-    to 20% of the value, and diffuseColor to 80% of the value.
-    The result is that regardless of whether lighting is used or not,
-    the material will appear to have a similar color.
-
-    \sa basicColor, ambientColor, diffuseColor
-*/
-
-QColor QGLMaterial::color() const
-{
-    Q_D(const QGLMaterial);
-    return d->basicColor;
-}
-
 void QGLMaterial::setColor(const QColor& value)
 {
     Q_D(QGLMaterial);
-    d->basicColor = value;
     d->ambientColor.setRgbF
         (value.redF() * 0.2f, value.greenF() * 0.2f,
          value.blueF() * 0.2f, value.alphaF());
     d->diffuseColor.setRgbF
         (value.redF() * 0.8f, value.greenF() * 0.8f,
          value.blueF() * 0.8f, value.alphaF());
-    emit basicColorChanged();
     emit ambientColorChanged();
     emit diffuseColorChanged();
     emit materialChanged();
@@ -541,14 +471,6 @@ void QGLMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
-
-/*!
-    \fn void QGLMaterial::basicColorChanged()
-
-    This signal is emitted when basicColor() changes.
-
-    \sa basicColor(), setBasicColor(), materialChanged()
-*/
 
 /*!
     \fn void QGLMaterial::ambientColorChanged()

@@ -65,7 +65,6 @@ class QGLMaterialPrivate
 public:
     explicit QGLMaterialPrivate();
 
-    QColor basicColor;
     QColor ambientColor;
     QColor diffuseColor;
     QColor specularColor;

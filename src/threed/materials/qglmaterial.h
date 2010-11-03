@@ -67,12 +67,10 @@ class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
     Q_DECLARE_PRIVATE(QGLMaterial)
     Q_DISABLE_COPY(QGLMaterial)
     Q_ENUMS(TextureCombineMode)
-    Q_PROPERTY(QColor basicColor READ basicColor WRITE setBasicColor NOTIFY basicColorChanged)
     Q_PROPERTY(QColor ambientColor READ ambientColor WRITE setAmbientColor NOTIFY ambientColorChanged)
     Q_PROPERTY(QColor diffuseColor READ diffuseColor WRITE setDiffuseColor NOTIFY diffuseColorChanged)
     Q_PROPERTY(QColor specularColor READ specularColor WRITE setSpecularColor NOTIFY specularColorChanged)
     Q_PROPERTY(QColor emittedLight READ emittedLight WRITE setEmittedLight NOTIFY emittedLightChanged)
-    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY basicColorChanged)
     Q_PROPERTY(qreal shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
     Q_PROPERTY(QGLTexture2D *texture READ texture WRITE setTexture NOTIFY texturesChanged)
     Q_PROPERTY(QGLMaterial::TextureCombineMode textureCombineMode READ textureCombineMode WRITE setTextureCombineMode NOTIFY texturesChanged)
@@ -80,9 +78,6 @@ class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
 public:
     explicit QGLMaterial(QObject *parent = 0);
     ~QGLMaterial();
-
-    QColor basicColor() const;
-    void setBasicColor(const QColor& value);
 
     QColor ambientColor() const;
     void setAmbientColor(const QColor& value);
@@ -96,7 +91,6 @@ public:
     QColor emittedLight() const;
     void setEmittedLight(const QColor& value);
 
-    QColor color() const;
     void setColor(const QColor& value);
 
     qreal shininess() const;
@@ -124,7 +118,6 @@ public:
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
 
 Q_SIGNALS:
-    void basicColorChanged();
     void ambientColorChanged();
     void diffuseColorChanged();
     void specularColorChanged();
