@@ -59,6 +59,7 @@ class QGLTexture2D;
 class QGLTextureCube;
 class QGLPainter;
 class QGLMaterialCollection;
+class QGLTwoSidedMaterial;
 
 class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
 {
@@ -133,6 +134,9 @@ Q_SIGNALS:
 
 private:
     friend class QGLMaterialCollection;
+    friend class QGLTwoSidedMaterial;
+
+    void bindTexturesAndEffect(QGLPainter *painter, bool twoSided);
 
     QScopedPointer<QGLMaterialPrivate> d_ptr;
 };

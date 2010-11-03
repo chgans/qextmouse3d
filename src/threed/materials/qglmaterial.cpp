@@ -44,6 +44,7 @@
 #include "qglpainter.h"
 #include "qgltexture2d.h"
 #include "qglmaterialcollection.h"
+#include "qgllightmodel.h"
 #include "qfileinfo.h"
 
 #include <QtCore/qurl.h>
@@ -52,10 +53,12 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QGLMaterial
-    \brief The QGLMaterial class describes material properties for OpenGL drawing.
+    \brief The QGLMaterial class describes one-sided material properties for rendering fragments.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+
+    \sa QGLTwoSidedMaterial
 */
 
 /*!
@@ -482,10 +485,21 @@ int QGLMaterial::textureLayerCount() const
 */
 void QGLMaterial::bind(QGLPainter *painter)
 {
+    painter->setFaceMaterial(QGL::AllFaces, this);
+    const_cast<QGLLightModel *>(painter->lightModel())
+        ->setModel(QGLLightModel::OneSided); // FIXME
+    bindTexturesAndEffect(painter, false);
+}
+
+/*!
+    \internal
+*/
+void QGLMaterial::bindTexturesAndEffect(QGLPainter *painter, bool twoSided)
+{
     Q_D(const QGLMaterial);
+    Q_UNUSED(twoSided);
     QMap<int, QGLTexture2D *>::ConstIterator it;
     QGL::StandardEffect effect = QGL::LitMaterial;
-    painter->setFaceMaterial(QGL::AllFaces, this);
     for (it = d->textures.begin(); it != d->textures.end(); ++it) {
         QGLTexture2D *tex = it.value();
         painter->glActiveTexture(GL_TEXTURE0 + it.key());
