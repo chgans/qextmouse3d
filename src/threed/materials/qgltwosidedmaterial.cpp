@@ -50,7 +50,7 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \brief The QGLTwoSidedMaterial class implemented two-sided materials for 3D rendering.
     \ingroup qt3d
-    \ingroup qt3d::painting
+    \ingroup qt3d::materials
 
     Two-sided materials consist of a front() material and a back()
     material.  The specific material rendered is determined by the

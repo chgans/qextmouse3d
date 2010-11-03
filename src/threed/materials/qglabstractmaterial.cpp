@@ -48,7 +48,7 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \brief The QGLAbstractMaterial class provides a standard interface for rendering surface materials with GL.
     \ingroup qt3d
-    \ingroup qt3d::painting
+    \ingroup qt3d::materials
 
     Materials are the primary method to specify the surface appearance of an
     object, as distinct from the geometry for the object.  Materials have an

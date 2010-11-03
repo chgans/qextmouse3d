@@ -70,6 +70,7 @@
         <li><a href="qt3d-arrays.html">Arrays and Vertex Buffers</a></li>
         <li><a href="qt3d-geometry.html">Geometry Building</a></li>
         <li><a href="qt3d-graphicsview.html">Graphics View Integration</a></li>
+        <li><a href="qt3d-materials.html">Materials</a></li>
         <li><a href="qt3d-math.html">Mathematical Primitives</a></li>
         <li><a href="qt3d-painting.html">Painting in 3D</a></li>
         <li><a href="qt3d-scene.html">Scene Management</a></li>

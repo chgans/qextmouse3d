@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
     \brief The QGLMaterial class describes one-sided material properties for rendering fragments.
     \since 4.8
     \ingroup qt3d
-    \ingroup qt3d::painting
+    \ingroup qt3d::materials
 
     \sa QGLTwoSidedMaterial
 */
