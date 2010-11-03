@@ -203,4 +203,11 @@ int QGLAbstractMaterial::compare(const QGLAbstractMaterial *other) const
         return 0;
 }
 
+/*!
+    \fn void QGLAbstractMaterial::materialChanged()
+
+    Signal that is emitted when an object that is using this material
+    should be redrawn because some property on the material has changed.
+*/
+
 QT_END_NAMESPACE

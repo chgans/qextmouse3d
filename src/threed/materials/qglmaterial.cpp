@@ -579,18 +579,6 @@ void QGLMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
     \sa texture(), setTexture(), materialChanged()
 */
 
-/*!
-    \fn void QGLMaterial::materialChanged()
-
-    This signal is emitted when one of basicColor(), ambientColor(),
-    diffuseColor(), specularColor(), emittedLight(), shiniess(),
-    or texture() changes.
-
-    \sa basicColorChanged(), ambientColorChanged(), diffuseColorChanged()
-    \sa specularColorChanged(), emittedLightChanged(), shininessChanged()
-    \sa texturesChanged()
-*/
-
 #ifndef QT_NO_DEBUG_STREAM
 
 QDebug operator<<(QDebug dbg, const QGLMaterial &material)

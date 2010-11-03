@@ -65,6 +65,9 @@ public:
     virtual void release(QGLPainter *painter, QGLAbstractMaterial *next) = 0;
 
     virtual int compare(const QGLAbstractMaterial *other) const;
+
+Q_SIGNALS:
+    void materialChanged();
 };
 
 QT_END_NAMESPACE

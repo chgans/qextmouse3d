@@ -130,7 +130,6 @@ Q_SIGNALS:
     void emittedLightChanged();
     void shininessChanged();
     void texturesChanged();
-    void materialChanged();
 
 private:
     friend class QGLMaterialCollection;
