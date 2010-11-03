@@ -53,19 +53,9 @@ QT_BEGIN_NAMESPACE
 class Cube : public Item3D
 {
     Q_OBJECT
-    Q_PROPERTY(qreal size READ size WRITE setSize NOTIFY sizeChanged)
 public:
-    Cube(QObject *parent = 0) : Item3D(parent), m_size(1) {}
+    Cube(QObject *parent = 0) : Item3D(parent) {}
     ~Cube() {}
-
-    qreal size() const { return m_size; }
-    void setSize(qreal value) { m_size = value; emit sizeChanged(); }
-
-Q_SIGNALS:
-    void sizeChanged();
-
-private:
-    qreal m_size;
 };
 
 QML_DECLARE_TYPE(Cube)

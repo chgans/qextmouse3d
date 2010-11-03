@@ -48,7 +48,6 @@ Viewport {
 
     Cube {
         id: teapot
-        size: 1.0
         effect: program
 //        xRotation: 30
     }

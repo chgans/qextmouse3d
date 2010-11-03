@@ -53,7 +53,7 @@
 
     \code
     Cube {
-        size: 1.5
+        scale: 1.5
         effect: Effect {
             color: "#aaca00"
             texture: "qtlogo.png"
@@ -74,7 +74,7 @@
 
     \code
     Cube {
-        size: 1.5
+        scale: 1.5
         position: Qt.vector3d(1, 0, 5)
         effect: Effect {
             color: "#aaca00"
@@ -84,11 +84,4 @@
     \endcode
 
     \sa Item3D
-*/
-
-/*!
-    \qmlproperty real Cube::size
-
-    The size of the cube.  The default value for this property is 1.
-    The cube will be centered on Item3D::position.
 */

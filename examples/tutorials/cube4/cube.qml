@@ -47,7 +47,6 @@ Viewport {
     width: 640; height: 480
 
     Cube {
-        size: 1.0
         transform: Rotation3D {
             angle: 45; axis: Qt.vector3d(1, 1, 1)
         }

@@ -46,7 +46,7 @@ Viewport {
     width: 640; height: 480
 
     Cube {
-        size: 1.5
+        scale: 1.5
 
         transform: Rotation3D {
             angle: 45
