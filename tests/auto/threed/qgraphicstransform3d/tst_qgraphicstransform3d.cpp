@@ -118,7 +118,6 @@ void tst_QGraphicsTransform3D::scale3D()
     QGraphicsScale3D scale1;
     QVERIFY(scale1.origin() == QVector3D(0, 0, 0));
     QVERIFY(scale1.scale() == QVector3D(1, 1, 1));
-    QVERIFY(scale1.uniformScale() == 1.0f);
 
     QSignalSpy spy1(&scale1, SIGNAL(originChanged()));
     QSignalSpy spy2(&scale1, SIGNAL(scaleChanged()));
@@ -128,7 +127,6 @@ void tst_QGraphicsTransform3D::scale3D()
     scale1.setScale(QVector3D(4, -6, 0.5f));
     QVERIFY(scale1.origin() == QVector3D(1, 2, 3));
     QVERIFY(scale1.scale() == QVector3D(4, -6, 0.5f));
-    QVERIFY(scale1.uniformScale() == ((4 + -6 + 0.5f) / 3.0f));
 
     QCOMPARE(spy1.size(), 1);
     QCOMPARE(spy2.size(), 1);
@@ -155,13 +153,6 @@ void tst_QGraphicsTransform3D::scale3D()
     QCOMPARE(spy3.size(), 3);
 
     QVERIFY(scale1.scale() == QVector3D(20, -4, 42));
-
-    scale1.setUniformScale(33);
-    QCOMPARE(spy2.size(), 3);
-    QCOMPARE(spy3.size(), 4);
-
-    QVERIFY(scale1.scale() == QVector3D(33, 33, 33));
-    QVERIFY(scale1.uniformScale() == 33.0f);
 
     QVERIFY(scale1.origin() == QVector3D(1, 2, 3));
     QCOMPARE(spy1.size(), 1);

@@ -39,14 +39,28 @@
 **
 ****************************************************************************/
 
-import Qt 4.7
-import Qt3D 1.0
+#include "scale3d.h"
 
-Item3D {
-    id: cube
-    property real size: 1
-    pretransform: Scale3D {
-        scale: size
+QT_BEGIN_NAMESPACE
+
+void Scale3D::setScale(const QVariant &value)
+{
+    QVector3D newScale;
+    if (value.type() == QVariant::Vector3D) {
+        newScale = value.value<QVector3D>();
+    } else {
+        bool ok = false;
+        double val = value.toDouble(&ok);
+        if (!ok) {
+            qWarning("Scale3D: scale value is not a vector3D or single floating-point value");
+            return;
+        }
+        newScale = QVector3D(qreal(val), qreal(val), qreal(val));
     }
-    mesh: Mesh { source: "cube.obj" }
+    if (newScale != QGraphicsScale3D::scale()) {
+        QGraphicsScale3D::setScale(newScale);
+        emit variantScaleChanged();
+    }
 }
+
+QT_END_NAMESPACE

@@ -75,8 +75,8 @@ QT_BEGIN_NAMESPACE
     Item3D {
         mesh: Mesh { source: "chair.3ds" }
         transform: [
-            Translation3D { translate: Qt.vector3D(5, 0, 0) },
-            Scale3D { uniformScale: 0.5 }
+            Translation3D { translate: Qt.vector3d(5, 0, 0) },
+            Scale3D { scale: 0.5 }
         ]
     }
     \endcode
@@ -92,8 +92,8 @@ QT_BEGIN_NAMESPACE
     Item3D {
         mesh: Mesh { source: "chair.3ds" }
         transform: [
-            Scale3D { uniformScale: 0.5 },
-            Translation3D { translate: Qt.vector3D(5, 0, 0) }
+            Scale3D { scale: 0.5 },
+            Translation3D { translate: Qt.vector3d(5, 0, 0) }
         ]
     }
     \endcode
@@ -106,7 +106,20 @@ QT_BEGIN_NAMESPACE
         mesh: Mesh { source: "chair.3ds" }
         scale: 0.5
         transform: [
-            Translation3D { translate: Qt.vector3D(5, 0, 0) }
+            Translation3D { translate: Qt.vector3d(5, 0, 0) }
+        ]
+    }
+    \endcode
+
+    Scale values can also affect the x, y, and z axes by different amounts
+    by using a \c{vector3D} value:
+
+    \code
+    Item3D {
+        mesh: Mesh { source: "chair.3ds" }
+        transform: [
+            Scale3D { scale: Qt.vector3d(0.5, 0.2, 1.0) },
+            Translation3D { translate: Qt.vector3d(5, 0, 0) }
         ]
     }
     \endcode
@@ -173,8 +186,6 @@ void QGraphicsScale3D::setOrigin(const QVector3D &value)
     \brief the amount with which to scale each component.
 
     The default value for this property is QVector3D(1, 1, 1).
-
-    \sa uniformScale()
 */
 
 /*!
@@ -183,16 +194,15 @@ void QGraphicsScale3D::setOrigin(const QVector3D &value)
     The amount with which to scale each component.  The default value for
     this property is (1, 1, 1).
 
-    The \l uniformScale property can be specified as a single floating-point
-    value to set all axes to the same value.  In other words, the following
-    two transformations are equivalent:
+    This property can be specified as either a vector3D or a single
+    floating-point value.  A single floating-point value will set
+    the x, y, and z scale components to the same value.  In other words,
+    the following two transformations are equivalent:
 
     \code
-    Scale3D { uniformScale: 2 }
+    Scale3D { scale: 2 }
     Scale3D { scale: Qt.vector3d(2, 2, 2) }
     \endcode
-
-    \sa uniformScale
 */
 
 QVector3D QGraphicsScale3D::scale() const
@@ -206,53 +216,6 @@ void QGraphicsScale3D::setScale(const QVector3D &value)
     Q_D(QGraphicsScale3D);
     if (d->scale != value) {
         d->scale = value;
-        emit transformChanged();
-        emit scaleChanged();
-    }
-}
-
-/*!
-    \property QGraphicsScale3D::uniformScale
-    \brief the amount with which to scale each component uniformly.
-
-    The default value for this property is 1.  It returns the
-    average of the x, y, and z components of scale() when read,
-    and sets all of x, y, and z to the same value when written.
-
-    \sa scale()
-*/
-
-/*!
-    \qmlproperty real Scale3D::uniformScale
-
-    The amount with which to scale each component uniformly.  The default
-    value for this property is 1.
-
-    This property returns the average of the x, y, and z components of
-    \l scale when read, and sets all of x, y, and z to the same value
-    when written.  In other words, the following two transformations
-    are equivalent:
-
-    \code
-    Scale3D { uniformScale: 2 }
-    Scale3D { scale: Qt.vector3d(2, 2, 2) }
-    \endcode
-
-    \sa scale
-*/
-
-qreal QGraphicsScale3D::uniformScale() const
-{
-    Q_D(const QGraphicsScale3D);
-    return (d->scale.x() + d->scale.y() + d->scale.z()) / 3.0f;
-}
-
-void QGraphicsScale3D::setUniformScale(qreal value)
-{
-    Q_D(QGraphicsScale3D);
-    QVector3D scale(value, value, value);
-    if (d->scale != scale) {
-        d->scale = scale;
         emit transformChanged();
         emit scaleChanged();
     }

@@ -48,6 +48,7 @@
 #include "item3d.h"
 #include "viewport.h"
 #include "effect.h"
+#include "scale3d.h"
 #include "qgraphicsrotation3d.h"
 #include "qgraphicstranslation3d.h"
 #include "qgraphicsscale3d.h"
@@ -82,7 +83,7 @@ public:
         qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
         qmlRegisterType<QGraphicsRotation3D>(uri,1,0,"Rotation3D");
         qmlRegisterType<QGraphicsTranslation3D>(uri,1,0,"Translation3D");
-        qmlRegisterType<QGraphicsScale3D>(uri,1,0,"Scale3D");
+        qmlRegisterType<Scale3D>(uri,1,0,"Scale3D");
         qmlRegisterType<QGraphicsBillboardTransform>(uri,1,0,"BillboardTransform");
         qmlRegisterType<QGLMaterial>(uri,1,0,"Material");
 #if !defined(QT_OPENGL_ES_1)
@@ -91,6 +92,7 @@ public:
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();
+        qmlRegisterType<QGraphicsScale3D>();
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {

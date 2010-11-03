@@ -39,14 +39,39 @@
 **
 ****************************************************************************/
 
-import Qt 4.7
-import Qt3D 1.0
+#ifndef SCALE3D_H
+#define SCALE3D_H
 
-Item3D {
-    id: cube
-    property real size: 1
-    pretransform: Scale3D {
-        scale: size
-    }
-    mesh: Mesh { source: "cube.obj" }
-}
+#include "qgraphicsscale3d.h"
+#include <QtCore/qvariant.h>
+#include <QtDeclarative/qdeclarative.h>
+
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
+class Q_QT3D_EXPORT Scale3D : public QGraphicsScale3D
+{
+    Q_OBJECT
+    Q_PROPERTY(QVariant scale READ scale WRITE setScale NOTIFY variantScaleChanged)
+public:
+    Scale3D(QObject *parent = 0) : QGraphicsScale3D(parent) {}
+    ~Scale3D() {}
+
+    QVariant scale() const { return QGraphicsScale3D::scale(); }
+    void setScale(const QVariant &value);
+
+Q_SIGNALS:
+    void variantScaleChanged();
+
+private:
+    Q_DISABLE_COPY(Scale3D)
+};
+
+QML_DECLARE_TYPE(Scale3D)
+
+QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

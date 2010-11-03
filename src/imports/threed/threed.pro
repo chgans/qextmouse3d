@@ -19,6 +19,7 @@ SOURCES += \
     item3d.cpp \
     mesh.cpp \
     qt3dnamespace.cpp \
+    scale3d.cpp \
     viewport.cpp
 HEADERS += \
     redcyaneffect.h \
@@ -26,6 +27,7 @@ HEADERS += \
     item3d.h \
     mesh.h \
     qt3dnamespace.h \
+    scale3d.h \
     viewport.h
 
 !contains(QT_CONFIG, opengles1) {
