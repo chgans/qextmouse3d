@@ -65,6 +65,7 @@ class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
     Q_OBJECT
     Q_DECLARE_PRIVATE(QGLMaterial)
     Q_DISABLE_COPY(QGLMaterial)
+    Q_ENUMS(TextureCombineMode)
     Q_PROPERTY(QColor basicColor READ basicColor WRITE setBasicColor NOTIFY basicColorChanged)
     Q_PROPERTY(QColor ambientColor READ ambientColor WRITE setAmbientColor NOTIFY ambientColorChanged)
     Q_PROPERTY(QColor diffuseColor READ diffuseColor WRITE setDiffuseColor NOTIFY diffuseColorChanged)
@@ -73,6 +74,7 @@ class Q_QT3D_EXPORT QGLMaterial : public QGLAbstractMaterial
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY basicColorChanged)
     Q_PROPERTY(qreal shininess READ shininess WRITE setShininess NOTIFY shininessChanged)
     Q_PROPERTY(QGLTexture2D *texture READ texture WRITE setTexture NOTIFY texturesChanged)
+    Q_PROPERTY(QGLMaterial::TextureCombineMode textureCombineMode READ textureCombineMode WRITE setTextureCombineMode NOTIFY texturesChanged)
     Q_PROPERTY(QUrl textureUrl READ textureUrl WRITE setTextureUrl NOTIFY texturesChanged)
 public:
     explicit QGLMaterial(QObject *parent = 0);
@@ -104,6 +106,16 @@ public:
 
     QUrl textureUrl(int layer = 0) const;
     void setTextureUrl(const QUrl &url, int layer = 0);
+
+    enum TextureCombineMode
+    {
+        Modulate,
+        Decal,
+        Replace
+    };
+
+    QGLMaterial::TextureCombineMode textureCombineMode(int layer = 0) const;
+    void setTextureCombineMode(QGLMaterial::TextureCombineMode mode, int layer = 0);
 
     int textureLayerCount() const;
 

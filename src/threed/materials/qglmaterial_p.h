@@ -72,6 +72,7 @@ public:
     QColor emittedLight;
     qreal shininess;
     QMap<int, QGLTexture2D *> textures;
+    QMap<int, QGLMaterial::TextureCombineMode> textureModes;
     QGLMaterialCollection *collection;
     int index;
     QString name;

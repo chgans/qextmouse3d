@@ -422,6 +422,43 @@ void QGLMaterial::setTextureUrl(const QUrl &url, int layer)
 }
 
 /*!
+    \enum QGLMaterial::TextureCombineMode
+    This enum defines the mode to use when combining a texture with
+    the material colors on a QGLMaterial object.
+
+    \value Modulate Modulate the texture with the lighting
+           conditions to produce a lit texture.
+    \value Decal Combine the texture with the lighting conditions
+           to produce a decal effect.
+    \value Replace Replace with the contents of the texture,
+           ignoring colors and lighting conditions.
+*/
+
+/*!
+    \property QGLMaterial::textureCombineMode
+    \brief the texture combine mode associated with \a layer on this material.
+    The default value is \l Modulate.
+
+    \sa texturesChanged()
+*/
+
+QGLMaterial::TextureCombineMode QGLMaterial::textureCombineMode(int layer) const
+{
+    Q_D(const QGLMaterial);
+    return d->textureModes.value(layer, Modulate);
+}
+
+void QGLMaterial::setTextureCombineMode(QGLMaterial::TextureCombineMode mode, int layer)
+{
+    Q_D(QGLMaterial);
+    if (d->textureModes.value(layer, Modulate) != mode) {
+        d->textureModes[layer] = mode;
+        emit texturesChanged();
+        emit materialChanged();
+    }
+}
+
+/*!
     Returns the number of texture layers associated with this material.
 
     The return value may be larger than the number of actual texture
@@ -456,7 +493,17 @@ void QGLMaterial::bind(QGLPainter *painter)
             tex->bind();
         else
             glBindTexture(GL_TEXTURE_2D, 0);
-        effect = QGL::LitModulateTexture2D;
+        if (effect == QGL::LitMaterial) {
+            // TODO: different combine modes for each layer.
+            QGLMaterial::TextureCombineMode mode =
+                d->textureModes.value(it.key(), Modulate);
+            if (mode == Replace)
+                effect = QGL::FlatReplaceTexture2D;
+            else if (mode == Decal)
+                effect = QGL::LitDecalTexture2D;
+            else
+                effect = QGL::LitModulateTexture2D;
+        }
     }
     painter->setStandardEffect(effect);
 }
