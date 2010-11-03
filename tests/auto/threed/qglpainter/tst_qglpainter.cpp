@@ -132,6 +132,7 @@ void tst_QGLPainter::drawTrianglePaint()
     vertices.append(500, 100);
     vertices.append(500, 500);
 
+    painter.clearAttributes();
     painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);
@@ -219,6 +220,7 @@ void tst_QGLPainter::scissorPaint()
     vertices.append(500, 500);
 
     // Paint a green triangle.
+    painter.clearAttributes();
     painter.setStandardEffect(QGL::FlatColor);
     painter.setColor(Qt::green);
     painter.setVertexAttribute(QGL::Position, vertices);

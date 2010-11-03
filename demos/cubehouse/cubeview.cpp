@@ -379,6 +379,7 @@ void CubeView::paintGL(QGLPainter *painter)
 
         painter->modelViewMatrix().push();
         painter->setStandardEffect(QGL::FlatColor);
+        painter->clearAttributes();
         painter->setVertexAttribute(QGL::Position, QGLAttributeValue(verts));
         glLineWidth(1.0f);
 

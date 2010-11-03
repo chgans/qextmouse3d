@@ -103,6 +103,7 @@ void ImageView::paintGL(QGLPainter *painter)
     texCoords.append(1.0f, 0.0f);
     texCoords.append(1.0f, 1.0f);
 
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, vertices);
     painter->setVertexAttribute(QGL::TextureCoord0, texCoords);
 

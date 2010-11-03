@@ -2,6 +2,7 @@ INCLUDEPATH += $$PWD
 VPATH += $$PWD
 HEADERS += \
     qglattributedescription.h \
+    qglattributeset.h \
     qglattributevalue.h \
     qglindexbuffer.h \
     qglvertexbundle.h \
@@ -14,6 +15,7 @@ HEADERS += \
     qt3dglobal.h
 SOURCES += \
     qglattributedescription.cpp \
+    qglattributeset.cpp \
     qglattributevalue.cpp \
     qglindexbuffer.cpp \
     qglvertexbundle.cpp \

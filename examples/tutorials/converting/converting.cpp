@@ -88,6 +88,7 @@ void TutorialWidget::paintGL()
 //! [create-vertex-array]
 
 //! [draw]
+    painter.clearAttributes();
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.draw(QGL::Triangles, 3);
 //! [draw]

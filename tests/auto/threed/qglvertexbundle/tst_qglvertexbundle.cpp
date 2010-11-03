@@ -82,8 +82,15 @@ void tst_QGLVertexBundle::interleaved()
     // Cannot upload an empty bundle.
     QVERIFY(!bundle.upload());
 
+    QVERIFY(bundle.attributes().isEmpty());
+
     bundle.addAttribute(QGL::Position, positions);
     bundle.addAttribute(QGL::TextureCoord0, texCoords);
+
+    QGLAttributeSet set = bundle.attributes();
+    QVERIFY(set.contains(QGL::Position));
+    QVERIFY(set.contains(QGL::TextureCoord0));
+    QVERIFY(!set.contains(QGL::TextureCoord1));
 
     QVERIFY(!bundle.isUploaded());
     QCOMPARE(bundle.vertexCount(), 4);

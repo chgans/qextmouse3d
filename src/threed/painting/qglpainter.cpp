@@ -1185,6 +1185,55 @@ static void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAt
 }
 
 /*!
+    Returns the set of vertex attributes that have been set on the
+    painter state by setVertexAttribute() and setVertexBundle()
+    since the last call to clearAttributes().
+
+    The most common use for this fucntion is to determine if specific
+    attributes have been supplied on the painter so as to adjust the
+    current drawing effect accordingly.  The following example will
+    use a lit texture effect if texture co-ordinates were provided
+    in the vertex bundle, or a simple lit material effect if
+    texture co-ordinates were not provided:
+
+    \code
+    painter.clearAttributes();
+    painter.setVertexBundle(bundle);
+    if (painter.attributes().contains(QGL::TextureCoord0))
+        painter.setStandardEffect(QGL::LitModulateTexture2D);
+    else
+        painter.setStandardEffect(QGL::LitMaterial);
+    \endcode
+
+    It is important to clear the attributes before setting the vertex
+    bundle, so that attributes from a previous bundle will not leak
+    through.  Multiple vertex bundles may be supplied if they contain
+    different parts of the same logical piece of geometry.
+
+    \sa clearAttributes(), setVertexBundle()
+*/
+QGLAttributeSet QGLPainter::attributes() const
+{
+    Q_D(const QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    return d->attributeSet;
+}
+
+/*!
+    Clears the set of vertex attributes that have been set on the
+    painter state by setVertexAttribute() and setVertexBundle().
+    See the documentation for attributes() for more information.
+
+    \sa attributes()
+*/
+void QGLPainter::clearAttributes()
+{
+    Q_D(QGLPainter);
+    QGLPAINTER_CHECK_PRIVATE();
+    d->attributeSet.clear();
+}
+
+/*!
     Sets a vertex \a attribute on the current GL context to \a value.
 
     The vertex attribute is bound to the GL state on the index
@@ -1195,7 +1244,13 @@ static void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAt
     Vertex attributes are independent of the effect() and can be
     bound once and then used with multiple effects.
 
-    \sa setVertexBundle(), draw()
+    If this is the first attribute in a new piece of geometry,
+    it is recommended that clearAttributes() be called before this
+    function.  This will inform QGLPainter that a new piece of geometry
+    is being provided and that the previous geometry is now invalid.
+    See the documentation for attributes() for more information.
+
+    \sa setVertexBundle(), draw(), clearAttributes(), attributes()
 */
 void QGLPainter::setVertexAttribute
     (QGL::VertexAttribute attribute, const QGLAttributeValue& value)
@@ -1214,6 +1269,7 @@ void QGLPainter::setVertexAttribute
                               value.type(), GL_TRUE,
                               value.stride(), value.data());
     }
+    d->attributeSet.insert(attribute);
 }
 
 /*!
@@ -1227,7 +1283,12 @@ void QGLPainter::setVertexAttribute
     Vertex attributes are independent of the effect() and can be
     bound once and then used with multiple effects.
 
-    \sa setVertexAttribute(), draw()
+    It is recommended that clearAttributes() be called before this
+    function to inform QGLPainter that a new piece of geometry is
+    being provided and that the previous geometry is now invalid.
+    See the documentation for attributes() for more information.
+
+    \sa setVertexAttribute(), draw(), clearAttributes(), attributes()
 */
 void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
 {
@@ -1256,6 +1317,7 @@ void QGLPainter::setVertexBundle(const QGLVertexBundle& buffer)
                                   attr->value.stride(), attr->value.data());
         }
     }
+    d->attributeSet.unite(buffer.attributes());
 }
 
 /*!

@@ -81,6 +81,7 @@ void PainterWidget::paintGL(QPainter *p)
     vertices.append(110.0, 110.0, 0.0);
     vertices.append(10.0,  110.0, 0.0);
 
+    painter.clearAttributes();
     painter.setStandardEffect(QGL::FlatColor);
     painter.setVertexAttribute(QGL::Position, vertices);
     painter.setColor(QColor(0, 128, 0, 255));

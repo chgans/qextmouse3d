@@ -123,6 +123,7 @@ public:
     GLuint boundIndexBuffer;
     QGLRenderSequencer *renderSequencer;
     bool isFixedFunction;
+    QGLAttributeSet attributeSet;
 
     inline void ensureEffect(QGLPainter *painter)
         { if (!effect) createEffect(painter); }

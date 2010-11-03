@@ -550,6 +550,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         // Select the effect and draw the backdrop quad.
         d->backdrop->enableEffect(painter);
+        painter->clearAttributes();
         painter->setVertexBundle(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
         d->backdrop->disableEffect(painter);
@@ -565,6 +566,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 
         painter->setStandardEffect(QGL::FlatColor);
         painter->setColor(d->backgroundColor);
+        painter->clearAttributes();
         painter->setVertexBundle(d->backdropVertices);
         painter->draw(QGL::TriangleFan, 4);
 

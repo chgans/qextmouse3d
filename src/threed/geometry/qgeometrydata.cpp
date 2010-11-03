@@ -866,6 +866,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode)
     if (d && d->indices.size() && d->count)
     {
         upload();
+        painter->clearAttributes();
         painter->setVertexBundle(d->vertexBundle);
         if (count == 0)
             count = d->indexBuffer.indexCount();

@@ -120,6 +120,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleFloatAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -137,6 +138,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleVector2DAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -154,6 +156,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleVector3DAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -171,6 +174,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleVector4DAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -188,6 +192,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleColorAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -205,6 +210,7 @@ void QGLVertexBundle::addAttribute
 {
     Q_D(QGLVertexBundle);
     if (!d->buffer.isCreated()) {
+        d->attributeSet.insert(attribute);
         d->attributes +=
             new QGLVertexBundleCustomAttribute(attribute, value);
         d->vertexCount = qMax(d->vertexCount, value.count());
@@ -259,6 +265,15 @@ static void vertexBufferInterleave
         }
         break;
     }
+}
+
+/*!
+    Returns the set of attributes that are present in this vertex bundle.
+*/
+QGLAttributeSet QGLVertexBundle::attributes() const
+{
+    Q_D(const QGLVertexBundle);
+    return d->attributeSet;
 }
 
 /*!

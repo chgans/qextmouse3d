@@ -508,6 +508,12 @@ void QGLMaterial::bindTexturesAndEffect(QGLPainter *painter, bool twoSided)
         else
             glBindTexture(GL_TEXTURE_2D, 0);
         if (effect == QGL::LitMaterial) {
+            // Don't change the effect unless we actually have texture coords.
+            // Otherwise we may get a crash when the effect enables a vertex
+            // attribute array that is not actually present.
+            if (!painter->attributes().contains(QGL::TextureCoord0))
+                continue;
+
             // TODO: different combine modes for each layer.
             QGLMaterial::TextureCombineMode mode =
                 d->textureModes.value(it.key(), Modulate);

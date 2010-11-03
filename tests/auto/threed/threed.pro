@@ -8,6 +8,7 @@ SUBDIRS = \
     qgeometrydata \
     qglabstractsurface \
     qglattributedescription \
+    qglattributeset \
     qglattributevalue \
     qglbezierpatches \
     qglbuilder \

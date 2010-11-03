@@ -210,6 +210,7 @@ void PageFlipView::paintGL()
         painter.glActiveTexture(GL_TEXTURE1);
         gradientTexture.bind();
     }
+    painter.clearAttributes();
     painter.setVertexAttribute(QGL::Position, positions);
     painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
     painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);
@@ -245,6 +246,7 @@ void PageFlipView::paintGL()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     painter.setStandardEffect(QGL::FlatColor);
+    painter.clearAttributes();
     painter.setVertexAttribute(QGL::Position, positions);
     painter.setVertexAttribute(QGL::TextureCoord0, texCoords);
     painter.setVertexAttribute(QGL::CustomVertex0, gradientCoords);

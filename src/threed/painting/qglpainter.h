@@ -151,6 +151,9 @@ public:
     QColor color() const;
     void setColor(const QColor& color);
 
+    QGLAttributeSet attributes() const;
+    void clearAttributes();
+
     void setVertexAttribute
         (QGL::VertexAttribute attribute, const QGLAttributeValue& value);
     void setVertexBundle(const QGLVertexBundle& buffer);

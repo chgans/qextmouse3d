@@ -206,6 +206,7 @@ public:
     QGLBuffer buffer;
     QList<QGLVertexBundleAttribute *> attributes;
     int vertexCount;
+    QGLAttributeSet attributeSet;
 };
 
 QT_END_NAMESPACE

@@ -166,6 +166,7 @@ void ShapesWidget::paintPoints(QGLPainter *painter, const QRect& rect)
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(170, 202, 0));
 
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Points, 8);
 
@@ -174,6 +175,7 @@ void ShapesWidget::paintPoints(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLines(QGLPainter *painter, const QRect& rect)
 {
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::Lines, 8);
 
@@ -182,6 +184,7 @@ void ShapesWidget::paintLines(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLineStrip(QGLPainter *painter, const QRect& rect)
 {
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::LineStrip, 8);
 
@@ -190,6 +193,7 @@ void ShapesWidget::paintLineStrip(QGLPainter *painter, const QRect& rect)
 
 void ShapesWidget::paintLineLoop(QGLPainter *painter, const QRect& rect)
 {
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, basicPoints(rect));
     painter->draw(QGL::LineLoop, 8);
 
@@ -222,6 +226,7 @@ void ShapesWidget::paintTriangles(QGLPainter *painter, const QRect& rect)
     normals.append(0.0f, 0.0f, 1.0f);
     normals.append(0.0f, 0.0f, 1.0f);
 
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, vertices);
     painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::Triangles, 6);
@@ -253,11 +258,13 @@ void ShapesWidget::paintTriangleStrip(QGLPainter *painter, const QRect& rect)
     normals.append(0.0f, 0.0f, 1.0f);
     normals.append(0.0f, 0.0f, 1.0f);
 
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, vertices);
     painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::TriangleStrip, 6);
 
     // Overpaint some lines to show the triangle boundaries.
+    painter->clearAttributes();
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(202, 170, 0));
     painter->setVertexAttribute(QGL::Position, vertices);
@@ -288,11 +295,13 @@ void ShapesWidget::paintTriangleFan(QGLPainter *painter, const QRect& rect)
     normals.append(0.0f, 0.0f, 1.0f);
     normals.append(0.0f, 0.0f, 1.0f);
 
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, vertices);
     painter->setVertexAttribute(QGL::Normal, normals);
     painter->draw(QGL::TriangleFan, 5);
 
     // Overpaint some lines to show the triangle boundaries.
+    painter->clearAttributes();
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(QColor(202, 170, 0));
     static ushort const indices[] = {0, 2, 0, 3};
@@ -389,6 +398,7 @@ void ShapesWidget::drawText
     texCoord.append(1.0f, 1.0f);
     texCoord.append(1.0f, 0.0f);
 
+    painter->clearAttributes();
     painter->setStandardEffect(QGL::FlatReplaceTexture2D);
     texture.bind();
     painter->setVertexAttribute(QGL::Position, vertices);

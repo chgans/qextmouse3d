@@ -147,6 +147,7 @@ void Spotlight::draw(QGLPainter *painter)
     // long as you're sure that light.spatialData() is the origin always
     // also you need to be scaled so that the -1 is long enough...
     verts.append(light.spotDirection());
+    painter->clearAttributes();
     painter->setVertexAttribute(QGL::Position, verts);
     painter->draw(QGL::Lines, 2);
     painter->update();
