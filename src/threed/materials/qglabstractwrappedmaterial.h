@@ -62,6 +62,8 @@ public:
     QGLAbstractMaterial *wrap() const { return m_wrap; }
     void setWrap(QGLAbstractMaterial *wrap);
 
+    QGLMaterial *front() const;
+    QGLMaterial *back() const;
     int compare(const QGLAbstractMaterial *other) const;
 
 Q_SIGNALS:

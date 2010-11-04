@@ -52,6 +52,7 @@ QT_BEGIN_NAMESPACE
 QT_MODULE(Qt3d)
 
 class QGLPainter;
+class QGLMaterial;
 
 class Q_QT3D_EXPORT QGLAbstractMaterial : public QObject
 {
@@ -60,6 +61,9 @@ class Q_QT3D_EXPORT QGLAbstractMaterial : public QObject
 public:
     explicit QGLAbstractMaterial(QObject *parent = 0);
     ~QGLAbstractMaterial();
+
+    virtual QGLMaterial *front() const;
+    virtual QGLMaterial *back() const;
 
     virtual void bind(QGLPainter *painter) = 0;
     virtual void release(QGLPainter *painter, QGLAbstractMaterial *next) = 0;

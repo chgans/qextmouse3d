@@ -114,6 +114,7 @@ public:
 
     int textureLayerCount() const;
 
+    QGLMaterial *front() const;
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
 

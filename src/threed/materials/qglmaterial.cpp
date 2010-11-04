@@ -412,6 +412,15 @@ int QGLMaterial::textureLayerCount() const
 
 /*!
     \reimp
+    Returns this material.
+*/
+QGLMaterial *QGLMaterial::front() const
+{
+    return const_cast<QGLMaterial *>(this);
+}
+
+/*!
+    \reimp
 */
 void QGLMaterial::bind(QGLPainter *painter)
 {

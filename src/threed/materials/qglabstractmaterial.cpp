@@ -107,6 +107,36 @@ QGLAbstractMaterial::~QGLAbstractMaterial()
 }
 
 /*!
+    Returns the material lighting parameters for rendering the front
+    faces of fragments with this abstract material.  The default
+    implementation returns null.
+
+    This function is provided as a convenience for applications that
+    wish to alter the lighting parameters or textures of a material,
+    without regard to any wrapping that has been performed to add
+    blending or other options.
+
+    \sa back(), QGLMaterial
+*/
+QGLMaterial *QGLAbstractMaterial::front() const
+{
+    return 0;
+}
+
+/*!
+    Returns the material lighting parameters for rendering the back
+    faces of fragments with this abstract material.  The default
+    implementation returns null, which indicates that front()
+    is also used to render back faces.
+
+    \sa front(), QGLMaterial
+*/
+QGLMaterial *QGLAbstractMaterial::back() const
+{
+    return 0;
+}
+
+/*!
     \fn void QGLAbstractMaterial::bind(QGLPainter *painter)
 
     Binds resources to \a painter that are needed to render this

@@ -113,6 +113,22 @@ void QGLAbstractWrappedMaterial::setWrap(QGLAbstractMaterial *wrap)
 /*!
     \reimp
 */
+QGLMaterial *QGLAbstractWrappedMaterial::front() const
+{
+    return m_wrap ? m_wrap->front() : 0;
+}
+
+/*!
+    \reimp
+*/
+QGLMaterial *QGLAbstractWrappedMaterial::back() const
+{
+    return m_wrap ? m_wrap->back() : 0;
+}
+
+/*!
+    \reimp
+*/
 int QGLAbstractWrappedMaterial::compare(const QGLAbstractMaterial *other) const
 {
     // Bail out if we don't have the same kind of wrapped material.
