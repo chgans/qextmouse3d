@@ -69,7 +69,7 @@ Viewport {
     }
 
     TestCase {
-        name: "scale3d"
+        name: "Scale3D"
 
         function test_uniformScale() {
             compare(scale1.scale, Qt.vector3d(2.5, 2.5, 2.5), "uniform1")

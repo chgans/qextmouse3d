@@ -62,7 +62,7 @@ Viewport {
     }
 
     TestCase {
-        name: "viewport"
+        name: "Viewport"
 
         function test_modes() {
             verify(viewport.picking, "picking")
