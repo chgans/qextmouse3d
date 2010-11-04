@@ -50,7 +50,7 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Q_QT3D_EXPORT Scale3D : public QGraphicsScale3D
+class Scale3D : public QGraphicsScale3D
 {
     Q_OBJECT
     Q_PROPERTY(QVariant scale READ scale WRITE setScale NOTIFY variantScaleChanged)
