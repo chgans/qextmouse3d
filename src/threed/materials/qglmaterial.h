@@ -117,6 +117,7 @@ public:
     QGLMaterial *front() const;
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
+    void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
 
 Q_SIGNALS:
     void ambientColorChanged();
@@ -130,7 +131,8 @@ private:
     friend class QGLMaterialCollection;
     friend class QGLTwoSidedMaterial;
 
-    void bindTexturesAndEffect(QGLPainter *painter, bool twoSided);
+    void bindTextures(QGLPainter *painter);
+    void bindEffect(QGLPainter *painter, const QGLAttributeSet &attributes, bool twoSided);
 
     QScopedPointer<QGLMaterialPrivate> d_ptr;
 };

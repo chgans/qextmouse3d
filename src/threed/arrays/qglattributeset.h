@@ -60,7 +60,7 @@ public:
     bool isEmpty() const { return !m_attrs; }
     void clear() { m_attrs = 0; }
 
-    bool contains(QGL::VertexAttribute attr);
+    bool contains(QGL::VertexAttribute attr) const;
     void insert(QGL::VertexAttribute attr);
     void remove(QGL::VertexAttribute attr);
 
@@ -78,7 +78,7 @@ private:
     quint32 m_attrs;
 };
 
-inline bool QGLAttributeSet::contains(QGL::VertexAttribute attr)
+inline bool QGLAttributeSet::contains(QGL::VertexAttribute attr) const
 {
     quint32 flag = quint32(attr);
     return flag < 32 ? ((m_attrs & (((quint32)1) << flag)) != 0) : false;

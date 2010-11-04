@@ -71,6 +71,7 @@ public:
 
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
+    void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
     int compare(const QGLAbstractMaterial *other) const;
 
 Q_SIGNALS:

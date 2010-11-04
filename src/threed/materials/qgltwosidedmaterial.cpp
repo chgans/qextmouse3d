@@ -192,11 +192,10 @@ void QGLTwoSidedMaterial::bind(QGLPainter *painter)
     if (d->back && d->back != front) {
         painter->setFaceMaterial(QGL::FrontFaces, front);
         painter->setFaceMaterial(QGL::BackFaces, d->back);
-        front->bindTexturesAndEffect(painter, true);
     } else {
         painter->setFaceMaterial(QGL::AllFaces, front);
-        front->bindTexturesAndEffect(painter, true);
     }
+    front->bindTextures(painter);
 }
 
 /*!
@@ -209,6 +208,19 @@ void QGLTwoSidedMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next
         d->front->release(painter, next);
     else if (d->defaultMaterial)
         d->defaultMaterial->release(painter, next);
+}
+
+/*!
+    \reimp
+*/
+void QGLTwoSidedMaterial::prepareToDraw
+    (QGLPainter *painter, const QGLAttributeSet &attributes)
+{
+    Q_D(QGLTwoSidedMaterial);
+    QGLMaterial *front = d->front;
+    if (!front)
+        front = d->defaultMaterial;
+    front->bindEffect(painter, attributes, true);
 }
 
 static inline int qt_gl_compare_materials(QGLMaterial *mat1, QGLMaterial *mat2)

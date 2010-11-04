@@ -156,7 +156,15 @@ QGLMaterial *QGLAbstractMaterial::back() const
     }
     \endcode
 
-    \sa release()
+    Normally the effect is bound to \a painter during the bind()
+    function.  However, some materials may need to use different
+    effects depending upon which attributes are present in the
+    geometry.  For example, a per-vertex color effect instead of a
+    uniform color effect if the geometry has the QGL::Color attribute.
+    The prepareToDraw() function can be overridden to alter the
+    effect once the specific set of geometry attributes are known.
+
+    \sa release(), prepareToDraw()
 */
 
 /*!
@@ -187,8 +195,31 @@ QGLMaterial *QGLAbstractMaterial::back() const
     }
     \endcode
 
-    \sa bind()
+    \sa bind(), prepareToDraw()
 */
+
+/*!
+    Prepares to draw geometry to \a painter that has the specified
+    set of vertex \a attributes.  The default implementation
+    does nothing.
+
+    Multiple effects may be used to render some materials depending upon
+    the available vertex attributes.  For example, if QGL::Color is
+    present in \a attributes, then a per-vertex color should be used
+    instead of a single uniform color.
+
+    This function is provided for such materials to have one last
+    chance during QGLPainter::draw() to alter the QGLPainter::effect()
+    to something that is tuned for the specific geometry.  It can
+    be assumed that bind() has already been called on this material.
+
+    \sa bind(), release()
+*/
+void QGLAbstractMaterial::prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes)
+{
+    Q_UNUSED(painter);
+    Q_UNUSED(attributes);
+}
 
 /*!
     Compares this material to \a other and returns -1, 0, or 1

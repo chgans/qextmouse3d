@@ -43,7 +43,7 @@
 #define QGLABSTRACTMATERIAL_H
 
 #include <QtCore/qobject.h>
-#include "qt3dglobal.h"
+#include "qglattributeset.h"
 
 QT_BEGIN_HEADER
 
@@ -67,6 +67,7 @@ public:
 
     virtual void bind(QGLPainter *painter) = 0;
     virtual void release(QGLPainter *painter, QGLAbstractMaterial *next) = 0;
+    virtual void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
 
     virtual int compare(const QGLAbstractMaterial *other) const;
 

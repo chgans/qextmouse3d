@@ -101,7 +101,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn bool QGLAttributeSet::contains(QGL::VertexAttribute attr)
+    \fn bool QGLAttributeSet::contains(QGL::VertexAttribute attr) const
 
     Returns true if this attribute set contains \a attr; false otherwise.
 

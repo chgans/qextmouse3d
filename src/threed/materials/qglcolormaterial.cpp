@@ -47,13 +47,15 @@ QT_BEGIN_NAMESPACE
 /*!
     \class QGLColorMaterial
     \since 4.8
-    \brief The QGLColorMaterial class implements flat color materials for 3D rendering.
+    \brief The QGLColorMaterial class implements flat or per-vertex color materials for 3D rendering.
     \ingroup qt3d
     \ingroup qt3d::materials
 
     When bound to a QGLPainter, QGLColorMaterial will select a flat
     color drawing effect, to render fragments with color(), ignoring
     any lights or textures that may be active on the QGLPainter state.
+    If the geometry has the QGL::Color attribute, then a per-vertex
+    color will be used instead and color() is ignored.
 
     \sa QGLMaterial
 */
@@ -87,6 +89,8 @@ QGLColorMaterial::~QGLColorMaterial()
     \brief the flat color to use to render the material.  The default
     color is white.
 
+    If the geometry has per-vertex colors, then this property is ignored.
+
     \sa colorChanged()
 */
 
@@ -113,7 +117,7 @@ void QGLColorMaterial::bind(QGLPainter *painter)
 {
     Q_D(const QGLColorMaterial);
     painter->setColor(d->color);
-    painter->setStandardEffect(QGL::FlatColor);
+    // Effect is set during prepareToDraw().
 }
 
 /*!
@@ -124,6 +128,18 @@ void QGLColorMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
     // No textures or other modes, so nothing to do here.
     Q_UNUSED(painter);
     Q_UNUSED(next);
+}
+
+/*!
+    \reimp
+*/
+void QGLColorMaterial::prepareToDraw
+    (QGLPainter *painter, const QGLAttributeSet &attributes)
+{
+    if (attributes.contains(QGL::Color))
+        painter->setStandardEffect(QGL::FlatPerVertexColor);
+    else
+        painter->setStandardEffect(QGL::FlatColor);
 }
 
 /*!

@@ -129,6 +129,16 @@ QGLMaterial *QGLAbstractWrappedMaterial::back() const
 /*!
     \reimp
 */
+void QGLAbstractWrappedMaterial::prepareToDraw
+    (QGLPainter *painter, const QGLAttributeSet &attributes)
+{
+    if (m_wrap)
+        m_wrap->prepareToDraw(painter, attributes);
+}
+
+/*!
+    \reimp
+*/
 int QGLAbstractWrappedMaterial::compare(const QGLAbstractMaterial *other) const
 {
     // Bail out if we don't have the same kind of wrapped material.

@@ -427,18 +427,16 @@ void QGLMaterial::bind(QGLPainter *painter)
     painter->setFaceMaterial(QGL::AllFaces, this);
     const_cast<QGLLightModel *>(painter->lightModel())
         ->setModel(QGLLightModel::OneSided); // FIXME
-    bindTexturesAndEffect(painter, false);
+    bindTextures(painter);
 }
 
 /*!
     \internal
 */
-void QGLMaterial::bindTexturesAndEffect(QGLPainter *painter, bool twoSided)
+void QGLMaterial::bindTextures(QGLPainter *painter)
 {
     Q_D(const QGLMaterial);
-    Q_UNUSED(twoSided);
     QMap<int, QGLTexture2D *>::ConstIterator it;
-    QGL::StandardEffect effect = QGL::LitMaterial;
     for (it = d->textures.begin(); it != d->textures.end(); ++it) {
         QGLTexture2D *tex = it.value();
         painter->glActiveTexture(GL_TEXTURE0 + it.key());
@@ -446,25 +444,7 @@ void QGLMaterial::bindTexturesAndEffect(QGLPainter *painter, bool twoSided)
             tex->bind();
         else
             glBindTexture(GL_TEXTURE_2D, 0);
-        if (effect == QGL::LitMaterial) {
-            // Don't change the effect unless we actually have texture coords.
-            // Otherwise we may get a crash when the effect enables a vertex
-            // attribute array that is not actually present.
-            if (!painter->attributes().contains(QGL::TextureCoord0))
-                continue;
-
-            // TODO: different combine modes for each layer.
-            QGLMaterial::TextureCombineMode mode =
-                d->textureModes.value(it.key(), Modulate);
-            if (mode == Replace)
-                effect = QGL::FlatReplaceTexture2D;
-            else if (mode == Decal)
-                effect = QGL::LitDecalTexture2D;
-            else
-                effect = QGL::LitModulateTexture2D;
-        }
     }
-    painter->setStandardEffect(effect);
 }
 
 /*!
@@ -479,6 +459,38 @@ void QGLMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
         painter->glActiveTexture(GL_TEXTURE0 + it.key());
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+}
+
+/*!
+    \reimp
+*/
+void QGLMaterial::prepareToDraw
+    (QGLPainter *painter, const QGLAttributeSet &attributes)
+{
+    bindEffect(painter, attributes, false);
+}
+
+/*!
+    \internal
+*/
+void QGLMaterial::bindEffect
+    (QGLPainter *painter, const QGLAttributeSet &attributes, bool twoSided)
+{
+    Q_D(const QGLMaterial);
+    Q_UNUSED(twoSided);
+    QGL::StandardEffect effect = QGL::LitMaterial;
+    if (!d->textures.isEmpty() && attributes.contains(QGL::TextureCoord0)) {
+        // TODO: different combine modes for each layer.
+        QGLMaterial::TextureCombineMode mode =
+            d->textureModes.value(0, Modulate);
+        if (mode == Replace)
+            effect = QGL::FlatReplaceTexture2D;
+        else if (mode == Decal)
+            effect = QGL::LitDecalTexture2D;
+        else
+            effect = QGL::LitModulateTexture2D;
+    }
+    painter->setStandardEffect(effect);
 }
 
 /*!
