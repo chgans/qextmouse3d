@@ -95,4 +95,16 @@ void QGLBlendMaterial::release(QGLPainter *painter, QGLAbstractMaterial *next)
     glDisable(GL_BLEND);
 }
 
+/*!
+    \reimp
+*/
+int QGLBlendMaterial::compare(const QGLAbstractMaterial *other) const
+{
+    const QGLBlendMaterial *blend =
+        qobject_cast<const QGLBlendMaterial *>(other);
+    if (!blend)
+        return QGLAbstractMaterial::compare(other);
+    return QGLAbstractMaterial::compare(wrap(), blend->wrap());
+}
+
 QT_END_NAMESPACE

@@ -265,6 +265,30 @@ int QGLAbstractMaterial::compare(const QGLAbstractMaterial *other) const
 }
 
 /*!
+    Compares \a material1 to \a material2 and returns -1, 0, or 1
+    depending upon whether \a material1 is less than, equal to,
+    or greater than \a material2.  This is used to sort materials
+    for more efficient rendering: materials of the same type
+    are rendered together to minimize GL state switching.
+
+    It is safe to call this function with either \a material1 or
+    \a material2 set to null.  Null materials always sort lowest
+    in the material order.
+*/
+int QGLAbstractMaterial::compare(const QGLAbstractMaterial *material1,
+                                 const QGLAbstractMaterial *material2)
+{
+    if (!material1)
+        return material2 ? -1 : 0;
+    else if (!material2)
+        return 1;
+    else if (material1 == material2)
+        return 0;
+    else
+        return material1->compare(material2);
+}
+
+/*!
     \fn void QGLAbstractMaterial::materialChanged()
 
     Signal that is emitted when an object that is using this material

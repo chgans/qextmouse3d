@@ -104,7 +104,15 @@ QGLAbstractWrappedMaterial::~QGLAbstractWrappedMaterial()
 void QGLAbstractWrappedMaterial::setWrap(QGLAbstractMaterial *wrap)
 {
     if (m_wrap != wrap) {
+        if (m_wrap) {
+            disconnect(m_wrap, SIGNAL(materialChanged()),
+                       this, SIGNAL(materialChanged()));
+        }
         m_wrap = wrap;
+        if (wrap) {
+            connect(wrap, SIGNAL(materialChanged()),
+                    this, SIGNAL(materialChanged()));
+        }
         emit wrapChanged();
         emit materialChanged();
     }
@@ -134,27 +142,6 @@ void QGLAbstractWrappedMaterial::prepareToDraw
 {
     if (m_wrap)
         m_wrap->prepareToDraw(painter, attributes);
-}
-
-/*!
-    \reimp
-*/
-int QGLAbstractWrappedMaterial::compare(const QGLAbstractMaterial *other) const
-{
-    // Bail out if we don't have the same kind of wrapped material.
-    if (metaObject() != other->metaObject())
-        return QGLAbstractMaterial::compare(other);
-
-    // Compare the wrapped materials.
-    QGLAbstractMaterial *wrap1 = m_wrap;
-    QGLAbstractMaterial *wrap2 =
-        qobject_cast<const QGLAbstractWrappedMaterial *>(other)->m_wrap;
-    if (!wrap1)
-        return wrap2 ? -1 : 0;
-    else if (!wrap2)
-        return 1;
-    else
-        return wrap1->compare(wrap2);
 }
 
 /*!

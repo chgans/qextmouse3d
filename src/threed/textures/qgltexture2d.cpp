@@ -356,6 +356,7 @@ void QGLTexture2D::setUrl(const QUrl &url)
     Q_D(QGLTexture2D);
     if (d->url == url)
         return;
+    d->url = url;
 
     if (url.isEmpty())
     {
@@ -376,12 +377,11 @@ void QGLTexture2D::setUrl(const QUrl &url)
                 if (im.isNull())
                     qWarning("Could not load texture: %s", qPrintable(fileName));
                 setImage(im);
-                d->url = url;
             }
         }
         else
         {
-            qWarning("Network URLs not yet supported\n");
+            qWarning("Network URLs not yet supported");
             /*
             if (d->textureReply)
                 d->textureReply->deleteLater();

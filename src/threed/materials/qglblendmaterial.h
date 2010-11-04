@@ -60,6 +60,7 @@ public:
 
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
+    int compare(const QGLAbstractMaterial *other) const;
 };
 
 QT_END_NAMESPACE

@@ -65,7 +65,6 @@ public:
     QGLMaterial *front() const;
     QGLMaterial *back() const;
     void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
-    int compare(const QGLAbstractMaterial *other) const;
 
 Q_SIGNALS:
     void wrapChanged();

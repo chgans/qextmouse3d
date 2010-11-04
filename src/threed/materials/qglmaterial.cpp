@@ -332,11 +332,11 @@ void QGLMaterial::setTexture(QGLTexture2D *value, int layer)
 QUrl QGLMaterial::textureUrl(int layer) const
 {
     Q_D(const QGLMaterial);
-    QUrl u;
     QGLTexture2D *tex = d->textures.value(layer, 0);
     if (tex)
-        u = tex->url();
-    return u;
+        return tex->url();
+    else
+        return QUrl();
 }
 
 void QGLMaterial::setTextureUrl(const QUrl &url, int layer)

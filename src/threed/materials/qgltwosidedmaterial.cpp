@@ -151,7 +151,7 @@ void QGLTwoSidedMaterial::setFront(QGLMaterial *material)
 QGLMaterial *QGLTwoSidedMaterial::back() const
 {
     Q_D(const QGLTwoSidedMaterial);
-    return d->front;
+    return d->back;
 }
 
 void QGLTwoSidedMaterial::setBack(QGLMaterial *material)
@@ -223,17 +223,6 @@ void QGLTwoSidedMaterial::prepareToDraw
     front->bindEffect(painter, attributes, true);
 }
 
-static inline int qt_gl_compare_materials(QGLMaterial *mat1, QGLMaterial *mat2)
-{
-    if (!mat1)
-        return mat2 ? -1 : 0;
-    else if (!mat2)
-        return 1;
-    else if (mat1 == mat2)
-        return 0;
-    return mat1->compare(mat2);
-}
-
 /*!
     \reimp
 */
@@ -244,10 +233,10 @@ int QGLTwoSidedMaterial::compare(const QGLAbstractMaterial *other) const
          = qobject_cast<const QGLTwoSidedMaterial *>(other);
     if (!twoside)
         return QGLAbstractMaterial::compare(other);
-    int cmp = qt_gl_compare_materials(d->front, twoside->d_ptr->front);
+    int cmp = QGLAbstractMaterial::compare(d->front, twoside->d_ptr->front);
     if (cmp)
         return cmp;
-    return qt_gl_compare_materials(d->back, twoside->d_ptr->back);
+    return QGLAbstractMaterial::compare(d->back, twoside->d_ptr->back);
 }
 
 /*!
