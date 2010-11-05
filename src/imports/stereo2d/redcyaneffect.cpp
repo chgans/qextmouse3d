@@ -73,6 +73,7 @@ void RedCyanEffect::draw(QPainter *painter)
     QPaintEngine *engine = painter->paintEngine();
     if (m_depth != 0.0f && (engine->type() == QPaintEngine::OpenGL ||
                             engine->type() == QPaintEngine::OpenGL2)) {
+#ifdef RED_CYAN_PIXMAP_CACHE
         QPoint offset;
         QPixmap pixmap = sourcePixmap(Qt::LogicalCoordinates, &offset, NoPad);
 
@@ -95,6 +96,37 @@ void RedCyanEffect::draw(QPainter *painter)
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         painter->setTransform(transform);
+#else
+        // Paint the source twice, with the GL color mask set up
+        // to allow through different colors each time.
+        // We apply the left/right eye adjustment by shifting the
+        // viewport left or right in the x direction by the z value.
+        //
+        // We have to shift the viewport because otherwise the
+        // two drawSource() calls will draw on top of each other
+        // and there will be no stereo effect.  There seems to be
+        // no way to alter this with the painter's transform instead.
+        // One problem with this is that the viewport is integer
+        // based so we lose sub-pixel accuracy on non-even depths.
+
+        QRect viewport = painter->viewport();
+        QRect origViewport = viewport;
+
+        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
+        viewport.translate(qRound(m_depth / 2.0f), 0);
+        painter->setViewport(viewport);
+        drawSource(painter);
+
+        glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+        viewport = origViewport;
+        viewport.translate(qRound(-m_depth / 2.0f), 0);
+        painter->setViewport(viewport);
+
+        drawSource(painter);
+
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        painter->setViewport(origViewport);
+#endif
     } else {
         drawSource(painter);
     }
