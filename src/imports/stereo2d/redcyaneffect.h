@@ -48,6 +48,8 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
+class QGraphicsItemEffectSourcePrivate;
+
 class RedCyanEffect : public QGraphicsEffect
 {
     Q_OBJECT
@@ -68,9 +70,11 @@ Q_SIGNALS:
 
 protected:
     void draw(QPainter *painter);
+    void sourceChanged(QGraphicsEffect::ChangeFlags flags);
 
 private:
     qreal m_depth;
+    QGraphicsItemEffectSourcePrivate *m_sourced;
 };
 
 QT_END_NAMESPACE

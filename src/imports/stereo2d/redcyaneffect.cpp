@@ -41,11 +41,14 @@
 
 #include "redcyaneffect.h"
 #include <QtGui/qpaintengine.h>
+#include <QtGui/private/qgraphicseffect_p.h>
+#include <QtGui/private/qgraphicsitem_p.h>
 #include <QtOpenGL>
 
 RedCyanEffect::RedCyanEffect(QObject *parent)
     : QGraphicsEffect(parent)
     , m_depth(0.0f)
+    , m_sourced(0)
 {
 }
 
@@ -73,61 +76,53 @@ void RedCyanEffect::draw(QPainter *painter)
     QPaintEngine *engine = painter->paintEngine();
     if (m_depth != 0.0f && (engine->type() == QPaintEngine::OpenGL ||
                             engine->type() == QPaintEngine::OpenGL2)) {
-#ifdef RED_CYAN_PIXMAP_CACHE
-        QPoint offset;
-        QPixmap pixmap = sourcePixmap(Qt::LogicalCoordinates, &offset, NoPad);
-
         // Paint the source twice, with the GL color mask set up
         // to allow through different colors each time.
         // We apply the left/right eye adjustment by shifting the
-        // image left or right in the x direction by the z value.
-        QTransform translationRed, translationCyan, transform;
-        transform = painter->transform();
+        // item left or right in the x direction by the z value.
 
+        // Modify the effectTransform to adjust the position
+        // and draw the left eye version of the source.
+        QGraphicsItemPaintInfo *drawContext = m_sourced->info;
+        const QTransform *origTransform = drawContext->effectTransform;
+        QTransform transform(Qt::Uninitialized);
+        if (!origTransform) {
+            transform = QTransform::fromTranslate(m_depth / 2.0f, 0.0f);
+        } else {
+            transform = *origTransform;
+            transform.translate(m_depth / 2.0f, 0.0f);
+        }
+        drawContext->effectTransform = &transform;
         glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-        translationRed.translate(m_depth / 2.0f, 0);
-        painter->setTransform(translationRed * transform);
-        painter->drawPixmap(offset, pixmap);
-
-        glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
-        translationCyan.translate(-m_depth / 2.0f, 0);
-        painter->setTransform(translationCyan * transform);
-        painter->drawPixmap(offset, pixmap);
-
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        painter->setTransform(transform);
-#else
-        // Paint the source twice, with the GL color mask set up
-        // to allow through different colors each time.
-        // We apply the left/right eye adjustment by shifting the
-        // viewport left or right in the x direction by the z value.
-        //
-        // We have to shift the viewport because otherwise the
-        // two drawSource() calls will draw on top of each other
-        // and there will be no stereo effect.  There seems to be
-        // no way to alter this with the painter's transform instead.
-        // One problem with this is that the viewport is integer
-        // based so we lose sub-pixel accuracy on non-even depths.
-
-        QRect viewport = painter->viewport();
-        QRect origViewport = viewport;
-
-        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
-        viewport.translate(qRound(m_depth / 2.0f), 0);
-        painter->setViewport(viewport);
         drawSource(painter);
 
+        // Modify the effectTransform again for the right eye version.
+        if (!origTransform) {
+            transform = QTransform::fromTranslate(-m_depth / 2.0f, 0.0f);
+        } else {
+            transform = *origTransform;
+            transform.translate(-m_depth / 2.0f, 0.0f);
+        }
         glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
-        viewport = origViewport;
-        viewport.translate(qRound(-m_depth / 2.0f), 0);
-        painter->setViewport(viewport);
-
         drawSource(painter);
 
+        // Restore the original effectTransform and color mask.
+        drawContext->effectTransform = origTransform;
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        painter->setViewport(origViewport);
-#endif
     } else {
         drawSource(painter);
+    }
+}
+
+void RedCyanEffect::sourceChanged(QGraphicsEffect::ChangeFlags flags)
+{
+    if (flags & SourceAttached) {
+        QGraphicsEffectPrivate *ep =
+            static_cast<QGraphicsEffectPrivate *>
+                (QObjectPrivate::get(this));
+        m_sourced = static_cast<QGraphicsItemEffectSourcePrivate *>
+            (QObjectPrivate::get(ep->source));
+    } else if (flags & SourceDetached) {
+        m_sourced = 0;
     }
 }
