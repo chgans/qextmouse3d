@@ -39,37 +39,29 @@
 **
 ****************************************************************************/
 
-#ifndef FLOATINGITEM_H
-#define FLOATINGITEM_H
+#ifndef STEREOVIEWEFFECT_H
+#define STEREOVIEWEFFECT_H
 
-#include <QtDeclarative/qdeclarativeitem.h>
+#include <QtGui/qgraphicseffect.h>
+#include "stereoview.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class FloatingItemEffect;
-
-class FloatingItem : public QDeclarativeItem
+class StereoViewEffect : public QGraphicsEffect
 {
     Q_OBJECT
-    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY depthChanged)
 public:
-    FloatingItem(QDeclarativeItem *parent = 0);
-    ~FloatingItem();
+    StereoViewEffect(StereoView *parent = 0);
+    ~StereoViewEffect();
 
-    qreal depth() const { return m_depth; }
-    void setDepth(qreal depth);
-
-Q_SIGNALS:
-    void depthChanged();
+protected:
+    void draw(QPainter *painter);
 
 private:
-    qreal m_depth;
-    FloatingItemEffect *m_effect;
+    StereoView *m_view;
 };
-
-QML_DECLARE_TYPE(FloatingItem)
 
 QT_END_NAMESPACE
 

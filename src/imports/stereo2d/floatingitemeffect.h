@@ -39,8 +39,8 @@
 **
 ****************************************************************************/
 
-#ifndef REDCYANEFFECT_H
-#define REDCYANEFFECT_H
+#ifndef FLOATINGITEMEFFECT_H
+#define FLOATINGITEMEFFECT_H
 
 #include <QtGui/qgraphicseffect.h>
 
@@ -49,31 +49,23 @@ QT_BEGIN_HEADER
 QT_BEGIN_NAMESPACE
 
 class QGraphicsItemEffectSourcePrivate;
+class FloatingItem;
 
-class RedCyanEffect : public QGraphicsEffect
+class FloatingItemEffect : public QGraphicsEffect
 {
     Q_OBJECT
-    Q_PROPERTY(qreal depth READ depth WRITE setDepth NOTIFY depthChanged)
 public:
-    RedCyanEffect(QObject *parent = 0);
-    ~RedCyanEffect();
-
-    qreal depth() const { return m_depth; }
+    FloatingItemEffect(FloatingItem *parent = 0);
+    ~FloatingItemEffect();
 
     QRectF boundingRectFor(const QRectF &sourceRect) const;
-
-public Q_SLOTS:
-    void setDepth(qreal depth);
-
-Q_SIGNALS:
-    void depthChanged(qreal depth);
 
 protected:
     void draw(QPainter *painter);
     void sourceChanged(QGraphicsEffect::ChangeFlags flags);
 
 private:
-    qreal m_depth;
+    FloatingItem *m_item;
     QGraphicsItemEffectSourcePrivate *m_sourced;
 };
 

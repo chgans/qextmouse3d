@@ -45,6 +45,7 @@
 #include <QtDeclarative/qdeclarative.h>
 
 #include "floatingitem.h"
+#include "stereoview.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -56,6 +57,7 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D.Stereo2D"));
         qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
+        qmlRegisterType<StereoView>(uri,1,0,"StereoView");
     }
 };
 

@@ -39,82 +39,72 @@
 **
 ****************************************************************************/
 
-#include "redcyaneffect.h"
-#include <QtGui/qpaintengine.h>
+#include "floatingitemeffect.h"
+#include "floatingitem.h"
+#include "stereoview.h"
 #include <QtGui/private/qgraphicseffect_p.h>
 #include <QtGui/private/qgraphicsitem_p.h>
-#include <QtOpenGL>
 
-RedCyanEffect::RedCyanEffect(QObject *parent)
+FloatingItemEffect::FloatingItemEffect(FloatingItem *parent)
     : QGraphicsEffect(parent)
-    , m_depth(0.0f)
+    , m_item(parent)
     , m_sourced(0)
 {
 }
 
-RedCyanEffect::~RedCyanEffect()
+FloatingItemEffect::~FloatingItemEffect()
 {
 }
 
-QRectF RedCyanEffect::boundingRectFor(const QRectF &sourceRect) const
+QRectF FloatingItemEffect::boundingRectFor(const QRectF &sourceRect) const
 {
-    qreal depth = qAbs(m_depth);
+    qreal depth = qAbs(m_item->depth());
     return sourceRect.adjusted(-depth, -depth, depth, depth);
 }
 
-void RedCyanEffect::setDepth(qreal depth)
+void FloatingItemEffect::draw(QPainter *painter)
 {
-    if (depth != m_depth) {
-        m_depth = depth;
-        emit depthChanged(depth);
-        update();
-    }
-}
-
-void RedCyanEffect::draw(QPainter *painter)
-{
-    QPaintEngine *engine = painter->paintEngine();
-    if (m_depth != 0.0f && (engine->type() == QPaintEngine::OpenGL ||
-                            engine->type() == QPaintEngine::OpenGL2)) {
-        // Paint the source twice, with the GL color mask set up
-        // to allow through different colors each time.
-        // We apply the left/right eye adjustment by shifting the
-        // item left or right in the x direction by the z value.
-
+    // Determine which eye is being rendered by the StereoView.
+    StereoView *view = StereoView::findView(m_item);
+    int eye = view ? view->eye() : StereoView::NoEye;
+    qreal depth = m_item->depth();
+    if (eye == StereoView::NoEye || depth == 0.0f) {
+        // No eye being rendered or zero depth, so draw source as-is.
+        drawSource(painter);
+    } else if (eye == StereoView::LeftEye) {
         // Modify the effectTransform to adjust the position
         // and draw the left eye version of the source.
         QGraphicsItemPaintInfo *drawContext = m_sourced->info;
         const QTransform *origTransform = drawContext->effectTransform;
         QTransform transform(Qt::Uninitialized);
         if (!origTransform) {
-            transform = QTransform::fromTranslate(m_depth / 2.0f, 0.0f);
+            transform = QTransform::fromTranslate(depth / 2.0f, 0.0f);
         } else {
             transform = *origTransform;
-            transform.translate(m_depth / 2.0f, 0.0f);
+            transform.translate(depth / 2.0f, 0.0f);
         }
         drawContext->effectTransform = &transform;
-        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
         drawSource(painter);
-
-        // Modify the effectTransform again for the right eye version.
+        drawContext->effectTransform = origTransform;
+    } else {
+        // Modify the effectTransform to adjust the position
+        // and draw the right eye version of the source.
+        QGraphicsItemPaintInfo *drawContext = m_sourced->info;
+        const QTransform *origTransform = drawContext->effectTransform;
+        QTransform transform(Qt::Uninitialized);
         if (!origTransform) {
-            transform = QTransform::fromTranslate(-m_depth / 2.0f, 0.0f);
+            transform = QTransform::fromTranslate(-depth / 2.0f, 0.0f);
         } else {
             transform = *origTransform;
-            transform.translate(-m_depth / 2.0f, 0.0f);
+            transform.translate(depth / 2.0f, 0.0f);
         }
-        glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+        drawContext->effectTransform = &transform;
         drawSource(painter);
-
-        // Restore the original effectTransform and color mask.
         drawContext->effectTransform = origTransform;
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    } else {
-        drawSource(painter);
     }
 }
 
-void RedCyanEffect::sourceChanged(QGraphicsEffect::ChangeFlags flags)
+void FloatingItemEffect::sourceChanged(QGraphicsEffect::ChangeFlags flags)
 {
     if (flags & SourceAttached) {
         QGraphicsEffectPrivate *ep =

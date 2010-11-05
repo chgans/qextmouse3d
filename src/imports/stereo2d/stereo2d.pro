@@ -13,11 +13,15 @@ QT += declarative opengl network
 
 SOURCES += \
     floatingitem.cpp \
-    redcyaneffect.cpp \
+    floatingitemeffect.cpp \
+    stereoview.cpp \
+    stereovieweffect.cpp \
     stereo2d.cpp
 HEADERS += \
     floatingitem.h \
-    redcyaneffect.h
+    floatingitemeffect.h \
+    stereoview.h \
+    stereovieweffect.h
 
 qdeclarativesources.files += \
     qmldir
