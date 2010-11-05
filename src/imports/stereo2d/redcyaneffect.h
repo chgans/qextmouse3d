@@ -44,6 +44,10 @@
 
 #include <QtGui/qgraphicseffect.h>
 
+QT_BEGIN_HEADER
+
+QT_BEGIN_NAMESPACE
+
 class RedCyanEffect : public QGraphicsEffect
 {
     Q_OBJECT
@@ -69,5 +73,8 @@ private:
     qreal m_depth;
 };
 
-#endif
+QT_END_NAMESPACE
 
+QT_END_HEADER
+
+#endif

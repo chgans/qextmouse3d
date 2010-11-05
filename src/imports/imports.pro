@@ -1,3 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS += threed shapes
+SUBDIRS += threed shapes stereo2d
 CONFIG += ordered

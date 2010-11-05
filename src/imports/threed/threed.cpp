@@ -44,7 +44,6 @@
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/qdeclarative.h>
 
-#include "redcyaneffect.h"
 #include "item3d.h"
 #include "viewport.h"
 #include "effect.h"
@@ -73,7 +72,6 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D"));
         qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
-        qmlRegisterType<RedCyanEffect>(uri,1,0,"RedCyan");
         qmlRegisterType<Effect>(uri,1,0,"Effect");
         qmlRegisterType<Mesh>(uri,1,0,"Mesh");
         qmlRegisterType<Item3D>(uri,1,0,"Item3D");

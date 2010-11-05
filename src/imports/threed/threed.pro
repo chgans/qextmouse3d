@@ -14,7 +14,6 @@ QT += declarative opengl network
 
 SOURCES += \
     threed.cpp \
-    redcyaneffect.cpp \
     effect.cpp \
     item3d.cpp \
     mesh.cpp \
@@ -22,7 +21,6 @@ SOURCES += \
     scale3d.cpp \
     viewport.cpp
 HEADERS += \
-    redcyaneffect.h \
     effect.h \
     item3d.h \
     mesh.h \
