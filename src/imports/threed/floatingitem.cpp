@@ -50,19 +50,38 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d::qml3d
 
-    \code
-    import Qt3D 1.0
+    Stereo viewing is enabled in QML using the StereoView element:
 
-    FloatingItem {
-        depth: -4
-        Rectangle {
-            anchors.fill: parent
-            ...
-        }
-    }
-    \endcode
+    \snippet declarative/stereo/stereo.qml 1
+    \dots
+    \snippet declarative/stereo/stereo.qml 2
 
-    \sa StereoView
+    \image stereo-screenshot-qml.png
+
+    2D items are placed within the 3D visual field using the
+    FloatingItem element and the \l depth property:
+
+    \snippet declarative/stereo/stereo.qml 5
+
+    Negative depth values define distances behind the
+    \i{center of focus} of our scene, and positive depth
+    values define distances in front of the center of focus.
+    The center of focus corresponds to where the left and right
+    eye images coincide at depth 0.  Usually the most important
+    item on the screen is placed at depth 0 so that the user's
+    attention is immediately drawn to it.  Other items then
+    \i{float above} (positive depth) or \i{appear behind}
+    (negative depth) the center of focus.
+
+    FloatingItem defines the depth for 2D elements.  3D elements
+    should be rendered inside a \l Viewport with the camera's
+    \l{Camera::eyeSeparation}{eyeSeparation} set to a non-zero value:
+
+    \snippet declarative/stereo/stereo.qml 6
+    \dots
+    \snippet declarative/stereo/stereo.qml 7
+
+    \sa StereoView, Viewport, {QML Stereo Viewing Example}
 */
 
 /*!
@@ -89,12 +108,22 @@ FloatingItem::~FloatingItem()
     This property defines the depth within the 3D field where children
     of this item will appear.  The default value of zero indicates
     that the left and right eye images will co-incide at the center of
-    focus.
+    focus.  Items with a negative depth appear behind the center
+    of focus and items with a positive depth float above the center
+    of focus.
 
-    If the value is non-zero, then it indicates the number of pixels that
-    separate the left and right eye images.  A negative value places
-    the item behind the center of focus and a positive value places
-    the item in front of the center of focus.
+    The value indicates the number of pixels that separate the left
+    and right eye images on a 100 dpi display.  The value is corrected
+    for the dpi of the actual display if it is not 100 dpi.  Thus,
+    a depth of 1 always corresponds to 0.254 millimeters of image
+    separation at the surface of the display.
+
+    It is assumed that the distance of the viewer from the display
+    is the same for all displays showing the same application.
+    For example, a stereoscopic application designed for viewing
+    on a handheld device should have the same depth cues on
+    another handheld device with a different dpi, when held at
+    the same arms-length distance from the viewer.
 */
 
 void FloatingItem::setDepth(qreal depth)

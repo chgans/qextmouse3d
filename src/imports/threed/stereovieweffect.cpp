@@ -79,7 +79,7 @@ void StereoViewEffect::draw(QPainter *painter)
             drawSource(painter);
         }
     } else if (layout == StereoView::Default ||
-                    layout == StereoView::DefaultOrNone) {
+                    layout == StereoView::Hardware) {
         // Draw the scene into the left and right back buffers.
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         if (isOpenGL && QGLContext::currentContext()->format().stereo()) {

@@ -55,19 +55,51 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d::qml3d
 
-    \code
-    import Qt3D 1.0
+    StereoView provides the logic to double-render the entire
+    application, firstly from the perspective of the left eye,
+    and then secondly from the perspective of the right eye.
+    By default, if the hardware does not support stereo, the
+    view will be drawn using red/cyan anaglyph filters as
+    shown in the following example:
 
-    StereoView {
-        width: 360; height: 640
-        Rectangle {
-            anchors.fill: parent
-            ...
-        }
-    }
-    \endcode
+    \snippet declarative/stereo/stereo.qml 1
+    \dots
+    \snippet declarative/stereo/stereo.qml 2
 
-    \sa FloatingItem
+    \image stereo-screenshot-qml.png
+
+    We could change this to double-wide stereo with the
+    \l layout property:
+
+    \snippet declarative/stereo/stereo.qml 3
+    \snippet declarative/stereo/stereo.qml 4
+    \dots
+    \snippet declarative/stereo/stereo.qml 2
+
+    \image stereo-screenshot-qml2.png
+
+    2D items are placed within the 3D visual field using the
+    FloatingItem element and the \l{FloatingItem::depth}{depth}
+    property:
+
+    \snippet declarative/stereo/stereo.qml 5
+
+    Negative depth values define distances behind the
+    \i{center of focus} of our scene, and positive depth
+    values define distances in front of the center of focus.
+    The center of focus corresponds to where the left and right
+    eye images coincide at depth 0.  Usually the most important
+    item on the screen is placed at depth 0 so that the user's
+    attention is immediately drawn to it.  Other items then
+    \i{float above} (positive depth) or \i{appear behind}
+    (negative depth) the center of focus.
+
+    As a general rule, children of the StereoView element
+    should appear in \i{bottom up order}, from the most negative
+    depth to the most positive.  This will ensure that the children
+    are painted correctly at their respective depths.
+
+    \sa FloatingItem, Viewport, {QML Stereo Viewing Example}
 */
 
 /*!
@@ -108,8 +140,8 @@ StereoView::~StereoView()
     \o \c Default - the stereo layout is determined by the hardware.
        If the hardware is incapable of stereo, \c RedCyan will
        be used instead.  The viewport size is determined by the
-       hardware type.
-    \o \c DefaultOrNone - the stereo layout is determined by the
+       hardware type.  This is the default setting.
+    \o \c Hardware - the stereo layout is determined by the
        hardware.  If the hardware is incapable of stereo, then
        stereo rendering will be disabled rather than use \c RedCyan.
        The viewport size is determined by the hardware type.

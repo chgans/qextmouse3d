@@ -82,7 +82,7 @@
     }
     \endcode
 
-    \sa Camera
+    \sa Camera, StereoView
 */
 
 QT_BEGIN_NAMESPACE

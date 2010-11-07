@@ -44,6 +44,8 @@
 #include "stereoview.h"
 #include <QtGui/private/qgraphicseffect_p.h>
 #include <QtGui/private/qgraphicsitem_p.h>
+#include <QtGui/qdesktopwidget.h>
+#include <QtGui/qapplication.h>
 
 FloatingItemEffect::FloatingItemEffect(FloatingItem *parent)
     : QGraphicsEffect(parent)
@@ -59,15 +61,22 @@ FloatingItemEffect::~FloatingItemEffect()
 QRectF FloatingItemEffect::boundingRectFor(const QRectF &sourceRect) const
 {
     qreal depth = qAbs(m_item->depth());
+    depth = depth * qApp->desktop()->logicalDpiX() / 100.0f;
     return sourceRect.adjusted(-depth, -depth, depth, depth);
 }
 
 void FloatingItemEffect::draw(QPainter *painter)
 {
+    // Correct the depth value for the screen's DPI.  We treat 100 DPI
+    // as "normal" and scale the depth value accordingly.  This way,
+    // the same number of millimeters are used on all displays viewed
+    // at the same viewing distance.  A depth of 1 is 0.254 millimeters.
+    // Note: we should probably correct for viewing distance also.
+    qreal depth = m_item->depth() * painter->device()->logicalDpiX() / 100.0f;
+
     // Determine which eye is being rendered by the StereoView.
     StereoView *view = StereoView::findView(m_item);
     QGL::Eye eye = view ? view->eye() : QGL::NoEye;
-    qreal depth = m_item->depth();
     if (eye == QGL::NoEye || depth == 0.0f) {
         // No eye being rendered or zero depth, so draw source as-is.
         drawSource(painter);

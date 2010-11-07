@@ -125,12 +125,12 @@
     over the top.
 
     We have two more elements to place: the current time and the
-    floating "Drag Me!" dialog box.  The time is at the center of
+    floating "Drag Me!" button.  The time is at the center of
     focus so we do not require a FloatingItem container:
 
     \snippet declarative/stereo/stereo.qml 11
 
-    The dialog box is placed at a positive depth of 4, floating
+    The button is placed at a positive depth of 4, floating
     above the center of focus:
 
     \snippet declarative/stereo/stereo.qml 12

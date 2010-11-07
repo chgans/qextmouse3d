@@ -131,7 +131,7 @@ StereoView {
 
 //![12]
     FloatingItem {
-        id: dialog
+        id: button
         x: 250; y: 50
         width: 300; height: 80
         depth: 4
@@ -152,7 +152,7 @@ StereoView {
 
         MouseArea {
             anchors.fill: parent
-            drag.target: dialog
+            drag.target: button
             drag.axis: Drag.XandYAxis
             drag.minimumX: 0
             drag.maximumX: stereo.viewport.width - parent.width

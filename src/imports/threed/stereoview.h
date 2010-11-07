@@ -66,7 +66,7 @@ public:
     enum Layout
     {
         Default,
-        DefaultOrNone,
+        Hardware,
         RedCyan,
         LeftRight,
         RightLeft,
