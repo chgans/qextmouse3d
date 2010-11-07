@@ -66,6 +66,7 @@ public:
     enum Layout
     {
         Default,
+        DefaultOrNone,
         RedCyan,
         LeftRight,
         RightLeft,
@@ -76,10 +77,6 @@ public:
 
     StereoView::Layout layout() const { return m_layout; }
     void setLayout(StereoView::Layout layout);
-
-    // May be different in the future: when layout() is Default,
-    // the actualLayout() will indicate the real hardware layout.
-    StereoView::Layout actualLayout() const { return m_layout; }
 
     QGraphicsObject *viewport() const { return m_viewport; }
 

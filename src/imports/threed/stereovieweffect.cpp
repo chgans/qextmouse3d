@@ -62,7 +62,7 @@ void StereoViewEffect::draw(QPainter *painter)
                      engine->type() == QPaintEngine::OpenGL2);
 
     // Determine how to draw the two eye images.
-    StereoView::Layout layout = m_view->actualLayout();
+    StereoView::Layout layout = m_view->layout();
     if (layout == StereoView::RedCyan) {
         // Draw the scene twice with red and cyan filters.
         if (isOpenGL) {
@@ -78,7 +78,8 @@ void StereoViewEffect::draw(QPainter *painter)
             // No OpenGL, so draw normally.
             drawSource(painter);
         }
-    } else if (layout == StereoView::Default) {
+    } else if (layout == StereoView::Default ||
+                    layout == StereoView::DefaultOrNone) {
         // Draw the scene into the left and right back buffers.
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         if (isOpenGL && QGLContext::currentContext()->format().stereo()) {
@@ -89,13 +90,22 @@ void StereoViewEffect::draw(QPainter *painter)
             glDrawBuffer(GL_BACK_RIGHT);
             drawSource(painter);
             m_view->setEye(QGL::NoEye);
+        } else
+#endif
+        if (isOpenGL && layout == StereoView::Default) {
+            // No hardware stereo, so use red-cyan instead.
+            m_view->setEye(QGL::LeftEye);
+            glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
+            drawSource(painter);
+            m_view->setEye(QGL::RightEye);
+            glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+            drawSource(painter);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            m_view->setEye(QGL::NoEye);
         } else {
-            // No OpenGL or no hardware stereo, so draw normally.
+            // No OpenGL or red-cyan not allowed, so draw normally.
             drawSource(painter);
         }
-#else
-        drawSource(painter);
-#endif
     } else if (layout != StereoView::Disabled) {
         // Fetch the original window and viewport from the painter.
         // We then use these values to set up an alternative logical

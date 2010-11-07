@@ -59,8 +59,7 @@ QT_BEGIN_NAMESPACE
     import Qt3D 1.0
 
     StereoView {
-        layout: StereoView.LeftRight
-        width: 720; height: 640
+        width: 360; height: 640
         Rectangle {
             anchors.fill: parent
             ...
@@ -107,9 +106,13 @@ StereoView::~StereoView()
 
     \list
     \o \c Default - the stereo layout is determined by the hardware.
-       If the hardware is incapable of stereo, then the depth
-       values on FloatingItem elements will be ignored.  The
-       viewport is determined by the hardware type.
+       If the hardware is incapable of stereo, \c RedCyan will
+       be used instead.  The viewport size is determined by the
+       hardware type.
+    \o \c DefaultOrNone - the stereo layout is determined by the
+       hardware.  If the hardware is incapable of stereo, then
+       stereo rendering will be disabled rather than use \c RedCyan.
+       The viewport size is determined by the hardware type.
     \o \c RedCyan - render the left eye image with a red filter and the
        right eye image with a cyan filter, which makes the result
        suitable for viewing with red/cyan anaglyph glasses.
@@ -207,10 +210,12 @@ StereoView *StereoView::findView(QDeclarativeItem *item)
 */
 void StereoView::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
-    if (m_layout != RedCyan)
+    if (m_layout != RedCyan && m_layout != Default)
         return;
 
     // Using a red-cyan effect, for which we must have OpenGL rendering.
+    // Or using the default layout, which is either hardware stereo
+    // or red-cyan.  We need an OpenGL viewport for both.
     QPaintEngine *engine = painter->paintEngine();
     if (engine->type() != QPaintEngine::OpenGL &&
             engine->type() != QPaintEngine::OpenGL2) {
