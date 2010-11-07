@@ -48,10 +48,10 @@ QT_BEGIN_NAMESPACE
     \qmlclass FloatingItem FloatingItem
     \brief The FloatingItem item defines the depth that a 2D element will be placed at in the 3D visual field.
     \since 4.8
-    \ingroup qt3d::qml3d::stereo2d
+    \ingroup qt3d::qml3d
 
     \code
-    import Qt3D.Stereo2D 1.0
+    import Qt3D 1.0
 
     FloatingItem {
         depth: -4

@@ -19,14 +19,22 @@ SOURCES += \
     mesh.cpp \
     qt3dnamespace.cpp \
     scale3d.cpp \
-    viewport.cpp
+    viewport.cpp \
+    floatingitem.cpp \
+    floatingitemeffect.cpp \
+    stereoview.cpp \
+    stereovieweffect.cpp
 HEADERS += \
     effect.h \
     item3d.h \
     mesh.h \
     qt3dnamespace.h \
     scale3d.h \
-    viewport.h
+    viewport.h \
+    floatingitem.h \
+    floatingitemeffect.h \
+    stereoview.h \
+    stereovieweffect.h
 
 !contains(QT_CONFIG, opengles1) {
     SOURCES += shaderprogram.cpp

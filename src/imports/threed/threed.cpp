@@ -55,6 +55,8 @@
 #include "shaderprogram.h"
 #include "qt3dnamespace.h"
 #include "qglscenenode.h"
+#include "floatingitem.h"
+#include "stereoview.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -87,6 +89,9 @@ public:
 #if !defined(QT_OPENGL_ES_1)
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
 #endif
+
+        qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
+        qmlRegisterType<StereoView>(uri,1,0,"StereoView");
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();

@@ -43,6 +43,7 @@
 #define STEREOVIEW_H
 
 #include <QtDeclarative/qdeclarativeitem.h>
+#include "qglnamespace.h"
 
 QT_BEGIN_HEADER
 
@@ -56,7 +57,6 @@ class StereoView : public QDeclarativeItem
     Q_ENUMS(Layout)
     Q_PROPERTY(Layout layout READ layout WRITE setLayout NOTIFY layoutChanged)
     Q_PROPERTY(QGraphicsObject *viewport READ viewport NOTIFY viewportChanged)
-    Q_PROPERTY(int eye READ eye WRITE setEye SCRIPTABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> stereoViewData READ stereoViewData DESIGNABLE false)
     Q_CLASSINFO("DefaultProperty", "stereoViewData")
 public:
@@ -74,13 +74,6 @@ public:
         Disabled
     };
 
-    enum
-    {
-        NoEye,
-        LeftEye,
-        RightEye
-    };
-
     StereoView::Layout layout() const { return m_layout; }
     void setLayout(StereoView::Layout layout);
 
@@ -90,8 +83,8 @@ public:
 
     QGraphicsObject *viewport() const { return m_viewport; }
 
-    int eye() const { return m_eye; }
-    void setEye(int eye) { m_eye = eye; }
+    QGL::Eye eye() const { return m_eye; }
+    void setEye(QGL::Eye eye) { m_eye = eye; }
 
     QDeclarativeListProperty<QObject> stereoViewData();
 
@@ -110,8 +103,8 @@ protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 
 private:
-    Layout m_layout;
-    int m_eye;
+    StereoView::Layout m_layout;
+    QGL::Eye m_eye;
     QDeclarativeItem *m_viewport;
     StereoViewEffect *m_effect;
 

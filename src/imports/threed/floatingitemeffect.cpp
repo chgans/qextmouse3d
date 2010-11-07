@@ -66,12 +66,12 @@ void FloatingItemEffect::draw(QPainter *painter)
 {
     // Determine which eye is being rendered by the StereoView.
     StereoView *view = StereoView::findView(m_item);
-    int eye = view ? view->eye() : StereoView::NoEye;
+    QGL::Eye eye = view ? view->eye() : QGL::NoEye;
     qreal depth = m_item->depth();
-    if (eye == StereoView::NoEye || depth == 0.0f) {
+    if (eye == QGL::NoEye || depth == 0.0f) {
         // No eye being rendered or zero depth, so draw source as-is.
         drawSource(painter);
-    } else if (eye == StereoView::LeftEye) {
+    } else if (eye == QGL::LeftEye) {
         // Modify the effectTransform to adjust the position
         // and draw the left eye version of the source.
         QGraphicsItemPaintInfo *drawContext = m_sourced->info;

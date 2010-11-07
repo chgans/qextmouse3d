@@ -53,10 +53,10 @@ QT_BEGIN_NAMESPACE
     \qmlclass StereoView StereoView
     \brief The StereoView item defines the layout of a view with left and right stereo eye images.
     \since 4.8
-    \ingroup qt3d::qml3d::stereo2d
+    \ingroup qt3d::qml3d
 
     \code
-    import Qt3D.Stereo2D 1.0
+    import Qt3D 1.0
 
     StereoView {
         layout: StereoView.LeftRight
@@ -77,7 +77,7 @@ QT_BEGIN_NAMESPACE
 StereoView::StereoView(QDeclarativeItem *parent)
     : QDeclarativeItem(parent)
     , m_layout(StereoView::Default)
-    , m_eye(StereoView::NoEye)
+    , m_eye(QGL::NoEye)
 {
     // We need paint() to be called to switch to an OpenGL viewport.
     setFlag(QGraphicsItem::ItemHasNoContents, false);

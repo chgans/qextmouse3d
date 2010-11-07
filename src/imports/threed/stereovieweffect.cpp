@@ -66,14 +66,14 @@ void StereoViewEffect::draw(QPainter *painter)
     if (layout == StereoView::RedCyan) {
         // Draw the scene twice with red and cyan filters.
         if (isOpenGL) {
-            m_view->setEye(StereoView::LeftEye);
+            m_view->setEye(QGL::LeftEye);
             glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);
             drawSource(painter);
-            m_view->setEye(StereoView::RightEye);
+            m_view->setEye(QGL::RightEye);
             glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
             drawSource(painter);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            m_view->setEye(StereoView::NoEye);
+            m_view->setEye(QGL::NoEye);
         } else {
             // No OpenGL, so draw normally.
             drawSource(painter);
@@ -82,13 +82,13 @@ void StereoViewEffect::draw(QPainter *painter)
         // Draw the scene into the left and right back buffers.
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
         if (isOpenGL && QGLContext::currentContext()->format().stereo()) {
-            m_view->setEye(StereoView::LeftEye);
+            m_view->setEye(QGL::LeftEye);
             glDrawBuffer(GL_BACK_LEFT);
             drawSource(painter);
-            m_view->setEye(StereoView::RightEye);
+            m_view->setEye(QGL::RightEye);
             glDrawBuffer(GL_BACK_RIGHT);
             drawSource(painter);
-            m_view->setEye(StereoView::NoEye);
+            m_view->setEye(QGL::NoEye);
         } else {
             // No OpenGL or no hardware stereo, so draw normally.
             drawSource(painter);
@@ -133,7 +133,7 @@ void StereoViewEffect::draw(QPainter *painter)
         }
 
         // Draw the left eye image into one half of the screen.
-        m_view->setEye(StereoView::LeftEye);
+        m_view->setEye(QGL::LeftEye);
         painter->save();
         painter->setWindow(window);
         painter->setViewport(leftViewport);
@@ -142,14 +142,14 @@ void StereoViewEffect::draw(QPainter *painter)
         painter->restore();
 
         // Draw the right eye image into the other half of the screen.
-        m_view->setEye(StereoView::RightEye);
+        m_view->setEye(QGL::RightEye);
         painter->save();
         painter->setWindow(window);
         painter->setViewport(rightViewport);
         painter->setClipRect(window, Qt::IntersectClip);
         drawSource(painter);
         painter->restore();
-        m_view->setEye(StereoView::NoEye);
+        m_view->setEye(QGL::NoEye);
     } else {
         // Stereo rendering has been explicitly disabled.
         drawSource(painter);

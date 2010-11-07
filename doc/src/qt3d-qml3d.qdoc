@@ -39,9 +39,7 @@ See the \l{Teapot Example in QML/3D}{Teapot} example for an introduction
 to using these elements in QML.
 
 QML/3D also provides some \l{Standard Shapes for QML/3D}{standard shapes}
-in the \c{Qt3D.Shapes} namespace as convenience elements, and support
-for \l{Stereoscopic Elements for QML/2D}{stereoscopic displays} in QML/2D
-applications.
+in the \c{Qt3D.Shapes} namespace as convenience elements.
 */
 
 /*!
@@ -54,14 +52,4 @@ as convenience elements:
 \generatelist{related}
 
 See the \l{Applying transformations and materials to objects#Cube in QML/3D}{Cube} example for an introduction to using these convenience shapes in QML.
-*/
-
-/*!
-\group qt3d::qml3d::stereo2d
-\title Stereoscopic Elements for QML/2D
-
-The following QML elements are provided by the \c{Qt3D.Stereo2D} namespace
-to assist with adding stereoscopic elements to a QML/2D scene.
-
-\generatelist{related}
 */
