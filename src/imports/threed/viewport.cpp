@@ -120,6 +120,8 @@ public:
     QVector3D startCenter;
     QVector3D startUpVector;
     Qt::KeyboardModifiers panModifiers;
+
+    void setDefaults(QGLPainter *painter);
 };
 
 ViewportPrivate::ViewportPrivate()
@@ -178,6 +180,28 @@ ViewportPrivate::ViewportPrivate()
 ViewportPrivate::~ViewportPrivate()
 {
     delete pickFbo;
+}
+
+void ViewportPrivate::setDefaults(QGLPainter *painter)
+{
+    // Set the default depth buffer options.
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+#if defined(QT_OPENGL_ES)
+    glDepthRangef(0.0f, 1.0f);
+#else
+    glDepthRange(0.0f, 1.0f);
+#endif
+
+    // Set the default blend options.
+    glDisable(GL_BLEND);
+    if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendColor))
+        painter->glBlendColor(0, 0, 0, 0);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendEquation))
+        painter->glBlendEquation(GL_FUNC_ADD);
+    else if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
+        painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 }
 
 void qt_gl_set_qml_viewport(QObject *viewport);
@@ -524,6 +548,12 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
     // Disable the effect to return control to the GL paint engine.
     painter.disableEffect();
+
+    // Try to restore the GL state to something paint-engine compatible.
+    glDisable(GL_CULL_FACE);
+    d->setDefaults(&painter);
+    glDisable(GL_DEPTH_TEST);
+
 }
 
 /*!
