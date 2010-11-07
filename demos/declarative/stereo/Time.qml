@@ -39,35 +39,33 @@
 ****************************************************************************/
 
 import Qt 4.7
-import Qt3D 1.0
 
-Viewport {
-    width: 640; height: 480
-    camera: Camera {
-        eye: Qt.vector3d(0, 0, 15)
-        eyeSeparation: 0.2
+Item {
+    id: container
+    property variant currentDateTime
+
+    Rectangle {
+        anchors.fill: parent
+        border.color: "black"
+        radius: 5
     }
 
-    Item3D {
-        id: teapot
-        mesh: Mesh { source: "meshes/teapot.bez" }
-        effect: Effect {
-            material: china
-        }
+    width: 150
+    height: 50
 
-        SequentialAnimation on z {
-            running: true
-            loops: Animation.Infinite
-            PauseAnimation { duration: 500 }
-            NumberAnimation { to : 9.0; duration: 300; easing.type:"OutQuad" }
-            NumberAnimation { to : 0.0; duration: 300; easing.type:"OutBounce" }
-        }
+    Text {
+        text: Qt.formatTime(container.currentDateTime, "h:mm'<sup><small> 'ap'</small></sup>'")
+        font.pixelSize: 30; font.bold: true
+        color: "black"
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
     }
 
-    Material {
-        id: china
-        ambientColor: "#c09680"
-        specularColor: "#3c3c3c"
-        shininess: 128
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: container.currentDateTime = new Date()
     }
 }

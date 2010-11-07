@@ -53,6 +53,7 @@
     \o \l{Teapot Example in QML/3D}{Hello Teapot} in QML/3D
     \o \l{basket#Basket in QML/3D}{Basket} in QML/3D
     \o \l{Applying transformations and materials to objects#Cube in QML/3D}{Cube} in QML/3D
+    \o \l{QML Stereo Viewing Example}{Stereo} - using stereoscopic displays in QML, and mixing 2D and 3D content.
     \o \l{Monkey God in QML}{Monkey God} in QML/3D
     \o \l{Tea Service Demo in QML}{Tea Service} in QML/3D
     \o \l{Forest Example}{Forest} - creating billboard objects.

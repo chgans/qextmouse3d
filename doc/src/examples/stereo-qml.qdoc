@@ -1,0 +1,145 @@
+/****************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (qt-info@nokia.com)
+**
+** This file is part of the documentation of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:FDL$
+** No Commercial Usage
+** This file contains pre-release code and may not be distributed.
+** You may use this file in accordance with the terms and conditions
+** contained in the Technology Preview License Agreement accompanying
+** this package.
+**
+** GNU Free Documentation License
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of this
+** file.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at qt-info@nokia.com.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+    \example declarative/stereo
+    \title QML Stereo Viewing Example
+
+    The QML Stereo example shows how to view objects in "stereoscopic 3D" with
+    the use of red-cyan viewing glasses, polarized classes, or
+    side-by-side rendering.  It also shows how to mix 2D and 3D
+    screen elements in a single QML application.  As shown in the
+    following picture, the example will have a 2D backdrop image,
+    some 3D objects, and some foreground 2D elements, all at
+    different depths within the 3D visual field:
+
+    \image stereo-screenshot-qml.png
+
+    We start by importing some QML modules and then introduce
+    a StereoView element to define the top-level of the application:
+
+    \snippet declarative/stereo/stereo.qml 1
+    \dots
+    \snippet declarative/stereo/stereo.qml 2
+
+    StereoView provides the logic to double-render the entire
+    application, firstly from the perspective of the left eye,
+    and then secondly from the perspective of the right eye.
+    By default, if the hardware does not support stereo, the
+    view will be drawn using red/cyan anaglyph filters.  We could
+    change this to double-wide stereo with the
+    \l{StereoView::layout}{layout} property:
+
+    \snippet declarative/stereo/stereo.qml 3
+    \snippet declarative/stereo/stereo.qml 4
+    \dots
+    \snippet declarative/stereo/stereo.qml 2
+
+    \image stereo-screenshot-qml2.png
+
+    For now we are going to stick with red/cyan anaglyphs.
+    Now that we have a StereoView, we can add a QML Image
+    element to it for the background image:
+
+    \snippet declarative/stereo/stereo.qml 5
+
+    We have surrounded the Image element with a FloatingItem
+    element, which defines the \l{FloatingItem::depth}{depth}
+    within the 3D visual field (-10 in this case).  Negative
+    depth values define distances behind the \i{center of focus}
+    of our scene, and positive depth values define distances
+    in front of the center of focus.
+
+    The center of focus corresponds to where the left and right
+    eye images coincide at depth 0.  Usually the most important
+    item on the screen is placed at depth 0 so that the user's
+    attention is immediately drawn to it.  Other items then
+    \i{float above} (positive depth) or \i{appear behind}
+    (negative depth) the center of focus.
+
+    As a general rule, children of the StereoView element
+    should appear in \i{bottom up order}, from the most negative
+    depth to the most positive.  This will ensure that the children
+    are painted correctly at their respective depths.  The next
+    element above the background image is the 3D \l Viewport:
+
+    \snippet declarative/stereo/stereo.qml 6
+    \dots
+    \snippet declarative/stereo/stereo.qml 7
+
+    Note that we have set the \l{Viewport::backgroundColor}{backgroundColor}
+    to \c{transparent} so that the viewport contents will blend
+    over the top of the background image.
+
+    Instead of a depth value, this time we specify an
+    \l{Camera::eyeSeparation}{eyeSeparation} value, which
+    indicates the distance between the viewer's left and
+    right eyes in world co-ordinates within the scene.
+    This time the center of focus is at (0, 0, 0) in world
+    co-ordinates, with negative z values being further away
+    and positive z values being closer.  We position the
+    teapot in the background at z = -5, and position the
+    cube at the center of focus at z = 0.
+
+    \snippet declarative/stereo/stereo.qml 8
+    \dots
+    \snippet declarative/stereo/stereo.qml 9
+    \dots
+    \snippet declarative/stereo/stereo.qml 10
+
+    Note: the z values within the 3D scene do not directly
+    correspond to the \l{FloatingItem::depth}{depth} values used
+    to position 2D FloatingItem elements.  The
+    \l{Camera::eyeSeparation}{eyeSeparation} uses a physical model
+    of 3D space, whereas the FloatingItem elements use a
+    virtual stacking model.
+
+    Some experimentation may be required to correctly position
+    2D and 3D stereo elements with respect to each other.
+    As a general rule, it is best to keep the 3D elements at
+    or behind the center of focus, with 2D elements floating
+    over the top.
+
+    We have two more elements to place: the current time and the
+    floating "Drag Me!" dialog box.  The time is at the center of
+    focus so we do not require a FloatingItem container:
+
+    \snippet declarative/stereo/stereo.qml 11
+
+    The dialog box is placed at a positive depth of 4, floating
+    above the center of focus:
+
+    \snippet declarative/stereo/stereo.qml 12
+
+    In the MouseArea, we have used the \l{StereoView::viewport}{viewport}
+    property to define the extents of the drag area.  In the case
+    of red/cyan anaglyphs the viewport is the same size as the screen.
+    In the case of \l{StereoView::layout}{LeftRight} layouts,
+    the viewport will be half the screen width.
+
+    \l{qt3d-examples.html}{Return to Examples}.
+*/

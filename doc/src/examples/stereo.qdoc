@@ -57,5 +57,11 @@
     section in the QGLView documentation for more information on the
     stereoscopic viewing modes that are supported.
 
+    The \l{QML Stereo Viewing Example}{QML version} of the stereo
+    example provides a richer experience, including the mixing of
+    2D and 3D scene elements within a stereo viewing field:
+
+    \image stereo-screenshot-qml.png
+
     \l{qt3d-examples.html}{Return to Examples}.
 */
