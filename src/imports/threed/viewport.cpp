@@ -47,6 +47,7 @@
 #include "qglview.h"
 #include "qglsubsurface.h"
 #include "qglframebufferobjectsurface.h"
+#include "stereoview.h"
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsview.h>
 #include <QtGui/qgraphicsscene.h>
@@ -490,8 +491,16 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
         initializeGL(&painter);
     }
 
+    // If this Viewport is surrounded by a StereoView item,
+    // then fetch the eye to be rendered from it.
+    StereoView *stereoView = StereoView::findView(this);
+    if (stereoView)
+        painter.setEye(stereoView->eye());
+    else
+        painter.setEye(QGL::NoEye);
+
     // Modify the GL viewport to only cover the extent of this QDeclarativeItem.
-    QTransform transform = p->transform();
+    QTransform transform = p->combinedTransform();
     QRect viewport(qRound(transform.dx()), qRound(transform.dy()),
                    width(), height());
     QGLSubsurface surface(painter.currentSurface(), viewport);
