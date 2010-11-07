@@ -110,7 +110,7 @@ public:
 
     int registerPickableObject(QObject *obj);
 
-    Q_INVOKABLE QObject *objectForPoint(int x, int y);
+    Q_INVOKABLE QObject *objectForPoint(qreal x, qreal y);
 
 Q_SIGNALS:
     void viewportChanged();
@@ -140,7 +140,7 @@ private:
 
     QObject *objectForPoint(const QPointF &pos)
     {
-        return objectForPoint(qRound(pos.x()), qRound(pos.y()));
+        return objectForPoint(pos.x(), pos.y());
     }
 
     void wheel(qreal delta);

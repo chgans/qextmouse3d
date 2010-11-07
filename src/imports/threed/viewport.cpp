@@ -542,6 +542,7 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     }
 
     // Draw the Item3D children.
+    painter.setPicking(d->showPicking);
     draw(&painter);
     painter.setPicking(false);
     painter.popSurface();
@@ -653,8 +654,6 @@ void Viewport::draw(QGLPainter *painter)
     else if (painter->hasOpenGLFeature(QOpenGLFunctions::BlendEquationSeparate))
         painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     glDisable(GL_CULL_FACE);
-    if (!d->view)
-        painter->setPicking(d->showPicking);
 
     painter->setObjectPickId(-1);
     QObjectList list = QObject::children();    
@@ -741,60 +740,73 @@ int Viewport::registerPickableObject(QObject *obj)
     return id;
 }
 
-// Find the next power of 2 which is "value" or greater.
-static inline int powerOfTwo(int value)
-{
-    int p = 1;
-    while (p < value)
-        p <<= 1;
-    return p;
-}
-
 /*!
   \internal
     Returns the registered object that is under the mouse position
     specified by (\a x, \a y).  This function may need to regenerate
     the contents of the pick buffer by repainting the scene.
 */
-QObject *Viewport::objectForPoint(int x, int y)
+QObject *Viewport::objectForPoint(qreal x, qreal y)
 {
     if (d->view)
-        return d->view->objectForPoint(QPoint(x, y));
+        return d->view->objectForPoint(QPoint(qRound(x), qRound(y)));
     if (!d->viewWidget)
+        return 0;
+
+    // Check the viewport boundaries in case a mouse move has
+    // moved the pointer outside the window.
+    QRectF rect = boundingRect();
+    if (!rect.contains(QPointF(x, y)))
         return 0;
 
     QPainter qpainter;
     QGLPainter painter;
     QGLWidget *glw = qobject_cast<QGLWidget *>(d->viewWidget);
+    bool doubleBuffer;
     if (glw) {
+        doubleBuffer = glw->doubleBuffer();
         if (!painter.begin(glw))
             return 0;
     } else {
+        doubleBuffer = false;
         qpainter.begin(d->viewWidget);
         if (!painter.begin(&qpainter))
             return 0;
     }
 
-    int objectId = 0;
+    int objectId = -1;
 
-    QSize size(width(), height());
-    QSize fbosize(powerOfTwo(size.width()), powerOfTwo(size.height()));
+    QSize size(qRound(width()), qRound(height()));
+    QSize fbosize(QGL::nextPowerOfTwo(size));
     if (!d->needsPick && d->pickFbo && d->pickFbo->size() == fbosize) {
         // The previous pick fbo contents should still be valid.
         d->pickFbo->bind();
-        objectId = painter.pickObject(x, height() - 1 - y);
+        objectId = painter.pickObject(qRound(x), fbosize.height() - 1 - qRound(y));
         d->pickFbo->release();
     } else {
         // Regenerate the pick fbo contents.
-        if (d->pickFbo && d->pickFbo->size() != fbosize) {
-            delete d->pickFbo;
-            d->pickFbo = 0;
+        QGLAbstractSurface *mainSurface = 0;
+        QGLAbstractSurface *fboSurface = 0;
+        int height;
+        if (!doubleBuffer) {
+            if (d->pickFbo && d->pickFbo->size() != fbosize) {
+                delete d->pickFbo;
+                d->pickFbo = 0;
+            }
+            if (!d->pickFbo) {
+                d->pickFbo = new QGLFramebufferObject
+                    (fbosize, QGLFramebufferObject::CombinedDepthStencil);
+            }
+            height = fbosize.height();
+            fboSurface = new QGLFramebufferObjectSurface(d->pickFbo);
+            mainSurface = fboSurface;
+        } else {
+            // Use the QGLWidget's back buffer for picking to avoid the
+            // need to create a separate fbo in GPU memory.
+            mainSurface = painter.currentSurface();
+            height = mainSurface->viewportGL().height();
         }
-        if (!d->pickFbo) {
-            d->pickFbo = new QGLFramebufferObject
-                (fbosize, QGLFramebufferObject::CombinedDepthStencil);
-        }
-        QGLFramebufferObjectSurface surface(d->pickFbo);
+        QGLSubsurface surface(mainSurface, QRect(QPoint(0, 0), size));
         painter.pushSurface(&surface);
         painter.setPicking(true);
         painter.clearPickObjects();
@@ -826,11 +838,12 @@ QObject *Viewport::objectForPoint(int x, int y)
         }
         draw(&painter);
         painter.setPicking(false);
-        objectId = painter.pickObject(x, height() - 1 - y);
+        objectId = painter.pickObject(qRound(x), height - 1 - qRound(y));
         painter.popSurface();
+        delete fboSurface;
     }
 
-    d->needsPick = false;
+    d->needsPick = doubleBuffer;
     return d->objects.value(objectId, 0);
 }
 
