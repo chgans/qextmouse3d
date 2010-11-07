@@ -44,6 +44,7 @@ import Qt3D 1.0
 Viewport {
     width: 850
     height: 480
+    picking: true
     //showPicking: true
 
     camera: Camera {

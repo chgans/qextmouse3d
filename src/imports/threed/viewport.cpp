@@ -125,7 +125,7 @@ public:
 };
 
 ViewportPrivate::ViewportPrivate()
-    : picking(true)
+    : picking(false)
     , showPicking(false)
     , navigation(true)
     , blending(false)
@@ -245,7 +245,7 @@ Viewport::~Viewport()
     If this property is set to true, picking will be supported for this
     viewport, while if the property is false, no picking will be applied.
 
-    The default value for this property is true.
+    The default value for this property is false.
 
     \sa showPicking
 */

@@ -65,17 +65,17 @@ Viewport {
         name: "Viewport"
 
         function test_modes() {
-            verify(viewport.picking, "picking")
+            verify(!viewport.picking, "picking")
             verify(!viewport.showPicking, "showPicking")
             verify(viewport.navigation, "navigation")
             verify(!viewport.blending, "blending")
 
-            viewport.picking = false
+            viewport.picking = true
             viewport.showPicking = true
             viewport.navigation = false
             viewport.blending = true
 
-            verify(!viewport.picking, "picking-modified")
+            verify(viewport.picking, "picking-modified")
             verify(viewport.showPicking, "showPicking-modified")
             verify(!viewport.navigation, "navigation-modified")
             verify(viewport.blending, "blending-modified")
