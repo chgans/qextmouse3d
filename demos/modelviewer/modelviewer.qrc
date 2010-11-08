@@ -1,9 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>cube.3ds</file>
-        <file>penguin.3ds</file>
         <file>trolltech-q.3ds</file>
-        <file>basic-cube.3ds</file>
         <file>images/file16x16.png</file>
         <file>images/mesh16x16.png</file>
         <file>images/red-dot.png</file>
@@ -18,5 +15,8 @@
         <file>images/leftViewIcon.png</file>
         <file>images/rearQuarterIcon.png</file>
         <file>images/frontQuarterIcon.png</file>
+        <file>images/fileopen.png</file>
+        <file>images/filesave.png</file>
+        <file>images/qt3dlogo.png</file>
     </qresource>
 </RCC>

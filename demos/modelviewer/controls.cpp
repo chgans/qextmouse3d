@@ -119,28 +119,25 @@ Controls::Controls(QWidget *parent)
             this, SLOT(optionMenuToggled(bool)));
     connect(m_ui->actionShow_Warnings, SIGNAL(triggered(bool)),
             this, SLOT(optionMenuToggled(bool)));
-    connect(m_ui->generateQmlPushButton, SIGNAL(clicked()),
-            m_ui->actionSave_QML, SIGNAL(triggered()));
 
-    //View signals/slots
-    connect(m_ui->CustomView, SIGNAL(clicked()),
-            this, SLOT(on_custom_view_triggered()));
-    connect(m_ui->FrontView, SIGNAL(clicked()),
-            this, SLOT(on_front_view_triggered()));
-    connect(m_ui->BackView, SIGNAL(clicked()),
-            this, SLOT(on_back_view_triggered()));
-    connect(m_ui->LeftView, SIGNAL(clicked()),
-            this, SLOT(on_left_view_triggered()));
-    connect(m_ui->RightView, SIGNAL(clicked()),
-            this, SLOT(on_right_view_triggered()));
-    connect(m_ui->TopView, SIGNAL(clicked()),
-            this, SLOT(on_top_view_triggered()));
-    connect(m_ui->BottomView, SIGNAL(clicked()),
-            this, SLOT(on_bottom_view_triggered()));
-    connect(m_ui->FrontQuarterView, SIGNAL(clicked()),
-            this, SLOT(on_frontquarter_view_triggered()));
-    connect(m_ui->RearQuarterView, SIGNAL(clicked()),
-            this, SLOT(on_rearquarter_view_triggered()));
+    connect(m_ui->actionFront, SIGNAL(triggered(bool)),
+            this, SLOT(front_view_triggered()));
+    connect(m_ui->actionBack, SIGNAL(triggered(bool)),
+            this, SLOT(back_view_triggered()));
+    connect(m_ui->actionTop, SIGNAL(triggered(bool)),
+            this, SLOT(top_view_triggered()));
+    connect(m_ui->actionBottom, SIGNAL(triggered(bool)),
+            this, SLOT(bottom_view_triggered()));
+    connect(m_ui->actionLeft, SIGNAL(triggered(bool)),
+            this, SLOT(left_view_triggered()));
+    connect(m_ui->actionRight, SIGNAL(triggered(bool)),
+            this, SLOT(right_view_triggered()));
+    connect(m_ui->actionFront_Quarter, SIGNAL(triggered(bool)),
+            this, SLOT(frontquarter_view_triggered()));
+    connect(m_ui->actionBack_Quarter, SIGNAL(triggered(bool)),
+            this, SLOT(rearquarter_view_triggered()));
+
+    m_ui->actionShow_Floor->setChecked(true);
 }
 
 Controls::~Controls()
@@ -148,40 +145,35 @@ Controls::~Controls()
     delete m_ui;
 }
 
-
-void Controls::on_custom_view_triggered() {
-    m_view->setView(Viewer::SelectView);
-}
-
-void Controls::on_front_view_triggered() {
+void Controls::front_view_triggered() {
     m_view->setView(Viewer::FrontView);
 }
 
-void Controls::on_back_view_triggered() {
+void Controls::back_view_triggered() {
     m_view->setView(Viewer::BackView);
 }
 
-void Controls::on_top_view_triggered() {
+void Controls::top_view_triggered() {
     m_view->setView(Viewer::TopView);
 }
 
-void Controls::on_bottom_view_triggered() {
+void Controls::bottom_view_triggered() {
     m_view->setView(Viewer::BottomView);
 }
 
-void Controls::on_left_view_triggered() {
+void Controls::left_view_triggered() {
     m_view->setView(Viewer::LeftView);
 }
 
-void Controls::on_right_view_triggered() {
+void Controls::right_view_triggered() {
     m_view->setView(Viewer::RightView);
 }
 
-void Controls::on_frontquarter_view_triggered() {
+void Controls::frontquarter_view_triggered() {
     m_view->setView(Viewer::FrontRightView);
 }
 
-void Controls::on_rearquarter_view_triggered() {
+void Controls::rearquarter_view_triggered() {
     m_view->setView(Viewer::BackLeftView);
 }
 
@@ -216,37 +208,102 @@ void Controls::load()
 
 void Controls::viewTypeChanged()
 {
-    if (m_ui->viewComboBox->currentIndex() != int(m_view->view()))
-        m_ui->viewComboBox->setCurrentIndex(int(m_view->view()));
+    switch (m_view->view()) {
+    case Viewer::SelectView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::FrontView:
+        m_ui->actionFront->setChecked(true);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::BackView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(true);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::TopView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(true);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::BottomView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(true);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::LeftView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(true);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::RightView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(true);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::FrontRightView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(true);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
+    case Viewer::BackLeftView:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(true);
+        break;
+    }
 }
 
 QString Controls::populateModelMenu()
 {
-    QString first;
-    QMenu *menu = m_ui->menuModels;
-    QStringList searchDirs;
-    searchDirs << QLatin1String(":/") << QLatin1String("./");
-    QStringList::const_iterator it = searchDirs.begin();
-    for ( ; it != searchDirs.end(); ++it)
-    {
-        if (it != searchDirs.begin())
-            menu->addSeparator();
-        QDir modelDir(*it);
-        QStringList filters(QLatin1String("*.3ds"));
-        modelDir.setNameFilters(filters);
-        QStringList models = modelDir.entryList();
-        QStringList::const_iterator mit = models.begin();
-        for ( ; mit != models.end(); ++mit)
-        {
-            QString name = *mit;
-            name.prepend(*it);
-            first = name;
-            QAction *act = new QAction(name, this);
-            menu->addAction(act);
-            QObject::connect(act, SIGNAL(triggered()),
-                             this, SLOT(load()));
-        }
-    }
     QString cmdlineModel;
     QSettings settings;
     settings.beginGroup(QLatin1String("General"));
@@ -272,7 +329,7 @@ QString Controls::populateModelMenu()
         else
             qWarning("%s model file could not be found", qPrintable(cmdlineModel));
     }
-    return first;
+    return QLatin1String(":/trolltech-q.3ds");
 }
 
 void Controls::loadModelDefaults(const QString &model)
@@ -345,18 +402,7 @@ void Controls::saveModelDefaults(const QString &model)
     settings.setValue(QLatin1String("scale"), s);
     settings.setValue(QLatin1String("eye"), e);
     settings.setValue(QLatin1String("upVector"), up);
-    settings.setValue(QLatin1String("spin"), m_ui->spinCheckBox->isChecked());
-}
-
-void Controls::on_spinCheckBox_stateChanged(int state)
-{
-    m_view->enableAnimation(state == Qt::Checked);
-    if (m_ui->actionSpin->isChecked() != (state == Qt::Checked))
-    {
-        m_ui->actionSpin->blockSignals(true);
-        m_ui->actionSpin->setChecked(state == Qt::Checked);
-        m_ui->actionSpin->blockSignals(false);
-    }
+    settings.setValue(QLatin1String("spin"), m_ui->actionSpin->isChecked());
 }
 
 void Controls::on_actionOpen_triggered()
@@ -563,27 +609,17 @@ void Controls::fileLoadTimeNotified(int time)
 
 void Controls::setManualControl()
 {
-    m_ui->spinCheckBox->setChecked(false);
-}
-
-void Controls::on_viewComboBox_currentIndexChanged(int view)
-{
-    m_view->setView(static_cast<Viewer::View>(view));
+    m_ui->actionSpin->setChecked(false);
 }
 
 void Controls::on_actionSpin_triggered()
 {
-    m_ui->spinCheckBox->setChecked(m_ui->actionSpin->isChecked());
+    m_view->enableAnimation(m_ui->actionSpin->isChecked());
 }
 
 void Controls::on_actionShow_Floor_triggered()
 {
-    m_ui->floorCheckBox->setChecked(m_ui->actionShow_Floor->isChecked());
-}
-
-void Controls::on_floorCheckBox_toggled(bool checked)
-{
-    m_view->setFloorEnabled(checked);
+    m_view->setFloorEnabled(m_ui->actionShow_Floor->isChecked());
 }
 
 void Controls::on_action1_x_triggered(bool checked)

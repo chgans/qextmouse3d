@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1202</width>
-    <height>881</height>
+    <width>1058</width>
+    <height>690</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Model Viewer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="modelviewer.qrc">
+    <normaloff>:/images/qt3dlogo.png</normaloff>:/images/qt3dlogo.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -49,349 +53,7 @@
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QLabel" name="label_9">
-          <property name="text">
-           <string>Viewpoint</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <item row="0" column="0">
-           <widget class="QComboBox" name="viewComboBox">
-            <property name="toolTip">
-             <string>Resets the camera to the selected view</string>
-            </property>
-            <property name="statusTip">
-             <string>Use tab; or select the view</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>Select View ...</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Front View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Back View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Top View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Bottom View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Left View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Right View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Front/Right View</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Back/Left View</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <property name="sizeConstraint">
-           <enum>QLayout::SetFixedSize</enum>
-          </property>
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="CustomView">
-            <property name="baseSize">
-             <size>
-              <width>5</width>
-              <height>5</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/customViewIcon.png</normaloff>:/images/customViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QPushButton" name="FrontView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/frontViewIcon.png</normaloff>:/images/frontViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="BackView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/backViewIcon.png</normaloff>:/images/backViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QPushButton" name="FrontQuarterView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/frontQuarterIcon.png</normaloff>:/images/frontQuarterIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="TopView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/topViewIcon.png</normaloff>:/images/topViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="BottomView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/bottomViewIcon.png</normaloff>:/images/bottomViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QPushButton" name="RearQuarterView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/rearQuarterIcon.png</normaloff>:/images/rearQuarterIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QPushButton" name="LeftView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/leftViewIcon.png</normaloff>:/images/leftViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QPushButton" name="RightView">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="modelviewer.qrc">
-              <normaloff>:/images/rightViewIcon.png</normaloff>:/images/rightViewIcon.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>48</width>
-              <height>48</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="spinCheckBox">
-            <property name="toolTip">
-             <string>Spin the model to show all sides</string>
-            </property>
-            <property name="statusTip">
-             <string>Spin the model around Y, to show all sides</string>
-            </property>
-            <property name="text">
-             <string>Spin</string>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-            <property name="tristate">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QCheckBox" name="floorCheckBox">
-            <property name="statusTip">
-             <string>Draw a reference floor plane in y=0</string>
-            </property>
-            <property name="text">
-             <string>Floor</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="generateQmlPushButton">
-            <property name="toolTip">
-             <string>Generate a QML file to display this model with current settings</string>
-            </property>
-            <property name="text">
-             <string>Save QML...</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Components</string>
-          </property>
-         </widget>
+         <layout class="QGridLayout" name="gridLayout_2"/>
         </item>
         <item>
          <widget class="QTreeView" name="treeView"/>
@@ -619,15 +281,10 @@ scale values</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1202</width>
+     <width>1058</width>
      <height>20</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuModels">
-    <property name="title">
-     <string>Models</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
@@ -639,7 +296,6 @@ scale values</string>
      <addaction name="actionEmpty"/>
     </widget>
     <addaction name="actionOpen"/>
-    <addaction name="actionRevert"/>
     <addaction name="menuRecent_Models"/>
     <addaction name="actionSave_QML"/>
     <addaction name="separator"/>
@@ -649,32 +305,58 @@ scale values</string>
     <property name="title">
      <string>Options</string>
     </property>
-    <widget class="QMenu" name="menuZoom_Scale">
-     <property name="title">
-      <string>Zoom Scale</string>
-     </property>
-     <addaction name="action1_x"/>
-     <addaction name="action10_x"/>
-     <addaction name="action100_x"/>
-    </widget>
     <addaction name="actionForce_Smooth"/>
     <addaction name="actionForce_Faceted"/>
     <addaction name="actionNative_Indices"/>
     <addaction name="actionCorrect_Normals"/>
     <addaction name="actionCorrect_Acute"/>
     <addaction name="actionShow_Warnings"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionSpin"/>
     <addaction name="separator"/>
-    <addaction name="actionComponent"/>
     <addaction name="actionShow_Floor"/>
     <addaction name="actionShow_Picking"/>
-    <addaction name="actionSpin"/>
-    <addaction name="menuZoom_Scale"/>
+    <addaction name="separator"/>
+    <addaction name="actionFront"/>
+    <addaction name="actionBack"/>
+    <addaction name="actionTop"/>
+    <addaction name="actionBottom"/>
+    <addaction name="actionLeft"/>
+    <addaction name="actionRight"/>
+    <addaction name="actionFront_Quarter"/>
+    <addaction name="actionBack_Quarter"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuModels"/>
+   <addaction name="menuView"/>
    <addaction name="menuOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave_QML"/>
+   <addaction name="separator"/>
+   <addaction name="actionFront"/>
+   <addaction name="actionBack"/>
+   <addaction name="actionTop"/>
+   <addaction name="actionBottom"/>
+   <addaction name="actionLeft"/>
+   <addaction name="actionRight"/>
+   <addaction name="actionFront_Quarter"/>
+   <addaction name="actionBack_Quarter"/>
+  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -684,6 +366,10 @@ scale values</string>
    </property>
   </action>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/fileopen.png</normaloff>:/images/fileopen.png</iconset>
+   </property>
    <property name="text">
     <string>Open...</string>
    </property>
@@ -745,6 +431,10 @@ scale values</string>
    </property>
   </action>
   <action name="actionSave_QML">
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/filesave.png</normaloff>:/images/filesave.png</iconset>
+   </property>
    <property name="text">
     <string>Save QML...</string>
    </property>
@@ -764,9 +454,6 @@ scale values</string>
    <property name="text">
     <string>Show Floor</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+F</string>
-   </property>
   </action>
   <action name="actionSpin">
    <property name="checkable">
@@ -777,9 +464,6 @@ scale values</string>
    </property>
    <property name="toolTip">
     <string>Spin model to show all sides</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionRevert">
@@ -837,7 +521,130 @@ scale values</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show Picking</string>
+    <string>Highlight Components</string>
+   </property>
+   <property name="toolTip">
+    <string>Highlight Components</string>
+   </property>
+  </action>
+  <action name="actionFront">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/frontViewIcon.png</normaloff>:/images/frontViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Front</string>
+   </property>
+   <property name="toolTip">
+    <string>Front View</string>
+   </property>
+  </action>
+  <action name="actionBack">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/backViewIcon.png</normaloff>:/images/backViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Back</string>
+   </property>
+   <property name="toolTip">
+    <string>Back View</string>
+   </property>
+  </action>
+  <action name="actionTop">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/topViewIcon.png</normaloff>:/images/topViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Top</string>
+   </property>
+   <property name="toolTip">
+    <string>Top View</string>
+   </property>
+  </action>
+  <action name="actionBottom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/bottomViewIcon.png</normaloff>:/images/bottomViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Bottom</string>
+   </property>
+   <property name="toolTip">
+    <string>Bottom View</string>
+   </property>
+  </action>
+  <action name="actionLeft">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/leftViewIcon.png</normaloff>:/images/leftViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Left</string>
+   </property>
+   <property name="toolTip">
+    <string>Left View</string>
+   </property>
+  </action>
+  <action name="actionRight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/rightViewIcon.png</normaloff>:/images/rightViewIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Right</string>
+   </property>
+   <property name="toolTip">
+    <string>Right View</string>
+   </property>
+  </action>
+  <action name="actionFront_Quarter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/frontQuarterIcon.png</normaloff>:/images/frontQuarterIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Front Quarter</string>
+   </property>
+   <property name="toolTip">
+    <string>Front Quarter View</string>
+   </property>
+  </action>
+  <action name="actionBack_Quarter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/rearQuarterIcon.png</normaloff>:/images/rearQuarterIcon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Back Quarter</string>
+   </property>
+   <property name="toolTip">
+    <string>Back Quarter View</string>
    </property>
   </action>
  </widget>

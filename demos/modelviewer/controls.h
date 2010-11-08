@@ -85,15 +85,12 @@ private slots:
     void on_action10_x_triggered(bool checked);
     void on_action1_x_triggered(bool checked);
     void setManualControl();
-    void on_floorCheckBox_toggled(bool checked);
     void on_actionShow_Floor_triggered();
     void on_actionSpin_triggered();
-    void on_viewComboBox_currentIndexChanged(int);
     void on_actionComponent_triggered();
     void on_actionSave_QML_triggered();
     void on_actionQuit_triggered();
     void on_actionOpen_triggered();
-    void on_spinCheckBox_stateChanged(int );
     void optionMenuToggled(bool);
     void saveSettings(const QString &);
     void loadSettings(const QString &);
@@ -102,15 +99,14 @@ private slots:
     void addRecentFiles(const QString &);
     void load();
     void viewTypeChanged();
-    void on_custom_view_triggered();
-    void on_front_view_triggered();
-    void on_back_view_triggered();
-    void on_top_view_triggered();
-    void on_bottom_view_triggered();
-    void on_left_view_triggered();
-    void on_right_view_triggered();
-    void on_frontquarter_view_triggered();
-    void on_rearquarter_view_triggered();
+    void front_view_triggered();
+    void back_view_triggered();
+    void top_view_triggered();
+    void bottom_view_triggered();
+    void left_view_triggered();
+    void right_view_triggered();
+    void frontquarter_view_triggered();
+    void rearquarter_view_triggered();
 
 private:
     QString populateModelMenu();

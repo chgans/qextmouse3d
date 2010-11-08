@@ -93,9 +93,6 @@ Viewer::Viewer(QWidget *parent)
     m_spinAnimation->setLoopCount(-1);
     m_spinAnimation->setDuration(5000);
 
-    setToolTip(tr("Drag the mouse to rotate the object left-right & up-down\n"
-                  "or use the mouse-wheel to move the camera nearer/farther.\n"
-                  "Use shift-drag to slide."));
     setOption(QGLView::ObjectPicking, true);
 }
 
