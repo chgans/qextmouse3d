@@ -54,7 +54,6 @@ class QGLCamera;
 class QGLLightModel;
 class QGLLightParameters;
 class Effect;
-class QGLView;
 
 class Viewport : public QDeclarativeItem
 {
@@ -101,13 +100,6 @@ public:
 
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 
-    Q_INVOKABLE void earlyDraw(QGLPainter *painter);
-    Q_INVOKABLE void draw(QGLPainter *painter);
-    Q_INVOKABLE void initialize(QGLView *view);
-    Q_INVOKABLE void initializeGL(QGLPainter *painter);
-
-    QGLView *view() const;
-
     int registerPickableObject(QObject *obj);
 
     Q_INVOKABLE QObject *objectForPoint(qreal x, qreal y);
@@ -135,6 +127,10 @@ protected:
 
 private:
     ViewportPrivate *d;
+
+    void earlyDraw(QGLPainter *painter);
+    void draw(QGLPainter *painter);
+    void initializeGL(QGLPainter *painter);
 
     bool hoverEvent(QGraphicsSceneHoverEvent *event);
 

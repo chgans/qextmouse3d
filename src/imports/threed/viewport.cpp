@@ -105,7 +105,6 @@ public:
     Effect *backdrop;
     QColor backgroundColor;
     QGLVertexBundle backdropVertices;
-    QGLView *view;
     QWidget *viewWidget;
     int pickId;
     QGLFramebufferObject *pickFbo;
@@ -136,7 +135,6 @@ ViewportPrivate::ViewportPrivate()
     , lightModel(0)
     , backdrop(0)
     , backgroundColor(Qt::black)
-    , view(0)
     , viewWidget(0)
     , pickId(1)
     , pickFbo(0)
@@ -204,8 +202,6 @@ void ViewportPrivate::setDefaults(QGLPainter *painter)
         painter->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 }
 
-void qt_gl_set_qml_viewport(QObject *viewport);
-
 /*!
     \internal
     Construct the class and assign it a \a parent QDeclarativeItem.
@@ -215,7 +211,6 @@ Viewport::Viewport(QDeclarativeItem *parent)
 {
     d = new ViewportPrivate();
     setFlag(QGraphicsItem::ItemHasNoContents, false);
-    qt_gl_set_qml_viewport(this);
 
     connect(this, SIGNAL(viewportChanged()), this, SLOT(update3d()));
 
@@ -510,10 +505,8 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     }
 
     // Initialize the objects in the scene if this is the first paint.
-    if (!d->itemsInitialized) {
-        initialize(0);
+    if (!d->itemsInitialized)
         initializeGL(&painter);
-    }
 
     // If this Viewport is surrounded by a StereoView item,
     // then fetch the eye to be rendered from it.
@@ -566,7 +559,7 @@ void Viewport::earlyDraw(QGLPainter *painter)
 {
     // If are running with the regular qml viewer, then assume that it
     // has cleared the background for us, and just clear the depth buffer.
-    if (!d->view && parentItem() && !d->showPicking) {
+    if (parentItem() && !d->showPicking) {
         glClear(GL_DEPTH_BUFFER_BIT);
     } else {
         if (d->showPicking)
@@ -668,39 +661,6 @@ void Viewport::draw(QGLPainter *painter)
 
 /*!
   \internal
-  The initialize function, as its name suggests, peforms all top level initialisation for the viewport.
-
-  This includes setting up the camera, as well as initialising all of the
-
-  If \a view is null, then we are running on a standard QFxView canvas widget.  If \a view is not null,
-  then we are running on a QGLView canvas widget.
-*/
-
-void Viewport::initialize(QGLView *view)
-{
-    // Remember which view we are associated with, if any.
-    d->view = view;
-
-    // Set up the QGLView size and properties as requested by the viewport.
-    if (view) {
-        int w = width();
-        if (w > 0)
-            view->setMinimumWidth(w);
-        int h = height();
-        if (h > 0)
-            view->setMinimumHeight(h);
-        view->setOption(QGLView::ObjectPicking, picking());
-        view->setOption(QGLView::ShowPicking, showPicking());
-        view->setOption(QGLView::CameraNavigation, navigation());
-    }
-
-    // Apply the camera to the view.
-    if (view && d->camera)
-        view->setCamera(d->camera);
-}
-
-/*!
-  \internal
   Initialize the GL viewport for the first time on \a painter.
 */
 
@@ -718,25 +678,13 @@ void Viewport::initializeGL(QGLPainter *painter)
 
 /*!
   \internal
-  Return the QGLView being used by the viewport.
-*/
-QGLView *Viewport::view() const
-{
-    return d->view;
-}
-
-/*!
-  \internal
     Registers \a obj with this viewport as a pickable object and
     return its pick identifier.
 */
 int Viewport::registerPickableObject(QObject *obj)
 {
     int id = (d->pickId)++;
-    if (d->view)
-        d->view->registerObject(id, obj);
-    else
-        d->objects[id] = obj;
+    d->objects[id] = obj;
     return id;
 }
 
@@ -748,8 +696,6 @@ int Viewport::registerPickableObject(QObject *obj)
 */
 QObject *Viewport::objectForPoint(qreal x, qreal y)
 {
-    if (d->view)
-        return d->view->objectForPoint(QPoint(qRound(x), qRound(y)));
     if (!d->viewWidget)
         return 0;
 
@@ -849,31 +795,18 @@ QObject *Viewport::objectForPoint(qreal x, qreal y)
 
 /*!
   \internal
-  If a QGLView is defined for this viewport then this function queues an update for that QGLView.
-
-  If this is not defined then a normal update is called.
 */
 void Viewport::update3d()
 {
-    if (d->view)
-        d->view->update();
-    else
-        update();
+    update();
 }
 
 /*!
     \internal
-    The cameraChanged slot updates the camera in the QGLView if one exists, or simply calls the
-    \l update() function otherwise.
-
-    \sa update()
 */
 void Viewport::cameraChanged()
 {
-    if (d->view)
-        d->view->setCamera(d->camera);  // Calls update() internally.
-    else
-        update();
+    update();
 }
 
 /*!

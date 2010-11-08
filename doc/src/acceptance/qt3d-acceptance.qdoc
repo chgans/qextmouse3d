@@ -166,10 +166,10 @@
     \section1 QML/3D
 
     Run the QML/3D version of the bouncing
-    \l{Teapot Example in QML/3D}{Teapot Example} using either
-    "qml3d teapot-bounce.qml" or "qmlviewer -opengl teapot-bounce.qml".
-    The teapot should have a shiny appearence (compared to the grey
-    teapot above) and bounce up and down:
+    \l{Teapot Example in QML/3D}{Teapot Example} using
+    "qmlviewer -opengl teapot-bounce.qml".  The teapot should have a
+    shiny appearence (compared to the grey teapot above) and bounce
+    up and down:
 
     \image teapot-china-screenshot.png
 
@@ -183,17 +183,15 @@
     \section1 Object picking
 
     Run the QML/3D \l{Tea Service Demo in QML}{Tea Service} demo
-    with "qml3d teaservice.qml".  Click on the teapot, teacups,
+    with "qmlviewer -opengl teaservice.qml".  Click on the teapot, teacups,
     and teaspoons to make them jump up, and click on the teapot
     spout and handle for other effects.  This example tests object
     picking and QML animations.
 
     \image teaservice-qml-screenshot.png
 
-    Note: qmlviewer can be used to run the tea service, but clicking
-    will not work.  This is expected.  It may also be necessary to
-    adjust the width and height properties in teaservice.qml to
-    match the device's screen size.
+    Note: It may be necessary to adjust the width and height properties
+    in teaservice.qml to match the device's screen size.
 
     \section1 Build tests
 

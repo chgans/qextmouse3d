@@ -1361,20 +1361,4 @@ QPointF QGLView::viewDelta(int deltax, int deltay) const
 */
 
 
-// The following is a hack to enable the use of QGLView with qml3d
-// and the Qt3D plugin for QML.  Needs to go away eventually.
-
-static QObject *qmlViewport = 0;
-
-Q_QT3D_EXPORT void qt_gl_set_qml_viewport(QObject *viewport)
-{
-    if (!qmlViewport)
-        qmlViewport = viewport;
-}
-
-Q_QT3D_EXPORT QObject *qt_gl_qml_viewport()
-{
-    return qmlViewport;
-}
-
 QT_END_NAMESPACE
