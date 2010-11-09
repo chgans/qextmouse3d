@@ -739,11 +739,11 @@ static inline QColor vector4DToColor(const QVector4D &value, qreal alpha)
 
 // Evaluate the standard GL lighting algorithm to determine what the
 // lit pixel on the screen will be with the supplied parameters.
-static QColor litColor
-    (const QGLMaterial &material,
-     const QGLLightParameters &light = QGLLightParameters(),
-     const QGLLightModel &model = QGLLightModel())
+static QColor litColor(const QGLMaterial &material)
 {
+    QGLLightParameters light;
+    QGLLightModel model;
+
     QVector4D color = colorToVector4D(material.emittedLight());
     color += colorToVector4D(material.ambientColor()) *
              colorToVector4D(model.ambientSceneColor());
