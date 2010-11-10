@@ -186,7 +186,12 @@ QGLAbstractSurface::~QGLAbstractSurface()
 QRect QGLAbstractSurface::viewportRect() const
 {
     QRect view = viewportGL();
-    int height = device()->height();
+    QPaintDevice *dev = device();
+    int height;
+    if (dev->devType() == QInternal::Widget)
+        height = static_cast<QWidget *>(dev)->height();
+    else
+        height = dev->height();
     return QRect(view.x(), height - (view.y() + view.height()),
                  view.width(), view.height());
 }
