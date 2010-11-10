@@ -65,6 +65,6 @@ QGLSceneFormatHandler *QGL3dsScenePlugin::create(QIODevice *device, const QUrl& 
 }
 
 Q_EXPORT_STATIC_PLUGIN(QGL3dsScenePlugin)
-Q_EXPORT_PLUGIN2(qscenebezier, QGL3dsScenePlugin)
+Q_EXPORT_PLUGIN2(qscene3ds, QGL3dsScenePlugin)
 
 QT_END_NAMESPACE
