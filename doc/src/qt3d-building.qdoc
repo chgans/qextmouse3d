@@ -51,7 +51,7 @@
 
     This is because Qt/3D requires access to source files that do not ship
     with an SDK.  Until Qt/3D becomes a regular part of Qt, either download an official
-    Qt 4.7 source package (\l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.0.tar.gz}{tar.gz}, \l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.0.zip}{zip}),
+    Qt 4.7 source package (\l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.1.tar.gz}{tar.gz}, \l{http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.1.zip}{zip}),
     or a source tarball from our 
     \l{http://qt.gitorious.org/qt/qt/}{gitorious repository}.
 
@@ -59,12 +59,16 @@
     \code
     mkdir $HOME/build/qt
     cd $HOME/build/qt
-    tar zxf qt-everywhere-opensource-src-4.7.0.tar.gz
+    tar zxf qt-everywhere-opensource-src-4.7.1.tar.gz
     ln -s qt* 4.7
     cd qt*
     ./configure -opengl
     make
+    make install
     \endcode
+
+    The "\c{make install}" step is required to make plug-ins work,
+    particularly the model loading and QML/3D plug-ins.
 
     On Windows refer to the
     \l{http://doc.qt.nokia.com/4.7/install-win.html}{build documentation}
