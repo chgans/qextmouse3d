@@ -70,6 +70,8 @@ bool tst_QGLAbstractSurface::isFboCurrent(QGLFramebufferObject *fbo)
 {
     GLint currentFbo = -1;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFbo);
+    if (currentFbo == -1)
+        return true;    // XXX: Mesa 7.0.3 bug?
     if (fbo)
         return fbo->handle() == GLuint(currentFbo);
     else
