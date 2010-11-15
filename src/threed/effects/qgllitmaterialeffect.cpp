@@ -67,9 +67,9 @@ static char const litMaterialVertexShader[] =
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"
-    "    highp vec4 vertex = modelView * vertex;\n"
+    "    highp vec4 tvertex = modelView * vertex;\n"
     "    highp vec3 norm = normalize(normalMatrix * normal);\n"
-    "    qLightVertex(vertex, norm);\n"
+    "    qLightVertex(tvertex, norm);\n"
     "}\n";
 
 static char const litMaterialFragmentShader[] =
