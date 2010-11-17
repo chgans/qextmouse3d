@@ -70,6 +70,7 @@ public:
     void setAxis(const QVector3D &value);
 
     void applyTo(QMatrix4x4 *matrix) const;
+    QGraphicsTransform3D *clone(QObject *parent) const;
 
 Q_SIGNALS:
     void originChanged();

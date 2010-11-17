@@ -241,6 +241,19 @@ void QGraphicsRotation3D::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
+    \internal
+*/
+QGraphicsTransform3D *QGraphicsRotation3D::clone(QObject *parent) const
+{
+    Q_D(const QGraphicsRotation3D);
+    QGraphicsRotation3D *copy = new QGraphicsRotation3D(parent);
+    copy->setOrigin(d->origin);
+    copy->setAxis(d->axis);
+    copy->setAngle(d->angle);
+    return copy;
+}
+
+/*!
     \fn void QGraphicsRotation3D::originChanged()
 
     Signal that is emitted when origin() changes.

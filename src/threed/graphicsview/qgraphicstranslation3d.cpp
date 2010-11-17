@@ -207,6 +207,18 @@ void QGraphicsTranslation3D::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
+    \internal
+*/
+QGraphicsTransform3D *QGraphicsTranslation3D::clone(QObject *parent) const
+{
+    Q_D(const QGraphicsTranslation3D);
+    QGraphicsTranslation3D *copy = new QGraphicsTranslation3D(parent);
+    copy->setTranslate(d->translate);
+    copy->setProgress(d->progress);
+    return copy;
+}
+
+/*!
     \fn void QGraphicsTranslation3D::translateChanged()
 
     Signal that is emitted when translate() changes.

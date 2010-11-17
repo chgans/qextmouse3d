@@ -97,6 +97,12 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
+    \fn QGraphicsTransform3D *QGraphicsTransform3D::clone(QObject *parent) const
+
+    Clones a copy of this transformation and attaches the clone to \a parent.
+*/
+
+/*!
     \fn void QGraphicsTransform3D::transformChanged()
 
     Signal that is emitted whenever any of the transformation's

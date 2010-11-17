@@ -63,4 +63,12 @@ void Scale3D::setScale(const QVariant &value)
     }
 }
 
+QGraphicsTransform3D *Scale3D::clone(QObject *parent) const
+{
+    Scale3D *copy = new Scale3D(parent);
+    copy->setOrigin(origin());
+    copy->setScale(scale());
+    return copy;
+}
+
 QT_END_NAMESPACE

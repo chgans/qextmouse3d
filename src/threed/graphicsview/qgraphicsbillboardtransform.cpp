@@ -241,6 +241,17 @@ void QGraphicsBillboardTransform::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
+    \internal
+*/
+QGraphicsTransform3D *QGraphicsBillboardTransform::clone(QObject *parent) const
+{
+    Q_D(const QGraphicsBillboardTransform);
+    QGraphicsBillboardTransform *copy = new QGraphicsBillboardTransform(parent);
+    copy->setPreserveUpVector(d->preserveUpVector);
+    return copy;
+}
+
+/*!
     \fn void QGraphicsBillboardTransform::preserveUpVectorChanged()
 
     Signal that is emitted when preserveUpVector() changes.

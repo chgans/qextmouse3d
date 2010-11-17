@@ -233,6 +233,18 @@ void QGraphicsScale3D::applyTo(QMatrix4x4 *matrix) const
 }
 
 /*!
+    \internal
+*/
+QGraphicsTransform3D *QGraphicsScale3D::clone(QObject *parent) const
+{
+    Q_D(const QGraphicsScale3D);
+    QGraphicsScale3D *copy = new QGraphicsScale3D(parent);
+    copy->setOrigin(d->origin);
+    copy->setScale(d->scale);
+    return copy;
+}
+
+/*!
     \fn void QGraphicsScale3D::originChanged()
 
     Signal that is emitted when origin() changes.

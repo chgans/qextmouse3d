@@ -58,6 +58,7 @@ public:
     ~QGraphicsTransform3D() {}
 
     virtual void applyTo(QMatrix4x4 *matrix) const = 0;
+    virtual QGraphicsTransform3D *clone(QObject *parent = 0) const = 0;
 
 Q_SIGNALS:
     void transformChanged();

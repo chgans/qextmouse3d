@@ -63,6 +63,7 @@ public:
     void setPreserveUpVector(bool value);
 
     void applyTo(QMatrix4x4 *matrix) const;
+    QGraphicsTransform3D *clone(QObject *parent) const;
 
 Q_SIGNALS:
     void preserveUpVectorChanged();
