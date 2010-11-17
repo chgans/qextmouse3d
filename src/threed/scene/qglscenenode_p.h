@@ -55,6 +55,7 @@
 
 #include "qglnamespace.h"
 #include "qglscenenode.h"
+#include "qgraphicstransform3d.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qlist.h>
@@ -89,7 +90,6 @@ public:
         , palette(other->palette)
         , localTransform(other->localTransform)
         , translate(other->translate)
-        , transforms(other->transforms)
         , localEffect(other->localEffect)
         , customEffect(other->customEffect)
         , hasEffect(other->hasEffect)

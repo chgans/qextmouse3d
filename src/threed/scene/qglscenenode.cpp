@@ -1398,6 +1398,8 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
     Q_D(const QGLSceneNode);
     QGLSceneNode *node = new QGLSceneNode
         (new QGLSceneNodePrivate(d), parent ? parent : this->parent());
+    for (int index = 0; index < d->transforms.size(); ++index)
+        node->addTransform(d->transforms.at(index)->clone(node));
     node->addNodes(d->childNodes);
     return node;
 }
@@ -1416,8 +1418,11 @@ QGLSceneNode *QGLSceneNode::clone(QObject *parent) const
 QGLSceneNode *QGLSceneNode::cloneNoChildren(QObject *parent) const
 {
     Q_D(const QGLSceneNode);
-    return new QGLSceneNode
+    QGLSceneNode *node = new QGLSceneNode
         (new QGLSceneNodePrivate(d), parent ? parent : this->parent());
+    for (int index = 0; index < d->transforms.size(); ++index)
+        node->addTransform(d->transforms.at(index)->clone(node));
+    return node;
 }
 
 /*!

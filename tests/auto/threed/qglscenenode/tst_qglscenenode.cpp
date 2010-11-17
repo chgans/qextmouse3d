@@ -396,6 +396,21 @@ void tst_QGLSceneNode::removeNode()
     QCOMPARE(node5Spy.count(), 1);
 }
 
+static bool sameTransforms(const QList<QGraphicsTransform3D *> &transforms1,
+                           const QList<QGraphicsTransform3D *> &transforms2)
+{
+    if (transforms1.size() != transforms2.size())
+        return false;
+    for (int index = 0; index < transforms1.size(); ++index) {
+        // We only check the meta object at the moment, and assume
+        // that the clone() worked properly.
+        if (transforms1.at(index)->metaObject() !=
+                transforms2.at(index)->metaObject())
+            return false;
+    }
+    return true;
+}
+
 void tst_QGLSceneNode::clone()
 {
     QGLSceneNode nodeParent;
@@ -462,7 +477,7 @@ void tst_QGLSceneNode::clone()
     QCOMPARE(node2->geometry().count(), 1);
     QVERIFY(node2->localTransform() == m);
     QVERIFY(node2->position() == QVector3D(1, -2, 3));
-    QVERIFY(node2->transforms() == transforms);
+    QVERIFY(sameTransforms(node2->transforms(), transforms));
     QVERIFY(node2->drawingMode() == QGL::Points);
     QVERIFY(node2->effect() == QGL::LitMaterial);
     QVERIFY(node2->userEffect() == &userEffect);
