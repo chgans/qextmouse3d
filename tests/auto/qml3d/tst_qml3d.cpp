@@ -242,8 +242,8 @@ int main(int argc, char *argv[])
         fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
                         "<TestCase name=\"tst_qml3d\">\n");
         fprintf(stream, "<Environment>\n"
-                        "   <QtVersion>%s<QtVersion>\n"
-                        "   <QTestVersion>%s<QTestVersion>\n"
+                        "   <QtVersion>%s</QtVersion>\n"
+                        "   <QTestVersion>%s</QTestVersion>\n"
                         "</Environment>\n", qVersion(), qVersion());
     } else {
         fprintf(stream, "********* Start testing of tst_qml3d *********\n");
