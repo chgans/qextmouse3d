@@ -162,7 +162,7 @@ Item {
     }
 
     function run() {
-        TestLogger.log_start_test()
+        TestLogger.log_start_test(reporter)
         var success = true
         running = true
         var testList = []

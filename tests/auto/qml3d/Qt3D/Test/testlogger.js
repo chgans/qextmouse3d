@@ -55,7 +55,8 @@ function log_init_results()
             numFailed: 0,
             numSkipped: 0,
             nextId: 0,
-            testCases: []
+            testCases: [],
+            reporter: null
         }
     }
 }
@@ -64,7 +65,7 @@ function log_fail(testcase, msg)
 {
     if (!msg)
         msg = ""
-    console.log("FAIL!  : " + testcase + " " + msg)
+    Qt.testResults.reporter.log_fail(testcase, msg);
     ++Qt.testResults.numFailed
 }
 
@@ -73,15 +74,15 @@ function log_expect_fail(testcase, expectmsg, msg)
     if (!msg)
         msg = ""
     if (expectmsg)
-        console.log("XFAIL  : " + testcase + " " + expectmsg + " " + msg)
+        Qt.testResults.reporter.log_expect_fail(testcase, expectmsg + " " + msg);
     else
-        console.log("XFAIL  : " + testcase + " " + msg)
+        Qt.testResults.reporter.log_expect_fail(testcase, msg);
     ++Qt.testResults.numPassed
 }
 
 function log_expect_fail_pass(testcase)
 {
-    console.log("XPASS  : " + testcase)
+    Qt.testResults.reporter.log_expect_fail_pass(testcase);
     ++Qt.testResults.numFailed
 }
 
@@ -89,19 +90,19 @@ function log_skip(testcase, msg)
 {
     if (!msg)
         msg = ""
-    console.log("SKIP   : " + testcase + " " + msg)
+    Qt.testResults.reporter.log_skip(testcase, msg);
     ++Qt.testResults.numSkipped
 }
 
 function log_pass(testcase)
 {
-    console.log("PASS   : " + testcase)
+    Qt.testResults.reporter.log_pass(testcase);
     ++Qt.testResults.numPassed
 }
 
 function log_message(msg)
 {
-    console.log(msg)
+    Qt.testResults.reporter.log_message(msg);
 }
 
 function log_register_test(name)
@@ -130,9 +131,10 @@ function log_mandatory_test(testId)
         Qt.testResults.testCases.push(testId)
 }
 
-function log_start_test()
+function log_start_test(reporter)
 {
     log_init_results()
+    Qt.testResults.reporter = reporter
     if (Qt.testResults.reportedStart)
         return
     Qt.testResults.reportedStart = true

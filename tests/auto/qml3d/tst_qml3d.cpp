@@ -50,6 +50,7 @@
 #include <QtCore/qdir.h>
 #include <QtCore/qdebug.h>
 #include <QtCore/qeventloop.h>
+#include <QtGui/qtextdocument.h>
 #include <stdio.h>
 
 class QuitObject : public QObject
@@ -64,9 +65,11 @@ private Q_SLOTS:
     void quit() { hasQuit = true; }
 };
 
+static bool xmlOutput = false;
 static int passed = 0;
 static int failed = 0;
 static int skipped = 0;
+static FILE *stream = 0;
 
 class TestReport : public QObject
 {
@@ -76,6 +79,17 @@ public:
 
 public Q_SLOTS:
     void report(int pass, int fail, int skip);
+    void log_fail(const QString &testCase, const QString &message);
+    void log_expect_fail
+        (const QString &testCase, const QString &message);
+    void log_expect_fail_pass(const QString &testCase);
+    void log_skip(const QString &testCase, const QString &message);
+    void log_pass(const QString &testCase);
+    void log_message(const QString &message);
+
+private:
+    void log_incident(const char *type, const QString &testCase,
+                      const QString &message);
 };
 
 QML_DECLARE_TYPE(TestReport)
@@ -87,9 +101,114 @@ void TestReport::report(int pass, int fail, int skip)
     skipped += skip;
 }
 
+void TestReport::log_fail(const QString &testCase, const QString &message)
+{
+    if (xmlOutput) {
+        log_incident("fail", testCase, message);
+    } else if (!message.isEmpty()) {
+        fprintf(stream, "FAIL!  : %s %s\n",
+                testCase.toLatin1().constData(),
+                message.toLatin1().constData());
+    } else {
+        fprintf(stream, "FAIL!  : %s\n", testCase.toLatin1().constData());
+    }
+}
+
+void TestReport::log_expect_fail
+    (const QString &testCase, const QString &message)
+{
+    if (xmlOutput) {
+        log_incident("xfail", testCase, message);
+    } else if (!message.isEmpty()) {
+        fprintf(stream, "XFAIL  : %s %s\n",
+                testCase.toLatin1().constData(),
+                message.toLatin1().constData());
+    } else {
+        fprintf(stream, "XFAIL  : %s\n", testCase.toLatin1().constData());
+    }
+}
+
+void TestReport::log_expect_fail_pass(const QString &testCase)
+{
+    if (xmlOutput)
+        log_incident("xpass", testCase, QString());
+    else
+        fprintf(stream, "XPASS  : %s\n", testCase.toLatin1().constData());
+}
+
+void TestReport::log_skip(const QString &testCase, const QString &message)
+{
+    if (xmlOutput) {
+        log_incident("skip", testCase, message);
+    } else if (!message.isEmpty()) {
+        fprintf(stream, "SKIP   : %s %s\n",
+                testCase.toLatin1().constData(),
+                message.toLatin1().constData());
+    } else {
+        fprintf(stream, "SKIP   : %s\n", testCase.toLatin1().constData());
+    }
+}
+
+void TestReport::log_pass(const QString &testCase)
+{
+    if (xmlOutput)
+        log_incident("pass", testCase, QString());
+    else
+        fprintf(stream, "PASS   : %s\n", testCase.toLatin1().constData());
+}
+
+void TestReport::log_message(const QString &message)
+{
+    if (!xmlOutput)
+        fprintf(stream, "%s\n", message.toLatin1().constData());
+}
+
+void TestReport::log_incident
+    (const char *type, const QString &testCase, const QString &message)
+{
+    QString name(testCase);
+    QString tag;
+    name.replace(QLatin1String("()"), QLatin1String(""));
+    name.replace(QLatin1String("::"), QLatin1String("__"));
+    int tagIndex = name.indexOf(QLatin1String(" ["));
+    if (tagIndex >= 0) {
+        tag = name.mid(tagIndex + 2);
+        if (tag.endsWith(QLatin1String("]")))
+            tag = tag.left(tag.length() - 1);
+        name = name.left(tagIndex);
+    }
+    fprintf(stream, "<TestFunction name=\"%s\">\n",
+            Qt::escape(name).toLatin1().constData());
+    if (message.isEmpty() && tag.isEmpty()) {
+        fprintf(stream, "<Incident type=\"%s\" file=\"\" line=\"0\" />\n", type);
+    } else {
+        fprintf(stream, "<Incident type=\"%s\" file=\"\" line=\"0\">\n", type);
+        if (!tag.isEmpty()) {
+            fprintf(stream, "    <DataTag>%s</DataTag>\n",
+                    Qt::escape(tag).toLatin1().constData());
+        }
+        if (!message.isEmpty()) {
+            fprintf(stream, "    <Description>%s</Description>\n",
+                    Qt::escape(message).toLatin1().constData());
+        }
+        fprintf(stream, "</Incident>\n");
+    }
+    fprintf(stream, "</TestFunction>\n");
+}
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+
+    // Parse the command-line arguments.
+    const char *filename = 0;
+    for (int index = 1; index < argc; ++index) {
+        QString arg = QString::fromLocal8Bit(argv[index]);
+        if (arg == QLatin1String("-xml"))
+            xmlOutput = true;
+        else if (arg == QLatin1String("-o") && (index + 1) < argc)
+            filename = argv[++index];
+    }
 
     // Determine where to look for the test data.  On a device it will
     // typically be necessary to set QML3D_TEST_SOURCE_DIR.
@@ -109,7 +228,26 @@ int main(int argc, char *argv[])
     entries.removeAll(QLatin1String(".."));
     entries.removeAll(QLatin1String("Qt3D"));
 
-    fprintf(stderr, "********* Start testing of tst_qml3d *********\n");
+    if (filename) {
+        stream = fopen(filename, "w");
+        if (!stream) {
+            perror(filename);
+            return 1;
+        }
+    } else {
+        stream = stdout;
+    }
+
+    if (xmlOutput) {
+        fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
+                        "<TestCase name=\"tst_qml3d\">\n");
+        fprintf(stream, "<Environment>\n"
+                        "   <QtVersion>%s<QtVersion>\n"
+                        "   <QTestVersion>%s<QTestVersion>\n"
+                        "</Environment>\n", qVersion(), qVersion());
+    } else {
+        fprintf(stream, "********* Start testing of tst_qml3d *********\n");
+    }
 
     qmlRegisterType<TestReport>("Qt3D.Test", 1, 0, "TestReport");
 
@@ -151,9 +289,17 @@ int main(int argc, char *argv[])
         }
     }
 
-    fprintf(stderr, "Totals: %d passed, %d failed, %d skipped\n",
-            passed, failed, skipped);
-    fprintf(stderr, "********* Finished testing of tst_qml3d *********\n");
+    if (xmlOutput) {
+        fprintf(stream, "</TestCase>\n");
+    } else {
+        fprintf(stream, "Totals: %d passed, %d failed, %d skipped\n",
+                passed, failed, skipped);
+        fprintf(stream, "********* Finished testing of tst_qml3d *********\n");
+    }
+
+    if (filename)
+        fclose(stream);
+
     return failed != 0;
 }
 
