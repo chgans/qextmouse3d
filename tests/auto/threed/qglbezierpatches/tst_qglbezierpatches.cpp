@@ -64,7 +64,6 @@ void tst_QGLBezierPatches::defaultValue()
     QVERIFY(patches.positions().isEmpty());
     QVERIFY(patches.textureCoords().isEmpty());
     QCOMPARE(patches.subdivisionDepth(), 4);
-    QVERIFY(!patches.compactSubdivision());
 }
 
 void tst_QGLBezierPatches::modify()
@@ -83,14 +82,12 @@ void tst_QGLBezierPatches::modify()
     patches.setPositions(positions);
     patches.setTextureCoords(texCoords);
     patches.setSubdivisionDepth(23);
-    patches.setCompactSubdivision(true);
 
     QCOMPARE(patches.positions().size(), positions.size());
     QVERIFY(patches.positions() == positions);
     QCOMPARE(patches.textureCoords().size(), texCoords.size());
     QVERIFY(patches.textureCoords() == texCoords);
     QCOMPARE(patches.subdivisionDepth(), 23);
-    QVERIFY(patches.compactSubdivision());
 
     QGLBezierPatches patches2(patches);
     QCOMPARE(patches2.positions().size(), positions.size());
@@ -98,24 +95,20 @@ void tst_QGLBezierPatches::modify()
     QCOMPARE(patches2.textureCoords().size(), texCoords.size());
     QVERIFY(patches2.textureCoords() == texCoords);
     QCOMPARE(patches2.subdivisionDepth(), 23);
-    QVERIFY(patches2.compactSubdivision());
 
     patches2.setPositions(QVector3DArray());
     patches2.setTextureCoords(QVector2DArray());
     patches2.setSubdivisionDepth(18);
-    patches2.setCompactSubdivision(false);
 
     QCOMPARE(patches.positions().size(), positions.size());
     QVERIFY(patches.positions() == positions);
     QCOMPARE(patches.textureCoords().size(), texCoords.size());
     QVERIFY(patches.textureCoords() == texCoords);
     QCOMPARE(patches.subdivisionDepth(), 23);
-    QVERIFY(patches.compactSubdivision());
 
     QVERIFY(patches2.positions().isEmpty());
     QVERIFY(patches2.textureCoords().isEmpty());
     QCOMPARE(patches2.subdivisionDepth(), 18);
-    QVERIFY(!patches2.compactSubdivision());
 
     QGLBezierPatches patches3;
     patches3 = patches;
@@ -125,30 +118,25 @@ void tst_QGLBezierPatches::modify()
     QCOMPARE(patches3.textureCoords().size(), texCoords.size());
     QVERIFY(patches3.textureCoords() == texCoords);
     QCOMPARE(patches3.subdivisionDepth(), 23);
-    QVERIFY(patches3.compactSubdivision());
 
     patches3.setPositions(QVector3DArray());
     patches3.setTextureCoords(QVector2DArray());
     patches3.setSubdivisionDepth(18);
-    patches3.setCompactSubdivision(false);
 
     QCOMPARE(patches.positions().size(), positions.size());
     QVERIFY(patches.positions() == positions);
     QCOMPARE(patches.textureCoords().size(), texCoords.size());
     QVERIFY(patches.textureCoords() == texCoords);
     QCOMPARE(patches.subdivisionDepth(), 23);
-    QVERIFY(patches.compactSubdivision());
 
     QVERIFY(patches3.positions().isEmpty());
     QVERIFY(patches3.textureCoords().isEmpty());
     QCOMPARE(patches3.subdivisionDepth(), 18);
-    QVERIFY(!patches3.compactSubdivision());
 
     patches = QGLBezierPatches();
     QVERIFY(patches.positions().isEmpty());
     QVERIFY(patches.textureCoords().isEmpty());
     QCOMPARE(patches.subdivisionDepth(), 4);
-    QVERIFY(!patches.compactSubdivision());
 }
 
 void tst_QGLBezierPatches::teapot()
@@ -159,7 +147,6 @@ void tst_QGLBezierPatches::teapot()
     QCOMPARE(teapot.positions().size(), 32 * 16);
     QCOMPARE(teapot.textureCoords().size(), 0);
     QCOMPARE(teapot.subdivisionDepth(), 4);
-    QVERIFY(!teapot.compactSubdivision());
 }
 
 void tst_QGLBezierPatches::build()
@@ -174,17 +161,13 @@ void tst_QGLBezierPatches::build()
     builder << teapot1;
 
     QGLTeapot teapot2;
-    teapot2.setCompactSubdivision(true);
-    builder << teapot2;
-
-    QGLTeapot teapot3;
     QVector2DArray texCoords;
     for (int index = 0; index < 32; ++index) {
         texCoords.append(0.0f, 0.5f);
         texCoords.append(0.5f, 1.0f);
     }
-    teapot3.setTextureCoords(texCoords);
-    builder << teapot3;
+    teapot2.setTextureCoords(texCoords);
+    builder << teapot2;
 
     delete builder.finalizedSceneNode();
 }

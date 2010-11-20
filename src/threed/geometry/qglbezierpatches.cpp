@@ -87,19 +87,16 @@ class QGLBezierPatchesPrivate
 {
 public:
     QGLBezierPatchesPrivate()
-        : compactSubdivision(false)
-        , subdivisionDepth(4) {}
+        : subdivisionDepth(4) {}
     QGLBezierPatchesPrivate(const QGLBezierPatchesPrivate *other)
         : positions(other->positions)
         , textureCoords(other->textureCoords)
-        , compactSubdivision(other->compactSubdivision)
         , subdivisionDepth(other->subdivisionDepth) {}
 
     void copy(const QGLBezierPatchesPrivate *other)
     {
         positions = other->positions;
         textureCoords = other->textureCoords;
-        compactSubdivision = other->compactSubdivision;
         subdivisionDepth = other->subdivisionDepth;
     }
 
@@ -107,7 +104,6 @@ public:
 
     QVector3DArray positions;
     QVector2DArray textureCoords;
-    bool compactSubdivision;
     int subdivisionDepth;
 };
 
@@ -124,8 +120,7 @@ public:
     QVector3D normal(qreal s, qreal t) const;
     void convertToTriangles
         (QGeometryData *prim,
-         qreal xtex, qreal ytex, qreal wtex, qreal htex,
-         bool compactSubdivision);
+         qreal xtex, qreal ytex, qreal wtex, qreal htex);
     void subDivide(QGLBezierPatch &patch1, QGLBezierPatch &patch2,
                    QGLBezierPatch &patch3, QGLBezierPatch &patch4);
     void createNewCorners(QGLBezierPatch &patch1, QGLBezierPatch &patch2,
@@ -134,8 +129,7 @@ public:
                           qreal xtex, qreal ytex, qreal wtex, qreal htex);
     void recursiveSubDivide
         (QGeometryData *prim,
-         int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
-         bool compactSubdivision);
+         int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex);
 };
 
 static int const cornerOffsets[] = {0, 3, 12, 15};
@@ -257,8 +251,7 @@ QVector3D QGLBezierPatch::normal(qreal s, qreal t) const
 // Convert this patch into flat triangles.
 void QGLBezierPatch::convertToTriangles
     (QGeometryData *prim,
-     qreal xtex, qreal ytex, qreal wtex, qreal htex,
-     bool compactSubdivision)
+     qreal xtex, qreal ytex, qreal wtex, qreal htex)
 {
     // The edges are considered ok if they have a non-zero length.
     // Zero-length edges can occur in triangular-shaped patches.
@@ -268,33 +261,25 @@ void QGLBezierPatch::convertToTriangles
     bool edge3ok = (points[12] != points[15]);
     bool edge4ok = (points[15] != points[3]);
 
-    if (compactSubdivision) {
-        // Divide the patch into 2 triangles along the diagonal.
-        if (edge1ok && edge2ok)
-            prim->appendIndices(indices[0], indices[1], indices[2]);
-        if (edge3ok && edge4ok)
-            prim->appendIndices(indices[1], indices[3], indices[2]);
-    } else {
-        // Find the mid-point on the patch by averaging the corners.
-        QVector3D mid = (points[0] + points[3] + points[12] + points[15]) / 4.0f;
+    // Find the mid-point on the patch by averaging the corners.
+    QVector3D mid = (points[0] + points[3] + points[12] + points[15]) / 4.0f;
 
-        // Allocate a triangle mesh vertex for the mid-point.
-        int midIndex = prim->count();
-        prim->appendVertex(mid);
-        prim->appendNormal(normal(0.5f, 0.5f));
-        prim->appendTexCoord
-            (QVector2D(xtex + wtex / 2.0f, ytex + htex / 2.0f));
+    // Allocate a triangle mesh vertex for the mid-point.
+    int midIndex = prim->count();
+    prim->appendVertex(mid);
+    prim->appendNormal(normal(0.5f, 0.5f));
+    prim->appendTexCoord
+        (QVector2D(xtex + wtex / 2.0f, ytex + htex / 2.0f));
 
-        // Divide the patch into 4 triangles pointing at the center.
-        if (edge1ok)
-            prim->appendIndices(indices[0], indices[1], midIndex);
-        if (edge2ok)
-            prim->appendIndices(indices[2], indices[0], midIndex);
-        if (edge3ok)
-            prim->appendIndices(indices[3], indices[2], midIndex);
-        if (edge4ok)
-            prim->appendIndices(indices[1], indices[3], midIndex);
-    }
+    // Divide the patch into 4 triangles pointing at the center.
+    if (edge1ok)
+        prim->appendIndices(indices[0], indices[1], midIndex);
+    if (edge2ok)
+        prim->appendIndices(indices[2], indices[0], midIndex);
+    if (edge3ok)
+        prim->appendIndices(indices[3], indices[2], midIndex);
+    if (edge4ok)
+        prim->appendIndices(indices[1], indices[3], midIndex);
 }
 
 // Sub-divide a Bezier curve (p1, p2, p3, p4) into two new
@@ -433,11 +418,10 @@ void QGLBezierPatch::createNewCorners
 // Recursively sub-divide a patch into triangles.
 void QGLBezierPatch::recursiveSubDivide
         (QGeometryData *prim,
-         int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex,
-         bool compactSubdivision)
+         int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex)
 {
     if (depth <= 1) {
-        convertToTriangles(prim, xtex, ytex, wtex, htex, compactSubdivision);
+        convertToTriangles(prim, xtex, ytex, wtex, htex);
     } else {
         QGLBezierPatch patch1, patch2, patch3, patch4;
         subDivide(patch1, patch2, patch3, patch4);
@@ -445,10 +429,10 @@ void QGLBezierPatch::recursiveSubDivide
         --depth;
         qreal hwtex = wtex / 2.0f;
         qreal hhtex = htex / 2.0f;
-        patch1.recursiveSubDivide(prim, depth, xtex, ytex, hwtex, hhtex, compactSubdivision);
-        patch2.recursiveSubDivide(prim, depth, xtex + hwtex, ytex, hwtex, hhtex, compactSubdivision);
-        patch3.recursiveSubDivide(prim, depth, xtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
-        patch4.recursiveSubDivide(prim, depth, xtex + hwtex, ytex + hhtex, hwtex, hhtex, compactSubdivision);
+        patch1.recursiveSubDivide(prim, depth, xtex, ytex, hwtex, hhtex);
+        patch2.recursiveSubDivide(prim, depth, xtex + hwtex, ytex, hwtex, hhtex);
+        patch3.recursiveSubDivide(prim, depth, xtex, ytex + hhtex, hwtex, hhtex);
+        patch4.recursiveSubDivide(prim, depth, xtex + hwtex, ytex + hhtex, hwtex, hhtex);
     }
 }
 
@@ -487,8 +471,7 @@ void QGLBezierPatchesPrivate::subdivide(QGLBuilder *list) const
 
         // Subdivide the patch and generate the final triangles.
         patch.recursiveSubDivide(&prim, subdivisionDepth,
-                                 xtex, ytex, wtex, htex,
-                                 compactSubdivision);
+                                 xtex, ytex, wtex, htex);
     }
     list->addTriangles(prim);
 }
@@ -609,42 +592,6 @@ void QGLBezierPatches::setSubdivisionDepth(int value)
 {
     Q_D(QGLBezierPatches);
     d->subdivisionDepth = value;
-}
-
-/*!
-    Returns true if the subdivision algorithm will generate a more
-    compact set of triangles; false otherwise.
-
-    The default value is false, which indicates that the patches
-    will be decomposed into four triangles at the lowest level
-    of subdivision, which may give better visual results at
-    the cost of extra memory.  If the value is true, then the patches
-    will be decomposed into two triangles at the lowest level
-    of subdivision.
-
-    \sa setCompactSubdivision()
-*/
-bool QGLBezierPatches::compactSubdivision() const
-{
-    Q_D(const QGLBezierPatches);
-    return d->compactSubdivision;
-}
-
-/*!
-    Sets the compact property of the subdivision algorithm to \a value.
-
-    If \a value is true, then the patches will be decomposed into two
-    triangles at the lowest level of subdivision.  A \a value of false
-    indicates that the patches will be decomposed into four triangles
-    at the lowest level of subdivision, which may give better visual
-    results at the cost of extra memory.
-
-    \sa compactSubdivision()
-*/
-void QGLBezierPatches::setCompactSubdivision(bool value)
-{
-    Q_D(QGLBezierPatches);
-    d->compactSubdivision = value;
 }
 
 /*!

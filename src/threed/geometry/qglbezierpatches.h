@@ -73,9 +73,6 @@ public:
     int subdivisionDepth() const;
     void setSubdivisionDepth(int value);
 
-    bool compactSubdivision() const;
-    void setCompactSubdivision(bool value);
-
 private:
     QScopedPointer<QGLBezierPatchesPrivate> d_ptr;
 

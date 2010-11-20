@@ -171,10 +171,6 @@ QGLAbstractScene *QGLBezierSceneHandler::read()
                 }
                 indices = newIndices;
             }
-            if (options.contains(QLatin1String("no-compact-subdivision")))
-                patches.setCompactSubdivision(false);
-            else if (options.contains(QLatin1String("compact-subdivision")))
-                patches.setCompactSubdivision(true);
         }
     }
 
