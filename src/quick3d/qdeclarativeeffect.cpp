@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "effect.h"
+#include "qdeclarativeeffect_p.h"
 #include "qglpainter.h"
 #include "qglmaterial.h"
 #include <QNetworkRequest>
@@ -49,7 +49,7 @@
 #include <qdeclarativeinfo.h>
 
 /*!
-    \qmlclass Effect Effect
+    \qmlclass Effect QDeclarativeEffect
     \brief The Effect item defines simple effects within the QML/3D environment.  Examples 
     of such effects include textures, simple material and lighting effects, and so on.
     \since 4.8
@@ -77,10 +77,10 @@
 
 QT_BEGIN_NAMESPACE
 
-class EffectPrivate
+class QDeclarativeEffectPrivate
 {
 public:
-    EffectPrivate()
+    QDeclarativeEffectPrivate()
         : color(255, 255, 255, 255),
           useLighting(true),
           textureChanged(false),
@@ -93,7 +93,7 @@ public:
     {
     }
 
-    ~EffectPrivate()
+    ~QDeclarativeEffectPrivate()
     {
         delete texture2D;
     }
@@ -115,17 +115,17 @@ public:
     \internal
     Constructs the Effect object with \a parent as its parent.
 */
-Effect::Effect(QObject *parent)
+QDeclarativeEffect::QDeclarativeEffect(QObject *parent)
     : QObject(parent)
 {
-    d = new EffectPrivate;
+    d = new QDeclarativeEffectPrivate;
 }
 
 /*!
     \internal
     Destroy the \l Effect object and delete any unneeded data.
 */
-Effect::~Effect()
+QDeclarativeEffect::~QDeclarativeEffect()
 {
     delete d;
 }
@@ -137,12 +137,12 @@ Effect::~Effect()
     The default value for this property is white.
 */
 
-QColor Effect::color() const
+QColor QDeclarativeEffect::color() const
 {
     return d->color;
 }
 
-void Effect::setColor(const QColor& value)
+void QDeclarativeEffect::setColor(const QColor& value)
 {
     d->color = value;
     emit effectChanged();
@@ -157,12 +157,12 @@ void Effect::setColor(const QColor& value)
 
     The default value for this property is true.
 */
-bool Effect::useLighting() const
+bool QDeclarativeEffect::useLighting() const
 {
     return d->useLighting;
 }
 
-void Effect::setUseLighting(bool value)
+void QDeclarativeEffect::setUseLighting(bool value)
 {
     d->useLighting = value;
     emit effectChanged();
@@ -178,12 +178,12 @@ void Effect::setUseLighting(bool value)
 
     The default value for this property is false.
 */
-bool Effect::decal() const
+bool QDeclarativeEffect::decal() const
 {
     return d->decal;
 }
 
-void Effect::setDecal(bool value)
+void QDeclarativeEffect::setDecal(bool value)
 {
     if (d->decal != value) {
         d->decal = value;
@@ -201,12 +201,12 @@ void Effect::setDecal(bool value)
     This property overrides the viewport-specific blending setting
     that is specified by Viewport::blending.
 */
-bool Effect::blending() const
+bool QDeclarativeEffect::blending() const
 {
     return d->blending;
 }
 
-void Effect::setBlending(bool value)
+void QDeclarativeEffect::setBlending(bool value)
 {
     if (d->blending != value) {
         d->blending = value;
@@ -225,12 +225,12 @@ void Effect::setBlending(bool value)
 
     \sa textureImage
 */
-QUrl Effect::texture() const
+QUrl QDeclarativeEffect::texture() const
 {
     return d->textureUrl;
 }
 
-void Effect::setTexture(const QUrl& value)
+void QDeclarativeEffect::setTexture(const QUrl& value)
 {
     if (d->textureUrl == value)
         return;
@@ -282,7 +282,7 @@ void Effect::setTexture(const QUrl& value)
 
     \sa effectChanged()
 */
-void Effect::textureRequestFinished()
+void QDeclarativeEffect::textureRequestFinished()
 {
     QDeclarativePixmap::Status status = d->declarativePixmap.status();
     d->textureChanged = true;
@@ -306,7 +306,7 @@ void Effect::textureRequestFinished()
     Updates the progress of an asyncronous resource request.  Progress is
     simply \a received / \a total.
 */
-void Effect::textureRequestProgress(qint64 received, qint64 total)
+void QDeclarativeEffect::textureRequestProgress(qint64 received, qint64 total)
 {
     if (d->declarativePixmap.status() == QDeclarativePixmap::Loading && total > 0) {
         d->progress = qreal(received)/total;
@@ -324,7 +324,7 @@ void Effect::textureRequestProgress(qint64 received, qint64 total)
 
     \sa texture
 */
-QImage Effect::textureImage() const
+QImage QDeclarativeEffect::textureImage() const
 {
     // Expensive
     return d->declarativePixmap.pixmap().toImage();
@@ -334,7 +334,7 @@ QImage Effect::textureImage() const
   \internal
   Sets this effect to use \value as the image for it's texture.
 */
-void Effect::setTextureImage(const QImage& value)
+void QDeclarativeEffect::setTextureImage(const QImage& value)
 {
     d->declarativePixmap.setPixmap(QPixmap::fromImage(value));
     d->textureChanged = true;
@@ -346,7 +346,7 @@ void Effect::setTextureImage(const QImage& value)
 
     Defines the material to apply to items that use this effect.
 */
-QGLMaterial *Effect::material() const
+QGLMaterial *QDeclarativeEffect::material() const
 {
     return d->material;
 }
@@ -355,7 +355,7 @@ QGLMaterial *Effect::material() const
   \internal
   Sets the material for use with this effect.
 */
-void Effect::setMaterial(QGLMaterial *value)
+void QDeclarativeEffect::setMaterial(QGLMaterial *value)
 {
     if (d->material != value) {
         if (d->material) {
@@ -382,7 +382,7 @@ void Effect::setMaterial(QGLMaterial *value)
     \internal
     Enable the effect on for a given \a painter.
 */
-void Effect::enableEffect(QGLPainter *painter)
+void QDeclarativeEffect::enableEffect(QGLPainter *painter)
 {
     QGLTexture2D *tex = texture2D();
     if (tex == NULL && d->material)
@@ -422,7 +422,7 @@ void Effect::enableEffect(QGLPainter *painter)
     \internal
     Disable the effect for a given \a painter.
 */
-void Effect::disableEffect(QGLPainter *painter)
+void QDeclarativeEffect::disableEffect(QGLPainter *painter)
 {
     painter->setStandardEffect(QGL::FlatColor);
     painter->setColor(Qt::white);
@@ -433,7 +433,7 @@ void Effect::disableEffect(QGLPainter *painter)
 /*!
   Returns the progress of remote resource loading.
   */
-qreal Effect::progress()
+qreal QDeclarativeEffect::progress()
 {
     return d->progress;
 }
@@ -442,7 +442,7 @@ qreal Effect::progress()
     \internal
     This function returns a \l QGLTexture2D based on the \c texture property of the \l Effect.
 */
-QGLTexture2D *Effect::texture2D()
+QGLTexture2D *QDeclarativeEffect::texture2D()
 {
     if (d->textureChanged) {
         delete d->texture2D;

@@ -39,38 +39,39 @@
 **
 ****************************************************************************/
 
-#ifndef Item3D_H
-#define Item3D_H
+#ifndef QDECLARATIVEITEM3D_H
+#define QDECLARATIVEITEM3D_H
+
+#include "qt3dquickglobal.h"
 
 #include <QtCore/qobject.h>
 #include <QtCore/qvariant.h>
 #include <QtGui/qvector3d.h>
 #include <QtDeclarative/qdeclarative.h>
 #include <QtDeclarative/qdeclarativelist.h>
-#include <QtDeclarative/private/qdeclarativestate_p.h>
-#include <QtDeclarative/private/qdeclarativetransition_p.h>
 #include <QtDeclarative/qdeclarativeparserstatus.h>
 
 #include "qglscenenode.h"
 #include "qglpainter.h"
 #include "qgraphicstransform3d.h"
-#include "mesh.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Item3DPrivate;
-class Effect;
-class Viewport;
+class QDeclarativeItem3DPrivate;
+class QDeclarativeMesh;
+class QDeclarativeEffect;
+class QDeclarativeViewport;
+class QDeclarativeState;
+class QDeclarativeTransition;
 
-class Item3D : public QObject, public QDeclarativeParserStatus
+class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
     Q_ENUMS(CullFace)
     Q_FLAGS(CullFaces)
-    Q_FLAGS(Mode)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
@@ -78,12 +79,12 @@ class Item3D : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)   
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> transform READ transform DESIGNABLE false FINAL)
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> pretransform READ pretransform DESIGNABLE false FINAL)
-    Q_PROPERTY(Mesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
-    Q_PROPERTY(Effect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
+    Q_PROPERTY(QDeclarativeMesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
+    Q_PROPERTY(QDeclarativeEffect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)    
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
-    Q_PROPERTY(QDeclarativeListProperty<Item3D> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
+    Q_PROPERTY(QDeclarativeListProperty<QDeclarativeItem3D> children READ itemChildren DESIGNABLE false NOTIFY childrenChanged)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
@@ -95,8 +96,8 @@ class Item3D : public QObject, public QDeclarativeParserStatus
 	
     Q_CLASSINFO("DefaultProperty", "data")
 public:
-    Item3D(QObject *parent = 0);
-    ~Item3D();
+    QDeclarativeItem3D(QObject *parent = 0);
+    ~QDeclarativeItem3D();
 
     enum CullFace
     {
@@ -121,27 +122,26 @@ public:
     qreal scale() const;
     void setScale(qreal value); 
 
-    Mesh *mesh() const;
-    void setMesh(Mesh* value);
+    QDeclarativeMesh *mesh() const;
+    void setMesh(QDeclarativeMesh* value);
 
     bool inheritEvents() const;
     void setInheritEvents(bool inherit);
 
-    Effect *effect() const;
-    void setEffect(Effect *value);
+    QDeclarativeEffect *effect() const;
+    void setEffect(QDeclarativeEffect *value);
 
     QGLLightParameters *light() const;
     void setLight(QGLLightParameters *value);
 
     QDeclarativeListProperty<QObject> data();
     QDeclarativeListProperty<QObject> resources();
-    QDeclarativeListProperty<Item3D> fxChildren();    
+    QDeclarativeListProperty<QDeclarativeItem3D> itemChildren();
 
     QDeclarativeListProperty<QGraphicsTransform3D> transform();
     QDeclarativeListProperty<QGraphicsTransform3D> pretransform();
 
     QDeclarativeListProperty<QDeclarativeState> states();
-    QDeclarativeState *findState(const QString &name) const;
 
     QDeclarativeListProperty<QDeclarativeTransition> transitions();
     
@@ -164,7 +164,7 @@ public:
     void setMainBranchId(int objectID);
 
     virtual void draw(QGLPainter *painter);
-    virtual void initialize(Viewport *viewport, QGLPainter *painter);
+    virtual void initialize(QGLPainter *painter);
 
     QGLSceneNode *getSceneObject(const QString& name) const;
 
@@ -199,14 +199,15 @@ Q_SIGNALS:
     void childrenChanged();
 
 private:
-    Item3DPrivate *d;
+    QDeclarativeItem3DPrivate *d;
 
-    friend class Item3DPrivate;
+    friend class QDeclarativeItem3DPrivate;
+    friend class QDeclarativeViewport;
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Item3D::CullFaces)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QDeclarativeItem3D::CullFaces)
 
-QML_DECLARE_TYPE(Item3D)
+QML_DECLARE_TYPE(QDeclarativeItem3D)
 
 QT_END_NAMESPACE
 

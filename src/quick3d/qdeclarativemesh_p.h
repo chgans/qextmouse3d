@@ -39,8 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef MESH_H
-#define MESH_H
+#ifndef QDECLARATIVEMESH_P_H
+#define QDECLARATIVEMESH_P_H
+
+#include "qt3dquickglobal.h"
 
 #include <QtCore/qobject.h>
 #include <QtCore/qurl.h>
@@ -55,11 +57,11 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class MeshPrivate;
+class QDeclarativeMeshPrivate;
 class QGLAbstractScene;
 class QGLMaterial;
 
-class Mesh : public QObject, public QDeclarativeParserStatus
+class Q_QT3D_QUICK_EXPORT QDeclarativeMesh : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
@@ -69,8 +71,8 @@ class Mesh : public QObject, public QDeclarativeParserStatus
     Q_PROPERTY(bool dumpInfo READ dumpInfo WRITE setDumpInfo NOTIFY dumpInfoChanged)
 
 public:
-    Mesh(QObject *parent = 0);
-    ~Mesh();
+    QDeclarativeMesh(QObject *parent = 0);
+    ~QDeclarativeMesh();
 
     QUrl source() const;
     void setSource(const QUrl& value);
@@ -121,7 +123,7 @@ private Q_SLOTS:
     void dataRequestFinished();
     
 private:
-    MeshPrivate *d;
+    QDeclarativeMeshPrivate *d;
 
 };
 
@@ -129,7 +131,7 @@ private:
 
 
 
-QML_DECLARE_TYPE(Mesh)
+QML_DECLARE_TYPE(QDeclarativeMesh)
 
 QT_END_NAMESPACE
 

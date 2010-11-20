@@ -39,46 +39,29 @@
 **
 ****************************************************************************/
 
-#ifndef SHADERPROGRAM_H
-#define SHADERPROGRAM_H
+#ifndef QDECLARATIVEVIEWPORT_P_H
+#define QDECLARATIVEVIEWPORT_P_H
 
-#include "qdeclarativeeffect_p.h"
+#include "qt3dquickglobal.h"
+#include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class ShaderProgramPrivate;
+class QDeclarativeItem3D;
 
-class ShaderProgram : public QDeclarativeEffect
+// Abstract interface for "Item3D" getting access to the "Viewport"
+// item in the QML/3D plugin.
+class Q_QT3D_QUICK_EXPORT QDeclarativeViewport
 {
-    Q_OBJECT
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY shaderChanged)
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY shaderChanged)
 public:
-    ShaderProgram(QObject *parent = 0);
-    virtual ~ShaderProgram();
+    virtual int registerPickableObject(QObject *obj) = 0;
+    virtual void update3d() = 0;
+    virtual bool blending() const = 0;
 
-    QString vertexShader() const;
-    void setVertexShader(const QString& value);
-
-    QString fragmentShader() const;
-    void setFragmentShader(const QString& value);
-
-    virtual void enableEffect(QGLPainter *painter);
-public Q_SLOTS:
-    void markAllPropertiesDirty();
-    void markPropertyDirty(int property);
-Q_SIGNALS:
-    void finishedLoading();
-    void shaderChanged();
-private Q_SLOTS:
-    void pixmapRequestFinished();
-private:
-    ShaderProgramPrivate *d;
+    void setItemViewport(QDeclarativeItem3D *item);
 };
-
-QML_DECLARE_TYPE(ShaderProgram)
 
 QT_END_NAMESPACE
 

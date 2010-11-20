@@ -39,9 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef EFFECT_H
-#define EFFECT_H
+#ifndef QDECLARATIVEEFFECT_P_H
+#define QDECLARATIVEEFFECT_P_H
 
+#include "qt3dquickglobal.h"
 #include <QtCore/qobject.h>
 #include <QtCore/qurl.h>
 #include <QtGui/qcolor.h>
@@ -53,11 +54,11 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class EffectPrivate;
+class QDeclarativeEffectPrivate;
 class QGLPainter;
 class QGLMaterial;
 
-class Effect : public QObject
+class Q_QT3D_QUICK_EXPORT QDeclarativeEffect : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY effectChanged)
@@ -69,8 +70,8 @@ class Effect : public QObject
     Q_PROPERTY(QGLMaterial *material READ material WRITE setMaterial NOTIFY effectChanged)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
 public:
-    Effect(QObject *parent = 0);
-    ~Effect();
+    QDeclarativeEffect(QObject *parent = 0);
+    ~QDeclarativeEffect();
 
     virtual QColor color() const;
     virtual void setColor(const QColor& value);
@@ -109,11 +110,10 @@ protected:
     QGLTexture2D *texture2D();
 
 private:
-    EffectPrivate *d;
+    QDeclarativeEffectPrivate *d;
 };
 
-QML_DECLARE_TYPE(Effect)
-QML_DECLARE_TYPE(QGLMaterial)
+QML_DECLARE_TYPE(QDeclarativeEffect)
 
 QT_END_NAMESPACE
 

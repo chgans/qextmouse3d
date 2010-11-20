@@ -39,49 +39,35 @@
 **
 ****************************************************************************/
 
-#ifndef SHADERPROGRAM_H
-#define SHADERPROGRAM_H
+#ifndef QT3DQUICKGLOBAL_H
+#define QT3DQUICKGLOBAL_H
 
-#include "qdeclarativeeffect_p.h"
+#include <QtCore/qglobal.h>
 
-QT_BEGIN_HEADER
-
-QT_BEGIN_NAMESPACE
-
-class ShaderProgramPrivate;
-
-class ShaderProgram : public QDeclarativeEffect
-{
-    Q_OBJECT
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader NOTIFY shaderChanged)
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader NOTIFY shaderChanged)
-public:
-    ShaderProgram(QObject *parent = 0);
-    virtual ~ShaderProgram();
-
-    QString vertexShader() const;
-    void setVertexShader(const QString& value);
-
-    QString fragmentShader() const;
-    void setFragmentShader(const QString& value);
-
-    virtual void enableEffect(QGLPainter *painter);
-public Q_SLOTS:
-    void markAllPropertiesDirty();
-    void markPropertyDirty(int property);
-Q_SIGNALS:
-    void finishedLoading();
-    void shaderChanged();
-private Q_SLOTS:
-    void pixmapRequestFinished();
-private:
-    ShaderProgramPrivate *d;
-};
-
-QML_DECLARE_TYPE(ShaderProgram)
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
+QT_LICENSED_MODULE(Qt3dQuick)
+#if defined(Q_OS_WIN) || defined(Q_OS_SYMBIAN)
+#  if defined(QT_NODLL)
+#    undef QT_MAKEDLL
+#    undef QT_DLL
+#  elif defined(QT_MAKEDLL)        /* create a Qt DLL library */
+#    if defined(QT_DLL)
+#      undef QT_DLL
+#    endif
+#    if defined(QT_BUILD_QT3D_QUICK_LIB)
+#        define Q_QT3D_QUICK_EXPORT Q_DECL_EXPORT
+#    else
+#        define Q_QT3D_QUICK_EXPORT Q_DECL_IMPORT
+#    endif
+#  elif defined(QT_DLL) /* use a Qt DLL library */
+#    define Q_QT3D_QUICK_EXPORT Q_DECL_IMPORT
+#  endif
+#endif
+#if !defined(Q_QT3D_QUICK_EXPORT)
+#   if defined(QT_SHARED)
+#       define Q_QT3D_QUICK_EXPORT Q_DECL_EXPORT
+#   else
+#       define Q_QT3D_QUICK_EXPORT
+#   endif
+#endif
 
 #endif

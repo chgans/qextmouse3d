@@ -43,7 +43,8 @@
 #define VIEWPORT_H
 
 #include <QtDeclarative/qdeclarativeitem.h>
-#include "item3d.h"
+#include "qdeclarativeitem3d.h"
+#include "qdeclarativeviewport_p.h"
 
 QT_BEGIN_HEADER
 
@@ -53,9 +54,10 @@ class ViewportPrivate;
 class QGLCamera;
 class QGLLightModel;
 class QGLLightParameters;
-class Effect;
+class QGLMaterial;
+class QDeclarativeEffect;
 
-class Viewport : public QDeclarativeItem
+class Viewport : public QDeclarativeItem, public QDeclarativeViewport
 {
     Q_OBJECT
     Q_PROPERTY(bool picking READ picking WRITE setPicking NOTIFY viewportChanged)
@@ -65,7 +67,7 @@ class Viewport : public QDeclarativeItem
     Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera)
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY viewportChanged)
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel NOTIFY viewportChanged)
-    Q_PROPERTY(Effect *backdrop READ backdrop WRITE setBackdrop NOTIFY viewportChanged)
+    Q_PROPERTY(QDeclarativeEffect *backdrop READ backdrop WRITE setBackdrop NOTIFY viewportChanged)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY viewportChanged)
 public:
     Viewport(QDeclarativeItem *parent = 0);
@@ -92,8 +94,8 @@ public:
     QGLLightModel *lightModel() const;
     void setLightModel(QGLLightModel *value);
 
-    Effect *backdrop() const;
-    void setBackdrop(Effect *value);
+    QDeclarativeEffect *backdrop() const;
+    void setBackdrop(QDeclarativeEffect *value);
 
     QColor backgroundColor() const;
     void setBackgroundColor(const QColor &value);
@@ -146,6 +148,7 @@ private:
 };
 
 QML_DECLARE_TYPE(Viewport)
+QML_DECLARE_TYPE(QGLMaterial)
 QML_DECLARE_TYPE(QGLLightModel)
 QML_DECLARE_TYPE(QGLLightParameters)
 QML_DECLARE_TYPE(QGLCamera)

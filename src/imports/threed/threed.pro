@@ -14,9 +14,6 @@ QT += declarative opengl network
 
 SOURCES += \
     threed.cpp \
-    effect.cpp \
-    item3d.cpp \
-    mesh.cpp \
     qt3dnamespace.cpp \
     scale3d.cpp \
     viewport.cpp \
@@ -25,9 +22,6 @@ SOURCES += \
     stereoview.cpp \
     stereovieweffect.cpp
 HEADERS += \
-    effect.h \
-    item3d.h \
-    mesh.h \
     qt3dnamespace.h \
     scale3d.h \
     viewport.h \
@@ -52,4 +46,4 @@ target.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 INSTALLS += qdeclarativesources target
 
 LIBS += -L../../lib -L../../bin
-include(../../threed/threed_dep.pri)
+include(../../quick3d/quick3d_dep.pri)

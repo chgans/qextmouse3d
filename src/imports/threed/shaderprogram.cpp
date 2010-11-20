@@ -713,7 +713,7 @@ void ShaderProgramEffect::processTextureUrl(int uniformLocation, QString urlStri
   Construction of the shader program and assignment of its \a parent object.
 */
 ShaderProgram::ShaderProgram(QObject *parent)
-    : Effect(parent)
+    : QDeclarativeEffect(parent)
 {
     d = new ShaderProgramPrivate();
 }
@@ -779,7 +779,7 @@ void ShaderProgram::setFragmentShader(const QString& value)
 void ShaderProgram::enableEffect(QGLPainter *painter)
 {
     if (!d->shadersSupported && !d->regenerate) {
-        Effect::enableEffect(painter);
+        QDeclarativeEffect::enableEffect(painter);
         return;
     }
     if (!d->effect) {
@@ -787,7 +787,7 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
         if (!d->effect->create(d->vertexShader, d->fragmentShader)) {
             delete d->effect;
             d->effect = 0;
-            Effect::enableEffect(painter);
+            QDeclarativeEffect::enableEffect(painter);
             d->regenerate = false;
             d->shadersSupported = false;
             return;
@@ -797,7 +797,7 @@ void ShaderProgram::enableEffect(QGLPainter *painter)
         if (!d->effect->create(d->vertexShader, d->fragmentShader)) {
             delete d->effect;
             d->effect = 0;
-            Effect::enableEffect(painter);
+            QDeclarativeEffect::enableEffect(painter);
             d->regenerate = false;
             d->shadersSupported = false;
             return;

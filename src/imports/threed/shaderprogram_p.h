@@ -44,7 +44,7 @@
 
 #include <QWeakPointer>
 #include <QGLShaderProgram>
-#include "effect.h"
+#include "qdeclarativeeffect_p.h"
 #include "qglshaderprogrameffect.h"
 #include "private/qdeclarativepixmapcache_p.h"
 

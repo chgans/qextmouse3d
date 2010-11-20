@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 #include "viewport.h"
-#include "effect.h"
+#include "qdeclarativeeffect_p.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
 #include "qglcamera.h"
@@ -102,7 +102,7 @@ public:
     QGLCamera *camera;
     QGLLightParameters *light;
     QGLLightModel *lightModel;
-    Effect *backdrop;
+    QDeclarativeEffect *backdrop;
     QColor backgroundColor;
     QGLVertexBundle backdropVertices;
     QWidget *viewWidget;
@@ -421,12 +421,12 @@ void Viewport::setLightModel(QGLLightModel *value)
 
     \sa Effect, backgroundColor
 */
-Effect *Viewport::backdrop() const
+QDeclarativeEffect *Viewport::backdrop() const
 {
     return d->backdrop;
 }
 
-void Viewport::setBackdrop(Effect *value)
+void Viewport::setBackdrop(QDeclarativeEffect *value)
 {
     if (d->backdrop != value) {
         if (d->backdrop) {
@@ -653,7 +653,7 @@ void Viewport::draw(QGLPainter *painter)
     painter->setMainLight(d->light, QMatrix4x4());
     painter->setLightModel(d->lightModel);
     foreach (QObject *child, list) {
-        Item3D *item = qobject_cast<Item3D *>(child);
+        QDeclarativeItem3D *item = qobject_cast<QDeclarativeItem3D *>(child);
         if (item)
             item->draw(painter);
     }
@@ -669,9 +669,11 @@ void Viewport::initializeGL(QGLPainter *painter)
     // Initialize the Item3D objects attached to this scene.
     QObjectList list = QObject::children();
     foreach (QObject *child, list) {
-        Item3D *item = qobject_cast<Item3D *>(child);
-        if (item)
-            item->initialize(this, painter);
+        QDeclarativeItem3D *item = qobject_cast<QDeclarativeItem3D *>(child);
+        if (item) {
+            setItemViewport(item);
+            item->initialize(painter);
+        }
     }
     d->itemsInitialized = true;
 }

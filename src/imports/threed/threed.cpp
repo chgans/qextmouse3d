@@ -44,9 +44,10 @@
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/qdeclarative.h>
 
-#include "item3d.h"
+#include "qdeclarativeitem3d.h"
+#include "qdeclarativemesh_p.h"
 #include "viewport.h"
-#include "effect.h"
+#include "qdeclarativeeffect_p.h"
 #include "scale3d.h"
 #include "qgraphicsrotation3d.h"
 #include "qgraphicstranslation3d.h"
@@ -74,9 +75,9 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D"));
         qmlRegisterType<QGLSceneNode>(uri,1,0,"SceneNode");
-        qmlRegisterType<Effect>(uri,1,0,"Effect");
-        qmlRegisterType<Mesh>(uri,1,0,"Mesh");
-        qmlRegisterType<Item3D>(uri,1,0,"Item3D");
+        qmlRegisterType<QDeclarativeEffect>(uri,1,0,"Effect");
+        qmlRegisterType<QDeclarativeMesh>(uri,1,0,"Mesh");
+        qmlRegisterType<QDeclarativeItem3D>(uri,1,0,"Item3D");
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
