@@ -5,7 +5,9 @@ TEMPLATE = subdirs
 qdeclarativesources.files += \
     qmldir \
     Cube.qml \
-    cube.obj
+    cube.obj \
+    Teapot.qml \
+    teapot.bez
 
 qdeclarativesources.path += $$[QT_INSTALL_IMPORTS]/Qt3D/Shapes
 

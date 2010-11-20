@@ -42,6 +42,8 @@ symbian {
         qt3dshapesImports.sources = \
                                 $$PWD/../../src/imports/shapes/Cube.qml \
                                 $$PWD/../../src/imports/shapes/cube.obj \
+                                $$PWD/../../src/imports/shapes/Teapot.qml \
+                                $$PWD/../../src/imports/shapes/teapot.bez \
                                 $$PWD/../../src/imports/shapes/qmldir
         qt3dshapesImports.path = $$QT_IMPORTS_BASE_DIR/Qt3D/Shapes
         DEPLOYMENT += qt3dthreedImports qt3dshapesImports
