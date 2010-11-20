@@ -92,7 +92,7 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
     Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
     Q_PROPERTY(bool inheritEvents READ inheritEvents WRITE setInheritEvents NOTIFY inheritEventsChanged)
-    Q_PROPERTY(bool isVisible READ isVisible WRITE setIsVisible NOTIFY isVisibleChanged)
+    Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
 	
     Q_CLASSINFO("DefaultProperty", "data")
 public:
@@ -157,8 +157,8 @@ public:
     QString meshNode() const;					
     void setMeshNode(const QString &);			
 
-    bool isVisible() const;
-    void setIsVisible(bool visibility);
+    bool isEnabled() const;
+    void setEnabled(bool value);
 
     int mainBranchId() const;
     void setMainBranchId(int objectID);
@@ -195,7 +195,7 @@ Q_SIGNALS:
     void hoverLeave();
     void nameChanged();
     void inheritEventsChanged();
-    void isVisibleChanged();
+    void enabledChanged();
     void childrenChanged();
 
 private:

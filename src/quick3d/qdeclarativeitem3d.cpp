@@ -239,7 +239,7 @@ public:
         , cullFaces(QDeclarativeItem3D::CullDisabled)
         , _stateGroup(0)
         , inheritEvents(false)
-        , isVisible(true)
+        , isEnabled(true)
         , isInitialized(false)
     {
     }
@@ -259,7 +259,7 @@ public:
     QDeclarativeStateGroup *_stateGroup;
 
     bool inheritEvents;
-    bool isVisible;
+    bool isEnabled;
     bool isInitialized;
     int mainBranchId;
     QString name;
@@ -1060,6 +1060,10 @@ QGLSceneNode *QDeclarativeItem3D::getSceneObject(const QString& name) const
 
 void QDeclarativeItem3D::draw(QGLPainter *painter)
 {
+    // Bail out if this item and its children have been disabled.
+    if (!d->isEnabled)
+        return;
+
     int prevId = painter->objectPickId();
     painter->setObjectPickId(d->objectPickId);
     QObjectList list = QObject::children();
@@ -1131,7 +1135,7 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
     }
 
     //Drawing
-    if (d->isVisible ) drawItem(painter);
+    drawItem(painter);
     foreach (QObject *child, list) {
         QDeclarativeItem3D *item = qobject_cast<QDeclarativeItem3D *>(child);
         if (item)
@@ -1338,25 +1342,25 @@ void QDeclarativeItem3D::update()
 }
 
 /*!
-    \qmlproperty bool Item3D::isVisible
+    \qmlproperty bool Item3D::enabled
 
-    A simple boolean property indicating whether the item is visible (and so
-    should be drawn), or not visible.  The default value for this property is
-    true.
+    This property should be set to true to enable the drawing
+    of this item and its children.  Set this property to false
+    to disable drawing.  The default value is true.
 
     \sa mesh
 */
-bool QDeclarativeItem3D::isVisible() const
+bool QDeclarativeItem3D::isEnabled() const
 {
-    return d->isVisible;
+    return d->isEnabled;
 }
 
-void QDeclarativeItem3D::setIsVisible(bool visibility)
+void QDeclarativeItem3D::setEnabled(bool value)
 {
-    if(d->isVisible == visibility)
-        return;
-    d->isVisible = visibility;
-    emit isVisibleChanged();
+    if (d->isEnabled != value) {
+        d->isEnabled = value;
+        emit enabledChanged();
+    }
 }
 
 /*!

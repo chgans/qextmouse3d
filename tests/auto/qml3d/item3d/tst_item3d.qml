@@ -43,8 +43,8 @@ Viewport {
         property bool onMeshChangedSignalTriggered: false
         onMeshChanged: onMeshChangedSignalTriggered = true
 
-        property bool onIsVisibleChangedSignalTriggered:false
-        onIsVisibleChanged: onIsVisibleChangedSignalTriggered = true
+        property bool onEnabledChangedSignalTriggered:false
+        onEnabledChanged: onEnabledChangedSignalTriggered = true
 
         property bool onNameChangedSignalTriggered:false
         onNameChanged: onNameChangedSignalTriggered = true
@@ -175,12 +175,12 @@ Viewport {
                 verify(item.onNameChangedSignalTriggered, "onNameChanged signal");
             }
 
-            function test_isVisible()
+            function test_enabled()
             {
-                verify(item.isVisible, "default value")
-                item.isVisible = false;
-                verify(!item.isVisible, "setIsVisible false")
-                verify(item.onIsVisibleChangedSignalTriggered, "isVisibleChanged signal")
+                verify(item.enabled, "default value")
+                item.enabled = false;
+                verify(!item.enabled, "setEnabled false")
+                verify(item.onEnabledChangedSignalTriggered, "enabledChanged signal")
             }
 
             // TODO
