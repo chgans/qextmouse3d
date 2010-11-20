@@ -241,6 +241,7 @@ public:
         , inheritEvents(false)
         , isEnabled(true)
         , isInitialized(false)
+        , mainBranchId(0)
     {
     }
 
@@ -1022,21 +1023,6 @@ void QDeclarativeItem3D::setName(QString nameString)
 
 /*!
     \internal
-    This function allows the user to get a scene object from the underlying mesh which forms
-    an \l Item3D.  
-
-    By passing the \a name of the scene object, the user can access the corresponding \l QGLSceneNode
-    for that name.
-
-    Failure to find the scene object will return \i null.
-*/
-QGLSceneNode *QDeclarativeItem3D::getSceneObject(const QString& name) const
-{
-    return mesh()->getSceneObject(name);
-}
-
-/*!
-    \internal
     Performs the actual drawing of the Item3D using \a painter.
 
     If the item is set to object picking mode this includes all of the infrastructure needed
@@ -1223,36 +1209,6 @@ void QDeclarativeItem3D::initialize(QGLPainter *painter)
         }
     }
     d->isInitialized = true;
-}
-
-/*!
-    \internal
-    Each \l Item3D which has a mesh associated with it contains an index value into that \l Mesh
-    object which indicates which \i "branch" of the scene is being drawn by the item.
-
-    This is generally relevant when \l Mesh objects have been split across a number of \l Item3D
-    objects at specific mesh nodes.  In this case the mesh will have a number of drawable branches, 
-    only one of which will corrsepond to the item currently being drawn.
-
-    These branch IDs are set up at initialisation of the \l Item3D.
-
-    Returns the ID number of the main branch for this item.
-
-    \sa initialize()
-*/
-int QDeclarativeItem3D::mainBranchId() const
-{
-    return d->mainBranchId;
-}
-
-
-/*!
-    \internal
-    Sets the ID number of the main scene branch in the item to \a objectID.
-*/
-void QDeclarativeItem3D::setMainBranchId(int objectID)
-{
-    d->mainBranchId = objectID;
 }
 
 /*!

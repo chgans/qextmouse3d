@@ -160,13 +160,8 @@ public:
     bool isEnabled() const;
     void setEnabled(bool value);
 
-    int mainBranchId() const;
-    void setMainBranchId(int objectID);
-
     virtual void draw(QGLPainter *painter);
     virtual void initialize(QGLPainter *painter);
-
-    QGLSceneNode *getSceneObject(const QString& name) const;
 
     void classBegin();   
     void componentComplete();   
