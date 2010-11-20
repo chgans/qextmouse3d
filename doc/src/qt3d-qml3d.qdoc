@@ -38,13 +38,13 @@ for importing 3D elements into QML applications:
 See the \l{Teapot Example in QML/3D}{Teapot} example for an introduction
 to using these elements in QML.
 
-QML/3D also provides some \l{Standard Shapes for QML/3D}{standard shapes}
+QML/3D also provides some \l{Stock Shapes for QML/3D}{stock shapes}
 in the \c{Qt3D.Shapes} namespace as convenience elements.
 */
 
 /*!
 \group qt3d::qml3d::shapes
-\title Standard Shapes for QML/3D 
+\title Stock Shapes for QML/3D 
 
 The following QML elements are provided by the \c{Qt3D.Shapes} namespace
 as convenience elements:
