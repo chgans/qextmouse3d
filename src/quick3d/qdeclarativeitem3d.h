@@ -92,11 +92,14 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
     Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
     Q_PROPERTY(bool inheritEvents READ inheritEvents WRITE setInheritEvents NOTIFY inheritEventsChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
-	
+    Q_PROPERTY(QDeclarativeItem3D *parent READ parentItem WRITE setParentItem NOTIFY parentChanged DESIGNABLE false FINAL)
     Q_CLASSINFO("DefaultProperty", "data")
 public:
     QDeclarativeItem3D(QObject *parent = 0);
     ~QDeclarativeItem3D();
+
+    QDeclarativeItem3D *parentItem() const;
+    void setParentItem(QDeclarativeItem3D *parent);
 
     enum CullFace
     {
@@ -187,6 +190,7 @@ Q_SIGNALS:
     void inheritEventsChanged();
     void enabledChanged();
     void childrenChanged();
+    void parentChanged();
 
 private:
     QDeclarativeItem3DPrivate *d;

@@ -32,7 +32,7 @@ Viewport {
     }
 
     Item3D {
-        id: "item"
+        id: item
         property int positionHasBeenChanged: 0
         onPositionChanged : positionHasBeenChanged = positionHasBeenChanged + 1;
 
@@ -55,6 +55,14 @@ Viewport {
 
         property bool onStateChangedSignalTriggered: false
         onStateChanged: onStateChangedSignalTriggered = true
+
+        Item3D {
+            id: child
+        }
+
+        Item3D {
+            id: child2
+        }
 
         states: [
             State {
@@ -171,12 +179,27 @@ Viewport {
                 verify(item.onEnabledChangedSignalTriggered, "enabledChanged signal")
             }
 
-            // TODO
-            // Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
-            // Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
-            // Q_PROPERTY(QDeclarativeListProperty<Item3D> children READ fxChildren DESIGNABLE false NOTIFY childrenChanged)
-            // Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
-            //Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
+            function test_parent()
+            {
+                // Test the initial Item3D parent/child relationships.
+                verify(item.parent == null, "root item")
+                verify(child.parent == item, "child item")
+                verify(child2.parent == item, "child2 item")
+                compare(item.children.length, 2, "root children")
+                compare(child.children.length, 0, "child children")
+                verify(item.children[0] == child, "child 0")
+                verify(item.children[1] == child2, "child 1")
+
+                // Reparent the second child and re-test.
+                child2.parent = child
+                verify(item.parent == null, "root item (B)")
+                verify(child.parent == item, "child item (B)")
+                verify(child2.parent == child, "child2 item (B)")
+                compare(item.children.length, 1, "root children (B)")
+                compare(child.children.length, 1, "child children (B)")
+                verify(item.children[0] == child, "child 0 (B)")
+                verify(child.children[0] == child2, "child 1 (B)")
+            }
         }
     }
 }

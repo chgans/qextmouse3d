@@ -227,6 +227,7 @@ class QDeclarativeItem3DPrivate
 public:
     QDeclarativeItem3DPrivate(QDeclarativeItem3D *_item)
         : item(_item)
+        , parent(0)
         , viewport(0)
         , position(0.0f, 0.0f, 0.0f)
         , pivot(0.0f,0.0f,0.0f)
@@ -244,8 +245,10 @@ public:
         , mainBranchId(0)
     {
     }
+    ~QDeclarativeItem3DPrivate();
 
     QDeclarativeItem3D *item;
+    QDeclarativeItem3D *parent;
     QDeclarativeViewport *viewport;
     QVector3D position;
     QVector3D pivot;
@@ -258,6 +261,7 @@ public:
     QDeclarativeItem3D::CullFaces cullFaces;
     QDeclarativeStateGroup *states();
     QDeclarativeStateGroup *_stateGroup;
+    QList<QDeclarativeItem3D *> children;
 
     bool inheritEvents;
     bool isEnabled;
@@ -294,6 +298,17 @@ public:
     QList<QGraphicsTransform3D *> pretransforms;
 };
 
+QDeclarativeItem3DPrivate::~QDeclarativeItem3DPrivate()
+{
+    // Detach our item children from us - they will be destroyed
+    // separately by their QObject parent.
+    for (int index = 0; index < children.size(); ++index)
+        children.at(index)->d->parent = 0;
+
+    // Detach ourselves from our own item parent.
+    if (parent)
+        parent->d->children.removeOne(item);
+}
 
 int QDeclarativeItem3DPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
 {  
@@ -409,7 +424,7 @@ void QDeclarativeItem3DPrivate::data_append(QDeclarativeListProperty<QObject> *p
 {
     QDeclarativeItem3D *i = qobject_cast<QDeclarativeItem3D *>(o);
     if (i) 
-        i->setParent(static_cast<QDeclarativeItem3D *>(prop->object));
+        i->setParentItem(static_cast<QDeclarativeItem3D *>(prop->object));
     else
         o->setParent(static_cast<QDeclarativeItem3D *>(prop->object));
 }
@@ -436,10 +451,9 @@ int QDeclarativeItem3DPrivate::resources_count(QDeclarativeListProperty<QObject>
 
 QDeclarativeItem3D *QDeclarativeItem3DPrivate::children_at(QDeclarativeListProperty<QDeclarativeItem3D> *prop, int index)
 {
-    QObjectList thechildren = static_cast<QDeclarativeItem3D*>(prop->object)->children();
-
-    if (index < thechildren.count())
-        return qobject_cast<QDeclarativeItem3D *>(thechildren.at(index));
+    QDeclarativeItem3D *item = static_cast<QDeclarativeItem3D *>(prop->object);
+    if (index >= 0 && index < item->d->children.count())
+        return item->d->children.at(index);
     else
         return 0;
 }
@@ -447,27 +461,12 @@ QDeclarativeItem3D *QDeclarativeItem3DPrivate::children_at(QDeclarativeListPrope
 void QDeclarativeItem3DPrivate::children_append(QDeclarativeListProperty<QDeclarativeItem3D> *prop, QDeclarativeItem3D *i)
 {
     if (i)
-    {
-        i->setParent(static_cast<QObject*>(prop->object));
-
-        //Because this is now a static function, we can no longer apply the following :-(
-        //however it is still carried out in the "initialize" function of QDeclarativeItem3D.
-        /*
-        if (inheritEvents) {
-            QObject::connect(i, SIGNAL(clicked()), item, SIGNAL(clicked()));
-            QObject::connect(i, SIGNAL(doubleClicked()), item, SIGNAL(doubleClicked()));
-            QObject::connect(i, SIGNAL(pressed()), item, SIGNAL(pressed()));
-            QObject::connect(i, SIGNAL(released()), item, SIGNAL(released()));
-            QObject::connect(i, SIGNAL(hoverEnter()), item, SIGNAL(hoverEnter()));
-            QObject::connect(i, SIGNAL(hoverLeave()), item, SIGNAL(hoverLeave()));
-        }
-        */
-    }
+        i->setParentItem(static_cast<QDeclarativeItem3D*>(prop->object));
 }
 
 int QDeclarativeItem3DPrivate::children_count(QDeclarativeListProperty<QDeclarativeItem3D> *prop)
 {
-    return static_cast<QDeclarativeItem3D*>(prop->object)->children().count();
+    return static_cast<QDeclarativeItem3D*>(prop->object)->d->children.count();
 }
 
 
@@ -490,6 +489,12 @@ QDeclarativeItem3D::QDeclarativeItem3D(QObject *parent)
     : QObject(parent)
 {
     d = new QDeclarativeItem3DPrivate(this);
+    QDeclarativeItem3D *itemParent = qobject_cast<QDeclarativeItem3D *>(parent);
+    if (itemParent) {
+        d->parent = itemParent;
+        itemParent->d->children.append(this);
+        emit itemParent->childrenChanged();
+    }
 }
 
 /*!
@@ -712,11 +717,10 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
     d->inheritEvents = inherit;
 
     //Generally we would only want to 
-    QObjectList list = QObject::children();
     if (inherit)
     {
-        foreach (QObject *child, list) {
-		    QDeclarativeItem3D *subItem =qobject_cast<QDeclarativeItem3D *>(child);	
+        for (int index = 0; index < d->children.size(); ++index) {
+            QDeclarativeItem3D *subItem = d->children.at(index);
             if (subItem)
             {   
                 // Proxy the mouse event signals to the parent so that
@@ -732,8 +736,8 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
     }
     else
     {
-        foreach (QObject *child, list) {
-		    QDeclarativeItem3D *subItem =qobject_cast<QDeclarativeItem3D *>(child);	
+        for (int index = 0; index < d->children.size(); ++index) {
+            QDeclarativeItem3D *subItem = d->children.at(index);
             if (subItem)
             {   
                 // Proxy the mouse event signals to the parent so that
@@ -970,6 +974,36 @@ void QDeclarativeItem3D::setState(const QString &state)
     d->states()->setState(state);
 }
 
+/*!
+    \qmlproperty Item3D Item3D::parent
+
+    This property specifies the Item3D parent of this item,
+    or null if this item does not have a parent.
+*/
+
+QDeclarativeItem3D *QDeclarativeItem3D::parentItem() const
+{
+    return d->parent;
+}
+
+void QDeclarativeItem3D::setParentItem(QDeclarativeItem3D *parent)
+{
+    QDeclarativeItem3D *prevParent = d->parent;
+    if (prevParent != parent) {
+        d->parent = 0;
+        if (prevParent) {
+            prevParent->d->children.removeOne(this);
+            emit prevParent->childrenChanged();
+        }
+        d->parent = parent;
+        if (parent) {
+            parent->d->children.append(this);
+            emit parent->childrenChanged();
+        }
+        QObject::setParent(parent);
+        emit parentChanged();
+    }
+}
 
 /*!
     \qmlproperty enumeration Item3D::cullFaces
@@ -1030,7 +1064,6 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
 
     int prevId = painter->objectPickId();
     painter->setObjectPickId(d->objectPickId);
-    QObjectList list = QObject::children();
 
     //Lighting
     const QGLLightParameters *currentLight = 0;
@@ -1100,11 +1133,9 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
 
     //Drawing
     drawItem(painter);
-    foreach (QObject *child, list) {
-        QDeclarativeItem3D *item = qobject_cast<QDeclarativeItem3D *>(child);
-        if (item)
-            item->draw(painter);
-    }
+    QList<QDeclarativeItem3D *> list = d->children;
+    for (int index = 0; index < list.size(); ++index)
+        list.at(index)->draw(painter);
 
     //Unset parameters for transforms, effects etc.
     painter->modelViewMatrix().pop();
@@ -1161,9 +1192,8 @@ void QDeclarativeItem3D::initialize(QGLPainter *painter)
         }
     }
 
-    QObjectList list = QObject::children();
-    foreach (QObject *child, list) {
-        QDeclarativeItem3D *item = qobject_cast<QDeclarativeItem3D *>(child);
+    for (int index = 0; index < d->children.size(); ++index) {
+        QDeclarativeItem3D *item = d->children.at(index);
         if (item) {   
             //Event inheritance is generally only declared at initialization, but can also be done at runtime
             //if the user wishes (though not recommended).
