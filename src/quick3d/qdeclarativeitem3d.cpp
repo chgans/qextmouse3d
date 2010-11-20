@@ -263,7 +263,6 @@ public:
     bool isEnabled;
     bool isInitialized;
     int mainBranchId;
-    QString name;
     QString meshNode;
 
     // data property
@@ -998,27 +997,6 @@ void QDeclarativeItem3D::setCullFaces(QDeclarativeItem3D::CullFaces value)
         d->cullFaces = value;
         emit meshChanged();
     }
-}
-
-/*!
-    \qmlproperty string Item3D::name
-
-    A simple string name for the object.  This is useful for debugging, but also as a
-    meaningful way of describing items in a manner which can be easily displayed/printed.
-*/
-QString QDeclarativeItem3D::name() const
-{
-    return d->name;
-}
-
-void QDeclarativeItem3D::setName(QString nameString)
-{
-    if(d->name == nameString)
-        return;
-    d->name = nameString;
-    if (objectName().isEmpty())
-        setObjectName(nameString);
-    emit nameChanged();
 }
 
 /*!

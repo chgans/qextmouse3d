@@ -88,7 +88,6 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeState> states READ states DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
     Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
     Q_PROPERTY(bool inheritEvents READ inheritEvents WRITE setInheritEvents NOTIFY inheritEventsChanged)
@@ -151,9 +150,6 @@ public:
     CullFaces cullFaces() const;
     void setCullFaces(CullFaces value);
 
-    QString name() const;
-    void setName(QString nameString);
-
     QString meshNode() const;					
     void setMeshNode(const QString &);			
 
@@ -188,7 +184,6 @@ Q_SIGNALS:
     void released();
     void hoverEnter();
     void hoverLeave();
-    void nameChanged();
     void inheritEventsChanged();
     void enabledChanged();
     void childrenChanged();

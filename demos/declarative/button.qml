@@ -46,7 +46,7 @@ Viewport {
 
     Item3D {
         id: button_mesh
-        name: "button_mesh"
+        objectName: "button_mesh"
         mesh: Mesh {
             source: "meshes/button3d.3ds"
             options: "ShowWarnings ForceSmooth"
@@ -56,7 +56,6 @@ Viewport {
         Item3D {
             id: top_node
             objectName: "top_node"
-            name: "top_node"
             meshNode: "Top"
             effect: Effect { material: face_texture }
         }
@@ -73,7 +72,6 @@ Viewport {
         Item3D {
             id: side_plate_node
             objectName: "side_plate_node"
-            name: "side_plate_node"
             meshNode: "SidePlate"
             //effect: Effect { material: address_texture }
         }

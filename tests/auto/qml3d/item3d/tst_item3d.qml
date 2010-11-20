@@ -33,7 +33,6 @@ Viewport {
 
     Item3D {
         id: "item"
-        name: "An Item3D"
         property int positionHasBeenChanged: 0
         onPositionChanged : positionHasBeenChanged = positionHasBeenChanged + 1;
 
@@ -45,9 +44,6 @@ Viewport {
 
         property bool onEnabledChangedSignalTriggered:false
         onEnabledChanged: onEnabledChangedSignalTriggered = true
-
-        property bool onNameChangedSignalTriggered:false
-        onNameChanged: onNameChangedSignalTriggered = true
 
         property bool onEffectChangedSignalTriggered: false
         onEffectChanged: onEffectChangedSignalTriggered = true
@@ -165,14 +161,6 @@ Viewport {
                 verify(item.onStateChangedSignalTriggered, "onStateChanged signal");
                 verify(item.state == "testState1", "setState()");
                 verify(item.stateChangeTestVariable == 1, "property changed with new state");
-            }
-
-            function test_name()
-            {
-                verify(item.name == "An Item3D", "Bound Name");
-                item.name = "an_item3d";
-                verify(item.name == "an_item3d", "changed name");
-                verify(item.onNameChangedSignalTriggered, "onNameChanged signal");
             }
 
             function test_enabled()
