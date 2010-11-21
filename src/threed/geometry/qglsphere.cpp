@@ -95,7 +95,7 @@ QT_BEGIN_NAMESPACE
 
     Creates a sphere of \a diameter across (default is 1).  When the sphere
     is recursively subdivided into triangles, it will be subdivided no more
-    than \a depth times (default is 3).
+    than \a depth times (between 1 and 5, default is 3).
 */
 
 /*!
@@ -125,7 +125,10 @@ QGLSphere::~QGLSphere()
     \fn int QGLSphere::subdivisionDepth() const
 
     Returns the maximum depth when this sphere is subdivided into triangles.
-    The default is 3.
+    The default is 3.  The following picture shows the effect of depth
+    values between 1 and 5 for a UV sphere:
+
+    \image sphere-detail.png
 
     \sa setSubdivisionDepth()
 */
@@ -197,7 +200,11 @@ QGLSphere::~QGLSphere()
 QGLBuilder& operator<<(QGLBuilder& builder, const QGLSphere& sphere)
 {
     qreal scale = sphere.diameter();
-    int divisions = qMax(sphere.subdivisionDepth() - 1, 0);
+    int divisions = sphere.subdivisionDepth();
+    if (divisions < 1)
+        divisions = 1;
+    else if (divisions > 5)
+        divisions = 5;
 
     // define a 0 division sphere as 4 points around the equator, 4 points around the bisection at poles.
     // each division doubles the number of points.

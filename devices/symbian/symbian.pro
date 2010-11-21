@@ -40,6 +40,7 @@ symbian {
                                 $$PWD/../../src/imports/threed/qmldir
         qt3dthreedImports.path = $$QT_IMPORTS_BASE_DIR/Qt3D
         qt3dshapesImports.sources = \
+                                qshapesqmlplugin.dll \
                                 $$PWD/../../src/imports/shapes/Cube.qml \
                                 $$PWD/../../src/imports/shapes/cube.obj \
                                 $$PWD/../../src/imports/shapes/Teapot.qml \
