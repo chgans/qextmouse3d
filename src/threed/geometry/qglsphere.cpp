@@ -43,7 +43,7 @@
 #include "qglbuilder.h"
 #include "qvector2darray.h"
 #include "qvector3darray.h"
-#include <QtGui/qquaternion.h>
+#include <QtCore/qmath.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -199,70 +199,74 @@ QGLSphere::~QGLSphere()
 */
 QGLBuilder& operator<<(QGLBuilder& builder, const QGLSphere& sphere)
 {
-    qreal scale = sphere.diameter();
+    qreal radius = sphere.diameter() / 2.0f;
+
+    // Determine the number of slices and stacks to generate.
     int divisions = sphere.subdivisionDepth();
     if (divisions < 1)
         divisions = 1;
     else if (divisions > 5)
         divisions = 5;
+    int stacks = 2 * (1 << divisions);
+    int slices = 2 * stacks;
 
-    // define a 0 division sphere as 4 points around the equator, 4 points around the bisection at poles.
-    // each division doubles the number of points.
-    // since each pass of each loop does half a sphere, we multiply by 2 rather than 4.
-    int total = 2*(1 << divisions);
+    // Precompute sin/cos values for the slices and stacks.
+    const int maxSlices = 4 * (1 << 5) + 1;
+    const int maxStacks = 2 * (1 << 5) + 1;
+    qreal sliceSin[maxSlices];
+    qreal sliceCos[maxSlices];
+    qreal stackSin[maxStacks];
+    qreal stackCos[maxStacks];
+    for (int slice = 0; slice < slices; ++slice) {
+        qreal angle = 2 * M_PI * slice / slices;
+        sliceSin[slice] = qFastSin(angle);
+        sliceCos[slice] = qFastCos(angle);
+    }
+    sliceSin[slices] = sliceSin[0]; // Join first and last slice.
+    sliceCos[slices] = sliceCos[0];
+    for (int stack = 0; stack <= stacks; ++stack) {
+        qreal angle = M_PI * stack / stacks;
+        stackSin[stack] = qFastSin(angle);
+        stackCos[stack] = qFastCos(angle);
+    }
+    stackSin[0] = 0.0f;             // Come to a point at the poles.
+    stackSin[stacks] = 0.0f;
 
-    QGeometryData prim;
+    // Create the stacks.
+    for (int stack = 0; stack < stacks; ++stack) {
+        QGeometryData prim;
+        qreal z = radius * stackCos[stack];
+        qreal nextz = radius * stackCos[stack + 1];
+        qreal s = stackSin[stack];
+        qreal nexts = stackSin[stack + 1];
+        qreal c = stackCos[stack];
+        qreal nextc = stackCos[stack + 1];
+        qreal r = radius * s;
+        qreal nextr = radius * nexts;
+        for (int slice = 0; slice <= slices; ++slice) {
+            prim.appendVertex
+                (QVector3D(nextr * sliceSin[slice],
+                           nextr * sliceCos[slice], nextz));
+            prim.appendNormal
+                (QVector3D(sliceSin[slice] * nexts,
+                           sliceCos[slice] * nexts, nextc));
+            prim.appendTexCoord
+                (QVector2D(1.0f - qreal(slice) / slices,
+                           1.0f - qreal(stack + 1) / stacks));
 
-    const QVector3D initialVector(0, 0, 1);
-    const QVector3D zAxis(0, 0, 1);
-    const QVector3D yAxis(0, 1, 0);
-    for(int vindex = 0; vindex < total; vindex++) {
-        qreal vFrom = qreal(vindex) / qreal(total);
-        qreal vTo = qreal(vindex+1) / qreal(total);
-        QQuaternion ryFrom = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vFrom);
-        QQuaternion ryTo = QQuaternion::fromAxisAndAngle(yAxis, 180.0f * vTo);
-        for (int uindex = 0; uindex < 2*total; uindex++) {
-            qreal uFrom = qreal(uindex) / qreal(total);
-            qreal uTo = qreal(uindex+1) / qreal(total);
-            QQuaternion rzFrom = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uFrom);
-            QQuaternion rzTo = QQuaternion::fromAxisAndAngle(zAxis, 180.0f * uTo);
-            // four points
-            QVector3D na, nb, nc, nd;
-            QVector3D va, vb, vc, vd;
-
-            na = ryFrom.rotatedVector(initialVector);
-            na = rzFrom.rotatedVector(na);
-            
-            nb = ryTo.rotatedVector(initialVector);
-            nb = rzFrom.rotatedVector(nb);
-
-            nc = ryTo.rotatedVector(initialVector);
-            nc = rzTo.rotatedVector(nc);
-
-            nd = ryFrom.rotatedVector(initialVector);
-            nd = rzTo.rotatedVector(nd);
-
-            QVector2D ta(uFrom/2.0f, 1.0-vFrom);
-            QVector2D tb(uFrom/2.0f, 1.0-vTo);
-            QVector2D tc(uTo/2.0f, 1.0-vTo);
-            QVector2D td(uTo/2.0f, 1.0-vFrom);
-
-            va = na * scale / 2.0f;
-            vb = nb * scale / 2.0f;
-            vc = nc * scale / 2.0f;
-            vd = nd * scale / 2.0f;
-
-            prim.appendVertex(va, vb, vc);
-            prim.appendNormal(na, nb, nc);
-            prim.appendTexCoord(ta, tb, tc);
-
-            prim.appendVertex(va, vc, vd);
-            prim.appendNormal(na, nc, nd);
-            prim.appendTexCoord(ta, tc, td);
+            prim.appendVertex
+                (QVector3D(r * sliceSin[slice],
+                           r * sliceCos[slice], z));
+            prim.appendNormal
+                (QVector3D(sliceSin[slice] * s,
+                           sliceCos[slice] * s, c));
+            prim.appendTexCoord
+                (QVector2D(1.0f - qreal(slice) / slices,
+                           1.0f - qreal(stack) / stacks));
         }
+        builder.addQuadStrip(prim);
     }
 
-    builder.addTriangles(prim);
     return builder;
 }
 
