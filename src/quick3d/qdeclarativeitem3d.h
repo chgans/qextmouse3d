@@ -76,12 +76,12 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
     Q_PROPERTY(qreal x READ x WRITE setX NOTIFY positionChanged)
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY positionChanged)
     Q_PROPERTY(qreal z READ z WRITE setZ NOTIFY positionChanged)
-    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)   
+    Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> transform READ transform DESIGNABLE false FINAL)
     Q_PROPERTY(QDeclarativeListProperty<QGraphicsTransform3D> pretransform READ pretransform DESIGNABLE false FINAL)
     Q_PROPERTY(QDeclarativeMesh *mesh READ mesh WRITE setMesh NOTIFY meshChanged)
-    Q_PROPERTY(QDeclarativeEffect *effect READ effect WRITE setEffect NOTIFY effectChanged)    
-    Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)    
+    Q_PROPERTY(QDeclarativeEffect *effect READ effect WRITE setEffect NOTIFY effectChanged)
+    Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY lightChanged)
     Q_PROPERTY(QDeclarativeListProperty<QObject> resources READ resources DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QObject> data READ data DESIGNABLE false)
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeItem3D> children READ itemChildren DESIGNABLE false NOTIFY childrenChanged)
@@ -122,7 +122,7 @@ public:
     void setZ(qreal value);
 
     qreal scale() const;
-    void setScale(qreal value); 
+    void setScale(qreal value);
 
     QDeclarativeMesh *mesh() const;
     void setMesh(QDeclarativeMesh* value);
@@ -146,15 +146,15 @@ public:
     QDeclarativeListProperty<QDeclarativeState> states();
 
     QDeclarativeListProperty<QDeclarativeTransition> transitions();
-    
+
     QString state() const;
     void setState(const QString &);
 
     CullFaces cullFaces() const;
     void setCullFaces(CullFaces value);
 
-    QString meshNode() const;					
-    void setMeshNode(const QString &);			
+    QString meshNode() const;
+    void setMeshNode(const QString &);
 
     bool isEnabled() const;
     void setEnabled(bool value);
@@ -162,8 +162,8 @@ public:
     virtual void draw(QGLPainter *painter);
     virtual void initialize(QGLPainter *painter);
 
-    void classBegin();   
-    void componentComplete();   
+    void classBegin();
+    void componentComplete();
 
 public Q_SLOTS:
     void update();

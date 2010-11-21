@@ -64,11 +64,11 @@
 
     \section1 Simple 3D Object Definition
 
-    The most basic use case for the Item3D class is the creation and display of a 
+    The most basic use case for the Item3D class is the creation and display of a
     single simple item in the 3D environment.
 
     Many such items within a 3D environment are defined as a single logical component
-    mesh which is treated as a stand-alone object for the purposes of rotation, 
+    mesh which is treated as a stand-alone object for the purposes of rotation,
     scaling, and user interaction via "picking".
 
     Such an object can easily be defined in QML using the following code:
@@ -78,14 +78,14 @@
         id: teapot
         mesh: Mesh { source: "teapot.bez" }
         effect: Effect {}
-		cullFaces: "CullBackFaces"
+        cullFaces: "CullBackFaces"
     }
     \endcode
 
-    This simple code will create a 3D item based on the \i teapot.bez mesh using 
+    This simple code will create a 3D item based on the \i teapot.bez mesh using
     back-face culling.
 
-    Notice that in this case the effect and mesh are defined within the body of 
+    Notice that in this case the effect and mesh are defined within the body of
     the item definition.  Where there is little complexity, this method of
     defining items simplifies the resultant code and makes modification of
     the QML easier.
@@ -98,8 +98,8 @@
     Item3D {
         id: cup
         mesh:  Mesh { source: "teacup.bez" }
-		effect: Effect {}
-		cullFaces: "CullBackFaces"
+        effect: Effect {}
+        cullFaces: "CullBackFaces"
 
         Item3D {
             id: saucer
@@ -114,11 +114,11 @@
     This demonstrates the capability of embedding one Item3D within another.  In
     this case the \i saucer item is a child of the \i cup item.
 
-    All transformations applied to the parent item are also applied to the child, 
-    so in this case both the cup and saucer will be translated based on the 
+    All transformations applied to the parent item are also applied to the child,
+    so in this case both the cup and saucer will be translated based on the
     position vector defined in the cup item's definition.
 
-    In this case any additional transformations applied to the child item will not 
+    In this case any additional transformations applied to the child item will not
     affect the parent, and are local only to that item (and to its children if any
     exist).
 
@@ -129,7 +129,7 @@
 
     In more complex applications the user may wish to load a complex mesh
     which is made up of a number of components or nodes which may be organised
-    into a tree like structure.  In this case they may wish to interact with, 
+    into a tree like structure.  In this case they may wish to interact with,
     animate, or otherwise modify individual sub-nodes of a mesh.
 
     Item3D leverages the existing \bold {Qt Object Model} in order to allow QML/3d users
@@ -141,65 +141,70 @@
     Item3D {
         id: helicoptor
         mesh:  helicoptorMesh
-		effect: Effect {}
-		cullFaces: "CullBackFaces"
+        effect: Effect {}
+        cullFaces: "CullBackFaces"
 
         transform: [
-			Rotation3D {
-				id: rotate1
-				angle: 5
-				axis: Qt.vector3d(1, 0, 0)
-			},
-			Rotation3D {
-				id: rotate2
-				angle: 5
-				axis: Qt.vector3d(0, 1, 0)
-			},
-			Rotation3D {
-				id: rotate3
-				angle: 45
-				axis: Qt.vector3d(0, 0, 1)
-			}
-		]
+            Rotation3D {
+                id: rotate1
+                angle: 5
+                axis: Qt.vector3d(1, 0, 0)
+            },
+            Rotation3D {
+                id: rotate2
+                angle: 5
+                axis: Qt.vector3d(0, 1, 0)
+            },
+            Rotation3D {
+                id: rotate3
+                angle: 45
+                axis: Qt.vector3d(0, 0, 1)
+            }
+        ]
 
         Item3D {
-			id: rotor
-			property bool spin: false				
-			meshNode: "rotorBladesNode"
-			Item3D {meshNode: "rotorHubNode"}
-            			
-			transform: [
-				Rotation3D {
-					id: rotateBlades
-					angle: 0
-					axis: Qt.vector3d(0, 0, 1)
-				}
-			]
-			
-			onClicked: { rotor.spin=true }
-			
+            id: rotor
+            property bool spin: false
+            meshNode: "rotorBladesNode"
+            Item3D {meshNode: "rotorHubNode"}
+
+            transform: [
+                Rotation3D {
+                    id: rotateBlades
+                    angle: 0
+                    axis: Qt.vector3d(0, 0, 1)
+                }
+            ]
+
+            onClicked: { rotor.spin=true }
+
             SequentialAnimation {
                 running: rotor.spin
-			    NumberAnimation {target: rotateBlades; property: "angle"; to : 360.0; duration: 750; easing.type:"OutQuad" }	
+                NumberAnimation {
+                    target: rotateBlades
+                    property: "angle"
+                    to: 360.0
+                    duration: 750
+                    easing.type:"OutQuad"
+                }
                 onCompleted: rotor.spin = false
-			}
-		}
-
+            }
+        }
     }
-        
+
     Mesh {
         id: helicoptorMesh
         source: "bellUH1.3ds"
     }
     \endcode
 
-    Obviously this example is much more complex both in structure and behaviour. In 
-    this case the mesh describes a \i .3ds file of a helicoptor, which is broken down 
+    Obviously this example is much more complex both in structure and behaviour. In
+    this case the mesh describes a \i .3ds file of a helicoptor, which is broken down
     discrete sub-components (engine nacelles, rotor, rotor hub, etc), which the user
     may wish to modify or animate individually.
 
-    Each child item in this case does not have a mesh explicitly defined, but rather 
-    inherits the mesh from the parent.  However each child item does define a mesh node 
+    Each child item in this case does not have a mesh explicitly defined, but rather
+    inherits the mesh from the parent.  However each child item does define a mesh node
     which is part of the parent mesh.
 
     All transformations carried out on the parent item will also be applied to the child.
@@ -210,8 +215,8 @@
     tree of nodes, this transformation will therefore be applied to all items in that
     tree which are children of the defined node.
 
-    Likewise if the user explicitly declares a child item, such as has been done here with 
-    the \i rotorHubNode, then the transformations will apply to this item as well (and 
+    Likewise if the user explicitly declares a child item, such as has been done here with
+    the \i rotorHubNode, then the transformations will apply to this item as well (and
     its children, and so on).
 
     It should be noted that no support is currently provided for skeleton animation or
@@ -255,7 +260,7 @@ public:
     bool usePivot;
     qreal scale;
     QDeclarativeMesh *mesh;
-    QDeclarativeEffect *effect;    
+    QDeclarativeEffect *effect;
     QGLLightParameters *light;
     int objectPickId;
     QDeclarativeItem3D::CullFaces cullFaces;
@@ -271,7 +276,7 @@ public:
 
     // data property
     static void data_append(QDeclarativeListProperty<QObject> *, QObject *);
-    
+
     // resources property
     static QObject *resources_at(QDeclarativeListProperty<QObject> *, int);
     static void resources_append(QDeclarativeListProperty<QObject> *, QObject *);
@@ -311,7 +316,7 @@ QDeclarativeItem3DPrivate::~QDeclarativeItem3DPrivate()
 }
 
 int QDeclarativeItem3DPrivate::transform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
-{  
+{
     QDeclarativeItem3D *object = qobject_cast<QDeclarativeItem3D *>(list->object);
     if (object) {
         return object->d->transforms.count();
@@ -331,7 +336,7 @@ void QDeclarativeItem3DPrivate::transform_append(QDeclarativeListProperty<QGraph
 
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
-            ptrans->append(item);            
+            ptrans->append(item);
             QObject::connect(item, SIGNAL(transformChanged()),
                              object, SLOT(update()));
         }
@@ -341,7 +346,7 @@ void QDeclarativeItem3DPrivate::transform_append(QDeclarativeListProperty<QGraph
 }
 
 QGraphicsTransform3D *QDeclarativeItem3DPrivate::transform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
-{    
+{
    QDeclarativeItem3D *object = qobject_cast<QDeclarativeItem3D *>(list->object);
     if (object) {
         return object->d->transforms.at(idx);
@@ -365,7 +370,7 @@ void QDeclarativeItem3DPrivate::transform_clear(QDeclarativeListProperty<QGraphi
 }
 
 int QDeclarativeItem3DPrivate::pretransform_count(QDeclarativeListProperty<QGraphicsTransform3D> *list)
-{  
+{
     QDeclarativeItem3D *object = qobject_cast<QDeclarativeItem3D *>(list->object);
     if (object) {
         return object->d->pretransforms.count();
@@ -385,7 +390,7 @@ void QDeclarativeItem3DPrivate::pretransform_append(QDeclarativeListProperty<QGr
 
         //We now need to connect the underlying transform so that any change will update the graphical item.
         if (!ptrans->contains(item)) {
-            ptrans->append(item);            
+            ptrans->append(item);
             QObject::connect(item, SIGNAL(transformChanged()),
                              object, SLOT(update()));
         }
@@ -395,7 +400,7 @@ void QDeclarativeItem3DPrivate::pretransform_append(QDeclarativeListProperty<QGr
 }
 
 QGraphicsTransform3D *QDeclarativeItem3DPrivate::pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int idx)
-{    
+{
    QDeclarativeItem3D *object = qobject_cast<QDeclarativeItem3D *>(list->object);
     if (object) {
         return object->d->pretransforms.at(idx);
@@ -423,7 +428,7 @@ void QDeclarativeItem3DPrivate::pretransform_clear(QDeclarativeListProperty<QGra
 void QDeclarativeItem3DPrivate::data_append(QDeclarativeListProperty<QObject> *prop, QObject *o)
 {
     QDeclarativeItem3D *i = qobject_cast<QDeclarativeItem3D *>(o);
-    if (i) 
+    if (i)
         i->setParentItem(static_cast<QDeclarativeItem3D *>(prop->object));
     else
         o->setParent(static_cast<QDeclarativeItem3D *>(prop->object));
@@ -620,7 +625,7 @@ void QDeclarativeItem3D::setScale(qreal value)
     of 3D transformation prior to display.  Examples of such transformations
     include rotations about the x, y, and z axes, translation, and so on.
 
-    Each Item3D maintains a list of transforms to apply to it through this 
+    Each Item3D maintains a list of transforms to apply to it through this
     property.  In scripting terms a transform can be applied as follows:
 
     \code
@@ -639,7 +644,7 @@ void QDeclarativeItem3D::setScale(qreal value)
                 axis: Qt.vector3d(0, 0, 1)
             }
         ]
-    }   
+    }
     \endcode
 
     In this example we have two transformations in our list - a rotation around
@@ -694,15 +699,15 @@ QDeclarativeListProperty<QGraphicsTransform3D> QDeclarativeItem3D::pretransform(
     same underlying QObject architecture shared by all of Qt.
 
     Often a user will only want an item to capture mouse events for itself, leaving
-    child items to handle their mouse events locally.  Under many circumstances, however, it 
-    is necessary for a parent object to collect all mouse events for itself and its child 
+    child items to handle their mouse events locally.  Under many circumstances, however, it
+    is necessary for a parent object to collect all mouse events for itself and its child
     items.  Usually this inheritance of events is only defined at initialisation for an \l Item3D
-    
+
     The inheritEvents property, however, is a simple boolean property which provides a mechanism
     for both initialisation time and programmatic modification of this.
 
     Setting the property to true connects the signals for all child items to the appropriate
-    signals for the item itself.  Conversely setting the property to false disconnects the 
+    signals for the item itself.  Conversely setting the property to false disconnects the
     events.
 
     The default value for this property is false.
@@ -716,13 +721,13 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
 {
     d->inheritEvents = inherit;
 
-    //Generally we would only want to 
+    //Generally we would only want to
     if (inherit)
     {
         for (int index = 0; index < d->children.size(); ++index) {
             QDeclarativeItem3D *subItem = d->children.at(index);
             if (subItem)
-            {   
+            {
                 // Proxy the mouse event signals to the parent so that
                 // the parent can trap the signal for a group of children.
                 QObject::connect(subItem, SIGNAL(clicked()), this, SIGNAL(clicked()));
@@ -731,7 +736,7 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
                 QObject::connect(subItem, SIGNAL(released()), this, SIGNAL(released()));
                 QObject::connect(subItem, SIGNAL(hoverEnter()), this, SIGNAL(hoverEnter()));
                 QObject::connect(subItem, SIGNAL(hoverLeave()), this, SIGNAL(hoverLeave()));
-            }   
+            }
         }
     }
     else
@@ -739,7 +744,7 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
         for (int index = 0; index < d->children.size(); ++index) {
             QDeclarativeItem3D *subItem = d->children.at(index);
             if (subItem)
-            {   
+            {
                 // Proxy the mouse event signals to the parent so that
                 // the parent can trap the signal for a group of children.
                 QObject::disconnect(subItem, SIGNAL(clicked()), this, SIGNAL(clicked()));
@@ -748,7 +753,7 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
                 QObject::disconnect(subItem, SIGNAL(released()), this, SIGNAL(released()));
                 QObject::disconnect(subItem, SIGNAL(hoverEnter()), this, SIGNAL(hoverEnter()));
                 QObject::disconnect(subItem, SIGNAL(hoverLeave()), this, SIGNAL(hoverLeave()));
-            }  
+            }
         }
     }
 }
@@ -756,13 +761,13 @@ void QDeclarativeItem3D::setInheritEvents(bool inherit)
 /*!
     \qmlproperty Mesh Item3D::mesh
 
-    Objects in most 3D environments are almost invariably defined as meshes - sets of 
-    vertices which when linked as polygons form a recognisable 3D object.  Qt3d currently 
-    supports a number of these \i {scene formats}, including \i {.obj} file, bezier patches 
+    Objects in most 3D environments are almost invariably defined as meshes - sets of
+    vertices which when linked as polygons form a recognisable 3D object.  Qt3d currently
+    supports a number of these \i {scene formats}, including \i {.obj} file, bezier patches
     \i {(.bez)}, and \i {.3ds} files.
 
     These meshes are abstracted into the \l Mesh class, which is defined for
-    an \l Item3D through this property.    
+    an \l Item3D through this property.
 
     The default value for this property is null, so a mesh must be defined in
     order for the item to be displayed
@@ -784,7 +789,7 @@ void QDeclarativeItem3D::setMesh(QDeclarativeMesh *value)
 
     d->mesh = value;
     //always start off pointing to the default scene mesh object.
-    d->mainBranchId = 0;  
+    d->mainBranchId = 0;
 
     if (value) {
         d->mesh->ref();
@@ -793,7 +798,7 @@ void QDeclarativeItem3D::setMesh(QDeclarativeMesh *value)
     }
 
     emit meshChanged();
-    
+
     update();
 }
 
@@ -882,15 +887,15 @@ void QDeclarativeItem3D::setLight(QGLLightParameters *value)
 QDeclarativeListProperty<QDeclarativeItem3D> QDeclarativeItem3D::itemChildren()
 {
     return QDeclarativeListProperty<QDeclarativeItem3D>(this, 0, QDeclarativeItem3DPrivate::children_append,
-                                                     QDeclarativeItem3DPrivate::children_count, 
-                                                     QDeclarativeItem3DPrivate::children_at); 
+                                                     QDeclarativeItem3DPrivate::children_count,
+                                                     QDeclarativeItem3DPrivate::children_at);
 }
 
 QDeclarativeListProperty<QObject> QDeclarativeItem3D::resources()
 {
-    return QDeclarativeListProperty<QObject>(this, 0, QDeclarativeItem3DPrivate::resources_append, 
-                                             QDeclarativeItem3DPrivate::resources_count, 
-                                             QDeclarativeItem3DPrivate::resources_at); 
+    return QDeclarativeListProperty<QObject>(this, 0, QDeclarativeItem3DPrivate::resources_append,
+                                             QDeclarativeItem3DPrivate::resources_count,
+                                             QDeclarativeItem3DPrivate::resources_at);
 }
 
 
@@ -902,7 +907,7 @@ QDeclarativeListProperty<QObject> QDeclarativeItem3D::resources()
     include additional data and resources.  Currently there is no underlying
     implementation for this.
 */
-QDeclarativeListProperty<QObject> QDeclarativeItem3D::data() 
+QDeclarativeListProperty<QObject> QDeclarativeItem3D::data()
 {
     return QDeclarativeListProperty<QObject>(this, 0, QDeclarativeItem3DPrivate::data_append);
 }
@@ -924,27 +929,26 @@ QDeclarativeListProperty<QObject> QDeclarativeItem3D::data()
     \sa state, transitions
 */
 QDeclarativeListProperty<QDeclarativeState> QDeclarativeItem3D::states()
-{    
+{
     return d->states()->statesProperty();
 }
 
 /*!
     \qmlproperty list<Transition> Item3D::transitions
 
-    When an object in QML moves from one state to another its behavior during this 
+    When an object in QML moves from one state to another its behavior during this
     change can be defined using transitions.  These transitions may define changes to one or
-    more objects or properties, and may include animations such as rotations, scaling, 
+    more objects or properties, and may include animations such as rotations, scaling,
     translation, and so on.
 
     Users can define a set of transitional procedures using this property.
-    
+
     As with states, by default there are no transitions defined.
-    
+
     \sa state, states
-    
 */
 QDeclarativeListProperty<QDeclarativeTransition> QDeclarativeItem3D::transitions()
-{    
+{
     return d->states()->transitionsProperty();
 }
 
@@ -955,7 +959,7 @@ QDeclarativeListProperty<QDeclarativeTransition> QDeclarativeItem3D::transitions
     This property describes the current state of the \l Item3D as defined in the list of
     allowable states for this item.
 
-    By default an item's state is undefined and irrelevant.  It is only when the states property 
+    By default an item's state is undefined and irrelevant.  It is only when the states property
     has been modified that a current state makes any sense.
 
     \sa states
@@ -1112,10 +1116,8 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
         // lexical appearance in the QML file.
         QMatrix4x4 m = painter->modelViewMatrix();
         for (int index = transformCount - 1; index >= 0; --index) {
-            
             d->transforms.at(index)->applyTo(&m);
         }
-            
         painter->modelViewMatrix() = m;
     }
     if (d->scale != 1.0f)
@@ -1125,7 +1127,6 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
         // Pre-transforms for orienting the model.
         QMatrix4x4 m = painter->modelViewMatrix();
         for (int index = transformCount - 1; index >= 0; --index) {
-            
             d->pretransforms.at(index)->applyTo(&m);
         }
         painter->modelViewMatrix() = m;
@@ -1165,7 +1166,7 @@ void QDeclarativeViewport::setItemViewport(QDeclarativeItem3D *item)
 
 /*!
     \internal
-    The process of initialising an /l Object3d is a critical step, particularly in 
+    The process of initialising an /l Object3d is a critical step, particularly in
     complex scenes.  This function initialises the item in \a viewport, and using \a painter.
 
     During the initialisation process objects are registered as being \i pickable (ie. able
@@ -1194,7 +1195,7 @@ void QDeclarativeItem3D::initialize(QGLPainter *painter)
 
     for (int index = 0; index < d->children.size(); ++index) {
         QDeclarativeItem3D *item = d->children.at(index);
-        if (item) {   
+        if (item) {
             //Event inheritance is generally only declared at initialization, but can also be done at runtime
             //if the user wishes (though not recommended).
             if (inheritEvents()) {
@@ -1208,10 +1209,10 @@ void QDeclarativeItem3D::initialize(QGLPainter *painter)
                 QObject::connect(item, SIGNAL(hoverLeave()), this, SIGNAL(hoverLeave()));
             }
             //if the item has no mesh of its own and no meshnode is declared we give it the mesh from the current item.
-             if (!item->mesh() && !item->meshNode().isEmpty()) {				 
+            if (!item->mesh() && !item->meshNode().isEmpty()) {
                 item->setMesh(mesh());
-			 }
-		
+            }
+
             d->viewport->setItemViewport(item);
             item->initialize(painter);
         }
