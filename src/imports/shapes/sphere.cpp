@@ -150,7 +150,7 @@ void Sphere::drawItem(QGLPainter *painter)
     if (!geometry) {
         QGLBuilder builder;
         builder.newSection(QGL::Faceted);
-        builder << QGLSphere(1.0f, lod);
+        builder << QGLSphere(2.0f, lod);
         geometry = builder.finalizedSceneNode();
         geometry->setParent(this);
         m_lodGeometry.insert(lod, geometry);

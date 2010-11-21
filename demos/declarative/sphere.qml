@@ -49,6 +49,7 @@ Viewport {
         effect: Effect { color: "#aaca00" }
 
         Sphere {
+            radius: 0.5
             x: -2.5
             levelOfDetail: 1
 
@@ -59,6 +60,7 @@ Viewport {
         }
 
         Sphere {
+            radius: 0.5
             x: -1.25
             levelOfDetail: 2
 
@@ -69,6 +71,7 @@ Viewport {
         }
 
         Sphere {
+            radius: 0.5
             x: 0
             levelOfDetail: 3
 
@@ -79,6 +82,7 @@ Viewport {
         }
 
         Sphere {
+            radius: 0.5
             x: 1.25
             levelOfDetail: 4
 
@@ -89,6 +93,7 @@ Viewport {
         }
 
         Sphere {
+            radius: 0.5
             x: 2.5
             levelOfDetail: 5
 
