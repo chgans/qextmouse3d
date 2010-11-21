@@ -51,9 +51,6 @@
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
-#include <QtDeclarative/private/qdeclarativeitem_p.h>
-#include <QtDeclarative/private/qdeclarativestate_p.h>
-#include <QtDeclarative/private/qdeclarativetransition_p.h>
 
 /*!
     \qmlclass Item3D QDeclarativeItem3D
