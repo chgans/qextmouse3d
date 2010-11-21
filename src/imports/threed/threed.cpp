@@ -110,4 +110,4 @@ QT_END_NAMESPACE
 
 #include "threed.moc"
 
-Q_EXPORT_PLUGIN2(threedqmlmodule, QT_PREPEND_NAMESPACE(QThreedQmlModule));
+Q_EXPORT_PLUGIN2(qthreedqmlplugin, QT_PREPEND_NAMESPACE(QThreedQmlModule));
