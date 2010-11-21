@@ -83,6 +83,7 @@ Sphere::Sphere(QObject *parent)
     : QDeclarativeItem3D(parent)
     , m_radius(1.0f)
     , m_lod(3)
+    , m_axis(Qt::ZAxis)
 {
 }
 
@@ -97,6 +98,7 @@ void Sphere::setRadius(qreal radius)
     if (m_radius != radius) {
         m_radius = radius;
         emit radiusChanged();
+        update();
     }
 }
 
@@ -129,6 +131,24 @@ void Sphere::setLevelOfDetail(int lod)
     if (m_lod != lod) {
         m_lod = lod;
         emit levelOfDetailChanged();
+        update();
+    }
+}
+
+/*!
+    \qmlproperty enumeration Sphere::axis
+
+    This property defines the axis that the sphere lies along.
+    The default is Qt.ZAxis.  The other supported values are
+    Qt.XAxis and Qt.YAxis.  This provides a simple method to
+    orient the sphere in the desired direction.
+*/
+void Sphere::setAxis(Qt::Axis axis)
+{
+    if (m_axis != axis) {
+        m_axis = axis;
+        emit axisChanged();
+        update();
     }
 }
 
@@ -158,16 +178,22 @@ void Sphere::drawItem(QGLPainter *painter)
 
     // Set the radius as a scale on the modelview transformation.
     // This way, we don't have to regenerate the geometry every
-    // frame if the radius is being animated.
-    if (m_radius != 1.0f) {
+    // frame if the radius is being animated.  Also rotate the
+    // geometry into the correct axis orientation.
+    if (m_radius != 1.0f || m_axis != Qt::ZAxis) {
         painter->modelViewMatrix().push();
-        painter->modelViewMatrix().scale(m_radius);
+        if (m_radius != 1.0f)
+            painter->modelViewMatrix().scale(m_radius);
+        if (m_axis == Qt::XAxis)
+            painter->modelViewMatrix().rotate(90.0f, 0.0f, 1.0f, 0.0);
+        else if (m_axis == Qt::YAxis)
+            painter->modelViewMatrix().rotate(-90.0f, 1.0f, 0.0f, 0.0);
     }
 
     // Draw the geometry.
     geometry->draw(painter);
 
     // Restore the original modelview.
-    if (m_radius != 1.0f)
+    if (m_radius != 1.0f || m_axis != Qt::ZAxis)
         painter->modelViewMatrix().pop();
 }

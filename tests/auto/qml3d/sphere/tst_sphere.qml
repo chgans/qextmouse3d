@@ -55,20 +55,24 @@ Viewport {
         id: sphere2
         radius: 3.5
         levelOfDetail: 2
+        axis: Qt.YAxis
     }
 
     Sphere {
         id: sphere3
         radius: -3.5
         levelOfDetail: 23   // Valid, but clamped during drawing
+        axis: Qt.XAxis
     }
 
     Sphere {
         id: sphere4
         property int radChanged: 0
         property int lodChanged: 0
+        property int axChanged: 0
         onRadiusChanged: ++radChanged
         onLevelOfDetailChanged: ++lodChanged
+        onAxisChanged: ++axChanged
     }
 
     TestCase {
@@ -77,13 +81,16 @@ Viewport {
         function test_defaults() {
             compare(sphere1.radius, 1, "radius");
             compare(sphere1.levelOfDetail, 3, "levelOfDetail");
+            compare(sphere1.axis, Qt.ZAxis, "axis");
         }
 
         function test_properties() {
             compare(sphere2.radius, 3.5, "radius");
             compare(sphere2.levelOfDetail, 2, "levelOfDetail");
+            compare(sphere2.axis, Qt.YAxis, "axis");
             compare(sphere3.radius, -3.5, "radius (B)");
             compare(sphere3.levelOfDetail, 23, "levelOfDetail (B)");
+            compare(sphere3.axis, Qt.XAxis, "axis (B)");
         }
 
         function test_radiusChanged() {
@@ -104,6 +111,16 @@ Viewport {
             compare(sphere4.levelOfDetail, 2, "levelOfDetail modified");
             sphere4.levelOfDetail = 2
             compare(sphere4.lodChanged, 1, "changed 3");
+        }
+
+        function test_axisChanged() {
+            compare(sphere4.axis, Qt.ZAxis, "axis");
+            compare(sphere4.axChanged, 0, "changed 1");
+            sphere4.axis = Qt.YAxis
+            compare(sphere4.axChanged, 1, "changed 2");
+            compare(sphere4.axis, Qt.YAxis, "axis modified");
+            sphere4.axis = Qt.YAxis
+            compare(sphere4.axChanged, 1, "changed 3");
         }
     }
 }

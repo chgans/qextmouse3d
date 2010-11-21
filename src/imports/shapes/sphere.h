@@ -55,6 +55,7 @@ class Sphere : public QDeclarativeItem3D
     Q_OBJECT
     Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
     Q_PROPERTY(int levelOfDetail READ levelOfDetail WRITE setLevelOfDetail NOTIFY levelOfDetailChanged)
+    Q_PROPERTY(Qt::Axis axis READ axis WRITE setAxis NOTIFY axisChanged)
 public:
     Sphere(QObject *parent = 0);
     ~Sphere() {}
@@ -65,9 +66,13 @@ public:
     int levelOfDetail() const { return m_lod; }
     void setLevelOfDetail(int lod);
 
+    Qt::Axis axis() const { return m_axis; }
+    void setAxis(Qt::Axis axis);
+
 Q_SIGNALS:
     void radiusChanged();
     void levelOfDetailChanged();
+    void axisChanged();
 
 protected:
     void drawItem(QGLPainter *painter);
@@ -75,6 +80,7 @@ protected:
 private:
     qreal m_radius;
     int m_lod;
+    Qt::Axis m_axis;
     QMap<int, QGLSceneNode *> m_lodGeometry;
 };
 
