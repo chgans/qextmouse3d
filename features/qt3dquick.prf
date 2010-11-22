@@ -1,0 +1,17 @@
+CONFIG += qt3d
+
+!symbian {
+    INCLUDEPATH += $$[QT_INSTALL_HEADERS]/Qt3DQuick
+} else {
+    load(data_caging_paths)
+
+    INCLUDEPATH+=$$MW_LAYER_PUBLIC_EXPORT_PATH(Qt3DQuick)
+}
+
+QT += opengl network declarative
+
+win32:CONFIG(debug, debug|release) {
+    LIBS += -lQt3DQuick$${QT_LIBINFIX}d
+} else {
+    LIBS += -lQt3DQuick$${QT_LIBINFIX}
+}

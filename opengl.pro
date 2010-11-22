@@ -14,7 +14,7 @@ include(doc/doc.pri)
 # Install qt3d.prf into the Qt mkspecs so that "CONFIG += qt3d"
 # can be used in customer applications to build against Qt/3D.
 feature.path = $$[QT_INSTALL_DATA]/mkspecs/features
-feature.files = $$PWD/features/qt3d.prf
+feature.files = $$PWD/features/qt3d.prf $$PWD/features/qt3dquick.prf
 INSTALLS += feature
 
 #symbian does not generate make install rule. Copy prf manually
@@ -24,4 +24,8 @@ symbian {
     featuresDir=$$[QT_INSTALL_DATA]\\mkspecs\\features
     featuresDir=$$replace(featuresDir,/,\\)
     system(copy "$$qt3dFile $$featuresDir")
+
+    qt3dQuickFile=$$PWD\\features\\qt3dquick.prf
+    qt3dQuickFile=$$replace(qt3dQuickFile,/,\\)
+    system(copy "$$qt3dQuickFile $$featuresDir")
 }
