@@ -74,6 +74,21 @@ QT_BEGIN_NAMESPACE
     import Qt3D.Shapes 1.0
     \endcode
 
+    By default, the sphere is aligned to lie along the Z axis.
+    The \l axis property can change this to either the X or the Y
+    axis, as shown in the following example:
+
+    \code
+    Sphere {
+        scale: 1.5
+        levelOfDetail: 4
+        axis: Qt.YAxis
+        effect: Effect { texture: "moon-texture.jpg" }
+    }
+    \endcode
+
+    \image moon-screenshot.png
+
     \sa Item3D
 */
 /*!
