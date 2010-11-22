@@ -41,10 +41,13 @@
 import Qt 4.7
 import Qt3D 1.0
 
+Rectangle {
+        color: "#AAAA22"
+        width: 1000
+        height: 800
+
 	Viewport  {
-		backgroundColor: "#AAAA22"
-		width: 1000
-		height: 800
+                anchors.fill: parent
 		
 		camera: Camera { eye: Qt.vector3d(21,7,19)}
 			
@@ -104,3 +107,4 @@ import Qt3D 1.0
 			shininess: 200
 		}
 	}
+}

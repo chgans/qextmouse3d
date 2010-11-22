@@ -59,7 +59,6 @@ Rectangle {
     }
 
     Viewport {
-        backgroundColor: "transparent"
         anchors.fill: parent
 
         MouseArea

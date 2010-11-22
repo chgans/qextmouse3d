@@ -102,9 +102,6 @@ public:
     QGLCamera *camera;
     QGLLightParameters *light;
     QGLLightModel *lightModel;
-    QDeclarativeEffect *backdrop;
-    QColor backgroundColor;
-    QGLVertexBundle backdropVertices;
     QWidget *viewWidget;
     int pickId;
     QGLFramebufferObject *pickFbo;
@@ -133,8 +130,6 @@ ViewportPrivate::ViewportPrivate()
     , camera(0)
     , light(0)
     , lightModel(0)
-    , backdrop(0)
-    , backgroundColor(Qt::black)
     , viewWidget(0)
     , pickId(1)
     , pickFbo(0)
@@ -146,33 +141,6 @@ ViewportPrivate::ViewportPrivate()
     , lastPan(-1, -1)
     , panModifiers(Qt::NoModifier)
 {
-    // Construct the vertices for a quad with (0, 0) as the
-    // texture co-ordinate for the bottom-left of the screen
-    // and (1, 1) as the texture co-ordinate for the top-right.
-
-    QArray<QVector2D> pos;
-    pos.append(QVector2D(-1.0f, -1.0f));
-    pos.append(QVector2D(-1.0f,  1.0f));
-    pos.append(QVector2D( 1.0f,  1.0f));
-    pos.append(QVector2D( 1.0f, -1.0f));
-
-    QArray<QVector2D> tex;
-    pos.append(QVector2D(0.0f, 0.0f));
-    pos.append(QVector2D(0.0f, 1.0f));
-    pos.append(QVector2D(1.0f, 1.0f));
-    pos.append(QVector2D(1.0f, 0.0f));
-
-    backdropVertices.addAttribute(QGL::Position, pos);
-    backdropVertices.addAttribute(QGL::TextureCoord0, tex);
-
-    //backdropVertices.append(-1.0f, -1.0f);
-    //backdropVertices.append(0.0f, 0.0f);
-    //backdropVertices.append(-1.0f, 1.0f);
-    //backdropVertices.append(0.0f, 1.0f);
-    //backdropVertices.append(1.0f, 1.0f);
-    //backdropVertices.append(1.0f, 1.0f);
-    //backdropVertices.append(1.0f, -1.0f);
-    //backdropVertices.append(1.0f, 0.0f);
 }
 
 ViewportPrivate::~ViewportPrivate()
@@ -412,63 +380,6 @@ void Viewport::setLightModel(QGLLightModel *value)
 }
 
 /*!
-    \qmlproperty Effect Viewport::backdrop
-    The user can set the backdrop property of the Viewport class to define a backdrop effect
-    for the 3d environment.  This backdrop is defined as an Effect object, and can take on any of
-    the effects supported.
-
-    By default no backdrop effect is defined.
-
-    \sa Effect, backgroundColor
-*/
-QDeclarativeEffect *Viewport::backdrop() const
-{
-    return d->backdrop;
-}
-
-void Viewport::setBackdrop(QDeclarativeEffect *value)
-{
-    if (d->backdrop != value) {
-        if (d->backdrop) {
-            disconnect(d->backdrop, SIGNAL(effectChanged()),
-                       this, SLOT(update3d()));
-        }
-        d->backdrop = value;
-        if (d->backdrop) {
-            connect(d->backdrop, SIGNAL(effectChanged()),
-                    this, SLOT(update3d()));
-            d->backdrop->setUseLighting(false);
-        }
-        emit viewportChanged();
-    }
-}
-
-/*!
-    \qmlproperty color Viewport::backgroundColor
-
-    The background color for the viewport, which is used if
-    backdrop is not specified.  The default color is black.
-
-    Setting this property to \c{"transparent"} will result in no
-    background color being set, so that items behind this viewport
-    will be visible through the viewport.
-
-    \sa backdrop
-*/
-QColor Viewport::backgroundColor() const
-{
-    return d->backgroundColor;
-}
-
-void Viewport::setBackgroundColor(const QColor &value)
-{
-    if (d->backgroundColor != value) {
-        d->backgroundColor = value;
-        emit viewportChanged();
-    }
-}
-
-/*!
     \internal
     The main paint function for the Viewport class.  It takes a  QPainter \a p, which performs the
     painting of objects in the 3d environment.
@@ -552,60 +463,22 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
 
 /*!
   \internal
-  Some elements of the image are drawn as an "early" draw activity.  Essentially it performs clearing
-  and drawing of backdrop effects in preparation for primary drawing activities using \a painter.
 */
 void Viewport::earlyDraw(QGLPainter *painter)
 {
-    // If are running with the regular qml viewer, then assume that it
-    // has cleared the background for us, and just clear the depth buffer.
-    if (parentItem() && !d->showPicking) {
+    // If we have a parent, then assume that the parent has painted
+    // the background and overpaint over the top of it.  If we don't
+    // have a parent, then clear to black.
+    if (parentItem()) {
         glClear(GL_DEPTH_BUFFER_BIT);
     } else {
-        if (d->showPicking)
-            painter->setClearColor(Qt::black);
-        else
-            painter->setClearColor(d->backgroundColor);
+        painter->setClearColor(Qt::black);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     // Force the effect to be updated.  The GL paint engine
     // has left the GL state in an unknown condition.
     painter->disableEffect();
-
-    // If we have a scene backdrop, then draw it now.
-    if (d->backdrop) {
-        painter->projectionMatrix().setToIdentity();
-        painter->modelViewMatrix().setToIdentity();
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glDepthMask(GL_FALSE);
-
-        // Select the effect and draw the backdrop quad.
-        d->backdrop->enableEffect(painter);
-        painter->clearAttributes();
-        painter->setVertexBundle(d->backdropVertices);
-        painter->draw(QGL::TriangleFan, 4);
-        d->backdrop->disableEffect(painter);
-
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-    } else if (d->backgroundColor.alpha() != 0 || !parentItem()) {
-        painter->projectionMatrix().setToIdentity();
-        painter->modelViewMatrix().setToIdentity();
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glDepthMask(GL_FALSE);
-
-        painter->setStandardEffect(QGL::FlatColor);
-        painter->setColor(d->backgroundColor);
-        painter->clearAttributes();
-        painter->setVertexBundle(d->backdropVertices);
-        painter->draw(QGL::TriangleFan, 4);
-
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-    }
 
 #ifdef GL_RESCALE_NORMAL
     glEnable(GL_RESCALE_NORMAL);

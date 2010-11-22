@@ -134,13 +134,5 @@ Viewport {
             verify(viewport.lightModel == newLightModel, "newLightModel")
             compare(viewport.lightModel.ambientSceneColor, "#ff00ee", "ambientSceneColor")
         }
-
-        function test_background() {
-            verify(viewport.backdrop == null, "backdrop")
-            compare(viewport.backgroundColor, "#000000", "backgroundColor")
-
-            viewport.backgroundColor = "#ff00ee"
-            compare(viewport.backgroundColor, "#ff00ee", "backgroundColor-modified")
-        }
     }
 }

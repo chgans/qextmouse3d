@@ -71,7 +71,6 @@ StereoView {
 //![6]
     Viewport {
         anchors.fill: parent
-        backgroundColor: "transparent"
         navigation: false
 
         camera: Camera {

@@ -67,8 +67,6 @@ class Viewport : public QDeclarativeItem, public QDeclarativeViewport
     Q_PROPERTY(QGLCamera *camera READ camera WRITE setCamera)
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY viewportChanged)
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel NOTIFY viewportChanged)
-    Q_PROPERTY(QDeclarativeEffect *backdrop READ backdrop WRITE setBackdrop NOTIFY viewportChanged)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY viewportChanged)
 public:
     Viewport(QDeclarativeItem *parent = 0);
     ~Viewport();
@@ -93,12 +91,6 @@ public:
 
     QGLLightModel *lightModel() const;
     void setLightModel(QGLLightModel *value);
-
-    QDeclarativeEffect *backdrop() const;
-    void setBackdrop(QDeclarativeEffect *value);
-
-    QColor backgroundColor() const;
-    void setBackgroundColor(const QColor &value);
 
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 

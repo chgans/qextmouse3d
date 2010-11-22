@@ -91,10 +91,6 @@
     \dots
     \snippet declarative/stereo/stereo.qml 7
 
-    Note that we have set the \l{Viewport::backgroundColor}{backgroundColor}
-    to \c{transparent} so that the viewport contents will blend
-    over the top of the background image.
-
     Instead of a depth value, this time we specify an
     \l{Camera::eyeSeparation}{eyeSeparation} value, which
     indicates the distance between the viewer's left and

@@ -77,7 +77,6 @@ Rectangle {
         id: viewport1
         width: 800; height: 500
         picking: false
-        backgroundColor: "transparent"
 
         camera: Camera {
             eye: Qt.vector3d(0, 0, 350)
@@ -182,7 +181,6 @@ Rectangle {
             id: viewport
             picking: false
             blending: true
-            backgroundColor: "transparent"
 
             camera: Camera {
                 eye: Qt.vector3d(0, 0, 350)
