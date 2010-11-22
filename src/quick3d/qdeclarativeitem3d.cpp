@@ -50,6 +50,12 @@
 #include "qgraphicstransform3d.h"
 #include <QtGui/qevent.h>
 #include <QtDeclarative/qdeclarativecontext.h>
+
+// Hack to prevent inclusion of <private/qdeclarativestate_p.h>
+// which creates problems with undefined symbols under Windows.
+// We only need the definition of QDeclarativeStateGroup.
+#define QDECLARATIVESTATE_H
+
 #include <QtDeclarative/private/qdeclarativestategroup_p.h>
 
 /*!
