@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = teapot cube cylinder basket painter stereo qpainter geometry sphere
+SUBDIRS = teapot cube cylinder basket painter stereo qpainter geometry
 SUBDIRS += tutorials graphicsview builder
 SUBDIRS += pvcolor nesting colliding3dmice stereophoto
 SUBDIRS += tank

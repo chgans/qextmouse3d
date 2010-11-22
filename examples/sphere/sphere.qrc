@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/" >
-        <file>faceCube.jpg</file>
-        <file>faceUV.jpg</file>
-        <file>faceIco.png</file>
-    </qresource>
-</RCC>

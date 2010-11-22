@@ -73,30 +73,6 @@ void tst_QGLSphere::create()
     QGLSphere sphere3(20.5f, 5);
     QCOMPARE(sphere3.diameter(), qreal(20.5f));
     QCOMPARE(sphere3.subdivisionDepth(), 5);
-
-    QGLIcoSphere isphere1;
-    QCOMPARE(isphere1.diameter(), qreal(1.0f));
-    QCOMPARE(isphere1.subdivisionDepth(), 3);
-
-    QGLIcoSphere isphere2(27.5f);
-    QCOMPARE(isphere2.diameter(), qreal(27.5f));
-    QCOMPARE(isphere2.subdivisionDepth(), 3);
-
-    QGLIcoSphere isphere3(20.5f, 5);
-    QCOMPARE(isphere3.diameter(), qreal(20.5f));
-    QCOMPARE(isphere3.subdivisionDepth(), 5);
-
-    QGLCubeSphere csphere1;
-    QCOMPARE(csphere1.diameter(), qreal(1.0f));
-    QCOMPARE(csphere1.subdivisionDepth(), 3);
-
-    QGLCubeSphere csphere2(27.5f);
-    QCOMPARE(csphere2.diameter(), qreal(27.5f));
-    QCOMPARE(csphere2.subdivisionDepth(), 3);
-
-    QGLCubeSphere csphere3(20.5f, 5);
-    QCOMPARE(csphere3.diameter(), qreal(20.5f));
-    QCOMPARE(csphere3.subdivisionDepth(), 5);
 }
 
 void tst_QGLSphere::modify()
@@ -139,14 +115,8 @@ void tst_QGLSphere::build()
     builder.newSection(QGL::Faceted);
     QGLSceneNode *node1 = builder.newNode();
     builder << QGLSphere(5.0f, 5);
-    QGLSceneNode *node2 = builder.newNode();
-    builder << QGLIcoSphere(20.0f, 5);
-    QGLSceneNode *node3 = builder.newNode();
-    builder << QGLCubeSphere(10.0f, 5);
     QGLSceneNode *root = builder.finalizedSceneNode();
     QVERIFY(validateSphere(node1, 5.0f));
-    QVERIFY(validateSphere(node2, 20.0f));
-    QVERIFY(validateSphere(node3, 10.0f));
     delete root;
 }
 
