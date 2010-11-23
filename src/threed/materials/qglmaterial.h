@@ -115,6 +115,7 @@ public:
     int textureLayerCount() const;
 
     QGLMaterial *front() const;
+    bool isTransparent() const;
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
     void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);

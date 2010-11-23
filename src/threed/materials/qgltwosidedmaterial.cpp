@@ -175,6 +175,17 @@ void QGLTwoSidedMaterial::setBack(QGLMaterial *material)
 /*!
     \reimp
 */
+bool QGLTwoSidedMaterial::isTransparent() const
+{
+    Q_D(const QGLTwoSidedMaterial);
+    if (d->front && d->front->isTransparent())
+        return true;
+    return d->back && d->back->isTransparent();
+}
+
+/*!
+    \reimp
+*/
 void QGLTwoSidedMaterial::bind(QGLPainter *painter)
 {
     Q_D(QGLTwoSidedMaterial);

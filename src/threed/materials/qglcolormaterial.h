@@ -66,6 +66,7 @@ public:
     QColor color() const;
     void setColor(const QColor &color);
 
+    bool isTransparent() const;
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
     void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);

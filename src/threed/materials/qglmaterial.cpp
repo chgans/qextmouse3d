@@ -422,6 +422,29 @@ QGLMaterial *QGLMaterial::front() const
 /*!
     \reimp
 */
+bool QGLMaterial::isTransparent() const
+{
+    Q_D(const QGLMaterial);
+    bool transparent = (d->diffuseColor.alpha() != 255);
+    QMap<int, QGLTexture2D *>::ConstIterator it;
+    for (it = d->textures.begin(); it != d->textures.end(); ++it) {
+        TextureCombineMode mode = d->textureModes.value(it.key(), Modulate);
+        if (mode == Modulate) {
+            // Texture alpha adds to the current alpha.
+            if (it.value() && it.value()->hasAlphaChannel())
+                transparent = true;
+        } else if (mode == Replace) {
+            // Replace the current alpha with the texture's alpha.
+            if (it.value())
+                transparent = it.value()->hasAlphaChannel();
+        }
+    }
+    return transparent;
+}
+
+/*!
+    \reimp
+*/
 void QGLMaterial::bind(QGLPainter *painter)
 {
     painter->setFaceMaterial(QGL::AllFaces, this);

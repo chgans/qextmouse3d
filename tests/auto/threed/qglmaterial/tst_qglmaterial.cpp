@@ -41,7 +41,6 @@
 
 #include <QtTest/QtTest>
 #include "qglmaterial.h"
-#include "qglblendmaterial.h"
 #include "qglcolormaterial.h"
 #include "qgltwosidedmaterial.h"
 #include "qgllightparameters.h"
@@ -71,13 +70,11 @@ private slots:
     void standardMaterial();
     void textureLayers();
     void customMaterial();
-    void wrappedMaterial();
     void colorMaterial();
     void twoSidedMaterial();
 
     void standardMaterialDraw();
     void colorMaterialDraw();
-    void blendMaterialDraw();
 
     void cleanupTestCase();
 
@@ -262,6 +259,7 @@ void tst_QGLMaterial::standardMaterial()
     QCOMPARE(mat1.emittedLight().blue(), 0);
     QCOMPARE(mat1.emittedLight().alpha(), 255);
     QCOMPARE(mat1.shininess(), qreal(0));
+    QVERIFY(!mat1.isTransparent());
 
     // Test modifying each field individually, including expected signals.
     QGLMaterial mat2;
@@ -494,6 +492,7 @@ class CustomMaterial : public QGLAbstractMaterial
 public:
     CustomMaterial(QObject *parent = 0) : QGLAbstractMaterial(parent) {}
 
+    bool isTransparent() const { return false; }
     void bind(QGLPainter *) {}
     void release(QGLPainter *, QGLAbstractMaterial *) {}
 };
@@ -504,6 +503,7 @@ class OtherCustomMaterial : public QGLAbstractMaterial
 public:
     OtherCustomMaterial(QObject *parent = 0) : QGLAbstractMaterial(parent) {}
 
+    bool isTransparent() const { return false; }
     void bind(QGLPainter *) {}
     void release(QGLPainter *, QGLAbstractMaterial *) {}
 };
@@ -547,67 +547,11 @@ void tst_QGLMaterial::customMaterial()
     QCOMPARE(mat2.compare(&mat3), -compareMetaObjects(mat3.metaObject(), mat2.metaObject()));
 }
 
-void tst_QGLMaterial::wrappedMaterial()
-{
-    QGLBlendMaterial mat1;
-    QGLBlendMaterial mat2;
-    QGLMaterial mat3;
-    QGLMaterial mat4;
-    QGLTwoSidedMaterial mat5;
-    mat5.setFront(&mat4);
-    mat5.setBack(&mat3);
-
-    QVERIFY(mat1.compare(&mat2) == 0);
-    QVERIFY(mat2.compare(&mat1) == 0);
-
-    QVERIFY(mat1.wrap() == 0);
-    QVERIFY(mat1.front() == 0);
-    QVERIFY(mat1.back() == 0);
-
-    QSignalSpy wrapSpy(&mat1, SIGNAL(wrapChanged()));
-    QSignalSpy materialSpy(&mat1, SIGNAL(materialChanged()));
-
-    mat1.setWrap(&mat3);
-    QVERIFY(mat1.wrap() == &mat3);
-    QVERIFY(mat1.front() == &mat3);
-    QVERIFY(mat1.back() == 0);
-
-    QCOMPARE(wrapSpy.count(), 1);
-    QCOMPARE(materialSpy.count(), 1);
-
-    mat1.setWrap(&mat5);
-    QVERIFY(mat1.wrap() == &mat5);
-    QVERIFY(mat1.front() == &mat4);
-    QVERIFY(mat1.back() == &mat3);
-
-    QCOMPARE(wrapSpy.count(), 2);
-    QCOMPARE(materialSpy.count(), 2);
-
-    mat5.front()->setAmbientColor(Qt::red);
-    QCOMPARE(wrapSpy.count(), 2);
-    QCOMPARE(materialSpy.count(), 3);
-
-    mat1.setWrap(&mat3);
-    QCOMPARE(wrapSpy.count(), 3);
-    QCOMPARE(materialSpy.count(), 4);
-
-    mat5.front()->setAmbientColor(Qt::blue);
-    QCOMPARE(wrapSpy.count(), 3);
-    QCOMPARE(materialSpy.count(), 4);
-
-    mat1.front()->setAmbientColor(Qt::green);
-    QCOMPARE(wrapSpy.count(), 3);
-    QCOMPARE(materialSpy.count(), 5);
-
-    QVERIFY(mat1.wrap() == &mat3);
-    QVERIFY(mat1.front() == &mat3);
-    QVERIFY(mat1.back() == 0);
-}
-
 void tst_QGLMaterial::colorMaterial()
 {
     QGLColorMaterial mat1;
     QVERIFY(mat1.color() == QColor(Qt::white));
+    QVERIFY(!mat1.isTransparent());
 
     QSignalSpy colorSpy(&mat1, SIGNAL(colorChanged()));
     QSignalSpy materialSpy(&mat1, SIGNAL(materialChanged()));
@@ -634,6 +578,9 @@ void tst_QGLMaterial::colorMaterial()
     QGLMaterial mat3;
     QCOMPARE(mat1.compare(&mat3), compareMetaObjects(mat1.metaObject(), mat3.metaObject()));
     QCOMPARE(mat3.compare(&mat1), -compareMetaObjects(mat1.metaObject(), mat3.metaObject()));
+
+    mat2.setColor(QColor(24, 56, 98, 43));
+    QVERIFY(mat2.isTransparent());
 }
 
 void tst_QGLMaterial::twoSidedMaterial()
@@ -829,21 +776,6 @@ void tst_QGLMaterial::colorMaterialDraw()
     mat1.setColor(Qt::blue);
     QVERIFY(widget->runTest(&mat1));
     QVERIFY(widget->sameColor(Qt::blue));
-}
-
-void tst_QGLMaterial::blendMaterialDraw()
-{
-    QGLBlendMaterial mat1;
-    QGLColorMaterial mat2;
-    mat2.setColor(QColor(0, 255, 0, 128));
-    mat1.setWrap(&mat2);
-
-    widget->setClearColor(Qt::blue);
-
-    QVERIFY(widget->runTest(&mat1));
-    QVERIFY(widget->sameColor(QColor(0, 128, 128)));
-
-    widget->setClearColor(Qt::black);
 }
 
 QTEST_MAIN(tst_QGLMaterial)

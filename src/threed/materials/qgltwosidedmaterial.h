@@ -69,6 +69,7 @@ public:
     QGLMaterial *back() const;
     void setBack(QGLMaterial *material);
 
+    bool isTransparent() const;
     void bind(QGLPainter *painter);
     void release(QGLPainter *painter, QGLAbstractMaterial *next);
     void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);

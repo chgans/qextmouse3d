@@ -113,6 +113,15 @@ void QGLColorMaterial::setColor(const QColor &color)
 /*!
     \reimp
 */
+bool QGLColorMaterial::isTransparent() const
+{
+    Q_D(const QGLColorMaterial);
+    return d->color.alpha() != 255;
+}
+
+/*!
+    \reimp
+*/
 void QGLColorMaterial::bind(QGLPainter *painter)
 {
     Q_D(const QGLColorMaterial);

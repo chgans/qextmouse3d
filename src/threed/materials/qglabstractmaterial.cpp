@@ -137,6 +137,14 @@ QGLMaterial *QGLAbstractMaterial::back() const
 }
 
 /*!
+    \fn bool QGLAbstractMaterial::isTransparent() const
+
+    Returns true if this material is transparent and will therefore
+    require the \c{GL_BLEND} mode to be enabled to render the material.
+    Returns false if the material is fully opaque.
+*/
+
+/*!
     \fn void QGLAbstractMaterial::bind(QGLPainter *painter)
 
     Binds resources to \a painter that are needed to render this

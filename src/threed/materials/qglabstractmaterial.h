@@ -65,6 +65,8 @@ public:
     virtual QGLMaterial *front() const;
     virtual QGLMaterial *back() const;
 
+    virtual bool isTransparent() const = 0;
+
     virtual void bind(QGLPainter *painter) = 0;
     virtual void release(QGLPainter *painter, QGLAbstractMaterial *next) = 0;
     virtual void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
