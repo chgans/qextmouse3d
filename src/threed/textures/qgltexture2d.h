@@ -62,6 +62,7 @@ public:
     ~QGLTexture2D();
 
     bool isNull() const;
+    bool hasAlphaChannel() const;
 
     QSize size() const;
     void setSize(const QSize& value);

@@ -153,6 +153,21 @@ bool QGLTexture2D::isNull() const
 }
 
 /*!
+    Returns true if this texture has an alpha channel; false if the
+    texture is fully opaque.
+*/
+bool QGLTexture2D::hasAlphaChannel() const
+{
+    Q_D(const QGLTexture2D);
+    if (!d->image.isNull())
+        return d->image.hasAlphaChannel();
+    QGLTexture2DTextureInfo *info = d->infos;
+    if (info)
+        return info->tex.hasAlpha();
+    return false;
+}
+
+/*!
     Returns the size of this texture.  If the underlying OpenGL
     implementation requires texture sizes to be a power of two,
     then this function will return the next power of two equal
