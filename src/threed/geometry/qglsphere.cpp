@@ -89,7 +89,7 @@ QT_BEGIN_NAMESPACE
 
     Creates a sphere of \a diameter across (default is 1).  When the sphere
     is recursively subdivided into triangles, it will be subdivided no more
-    than \a depth times (between 1 and 5, default is 3).
+    than \a depth times (between 1 and 10, default is 5).
 */
 
 /*!
@@ -119,10 +119,24 @@ QGLSphere::~QGLSphere()
     \fn int QGLSphere::subdivisionDepth() const
 
     Returns the maximum depth when this sphere is subdivided into triangles.
-    The default is 3.  The following picture shows the effect of depth
-    values between 1 and 5 for a UV sphere:
+    The default is 5.  The following picture shows the effect of depth
+    values between 1 and 10 for a UV sphere:
 
     \image sphere-detail.png
+
+    \table
+    \header \o Level of Detail \o Number of Triangles
+    \row \o 1 \o 64
+    \row \o 2 \o 128
+    \row \o 3 \o 256
+    \row \o 4 \o 512
+    \row \o 5 \o 1024
+    \row \o 6 \o 2048
+    \row \o 7 \o 4096
+    \row \o 8 \o 8192
+    \row \o 9 \o 16384
+    \row \o 10 \o 32768
+    \endtable
 
     \sa setSubdivisionDepth()
 */
@@ -146,17 +160,29 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLSphere& sphere)
     qreal radius = sphere.diameter() / 2.0f;
 
     // Determine the number of slices and stacks to generate.
+    static int const slicesAndStacks[] = {
+        8, 4,
+        8, 8,
+        16, 8,
+        16, 16,
+        32, 16,
+        32, 32,
+        64, 32,
+        64, 64,
+        128, 64,
+        128, 128
+    };
     int divisions = sphere.subdivisionDepth();
     if (divisions < 1)
         divisions = 1;
-    else if (divisions > 5)
-        divisions = 5;
-    int stacks = 2 * (1 << divisions);
-    int slices = 2 * stacks;
+    else if (divisions > 10)
+        divisions = 10;
+    int stacks = slicesAndStacks[divisions * 2 - 1];
+    int slices = slicesAndStacks[divisions * 2 - 2];
 
     // Precompute sin/cos values for the slices and stacks.
-    const int maxSlices = 4 * (1 << 5) + 1;
-    const int maxStacks = 2 * (1 << 5) + 1;
+    const int maxSlices = 128 + 1;
+    const int maxStacks = 128 + 1;
     qreal sliceSin[maxSlices];
     qreal sliceCos[maxSlices];
     qreal stackSin[maxStacks];

@@ -51,6 +51,7 @@ Viewport {
         Sphere {
             radius: 0.5
             x: -2.5
+            y: 0.6
             levelOfDetail: 1
 
             transform: Rotation3D {
@@ -62,6 +63,7 @@ Viewport {
         Sphere {
             radius: 0.5
             x: -1.25
+            y: 0.6
             levelOfDetail: 2
 
             transform: Rotation3D {
@@ -73,6 +75,7 @@ Viewport {
         Sphere {
             radius: 0.5
             x: 0
+            y: 0.6
             levelOfDetail: 3
 
             transform: Rotation3D {
@@ -84,6 +87,7 @@ Viewport {
         Sphere {
             radius: 0.5
             x: 1.25
+            y: 0.6
             levelOfDetail: 4
 
             transform: Rotation3D {
@@ -95,7 +99,68 @@ Viewport {
         Sphere {
             radius: 0.5
             x: 2.5
+            y: 0.6
             levelOfDetail: 5
+
+            transform: Rotation3D {
+                angle: 45
+                axis: Qt.vector3d(1, -1, 1)
+            }
+        }
+
+        Sphere {
+            radius: 0.5
+            x: -2.5
+            y: -0.6
+            levelOfDetail: 6
+
+            transform: Rotation3D {
+                angle: 45
+                axis: Qt.vector3d(1, -1, 1)
+            }
+        }
+
+        Sphere {
+            radius: 0.5
+            x: -1.25
+            y: -0.6
+            levelOfDetail: 7
+
+            transform: Rotation3D {
+                angle: 45
+                axis: Qt.vector3d(1, -1, 1)
+            }
+        }
+
+        Sphere {
+            radius: 0.5
+            x: 0
+            y: -0.6
+            levelOfDetail: 8
+
+            transform: Rotation3D {
+                angle: 45
+                axis: Qt.vector3d(1, -1, 1)
+            }
+        }
+
+        Sphere {
+            radius: 0.5
+            x: 1.25
+            y: -0.6
+            levelOfDetail: 9
+
+            transform: Rotation3D {
+                angle: 45
+                axis: Qt.vector3d(1, -1, 1)
+            }
+        }
+
+        Sphere {
+            radius: 0.5
+            x: 2.5
+            y: -0.6
+            levelOfDetail: 10
 
             transform: Rotation3D {
                 angle: 45

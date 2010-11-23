@@ -55,7 +55,7 @@ class QGLBuilder;
 class Q_QT3D_EXPORT QGLSphere
 {
 public:
-    explicit QGLSphere(qreal diameter = 1.0f, int depth = 3)
+    explicit QGLSphere(qreal diameter = 1.0f, int depth = 5)
         : m_diameter(diameter), m_subdivisionDepth(depth) {}
     virtual ~QGLSphere();
 

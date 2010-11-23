@@ -81,7 +81,7 @@ QT_BEGIN_NAMESPACE
     \code
     Sphere {
         scale: 1.5
-        levelOfDetail: 4
+        levelOfDetail: 6
         axis: Qt.YAxis
         effect: Effect { texture: "moon-texture.jpg" }
     }
@@ -97,7 +97,7 @@ QT_BEGIN_NAMESPACE
 Sphere::Sphere(QObject *parent)
     : QDeclarativeItem3D(parent)
     , m_radius(1.0f)
-    , m_lod(3)
+    , m_lod(5)
     , m_axis(Qt::ZAxis)
 {
 }
@@ -120,25 +120,29 @@ void Sphere::setRadius(qreal radius)
 /*!
     \qmlproperty int Sphere::levelOfDetail
 
-    This property defines the level of detail, between 1 and 5,
+    This property defines the level of detail, between 1 and 10,
     which controls the number of triangles that are generated to
     render the surface of the sphere.  Values outside the range
-    1 to 5 will be clamped to the range when the sphere is drawn.
+    1 to 10 will be clamped to the range when the sphere is drawn.
 
-    The default value is 3.  An increase in 1 in level of detail
-    increases the number of triangles by a factor of 4.  The
-    following picture shows the effect of level of detail values
-    between 1 and 5:
+    The default value is 5.  An increase in 1 in level of detail
+    doubles the number of triangles.  The following picture shows
+    the effect of level of detail values between 1 and 10:
 
     \image sphere-detail.png
 
     \table
     \header \o Level of Detail \o Number of Triangles
     \row \o 1 \o 64
-    \row \o 2 \o 256
-    \row \o 3 \o 1024
-    \row \o 4 \o 4096
-    \row \o 5 \o 16384
+    \row \o 2 \o 128
+    \row \o 3 \o 256
+    \row \o 4 \o 512
+    \row \o 5 \o 1024
+    \row \o 6 \o 2048
+    \row \o 7 \o 4096
+    \row \o 8 \o 8192
+    \row \o 9 \o 16384
+    \row \o 10 \o 32768
     \endtable
 */
 void Sphere::setLevelOfDetail(int lod)
@@ -173,12 +177,12 @@ void Sphere::setAxis(Qt::Axis axis)
 void Sphere::drawItem(QGLPainter *painter)
 {
     // Convert the level of detail into a depth value for QGLSphere.
-    // We cache a maximum of 5 levels of detail for lod animations.
+    // We cache a maximum of 10 levels of detail for lod animations.
     int lod = m_lod;
     if (lod < 1)
         lod = 1;
-    else if (lod > 5)
-        lod = 5;
+    else if (lod > 10)
+        lod = 10;
 
     // Create a new geometry node for this level of detail if necessary.
     QGLSceneNode *geometry = m_lodGeometry.value(lod, 0);

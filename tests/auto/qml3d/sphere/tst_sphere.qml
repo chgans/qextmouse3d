@@ -80,7 +80,7 @@ Viewport {
 
         function test_defaults() {
             compare(sphere1.radius, 1, "radius");
-            compare(sphere1.levelOfDetail, 3, "levelOfDetail");
+            compare(sphere1.levelOfDetail, 5, "levelOfDetail");
             compare(sphere1.axis, Qt.ZAxis, "axis");
         }
 
@@ -104,7 +104,7 @@ Viewport {
         }
 
         function test_levelOfDetailChanged() {
-            compare(sphere4.levelOfDetail, 3, "levelOfDetail");
+            compare(sphere4.levelOfDetail, 5, "levelOfDetail");
             compare(sphere4.lodChanged, 0, "changed 1");
             sphere4.levelOfDetail = 2
             compare(sphere4.lodChanged, 1, "changed 2");

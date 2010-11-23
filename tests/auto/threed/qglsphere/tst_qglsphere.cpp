@@ -64,15 +64,15 @@ void tst_QGLSphere::create()
 {
     QGLSphere sphere1;
     QCOMPARE(sphere1.diameter(), qreal(1.0f));
-    QCOMPARE(sphere1.subdivisionDepth(), 3);
+    QCOMPARE(sphere1.subdivisionDepth(), 5);
 
     QGLSphere sphere2(27.5f);
     QCOMPARE(sphere2.diameter(), qreal(27.5f));
-    QCOMPARE(sphere2.subdivisionDepth(), 3);
+    QCOMPARE(sphere2.subdivisionDepth(), 5);
 
-    QGLSphere sphere3(20.5f, 5);
+    QGLSphere sphere3(20.5f, 4);
     QCOMPARE(sphere3.diameter(), qreal(20.5f));
-    QCOMPARE(sphere3.subdivisionDepth(), 5);
+    QCOMPARE(sphere3.subdivisionDepth(), 4);
 }
 
 void tst_QGLSphere::modify()

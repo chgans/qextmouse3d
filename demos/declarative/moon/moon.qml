@@ -51,7 +51,7 @@ Viewport {
 
     Sphere {
         scale: 1.5
-        levelOfDetail: 4
+        levelOfDetail: 6
         axis: Qt.YAxis
 
         effect: Effect {
