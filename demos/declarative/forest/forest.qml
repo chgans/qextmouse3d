@@ -60,18 +60,22 @@ Viewport {
         }
     }
 
-    Tree { position: Qt.vector3d(-1.5, 0, -1) }
-    Tree { position: Qt.vector3d(-0.5, 0, -1) }
-    Tree { position: Qt.vector3d(0.5, 0, -1) }
-    Tree { position: Qt.vector3d(1.5, 0, -1) }
+    Item3D {
+        sortChildren: Item3D.BackToFront
 
-    Tree { position: Qt.vector3d(0, 0, 0) }
-    Tree { position: Qt.vector3d(-1, 0, 0) }
-    Tree { position: Qt.vector3d(1, 0, 0) }
+        Tree { position: Qt.vector3d(-1.5, 0, -1) }
+        Tree { position: Qt.vector3d(-0.5, 0, -1) }
+        Tree { position: Qt.vector3d(0.5, 0, -1) }
+        Tree { position: Qt.vector3d(1.5, 0, -1) }
 
-    Tree { position: Qt.vector3d(-1.5, 0, 1) }
-    Tree { position: Qt.vector3d(-0.5, 0, 1) }
-    Tree { position: Qt.vector3d(0.5, 0, 1) }
-    Tree { position: Qt.vector3d(1.5, 0, 1) }
+        Tree { position: Qt.vector3d(0, 0, 0) }
+        Tree { position: Qt.vector3d(-1, 0, 0) }
+        Tree { position: Qt.vector3d(1, 0, 0) }
+
+        Tree { position: Qt.vector3d(-1.5, 0, 1) }
+        Tree { position: Qt.vector3d(-0.5, 0, 1) }
+        Tree { position: Qt.vector3d(0.5, 0, 1) }
+        Tree { position: Qt.vector3d(1.5, 0, 1) }
+    }
 }
 //![1]

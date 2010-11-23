@@ -70,6 +70,7 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
+    Q_ENUMS(SortMode)
     Q_ENUMS(CullFace)
     Q_FLAGS(CullFaces)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
@@ -89,6 +90,7 @@ class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarati
     Q_PROPERTY(QDeclarativeListProperty<QDeclarativeTransition> transitions READ transitions DESIGNABLE false)
     Q_PROPERTY(QString state READ state WRITE setState NOTIFY stateChanged)
     Q_PROPERTY(CullFaces cullFaces READ cullFaces WRITE setCullFaces NOTIFY meshChanged)
+    Q_PROPERTY(SortMode sortChildren READ sortChildren WRITE setSortChildren NOTIFY sortChildrenChanged)
     Q_PROPERTY(QString meshNode READ meshNode WRITE setMeshNode NOTIFY meshNodeChanged)
     Q_PROPERTY(bool inheritEvents READ inheritEvents WRITE setInheritEvents NOTIFY inheritEventsChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
@@ -110,6 +112,12 @@ public:
         CullClockwise               = 0x10000
     };
     Q_DECLARE_FLAGS(CullFaces, CullFace)
+
+    enum SortMode
+    {
+        DefaultSorting,
+        BackToFront
+    };
 
     QVector3D position() const;
     void setPosition(const QVector3D& value);
@@ -153,6 +161,9 @@ public:
     CullFaces cullFaces() const;
     void setCullFaces(CullFaces value);
 
+    SortMode sortChildren() const;
+    void setSortChildren(SortMode mode);
+
     QString meshNode() const;
     void setMeshNode(const QString &);
 
@@ -191,6 +202,7 @@ Q_SIGNALS:
     void enabledChanged();
     void childrenChanged();
     void parentChanged();
+    void sortChildrenChanged();
 
 private:
     QDeclarativeItem3DPrivate *d;

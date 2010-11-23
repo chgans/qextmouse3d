@@ -56,6 +56,9 @@ Viewport {
         property bool onStateChangedSignalTriggered: false
         onStateChanged: onStateChangedSignalTriggered = true
 
+        property bool onSortChildrenSignalTriggered: false
+        onSortChildrenChanged: onSortChildrenSignalTriggered = true
+
         Item3D {
             id: child
         }
@@ -199,6 +202,14 @@ Viewport {
                 compare(child.children.length, 1, "child children (B)")
                 verify(item.children[0] == child, "child 0 (B)")
                 verify(child.children[0] == child2, "child 1 (B)")
+            }
+
+            function test_sortChildren()
+            {
+                verify(item.sortChildren == Item3D.DefaultSorting, "default value")
+                item.sortChildren = Item3D.BackToFront;
+                verify(item.sortChildren == Item3D.BackToFront, "back-to-front")
+                verify(item.onSortChildrenSignalTriggered, "sortChildren signal")
             }
         }
     }

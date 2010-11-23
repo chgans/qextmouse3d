@@ -246,6 +246,7 @@ public:
         , light(0)
         , objectPickId(-1)
         , cullFaces(QDeclarativeItem3D::CullDisabled)
+        , sortChildren(QDeclarativeItem3D::DefaultSorting)
         , _stateGroup(0)
         , inheritEvents(false)
         , isEnabled(true)
@@ -267,6 +268,7 @@ public:
     QGLLightParameters *light;
     int objectPickId;
     QDeclarativeItem3D::CullFaces cullFaces;
+    QDeclarativeItem3D::SortMode sortChildren;
     QDeclarativeStateGroup *states();
     QDeclarativeStateGroup *_stateGroup;
     QList<QDeclarativeItem3D *> children;
@@ -1041,6 +1043,36 @@ void QDeclarativeItem3D::setCullFaces(QDeclarativeItem3D::CullFaces value)
 }
 
 /*!
+    \qmlproperty enumeration Item3D::sortChildren
+
+    This property defines the sorting mode to apply to child \l Item3D
+    elements when they are drawn.
+
+    \list
+    \o DefaultSorting No explicit sorting of the children - draw them in
+       whatever order is convenient for the system.  The system may apply
+       its own sorting, grouping similar materials to improve performance.
+       This is the default.
+    \o BackToFront Sort the children to draw them in back-to-front
+       order of their \l position, overriding any system-supplied sorting.
+       BackToFront is useful when the children are partially transparent
+       and must be drawn in back-to-front order for correct rendering.
+    \endlist
+*/
+QDeclarativeItem3D::SortMode QDeclarativeItem3D::sortChildren() const
+{
+    return d->sortChildren;
+}
+
+void QDeclarativeItem3D::setSortChildren(QDeclarativeItem3D::SortMode mode)
+{
+    if (d->sortChildren != mode) {
+        d->sortChildren = mode;
+        emit sortChildrenChanged();
+    }
+}
+
+/*!
     \internal
     Performs the actual drawing of the Item3D using \a painter.
 
@@ -1138,6 +1170,25 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
     //Drawing
     drawItem(painter);
     QList<QDeclarativeItem3D *> list = d->children;
+    if (d->sortChildren == QDeclarativeItem3D::BackToFront) {
+        // Collect up the transformed z positions of all children.
+        QList<qreal> zlist;
+        QMatrix4x4 mv = painter->modelViewMatrix();
+        for (int index = 0; index < list.size(); ++index) {
+            QVector3D position = list.at(index)->position();
+            zlist.append(mv.map(position).z());
+        }
+
+        // Sort the item list (Caution: really dumb sort algorithm).
+        for (int i = 0; i < list.size() - 1; ++i) {
+            for (int j = i + 1; j < list.size(); ++j) {
+                if (zlist.at(i) > zlist.at(j)) {
+                    qSwap(list[i], list[j]);
+                    qSwap(zlist[i], zlist[j]);
+                }
+            }
+        }
+    }
     for (int index = 0; index < list.size(); ++index)
         list.at(index)->draw(painter);
 
