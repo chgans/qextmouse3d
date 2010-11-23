@@ -71,10 +71,6 @@ public:
     virtual void release(QGLPainter *painter, QGLAbstractMaterial *next) = 0;
     virtual void prepareToDraw(QGLPainter *painter, const QGLAttributeSet &attributes);
 
-    virtual int compare(const QGLAbstractMaterial *other) const;
-    static int compare(const QGLAbstractMaterial *material1,
-                       const QGLAbstractMaterial *material2);
-
 Q_SIGNALS:
     void materialChanged();
 };

@@ -69,7 +69,7 @@ QT_BEGIN_NAMESPACE
     It provides a very simple API to bind() a material to a QGLPainter
     when the material needs to be rendered, to release() a material
     from a QGLPainter when the material is no longer needed, and to
-    compare() materials for sorting the render order.
+    prepareToDraw().
 
     Subclasses of QGLAbstractMaterial implement specific materials.
     QGLMaterial provides the traditional ambient, diffuse, specular, etc
@@ -227,73 +227,6 @@ void QGLAbstractMaterial::prepareToDraw(QGLPainter *painter, const QGLAttributeS
 {
     Q_UNUSED(painter);
     Q_UNUSED(attributes);
-}
-
-/*!
-    Compares this material to \a other and returns -1, 0, or 1
-    depending upon whether this material is less than, equal to,
-    or greater than \a other.  This is used to sort materials
-    for more efficient rendering: materials of the same type
-    are rendered together to minimize GL state switching.
-
-    The default implementation orders materials based on their
-    QObject metaobject type, and orders materials of the same type
-    based on their pointer.  Subclasses may override this function
-    to provide better ordering for specific types of materials:
-
-    \code
-    int MyMaterial::compare(const QGLAbstractMaterial *other) const
-    {
-        const MyMaterial *mymat = qobject_cast<const MyMaterial *>(other);
-        if (!mymat)
-            return QGLAbstractMaterial::compare(other);
-        if (blendFactor() < mymat->blendFactor())
-            return -1;
-        else if (blendFactor() > mymat->blendFactor())
-            return 1;
-        else
-            return 0;
-    }
-    \endcode
-*/
-int QGLAbstractMaterial::compare(const QGLAbstractMaterial *other) const
-{
-    const QMetaObject *meta1 = metaObject();
-    const QMetaObject *meta2 = other->metaObject();
-    if (meta1 < meta2)
-        return -1;
-    else if (meta1 > meta2)
-        return 1;
-    if (this < other)
-        return -1;
-    else if (this > other)
-        return 1;
-    else
-        return 0;
-}
-
-/*!
-    Compares \a material1 to \a material2 and returns -1, 0, or 1
-    depending upon whether \a material1 is less than, equal to,
-    or greater than \a material2.  This is used to sort materials
-    for more efficient rendering: materials of the same type
-    are rendered together to minimize GL state switching.
-
-    It is safe to call this function with either \a material1 or
-    \a material2 set to null.  Null materials always sort lowest
-    in the material order.
-*/
-int QGLAbstractMaterial::compare(const QGLAbstractMaterial *material1,
-                                 const QGLAbstractMaterial *material2)
-{
-    if (!material1)
-        return material2 ? -1 : 0;
-    else if (!material2)
-        return 1;
-    else if (material1 == material2)
-        return 0;
-    else
-        return material1->compare(material2);
 }
 
 /*!

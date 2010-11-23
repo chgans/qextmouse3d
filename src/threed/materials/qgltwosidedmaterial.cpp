@@ -235,22 +235,6 @@ void QGLTwoSidedMaterial::prepareToDraw
 }
 
 /*!
-    \reimp
-*/
-int QGLTwoSidedMaterial::compare(const QGLAbstractMaterial *other) const
-{
-    Q_D(const QGLTwoSidedMaterial);
-    const QGLTwoSidedMaterial *twoside
-         = qobject_cast<const QGLTwoSidedMaterial *>(other);
-    if (!twoside)
-        return QGLAbstractMaterial::compare(other);
-    int cmp = QGLAbstractMaterial::compare(d->front, twoside->d_ptr->front);
-    if (cmp)
-        return cmp;
-    return QGLAbstractMaterial::compare(d->back, twoside->d_ptr->back);
-}
-
-/*!
     \fn void QGLTwoSidedMaterial::frontChanged()
 
     Signal that is emitted when the front() material pointer changes.

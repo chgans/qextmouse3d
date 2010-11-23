@@ -69,7 +69,6 @@ private slots:
 
     void standardMaterial();
     void textureLayers();
-    void customMaterial();
     void colorMaterial();
     void twoSidedMaterial();
 
@@ -486,67 +485,6 @@ void tst_QGLMaterial::textureLayers()
     QCOMPARE(mat1.textureLayerCount(), 4);
 }
 
-class CustomMaterial : public QGLAbstractMaterial
-{
-    Q_OBJECT
-public:
-    CustomMaterial(QObject *parent = 0) : QGLAbstractMaterial(parent) {}
-
-    bool isTransparent() const { return false; }
-    void bind(QGLPainter *) {}
-    void release(QGLPainter *, QGLAbstractMaterial *) {}
-};
-
-class OtherCustomMaterial : public QGLAbstractMaterial
-{
-    Q_OBJECT
-public:
-    OtherCustomMaterial(QObject *parent = 0) : QGLAbstractMaterial(parent) {}
-
-    bool isTransparent() const { return false; }
-    void bind(QGLPainter *) {}
-    void release(QGLPainter *, QGLAbstractMaterial *) {}
-};
-
-static int compareMetaObjects(const QMetaObject *m1, const QMetaObject *m2)
-{
-    if (m1 < m2)
-        return -1;
-    else if (m1 > m2)
-        return 1;
-    else
-        return 0;
-}
-
-static int compareObjects(const QObject *o1, const QObject *o2)
-{
-    if (o1 < o2)
-        return -1;
-    else if (o1 > o2)
-        return 1;
-    else
-        return 0;
-}
-
-void tst_QGLMaterial::customMaterial()
-{
-    CustomMaterial mat1;
-    QVERIFY(mat1.front() == 0);
-    QVERIFY(mat1.back() == 0);
-
-    QCOMPARE(mat1.compare(&mat1), 0);
-
-    OtherCustomMaterial mat2;
-    QCOMPARE(mat1.compare(&mat2), compareMetaObjects(mat1.metaObject(), mat2.metaObject()));
-    QCOMPARE(mat2.compare(&mat1), -compareMetaObjects(mat1.metaObject(), mat2.metaObject()));
-
-    CustomMaterial mat3;
-    QCOMPARE(mat1.compare(&mat3), compareObjects(&mat1, &mat3));
-    QCOMPARE(mat3.compare(&mat1), -compareObjects(&mat1, &mat3));
-    QCOMPARE(mat3.compare(&mat2), compareMetaObjects(mat3.metaObject(), mat2.metaObject()));
-    QCOMPARE(mat2.compare(&mat3), -compareMetaObjects(mat3.metaObject(), mat2.metaObject()));
-}
-
 void tst_QGLMaterial::colorMaterial()
 {
     QGLColorMaterial mat1;
@@ -565,22 +503,8 @@ void tst_QGLMaterial::colorMaterial()
     QCOMPARE(colorSpy.count(), 1);
     QCOMPARE(materialSpy.count(), 1);
 
-    QGLColorMaterial mat2;
-    mat2.setColor(Qt::red);
-    QCOMPARE(mat1.compare(&mat2), 0);
-    QCOMPARE(mat2.compare(&mat1), 0);
-    QCOMPARE(mat1.compare(&mat1), 0);
-
-    mat2.setColor(Qt::green);
-    QCOMPARE(mat1.compare(&mat2), 1);   // 0xFFFF0000 > 0xFF00FF00
-    QCOMPARE(mat2.compare(&mat1), -1);
-
-    QGLMaterial mat3;
-    QCOMPARE(mat1.compare(&mat3), compareMetaObjects(mat1.metaObject(), mat3.metaObject()));
-    QCOMPARE(mat3.compare(&mat1), -compareMetaObjects(mat1.metaObject(), mat3.metaObject()));
-
-    mat2.setColor(QColor(24, 56, 98, 43));
-    QVERIFY(mat2.isTransparent());
+    mat1.setColor(QColor(24, 56, 98, 43));
+    QVERIFY(mat1.isTransparent());
 }
 
 void tst_QGLMaterial::twoSidedMaterial()

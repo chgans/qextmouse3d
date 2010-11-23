@@ -152,26 +152,6 @@ void QGLColorMaterial::prepareToDraw
 }
 
 /*!
-    \reimp
-*/
-int QGLColorMaterial::compare(const QGLAbstractMaterial *other) const
-{
-    const QGLColorMaterial *colmat =
-        qobject_cast<const QGLColorMaterial *>(other);
-    if (!colmat)
-        return QGLAbstractMaterial::compare(other);
-    Q_D(const QGLColorMaterial);
-    QRgb col1 = d->color.rgba();
-    QRgb col2 = colmat->d_ptr->color.rgba();
-    if (col1 < col2)
-        return -1;
-    else if (col1 > col2)
-        return 1;
-    else
-        return 0;
-}
-
-/*!
     \fn void QGLColorMaterial::colorChanged()
 
     Signal that is emitted when color() changes.
