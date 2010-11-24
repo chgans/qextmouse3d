@@ -136,7 +136,8 @@ SkyBox::SkyBox(QGLView *view, const QString &imagePath)
     m_scene->setEffectEnabled(true);
     m_scene->setParent(this);
 
-    setImagePath(imagePath.isEmpty() ? QString(":/") : imagePath);
+    QString resourceBase = QLatin1String(":/");
+    setImagePath(imagePath.isEmpty() ? resourceBase : imagePath);
 }
 
 
@@ -146,9 +147,11 @@ void SkyBox::setImagePath(const QString &imagePath)
     static QStringList expected;
 
     if (expected.isEmpty())
-        expected << "east" << "up" << "west" << "down" << "south" << "north";
+        expected << QLatin1String("east") << QLatin1String("up") << QLatin1String("west")
+                 << QLatin1String("down") << QLatin1String("south") << QLatin1String("north");
     if (expected2.isEmpty())
-        expected2 << "right" << "top" << "left" << "bottom" << "front" << "back";
+        expected2 << QLatin1String("right") << QLatin1String("top") << QLatin1String("left")
+                  << QLatin1String("bottom") << QLatin1String("front") << QLatin1String("back");
     if (imagePath != m_imagePath)
     {
         m_imagePath = imagePath;

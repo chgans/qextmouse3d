@@ -309,7 +309,7 @@ QString QGLInfo::reportEGLConfigInfo() const
     EGLContext ctx = eglGetCurrentContext();
     EGLint cfgnum = 0;
     if (eglQueryContext(dpy, ctx, EGL_CONFIG_ID, &cfgnum)) {
-        d += QString("Window configuration in use: ") + QString::number(cfgnum) +
+        d += QLatin1String("Window configuration in use: ") + QString::number(cfgnum) +
              QLatin1String("\n\n");
     }
     if (!eglGetConfigs(dpy, 0, 0, &count) || count < 1)
