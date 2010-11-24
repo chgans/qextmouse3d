@@ -289,6 +289,49 @@ void QGraphicsLookAtTransform::setPreserveUpVector(bool value)
     }
 }
 
+/*!
+    \property QGraphicsLookAtTransform::subject
+    \brief The local-relative coordinates that are being looked at
+
+    This property indicates what this transform is trying to look at.  After
+    applying the transformation,
+    Forwards is always considered to be in the direction of the positive Z axis
+    in local space
+
+ther the transform should rotate around a second
+    axis to face directly at the subject (when the subject is the camera, this
+    is known as "spherical billboarding").
+
+    If the value for this property is true, then the object will have
+    its upVector's orientation preserved, rotating around only this axis and
+    not directly facing the subject unless it happens to fall on the correct
+    plane (when the subject is the camera, this is known as known as
+    "cylindrical billboarding").
+
+    The default value for this property is false.
+*/
+
+/*!
+    \qmlproperty bool LookatTransform::preserveUpVector
+
+    This property indicates whether the transform should rotate around a second
+    axis to face directly at the subject (known as a "spherical look-at").
+
+    If the value for this property is true, then the object will have
+    its upVector's orientation preserved, rotating around only this axis and
+    not directly facing the subject unless it happens to fall on the correct
+    plane (known as a "cylindrical look-at").
+
+    The default value for this property is false.
+*/
+
+/*!
+    \fn void QGraphicsLookAtTransform::subjectChanged()
+
+    Signal that is emitted when subject() changes.
+*/
+
+
 QVector3D QGraphicsLookAtTransform::subject() const
 {
     Q_D(const QGraphicsLookAtTransform);
@@ -306,6 +349,33 @@ void QGraphicsLookAtTransform::setSubject(QVector3D value)
         emit transformChanged();
     }
 };
+
+/*!
+    \property QGraphicsLookAtTransform::upVector
+    \brief The primary axis of rotation.
+
+    This property indicates the first axis around which the object should
+    rotate to face the subject.  If preserveUpVector is set true, will not
+    change the object's orientation relative to the up vector at all.
+
+    The default value for this property is Qt.vector3d(0, 1, 0).
+*/
+
+/*!
+    \qmlproperty bool LookatTransform::upVector
+
+    This property indicates the first axis around which the object should
+    rotate to face the subject.  If preserveUpVector is set true, will not
+    change the object's orientation relative to the up vector at all.
+
+    The default value for this property is Qt.vector3d(0, 1, 0).
+*/
+
+/*!
+    \fn void QGraphicsLookAtTransform::upVectorChanged()
+
+    Signal that is emitted when upVector() changes.
+*/
 
 QVector3D QGraphicsLookAtTransform::upVector() const
 {
@@ -325,11 +395,83 @@ void QGraphicsLookAtTransform::setUpVector(QVector3D value)
     }
 };
 
+/*!
+    \property QGraphicsLookAtTransform::primaryAngle
+    \brief true to preserve the up orientation.
+
+    This property indicates the amount of rotation around the upVector that
+    this transform applies.
+
+    It is calculated based on subject and upVector, and cannot be set directly.
+
+    \sa subject, upVector, secondaryAngle
+*/
+
+/*!
+    \qmlproperty real LookatTransform::primaryAngle
+
+    This property indicates the amount of rotation around the upVector that
+    this transform applies.
+
+    It is calculated based on subject and upVector, and cannot be set directly.
+
+    \sa subject, upVector, secondaryAngle
+*/
+
+/*!
+    \fn void QGraphicsLookAtTransform::primaryAngleChanged()
+
+    Signal that is emitted when primaryAngle() changes.
+*/
+
 qreal QGraphicsLookAtTransform::primaryAngle() const
 {
     Q_D(const QGraphicsLookAtTransform);
     return d->primaryRotation.angle();
 }
+
+/*!
+    \property QGraphicsLookAtTransform::secondaryAngle
+    \brief true to preserve the up orientation.
+
+    This property indicates the amount of tilt this transformation applies.
+
+    The secondary rotation is around a vector that is orthogonal to the up
+    vector and the subject vector.  If we consider the analogy of turning a
+    head to look at something, the up vector is up, the primary rotation
+    control looking side to side, and the secondary rotation will control
+    looking up and down.
+
+    It is calculated based on subject and upVector, and cannot be set directly.
+
+    If preserveUpVector is true, this value has no effect.
+
+    \sa subject, upVector, primaryAngle, preserveUpVector
+*/
+
+/*!
+    \qmlproperty real LookatTransform::secondaryAngle
+
+    This property indicates the amount of tilt this transformation applies.
+
+    The secondary rotation is around a vector that is orthogonal to the up
+    vector and the subject vector.  If we consider the analogy of turning a
+    head to look at something, the up vector is up, the primary rotation
+    control looking side to side, and the secondary rotation will control
+    looking up and down.
+
+    It is calculated based on subject and upVector, and cannot be set directly.
+
+    If preserveUpVector is true, this value has no effect.
+
+    \sa subject, upVector, primaryAngle, preserveUpVector
+*/
+
+/*!
+    \fn void QGraphicsLookAtTransform::secondaryAngleChanged()
+
+    Signal that is emitted when secondaryAngle() changes.
+*/
 
 qreal QGraphicsLookAtTransform::secondaryAngle() const
 {
