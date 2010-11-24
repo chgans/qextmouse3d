@@ -298,7 +298,7 @@ QVector3D QGraphicsLookAtTransform::subject() const
 void QGraphicsLookAtTransform::setSubject(QVector3D value)
 {
     Q_D(QGraphicsLookAtTransform);
-    if(d->subject != value)
+    if (d->subject != value)
     {
         d->subject = value;
         d->calculateRotationValues();
@@ -316,7 +316,7 @@ QVector3D QGraphicsLookAtTransform::upVector() const
 void QGraphicsLookAtTransform::setUpVector(QVector3D value)
 {
     Q_D(QGraphicsLookAtTransform);
-    if(d->upVector != value)
+    if (d->upVector != value)
     {
         d->upVector = value;
         d->calculateRotationValues();
@@ -347,7 +347,7 @@ void QGraphicsLookAtTransform::applyTo(QMatrix4x4 *matrix) const
     bool animationTest = false;
     // If we're looking at the camera, and not animating,
     // we can use a cheap cheat
-    if(cameraTest && !animationTest)
+    if (cameraTest && !animationTest)
     {
         if (!d->preserveUpVector)
             cheatingSphericalBillboard(matrix);
@@ -360,7 +360,7 @@ void QGraphicsLookAtTransform::applyTo(QMatrix4x4 *matrix) const
     d->primaryRotation.applyTo(matrix);
     // then, if preserveVector is not set, perform a second rotation
     // around the cross product of the lookAt and the upVector
-    if(!preserveUpVector())
+    if (!preserveUpVector())
         d->secondaryRotation.applyTo(matrix);
     else
         qWarning() << "preserveUpVector ignored in LookAt transform";
