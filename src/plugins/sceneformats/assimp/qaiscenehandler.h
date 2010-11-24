@@ -49,6 +49,10 @@
 
 #include <QtCore/qurl.h>
 
+Q_DECLARE_FLAGS(aiPostProcessFlags, aiPostProcessSteps);
+Q_DECLARE_OPERATORS_FOR_FLAGS(aiPostProcessFlags);
+
+
 QT_BEGIN_NAMESPACE
 
 class QIODevice;
@@ -83,12 +87,12 @@ public:
     bool showWarnings() const { return m_showWarnings; }
     bool mayHaveLinesPoints() const { return m_mayHaveLinesPoints; }
 
-    aiPostProcessSteps options() const { return m_options; }
+    aiPostProcessFlags options() const { return m_options; }
     quint32 removeComponentFlags() const { return m_removeComponentFlags; }
     quint32 removeSortFlags() const { return m_removeSortFlags; }
 
 private:
-    aiPostProcessSteps m_options;
+    aiPostProcessFlags m_options;
     bool m_showWarnings;
     bool m_mayHaveLinesPoints;
     int m_meshSplitVertexLimit;

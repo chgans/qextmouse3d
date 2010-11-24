@@ -50,10 +50,25 @@
 #include <QtCore/qdir.h>
 #include <QtCore/qdebug.h>
 
+
+#define qAiPostProcessPreset ( \
+    aiProcess_CalcTangentSpace           | \
+    aiProcess_GenSmoothNormals           | \
+    aiProcess_JoinIdenticalVertices      | \
+    aiProcess_ImproveCacheLocality       | \
+    aiProcess_LimitBoneWeights           | \
+    aiProcess_RemoveRedundantMaterials   | \
+    aiProcess_SplitLargeMeshes           | \
+    aiProcess_Triangulate                | \
+    aiProcess_GenUVCoords                | \
+    aiProcess_SortByPType                | \
+    aiProcess_FindDegenerates            | \
+    aiProcess_FindInvalidData )
+
 QT_BEGIN_NAMESPACE
 
 QAiSceneHandler::QAiSceneHandler()
-    : m_options(aiProcessPreset_TargetRealtime_Quality)  // see decodeOptions
+    : m_options(qAiPostProcessPreset)
     , m_showWarnings(false)
     , m_mayHaveLinesPoints(false)
 {
@@ -79,9 +94,11 @@ void QAiSceneHandler::decodeOptions(const QString &options)
     if (options.isEmpty())
         return;
 
-    // see aiPostProcess.h for this default set of values - its exactly
-    // what we want, but allow the user to override some settings
-    m_options = static_cast<aiPostProcessSteps>(aiProcessPreset_TargetRealtime_Quality);
+    // See aiPostProcess.h for aiProcessPreset_TargetRealtime_Quality
+    // - a useful default set of values - its exactly what we want but
+    // wont compile with flags, so redefined with the above macro.
+    // Also, allow the user to override some settings
+    m_options = qAiPostProcessPreset;
 
     static const char *validOptions[] = {
         "NoOptions"
@@ -183,12 +200,12 @@ void QAiSceneHandler::decodeOptions(const QString &options)
                 m_removeComponentFlags &= ~aiComponent_COLORS;
                 break;
             case VertexSplitLimitx2:
-                m_meshSplitVertexLimit << 1;
+                m_meshSplitVertexLimit <<= 1;
                 // repeating this in the option string more than once works...
                 break;
             case TriangleSplitLimitx2:
                 // ....and we're OK with that, just don't overdo it
-                m_meshSplitTriangleLimit << 1;
+                m_meshSplitTriangleLimit <<= 1;
                 break;
             }
         }
@@ -202,20 +219,22 @@ void QAiSceneHandler::decodeOptions(const QString &options)
 
 QGLAbstractScene *QAiSceneHandler::read()
 {
-    importer.SetIOHandler(new AiLoaderIOSystem(device()));
+    m_importer.SetIOHandler(new AiLoaderIOSystem(device()));
 
     Assimp::Logger *log = 0;
     Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;
     if (m_showWarnings)
     {
         severity = Assimp::Logger::VERBOSE;
-        log = Assimp::DefaultLogger::create("AssimpLog.txt", severity, aiDefaultLogStream_FILE);
-    }
+        int streams = aiDefaultLogStream_FILE |
 #ifdef Q_CC_MSVC
-    log->attachStream(aiDefaultLogStream_DEBUGGER, severity);
+                aiDefaultLogStream_DEBUGGER
 #else
-    log->attachStream(aiDefaultLogStream_STDERR, severity);
+                aiDefaultLogStream_STDERR
 #endif
+                ;
+        log = Assimp::DefaultLogger::create("AssimpLog.txt", severity, streams);
+    }
 
     QString path;
     QUrl u = url();
@@ -243,7 +262,7 @@ QGLAbstractScene *QAiSceneHandler::read()
 
     // the importer owns the scene, so when the it goes out of scope on exiting
     // this function the scene will get destroyed
-    const aiScene* scene = importer.ReadFile(path.toStdString(), m_options);
+    const aiScene* scene = m_importer.ReadFile(path.toStdString(), m_options);
 
     if (scene && scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
     {
@@ -263,7 +282,7 @@ QGLAbstractScene *QAiSceneHandler::read()
     if (!scene)
     {
         QString c = QDir::current().absolutePath();
-        qWarning("Asset importer error: %s\n", importer.GetErrorString());
+        qWarning("Asset importer error: %s\n", m_importer.GetErrorString());
         if (log)
             qWarning("For details check log: %s/AssimpLog.txt\n", qPrintable(c));
         return 0;

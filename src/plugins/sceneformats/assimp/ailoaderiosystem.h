@@ -54,8 +54,8 @@ public:
     ~AiLoaderIOSystem();
     virtual bool Exists( const char* path) const;
     virtual char getOsSeparator() const;
-    virtual IOStream* Open(const char* pFile, const char* pMode = "rb");
-    virtual void Close( IOStream* pFile) = 0;
+    virtual Assimp::IOStream* Open(const char* pFile, const char* pMode = "rb");
+    virtual void Close(Assimp::IOStream* pFile);
 private:
     QIODevice *m_device;
 };

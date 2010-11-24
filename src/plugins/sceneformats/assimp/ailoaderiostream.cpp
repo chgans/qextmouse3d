@@ -66,7 +66,7 @@ size_t AiLoaderIOStream::Read( void* pvBuffer, size_t pSize, size_t pCount)
 
 size_t AiLoaderIOStream::Write( const void* pvBuffer, size_t pSize, size_t pCount)
 {
-    qint64 result = m_device->write((char*)buffer, pSize * pCount);
+    qint64 result = m_device->write((char*)pvBuffer, pSize * pCount);
     m_errorState = (result == -1);
     if (m_errorState)
         fprintf(stderr, "AI write error: %s\n", qPrintable(m_device->errorString()));
@@ -80,13 +80,13 @@ aiReturn AiLoaderIOStream::Seek(size_t pOffset, aiOrigin pOrigin)
     switch (pOrigin)
     {
     case aiOrigin_SET:
-        m_errorState = m_device->seek(offset);
+        m_errorState = m_device->seek(pOffset);
         break;
     case aiOrigin_CUR:
-        m_errorState = m_device->seek(m_device->pos() + offset);
+        m_errorState = m_device->seek(m_device->pos() + pOffset);
         break;
     case aiOrigin_END:
-        m_errorState = m_device->seek(m_device->size() + offset);
+        m_errorState = m_device->seek(m_device->size() + pOffset);
         break;
     default:
         Q_ASSERT(0);

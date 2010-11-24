@@ -45,8 +45,6 @@
 
 #include "qglscenenode.h"
 
-#include <lib3ds/file.h>
-
 QT_BEGIN_NAMESPACE
 
 /*!

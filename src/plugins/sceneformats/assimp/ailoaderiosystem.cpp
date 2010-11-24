@@ -55,23 +55,25 @@ AiLoaderIOSystem::~AiLoaderIOSystem()
     // nothing to do - we don't own m_device
 }
 
-virtual bool AiLoaderIOSystem::Exists(const char* path) const
+bool AiLoaderIOSystem::Exists(const char* path) const
 {
     return QFile::exists(QLatin1String(path));
 }
 
-virtual char AiLoaderIOSystem::getOsSeparator() const
+char AiLoaderIOSystem::getOsSeparator() const
 {
     return QDir::separator().toLatin1();
 }
 
-virtual IOStream* AiLoaderIOSystem::Open(const char* pFile, const char* pMode)
+Assimp::IOStream* AiLoaderIOSystem::Open(const char* pFile, const char* pMode)
 {
+    Q_UNUSED(pFile);
+    Q_UNUSED(pMode);
     AiLoaderIOStream *s = new AiLoaderIOStream(m_device);
     return s;
 }
 
-virtual void AiLoaderIOSystem::Close(IOStream* stream)
+void AiLoaderIOSystem::Close(Assimp::IOStream* stream)
 {
     m_device->close();
     delete stream;

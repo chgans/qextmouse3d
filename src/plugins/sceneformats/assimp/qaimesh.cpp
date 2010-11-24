@@ -71,22 +71,22 @@ QGLSceneNode *QAiMesh::loadTriangles()
 {
     QGLBuilder builder;
     QGeometryData data;
-    for (int i = 0; i < m_mesh->mNumVertices; ++i)
+    for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
         data.appendVertex(qv3d(m_mesh->mVertices[i]));
     if (m_mesh->HasNormals())
-        for (int i = 0; i < m_mesh->mNumVertices; ++i)
+        for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
             data.appendNormal(qv3d(m_mesh->mNormals[i]));
     int k = m_mesh->GetNumUVChannels();
     for (int t = 0; t < k; ++t)
     {
         if (m_mesh->mNumUVComponents[t] != 2)
             Assimp::DefaultLogger::get()->warn("Tex co-ords only supports U & V");
-        for (int i = 0; i < m_mesh->mNumVertices; ++i)
-            data.appendTexCoord(qv2d(m_mesh->mTextureCoords[t][i]), QGL::TextureCoord0 + t);
+        for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
+            data.appendTexCoord(qv2d(m_mesh->mTextureCoords[t][i]), static_cast<QGL::VertexAttribute>(QGL::TextureCoord0 + t));
     }
-    for (int i = 0; i < m_mesh->mNumFaces; ++i)
+    for (unsigned int i = 0; i < m_mesh->mNumFaces; ++i)
     {
-        aiFace *face = m_mesh->mFaces[i];
+        aiFace *face = &m_mesh->mFaces[i];
         data.appendIndices(face->mIndices[0], face->mIndices[1], face->mIndices[2]);
     }
     // invoke raw mode (with indexes)
@@ -94,12 +94,12 @@ QGLSceneNode *QAiMesh::loadTriangles()
     return builder.finalizedSceneNode();
 }
 
-static inline assertOnePrimitiveType(aiMesh *mesh)
+static inline void assertOnePrimitiveType(aiMesh *mesh)
 {
 #ifndef QT_NO_DEBUG
     int k;  // count the number of bits set in the primitives
     unsigned int msk = 0x01;
-    for (unsigned int p = mesh->mPrimitiveTypes; p; p >> 1)
+    for (unsigned int p = mesh->mPrimitiveTypes; p; p >>= 1)
         if (p & msk)
             ++k;
     Q_ASSERT(k == 1);  // Assimp SortByPType promises this
@@ -132,4 +132,5 @@ QGLSceneNode *QAiMesh::build()
         Assimp::DefaultLogger::get()->warn("Unsupported primitive type");
         return 0;
     }
+    return s;
 }
