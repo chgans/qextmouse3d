@@ -362,9 +362,6 @@ void QGraphicsLookAtTransform::applyTo(QMatrix4x4 *matrix) const
     // around the cross product of the lookAt and the upVector
     if (!preserveUpVector())
         d->secondaryRotation.applyTo(matrix);
-    else
-        qWarning() << "preserveUpVector ignored in LookAt transform";
-
 }
 
 /*!
