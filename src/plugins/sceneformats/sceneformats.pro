@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = 3ds bezier obj
+SUBDIRS = 3ds bezier obj assimp
