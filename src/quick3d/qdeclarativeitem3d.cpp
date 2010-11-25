@@ -306,6 +306,10 @@ public:
     static QGraphicsTransform3D *pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int);
     static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list);
     QList<QGraphicsTransform3D *> pretransforms;
+
+    // transform convenience function
+    void applyLocalTransforms(QMatrix4x4 &m);
+
 };
 
 QDeclarativeItem3DPrivate::~QDeclarativeItem3DPrivate()
@@ -478,6 +482,34 @@ int QDeclarativeItem3DPrivate::children_count(QDeclarativeListProperty<QDeclarat
 {
     return static_cast<QDeclarativeItem3D*>(prop->object)->d->children.count();
 }
+
+/*!
+    \internal
+    Applies position, scale and rotation transforms for this item3d to matrix
+    \a m
+*/
+void QDeclarativeItem3DPrivate::applyLocalTransforms(QMatrix4x4 &m)
+{
+    m.translate(position);
+    int transformCount = transforms.count();
+    if (transformCount>0) {
+        // The transformations are applied in reverse order of their
+        // lexical appearance in the QML file.
+        for (int index = transformCount - 1; index >= 0; --index) {
+            transforms.at(index)->applyTo(&m);
+        }
+    }
+    if (scale != 1.0f)
+        m.scale(scale);
+    transformCount = pretransforms.count();
+    if (transformCount>0) {
+        // Pre-transforms for orienting the model.
+        for (int index = transformCount - 1; index >= 0; --index) {
+            pretransforms.at(index)->applyTo(&m);
+        }
+    }
+}
+
 
 
 QDeclarativeStateGroup *QDeclarativeItem3DPrivate::states()
@@ -1144,28 +1176,9 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
 
     //1) Item Transforms
     painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(d->position);
-    int transformCount = d->transforms.count();
-    if (transformCount>0) {
-        // The transformations are applied in reverse order of their
-        // lexical appearance in the QML file.
-        QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = transformCount - 1; index >= 0; --index) {
-            d->transforms.at(index)->applyTo(&m);
-        }
-        painter->modelViewMatrix() = m;
-    }
-    if (d->scale != 1.0f)
-        painter->modelViewMatrix().scale(d->scale);
-    transformCount = d->pretransforms.count();
-    if (transformCount>0) {
-        // Pre-transforms for orienting the model.
-        QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = transformCount - 1; index >= 0; --index) {
-            d->pretransforms.at(index)->applyTo(&m);
-        }
-        painter->modelViewMatrix() = m;
-    }
+    QMatrix4x4 m = painter->modelViewMatrix();
+    d->applyLocalTransforms(m);
+    painter->modelViewMatrix() = m;
 
     //Drawing
     drawItem(painter);
