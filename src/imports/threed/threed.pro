@@ -20,7 +20,8 @@ SOURCES += \
     floatingitem.cpp \
     floatingitemeffect.cpp \
     stereoview.cpp \
-    stereovieweffect.cpp
+    stereovieweffect.cpp \
+    qgraphicslookattransform.cpp
 HEADERS += \
     qt3dnamespace.h \
     scale3d.h \
@@ -28,7 +29,8 @@ HEADERS += \
     floatingitem.h \
     floatingitemeffect.h \
     stereoview.h \
-    stereovieweffect.h
+    stereovieweffect.h \
+    qgraphicslookattransform.h
 
 !contains(QT_CONFIG, opengles1) {
     SOURCES += shaderprogram.cpp
