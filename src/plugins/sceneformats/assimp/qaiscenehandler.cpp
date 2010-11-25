@@ -102,8 +102,9 @@ void QAiSceneHandler::decodeOptions(const QString &options)
     // Also, allow the user to override some settings
     m_options = qAiPostProcessPreset;
 
+    // Has to match the enum
     static const char *validOptions[] = {
-        "NoOptions"
+        "NoOptions",
         "ShowWarnings",
         "CalculateNormals",
         "ForceFaceted",
@@ -116,25 +117,8 @@ void QAiSceneHandler::decodeOptions(const QString &options)
         "FlipWinding",
         "UseVertexColors",
         "VertexSplitLimitx2",
-        "TriangleSplitLimitx2"
-    };
-
-    static int optionKeys[] = {
-        NoOptions,
-        ShowWarnings,
-        CalculateNormals,
-        ForceFaceted,
-        IncludeAllMaterials,
-        IncludeLinesPoints,
-        FixNormals,
-        DeDupMeshes,
-        Optimize,
-        FlipUVs,
-        FlipWinding,
-        UseVertexColors,
-        VertexSplitLimitx2,
-        TriangleSplitLimitx2,
-        -1
+        "TriangleSplitLimitx2",
+        0
     };
 
     QStringList opList = options.simplified().split(QLatin1Char(' '), QString::SkipEmptyParts);
@@ -145,14 +129,12 @@ void QAiSceneHandler::decodeOptions(const QString &options)
         op = op.trimmed();
         fprintf(stderr, "Looking for option >>%s<<\n", qPrintable(op));
         int k = 0;
-        for ( ; optionKeys[k] != -1; ++k)
-            if (op == QString(QLatin1String(validOptions[k])))
+        for ( ; validOptions[k]; ++k)
+            if (op == QString::fromLatin1(validOptions[k]))
                 break;
-        if (optionKeys[k] != -1) // found
+        if (validOptions[k]) // found
         {
-            qDebug() << "   option found at:" << k << validOptions[k];
-
-            Options o = static_cast<Options>(optionKeys[k]);
+            Options o = static_cast<Options>(k);
             switch (o)
             {
             case NoOptions:

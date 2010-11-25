@@ -1,6 +1,9 @@
 # This file mostly g3nerated by "qmake -project" - use that to regenerate if large scale
 # changes occur to this directory
 
+# AssImp expects this to be defined on debug builds
+CONFIG(debug, debug|release) : DEFINES+=_DEBUG
+
 DEPENDPATH += \
         $$PWD \
         $$PWD/code \

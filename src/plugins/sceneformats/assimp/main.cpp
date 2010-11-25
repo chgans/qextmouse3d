@@ -83,7 +83,6 @@ QStringList QAiScenePlugin::keys() const
         for ( ; it != mimetypes.constEnd(); ++it)
             result << it.value();
     }
-    qDebug() << "Asset Importer reports support for:" << result;
     return result;
 }
 
