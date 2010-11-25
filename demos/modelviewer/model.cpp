@@ -176,6 +176,7 @@ void Model::importModel()
     QString options = getOptions();
     QTime time;
     time.start();
+    options = "ShowWarnings ShowWarnings";
     m_sceneManager = QGLAbstractScene::loadScene(m_fullPath, QString(), options);
     int ms = time.elapsed();
     emit modelLoadTime(ms);
