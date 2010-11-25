@@ -71,6 +71,8 @@ QAiSceneHandler::QAiSceneHandler()
     : m_options(qAiPostProcessPreset)
     , m_showWarnings(false)
     , m_mayHaveLinesPoints(false)
+    , m_meshSplitVertexLimit(2000)
+    , m_meshSplitTriangleLimit(2000)
 {
     // by default remove per vertex colors from the data - no-one uses that in
     // models - if they need it it can be turned on with UseVertexColors
@@ -131,21 +133,25 @@ void QAiSceneHandler::decodeOptions(const QString &options)
         FlipWinding,
         UseVertexColors,
         VertexSplitLimitx2,
-        TriangleSplitLimitx2
+        TriangleSplitLimitx2,
         -1
     };
 
     QStringList opList = options.simplified().split(QLatin1Char(' '), QString::SkipEmptyParts);
+
     for (int i = 0; i < opList.count(); ++i)
     {
         QString op = opList.at(i);
         op = op.trimmed();
+        fprintf(stderr, "Looking for option >>%s<<\n", qPrintable(op));
         int k = 0;
         for ( ; optionKeys[k] != -1; ++k)
-            if (op == QLatin1String(validOptions[k]))
+            if (op == QString(QLatin1String(validOptions[k])))
                 break;
         if (optionKeys[k] != -1) // found
         {
+            qDebug() << "   option found at:" << k << validOptions[k];
+
             Options o = static_cast<Options>(optionKeys[k]);
             switch (o)
             {
@@ -215,6 +221,10 @@ void QAiSceneHandler::decodeOptions(const QString &options)
                      qPrintable(options));
         }
     }
+
+    qDebug() << "ShowWarnigs:" << m_showWarnings;
+    qDebug() << "Got option string \"" << options << "\" coded to:" << opList << "-- options:"
+                << m_options;
 }
 
 QGLAbstractScene *QAiSceneHandler::read()

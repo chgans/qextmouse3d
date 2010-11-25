@@ -76,8 +76,8 @@ QStringList QAiScenePlugin::keys() const
     {
         QString xt = extnList.at(i);
         xt = xt.simplified();
-        if (xt.startsWith('.'))
-            xt = xt.mid(1);
+        if (xt.startsWith(QLatin1String("*.")))
+            xt = xt.mid(2);
         result << xt;
         QMap<QString, QString>::const_iterator it = mimetypes.constFind(xt);
         for ( ; it != mimetypes.constEnd(); ++it)
