@@ -121,9 +121,9 @@ void Point::setPointSize(qreal pointSize)
 void Point::drawItem(QGLPainter *painter)
 {
     QVector3DArray vertices;
-    vertices.append(m_position.x(), m_position.y(), m_position.z());
+    vertices.append(m_location.x(), m_location.y(), m_location.z());
     painter->setVertexAttribute(QGL::Position, vertices);
-    glPointSize(m_size);
+    glPointSize(m_pointSize);
     painter->draw(QGL::Points, 1);
 }
 

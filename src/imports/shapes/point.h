@@ -60,9 +60,9 @@ public:
     ~Point() {}
 
     QVector3D location() const {return m_location;}
-    void setLocation(QVector3D m_location);
+    void setLocation(QVector3D location);
 
-    qreal pointSize() const {return pointSize;}
+    qreal pointSize() const {return m_pointSize;}
     void setPointSize(qreal pointSize);
 
 Q_SIGNALS:
