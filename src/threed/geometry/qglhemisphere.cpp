@@ -39,14 +39,14 @@
 **
 ****************************************************************************/
 
-#include "QGLHemiSphere.h"
+#include "qglhemisphere.h"
 #include "qglbuilder.h"
 #include <QtCore/qmath.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QGLHemisphere
+    \class QGLHemiSphere
     \brief The QGLHemiSphere class represents the geometry of a simple hemisphere in 3D space.
     \since 4.8
     \ingroup qt3d
@@ -91,7 +91,8 @@ QT_BEGIN_NAMESPACE
     is recursively subdivided into triangles, it will be subdivided no more
     than \a depth times (between 1 and 5, default is 3).
 
-
+    If \a base is true, the hemisphere will be drawn with a bottom circle, creating
+    an enclosed solid.
 */
 
 /*!
@@ -152,8 +153,8 @@ QGLHemiSphere::~QGLHemiSphere()
 /*!
     \fn void QGLHemiSphere::setBaseEnabled(bool base)
 
-    Set whether the base of the hemisphere will be created when
-    building the mesh.  If \a base is true, the end-cap will be 
+    Set whether the bottom of the hemisphere will be created when
+    building the mesh.  If \a base is true, the end-cap will be
 	created.
 
     \sa baseEnabled()
