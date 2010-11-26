@@ -101,7 +101,7 @@ Capsule::Capsule(QObject *parent) :
 }
 
 /*!
-    \qmlproperty real Capsule::setDiameterTop
+    \qmlproperty real Capsule::radius
 
     This property defines the top diameter of the capsule.
     The default value is 1.
@@ -116,7 +116,7 @@ void Capsule::setRadius(qreal radius)
 }
 
 /*!
-    \qmlproperty real Capsule::setHeight
+    \qmlproperty real Capsule::height
 
     This property defines the height of the capsule.
     The default value is 1.

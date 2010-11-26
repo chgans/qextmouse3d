@@ -95,9 +95,9 @@ Cylinder::Cylinder(QObject *parent) :
 }
 
 /*!
-    \qmlproperty real Cylinder::setDiameterTop
+    \qmlproperty real Cylinder::radius
 
-    This property defines the top diameter of the cylinder.
+    This property defines the radius of the cylinder.
     The default value is 1.
 */
 void Cylinder::setRadius(qreal radius)
@@ -110,7 +110,7 @@ void Cylinder::setRadius(qreal radius)
 }
 
 /*!
-    \qmlproperty real Cylinder::setHeight
+    \qmlproperty real Cylinder::height
 
     This property defines the height of the cylinder.
     The default value is 1.

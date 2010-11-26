@@ -88,7 +88,7 @@ Line::Line(QObject *parent) :
 
 
 /*!
-    \qmlproperty real Line::setStartPoint
+    \qmlproperty real Line::startPoint
 
     This property defines the start point of the line.
     The default value is (0,0,0).
@@ -103,22 +103,22 @@ void Line::setStartPoint(QVector3D startPos)
 }
 
 /*!
-    \qmlproperty real Line::setEndPoint
+    \qmlproperty real Line::endPoint
 
     This property defines the end point of the line.
     The default value is (1,1,1).
 */
-void Line::setEndPoint(QVector3D startPos)
+void Line::setEndPoint(QVector3D endPos)
 {
-    if (m_startPos != startPos) {
-        m_startPos = startPos;
-        emit startPointChanged();
+    if (m_endPos != endPos) {
+        m_endPos = endPos;
+        emit endPointChanged();
         update();
     }
 }
 
 /*!
-    \qmlproperty real Line::setSize
+    \qmlproperty real Line::width
 
     This property defines the width of the line.  The
     default is 1.0
