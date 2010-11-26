@@ -49,32 +49,32 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Line : public QDeclarativeItem3D
+class Point : public QDeclarativeItem3D
 {
     Q_OBJECT
-    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged)
-    Q_PROPERTY(qreal size READ size WRITE setSize NOTIFY sizeChanged)
+    Q_PROPERTY(QVector3D location READ location WRITE setLocation NOTIFY locationChanged)
+    Q_PROPERTY(qreal pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
 
 public:
     explicit Point(QObject *parent = 0);
     ~Point() {}
 
-    QVector3D position() const {return m_position;}
-    void setPosition(QVector3D m_position);
+    QVector3D location() const {return m_location;}
+    void setLocation(QVector3D m_location);
 
-    qreal size() const {return size;}
-    void setSize(qreal size);
+    qreal pointSize() const {return pointSize;}
+    void setPointSize(qreal pointSize);
 
 Q_SIGNALS:
-    void positionChanged();
-    void sizeChanged();
+    void locationChanged();
+    void pointSizeChanged();
 
 protected:
     void drawItem(QGLPainter *painter);
 
 private:
-    QVector3D m_position;
-    qreal m_size;
+    QVector3D m_location;
+    qreal m_pointSize;
 };
 
 QML_DECLARE_TYPE(Point)

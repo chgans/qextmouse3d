@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
 
     \code
     Point {
-        position: Qt.vector3D(0,0,0)
+        location: Qt.vector3D(0,0,0)
         effect: Effect {
             color: "#aaca00"
         }
@@ -78,39 +78,39 @@ QT_BEGIN_NAMESPACE
 */
 Point::Point(QObject *parent) :
     QDeclarativeItem3D(parent)
-    , m_position(QVector3D(0.0f, 0.0f, 0.0f))
-    , m_size(1.0f)
+    , m_location(QVector3D(0.0f, 0.0f, 0.0f))
+    , m_pointSize(1.0f)
 {
     //meh
 }
 
 
 /*!
-    \qmlproperty real Point::setPosition
+    \qmlproperty QVector3D Point::location
 
-    This property defines the point to be drawn.
+    This property defines the locaiton of the point to be drawn.
     The default value is (0,0,0).
 */
-void Point::setPosition(QVector3D position)
+void Point::setLocation(QVector3D location)
 {
-    if (m_position != position) {
-        m_position = position;
-        emit positionChanged();
+    if (m_location != location) {
+        m_location = location;
+        emit locationChanged();
         update();
     }
 }
 
 /*!
-    \qmlproperty real Point::setSize
+    \qmlproperty qreal Point::pointSize
 
     This property defines the size of the point.  The
     default is 1.0
 */
-void Point::setSize(qreal size)
+void Point::setPointSize(qreal pointSize)
 {
-    if (m_size != size) {
-        m_size = size;
-        emit sizeChanged();
+    if (m_pointSize != pointSize) {
+        m_pointSize = pointSize;
+        emit pointSizeChanged();
         update();
     }
 }
