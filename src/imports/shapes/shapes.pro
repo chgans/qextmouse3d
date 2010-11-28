@@ -15,9 +15,17 @@ QT += declarative opengl network
 
 SOURCES += \
     sphere.cpp \
-    shapes.cpp
+    shapes.cpp \
+    cylinder.cpp \
+    capsule.cpp \
+    line.cpp \
+    point.cpp
 HEADERS += \
-    sphere.h
+    sphere.h \
+    cylinder.h \
+    capsule.h \
+    line.h \
+    point.h
 
 qdeclarativesources.files += \
     qmldir \
