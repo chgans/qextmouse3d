@@ -39,36 +39,61 @@
 **
 ****************************************************************************/
 
-#ifndef QGLOBJSCENEHANDLER_H
-#define QGLOBJSCENEHANDLER_H
+#include <QtTest/QtTest>
 
-#include "qglsceneformatplugin.h"
-#include "qglmaterialcollection.h"
-#include <QtCore/qmap.h>
-#include <QtCore/qset.h>
+#include "qglabstractscene.h"
 
-QT_BEGIN_NAMESPACE
-
-//! [1]
-class QGLObjSceneHandler : public QGLSceneFormatHandler
+class tst_LoadModel : public QObject
 {
+    Q_OBJECT
 public:
-    QGLObjSceneHandler();
-    QGLAbstractScene *read();
-//! [1]
-    void decodeOptions(const QString &options);
+    tst_LoadModel() {}
+    ~tst_LoadModel() {}
 
-private:
-    void loadMaterialLibrary(const QString& name);
-    void loadMaterials(QIODevice *device);
-    QGLTexture2D *loadTexture(const QString& name);
-
-    QGLMaterialCollection *palette;
-    bool forceSmooth;
-//! [2]
+private slots:
+    void create_data();
+    void create();
 };
-//! [2]
 
-QT_END_NAMESPACE
+void tst_LoadModel::create_data()
+{
+    QTest::addColumn<QString>("model");
+    QTest::addColumn<QString>("options");
+    QTest::addColumn<int>("expected_vertices");
+    QTest::addColumn<int>("expected_indices");
 
-#endif
+    QTest::newRow("cube-obj-faceted")
+            << "basic-cube.obj" << ""
+               << 24 << 36;
+    QTest::newRow("cube-obj-smooth")
+            << "basic-cube.obj" << "ForceSmooth"
+               << 8 << 36;
+}
+
+void tst_LoadModel::create()
+{
+    QFETCH(QString, model);
+    QFETCH(QString, options);
+    QFETCH(int, expected_vertices);
+    QFETCH(int, expected_indices);
+
+    QGLAbstractScene *scene = 0;
+    QString model_path(QLatin1String(":/data/models/%1"));
+    model_path = model_path.arg(model);
+
+    scene = QGLAbstractScene::loadScene(model_path, QString(), options);
+    QVERIFY(scene != 0);
+
+    QGLSceneNode *node = scene->mainNode();
+    //qDumpScene(node);
+
+    QGeometryData data = node->children().at(0)->geometry();
+    //qDebug() << data;
+
+    QCOMPARE(data.vertices().count(), expected_vertices);
+    QCOMPARE(data.indices().count(), expected_indices);
+}
+
+QTEST_APPLESS_MAIN(tst_LoadModel)
+
+#include "tst_load_model.moc"

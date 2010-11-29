@@ -51,6 +51,13 @@
 
 QT_BEGIN_NAMESPACE
 
+QGLObjSceneHandler::QGLObjSceneHandler()
+    : QGLSceneFormatHandler()
+    , palette(0)
+    , forceSmooth(false)
+{
+}
+
 // Documentation for OBJ and MTL files from:
 // http://www.fileformat.info/format/wavefrontobj/egff.htm
 // http://www.fileformat.info/format/material/
@@ -125,6 +132,12 @@ static QColor objReadColor(const QByteArray& line, int posn)
     return QColor::fromRgbF(red, green, blue, alpha);
 }
 
+void QGLObjSceneHandler::decodeOptions(const QString &options)
+{
+    if (options.contains(QLatin1String("ForceSmooth")))
+        forceSmooth = true;
+}
+
 QGLAbstractScene *QGLObjSceneHandler::read()
 {
     QByteArray line;
@@ -137,7 +150,7 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     qreal x, y, z;
     quint32 fields = 0;
     QGLMaterial *material = 0;
-    QGL::Smoothing smoothing = QGL::Faceted;
+    QGL::Smoothing smoothing = forceSmooth ? QGL::Faceted : QGL::Smooth;
     QGLSceneNode *defaultNode;
 
     // Create the geometry builder and start an initial Faceted section.
