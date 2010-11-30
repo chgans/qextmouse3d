@@ -64,7 +64,8 @@ private:
     QGLTexture2D *loadTexture(const QString& name);
 
     QGLMaterialCollection *palette;
-    bool forceSmooth;
+    QGL::Smoothing smoothing;
+    bool smoothingForced;
 //! [2]
 };
 //! [2]

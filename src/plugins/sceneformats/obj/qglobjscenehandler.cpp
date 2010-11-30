@@ -54,7 +54,8 @@ QT_BEGIN_NAMESPACE
 QGLObjSceneHandler::QGLObjSceneHandler()
     : QGLSceneFormatHandler()
     , palette(0)
-    , forceSmooth(false)
+    , smoothing(QGL::Faceted)
+    , smoothingForced(false)
 {
 }
 
@@ -135,7 +136,15 @@ static QColor objReadColor(const QByteArray& line, int posn)
 void QGLObjSceneHandler::decodeOptions(const QString &options)
 {
     if (options.contains(QLatin1String("ForceSmooth")))
-        forceSmooth = true;
+    {
+        smoothingForced = true;
+        smoothing = QGL::Smooth;
+    }
+    else
+    {
+        smoothingForced = true;
+        smoothing = QGL::Faceted;
+    }
 }
 
 QGLAbstractScene *QGLObjSceneHandler::read()
@@ -150,7 +159,6 @@ QGLAbstractScene *QGLObjSceneHandler::read()
     qreal x, y, z;
     quint32 fields = 0;
     QGLMaterial *material = 0;
-    QGL::Smoothing smoothing = forceSmooth ? QGL::Faceted : QGL::Smooth;
     QGLSceneNode *defaultNode;
 
     // Create the geometry builder and start an initial Faceted section.
@@ -236,11 +244,12 @@ QGLAbstractScene *QGLObjSceneHandler::read()
                 posn = objSkipNonWS(line, posn, 0);
                 posn = objSkipWS(line, posn);
             }
-            // if a different combination of fields start a new section
+            // if geometry has already been added with a different combination
+            // of fields start a new section
             // the primitive doesn't get posted to the section until op.end()
             if (op.fields() != fields)
             {
-                if (fields)
+                if (fields && builder.currentNode()->count() > 0)
                     builder.newSection(smoothing);
                 fields = op.fields();
             }
@@ -272,26 +281,42 @@ QGLAbstractScene *QGLObjSceneHandler::read()
             QByteArray filename = line.mid(posn);
             loadMaterialLibrary(QString::fromLocal8Bit(filename.constData(), filename.size()));
         } else if (keyword == "s") {
-            // Set smoothing on or off.
-            posn = objSkipWS(line, posn);
-            index = objSkipNonWS(line, posn, 0);
-            QByteArray arg = line.mid(posn, index - posn);
-            QGL::Smoothing smooth;
-            if (arg == "on" || arg == "1")
-                smooth = QGL::Smooth;
-            else
-                smooth = QGL::Faceted;
-            if (smoothing != smooth) {
-                smoothing = smooth;
-                builder.newSection(smooth);
+            if (!smoothingForced)
+            {
+                // Set smoothing on or off.
+                posn = objSkipWS(line, posn);
+                index = objSkipNonWS(line, posn, 0);
+                QByteArray arg = line.mid(posn, index - posn);
+                QGL::Smoothing smooth;
+                if (arg == "on" || arg == "1")
+                    smooth = QGL::Smooth;
+                else
+                    smooth = QGL::Faceted;
+                if (smoothing != smooth) {
+                    smoothing = smooth;
+                    builder.newSection(smooth);
+                }
             }
         } else if (keyword == "g" || keyword == "o") {
             // Label the faces that follow as part of a named group or object.
             posn = objSkipWS(line, posn);
             QByteArray rest = line.mid(posn);
             QString objectName = QString::fromLocal8Bit(rest.constData(), rest.size());
-            builder.popNode();
-            QGLSceneNode *node = builder.pushNode();
+            QGLSceneNode *node = builder.currentNode();
+            // if content has already been added to a current group, then
+            // create a new node in the scene graph for the group, otherwise
+            // just label the existing group with this name
+            QGLSceneNode *p = qobject_cast<QGLSceneNode*>(node->parent());
+            if (node->count() > 0 && p && p->objectName().isEmpty())
+            {
+                node = p;
+            }
+            else
+            {
+                builder.popNode();
+                node = builder.currentNode();
+                builder.pushNode();
+            }
             node->setObjectName(objectName);
         } else {
             qWarning() << "unsupported obj command: " << keyword.constData();

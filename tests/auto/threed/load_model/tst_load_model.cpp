@@ -59,21 +59,81 @@ void tst_LoadModel::create_data()
 {
     QTest::addColumn<QString>("model");
     QTest::addColumn<QString>("options");
+    QTest::addColumn<QString>("importName");
+    QTest::addColumn<QString>("nodeName");
+    QTest::addColumn<QString>("materialName");
+    QTest::addColumn<QRgb>("materialDiffuse");
+    QTest::addColumn<QString>("texture");
     QTest::addColumn<int>("expected_vertices");
     QTest::addColumn<int>("expected_indices");
 
-    QTest::newRow("cube-obj-faceted")
+    ////// --- OBJ ---
+
+    // default is faceted for obj
+    QTest::newRow("cube-obj-default")
             << "basic-cube.obj" << ""
-               << 24 << 36;
+            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << qRgb(188, 32, 32) << "tex"
+            << 24 << 36;
+
+    // force a faceted load
+    QTest::newRow("cube-obj-faceted")
+            << "basic-cube.obj" << "ForceFaceted"
+            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << qRgb(188, 32, 32) << "tex"
+            << 24 << 36;
+
+    // force a smooth load
     QTest::newRow("cube-obj-smooth")
             << "basic-cube.obj" << "ForceSmooth"
-               << 8 << 36;
+            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << qRgb(188, 32, 32) << "tex"
+            << 8 << 36;
+
+
+    ////// --- 3DS ---
+
+    // default is faceted
+    QTest::newRow("cube-3ds-default")
+            << "basic-cube.3ds" << ""
+            << "LIB3DS" << "CubeObject" << "Red"
+            << qRgb(234, 40, 40) << "tex"
+            << 24 << 36;
+
+    // force smooth
+    QTest::newRow("cube-3ds-smooth")
+            << "basic-cube.3ds" << "ForceSmooth"
+            << "LIB3DS" << "CubeObject" << "Red"
+            << qRgb(234, 40, 40) << "tex"
+            << 8 << 36;
+
+
+    ////// --- wave model ---
+
+    // default is faceted
+    QTest::newRow("wave-obj-default")
+            << "wave.obj" << ""
+               << "__main" << "Wave_Obj" << ""
+                  << qRgb(0, 0, 0) << ""
+                     << 1296 << 1296;
+
+    // force smooth
+    QTest::newRow("wave-obj-default")
+            << "wave.obj" << "ForceSmooth"
+               << "__main" << "Wave_Obj" << ""
+                  << qRgb(0, 0, 0) << ""
+                     << 259 << 1296;
 }
 
 void tst_LoadModel::create()
 {
     QFETCH(QString, model);
     QFETCH(QString, options);
+    QFETCH(QString, importName);
+    QFETCH(QString, nodeName);
+    QFETCH(QString, materialName);
+    QFETCH(QRgb, materialDiffuse);
+    QFETCH(QString, texture);
     QFETCH(int, expected_vertices);
     QFETCH(int, expected_indices);
 
@@ -85,12 +145,39 @@ void tst_LoadModel::create()
     QVERIFY(scene != 0);
 
     QGLSceneNode *node = scene->mainNode();
-    //qDumpScene(node);
+    QCOMPARE(node->objectName(), importName);
 
-    QGeometryData data = node->children().at(0)->geometry();
-    //qDebug() << data;
+    QGLSceneNode *foundGeometry = 0;
+    QGLSceneNode *foundNode = nodeName.isEmpty() ? (QGLSceneNode *)1 : 0;
+    QGLSceneNode *foundMaterial = materialName.isEmpty() ? (QGLSceneNode *)1 : 0;
+    QList<QGLSceneNode*> list = node->allChildren();
+    for (int i = 0; i < list.size(); ++ i)
+    {
+        if (!foundGeometry && list.at(i)->geometry().count() > 0)
+            foundGeometry = list.at(i);
+        if (!foundNode && list.at(i)->objectName() == nodeName)
+            foundNode = list.at(i);
+        if (!foundMaterial && list.at(i)->material() &&
+                (list.at(i)->material()->objectName() == materialName))
+            foundMaterial = list.at(i);
+    }
+
+    QVERIFY(foundGeometry != 0);
+    QVERIFY(foundNode != 0);
+    QVERIFY(foundMaterial != 0);
+
+    int r, g, b;
+    if (!materialName.isEmpty())
+    {
+        foundMaterial->material()->diffuseColor().getRgb(&r, &g, &b);
+        QCOMPARE(qRgb(r, g, b), materialDiffuse);
+    }
+
+    QGeometryData data = foundGeometry->geometry();
+    QVERIFY(data.count() > 0);
 
     QCOMPARE(data.vertices().count(), expected_vertices);
+    QCOMPARE(data.normals().count(), expected_vertices);
     QCOMPARE(data.indices().count(), expected_indices);
 }
 
