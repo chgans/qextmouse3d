@@ -176,6 +176,9 @@ public:
     void classBegin();
     void componentComplete();
 
+    Q_INVOKABLE QVector3D localToWorld(const QVector3D &point) const;
+    Q_INVOKABLE QVector3D worldToLocal(const QVector3D &point) const;
+
 public Q_SLOTS:
     void update();
 
