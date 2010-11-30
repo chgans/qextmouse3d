@@ -1590,9 +1590,10 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-    if (node->geometry() == 0 || !node->geometry().isNull())
+    if (!node->geometry().isEmpty())
     {
-        fprintf(stderr, "%s geometry: %d verts\n", qPrintable(ind), node->geometry().count());
+        fprintf(stderr, "%s geometry: %d indexes, %d vertices\n",
+                qPrintable(ind), node->geometry().count(), node->geometry().count(QGL::Position));
     }
     else
     {
