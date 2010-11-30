@@ -66,7 +66,7 @@ class QDeclarativeViewport;
 class QDeclarativeState;
 class QDeclarativeTransition;
 
-class QDeclarativeItem3D : public QObject, public QDeclarativeParserStatus
+class Q_QT3D_QUICK_EXPORT QDeclarativeItem3D : public QObject, public QDeclarativeParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QDeclarativeParserStatus)
