@@ -1327,7 +1327,7 @@ QMatrix4x4 QDeclarativeItem3DPrivate::localToWorldMatrix() const
     QDeclarativeItem3D *anscestor = parent;
 
     result = localTransforms() * result;
-    while(anscestor)
+    while (anscestor)
     {
         result = anscestor->d->localTransforms() * result;
         anscestor = anscestor->d->parent;
@@ -1343,7 +1343,7 @@ QMatrix4x4 QDeclarativeItem3DPrivate::worldToLocalMatrix() const
 {
     bool inversionSuccessful;
     QMatrix4x4 result = localToWorldMatrix().inverted(&inversionSuccessful);
-    if(inversionSuccessful)
+    if (inversionSuccessful)
         return result;
     qWarning() << "QDeclarativeItem3D - matrix inversion failed trying to generate worldToLocal Matrix";
     return QMatrix4x4();
