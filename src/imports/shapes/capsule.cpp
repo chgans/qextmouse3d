@@ -42,7 +42,7 @@
 #include "capsule.h"
 #include "qglbuilder.h"
 #include "qglcylinder.h"
-#include "qglhemisphere.h"
+#include "qgldome.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -56,13 +56,13 @@ QT_BEGIN_NAMESPACE
     The Capsule element in QML provides a simple way to create a capsule
     object, usually for testing material effects.  For example,
     the following QML code displays a green cylinder of with a uniform
-    diameter of 0.5, and a height of 3.0, centered with its base on the
+    diameter of 0.5, and a length of 3.0, centered vertically on the
     origin:
 
     \code
     Capsule {
         radius: 0.5
-        height: 3.0
+        length: 3.0
         effect: Effect {
             color: "#aaca00"
         }
@@ -81,11 +81,8 @@ QT_BEGIN_NAMESPACE
     for additional slices and layers to be drawn if more detailed meshes
     are required.
 
-    Note that the height of the capsule should always exceed its
-    diameter (a capsule with equal height and diameter is a sphere, while
-    a capsule wherein the height is less than the diameter is a geometric
-    impossibility).  Any such non-sensical meansurements shall have
-    its height adjusted to be equal to its diameter.
+    Note that the length of the capsule should always exceed its
+    diameter to be considered valid.
 
     \sa Item3D
 */
@@ -95,7 +92,7 @@ QT_BEGIN_NAMESPACE
 Capsule::Capsule(QObject *parent) :
     QDeclarativeItem3D(parent)
     , m_radius(1.0)
-    , m_height(4.0)
+    , m_length(4.0)
     , m_lod(1)
 {
 }
@@ -103,7 +100,7 @@ Capsule::Capsule(QObject *parent) :
 /*!
     \qmlproperty real Capsule::radius
 
-    This property defines the top diameter of the capsule.
+    This property defines the radius of the capsule.
     The default value is 1.
 */
 void Capsule::setRadius(qreal radius)
@@ -116,16 +113,16 @@ void Capsule::setRadius(qreal radius)
 }
 
 /*!
-    \qmlproperty real Capsule::height
+    \qmlproperty real Capsule::length
 
-    This property defines the height of the capsule.
+    This property defines the length of the capsule.
     The default value is 1.
 */
-void Capsule::setHeight(qreal height)
+void Capsule::setLength(qreal length)
 {
-    if (m_height != height) {
-        m_height = height;
-        emit heightChanged();
+    if (m_length != length) {
+        m_length = length;
+        emit lengthChanged();
         update();
     }
 }
@@ -144,7 +141,7 @@ void Capsule::setHeight(qreal height)
     level of detail as specified in the Cylinder and Sphere
     objects.
 
-    \sa Sphere, Cylinder
+    \sa Sphere::levelOfDetail(), Cylinder::levelOfDetail()
 */
 void Capsule::setLevelOfDetail(int lod)
 {
@@ -171,6 +168,9 @@ void Capsule::drawItem(QGLPainter *painter)
     // Create a new geometry node for this level of detail if necessary.
     QGLSceneNode *geometry = m_lodGeometry.value(lod, 0);
     if (!geometry) {
+
+        qWarning() << "Creating new geometry";
+
         QGLBuilder builder;
 
         //For the cylinder
@@ -182,13 +182,13 @@ void Capsule::drawItem(QGLPainter *painter)
 
         //sanity check - the height of the capsule must exceed its diameter.  A minimal capsule is
         //a sphere - a capsule where diameter = height.
-        if (m_height<2.0*m_radius) {
-            qWarning() << "Height of capsule must exceed its diameter - correcting height.";
-            m_height = 2*m_radius;
+        if (m_length<2.0*m_radius) {
+            qWarning() << "Length of capsule must exceed its diameter - correcting height.";
+            m_length = 2*m_radius;
         }
 
         qreal diameter = m_radius+m_radius;
-        qreal cylinderHeight = m_height - diameter;
+        qreal cylinderHeight = m_length - diameter;
         qreal offset = cylinderHeight/2.0;
 
         builder << QGL::Faceted;
@@ -199,14 +199,14 @@ void Capsule::drawItem(QGLPainter *painter)
         builder.currentNode()->setLocalTransform(translateMatrix);
 
         builder.newNode();
-        builder << QGLHemiSphere(diameter, divisions, false);
+        builder << QGLDome(diameter, divisions, false);
         translateMatrix.setToIdentity();
         translateMatrix.rotate(180, 0, 1,0);
         translateMatrix.translate(0, 0, offset);
         builder.currentNode()->setLocalTransform(translateMatrix);
 
         builder.newNode();
-        builder << QGLHemiSphere(diameter, divisions, false);
+        builder << QGLDome(diameter, divisions, false);
         translateMatrix.setToIdentity();
         translateMatrix.translate(0, 0, offset);
         builder.currentNode()->setLocalTransform(translateMatrix);

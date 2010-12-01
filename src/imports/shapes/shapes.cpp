@@ -42,6 +42,10 @@
 #include <QtDeclarative/qdeclarativeextensionplugin.h>
 
 #include "sphere.h"
+#include "cylinder.h"
+#include "capsule.h"
+#include "line.h"
+#include "point.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -53,6 +57,11 @@ public:
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("Qt3D.Shapes"));
         qmlRegisterType<Sphere>(uri,1,0,"Sphere");
+        qmlRegisterType<Cylinder>(uri,1,0,"Cylinder");
+        qmlRegisterType<Capsule>(uri,1,0,"Capsule");
+        qmlRegisterType<Line>(uri,1,0,"Line");
+        qmlRegisterType<Point>(uri,1,0,"Point");
+
     }
 };
 

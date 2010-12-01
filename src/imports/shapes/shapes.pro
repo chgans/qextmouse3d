@@ -31,6 +31,8 @@ qdeclarativesources.files += \
     qmldir \
     Cube.qml \
     cube.obj \
+    Quad.qml \
+    quad.obj \
     Teapot.qml \
     teapot.bez
 

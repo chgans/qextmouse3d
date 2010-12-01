@@ -52,29 +52,30 @@ QT_BEGIN_NAMESPACE
 class Point : public QDeclarativeItem3D
 {
     Q_OBJECT
-    Q_PROPERTY(QVector3D location READ location WRITE setLocation NOTIFY locationChanged)
     Q_PROPERTY(qreal pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
+    Q_PROPERTY(QVariant vertices READ vertices WRITE setVertices NOTIFY verticesChanged)
 
 public:
     explicit Point(QObject *parent = 0);
     ~Point() {}
 
-    QVector3D location() const {return m_location;}
-    void setLocation(QVector3D location);
+    QVariant vertices() const;
+    void setVertices(const QVariant &value);
 
     qreal pointSize() const {return m_pointSize;}
     void setPointSize(qreal pointSize);
 
 Q_SIGNALS:
-    void locationChanged();
+    void verticesChanged();
     void pointSizeChanged();
 
 protected:
     void drawItem(QGLPainter *painter);
 
 private:
-    QVector3D m_location;
     qreal m_pointSize;
+    QVariant m_vertices;
+    QVector3DArray m_vertexArray;
 };
 
 QML_DECLARE_TYPE(Point)

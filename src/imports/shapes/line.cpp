@@ -52,13 +52,17 @@ QT_BEGIN_NAMESPACE
     \inherits Item3D
 
     The Line element in QML provides a means of drawing lines in a 3D
-    environment.  For example, the following QML code line between point
-    (0,0,0) and (1,1,1).
+    environment.  For example, the following QML code draws a line between 
+	point (0,0,0), (1,1,1), then to (-1,-1,-1).
 
     \code
+	
     Line {
-        startPoint: Qt.vector3D(0,0,0)
-        endPoint: Qt.vector3D(1,1,1)
+        vertices: [
+           0, 0, 0,
+           1, 1, 1,
+           -1, -1, -1
+		]
         effect: Effect {
             color: "#aaca00"
         }
@@ -80,42 +84,38 @@ QT_BEGIN_NAMESPACE
 */
 Line::Line(QObject *parent) :
     QDeclarativeItem3D(parent)
-    , m_startPos(QVector3D(0.0f, 0.0f, 0.0f))
-    , m_endPos(QVector3D(1.0f, 1.0f, 1.0f))
+	,m_width(3.0)
 {
     //meh
 }
 
-
 /*!
-    \qmlproperty real Line::startPoint
+   \qmlproperty list<real> Line::vertices
 
-    This property defines the start point of the line.
-    The default value is (0,0,0).
+   This property defines the positions for all of the vertices in the
+   line strip.  Each vertex is given by three real values, defining
+   the x, y, and z co-ordinates of the vertex.
 */
-void Line::setStartPoint(QVector3D startPos)
+
+QVariant Line::vertices() const
 {
-    if (m_startPos != startPos) {
-        m_startPos = startPos;
-        emit startPointChanged();
-        update();
-    }
+   return m_vertices;
 }
 
-/*!
-    \qmlproperty real Line::endPoint
-
-    This property defines the end point of the line.
-    The default value is (1,1,1).
-*/
-void Line::setEndPoint(QVector3D endPos)
+void Line::setVertices(const QVariant &value)
 {
-    if (m_endPos != endPos) {
-        m_endPos = endPos;
-        emit endPointChanged();
-        update();
+    m_vertices = value;
+
+    //Update the actual QVector3DArray containing the line points.
+    m_vertexArray.clear();
+    QVariantList vertlist = m_vertices.toList();
+    for (int index = 0; (index + 2) < vertlist.size(); index += 3) {
+        m_vertexArray.append(qreal(vertlist.at(index).toDouble()), qreal(vertlist.at(index + 1).toDouble()), qreal(vertlist.at(index + 2).toDouble()));
     }
+    emit verticesChanged();
+    update();
 }
+
 
 /*!
     \qmlproperty real Line::width
@@ -128,7 +128,7 @@ void Line::setWidth(qreal width)
     if (m_width != width) {
         m_width = width;
         emit widthChanged();
-        update();
+        update();               
     }
 }
 
@@ -137,11 +137,12 @@ void Line::setWidth(qreal width)
 */
 void Line::drawItem(QGLPainter *painter)
 {
-    QVector3DArray vertices;
-    vertices.append(m_startPos.x(), m_startPos.y(), m_startPos.z());
-    vertices.append(m_endPos.x(), m_endPos.y(), m_endPos.z());
-    painter->setVertexAttribute(QGL::Position, vertices);
+    //Placeholder GL code using basic painter system.
+    //
+    //This code is intended only as demonstrative code until
+    //the builder system supports lines/points etc.
+    painter->clearAttributes();
+    painter->setVertexAttribute(QGL::Position, m_vertexArray);
     glLineWidth(m_width);
-    painter->draw(QGL::Lines, 2);
+    painter->draw(QGL::LineStrip, 2);
 }
-

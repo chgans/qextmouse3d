@@ -43,6 +43,8 @@ symbian {
                                 qshapesqmlplugin.dll \
                                 $$PWD/../../src/imports/shapes/Cube.qml \
                                 $$PWD/../../src/imports/shapes/cube.obj \
+								$$PWD/../../src/imports/shapes/Quad.qml \
+								$$PWD/../../src/imports/shapes/quad.obj \
                                 $$PWD/../../src/imports/shapes/Teapot.qml \
                                 $$PWD/../../src/imports/shapes/teapot.bez \
                                 $$PWD/../../src/imports/shapes/qmldir
