@@ -97,7 +97,7 @@ QGLSceneNode *QAiMesh::loadTriangles()
 static inline void assertOnePrimitiveType(aiMesh *mesh)
 {
 #ifndef QT_NO_DEBUG
-    int k;  // count the number of bits set in the primitives
+    int k = 0;  // count the number of bits set in the primitives
     unsigned int msk = 0x01;
     for (unsigned int p = mesh->mPrimitiveTypes; p; p >>= 1)
         if (p & msk)

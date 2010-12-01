@@ -1014,6 +1014,8 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 			profiler->EndRegion("import");
 		}
 
+        fprintf(stderr, "Loaded - material count: %d\n", pimpl->mScene->mNumMaterials);
+
 		// If successful, apply all active post processing steps to the imported data
 		if( pimpl->mScene)	{
 

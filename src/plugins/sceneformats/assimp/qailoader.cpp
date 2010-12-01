@@ -96,15 +96,31 @@ void QAiLoader::loadMesh(aiMesh *mesh)
             error.arg(name.isEmpty() ? QString(QLatin1String("<unnamed mesh>")) : name);
             Assimp::DefaultLogger::get()->warn(error.toStdString());
         }
+        else
+        {
+            qDebug() << "arggh - wtf - no faces or verts - no warnings?" << name;
+        }
         return;
     }
+
+    qDebug() << "loadMesh" << name << "with" << mesh->mNumVertices << "vertices"
+                << "and" << mesh->mNumFaces << "faces";
 
     QAiMesh m(mesh);
     QGLSceneNode *node = m.build();
 
     node->setPalette(m_root->palette());
     node->setMaterialIndex(mesh->mMaterialIndex);
+
     QGLMaterial *mat = m_root->palette()->material(mesh->mMaterialIndex);
+    qDebug() << "palette is:" << m_root->palette() << "containing count:" << m_root->palette()->size();
+    qDebug() << "creating mesh node" << node;
+    qDebug() << "   using material #" << mesh->mMaterialIndex;
+    qDebug() << "   that is:" << (mat ? mat->objectName() : QString("NULL"));
+    mat = node->material();
+    qDebug() << "Material is:" << *mat;
+
+    /*QGLMaterial * */mat = m_root->palette()->material(mesh->mMaterialIndex);
     if (mat->property("isTwoSided").isValid() && mat->property("isTwoSided").toBool())
         node->setBackMaterialIndex(mesh->mMaterialIndex);
     if (mat->property("isWireFrame").isValid() && mat->property("isWireFrame").toBool())
@@ -118,6 +134,8 @@ void QAiLoader::loadMesh(aiMesh *mesh)
     node->setObjectName(name);
 
     m_meshes.append(node);
+
+    qDebug() << node;
 
     if (m_handler->showWarnings())
     {
@@ -178,18 +196,34 @@ inline static QMatrix4x4 getNodeMatrix(aiNode *node)
 
 void QAiLoader::loadNodes(aiNode *nodeList, QGLSceneNode *parentNode)
 {
-    QGLSceneNode *node = new QGLSceneNode(parentNode);
-    QString name = QString::fromUtf8(nodeList->mName.data, nodeList->mName.length);
-    if (name.isEmpty())
-        name = QString(QLatin1String("aiNode %1")).arg(m_nodes.size());
-    node->setObjectName(name);
-    QMatrix4x4 mat = getNodeMatrix(nodeList);
-    if (!mat.isIdentity())
-        node->setLocalTransform(mat);
-    for (unsigned int i = 0; i < nodeList->mNumChildren; ++i)
-        loadNodes(nodeList->mChildren[i], node);
-    for (unsigned int i = 0; i < nodeList->mNumMeshes; ++i)
-        node->addNode(m_nodes.at(nodeList->mMeshes[i]));
+    QMap<aiNode *, QGLSceneNode *>::const_iterator it = m_nodeMap.constFind(nodeList);
+    QGLSceneNode *node = 0;
+    if (it == m_nodeMap.constEnd()) // not found
+    {
+        node = new QGLSceneNode(parentNode);
+        m_nodes.append(node);
+        QString name = QString::fromUtf8(nodeList->mName.data, nodeList->mName.length);
+        if (name.isEmpty())
+            name = QString(QLatin1String("aiNode %1")).arg(m_nodes.size());
+        node->setObjectName(name);
+        QMatrix4x4 mat = getNodeMatrix(nodeList);
+        if (!mat.isIdentity())
+            node->setLocalTransform(mat);
+        for (unsigned int i = 0; i < nodeList->mNumChildren; ++i)
+            loadNodes(nodeList->mChildren[i], node);
+        for (unsigned int i = 0; i < nodeList->mNumMeshes; ++i)
+        {
+            int n = nodeList->mMeshes[i];
+            qDebug() << "Looking to add mesh #" << n;
+            if (n < m_meshes.size())
+                node->addNode(m_meshes.at(n));
+        }
+    }
+    else
+    {
+        node = it.value();
+        parentNode->addNode(node);
+    }
 }
 
 /*!
@@ -203,13 +237,16 @@ void QAiLoader::loadNodes(aiNode *nodeList, QGLSceneNode *parentNode)
 QGLSceneNode *QAiLoader::loadMeshes()
 {
     Q_ASSERT(m_scene);
+    qDebug() << "processing:" << m_scene->mNumMaterials << "materials";
     for (unsigned int i = 0; i < m_scene->mNumMaterials; ++i)
         loadMaterial(m_scene->mMaterials[i]);
 
+    qDebug() << "processing:" << m_scene->mNumMeshes << "meshes";
     for (unsigned int i = 0; i < m_scene->mNumMeshes; ++i)
         loadMesh(m_scene->mMeshes[i]);
 
-    m_root->palette()->removeUnusedMaterials();
+    QGLMaterialCollection *palette = m_root->palette();
+    palette->removeUnusedMaterials();
 
     loadNodes(m_scene->mRootNode, m_root);
 
@@ -217,14 +254,20 @@ QGLSceneNode *QAiLoader::loadMeshes()
 
     if (m_handler->showWarnings())
     {
-        QString message = QLatin1String("AssetImporter loader: file %1\n"
-                                        "Loaded %2 mesh/es and %3 nodes\n"
-                                        "Loaded %4 materials");
+        QString message = QLatin1String("AssetImporter loader %1 -- "
+                                        "Mesh count: %2 -- Node count: %3 -- "
+                                        "Material count: %4");
         QUrl url = m_handler->url();
-        message.arg(url.toString()).arg(m_meshes.size())
-                .arg(m_nodes.size()).arg(m_materials.size());
+        message = message.arg(url.toString()).arg(m_meshes.size())
+                .arg(m_nodes.size()).arg(palette->size());
         Assimp::DefaultLogger::get()->warn(message.toStdString());
     }
+
+    qDumpScene(m_root);
+
+    QGeometryData data = m_root->children().at(0)->children().at(0)->children().at(0)->children().at(0)->geometry();
+    qDebug() << data;
+
     return m_root;
 }
 
@@ -444,5 +487,7 @@ void QAiLoader::loadMaterial(aiMaterial *ma)
     // the palette will be the same.
     //
     // executive summary: don't muck around with the palettte outside of this call
-    palette->addMaterial(mq);
+    int k = palette->addMaterial(mq);
+    palette->markMaterialAsUsed(k);
+    qDebug() << "loaded material" << k << mq;
 }

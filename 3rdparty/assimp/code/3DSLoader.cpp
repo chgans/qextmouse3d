@@ -353,6 +353,8 @@ void Discreet3DSImporter::ParseObjectChunk()
 	ASSIMP_3DS_END_CHUNK();
 }
 
+#include <QtCore/qstring>
+
 // ------------------------------------------------------------------------------------------------
 void Discreet3DSImporter::ParseChunk(const char* name, unsigned int num)
 {
@@ -975,10 +977,10 @@ void Discreet3DSImporter::ParseMeshChunk()
 	switch (chunk.Flag)
 	{
 	case Discreet3DS::CHUNK_VERTLIST:
-		{
-		// This is the list of all vertices in the current mesh
+    {
+        // This is the list of all vertices in the current mesh
 		int num = (int)(uint16_t)stream->GetI2();
-		mMesh.mPositions.reserve(num);
+        mMesh.mPositions.reserve(num);
 		while (num-- > 0)	{
 			aiVector3D v;
 			v.x = stream->GetF4();
@@ -986,9 +988,9 @@ void Discreet3DSImporter::ParseMeshChunk()
 			v.z = stream->GetF4();
 			mMesh.mPositions.push_back(v);
 		}}
-		break;
+    break;
 	case Discreet3DS::CHUNK_TRMATRIX:
-		{
+    {
 		// This is the RLEATIVE transformation matrix of the current mesh. Vertices are
 		// pretransformed by this matrix wonder.
 		mMesh.mMat.a1 = stream->GetF4();
@@ -1003,11 +1005,11 @@ void Discreet3DSImporter::ParseMeshChunk()
 		mMesh.mMat.a4 = stream->GetF4();
 		mMesh.mMat.b4 = stream->GetF4();
 		mMesh.mMat.c4 = stream->GetF4();
-		}
-		break;
+    }
+    break;
 
 	case Discreet3DS::CHUNK_MAPLIST:
-		{
+    {
 		// This is the list of all UV coords in the current mesh
 		int num = (int)(uint16_t)stream->GetI2();
 		mMesh.mTexCoords.reserve(num);
@@ -1017,10 +1019,10 @@ void Discreet3DSImporter::ParseMeshChunk()
 			v.y = stream->GetF4();
 			mMesh.mTexCoords.push_back(v);
 		}}
-		break;
+    break;
 
 	case Discreet3DS::CHUNK_FACELIST:
-		{
+    {
 		// This is the list of all faces in the current mesh
 		int num = (int)(uint16_t)stream->GetI2();
 		mMesh.mFaces.reserve(num);
@@ -1044,8 +1046,9 @@ void Discreet3DSImporter::ParseMeshChunk()
 		chunkSize = stream->GetRemainingSizeToLimit();
 		if ( chunkSize > (int) sizeof(Discreet3DS::Chunk ) )
 			ParseFaceChunk();
-		}
-		break;
+    }
+
+    break;
 	};
 	ASSIMP_3DS_END_CHUNK();
 }

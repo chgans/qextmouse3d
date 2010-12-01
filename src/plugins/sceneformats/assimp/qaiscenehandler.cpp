@@ -73,16 +73,16 @@ QAiSceneHandler::QAiSceneHandler()
     , m_mayHaveLinesPoints(false)
     , m_meshSplitVertexLimit(2000)
     , m_meshSplitTriangleLimit(2000)
+    , m_removeComponentFlags(0)
+    , m_removeSortFlags(0)
 {
     // by default remove per vertex colors from the data - no-one uses that in
     // models - if they need it it can be turned on with UseVertexColors
-    m_removeComponentFlags = m_importer.GetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS);
     m_removeComponentFlags |= aiComponent_COLORS;
 
     // by default remove points and lines from the model, since these are usually
     // degenerate structures from bad modelling or bad import/export.  if they
     // are needed it can be turned on with IncludeLinesPoints
-    m_removeSortFlags = m_importer.GetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE);
     m_removeSortFlags |= aiPrimitiveType_POINT | aiPrimitiveType_LINE;
 }
 
@@ -127,7 +127,6 @@ void QAiSceneHandler::decodeOptions(const QString &options)
     {
         QString op = opList.at(i);
         op = op.trimmed();
-        fprintf(stderr, "Looking for option >>%s<<\n", qPrintable(op));
         int k = 0;
         for ( ; validOptions[k]; ++k)
             if (op == QString::fromLatin1(validOptions[k]))
@@ -159,6 +158,7 @@ void QAiSceneHandler::decodeOptions(const QString &options)
                 m_removeComponentFlags |= aiComponent_NORMALS;
                 m_options |= aiProcess_GenNormals;
                 m_options &= ~aiProcess_GenSmoothNormals;
+                m_options &= ~aiProcess_JoinIdenticalVertices;
                 break;
             case IncludeAllMaterials:
                 m_options &= ~aiProcess_RemoveRedundantMaterials;
@@ -203,10 +203,6 @@ void QAiSceneHandler::decodeOptions(const QString &options)
                      qPrintable(options));
         }
     }
-
-    qDebug() << "ShowWarnigs:" << m_showWarnings;
-    qDebug() << "Got option string \"" << options << "\" coded to:" << opList << "-- options:"
-                << m_options;
 }
 
 QGLAbstractScene *QAiSceneHandler::read()
@@ -256,23 +252,17 @@ QGLAbstractScene *QAiSceneHandler::read()
     // this function the scene will get destroyed
     const aiScene* scene = m_importer.ReadFile(path.toStdString(), m_options);
 
-    if (scene && scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
-    {
-        if (log)
-            log->warn("Mesh incomplete - aborting load");
-        scene = 0;
-    }
-
-    if ((m_options & aiProcess_ValidateDataStructure)
-            && scene && !(scene->mFlags & AI_SCENE_FLAGS_VALIDATED))
-    {
-        if (log)
-            log->warn("Mesh invalid - aborting load");
-        scene = 0;
-    }
-
     if (!scene)
     {
+        // Notes on import success flags - according to assimp doco if validation
+        // is requested the flags AI_SCENE_FLAGS_VALIDATION_WARNING will be set
+        // if there's a warning, and AI_SCENE_FLAGS_VALIDATED is set on success.
+        // This does not happen.  Also AI_SCENE_FLAGS_INCOMPLETE can be set on a
+        // valid model, so checking for that is no use either.  Best way to proceed
+        // is that if ShowWarnings is turned on above, then any pertinent warnings
+        // will be shown; and if a NULL result is returned here, then its a fatal
+        // error and a message is shown here.  If a non-NULL result is returned
+        // just go ahead and try to load it.
         QString c = QDir::current().absolutePath();
         qWarning("Asset importer error: %s\n", m_importer.GetErrorString());
         if (log)

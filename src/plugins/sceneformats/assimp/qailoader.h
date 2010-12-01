@@ -74,6 +74,7 @@ private:
     QList<QGLSceneNode *> m_nodes;
     QList<QGLMaterial *> m_materials;
     QList<QGLSceneNode *> m_meshes;
+    QMap<aiNode *, QGLSceneNode *> m_nodeMap;
     bool m_hasTextures;
     bool m_hasLitMaterials;
 };

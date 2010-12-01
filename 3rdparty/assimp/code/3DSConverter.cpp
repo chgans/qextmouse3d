@@ -237,6 +237,8 @@ void Discreet3DSImporter::ConvertMaterial(D3DS::Material& oldMat,
 	name.Set( oldMat.mName);
 	mat.AddProperty( &name, AI_MATKEY_NAME);
 
+    fprintf(stderr, "loading material %s", oldMat.mName.c_str());
+
 	// Material colors
 	mat.AddProperty( &oldMat.mAmbient, 1, AI_MATKEY_COLOR_AMBIENT);
 	mat.AddProperty( &oldMat.mDiffuse, 1, AI_MATKEY_COLOR_DIFFUSE);
@@ -345,6 +347,8 @@ void Discreet3DSImporter::ConvertMaterial(D3DS::Material& oldMat,
 // Split meshes by their materials and generate output aiMesh'es
 void Discreet3DSImporter::ConvertMeshes(aiScene* pcOut)
 {
+    fprintf(stderr, "Converting meshes %d\n", (int)(mScene->mMeshes.size()));
+
 	std::vector<aiMesh*> avOutMeshes;
 	avOutMeshes.reserve(mScene->mMeshes.size() * 2);
 
@@ -356,6 +360,10 @@ void Discreet3DSImporter::ConvertMeshes(aiScene* pcOut)
 		boost::scoped_array< std::vector<unsigned int> > aiSplit(new std::vector<unsigned int>[mScene->mMaterials.size()]);
 
 		name.length = ASSIMP_itoa10(name.data,num++);
+
+        char buf[MAXLEN];
+        strncpy(buf, (*i).mName.c_str(), (*i).mName.size());
+        fprintf(stderr, "Got mesh name: >>%s<< -- previous name is >>%s<<\n", buf, name.data);
 
 		unsigned int iNum = 0;
 		for (std::vector<unsigned int>::const_iterator a =  (*i).mFaceMaterials.begin();
@@ -370,7 +378,12 @@ void Discreet3DSImporter::ConvertMeshes(aiScene* pcOut)
 				continue;
 			}
 			aiMesh* meshOut = new aiMesh();
-			meshOut->mName = name;
+
+            std::string name_parts((*i).mName);
+            name_parts.append("::");
+            name_parts.append(mScene->mMaterials.at(p).mName);
+
+            meshOut->mName.Set(name_parts);
 			meshOut->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
 
 			// be sure to setup the correct material index
@@ -736,6 +749,7 @@ void Discreet3DSImporter::GenerateNodeGraph(aiScene* pcOut)
 
 			// Build a name for the node
 			pcNode->mName.length = sprintf(pcNode->mName.data,"3DSMesh_%i",i);	
+            fprintf(stderr, "XXXX created dummy node: %s\n", pcNode->mName.data);
 		}
 
 		// Build dummy nodes for all cameras
