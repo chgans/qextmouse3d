@@ -37,6 +37,7 @@ SUBDIRS = \
     qsphere3d \
     qstereoimage \
     qtriangle3d \
-    qvectorarray
+    qvectorarray \
+    load_model
 
 !contains(QT_CONFIG, opengles1): SUBDIRS += qglcolladafxeffectfactory

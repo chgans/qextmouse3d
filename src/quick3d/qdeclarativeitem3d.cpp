@@ -307,9 +307,10 @@ public:
     static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list);
     QList<QGraphicsTransform3D *> pretransforms;
 
-    // transform convenience function
-    void applyLocalTransforms(QMatrix4x4 &m);
-
+    // transform convenience functions
+    QMatrix4x4 localTransforms() const;
+    QMatrix4x4 localToWorldMatrix() const;
+    QMatrix4x4 worldToLocalMatrix() const;
 };
 
 QDeclarativeItem3DPrivate::~QDeclarativeItem3DPrivate()
@@ -488,8 +489,9 @@ int QDeclarativeItem3DPrivate::children_count(QDeclarativeListProperty<QDeclarat
     Applies position, scale and rotation transforms for this item3d to matrix
     \a m
 */
-void QDeclarativeItem3DPrivate::applyLocalTransforms(QMatrix4x4 &m)
+QMatrix4x4 QDeclarativeItem3DPrivate::localTransforms() const
 {
+    QMatrix4x4 m;
     m.translate(position);
     int transformCount = transforms.count();
     if (transformCount>0) {
@@ -508,6 +510,7 @@ void QDeclarativeItem3DPrivate::applyLocalTransforms(QMatrix4x4 &m)
             pretransforms.at(index)->applyTo(&m);
         }
     }
+    return m;
 }
 
 
@@ -1176,9 +1179,7 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
 
     //1) Item Transforms
     painter->modelViewMatrix().push();
-    QMatrix4x4 m = painter->modelViewMatrix();
-    d->applyLocalTransforms(m);
-    painter->modelViewMatrix() = m;
+    painter->modelViewMatrix() *= d->localTransforms();
 
     //Drawing
     drawItem(painter);
@@ -1313,6 +1314,51 @@ void QDeclarativeItem3D::drawItem(QGLPainter *painter)
     if (d->mesh)
         d->mesh->draw(painter, d->mainBranchId);
 }
+
+
+/*!
+    Calculates and returns a matrix that transforms local coordinates into
+    world coordinates (i.e. coordinates untransformed by any item3d's
+    transforms).
+*/
+QMatrix4x4 QDeclarativeItem3DPrivate::localToWorldMatrix() const
+{
+    QMatrix4x4 result;
+    QDeclarativeItem3D *anscestor = parent;
+
+    result = localTransforms() * result;
+    while (anscestor)
+    {
+        result = anscestor->d->localTransforms() * result;
+        anscestor = anscestor->d->parent;
+    }
+    return result;
+}
+
+/*!
+    Calculates and returns a matrix that transforms world coordinates into
+    coordinates relative to this Item3D.
+*/
+QMatrix4x4 QDeclarativeItem3DPrivate::worldToLocalMatrix() const
+{
+    bool inversionSuccessful;
+    QMatrix4x4 result = localToWorldMatrix().inverted(&inversionSuccessful);
+    if (inversionSuccessful)
+        return result;
+    qWarning() << "QDeclarativeItem3D - matrix inversion failed trying to generate worldToLocal Matrix";
+    return QMatrix4x4();
+}
+
+QVector3D QDeclarativeItem3D::localToWorld(const QVector3D &point) const
+{
+    return d->localToWorldMatrix() * point;
+}
+
+QVector3D QDeclarativeItem3D::worldToLocal(const QVector3D &point) const
+{
+    return d->worldToLocalMatrix() * point;
+}
+
 
 /*!
     \internal

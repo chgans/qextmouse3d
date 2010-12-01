@@ -47,5 +47,5 @@ target.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
 INSTALLS += qdeclarativesources target
 
-LIBS += -L../../lib -L../../bin
+LIBS += -L../../../lib -L../../../bin
 include(../../quick3d/quick3d_dep.pri)

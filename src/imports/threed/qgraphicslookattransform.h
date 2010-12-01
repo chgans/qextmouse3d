@@ -52,7 +52,7 @@ QT_BEGIN_NAMESPACE
 
 class QGraphicsLookAtTransformPrivate;
 
-class Q_QT3D_EXPORT QGraphicsLookAtTransform : public QGraphicsTransform3D
+class QGraphicsLookAtTransform : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(bool preserveUpVector READ preserveUpVector WRITE setPreserveUpVector NOTIFY preserveUpVectorChanged)

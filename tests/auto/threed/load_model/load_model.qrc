@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/data">
+        <file>models/basic-cube.3ds</file>
+        <file>models/basic-cube.blend</file>
+        <file>models/basic-cube.mtl</file>
+        <file>models/basic-cube.obj</file>
+        <file>models/wave.obj</file>
+    </qresource>
+</RCC>

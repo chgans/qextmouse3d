@@ -52,8 +52,10 @@
 #include "qgraphicstransform3d.h"
 
 #include <QtGui/qmatrix4x4.h>
+#if !defined(QT_NO_THREAD)
 #include <QtCore/qthread.h>
 #include <QtGui/qapplication.h>
+#endif
 
 QT_BEGIN_NAMESPACE
 
@@ -1546,15 +1548,22 @@ QGLSceneNode *QGLSceneNode::only(const QStringList &names, QObject *parent) cons
 */
 void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop)
 {
-    QThread *appThread = QApplication::instance()->thread();
+#if !defined(QT_NO_THREAD)
+    QCoreApplication *app = QApplication::instance();
+    QThread *appThread = 0;
+    if (app)
+        appThread = QApplication::instance()->thread();
+#endif
     QSet<QGLSceneNode *> lp = loop;
     lp.insert(node);
     QString ind;
     ind.fill(QLatin1Char(' '), indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
-    if (appThread != node->thread())
+#if !defined(QT_NO_THREAD)
+    if (appThread && appThread != node->thread())
         fprintf(stderr, "\n%s        from thread: %p\n", qPrintable(ind), node->thread());
+#endif
     fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
     {
         QList<QGLSceneNode*> children = node->children();
@@ -1581,9 +1590,10 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
             fprintf(stderr, "%s     %0.4f   %0.4f   %0.4f   %0.4f\n",
                     qPrintable(ind), m(i, 0), m(i, 1), m(i, 2), m(i, 3));
     }
-    if (node->geometry() == 0 || !node->geometry().isNull())
+    if (!node->geometry().isEmpty())
     {
-        fprintf(stderr, "%s geometry: %d verts\n", qPrintable(ind), node->geometry().count());
+        fprintf(stderr, "%s geometry: %d indexes, %d vertices\n",
+                qPrintable(ind), node->geometry().count(), node->geometry().count(QGL::Position));
     }
     else
     {
