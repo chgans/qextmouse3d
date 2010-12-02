@@ -100,28 +100,28 @@ static char const flatTexVertexShader[] =
     "attribute highp vec4 vertex;\n"
     "attribute highp vec4 texcoord;\n"
     "uniform highp mat4 matrix;\n"
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"
-    "    qTexCoord = texcoord;\n"
+    "    qt_TexCoord0 = texcoord;\n"
     "}\n";
 
 static char const flatTexFragmentShader[] =
     "uniform sampler2D tex;\n"
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "void main(void)\n"
     "{\n"
-    "    gl_FragColor = texture2D(tex, qTexCoord.st);\n"
+    "    gl_FragColor = texture2D(tex, qt_TexCoord0.st);\n"
     "}\n";
 
 static char const flatDecalFragmentShader[] =
     "uniform sampler2D tex;\n"
     "uniform mediump vec4 color;\n"
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "void main(void)\n"
     "{\n"
-    "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
+    "    mediump vec4 col = texture2D(tex, qt_TexCoord0.st);\n"
     "    gl_FragColor = vec4(clamp(color.rgb * (1.0 - col.a) + col.rgb, 0.0, 1.0), color.a);\n"
     "}\n";
 

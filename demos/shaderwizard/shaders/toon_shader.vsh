@@ -56,7 +56,7 @@ uniform bool viewerAtInfinity;  // Light model indicates viewer at infinity
 
 uniform float time;
 uniform vec3 lightDir;
-uniform highp mat3 qgl_NormalMatrix;
+uniform highp mat3 qt_NormalMatrix;
 
 varying mediump vec4 qAmbient;
 varying mediump vec4 qDiffuse;
@@ -64,8 +64,8 @@ varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
 varying mediump vec3 qHalfVector;
 varying mediump vec3 qVertexToLight;
-varying highp vec4 qTexCoord0;
-varying highp vec4 qTexCoord1;
+varying highp vec4 qt_TexCoord0;
+varying highp vec4 qt_TexCoord1;
 
 
 void qLightVertex(vec4 vertex, vec3 normal)
@@ -84,7 +84,7 @@ void main(void)
 {
     vec4 v = vertex;
     vec3 toEye;
-    qNormal = normalize(qgl_NormalMatrix * vec3(normal));
+    qNormal = normalize(qt_NormalMatrix * vec3(normal));
     qLightVertex(vertex, qNormal);
     gl_Position = matrix * v;
 };

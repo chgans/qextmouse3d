@@ -53,8 +53,8 @@ varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
 varying mediump vec3 qHalfVector;
 varying mediump vec3 qVertexToLight;
-varying highp vec4 qTexCoord0;
-varying highp vec4 qTexCoord1;
+varying highp vec4 qt_TexCoord0;
+varying highp vec4 qt_TexCoord1;
 
 
 void main(void)

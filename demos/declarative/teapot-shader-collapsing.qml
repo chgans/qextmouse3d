@@ -89,9 +89,9 @@ Item3D {
         }
 
         vertexShader: "
-            attribute highp vec4 qgl_Vertex;
-            attribute highp vec4 qgl_TexCoord0;
-            uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+            attribute highp vec4 qt_Vertex;
+            attribute highp vec4 qt_MultiTexCoord0;
+            uniform mediump mat4 qt_ModelViewProjectionMatrix;
             varying highp vec4 texCoord;
             uniform highp float collapseFactor;
 
@@ -100,20 +100,20 @@ Item3D {
                 // Interpolate between the actual position of the input vertex
                 // and treating the tex-coordinates as vertex positions to
                 // create a neat collapsing effect.
-                vec4 workingPosition = mix( qgl_Vertex, vec4(-qgl_TexCoord0.xyz, 1.0) , collapseFactor);
-                gl_Position = qgl_ModelViewProjectionMatrix * workingPosition;
-                texCoord =  -qgl_TexCoord0;
+                vec4 workingPosition = mix( qt_Vertex, vec4(-qt_MultiTexCoord0.xyz, 1.0) , collapseFactor);
+                gl_Position = qt_ModelViewProjectionMatrix * workingPosition;
+                texCoord =  -qt_MultiTexCoord0;
             }
         "
         fragmentShader: "
             varying highp vec4 texCoord;
-            uniform sampler2D qgl_Texture0;
-            uniform mediump vec4 qgl_Color;
+            uniform sampler2D qt_Texture0;
+            uniform mediump vec4 qt_Color;
 
             void main(void)
             {
-                mediump vec4 col = texture2D(qgl_Texture0, texCoord.st);
-                gl_FragColor = vec4(clamp(qgl_Color.rgb * (1.0 - col.a) +
+                mediump vec4 col = texture2D(qt_Texture0, texCoord.st);
+                gl_FragColor = vec4(clamp(qt_Color.rgb * (1.0 - col.a) +
                                           col.rgb, 0.0, 1.0), 1.0);
             }
         "
