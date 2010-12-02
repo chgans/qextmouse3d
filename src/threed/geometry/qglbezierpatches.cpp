@@ -41,6 +41,9 @@
 
 #include "qglbezierpatches.h"
 #include "qglbuilder.h"
+#include "qray3d.h"
+#include "qtriangle3d.h"
+#include <QtCore/qnumeric.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -101,6 +104,8 @@ public:
     }
 
     void subdivide(QGLBuilder *list) const;
+    qreal intersection
+        (const QRay3D &ray, bool anyIntersection, QVector2D *texCoord, int *patch) const;
 
     QVector3DArray positions;
     QVector2DArray textureCoords;
@@ -130,6 +135,9 @@ public:
     void recursiveSubDivide
         (QGeometryData *prim,
          int depth, qreal xtex, qreal ytex, qreal wtex, qreal htex);
+    qreal intersection
+        (qreal result, int depth, const QRay3D &ray, bool anyIntersection,
+         qreal xtex, qreal ytex, qreal wtex, qreal htex, QVector2D *tc);
 };
 
 static int const cornerOffsets[] = {0, 3, 12, 15};
@@ -476,6 +484,124 @@ void QGLBezierPatchesPrivate::subdivide(QGLBuilder *list) const
     list->addTriangles(prim);
 }
 
+static inline qreal combineResults(qreal result, qreal t)
+{
+    if (qIsNaN(result))
+        return t;
+    if (t >= 0.0f)
+        return result < 0.0f ? t : qMin(result, t);
+    else
+        return result >= 0.0f ? result : qMax(result, t);
+}
+
+qreal QGLBezierPatch::intersection
+    (qreal result, int depth, const QRay3D& ray, bool anyIntersection,
+     qreal xtex, qreal ytex, qreal wtex, qreal htex, QVector2D *tc)
+{
+    // Check the convex hull of the patch for an intersection.
+    // If no intersection with the convex hull, then there is
+    // no point subdividing this patch further.
+    QBox3D box;
+    for (int point = 0; point < 16; ++point)
+        box.unite(points[point]);
+    if (!box.intersects(ray))
+        return result;
+
+    // Are we at the lowest point of subdivision yet?
+    if (depth <= 1) {
+        // Divide the patch into two triangles and intersect with those.
+        QTriangle3D triangle1(points[0], points[3], points[12]);
+        qreal t = triangle1.intersection(ray);
+        if (!qIsNaN(t)) {
+            result = combineResults(result, t);
+            if (result == t) {
+                QVector2D uv = triangle1.uv(ray.point(t));
+                QVector2D tp(xtex, ytex);
+                QVector2D tq(xtex + wtex, ytex);
+                QVector2D tr(xtex, ytex + htex);
+                *tc = uv.x() * tp + uv.y() * tq + (1 - uv.x() - uv.y()) * tr;
+            }
+        } else {
+            QTriangle3D triangle2(points[3], points[15], points[12]);
+            qreal t = triangle2.intersection(ray);
+            if (!qIsNaN(t)) {
+                result = combineResults(result, t);
+                if (result == t) {
+                    QVector2D uv = triangle2.uv(ray.point(t));
+                    QVector2D tp(xtex + wtex, ytex);
+                    QVector2D tq(xtex + wtex, ytex + htex);
+                    QVector2D tr(xtex, ytex + htex);
+                    *tc = uv.x() * tp + uv.y() * tq + (1 - uv.x() - uv.y()) * tr;
+                }
+            }
+        }
+    } else {
+        // Subdivide the patch to find the point of intersection.
+        QGLBezierPatch patch1, patch2, patch3, patch4;
+        subDivide(patch1, patch2, patch3, patch4);
+        --depth;
+        qreal hwtex = wtex / 2.0f;
+        qreal hhtex = htex / 2.0f;
+        result = patch1.intersection
+            (result, depth, ray, anyIntersection,
+             xtex, ytex, hwtex, hhtex, tc);
+        if (anyIntersection && !qIsNaN(result))
+            return result;
+        result = patch2.intersection
+            (result, depth, ray, anyIntersection,
+             xtex + hwtex, ytex, hwtex, hhtex, tc);
+        if (anyIntersection && !qIsNaN(result))
+            return result;
+        result = patch3.intersection
+            (result, depth, ray, anyIntersection,
+             xtex, ytex + hhtex, hwtex, hhtex, tc);
+        if (anyIntersection && !qIsNaN(result))
+            return result;
+        result = patch4.intersection
+            (result, depth, ray, anyIntersection,
+             xtex + hwtex, ytex + hhtex, hwtex, hhtex, tc);
+    }
+    return result;
+}
+
+qreal QGLBezierPatchesPrivate::intersection
+    (const QRay3D &ray, bool anyIntersection, QVector2D *texCoord, int *bestPatch) const
+{
+    int count = positions.size();
+    qreal result = qSNaN();
+    QVector2D tc;
+    if (bestPatch)
+        *bestPatch = -1;
+    for (int posn = 0; (posn + 15) < count; posn += 16) {
+        QGLBezierPatch patch;
+        for (int vertex = 0; vertex < 16; ++vertex)
+            patch.points[vertex] = positions[posn + vertex];
+        QVector2D tex1, tex2;
+        if (!textureCoords.isEmpty()) {
+            tex1 = textureCoords[(posn / 16) * 2];
+            tex2 = textureCoords[(posn / 16) * 2 + 1];
+        } else {
+            tex1 = QVector2D(0.0f, 0.0f);
+            tex2 = QVector2D(1.0f, 1.0f);
+        }
+        qreal xtex = tex1.x();
+        qreal ytex = tex1.y();
+        qreal wtex = tex2.x() - xtex;
+        qreal htex = tex2.y() - ytex;
+        qreal prev = result;
+        result = patch.intersection
+            (result, subdivisionDepth, ray, anyIntersection,
+             xtex, ytex, wtex, htex, &tc);
+        if (bestPatch && result != prev)
+            *bestPatch = posn / 16;
+        if (anyIntersection && !qIsNaN(result))
+            break;
+    }
+    if (texCoord && !qIsNaN(result))
+        *texCoord = tc;
+    return result;
+}
+
 /*!
     Constructs an empty Bezier patch list.
 
@@ -617,6 +743,61 @@ QGLBezierPatches QGLBezierPatches::transformed(const QMatrix4x4 &matrix) const
     QGLBezierPatches result(*this);
     result.d_ptr->positions.transform(matrix);
     return result;
+}
+
+/*!
+    Returns true if \a ray intersects this Bezier geometry object;
+    false otherwise.
+
+    \sa intersection()
+*/
+bool QGLBezierPatches::intersects(const QRay3D &ray) const
+{
+    Q_D(const QGLBezierPatches);
+    return !qIsNaN(d->intersection(ray, true, 0, 0));
+}
+
+/*!
+    Returns the t value at which \a ray intersects this Bezier
+    geometry object, or not-a-number if there is no intersection.
+
+    When the \a ray intersects this object, the return value is a
+    parametric value that can be passed to QRay3D::point() to determine
+    the actual intersection point, as shown in the following example:
+
+    \code
+    qreal t = patches.intersection(ray);
+    QVector3D pt;
+    if (qIsNaN(t)) {
+        qWarning("no intersection occurred");
+    else
+        pt = ray.point(t);
+    \endcode
+
+    If \a ray intersects the object multiple times, the returned
+    t will be the smallest t value, corresponding to the first
+    intersection of the \a ray with the object.  The t value may
+    be negative if the first intersection occurs in the reverse
+    direction of \a ray.
+
+    The intersection is determined by subdividing the patches into
+    triangles and intersecting with those triangles.  A pruning
+    algorithm is used to discard patches whose convex hull do not
+    intersect with \a ray.
+
+    If \a texCoord is not null, then it will return the texture
+    co-ordinate of the intersection point.
+
+    If \a patch is not null, then it will return the index of the
+    patch that contains the intersection, or -1 if there is no
+    intersection.
+
+    \sa intersects()
+*/
+qreal QGLBezierPatches::intersection(const QRay3D &ray, QVector2D *texCoord, int *patch) const
+{
+    Q_D(const QGLBezierPatches);
+    return d->intersection(ray, false, texCoord, patch);
 }
 
 /*!

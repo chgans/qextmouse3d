@@ -54,6 +54,7 @@ QT_MODULE(Qt3d)
 
 class QGLBezierPatchesPrivate;
 class QGLBuilder;
+class QRay3D;
 
 class Q_QT3D_EXPORT QGLBezierPatches
 {
@@ -75,6 +76,9 @@ public:
 
     void transform(const QMatrix4x4 &matrix);
     QGLBezierPatches transformed(const QMatrix4x4 &matrix) const;
+
+    bool intersects(const QRay3D &ray) const;
+    qreal intersection(const QRay3D &ray, QVector2D *texCoord = 0, int *patch = 0) const;
 
 private:
     QScopedPointer<QGLBezierPatchesPrivate> d_ptr;
