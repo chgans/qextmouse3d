@@ -166,12 +166,12 @@ QGLDome::~QGLDome()
     Builds the geometry for \a dome within the specified
     geometry \a builder.
 */
-QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& hemisphere)
+QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
 {
-    qreal radius = hemisphere.diameter() / 2.0f;
+    qreal radius = dome.diameter() / 2.0f;
 
     // Determine the number of slices and stacks to generate.
-    int divisions = hemisphere.subdivisionDepth();
+    int divisions = dome.subdivisionDepth();
     if (divisions < 1)
         divisions = 1;
     else if (divisions > 5)
@@ -206,8 +206,8 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& hemisphere)
     stackSin[stacks] = 1.0f;
 
     builder.newSection();
-    builder.currentNode()->setObjectName("Hemisphere Dome");
-    // Create the stacks for the dome part of the hemisphere
+    builder.currentNode()->setObjectName("Dome");
+    // Create the stacks for the dome part of the dome
     for (int stack = 0; stack < stacks; ++stack) {
         QGeometryData prim;
         qreal z = radius * stackCos[stack];
@@ -230,10 +230,10 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& hemisphere)
         builder.addQuadStrip(prim);
     }
 
-    if (hemisphere.baseEnabled()) {
+    if (dome.baseEnabled()) {
         //Draw end-cap at bottom
         builder.newSection();
-        builder.currentNode()->setObjectName("Hemisphere Base");
+        builder.currentNode()->setObjectName("Base");
 
         //Generate a circle of vertices for this layer.
         QGeometryData tempBase;

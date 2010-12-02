@@ -141,7 +141,7 @@ void Capsule::setLength(qreal length)
     level of detail as specified in the Cylinder and Sphere
     objects.
 
-    \sa Sphere::levelOfDetail(), Cylinder::levelOfDetail()
+    \sa Sphere, Cylinder
 */
 void Capsule::setLevelOfDetail(int lod)
 {
