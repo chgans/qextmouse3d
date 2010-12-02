@@ -302,7 +302,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     QGeometryData oldLayer;
 
     //Generate vertices for the next layer of cylinder
-    for (int layerCount=0; layerCount<=cylinder.layers(); layerCount++) {        
+    for (int layerCount=0; layerCount<=cylinder.layers(); layerCount++) {
         QGeometryData newLayer;
 
         //Generate a circle of vertices for this layer.
@@ -313,20 +313,20 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                                             height));
             angle+=angleIncrement;
         }        
-        angle = 0;        
+        angle = 0;
         // Generate texture coordinates (including an extra seam vertex for textures).
-        newLayer.appendVertex(newLayer.vertex(0)); 
-        newLayer.generateTextureCoordinates();        
+        newLayer.appendVertex(newLayer.vertex(0));
+        newLayer.generateTextureCoordinates();
         for (int i = 0; i < newLayer.count(); i++)  newLayer.texCoord(i).setY(textureHeight);
 
         //Special cases for top end-cap
         if (layerCount==0 && cylinder.topEnabled()) {
-            //Draw end-cap at top            
+            //Draw end-cap at top
             QGeometryData top;
             builder.newSection();
-            builder.currentNode()->setObjectName("Cylinder Top");                        
+            builder.currentNode()->setObjectName("Cylinder Top");
             top.appendVertex(newLayer.center());
-            top.appendVertexArray(newLayer.vertices());                                        
+            top.appendVertexArray(newLayer.vertices());
             //Generate a circle of texture vertices for this layer.
             top.appendTexCoord(QVector2D(0.5,0.5));
             
@@ -356,7 +356,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             //Draw end-cap at bottom            
             QGeometryData base;
             builder.newSection();
-            builder.currentNode()->setObjectName("Cylinder Base");            
+            builder.currentNode()->setObjectName("Cylinder Base");
             base.appendVertexArray(newLayer.vertices());
             base.appendVertex(newLayer.center());
             //Generate a circle of texture vertices for this layer.
@@ -372,12 +372,12 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             builder.addTriangulatedFace(base.reversed());
         }
         
-        //Keep the current layer for drawing the next segment of the cylinder        
+        //Keep the current layer for drawing the next segment of the cylinder
         oldLayer.clear();
         oldLayer.appendGeometry(newLayer);
         radius+=radiusIncrement;
         height-=heightDecrement;
-        textureHeight-=textureDecrement;       
+        textureHeight-=textureDecrement;
     }
 
     return builder;

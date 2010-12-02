@@ -60,9 +60,10 @@ QT_BEGIN_NAMESPACE
     Line {
         vertices: [
            0, 0, 0,
-           1, 1, 1,
-           -1, -1, -1
-		]
+           0, 0, 1,
+           0, 1, 1
+
+        ]
         effect: Effect {
             color: "#aaca00"
         }
@@ -84,7 +85,8 @@ QT_BEGIN_NAMESPACE
 */
 Line::Line(QObject *parent) :
     QDeclarativeItem3D(parent)
-	,m_width(3.0)
+        ,m_width(3.0)
+        ,m_changeFlag(false)
 {
     //meh
 }
@@ -112,6 +114,7 @@ void Line::setVertices(const QVariant &value)
     for (int index = 0; (index + 2) < vertlist.size(); index += 3) {
         m_vertexArray.append(qreal(vertlist.at(index).toDouble()), qreal(vertlist.at(index + 1).toDouble()), qreal(vertlist.at(index + 2).toDouble()));
     }
+    m_changeFlag=true;
     emit verticesChanged();
     update();
 }
@@ -127,8 +130,9 @@ void Line::setWidth(qreal width)
 {
     if (m_width != width) {
         m_width = width;
+        m_changeFlag=true;
         emit widthChanged();
-        update();               
+        update();
     }
 }
 
@@ -137,12 +141,24 @@ void Line::setWidth(qreal width)
 */
 void Line::drawItem(QGLPainter *painter)
 {
-    //Placeholder GL code using basic painter system.
-    //
-    //This code is intended only as demonstrative code until
-    //the builder system supports lines/points etc.
-    painter->clearAttributes();
-    painter->setVertexAttribute(QGL::Position, m_vertexArray);
-    glLineWidth(m_width);
-    painter->draw(QGL::LineStrip, 2);
+    if (m_changeFlag || !m_geometry) {
+        if (m_geometry) delete m_geometry;
+
+        QGLBuilder builder;
+
+        QGeometryData lineCollection;
+        builder.newSection();
+
+        lineCollection.appendVertexArray(m_vertexArray);
+
+        builder.addTriangles(lineCollection);
+        builder.currentNode()->setDrawingMode(QGL::LineStrip);
+        builder.currentNode()->setDrawingWidth(m_width);
+        m_geometry = builder.finalizedSceneNode();
+
+        m_changeFlag = false;
+    }
+
+    // Draw the geometry.
+    m_geometry->draw(painter);
 }

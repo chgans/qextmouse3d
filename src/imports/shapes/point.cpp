@@ -84,6 +84,7 @@ QT_BEGIN_NAMESPACE
 Point::Point(QObject *parent) :
     QDeclarativeItem3D(parent)
     , m_pointSize(1.0f)
+    , m_changeFlag(false)
 {
     //meh
 }
@@ -112,7 +113,7 @@ void Point::setVertices(const QVariant &value)
     for (int index = 0; (index + 2) < vertlist.size(); index += 3) {
         m_vertexArray.append(qreal(vertlist.at(index).toDouble()), qreal(vertlist.at(index + 1).toDouble()), qreal(vertlist.at(index + 2).toDouble()));
     }
-
+    m_changeFlag=true;
     emit verticesChanged();
     update();
 }
@@ -128,6 +129,7 @@ void Point::setPointSize(qreal pointSize)
 {
     if (m_pointSize != pointSize) {
         m_pointSize = pointSize;
+        m_changeFlag=true;
         emit pointSizeChanged();
         update();
     }
@@ -138,12 +140,24 @@ void Point::setPointSize(qreal pointSize)
 */
 void Point::drawItem(QGLPainter *painter)
 {
-    //Placeholder GL code using basic painter system.
-    //
-    //This code is intended only as demonstrative code until
-    //the builder system supports lines/points etc.
-    painter->clearAttributes();
-    painter->setVertexAttribute(QGL::Position, m_vertexArray);
-    glPointSize(m_pointSize);
-    painter->draw(QGL::Points, 2);
+    if (m_changeFlag || !m_geometry) {
+        if (m_geometry) delete m_geometry;
+
+        QGLBuilder builder;
+
+        QGeometryData pointCollection;
+        builder.newSection();
+
+        pointCollection.appendVertexArray(m_vertexArray);
+
+        builder.addTriangles(pointCollection);
+        builder.currentNode()->setDrawingMode(QGL::Points);
+        builder.currentNode()->setDrawingWidth(m_pointSize);
+        m_geometry = builder.finalizedSceneNode();
+
+        m_changeFlag = false;
+    }
+
+    // Draw the geometry.
+    m_geometry->draw(painter);
 }

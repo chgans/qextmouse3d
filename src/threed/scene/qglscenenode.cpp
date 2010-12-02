@@ -650,6 +650,35 @@ void QGLSceneNode::setDrawingMode(QGL::DrawingMode mode)
 }
 
 /*!
+    Returns the drawing width for this node.
+
+    Drawing width is used only when drawing lines or points (ie. when
+    the drawing mode is points, lines, line-strips, etc).
+
+    \sa drawingMode()
+*/
+qreal QGLSceneNode::drawingWidth() const
+{
+    Q_D(const QGLSceneNode);
+    return d->drawingWidth;
+}
+
+/*!
+    Sets the drawing \a width to the given value.
+
+    Drawing width is used only when drawing lines or points (ie. when
+    the drawing mode is points, lines, line-strips, etc).
+
+    \sa drawingMode()
+*/
+void QGLSceneNode::setDrawingWidth(qreal width)
+{
+    Q_D(QGLSceneNode);
+    d->drawingWidth = width;
+}
+
+
+/*!
     Returns the local effect associated with this node.  The default value
     is QGL::FlatColor.  If the value of hasEffect() is false, then this
     the value of effect() is ignored.
@@ -1251,7 +1280,7 @@ void QGLSceneNode::drawGeometry(QGLPainter *painter)
 {
     Q_D(QGLSceneNode);
     if (d->count && d->geometry.count() > 0)
-        d->geometry.draw(painter, d->start, d->count, d->drawingMode);
+        d->geometry.draw(painter, d->start, d->count, d->drawingMode, d->drawingWidth);
 }
 
 /*!

@@ -76,6 +76,8 @@ private:
     qreal m_pointSize;
     QVariant m_vertices;
     QVector3DArray m_vertexArray;
+    QGLSceneNode * m_geometry;
+    bool m_changeFlag;
 };
 
 QML_DECLARE_TYPE(Point)
