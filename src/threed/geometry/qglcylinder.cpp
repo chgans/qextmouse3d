@@ -356,18 +356,18 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             //Draw end-cap at bottom            
             QGeometryData base;
             builder.newSection();
-            builder.currentNode()->setObjectName("Cylinder Base");
+            builder.currentNode()->setObjectName("Cylinder Base");            
+            base.appendVertexArray(newLayer.vertices());
             base.appendVertex(newLayer.center());
-            base.appendVertexArray(newLayer.vertices());    
             //Generate a circle of texture vertices for this layer.
-            base.appendTexCoord(QVector2D(0.5,0.5));
-            
             for (int i=1; i<base.count(); i++)
             {
                 base.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
-            }  
+            }
+            base.appendTexCoord(QVector2D(0.5,0.5));
             angle = 0;
+
             //we need to reverse the above to draw it properly - windings!
             builder.addTriangulatedFace(base.reversed());
         }
@@ -377,7 +377,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
         oldLayer.appendGeometry(newLayer);
         radius+=radiusIncrement;
         height-=heightDecrement;
-        textureHeight-=textureDecrement;
+        textureHeight-=textureDecrement;       
     }
 
     return builder;
