@@ -77,7 +77,7 @@ QT_BEGIN_NAMESPACE
 
     The QGLShaderProgramEffect class can assist with writing
     shader-based effects.  It will automatically bind special
-    variable names, such as \c{qgl_Vertex}, \c{qgl_TexCoord0}, etc,
+    variable names, such as \c{qt_Vertex}, \c{qt_MultiTexCoord0}, etc,
     to the standard indexes.  This alleviates the need for the
     application to bind the names itself.
 */

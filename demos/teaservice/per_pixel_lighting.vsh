@@ -41,22 +41,22 @@
 
 // Per-pixel lighting - vertex shader side.
 
-attribute highp vec4 qgl_Vertex;
-attribute mediump vec3 qgl_Normal;
-uniform mediump mat4 qgl_ModelViewMatrix;
-uniform mediump mat4 qgl_ModelViewProjectionMatrix;
-uniform mediump mat3 qgl_NormalMatrix;
+attribute highp vec4 qt_Vertex;
+attribute mediump vec3 qt_Normal;
+uniform mediump mat4 qt_ModelViewMatrix;
+uniform mediump mat4 qt_ModelViewProjectionMatrix;
+uniform mediump mat3 qt_NormalMatrix;
 
-struct qgl_MaterialParameters {
+struct qt_MaterialParameters {
     mediump vec4 emission;
     mediump vec4 ambient;
     mediump vec4 diffuse;
     mediump vec4 specular;
     mediump float shininess;
 };
-uniform qgl_MaterialParameters qgl_Material;
+uniform qt_MaterialParameters qt_Material;
 
-struct qgl_SingleLightParameters {
+struct qt_SingleLightParameters {
     mediump vec4 position;
     mediump vec3 spotDirection;
     mediump float spotExponent;
@@ -66,7 +66,7 @@ struct qgl_SingleLightParameters {
     mediump float linearAttenuation;
     mediump float quadraticAttenuation;
 };
-uniform qgl_SingleLightParameters qgl_Light;
+uniform qt_SingleLightParameters qt_Light;
 
 varying mediump vec4 qAmbient;
 varying mediump vec4 qDiffuse;
@@ -79,18 +79,18 @@ void qLightVertex(vec4 vertex, vec3 normal)
 {
     vec3 toEye;
     qNormal = normal;
-    qAmbient = qgl_Material.emission + qgl_Material.ambient;
-    qDiffuse = qgl_Material.diffuse;
-    qLightDirection = normalize(qgl_Light.position.xyz);
+    qAmbient = qt_Material.emission + qt_Material.ambient;
+    qDiffuse = qt_Material.diffuse;
+    qLightDirection = normalize(qt_Light.position.xyz);
     toEye = vec3(0, 0, 1);
     qHalfVector = normalize(qLightDirection + toEye);
-    qVertexToLight = vertex.xyz - qgl_Light.position.xyz;
+    qVertexToLight = vertex.xyz - qt_Light.position.xyz;
 }
 
 void main(void)
 {
-    gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-    vec4 vertex = qgl_ModelViewMatrix * qgl_Vertex;
-    vec3 normal = normalize(qgl_NormalMatrix * qgl_Normal);
+    gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+    vec4 vertex = qt_ModelViewMatrix * qt_Vertex;
+    vec3 normal = normalize(qt_NormalMatrix * qt_Normal);
     qLightVertex(vertex, normal);
 }

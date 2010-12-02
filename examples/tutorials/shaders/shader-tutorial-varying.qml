@@ -49,16 +49,16 @@ Viewport {
             id: program
 
             vertexShader: "
-            attribute highp vec4 qgl_Vertex;
-            uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+            attribute highp vec4 qt_Vertex;
+            uniform mediump mat4 qt_ModelViewProjectionMatrix;
 
-            attribute highp vec4 qgl_TexCoord0;
+            attribute highp vec4 qt_MultiTexCoord0;
             varying highp vec4 texCoord;
 
             void main(void)
             {
-                gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-                texCoord = vec4(qgl_TexCoord0.st, 0, 0);
+                gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+                texCoord = vec4(qt_MultiTexCoord0.st, 0, 0);
             }
             "
             fragmentShader: "

@@ -40,7 +40,7 @@
 ****************************************************************************/
 
 // This is equivilent to GL_REPLACE
-varying highp vec4 qTexCoord0;
+varying highp vec4 qt_TexCoord0;
 
 uniform mediump sampler2D texture;
 uniform mediump mat4 textureMatrix;

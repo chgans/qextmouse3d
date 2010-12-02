@@ -93,32 +93,32 @@ Viewport {
 
 
         vertexShader: "
-        attribute highp vec4 qgl_Vertex;
-        uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+        attribute highp vec4 qt_Vertex;
+        uniform mediump mat4 qt_ModelViewProjectionMatrix;
 
-        attribute mediump vec4 qgl_TexCoord0;
+        attribute mediump vec4 qt_MultiTexCoord0;
         varying mediump vec4 texCoord;
 
         void main(void)
         {
             const float modelBottom = -4.0;
 
-            vec4 workingPosition = qgl_ModelViewProjectionMatrix * qgl_Vertex;
+            vec4 workingPosition = qt_ModelViewProjectionMatrix * qt_Vertex;
             float newY = max(workingPosition.y,
                                workingPosition.y * 0.15 + modelBottom);
             workingPosition.y = newY;
             gl_Position = workingPosition;
 
-            texCoord = -qgl_TexCoord0;
+            texCoord = -qt_MultiTexCoord0;
         }
         "
         fragmentShader: "
         varying mediump vec4 texCoord;
-        uniform sampler2D qgl_Texture0;
+        uniform sampler2D qt_Texture0;
 
         void main(void)
         {
-            mediump vec4 textureColor = texture2D(qgl_Texture0, texCoord.st);
+            mediump vec4 textureColor = texture2D(qt_Texture0, texCoord.st);
             gl_FragColor = textureColor;
         }
         "

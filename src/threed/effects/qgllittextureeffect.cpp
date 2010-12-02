@@ -99,14 +99,14 @@ static char const litTextureVertexShader[] =
     "uniform highp mat4 matrix;\n"
     "uniform highp mat4 modelView;\n"
     "uniform highp mat3 normalMatrix;\n"
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "void main(void)\n"
     "{\n"
     "    gl_Position = matrix * vertex;\n"
     "    highp vec4 tvertex = modelView * vertex;\n"
     "    highp vec3 norm = normalize(normalMatrix * normal);\n"
     "    qLightVertex(tvertex, norm);\n"
-    "    qTexCoord = texcoord;\n"
+    "    qt_TexCoord0 = texcoord;\n"
     "}\n";
 
 static char const litDecalFragmentShader[] =
@@ -118,11 +118,11 @@ static char const litDecalFragmentShader[] =
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
 #endif
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "\n"
     "void main(void)\n"
     "{\n"
-    "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
+    "    mediump vec4 col = texture2D(tex, qt_TexCoord0.st);\n"
 #if defined(QT_OPENGL_ES)
     "    gl_FragColor = vec4(clamp(qCombinedColor.rgb * (1.0 - col.a) + col.rgb * col.a, 0.0, 1.0), qCombinedColor.a);\n"
 #else
@@ -144,11 +144,11 @@ static char const litModulateFragmentShader[] =
     "varying mediump vec4 qColor;\n"
     "varying mediump vec4 qSecondaryColor;\n"
 #endif
-    "varying highp vec4 qTexCoord;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "\n"
     "void main(void)\n"
     "{\n"
-    "    mediump vec4 col = texture2D(tex, qTexCoord.st);\n"
+    "    mediump vec4 col = texture2D(tex, qt_TexCoord0.st);\n"
 #if defined(QT_OPENGL_ES)
     "    gl_FragColor = col * qCombinedColor;\n"
 #else

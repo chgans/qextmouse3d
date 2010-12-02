@@ -92,27 +92,27 @@ Item3D {
         }
 
         vertexShader: "
-            attribute highp vec4 qgl_Vertex;
-            attribute highp vec4 qgl_TexCoord0;
-            uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+            attribute highp vec4 qt_Vertex;
+            attribute highp vec4 qt_MultiTexCoord0;
+            uniform mediump mat4 qt_ModelViewProjectionMatrix;
             varying highp vec4 texCoord;
 
             void main(void)
             {
-                gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-                texCoord = qgl_TexCoord0;
+                gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+                texCoord = qt_MultiTexCoord0;
             }
         "
         fragmentShader: "
             varying highp vec4 texCoord;
-            uniform sampler2D qgl_Texture0;
+            uniform sampler2D qt_Texture0;
             uniform sampler2D texture2;
-            uniform mediump vec4 qgl_Color;
+            uniform mediump vec4 qt_Color;
             uniform mediump float interpolationFactor;
 
             void main(void)
             {
-                mediump vec4 col1 = texture2D(qgl_Texture0, texCoord.st);
+                mediump vec4 col1 = texture2D(qt_Texture0, texCoord.st);
                 mediump vec4 col2 = texture2D(texture2, texCoord.st);
                 gl_FragColor = mix(col1, col2, interpolationFactor);
             }

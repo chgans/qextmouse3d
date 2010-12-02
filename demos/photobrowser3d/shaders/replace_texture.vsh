@@ -46,13 +46,13 @@ attribute highp vec4 thumbcoord;
 uniform highp mat4 matrix;
 uniform bool thumb;
 
-varying highp vec4 qTexCoord;
+varying highp vec4 qt_TexCoord0;
 
 void main(void)
 {
     if (thumb)
-        qTexCoord = thumbcoord;
+        qt_TexCoord0 = thumbcoord;
     else
-        qTexCoord = texcoord;
+        qt_TexCoord0 = texcoord;
     gl_Position = matrix * vertex;
 }

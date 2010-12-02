@@ -46,7 +46,7 @@ attribute highp vec4 vertex;
 attribute highp vec4 normal;
 attribute highp vec4 texCoords;
 uniform highp mat4 matrix;
-uniform mediump mat3 qgl_NormalMatrix;
+uniform mediump mat3 qt_NormalMatrix;
 
 uniform mediump vec4 acli;      // Ambient intensity of the light
 uniform mediump vec4 dcli;      // Diffuse intensity of the light
@@ -66,8 +66,8 @@ varying mediump vec4 qDiffuse;
 varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
 varying mediump vec3 qHalfVector;
-varying highp vec4 qTexCoord0;
-varying highp vec4 qTexCoord1;
+varying highp vec4 qt_TexCoord0;
+varying highp vec4 qt_TexCoord1;
 
 void qLightVertex(vec4 vertex, vec3 normal)
 {
@@ -84,8 +84,8 @@ void qLightVertex(vec4 vertex, vec3 normal)
 
 void main(void)
 {
-    qNormal = normalize(qgl_NormalMatrix * vec3(normal));
+    qNormal = normalize(qt_NormalMatrix * vec3(normal));
     qLightVertex(vertex, qNormal);
-    qTexCoord0 = texCoords;
+    qt_TexCoord0 = texCoords;
     gl_Position = matrix * vertex;
 };
