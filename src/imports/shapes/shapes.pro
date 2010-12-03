@@ -2,6 +2,12 @@ TEMPLATE = lib
 TARGET  = qshapesqmlplugin
 CONFIG += qt plugin
 
+win32 {
+    CONFIG(debug, debug|release) {
+        TARGET = $$member(TARGET, 0)d
+    }
+}
+
 symbian {
     CONFIG += epocallowdlldata
     contains(QT_EDITION, OpenSource) {
