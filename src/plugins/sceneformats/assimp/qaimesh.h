@@ -43,9 +43,11 @@
 #define QGL3DSMESH_H
 
 #include "qaiscenehandler.h"
-#include "qglbuilder.h"
+#include "qgeometrydata.h"
 
 class QGLMaterialCollection;
+class QGLSceneNode;
+class QGLBuilder;
 class QAiLoader;
 class aiMesh;
 
@@ -55,10 +57,9 @@ public:
     QAiMesh(aiMesh *mesh);
     virtual ~QAiMesh();
 
-    QGLSceneNode *build();
-
+    void build(QGLBuilder &builder, bool showWarnings = false);
 private:
-    QGLSceneNode *loadTriangles();
+    void loadTriangles(QGLBuilder &builder);
 
     aiMesh *m_mesh;
 };

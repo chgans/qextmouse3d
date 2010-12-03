@@ -185,6 +185,9 @@ public:
     bool isEmpty() const;
     bool isNull() const;
     void detach();
+#ifndef QT_NO_DEBUG
+    void printId(QDebug dbg) const { dbg << "Data block id:" << d; }
+#endif
 protected:
     const QVector3DArray *vertexData() const;
 private:

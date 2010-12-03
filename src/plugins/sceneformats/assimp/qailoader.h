@@ -48,6 +48,8 @@
 
 #include "aiScene.h"
 
+#include "qglbuilder.h"
+
 class QAiMesh;
 class QGLSceneNode;
 class QAiSceneHandler;
@@ -67,6 +69,9 @@ private:
     void loadMaterial(aiMaterial *);
     void loadTextures(aiMaterial *, QGLMaterial *);
     QUrl ensureResource(const QString &);
+    void optimizeData();
+    void optimizeNodes(QGLSceneNode *node = 0, QGLSceneNode *parent = 0);
+    void countChildNodeReferences();
 
     const aiScene *m_scene;
     QGLSceneNode *m_root;
@@ -75,8 +80,10 @@ private:
     QList<QGLMaterial *> m_materials;
     QList<QGLSceneNode *> m_meshes;
     QMap<aiNode *, QGLSceneNode *> m_nodeMap;
+    QMap<QGLSceneNode *, int> m_refCounts;
     bool m_hasTextures;
     bool m_hasLitMaterials;
+    QGLBuilder m_builder;
 };
 
 #endif // QGL3DSLOADER_H

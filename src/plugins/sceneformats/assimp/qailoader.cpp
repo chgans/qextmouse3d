@@ -44,12 +44,14 @@
 #include "qaiscene.h"
 #include "qaimesh.h"
 
+#include "qgeometrydata.h"
 #include "qgltwosidedmaterial.h"
 #include "qglmaterial.h"
 #include "qglmaterialcollection.h"
 #include "qglpainter.h"
 #include "qgltexture2d.h"
 #include "qglscenenode.h"
+#include "qlogicalvertex.h"
 
 #include "aiScene.h"
 #include "aiMaterial.h"
@@ -62,19 +64,12 @@
 
 QAiLoader::QAiLoader(const aiScene *scene, QAiSceneHandler* handler)
      : m_scene(scene)
-     , m_root(new QGLSceneNode())
+     , m_root(0)
      , m_handler(handler)
      , m_hasTextures(false)
      , m_hasLitMaterials(false)
+     , m_builder(new QGLMaterialCollection(m_root))
 {
-    m_root->setPalette(new QGLMaterialCollection(m_root));
-    QString name = handler->url().path();
-    int pos = name.lastIndexOf("/");
-    if (pos == -1)
-        pos = name.lastIndexOf("\\");
-    if (pos != -1)
-        name = name.mid(pos+1);
-    m_root->setObjectName(name);
 }
 
 QAiLoader::~QAiLoader()
@@ -83,59 +78,46 @@ QAiLoader::~QAiLoader()
     // rootNode() method
 }
 
+static inline void assertOnePrimitiveType(aiMesh *mesh)
+{
+#ifndef QT_NO_DEBUG
+    int k = 0;  // count the number of bits set in the primitives
+    unsigned int msk = 0x01;
+    for (unsigned int p = mesh->mPrimitiveTypes; p; p >>= 1)
+        if (p & msk)
+            ++k;
+    Q_ASSERT(k == 1);  // Assimp SortByPType promises this
+#endif
+}
+
 void QAiLoader::loadMesh(aiMesh *mesh)
 {
-    QString name;
-    if (mesh->mName.length > 0)
-        name = QString::fromUtf8(mesh->mName.data, mesh->mName.length);
-    if (!mesh->HasFaces() || !mesh->HasPositions())
-    {
-        if (m_handler->showWarnings())
-        {
-            QString error = QLatin1String("Mesh %1 has zero vertex/face count");
-            error.arg(name.isEmpty() ? QString(QLatin1String("<unnamed mesh>")) : name);
-            Assimp::DefaultLogger::get()->warn(error.toStdString());
-        }
-        else
-        {
-            qDebug() << "arggh - wtf - no faces or verts - no warnings?" << name;
-        }
-        return;
-    }
-
+    QString name = QString::fromUtf8(mesh->mName.data, mesh->mName.length);
     qDebug() << "loadMesh" << name << "with" << mesh->mNumVertices << "vertices"
                 << "and" << mesh->mNumFaces << "faces";
 
-    QAiMesh m(mesh);
-    QGLSceneNode *node = m.build();
+    assertOnePrimitiveType(mesh);
 
-    node->setPalette(m_root->palette());
-    node->setMaterialIndex(mesh->mMaterialIndex);
-
-    QGLMaterial *mat = m_root->palette()->material(mesh->mMaterialIndex);
-    qDebug() << "palette is:" << m_root->palette() << "containing count:" << m_root->palette()->size();
-    qDebug() << "creating mesh node" << node;
-    qDebug() << "   using material #" << mesh->mMaterialIndex;
-    qDebug() << "   that is:" << (mat ? mat->objectName() : QString("NULL"));
-    mat = node->material();
-    qDebug() << "Material is:" << *mat;
-
-    /*QGLMaterial * */mat = m_root->palette()->material(mesh->mMaterialIndex);
-    if (mat->property("isTwoSided").isValid() && mat->property("isTwoSided").toBool())
-        node->setBackMaterialIndex(mesh->mMaterialIndex);
-    if (mat->property("isWireFrame").isValid() && mat->property("isWireFrame").toBool())
-        node->setDrawingMode(QGL::Lines);
-
-    if (name.isEmpty())
+    if (mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE)
     {
-        name = QLatin1String("AIMesh %1");
-        name.arg(m_meshes.size());
+        QGLSceneNode *node = m_builder.newNode();
+        node->setObjectName(name);
+        QAiMesh m(mesh);
+        m.build(m_builder, m_handler->showWarnings());
+        m_meshes.append(node);
+
+        qDebug() << node;
     }
-    node->setObjectName(name);
-
-    m_meshes.append(node);
-
-    qDebug() << node;
+    else
+    {
+        // TODO: Implement other types in qaimesh.cpp
+        if (m_handler->showWarnings())
+        {
+            QString error = QLatin1String("Bad primitive type in mesh %1 : %2");
+            error = error.arg(name).arg(mesh->mPrimitiveTypes);
+            Assimp::DefaultLogger::get()->warn(error.toStdString());
+        }
+    }
 
     if (m_handler->showWarnings())
     {
@@ -150,7 +132,7 @@ void QAiLoader::loadMesh(aiMesh *mesh)
                     QString error = QLatin1String(
                                 "Found color information in mesh %1, channel %2"
                                 "- per vertex color not yet supported");
-                    error.arg(name).arg(i);
+                    error = error.arg(name).arg(i);
                     Assimp::DefaultLogger::get()->warn(error.toStdString());
                     break;
                 }
@@ -226,6 +208,160 @@ void QAiLoader::loadNodes(aiNode *nodeList, QGLSceneNode *parentNode)
     }
 }
 
+static void qRewriteData(QGLSceneNode *node, QGeometryData &dstData)
+{
+    uint minIndex = 32000;
+    uint maxIndex = 0;
+    QGeometryData srcData = node->geometry();
+    Q_ASSERT(dstData.fields() == srcData.fields());
+    QGL::IndexArray srcIndices = srcData.indices();
+
+    qDebug() << "Re-writing data for" << node << "appending to" << dstData;
+
+    // find the indices of the first vertex referenced and the last - the
+    // src data should reference all of those vertices (should be contiguous)
+    // if there is "holes" then there is slight wastage, not a crash/bug
+    for (int i = node->start(); i < (node->start() + node->count()); ++i)
+    {
+        if (minIndex > srcIndices.at(i))
+            minIndex = srcIndices.at(i);
+        if (maxIndex < srcIndices.at(i))
+            maxIndex = srcIndices.at(i);
+    }
+
+    // calculate the offset which all index values need to change by
+    int offset = dstData.count(QGL::Position) - minIndex;
+
+    // save the offset by which the node start value needs to change
+    int newStart = dstData.indexCount();
+
+    // copy all the referenced data into the dst buffer
+    for (uint i = minIndex; i <= maxIndex; ++i)
+        dstData.appendVertex(srcData.logicalVertexAt(i));
+
+    // change the references (the indices) by the offset and copy to dst
+    for (int i = node->start(); i < srcIndices.size(); ++i)
+        dstData.appendIndex(srcIndices.at(i) + offset);
+
+    // update the starting index & geometry in the node
+    node->setStart(newStart);
+    node->setGeometry(dstData);
+}
+
+/*!
+    \internal
+    Pack the geometry data into as few buffers as possible
+*/
+void QAiLoader::optimizeData()
+{
+    QMap<quint32, QGeometryData> data;
+    QList<QGLSceneNode*> queue;
+    queue.append(m_root);
+    while (!queue.isEmpty())
+    {
+        QGLSceneNode *node = queue.takeFirst();
+        if ((node->geometry().count() > 0) && (node->count() > 0))
+        {
+            QMap<quint32, QGeometryData>::iterator it = data.find(node->geometry().fields());
+            if (it == data.end()) // not found
+                data.insert(node->geometry().fields(), node->geometry());
+            else
+                qRewriteData(node, it.value());
+        }
+        queue.append(node->children());
+    }
+}
+
+void QAiLoader::countChildNodeReferences()
+{
+    m_refCounts.clear();
+    QList<QGLSceneNode *> queue;
+    queue.append(m_root);
+    while (queue.size() > 0)
+    {
+        QGLSceneNode *n = queue.takeFirst();
+        QList<QGLSceneNode*> c = n->children();
+        QList<QGLSceneNode*>::const_iterator it = c.constBegin();
+        for ( ; it != c.constEnd(); ++it)
+        {
+            QGLSceneNode *child = *it;
+            ++m_refCounts[child];
+            queue.append(child);
+        }
+    }
+}
+
+/*!
+    \internal
+    Try to collapse useless nodes together
+*/
+void QAiLoader::optimizeNodes(QGLSceneNode *node, QGLSceneNode *parent)
+{
+    if (node == 0)
+    {
+        // start recursive traversal at the root
+        node = m_root;
+        parent = 0;
+        countChildNodeReferences();
+    }
+
+    QList<QGLSceneNode*> c = node->children();
+
+    // find how many references to the first child
+    QMap<QGLSceneNode*, int>::const_iterator fit = m_refCounts.constFind(c.at(0));
+    Q_ASSERT(fit != m_refCounts.constEnd());
+    int k = fit.value();
+    Q_ASSERT(k > 0);
+
+    if (c.size() == 1 && (k < 2))
+    {
+        // has only one child, so might be able to collapse child into this
+        QGLSceneNode *child = c.at(0);
+
+        // can't collapse if they both have a name - might be needed for animation
+        uint nodeHasName = (!node->objectName().isEmpty()) ? 0x01 : 0;
+        uint childHasName = (!child->objectName().isEmpty()) ? 0x02 : 0;
+
+        // too difficult to collapse if both have geometry, or both have transform
+        uint nodeHasGeometry = ((node->geometry().count() > 0) && node->count() > 0) ? 0x01 : 0;
+        uint childHasGeometry = ((child->geometry().count() > 0) && child->count() > 0) ? 0x02 : 0;
+        uint nodeHasLocal = (!node->localTransform().isIdentity()) ? 0x01 : 0;
+        uint childHasLocal = (!child->localTransform().isIdentity()) ? 0x02 : 0;
+
+        if ((nodeHasGeometry | childHasGeometry) < 3 &&
+                (nodeHasName | childHasName) < 3 &&
+                (nodeHasLocal | childHasLocal) < 3)
+        {
+            // ok, can collapse - make child same as node, then delete node
+            if (nodeHasName)
+                child->setObjectName(node->objectName());
+
+            if (nodeHasGeometry)
+            {
+                // this would be kind of weird but possible
+                child->setGeometry(node->geometry());
+                child->setStart(node->start());
+                child->setCount(node->count());
+            }
+
+            if (nodeHasLocal)
+                child->setLocalTransform(node->localTransform());
+            // no need to worry about drawing mode, material or effect since whatever
+            // node might have set these two they would have gotten instantly over-ridden
+            // by the child anyway.
+
+            if (parent)
+                parent->addNode(child);
+            else
+                m_root = child;
+
+            qDebug() << "Collapsed:" << node << "into:" << child << "deleting:" << node;
+            delete node;
+        }
+    }
+
+}
+
 /*!
     \internal
     Loads all the geometry, materials, and texture associations from the assigned
@@ -242,13 +378,31 @@ QGLSceneNode *QAiLoader::loadMeshes()
         loadMaterial(m_scene->mMaterials[i]);
 
     qDebug() << "processing:" << m_scene->mNumMeshes << "meshes";
+    // builds a naive scene heierarchy with all meshes under the root node
     for (unsigned int i = 0; i < m_scene->mNumMeshes; ++i)
         loadMesh(m_scene->mMeshes[i]);
 
-    QGLMaterialCollection *palette = m_root->palette();
-    palette->removeUnusedMaterials();
+    // fetch the naive scene heierarchy from the builder
+    m_root = m_builder.finalizedSceneNode();
 
-    loadNodes(m_scene->mRootNode, m_root);
+    QString name = m_handler->url().path();
+    int pos = name.lastIndexOf("/");
+    if (pos == -1)
+        pos = name.lastIndexOf("\\");
+    if (pos != -1)
+        name = name.mid(pos+1);
+    m_root->setObjectName(name);
+
+    // this should be unnecessary given assimps post-processing but some
+    // AI back ends may require it.
+    m_root->palette()->removeUnusedMaterials();
+
+    // if scene has a node heierarchy replace the naive heierarchy with that
+    if (m_scene->mRootNode->mNumChildren > 0 && m_scene->mRootNode->mChildren)
+    {
+        m_root->removeNodes(m_root->children());
+        loadNodes(m_scene->mRootNode, m_root);
+    }
 
     m_root->setEffect(m_scene->HasTextures() ? QGL::LitModulateTexture2D : QGL::LitMaterial);
 
@@ -259,14 +413,27 @@ QGLSceneNode *QAiLoader::loadMeshes()
                                         "Material count: %4");
         QUrl url = m_handler->url();
         message = message.arg(url.toString()).arg(m_meshes.size())
-                .arg(m_nodes.size()).arg(palette->size());
+                .arg(m_nodes.size()).arg(m_root->palette()->size());
         Assimp::DefaultLogger::get()->warn(message.toStdString());
     }
 
+    //optimizeData();
+    //optimizeNodes();
+
+#define DEBUG_ME
+#ifdef DEBUG_ME
     qDumpScene(m_root);
 
-    QGeometryData data = m_root->children().at(0)->children().at(0)->children().at(0)->children().at(0)->geometry();
-    qDebug() << data;
+    QList<QGLSceneNode*> c = m_root->allChildren();
+    for (int i = 0; i < c.size(); ++i)
+    {
+        if (c.at(i)->geometry().count() > 0)
+        {
+            qDebug() << "geometry for:" << c.at(i);
+            qDebug() << c.at(i)->geometry();
+        }
+    }
+#endif
 
     return m_root;
 }
@@ -430,7 +597,7 @@ void QAiLoader::loadTextures(aiMaterial *ma, QGLMaterial *mq)
 */
 void QAiLoader::loadMaterial(aiMaterial *ma)
 {
-    QGLMaterialCollection *palette = m_root->palette();
+    QGLMaterialCollection *palette = m_builder.palette();
     QGLMaterial *mq = new QGLMaterial;
     mq->setObjectName("___DEFAULT_NAME___");
 

@@ -40,7 +40,9 @@
 ****************************************************************************/
 
 #include "qaimesh.h"
+#include "qglscenenode.h"
 #include "qglmaterialcollection.h"
+#include "qglbuilder.h"
 
 #include <QtGui/qmatrix4x4.h>
 #include <QtCore/qmath.h>
@@ -67,9 +69,8 @@ static inline QVector3D qv3d(const aiVector3D &v)
     return QVector3D(v.x, v.y, v.z);
 }
 
-QGLSceneNode *QAiMesh::loadTriangles()
+void QAiMesh::loadTriangles(QGLBuilder &builder)
 {
-    QGLBuilder builder;
     QGeometryData data;
     for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
         data.appendVertex(qv3d(m_mesh->mVertices[i]));
@@ -84,53 +85,57 @@ QGLSceneNode *QAiMesh::loadTriangles()
         for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
             data.appendTexCoord(qv2d(m_mesh->mTextureCoords[t][i]), static_cast<QGL::VertexAttribute>(QGL::TextureCoord0 + t));
     }
+
     for (unsigned int i = 0; i < m_mesh->mNumFaces; ++i)
     {
         aiFace *face = &m_mesh->mFaces[i];
         data.appendIndices(face->mIndices[0], face->mIndices[1], face->mIndices[2]);
     }
-    // invoke raw mode (with indexes)
+
+    qDebug() << "adding triangle data" << data;
+    qDebug() << "   from" << m_mesh->mNumVertices << "verts and" << m_mesh->mNumFaces << "faces";
+
+    // raw triangle mode
     builder.addTriangles(data);
-    return builder.finalizedSceneNode();
+
+    qDebug() << *(builder.currentNode());
 }
 
-static inline void assertOnePrimitiveType(aiMesh *mesh)
+void QAiMesh::build(QGLBuilder &builder, bool showWarnings)
 {
-#ifndef QT_NO_DEBUG
-    int k = 0;  // count the number of bits set in the primitives
-    unsigned int msk = 0x01;
-    for (unsigned int p = mesh->mPrimitiveTypes; p; p >>= 1)
-        if (p & msk)
-            ++k;
-    Q_ASSERT(k == 1);  // Assimp SortByPType promises this
-#endif
-}
+    QGLSceneNode *node = builder.currentNode();
+    QString name = node->objectName();
 
-QGLSceneNode *QAiMesh::build()
-{
-    assertOnePrimitiveType(m_mesh);
-    QGLSceneNode *s = 0;
+    if (!m_mesh->HasFaces() || !m_mesh->HasPositions())
+    {
+        if (showWarnings)
+        {
+            QString error = QLatin1String("Mesh %1 has zero vertex/face count");
+            error.arg(name.isEmpty() ? QString(QLatin1String("<unnamed mesh>")) : name);
+            Assimp::DefaultLogger::get()->warn(error.toStdString());
+        }
+        return;
+    }
+
     if (m_mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE)
-    {
-        s = loadTriangles();
-    }
-    else if (m_mesh->mPrimitiveTypes & aiPrimitiveType_POINT)
-    {
-        // TODO: not implemented yet
-        Assimp::DefaultLogger::get()->warn("Point primitive not implemented yet");
-        return 0;
-    }
-    else if (m_mesh->mPrimitiveTypes & aiPrimitiveType_LINE)
-    {
-        // TODO: not implemented yet
-        Assimp::DefaultLogger::get()->warn("Line primitive not implemented yet");
-        return 0;
-    }
+        loadTriangles(builder);
     else
-    {
-        // TODO: not implemented yet
-        Assimp::DefaultLogger::get()->warn("Unsupported primitive type");
-        return 0;
-    }
-    return s;
+        return;  // TODO - lines, points, quads, polygons
+
+    node->setMaterialIndex(m_mesh->mMaterialIndex);
+    node->palette()->markMaterialAsUsed(m_mesh->mMaterialIndex);
+
+    QGLMaterial *mat = node->palette()->material(m_mesh->mMaterialIndex);
+    qDebug() << "palette is:" << node->palette() << "containing count:" << node->palette()->size();
+    qDebug() << "creating mesh node" << node;
+    qDebug() << "   using material #" << m_mesh->mMaterialIndex;
+    qDebug() << "   that is:" << (mat ? mat->objectName() : QString("NULL"));
+    mat = node->material();
+    qDebug() << "Material is:" << *mat;
+
+    /*QGLMaterial * */mat = node->palette()->material(m_mesh->mMaterialIndex);
+    if (mat->property("isTwoSided").isValid() && mat->property("isTwoSided").toBool())
+        node->setBackMaterialIndex(m_mesh->mMaterialIndex);
+    if (mat->property("isWireFrame").isValid() && mat->property("isWireFrame").toBool())
+        node->setDrawingMode(QGL::Lines);
 }
