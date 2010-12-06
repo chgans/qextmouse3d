@@ -90,11 +90,20 @@ static inline void assertOnePrimitiveType(aiMesh *mesh)
 #endif
 }
 
+static inline bool qHasTextures(const QGLSceneNode *node)
+{
+    QGLMaterial *mat = node->material();
+    for (int i = 0; i < mat->textureLayerCount(); ++i)
+        if (node->material()->texture(i))
+            return true;
+    return false;
+}
+
 void QAiLoader::loadMesh(aiMesh *mesh)
 {
     QString name = QString::fromUtf8(mesh->mName.data, mesh->mName.length);
-    qDebug() << "loadMesh" << name << "with" << mesh->mNumVertices << "vertices"
-                << "and" << mesh->mNumFaces << "faces";
+    // qDebug() << "loadMesh" << name << "with" << mesh->mNumVertices << "vertices"
+    //            << "and" << mesh->mNumFaces << "faces";
 
     assertOnePrimitiveType(mesh);
 
@@ -106,6 +115,10 @@ void QAiLoader::loadMesh(aiMesh *mesh)
         QAiMesh m(mesh);
         m.build(m_builder, m_handler->showWarnings());
         m_meshes.append(node);
+        if (qHasTextures(node))
+            m_hasTextures = true;
+        else
+            m_hasLitMaterials = true;
     }
     else
     {
@@ -242,7 +255,20 @@ QGLSceneNode *QAiLoader::loadMeshes()
         loadNodes(m_scene->mRootNode, m_root);
     }
 
-    m_root->setEffect(m_scene->HasTextures() ? QGL::LitModulateTexture2D : QGL::LitMaterial);
+    if (m_hasTextures) // make textures the default
+    {
+        m_root->setEffect(QGL::LitModulateTexture2D);
+        if (m_hasLitMaterials)
+        {
+            for (int i = 0; i < m_meshes.size(); ++i)
+                if (!qHasTextures(m_meshes.at(i)))
+                    m_meshes.at(i)->setEffect(QGL::LitMaterial);
+        }
+    }
+    else
+    {
+        m_root->setEffect(QGL::LitMaterial);
+    }
 
     if (m_handler->showWarnings())
     {
@@ -304,8 +330,8 @@ QUrl QAiLoader::ensureResource(const QString &path)
     if (base.scheme() == QLatin1String("file"))
     {
         res = base.resolved(path);
-        qDebug() << "ensureResource - base:" << base
-                 << " -- path:" << path << "-- resolved:" << res;
+        //qDebug() << "ensureResource - base:" << base
+        //         << " -- path:" << path << "-- resolved:" << res;
         if (QFile::exists(res.path())) // shortcut common case
             return res;
         QStringList paths;
@@ -504,7 +530,9 @@ void QAiLoader::loadMaterial(aiMaterial *ma)
     // the palette will be the same.
     //
     // executive summary: don't muck around with the palettte outside of this call
+
     int k = palette->addMaterial(mq);
-    palette->markMaterialAsUsed(k);
-    qDebug() << "loaded material" << k << mq;
+
+    Q_UNUSED(k);
+    //qDebug() << "loaded material" << k << mq;
 }

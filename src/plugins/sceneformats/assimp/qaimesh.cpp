@@ -64,6 +64,12 @@ static inline QVector2D qv2d(const aiVector3D &v)
     return QVector2D(v.x, v.y);
 }
 
+static inline QVector2D qv2d_inv(const aiVector3D &v)
+{
+    // invert the v coord because Qt is upside-down
+    return QVector2D(v.x, (1.0 - v.y));
+}
+
 static inline QVector3D qv3d(const aiVector3D &v)
 {
     return QVector3D(v.x, v.y, v.z);
@@ -82,8 +88,17 @@ void QAiMesh::loadTriangles(QGLBuilder &builder)
     {
         if (m_mesh->mNumUVComponents[t] != 2)
             Assimp::DefaultLogger::get()->warn("Tex co-ords only supports U & V");
-        for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
-            data.appendTexCoord(qv2d(m_mesh->mTextureCoords[t][i]), static_cast<QGL::VertexAttribute>(QGL::TextureCoord0 + t));
+        QGLMaterial *m = builder.currentNode()->material();
+        if (m && m->textureUrl().path().endsWith(".dds", Qt::CaseInsensitive))
+        {
+            for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
+                data.appendTexCoord(qv2d_inv(m_mesh->mTextureCoords[t][i]), static_cast<QGL::VertexAttribute>(QGL::TextureCoord0 + t));
+        }
+        else
+        {
+            for (unsigned int i = 0; i < m_mesh->mNumVertices; ++i)
+                data.appendTexCoord(qv2d(m_mesh->mTextureCoords[t][i]), static_cast<QGL::VertexAttribute>(QGL::TextureCoord0 + t));
+        }
     }
 
     for (unsigned int i = 0; i < m_mesh->mNumFaces; ++i)
@@ -112,13 +127,13 @@ void QAiMesh::build(QGLBuilder &builder, bool showWarnings)
         return;
     }
 
+    node->setMaterialIndex(m_mesh->mMaterialIndex);
+    node->palette()->markMaterialAsUsed(m_mesh->mMaterialIndex);
+
     if (m_mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE)
         loadTriangles(builder);
     else
         return;  // TODO - lines, points, quads, polygons
-
-    node->setMaterialIndex(m_mesh->mMaterialIndex);
-    node->palette()->markMaterialAsUsed(m_mesh->mMaterialIndex);
 
     QGLMaterial * mat = node->palette()->material(m_mesh->mMaterialIndex);
     if (mat->property("isTwoSided").isValid() && mat->property("isTwoSided").toBool())

@@ -63,7 +63,6 @@ size_t AiLoaderIOStream::Read( void* pvBuffer, size_t pSize, size_t pCount)
     m_errorState = (result == -1);
     if (m_errorState)
         fprintf(stderr, "AI read error: %s\n", qPrintable(m_device->errorString()));
-    qDebug() << "AiLoaderIOStream::Read" << (pSize * pCount) << "bytes read";
     return result;
 }
 

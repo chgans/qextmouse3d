@@ -59,8 +59,6 @@ AiLoaderIOSystem::~AiLoaderIOSystem()
 
 bool AiLoaderIOSystem::Exists(const char* path) const
 {
-    qDebug() << "AiLoaderIOSystem::Exists" << path
-                << QFile::exists(QLatin1String(path));
     return QFile::exists(QLatin1String(path));
 }
 
@@ -71,8 +69,6 @@ char AiLoaderIOSystem::getOsSeparator() const
 
 Assimp::IOStream* AiLoaderIOSystem::Open(const char* pFile, const char* pMode)
 {
-    qDebug() << "AiLoaderIOSystem::Open" << pFile << "-- mode:" << pMode;
-
     Q_UNUSED(pFile);
     Q_UNUSED(pMode);
     AiLoaderIOStream *s = new AiLoaderIOStream(m_device);
