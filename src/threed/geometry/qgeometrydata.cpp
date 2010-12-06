@@ -1963,8 +1963,8 @@ void QGeometryData::check() const
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGeometryData &vertices)
 {
-    dbg << "QGeometryData" << &vertices << " size:" << vertices.count();
-    vertices.printId(dbg);
+    dbg << "QGeometryData" << &vertices << " size:" << vertices.count() <<
+           "data block id:" << vertices.id();
     quint32 fields = vertices.fields();
     const quint32 mask = 0x01;
     for (int field = 0; fields; ++field, fields >>= 1)
