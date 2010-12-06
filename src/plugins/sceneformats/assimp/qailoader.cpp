@@ -100,13 +100,12 @@ void QAiLoader::loadMesh(aiMesh *mesh)
 
     if (mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE)
     {
-        QGLSceneNode *node = m_builder.newNode();
+        m_builder.newSection();
+        QGLSceneNode *node = m_builder.currentNode();
         node->setObjectName(name);
         QAiMesh m(mesh);
         m.build(m_builder, m_handler->showWarnings());
         m_meshes.append(node);
-
-        qDebug() << node;
     }
     else
     {
@@ -196,7 +195,6 @@ void QAiLoader::loadNodes(aiNode *nodeList, QGLSceneNode *parentNode)
         for (unsigned int i = 0; i < nodeList->mNumMeshes; ++i)
         {
             int n = nodeList->mMeshes[i];
-            qDebug() << "Looking to add mesh #" << n;
             if (n < m_meshes.size())
                 node->addNode(m_meshes.at(n));
         }
@@ -206,160 +204,6 @@ void QAiLoader::loadNodes(aiNode *nodeList, QGLSceneNode *parentNode)
         node = it.value();
         parentNode->addNode(node);
     }
-}
-
-static void qRewriteData(QGLSceneNode *node, QGeometryData &dstData)
-{
-    uint minIndex = 32000;
-    uint maxIndex = 0;
-    QGeometryData srcData = node->geometry();
-    Q_ASSERT(dstData.fields() == srcData.fields());
-    QGL::IndexArray srcIndices = srcData.indices();
-
-    qDebug() << "Re-writing data for" << node << "appending to" << dstData;
-
-    // find the indices of the first vertex referenced and the last - the
-    // src data should reference all of those vertices (should be contiguous)
-    // if there is "holes" then there is slight wastage, not a crash/bug
-    for (int i = node->start(); i < (node->start() + node->count()); ++i)
-    {
-        if (minIndex > srcIndices.at(i))
-            minIndex = srcIndices.at(i);
-        if (maxIndex < srcIndices.at(i))
-            maxIndex = srcIndices.at(i);
-    }
-
-    // calculate the offset which all index values need to change by
-    int offset = dstData.count(QGL::Position) - minIndex;
-
-    // save the offset by which the node start value needs to change
-    int newStart = dstData.indexCount();
-
-    // copy all the referenced data into the dst buffer
-    for (uint i = minIndex; i <= maxIndex; ++i)
-        dstData.appendVertex(srcData.logicalVertexAt(i));
-
-    // change the references (the indices) by the offset and copy to dst
-    for (int i = node->start(); i < srcIndices.size(); ++i)
-        dstData.appendIndex(srcIndices.at(i) + offset);
-
-    // update the starting index & geometry in the node
-    node->setStart(newStart);
-    node->setGeometry(dstData);
-}
-
-/*!
-    \internal
-    Pack the geometry data into as few buffers as possible
-*/
-void QAiLoader::optimizeData()
-{
-    QMap<quint32, QGeometryData> data;
-    QList<QGLSceneNode*> queue;
-    queue.append(m_root);
-    while (!queue.isEmpty())
-    {
-        QGLSceneNode *node = queue.takeFirst();
-        if ((node->geometry().count() > 0) && (node->count() > 0))
-        {
-            QMap<quint32, QGeometryData>::iterator it = data.find(node->geometry().fields());
-            if (it == data.end()) // not found
-                data.insert(node->geometry().fields(), node->geometry());
-            else
-                qRewriteData(node, it.value());
-        }
-        queue.append(node->children());
-    }
-}
-
-void QAiLoader::countChildNodeReferences()
-{
-    m_refCounts.clear();
-    QList<QGLSceneNode *> queue;
-    queue.append(m_root);
-    while (queue.size() > 0)
-    {
-        QGLSceneNode *n = queue.takeFirst();
-        QList<QGLSceneNode*> c = n->children();
-        QList<QGLSceneNode*>::const_iterator it = c.constBegin();
-        for ( ; it != c.constEnd(); ++it)
-        {
-            QGLSceneNode *child = *it;
-            ++m_refCounts[child];
-            queue.append(child);
-        }
-    }
-}
-
-/*!
-    \internal
-    Try to collapse useless nodes together
-*/
-void QAiLoader::optimizeNodes(QGLSceneNode *node, QGLSceneNode *parent)
-{
-    if (node == 0)
-    {
-        // start recursive traversal at the root
-        node = m_root;
-        parent = 0;
-        countChildNodeReferences();
-    }
-
-    QList<QGLSceneNode*> c = node->children();
-
-    // find how many references to the first child
-    QMap<QGLSceneNode*, int>::const_iterator fit = m_refCounts.constFind(c.at(0));
-    Q_ASSERT(fit != m_refCounts.constEnd());
-    int k = fit.value();
-    Q_ASSERT(k > 0);
-
-    if (c.size() == 1 && (k < 2))
-    {
-        // has only one child, so might be able to collapse child into this
-        QGLSceneNode *child = c.at(0);
-
-        // can't collapse if they both have a name - might be needed for animation
-        uint nodeHasName = (!node->objectName().isEmpty()) ? 0x01 : 0;
-        uint childHasName = (!child->objectName().isEmpty()) ? 0x02 : 0;
-
-        // too difficult to collapse if both have geometry, or both have transform
-        uint nodeHasGeometry = ((node->geometry().count() > 0) && node->count() > 0) ? 0x01 : 0;
-        uint childHasGeometry = ((child->geometry().count() > 0) && child->count() > 0) ? 0x02 : 0;
-        uint nodeHasLocal = (!node->localTransform().isIdentity()) ? 0x01 : 0;
-        uint childHasLocal = (!child->localTransform().isIdentity()) ? 0x02 : 0;
-
-        if ((nodeHasGeometry | childHasGeometry) < 3 &&
-                (nodeHasName | childHasName) < 3 &&
-                (nodeHasLocal | childHasLocal) < 3)
-        {
-            // ok, can collapse - make child same as node, then delete node
-            if (nodeHasName)
-                child->setObjectName(node->objectName());
-
-            if (nodeHasGeometry)
-            {
-                // this would be kind of weird but possible
-                child->setGeometry(node->geometry());
-                child->setStart(node->start());
-                child->setCount(node->count());
-            }
-
-            if (nodeHasLocal)
-                child->setLocalTransform(node->localTransform());
-            // no need to worry about drawing mode, material or effect since whatever
-            // node might have set these two they would have gotten instantly over-ridden
-            // by the child anyway.
-
-            if (parent)
-                parent->addNode(child);
-            else
-                m_root = child;
-
-            qDebug() << "Collapsed:" << node << "into:" << child << "deleting:" << node;
-            delete node;
-        }
-    }
-
 }
 
 /*!
@@ -373,11 +217,9 @@ void QAiLoader::optimizeNodes(QGLSceneNode *node, QGLSceneNode *parent)
 QGLSceneNode *QAiLoader::loadMeshes()
 {
     Q_ASSERT(m_scene);
-    qDebug() << "processing:" << m_scene->mNumMaterials << "materials";
     for (unsigned int i = 0; i < m_scene->mNumMaterials; ++i)
         loadMaterial(m_scene->mMaterials[i]);
 
-    qDebug() << "processing:" << m_scene->mNumMeshes << "meshes";
     // builds a naive scene heierarchy with all meshes under the root node
     for (unsigned int i = 0; i < m_scene->mNumMeshes; ++i)
         loadMesh(m_scene->mMeshes[i]);
@@ -392,10 +234,6 @@ QGLSceneNode *QAiLoader::loadMeshes()
     if (pos != -1)
         name = name.mid(pos+1);
     m_root->setObjectName(name);
-
-    // this should be unnecessary given assimps post-processing but some
-    // AI back ends may require it.
-    m_root->palette()->removeUnusedMaterials();
 
     // if scene has a node heierarchy replace the naive heierarchy with that
     if (m_scene->mRootNode->mNumChildren > 0 && m_scene->mRootNode->mChildren)
@@ -417,20 +255,23 @@ QGLSceneNode *QAiLoader::loadMeshes()
         Assimp::DefaultLogger::get()->warn(message.toStdString());
     }
 
-    //optimizeData();
-    //optimizeNodes();
-
-#define DEBUG_ME
+//#define DEBUG_ME
 #ifdef DEBUG_ME
     qDumpScene(m_root);
 
     QList<QGLSceneNode*> c = m_root->allChildren();
+    QSet<quint64> debugged;
     for (int i = 0; i < c.size(); ++i)
     {
         if (c.at(i)->geometry().count() > 0)
         {
-            qDebug() << "geometry for:" << c.at(i);
-            qDebug() << c.at(i)->geometry();
+            QGeometryData g = c.at(i)->geometry();
+            qDebug() << "geometry for:" << c.at(i) << "is:" << g.id();
+            if (!debugged.contains(g.id()))
+            {
+                qDebug() << g;
+                debugged.insert(g.id());
+            }
         }
     }
 #endif
@@ -630,7 +471,16 @@ void QAiLoader::loadMaterial(aiMaterial *ma)
 
     r = ma->Get(AI_MATKEY_COLOR_SPECULAR, clr);
     if (r == aiReturn_SUCCESS)
-        mq->setSpecularColor(QColor::fromRgbF(clr.r, clr.g, clr.b, clr.a));
+    {
+        QColor spec = QColor::fromRgbF(clr.r, clr.g, clr.b, clr.a);
+        mq->setSpecularColor(spec);
+
+        // By default the specular color is black - very dark.
+        // If the specular color is bright  be careful with shininess -
+        // a shininess of 0 will blow everything out to full white.  So in
+        // the case of bad materials with this problem, set shiness low.
+        mq->setShininess(64.0);
+    }
 
     r = ma->Get(AI_MATKEY_SHININESS, shininess);
     if (r == aiReturn_SUCCESS)

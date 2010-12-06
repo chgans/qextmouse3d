@@ -92,13 +92,8 @@ void QAiMesh::loadTriangles(QGLBuilder &builder)
         data.appendIndices(face->mIndices[0], face->mIndices[1], face->mIndices[2]);
     }
 
-    qDebug() << "adding triangle data" << data;
-    qDebug() << "   from" << m_mesh->mNumVertices << "verts and" << m_mesh->mNumFaces << "faces";
-
     // raw triangle mode
     builder.addTriangles(data);
-
-    qDebug() << *(builder.currentNode());
 }
 
 void QAiMesh::build(QGLBuilder &builder, bool showWarnings)
@@ -125,15 +120,7 @@ void QAiMesh::build(QGLBuilder &builder, bool showWarnings)
     node->setMaterialIndex(m_mesh->mMaterialIndex);
     node->palette()->markMaterialAsUsed(m_mesh->mMaterialIndex);
 
-    QGLMaterial *mat = node->palette()->material(m_mesh->mMaterialIndex);
-    qDebug() << "palette is:" << node->palette() << "containing count:" << node->palette()->size();
-    qDebug() << "creating mesh node" << node;
-    qDebug() << "   using material #" << m_mesh->mMaterialIndex;
-    qDebug() << "   that is:" << (mat ? mat->objectName() : QString("NULL"));
-    mat = node->material();
-    qDebug() << "Material is:" << *mat;
-
-    /*QGLMaterial * */mat = node->palette()->material(m_mesh->mMaterialIndex);
+    QGLMaterial * mat = node->palette()->material(m_mesh->mMaterialIndex);
     if (mat->property("isTwoSided").isValid() && mat->property("isTwoSided").toBool())
         node->setBackMaterialIndex(m_mesh->mMaterialIndex);
     if (mat->property("isWireFrame").isValid() && mat->property("isWireFrame").toBool())
