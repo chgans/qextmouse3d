@@ -110,10 +110,6 @@ inline aiReturn aiMaterial::Get(const char* pKey,unsigned int type,
 			return AI_FAILURE;
 		}
 
-		if (strcmp(prop->mData,(char*)aiPTI_Buffer)!=0) {
-			return AI_FAILURE;
-		}
-
 		memcpy(&pOut,prop->mData,sizeof(Type));
 	}
 	return ret;
