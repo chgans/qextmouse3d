@@ -299,6 +299,16 @@ void Controls::viewTypeChanged()
         m_ui->actionFront_Quarter->setChecked(false);
         m_ui->actionBack_Quarter->setChecked(true);
         break;
+    case Viewer::Centered:
+        m_ui->actionFront->setChecked(false);
+        m_ui->actionBack->setChecked(false);
+        m_ui->actionTop->setChecked(false);
+        m_ui->actionBottom->setChecked(false);
+        m_ui->actionLeft->setChecked(false);
+        m_ui->actionRight->setChecked(false);
+        m_ui->actionFront_Quarter->setChecked(false);
+        m_ui->actionBack_Quarter->setChecked(false);
+        break;
     }
 }
 
@@ -414,7 +424,7 @@ void Controls::on_actionOpen_triggered()
 #endif
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                                  QDir::homePath(),
-                                                 tr("Models (*.3ds *.obj)"), 0, options);
+                                                 tr("Models (*.3ds *.obj *.dae)"), 0, options);
     if (fileName.isEmpty())
         return;
     setWindowTitle(fileName);
@@ -773,4 +783,9 @@ void Controls::on_lockButton_clicked()
 void Controls::on_actionShow_Picking_triggered()
 {
     m_view->setOption(QGLView::ShowPicking, m_ui->actionShow_Picking->isChecked());
+}
+
+void Controls::on_actionCenter_View_triggered()
+{
+    m_view->setView(Viewer::Centered);
 }

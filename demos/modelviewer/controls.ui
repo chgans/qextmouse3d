@@ -109,10 +109,13 @@
             <item row="1" column="4">
              <widget class="QDoubleSpinBox" name="xTranSpin">
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>2.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -123,10 +126,10 @@
 negative values scale down along X</string>
               </property>
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -156,10 +159,13 @@ negative values scale down along X</string>
             <item row="2" column="4">
              <widget class="QDoubleSpinBox" name="yTranSpin">
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>2.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -170,10 +176,10 @@ negative values scale down along X</string>
 negative values scale down along Y</string>
               </property>
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -203,10 +209,10 @@ negative values scale down along Y</string>
             <item row="3" column="4">
              <widget class="QDoubleSpinBox" name="zTranSpin">
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -217,10 +223,10 @@ negative values scale down along Y</string>
 negative values scale down along Z</string>
               </property>
               <property name="minimum">
-               <double>-100.000000000000000</double>
+               <double>-500.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>100.000000000000000</double>
+               <double>500.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -247,27 +253,6 @@ scale values</string>
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
          </layout>
         </item>
        </layout>
@@ -282,7 +267,7 @@ scale values</string>
      <x>0</x>
      <y>0</y>
      <width>1058</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -329,6 +314,8 @@ scale values</string>
     <addaction name="actionRight"/>
     <addaction name="actionFront_Quarter"/>
     <addaction name="actionBack_Quarter"/>
+    <addaction name="separator"/>
+    <addaction name="actionCenter_View"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -354,8 +341,8 @@ scale values</string>
    <addaction name="actionBottom"/>
    <addaction name="actionLeft"/>
    <addaction name="actionRight"/>
-   <addaction name="actionFront_Quarter"/>
-   <addaction name="actionBack_Quarter"/>
+   <addaction name="separator"/>
+   <addaction name="actionCenter_View"/>
   </widget>
   <action name="actionQuit">
    <property name="text">
@@ -645,6 +632,21 @@ scale values</string>
    </property>
    <property name="toolTip">
     <string>Back Quarter View</string>
+   </property>
+  </action>
+  <action name="actionCenter_View">
+   <property name="icon">
+    <iconset resource="modelviewer.qrc">
+     <normaloff>:/images/target.png</normaloff>:/images/target.png</iconset>
+   </property>
+   <property name="text">
+    <string>Center View</string>
+   </property>
+   <property name="toolTip">
+    <string>Try to move the camera to fit the model in the view</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
  </widget>

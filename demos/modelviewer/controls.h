@@ -108,6 +108,8 @@ private slots:
     void frontquarter_view_triggered();
     void rearquarter_view_triggered();
 
+    void on_actionCenter_View_triggered();
+
 private:
     QString populateModelMenu();
 

@@ -220,7 +220,25 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
 void Viewer::wheelEvent(QWheelEvent *e)
 {
     engageManualControl();
+#if 0
+    // enable this to get wheel navigation that actually zooms by moving the
+    // camera back, as opposed to making the angle of view wider.
+    e->accept();
+    QVector3D viewVec = camera()->eye() - camera()->center();
+    qreal zoomMag = viewVec.length();
+    qreal inc = float(e->delta()) / 50.0f;
+    if (!qFuzzyIsNull(inc))
+    {
+        zoomMag += inc;
+        if (zoomMag < 2.0f)
+            zoomMag = 2.0f;
+        QRay3D viewLine(camera()->center(), viewVec.normalized());
+        camera()->setEye(viewLine.point(zoomMag));
+        update();
+    }
+#else
     QGLView::wheelEvent(e);
+#endif
 }
 
 void Viewer::keyPressEvent(QKeyEvent *e)
@@ -579,6 +597,44 @@ void Viewer::enableAnimation(bool enabled)
     }
 }
 
+static qreal viewSizeFactor(const QGLCamera *cam, QGLSceneNode *node, QRect viewRect)
+{
+    QBox3D box = node->boundingBox();
+    QVector3D sz = box.size();
+
+    qDebug() << "scene bounds:" << box << "size:" << sz;
+
+    qreal nearDist = cam->nearPlane();
+
+    qDebug() << "near plane:" << nearDist;
+
+    QSizeF v = cam->viewSize();
+
+    qreal vh = viewRect.height();
+    qreal vw = viewRect.width();
+    if (!qFuzzyIsNull(vw - vh))
+    {
+        qreal asp = vh / vw;
+        if (vh > vw)
+            v.setHeight(v.height() * asp);
+        else
+            v.setWidth(v.width() / asp);
+    }
+
+    qDebug() << "viewRect:" << viewRect << "viewSize:" << cam->viewSize()
+                << "adjusted:" << v;
+
+    qreal mx = qMax(sz.x(), (qMax(sz.y(), sz.z())));
+    qreal mn = qMin(v.height(), v.width());
+
+    // fill 70% of the screen - not a tight fit
+    qreal q = (nearDist * mx) / (0.7 * mn);
+
+    qDebug() << "max is:" << mx << "-- min is:" << mn << "q:" << q;
+
+    return q;
+}
+
 void Viewer::resetView()
 {
     QVector3D origin = camera()->center();
@@ -628,6 +684,16 @@ void Viewer::resetView()
         eye = zoomMag * QVector3D(1, 1, -1).normalized();
         up = QVector3D(0.0f, 1.0f, 0.0f);
         break;
+
+    case Centered:
+        //origin = m_model->scene()->boundingBox().center();
+        qreal zoomMag = viewSizeFactor(camera(), m_model->scene(), rect());
+        viewVec = eye - origin;
+        qDebug() << "viewVec:" << viewVec << "-- eye:" << eye << "origin:" << origin;
+        eye = origin + (viewVec.normalized() * zoomMag);
+        qDebug() << "   result eye:" << eye;
+        break;
+
     }
 
     // Perform a short animation from the current camera position
@@ -638,7 +704,7 @@ void Viewer::resetView()
     m_cameraAnimation->setStartCenter(camera()->center());
     m_cameraAnimation->setEndEye(eye);
     m_cameraAnimation->setEndUpVector(up);
-    m_cameraAnimation->setEndCenter(QVector3D());
+    m_cameraAnimation->setEndCenter(m_view == Centered ? origin : QVector3D());
     m_cameraAnimation->setDuration(500);
     m_cameraAnimation->setEasingCurve(QEasingCurve::OutQuad);
     m_cameraAnimation->start();

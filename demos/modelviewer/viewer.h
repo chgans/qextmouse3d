@@ -73,7 +73,8 @@ public:
         LeftView,
         RightView,
         FrontRightView,
-        BackLeftView
+        BackLeftView,
+        Centered
     };
 
     Viewer(QWidget *parent = 0);
