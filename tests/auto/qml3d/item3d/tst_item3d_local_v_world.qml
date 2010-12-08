@@ -16,6 +16,14 @@ Viewport {
     }
 
     Item3D {
+        id: rotateZTestItem
+        Item3D {
+            id: rotateZChild
+        }
+        transform: Rotation3D {angle: 90 ; axis: Qt.vector3d(0,0,1)}
+    }
+
+    Item3D {
         id: scaleTestItem
         Item3D {
             id: scaleTestItemChild
@@ -70,6 +78,12 @@ Viewport {
                 compare(resultVectorY.x, 0, "x value of testVectorY rotated 90 degrees around y unit vector");
                 compare(resultVectorY.y, 1, "y value of testVectorY rotated 90 degrees around y unit vector");
                 compare(resultVectorY.z, 0, "z value of testVectorY rotated 90 degrees around y unit vector");
+
+                var testVectorXY = Qt.vector3d(1,2,0);
+                var resultVectorXY = rotateZChild.localToWorld(testVectorXY);
+                compare(resultVectorXY.x, -testVectorXY.y, "x value of testVectorY rotated 90 degrees around y unit vector");
+                compare(resultVectorXY.y, testVectorXY.x, "y value of testVectorY rotated 90 degrees around y unit vector");
+                compare(resultVectorXY.z, testVectorXY.z, "z value of testVectorY rotated 90 degrees around y unit vector");
             }
 
             function test_localToWorld_scale()
