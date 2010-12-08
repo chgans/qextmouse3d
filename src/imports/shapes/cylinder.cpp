@@ -52,16 +52,16 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::qml3d::shapes
     \inherits Item3D
 
-    The Cylinder element in QML provides a simple way to create a cylinder
-    object, usually for testing material effects.  For example,
-    the following QML code displays a green cylinder of with a uniform
-    diameter of 0.5, and a height of 3.0, centered with its base on the
+    The Cylinder element in QML provides a way to create a simple cylinder
+    object, usually for testing material effects.  For example, the
+    following QML code displays a green cylinder of with a uniform
+    diameter of 0.5, and a length of 3.0, centered with its base on the
     origin:
 
     \code
     Cylinder {
         radius: 0.5
-        height: 3.0
+        length: 3.0
         effect: Effect {
             color: "#aaca00"
         }
@@ -88,7 +88,7 @@ QT_BEGIN_NAMESPACE
 Cylinder::Cylinder(QObject *parent) :
     QDeclarativeItem3D(parent)
     , m_radius(1.0)
-    , m_height(1.0)
+    , m_length(1.0)
     , m_lod(1)
 {
 
@@ -110,16 +110,16 @@ void Cylinder::setRadius(qreal radius)
 }
 
 /*!
-    \qmlproperty real Cylinder::height
+    \qmlproperty real Cylinder::length
 
-    This property defines the height of the cylinder.
+    This property defines the length of the cylinder.
     The default value is 1.
 */
-void Cylinder::setHeight(qreal height)
+void Cylinder::setLength(qreal length)
 {
-    if (m_height != height) {
-        m_height = height;
-        emit heightChanged();
+    if (m_length != length) {
+        m_length = length;
+        emit lengthChanged();
         update();
     }
 }
@@ -152,7 +152,7 @@ void Cylinder::setHeight(qreal height)
     \row \o 8 \o 1024 \o 256
     \row \o 9 \o 2048 \o 512
     \row \o 10 \o 4096 \o 1024
-    \endtable
+    \endtable    
 */
 void Cylinder::setLevelOfDetail(int lod)
 {
@@ -182,6 +182,7 @@ void Cylinder::drawItem(QGLPainter *painter)
     // Create a new geometry node for this level of detail if necessary.
     QGLSceneNode *geometry = m_lodGeometry.value(lod, 0);
     if (!geometry) {
+        qWarning() << "Creating new geometry";
         QGLBuilder builder;
         builder << QGL::Faceted << QGLCylinder(2.0, 2.0, 1.0, facets, layers, true, true);
         geometry = builder.finalizedSceneNode();
@@ -189,22 +190,22 @@ void Cylinder::drawItem(QGLPainter *painter)
         m_lodGeometry.insert(lod, geometry);
     }
 
-    // Set the height as a scale on the modelview transformation.
+    // Set the length as a scale on the modelview transformation.
     // This way, we don't have to regenerate the geometry every
     // frame if the height is being animated.
-    if (m_height != 1.0f || m_radius!=1.0) {
+    if (m_length != 1.0f || m_radius!=1.0) {
         painter->modelViewMatrix().push();
         //We could do the scales separately if either height or radius
         //were !=1.0f, but the same amount of maths is required, so
         //we can just scale appropriately on the axes.
-        painter->modelViewMatrix().scale(m_height,m_radius,m_radius);
+        painter->modelViewMatrix().scale(m_radius,m_radius, m_length);
     }
 
     // Draw the geometry.
     geometry->draw(painter);
 
     // Restore the original modelview if necessary
-    if (m_height != 1.0f || m_radius!=1.0)
+    if (m_length != 1.0f || m_radius!=1.0)
         painter->modelViewMatrix().pop();
 }
 

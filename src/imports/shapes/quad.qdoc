@@ -39,45 +39,49 @@
 **
 ****************************************************************************/
 
-#ifndef QGLHEMISPHERE_H
-#define QGLHEMISPHERE_H
+/*!
+    \qmlclass Quad Quad
+    \brief The Quad item represents a simple quad in 3D space.
+    \since 4.8
+    \ingroup qt3d::qml3d::shapes
+    \inherits Item3D
 
-#include "qt3dglobal.h"
+    The Quad element in QML provides a simple way to create a regular
+    quad object, usually for testing material effects.  For example,
+    the following QML code displays a quad of size 1.5, centered
+    on the origin and covered in the Qt logo texture:
 
-QT_BEGIN_HEADER
+    \code
+    Cube {
+        scale: 1.5
+        effect: Effect {
+            color: "#aaca00"
+            texture: "qtlogo.png"
+        }
+    }
+    \endcode
 
-QT_BEGIN_NAMESPACE
+    The Cube element is part of the \c{Qt3D.Shapes} namespace,
+    so the following must appear at the top of any QML file that
+    references it:
 
-QT_MODULE(Qt3d)
+    \code
+    import Qt3D.Shapes 1.0
+    \endcode
 
-class QGLBuilder;
+    The cube can be moved from the origin by specifying the
+    Item3D::position property:
 
-class Q_QT3D_EXPORT QGLHemiSphere
-{
-public:
-    explicit QGLHemiSphere(qreal diameter = 1.0f, int depth = 3, bool baseEnabled = true)
-        : m_diameter(diameter), m_subdivisionDepth(depth), m_baseEnabled(baseEnabled) {}
-    virtual ~QGLHemiSphere();
+    \code
+    Cube {
+        scale: 1.5
+        position: Qt.vector3d(1, 0, 5)
+        effect: Effect {
+            color: "#aaca00"
+            texture: "qtlogo.png"
+        }
+    }
+    \endcode
 
-    qreal diameter() const { return m_diameter; }
-    void setDiameter(qreal diameter) { m_diameter = diameter; }
-
-    int subdivisionDepth() const { return m_subdivisionDepth; }
-    void setSubdivisionDepth(int depth) { m_subdivisionDepth = depth; }
-
-    bool baseEnabled() const {return m_baseEnabled; }
-    void setBaseEnabled(bool baseEnabled) {m_baseEnabled = baseEnabled;}
-
-private:
-    qreal m_diameter;
-    int m_subdivisionDepth;
-    bool m_baseEnabled;
-};
-
-Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLHemiSphere& hemisphere);
-
-QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif
+    \sa Item3D
+*/

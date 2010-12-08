@@ -46,17 +46,22 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \qmlclass Point Point
-    \brief The Line item represents a geometric point drawn in 3D space.
+    \brief The Point item represents a geometric point drawn in 3D space.
     \since 4.8
     \ingroup qt3d::qml3d::shapes
     \inherits Item3D
 
     The Point element in QML provides a means of drawing points in a 3D
-    environment.  For example, the following QML code line at point (0,0,0).
+    environment.  For example, the following QML code draws points (0,0,0),
+	(1,1,1), and (-1,-1,-1).
 
     \code
     Point {
-        location: Qt.vector3D(0,0,0)
+        vertices: [
+           0, 0, 0,
+           1, 1, 1,
+           -1, -1, -1
+		]
         effect: Effect {
             color: "#aaca00"
         }
@@ -78,27 +83,41 @@ QT_BEGIN_NAMESPACE
 */
 Point::Point(QObject *parent) :
     QDeclarativeItem3D(parent)
-    , m_location(QVector3D(0.0f, 0.0f, 0.0f))
     , m_pointSize(1.0f)
+    , m_changeFlag(false)
 {
     //meh
 }
 
 
 /*!
-    \qmlproperty QVector3D Point::location
+   \qmlproperty list<real> Point::vertices
 
-    This property defines the locaiton of the point to be drawn.
-    The default value is (0,0,0).
+   This property defines the positions for all of the points to be drawn   
+   Each vertex is given by three real values, defining
+   the x, y, and z co-ordinates of the vertex.
 */
-void Point::setLocation(QVector3D location)
+
+QVariant Point::vertices() const
 {
-    if (m_location != location) {
-        m_location = location;
-        emit locationChanged();
-        update();
-    }
+   return m_vertices;
 }
+
+void Point::setVertices(const QVariant &value)
+{
+    m_vertices = value;
+
+    //Update the actual QVector3DArray containing the points.
+    m_vertexArray.clear();
+    QVariantList vertlist = m_vertices.toList();
+    for (int index = 0; (index + 2) < vertlist.size(); index += 3) {
+        m_vertexArray.append(qreal(vertlist.at(index).toDouble()), qreal(vertlist.at(index + 1).toDouble()), qreal(vertlist.at(index + 2).toDouble()));
+    }
+    m_changeFlag=true;
+    emit verticesChanged();
+    update();
+}
+
 
 /*!
     \qmlproperty qreal Point::pointSize
@@ -110,6 +129,7 @@ void Point::setPointSize(qreal pointSize)
 {
     if (m_pointSize != pointSize) {
         m_pointSize = pointSize;
+        m_changeFlag=true;
         emit pointSizeChanged();
         update();
     }
@@ -120,10 +140,24 @@ void Point::setPointSize(qreal pointSize)
 */
 void Point::drawItem(QGLPainter *painter)
 {
-    QVector3DArray vertices;
-    vertices.append(m_location.x(), m_location.y(), m_location.z());
-    painter->setVertexAttribute(QGL::Position, vertices);
-    glPointSize(m_pointSize);
-    painter->draw(QGL::Points, 1);
-}
+    if (m_changeFlag || !m_geometry) {
+        if (m_geometry) delete m_geometry;
 
+        QGLBuilder builder;
+
+        QGeometryData pointCollection;
+        builder.newSection();
+
+        pointCollection.appendVertexArray(m_vertexArray);
+
+        builder.addTriangles(pointCollection);
+        builder.currentNode()->setDrawingMode(QGL::Points);
+        builder.currentNode()->setDrawingWidth(m_pointSize);
+        m_geometry = builder.finalizedSceneNode();
+
+        m_changeFlag = false;
+    }
+
+    // Draw the geometry.
+    m_geometry->draw(painter);
+}

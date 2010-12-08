@@ -95,7 +95,7 @@ public:
     void clear();
     void clear(QGL::VertexAttribute);
     void reserve(int amount);
-    void draw(QGLPainter *painter, int start, int count, GLenum mode = QGL::Triangles);
+    void draw(QGLPainter *painter, int start, int count, GLenum mode = QGL::Triangles, qreal drawWidth=1.0);
     bool upload();
     enum BufferStrategyFlags
     {
@@ -146,7 +146,7 @@ public:
     void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
-    void appendColorArray(const QArray<QColor4ub> &ary);
+    void appendColorArray(const QArray<QColor4ub> &ary);    
 
     QLogicalVertex logicalVertexAt(int i) const;
 

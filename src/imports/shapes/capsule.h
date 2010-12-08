@@ -54,7 +54,7 @@ class Capsule : public QDeclarativeItem3D
 {
     Q_OBJECT
     Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
-    Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
+    Q_PROPERTY(qreal length READ length WRITE setLength NOTIFY lengthChanged)
     Q_PROPERTY(int levelOfDetail READ levelOfDetail WRITE setLevelOfDetail NOTIFY levelOfDetailChanged)
 
 public:
@@ -64,15 +64,15 @@ public:
     qreal radius() const { return m_radius; }
     void setRadius(qreal radius);
 
-    qreal height() const {return m_height;}
-    void setHeight(qreal height);
+    qreal length() const {return m_length;}
+    void setLength(qreal length);
 
     int levelOfDetail() const {return m_lod;}
     void setLevelOfDetail(int lod);
 
 Q_SIGNALS:
     void radiusChanged();
-    void heightChanged();
+    void lengthChanged();
     void levelOfDetailChanged();
 
 protected:
@@ -80,7 +80,7 @@ protected:
 
 private:
     qreal m_radius;
-    qreal m_height;
+    qreal m_length;
     int m_lod;
     QMap<int, QGLSceneNode *> m_lodGeometry;
 };

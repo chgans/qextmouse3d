@@ -39,51 +39,45 @@
 **
 ****************************************************************************/
 
-#ifndef LINE_H
-#define LINE_H
+#ifndef QGLDOME_H
+#define QGLDOME_H
 
-#include "qdeclarativeitem3d.h"
-#include "qglscenenode.h"
+#include "qt3dglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class Line : public QDeclarativeItem3D
+QT_MODULE(Qt3d)
+
+class QGLBuilder;
+
+class Q_QT3D_EXPORT QGLDome
 {
-    Q_OBJECT
-    Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged)
-    Q_PROPERTY(QVariant vertices READ vertices WRITE setVertices NOTIFY verticesChanged)
-
 public:
-    explicit Line(QObject *parent = 0);
-    ~Line() {}
+    explicit QGLDome(qreal diameter = 1.0f, int depth = 3, bool baseEnabled = true)
+        : m_diameter(diameter), m_subdivisionDepth(depth), m_baseEnabled(baseEnabled) {}
+    virtual ~QGLDome();
 
-    QVariant vertices() const;
-    void setVertices(const QVariant &value);
+    qreal diameter() const { return m_diameter; }
+    void setDiameter(qreal diameter) { m_diameter = diameter; }
 
-    qreal width() const {return m_width;}
-    void setWidth(qreal width);
+    int subdivisionDepth() const { return m_subdivisionDepth; }
+    void setSubdivisionDepth(int depth) { m_subdivisionDepth = depth; }
 
-Q_SIGNALS:
-    void verticesChanged();
-    void widthChanged();
-
-protected:
-    void drawItem(QGLPainter *painter);
+    bool baseEnabled() const {return m_baseEnabled; }
+    void setBaseEnabled(bool baseEnabled) {m_baseEnabled = baseEnabled;}
 
 private:
-    qreal m_width;
-    QVariant m_vertices;
-    QVector3DArray m_vertexArray;
-    QGLSceneNode * m_geometry;
-    bool m_changeFlag;
+    qreal m_diameter;
+    int m_subdivisionDepth;
+    bool m_baseEnabled;
 };
 
-QML_DECLARE_TYPE(Line)
+Q_QT3D_EXPORT QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome);
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // LINE_H
+#endif

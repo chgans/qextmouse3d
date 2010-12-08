@@ -39,32 +39,32 @@
 **
 ****************************************************************************/
 
-#include "qglhemisphere.h"
+#include "qgldome.h"
 #include "qglbuilder.h"
 #include <QtCore/qmath.h>
 
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QGLHemiSphere
-    \brief The QGLHemiSphere class represents the geometry of a simple hemisphere in 3D space.
+    \class QGLDome
+    \brief The QGLDome class represents the geometry of a simple hemisphere in 3D space.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::geometry
 
-    The following example creates a hemisphere of 2 units in diameter and
+    The following example creates a dome of 2 units in diameter and
     draws it at (10, 25, 0) in a QGLPainter:
 
     \code
     QGLBuilder builder;
-    builder << QGLHemiSphere(2);
+    builder << QGLDome(2);
     QGLSceneNode *node = builder.finalizedSceneNode();
 
     painter.translate(10, 25, 0);
     node->draw(&painter);
     \endcode;
 
-    The QGLHemiSphere class specifies positions, normals and 2D texture
+    The QGLDome class specifies positions, normals and 2D texture
     co-ordinates for all of the vertices that make up the sphere.
 
     The texture co-ordinates are fixed at construction time.  This
@@ -72,9 +72,9 @@ QT_BEGIN_NAMESPACE
     vertices which need to interpolate the texture co-ordinates of their
     neighboring vertices.
 
-    The default mode of QGLHemiSphere is half of a "UV sphere", which divides
+    The default mode of QGLDome is half of a "UV sphere", which divides
     the object up into longitudinal and latitudinal sections.  The longitudinal
-    slices meet at the pole, which in a single unit hemissphere is defined to
+    slices meet at the pole, which in a single unit dome is defined to
     be at (0, 0, +0.5) and (0, 0, -0.5).  This choice is the simplest to
     texture map as the texture will only distort along the x-axis of the
     2D texture.  However the density of vertices is significantly higher at
@@ -85,41 +85,41 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \fn QGLHemiSphere::QGLHemiSphere(qreal diameter, int depth, bool base)
+    \fn QGLDome::QGLDome(qreal diameter, int depth, bool base)
 
-    Creates a hemisphere of \a diameter across (default is 1).  When the hemisphere
+    Creates a dome of \a diameter across (default is 1).  When the dome
     is recursively subdivided into triangles, it will be subdivided no more
     than \a depth times (between 1 and 5, default is 3).
 
-    If \a base is true, the hemisphere will be drawn with a bottom circle, creating
+    If \a base is true, the dome will be drawn with a bottom circle, creating
     an enclosed solid.
 */
 
 /*!
-    Destroys this hemisphere object.
+    Destroys this dome object.
 */
-QGLHemiSphere::~QGLHemiSphere()
+QGLDome::~QGLDome()
 {
 }
 
 /*!
-    \fn qreal QGLHemiSphere::diameter() const
+    \fn qreal QGLDome::diameter() const
 
-    Returns the diameter of this hemisphere.  The default is 1.
+    Returns the diameter of this dome.  The default is 1.
 
     \sa setDiameter()
 */
 
 /*!
-    \fn void QGLHemiSphere::setDiameter(qreal diameter)
+    \fn void QGLDome::setDiameter(qreal diameter)
 
-    Sets the diameter of this hemisphere to \a diameter.
+    Sets the diameter of this dome to \a diameter.
 
     \sa diameter()
 */
 
 /*!
-    \fn int QGLHemiSphere::subdivisionDepth() const
+    \fn int QGLDome::subdivisionDepth() const
 
     Returns the maximum depth when this hemisphere is subdivided into
     triangles.  The default is 3.  The following picture shows the effect
@@ -128,11 +128,11 @@ QGLHemiSphere::~QGLHemiSphere()
 
     \image sphere-detail.png
 
-    \sa setSubdivisionDepth()
+    \sa setSubdivisionDepth(), QGLSphere::subdivisionDepth()
 */
 
 /*!
-    \fn void QGLHemiSphere::setSubdivisionDepth(int depth)
+    \fn void QGLDome::setSubdivisionDepth(int depth)
 
     Sets the maximum \a depth when this hemisphere is subdivided into triangles.
 
@@ -140,9 +140,9 @@ QGLHemiSphere::~QGLHemiSphere()
 */
 
 /*!
-    \fn  bool QGLHemiSphere::baseEnabled() const
+    \fn  bool QGLDome::baseEnabled() const
 
-    Returns true if the base of the hemisphere will be created when
+    Returns true if the base of the dome will be created when
     building the mesh.
 
     The default is true.
@@ -151,9 +151,9 @@ QGLHemiSphere::~QGLHemiSphere()
 */
 
 /*!
-    \fn void QGLHemiSphere::setBaseEnabled(bool base)
+    \fn void QGLDome::setBaseEnabled(bool base)
 
-    Set whether the bottom of the hemisphere will be created when
+    Set whether the bottom of the dome will be created when
     building the mesh.  If \a base is true, the end-cap will be
 	created.
 
@@ -161,17 +161,17 @@ QGLHemiSphere::~QGLHemiSphere()
 */
 
 /*!
-    \relates QGLHemiSphere
+    \relates QGLDome
 
-    Builds the geometry for \a hemisphere within the specified
+    Builds the geometry for \a dome within the specified
     geometry \a builder.
 */
-QGLBuilder& operator<<(QGLBuilder& builder, const QGLHemiSphere& hemisphere)
+QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
 {
-    qreal radius = hemisphere.diameter() / 2.0f;
+    qreal radius = dome.diameter() / 2.0f;
 
     // Determine the number of slices and stacks to generate.
-    int divisions = hemisphere.subdivisionDepth();
+    int divisions = dome.subdivisionDepth();
     if (divisions < 1)
         divisions = 1;
     else if (divisions > 5)
@@ -206,8 +206,8 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLHemiSphere& hemisphere)
     stackSin[stacks] = 1.0f;
 
     builder.newSection();
-    builder.currentNode()->setObjectName("Hemisphere Dome");
-    // Create the stacks for the dome part of the hemisphere
+    builder.currentNode()->setObjectName("Dome");
+    // Create the stacks for the dome part of the dome
     for (int stack = 0; stack < stacks; ++stack) {
         QGeometryData prim;
         qreal z = radius * stackCos[stack];
@@ -230,10 +230,10 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLHemiSphere& hemisphere)
         builder.addQuadStrip(prim);
     }
 
-    if (hemisphere.baseEnabled()) {
+    if (dome.baseEnabled()) {
         //Draw end-cap at bottom
         builder.newSection();
-        builder.currentNode()->setObjectName("Hemisphere Base");
+        builder.currentNode()->setObjectName("Base");
 
         //Generate a circle of vertices for this layer.
         QGeometryData tempBase;
