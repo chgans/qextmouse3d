@@ -1349,16 +1349,22 @@ QMatrix4x4 QDeclarativeItem3DPrivate::worldToLocalMatrix() const
     return QMatrix4x4();
 }
 
+/*!
+    Returns the position of a local \a point in world space (i.e. not
+    transformed by this item, it's parents, the camera etc).
+*/
 QVector3D QDeclarativeItem3D::localToWorld(const QVector3D &point) const
 {
     return d->localToWorldMatrix() * point;
 }
 
+/*!
+    Returns the position of a point in world space in local coordinates.
+*/
 QVector3D QDeclarativeItem3D::worldToLocal(const QVector3D &point) const
 {
     return d->worldToLocalMatrix() * point;
 }
-
 
 /*!
     \internal

@@ -45,6 +45,7 @@
 #include "qgraphicstransform3d.h"
 #include <QtCore/qscopedpointer.h>
 #include <QPointer>
+#include "qdeclarativeitem3d.h"
 
 QT_BEGIN_HEADER
 
@@ -56,10 +57,7 @@ class QGraphicsLookAtTransform : public QGraphicsTransform3D
 {
     Q_OBJECT
     Q_PROPERTY(bool preserveUpVector READ preserveUpVector WRITE setPreserveUpVector NOTIFY preserveUpVectorChanged)
-    Q_PROPERTY(QVector3D subject READ subject WRITE setSubject NOTIFY subjectChanged )
-    Q_PROPERTY(QVector3D upVector READ upVector WRITE setUpVector NOTIFY upVectorChanged )
-    Q_PROPERTY(qreal primaryAngle READ primaryAngle NOTIFY primaryAngleChanged)
-    Q_PROPERTY(qreal secondaryAngle READ secondaryAngle NOTIFY secondaryAngleChanged)
+    Q_PROPERTY(QDeclarativeItem3D* subject READ subject WRITE setSubject NOTIFY subjectChanged )
 public:
     QGraphicsLookAtTransform(QObject *parent = 0);
     ~QGraphicsLookAtTransform();
@@ -67,25 +65,18 @@ public:
     bool preserveUpVector() const;
     void setPreserveUpVector(bool value);
 
-    QVector3D subject() const;
-    void setSubject(QVector3D value);
-
-    QVector3D upVector() const;
-    void setUpVector(QVector3D value);
-
-    qreal primaryAngle() const;
-    qreal secondaryAngle() const;
+    QDeclarativeItem3D* subject() const;
+    void setSubject(QDeclarativeItem3D* value);
 
     void applyTo(QMatrix4x4 *matrix) const;
     QGraphicsTransform3D *clone(QObject *parent) const;
 
+private Q_SLOTS:
+    void subjectPositionChanged();
 
 Q_SIGNALS:
     void preserveUpVectorChanged();
     void subjectChanged();
-    void upVectorChanged();
-    void primaryAngleChanged();
-    void secondaryAngleChanged();
 
 private:
     QScopedPointer<QGraphicsLookAtTransformPrivate> d_ptr;
