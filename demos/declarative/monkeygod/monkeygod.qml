@@ -54,13 +54,14 @@ import Qt3D 1.0
 			
 			mesh: Mesh { source: "meshes/monkey.3ds"; options: "ForceSmooth"}
 			effect: Effect { material: gold}
+                        transform: LookAt { subject: focalPenguin}
 		}
 		
 		Item3D
 		{
 			Penguin {position: Qt.vector3d(-1.5,0,1)}
 			Penguin {position: Qt.vector3d(1.5,0,1)}
-			Penguin {position: Qt.vector3d(-0.5,0,2)}
+                        Penguin {id: focalPenguin; position: Qt.vector3d(-0.5,0,2)}
 			Penguin {position: Qt.vector3d(0.5,0,2)}
 			
 			transform: [

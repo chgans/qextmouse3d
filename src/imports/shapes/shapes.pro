@@ -2,6 +2,12 @@ TEMPLATE = lib
 TARGET  = qshapesqmlplugin
 CONFIG += qt plugin
 
+win32 {
+    CONFIG(debug, debug|release) {
+        TARGET = $$member(TARGET, 0)d
+    }
+}
+
 symbian {
     CONFIG += epocallowdlldata
     contains(QT_EDITION, OpenSource) {
@@ -15,14 +21,24 @@ QT += declarative opengl network
 
 SOURCES += \
     sphere.cpp \
-    shapes.cpp
+    shapes.cpp \
+    cylinder.cpp \
+    capsule.cpp \
+    line.cpp \
+    point.cpp
 HEADERS += \
-    sphere.h
+    sphere.h \
+    cylinder.h \
+    capsule.h \
+    line.h \
+    point.h
 
 qdeclarativesources.files += \
     qmldir \
     Cube.qml \
     cube.obj \
+    Quad.qml \
+    quad.obj \
     Teapot.qml \
     teapot.bez
 
@@ -32,5 +48,5 @@ target.path += $$[QT_INSTALL_IMPORTS]/Qt3D/Shapes
 
 INSTALLS += qdeclarativesources target
 
-LIBS += -L../../lib -L../../bin
+LIBS += -L../../../lib -L../../../bin
 include(../../quick3d/quick3d_dep.pri)

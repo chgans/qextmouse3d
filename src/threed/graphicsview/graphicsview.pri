@@ -6,7 +6,6 @@ HEADERS += \
     qglgraphicsviewportitem.h \
     qglgraphicsnavigationitem.h \
     qgraphicsbillboardtransform.h \
-    qgraphicslookattransform.h \
     qgraphicsrotation3d.h \
     qgraphicsscale3d.h \
     qgraphicstransform3d.h \
@@ -16,7 +15,6 @@ SOURCES += \
     qglgraphicsviewportitem.cpp \
     qglgraphicsnavigationitem.cpp \
     qgraphicsbillboardtransform.cpp \
-    qgraphicslookattransform.cpp \
     qgraphicsrotation3d.cpp \
     qgraphicsscale3d.cpp \
     qgraphicstransform3d.cpp \

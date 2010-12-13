@@ -80,10 +80,10 @@ Viewport {
         }
 
         vertexShader: "
-        attribute highp vec4 qgl_Vertex;
-        uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+        attribute highp vec4 qt_Vertex;
+        uniform mediump mat4 qt_ModelViewProjectionMatrix;
 
-        attribute highp vec4 qgl_TexCoord0;
+        attribute highp vec4 qt_MultiTexCoord0;
         varying highp vec4 texCoord;
         uniform mediump float textureOffsetX;
         uniform mediump float squashFactor;
@@ -92,24 +92,24 @@ Viewport {
         {
             const float modelSize = 2.0;
             const float modelBottom = -1.0;
-            float newY = max(qgl_Vertex.y - squashFactor * modelSize,
-                               qgl_Vertex.y * 0.01 + modelBottom);
-            gl_Position = qgl_ModelViewProjectionMatrix *
-                                  vec4(qgl_Vertex.x, newY, qgl_Vertex.zw);
+            float newY = max(qt_Vertex.y - squashFactor * modelSize,
+                               qt_Vertex.y * 0.01 + modelBottom);
+            gl_Position = qt_ModelViewProjectionMatrix *
+                                  vec4(qt_Vertex.x, newY, qt_Vertex.zw);
 
-            texCoord = vec4(-qgl_TexCoord0.s
+            texCoord = vec4(-qt_MultiTexCoord0.s
                             - textureOffsetX,
-                            -qgl_TexCoord0.t,
-                            qgl_TexCoord0.pq);
+                            -qt_MultiTexCoord0.t,
+                            qt_MultiTexCoord0.pq);
         }
         "
         fragmentShader: "
         varying highp vec4 texCoord;
-        uniform sampler2D qgl_Texture0;
+        uniform sampler2D qt_Texture0;
 
         void main(void)
         {
-            mediump vec4 textureColor = texture2D(qgl_Texture0, texCoord.st);
+            mediump vec4 textureColor = texture2D(qt_Texture0, texCoord.st);
             gl_FragColor = textureColor;
         }
         "

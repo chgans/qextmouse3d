@@ -12,7 +12,6 @@ QT += opengl \
 DESTDIR = ../../lib
 
 win32 {
-    CONFIG += debug_and_release debug_and_release_config build_all
     DLLDESTDIR = ../../bin
     !static:DEFINES += QT_MAKEDLL
 

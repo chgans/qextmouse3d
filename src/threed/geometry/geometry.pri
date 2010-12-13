@@ -8,7 +8,8 @@ HEADERS += qglcube.h \
     qglbezierpatches.h \
     qglmaterialcollection.h \
     qglteapot.h \
-    qglcylinder.h
+    qglcylinder.h \
+    qgldome.h
 SOURCES += qglcube.cpp \
     qglsphere.cpp \
     qgeometrydata.cpp \
@@ -18,7 +19,8 @@ SOURCES += qglcube.cpp \
     qglmaterialcollection.cpp \
     qglteapot.cpp \
     qlogicalvertex.cpp \
-    qglcylinder.cpp
+    qglcylinder.cpp \
+    qgldome.cpp
 PRIVATE_HEADERS += qglteapot_data_p.h \
     qglbuilder_p.h \
     qglsection_p.h \

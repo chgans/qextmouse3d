@@ -595,6 +595,31 @@ void QGLBezierPatches::setSubdivisionDepth(int value)
 }
 
 /*!
+    Transforms the positions() in this Bezier geometry object
+    according to \a matrix.
+
+    \sa transformed()
+*/
+void QGLBezierPatches::transform(const QMatrix4x4 &matrix)
+{
+    Q_D(QGLBezierPatches);
+    d->positions.transform(matrix);
+}
+
+/*!
+    Returns a new Bezier geometry object that results from transforming
+    this object's positions() according to \a matrix.
+
+    \sa transform()
+*/
+QGLBezierPatches QGLBezierPatches::transformed(const QMatrix4x4 &matrix) const
+{
+    QGLBezierPatches result(*this);
+    result.d_ptr->positions.transform(matrix);
+    return result;
+}
+
+/*!
     \relates QGLBezierPatches
 
     Subdivides the Bezier patch data in \a patches into triangles

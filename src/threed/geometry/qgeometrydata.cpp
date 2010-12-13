@@ -148,7 +148,7 @@ public:
     quint8 size[ATTR_CNT];
     int count;
     int reserved;
-    bool boxValid;
+    bool boxValid;    
     QGeometryData::BufferStrategy bufferStrategy;
 };
 
@@ -853,16 +853,24 @@ void QGeometryData::reserve(int amount)
     in \a mode.  The drawing \a mode is by default QGL::Triangles.  This function
     Also calls the upload() method to ensure that the geometry is resident on
     the graphics hardware if appropriate.
+
+    If the geometry is a point or line, then the \a drawWidth value specified the
+    width/size of the line/point.
 */
-void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode)
+void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode, qreal drawWidth)
 {
     if (d && d->indices.size() && d->count)
     {
         upload();
         painter->clearAttributes();
+        if (mode==QGL::Points) {
+            ::glPointSize(drawWidth);
+        } else if (mode==QGL::LineStrip || mode == QGL::Lines) {
+            ::glLineWidth(drawWidth);
+        }
         painter->setVertexBundle(d->vertexBundle);
         if (count == 0)
-            count = d->indexBuffer.indexCount();
+            count = d->indexBuffer.indexCount();        
         painter->draw(QGL::DrawingMode(mode), d->indexBuffer, start, count);
     }
 }

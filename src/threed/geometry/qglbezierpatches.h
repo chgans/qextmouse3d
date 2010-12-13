@@ -73,6 +73,9 @@ public:
     int subdivisionDepth() const;
     void setSubdivisionDepth(int value);
 
+    void transform(const QMatrix4x4 &matrix);
+    QGLBezierPatches transformed(const QMatrix4x4 &matrix) const;
+
 private:
     QScopedPointer<QGLBezierPatchesPrivate> d_ptr;
 

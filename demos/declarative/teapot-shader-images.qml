@@ -108,23 +108,23 @@ Rectangle {
             }
 
             vertexShader: "
-            attribute highp vec4 qgl_Vertex;
-            attribute highp vec4 qgl_TexCoord0;
-            uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+            attribute highp vec4 qt_Vertex;
+            attribute highp vec4 qt_MultiTexCoord0;
+            uniform mediump mat4 qt_ModelViewProjectionMatrix;
             varying highp vec4 texCoord;
 
             uniform mediump vec2 textureOffset;
 
             void main(void)
             {
-                gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-                texCoord = -qgl_TexCoord0 + vec4(textureOffset.x, textureOffset.y, 0.0, 0.0);
+                gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+                texCoord = -qt_MultiTexCoord0 + vec4(textureOffset.x, textureOffset.y, 0.0, 0.0);
             }
             "
 
             fragmentShader: "
             varying highp vec4 texCoord;
-            uniform sampler2D qgl_Texture0;
+            uniform sampler2D qt_Texture0;
             uniform bool myBoolean;
 
             // This image uniform is automatically associated with the image

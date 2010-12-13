@@ -107,6 +107,9 @@ public:
     QGL::DrawingMode drawingMode() const;
     void setDrawingMode(QGL::DrawingMode mode);
 
+    qreal drawingWidth() const;
+    void setDrawingWidth(qreal width);
+
     QGL::StandardEffect effect() const;
     void setEffect(QGL::StandardEffect);
 

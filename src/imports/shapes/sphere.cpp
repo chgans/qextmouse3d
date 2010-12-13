@@ -184,6 +184,7 @@ void Sphere::drawItem(QGLPainter *painter)
     else if (lod > 10)
         lod = 10;
 
+
     // Create a new geometry node for this level of detail if necessary.
     QGLSceneNode *geometry = m_lodGeometry.value(lod, 0);
     if (!geometry) {

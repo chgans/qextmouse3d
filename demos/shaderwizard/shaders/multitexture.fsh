@@ -62,8 +62,8 @@ varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
 varying mediump vec3 qHalfVector;
 varying mediump vec3 qVertexToLight;
-varying highp vec4 qTexCoord0;
-varying highp vec4 qTexCoord1;
+varying highp vec4 qt_TexCoord0;
+varying highp vec4 qt_TexCoord1;
 
 mediump vec3 perPixelNormal;
 
@@ -79,8 +79,8 @@ void main(void)
         if(specularIntensity > 0.0)
             specularComponent = scm * scli * pow(specularIntensity, shininess);
     }
-    vec4 texture0Color = texture2D(texture0, qTexCoord0.st);
-    vec4 diffuseColor = texture2D(texture1, qTexCoord0.st);
+    vec4 texture0Color = texture2D(texture0, qt_TexCoord0.st);
+    vec4 diffuseColor = texture2D(texture1, qt_TexCoord0.st);
     vec4 lightingColor = qAmbient + diffuseColor * intensity ;
 
 // The two fixed function lighting models are GL_MODULATE and GL_DECAL

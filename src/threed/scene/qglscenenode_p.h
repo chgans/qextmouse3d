@@ -102,6 +102,7 @@ public:
         , bb(other->bb)
         , boxValid(other->boxValid)
         , drawingMode(other->drawingMode)
+        , drawingWidth(1.0)
     {
     }
 
@@ -131,6 +132,7 @@ public:
     mutable QBox3D bb;
     mutable bool boxValid;
     QGL::DrawingMode drawingMode;
+    qreal drawingWidth;
 };
 
 #endif // QGLSCENENODE_P_H

@@ -494,7 +494,6 @@ QGLAbstractSurface *QGLViewPrivate::bothEyesSurface()
 
 static QGLFormat makeStereoGLFormat(const QGLFormat& format)
 {
-    return format;
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
     QGLFormat fmt(format);
     if (qt_gl_stereo_arg() == QLatin1String("-stereo-hw"))

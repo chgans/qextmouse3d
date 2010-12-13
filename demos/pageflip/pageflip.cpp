@@ -319,29 +319,29 @@ void PageFlipView::setAlphaValue(QGLPainter *painter, GLfloat value)
 }
 
 static char const gradientVertexShader[] =
-    "attribute highp vec4 qgl_Vertex;\n"
-    "attribute highp vec4 qgl_TexCoord0;\n"
-    "attribute highp float qgl_Custom0;\n"
-    "uniform mediump mat4 qgl_ModelViewProjectionMatrix;\n"
-    "varying highp vec4 qTexCoord0;\n"
+    "attribute highp vec4 qt_Vertex;\n"
+    "attribute highp vec4 qt_MultiTexCoord0;\n"
+    "attribute highp float qt_Custom0;\n"
+    "uniform mediump mat4 qt_ModelViewProjectionMatrix;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "varying highp float qGradCtrl;\n"
     "void main(void)\n"
     "{\n"
-    "    gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;\n"
-    "    qTexCoord0 = qgl_TexCoord0;\n"
-    "    qGradCtrl = qgl_Custom0;\n"
+    "    gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;\n"
+    "    qt_TexCoord0 = qt_MultiTexCoord0;\n"
+    "    qGradCtrl = qt_Custom0;\n"
     "}\n";
 
 static char const gradientFragmentShader[] =
-    "uniform sampler2D qgl_Texture0;\n"
-    "uniform sampler2D qgl_Texture1;\n"
+    "uniform sampler2D qt_Texture0;\n"
+    "uniform sampler2D qt_Texture1;\n"
     "uniform mediump float alphaValue;\n"
-    "varying highp vec4 qTexCoord0;\n"
+    "varying highp vec4 qt_TexCoord0;\n"
     "varying highp float qGradCtrl;\n"
     "void main(void)\n"
     "{\n"
-    "    mediump vec4 col = texture2D(qgl_Texture0, qTexCoord0.st);\n"
-    "    mediump vec4 gradcol = texture2D(qgl_Texture1, vec2(qGradCtrl, qTexCoord0.t));\n"
+    "    mediump vec4 col = texture2D(qt_Texture0, qt_TexCoord0.st);\n"
+    "    mediump vec4 gradcol = texture2D(qt_Texture1, vec2(qGradCtrl, qt_TexCoord0.t));\n"
     "    gl_FragColor = vec4((col * gradcol).xyz, alphaValue);\n"
     "}\n";
 

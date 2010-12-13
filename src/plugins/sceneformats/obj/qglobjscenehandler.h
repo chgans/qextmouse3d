@@ -53,8 +53,10 @@ QT_BEGIN_NAMESPACE
 class QGLObjSceneHandler : public QGLSceneFormatHandler
 {
 public:
+    QGLObjSceneHandler();
     QGLAbstractScene *read();
 //! [1]
+    void decodeOptions(const QString &options);
 
 private:
     void loadMaterialLibrary(const QString& name);
@@ -62,6 +64,8 @@ private:
     QGLTexture2D *loadTexture(const QString& name);
 
     QGLMaterialCollection *palette;
+    QGL::Smoothing smoothing;
+    bool smoothingForced;
 //! [2]
 };
 //! [2]

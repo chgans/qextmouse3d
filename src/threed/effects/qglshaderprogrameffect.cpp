@@ -89,22 +89,22 @@ QT_BEGIN_NAMESPACE
 
     \table
     \header \o Shader Variable \o Mesh Attribute \o Purpose
-    \row \o \c qgl_Vertex \o QGL::Position
+    \row \o \c qt_Vertex \o QGL::Position
          \o The primary position of the vertex.
-    \row \o \c qgl_Normal \o QGL::Normal
+    \row \o \c qt_Normal \o QGL::Normal
          \o The normal at each vertex, for lit material effects.
-    \row \o \c qgl_Color \o QGL::Color
+    \row \o \c qt_Color \o QGL::Color
          \o The color at each vertex, for per-vertex color effects.
-    \row \o \c qgl_TexCoord0 \o QGL::TextureCoord0
+    \row \o \c qt_MultiTexCoord0 \o QGL::TextureCoord0
          \o The texture co-ordinate at each vertex for texture unit 0.
-    \row \o \c qgl_TexCoord1 \o QGL::TextureCoord1
+    \row \o \c qt_MultiTexCoord1 \o QGL::TextureCoord1
          \o Secondary texture co-ordinate at each vertex.
-    \row \o \c qgl_TexCoord2 \o QGL::TextureCoord2
+    \row \o \c qt_MultiTexCoord2 \o QGL::TextureCoord2
          \o Tertiary texture co-ordinate at each vertex.
-    \row \o \c qgl_Custom0 \o QGL::CustomVertex0
+    \row \o \c qt_Custom0 \o QGL::CustomVertex0
          \o First custom vertex attribute that can be used for any
             user-defined purpose.
-    \row \o \c qgl_Custom1 \o QGL::CustomVertex1
+    \row \o \c qt_Custom1 \o QGL::CustomVertex1
          \o Second custom vertex attribute that can be used for any
             user-defined purpose.
     \endtable
@@ -113,15 +113,15 @@ QT_BEGIN_NAMESPACE
     example of a simple texture shader:
 
     \code
-    attribute highp vec4 qgl_Vertex;
-    attribute highp vec4 qgl_TexCoord0;
-    uniform mediump mat4 qgl_ModelViewProjectionMatrix;
-    varying highp vec4 qTexCoord0;
+    attribute highp vec4 qt_Vertex;
+    attribute highp vec4 qt_MultiTexCoord0;
+    uniform mediump mat4 qt_ModelViewProjectionMatrix;
+    varying highp vec4 qt_TexCoord0;
 
     void main(void)
     {
-        gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-        qTexCoord0 = qgl_TexCoord0;
+        gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+        qt_TexCoord0 = qt_MultiTexCoord0;
     }
     \endcode
 
@@ -132,33 +132,33 @@ QT_BEGIN_NAMESPACE
 
     \table
     \header \o Shader Variable \o Purpose
-    \row \o \c qgl_ModelViewProjectionMatrix
+    \row \o \c qt_ModelViewProjectionMatrix
          \o Combination of the modelview and projection matrices into a
             single 4x4 matrix.
-    \row \o \c qgl_ModelViewMatrix
+    \row \o \c qt_ModelViewMatrix
          \o Modelview matrix without the projection.  This is typically
             used for performing calculations in eye co-ordinates.
-    \row \o \c qgl_ProjectionMatrix
+    \row \o \c qt_ProjectionMatrix
          \o Projection matrix without the modelview.
-    \row \o \c qgl_NormalMatrix
+    \row \o \c qt_NormalMatrix
          \o Normal matrix, which is the transpose of the inverse of the
             top-left 3x3 part of the modelview matrix.  This is typically
-            used in lighting calcuations to transform \c qgl_Normal.
-    \row \o \c qgl_WorldMatrix
+            used in lighting calcuations to transform \c qt_Normal.
+    \row \o \c qt_WorldMatrix
          \o Modelview matrix without the eye position and orientation
             component.  See QGLPainter::worldMatrix() for further
             information.
-    \row \o \c qgl_Texture0
+    \row \o \c qt_Texture0
          \o Sampler corresponding to the texture on unit 0.
-    \row \o \c qgl_Texture1
+    \row \o \c qt_Texture1
          \o Sampler corresponding to the texture on unit 1.
-    \row \o \c qgl_Texture2
+    \row \o \c qt_Texture2
          \o Sampler corresponding to the texture on unit 2.
-    \row \o \c qgl_Color
+    \row \o \c qt_Color
          \o Set to the value of the QGLPainter::color() property.
             This is typically used for flat-color shaders that do
             not involve lighting.  Note that this is different from
-            the \c qgl_Color attribute, which provides per-vertex colors.
+            the \c qt_Color attribute, which provides per-vertex colors.
     \endtable
 
     The above variables are usually declared in the shaders as follows
@@ -166,44 +166,44 @@ QT_BEGIN_NAMESPACE
     upon the shader's precision requirements):
 
     \code
-    uniform highp mat4 qgl_ModelViewProjectionMatrix;
-    uniform highp mat4 qgl_ModelViewMatrix;
-    uniform highp mat4 qgl_ProjectionMatrix;
-    uniform highp mat3 qgl_NormalMatrix;
-    uniform sampler2D qgl_Texture0;
-    uniform sampler2D qgl_Texture1;
-    uniform sampler2D qgl_Texture2;
-    uniform highp vec4 qgl_Color;
+    uniform highp mat4 qt_ModelViewProjectionMatrix;
+    uniform highp mat4 qt_ModelViewMatrix;
+    uniform highp mat4 qt_ProjectionMatrix;
+    uniform highp mat3 qt_NormalMatrix;
+    uniform sampler2D qt_Texture0;
+    uniform sampler2D qt_Texture1;
+    uniform sampler2D qt_Texture2;
+    uniform highp vec4 qt_Color;
     \endcode
 
     \section1 Material parameters
 
     QGLShaderProgramEffect will provide information about the front and
     back materials from QGLPainter::faceMaterial() if the
-    \c qgl_Materials array is present in the shader code.
+    \c qt_Materials array is present in the shader code.
     The array should be declared as follows:
 
     \code
-    struct qgl_MaterialParameters {
+    struct qt_MaterialParameters {
         mediump vec4 emission;
         mediump vec4 ambient;
         mediump vec4 diffuse;
         mediump vec4 specular;
         mediump float shininess;
     };
-    uniform qgl_MaterialParameters qgl_Materials[2];
+    uniform qt_MaterialParameters qt_Materials[2];
     \endcode
 
     The front material will be provided as index 0 and the back
     material will be provided as index 1.  If the shader only
-    needs a single material, then the \c qgl_Material variable
+    needs a single material, then the \c qt_Material variable
     can be declared instead:
 
     \code
-    uniform qgl_MaterialParameters qgl_Material;
+    uniform qt_MaterialParameters qt_Material;
     \endcode
 
-    The front material will be provided as the value of \c qgl_Material
+    The front material will be provided as the value of \c qt_Material
     and the back material will be ignored.
 
     Note: the \c emission parameter is actually QGLMaterial::emittedLight()
@@ -213,11 +213,11 @@ QT_BEGIN_NAMESPACE
     \section1 Lighting parameters
 
     QGLShaderProgramEffect will provide information about the current lights
-    specified on the QGLPainter if the \c qgl_Lights array is present
+    specified on the QGLPainter if the \c qt_Lights array is present
     in the shader code.  The array should be declared as follows:
 
     \code
-    struct qgl_LightParameters {
+    struct qt_LightParameters {
         mediump vec4 ambient;
         mediump vec4 diffuse;
         mediump vec4 specular;
@@ -230,25 +230,25 @@ QT_BEGIN_NAMESPACE
         mediump float linearAttenuation;
         mediump float quadraticAttenuation;
     };
-    const int qgl_MaxLights = 8;
-    uniform qgl_LightParameters qgl_Lights[qgl_MaxLights];
-    uniform int qgl_NumLights;
+    const int qt_MaxLights = 8;
+    uniform qt_LightParameters qt_Lights[qt_MaxLights];
+    uniform int qt_NumLights;
     \endcode
 
     As shown, up to 8 lights can be supported at once.  Usually this is
     more lights than most shaders need, and so the user can change the
-    \c qgl_MaxLights constant to a smaller value if they wish.  Be sure
+    \c qt_MaxLights constant to a smaller value if they wish.  Be sure
     to also call setMaximumLights() to tell QGLShaderProgramEffect about
     the new light count limit.
 
-    The \c qgl_NumLights uniform variable will be set to the actual number
+    The \c qt_NumLights uniform variable will be set to the actual number
     of lights that are active on the QGLPainter when update() is called.
 
     Because most shaders will only need a single light, the shader can
-    declare the \c qgl_Light variable instead of the \c qgl_Lights array:
+    declare the \c qt_Light variable instead of the \c qt_Lights array:
 
     \code
-    struct qgl_SingleLightParameters {
+    struct qt_SingleLightParameters {
         mediump vec4 position;
         mediump vec3 spotDirection;
         mediump float spotExponent;
@@ -258,12 +258,12 @@ QT_BEGIN_NAMESPACE
         mediump float linearAttenuation;
         mediump float quadraticAttenuation;
     };
-    uniform qgl_SingleLightParameters qgl_Light;
+    uniform qt_SingleLightParameters qt_Light;
     \endcode
 
     Note that we have omitted the \c ambient, \c diffuse, and \c specular
     colors for the single light.  QGLShaderProgramEffect will combine the material
-    and light colors ahead of time into \c qgl_Material or \c qgl_Materials.
+    and light colors ahead of time into \c qt_Material or \c qt_Materials.
     This makes lighting shaders more efficient because they do not have
     to compute \c material_color * \c light_color; just \c material_color
     is sufficient.
@@ -272,25 +272,19 @@ QT_BEGIN_NAMESPACE
 
     The name and purpose of the varying variables is up to the
     author of the vertex and fragment shaders, but the following names
-    are recommended:
+    are recommended for texture co-ordinates:
 
     \table
     \header \o Varying Variable \o Purpose
-    \row \o \c qColor
-         \o Per-vertex color, copied from the \c qgl_Color attribute.
-    \row \o \c qTexCoord0
-         \o Texture coordinate for unit 0, copied from the \c qgl_TexCoord0
+    \row \o \c qt_TexCoord0
+         \o Texture coordinate for unit 0, copied from the \c qt_MultiTexCoord0
             attribute.
-    \row \o \c qTexCoord1
-         \o Texture coordinate for unit 1, copied from the \c qgl_TexCoord1
+    \row \o \c qt_TexCoord1
+         \o Texture coordinate for unit 1, copied from the \c qt_MultiTexCoord1
             attribute.
-    \row \o \c qTexCoord2
-         \o Texture coordinate for unit 2, copied from the \c qgl_TexCoord2
+    \row \o \c qt_TexCoord2
+         \o Texture coordinate for unit 2, copied from the \c qt_MultiTexCoord2
             attribute.
-    \row \o \c qLitColor
-         \o Primary color component from the lighting calculation.
-    \row \o \c qLitSecondaryColor
-         \o Secondary color component from the lighting calculation.
     \endtable
 
     \section1 Lighting shader example
@@ -302,24 +296,24 @@ QT_BEGIN_NAMESPACE
     OpenGL pipeline:
 
     \code
-    attribute highp vec4 qgl_Vertex;
-    uniform highp mat4 qgl_ModelViewProjectionMatrix;
-    attribute highp vec3 qgl_Normal;
-    uniform highp mat4 qgl_ModelViewMatrix;
-    uniform highp mat3 qgl_NormalMatrix;
-    attribute highp vec4 qgl_TexCoord0;
-    varying highp vec4 qTexCoord0;
+    attribute highp vec4 qt_Vertex;
+    uniform highp mat4 qt_ModelViewProjectionMatrix;
+    attribute highp vec3 qt_Normal;
+    uniform highp mat4 qt_ModelViewMatrix;
+    uniform highp mat3 qt_NormalMatrix;
+    attribute highp vec4 qt_MultiTexCoord0;
+    varying highp vec4 qt_TexCoord0;
 
-    struct qgl_MaterialParameters {
+    struct qt_MaterialParameters {
         mediump vec4 emission;
         mediump vec4 ambient;
         mediump vec4 diffuse;
         mediump vec4 specular;
         mediump float shininess;
     };
-    uniform qgl_MaterialParameters qgl_Material;
+    uniform qt_MaterialParameters qt_Material;
 
-    struct qgl_SingleLightParameters {
+    struct qt_SingleLightParameters {
         mediump vec4 position;
         mediump vec3 spotDirection;
         mediump float spotExponent;
@@ -329,19 +323,19 @@ QT_BEGIN_NAMESPACE
         mediump float linearAttenuation;
         mediump float quadraticAttenuation;
     };
-    uniform qgl_SingleLightParameters qgl_Light;
+    uniform qt_SingleLightParameters qt_Light;
 
-    varying mediump vec4 qLitColor;
-    varying mediump vec4 qLitSecondaryColor;
+    varying mediump vec4 litColor;
+    varying mediump vec4 litSecondaryColor;
 
     void main(void)
     {
-        gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-        gTexCoord0 = qgl_TexCoord0;
+        gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+        gTexCoord0 = qt_MultiTexCoord0;
 
         // Calculate the vertex and normal to use for lighting calculations.
-        highp vec4 vertex = qgl_ModelViewMatrix * qgl_Vertex;
-        highp vec3 normal = normalize(qgl_NormalMatrix * qgl_Normal);
+        highp vec4 vertex = qt_ModelViewMatrix * qt_Vertex;
+        highp vec3 normal = normalize(qt_NormalMatrix * qt_Normal);
 
         // Start with the material's emissive color and the ambient scene color,
         // which have been combined into the emission parameter.
@@ -351,7 +345,7 @@ QT_BEGIN_NAMESPACE
         vec3 toEye = vec3(0, 0, 1);
 
         // Determine the angle between the normal and the light direction.
-        vec4 pli = qgl_Light.position;
+        vec4 pli = qt_Light.position;
         vec3 toLight;
         if (pli.w == 0.0)
             toLight = normalize(pli.xyz);
@@ -360,15 +354,15 @@ QT_BEGIN_NAMESPACE
         float angle = max(dot(normal, toLight), 0.0);
 
         // Calculate the ambient and diffuse light components.
-        vec4 adcomponent = qgl_Material.ambient + angle * qgl_Material.diffuse;
+        vec4 adcomponent = qt_Material.ambient + angle * qt_Material.diffuse;
 
         // Calculate the specular light components.
         vec4 scomponent;
         if (angle != 0.0) {
             vec3 h = normalize(toLight + toEye);
             angle = max(dot(normal, h), 0.0);
-            float srm = qgl_Material.shininess;
-            vec4 scm = qgl_Material.specular;
+            float srm = qt_Material.shininess;
+            vec4 scm = qt_Material.specular;
             if (srm != 0.0)
                 scomponent = pow(angle, srm) * scm;
             else
@@ -378,14 +372,14 @@ QT_BEGIN_NAMESPACE
         }
 
         // Apply the spotlight angle and exponent.
-        if (qgl_Light.spotCutoff != 180.0) {
+        if (qt_Light.spotCutoff != 180.0) {
             float spot = max(dot(normalize(vertex.xyz - pli.xyz),
-                                 qgl_Light.spotDirection), 0.0);
-            if (spot < qgl_Light.spotCosCutoff) {
+                                 qt_Light.spotDirection), 0.0);
+            if (spot < qt_Light.spotCosCutoff) {
                 adcomponent = vec4(0, 0, 0, 0);
                 scomponent = vec4(0, 0, 0, 0);
             } else {
-                spot = pow(spot, qgl_Light.spotExponent);
+                spot = pow(spot, qt_Light.spotExponent);
                 adcomponent *= spot;
                 scomponent *= spot;
             }
@@ -393,9 +387,9 @@ QT_BEGIN_NAMESPACE
 
         // Apply attenuation to the colors.
         if (pli.w != 0.0) {
-            float attenuation = qgl_Light.constantAttenuation;
-            float k1 = qgl_Light.linearAttenuation;
-            float k2 = qgl_Light.quadraticAttenuation;
+            float attenuation = qt_Light.constantAttenuation;
+            float k1 = qt_Light.linearAttenuation;
+            float k2 = qt_Light.quadraticAttenuation;
             if (k1 != 0.0 || k2 != 0.0) {
                 float len = length(pli.xyz - vertex.xyz);
                 attenuation += k1 * len + k2 * len * len;
@@ -408,23 +402,23 @@ QT_BEGIN_NAMESPACE
         }
 
         // Generate the final output colors to pass to the fragment shader.
-        float alpha = qgl_Material.diffuse.a;
-        qLitColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
-        qLitSecondaryColor = vec4(clamp(scolor.rgb, 0.0, 1.0), 0.0);
+        float alpha = qt_Material.diffuse.a;
+        litColor = vec4(clamp(color.rgb, 0.0, 1.0), alpha);
+        litSecondaryColor = vec4(clamp(scolor.rgb, 0.0, 1.0), 0.0);
     }
     \endcode
 
     The corresponding fragment shader is as follows:
 
     \code
-    varying mediump vec4 qLitColor;
-    varying mediump vec4 qLitSecondaryColor;
-    varying highp vec4 qTexCoord0;
+    varying mediump vec4 litColor;
+    varying mediump vec4 litSecondaryColor;
+    varying highp vec4 qt_TexCoord0;
 
     void main(void)
     {
-        vec4 color = qLitColor * texture2D(qgl_Texture0, qTexCoord0.st);
-        gl_FragColor = clamp(color + qLitSecondaryColor, 0.0, 1.0);
+        vec4 color = litColor * texture2D(qt_Texture0, qt_TexCoord0.st);
+        gl_FragColor = clamp(color + litSecondaryColor, 0.0, 1.0);
     }
     \endcode
 
@@ -680,14 +674,14 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
 
 #if !defined(QGL_FIXED_FUNCTION_ONLY)
     static const char *const attributes[] = {
-        "qgl_Vertex",
-        "qgl_Normal",
-        "qgl_Color",
-        "qgl_TexCoord0",
-        "qgl_TexCoord1",
-        "qgl_TexCoord2",
-        "qgl_Custom0",
-        "qgl_Custom1"
+        "qt_Vertex",
+        "qt_Normal",
+        "qt_Color",
+        "qt_MultiTexCoord0",
+        "qt_MultiTexCoord1",
+        "qt_MultiTexCoord2",
+        "qt_Custom0",
+        "qt_Custom1"
     };
     const int numAttributes = 8;
     Q_UNUSED(painter);
@@ -725,24 +719,26 @@ void QGLShaderProgramEffect::setActive(QGLPainter *painter, bool flag)
             if (d->program->attributeLocation(attributes[attr]) != -1)
                 d->attributes |= (1 << attr);
         }
-        d->matrix = d->program->uniformLocation("qgl_ModelViewProjectionMatrix");
-        d->mvMatrix = d->program->uniformLocation("qgl_ModelViewMatrix");
-        d->projMatrix = d->program->uniformLocation("qgl_ProjectionMatrix");
-        d->normalMatrix = d->program->uniformLocation("qgl_NormalMatrix");
-        d->worldMatrix = d->program->uniformLocation("qgl_WorldMatrix");
-        d->texture0 = d->program->uniformLocation("qgl_Texture0");
-        d->texture1 = d->program->uniformLocation("qgl_Texture1");
-        d->texture2 = d->program->uniformLocation("qgl_Texture2");
-        d->color = d->program->uniformLocation("qgl_Color");
-        d->numLights = d->program->uniformLocation("qgl_NumLights");
+        if (d->program->attributeLocation("qgl_Vertex") != -1)
+            qWarning("QGLShaderProgramEffect: qgl_Vertex no longer supported; use qt_Vertex instead");
+        d->matrix = d->program->uniformLocation("qt_ModelViewProjectionMatrix");
+        d->mvMatrix = d->program->uniformLocation("qt_ModelViewMatrix");
+        d->projMatrix = d->program->uniformLocation("qt_ProjectionMatrix");
+        d->normalMatrix = d->program->uniformLocation("qt_NormalMatrix");
+        d->worldMatrix = d->program->uniformLocation("qt_WorldMatrix");
+        d->texture0 = d->program->uniformLocation("qt_Texture0");
+        d->texture1 = d->program->uniformLocation("qt_Texture1");
+        d->texture2 = d->program->uniformLocation("qt_Texture2");
+        d->color = d->program->uniformLocation("qt_Color");
+        d->numLights = d->program->uniformLocation("qt_NumLights");
         d->haveLight =
-            (d->program->uniformLocation("qgl_Light.position") != -1);
+            (d->program->uniformLocation("qt_Light.position") != -1);
         d->haveLights =
-            (d->program->uniformLocation("qgl_Lights[0].position") != -1);
+            (d->program->uniformLocation("qt_Lights[0].position") != -1);
         d->haveMaterial =
-            (d->program->uniformLocation("qgl_Material.diffuse") != -1);
+            (d->program->uniformLocation("qt_Material.diffuse") != -1);
         d->haveMaterials =
-            (d->program->uniformLocation("qgl_Materials[0].diffuse") != -1);
+            (d->program->uniformLocation("qt_Materials[0].diffuse") != -1);
     }
     if (flag) {
         d->program->bind();
@@ -804,7 +800,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
         if (d->haveLight) {
             // Only one light needed so make it the main light.
             d->setLight(painter->mainLight(), painter->mainLightTransform(),
-                        "qgl_Light", -1);
+                        "qt_Light", -1);
         } else if (d->haveLights) {
             // Shader supports multiple light sources.
             int numLights = 0;
@@ -822,7 +818,7 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
 
                 // Set the parameters for the next shader light number.
                 d->setLight(lparams, painter->lightTransform(lightId),
-                            "qgl_Lights", numLights);
+                            "qt_Lights", numLights);
 
                 // Bail out if we've hit the maximum shader light limit.
                 ++numLights;
@@ -841,25 +837,25 @@ void QGLShaderProgramEffect::update(QGLPainter *painter, QGLPainter::Updates upd
             if (d->haveMaterial) {
                 d->setMaterial(painter->faceMaterial(QGL::FrontFaces),
                                painter->lightModel(), painter->mainLight(),
-                               "qgl_Material", -1);
+                               "qt_Material", -1);
             } else if (d->haveMaterials) {
                 d->setMaterial(painter->faceMaterial(QGL::FrontFaces),
                                painter->lightModel(), painter->mainLight(),
-                               "qgl_Materials", 0);
+                               "qt_Materials", 0);
                 d->setMaterial(painter->faceMaterial(QGL::BackFaces),
                                painter->lightModel(), painter->mainLight(),
-                               "qgl_Materials", 1);
+                               "qt_Materials", 1);
             }
         } else {
             // Multiple light sources, so light colors are separate.
             if (d->haveMaterial) {
                 d->setMaterial(painter->faceMaterial(QGL::FrontFaces),
-                               painter->lightModel(), 0, "qgl_Material", -1);
+                               painter->lightModel(), 0, "qt_Material", -1);
             } else if (d->haveMaterials) {
                 d->setMaterial(painter->faceMaterial(QGL::FrontFaces),
-                               painter->lightModel(), 0, "qgl_Materials", 0);
+                               painter->lightModel(), 0, "qt_Materials", 0);
                 d->setMaterial(painter->faceMaterial(QGL::BackFaces),
-                               painter->lightModel(), 0, "qgl_Materials", 1);
+                               painter->lightModel(), 0, "qt_Materials", 1);
             }
         }
     }
@@ -953,7 +949,7 @@ void QGLShaderProgramEffect::setFragmentShader(const QByteArray &source)
     shader program effect.  The default value is 8.
 
     The actual number of lights will be provided to the vertexShader()
-    as the \c{qgl_NumLights} uniform variable, which will always be
+    as the \c{qt_NumLights} uniform variable, which will always be
     less than or equal to maximumLights().
 
     \sa setMaximumLights()

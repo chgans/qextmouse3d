@@ -55,8 +55,8 @@ varying mediump vec4 qDiffuse;
 varying mediump vec3 qNormal;
 varying mediump vec3 qLightDirection;
 varying mediump vec3 qHalfVector;
-varying highp vec4 qTexCoord0;
-varying highp vec4 qTexCoord1;
+varying highp vec4 qt_TexCoord0;
+varying highp vec4 qt_TexCoord1;
 
 mediump vec3 perPixelNormal;
 

@@ -235,8 +235,8 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
     // Fragment shader declarations:
     d->fragmentShaderDeclarationSnippets.append(QLatin1String("uniform mediump sampler2D texture0;"));
     d->fragmentShaderVariableNames.append(QLatin1String("texture0"));
-    d->fragmentShaderDeclarationSnippets.append(QLatin1String("varying highp vec4 qTexCoord0;"));
-    d->fragmentShaderVariableNames.append(QLatin1String("qTexCoord0"));
+    d->fragmentShaderDeclarationSnippets.append(QLatin1String("varying highp vec4 qt_TexCoord0;"));
+    d->fragmentShaderVariableNames.append(QLatin1String("qt_TexCoord0"));
 
     // Fragment Shader code
     d->fragmentShaderCodeSnippets.append(QLatin1String(
@@ -252,7 +252,7 @@ void QGLColladaFxEffect::addBlinnPhongLighting()
 
     // Replace the "end glue" to set colour from lighting
     d->fragmentShaderEndGlueSnippet = QLatin1String(
-            "    vec4 texture0Color = texture2D(texture0, qTexCoord0.st);\n"\
+            "    vec4 texture0Color = texture2D(texture0, qt_TexCoord0.st);\n"\
             "    vec4 diffuseColor = qDiffuse;\n"\
             "    vec4 lightingColor = qAmbient + diffuseColor * intensity + specularComponent;\n"\
             "   vec4 texturedColor = vec4(lightingColor.xyz * (1.0 - texture0Color.a)\n"\
@@ -296,12 +296,12 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "attribute highp vec4 normal;\n"\
             "attribute highp vec4 texCoords;\n"\
             "uniform highp mat4 matrix;\n"\
-            "uniform highp mat3 qgl_NormalMatrix;\n"\
+            "uniform highp mat3 qt_NormalMatrix;\n"\
             "varying mediump vec3 qNormal;\n"\
             "varying mediump vec3 qLightDirection;\n"\
             "varying mediump vec3 qHalfVector;\n"\
             "uniform mediump vec3 pli;       // Position of the light\n"\
-            "varying highp vec4 qTexCoord0; // TEMP\n" /* Got to get rid of this*/\
+            "varying highp vec4 qt_TexCoord0; // TEMP\n" /* Got to get rid of this*/\
             "\n"\
             "void qLightVertex(vec4 vertex, vec3 normal)\n"\
             "{\n"\
@@ -313,9 +313,9 @@ void QGLColladaFxEffectPrivate::resetGlueSnippets()
             "\n"\
             "void main(void)\n"\
             "{\n"\
-            "    qNormal = normalize(qgl_NormalMatrix * vec3(normal));\n"\
+            "    qNormal = normalize(qt_NormalMatrix * vec3(normal));\n"\
             "    qLightVertex(vertex, qNormal);\n"\
-            "    qTexCoord0 = texCoords;\n"\
+            "    qt_TexCoord0 = texCoords;\n"\
             );
 
     vertexShaderEndGlueSnippet = QLatin1String (

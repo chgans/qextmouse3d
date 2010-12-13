@@ -39,63 +39,51 @@
 **
 ****************************************************************************/
 
-#ifndef QGRAPHICSLOOKATTRANSFORM_H
-#define QGRAPHICSLOOKATTRANSFORM_H
+#ifndef LINE_H
+#define LINE_H
 
-#include "qgraphicstransform3d.h"
-#include <QtCore/qscopedpointer.h>
-#include <QPointer>
+#include "qdeclarativeitem3d.h"
+#include "qglscenenode.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QGraphicsLookAtTransformPrivate;
-
-class Q_QT3D_EXPORT QGraphicsLookAtTransform : public QGraphicsTransform3D
+class Line : public QDeclarativeItem3D
 {
     Q_OBJECT
-    Q_PROPERTY(bool preserveUpVector READ preserveUpVector WRITE setPreserveUpVector NOTIFY preserveUpVectorChanged)
-    Q_PROPERTY(QVector3D subject READ subject WRITE setSubject NOTIFY subjectChanged )
-    Q_PROPERTY(QVector3D upVector READ upVector WRITE setUpVector NOTIFY upVectorChanged )
-    Q_PROPERTY(qreal primaryAngle READ primaryAngle NOTIFY primaryAngleChanged)
-    Q_PROPERTY(qreal secondaryAngle READ secondaryAngle NOTIFY secondaryAngleChanged)
+    Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged)
+    Q_PROPERTY(QVariant vertices READ vertices WRITE setVertices NOTIFY verticesChanged)
+
 public:
-    QGraphicsLookAtTransform(QObject *parent = 0);
-    ~QGraphicsLookAtTransform();
+    explicit Line(QObject *parent = 0);
+    ~Line() {}
 
-    bool preserveUpVector() const;
-    void setPreserveUpVector(bool value);
+    QVariant vertices() const;
+    void setVertices(const QVariant &value);
 
-    QVector3D subject() const;
-    void setSubject(QVector3D value);
-
-    QVector3D upVector() const;
-    void setUpVector(QVector3D value);
-
-    qreal primaryAngle() const;
-    qreal secondaryAngle() const;
-
-    void applyTo(QMatrix4x4 *matrix) const;
-    QGraphicsTransform3D *clone(QObject *parent) const;
-
+    qreal width() const {return m_width;}
+    void setWidth(qreal width);
 
 Q_SIGNALS:
-    void preserveUpVectorChanged();
-    void subjectChanged();
-    void upVectorChanged();
-    void primaryAngleChanged();
-    void secondaryAngleChanged();
+    void verticesChanged();
+    void widthChanged();
+
+protected:
+    void drawItem(QGLPainter *painter);
 
 private:
-    QScopedPointer<QGraphicsLookAtTransformPrivate> d_ptr;
-
-    Q_DISABLE_COPY(QGraphicsLookAtTransform)
-    Q_DECLARE_PRIVATE(QGraphicsLookAtTransform)
+    qreal m_width;
+    QVariant m_vertices;
+    QVector3DArray m_vertexArray;
+    QGLSceneNode * m_geometry;
+    bool m_changeFlag;
 };
+
+QML_DECLARE_TYPE(Line)
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif
+#endif // LINE_H

@@ -306,6 +306,11 @@ public:
     static QGraphicsTransform3D *pretransform_at(QDeclarativeListProperty<QGraphicsTransform3D> *list, int);
     static void pretransform_clear(QDeclarativeListProperty<QGraphicsTransform3D> *list);
     QList<QGraphicsTransform3D *> pretransforms;
+
+    // transform convenience functions
+    QMatrix4x4 localTransforms() const;
+    QMatrix4x4 localToWorldMatrix() const;
+    QMatrix4x4 worldToLocalMatrix() const;
 };
 
 QDeclarativeItem3DPrivate::~QDeclarativeItem3DPrivate()
@@ -478,6 +483,36 @@ int QDeclarativeItem3DPrivate::children_count(QDeclarativeListProperty<QDeclarat
 {
     return static_cast<QDeclarativeItem3D*>(prop->object)->d->children.count();
 }
+
+/*!
+    \internal
+    Applies position, scale and rotation transforms for this item3d to matrix
+    \a m
+*/
+QMatrix4x4 QDeclarativeItem3DPrivate::localTransforms() const
+{
+    QMatrix4x4 m;
+    m.translate(position);
+    int transformCount = transforms.count();
+    if (transformCount>0) {
+        // The transformations are applied in reverse order of their
+        // lexical appearance in the QML file.
+        for (int index = transformCount - 1; index >= 0; --index) {
+            transforms.at(index)->applyTo(&m);
+        }
+    }
+    if (scale != 1.0f)
+        m.scale(scale);
+    transformCount = pretransforms.count();
+    if (transformCount>0) {
+        // Pre-transforms for orienting the model.
+        for (int index = transformCount - 1; index >= 0; --index) {
+            pretransforms.at(index)->applyTo(&m);
+        }
+    }
+    return m;
+}
+
 
 
 QDeclarativeStateGroup *QDeclarativeItem3DPrivate::states()
@@ -1144,28 +1179,7 @@ void QDeclarativeItem3D::draw(QGLPainter *painter)
 
     //1) Item Transforms
     painter->modelViewMatrix().push();
-    painter->modelViewMatrix().translate(d->position);
-    int transformCount = d->transforms.count();
-    if (transformCount>0) {
-        // The transformations are applied in reverse order of their
-        // lexical appearance in the QML file.
-        QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = transformCount - 1; index >= 0; --index) {
-            d->transforms.at(index)->applyTo(&m);
-        }
-        painter->modelViewMatrix() = m;
-    }
-    if (d->scale != 1.0f)
-        painter->modelViewMatrix().scale(d->scale);
-    transformCount = d->pretransforms.count();
-    if (transformCount>0) {
-        // Pre-transforms for orienting the model.
-        QMatrix4x4 m = painter->modelViewMatrix();
-        for (int index = transformCount - 1; index >= 0; --index) {
-            d->pretransforms.at(index)->applyTo(&m);
-        }
-        painter->modelViewMatrix() = m;
-    }
+    painter->modelViewMatrix() *= d->localTransforms();
 
     //Drawing
     drawItem(painter);
@@ -1299,6 +1313,57 @@ void QDeclarativeItem3D::drawItem(QGLPainter *painter)
 {
     if (d->mesh)
         d->mesh->draw(painter, d->mainBranchId);
+}
+
+
+/*!
+    Calculates and returns a matrix that transforms local coordinates into
+    world coordinates (i.e. coordinates untransformed by any item3d's
+    transforms).
+*/
+QMatrix4x4 QDeclarativeItem3DPrivate::localToWorldMatrix() const
+{
+    QMatrix4x4 result;
+    QDeclarativeItem3D *anscestor = parent;
+
+    result = localTransforms() * result;
+    while (anscestor)
+    {
+        result = anscestor->d->localTransforms() * result;
+        anscestor = anscestor->d->parent;
+    }
+    return result;
+}
+
+/*!
+    Calculates and returns a matrix that transforms world coordinates into
+    coordinates relative to this Item3D.
+*/
+QMatrix4x4 QDeclarativeItem3DPrivate::worldToLocalMatrix() const
+{
+    bool inversionSuccessful;
+    QMatrix4x4 result = localToWorldMatrix().inverted(&inversionSuccessful);
+    if (inversionSuccessful)
+        return result;
+    qWarning() << "QDeclarativeItem3D - matrix inversion failed trying to generate worldToLocal Matrix";
+    return QMatrix4x4();
+}
+
+/*!
+    Returns the position of a local \a point in world space (i.e. not
+    transformed by this item, it's parents, the camera etc).
+*/
+QVector3D QDeclarativeItem3D::localToWorld(const QVector3D &point) const
+{
+    return d->localToWorldMatrix() * point;
+}
+
+/*!
+    Returns the position of a point in world space in local coordinates.
+*/
+QVector3D QDeclarativeItem3D::worldToLocal(const QVector3D &point) const
+{
+    return d->worldToLocalMatrix() * point;
 }
 
 /*!

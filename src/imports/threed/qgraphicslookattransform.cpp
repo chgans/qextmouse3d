@@ -104,27 +104,31 @@ QT_BEGIN_NAMESPACE
 
     Typically, orientation as well as facing is important.  For example, a face
     that does not remain basically upright will look very odd indeed as it
-    tracks a subject.  This control is achieved using the upVector property.
-    The LookAt transform will first rotate around this axis to look towards a
-    subject, and then rotate around an axis orthogonal to the upVector and the
-    subject vector.  By default, the upVector is the objects local up
-    Qt.vector3d(0, 1, 0).
+    tracks a subject.  The lookAt transform will always rotate first around the
+    local y axis, and secondarily around the local x axis, around an origin of
+    (0,0,0).
+
+    If rotation around a different axis or origin is desired, place the
+    Item3D to be rotated inside a new parent Item3D.  Apply rotations the
+    and translations to the original Item3D such that the desired "front"
+    matches the new parent Item3d's positive z direction and the left to right
+    matches the parent's x-axis, and then apply the LookAt transform to the
+    new parent item.
 
     \code
     Item3D {
-        mesh: Mesh { source: "pane.obj" }
-        position: Qt.vector3d(2, 0, -20)
-        transform: [
-            Scale3D { scale: 0.5 },
-            Rotation3D { angle: 30 },
-            LookAtTransform { upVector: Qt.vector3d(0, 0, 1) }
-        ]
-        effect: Effect { texture: "picture.jpg" }
+        position: Qt.vector3d(0,0,4)
+        transform: LookAt { subject: subjectPenguin }
+
+        Item3D {
+            id: lookAwayMonkey
+            mesh: Mesh { source: "meshes/monkey.3ds" }
+            transform: Rotation3D { axis: Qt.vector3d(0,1,0); angle: 180 }
+        }
     }
     \endcode
 
-
-    By default the lookAt transform will cause the object to
+    By default the LookAt transform will cause the object to
     face directly at the subject no matter how the world co-ordinate
     system is rotated.  Sometimes it is useful to limit the lookAt to only
     one axis of rotation - for example, a tank with a turret and barrel that
@@ -182,55 +186,124 @@ static QMatrix4x4* cheatingCylindricalBillboard(QMatrix4x4 *matrix)
     return matrix;
 };
 
-#define RADS_TO_DEGREES (180.0 / 3.14159265358979323846264338327950288419717)
+#define RADS_TO_DEGREES (180.0 / M_PI)
 
 class QGraphicsLookAtTransformPrivate
 {
 public:
-    QGraphicsLookAtTransformPrivate() :
-        preserveUpVector(false), subject(0, 0, 1), upVector(0, 1, 0) {}
-
-    void calculateRotationValues()
-    {
-        QVector3D forwards(0, 0, 1);
-        QVector3D primarySubjectProjection = subject;
-        // For a cylindrical lookat, we want no Y movement in the local frame:
-        primarySubjectProjection.setY(0);
-        primarySubjectProjection.normalize();
-
-        primaryRotation.setAxis(QVector3D::crossProduct(forwards, primarySubjectProjection));
-        secondaryRotation.setAxis(QVector3D::crossProduct(forwards, upVector));
-
-        qreal angleCosine =
-                QVector3D::dotProduct(forwards, primarySubjectProjection);
-        qreal angle = qAcos(angleCosine);
-        primaryRotation.setAngle(angle * RADS_TO_DEGREES );
-
-
-        QVector3D secondarySubjectProjection = subject;
-        // For the secondary rotation, we project into the x=0 plane:
-        secondarySubjectProjection.setX(0);
-        secondarySubjectProjection.normalize();
-
-        qreal secondaryAngleCosine =
-                QVector3D::dotProduct(forwards, secondarySubjectProjection);
-        qreal secondaryAngle = qAcos(secondaryAngleCosine);
-        secondaryRotation.setAngle(secondaryAngle * RADS_TO_DEGREES );
-    }
+    QGraphicsLookAtTransformPrivate(QGraphicsLookAtTransform* _lookAt);
+    QGraphicsLookAtTransform* lookAt;
+    void determineOriginItem();
+    void calculateRotationValues();
+    QVector3D relativePosition(QDeclarativeItem3D* originItem, QDeclarativeItem3D* subject);
 
     bool preserveUpVector;
-    QVector3D subject;
-    QVector3D upVector;
+    QDeclarativeItem3D* originItem;
+    QDeclarativeItem3D* subject;
 
     QGraphicsRotation3D primaryRotation;
     QGraphicsRotation3D secondaryRotation;
 };
 
+QGraphicsLookAtTransformPrivate::QGraphicsLookAtTransformPrivate(QGraphicsLookAtTransform* _lookAt) :
+    lookAt(_lookAt), preserveUpVector(false), originItem(0), subject(0)
+{
+}
+
+void QGraphicsLookAtTransformPrivate::determineOriginItem()
+{
+    QObject* workingObject = lookAt->parent();
+    while (qobject_cast<QDeclarativeItem3D*>(workingObject) == 0 &&
+           workingObject != 0)
+    {
+        workingObject = workingObject->parent();
+    }
+
+    originItem = qobject_cast<QDeclarativeItem3D*>(workingObject);
+    if (!originItem)
+        qWarning() << "LookAt transform requires an Item3D ancestor";
+}
+
+QVector3D QGraphicsLookAtTransformPrivate::relativePosition(QDeclarativeItem3D* originItem, QDeclarativeItem3D* subject)
+{
+    QVector3D result =  originItem->worldToLocal(subject->localToWorld());
+    return result;
+
+}
+
+void QGraphicsLookAtTransformPrivate::calculateRotationValues()
+{
+    QVector3D forwards(0, 0, 1);
+    primaryRotation.setAngle(0);
+    secondaryRotation.setAngle(0);
+    determineOriginItem();
+
+    if (subject == 0 || originItem == 0)
+    {
+        if (subject == 0)
+            qWarning() << "LookAt transform got null subject";
+        if (originItem == 0)
+            qWarning() << "LookAt transform got null originItem";
+        primaryRotation.setAxis(QVector3D(0,1,0));
+        primaryRotation.setAngle(0);
+        secondaryRotation.setAxis(QVector3D(1,0,0));
+        secondaryRotation.setAngle(0);
+        return;
+    }
+
+    // Calculate the lookat vector in the local frame:
+    QVector3D relativePositionVector = relativePosition(originItem, subject);
+
+    // Project the relative position into the xz plane:
+    QVector3D subjectProjection = relativePositionVector;
+    subjectProjection.setY(0);
+    subjectProjection.normalize();
+    QVector3D primaryRotationAxis;
+
+    if (!subjectProjection.isNull())
+    {
+        primaryRotationAxis = QVector3D::crossProduct(forwards, subjectProjection);
+        // Fix rotational axis for positions along z axis
+        if (primaryRotationAxis.length() == 0)
+        {
+            primaryRotationAxis = QVector3D(0,1,0);
+        }
+
+        qreal angleCosine =
+                QVector3D::dotProduct(forwards, subjectProjection);
+        qreal angle = qAcos(angleCosine);
+
+        primaryRotation.setAxis(primaryRotationAxis);
+        primaryRotation.setAngle(angle * RADS_TO_DEGREES );
+    } else {
+        qWarning() << "QGraphicsLookAtTransform: unable to generate target projection for primary rotation";
+        primaryRotation.setAxis(QVector3D(0,1,0));
+        primaryRotation.setAngle(0);
+    }
+
+    relativePositionVector.normalize();
+
+    qreal secondaryAngleCosine = QVector3D::dotProduct( subjectProjection,
+                                                       relativePositionVector);
+    // Sanity check in case of rounding errors
+    if (secondaryAngleCosine <= 1.0 && secondaryAngleCosine >= -1.0)
+    {
+        if (relativePositionVector.y() < 0)
+            secondaryRotation.setAxis(QVector3D(1,0,0));
+        else
+            secondaryRotation.setAxis(QVector3D(-1,0,0));
+        secondaryRotation.setAngle(qAcos(secondaryAngleCosine)*RADS_TO_DEGREES);
+    } else {
+        secondaryRotation.setAxis(QVector3D(1,0,0));
+        secondaryRotation.setAngle(0.0);
+    }
+}
+
 /*!
     Construct a lookAt transform and attach it to \a parent.
 */
 QGraphicsLookAtTransform::QGraphicsLookAtTransform(QObject *parent)
-    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsLookAtTransformPrivate)
+    : QGraphicsTransform3D(parent), d_ptr(new QGraphicsLookAtTransformPrivate(this))
 {
 }
 
@@ -250,7 +323,7 @@ QGraphicsLookAtTransform::~QGraphicsLookAtTransform()
     is known as "spherical billboarding").
 
     If the value for this property is true, then the object will have
-    its upVector's orientation preserved, rotating around only this axis and
+    its up vector's orientation preserved, rotating around only the y-axis and
     not directly facing the subject unless it happens to fall on the correct
     plane (when the subject is the camera, this is known as known as
     "cylindrical billboarding").
@@ -265,7 +338,7 @@ QGraphicsLookAtTransform::~QGraphicsLookAtTransform()
     axis to face directly at the subject (known as a "spherical look-at").
 
     If the value for this property is true, then the object will have
-    its upVector's orientation preserved, rotating around only this axis and
+    its y-axis' orientation preserved, rotating around only this axis and
     not directly facing the subject unless it happens to fall on the correct
     plane (known as a "cylindrical look-at").
 
@@ -294,21 +367,15 @@ void QGraphicsLookAtTransform::setPreserveUpVector(bool value)
     \brief The local-relative coordinates that are being looked at
 
     This property indicates what this transform is trying to look at.  After
-    applying the transformation,
-    Forwards is always considered to be in the direction of the positive Z axis
-    in local space
+    applying the transformation.
 
-ther the transform should rotate around a second
-    axis to face directly at the subject (when the subject is the camera, this
-    is known as "spherical billboarding").
+    Forwards is always considered to be in the direction of the positive z axis
+    in local space, and up is always considered to be the positive y axis, and
+    rotation is always around the position (0,0,0) in local space (although
+    any values can be emulated by applying the LookAt transformation to a
+    parent Item3D, and then applying transformations relative to that parent).
 
-    If the value for this property is true, then the object will have
-    its upVector's orientation preserved, rotating around only this axis and
-    not directly facing the subject unless it happens to fall on the correct
-    plane (when the subject is the camera, this is known as known as
-    "cylindrical billboarding").
-
-    The default value for this property is false.
+    If no subject is set, no transformation is applied.
 */
 
 /*!
@@ -318,9 +385,10 @@ ther the transform should rotate around a second
     axis to face directly at the subject (known as a "spherical look-at").
 
     If the value for this property is true, then the object will have
-    its upVector's orientation preserved, rotating around only this axis and
+    its y-axis' orientation preserved, rotating around only this axis and
     not directly facing the subject unless it happens to fall on the correct
-    plane (known as a "cylindrical look-at").
+    plane (when the subject is the camera, this is known as a
+    "cylindrical look-at").
 
     The default value for this property is false.
 */
@@ -332,151 +400,39 @@ ther the transform should rotate around a second
 */
 
 
-QVector3D QGraphicsLookAtTransform::subject() const
+QDeclarativeItem3D* QGraphicsLookAtTransform::subject() const
 {
     Q_D(const QGraphicsLookAtTransform);
     return d->subject;
 }
 
-void QGraphicsLookAtTransform::setSubject(QVector3D value)
+void QGraphicsLookAtTransform::setSubject(QDeclarativeItem3D* value)
 {
     Q_D(QGraphicsLookAtTransform);
     if (d->subject != value)
     {
+        disconnect(this, SLOT(subjectPositionChanged()));
         d->subject = value;
+        QDeclarativeItem3D* ancestorItem = d->subject;
+        while (ancestorItem != 0)
+        {
+            connect(ancestorItem, SIGNAL(positionChanged()), this, SLOT(subjectPositionChanged()));
+            connect(ancestorItem, SIGNAL(rotationChanged()), this, SLOT(subjectPositionChanged()));
+            connect(ancestorItem, SIGNAL(scaleChanged()), this, SLOT(subjectPositionChanged()));
+            connect(ancestorItem, SIGNAL(parentChanged()), this, SLOT(subjectPositionChanged()));
+            ancestorItem = qobject_cast<QDeclarativeItem3D*>(ancestorItem->parent());
+        };
+
         d->calculateRotationValues();
         emit subjectChanged();
         emit transformChanged();
     }
 };
 
-/*!
-    \property QGraphicsLookAtTransform::upVector
-    \brief The primary axis of rotation.
-
-    This property indicates the first axis around which the object should
-    rotate to face the subject.  If preserveUpVector is set true, will not
-    change the object's orientation relative to the up vector at all.
-
-    The default value for this property is Qt.vector3d(0, 1, 0).
-*/
-
-/*!
-    \qmlproperty bool LookatTransform::upVector
-
-    This property indicates the first axis around which the object should
-    rotate to face the subject.  If preserveUpVector is set true, will not
-    change the object's orientation relative to the up vector at all.
-
-    The default value for this property is Qt.vector3d(0, 1, 0).
-*/
-
-/*!
-    \fn void QGraphicsLookAtTransform::upVectorChanged()
-
-    Signal that is emitted when upVector() changes.
-*/
-
-QVector3D QGraphicsLookAtTransform::upVector() const
-{
-    Q_D(const QGraphicsLookAtTransform);
-    return d->upVector;
-}
-
-void QGraphicsLookAtTransform::setUpVector(QVector3D value)
+void QGraphicsLookAtTransform::subjectPositionChanged()
 {
     Q_D(QGraphicsLookAtTransform);
-    if (d->upVector != value)
-    {
-        d->upVector = value;
-        d->calculateRotationValues();
-        emit upVectorChanged();
-        emit transformChanged();
-    }
-};
-
-/*!
-    \property QGraphicsLookAtTransform::primaryAngle
-    \brief true to preserve the up orientation.
-
-    This property indicates the amount of rotation around the upVector that
-    this transform applies.
-
-    It is calculated based on subject and upVector, and cannot be set directly.
-
-    \sa subject, upVector, secondaryAngle
-*/
-
-/*!
-    \qmlproperty real LookatTransform::primaryAngle
-
-    This property indicates the amount of rotation around the upVector that
-    this transform applies.
-
-    It is calculated based on subject and upVector, and cannot be set directly.
-
-    \sa subject, upVector, secondaryAngle
-*/
-
-/*!
-    \fn void QGraphicsLookAtTransform::primaryAngleChanged()
-
-    Signal that is emitted when primaryAngle() changes.
-*/
-
-qreal QGraphicsLookAtTransform::primaryAngle() const
-{
-    Q_D(const QGraphicsLookAtTransform);
-    return d->primaryRotation.angle();
-}
-
-/*!
-    \property QGraphicsLookAtTransform::secondaryAngle
-    \brief true to preserve the up orientation.
-
-    This property indicates the amount of tilt this transformation applies.
-
-    The secondary rotation is around a vector that is orthogonal to the up
-    vector and the subject vector.  If we consider the analogy of turning a
-    head to look at something, the up vector is up, the primary rotation
-    control looking side to side, and the secondary rotation will control
-    looking up and down.
-
-    It is calculated based on subject and upVector, and cannot be set directly.
-
-    If preserveUpVector is true, this value has no effect.
-
-    \sa subject, upVector, primaryAngle, preserveUpVector
-*/
-
-/*!
-    \qmlproperty real LookatTransform::secondaryAngle
-
-    This property indicates the amount of tilt this transformation applies.
-
-    The secondary rotation is around a vector that is orthogonal to the up
-    vector and the subject vector.  If we consider the analogy of turning a
-    head to look at something, the up vector is up, the primary rotation
-    control looking side to side, and the secondary rotation will control
-    looking up and down.
-
-    It is calculated based on subject and upVector, and cannot be set directly.
-
-    If preserveUpVector is true, this value has no effect.
-
-    \sa subject, upVector, primaryAngle, preserveUpVector
-*/
-
-/*!
-    \fn void QGraphicsLookAtTransform::secondaryAngleChanged()
-
-    Signal that is emitted when secondaryAngle() changes.
-*/
-
-qreal QGraphicsLookAtTransform::secondaryAngle() const
-{
-    Q_D(const QGraphicsLookAtTransform);
-    return d->secondaryRotation.angle();
+    d->calculateRotationValues();
 }
 
 /*!
@@ -501,7 +457,7 @@ void QGraphicsLookAtTransform::applyTo(QMatrix4x4 *matrix) const
 
     d->primaryRotation.applyTo(matrix);
     // then, if preserveVector is not set, perform a second rotation
-    // around the cross product of the lookAt and the upVector
+    // around the x-axis
     if (!preserveUpVector())
         d->secondaryRotation.applyTo(matrix);
 }
@@ -514,7 +470,6 @@ QGraphicsTransform3D *QGraphicsLookAtTransform::clone(QObject *parent) const
     Q_D(const QGraphicsLookAtTransform);
     QGraphicsLookAtTransform *copy = new QGraphicsLookAtTransform(parent);
     copy->setPreserveUpVector(d->preserveUpVector);
-    copy->setUpVector(d->upVector);
     copy->setSubject(d->subject);
     return copy;
 }

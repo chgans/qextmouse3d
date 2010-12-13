@@ -1,6 +1,13 @@
 TEMPLATE = lib
 TARGET  = qthreedqmlplugin
 CONFIG += qt plugin
+
+win32 {
+    CONFIG(debug, debug|release) {
+        TARGET = $$member(TARGET, 0)d
+    }
+}
+
 symbian {
     CONFIG += epocallowdlldata
     contains(QT_EDITION, OpenSource) {
@@ -20,7 +27,8 @@ SOURCES += \
     floatingitem.cpp \
     floatingitemeffect.cpp \
     stereoview.cpp \
-    stereovieweffect.cpp
+    stereovieweffect.cpp \
+    qgraphicslookattransform.cpp
 HEADERS += \
     qt3dnamespace.h \
     scale3d.h \
@@ -28,7 +36,8 @@ HEADERS += \
     floatingitem.h \
     floatingitemeffect.h \
     stereoview.h \
-    stereovieweffect.h
+    stereovieweffect.h \
+    qgraphicslookattransform.h
 
 !contains(QT_CONFIG, opengles1) {
     SOURCES += shaderprogram.cpp
@@ -45,5 +54,5 @@ target.path += $$[QT_INSTALL_IMPORTS]/Qt3D
 
 INSTALLS += qdeclarativesources target
 
-LIBS += -L../../lib -L../../bin
+LIBS += -L../../../lib -L../../../bin
 include(../../quick3d/quick3d_dep.pri)

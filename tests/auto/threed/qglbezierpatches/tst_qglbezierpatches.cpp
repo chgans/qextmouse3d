@@ -56,6 +56,7 @@ private slots:
     void modify();
     void teapot();
     void build();
+    void transform();
 };
 
 void tst_QGLBezierPatches::defaultValue()
@@ -170,6 +171,42 @@ void tst_QGLBezierPatches::build()
     builder << teapot2;
 
     delete builder.finalizedSceneNode();
+}
+
+void tst_QGLBezierPatches::transform()
+{
+    QVector3DArray positions;
+    for (int index = 0; index < 32; ++index)
+        positions.append(index, index + 1, index + 2);
+
+    QMatrix4x4 m;
+    m.translate(-1.0f, 2.5f, 5.0f);
+    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    m.scale(23.5f);
+
+    QVector3DArray positions2 = positions.transformed(m);
+
+    QVector2DArray texCoords;
+    texCoords.append(0.0f, 0.5f);
+    texCoords.append(0.5f, 1.0f);
+    texCoords.append(0.5f, 0.0f);
+    texCoords.append(1.0f, 0.5f);
+
+    QGLBezierPatches patches;
+    patches.setPositions(positions);
+    patches.setTextureCoords(texCoords);
+    patches.setSubdivisionDepth(18);
+
+    QGLBezierPatches patches2(patches);
+    patches2.transform(m);
+    QVERIFY(patches2.positions() == positions2);
+    QVERIFY(patches2.textureCoords() == texCoords);
+    QCOMPARE(patches2.subdivisionDepth(), 18);
+
+    QGLBezierPatches patches3 = patches.transformed(m);
+    QVERIFY(patches3.positions() == positions2);
+    QVERIFY(patches3.textureCoords() == texCoords);
+    QCOMPARE(patches3.subdivisionDepth(), 18);
 }
 
 QTEST_APPLESS_MAIN(tst_QGLBezierPatches)

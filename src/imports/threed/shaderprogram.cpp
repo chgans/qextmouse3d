@@ -71,22 +71,22 @@
 
     \table
     \header \o Shader Variable \o Mesh Attribute \o Purpose
-    \row \o \c qgl_Vertex \o QGL::Position
+    \row \o \c qt_Vertex \o QGL::Position
          \o The primary position of the vertex.
-    \row \o \c qgl_Normal \o QGL::Normal
+    \row \o \c qt_Normal \o QGL::Normal
          \o The normal at each vertex, for lit material effects.
-    \row \o \c qgl_Color \o QGL::Color
+    \row \o \c qt_Color \o QGL::Color
          \o The color at each vertex, for per-vertex color effects.
-    \row \o \c qgl_TexCoord0 \o QGL::TextureCoord0
+    \row \o \c qt_MultiTexCoord0 \o QGL::TextureCoord0
          \o The texture co-ordinate at each vertex for texture unit 0.
-    \row \o \c qgl_TexCoord1 \o QGL::TextureCoord1
+    \row \o \c qt_MultiTexCoord1 \o QGL::TextureCoord1
          \o Secondary texture co-ordinate at each vertex.
-    \row \o \c qgl_TexCoord2 \o QGL::TextureCoord2
+    \row \o \c qt_MultiTexCoord2 \o QGL::TextureCoord2
          \o Tertiary texture co-ordinate at each vertex.
-    \row \o \c qgl_Custom0 \o QGL::CustomVertex0
+    \row \o \c qt_Custom0 \o QGL::CustomVertex0
          \o First custom vertex attribute that can be used for any
             user-defined purpose.
-    \row \o \c qgl_Custom1 \o QGL::CustomVertex1
+    \row \o \c qt_Custom1 \o QGL::CustomVertex1
          \o Second custom vertex attribute that can be used for any
             user-defined purpose.
     \endtable
@@ -95,15 +95,15 @@
     example of a simple texture shader:
 
     \code
-    attribute highp vec4 qgl_Vertex;
-    attribute highp vec4 qgl_TexCoord0;
-    uniform mediump mat4 qgl_ModelViewProjectionMatrix;
+    attribute highp vec4 qt_Vertex;
+    attribute highp vec4 qt_MultiTexCoord0;
+    uniform mediump mat4 qt_ModelViewProjectionMatrix;
     varying highp vec4 texCoord;
 
     void main(void)
     {
-        gl_Position = qgl_ModelViewProjectionMatrix * qgl_Vertex;
-        texCoord = qgl_TexCoord0;
+        gl_Position = qt_ModelViewProjectionMatrix * qt_Vertex;
+        texCoord = qt_MultiTexCoord0;
     }
     \endcode
 
@@ -114,25 +114,25 @@
 
     \table
     \header \o Shader Variable \o Purpose
-    \row \o \c qgl_ModelViewProjectionMatrix
+    \row \o \c qt_ModelViewProjectionMatrix
          \o Combination of the modelview and projection matrices into a
             single 4x4 matrix.
-    \row \o \c qgl_ModelViewMatrix
+    \row \o \c qt_ModelViewMatrix
          \o Modelview matrix without the projection.  This is typically
             used for performing calculations in eye co-ordinates.
-    \row \o \c qgl_ProjectionMatrix
+    \row \o \c qt_ProjectionMatrix
          \o Projection matrix without the modelview.
-    \row \o \c qgl_NormalMatrix
+    \row \o \c qt_NormalMatrix
          \o Normal matrix, which is the transpose of the inverse of the
             top-left 3x3 part of the modelview matrix.  This is typically
-            used in lighting calcuations to transform \c qgl_Normal.
-    \row \o \c qgl_WorldMatrix
+            used in lighting calcuations to transform \c qt_Normal.
+    \row \o \c qt_WorldMatrix
          \o Modelview matrix without the eye position and orientation
             component.  See QGLPainter::worldMatrix() for further
             information.
-    \row \o \c qgl_Texture0
+    \row \o \c qt_Texture0
          \o Sampler holding the texture from the Effect::texture property.
-    \row \o \c qgl_Color
+    \row \o \c qt_Color
          \o Set to the value of the Effect::color property.
     \endtable
 
@@ -141,11 +141,11 @@
     upon the shader's precision requirements):
 
     \code
-    uniform highp mat4 qgl_ModelViewProjectionMatrix;
-    uniform highp mat4 qgl_ModelViewMatrix;
-    uniform highp mat3 qgl_NormalMatrix;
-    uniform sampler2D qgl_Texture0;
-    uniform highp vec4 qgl_Color;
+    uniform highp mat4 qt_ModelViewProjectionMatrix;
+    uniform highp mat4 qt_ModelViewMatrix;
+    uniform highp mat3 qt_NormalMatrix;
+    uniform sampler2D qt_Texture0;
+    uniform highp vec4 qt_Color;
     \endcode
 
     Other lighting and material values, such as the ambient, diffuse,
