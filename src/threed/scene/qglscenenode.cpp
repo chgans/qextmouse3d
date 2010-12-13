@@ -364,9 +364,9 @@ QBox3D QGLSceneNode::boundingBox() const
     {
         QGLSceneNode *n = *it;
         QBox3D b = n->boundingBox();
-        b.transform(n->transform());
         d->bb.unite(b);
     }
+    d->bb.transform(transform());
     d->boxValid = true;
     return d->bb;
 }
@@ -420,7 +420,6 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
         d->localTransform = transform;
         emit updated();
         invalidateTransform();
-        d->invalidateParentBoundingBox();
     }
 }
 
@@ -1164,8 +1163,7 @@ void QGLSceneNode::invalidateBoundingBox() const
 
 void QGLSceneNode::invalidateTransform() const
 {
-    Q_D(const QGLSceneNode);
-    d->invalidateParentBoundingBox();
+    invalidateBoundingBox();
 }
 
 void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)
@@ -1297,6 +1295,8 @@ void QGLSceneNode::draw(QGLPainter *painter)
         {
             if (wasTransformed)
                 painter->modelViewMatrix().pop();
+            qDebug() << "******* culled ***********";
+            qDebug() << bb;
             return;
         }
     }
@@ -1546,14 +1546,16 @@ QGLSceneNode *QGLSceneNode::only(const QStringList &names, QObject *parent) cons
 */
 void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop)
 {
-    QThread *appThread = QApplication::instance()->thread();
+    QThread *appThread = 0;
+    if (QApplication::instance())
+        appThread = QApplication::instance()->thread();
     QSet<QGLSceneNode *> lp = loop;
     lp.insert(node);
     QString ind;
     ind.fill(QLatin1Char(' '), indent * 4);
     fprintf(stderr, "\n%s ======== Node: %p - %s =========\n", qPrintable(ind), node,
             qPrintable(node->objectName()));
-    if (appThread != node->thread())
+    if (appThread && appThread != node->thread())
         fprintf(stderr, "\n%s        from thread: %p\n", qPrintable(ind), node->thread());
     fprintf(stderr, "%s start: %d   count: %d   children:", qPrintable(ind), node->start(), node->count());
     {
