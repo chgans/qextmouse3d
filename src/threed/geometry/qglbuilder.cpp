@@ -494,7 +494,8 @@ static bool qCalculateNormal(int i, int j, int k, QGeometryData &p, QVector3D *v
     \internal
     Helper function to actually add the vertices to geometry.
 */
-void QGLBuilderPrivate::addTriangle(int i, int j, int k, const QGeometryData &p)
+void QGLBuilderPrivate::addTriangle(int i, int j, int k,
+                                    const QGeometryData &p, int &count)
 {
     if (currentSection == 0)
         q->newSection();
@@ -502,7 +503,7 @@ void QGLBuilderPrivate::addTriangle(int i, int j, int k, const QGeometryData &p)
     QLogicalVertex b(p, j);
     QLogicalVertex c(p, k);
     currentSection->append(a, b, c);
-    currentNode->setCount(currentNode->count() + 3);
+    count += 3;
 }
 
 /*!
@@ -561,13 +562,15 @@ void QGLBuilder::addTriangles(const QGeometryData &triangles)
             t.appendNormalArray(nm);
         }
         bool skip = false;
+        int k = 0;
         for (int i = 0; i < t.count() - 2; i += 3)
         {
             if (calcNormal)
                 skip = qCalculateNormal(i, i+1, i+2, t);
             if (!skip)
-                dptr->addTriangle(i, i+1, i+2, t);
+                dptr->addTriangle(i, i+1, i+2, t, k);
         }
+        dptr->currentNode->setCount(dptr->currentNode->count() + k);
     }
 }
 
@@ -601,22 +604,24 @@ void QGLBuilder::addQuads(const QGeometryData &quads)
         q.appendNormalArray(nm);
     }
     bool skip = false;
+    int k = 0;
     QVector3D norm;
     for (int i = 0; i < q.count(); i += 4)
     {
         if (calcNormal)
             skip = qCalculateNormal(i, i+1, i+2, q, &norm);
         if (!skip)
-            dptr->addTriangle(i, i+1, i+2, q);
+            dptr->addTriangle(i, i+1, i+2, q, k);
         if (skip)
             skip = qCalculateNormal(i, i+2, i+3, q, &norm);
         if (!skip)
         {
             if (calcNormal)
                 setNormals(i, i+2, i+3, q, norm);
-            dptr->addTriangle(i, i+2, i+3, q);
+            dptr->addTriangle(i, i+2, i+3, q, k);
         }
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
@@ -651,14 +656,19 @@ void QGLBuilder::addTriangleFan(const QGeometryData &fan)
         QVector3DArray nm(f.count());
         f.appendNormalArray(nm);
     }
+    int k = 0;
     bool skip = false;
     for (int i = 1; i < f.count() - 1; ++i)
     {
         if (calcNormal)
             skip = qCalculateNormal(0, i, i+1, f);
         if (!skip)
-            dptr->addTriangle(0, i, i+1, f);
+        {
+            k += 3;
+            dptr->addTriangle(0, i, i+1, f, k);
+        }
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
@@ -693,6 +703,7 @@ void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
         s.appendNormalArray(nm);
     }
     bool skip = false;
+    int k = 0;
     for (int i = 0; i < s.count() - 2; ++i)
     {
         if (i % 2)
@@ -700,15 +711,16 @@ void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
             if (calcNormal)
                 skip = qCalculateNormal(i+1, i, i+2, s);
             if (!skip)
-                dptr->addTriangle(i+1, i, i+2, s);
+                dptr->addTriangle(i+1, i, i+2, s, k);
         }
         else
         {
             if (calcNormal)
                 skip = qCalculateNormal(i, i+1, i+2, s);
             if (!skip)
-                dptr->addTriangle(i, i+1, i+2, s);
+                dptr->addTriangle(i, i+1, i+2, s, k);
         }
+        dptr->currentNode->setCount(dptr->currentNode->count() + k);
     }
 }
 
@@ -748,21 +760,23 @@ void QGLBuilder::addQuadStrip(const QGeometryData &strip)
     }
     bool skip = false;
     QVector3D norm;
+    int k = 0;
     for (int i = 0; i < s.count() - 3; i += 2)
     {
         if (calcNormal)
             skip = qCalculateNormal(i, i+2, i+3, s, &norm);
         if (!skip)
-            dptr->addTriangle(i, i+2, i+3, s);
+            dptr->addTriangle(i, i+2, i+3, s, k);
         if (skip)
             skip = qCalculateNormal(i, i+3, i+1, s, &norm);
         if (!skip)
         {
             if (calcNormal)
                 setNormals(i, i+3, i+1, s, norm);
-            dptr->addTriangle(i, i+3, i+1, s);
+            dptr->addTriangle(i, i+3, i+1, s, k);
         }
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
@@ -825,6 +839,7 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
     }
     bool skip = false;
     QVector3D norm;
+    int k = 0;
     for (int i = 1; i < cnt; ++i)
     {
         int n = i + 1;
@@ -841,8 +856,9 @@ void QGLBuilder::addTriangulatedFace(const QGeometryData &face)
             }
         }
         if (!skip)
-            dptr->addTriangle(0, i, n, f);
+            dptr->addTriangle(0, i, n, f, k);
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
@@ -904,21 +920,23 @@ void QGLBuilder::addQuadsInterleaved(const QGeometryData &top,
     }
     bool skip = false;
     QVector3D norm;
+    int k = 0;
     for (int i = 0; i < zipped.count() - 2; i += 2)
     {
         if (calcNormal)
             skip = qCalculateNormal(i, i+2, i+3, zipped, &norm);
         if (!skip)
-            dptr->addTriangle(i, i+2, i+3, zipped);
+            dptr->addTriangle(i, i+2, i+3, zipped, k);
         if (skip)
             skip = qCalculateNormal(i, i+3, i+1, zipped, &norm);
         if (!skip)
         {
             if (calcNormal)
                 setNormals(i, i+3, i+1, zipped, norm);
-            dptr->addTriangle(i, i+3, i+1, zipped);
+            dptr->addTriangle(i, i+3, i+1, zipped, k);
         }
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
