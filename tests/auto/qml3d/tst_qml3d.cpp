@@ -221,12 +221,12 @@ int main(int argc, char *argv[])
         testPath = QLatin1String(".");
 
     // Find the subdirectories that look like they may contain test cases.
-    // The "Qt3D" directory contains the common QML and JS test logic.
+    // The "QtQuickTest" directory contains the common QML and JS test logic.
     QDir dir(testPath);
     QStringList entries = dir.entryList(QDir::Dirs);
     entries.removeAll(QLatin1String("."));
     entries.removeAll(QLatin1String(".."));
-    entries.removeAll(QLatin1String("Qt3D"));
+    entries.removeAll(QLatin1String("QtQuickTest"));
 
     if (filename) {
         stream = fopen(filename, "w");
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
         fprintf(stream, "********* Start testing of tst_qml3d *********\n");
     }
 
-    qmlRegisterType<TestReport>("Qt3D.Test", 1, 0, "TestReport");
+    qmlRegisterType<TestReport>("QtQuickTest", 1, 0, "TestReport");
 
     // Scan through all of the "*.qml" files in the subdirectories
     // and run each of them in turn with a QDeclarativeView.

@@ -42,7 +42,7 @@
 import Qt 4.7
 import Qt3D 1.0
 import Qt3D.Shapes 1.0
-import Qt3D.Test 1.0
+import QtQuickTest 1.0
 
 Viewport {
     id: viewport
