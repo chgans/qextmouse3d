@@ -601,7 +601,6 @@ void ObjFileParser::createObject(const std::string &strObjectName)
 	m_pModel->m_pCurrent->m_strObjName = strObjectName;
 	m_pModel->m_Objects.push_back( m_pModel->m_pCurrent );
 	
-
 	createMesh();
 
 	if( m_pModel->m_pCurrentMaterial )
