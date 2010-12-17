@@ -1909,6 +1909,13 @@ void QGeometryData::detach()
     }
 }
 
+/*!
+    \fn quint64 QGeometryData::id() const
+    Return an opaque value that can be used to identify which data block is
+    being used by this QGeometryData instance.  See the class documentation
+    relating to explicit sharing.
+*/
+
 #ifndef QT_NO_DEBUG
 void QGeometryData::check() const
 {
