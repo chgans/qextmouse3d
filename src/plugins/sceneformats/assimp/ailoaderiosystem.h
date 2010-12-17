@@ -44,13 +44,15 @@
 
 #include "IOSystem.h"
 
+#include <QtCore/qurl.h>
+
 class QIODevice;
 class IOStream;
 
 class AiLoaderIOSystem : public Assimp::IOSystem
 {
 public:
-    AiLoaderIOSystem(QIODevice *device);
+    AiLoaderIOSystem(QIODevice *device, QUrl url);
     ~AiLoaderIOSystem();
     virtual bool Exists( const char* path) const;
     virtual char getOsSeparator() const;
@@ -58,6 +60,8 @@ public:
     virtual void Close(Assimp::IOStream* pFile);
 private:
     QIODevice *m_device;
+    QList<QIODevice*> m_sub;
+    QUrl m_url;
 };
 
 #endif // AILOADERIOSYSTEM_H

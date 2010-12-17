@@ -108,6 +108,7 @@ void QAiSceneHandler::decodeOptions(const QString &options)
         "ShowWarnings",
         "CalculateNormals",
         "ForceFaceted",
+        "ForceSmooth",
         "IncludeAllMaterials",
         "IncludeLinesPoints",
         "FixNormals",
@@ -160,6 +161,9 @@ void QAiSceneHandler::decodeOptions(const QString &options)
                 m_options &= ~aiProcess_GenSmoothNormals;
                 m_options &= ~aiProcess_JoinIdenticalVertices;
                 break;
+            case ForceSmooth:
+                Assimp::DefaultLogger::get()->warn("ForceSmooth is deprecated - ignoring (meshes now smooth by default)");
+                break;
             case IncludeAllMaterials:
                 m_options &= ~aiProcess_RemoveRedundantMaterials;
                 break;
@@ -207,7 +211,8 @@ void QAiSceneHandler::decodeOptions(const QString &options)
 
 QGLAbstractScene *QAiSceneHandler::read()
 {
-    m_importer.SetIOHandler(new AiLoaderIOSystem(device()));
+    AiLoaderIOSystem *ios = new AiLoaderIOSystem(device(), url());
+    m_importer.SetIOHandler(ios);
 
     Assimp::Logger *log = 0;
     Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;

@@ -65,6 +65,7 @@ public:
         ShowWarnings,        // show any warnings while loading the file
         CalculateNormals,    // replace normals from the file with smooth generated ones
         ForceFaceted,        // generate non-smooth normals (implies CalculateNormals)
+        ForceSmooth,         // deprecated - retained only for backward compatibility
         IncludeAllMaterials, // include even redundant (unused) materials
         IncludeLinesPoints,  // include even collapsed triangles (lines or points)
         FixNormals,          // try to fix incorrect (in facing) normals

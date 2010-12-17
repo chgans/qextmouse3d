@@ -58,6 +58,7 @@ public:
     size_t Tell() const;
     size_t FileSize() const;
     void Flush();
+    QIODevice *device() const { return m_device; }
 private:
     QIODevice *m_device;
     bool m_errorState;

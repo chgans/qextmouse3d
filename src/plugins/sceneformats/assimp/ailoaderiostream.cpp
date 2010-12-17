@@ -63,6 +63,11 @@ size_t AiLoaderIOStream::Read( void* pvBuffer, size_t pSize, size_t pCount)
     m_errorState = (result == -1);
     if (m_errorState)
         fprintf(stderr, "AI read error: %s\n", qPrintable(m_device->errorString()));
+    if ((pSize * pCount) != result) // AI will treat as error
+    {
+        fprintf(stderr, "read mismatch requested size: %d x count: %d = %d != %lli actuall read\n",
+                pSize, pCount, (pSize * pCount), result);
+    }
     return result;
 }
 

@@ -41,20 +41,21 @@
 
 #include "ailoaderiosystem.h"
 #include "ailoaderiostream.h"
+#include "DefaultLogger.h"
 
 #include <QtCore/qfile.h>
 #include <QtCore/qdir.h>
 
-#include <QtCore/qdebug.h>
-
-AiLoaderIOSystem::AiLoaderIOSystem(QIODevice *device)
+AiLoaderIOSystem::AiLoaderIOSystem(QIODevice *device, QUrl url)
     : m_device(device)
+    , m_url(url)
 {
 }
 
 AiLoaderIOSystem::~AiLoaderIOSystem()
 {
-    // nothing to do - we don't own m_device
+    // we don't own m_device
+    qDeleteAll(m_sub);
 }
 
 bool AiLoaderIOSystem::Exists(const char* path) const
@@ -67,16 +68,89 @@ char AiLoaderIOSystem::getOsSeparator() const
     return QDir::separator().toLatin1();
 }
 
+/*!
+    \internal
+    Open the pFile with the pMode, where mode is given by "man fopen"
+*/
 Assimp::IOStream* AiLoaderIOSystem::Open(const char* pFile, const char* pMode)
 {
-    Q_UNUSED(pFile);
-    Q_UNUSED(pMode);
-    AiLoaderIOStream *s = new AiLoaderIOStream(m_device);
+    // This is just the file already opened on the device
+    if (m_url.toEncoded().endsWith(pFile))
+        return new AiLoaderIOStream(m_device);
+
+    // New relative file
+    QUrl rel;
+    rel.setScheme(m_url.scheme());
+    rel.setPath(QLatin1String(pFile));
+    QUrl url = m_url.resolved(rel);
+
+    // TODO: handle network case
+    if (url.scheme() != QLatin1String("file"))
+    {
+        qWarning("Opening %s url not supported", qPrintable(url.scheme()));
+        return 0;
+    }
+
+    char mode_str[4];
+    qMemSet(mode_str, '\0', 4);
+    int i = 0;
+    for (const char *ptr = pMode; i < 4 && *ptr; ++ptr)
+    {
+        if (*ptr != 'b') // ignore the binary attribute
+            mode_str[i++] = *ptr;
+    }
+    QIODevice::OpenMode mode = QIODevice::NotOpen;
+    if (::strncmp("r", mode_str, 1) == 0)
+    {
+        mode = QIODevice::ReadOnly;
+    }
+    else if (::strncmp("r+", mode_str, 2) == 0)
+    {
+        mode = QIODevice::ReadWrite;
+    }
+    else if (::strncmp("w", mode_str, 1) == 0)
+    {
+        mode = QIODevice::WriteOnly | QIODevice::Truncate;
+    }
+    else if (::strncmp("w+", mode_str, 2) == 0)
+    {
+        mode = QIODevice::ReadWrite | QIODevice::Truncate;
+    }
+    else if (::strncmp("a", mode_str, 1) == 0)
+    {
+        mode = QIODevice::WriteOnly | QIODevice::Append;
+    }
+    else if (::strncmp("a+", mode_str, 2) == 0)
+    {
+        mode = QIODevice::ReadWrite | QIODevice::Append;
+    }
+    else
+    {
+        std::string err("Error: invalid mode flag:");
+        err.append(mode_str).append(" when opening ").append(pFile);
+        Assimp::DefaultLogger::get()->warn(err);
+        return 0;
+    }
+
+    QFile *f = new QFile(url.toLocalFile());
+    bool res = f->open(mode);
+    if (!res)
+    {
+        std::string err("Error: could not open subsequent file:");
+        err.append(pFile).append("--").append(f->errorString().toStdString());
+        Assimp::DefaultLogger::get()->warn(err);
+        delete f;
+        return 0;
+    }
+    m_sub.append(f);
+    AiLoaderIOStream *s = new AiLoaderIOStream(f);
     return s;
 }
 
 void AiLoaderIOSystem::Close(Assimp::IOStream* stream)
 {
-    m_device->close();
+    AiLoaderIOStream *s = static_cast<AiLoaderIOStream*>(stream);
+    Q_ASSERT(s);
+    s->device()->close();
     delete stream;
 }
