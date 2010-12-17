@@ -5,5 +5,9 @@
         <file>models/basic-cube.mtl</file>
         <file>models/basic-cube.obj</file>
         <file>models/wave.obj</file>
+        <file>models/basic-cube.m3g</file>
+        <file>models/basic-cube.ply</file>
+        <file>models/basic-cube.x3d</file>
+        <file>models/basic-cube.dae</file>
     </qresource>
 </RCC>

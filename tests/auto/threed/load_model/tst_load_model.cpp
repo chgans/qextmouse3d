@@ -51,9 +51,45 @@ public:
     ~tst_LoadModel() {}
 
 private slots:
+    void load_data();
+    void load();
     void create_data();
     void create();
 };
+
+// Just try to load all the models in the resources file - no checking
+void tst_LoadModel::load_data()
+{
+    QString model_path(QLatin1String(":/data/models"));
+    QDir data(model_path);
+
+    // only load if its a supported format
+    QStringList entries = data.entryList(QGLAbstractScene::supportedFormats());
+
+    QTest::addColumn<QString>("model");
+
+    for (int i = 0; i < entries.size(); ++i)
+        QTest::newRow(qPrintable(entries.at(i))) << entries.at(i);
+}
+
+void tst_LoadModel::load()
+{
+    QFETCH(QString, model);
+
+    QGLAbstractScene *scene = 0;
+    QString model_path(QLatin1String(":/data/models/%1"));
+    model_path = model_path.arg(model);
+
+    QFile f(model_path);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+
+    QUrl u;
+    u.setPath(model_path);
+    u.setScheme("file");
+
+    scene = QGLAbstractScene::loadScene(&f, u);
+    QVERIFY(scene != 0);
+}
 
 void tst_LoadModel::create_data()
 {
@@ -72,23 +108,23 @@ void tst_LoadModel::create_data()
     // default is faceted for obj
     QTest::newRow("cube-obj-default")
             << "basic-cube.obj" << ""
-            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << "basic-cube.obj" << "CubeObject_CubeMesh" << "Red"
             << qRgb(188, 32, 32) << "tex"
             << 24 << 36;
 
     // force a faceted load
     QTest::newRow("cube-obj-faceted")
             << "basic-cube.obj" << "ForceFaceted"
-            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << "basic-cube.obj" << "CubeObject_CubeMesh" << "Red"
             << qRgb(188, 32, 32) << "tex"
             << 24 << 36;
 
     // force a smooth load
     QTest::newRow("cube-obj-smooth")
             << "basic-cube.obj" << "ForceSmooth"
-            << "__main" << "CubeObject_CubeMesh" << "Red"
+            << "basic-cube.obj" << "CubeObject_CubeMesh" << "Red"
             << qRgb(188, 32, 32) << "tex"
-            << 8 << 36;
+            << 24 << 36;
 
 
     ////// --- 3DS ---
@@ -96,16 +132,16 @@ void tst_LoadModel::create_data()
     // default is faceted
     QTest::newRow("cube-3ds-default")
             << "basic-cube.3ds" << ""
-            << "LIB3DS" << "CubeObject" << "Red"
-            << qRgb(234, 40, 40) << "tex"
-            << 24 << 36;
+            << "basic-cube.3ds" << "CubeObject::SlateGray" << "SlateGray"
+            << qRgb(94, 142, 155) << "tex"
+            << 12 << 36;
 
     // force smooth
     QTest::newRow("cube-3ds-smooth")
             << "basic-cube.3ds" << "ForceSmooth"
-            << "LIB3DS" << "CubeObject" << "Red"
+            << "basic-cube.3ds" << "CubeObject::Red" << "Red"
             << qRgb(234, 40, 40) << "tex"
-            << 8 << 36;
+            << 12 << 36;
 
 
     ////// --- wave model ---
@@ -113,16 +149,16 @@ void tst_LoadModel::create_data()
     // default is faceted
     QTest::newRow("wave-obj-default")
             << "wave.obj" << ""
-               << "__main" << "Wave_Obj" << ""
-                  << qRgb(0, 0, 0) << ""
-                     << 1296 << 1296;
-
-    // force smooth
-    QTest::newRow("wave-obj-default")
-            << "wave.obj" << "ForceSmooth"
-               << "__main" << "Wave_Obj" << ""
+               << "wave.obj" << "Wave_Obj" << ""
                   << qRgb(0, 0, 0) << ""
                      << 259 << 1296;
+
+    // force smooth
+    QTest::newRow("wave-obj-faceted")
+            << "wave.obj" << "ForceFaceted"
+               << "wave.obj" << "Wave_Obj" << ""
+                  << qRgb(0, 0, 0) << ""
+                     << 864 << 1296;
 }
 
 void tst_LoadModel::create()
@@ -141,10 +177,20 @@ void tst_LoadModel::create()
     QString model_path(QLatin1String(":/data/models/%1"));
     model_path = model_path.arg(model);
 
-    scene = QGLAbstractScene::loadScene(model_path, QString(), options);
+    QFile f(model_path);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+
+    QUrl u;
+    u.setPath(model_path);
+    u.setScheme("file");
+
+    scene = QGLAbstractScene::loadScene(&f, u, QString(), options);
     QVERIFY(scene != 0);
 
     QGLSceneNode *node = scene->mainNode();
+
+    //qDumpScene(node);
+
     QCOMPARE(node->objectName(), importName);
 
     QGLSceneNode *foundGeometry = 0;
@@ -162,15 +208,15 @@ void tst_LoadModel::create()
             foundMaterial = list.at(i);
     }
 
-    QVERIFY(foundGeometry != 0);
-    QVERIFY(foundNode != 0);
-    QVERIFY(foundMaterial != 0);
+    QVERIFY2(foundGeometry != 0, "A non-null geometry node was not found");
+    QVERIFY2(foundNode != 0, qPrintable(nodeName + QLatin1String(" named node not found")));
+    QVERIFY2(foundMaterial != 0, qPrintable(materialName + QLatin1String(" named material not found")));
 
     int r, g, b;
     if (!materialName.isEmpty())
     {
         foundMaterial->material()->diffuseColor().getRgb(&r, &g, &b);
-        QCOMPARE(qRgb(r, g, b), materialDiffuse);
+        QCOMPARE(materialDiffuse, qRgb(r, g, b));
     }
 
     QGeometryData data = foundGeometry->geometry();
