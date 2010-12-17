@@ -663,10 +663,7 @@ void QGLBuilder::addTriangleFan(const QGeometryData &fan)
         if (calcNormal)
             skip = qCalculateNormal(0, i, i+1, f);
         if (!skip)
-        {
-            k += 3;
             dptr->addTriangle(0, i, i+1, f, k);
-        }
     }
     dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
@@ -720,8 +717,8 @@ void QGLBuilder::addTriangleStrip(const QGeometryData &strip)
             if (!skip)
                 dptr->addTriangle(i, i+1, i+2, s, k);
         }
-        dptr->currentNode->setCount(dptr->currentNode->count() + k);
     }
+    dptr->currentNode->setCount(dptr->currentNode->count() + k);
 }
 
 /*!
