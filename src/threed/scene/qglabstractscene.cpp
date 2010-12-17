@@ -50,6 +50,9 @@
 #include <QtNetwork/qnetworkreply.h>
 #include <QtCore/qcoreevent.h>
 #include <QtCore/qdebug.h>
+#include <QtCore/qcoreapplication.h>
+#include <QtCore/qdir.h>
+#include <QtCore/qpluginloader.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -444,5 +447,81 @@ QGLAbstractScene *QGLAbstractScene::loadScene
     QUrl url = QUrl::fromLocalFile(fi.absoluteFilePath());
     return loadScene(&file, url, format, options);
 }
+
+/*!
+    \enum QGLAbstractScene::FormatListType
+    This enum specifies the format of the list returned by the supportedFormats() function.
+
+    \value AsFilter Return a format list that may be used as a filter.
+    \value AsSuffix Return a format list that is simply the filename suffixes.
+*/
+
+/*!
+    Returns a list of all supported formats known by currently available
+    sceneformat plugins, in the format type \a t.
+
+    If \a t is QGLAbstractScene::AsFilter then the result may be passed
+    to QDir::setNameFilters(), or used in other filters.  This is the default.
+
+    For example to create a file dialog to load model files use this:
+    \code
+    QString modelsDir = QDir::toNativeSeperators(QDir::homePath());
+    QString filter = tr("Models (%1)").arg(QAbstractScene::supportedFormats().join(" "));
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Open File"), modelsDir, filter));
+    \endcode
+
+    Otherwise (when \a t is QGLAbstractScene::AsSuffix) it is simply a list
+    of file name suffixes.
+
+    Note that this function may be expensive to
+    call since it scans for available plugins, and loads each one it
+    finds to get an accurate report of formats supported at run-time.
+*/
+QStringList QGLAbstractScene::supportedFormats(QGLAbstractScene::FormatListType t)
+{
+    QStringList formats;
+    QSet<QString> formatSet;
+    QSet<QString> dirSet;
+    QStringList pluginPaths = QCoreApplication::libraryPaths();
+    QStringList::const_iterator it = pluginPaths.constBegin();
+    for ( ; it != pluginPaths.constEnd(); ++it)
+    {
+        QString path = *it;
+        QDir sceneformatDir(path + QLatin1String("/sceneformats"));
+        path = sceneformatDir.absolutePath();
+        if (!sceneformatDir.exists() || dirSet.contains(path))
+            continue;
+        dirSet.insert(path);
+        sceneformatDir.setFilter(QDir::Files);
+        QStringList entries = sceneformatDir.entryList();
+        QStringList::const_iterator fit = entries.constBegin();
+        for ( ; fit != entries.constEnd(); ++fit)
+        {
+            QString fi = *fit;
+            QPluginLoader loader(sceneformatDir.absoluteFilePath(fi));
+            QObject *inst = loader.instance();
+            QGLSceneFormatFactoryInterface *iface = qobject_cast<QGLSceneFormatFactoryInterface*>(inst);
+            if (iface)
+            {
+                QStringList formatKeys = iface->keys();
+                QStringList::const_iterator kit = formatKeys.constBegin();
+                for ( ; kit != formatKeys.constEnd(); ++kit)
+                {
+                    QString k = *kit;
+                    if (!formatSet.contains(k) && !k.contains("/")) // dont add mime-type keys
+                    {
+                        if (t == AsFilter)
+                            k.prepend("*.");
+                        formatSet.insert(k);
+                        formats.append(k);
+                    }
+                }
+            }
+        }
+    }
+    return formats;
+}
+
 
 QT_END_NAMESPACE

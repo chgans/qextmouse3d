@@ -84,6 +84,12 @@ public:
         (const QString& fileName, const QString& format = QString(),
 	 const QString& options = QString());
 
+    enum FormatListType {
+        AsFilter, AsSuffix
+    };
+
+    static QStringList supportedFormats(FormatListType t = AsFilter);
+
 protected:
     void childEvent(QChildEvent * event);
 
