@@ -353,7 +353,7 @@ void Discreet3DSImporter::ParseObjectChunk()
 	ASSIMP_3DS_END_CHUNK();
 }
 
-#include <QtCore/qstring>
+#include <QtCore/qstring.h>
 
 // ------------------------------------------------------------------------------------------------
 void Discreet3DSImporter::ParseChunk(const char* name, unsigned int num)
