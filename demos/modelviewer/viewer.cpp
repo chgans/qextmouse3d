@@ -686,7 +686,7 @@ void Viewer::resetView()
         break;
 
     case Centered:
-        //origin = m_model->scene()->boundingBox().center();
+        origin = m_model->scene()->boundingBox().center();
         qreal zoomMag = viewSizeFactor(camera(), m_model->scene(), rect());
         viewVec = eye - origin;
         qDebug() << "viewVec:" << viewVec << "-- eye:" << eye << "origin:" << origin;
