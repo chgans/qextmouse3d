@@ -1326,8 +1326,6 @@ void QGLSceneNode::draw(QGLPainter *painter)
         {
             if (wasTransformed)
                 painter->modelViewMatrix().pop();
-            qDebug() << "******* culled ***********";
-            qDebug() << bb;
             return;
         }
     }
