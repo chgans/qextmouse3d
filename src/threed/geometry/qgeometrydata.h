@@ -185,6 +185,9 @@ public:
     bool isEmpty() const;
     bool isNull() const;
     void detach();
+#ifndef QT_NO_DEBUG
+    quint64 id() const { return (quint64)d; }
+#endif
 protected:
     const QVector3DArray *vertexData() const;
 private:

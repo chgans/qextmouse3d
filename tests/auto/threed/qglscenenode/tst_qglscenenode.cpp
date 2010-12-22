@@ -47,6 +47,9 @@
 #include "qgraphicstransform3d.h"
 #include "qgraphicsscale3d.h"
 #include "qgraphicsrotation3d.h"
+#include "qglbuilder.h"
+
+#include "qtest_helpers.h"
 
 class tst_QGLSceneNode : public QObject
 {
@@ -61,6 +64,8 @@ private slots:
     void addNode();
     void removeNode();
     void clone();
+    void boundingBox_data();
+    void boundingBox();
 };
 
 // Check that all properties have their expected defaults.
@@ -503,6 +508,158 @@ void tst_QGLSceneNode::clone()
     QCOMPARE(node2Parent.children().count(), 1);
     QVERIFY(node2Parent.children()[0] == node2);
     delete node2;
+}
+
+void tst_QGLSceneNode::boundingBox_data()
+{
+    QTest::addColumn<QVector3D>("bottomLeftFront");
+    QTest::addColumn<QVector3D>("bottomRightFront");
+    QTest::addColumn<QVector3D>("topRightFront");
+    QTest::addColumn<QVector3D>("topLeftFront");
+    QTest::addColumn<QVector3D>("scale");
+    QTest::addColumn<QVector3D>("translation");
+    QTest::addColumn<QVector3D>("rotation");
+    QTest::addColumn<QVector3D>("boxMin");
+    QTest::addColumn<QVector3D>("boxMax");
+
+    QTest::newRow("cube-2x2x2-at-origin-no-xform")
+            << QVector3D(-1, -1, -1)
+            << QVector3D(1, -1, -1)
+            << QVector3D(1, 1, -1)
+            << QVector3D(-1, 1, -1)
+            << QVector3D(0, 0, 0)
+            << QVector3D(0, 0, 0)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-1, -1, -1)
+            << QVector3D(1, 1, 1);
+
+    QTest::newRow("cube-2x2x2-offset-no-xform")
+            << QVector3D(3, -1, -1)
+            << QVector3D(5, -1, -1)
+            << QVector3D(5, 1, -1)
+            << QVector3D(3, 1, -1)
+            << QVector3D(0, 0, 0)
+            << QVector3D(0, 0, 0)
+            << QVector3D(0, 0, 0)
+            << QVector3D(3, -1, -1)
+            << QVector3D(5, 1, 1);
+
+    QTest::newRow("cube-2x2x2-at-origin-positioned")
+            << QVector3D(-1, -1, -1)
+            << QVector3D(1, -1, -1)
+            << QVector3D(1, 1, -1)
+            << QVector3D(-1, 1, -1)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-4, -4, -4)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-5, -5, -5)
+            << QVector3D(-3, -3, -3);
+
+    QTest::newRow("cube-2x2x2-offset-positioned")
+            << QVector3D(3, -1, -1)
+            << QVector3D(5, -1, -1)
+            << QVector3D(5, 1, -1)
+            << QVector3D(3, 1, -1)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-4, -4, -4)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-1, -5, -5)
+            << QVector3D(1, -3, -3);
+
+    QTest::newRow("cube-2x2x2-at-origin-positioned-scaled")
+            << QVector3D(-1, -1, -1)
+            << QVector3D(1, -1, -1)
+            << QVector3D(1, 1, -1)
+            << QVector3D(-1, 1, -1)
+            << QVector3D(4, 4, 4)
+            << QVector3D(-4, -4, -4)
+            << QVector3D(0, 0, 0)
+            << QVector3D(-20, -20, -20)
+            << QVector3D(-12, -12, -12);
+
+    QTest::newRow("cube-2x2x2-offset-positioned-scaled-rotated")
+            << QVector3D(3, -1, -1)
+            << QVector3D(5, -1, -1)
+            << QVector3D(5, 1, -1)
+            << QVector3D(3, 1, -1)
+            << QVector3D(4, 4, 4)
+            << QVector3D(-4, -4, -4)
+            << QVector3D(0, 0, 45)
+            << QVector3D(-4, -20, -20)
+            << QVector3D(4, -12, -12);
+}
+
+void tst_QGLSceneNode::boundingBox()
+{
+    QFETCH(QVector3D, bottomLeftFront);
+    QFETCH(QVector3D, bottomRightFront);
+    QFETCH(QVector3D, topRightFront);
+    QFETCH(QVector3D, topLeftFront);
+    QFETCH(QVector3D, scale);
+    QFETCH(QVector3D, translation);
+    QFETCH(QVector3D, rotation);
+    QFETCH(QVector3D, boxMin);
+    QFETCH(QVector3D, boxMax);
+
+    QBox3D expBox(boxMin, boxMax);
+    QGLSceneNode *node = new QGLSceneNode;
+    node->setObjectName(QLatin1String("Root node"));
+    QGLSceneNode *geoNode = 0;
+    QGeometryData data;
+    QGLBuilder builder;
+
+    data.appendVertex(bottomLeftFront, bottomRightFront, topRightFront, topLeftFront);
+    builder.addQuads(data);    // top of cube
+    builder.addQuadsInterleaved(data, data.translated(QVector3D(0, 0, 2)));  // sides of cube
+    builder.addQuads(data.reversed());   // bottom of cube
+
+    geoNode = builder.finalizedSceneNode();
+    geoNode->setObjectName("Geometry node");
+    node->addNode(geoNode);
+
+    if (!scale.isNull())
+    {
+        QMatrix4x4 m = node->localTransform();
+        m.scale(scale);
+        node->setLocalTransform(m);
+    }
+
+    if (!translation.isNull())
+    {
+        QMatrix4x4 m = node->localTransform();
+        m.translate(translation);
+        node->setLocalTransform(m);
+    }
+
+    if (!rotation.isNull())
+    {
+        QMatrix4x4 m = node->localTransform();
+        if (qIsNull(rotation.x()))
+            m.rotate(rotation.x(), 1.0, 0.0, 0.0);
+        if (qIsNull(rotation.y()))
+            m.rotate(rotation.y(), 0.0, 1.0, 0.0);
+        if (qIsNull(rotation.z()))
+            m.rotate(rotation.z(), 0.0, 0.0, 1.0);
+        node->setLocalTransform(m);
+    }
+
+    QBox3D gotBox = node->boundingBox();
+    QCOMPARE(gotBox.minimum(), expBox.minimum());
+    QCOMPARE(gotBox.maximum(), expBox.maximum());
+
+
+    // now clear out the root nodes transform and apply the same transform
+    // to the child node - should be exactly the same
+
+    QMatrix4x4 saveMat = node->localTransform();
+    node->setLocalTransform(QMatrix4x4());       // set back to identity
+    geoNode->setLocalTransform(saveMat);
+
+    gotBox = node->boundingBox();
+    QCOMPARE(gotBox.minimum(), expBox.minimum());
+    QCOMPARE(gotBox.maximum(), expBox.maximum());
+
+    delete node;
 }
 
 QTEST_APPLESS_MAIN(tst_QGLSceneNode)

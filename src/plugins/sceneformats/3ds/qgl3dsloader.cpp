@@ -135,13 +135,6 @@ static const char *node_type_names[] = {
 };
 #endif
 
-void qGetMyMatrix()
-{
-    QMatrix4x4 test;
-
-    
-}
-
 inline static QMatrix4x4 getNodeMatrix(Lib3dsNode *node)
 {
     QMatrix4x4 nodeMatrix;

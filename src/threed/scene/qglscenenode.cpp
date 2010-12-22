@@ -366,9 +366,9 @@ QBox3D QGLSceneNode::boundingBox() const
     {
         QGLSceneNode *n = *it;
         QBox3D b = n->boundingBox();
-        b.transform(n->transform());
         d->bb.unite(b);
     }
+    d->bb.transform(transform());
     d->boxValid = true;
     return d->bb;
 }
@@ -422,7 +422,6 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
         d->localTransform = transform;
         emit updated();
         invalidateTransform();
-        d->invalidateParentBoundingBox();
     }
 }
 
@@ -1195,8 +1194,7 @@ void QGLSceneNode::invalidateBoundingBox() const
 
 void QGLSceneNode::invalidateTransform() const
 {
-    Q_D(const QGLSceneNode);
-    d->invalidateParentBoundingBox();
+    invalidateBoundingBox();
 }
 
 void QGLSceneNode::drawNormalIndicators(QGLPainter *painter)
@@ -1632,6 +1630,21 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
     {
         fprintf(stderr, "%s material: %d", qPrintable(ind), node->materialIndex());
         QGLMaterial *mat = node->material();
+        QGLMaterialCollection *pal = node->palette();
+        if (pal)
+            fprintf(stderr, "%s palette: %p", qPrintable(ind), pal);
+        else
+            fprintf(stderr, "%s no palette", qPrintable(ind));
+        if (pal)
+        {
+            mat = pal->material(node->materialIndex());
+            if (mat)
+                fprintf(stderr, "%s mat name from pal: %s ", qPrintable(ind),
+                        qPrintable(pal->material(node->materialIndex())->objectName()));
+            else
+                fprintf(stderr, "%s indexed material %d does not exist in palette!",
+                        qPrintable(ind), node->materialIndex());
+        }
         if (mat)
         {
             if (mat->objectName().isEmpty())
@@ -1658,6 +1671,10 @@ void qDumpScene(QGLSceneNode *node, int indent, const QSet<QGLSceneNode *> &loop
                     fprintf(stderr, " - size: %d (w) x %d (h)\n", sz.width(), sz.height());
                 }
             }
+        }
+        else
+        {
+            fprintf(stderr, "%s - could not find indexed material!!", qPrintable(ind));
         }
     }
     else

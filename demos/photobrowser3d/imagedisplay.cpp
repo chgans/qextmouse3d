@@ -189,7 +189,9 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
         int count = m_frameGeometry.indexCount() - start;
         m_frameGeometry.appendTexCoordArray(m_atlasPlaceHolder, QGL::TextureCoord1);
         m_currentFrame = new ThumbnailNode(m_frames);
-        m_currentFrame->setObjectName(QString("frame %1").arg(m_count));
+        QString name = QLatin1String("frame %1");
+        name.arg(m_count);
+        m_currentFrame->setObjectName(name);
         m_currentFrame->setPosition(p);
         m_currentFrame->setStart(start);
         m_currentFrame->setCount(count);
@@ -197,7 +199,9 @@ void ImageDisplay::addThumbnailNode(const QUrl &image)
         m_currentFrame->setMaterialIndex(m_frameLoadingMaterial);
 
         QGLSceneNode *s = m_currentWall->clone(m_wall);
-        s->setObjectName(QString("wall %1").arg(m_count));
+        name = QLatin1String("wall %1");
+        name.arg(m_count);
+        s->setObjectName(name);
         p = s->position();
         p.setX(p.x() - m_size);
         s->setPosition(p);

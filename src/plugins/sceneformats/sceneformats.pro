@@ -1,2 +1,7 @@
 TEMPLATE = subdirs
-SUBDIRS = 3ds bezier obj
+
+old_importer {
+    SUBDIRS = bezier 3ds obj
+} else {
+    SUBDIRS = bezier assimp
+}

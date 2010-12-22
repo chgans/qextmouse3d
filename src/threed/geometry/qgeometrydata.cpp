@@ -291,46 +291,39 @@ void QGeometryData::appendGeometry(const QGeometryData &data)
 {
     if (data.d && data.count())
     {
-        if (!d || count() == 0)
+        detach();
+        d->modified = true;
+        d->boxValid = false;
+        int cnt = data.d->count;
+        const quint32 mask = 0x01;
+        quint32 fields = d->fields | data.fields();
+        d->fields = fields;
+        for (int field = 0; fields; ++field, fields >>= 1)
         {
-            *this = data;
-        }
-        else
-        {
-            create();
-            d->modified = true;
-            d->boxValid = false;
-            int cnt = data.d->count;
-            const quint32 mask = 0x01;
-            quint32 fields = d->fields | data.fields();
-            d->fields = fields;
-            for (int field = 0; fields; ++field, fields >>= 1)
+            if (mask & fields)
             {
-                if (mask & fields)
+                QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
+                enableField(attr);  // might not be enabled if we had NO fields
+                if (attr < QGL::TextureCoord0)
                 {
-                    QGL::VertexAttribute attr = static_cast<QGL::VertexAttribute>(field);
-                    enableField(attr);  // might not be enabled if we had NO fields
-                    if (attr < QGL::TextureCoord0)
-                    {
-                        if (attr == QGL::Position)
-                            d->vertices.append(data.d->vertices);
-                        else if (attr == QGL::Normal)
-                            d->normals.append(data.d->normals);
-                        else  // colors
-                            d->colors.append(data.d->colors);
-                    }
-                    else if (attr < QGL::CustomVertex0)
-                    {
-                        d->textures[d->key[attr]].append(data.texCoords(attr));
-                    }
-                    else
-                    {
-                        d->attributes[d->key[attr]].append(data.attributes(attr));
-                    }
+                    if (attr == QGL::Position)
+                        d->vertices.append(data.d->vertices);
+                    else if (attr == QGL::Normal)
+                        d->normals.append(data.d->normals);
+                    else  // colors
+                        d->colors.append(data.d->colors);
+                }
+                else if (attr < QGL::CustomVertex0)
+                {
+                    d->textures[d->key[attr]].append(data.texCoords(attr));
+                }
+                else
+                {
+                    d->attributes[d->key[attr]].append(data.attributes(attr));
                 }
             }
-            d->count += cnt;
         }
+        d->count += cnt;
     }
 }
 
@@ -1916,6 +1909,13 @@ void QGeometryData::detach()
     }
 }
 
+/*!
+    \fn quint64 QGeometryData::id() const
+    Return an opaque value that can be used to identify which data block is
+    being used by this QGeometryData instance.  See the class documentation
+    relating to explicit sharing.
+*/
+
 #ifndef QT_NO_DEBUG
 void QGeometryData::check() const
 {
@@ -1971,7 +1971,8 @@ void QGeometryData::check() const
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGeometryData &vertices)
 {
-    dbg << "QGeometryData" << &vertices << " size:" << vertices.count();
+    dbg << "QGeometryData" << &vertices << " size:" << vertices.count() <<
+           "data block id:" << vertices.id();
     quint32 fields = vertices.fields();
     const quint32 mask = 0x01;
     for (int field = 0; fields; ++field, fields >>= 1)

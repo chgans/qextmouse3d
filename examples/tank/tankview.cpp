@@ -73,7 +73,7 @@ TankView::~TankView()
 Tank *TankView::addTank()
 {
     Tank *tank = new Tank(m_tankScene);
-    tank->setObjectName(QString("Tank %1").arg(m_count));
+    tank->setObjectName(QString(QLatin1String("Tank %1")).arg(m_count));
     ++m_count;
     connect(tank, SIGNAL(updated()), this, SLOT(update()));
     return tank;

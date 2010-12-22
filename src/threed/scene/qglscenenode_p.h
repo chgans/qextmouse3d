@@ -106,7 +106,7 @@ public:
     {
     }
 
-    void invalidateParentBoundingBox() const
+    inline void invalidateParentBoundingBox() const
     {
         QList<QGLSceneNode*>::const_iterator it = parentNodes.constBegin();
         for ( ; it != parentNodes.constEnd(); ++it)

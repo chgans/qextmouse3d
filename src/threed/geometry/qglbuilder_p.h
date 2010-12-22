@@ -70,7 +70,7 @@ public:
     QGLBuilderPrivate(QGLBuilder *parent);
     ~QGLBuilderPrivate();
     inline void setDirty(bool dirty = true);
-    void addTriangle(int a, int b, int c, const QGeometryData &p);
+    void addTriangle(int a, int b, int c, const QGeometryData &p, int &count);
     void adjustSectionNodes(QGLSection *sec, int offset, const QGeometryData &geom);
     int adjustNodeTree(QGLSceneNode *top, int offset, const QGeometryData &geom,
                        QList<QGLSceneNode*> &deleted);
