@@ -60,15 +60,16 @@ AiLoaderIOStream::~AiLoaderIOStream()
 size_t AiLoaderIOStream::Read( void* pvBuffer, size_t pSize, size_t pCount)
 {
     qint64 result = m_device->read((char*)pvBuffer, pSize * pCount);
+    size_t res = result;
     m_errorState = (result == -1);
     if (m_errorState)
         fprintf(stderr, "AI read error: %s\n", qPrintable(m_device->errorString()));
-    if ((pSize * pCount) != result) // AI will treat as error
+    if ((pSize * pCount) != res) // AI will treat as error
     {
-        fprintf(stderr, "read mismatch requested size: %d x count: %d = %d != %lli actuall read\n",
-                pSize, pCount, (pSize * pCount), result);
+        fprintf(stderr, "read mismatch requested size: %lu x count: %lu = %lu != %lu actuall read\n",
+                pSize, pCount, (pSize * pCount), res);
     }
-    return result;
+    return res;
 }
 
 size_t AiLoaderIOStream::Write( const void* pvBuffer, size_t pSize, size_t pCount)
