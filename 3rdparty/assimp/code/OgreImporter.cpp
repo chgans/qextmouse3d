@@ -407,7 +407,7 @@ void OgreImporter::ReadSubMesh(SubMesh &theSubMesh, XmlReader *Reader)
 
 aiMesh* OgreImporter::CreateAssimpSubMesh(const SubMesh& theSubMesh, const vector<Bone>& Bones) const
 {
-	const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
+    // const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
 
 	aiMesh* NewAiMesh=new aiMesh();
 		
@@ -499,7 +499,7 @@ aiMesh* OgreImporter::CreateAssimpSubMesh(const SubMesh& theSubMesh, const vecto
 
 void OgreImporter::LoadSkeleton(std::string FileName, vector<Bone> &Bones, vector<Animation> &Animations) const
 {
-	const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
+    //const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
 
 
 	//most likely the skeleton file will only end with .skeleton
@@ -705,7 +705,7 @@ void OgreImporter::LoadSkeleton(std::string FileName, vector<Bone> &Bones, vecto
 }
 
 
-void OgreImporter::CreateAssimpSkeleton(const std::vector<Bone> &Bones, const std::vector<Animation> &Animations)
+void OgreImporter::CreateAssimpSkeleton(const std::vector<Bone> &Bones, const std::vector<Animation> &/*Animations*/)
 {
 	if(!m_CurrentScene->mRootNode)
 		throw DeadlyImportError("No root node exists!!");
@@ -814,7 +814,7 @@ void OgreImporter::PutAnimationsInScene(const std::vector<Bone> &Bones, const st
 
 aiNode* OgreImporter::CreateAiNodeFromBone(int BoneId, const std::vector<Bone> &Bones, aiNode* ParentNode) const
 {
-	const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
+    //const aiScene* const m_CurrentScene=this->m_CurrentScene;//make sure, that we can access but not change the scene
 
 	//----Create the node for this bone and set its values-----
 	aiNode* NewNode=new aiNode(Bones[BoneId].Name);

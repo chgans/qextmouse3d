@@ -22,7 +22,7 @@ AI_WONT_RETURN void aiAssert(const std::string &message, unsigned int uiLine, co
 #ifdef DEBUG  
 #  define	ai_assert(expression) if( !(expression)) Assimp::aiAssert( #expression, __LINE__, __FILE__);
 #else
-#  define	ai_assert(expression)
+#  define	ai_assert(expression) (void)(expression);
 #endif
 
 }	// Namespace Assimp

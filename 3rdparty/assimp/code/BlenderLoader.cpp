@@ -126,7 +126,7 @@ const aiLoaderDesc& BlenderImporter::GetInfo () const
 
 // ------------------------------------------------------------------------------------------------
 // Setup configuration properties for the loader
-void BlenderImporter::SetupProperties(const Importer* pImp)
+void BlenderImporter::SetupProperties(const Importer* /* pImp */)
 {
 	// nothing to be done for the moment
 }
@@ -397,10 +397,10 @@ void BlenderImporter::ConvertBlendFile(aiScene* out, const Scene& in,const FileD
 }
 
 // ------------------------------------------------------------------------------------------------
-void BlenderImporter::ResolveImage(MaterialHelper* out, const Material* mat, const MTex* tex, const Image* img, ConversionData& conv_data)
+void BlenderImporter::ResolveImage(MaterialHelper* out, const Material* /* mat */, const MTex* /*tex*/, const Image* img, ConversionData& conv_data)
 {
-	mat; tex; conv_data;
-	aiString name;
+    // mat; tex; conv_data;
+    aiString name;
 
 	// check if the file contents are bundled with the BLEND file
 	if (img->packedfile) {
@@ -442,9 +442,9 @@ void BlenderImporter::ResolveImage(MaterialHelper* out, const Material* mat, con
 }
 
 // ------------------------------------------------------------------------------------------------
-void BlenderImporter::AddSentinelTexture(MaterialHelper* out, const Material* mat, const MTex* tex, ConversionData& conv_data)
+void BlenderImporter::AddSentinelTexture(MaterialHelper* out, const Material* /*mat*/, const MTex* tex, ConversionData& conv_data)
 {
-	mat; tex; conv_data;
+    // mat; tex; conv_data;
 
 	aiString name;
 	name.length = sprintf(name.data, "Procedural,num=%i,type=%s",conv_data.sentinel_cnt++,
@@ -599,7 +599,7 @@ void BlenderImporter::NotSupportedObjectType(const Object* obj, const char* type
 }
 
 // ------------------------------------------------------------------------------------------------
-void BlenderImporter::ConvertMesh(const Scene& in, const Object* obj, const Mesh* mesh, 
+void BlenderImporter::ConvertMesh(const Scene& /* in */, const Object* /* obj */, const Mesh* mesh,
 	ConversionData& conv_data, TempArray<std::vector,aiMesh>&  temp
 	) 
 {
@@ -838,7 +838,7 @@ void BlenderImporter::ConvertMesh(const Scene& in, const Object* obj, const Mesh
 				vo->b = col->b;
 				vo->a = col->a;
 			}
-			for (unsigned int n = f.mNumIndices; n < 4; ++n);
+            for (unsigned int n = f.mNumIndices; n < 4; ++n) {};
 		}
 	}
 
@@ -846,7 +846,7 @@ void BlenderImporter::ConvertMesh(const Scene& in, const Object* obj, const Mesh
 }
 
 // ------------------------------------------------------------------------------------------------
-aiCamera* BlenderImporter::ConvertCamera(const Scene& in, const Object* obj, const Camera* mesh, ConversionData& conv_data) 
+aiCamera* BlenderImporter::ConvertCamera(const Scene& /* in */, const Object* /* obj */, const Camera* /* mesh */, ConversionData& /* conv_data */)
 {
 	ScopeGuard<aiCamera> out(new aiCamera());
 
@@ -854,7 +854,7 @@ aiCamera* BlenderImporter::ConvertCamera(const Scene& in, const Object* obj, con
 }
 
 // ------------------------------------------------------------------------------------------------
-aiLight* BlenderImporter::ConvertLight(const Scene& in, const Object* obj, const Lamp* mesh, ConversionData& conv_data) 
+aiLight* BlenderImporter::ConvertLight(const Scene& /* in */, const Object* /* obj */, const Lamp* /* mesh */, ConversionData& /* conv_data */)
 {
 	ScopeGuard<aiLight> out(new aiLight());
 

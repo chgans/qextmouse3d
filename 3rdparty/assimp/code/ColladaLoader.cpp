@@ -1174,7 +1174,7 @@ void ColladaLoader::AddTexture ( Assimp::MaterialHelper& mat, const ColladaParse
 
 // ------------------------------------------------------------------------------------------------
 // Fills materials from the collada material definitions
-void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* pScene)
+void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* /*pScene*/)
 {
 	for (std::vector<std::pair<Collada::Effect*, aiMaterial*> >::iterator it = newMats.begin(),
 		end = newMats.end(); it != end; ++it)
@@ -1266,7 +1266,7 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* pScene
 
 // ------------------------------------------------------------------------------------------------
 // Constructs materials from the collada material definitions
-void ColladaLoader::BuildMaterials( const ColladaParser& pParser, aiScene* pScene)
+void ColladaLoader::BuildMaterials( const ColladaParser& pParser, aiScene* /*pScene*/)
 {
 	newMats.reserve(pParser.mMaterialLibrary.size());
 

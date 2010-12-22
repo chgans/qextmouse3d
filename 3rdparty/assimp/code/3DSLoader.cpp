@@ -117,7 +117,7 @@ void Discreet3DSImporter::GetExtensionList(std::set<std::string>& extensions)
 
 // ------------------------------------------------------------------------------------------------
 // Setup configuration properties
-void Discreet3DSImporter::SetupProperties(const Importer* pImp)
+void Discreet3DSImporter::SetupProperties(const Importer* /* pImp */)
 {
 	// nothing to be done for the moment
 }
@@ -691,7 +691,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		// This is the "real" name of a $$$DUMMY object
 		{
 			const char* sz = (const char*) stream->GetPtr();
-			while (stream->GetI1());
+            while (stream->GetI1()) {};
 
 			// If object name is DUMMY, take this one instead
 			if (mCurrentNode->mName == "$$$DUMMY")	{
@@ -933,7 +933,7 @@ void Discreet3DSImporter::ParseFaceChunk()
 		{
 		// at fist an asciiz with the material name
 		const char* sz = (const char*)stream->GetPtr();
-		while (stream->GetI1());
+        while (stream->GetI1()) {};
 
 		// find the index of the material
 		unsigned int idx = 0xcdcdcdcd, cnt = 0;
