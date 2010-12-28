@@ -50,8 +50,9 @@
 
 #include <QIcon>
 
-struct MVCNode
+class MVCNode
 {
+public:
     MVCNode(QGLSceneNode *_n, Model *_m)
         : node(_n), model(_m), parent(0), row(0), col(0) {}
     ~MVCNode() { qDeleteAll(rows); }
