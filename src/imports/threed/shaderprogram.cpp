@@ -418,7 +418,7 @@ void ShaderProgramEffect::update
     QGLShaderProgramEffect::update(painter, updates);
 
     // Assign custom properties if they exist
-    if(!parent.data() || !propertyIdsToUniformLocations.count() > 0)
+    if(!parent.data() || !(propertyIdsToUniformLocations.count() > 0))
         return;
 
     // update dirty properties and remove them from the list
