@@ -4,6 +4,7 @@ CONFIG += qt warn_on
 QT += opengl
 SOURCES = cubeview.cpp main.cpp
 HEADERS = cubeview.h
+win32:DEFINES+=_CRT_SECURE_NO_WARNINGS
 !contains(QT_CONFIG, opengles1) {
     SOURCES += projectivetextureeffect.cpp
     HEADERs += projectivetextureeffect.h

@@ -4,6 +4,8 @@
 # AssImp expects this to be defined on debug builds
 CONFIG(debug, debug|release) : DEFINES+=_DEBUG
 
+win32:DEFINES+=_CRT_SECURE_NO_WARNINGS
+
 DEPENDPATH += \
         $$PWD \
         $$PWD/code \
