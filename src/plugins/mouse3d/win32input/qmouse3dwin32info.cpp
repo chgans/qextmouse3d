@@ -87,6 +87,7 @@ bool initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary()
 
 bool mouse3dEventFilterFunction(void *newMessage, long *result)
 {
+    Q_UNUSED(result);
     MSG* message=(MSG*)newMessage;
     //the "message" component is a MSG (it tagMSG as defined in windows.h)
     switch(message->message){

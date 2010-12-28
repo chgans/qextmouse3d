@@ -134,6 +134,7 @@ void QMouse3DWin32Handler::updateSensitivity(qreal sensitivity)
 
 void QMouse3DWin32Handler::deviceAdded(HANDLE deviceHandle)
 {
+    Q_UNUSED(deviceHandle);
 	//
 	//
 	//	TODO: No equivalent for this in Win32 right now.
