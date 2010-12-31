@@ -87,6 +87,8 @@ static inline void assertOnePrimitiveType(aiMesh *mesh)
         if (p & msk)
             ++k;
     Q_ASSERT(k == 1);  // Assimp SortByPType promises this
+#else
+    Q_UNUSED(mesh);
 #endif
 }
 
@@ -364,12 +366,12 @@ QUrl QAiLoader::ensureResource(const QString &path)
                 else
                 {
                     if (fileList.contains(path))
-					{
+                    {
                         //return resDir.absoluteFilePath(path);
-						res.setScheme(QLatin1String("file"));
-						res.setPath(resDir.absoluteFilePath(path));
-						break;
-					}
+                        res.setScheme(QLatin1String("file"));
+                        res.setPath(resDir.absoluteFilePath(path));
+                        break;
+                    }
                 }
             }
             if (caseInsensitive)
