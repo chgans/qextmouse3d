@@ -43,6 +43,7 @@
 #include "qlogicalvertex.h"
 #include "qglpainter.h"
 
+#include <QtOpenGL/qgl.h>
 #include <QtCore/qdebug.h>
 
 /*!
@@ -148,7 +149,7 @@ public:
     quint8 size[ATTR_CNT];
     int count;
     int reserved;
-    bool boxValid;    
+    bool boxValid;
     QGeometryData::BufferStrategy bufferStrategy;
 };
 
@@ -870,7 +871,7 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode,
         }
         painter->setVertexBundle(d->vertexBundle);
         if (count == 0)
-            count = d->indexBuffer.indexCount();        
+            count = d->indexBuffer.indexCount();
         painter->draw(QGL::DrawingMode(mode), d->indexBuffer, start, count);
     }
 }
@@ -1971,8 +1972,11 @@ void QGeometryData::check() const
 #ifndef QT_NO_DEBUG_STREAM
 QDebug operator<<(QDebug dbg, const QGeometryData &vertices)
 {
-    dbg << "QGeometryData" << &vertices << " size:" << vertices.count() <<
-           "data block id:" << vertices.id();
+    dbg << "QGeometryData" << &vertices << " size:" << vertices.count()
+#ifndef QT_NO_DEBUG
+        << "data block id:" << vertices.id()
+#endif
+           ;
     quint32 fields = vertices.fields();
     const quint32 mask = 0x01;
     for (int field = 0; fields; ++field, fields >>= 1)
