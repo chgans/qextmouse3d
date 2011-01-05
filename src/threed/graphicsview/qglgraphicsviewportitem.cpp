@@ -55,18 +55,6 @@ QT_BEGIN_NAMESPACE
     \ingroup qt3d::graphicsview
 */
 
-/*!
-    \enum QGLGraphicsViewportItem::Option
-    This enum defines an option for QGLGraphicsViewportItem.
-
-    \value ObjectPicking Object picking is enabled.  Disabled by default.
-    \value ShowPicking Objects are rendered with their pick colors instead
-           of their normal colors and materials.  This can help debug
-           problems with object picking.  Disabled by default.
-    \value CameraNavigation Camera navigation using the keyboard and mouse
-           is enabled.  Enabled by default.
-*/
-
 class QGLGraphicsViewportItemPrivate : public QObject
 {
     Q_OBJECT
@@ -79,20 +67,15 @@ public:
                 this, SLOT(cameraChanged()));
         connect(camera, SIGNAL(viewChanged()),
                 this, SLOT(cameraChanged()));
-
-        options = QGLGraphicsViewportItem::CameraNavigation;
-        clearDepthBuffer = true;
     }
 
     void changeCamera(QGLCamera *c);
     void setDefaults(QGLPainter *painter);
 
     QGLGraphicsViewportItem *q;
-    QGLGraphicsViewportItem::Options options;
     QRectF rect;
     QGLCamera *camera;
     QGLCamera *defaultCamera;
-    bool clearDepthBuffer;
     QColor backgroundColor;
 
 private Q_SLOTS:
@@ -173,43 +156,6 @@ QGLGraphicsViewportItem::QGLGraphicsViewportItem
 */
 QGLGraphicsViewportItem::~QGLGraphicsViewportItem()
 {
-}
-
-/*!
-    Returns the options for this view.  The default value is
-    CameraNavigation.
-
-    \sa setOptions(), setOption()
-*/
-QGLGraphicsViewportItem::Options QGLGraphicsViewportItem::options() const
-{
-    Q_D(const QGLGraphicsViewportItem);
-    return d->options;
-}
-
-/*!
-    Sets the options for this view to \a value.
-
-    \sa options(), setOption()
-*/
-void QGLGraphicsViewportItem::setOptions(QGLGraphicsViewportItem::Options value)
-{
-    Q_D(QGLGraphicsViewportItem);
-    d->options = value;
-}
-
-/*!
-    Enables or disables \a option according to \a value.
-
-    \sa options(), setOptions()
-*/
-void QGLGraphicsViewportItem::setOption(QGLGraphicsViewportItem::Option option, bool value)
-{
-    Q_D(QGLGraphicsViewportItem);
-    if (value)
-        d->options |= option;
-    else
-        d->options &= ~option;
 }
 
 /*!
@@ -302,29 +248,6 @@ void QGLGraphicsViewportItem::setCamera(QGLCamera *camera)
 }
 
 /*!
-    Returns true if the depth buffer should be cleared before paintGL()
-    is called; false otherwise.  The default is true.
-
-    \sa setClearDepthBuffer()
-*/
-bool QGLGraphicsViewportItem::clearDepthBuffer() const
-{
-    Q_D(const QGLGraphicsViewportItem);
-    return d->clearDepthBuffer;
-}
-
-/*!
-    Sets the depth buffer clearing mode according to \a value.
-
-    \sa clearDepthBuffer()
-*/
-void QGLGraphicsViewportItem::setClearDepthBuffer(bool value)
-{
-    Q_D(QGLGraphicsViewportItem);
-    d->clearDepthBuffer = value;
-}
-
-/*!
     Returns the background color, which is used to clear the viewport
     before calling paintGL().  The default value is an invalid QColor,
     which indicates that the viewport should not be cleared.
@@ -405,8 +328,7 @@ void QGLGraphicsViewportItem::paint
         glpainter.setVertexAttribute(QGL::Position, array);
         glpainter.draw(QGL::TriangleFan, 4);
     }
-    if (d->clearDepthBuffer)
-        glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
 
@@ -427,17 +349,6 @@ void QGLGraphicsViewportItem::paint
     glDisable(GL_DEPTH_TEST);
 
     glpainter.popSurface();
-}
-
-/*!
-    Returns the scene object that is under the mouse at \a pos
-    within this graphics item; null if no object detected.
-*/
-QObject *QGLGraphicsViewportItem::objectForPosition(const QPointF& pos) const
-{
-    // TODO: object picking.
-    Q_UNUSED(pos);
-    return 0;
 }
 
 /*!
