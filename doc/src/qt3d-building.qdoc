@@ -64,11 +64,11 @@
     cd qt*
     ./configure -opengl
     make
-    make install
     \endcode
 
-    The "\c{make install}" step is required to make plug-ins work,
-    particularly the model loading and QML/3D plug-ins.
+    The \c{-developer-build} option is recommended to get debug support,
+    and to ensure that your version of Qt is used and not the system
+    version of Qt.
 
     On Windows refer to the
     \l{http://doc.qt.nokia.com/4.7/install-win.html}{build documentation}
@@ -96,11 +96,15 @@
     $ cd $HOME/build/qt-labs/qt3d
     $ $HOME/build/qt/4.7/bin/qmake $HOME/depot/qt-labs/qt3d/opengl.pro
     $ make
+    $ make install
     $ export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
     \endcode
 
     The last line exports the library path so that you can run applications
     from Qt/3D, and is needed so those applications can find the Qt/3D libraries.
+
+    The "\c{make install}" step is required to make plug-ins work,
+    particularly the model loading and QML/3D plug-ins.
 
     On Windows (with Visual Studio) those commands look like this:
 
