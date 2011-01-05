@@ -42,7 +42,6 @@
 #include "stereoeffect.h"
 #include "stereographicsview.h"
 #include "teapotitem.h"
-#include "qglgraphicsnavigationitem.h"
 
 #include <QtGui>
 #include <QtOpenGL/qgl.h>
@@ -109,10 +108,6 @@ int main(int argc, char **argv)
         teapot->setScene(&scene);
         teapot->setBackgroundBrush(QPixmap(QLatin1String(":/images/cheese.jpg")));
         outerScene.addItem(teapot);
-
-        QGLGraphicsNavigationItem *navigator = new QGLGraphicsNavigationItem();
-        navigator->setViewportItem(teapot);
-        outerScene.addItem(navigator);
 
         teapot->setFocus();
 

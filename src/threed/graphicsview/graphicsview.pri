@@ -4,7 +4,6 @@ VPATH += $$PWD
 
 HEADERS += \
     qglgraphicsviewportitem.h \
-    qglgraphicsnavigationitem.h \
     qgraphicsbillboardtransform.h \
     qgraphicsrotation3d.h \
     qgraphicsscale3d.h \
@@ -13,7 +12,6 @@ HEADERS += \
 
 SOURCES += \
     qglgraphicsviewportitem.cpp \
-    qglgraphicsnavigationitem.cpp \
     qgraphicsbillboardtransform.cpp \
     qgraphicsrotation3d.cpp \
     qgraphicsscale3d.cpp \
