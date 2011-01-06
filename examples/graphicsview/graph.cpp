@@ -41,6 +41,7 @@
 #include "graph.h"
 #include "edge.h"
 #include "node.h"
+#include "scene.h"
 
 #include <QDebug>
 #include <QGraphicsScene>
@@ -50,7 +51,7 @@
 Graph::Graph()
     : timerId(0)
 {
-    QGraphicsScene *scene = new QGraphicsScene(this);
+    QGraphicsEmbedScene *scene = new Scene(this);
     sceneObject = scene;
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
     scene->setSceneRect(-128, -128, 256, 256);

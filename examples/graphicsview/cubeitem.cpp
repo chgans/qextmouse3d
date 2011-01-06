@@ -44,8 +44,7 @@
 #include "qray3d.h"
 #include "qplane3d.h"
 #include "qtriangle3d.h"
-#include <QtOpenGL/qglframebufferobject.h>
-#include <QtGui/qgraphicsscene.h>
+#include "qgraphicsembedscene.h"
 #include <QtGui/qgraphicssceneevent.h>
 #include <QtGui/qgraphicsview.h>
 #include <QtGui/qpolygon.h>
@@ -56,7 +55,7 @@ const qreal CubeSize = 2.0f;
 CubeItem::CubeItem(QGraphicsItem *parent)
     : QGLGraphicsViewportItem(parent)
     , mScene(0)
-    , fbo(0)
+    , textureId(0)
     , navigating(false)
     , pressedFace(-1)
     , pressedButton(Qt::NoButton)
@@ -77,7 +76,7 @@ CubeItem::~CubeItem()
     delete cube;
 }
 
-void CubeItem::setScene(QGraphicsScene *scene)
+void CubeItem::setScene(QGraphicsEmbedScene *scene)
 {
     mScene = scene;
     connect(scene, SIGNAL(changed(QList<QRectF>)), this, SLOT(updateScene()));
@@ -89,26 +88,8 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     // We do this while the ordinary Qt paint engine has
     // control of the GL context rather than later when the
     // QGLPainter has control of the GL context.
-    if (mScene) {
-        if (!fbo) {
-            QGLFramebufferObjectFormat format;
-            format.setAttachment(QGLFramebufferObject::CombinedDepthStencil);
-            //format.setSamples(8);
-            fbo = new QGLFramebufferObject
-                (mScene->sceneRect().size().toSize(), format);
-        }
-        QRectF rect(0, 0, fbo->size().width(), fbo->size().height());
-        QPainter fboPainter(fbo);
-        fboPainter.save();
-        QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
-        gradient.setColorAt(0, QColor(0, 128, 192, 255));
-        gradient.setColorAt(1, QColor(0, 0, 128, 255));
-        fboPainter.setPen(QPen(Qt::black, 3));
-        fboPainter.setBrush(gradient);
-        fboPainter.drawRect(rect);
-        fboPainter.restore();
-        mScene->render(&fboPainter, rect);
-    }
+    if (mScene)
+        textureId = mScene->renderToTexture();
 
     // Now render the GL parts of the item using QGLPainter.
     QGLGraphicsViewportItem::paint(painter, option, widget);
@@ -116,12 +97,12 @@ void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 void CubeItem::paintGL(QGLPainter *painter)
 {
-    if (fbo) {
+    if (textureId) {
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         painter->setFaceColor(QGL::AllFaces, QColor(0, 0, 0, 200));
         painter->setStandardEffect(QGL::LitDecalTexture2D);
-        glBindTexture(GL_TEXTURE_2D, fbo->texture());
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         if (painter->isFixedFunction())
@@ -149,13 +130,12 @@ void CubeItem::updateScene()
 void CubeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     int face;
-    QPoint pos = cubeIntersection
+    QPointF tc = cubeIntersection
         (event->widget(), event->pos().toPoint(), &face);
     if (!navigating && pressedFace == -1 && face != -1) {
         pressedFace = face;
         pressedButton = event->button();
-        pressedPos = pos;
-        deliverSceneEvent(pos, event);
+        mScene->deliverEvent(event, tc);
         return;
     } else if (!navigating && face == -1) {
         navigating = true;
@@ -199,11 +179,11 @@ void CubeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         camera->rotateCenter(q);
     } else if (pressedFace != -1) {
         int face;
-        QPoint pos = cubeIntersection
+        QPointF tc = cubeIntersection
             (event->widget(), event->pos().toPoint(), &face);
         if (face != pressedFace)
-            pos = QPoint(-1, -1);
-        deliverSceneEvent(pos, event);
+            tc = QPointF(-1, -1);
+        mScene->deliverEvent(event, tc);
         return;
     }
     QGraphicsItem::mouseMoveEvent(event);
@@ -220,15 +200,15 @@ void CubeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         return;
     } else if (pressedFace != -1) {
         int face;
-        QPoint pos = cubeIntersection
+        QPointF tc = cubeIntersection
             (event->widget(), event->pos().toPoint(), &face);
         if (face != pressedFace)
-            pos = QPoint(-1, -1);
+            tc = QPoint(-1, -1);
         if (pressedButton == event->button()) {
             pressedFace = -1;
             pressedButton = Qt::NoButton;
         }
-        deliverSceneEvent(pos, event);
+        mScene->deliverEvent(event, tc);
         return;
     }
     QGraphicsItem::mouseReleaseEvent(event);
@@ -237,12 +217,12 @@ void CubeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 void CubeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 {
     int face;
-    QPoint pos = cubeIntersection
+    QPointF tc = cubeIntersection
         (event->widget(), event->pos().toPoint(), &face);
     if (pressedFace == -1 && face != -1) {
         pressedFace = face;
         pressedButton = event->button();
-        deliverSceneEvent(pos, event);
+        mScene->deliverEvent(event, tc);
         return;
     }
     QGraphicsItem::mouseDoubleClickEvent(event);
@@ -282,13 +262,13 @@ static const float vertexData[vertexDataLen] = {
     -0.5f * CubeSize, 0.5f * CubeSize, -0.5f * CubeSize
 };
 
-QPoint CubeItem::cubeIntersection
+QPointF CubeItem::cubeIntersection
     (QWidget *widget, const QPoint &point, int *actualFace) const
 {
     // Bail out if no scene.
     if (!mScene) {
         *actualFace = -1;
-        return QPoint();
+        return QPointF();
     }
 
     // Get the combined matrix for the projection.
@@ -366,42 +346,10 @@ QPoint CubeItem::cubeIntersection
         QVector2D uv = triangle.uv(ray.point(t));
         QVector2D tc =
             uv.x() * tc1 + uv.y() * tc2 + (1 - uv.x() - uv.y()) * tc3;
-
-        // Turn the texture co-ordinates into scene co-ordinates.
-        bounds = mScene->sceneRect();
-        int x = qRound(tc.x() * bounds.width());
-        int y = qRound((1.0f - tc.y()) * bounds.height());
-        if (x < 0)
-            x = 0;
-        else if (x >= bounds.width())
-            x = qRound(bounds.width() - 1);
-        if (y < 0)
-            y = 0;
-        else if (y >= bounds.height())
-            y = qRound(bounds.height() - 1);
         *actualFace = face;
-        return QPoint(x, y);
+        return QPointF(tc.x(), tc.y());
     }
 
     *actualFace = -1;
-    return QPoint();
-}
-
-void CubeItem::deliverSceneEvent
-    (const QPoint &point, QGraphicsSceneMouseEvent *event)
-{
-    QRectF srect = mScene->sceneRect();
-    QPointF spoint = QPointF(point.x() + srect.x(), point.y() + srect.y());
-    QGraphicsSceneMouseEvent e(event->type());
-    e.setScenePos(spoint);
-    e.setScreenPos(point);
-    e.setButtonDownScreenPos(event->button(), pressedPos);
-    e.setButtonDownScenePos
-        (event->button(), QPointF(pressedPos.x() + srect.x(),
-                                  pressedPos.y() + srect.y()));
-    e.setButtons(event->buttons());
-    e.setButton(event->button());
-    e.setModifiers(event->modifiers());
-    e.setAccepted(false);
-    QApplication::sendEvent(mScene, &e);
+    return QPointF();
 }

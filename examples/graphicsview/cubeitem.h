@@ -44,8 +44,7 @@
 #include "qglgraphicsviewportitem.h"
 #include "qglbuilder.h"
 
-class QGraphicsScene;
-class QGLFramebufferObject;
+class QGraphicsEmbedScene;
 
 class CubeItem : public QObject, public QGLGraphicsViewportItem
 {
@@ -54,8 +53,8 @@ public:
     CubeItem(QGraphicsItem *parent = 0);
     ~CubeItem();
 
-    QGraphicsScene *scene() const { return mScene; }
-    void setScene(QGraphicsScene *scene);
+    QGraphicsEmbedScene *scene() const { return mScene; }
+    void setScene(QGraphicsEmbedScene *scene);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
@@ -71,18 +70,16 @@ private Q_SLOTS:
 
 private:
     QGLSceneNode *cube;
-    QGraphicsScene *mScene;
-    QGLFramebufferObject *fbo;
+    QGraphicsEmbedScene *mScene;
+    GLuint textureId;
     bool navigating;
     int pressedFace;
     Qt::MouseButton pressedButton;
     QPoint pressedPos;
     QGLCamera *startNavCamera;
 
-    QPoint cubeIntersection(QWidget *widget, const QPoint &point,
-                            int *actualFace) const;
-    void deliverSceneEvent
-        (const QPoint &point, QGraphicsSceneMouseEvent *event);
+    QPointF cubeIntersection(QWidget *widget, const QPoint &point,
+                             int *actualFace) const;
 };
 
 #endif

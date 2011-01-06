@@ -38,30 +38,19 @@
 **
 ****************************************************************************/
 
-#ifndef GRAPHWIDGET_H
-#define GRAPHWIDGET_H
+#ifndef SCENE_H
+#define SCENE_H
 
 #include "qgraphicsembedscene.h"
 
-class Node;
-
-class Graph : public QObject
+class Scene : public QGraphicsEmbedScene
 {
     Q_OBJECT
 public:
-    Graph();
-
-    QGraphicsEmbedScene *scene() const { return sceneObject; }
-
-    void itemMoved();
+    Scene(QObject *parent = 0) : QGraphicsEmbedScene(parent) {}
 
 protected:
-    void timerEvent(QTimerEvent *event);
-
-private:
-    QGraphicsEmbedScene *sceneObject;
-    int timerId;
-    Node *centerNode;
+    void drawBackground(QPainter *painter, const QRectF &rect);
 };
 
 #endif

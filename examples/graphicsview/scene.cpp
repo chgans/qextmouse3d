@@ -38,30 +38,17 @@
 **
 ****************************************************************************/
 
-#ifndef GRAPHWIDGET_H
-#define GRAPHWIDGET_H
+#include "scene.h"
+#include <QtGui/qpainter.h>
 
-#include "qgraphicsembedscene.h"
-
-class Node;
-
-class Graph : public QObject
+void Scene::drawBackground(QPainter *painter, const QRectF &rect)
 {
-    Q_OBJECT
-public:
-    Graph();
-
-    QGraphicsEmbedScene *scene() const { return sceneObject; }
-
-    void itemMoved();
-
-protected:
-    void timerEvent(QTimerEvent *event);
-
-private:
-    QGraphicsEmbedScene *sceneObject;
-    int timerId;
-    Node *centerNode;
-};
-
-#endif
+    painter->save();
+    QLinearGradient gradient(rect.topLeft(), rect.bottomRight());
+    gradient.setColorAt(0, QColor(0, 128, 192, 255));
+    gradient.setColorAt(1, QColor(0, 0, 128, 255));
+    painter->setPen(QPen(Qt::black, 3));
+    painter->setBrush(gradient);
+    painter->drawRect(rect);
+    painter->restore();
+}
