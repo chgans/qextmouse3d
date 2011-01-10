@@ -238,6 +238,8 @@ void QMouse3DSpacePilotPROScreen::writeImage(const QImage &image)
     header[14] = (char)(239 >> 8);
     usb_bulk_write(m_handle, 0x02, header, 512, 100);
     usb_bulk_write(m_handle, 0x02, (char *)image.constBits(), count, 100);
+#else
+    Q_UNUSED(image);
 #endif
 }
 
