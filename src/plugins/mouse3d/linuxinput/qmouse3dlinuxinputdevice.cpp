@@ -153,7 +153,7 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
             if (info.flat != 0)
                 flat = qMax(flat, info.flat);
             else
-                flat = qMax(flat, range / 32);
+                flat = qMax(flat, range / 10);
         } else {
             flat = qMax(flat, 16);
         }
