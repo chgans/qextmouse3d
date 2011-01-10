@@ -38,21 +38,26 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QtOpenGL/qgl.h>
-#include <QtCore/qmath.h>
-#include <QtCore/qdatetime.h>
-#include "view.h"
+#ifndef TEAPOTITEM_H
+#define TEAPOTITEM_H
 
-int main(int argc, char *argv[])
+#include "modelitem.h"
+#include "qglteapot.h"
+
+class TeapotItem : public ModelItem
 {
-    QApplication app(argc, argv);
+    Q_OBJECT
+public:
+    TeapotItem(QGraphicsItem *parent = 0);
+    ~TeapotItem();
 
-    QGLFormat format(QGLFormat::defaultFormat());
-    format.setSampleBuffers(true);
-    View view;
-    view.setViewport(new QGLWidget(format));
-    view.show();
+protected:
+    void paintGL(QGLPainter *painter);
+    QPointF intersection(const QRay3D &ray, int *actualFace) const;
 
-    return app.exec();
-}
+private:
+    QGLTeapot teapot;
+    QGLSceneNode *teapotNode;
+};
+
+#endif

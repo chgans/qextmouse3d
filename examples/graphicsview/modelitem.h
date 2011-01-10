@@ -38,21 +38,52 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QtOpenGL/qgl.h>
-#include <QtCore/qmath.h>
-#include <QtCore/qdatetime.h>
-#include "view.h"
+#ifndef MODELITEM_H
+#define MODELITEM_H
 
-int main(int argc, char *argv[])
+#include "qglgraphicsviewportitem.h"
+#include "qglbuilder.h"
+#include "qray3d.h"
+
+class QGraphicsEmbedScene;
+
+class ModelItem : public QObject, public QGLGraphicsViewportItem
 {
-    QApplication app(argc, argv);
+    Q_OBJECT
+public:
+    ModelItem(QGraphicsItem *parent = 0);
+    ~ModelItem();
 
-    QGLFormat format(QGLFormat::defaultFormat());
-    format.setSampleBuffers(true);
-    View view;
-    view.setViewport(new QGLWidget(format));
-    view.show();
+    QGraphicsEmbedScene *scene() const { return mScene; }
+    void setScene(QGraphicsEmbedScene *scene);
 
-    return app.exec();
-}
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
+
+private Q_SLOTS:
+    void updateScene();
+
+protected:
+    virtual QPointF intersection(const QRay3D &ray, int *actualFace) const = 0;
+    GLuint textureId() const { return mTextureId; }
+    int pressedFace() const { return mPressedFace; }
+
+private:
+    QGraphicsEmbedScene *mScene;
+    GLuint mTextureId;
+    bool navigating;
+    int mPressedFace;
+    Qt::MouseButton pressedButton;
+    QPoint pressedPos;
+    QGLCamera *startNavCamera;
+
+    QPointF intersection
+        (QWidget *widget, const QPoint &point, int *actualFace) const;
+};
+
+#endif

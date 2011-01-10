@@ -41,45 +41,21 @@
 #ifndef CUBEITEM_H
 #define CUBEITEM_H
 
-#include "qglgraphicsviewportitem.h"
-#include "qglbuilder.h"
+#include "modelitem.h"
 
-class QGraphicsEmbedScene;
-
-class CubeItem : public QObject, public QGLGraphicsViewportItem
+class CubeItem : public ModelItem
 {
     Q_OBJECT
 public:
     CubeItem(QGraphicsItem *parent = 0);
     ~CubeItem();
 
-    QGraphicsEmbedScene *scene() const { return mScene; }
-    void setScene(QGraphicsEmbedScene *scene);
-
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-
 protected:
     void paintGL(QGLPainter *painter);
-    void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
-
-private Q_SLOTS:
-    void updateScene();
+    QPointF intersection(const QRay3D &ray, int *actualFace) const;
 
 private:
     QGLSceneNode *cube;
-    QGraphicsEmbedScene *mScene;
-    GLuint textureId;
-    bool navigating;
-    int pressedFace;
-    Qt::MouseButton pressedButton;
-    QPoint pressedPos;
-    QGLCamera *startNavCamera;
-
-    QPointF cubeIntersection(QWidget *widget, const QPoint &point,
-                             int *actualFace) const;
 };
 
 #endif

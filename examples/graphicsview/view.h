@@ -38,21 +38,50 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QtOpenGL/qgl.h>
-#include <QtCore/qmath.h>
-#include <QtCore/qdatetime.h>
-#include "view.h"
+#ifndef VIEW_H
+#define VIEW_H
 
-int main(int argc, char *argv[])
+#include <QtGui/qgraphicsview.h>
+#include <QtGui/qgraphicsscene.h>
+#include <QtGui/qgraphicsitem.h>
+
+class CubeItem;
+class TeapotItem;
+
+class View : public QGraphicsView
 {
-    QApplication app(argc, argv);
+    Q_OBJECT
+public:
+    View(QWidget *parent = 0);
 
-    QGLFormat format(QGLFormat::defaultFormat());
-    format.setSampleBuffers(true);
-    View view;
-    view.setViewport(new QGLWidget(format));
-    view.show();
+protected:
+    void resizeEvent(QResizeEvent *e);
 
-    return app.exec();
-}
+private Q_SLOTS:
+    void switchToCube();
+    void switchToTeapot();
+
+private:
+    QGraphicsScene scene;
+    CubeItem *cube;
+    TeapotItem *teapot;
+};
+
+class Button : public QObject, public QGraphicsPixmapItem
+{
+    Q_OBJECT
+public:
+    Button(const QPixmap &pixmap, QGraphicsItem *parent);
+
+Q_SIGNALS:
+    void clicked();
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
+private:
+    bool pressed;
+};
+
+#endif

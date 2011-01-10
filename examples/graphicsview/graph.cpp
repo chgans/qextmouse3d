@@ -48,8 +48,8 @@
 
 #include <math.h>
 
-Graph::Graph()
-    : timerId(0)
+Graph::Graph(QObject *parent)
+    : QObject(parent), timerId(0)
 {
     QGraphicsEmbedScene *scene = new Scene(this);
     sceneObject = scene;

@@ -45,25 +45,12 @@
 #include "qplane3d.h"
 #include "qtriangle3d.h"
 #include "qgraphicsembedscene.h"
-#include <QtGui/qgraphicssceneevent.h>
-#include <QtGui/qgraphicsview.h>
-#include <QtGui/qpolygon.h>
-#include <QtGui/qapplication.h>
 
 const qreal CubeSize = 2.0f;
 
 CubeItem::CubeItem(QGraphicsItem *parent)
-    : QGLGraphicsViewportItem(parent)
-    , mScene(0)
-    , textureId(0)
-    , navigating(false)
-    , pressedFace(-1)
-    , pressedButton(Qt::NoButton)
+    : ModelItem(parent)
 {
-    startNavCamera = new QGLCamera();
-
-    setFlag(ItemIsFocusable, true);
-
     QGLBuilder builder;
     builder.newSection(QGL::Faceted);
     builder << QGLCube(CubeSize);
@@ -72,31 +59,12 @@ CubeItem::CubeItem(QGraphicsItem *parent)
 
 CubeItem::~CubeItem()
 {
-    delete startNavCamera;
     delete cube;
-}
-
-void CubeItem::setScene(QGraphicsEmbedScene *scene)
-{
-    mScene = scene;
-    connect(scene, SIGNAL(changed(QList<QRectF>)), this, SLOT(updateScene()));
-}
-
-void CubeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
-{
-    // Render the inner scene into a framebuffer object.
-    // We do this while the ordinary Qt paint engine has
-    // control of the GL context rather than later when the
-    // QGLPainter has control of the GL context.
-    if (mScene)
-        textureId = mScene->renderToTexture();
-
-    // Now render the GL parts of the item using QGLPainter.
-    QGLGraphicsViewportItem::paint(painter, option, widget);
 }
 
 void CubeItem::paintGL(QGLPainter *painter)
 {
+    GLuint textureId = this->textureId();
     if (textureId) {
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -120,112 +88,6 @@ void CubeItem::paintGL(QGLPainter *painter)
         painter->setStandardEffect(QGL::LitMaterial);
         cube->draw(painter);
     }
-}
-
-void CubeItem::updateScene()
-{
-    update();
-}
-
-void CubeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    int face;
-    QPointF tc = cubeIntersection
-        (event->widget(), event->pos().toPoint(), &face);
-    if (!navigating && pressedFace == -1 && face != -1) {
-        pressedFace = face;
-        pressedButton = event->button();
-        mScene->deliverEvent(event, tc);
-        return;
-    } else if (!navigating && face == -1) {
-        navigating = true;
-        pressedButton = event->button();
-        pressedPos = event->pos().toPoint();
-        startNavCamera->setEye(camera()->eye());
-        startNavCamera->setCenter(camera()->center());
-        startNavCamera->setUpVector(camera()->upVector());
-#ifndef QT_NO_CURSOR
-        setCursor(Qt::ClosedHandCursor);
-#endif
-        return;
-    }
-    QGraphicsItem::mousePressEvent(event);
-}
-
-void CubeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (navigating) {
-        QPoint delta = event->pos().toPoint() - pressedPos;
-        int deltax = delta.x();
-        int deltay = delta.y();
-        QGLCamera *camera = this->camera();
-        int rotation = camera->screenRotation();
-        if (rotation == 90 || rotation == 270) {
-            qSwap(deltax, deltay);
-        }
-        if (rotation == 90 || rotation == 180) {
-            deltax = -deltax;
-        }
-        if (rotation == 180 || rotation == 270) {
-            deltay = -deltay;
-        }
-        qreal anglex = deltax * 90.0f / rect().width();
-        qreal angley = deltay * 90.0f / rect().height();
-        QQuaternion q = startNavCamera->pan(-anglex);
-        q *= startNavCamera->tilt(-angley);
-        camera->setEye(startNavCamera->eye());
-        camera->setCenter(startNavCamera->center());
-        camera->setUpVector(startNavCamera->upVector());
-        camera->rotateCenter(q);
-    } else if (pressedFace != -1) {
-        int face;
-        QPointF tc = cubeIntersection
-            (event->widget(), event->pos().toPoint(), &face);
-        if (face != pressedFace)
-            tc = QPointF(-1, -1);
-        mScene->deliverEvent(event, tc);
-        return;
-    }
-    QGraphicsItem::mouseMoveEvent(event);
-}
-
-void CubeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (navigating && pressedButton == event->button()) {
-        navigating = false;
-        pressedButton = Qt::NoButton;
-#ifndef QT_NO_CURSOR
-        unsetCursor();
-#endif
-        return;
-    } else if (pressedFace != -1) {
-        int face;
-        QPointF tc = cubeIntersection
-            (event->widget(), event->pos().toPoint(), &face);
-        if (face != pressedFace)
-            tc = QPoint(-1, -1);
-        if (pressedButton == event->button()) {
-            pressedFace = -1;
-            pressedButton = Qt::NoButton;
-        }
-        mScene->deliverEvent(event, tc);
-        return;
-    }
-    QGraphicsItem::mouseReleaseEvent(event);
-}
-
-void CubeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
-{
-    int face;
-    QPointF tc = cubeIntersection
-        (event->widget(), event->pos().toPoint(), &face);
-    if (pressedFace == -1 && face != -1) {
-        pressedFace = face;
-        pressedButton = event->button();
-        mScene->deliverEvent(event, tc);
-        return;
-    }
-    QGraphicsItem::mouseDoubleClickEvent(event);
 }
 
 static const int vertexDataLen = 6 * 4 * 3;
@@ -262,39 +124,15 @@ static const float vertexData[vertexDataLen] = {
     -0.5f * CubeSize, 0.5f * CubeSize, -0.5f * CubeSize
 };
 
-QPointF CubeItem::cubeIntersection
-    (QWidget *widget, const QPoint &point, int *actualFace) const
+QPointF CubeItem::intersection(const QRay3D &ray, int *actualFace) const
 {
-    // Bail out if no scene.
-    if (!mScene) {
-        *actualFace = -1;
-        return QPointF();
-    }
-
-    // Get the combined matrix for the projection.
-    int dpiX = widget->logicalDpiX();
-    int dpiY = widget->logicalDpiY();
-    QRectF bounds = boundingRect();
-    qreal aspectRatio = (bounds.width() * dpiY) / (bounds.height() * dpiX);
-    QMatrix4x4 mv = camera()->modelViewMatrix();
-    QMatrix4x4 proj = camera()->projectionMatrix(aspectRatio);
-
-    // Find the relative position of the point within (-1, -1) to (1, 1).
-    QPointF relativePoint =
-        QPointF((point.x() - bounds.center().x()) * 2 / bounds.width(),
-                -(point.y() - bounds.center().y()) * 2 / bounds.height());
-
-    // Get the ray extending from the eye through the point the user selected.
-    QVector3D eyept = proj.inverted().map
-        (QVector3D(relativePoint.x(), relativePoint.y(), -1.0f));
-    QRay3D ray(QVector3D(0, 0, 0), eyept);
-
     // Determine which face of the cube contains the point.
+    QMatrix4x4 mv = camera()->modelViewMatrix();
     QVector3D pt1, pt2, pt3, pt4;
     QVector2D tc1, tc2, tc3;
-    bool singleFace = (pressedFace != -1);
+    bool singleFace = (pressedFace() != -1);
     for (int face = 0; face < 6; ++face) {
-        if (singleFace && face != pressedFace)
+        if (singleFace && face != pressedFace())
             continue;
 
         // Test the two triangles on the face for an intersection.

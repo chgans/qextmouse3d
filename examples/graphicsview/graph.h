@@ -49,7 +49,7 @@ class Graph : public QObject
 {
     Q_OBJECT
 public:
-    Graph();
+    Graph(QObject *parent = 0);
 
     QGraphicsEmbedScene *scene() const { return sceneObject; }
 
