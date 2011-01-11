@@ -411,16 +411,30 @@ void QGraphicsLookAtTransform::setSubject(QDeclarativeItem3D* value)
     Q_D(QGraphicsLookAtTransform);
     if (d->subject != value)
     {
+        // Listen for changes on the subject and it's ancestors that mean the
+        // lookAt transform needs to be recalculated
         disconnect(this, SLOT(subjectPositionChanged()));
         d->subject = value;
         QDeclarativeItem3D* ancestorItem = d->subject;
         while (ancestorItem != 0)
         {
+            // listen for changes directly on the item, changes on it's
+            // transforms property, or through reparenting
             connect(ancestorItem, SIGNAL(positionChanged()), this, SLOT(subjectPositionChanged()));
             connect(ancestorItem, SIGNAL(rotationChanged()), this, SLOT(subjectPositionChanged()));
             connect(ancestorItem, SIGNAL(scaleChanged()), this, SLOT(subjectPositionChanged()));
             connect(ancestorItem, SIGNAL(parentChanged()), this, SLOT(subjectPositionChanged()));
-            ancestorItem = qobject_cast<QDeclarativeItem3D*>(ancestorItem->parent());
+            QDeclarativeListProperty<QGraphicsTransform3D> transforms =
+                    ancestorItem->transform();
+
+            for (int i=0; i < transforms.count(&transforms) ; i++)
+            {
+                QGraphicsTransform3D* transform = transforms.at(&transforms, i);
+                connect(transform, SIGNAL(transformChanged()),
+                        this, SLOT(subjectPositionChanged()));
+            }
+
+            ancestorItem = qobject_cast<QDeclarativeItem3D*> (ancestorItem->parent());
         };
 
         d->calculateRotationValues();
