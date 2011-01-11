@@ -3,7 +3,6 @@ VPATH += $$PWD
 HEADERS += \
     qglabstractsurface.h \
     qglframebufferobjectsurface.h \
-    qglmaskedsurface.h \
     qglpixelbuffersurface.h \
     qglsubsurface.h \
     qglwidgetsurface.h
@@ -20,4 +19,5 @@ SOURCES += \
 PRIVATE_HEADERS += \
     qglcontextsurface_p.h \
     qgldrawbuffersurface_p.h \
+    qglmaskedsurface_p.h \
     qglpaintersurface_p.h

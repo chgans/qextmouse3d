@@ -63,7 +63,7 @@ class QGLContextSurface : public QGLAbstractSurface
 {
 public:
     explicit QGLContextSurface(const QGLContext *context)
-        : QGLAbstractSurface(QGLAbstractSurface::Other)
+        : QGLAbstractSurface(502)
         , m_context(context) {}
     ~QGLContextSurface() {}
 

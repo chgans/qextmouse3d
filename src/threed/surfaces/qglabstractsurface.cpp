@@ -108,12 +108,11 @@ QT_BEGIN_NAMESPACE
     \value FramebufferObject Instance of QGLFramebufferObjectSurface.
     \value PixelBuffer Instance of QGLPixelBufferSurface.
     \value Subsurface Instance of QGLSubsurface.
-    \value Masked Instance of QGLMaskedSurface.
-    \value Other Some other kind of user-defined surface.
+    \value User First user-defined surface type for use by applications.
 */
 
 /*!
-    \fn QGLAbstractSurface::QGLAbstractSurface(QGLAbstractSurface::SurfaceType surfaceType)
+    \fn QGLAbstractSurface::QGLAbstractSurface(int surfaceType)
 
     Constructs an OpenGL drawing surface of the specified \a surfaceType.
 */
@@ -126,7 +125,7 @@ QGLAbstractSurface::~QGLAbstractSurface()
 }
 
 /*!
-    \fn QGLAbstractSurface::SurfaceType QGLAbstractSurface::surfaceType() const
+    \fn int QGLAbstractSurface::surfaceType() const
 
     Returns the type of this surface.
 */

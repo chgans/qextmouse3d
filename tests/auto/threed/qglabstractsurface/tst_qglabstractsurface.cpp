@@ -45,7 +45,6 @@
 #include "qglframebufferobjectsurface.h"
 #include "qglpixelbuffersurface.h"
 #include "qglsubsurface.h"
-#include "qglmaskedsurface.h"
 #include "qopenglfunctions.h"
 
 class tst_QGLAbstractSurface : public QObject
@@ -60,7 +59,6 @@ private slots:
     void fboSurface();
     void pbufferSurface();
     void subSurface();
-    void maskedSurface();
 
 private:
     bool isFboCurrent(QGLFramebufferObject *fbo);
@@ -316,63 +314,6 @@ void tst_QGLAbstractSurface::subSurface()
     QVERIFY(surface2.switchTo(&surface4));
     QVERIFY(QGLContext::currentContext() == glw.context());
     QCOMPARE(surface4.viewportGL(), QRect(16 + 4, glw.height() - (6 + 8 + 8), 12, 8));
-}
-
-void tst_QGLAbstractSurface::maskedSurface()
-{
-    QGLWidget glw;
-    QGLWidgetSurface surface1(&glw);
-    QVERIFY(surface1.device() == &glw);
-
-    QGLMaskedSurface surface2(&surface1, QGLMaskedSurface::RedMask |
-                                         QGLMaskedSurface::AlphaMask);
-    QVERIFY(surface2.surfaceType() == QGLAbstractSurface::Masked);
-    QVERIFY(surface2.surface() == &surface1);
-    QVERIFY(surface2.mask() == (QGLMaskedSurface::RedMask |
-                                QGLMaskedSurface::AlphaMask));
-    QVERIFY(surface2.device() == surface1.device());
-    QCOMPARE(surface2.viewportGL(), QRect(0, 0, glw.width(), glw.height()));
-
-    QVERIFY(surface2.activate());
-
-    GLboolean buf[4] = {2, 2, 2, 2};
-    glGetBooleanv(GL_COLOR_WRITEMASK, buf);
-    QVERIFY(buf[0] == GL_TRUE);
-    QVERIFY(buf[1] == GL_FALSE);
-    QVERIFY(buf[2] == GL_FALSE);
-    QVERIFY(buf[3] == GL_TRUE);
-
-    QGLMaskedSurface surface3;
-    QVERIFY(surface3.surfaceType() == QGLAbstractSurface::Masked);
-    QVERIFY(surface3.surface() == 0);
-    QVERIFY(surface3.device() == 0);
-    QVERIFY(surface3.mask() == (QGLMaskedSurface::RedMask |
-                                QGLMaskedSurface::GreenMask |
-                                QGLMaskedSurface::BlueMask |
-                                QGLMaskedSurface::AlphaMask));
-    QVERIFY(!surface3.activate(0));
-    QVERIFY(surface3.viewportGL().isNull());
-    surface3.setSurface(&surface1);
-    surface3.setMask(QGLMaskedSurface::GreenMask | QGLMaskedSurface::BlueMask);
-    QVERIFY(surface3.surface() == &surface1);
-    QVERIFY(surface3.mask() == (QGLMaskedSurface::GreenMask |
-                                QGLMaskedSurface::BlueMask));
-
-    QVERIFY(surface2.switchTo(&surface3));
-
-    glGetBooleanv(GL_COLOR_WRITEMASK, buf);
-    QVERIFY(buf[0] == GL_FALSE);
-    QVERIFY(buf[1] == GL_TRUE);
-    QVERIFY(buf[2] == GL_TRUE);
-    QVERIFY(buf[3] == GL_FALSE);
-
-    QVERIFY(surface3.switchTo(&surface1));
-
-    glGetBooleanv(GL_COLOR_WRITEMASK, buf);
-    QVERIFY(buf[0] == GL_TRUE);
-    QVERIFY(buf[1] == GL_TRUE);
-    QVERIFY(buf[2] == GL_TRUE);
-    QVERIFY(buf[3] == GL_TRUE);
 }
 
 QTEST_MAIN(tst_QGLAbstractSurface)

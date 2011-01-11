@@ -63,7 +63,7 @@ class QGLDrawBufferSurface : public QGLAbstractSurface
 {
 public:
     QGLDrawBufferSurface(QGLAbstractSurface *surface, GLenum buffer)
-        : QGLAbstractSurface(QGLAbstractSurface::Other)
+        : QGLAbstractSurface(500)
         , m_surface(surface), m_buffer(buffer) {}
     ~QGLDrawBufferSurface() {}
 

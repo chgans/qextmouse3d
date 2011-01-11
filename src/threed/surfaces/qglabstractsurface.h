@@ -62,11 +62,10 @@ public:
         FramebufferObject,
         PixelBuffer,
         Subsurface,
-        Masked,
-        Other
+        User = 1000
     };
 
-    QGLAbstractSurface::SurfaceType surfaceType() const { return m_type; }
+    int surfaceType() const { return m_type; }
 
     virtual QPaintDevice *device() const = 0;
     virtual bool activate(QGLAbstractSurface *prevSurface = 0) = 0;
@@ -80,11 +79,10 @@ public:
     static QGLAbstractSurface *createSurfaceForContext(const QGLContext *context);
 
 protected:
-    QGLAbstractSurface(QGLAbstractSurface::SurfaceType surfaceType)
-        : m_type(surfaceType) {}
+    QGLAbstractSurface(int surfaceType) : m_type(surfaceType) {}
 
 private:
-    QGLAbstractSurface::SurfaceType m_type;
+    int m_type;
 
     Q_DISABLE_COPY(QGLAbstractSurface)
 };

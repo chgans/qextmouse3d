@@ -42,17 +42,26 @@
 #ifndef QGLMASKEDSURFACE_H
 #define QGLMASKEDSURFACE_H
 
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists purely as an
+// implementation detail.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
 #include "qglabstractsurface.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-QT_MODULE(Qt3d)
-
 class QGLMaskedSurfacePrivate;
 
-class Q_QT3D_EXPORT QGLMaskedSurface : public QGLAbstractSurface
+class QGLMaskedSurface : public QGLAbstractSurface
 {
 public:
     enum BufferMaskBit

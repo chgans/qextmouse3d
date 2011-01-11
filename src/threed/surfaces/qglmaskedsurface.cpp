@@ -39,7 +39,7 @@
 **
 ****************************************************************************/
 
-#include "qglmaskedsurface.h"
+#include "qglmaskedsurface_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -49,6 +49,7 @@ QT_BEGIN_NAMESPACE
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::painting
+    \internal
 
     Masked surfaces are typically used to render red-cyan anaglyph images
     into an underlying surface().  For the left eye image, the mask()
@@ -81,13 +82,15 @@ public:
     QGLMaskedSurface::BufferMask mask;
 };
 
+#define MaskedSurfaceType       501
+
 /*!
     Constructs a masked OpenGL drawing surface with surface() initially
     set to null and mask() initially set to allow all channels to be
     written to the color buffer.
 */
 QGLMaskedSurface::QGLMaskedSurface()
-    : QGLAbstractSurface(QGLAbstractSurface::Masked)
+    : QGLAbstractSurface(MaskedSurfaceType)
     , d_ptr(new QGLMaskedSurfacePrivate)
 {
 }
@@ -98,7 +101,7 @@ QGLMaskedSurface::QGLMaskedSurface()
 */
 QGLMaskedSurface::QGLMaskedSurface
         (QGLAbstractSurface *surface, QGLMaskedSurface::BufferMask mask)
-    : QGLAbstractSurface(QGLAbstractSurface::Masked)
+    : QGLAbstractSurface(MaskedSurfaceType)
     , d_ptr(new QGLMaskedSurfacePrivate(surface, mask))
 {
 }
@@ -188,7 +191,7 @@ void QGLMaskedSurface::deactivate(QGLAbstractSurface *nextSurface)
     Q_D(QGLMaskedSurface);
     if (d->surface)
         d->surface->deactivate(nextSurface);
-    if (nextSurface && nextSurface->surfaceType() == Masked) {
+    if (nextSurface && nextSurface->surfaceType() == MaskedSurfaceType) {
         // If we are about to switch to another masked surface for
         // the same underlying surface, then don't bother calling
         // glColorMask() for this one.

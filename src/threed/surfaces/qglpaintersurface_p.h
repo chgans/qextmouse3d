@@ -63,7 +63,7 @@ class QGLPainterSurface : public QGLAbstractSurface
 {
 public:
     explicit QGLPainterSurface(QPainter *painter)
-        : QGLAbstractSurface(QGLAbstractSurface::Other)
+        : QGLAbstractSurface(503)
         , m_painter(painter), m_painterContext(QGLContext::currentContext()) {}
     ~QGLPainterSurface() {}
 

@@ -42,7 +42,7 @@
 #include "qglview.h"
 #include "qglframebufferobject.h"
 #include "qglsubsurface.h"
-#include "qglmaskedsurface.h"
+#include "qglmaskedsurface_p.h"
 #include "qglwidgetsurface.h"
 #include "qgldrawbuffersurface_p.h"
 #include <QtGui/qevent.h>
