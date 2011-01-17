@@ -368,7 +368,7 @@ void tst_QGeometryData::interleaveWith()
     QGeometryData dat2;
 
     // count is the smaller of the two - nothing in this null case
-    // also make sure the argument doesnt somehow change - its a const
+    // also make sure the argument does not somehow change - its a const
     // so it shouldn't...
     dat2.interleaveWith(data);
     QCOMPARE(data.count(), 4);

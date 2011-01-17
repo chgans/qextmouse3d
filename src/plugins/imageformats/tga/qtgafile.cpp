@@ -217,7 +217,7 @@ QImage QTgaFile::readImage()
         reader = new Tga32Reader();
     TgaReader &read = *reader;
 
-    // For now only deal with yCorner, since noone uses xCorner == 1
+    // For now only deal with yCorner, since no one uses xCorner == 1
     // Also this is upside down, since Qt has the origin flipped
     if (yCorner)
     {

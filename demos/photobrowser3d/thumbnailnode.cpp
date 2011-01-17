@@ -240,7 +240,7 @@ void ThumbnailNode::setImage(const ThumbnailableImage &image)
     }
 
     // ok maybe we got what we asked for but in the meantime we decided
-    // we didnt want it anymore
+    // we did not want it anymore
     if (!m_loading)
         return;
 

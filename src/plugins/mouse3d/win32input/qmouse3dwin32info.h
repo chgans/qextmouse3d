@@ -103,7 +103,7 @@ enum connexion3dKeyCode
 	V3DK_CCW,			// Rotate 90 degrees counter-clockwise
 	V3DK_ISO1,			// Isometric top/front/right view
 	V3DK_ISO2,			// Isometric top/back/left view
-	V3DK_1,				// Customisable 3d mouse function key 1
+	V3DK_1,				// Custom 3d mouse function key 1
 	V3DK_2,				// .
 	V3DK_3,				// .
 	V3DK_4,				// .
@@ -112,7 +112,7 @@ enum connexion3dKeyCode
 	V3DK_7,				// .
 	V3DK_8,				// .
 	V3DK_9,				// .
-	V3DK_10,			// Customisable 3d mouse function key 10
+	V3DK_10,			// Custom 3d mouse function key 10
 	V3DK_ESC,			// Escape key
 	V3DK_ALT,			// Alt key
 	V3DK_SHIFT,			// Shit key

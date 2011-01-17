@@ -209,7 +209,7 @@ QT_BEGIN_NAMESPACE
     This enum defines vertex smoothing treatments.
     \value NoSmoothing No smoothing processing is performed.
     \value Smooth Lighting normals averaged for each face for a smooth appearance.
-    \value Faceted Lighting normals seperate for each face for a faceted appearance.
+    \value Faceted Lighting normals separate for each face for a faceted appearance.
 */
 
 /*!

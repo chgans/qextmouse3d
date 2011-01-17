@@ -255,7 +255,7 @@ void QAreaAllocator::expandBy(const QSize &size)
 
     Allocates \a size pixels from this allocator and returns the rectangle
     that should be used by the caller.  Returns a null rectangle if
-    this allocator does not have sufficient space to accomodate \a size.
+    this allocator does not have sufficient space to accommodate \a size.
 
     \sa release()
 */
@@ -265,7 +265,7 @@ void QAreaAllocator::expandBy(const QSize &size)
 
     Allocates and returns a list of rectangles corresponding to the
     elements of \a sizes.  The returned list will have less elements
-    than \a sizes if there is insufficient space to accomodate
+    than \a sizes if there is insufficient space to accommodate
     all of the allocation requests.  The values that are in the returned
     list will be allocated and need to be passed to release() to
     deallocate them.

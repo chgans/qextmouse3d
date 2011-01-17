@@ -108,7 +108,7 @@ static inline void findEndTag( QXmlStreamReader& xml, QString tagName )
 
 /*!
     \internal
-    Convenience function to find paramaters in \a resultState that have an id,
+    Convenience function to find parameters in \a resultState that have an id,
     sid, or name that is equal to \a stringToMatch
     Note that this using this is not in line with the Collada specification,
     and that non-unique sids will always return the last parameter parsed.
@@ -1234,7 +1234,7 @@ QGLColladaParam* QGLColladaFxEffectFactory::processNewparamElement( QXmlStreamRe
         {
             result = processSurfaceElement( xml, resultState, sidString);
         } else {
-            qWarning() << "unrecognized paramter type ( line:" << xml.lineNumber() << ")";
+            qWarning() << "unrecognized parameter type ( line:" << xml.lineNumber() << ")";
             findEndTag( xml, QLatin1String("newparam") );
             return 0;
         }

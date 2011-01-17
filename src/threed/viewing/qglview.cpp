@@ -131,7 +131,7 @@ QT_BEGIN_NAMESPACE
     and DoubleHighRightLeft, according to the layout of the eye images.
     Double image stereo is selected by calling setStereoType().  It is
     the responsibility of the application to resize the window to
-    twice its normal size to accomodate the images.
+    twice its normal size to accommodate the images.
 
     Ctrl-Left and Ctrl-Right can be used to make the eye separation
     smaller or larger under keyboard control.

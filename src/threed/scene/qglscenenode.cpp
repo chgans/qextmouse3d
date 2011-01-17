@@ -434,7 +434,7 @@ void QGLSceneNode::setLocalTransform(const QMatrix4x4 &transform)
     effectively the position of the model in the scene.
 
     The x, y and z axis translations can also be specified individually as
-    seperate properties \l x, \l y, and \l z
+    separate properties \l x, \l y, and \l z
 
     \sa x(), y(), z()
 */

@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
     in order, one at a time, to the modelview matrix.  Transformations are
     computed in true 3D space using QMatrix4x4.
 
-    QGraphicsTransform3D is particularily useful for animations. Whereas
+    QGraphicsTransform3D is particularly useful for animations. Whereas
     QGLPainter::modelViewMatrix() lets you assign any transform directly,
     there is no direct way to interpolate between two different
     transformations (e.g., when transitioning between two states, each for

@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
     are instances of QGL::VertexAttribute, with the restriction that
     the index must be between 0 and 31.
 
-    The most common use for this fucntion is to determine if specific
+    The most common use for this class is to determine if specific
     attributes have been supplied on a QGLPainter so as to adjust the
     current drawing effect accordingly.  The following example will
     use a lit texture effect if texture co-ordinates were provided

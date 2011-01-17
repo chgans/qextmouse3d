@@ -1189,7 +1189,7 @@ static void qt_gl_setVertexAttribute(QGL::VertexAttribute attribute, const QGLAt
     painter state by setVertexAttribute() and setVertexBundle()
     since the last call to clearAttributes().
 
-    The most common use for this fucntion is to determine if specific
+    The most common use for this function is to determine if specific
     attributes have been supplied on the painter so as to adjust the
     current drawing effect accordingly.  The following example will
     use a lit texture effect if texture co-ordinates were provided

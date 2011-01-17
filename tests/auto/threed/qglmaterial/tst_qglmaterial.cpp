@@ -372,7 +372,7 @@ void tst_QGLMaterial::standardMaterial()
     QVERIFY(mat2.front() == &mat2);
     QVERIFY(mat2.back() == 0);
 
-    // Test setting a psuedo-flat color via QGLMaterial::setColor().
+    // Test setting a pseudo-flat color via QGLMaterial::setColor().
     mat2.setColor(QColor::fromRgbF(0.2f, 0.8f, 0.5f, 0.7f));
     QVERIFY(fuzzyCompare(mat2.ambientColor().redF(), qreal(0.2f * 0.2f)));
     QVERIFY(fuzzyCompare(mat2.ambientColor().greenF(), qreal(0.2f * 0.8f)));

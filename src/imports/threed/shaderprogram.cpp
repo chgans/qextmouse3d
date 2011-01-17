@@ -596,7 +596,7 @@ void ShaderProgramEffect::setPropertyDirty(int property)
 }
 
 /*!
-  \internal Notification recieved via parent ShaderProgram parent that
+  \internal Notification received via parent ShaderProgram parent that
   a requested network resource is ready, so load the pixmap and get
   ready for painting with it.
 

@@ -303,7 +303,7 @@ void QDeclarativeEffect::textureRequestFinished()
 }
 
 /*!
-    Updates the progress of an asyncronous resource request.  Progress is
+    Updates the progress of an asynchronous resource request.  Progress is
     simply \a received / \a total.
 */
 void QDeclarativeEffect::textureRequestProgress(qint64 received, qint64 total)
