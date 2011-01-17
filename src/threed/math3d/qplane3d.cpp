@@ -198,41 +198,9 @@ qreal QPlane3D::intersection(const QRay3D& ray) const
 }
 
 /*!
-    Returns the projection of \a ray onto this plane.
-*/
-QRay3D QPlane3D::project(const QRay3D &ray) const
-{
-    return QRay3D(project(ray.origin()), project(ray.direction()));
-}
-
-/*!
-    Returns the projection of \a point onto this plane, by extending a
-    ray from \a point back to the plane, where the ray is parallel to the
-    normal().
-
-    \sa distanceTo()
-*/
-QVector3D QPlane3D::project(const QVector3D &point) const
-{
-    QVector3D ppVec = m_origin - point;
-    if (ppVec.isNull())
-        return point;
-
-    // the component/projection of the point-to-point vector on the normal vector
-    QVector3D normalComponent = QVector3D::dotProduct(m_normal, ppVec) * m_normal;
-
-    // the component/projection of the point-to-point vector on the plane
-    QVector3D planeComponent = ppVec - normalComponent;
-
-    return m_origin + planeComponent;
-}
-
-/*!
     Returns the distance from this plane to \a point.  The value will
     be positive if \a point is above the plane in the direction
     of normal(), and negative if \a point is below the plane.
-
-    \sa project()
 */
 qreal QPlane3D::distanceTo(const QVector3D &point) const
 {

@@ -71,9 +71,6 @@ public:
     bool intersects(const QRay3D &ray) const;
     qreal intersection(const QRay3D &ray) const;
 
-    QVector3D project(const QVector3D &point) const;
-    QRay3D project(const QRay3D &ray) const;
-
     qreal distanceTo(const QVector3D &point) const;
 
     void transform(const QMatrix4x4 &matrix);

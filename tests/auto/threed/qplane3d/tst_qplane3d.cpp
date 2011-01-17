@@ -58,6 +58,14 @@ private slots:
     void intersection();
     void noIntersection_data();
     void noIntersection();
+    void contains_data();
+    void contains();
+    void distanceTo_data();
+    void distanceTo();
+    void compare();
+    void transform_data();
+    void transform();
+    void dataStream();
     void properties();
     void metaTypes();
 };
@@ -89,6 +97,13 @@ static inline bool fuzzyCompare(const QVector3D &lhs, const QVector3D &rhs)
     qWarning() << "expected:" << rhs;
 #endif
     return false;
+}
+
+static inline bool fuzzyIsNull(const QVector3D &v)
+{
+    return fuzzyCompare(v.x(), 0.0f) &&
+           fuzzyCompare(v.y(), 0.0f) &&
+           fuzzyCompare(v.z(), 0.0f);
 }
 
 void tst_QPlane3D::create_data()
@@ -142,6 +157,14 @@ void tst_QPlane3D::create()
     QPlane3D plane(point, normal);
     QVERIFY(fuzzyCompare(plane.normal(), normal));
     QVERIFY(fuzzyCompare(plane.origin(), point));
+
+    QPlane3D plane2;
+    QVERIFY(plane2.origin() == QVector3D(0, 0, 0));
+    QVERIFY(plane2.normal() == QVector3D(1, 0, 0));
+    plane2.setOrigin(point);
+    plane2.setNormal(normal);
+    QVERIFY(fuzzyCompare(plane2.normal(), normal));
+    QVERIFY(fuzzyCompare(plane2.origin(), point));
 }
 
 void tst_QPlane3D::intersection_data()
@@ -208,6 +231,7 @@ void tst_QPlane3D::intersection()
     qreal t = plane.intersection(line);
     QVERIFY(!qIsNaN(t));
     QVERIFY(fuzzyCompare(line.point(t), intersection));
+    QVERIFY(plane.intersects(line));
 }
 
 void tst_QPlane3D::noIntersection_data()
@@ -250,6 +274,131 @@ void tst_QPlane3D::noIntersection()
 
     qreal t = plane.intersection(line);
     QVERIFY(qIsNaN(t));
+    QVERIFY(!plane.intersects(line));
+}
+
+// Find a vector that lies perpendicular to the normal, and in the plane.
+static QVector3D vectorInPlane(const QPlane3D &plane)
+{
+    QVector3D v = QVector3D::crossProduct(plane.normal(), QVector3D(1, 0, 0));
+    if (fuzzyIsNull(v))
+        v = QVector3D::crossProduct(plane.normal(), QVector3D(0, 1, 0));
+    if (fuzzyIsNull(v))
+        v = QVector3D::crossProduct(plane.normal(), QVector3D(0, 0, 1));
+    v = QVector3D::dotProduct(v, plane.normal()) * plane.normal() /
+                plane.normal().lengthSquared();
+    Q_ASSERT(fuzzyCompare(QVector3D::dotProduct(v, plane.normal()), 0.0f));
+    return v;
+}
+
+void tst_QPlane3D::contains_data()
+{
+    create_data();
+}
+
+void tst_QPlane3D::contains()
+{
+    QFETCH(QVector3D, point);
+    QFETCH(QVector3D, normal);
+    QPlane3D plane(point, normal);
+
+    QVERIFY(plane.contains(point));
+    QVERIFY(!plane.contains(point + normal));
+    QVERIFY(!plane.contains(point - normal));
+
+    QVector3D v = vectorInPlane(plane);
+    QVERIFY(plane.contains(QRay3D(point, v)));
+    QVERIFY(plane.contains(QRay3D(point - v, v)));
+    QVERIFY(!plane.contains(QRay3D(point + normal, v)));
+    QVERIFY(!plane.contains(QRay3D(point, normal)));
+}
+
+void tst_QPlane3D::distanceTo_data()
+{
+    create_data();
+}
+
+void tst_QPlane3D::distanceTo()
+{
+    QFETCH(QVector3D, point);
+    QFETCH(QVector3D, normal);
+    QPlane3D plane(point, normal);
+
+    QVERIFY(fuzzyCompare(plane.distanceTo(point), 0.0f));
+    QVERIFY(fuzzyCompare(plane.distanceTo(point + normal), normal.length()));
+    QVERIFY(fuzzyCompare(plane.distanceTo(point - normal), -normal.length()));
+
+    QVector3D v = vectorInPlane(plane);
+    QVERIFY(fuzzyCompare(plane.distanceTo(point + v), 0.0f));
+    QVERIFY(fuzzyCompare(plane.distanceTo(point + normal + v), normal.length()));
+    QVERIFY(fuzzyCompare(plane.distanceTo(point - normal + v), -normal.length()));
+}
+
+void tst_QPlane3D::compare()
+{
+    QPlane3D plane1(QVector3D(10, 20, 30), QVector3D(-1, 2, 4));
+    QPlane3D plane2(QVector3D(10, 20, 30), QVector3D(1, -2, -4));
+    QPlane3D plane3(QVector3D(0, 20, 30), QVector3D(-1, 2, 4));
+    QVERIFY(plane1 == plane1);
+    QVERIFY(!(plane1 != plane1));
+    QVERIFY(qFuzzyCompare(plane1, plane1));
+    QVERIFY(plane1 != plane2);
+    QVERIFY(!(plane1 == plane2));
+    QVERIFY(!qFuzzyCompare(plane1, plane2));
+    QVERIFY(plane1 != plane3);
+    QVERIFY(!(plane1 == plane3));
+    QVERIFY(!qFuzzyCompare(plane1, plane3));
+}
+
+void tst_QPlane3D::transform_data()
+{
+    create_data();
+}
+
+void tst_QPlane3D::transform()
+{
+    QFETCH(QVector3D, point);
+    QFETCH(QVector3D, normal);
+
+    QMatrix4x4 m;
+    m.translate(-1.0f, 2.5f, 5.0f);
+    m.rotate(45.0f, 1.0f, 1.0f, 1.0f);
+    m.scale(23.5f);
+
+    QPlane3D plane1(point, normal);
+    QPlane3D plane2(plane1);
+    QPlane3D plane3;
+
+    plane1.transform(m);
+    plane3 = plane2.transformed(m);
+
+    QVERIFY(fuzzyCompare(plane1.origin(), plane3.origin()));
+    QVERIFY(fuzzyCompare(plane1.normal(), plane3.normal()));
+
+    QVERIFY(fuzzyCompare(plane1.origin(), m * point));
+    QVERIFY(fuzzyCompare(plane1.normal(), m.mapVector(normal)));
+}
+
+void tst_QPlane3D::dataStream()
+{
+#ifndef QT_NO_DATASTREAM
+    QPlane3D plane(QVector3D(1.0f, 2.0f, 3.0f),
+                   QVector3D(4.0f, 5.0f, 6.0f));
+
+    QByteArray data;
+    {
+        QDataStream stream(&data, QIODevice::WriteOnly);
+        stream << plane;
+    }
+
+    QPlane3D plane2;
+    {
+        QDataStream stream2(data);
+        stream2 >> plane2;
+    }
+
+    QVERIFY(plane == plane2);
+#endif
 }
 
 class tst_QPlane3DProperties : public QObject
