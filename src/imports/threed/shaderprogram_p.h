@@ -74,7 +74,7 @@ public:
     virtual ~ShaderProgramPropertyListener()
     {
     }
-signals:
+Q_SIGNALS:
     void propertyChanged();
 };
 
