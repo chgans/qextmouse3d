@@ -89,6 +89,7 @@ QT_BEGIN_NAMESPACE
 */
 FloatingItem::FloatingItem(QDeclarativeItem *parent)
     : QDeclarativeItem(parent)
+    , m_depth(0.0f)
 {
     // The actual stereo adjustment is done with a QGraphicsEffect.
     m_effect = new FloatingItemEffect(this);
