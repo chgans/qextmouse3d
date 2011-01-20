@@ -105,7 +105,7 @@ void FloatingItemEffect::draw(QPainter *painter)
             transform = QTransform::fromTranslate(-depth / 2.0f, 0.0f);
         } else {
             transform = *origTransform;
-            transform.translate(depth / 2.0f, 0.0f);
+            transform.translate(-depth / 2.0f, 0.0f);
         }
         drawContext->effectTransform = &transform;
         drawSource(painter);
