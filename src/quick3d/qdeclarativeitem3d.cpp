@@ -243,6 +243,7 @@ public:
         , scale(1.0f)
         , mesh(0)
         , effect(0)
+        , requireBlockingEffectsCheck(false)
         , light(0)
         , objectPickId(-1)
         , cullFaces(QDeclarativeItem3D::CullDisabled)
@@ -265,6 +266,7 @@ public:
     qreal scale;
     QDeclarativeMesh *mesh;
     QDeclarativeEffect *effect;
+    bool requireBlockingEffectsCheck;
     QGLLightParameters *light;
     int objectPickId;
     QDeclarativeItem3D::CullFaces cullFaces;
@@ -822,24 +824,28 @@ QDeclarativeMesh *QDeclarativeItem3D::mesh() const
 
 void QDeclarativeItem3D::setMesh(QDeclarativeMesh *value)
 {
-    if (d->mesh) {
-        if (!d->mesh->deref())
-            delete d->mesh;
+    if (d->mesh != value)
+    {
+        if (d->mesh) {
+            if (!d->mesh->deref())
+                delete d->mesh;
+        }
+
+        d->mesh = value;
+        //always start off pointing to the default scene mesh object.
+        d->mainBranchId = 0;
+
+        if (value) {
+            d->mesh->ref();
+            connect(value, SIGNAL(dataChanged()), this, SIGNAL(meshChanged()));
+            connect(value, SIGNAL(dataChanged()), this, SLOT(update()));
+            d->requireBlockingEffectsCheck = true;
+        }
+
+        emit meshChanged();
+
+        update();
     }
-
-    d->mesh = value;
-    //always start off pointing to the default scene mesh object.
-    d->mainBranchId = 0;
-
-    if (value) {
-        d->mesh->ref();
-        connect(value, SIGNAL(dataChanged()), this, SIGNAL(meshChanged()));
-        connect(value, SIGNAL(dataChanged()), this, SLOT(update()));
-    }
-
-    emit meshChanged();
-
-    update();
 }
 
 /*!
@@ -868,7 +874,10 @@ void QDeclarativeItem3D::setEffect(QDeclarativeEffect *value)
         disconnect(d->effect, SIGNAL(effectChanged()), this, SLOT(update()));
     d->effect = value;
     if (d->effect)
+    {
         connect(d->effect, SIGNAL(effectChanged()), this, SLOT(update()));
+        d->requireBlockingEffectsCheck = true;
+    }
     emit effectChanged();
     update();
 }
@@ -1421,6 +1430,25 @@ void QDeclarativeItem3D::setMeshNode(const QString &node)
 */
 void QDeclarativeItem3D::update()
 {
+    if (d->requireBlockingEffectsCheck && d->effect && d->mesh)
+    {
+        QGLSceneNode *n = 0;
+        if (d->mainBranchId)
+            n = d->mesh->getSceneBranch(d->mainBranchId);
+        if (!n)
+            n = d->mesh->getSceneObject();
+        if (n)
+        {
+            QList<QGLSceneNode*> k = n->allChildren();
+            k.prepend(n);
+            for (int i = 0; i < k.size(); ++i)
+            {
+                if (k.at(i)->hasEffect())
+                    k.at(i)->setEffectEnabled(false);
+            }
+        }
+        d->requireBlockingEffectsCheck = false;
+    }
     if (d->viewport)
         d->viewport->update3d();
 }
