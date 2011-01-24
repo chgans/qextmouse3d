@@ -39,24 +39,26 @@
 **
 ****************************************************************************/
 
-#ifndef VIEWPORT_H
-#define VIEWPORT_H
+#ifndef VIEWPORT_SG_H
+#define VIEWPORT_SG_H
 
-#include <QtDeclarative/qdeclarativeitem.h>
+#include "qsgitem.h"
 #include "qdeclarativeitem3d.h"
 #include "qdeclarativeviewport_p.h"
+#include "qglnamespace.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class ViewportPrivate;
+class ViewportSGPrivate;
 class QGLCamera;
 class QGLLightModel;
 class QGLLightParameters;
 class QDeclarativeEffect;
+class QGLAbstractSurface;
 
-class Viewport : public QDeclarativeItem, public QDeclarativeViewport
+class ViewportSG : public QSGItem, public QDeclarativeViewport
 {
     Q_OBJECT
     Q_PROPERTY(bool picking READ picking WRITE setPicking NOTIFY viewportChanged)
@@ -67,8 +69,8 @@ class Viewport : public QDeclarativeItem, public QDeclarativeViewport
     Q_PROPERTY(QGLLightParameters *light READ light WRITE setLight NOTIFY viewportChanged)
     Q_PROPERTY(QGLLightModel *lightModel READ lightModel WRITE setLightModel NOTIFY viewportChanged)
 public:
-    Viewport(QDeclarativeItem *parent = 0);
-    ~Viewport();
+    ViewportSG(QSGItem *parent = 0);
+    ~ViewportSG();
 
     bool picking() const;
     void setPicking(bool value);
@@ -91,7 +93,8 @@ public:
     QGLLightModel *lightModel() const;
     void setLightModel(QGLLightModel *value);
 
-    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+    bool isDirty() const;
+    void paint(QGLAbstractSurface *surface, QGL::Eye eye);
 
     int registerPickableObject(QObject *obj);
 
@@ -105,7 +108,6 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void cameraChanged();
-    void switchToOpenGL();
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
@@ -118,8 +120,10 @@ protected:
     void wheelEvent(QGraphicsSceneWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
 
+    Node *updatePaintNode(Node *, UpdatePaintNodeData *);
+
 private:
-    ViewportPrivate *d;
+    ViewportSGPrivate *d;
 
     void earlyDraw(QGLPainter *painter);
     void draw(QGLPainter *painter);
@@ -136,9 +140,11 @@ private:
     void pan(qreal deltax, qreal deltay);
     void rotate(qreal deltax, qreal deltay);
     QPointF viewDelta(qreal deltax, qreal deltay);
+
+    bool isViewportRoot() const;
 };
 
-QML_DECLARE_TYPE(Viewport)
+QML_DECLARE_TYPE(ViewportSG)
 
 QT_END_NAMESPACE
 

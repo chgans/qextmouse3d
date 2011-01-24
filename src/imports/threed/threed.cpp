@@ -62,6 +62,7 @@
 #ifdef QT_USE_SCENEGRAPH
 #include "stereoview_sg.h"
 #include "floatingitem_sg.h"
+#include "viewport_sg.h"
 #endif
 
 QT_BEGIN_NAMESPACE
@@ -72,6 +73,10 @@ QML_DECLARE_TYPE(QGraphicsTranslation3D)
 QML_DECLARE_TYPE(QGraphicsScale3D)
 QML_DECLARE_TYPE(QGraphicsBillboardTransform)
 QML_DECLARE_TYPE(QGraphicsLookAtTransform)
+QML_DECLARE_TYPE(QGLMaterial)
+QML_DECLARE_TYPE(QGLLightModel)
+QML_DECLARE_TYPE(QGLLightParameters)
+QML_DECLARE_TYPE(QGLCamera)
 
 class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
@@ -99,6 +104,7 @@ public:
 
 #ifdef QT_USE_SCENEGRAPH
         // XXX: how to switch dynamically?
+        qmlRegisterType<ViewportSG>(uri,1,0,"Viewport");
         qmlRegisterType<FloatingItemSG>(uri,1,0,"FloatingItem");
         qmlRegisterType<StereoViewSG>(uri,1,0,"StereoView");
 #else
