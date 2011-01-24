@@ -56,6 +56,9 @@ QT_BEGIN_NAMESPACE
     \dots
     \snippet declarative/stereo/stereo.qml 2
 
+    \bold{Note:} StereoView is not needed with Qt Quick 2.0 as the
+    standard view classes are already stereo-aware.
+
     \image stereo-screenshot-qml.png
 
     2D items are placed within the 3D visual field using the

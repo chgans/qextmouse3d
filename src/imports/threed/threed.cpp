@@ -59,6 +59,9 @@
 #include "qglscenenode.h"
 #include "floatingitem.h"
 #include "stereoview.h"
+#ifdef QT_USE_SCENEGRAPH
+#include "floatingitem_sg.h"
+#endif
 
 QT_BEGIN_NAMESPACE
 
@@ -80,7 +83,6 @@ public:
         qmlRegisterType<QDeclarativeEffect>(uri,1,0,"Effect");
         qmlRegisterType<QDeclarativeMesh>(uri,1,0,"Mesh");
         qmlRegisterType<QDeclarativeItem3D>(uri,1,0,"Item3D");
-        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
         qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
@@ -94,8 +96,14 @@ public:
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
 #endif
 
+#ifdef QT_USE_SCENEGRAPH
+        // XXX: how to switch dynamically?
+        qmlRegisterType<FloatingItemSG>(uri,1,0,"FloatingItem");
+#else
+        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
         qmlRegisterType<StereoView>(uri,1,0,"StereoView");
+#endif
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();
