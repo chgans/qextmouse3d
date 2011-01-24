@@ -47,9 +47,11 @@ HEADERS += \
 
 scenegraph {
     SOURCES += \
+        stereoview_sg.cpp \
         floatingitem_sg.cpp \
         floatingitemnode_sg.cpp
     HEADERS += \
+        stereoview_sg.h \
         floatingitem_sg.h \
         floatingitemnode_sg.h
     !isEmpty(SCENEGRAPH_PATH) {

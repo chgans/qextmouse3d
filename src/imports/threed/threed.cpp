@@ -60,6 +60,7 @@
 #include "floatingitem.h"
 #include "stereoview.h"
 #ifdef QT_USE_SCENEGRAPH
+#include "stereoview_sg.h"
 #include "floatingitem_sg.h"
 #endif
 
@@ -99,6 +100,7 @@ public:
 #ifdef QT_USE_SCENEGRAPH
         // XXX: how to switch dynamically?
         qmlRegisterType<FloatingItemSG>(uri,1,0,"FloatingItem");
+        qmlRegisterType<StereoViewSG>(uri,1,0,"StereoView");
 #else
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
