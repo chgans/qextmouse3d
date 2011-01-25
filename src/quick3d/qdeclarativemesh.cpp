@@ -289,9 +289,8 @@ void QDeclarativeMesh::initSceneObjectList()
             if (node)
                 d->sceneObjects.append(node);
         }
+        d->mainSceneObject = d->scene->mainNode();
     }
-
-    d->mainSceneObject = d->scene->mainNode();
 }
 
 /*!
