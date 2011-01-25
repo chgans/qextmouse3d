@@ -86,11 +86,11 @@ QML_DECLARE_TYPE(Item3DClicker)
 
 bool Item3DClicker::click(QObject *target)
 {
-    if(target == 0)
+    if (target == 0)
         return false;
     const QMetaObject* metaTarget = target->metaObject();
     int clickedIndex = metaTarget->indexOfSignal("clicked()");
-    if(clickedIndex == -1)
+    if (clickedIndex == -1)
         return false;
 
     metaTarget->activate(target, clickedIndex, 0);
