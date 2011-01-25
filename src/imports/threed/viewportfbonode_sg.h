@@ -42,8 +42,12 @@
 #ifndef VIEWPORTFBONODE_SG_H
 #define VIEWPORTFBONODE_SG_H
 
-#include "node.h"
-#include "texturematerial.h"
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
+#include <QtDeclarative/node.h>
+#include <QtDeclarative/texturematerial.h>
 
 QT_BEGIN_HEADER
 
@@ -87,5 +91,7 @@ private:
 QT_END_NAMESPACE
 
 QT_END_HEADER
+
+#endif // QML_VERSION >= 0x020000
 
 #endif

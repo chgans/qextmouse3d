@@ -39,9 +39,13 @@
 **
 ****************************************************************************/
 
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
 #include "viewportfbonode_sg.h"
 #include "viewport_sg.h"
-#include "qsgstereocontext.h"
+#include <QtDeclarative/qsgstereocontext.h>
 #include "qglframebufferobjectsurface.h"
 
 QT_BEGIN_NAMESPACE
@@ -146,3 +150,5 @@ void ViewportFboNodeSG::preprocess()
 }
 
 QT_END_NAMESPACE
+
+#endif // QML_VERSION >= 0x020000

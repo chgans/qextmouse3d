@@ -59,7 +59,8 @@
 #include "qglscenenode.h"
 #include "floatingitem.h"
 #include "stereoview.h"
-#ifdef QT_USE_SCENEGRAPH
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+#define QT_USE_SCENEGRAPH 1
 #include "stereoview_sg.h"
 #include "floatingitem_sg.h"
 #include "viewport_sg.h"
@@ -102,20 +103,19 @@ public:
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
 #endif
 
-#ifdef QT_USE_SCENEGRAPH
-        // XXX: how to switch dynamically?
-        qmlRegisterType<ViewportSG>(uri,1,0,"Viewport");
-        qmlRegisterType<FloatingItemSG>(uri,1,0,"FloatingItem");
-        qmlRegisterType<StereoViewSG>(uri,1,0,"StereoView");
-#else
         qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
         qmlRegisterType<StereoView>(uri,1,0,"StereoView");
-#endif
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();
         qmlRegisterType<QGraphicsScale3D>();
+
+#ifdef QT_USE_SCENEGRAPH
+        qmlRegisterType<ViewportSG>(uri,2,0,"Viewport");
+        qmlRegisterType<FloatingItemSG>(uri,2,0,"FloatingItem");
+        qmlRegisterType<StereoViewSG>(uri,2,0,"StereoView");
+#endif
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {

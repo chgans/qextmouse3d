@@ -45,32 +45,18 @@ HEADERS += \
                shaderprogram_p.h
 }
 
-scenegraph {
-    SOURCES += \
-        stereoview_sg.cpp \
-        floatingitem_sg.cpp \
-        floatingitemnode_sg.cpp \
-        viewport_sg.cpp \
-        viewportfbonode_sg.cpp
-    HEADERS += \
-        stereoview_sg.h \
-        floatingitem_sg.h \
-        floatingitemnode_sg.h \
-        viewport_sg.h \
-        viewportfbonode_sg.h
-    !isEmpty(SCENEGRAPH_PATH) {
-        INCLUDEPATH += $$SCENEGRAPH_PATH/src/scenegraph/coreapi
-        INCLUDEPATH += $$SCENEGRAPH_PATH/src/scenegraph/convenience
-        INCLUDEPATH += $$SCENEGRAPH_PATH/src/adaptationlayers
-        INCLUDEPATH += $$SCENEGRAPH_PATH/src/qml
-        INCLUDEPATH += $$SCENEGRAPH_PATH/src
-        LIBS += -L$$SCENEGRAPH_PATH/lib -lQtSceneGraph
-        DEFINES += QT_USE_SCENEGRAPH
-        DEFINES += QML_RUNTIME_TESTING
-    } else {
-        error("SCENEGRAPH_PATH is not set")
-    }
-}
+SOURCES += \
+    stereoview_sg.cpp \
+    floatingitem_sg.cpp \
+    floatingitemnode_sg.cpp \
+    viewport_sg.cpp \
+    viewportfbonode_sg.cpp
+HEADERS += \
+    stereoview_sg.h \
+    floatingitem_sg.h \
+    floatingitemnode_sg.h \
+    viewport_sg.h \
+    viewportfbonode_sg.h
 
 qdeclarativesources.files += \
     qmldir

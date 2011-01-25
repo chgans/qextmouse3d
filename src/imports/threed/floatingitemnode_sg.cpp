@@ -39,9 +39,15 @@
 **
 ****************************************************************************/
 
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
 #include "floatingitemnode_sg.h"
-#include "qsgstereocontext.h"
-#include "qmatrix4x4stack.h"
+#include <QtDeclarative/qsgstereocontext.h>
+#include <QtDeclarative/qsgmatrix4x4stack.h>
+
+QT_BEGIN_NAMESPACE
 
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
     : m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
@@ -81,7 +87,11 @@ void FloatingItemSGNode::preprocess()
     markDirty(DirtyMatrix);
 }
 
-void FloatingItemSGNode::applyTo(QMatrix4x4Stack *stack)
+void FloatingItemSGNode::applyTo(QSGMatrix4x4Stack *stack)
 {
     *stack = m_adjustMatrix * stack->top() * matrix();
 }
+
+QT_END_NAMESPACE
+
+#endif // QML_VERSION >= 0x020000

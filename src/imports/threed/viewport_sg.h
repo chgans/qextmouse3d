@@ -42,7 +42,11 @@
 #ifndef VIEWPORT_SG_H
 #define VIEWPORT_SG_H
 
-#include "qsgitem.h"
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
+#include <QtDeclarative/qsgitem.h>
 #include "qdeclarativeitem3d.h"
 #include "qdeclarativeviewport_p.h"
 #include "qglnamespace.h"
@@ -149,5 +153,7 @@ QML_DECLARE_TYPE(ViewportSG)
 QT_END_NAMESPACE
 
 QT_END_HEADER
+
+#endif // QML_VERSION >= 0x020000
 
 #endif

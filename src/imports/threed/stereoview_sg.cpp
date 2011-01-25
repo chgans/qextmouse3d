@@ -39,6 +39,10 @@
 **
 ****************************************************************************/
 
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
 #include "stereoview_sg.h"
 
 QT_BEGIN_NAMESPACE
@@ -53,3 +57,5 @@ StereoViewSG::~StereoViewSG()
 }
 
 QT_END_NAMESPACE
+
+#endif // QML_VERSION >= 0x020000

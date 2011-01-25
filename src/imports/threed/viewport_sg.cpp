@@ -39,9 +39,13 @@
 **
 ****************************************************************************/
 
+#include <QtDeclarative/qdeclarative.h>
+
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+
 #include "viewport_sg.h"
 #include "viewportfbonode_sg.h"
-#include "qsgview.h"
+#include <QtDeclarative/qsgview.h>
 #include "qdeclarativeeffect_p.h"
 #include "qgllightmodel.h"
 #include "qgllightparameters.h"
@@ -49,7 +53,7 @@
 #include "qglview.h"
 #include "qglsubsurface.h"
 #include "qglframebufferobjectsurface.h"
-#include "node.h"
+#include <QtDeclarative/node.h>
 #include <QtGui/qpainter.h>
 #include <QtGui/qgraphicsview.h>
 #include <QtGui/qgraphicsscene.h>
@@ -951,3 +955,5 @@ bool ViewportSG::isViewportRoot() const
 }
 
 QT_END_NAMESPACE
+
+#endif // QML_VERSION >= 0x020000
