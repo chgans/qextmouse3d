@@ -71,6 +71,32 @@ static int failed = 0;
 static int skipped = 0;
 static FILE *stream = 0;
 
+// A utility object to trigger the "clicked()" signal on a DeclarativeItem3d.
+class Item3DClicker : public QObject
+{
+        Q_OBJECT
+public:
+        Item3DClicker(QObject *parent = 0) : QObject(parent) {}
+
+public Q_SLOTS:
+    Q_INVOKABLE bool click(QObject *target);
+};
+
+QML_DECLARE_TYPE(Item3DClicker)
+
+bool Item3DClicker::click(QObject *target)
+{
+    if (target == 0)
+        return false;
+    const QMetaObject* metaTarget = target->metaObject();
+    int clickedIndex = metaTarget->indexOfSignal("clicked()");
+    if (clickedIndex == -1)
+        return false;
+
+    metaTarget->activate(target, clickedIndex, 0);
+    return true;
+}
+
 class TestReport : public QObject
 {
     Q_OBJECT
@@ -250,6 +276,7 @@ int main(int argc, char *argv[])
     }
 
     qmlRegisterType<TestReport>("QtQuickTest", 1, 0, "TestReport");
+    qmlRegisterType<Item3DClicker>("QtQuickTest", 1, 0, "Item3DClicker");
 
     // Scan through all of the "*.qml" files in the subdirectories
     // and run each of them in turn with a QDeclarativeView.

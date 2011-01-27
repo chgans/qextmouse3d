@@ -59,6 +59,11 @@
 #include "qglscenenode.h"
 #include "floatingitem.h"
 #include "stereoview.h"
+#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+#define QT_USE_SCENEGRAPH 1
+#include "floatingitem_sg.h"
+#include "viewport_sg.h"
+#endif
 
 QT_BEGIN_NAMESPACE
 
@@ -68,6 +73,10 @@ QML_DECLARE_TYPE(QGraphicsTranslation3D)
 QML_DECLARE_TYPE(QGraphicsScale3D)
 QML_DECLARE_TYPE(QGraphicsBillboardTransform)
 QML_DECLARE_TYPE(QGraphicsLookAtTransform)
+QML_DECLARE_TYPE(QGLMaterial)
+QML_DECLARE_TYPE(QGLLightModel)
+QML_DECLARE_TYPE(QGLLightParameters)
+QML_DECLARE_TYPE(QGLCamera)
 
 class QThreedQmlModule : public QDeclarativeExtensionPlugin
 {
@@ -80,7 +89,6 @@ public:
         qmlRegisterType<QDeclarativeEffect>(uri,1,0,"Effect");
         qmlRegisterType<QDeclarativeMesh>(uri,1,0,"Mesh");
         qmlRegisterType<QDeclarativeItem3D>(uri,1,0,"Item3D");
-        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<QGLLightModel>(uri,1,0,"LightModel");
         qmlRegisterType<QGLLightParameters>(uri,1,0,"Light");
         qmlRegisterType<QGLCamera>(uri,1,0,"Camera");
@@ -94,12 +102,18 @@ public:
         qmlRegisterType<ShaderProgram>(uri,1,0,"ShaderProgram");
 #endif
 
+        qmlRegisterType<Viewport>(uri,1,0,"Viewport");
         qmlRegisterType<FloatingItem>(uri,1,0,"FloatingItem");
         qmlRegisterType<StereoView>(uri,1,0,"StereoView");
 
         // Needed to make QDeclarativeListProperty<QGraphicsTransform3D> work.
         qmlRegisterType<QGraphicsTransform3D>();
         qmlRegisterType<QGraphicsScale3D>();
+
+#ifdef QT_USE_SCENEGRAPH
+        qmlRegisterType<ViewportSG>(uri,2,0,"Viewport");
+        qmlRegisterType<FloatingItemSG>(uri,2,0,"FloatingItem");
+#endif
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {

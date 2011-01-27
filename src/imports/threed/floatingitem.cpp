@@ -56,6 +56,9 @@ QT_BEGIN_NAMESPACE
     \dots
     \snippet declarative/stereo/stereo.qml 2
 
+    \bold{Note:} StereoView is not supported with Qt Quick 2.0 as the
+    standard view classes are already stereo-aware.
+
     \image stereo-screenshot-qml.png
 
     2D items are placed within the 3D visual field using the
@@ -89,6 +92,7 @@ QT_BEGIN_NAMESPACE
 */
 FloatingItem::FloatingItem(QDeclarativeItem *parent)
     : QDeclarativeItem(parent)
+    , m_depth(0.0f)
 {
     // The actual stereo adjustment is done with a QGraphicsEffect.
     m_effect = new FloatingItemEffect(this);

@@ -99,6 +99,9 @@ QT_BEGIN_NAMESPACE
     depth to the most positive.  This will ensure that the children
     are painted correctly at their respective depths.
 
+    \bold{Note:} StereoView is not supported with Qt Quick 2.0 as the
+    standard view classes are already stereo-aware.
+
     \sa FloatingItem, Viewport, {QML Stereo Viewing Example}
 */
 
