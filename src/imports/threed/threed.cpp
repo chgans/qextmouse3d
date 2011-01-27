@@ -61,7 +61,6 @@
 #include "stereoview.h"
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 #define QT_USE_SCENEGRAPH 1
-#include "stereoview_sg.h"
 #include "floatingitem_sg.h"
 #include "viewport_sg.h"
 #endif
@@ -114,7 +113,6 @@ public:
 #ifdef QT_USE_SCENEGRAPH
         qmlRegisterType<ViewportSG>(uri,2,0,"Viewport");
         qmlRegisterType<FloatingItemSG>(uri,2,0,"FloatingItem");
-        qmlRegisterType<StereoViewSG>(uri,2,0,"StereoView");
 #endif
     }
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)

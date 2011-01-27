@@ -99,9 +99,8 @@ QT_BEGIN_NAMESPACE
     depth to the most positive.  This will ensure that the children
     are painted correctly at their respective depths.
 
-    \bold{Note:} StereoView is optional with Qt Quick 2.0 as the
-    standard view classes are already stereo-aware.  Also, changing
-    the \l layout property has no effect with Qt Quick 2.0.
+    \bold{Note:} StereoView is not supported with Qt Quick 2.0 as the
+    standard view classes are already stereo-aware.
 
     \sa FloatingItem, Viewport, {QML Stereo Viewing Example}
 */
@@ -169,10 +168,6 @@ StereoView::~StereoView()
        FloatingItem elements will be ignored, and the viewport
        occupies the entire StereoView.
     \endlist
-
-    \bold{Note:} Changing this property has no effect with Qt Quick 2.0
-    because the standard view classes handle stereo layout.  Reading
-    this property will always return Default.
 */
 
 void StereoView::setLayout(StereoView::Layout layout)
