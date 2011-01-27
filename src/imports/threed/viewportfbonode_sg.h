@@ -48,6 +48,7 @@
 
 #include <QtDeclarative/node.h>
 #include <QtDeclarative/texturematerial.h>
+#include <QtOpenGL/qglframebufferobject.h>
 
 QT_BEGIN_HEADER
 
@@ -80,12 +81,26 @@ private:
     QSGStereoContext *m_context;
     QSize m_size;
     qreal m_opacity;
-    QGLFramebufferObject *m_fbo;
-    TextureMaterial m_material;
-    TextureMaterialWithOpacity m_materialO;
-    QSGTextureRef m_texture;
+
+    struct EyeBuffer
+    {
+        EyeBuffer() : fbo(0) {}
+        ~EyeBuffer() { delete fbo; }
+
+        QGLFramebufferObject *fbo;
+        TextureMaterial material;
+        TextureMaterialWithOpacity materialO;
+        QSGTextureRef texture;
+
+        void reset() { delete fbo; fbo = 0; }
+    };
+
+    EyeBuffer m_left;
+    EyeBuffer m_right;
+
     bool m_useAlpha;
     bool m_linearFiltering;
+    bool m_leftWasDirty;
 };
 
 QT_END_NAMESPACE

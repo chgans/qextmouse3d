@@ -54,18 +54,17 @@ ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     : m_viewport(viewport)
     , m_context(qobject_cast<QSGStereoContext *>(context))
     , m_opacity(1.0f)
-    , m_fbo(0)
     , m_useAlpha(true)
     , m_linearFiltering(true)
+    , m_leftWasDirty(true)
 {
     setFlag(Node::UsePreprocess);
-    setMaterial(&m_material);
+    setMaterial(&m_left.material);
     updateGeometryDescription(Utilities::getTexturedRectGeometryDescription(), GL_UNSIGNED_SHORT);
 }
 
 ViewportFboNodeSG::~ViewportFboNodeSG()
 {
-    delete m_fbo;
 }
 
 void ViewportFboNodeSG::setSize(const QSize &size)
@@ -76,8 +75,8 @@ void ViewportFboNodeSG::setSize(const QSize &size)
     m_size = size;
     setBoundingRect(QRectF(0, 0, size.width(), size.height()));
 
-    delete m_fbo;
-    m_fbo = 0;
+    m_left.reset();
+    m_right.reset();
 
     Utilities::setupRectGeometry(geometry(), QRectF(0, 0, m_size.width(), m_size.height()), QSize(1, 1), QRectF(0,1,1,-1));
     markDirty(DirtyGeometry);
@@ -89,8 +88,10 @@ void ViewportFboNodeSG::setOpacity(qreal opacity)
         return;
 
     m_opacity = opacity;
-    m_materialO.setOpacity(opacity);
-    setMaterial(opacity == 1 ? &m_material : &m_materialO);
+    m_left.materialO.setOpacity(opacity);
+    m_right.materialO.setOpacity(opacity);
+
+    markDirty(DirtyMaterial);
 }
 
 void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
@@ -100,8 +101,10 @@ void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
 
     m_useAlpha = useAlpha;
 
-    delete m_fbo;
-    m_fbo = 0;
+    m_left.reset();
+    m_right.reset();
+
+    markDirty(DirtyGeometry);
 }
 
 void ViewportFboNodeSG::preprocess()
@@ -109,15 +112,25 @@ void ViewportFboNodeSG::preprocess()
     QSGStereoContext::Eye eye;
     eye = m_context ? m_context->eye() : QSGStereoContext::NoEye;
 
+    // Which eye buffer should we render into?
+    EyeBuffer *buffer;
+    if (eye == QSGStereoContext::RightEye)
+        buffer = &m_right;
+    else
+        buffer = &m_left;
+
     // If the viewport contents have not changed since the last
     // time we rendered into the fbo, then no point painting again.
-    // In stereo mode, the viewport contents are assumed to always
-    // change: left eye, right eye, left eye, right eye, ...
-    // May want to experiment later with using an fbo for each eye.
-    if (m_fbo && !m_viewport->isDirty() && eye == QSGStereoContext::NoEye)
-        return;
+    if (eye != QSGStereoContext::RightEye) {
+        m_leftWasDirty = m_viewport->isDirty();
+        if (buffer->fbo && !m_viewport->isDirty())
+            return;
+    } else {
+        if (buffer->fbo && !m_leftWasDirty)
+            return;
+    }
 
-    if (!m_fbo) {
+    if (!buffer->fbo) {
         QGLFramebufferObjectFormat format;
         if (!m_useAlpha) {
 #ifndef QT_OPENGL_ES
@@ -127,25 +140,25 @@ void ViewportFboNodeSG::preprocess()
 #endif
         }
         format.setAttachment(QGLFramebufferObject::CombinedDepthStencil);
-        m_fbo = new QGLFramebufferObject(m_size, format);
+        buffer->fbo = new QGLFramebufferObject(m_size, format);
 
         QSGTexture *texture = new QSGTexture;
-        texture->setTextureId(m_fbo->texture());
-        texture->setTextureSize(m_fbo->size());
+        texture->setTextureId(buffer->fbo->texture());
+        texture->setTextureSize(buffer->fbo->size());
         texture->setAlphaChannel(m_useAlpha);
         texture->setStatus(QSGTexture::Ready);
         texture->setOwnsTexture(false);
-        m_texture = QSGTextureRef(texture);
+        buffer->texture = QSGTextureRef(texture);
 
-        m_material.setTexture(m_texture, !m_useAlpha);
-        m_material.setLinearFiltering(m_linearFiltering);
-        m_materialO.setTexture(m_texture, !m_useAlpha);
-        m_materialO.setLinearFiltering(m_linearFiltering);
-        m_materialO.setOpacity(m_opacity);
-        setMaterial(m_opacity == 1 ? &m_material : &m_materialO);
+        buffer->material.setTexture(buffer->texture, !m_useAlpha);
+        buffer->material.setLinearFiltering(m_linearFiltering);
+        buffer->materialO.setTexture(buffer->texture, !m_useAlpha);
+        buffer->materialO.setLinearFiltering(m_linearFiltering);
+        buffer->materialO.setOpacity(m_opacity);
     }
+    setMaterial(m_opacity == 1 ? &(buffer->material) : &(buffer->materialO));
 
-    QGLFramebufferObjectSurface surface(m_fbo);
+    QGLFramebufferObjectSurface surface(buffer->fbo);
     m_viewport->paint(&surface, QGL::Eye(eye));
 }
 
