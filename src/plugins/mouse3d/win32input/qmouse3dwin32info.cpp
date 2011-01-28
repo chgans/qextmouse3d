@@ -95,7 +95,7 @@ bool mouse3dEventFilterFunction(void *newMessage, long *result)
         {   
 			//OnRawInput(newMessage);
             // This feature requires Windows XP or greater.
-            // The symbol _WIN32_WINNT must be >= 0x0501.            
+            // The symbol _WIN32_WINNT must be >= 0x0501.                        
 			mouseSignaller.sendDetectedSignal((HRAWINPUT)message->lParam);   
         }
         return true;

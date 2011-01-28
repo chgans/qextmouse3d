@@ -46,6 +46,7 @@
 #include "qmouse3ddevice_p.h"
 #include <QtCore/qtimer.h>
 #include <windows.h>
+#include "qmouse3dwin32info.h"
 //typedef WINUSERAPI BOOL (WINAPI *pRegisterRawInputDevices)(IN PCRAWINPUTDEVICE pRawInputDevices, IN UINT uiNumDevices, IN UINT cbSize);
 //typedef WINUSERAPI INT (WINAPI *pGetRawInputData)(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData,  PINT pcbSize, UINT cbSizeHeader);
 //typedef WINUSERAPI INT (WINAPI *pGetRawInputDeviceInfoA)(IN HANDLE hDevice, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize);

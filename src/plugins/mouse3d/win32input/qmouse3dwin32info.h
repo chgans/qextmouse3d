@@ -51,6 +51,10 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
+#ifndef HRAWINPUT
+#define HRAWINPUT DWORD
+#endif
+
 #define LOGITECH_VENDOR_ID 0x46d  //Vendor identifier for Logitech - manufacturers of 3dconnexion human input devices.
 
 // Function pointers for Windows Raw Input functions.

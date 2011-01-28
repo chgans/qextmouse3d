@@ -220,7 +220,8 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
             //motion data comes in 2 packages
             //orientation is right handed coord system with z down
             //this is the standard HID orientation
-            if (pRawInput->data.hid.bRawData[0]==0x01)
+            BYTE* inputDataBytes = (BYTE*)(&pRawInput->data.hid.bRawData);
+            if (inputDataBytes[0]==0x01)
             {				
 				
 				//translation vector
@@ -231,7 +232,7 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
 				
 				sawTranslate = true;
             }
-            else if (pRawInput->data.hid.bRawData[0]==0x02)
+            else if (inputDataBytes[0]==0x02)
             {
 				sawRotate = true;
                 //directed rotation vector
@@ -240,7 +241,7 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
                 tempValues[4] = pnData[1];
                 tempValues[5] = pnData[2];                
             }
-            else if (pRawInput->data.hid.bRawData[0]==0x03)
+            else if (inputDataBytes[0]==0x03)
             {
                 //state of the keys
                 unsigned long dwKeystate= *reinterpret_cast<unsigned long *>(&pRawInput->data.hid.bRawData[1]);                                 
