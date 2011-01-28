@@ -93,6 +93,9 @@ Viewport {
         property bool onEffectChangedSignalTriggered: false
         onEffectChanged: onEffectChangedSignalTriggered = true
 
+        property int childrenHasBeenChanged: 0
+        onChildrenChanged: childrenHasBeenChanged = childrenHasBeenChanged + 1
+
         property bool onLightChangedSignalTriggered: false
         onLightChanged: onLightChangedSignalTriggered = true
 
@@ -132,6 +135,15 @@ Viewport {
 
         TestCase {
             name: "Item3D"
+
+            // Helper function that finds the index of an object in a list
+            function indexOf(list, object)
+            {
+                for(var i = 0; i < list.length; i++)
+                    if(list[i] == object)
+                        return i;
+                return -1;
+            }
 
             function test_position()
             {
@@ -274,6 +286,7 @@ Viewport {
                 verify(other.mesh != null, "non-null mesh");
                 item.mesh = other.mesh;
                 verify(item.onMeshChangedSignalTriggered, "MeshChanged signal");
+                verify(item.mesh == other.mesh, "setMesh()");
             }
 
             function test_effect()
@@ -289,11 +302,37 @@ Viewport {
                 verify(!item.light, "default lightparamters is null");
                 item.light = testLight;
                 verify(item.onLightChangedSignalTriggered, "onLightChangedSignal");
-                verify(item.light == testLight);
+                verify(item.light == testLight, "setLight()");
+            }
+
+            function test_resources()
+            {
+                verify(item.resources != undefined, "item has resources");
+                verify(other.resources != undefined, "other item has resources");
+                // No public write method
+            }
+
+            function test_data()
+            {
+                verify(item.data != undefined, "item has data");
+                verify(other.data != undefined, "other item has data");
+                // No public write method
+            }
+
+            function test_children()
+            {
+                verify(item.children.length == 3, "item has 3 children");
+                verify(indexOf(item.children, child1) != -1, "item.children contains child1")
+                verify(indexOf(item.children, child2) != -1, "item.children contains child2")
+                verify(indexOf(item.children, inheritEventTestChild) != -1, "item.children contains inheritEventTestChild")
+            }
+
+            function test_states()
+            {
+
             }
 
             function test_state()
-
             {
                 verify(!item.state, "Default state is null");
                 verify(item.stateChangeTestVariable == 0, "property check before state change");
@@ -313,24 +352,43 @@ Viewport {
 
             function test_parent()
             {
+                compare(item.childrenHasBeenChanged,0, "pretest marker verification");
+
                 // Test the initial Item3D parent/child relationships.
                 verify(item.parent == null, "root item")
                 verify(child1.parent == item, "child1 item")
                 verify(child2.parent == item, "child2 item")
-                compare(item.children.length, 3, "root children")
+                compare(item.children.length, 3, "root item children count")
                 compare(child1.children.length, 0, "child1 children")
                 verify(item.children[0] == child1, "children[0] is child1")
                 verify(item.children[1] == child2, "children[1] is child2")
 
                 // Reparent the second child and re-test.
                 child2.parent = child1
+                compare(item.childrenHasBeenChanged,1, "childrenChanged triggered by removing child");
+
                 verify(item.parent == null, "root item (B)")
                 verify(child1.parent == item, "child1's parent (B)")
                 verify(child2.parent == child1, "child2's parent (B)")
-                compare(item.children.length, 2, "root children (B)")
+                compare(item.children.length, 2, "root item children count (B)")
                 compare(child1.children.length, 1, "child1 children (B)")
                 verify(item.children[0] == child1, "children[0] is child1 (B)")
                 verify(child1.children[0] == child2, "children[1] is child2 (B)")
+                verify(indexOf(child1.children, child2) != -1, "child1.children contains child2");
+
+                // Change the parent back and test again
+                child2.parent = item
+                compare(item.childrenHasBeenChanged,2, "childrenChanged triggered by re-adding child");
+
+                verify(item.parent == null, "root item after revert")
+                verify(child1.parent == item, "child1 item after revert")
+                verify(child2.parent == item, "child2 item after revert")
+                compare(item.children.length, 3, "root children count after revert")
+                compare(child1.children.length, 0, "child1 has no children after revert")
+
+                verify(indexOf(item.children, child1) != -1, "item.children contains child1 after revert");
+                verify(indexOf(item.children, child2) != -1, "item.children contains child2 after revert");
+                verify(indexOf(child1.children, child2) == -1, "child1.children does not contain child2 after revert");
             }
 
             function test_sortChildren()
