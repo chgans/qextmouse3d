@@ -139,8 +139,8 @@ Viewport {
             // Helper function that finds the index of an object in a list
             function indexOf(list, object)
             {
-                for(var i = 0; i < list.length; i++)
-                    if(list[i] == object)
+                for (var i = 0; i < list.length; i++)
+                    if (list[i] == object)
                         return i;
                 return -1;
             }
