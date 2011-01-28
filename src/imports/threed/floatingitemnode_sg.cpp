@@ -44,14 +44,16 @@
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
 #include "floatingitemnode_sg.h"
-#include <QtDeclarative/qsgstereocontext.h>
+//#include <QtDeclarative/qsgstereocontext.h>
 #include <QtDeclarative/qsgmatrix4x4stack.h>
 
 QT_BEGIN_NAMESPACE
 
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
-    : m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
+    //: m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
+    : m_context(0), m_depth(0.0f)
 {
+    Q_UNUSED(context);
     setFlag(Node::UsePreprocess, true);
 }
 
@@ -66,6 +68,7 @@ void FloatingItemSGNode::setDepth(qreal depth)
 
 void FloatingItemSGNode::preprocess()
 {
+#if 0
     QSGStereoContext::Eye eye;
     m_adjustMatrix.setToIdentity();
     eye = m_context ? m_context->eye() : QSGStereoContext::NoEye;
@@ -84,6 +87,7 @@ void FloatingItemSGNode::preprocess()
         else
             m_adjustMatrix.translate(-depth / 2.0f, 0.0f, 0.0f);
     }
+#endif
     markDirty(DirtyMatrix);
 }
 

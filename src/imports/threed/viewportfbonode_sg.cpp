@@ -45,22 +45,29 @@
 
 #include "viewportfbonode_sg.h"
 #include "viewport_sg.h"
-#include <QtDeclarative/qsgstereocontext.h>
+//#include <QtDeclarative/qsgstereocontext.h>
 #include "qglframebufferobjectsurface.h"
 
 QT_BEGIN_NAMESPACE
 
 ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     : m_viewport(viewport)
-    , m_context(qobject_cast<QSGStereoContext *>(context))
+    //, m_context(qobject_cast<QSGStereoContext *>(context))
+    , m_context(0)
     , m_opacity(1.0f)
     , m_useAlpha(true)
     , m_linearFiltering(true)
     , m_leftWasDirty(true)
 {
+    Q_UNUSED(context);
+
     setFlag(Node::UsePreprocess);
     setMaterial(&m_left.material);
-    updateGeometryDescription(Utilities::getTexturedRectGeometryDescription(), GL_UNSIGNED_SHORT);
+
+    QVector<QSGAttributeDescription> desc = QVector<QSGAttributeDescription>()
+        << QSGAttributeDescription(0, 2, GL_FLOAT, 4 * sizeof(float))
+        << QSGAttributeDescription(1, 2, GL_FLOAT, 4 * sizeof(float));
+    updateGeometryDescription(desc, GL_UNSIGNED_SHORT);
 }
 
 ViewportFboNodeSG::~ViewportFboNodeSG()
@@ -78,7 +85,44 @@ void ViewportFboNodeSG::setSize(const QSize &size)
     m_left.reset();
     m_right.reset();
 
-    Utilities::setupRectGeometry(geometry(), QRectF(0, 0, m_size.width(), m_size.height()), QSize(1, 1), QRectF(0,1,1,-1));
+    Geometry *geometry = this->geometry();
+    geometry->setDrawingMode(QSG::TriangleStrip);
+    geometry->setVertexCount(4);
+
+    QRectF rect(0, 0, m_size.width(), m_size.height());
+    QRectF sourceRect(0,1,1,-1);
+
+    const QVector<QSGAttributeDescription> &d = geometry->vertexDescription();
+    int offset = 0;
+    for (int i = 0; i < d.size(); ++i) {
+        if (d.at(i).attribute() == 0) {         // Position
+            Q_ASSERT(d.at(i).tupleSize() >= 2);
+            Q_ASSERT(d.at(i).type() == GL_FLOAT);
+            for (int j = 0; j < 4; ++j) {
+                float *f = (float *)((uchar *)geometry->vertexData() + geometry->stride() * j + offset);
+                f[0] = j & 2 ? rect.right() : rect.left();
+                f[1] = j & 1 ? rect.bottom() : rect.top();
+                for (int k = 2; k < d.at(i).tupleSize(); ++k)
+                    f[k] = k - 2;
+            }
+        } else if (d.at(i).attribute() == 1) {  // TextureCoord0
+            Q_ASSERT(d.at(i).tupleSize() >= 2);
+            Q_ASSERT(d.at(i).type() == GL_FLOAT);
+
+            qreal pw = 1.0f;
+            qreal ph = 1.0f;
+
+            for (int j = 0; j < 4; ++j) {
+                float *f = (float *)((uchar *)geometry->vertexData() + geometry->stride() * j + offset);
+                f[0] = (j & 2 ? sourceRect.right() : sourceRect.left()) / pw;
+                f[1] = (j & 1 ? sourceRect.bottom() : sourceRect.top()) / ph;
+                for (int k = 2; k < d.at(i).tupleSize(); ++k)
+                    f[k] = k - 2;
+            }
+        }
+        offset += d.at(i).tupleSize() * d.at(i).sizeOfType();
+    }
+
     markDirty(DirtyGeometry);
 }
 
@@ -109,19 +153,19 @@ void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
 
 void ViewportFboNodeSG::preprocess()
 {
-    QSGStereoContext::Eye eye;
-    eye = m_context ? m_context->eye() : QSGStereoContext::NoEye;
+    QGL::Eye eye = QGL::NoEye;
+    //eye = m_context ? m_context->eye() : QSGStereoContext::NoEye;
 
     // Which eye buffer should we render into?
     EyeBuffer *buffer;
-    if (eye == QSGStereoContext::RightEye)
+    if (eye == QGL::RightEye)
         buffer = &m_right;
     else
         buffer = &m_left;
 
     // If the viewport contents have not changed since the last
     // time we rendered into the fbo, then no point painting again.
-    if (eye != QSGStereoContext::RightEye) {
+    if (eye != QGL::RightEye) {
         m_leftWasDirty = m_viewport->isDirty();
         if (buffer->fbo && !m_viewport->isDirty())
             return;
@@ -159,7 +203,7 @@ void ViewportFboNodeSG::preprocess()
     setMaterial(m_opacity == 1 ? &(buffer->material) : &(buffer->materialO));
 
     QGLFramebufferObjectSurface surface(buffer->fbo);
-    m_viewport->paint(&surface, QGL::Eye(eye));
+    m_viewport->paint(&surface, eye);
 }
 
 QT_END_NAMESPACE

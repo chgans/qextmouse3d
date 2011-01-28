@@ -61,7 +61,7 @@ public:
     {
     }
 
-    TransformNode *createTransformNode();
+    //TransformNode *createTransformNode();
 
     qreal depth;
 };
@@ -103,16 +103,20 @@ QRectF FloatingItemSG::boundingRect() const
 
 Node *FloatingItemSG::updatePaintNode(Node *node, UpdatePaintNodeData *data)
 {
+#if 0
     Q_D(FloatingItemSG);
     FloatingItemSGNode *fNode = static_cast<FloatingItemSGNode *>(data->transformNode);
     fNode->setDepth(d->depth);
+#endif
     return QSGItem::updatePaintNode(node, data);
 }
 
+#if 0
 TransformNode *FloatingItemSGPrivate::createTransformNode()
 {
     return new FloatingItemSGNode(QSGContext::current);
 }
+#endif
 
 QT_END_NAMESPACE
 

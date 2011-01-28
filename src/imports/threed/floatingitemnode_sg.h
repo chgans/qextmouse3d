@@ -54,6 +54,7 @@ QT_BEGIN_NAMESPACE
 
 class QSGContext;
 class QSGStereoContext;
+class QSGMatrix4x4Stack;
 
 class FloatingItemSGNode : public TransformNode
 {
