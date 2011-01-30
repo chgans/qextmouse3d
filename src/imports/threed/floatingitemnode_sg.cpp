@@ -44,16 +44,15 @@
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
 #include "floatingitemnode_sg.h"
-//#include <QtDeclarative/qsgstereocontext.h>
 #include <QtDeclarative/qsgmatrix4x4stack.h>
 
 QT_BEGIN_NAMESPACE
 
+#if QSG_STEREO
+
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
-    //: m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
-    : m_context(0), m_depth(0.0f)
+    : m_context(context), m_depth(0.0f)
 {
-    Q_UNUSED(context);
     setFlag(Node::UsePreprocess, true);
 }
 
@@ -68,11 +67,8 @@ void FloatingItemSGNode::setDepth(qreal depth)
 
 void FloatingItemSGNode::preprocess()
 {
-#if 0
-    QSGStereoContext::Eye eye;
-    m_adjustMatrix.setToIdentity();
-    eye = m_context ? m_context->eye() : QSGStereoContext::NoEye;
-    if (eye != QSGStereoContext::NoEye && m_depth != 0.0f) {
+    QMatrix4x4 adjustMatrix;
+    if (m_context->eye() != QSGContext::NoEye && m_depth != 0.0f) {
         // Correct the depth value for the screen's DPI.  We treat 100 DPI
         // as "normal" and scale the depth value accordingly.  This way,
         // the same number of millimeters are used on all displays viewed
@@ -82,19 +78,15 @@ void FloatingItemSGNode::preprocess()
         qreal depth = m_depth * m_context->glContext()->device()->logicalDpiX() / 100.0f;
 
         // Determine the transformation to pre-multiply with the modelview.
-        if (eye == QSGStereoContext::LeftEye)
-            m_adjustMatrix.translate(depth / 2.0f, 0.0f, 0.0f);
+        if (m_context->eye() == QSGContext::LeftEye)
+            adjustMatrix.translate(depth / 2.0f, 0.0f, 0.0f);
         else
-            m_adjustMatrix.translate(-depth / 2.0f, 0.0f, 0.0f);
+            adjustMatrix.translate(-depth / 2.0f, 0.0f, 0.0f);
     }
-#endif
-    markDirty(DirtyMatrix);
+    setPreMatrix(adjustMatrix);
 }
 
-void FloatingItemSGNode::applyTo(QSGMatrix4x4Stack *stack)
-{
-    *stack = m_adjustMatrix * stack->top() * matrix();
-}
+#endif // QSG_STEREO
 
 QT_END_NAMESPACE
 

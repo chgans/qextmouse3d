@@ -57,7 +57,6 @@ QT_BEGIN_NAMESPACE
 class ViewportSG;
 class QGLFramebufferObject;
 class QSGContext;
-class QSGStereoContext;
 
 class ViewportFboNodeSG : public GeometryNode
 {
@@ -78,7 +77,7 @@ public:
 
 private:
     ViewportSG *m_viewport;
-    QSGStereoContext *m_context;
+    QSGContext *m_context;
     QSize m_size;
     qreal m_opacity;
 

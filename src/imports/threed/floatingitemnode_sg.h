@@ -47,16 +47,18 @@
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
 #include <QtDeclarative/node.h>
+#include <QtDeclarative/qsgcontext.h>
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
 class QSGContext;
-class QSGStereoContext;
 class QSGMatrix4x4Stack;
 
-class FloatingItemSGNode : public TransformNode
+#if QSG_STEREO
+
+class FloatingItemSGNode : public PreTransformNode
 {
 public:
     FloatingItemSGNode(QSGContext *);
@@ -66,13 +68,14 @@ public:
     inline qreal depth() const { return m_depth; }
 
     void preprocess();
-    void applyTo(QSGMatrix4x4Stack *stack);
 
 private:
-    QSGStereoContext *m_context;
+    QSGContext *m_context;
     qreal m_depth;
     QMatrix4x4 m_adjustMatrix;
 };
+
+#endif
 
 QT_END_NAMESPACE
 
