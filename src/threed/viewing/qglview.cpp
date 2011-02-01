@@ -218,7 +218,6 @@ public:
         fbo = 0;
         leftSurface = 0;
         rightSurface = 0;
-        bothSurface = 0;
 
         if (parent->format().stereo())
             stereoType = QGLView::Hardware;
@@ -257,7 +256,6 @@ public:
         delete fbo;
         delete leftSurface;
         delete rightSurface;
-        delete bothSurface;
     }
 
     QGLView *view;
@@ -267,7 +265,6 @@ public:
     QGLWidgetSurface mainSurface;
     QGLAbstractSurface *leftSurface;
     QGLAbstractSurface *rightSurface;
-    QGLAbstractSurface *bothSurface;
     bool pickBufferForceUpdate;
     bool pickBufferMaybeInvalid;
     bool updateQueued;
@@ -479,11 +476,7 @@ QGLAbstractSurface *QGLViewPrivate::bothEyesSurface()
     switch (stereoType) {
     case QGLView::Hardware:
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
-        if (!bothSurface) {
-            bothSurface = new QGLDrawBufferSurface
-                (&mainSurface, view->doubleBuffer() ? GL_BACK : GL_FRONT);
-        }
-        return bothSurface;
+        return 0;
 #endif
     case QGLView::RedCyanAnaglyph:
         return &mainSurface;
@@ -612,10 +605,8 @@ void QGLView::setStereoType(QGLView::StereoType type)
     // be re-generated the next time we paint the widget.
     delete d->leftSurface;
     delete d->rightSurface;
-    delete d->bothSurface;
     d->leftSurface = 0;
     d->rightSurface = 0;
-    d->bothSurface = 0;
 }
 
 /*!
