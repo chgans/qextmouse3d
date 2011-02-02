@@ -865,7 +865,9 @@ void QGeometryData::draw(QGLPainter *painter, int start, int count, GLenum mode,
         upload();
         painter->clearAttributes();
         if (mode==QGL::Points) {
+#if !defined(QT_OPENGL_ES_2)
             ::glPointSize(drawWidth);
+#endif
         } else if (mode==QGL::LineStrip || mode == QGL::Lines) {
             ::glLineWidth(drawWidth);
         }
