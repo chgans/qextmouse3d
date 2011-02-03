@@ -28,6 +28,9 @@ symbian {
     } else {
         TARGET.CAPABILITY = All -Tcb
     }
+    Qt3DDeployment.sources = Qt3D.dll
+    Qt3DDeployment.path = /sys/bin
+    DEPLOYMENT += Qt3DDeployment
 }
 
 include(threed.pri)

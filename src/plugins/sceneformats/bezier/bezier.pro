@@ -15,3 +15,9 @@ LIBS += -L../../../../lib -L../../../../bin
 QT += opengl network
 
 include(../../../../src/threed/threed_dep.pri)
+
+symbian {
+    qscenebezierDeployment.sources = qscenebezier.dll
+    qscenebezierDeployment.path = $${QT_PLUGINS_BASE_DIR}/sceneformats
+    DEPLOYMENT += qscenebezierDeployment
+}
