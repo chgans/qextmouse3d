@@ -367,15 +367,16 @@ void PhotoBrowser3DView::earlyPaintGL(QGLPainter *painter)
 
     if (!m_done)
         m_pc->pan();
+
+    painter->setClearColor(Qt::blue);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void PhotoBrowser3DView::paintGL(QGLPainter *painter)
 {
     if (!m_done)
     {
-        painter->setClearColor(Qt::blue);
         glEnable(GL_BLEND);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         m_skybox->draw(painter);
         m_display->draw(painter);
         m_buttons->draw(painter);
