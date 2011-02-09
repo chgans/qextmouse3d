@@ -62,9 +62,6 @@ DEFINES += QT_BUILD_QT3D_QUICK_LIB
             }
         }
     }
-    Qt3DQuickDeployment.sources = Qt3DQuick.dll
-    Qt3DQuickDeployment.path = /sys/bin
-    DEPLOYMENT += Qt3DQuickDeployment
 }
 
 include(../threed/threed_dep.pri)

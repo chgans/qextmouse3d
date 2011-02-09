@@ -71,9 +71,3 @@ INSTALLS += qdeclarativesources target
 
 LIBS += -L../../../lib -L../../../bin
 include(../../quick3d/quick3d_dep.pri)
-
-symbian {
-    qthreedqmlpluginDeployment.sources = qthreedqmlplugin.dll $${qdeclarativesources.files}
-    qthreedqmlpluginDeployment.path = $$QT_IMPORTS_BASE_DIR/Qt3D
-    DEPLOYMENT += qthreedqmlpluginDeployment
-}

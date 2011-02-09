@@ -50,9 +50,3 @@ INSTALLS += qdeclarativesources target
 
 LIBS += -L../../../lib -L../../../bin
 include(../../quick3d/quick3d_dep.pri)
-
-symbian {
-    qshapesqmlpluginDeployment.sources = qshapesqmlplugin.dll $${qdeclarativesources.files}
-    qshapesqmlpluginDeployment.path = $$QT_IMPORTS_BASE_DIR/Qt3D/Shapes
-    DEPLOYMENT += qshapesqmlpluginDeployment
-}

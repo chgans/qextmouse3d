@@ -15,9 +15,3 @@ LIBS += -L../../../../lib -L../../../../bin
 QT += opengl network
 
 include(../../../../src/threed/threed_dep.pri)
-
-symbian {
-    qsceneobjDeployment.sources = qsceneobj.dll
-    qsceneobjDeployment.path = $${QT_PLUGINS_BASE_DIR}/sceneformats
-    DEPLOYMENT += qsceneobjDeployment
-}

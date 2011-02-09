@@ -29,9 +29,3 @@ INSTALLS += target
 LIBS += -L../../../../lib \
     -L../../../../bin
 include(../../../../src/threed/threed_dep.pri)
-
-symbian {
-    qscene3dsDeployment.sources = qscene3ds.dll
-    qscene3dsDeployment.path = $${QT_PLUGINS_BASE_DIR}/sceneformats
-    DEPLOYMENT += qscene3dsDeployment
-}
