@@ -39,42 +39,56 @@
 **
 ****************************************************************************/
 
-#ifndef FLOATINGITEMNODE_SG_H
-#define FLOATINGITEMNODE_SG_H
+#ifndef QSGSTEREOCONTEXT_P_H
+#define QSGSTEREOCONTEXT_P_H
 
 #include <QtDeclarative/qdeclarative.h>
 
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
-#include "qsgpretransformnode_p.h"
+#include <QtDeclarative/qsgcontext.h>
+#include "qt3dquickglobal.h"
+#include "qglnamespace.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QSGContext;
-class QSGStereoContext;
+class QSGStereoContextPrivate;
 
-class FloatingItemSGNode : public QSGPreTransformNode
+class Q_QT3D_QUICK_EXPORT QSGStereoContext : public QSGContext
 {
+    Q_OBJECT
+    // These properties exist to allow QML plugins that don't link
+    // against the Qt3DQuick library to determine the stereo settings.
+    Q_PROPERTY(bool isStereo READ isStereo)
+    Q_PROPERTY(int eye READ eyeInt)
 public:
-    FloatingItemSGNode(QSGContext *);
-    ~FloatingItemSGNode();
+    explicit QSGStereoContext(const QString &key, QObject *parent = 0);
+    ~QSGStereoContext();
 
-    void setDepth(qreal depth);
-    inline qreal depth() const { return m_depth; }
+    bool isStereo() const { return true; }
+    QGL::Eye eye() const;
 
-    void preprocess();
+    Renderer *createRenderer();
+    void renderNextFrame();
+
+protected:
+    void setEye(QGL::Eye eye);
 
 private:
-    QSGStereoContext *m_context;
-    qreal m_depth;
+    int eyeInt() const { return int(eye()); }
+
+    QScopedPointer<QSGStereoContextPrivate> d_ptr;
+
+    Q_DECLARE_PRIVATE(QSGStereoContext)
+    Q_DISABLE_COPY(QSGStereoContext)
 };
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // QML_VERSION >= 0x020000
+#endif
 
-#endif // FLOATINGITEMNODE_SG_H
+#endif

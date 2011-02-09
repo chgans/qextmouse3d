@@ -932,14 +932,13 @@ QPointF ViewportSG::viewDelta(qreal deltax, qreal deltay)
     return QPointF(deltax * scaleX / w, deltay * scaleY / h);
 }
 
-Node *ViewportSG::updatePaintNode(Node *node, UpdatePaintNodeData *data)
+Node *ViewportSG::updatePaintNode(Node *node, UpdatePaintNodeData *)
 {
     ViewportFboNodeSG *vnode = static_cast<ViewportFboNodeSG *>(node);
     if (!vnode)
         vnode = new ViewportFboNodeSG(this, QSGContext::current);
 
     vnode->setSize(QSize(qRound(width()), qRound(height())));
-    vnode->setOpacity(data->opacity);
     vnode->setUseAlpha(!isViewportRoot());
 
     return vnode;

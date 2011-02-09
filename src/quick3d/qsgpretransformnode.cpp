@@ -39,42 +39,29 @@
 **
 ****************************************************************************/
 
-#ifndef FLOATINGITEMNODE_SG_H
-#define FLOATINGITEMNODE_SG_H
-
 #include <QtDeclarative/qdeclarative.h>
 
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
 #include "qsgpretransformnode_p.h"
 
-QT_BEGIN_HEADER
-
 QT_BEGIN_NAMESPACE
 
-class QSGContext;
-class QSGStereoContext;
-
-class FloatingItemSGNode : public QSGPreTransformNode
+QSGPreTransformNode::QSGPreTransformNode()
 {
-public:
-    FloatingItemSGNode(QSGContext *);
-    ~FloatingItemSGNode();
+}
 
-    void setDepth(qreal depth);
-    inline qreal depth() const { return m_depth; }
+QSGPreTransformNode::~QSGPreTransformNode()
+{
+    destroy();
+}
 
-    void preprocess();
-
-private:
-    QSGStereoContext *m_context;
-    qreal m_depth;
-};
+void QSGPreTransformNode::setPreMatrix(const QMatrix4x4 &matrix)
+{
+    m_preMatrix = matrix;
+    markDirty(DirtyMatrix);
+}
 
 QT_END_NAMESPACE
 
-QT_END_HEADER
-
-#endif // QML_VERSION >= 0x020000
-
-#endif // FLOATINGITEMNODE_SG_H
+#endif

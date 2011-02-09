@@ -57,6 +57,7 @@ QT_BEGIN_NAMESPACE
 class ViewportSG;
 class QGLFramebufferObject;
 class QSGContext;
+class QSGStereoContext;
 
 class ViewportFboNodeSG : public GeometryNode
 {
@@ -67,9 +68,6 @@ public:
     void setSize(const QSize &size);
     QSize size() const { return m_size; }
 
-    void setOpacity(qreal opacity);
-    qreal opacity() const { return m_opacity; }
-
     bool useAlpha() const { return m_useAlpha; }
     void setUseAlpha(bool useAlpha);
 
@@ -77,9 +75,8 @@ public:
 
 private:
     ViewportSG *m_viewport;
-    QSGContext *m_context;
+    QSGStereoContext *m_context;
     QSize m_size;
-    qreal m_opacity;
 
     struct EyeBuffer
     {
