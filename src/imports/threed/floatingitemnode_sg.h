@@ -64,6 +64,7 @@ public:
     void setDepth(qreal depth);
     inline qreal depth() const { return m_depth; }
 
+    NodeType type() const;
     void preprocess();
 
 private:

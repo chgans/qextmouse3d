@@ -51,7 +51,9 @@ QT_BEGIN_NAMESPACE
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
     : m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
 {
-    setFlag(Node::UsePreprocess, true);
+    // Preprocessing is required only if the context supports pre-transforms.
+    if (m_context)
+        setFlag(Node::UsePreprocess, true);
 }
 
 FloatingItemSGNode::~FloatingItemSGNode()
@@ -61,6 +63,18 @@ FloatingItemSGNode::~FloatingItemSGNode()
 void FloatingItemSGNode::setDepth(qreal depth)
 {
     m_depth = depth;
+}
+
+Node::NodeType FloatingItemSGNode::type() const
+{
+    // If the device-specific rendering context does not inherit
+    // from QSGStereoContext, then it won't be aware of how to
+    // update pre-transform nodes.  In that case, act like a
+    // regular transform node and ignore the depth adjustment.
+    if (m_context)
+        return PreTransformNodeType;
+    else
+        return TransformNodeType;
 }
 
 void FloatingItemSGNode::preprocess()
