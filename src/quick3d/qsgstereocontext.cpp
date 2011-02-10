@@ -121,7 +121,7 @@ public:
 
     void setDrawBuffer(GLenum buffer);
 };
- 
+
 void QSGStereoContextPrivate::setDrawBuffer(GLenum buffer)
 {
 #if defined(DESKTOP_GL_DRAW_BUFFERS)
@@ -325,7 +325,7 @@ void QSGStereoContext::renderNextFrame()
     Q_D(QSGStereoContext);
 
     emit aboutToRenderNextFrame();
- 
+
     // Detect the type of stereo we should use the first time we render.
     if (d->stereoMode == QSGStereoContextPrivate::Autodetect) {
         if (glContext()->format().stereo())
