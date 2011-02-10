@@ -74,7 +74,7 @@ public:
     void transform(const QMatrix4x4& matrix);
     QArray<QVector3D> transformed(const QMatrix4x4& matrix) const;
 
-#if !defined(Q_NO_USING_KEYWORD)
+#if !defined(Q_NO_USING_KEYWORD) || defined(Q_QDOC)
     using QArray<QVector3D>::append;
 #else
     inline void append(const QVector3D& value)
