@@ -18,10 +18,8 @@ PRIVATE_HEADERS += \
 
 scenegraph {
     SOURCES += \
-        qsgpretransformnode.cpp \
-        qsgstereocontext.cpp
+        qsgpretransformnode.cpp
 
     PRIVATE_HEADERS += \
-        qsgpretransformnode_p.h \
-        qsgstereocontext_p.h
+        qsgpretransformnode_p.h
 }

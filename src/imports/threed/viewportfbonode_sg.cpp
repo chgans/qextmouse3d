@@ -41,14 +41,13 @@
 
 #include "viewportfbonode_sg.h"
 #include "viewport_sg.h"
-#include "qsgstereocontext_p.h"
 #include "qglframebufferobjectsurface.h"
 
 QT_BEGIN_NAMESPACE
 
 ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     : m_viewport(viewport)
-    , m_context(qobject_cast<QSGStereoContext *>(context))
+    , m_stereoInfo(context)
     , m_useAlpha(true)
     , m_linearFiltering(true)
     , m_leftWasDirty(true)
@@ -134,7 +133,7 @@ void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
 
 void ViewportFboNodeSG::preprocess()
 {
-    QGL::Eye eye = m_context ? m_context->eye() : QGL::NoEye;
+    QGL::Eye eye = m_stereoInfo.eye();
 
     // Which eye buffer should we render into?
     EyeBuffer *buffer;

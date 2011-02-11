@@ -39,32 +39,38 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qsgcontextplugin.h>
-#include "qsgstereocontext.h"
+#ifndef STEREOINFO_SG_H
+#define STEREOINFO_SG_H
+
+#include "qglnamespace.h"
+
+QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QSGStereoContextPlugin : public QSGContextPlugin
+class QSGContext;
+
+class QSGStereoInfo
 {
 public:
-    QStringList keys() const;
-    QSGContext *create(const QString &key) const;
+    explicit QSGStereoInfo(QSGContext *context);
+    ~QSGStereoInfo();
+
+    QSGContext *context() const { return m_context; }
+
+    bool hasStereo() const { return m_hasStereo; }
+    bool hasPreTransform() const { return m_hasPreTransform; }
+
+    QGL::Eye eye() const;
+
+private:
+    QSGContext *m_context;
+    bool m_hasStereo;
+    bool m_hasPreTransform;
 };
 
-QStringList QSGStereoContextPlugin::keys() const
-{
-    QStringList keys;
-    keys += QLatin1String("stereo");
-    keys += QLatin1String("stereo-test");   // Red-cyan test mode
-    return keys;
-}
-
-QSGContext *QSGStereoContextPlugin::create(const QString &key) const
-{
-    return new QSGStereoContext(key);
-}
-
-Q_EXPORT_STATIC_PLUGIN(QSGStereoContextPlugin)
-Q_EXPORT_PLUGIN2(qstereoscenegraph, QSGStereoContextPlugin)
-
 QT_END_NAMESPACE
+
+QT_END_HEADER
+
+#endif

@@ -39,12 +39,10 @@
 **
 ****************************************************************************/
 
-#ifndef QSGSTEREOCONTEXT_P_H
-#define QSGSTEREOCONTEXT_P_H
+#ifndef QSGSTEREOCONTEXT_H
+#define QSGSTEREOCONTEXT_H
 
 #include <QtDeclarative/qsgcontext.h>
-#include "qt3dquickglobal.h"
-#include "qglnamespace.h"
 
 QT_BEGIN_HEADER
 
@@ -52,28 +50,25 @@ QT_BEGIN_NAMESPACE
 
 class QSGStereoContextPrivate;
 
-class Q_QT3D_QUICK_EXPORT QSGStereoContext : public QSGContext
+class QSGStereoContext : public QSGContext
 {
     Q_OBJECT
-    // These properties exist to allow QML plugins that don't link
-    // against the Qt3DQuick library to determine the stereo settings.
-    Q_PROPERTY(bool isStereo READ isStereo)
-    Q_PROPERTY(int eye READ eyeInt)
+    // These properties exist for the QSGStereoInfo class to
+    // fetch information about the stereo context without having
+    // to directly link against QSGStereoContext.
+    Q_PROPERTY(bool hasStereo READ returnTrue)
+    Q_PROPERTY(bool hasPreTransform READ returnTrue)
+    Q_PROPERTY(int eye READ eye)
 public:
     explicit QSGStereoContext(const QString &key, QObject *parent = 0);
     ~QSGStereoContext();
 
-    bool isStereo() const { return true; }
-    QGL::Eye eye() const;
-
     Renderer *createRenderer();
     void renderNextFrame();
 
-protected:
-    void setEye(QGL::Eye eye);
-
 private:
-    int eyeInt() const { return int(eye()); }
+    bool returnTrue() const { return true; }
+    int eye() const;
 
     QScopedPointer<QSGStereoContextPrivate> d_ptr;
 

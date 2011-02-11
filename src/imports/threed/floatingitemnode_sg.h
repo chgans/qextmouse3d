@@ -43,13 +43,13 @@
 #define FLOATINGITEMNODE_SG_H
 
 #include "qsgpretransformnode_p.h"
+#include "stereoinfo_sg.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
 class QSGContext;
-class QSGStereoContext;
 
 class FloatingItemSGNode : public QSGPreTransformNode
 {
@@ -64,7 +64,7 @@ public:
     void preprocess();
 
 private:
-    QSGStereoContext *m_context;
+    QSGStereoInfo m_stereoInfo;
     qreal m_depth;
 };
 

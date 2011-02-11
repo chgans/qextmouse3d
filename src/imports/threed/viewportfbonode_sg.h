@@ -45,6 +45,7 @@
 #include <QtDeclarative/node.h>
 #include <QtDeclarative/texturematerial.h>
 #include <QtOpenGL/qglframebufferobject.h>
+#include "stereoinfo_sg.h"
 
 QT_BEGIN_HEADER
 
@@ -53,7 +54,6 @@ QT_BEGIN_NAMESPACE
 class ViewportSG;
 class QGLFramebufferObject;
 class QSGContext;
-class QSGStereoContext;
 
 class ViewportFboNodeSG : public GeometryNode
 {
@@ -71,7 +71,7 @@ public:
 
 private:
     ViewportSG *m_viewport;
-    QSGStereoContext *m_context;
+    QSGStereoInfo m_stereoInfo;
     QSize m_size;
 
     struct EyeBuffer

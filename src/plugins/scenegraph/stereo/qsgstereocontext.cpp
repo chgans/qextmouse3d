@@ -39,8 +39,9 @@
 **
 ****************************************************************************/
 
-#include "qsgstereocontext_p.h"
+#include "qsgstereocontext.h"
 #include "qsgpretransformnode_p.h"
+#include "qglnamespace.h"
 #include <QtDeclarative/private/nodeupdater_p.h>
 #include <QtDeclarative/renderer.h>
 #include <QtOpenGL/qglframebufferobject.h>
@@ -115,6 +116,7 @@ public:
     q_PFNGLDRAWBUFFERSPROC drawBuffers;
 #endif
 
+    void setEye(QGL::Eye value) { eye = value; }
     void setDrawBuffer(GLenum buffer);
 };
 
@@ -297,16 +299,10 @@ QSGStereoContext::~QSGStereoContext()
 {
 }
 
-QGL::Eye QSGStereoContext::eye() const
+int QSGStereoContext::eye() const
 {
     Q_D(const QSGStereoContext);
-    return d->eye;
-}
-
-void QSGStereoContext::setEye(QGL::Eye eye)
-{
-    Q_D(QSGStereoContext);
-    d->eye = eye;
+    return int(d->eye);
 }
 
 Renderer *QSGStereoContext::createRenderer()
@@ -336,23 +332,23 @@ void QSGStereoContext::renderNextFrame()
     case QSGStereoContextPrivate::HardwareStereo: {
         DrawBufferBindable left(d, GL_BACK_LEFT);
         DrawBufferBindable right(d, GL_BACK_RIGHT);
-        setEye(QGL::LeftEye);
+        d->setEye(QGL::LeftEye);
         renderer->renderScene(left);
-        setEye(QGL::RightEye);
+        d->setEye(QGL::RightEye);
         renderer->renderScene(right);
-        setEye(QGL::NoEye);
+        d->setEye(QGL::NoEye);
         break; }
 
     case QSGStereoContextPrivate::RedCyanStereo: {
         RedStereoBindable left;
         CyanStereoBindable right;
-        setEye(QGL::LeftEye);
+        d->setEye(QGL::LeftEye);
         renderer->renderScene(left);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        setEye(QGL::RightEye);
+        d->setEye(QGL::RightEye);
         renderer->renderScene(right);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        setEye(QGL::NoEye);
+        d->setEye(QGL::NoEye);
         break; }
 
     default: break;

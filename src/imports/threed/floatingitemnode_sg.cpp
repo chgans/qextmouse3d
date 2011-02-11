@@ -40,15 +40,15 @@
 ****************************************************************************/
 
 #include "floatingitemnode_sg.h"
-#include "qsgstereocontext_p.h"
+#include <QtDeclarative/qsgcontext.h>
 
 QT_BEGIN_NAMESPACE
 
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
-    : m_context(qobject_cast<QSGStereoContext *>(context)), m_depth(0.0f)
+    : m_stereoInfo(context), m_depth(0.0f)
 {
     // Preprocessing is required only if the context supports pre-transforms.
-    if (m_context)
+    if (m_stereoInfo.hasPreTransform())
         setFlag(Node::UsePreprocess, true);
 }
 
@@ -67,7 +67,7 @@ Node::NodeType FloatingItemSGNode::type() const
     // from QSGStereoContext, then it won't be aware of how to
     // update pre-transform nodes.  In that case, act like a
     // regular transform node and ignore the depth adjustment.
-    if (m_context)
+    if (m_stereoInfo.hasPreTransform())
         return PreTransformNodeType;
     else
         return TransformNodeType;
@@ -76,7 +76,7 @@ Node::NodeType FloatingItemSGNode::type() const
 void FloatingItemSGNode::preprocess()
 {
     QMatrix4x4 adjustMatrix;
-    QGL::Eye eye = m_context ? m_context->eye() : QGL::NoEye;
+    QGL::Eye eye = m_stereoInfo.eye();
     if (eye != QGL::NoEye && m_depth != 0.0f) {
         // Correct the depth value for the screen's DPI.  We treat 100 DPI
         // as "normal" and scale the depth value accordingly.  This way,
@@ -84,7 +84,7 @@ void FloatingItemSGNode::preprocess()
         // at the same viewing distance.  A depth of 1 is 0.254 millimeters.
         // Note: we should probably correct for viewing distance also,
         // but that is harder to determine.
-        qreal depth = m_depth * m_context->glContext()->device()->logicalDpiX() / 100.0f;
+        qreal depth = m_depth * m_stereoInfo.context()->glContext()->device()->logicalDpiX() / 100.0f;
 
         // Determine the transformation to pre-multiply with the modelview.
         if (eye == QGL::LeftEye)
