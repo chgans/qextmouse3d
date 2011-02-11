@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "qsgstereocontext_p.h"
 #include "qsgpretransformnode_p.h"
 #include <QtDeclarative/private/nodeupdater_p.h>
@@ -364,5 +360,3 @@ void QSGStereoContext::renderNextFrame()
 }
 
 QT_END_NAMESPACE
-
-#endif

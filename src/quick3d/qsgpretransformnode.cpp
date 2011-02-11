@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "qsgpretransformnode_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -63,5 +59,3 @@ void QSGPreTransformNode::setPreMatrix(const QMatrix4x4 &matrix)
 }
 
 QT_END_NAMESPACE
-
-#endif

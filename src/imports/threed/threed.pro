@@ -45,16 +45,18 @@ HEADERS += \
                shaderprogram_p.h
 }
 
-SOURCES += \
-    floatingitem_sg.cpp \
-    floatingitemnode_sg.cpp \
-    viewport_sg.cpp \
-    viewportfbonode_sg.cpp
-HEADERS += \
-    floatingitem_sg.h \
-    floatingitemnode_sg.h \
-    viewport_sg.h \
-    viewportfbonode_sg.h
+scenegraph {
+    SOURCES += \
+        floatingitem_sg.cpp \
+        floatingitemnode_sg.cpp \
+        viewport_sg.cpp \
+        viewportfbonode_sg.cpp
+    HEADERS += \
+        floatingitem_sg.h \
+        floatingitemnode_sg.h \
+        viewport_sg.h \
+        viewportfbonode_sg.h
+}
 
 qdeclarativesources.files += \
     qmldir

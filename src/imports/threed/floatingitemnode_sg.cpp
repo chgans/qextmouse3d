@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "floatingitemnode_sg.h"
 #include "qsgstereocontext_p.h"
 
@@ -100,5 +96,3 @@ void FloatingItemSGNode::preprocess()
 }
 
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

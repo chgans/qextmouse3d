@@ -42,10 +42,6 @@
 #ifndef QSGSTEREOCONTEXT_P_H
 #define QSGSTEREOCONTEXT_P_H
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include <QtDeclarative/qsgcontext.h>
 #include "qt3dquickglobal.h"
 #include "qglnamespace.h"
@@ -88,7 +84,5 @@ private:
 QT_END_NAMESPACE
 
 QT_END_HEADER
-
-#endif
 
 #endif

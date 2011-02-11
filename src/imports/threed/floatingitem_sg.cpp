@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "floatingitem_sg.h"
 #include "floatingitemnode_sg.h"
 #include <QtDeclarative/qsgcontext.h>
@@ -115,5 +111,3 @@ TransformNode *FloatingItemSGPrivate::createTransformNode()
 }
 
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

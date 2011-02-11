@@ -42,10 +42,6 @@
 #ifndef FLOATINGITEMNODE_SG_H
 #define FLOATINGITEMNODE_SG_H
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "qsgpretransformnode_p.h"
 
 QT_BEGIN_HEADER
@@ -75,7 +71,5 @@ private:
 QT_END_NAMESPACE
 
 QT_END_HEADER
-
-#endif // QML_VERSION >= 0x020000
 
 #endif // FLOATINGITEMNODE_SG_H

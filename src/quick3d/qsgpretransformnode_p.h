@@ -42,10 +42,6 @@
 #ifndef QSGPRETRANSFORMNODE_P_H
 #define QSGPRETRANSFORMNODE_P_H
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include <QtDeclarative/node.h>
 #include "qt3dquickglobal.h"
 
@@ -73,7 +69,5 @@ private:
 QT_END_NAMESPACE
 
 QT_END_HEADER
-
-#endif
 
 #endif

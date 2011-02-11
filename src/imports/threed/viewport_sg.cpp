@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "viewport_sg.h"
 #include "viewportfbonode_sg.h"
 #include <QtDeclarative/qsgview.h>
@@ -954,5 +950,3 @@ bool ViewportSG::isViewportRoot() const
 }
 
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000
