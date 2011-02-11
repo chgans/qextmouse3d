@@ -39,43 +39,32 @@
 **
 ****************************************************************************/
 
-#ifndef FLOATINGITEMNODE_SG_H
-#define FLOATINGITEMNODE_SG_H
-
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
-#include "qsgpretransformnode_p.h"
-
-QT_BEGIN_HEADER
+#include <QtDeclarative/qsgcontextplugin.h>
+#include "qsgstereocontext_p.h"
 
 QT_BEGIN_NAMESPACE
 
-class QSGContext;
-class QSGStereoContext;
-
-class FloatingItemSGNode : public QSGPreTransformNode
+class QSGStereoContextPlugin : public QSGContextPlugin
 {
 public:
-    FloatingItemSGNode(QSGContext *);
-    ~FloatingItemSGNode();
-
-    void setDepth(qreal depth);
-    inline qreal depth() const { return m_depth; }
-
-    NodeType type() const;
-    void preprocess();
-
-private:
-    QSGStereoContext *m_context;
-    qreal m_depth;
+    QStringList keys() const;
+    QSGContext *create(const QString &key) const;
 };
 
+QStringList QSGStereoContextPlugin::keys() const
+{
+    QStringList keys;
+    keys += QLatin1String("stereo");
+    keys += QLatin1String("stereo-test");   // Red-cyan test mode
+    return keys;
+}
+
+QSGContext *QSGStereoContextPlugin::create(const QString &key) const
+{
+    return new QSGStereoContext(key);
+}
+
+Q_EXPORT_STATIC_PLUGIN(QSGStereoContextPlugin)
+Q_EXPORT_PLUGIN2(qstereoscenegraph, QSGStereoContextPlugin)
+
 QT_END_NAMESPACE
-
-QT_END_HEADER
-
-#endif // QML_VERSION >= 0x020000
-
-#endif // FLOATINGITEMNODE_SG_H

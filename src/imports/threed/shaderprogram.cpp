@@ -689,7 +689,14 @@ void ShaderProgramEffect::processTextureUrl(int uniformLocation, QString urlStri
         QDeclarativePixmap* declarativePixmap =
                 declarativePixmaps[uniformLocation];
         QDeclarativeEngine *engine = qmlEngine(parent.data());
+#if QT_VERSION >= 0x040702
+        QDeclarativePixmap::Options options = QDeclarativePixmap::Cache;
+        if (async)
+            options |= QDeclarativePixmap::Asynchronous;
+        declarativePixmap->load(engine, urlString, options);
+#else
         declarativePixmap->load(engine, urlString, async);
+#endif
 
         QDeclarativePixmap::Status status =
                 declarativePixmap->status();

@@ -66,7 +66,7 @@ QT_BEGIN_NAMESPACE
 
     painter.translate(10, 25, 0);
     node->draw(&painter);
-    \endcode;
+    \endcode
 
     Note that the bottom circle of the cylinder will always be centred at (0,0,0)
     unless otherwise transformed after cylinder creation.

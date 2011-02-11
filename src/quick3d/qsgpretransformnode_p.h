@@ -39,43 +39,41 @@
 **
 ****************************************************************************/
 
-#ifndef FLOATINGITEMNODE_SG_H
-#define FLOATINGITEMNODE_SG_H
+#ifndef QSGPRETRANSFORMNODE_P_H
+#define QSGPRETRANSFORMNODE_P_H
 
 #include <QtDeclarative/qdeclarative.h>
 
 #if defined(QML_VERSION) && QML_VERSION >= 0x020000
 
-#include "qsgpretransformnode_p.h"
+#include <QtDeclarative/node.h>
+#include "qt3dquickglobal.h"
 
 QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QSGContext;
-class QSGStereoContext;
-
-class FloatingItemSGNode : public QSGPreTransformNode
+class Q_QT3D_QUICK_EXPORT QSGPreTransformNode : public TransformNode
 {
 public:
-    FloatingItemSGNode(QSGContext *);
-    ~FloatingItemSGNode();
+    QSGPreTransformNode();
+    ~QSGPreTransformNode();
 
-    void setDepth(qreal depth);
-    inline qreal depth() const { return m_depth; }
+    static const NodeType PreTransformNodeType = NodeType(UserNodeType + 267);
 
-    NodeType type() const;
-    void preprocess();
+    virtual NodeType type() const { return PreTransformNodeType; }
+
+    void setPreMatrix(const QMatrix4x4 &matrix);
+    const QMatrix4x4 &preMatrix() const { return m_preMatrix; }
 
 private:
-    QSGStereoContext *m_context;
-    qreal m_depth;
+    QMatrix4x4 m_preMatrix;
 };
 
 QT_END_NAMESPACE
 
 QT_END_HEADER
 
-#endif // QML_VERSION >= 0x020000
+#endif
 
-#endif // FLOATINGITEMNODE_SG_H
+#endif
