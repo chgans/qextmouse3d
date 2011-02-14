@@ -1209,9 +1209,9 @@ QRect QGLViewPickSurface::viewportGL() const
 
     \sa registerObject()
 */
-QObject *QGLView::objectForPoint(const QPoint &pt)
+QObject *QGLView::objectForPoint(const QPoint &point)
 {
-    QPoint point(pt);
+    QPoint pt(point);
 
     // What is the size of the drawing area after correcting for stereo?
     // Also adjust the mouse position to always be in the left half.
@@ -1219,19 +1219,19 @@ QObject *QGLView::objectForPoint(const QPoint &pt)
     if (d->stereoType == QGLView::DoubleWideLeftRight ||
             d->stereoType == QGLView::DoubleWideRightLeft) {
         areaSize = QSize(areaSize.width() / 2, areaSize.height());
-        if (point.x() >= areaSize.width())
-            point.setX(point.x() - areaSize.width());
+        if (pt.x() >= areaSize.width())
+            pt.setX(pt.x() - areaSize.width());
     } else if (d->stereoType == QGLView::DoubleHighLeftRight ||
                d->stereoType == QGLView::DoubleHighRightLeft) {
         areaSize = QSize(areaSize.width(), areaSize.height() / 2);
-        if (point.y() >= areaSize.height())
-            point.setY(point.y() - areaSize.height());
+        if (pt.y() >= areaSize.height())
+            pt.setY(pt.y() - areaSize.height());
     }
 
     // Check the area boundaries in case a mouse move has
     // moved the pointer outside the window.
-    if (point.x() < 0 || point.x() >= areaSize.width() ||
-            point.y() < 0 || point.y() >= areaSize.height())
+    if (pt.x() < 0 || pt.x() >= areaSize.width() ||
+            pt.y() < 0 || pt.y() >= areaSize.height())
         return 0;
 
     // Do we need to refresh the pick buffer contents?
@@ -1274,7 +1274,7 @@ QObject *QGLView::objectForPoint(const QPoint &pt)
     // Pick the object under the mouse.
     if (d->fbo)
         d->fbo->bind();
-    int objectId = painter.pickObject(point.x(), areaSize.height() - 1 - point.y());
+    int objectId = painter.pickObject(pt.x(), areaSize.height() - 1 - pt.y());
     QObject *object = d->objects.value(objectId, 0);
     if (d->fbo)
         d->fbo->release();
