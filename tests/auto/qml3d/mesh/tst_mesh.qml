@@ -77,7 +77,6 @@ Viewport {
         id: meshTest
 
         function test_url() {
-            console.log("mark");
             compare(url_test_mesh.dataChangedCounter, 0, "pre-test counter validation")
             compare(url_test_mesh.source, "", "null default source")
 
