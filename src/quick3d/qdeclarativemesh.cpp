@@ -207,7 +207,7 @@ QString QDeclarativeMesh::meshName() const
 void QDeclarativeMesh::setMeshName(const QString& value)
 {
     bool emitDataChanged = false;
-    if(d->meshName != value)
+    if (d->meshName != value)
     {
         d->meshName = value;
         emitDataChanged = true;
@@ -228,9 +228,8 @@ void QDeclarativeMesh::setMeshName(const QString& value)
         //to run.
         addSceneBranch(insertObject);
         emitDataChanged = true;
-        
     }
-    if( emitDataChanged )
+    if (emitDataChanged)
         emit dataChanged();
 }
 
