@@ -49,29 +49,36 @@ Viewport {
     Mesh {
         id: url_test_mesh
         source: ""
-        onDataChanged: { meshTest.dataChangedCounter += 1 }
+        onDataChanged: { dataChangedCounter += 1 }
+        property int dataChangedCounter: 0
     }
 
     Mesh {
         id: meshName_test_mesh
-        onDataChanged: { meshTest.dataChangedCounter += 1 }
+        onDataChanged: { dataChangedCounter += 1 }
+        property int dataChangedCounter: 0
     }
 
     Mesh {
         id: meshName_test_mesh2
         meshName: "testName"
-        onDataChanged: { meshTest.dataChangedCounter += 1 }
+        onDataChanged: { dataChangedCounter += 1 }
+        property int dataChangedCounter: 0
+    }
+
+    Mesh {
+        id: options_test_mesh
+        onOptionsChanged: { optionsChangedCounter += 1}
+        property int optionsChangedCounter: 0
     }
 
     TestCase {
         name: "Mesh"
         id: meshTest
 
-        property int dataChangedCounter: 0
-
         function test_url() {
             console.log("mark");
-            compare(dataChangedCounter, 0, "pre-test counter validation")
+            compare(url_test_mesh.dataChangedCounter, 0, "pre-test counter validation")
             compare(url_test_mesh.source, "", "null default source")
 
 
@@ -81,19 +88,41 @@ Viewport {
             // QUrl contains the absolute file path, so just compare the end
             var substring = url_test_mesh.source.toString().substr(-testString.length,testString.length);
             compare(substring, testString, "setSource() (relative file path)");
-            compare(dataChangedCounter, 1, "dataChanged signal")
+            compare(url_test_mesh.dataChangedCounter, 1, "dataChanged signal")
         }
 
         function test_meshName() {
-            dataChangedCounter = 0;
-            compare(dataChangedCounter, 0, "pre-test counter validation")
+            meshName_test_mesh.dataChangedCounter = 0;
+            compare(meshName_test_mesh.dataChangedCounter, 0, "pre-test counter validation")
 
             compare(meshName_test_mesh.meshName, "", "null default meshName");
-            compare(meshName_test_mesh2.meshName, "testName", "simple assignment test");
+            compare(meshName_test_mesh2.meshName, "testName", "qml assignment test");
 
             meshName_test_mesh.meshName = "setMeshNameTestName";
             compare(meshName_test_mesh.meshName, "setMeshNameTestName", "setMeshNameTestName");
-            compare(dataChangedCounter, 1, "dataChanged signal")
+            compare(meshName_test_mesh.dataChangedCounter, 1, "dataChanged signal")
+        }
+
+        function test_options() {
+            compare(options_test_mesh.optionsChangedCounter, 0,
+                    "pretest validation")
+            compare(options_test_mesh.options, "", "null default options");
+
+            options_test_mesh.options="test options string";
+            compare(options_test_mesh.options, "test options string",
+                    "setOptionsString");
+
+            options_test_mesh.options="test options string";
+            compare(options_test_mesh.options,  "test options string",
+                    "setOptions()");
+            compare(options_test_mesh.optionsChangedCounter, 1,
+                    "optionsChanged signal 1");
+
+            options_test_mesh.options=" \\ \ \$";
+            compare(options_test_mesh.options, " \\ \ \$",
+                    "potentially troublesome characters")
+            compare(options_test_mesh.optionsChangedCounter, 2,
+                    "optionsChanged signal 2");
         }
     }
 }
