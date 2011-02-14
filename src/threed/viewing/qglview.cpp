@@ -1146,13 +1146,55 @@ void QGLView::keyPressEvent(QKeyEvent *e)
     QGLWidget::keyPressEvent(e);
 }
 
-// Find the next power of 2 which is "value" or greater.
-static inline int powerOfTwo(int value)
+class QGLViewPickSurface : public QGLAbstractSurface
 {
-    int p = 1;
-    while (p < value)
-        p <<= 1;
-    return p;
+public:
+    QGLViewPickSurface(QGLView *view, QGLFramebufferObject *fbo,
+                       const QSize &areaSize);
+
+    QPaintDevice *device() const;
+    bool activate(QGLAbstractSurface *prevSurface);
+    void deactivate(QGLAbstractSurface *nextSurface);
+    QRect viewportGL() const;
+
+private:
+    QGLView *m_view;
+    QGLFramebufferObject *m_fbo;
+    QRect m_viewportGL;
+};
+
+QGLViewPickSurface::QGLViewPickSurface
+        (QGLView *view, QGLFramebufferObject *fbo, const QSize &areaSize)
+    : QGLAbstractSurface(504)
+    , m_view(view)
+    , m_fbo(fbo)
+    , m_viewportGL(QPoint(0, 0), areaSize)
+{
+}
+
+QPaintDevice *QGLViewPickSurface::device() const
+{
+    return m_view;
+}
+
+bool QGLViewPickSurface::activate(QGLAbstractSurface *prevSurface)
+{
+    Q_UNUSED(prevSurface);
+    if (m_fbo)
+        m_fbo->bind();
+    return true;
+}
+
+void QGLViewPickSurface::deactivate(QGLAbstractSurface *nextSurface)
+{
+    Q_UNUSED(nextSurface);
+    if (m_fbo)
+        m_fbo->release();
+}
+
+QRect QGLViewPickSurface::viewportGL() const
+{
+    return m_viewportGL;
 }
 
 /*!
@@ -1163,11 +1205,29 @@ static inline int powerOfTwo(int value)
 
     \sa registerObject()
 */
-QObject *QGLView::objectForPoint(const QPoint &point)
+QObject *QGLView::objectForPoint(const QPoint &pt)
 {
-    // Check the window boundaries in case a mouse move has
+    QPoint point(pt);
+
+    // What is the size of the drawing area after correcting for stereo?
+    // Also adjust the mouse position to always be in the left half.
+    QSize areaSize = size();
+    if (d->stereoType == QGLView::DoubleWideLeftRight ||
+            d->stereoType == QGLView::DoubleWideRightLeft) {
+        areaSize = QSize(areaSize.width() / 2, areaSize.height());
+        if (point.x() >= areaSize.width())
+            point.setX(point.x() - areaSize.width());
+    } else if (d->stereoType == QGLView::DoubleHighLeftRight ||
+               d->stereoType == QGLView::DoubleHighRightLeft) {
+        areaSize = QSize(areaSize.width(), areaSize.height() / 2);
+        if (point.y() >= areaSize.height())
+            point.setY(point.y() - areaSize.height());
+    }
+
+    // Check the area boundaries in case a mouse move has
     // moved the pointer outside the window.
-    if (!rect().contains(point))
+    if (point.x() < 0 || point.x() >= areaSize.width() ||
+            point.y() < 0 || point.y() >= areaSize.height())
         return 0;
 
     // Do we need to refresh the pick buffer contents?
@@ -1182,8 +1242,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // double-buffered, then use the window back buffer.
         bool useBackBuffer = doubleBuffer();
         if (!useBackBuffer) {
-            QSize fbosize = size();
-            fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
+            QSize fbosize = QGL::nextPowerOfTwo(areaSize);
             if (!d->fbo) {
                 d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
             } else if (d->fbo->size() != fbosize) {
@@ -1192,34 +1251,32 @@ QObject *QGLView::objectForPoint(const QPoint &point)
             }
         }
 
-        // Render the pick version of the scene into the framebuffer object.
-        if (d->fbo)
-            d->fbo->bind();
+        // Render the pick version of the scene.
+        QGLViewPickSurface surface(this, d->fbo, areaSize);
+        painter.pushSurface(&surface);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
+        painter.popSurface();
 
         // The pick buffer contents are now valid, unless we are using
         // the back buffer - we cannot rely upon it being valid next time.
         d->pickBufferForceUpdate = useBackBuffer;
         d->pickBufferMaybeInvalid = false;
-    } else {
-        // Bind the framebuffer object to the window's context.
-        makeCurrent();
-        if (d->fbo)
-            d->fbo->bind();
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(point.x(), height() - 1 - point.y());
+    if (d->fbo)
+        d->fbo->bind();
+    int objectId = painter.pickObject(point.x(), areaSize.height() - 1 - point.y());
     QObject *object = d->objects.value(objectId, 0);
+    if (d->fbo)
+        d->fbo->release();
     
     // Release the framebuffer object and return.
     painter.end();
-    if (d->fbo)
-        d->fbo->release();
     doneCurrent();
     return object;
 }
