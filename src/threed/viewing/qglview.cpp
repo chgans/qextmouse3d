@@ -807,8 +807,12 @@ void QGLView::paintGL()
         // Paint the scene twice, from the perspective of each camera.
         QSize size(this->size());
         painter.setEye(QGL::LeftEye);
-        earlyPaintGL(&painter);
+        if (d->stereoType != QGLView::Hardware)
+            earlyPaintGL(&painter);     // Clear both eyes at the same time.
         painter.pushSurface(d->leftEyeSurface(size));
+        if (d->stereoType == QGLView::Hardware)
+            earlyPaintGL(&painter);     // Clear the left eye only.
+        earlyPaintGL(&painter);
         painter.setCamera(d->camera);
         paintGL(&painter);
         if (d->stereoType == QGLView::RedCyanAnaglyph)
@@ -816,7 +820,7 @@ void QGLView::paintGL()
         painter.setEye(QGL::RightEye);
         painter.setSurface(d->rightEyeSurface(size));
         if (d->stereoType == QGLView::Hardware)
-            earlyPaintGL(&painter);
+            earlyPaintGL(&painter);     // Clear the right eye only.
         painter.setCamera(d->camera);
         paintGL(&painter);
         painter.popSurface();
