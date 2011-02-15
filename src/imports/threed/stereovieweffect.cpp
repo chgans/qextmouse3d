@@ -118,24 +118,32 @@ void StereoViewEffect::draw(QPainter *painter)
         switch (layout) {
         case StereoView::LeftRight: default:
             window.setWidth(window.width() / 2);
+            // Fall through.
+        case StereoView::StretchedLeftRight:
             leftViewport.setWidth(viewport.width() / 2);
             rightViewport.setX(leftViewport.right() + 1);
             rightViewport.setWidth(viewport.width() - leftViewport.width());
             break;
         case StereoView::RightLeft:
             window.setWidth(window.width() / 2);
+            // Fall through.
+        case StereoView::StretchedRightLeft:
             rightViewport.setWidth(viewport.width() / 2);
             leftViewport.setX(rightViewport.right() + 1);
             leftViewport.setWidth(viewport.width() - rightViewport.width());
             break;
         case StereoView::TopBottom:
             window.setHeight(window.height() / 2);
+            // Fall through.
+        case StereoView::StretchedTopBottom:
             leftViewport.setHeight(viewport.height() / 2);
             rightViewport.setY(leftViewport.bottom() + 1);
             rightViewport.setHeight(viewport.height() - leftViewport.height());
             break;
         case StereoView::BottomTop:
             window.setHeight(window.height() / 2);
+            // Fall through.
+        case StereoView::StretchedBottomTop:
             rightViewport.setHeight(viewport.height() / 2);
             leftViewport.setY(rightViewport.bottom() + 1);
             leftViewport.setHeight(viewport.height() - rightViewport.height());

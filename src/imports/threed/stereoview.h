@@ -72,6 +72,10 @@ public:
         RightLeft,
         TopBottom,
         BottomTop,
+        StretchedLeftRight,
+        StretchedRightLeft,
+        StretchedTopBottom,
+        StretchedBottomTop,
         Disabled
     };
 
@@ -88,6 +92,8 @@ public:
     static StereoView *findView(QDeclarativeItem *item);
 
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
+
+    qreal aspectRatioAdjustment() const;
 
 Q_SIGNALS:
     void layoutChanged();

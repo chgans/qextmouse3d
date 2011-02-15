@@ -164,6 +164,14 @@ StereoView::~StereoView()
     \o \c BottomTop - the left and right eye images are rendered into
        the bottom and top halves of the StereoView, with the
        viewport occupying the full width and half the height.
+    \o \c StretchedLeftRight - same as LeftRight, but the two eye
+       halves are stretched to twice their original width.
+    \o \c StretchedRightLeft - same as RightLeft, but the two eye
+       halves are stretched to twice their original width.
+    \o \c StretchedTopBottom - same as TopBottom, but the two eye
+       halves are stretched to twice their original height.
+    \o \c StretchedBottomTop - same as BottomTop, but the two eye
+       halves are stretched to twice their original height.
     \o \c Disabled - stereo rendering is disabled, depth values on
        FloatingItem elements will be ignored, and the viewport
        occupies the entire StereoView.
@@ -175,6 +183,7 @@ void StereoView::setLayout(StereoView::Layout layout)
     if (m_layout != layout) {
         m_layout = layout;
         updateViewportSize();
+        emit layoutChanged();
         update();
     }
 }
@@ -287,6 +296,18 @@ void StereoView::switchToOpenGL()
         views[0]->setViewport(new QGLWidget(format, views[0]));
         if (focused)
             views[0]->viewport()->setFocus();
+    }
+}
+
+/*!
+    \internal
+*/
+qreal StereoView::aspectRatioAdjustment() const
+{
+    switch (m_layout) {
+    case StretchedLeftRight: case StretchedRightLeft: return 2.0f;
+    case StretchedTopBottom: case StretchedBottomTop: return 0.5f;
+    default: return 1.0f;
     }
 }
 
