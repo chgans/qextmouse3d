@@ -217,6 +217,34 @@ QRect QGLAbstractSurface::viewportRect() const
 */
 
 /*!
+    Returns the aspect ratio of viewportGL() after correcting for the
+    DPI of device().
+
+    The return value is used to correct perspective and orthographic
+    projections for the aspect ratio of the drawing surface.  Subclasses
+    may override this function to adjust the return value if the DPI of
+    device() is not sufficient to determine the aspect ratio.
+*/
+qreal QGLAbstractSurface::aspectRatio() const
+{
+    // Get the size of the current viewport.
+    QSize size = viewportGL().size();
+    if (size.width() == 0 || size.height() == 0 ||
+            size.width() == size.height())
+        return 1.0f;
+
+    // Use the device's DPI setting to determine the pixel aspect ratio.
+    QPaintDevice *device = this->device();
+    int dpiX = device->logicalDpiX();
+    int dpiY = device->logicalDpiY();
+    if (dpiX <= 0 || dpiY <= 0)
+        dpiX = dpiY = 1;
+
+    // Return the final aspect ratio based on viewport and pixel size.
+    return ((qreal)(size.width() * dpiY)) / ((qreal)(size.height() * dpiX));
+}
+
+/*!
     Switches from this surface to \a nextSurface by calling deactivate()
     on this surface and activate() on \a nextSurface.
 
