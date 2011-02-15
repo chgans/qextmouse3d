@@ -703,8 +703,11 @@ void Viewport::switchToOpenGL()
     QGraphicsView *view =
         qobject_cast<QGraphicsView *>(d->viewWidget->parentWidget());
     if (view) {
+        bool focused = view->viewport()->hasFocus();
         d->viewWidget = new QGLWidget(view);
         view->setViewport(d->viewWidget);
+        if (focused)
+            d->viewWidget->setFocus();
     }
 }
 

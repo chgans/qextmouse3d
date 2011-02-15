@@ -280,10 +280,13 @@ void StereoView::switchToOpenGL()
         QGLWidget *glw = qobject_cast<QGLWidget *>(views[0]->viewport());
         if (glw)
             return;
+        bool focused = views[0]->viewport()->hasFocus();
         QGLFormat format = QGLFormat::defaultFormat();
         if (m_layout == Default)
             format.setStereo(true); // Request hardware stereo if available.
         views[0]->setViewport(new QGLWidget(format, views[0]));
+        if (focused)
+            views[0]->viewport()->setFocus();
     }
 }
 
