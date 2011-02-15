@@ -953,6 +953,11 @@ void Viewport::wheelEvent(QGraphicsSceneWheelEvent *e)
 */
 void Viewport::keyPressEvent(QKeyEvent *e)
 {
+    // Process the "Keys" property on the item first.
+    keyPressPreHandler(e);
+    if (e->isAccepted())
+        return;
+
     qreal sep;
 
     if (!d->navigation) {
