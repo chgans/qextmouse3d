@@ -142,37 +142,21 @@ QT_BEGIN_NAMESPACE
 
     \table
     \row \o \c{-stereo-hw} \o \l Hardware.
-    \row \o \c{-stereo-nhd} \o LeftRight, nHD (640x360).
-    \row \o \c{-stereo-vga} \o LeftRight, VGA (640x480).
-    \row \o \c{-stereo-wvga} \o LeftRight, WVGA (800x480).
-    \row \o \c{-stereo-720p} \o LeftRight, 720p (1280x720).
-    \row \o \c{-stereo-nhd-lr} \o LeftRight, nHD (640x360).
-    \row \o \c{-stereo-vga-lr} \o LeftRight, VGA (640x480).
-    \row \o \c{-stereo-wvga-lr} \o LeftRight, WVGA (800x480).
-    \row \o \c{-stereo-720p-lr} \o LeftRight, 720p (1280x720).
-    \row \o \c{-stereo-nhd-rl} \o RightLeft, nHD (640x360).
-    \row \o \c{-stereo-vga-rl} \o RightLeft, VGA (640x480).
-    \row \o \c{-stereo-wvga-rl} \o RightLeft, WVGA (800x480).
-    \row \o \c{-stereo-720p-rl} \o RightLeft, 720p (1280x720).
-    \row \o \c{-stereo-nhd-tb} \o TopBottom, nHD (640x360).
-    \row \o \c{-stereo-vga-tb} \o TopBottom, VGA (640x480).
-    \row \o \c{-stereo-wvga-tb} \o TopBottom, WVGA (800x480).
-    \row \o \c{-stereo-720p-tb} \o TopBottom, 720p (1280x720).
-    \row \o \c{-stereo-nhd-bt} \o BottomTop, nHD (640x360).
-    \row \o \c{-stereo-vga-bt} \o BottomTop, VGA (640x480).
-    \row \o \c{-stereo-wvga-bt} \o BottomTop, WVGA (800x480).
-    \row \o \c{-stereo-720p-bt} \o BottomTop, 720p (1280x720).
-    \row \o \c{-stereo-lr} \o LeftRight, size set separately.
-    \row \o \c{-stereo-rl} \o RightLeft, size set separately.
-    \row \o \c{-stereo-tb} \o TopBottom, size set separately.
-    \row \o \c{-stereo-bt} \o BottomTop, size set separately.
+    \row \o \c{-stereo-lr} \o LeftRight.
+    \row \o \c{-stereo-rl} \o RightLeft.
+    \row \o \c{-stereo-tb} \o TopBottom.
+    \row \o \c{-stereo-bt} \o BottomTop.
+    \row \o \c{-stereo-stretched-lr} \o StretchedLeftRight.
+    \row \o \c{-stereo-stretched-rl} \o StretchedRightLeft.
+    \row \o \c{-stereo-stretched-tb} \o StretchedTopBottom.
+    \row \o \c{-stereo-stretched-bt} \o StretchedBottomTop.
     \endtable
 
     The option can also be supplied in the \c{QT3D_OPTIONS} environment
     variable:
 
     \code
-    $ QT3D_OPTIONS="-stereo-nhd" ./cubehouse
+    $ QT3D_OPTIONS="-stereo-lr" ./cubehouse
     \endcode
 
     If the application sets the stereo type with setStereoType(),
@@ -363,38 +347,22 @@ void QGLViewPrivate::processStereoOptions(QGLView *view, const QString &arg)
     // then convert it into options that define the size and type of
     // stereo window to use for a top-level QGLView.  Possible options:
     //
-    //      nhd, vga, wvga, 720p - define the screen resolution
+    //      hw - use hardware stereo
     //      lr, rl, tb, bt - specify the eye order (default is left-right)
+    //      stretched - used stretched versions of double wide/high modes.
     //
     QStringList opts = arg.mid(8).split(QLatin1Char('-'));
     QGLView::StereoType stereoType;
-    QSize size(0, 0);
-    if (opts.contains(QLatin1String("hw")))
-        return; // Hardware mode is selected by makeStereoGLFormat().
-    else if (opts.contains(QLatin1String("nhd")))
-        size = QSize(640, 360);
-    else if (opts.contains(QLatin1String("vga")))
-        size = QSize(640, 480);
-    else if (opts.contains(QLatin1String("wvga")))
-        size = QSize(800, 480);
-    else if (opts.contains(QLatin1String("720p")))
-        size = QSize(1280, 720);
     bool stretched = opts.contains(QLatin1String("stretched"));
     if (opts.contains(QLatin1String("rl"))) {
         stereoType = stretched ? QGLView::StretchedRightLeft : QGLView::RightLeft;
-        size = QSize(size.width() * 2, size.height());
     } else if (opts.contains(QLatin1String("tb"))) {
-        size = QSize(size.width(), size.height() * 2);
         stereoType = stretched ? QGLView::StretchedTopBottom : QGLView::TopBottom;
     } else if (opts.contains(QLatin1String("bt"))) {
-        size = QSize(size.width(), size.height() * 2);
         stereoType = stretched ? QGLView::StretchedBottomTop : QGLView::BottomTop;
     } else {
-        size = QSize(size.width() * 2, size.height());
         stereoType = stretched ? QGLView::StretchedLeftRight : QGLView::LeftRight;
     }
-    if (size.width() > 0 && size.height() > 0)
-        view->resize(size);
     view->setStereoType(stereoType);
 }
 

@@ -129,8 +129,9 @@
 
     If the platform or device has a hardware stereoscopic display,
     then it may be necessary to supply a command-line option to enable
-    the correct stereo mode.  For example, the \c{-stereo-nhd-tb} option
-    will render the scene in double-high nHD (640x360):
+    the correct stereo mode.  For example, the \c{-stereo-tb} option
+    will render the scene in double-high stereo with the left eye
+    image on top:
 
     \image stereo-nhd-screenshot.png
 
