@@ -109,7 +109,7 @@ void OptionsDialog::saveSettings()
     bool correctAcute = ui->correctActuteCheckBox->isChecked();
     settings.setValue(QLatin1String("CorrectAcute"), correctAcute);
     bool showWarnings = ui->showWarningsCheckBox->isChecked();
-    settings.setValue(QLatin1String("ShowWarnings"), showWarnings);
+    settings.setValue(QLatin1String("ShowWarnings"), showWarnings);	
 }
 
 void OptionsDialog::loadSettings()

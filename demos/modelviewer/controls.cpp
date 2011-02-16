@@ -367,7 +367,13 @@ void Controls::loadModelDefaults(const QString &model)
         up = qvariant_cast<QVector3D>(settings.value(QLatin1String("upVector"), up));
         m_view->camera()->setEye(e);
         m_view->camera()->setUpVector(up);
-        spin = settings.value(QLatin1String("spin"), false).toBool();
+       // spin = settings.value(QLatin1String("spin"), false).toBool();
+		bool showFloor = settings.value(QLatin1String("ShowFloor"), false).toBool();
+		m_ui->actionShow_Floor->setChecked(showFloor);
+		on_actionShow_Floor_triggered();
+		bool spinView = settings.value(QLatin1String("spin"), false).toBool();
+		m_ui->actionSpin->setChecked(spinView);
+		on_actionSpin_triggered();
     }
     else
     {
@@ -412,7 +418,11 @@ void Controls::saveModelDefaults(const QString &model)
     settings.setValue(QLatin1String("scale"), s);
     settings.setValue(QLatin1String("eye"), e);
     settings.setValue(QLatin1String("upVector"), up);
-    settings.setValue(QLatin1String("spin"), m_ui->actionSpin->isChecked());
+  //  settings.setValue(QLatin1String("spin"), m_ui->actionSpin->isChecked());
+	bool showFloor = m_ui->actionShow_Floor->isChecked();
+	settings.setValue(QLatin1String("ShowFloor"), showFloor);
+	bool spinView = m_ui->actionSpin->isChecked();
+	settings.setValue(QLatin1String("spin"), spinView);
 }
 
 void Controls::on_actionOpen_triggered()
@@ -475,6 +485,7 @@ void Controls::saveSettings(const QString &model)
     settings.setValue(QLatin1String("CorrectAcute"), correctAcute);
     bool showWarnings = m_ui->actionShow_Warnings->isChecked();
     settings.setValue(QLatin1String("ShowWarnings"), showWarnings);
+	
 }
 
 void Controls::loadSettings(const QString &model)
