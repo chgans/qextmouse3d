@@ -57,6 +57,9 @@ QSGStereoInfo::QSGStereoInfo(QSGContext *context)
     v = m_context->property("hasPreTransform");
     if (!v.isNull())
         m_hasPreTransform = v.toBool();
+
+    const QMetaObject *meta = m_context->metaObject();
+    m_eyeProperty = meta->property(meta->indexOfProperty("eye"));
 }
 
 QSGStereoInfo::~QSGStereoInfo()
@@ -107,7 +110,7 @@ QGL::Eye QSGStereoInfo::eye() const
 {
     // The "eye" property is assumed to be of type "int" with values
     // 0, 1, and 2, which we cast to NoEye, LeftEye, and RightEye.
-    QVariant v = m_context->property("eye");
+    QVariant v = m_eyeProperty.read(m_context);
     if (v.isNull())
         return QGL::NoEye;
     else

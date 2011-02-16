@@ -43,6 +43,8 @@
 #define STEREOINFO_SG_H
 
 #include "qglnamespace.h"
+#include <QtCore/qobject.h>
+#include <QtCore/qmetaobject.h>
 
 QT_BEGIN_HEADER
 
@@ -67,6 +69,7 @@ private:
     QSGContext *m_context;
     bool m_hasStereo;
     bool m_hasPreTransform;
+    QMetaProperty m_eyeProperty;
 };
 
 QT_END_NAMESPACE
