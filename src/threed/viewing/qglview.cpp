@@ -210,6 +210,14 @@ QT_BEGIN_NAMESPACE
         image on the top of the window.
     \value BottomTop The view is double-high with the left eye
         image on the bottom of the window.
+    \value StretchedLeftRight Same as LeftRight, but with the
+        left and right eye images stretched to double their width.
+    \value StretchedRightLeft Same as RightLeft, but with the
+        left and right eye images stretched to double their width.
+    \value StretchedTopBottom Same as TopBottom, but with the
+        left and right eye images stretched to double their height.
+    \value StretchedBottomTop Same as BottomTop, but with the
+        left and right eye images stretched to double their height.
 */
 
 class QGLViewPrivate
@@ -371,28 +379,48 @@ void QGLViewPrivate::processStereoOptions(QGLView *view, const QString &arg)
         size = QSize(800, 480);
     else if (opts.contains(QLatin1String("720p")))
         size = QSize(1280, 720);
+    bool stretched = opts.contains(QLatin1String("stretched"));
     if (opts.contains(QLatin1String("rl"))) {
-        stereoType = QGLView::RightLeft;
+        stereoType = stretched ? QGLView::StretchedRightLeft : QGLView::RightLeft;
         size = QSize(size.width() * 2, size.height());
     } else if (opts.contains(QLatin1String("tb"))) {
         size = QSize(size.width(), size.height() * 2);
-        stereoType = QGLView::TopBottom;
+        stereoType = stretched ? QGLView::StretchedTopBottom : QGLView::TopBottom;
     } else if (opts.contains(QLatin1String("bt"))) {
         size = QSize(size.width(), size.height() * 2);
-        stereoType = QGLView::BottomTop;
+        stereoType = stretched ? QGLView::StretchedBottomTop : QGLView::BottomTop;
     } else {
         size = QSize(size.width() * 2, size.height());
-        stereoType = QGLView::LeftRight;
+        stereoType = stretched ? QGLView::StretchedLeftRight : QGLView::LeftRight;
     }
     if (size.width() > 0 && size.height() > 0)
         view->resize(size);
     view->setStereoType(stereoType);
 }
 
+class QGLViewSubsurface : public QGLSubsurface
+{
+public:
+    QGLViewSubsurface(QGLAbstractSurface *surface, const QRect &region,
+                      qreal adjust)
+        : QGLSubsurface(surface, region), m_adjust(adjust) {}
+
+    qreal aspectRatio() const;
+
+private:
+    qreal m_adjust;
+};
+
+qreal QGLViewSubsurface::aspectRatio() const
+{
+    return QGLSubsurface::aspectRatio() * m_adjust;
+}
+
 // Returns the surface to use to render the left eye image.
 QGLAbstractSurface *QGLViewPrivate::leftEyeSurface(const QSize &size)
 {
     QRect viewport;
+    qreal adjust = 1.0f;
     switch (stereoType) {
     case QGLView::Hardware:
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
@@ -422,11 +450,31 @@ QGLAbstractSurface *QGLViewPrivate::leftEyeSurface(const QSize &size)
     case QGLView::BottomTop:
         viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
         break;
+    case QGLView::StretchedLeftRight:
+        viewport = QRect(0, 0, size.width() / 2, size.height());
+        adjust = 2.0f;
+        break;
+    case QGLView::StretchedRightLeft:
+        viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
+        adjust = 2.0f;
+        break;
+    case QGLView::StretchedTopBottom:
+        viewport = QRect(0, 0, size.width(), size.height() / 2);
+        adjust = 0.5f;
+        break;
+    case QGLView::StretchedBottomTop:
+        viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
+        adjust = 0.5f;
+        break;
     }
-    if (!leftSurface)
-        leftSurface = new QGLSubsurface(&mainSurface, viewport);
-    else
+    if (!leftSurface) {
+        if (adjust == 1.0f)
+            leftSurface = new QGLSubsurface(&mainSurface, viewport);
+        else
+            leftSurface = new QGLViewSubsurface(&mainSurface, viewport, adjust);
+    } else {
         static_cast<QGLSubsurface *>(leftSurface)->setRegion(viewport);
+    }
     return leftSurface;
 }
 
@@ -434,6 +482,7 @@ QGLAbstractSurface *QGLViewPrivate::leftEyeSurface(const QSize &size)
 QGLAbstractSurface *QGLViewPrivate::rightEyeSurface(const QSize &size)
 {
     QRect viewport;
+    qreal adjust = 1.0f;
     switch (stereoType) {
     case QGLView::Hardware:
 #if defined(GL_BACK_LEFT) && defined(GL_BACK_RIGHT)
@@ -463,11 +512,31 @@ QGLAbstractSurface *QGLViewPrivate::rightEyeSurface(const QSize &size)
     case QGLView::BottomTop:
         viewport = QRect(0, 0, size.width(), size.height() / 2);
         break;
+    case QGLView::StretchedLeftRight:
+        viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
+        adjust = 2.0f;
+        break;
+    case QGLView::StretchedRightLeft:
+        viewport = QRect(0, 0, size.width() / 2, size.height());
+        adjust = 2.0f;
+        break;
+    case QGLView::StretchedTopBottom:
+        viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
+        adjust = 0.5f;
+        break;
+    case QGLView::StretchedBottomTop:
+        viewport = QRect(0, 0, size.width(), size.height() / 2);
+        adjust = 0.5f;
+        break;
     }
-    if (!rightSurface)
-        rightSurface = new QGLSubsurface(&mainSurface, viewport);
-    else
+    if (!rightSurface) {
+        if (adjust == 1.0f)
+            rightSurface = new QGLSubsurface(&mainSurface, viewport);
+        else
+            rightSurface = new QGLViewSubsurface(&mainSurface, viewport, adjust);
+    } else {
         static_cast<QGLSubsurface *>(rightSurface)->setRegion(viewport);
+    }
     return rightSurface;
 }
 
@@ -1219,16 +1288,36 @@ QObject *QGLView::objectForPoint(const QPoint &point)
     // What is the size of the drawing area after correcting for stereo?
     // Also adjust the mouse position to always be in the left half.
     QSize areaSize = size();
-    if (d->stereoType == QGLView::LeftRight ||
-            d->stereoType == QGLView::RightLeft) {
+    switch (d->stereoType) {
+    case QGLView::LeftRight:
+    case QGLView::RightLeft:
         areaSize = QSize(areaSize.width() / 2, areaSize.height());
         if (pt.x() >= areaSize.width())
             pt.setX(pt.x() - areaSize.width());
-    } else if (d->stereoType == QGLView::TopBottom ||
-               d->stereoType == QGLView::BottomTop) {
+        break;
+    case QGLView::TopBottom:
+    case QGLView::BottomTop:
         areaSize = QSize(areaSize.width(), areaSize.height() / 2);
         if (pt.y() >= areaSize.height())
             pt.setY(pt.y() - areaSize.height());
+        break;
+    case QGLView::StretchedLeftRight:
+    case QGLView::StretchedRightLeft: {
+        int halfwid = areaSize.width() / 2;
+        if (pt.x() >= halfwid)
+            pt.setX((pt.x() - halfwid) * 2);
+        else
+            pt.setX(pt.x() * 2);
+        break; }
+    case QGLView::StretchedTopBottom:
+    case QGLView::StretchedBottomTop: {
+        int halfht = areaSize.height() / 2;
+        if (pt.y() >= halfht)
+            pt.setY((pt.y() - halfht) * 2);
+        else
+            pt.setY(pt.y() * 2);
+        break; }
+    default: break;
     }
 
     // Check the area boundaries in case a mouse move has

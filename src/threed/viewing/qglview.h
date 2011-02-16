@@ -81,7 +81,11 @@ public:
         LeftRight,
         RightLeft,
         TopBottom,
-        BottomTop
+        BottomTop,
+        StretchedLeftRight,
+        StretchedRightLeft,
+        StretchedTopBottom,
+        StretchedBottomTop
     };
 
     QGLView::StereoType stereoType() const;
