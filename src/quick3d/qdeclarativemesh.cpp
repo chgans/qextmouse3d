@@ -206,7 +206,12 @@ QString QDeclarativeMesh::meshName() const
 
 void QDeclarativeMesh::setMeshName(const QString& value)
 {
-    d->meshName = value;
+    bool emitDataChanged = false;
+    if (d->meshName != value)
+    {
+        d->meshName = value;
+        emitDataChanged = true;
+    }
     if (d->loaded && d->scene) {
         QGLSceneNode *insertObject;
         if (value.isEmpty())            
@@ -222,9 +227,10 @@ void QDeclarativeMesh::setMeshName(const QString& value)
         //Add the object: if null it will make the object non-drawable, but still able
         //to run.
         addSceneBranch(insertObject);
-        
-        emit dataChanged();
+        emitDataChanged = true;
     }
+    if (emitDataChanged)
+        emit dataChanged();
 }
 
 /*!

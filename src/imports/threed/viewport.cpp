@@ -379,6 +379,24 @@ void Viewport::setLightModel(QGLLightModel *value)
     }
 }
 
+class ViewportSubsurface : public QGLSubsurface
+{
+public:
+    ViewportSubsurface(QGLAbstractSurface *surface, const QRect &region,
+                       qreal adjust)
+        : QGLSubsurface(surface, region), m_adjust(adjust) {}
+
+    qreal aspectRatio() const;
+
+private:
+    qreal m_adjust;
+};
+
+qreal ViewportSubsurface::aspectRatio() const
+{
+    return QGLSubsurface::aspectRatio() * m_adjust;
+}
+
 /*!
     \internal
     The main paint function for the Viewport class.  It takes a  QPainter \a p, which performs the
@@ -422,16 +440,19 @@ void Viewport::paint(QPainter *p, const QStyleOptionGraphicsItem * style, QWidge
     // If this Viewport is surrounded by a StereoView item,
     // then fetch the eye to be rendered from it.
     StereoView *stereoView = StereoView::findView(this);
-    if (stereoView)
+    qreal adjust;
+    if (stereoView) {
         painter.setEye(stereoView->eye());
-    else
+        adjust = stereoView->aspectRatioAdjustment();
+    } else {
         painter.setEye(QGL::NoEye);
+        adjust = 1.0f;
+    }
 
     // Modify the GL viewport to only cover the extent of this QDeclarativeItem.
     QTransform transform = p->combinedTransform();
-    QRect viewport(qRound(transform.dx()), qRound(transform.dy()),
-                   width(), height());
-    QGLSubsurface surface(painter.currentSurface(), viewport);
+    QRect viewport = transform.mapRect(boundingRect()).toRect();
+    ViewportSubsurface surface(painter.currentSurface(), viewport, adjust);
     painter.pushSurface(&surface);
 
     // Perform early drawing operations.
@@ -703,8 +724,11 @@ void Viewport::switchToOpenGL()
     QGraphicsView *view =
         qobject_cast<QGraphicsView *>(d->viewWidget->parentWidget());
     if (view) {
+        bool focused = view->viewport()->hasFocus();
         d->viewWidget = new QGLWidget(view);
         view->setViewport(d->viewWidget);
+        if (focused)
+            d->viewWidget->setFocus();
     }
 }
 
@@ -953,6 +977,11 @@ void Viewport::wheelEvent(QGraphicsSceneWheelEvent *e)
 */
 void Viewport::keyPressEvent(QKeyEvent *e)
 {
+    // Process the "Keys" property on the item first.
+    keyPressPreHandler(e);
+    if (e->isAccepted())
+        return;
+
     qreal sep;
 
     if (!d->navigation) {

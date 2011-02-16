@@ -42,13 +42,10 @@
 #ifndef VIEWPORTFBONODE_SG_H
 #define VIEWPORTFBONODE_SG_H
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include <QtDeclarative/node.h>
 #include <QtDeclarative/texturematerial.h>
 #include <QtOpenGL/qglframebufferobject.h>
+#include "stereoinfo_sg.h"
 
 QT_BEGIN_HEADER
 
@@ -67,9 +64,6 @@ public:
     void setSize(const QSize &size);
     QSize size() const { return m_size; }
 
-    void setOpacity(qreal opacity);
-    qreal opacity() const { return m_opacity; }
-
     bool useAlpha() const { return m_useAlpha; }
     void setUseAlpha(bool useAlpha);
 
@@ -77,9 +71,8 @@ public:
 
 private:
     ViewportSG *m_viewport;
-    QSGContext *m_context;
+    QSGStereoInfo m_stereoInfo;
     QSize m_size;
-    qreal m_opacity;
 
     struct EyeBuffer
     {
@@ -105,7 +98,5 @@ private:
 QT_END_NAMESPACE
 
 QT_END_HEADER
-
-#endif // QML_VERSION >= 0x020000
 
 #endif

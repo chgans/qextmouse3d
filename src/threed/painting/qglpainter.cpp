@@ -860,24 +860,7 @@ QGLRenderSequencer *QGLPainter::renderSequencer()
 */
 qreal QGLPainter::aspectRatio() const
 {
-    Q_D(QGLPainter);
-    QGLPAINTER_CHECK_PRIVATE();
-
-    // Get the size of the current viewport.
-    QSize size = currentSurface()->viewportGL().size();
-    if (size.width() == 0 || size.height() == 0 ||
-            size.width() == size.height())
-        return 1.0f;
-
-    // Use the device's DPI setting to determine the pixel aspect ratio.
-    QPaintDevice *device = d->context->device();
-    int dpiX = device->logicalDpiX();
-    int dpiY = device->logicalDpiY();
-    if (dpiX <= 0 || dpiY <= 0)
-        dpiX = dpiY = 1;
-
-    // Return the final aspect ratio based on viewport and pixel size.
-    return ((qreal)(size.width() * dpiY)) / ((qreal)(size.height() * dpiX));
+    return currentSurface()->aspectRatio();
 }
 
 /*!

@@ -78,10 +78,10 @@ public:
     {
         Hardware,
         RedCyanAnaglyph,
-        DoubleWideLeftRight,
-        DoubleWideRightLeft,
-        DoubleHighLeftRight,
-        DoubleHighRightLeft
+        LeftRight,
+        RightLeft,
+        TopBottom,
+        BottomTop
     };
 
     QGLView::StereoType stereoType() const;

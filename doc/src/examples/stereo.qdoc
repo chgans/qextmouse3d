@@ -48,7 +48,7 @@
 
     The QGLView class supports a number of stereoscopic viewing modes.
     The screenshot above shows the default red-cyan anaglyph mode.
-    If the QGLView::stereoType() is changed to QGLView::DoubleWideLeftRight,
+    If the QGLView::stereoType() is changed to QGLView::LeftRight,
     then the two eye images will be rendered side by side:
 
     \image stereo-wide-screenshot.png

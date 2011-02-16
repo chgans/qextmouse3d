@@ -1310,27 +1310,31 @@ void QGLSceneNode::draw(QGLPainter *painter)
     Q_D(QGLSceneNode);
     bool wasTransformed = false;
 
-    QMatrix4x4 m = transform();
+    QGLRenderSequencer *seq = painter->renderSequencer();
 
-    if (!m.isIdentity())
+    if (seq->top() != this)
     {
-         painter->modelViewMatrix().push();
-         painter->modelViewMatrix() *= m;
-         wasTransformed = true;
-    }
+        QMatrix4x4 m = transform();
 
-    if (d->options & CullBoundingBox)
-    {
-        QBox3D bb = boundingBox();
-        if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+        if (!m.isIdentity())
         {
-            if (wasTransformed)
-                painter->modelViewMatrix().pop();
-            return;
+            painter->modelViewMatrix().push();
+            painter->modelViewMatrix() *= m;
+            wasTransformed = true;
+        }
+
+        if (d->options & CullBoundingBox)
+        {
+            QBox3D bb = boundingBox();
+            if (bb.isFinite() && !bb.isNull() && painter->isCullable(bb))
+            {
+                if (wasTransformed)
+                    painter->modelViewMatrix().pop();
+                return;
+            }
         }
     }
 
-    QGLRenderSequencer *seq = painter->renderSequencer();
     if (seq->top() == NULL)
     {
         seq->setTop(this);
@@ -1341,46 +1345,48 @@ void QGLSceneNode::draw(QGLPainter *painter)
                 break;
         }
         seq->reset();
-        return;
     }
-    bool stateEntered = false;
-    if (d->childNodes.size() > 0)
+    else
     {
-        seq->beginState(this);
-        stateEntered = true;
-        QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
-        for ( ; cit != d->childNodes.end(); ++cit)
-            (*cit)->draw(painter);
-    }
-
-    if (d->count && (d->geometry.count() > 0) && seq->renderInSequence(this))
-    {
-        bool idSaved = false;
-        int id = -1;
-        if (d->pickNode && painter->isPicking())
+        bool stateEntered = false;
+        if (d->childNodes.size() > 0)
         {
-            idSaved = true;
-            id = painter->objectPickId();
-            painter->setObjectPickId(d->pickNode->id());
-        }
-
-        if (!stateEntered)
-        {
-            stateEntered = true;
             seq->beginState(this);
+            stateEntered = true;
+            QList<QGLSceneNode*>::iterator cit = d->childNodes.begin();
+            for ( ; cit != d->childNodes.end(); ++cit)
+                (*cit)->draw(painter);
         }
-        seq->applyState();
 
-        drawGeometry(painter);
+        if (d->count && (d->geometry.count() > 0) && seq->renderInSequence(this))
+        {
+            bool idSaved = false;
+            int id = -1;
+            if (d->pickNode && painter->isPicking())
+            {
+                idSaved = true;
+                id = painter->objectPickId();
+                painter->setObjectPickId(d->pickNode->id());
+            }
 
-        if (idSaved)
-            painter->setObjectPickId(id);
+            if (!stateEntered)
+            {
+                stateEntered = true;
+                seq->beginState(this);
+            }
+            seq->applyState();
 
-        if (d->options & ViewNormals)
-            drawNormalIndicators(painter);
+            drawGeometry(painter);
+
+            if (idSaved)
+                painter->setObjectPickId(id);
+
+            if (d->options & ViewNormals)
+                drawNormalIndicators(painter);
+        }
+        if (stateEntered)
+            seq->endState(this);
     }
-    if (stateEntered)
-        seq->endState(this);
     if (wasTransformed)
         painter->modelViewMatrix().pop();
 }

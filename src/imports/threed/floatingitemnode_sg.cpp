@@ -39,21 +39,17 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "floatingitemnode_sg.h"
-#include <QtDeclarative/qsgmatrix4x4stack.h>
+#include <QtDeclarative/qsgcontext.h>
 
 QT_BEGIN_NAMESPACE
 
-#if QSG_STEREO
-
 FloatingItemSGNode::FloatingItemSGNode(QSGContext *context)
-    : m_context(context), m_depth(0.0f)
+    : m_stereoInfo(context), m_depth(0.0f)
 {
-    setFlag(Node::UsePreprocess, true);
+    // Preprocessing is required only if the context supports pre-transforms.
+    if (m_stereoInfo.hasPreTransform())
+        setFlag(Node::UsePreprocess, true);
 }
 
 FloatingItemSGNode::~FloatingItemSGNode()
@@ -65,20 +61,33 @@ void FloatingItemSGNode::setDepth(qreal depth)
     m_depth = depth;
 }
 
+Node::NodeType FloatingItemSGNode::type() const
+{
+    // If the device-specific rendering context does not inherit
+    // from QSGStereoContext, then it won't be aware of how to
+    // update pre-transform nodes.  In that case, act like a
+    // regular transform node and ignore the depth adjustment.
+    if (m_stereoInfo.hasPreTransform())
+        return PreTransformNodeType;
+    else
+        return TransformNodeType;
+}
+
 void FloatingItemSGNode::preprocess()
 {
     QMatrix4x4 adjustMatrix;
-    if (m_context->eye() != QSGContext::NoEye && m_depth != 0.0f) {
+    QGL::Eye eye = m_stereoInfo.eye();
+    if (eye != QGL::NoEye && m_depth != 0.0f) {
         // Correct the depth value for the screen's DPI.  We treat 100 DPI
         // as "normal" and scale the depth value accordingly.  This way,
         // the same number of millimeters are used on all displays viewed
         // at the same viewing distance.  A depth of 1 is 0.254 millimeters.
         // Note: we should probably correct for viewing distance also,
         // but that is harder to determine.
-        qreal depth = m_depth * m_context->glContext()->device()->logicalDpiX() / 100.0f;
+        qreal depth = m_depth * m_stereoInfo.context()->glContext()->device()->logicalDpiX() / 100.0f;
 
         // Determine the transformation to pre-multiply with the modelview.
-        if (m_context->eye() == QSGContext::LeftEye)
+        if (eye == QGL::LeftEye)
             adjustMatrix.translate(depth / 2.0f, 0.0f, 0.0f);
         else
             adjustMatrix.translate(-depth / 2.0f, 0.0f, 0.0f);
@@ -86,8 +95,4 @@ void FloatingItemSGNode::preprocess()
     setPreMatrix(adjustMatrix);
 }
 
-#endif // QSG_STEREO
-
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

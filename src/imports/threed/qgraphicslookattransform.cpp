@@ -276,7 +276,7 @@ void QGraphicsLookAtTransformPrivate::calculateRotationValues()
         primaryRotation.setAxis(primaryRotationAxis);
         primaryRotation.setAngle(angle * RADS_TO_DEGREES );
     } else {
-        qWarning() << "QGraphicsLookAtTransform: unable to generate target projection for primary rotation";
+        // Target is directly above or below, so zero primary rotation
         primaryRotation.setAxis(QVector3D(0,1,0));
         primaryRotation.setAngle(0);
     }

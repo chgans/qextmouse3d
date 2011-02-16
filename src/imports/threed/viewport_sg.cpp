@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "viewport_sg.h"
 #include "viewportfbonode_sg.h"
 #include <QtDeclarative/qsgview.h>
@@ -932,14 +928,13 @@ QPointF ViewportSG::viewDelta(qreal deltax, qreal deltay)
     return QPointF(deltax * scaleX / w, deltay * scaleY / h);
 }
 
-Node *ViewportSG::updatePaintNode(Node *node, UpdatePaintNodeData *data)
+Node *ViewportSG::updatePaintNode(Node *node, UpdatePaintNodeData *)
 {
     ViewportFboNodeSG *vnode = static_cast<ViewportFboNodeSG *>(node);
     if (!vnode)
         vnode = new ViewportFboNodeSG(this, QSGContext::current);
 
     vnode->setSize(QSize(qRound(width()), qRound(height())));
-    vnode->setOpacity(data->opacity);
     vnode->setUseAlpha(!isViewportRoot());
 
     return vnode;
@@ -955,5 +950,3 @@ bool ViewportSG::isViewportRoot() const
 }
 
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

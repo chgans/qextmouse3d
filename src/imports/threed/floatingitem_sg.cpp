@@ -39,10 +39,6 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "floatingitem_sg.h"
 #include "floatingitemnode_sg.h"
 #include <QtDeclarative/qsgcontext.h>
@@ -61,9 +57,7 @@ public:
     {
     }
 
-#if QSG_STEREO
     TransformNode *createTransformNode();
-#endif
 
     qreal depth;
 };
@@ -72,13 +66,6 @@ FloatingItemSG::FloatingItemSG(QSGItem *parent)
     : QSGItem(*new FloatingItemSGPrivate, parent)
 {
     setFlag(ItemHasContents);
-#ifndef QSG_STEREO
-    static bool warned = false;
-    if (!warned) {
-        warned = true;
-        qWarning("FloatingItem: QtDeclarative scenegraph does not support stereoscopics");
-    }
-#endif
 }
 
 FloatingItemSG::~FloatingItemSG()
@@ -112,23 +99,15 @@ QRectF FloatingItemSG::boundingRect() const
 
 Node *FloatingItemSG::updatePaintNode(Node *node, UpdatePaintNodeData *data)
 {
-#if QSG_STEREO
     Q_D(FloatingItemSG);
     FloatingItemSGNode *fNode = static_cast<FloatingItemSGNode *>(data->transformNode);
     fNode->setDepth(d->depth);
-#endif
     return QSGItem::updatePaintNode(node, data);
 }
-
-#if QSG_STEREO
 
 TransformNode *FloatingItemSGPrivate::createTransformNode()
 {
     return new FloatingItemSGNode(QSGContext::current);
 }
 
-#endif
-
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

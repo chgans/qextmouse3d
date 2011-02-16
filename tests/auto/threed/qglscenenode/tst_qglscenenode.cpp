@@ -66,6 +66,7 @@ private slots:
     void clone();
     void boundingBox_data();
     void boundingBox();
+    void position_QTBUG_17279();
 };
 
 // Check that all properties have their expected defaults.
@@ -662,6 +663,89 @@ void tst_QGLSceneNode::boundingBox()
     delete node;
 }
 
-QTEST_APPLESS_MAIN(tst_QGLSceneNode)
+class TestSceneNode : public QGLSceneNode
+{
+public:
+    QMatrix4x4 resultingModelView;
+    QMatrix4x4 transformMatrix;
+
+    TestSceneNode()
+        : QGLSceneNode()
+    {
+        //
+    }
+
+protected:
+    virtual void drawGeometry(QGLPainter *painter)
+    {
+        resultingModelView = painter->modelViewMatrix().top();
+
+        // basically reimplement the private function "transform()" here to get the value of the transforms
+        QMatrix4x4 m;
+        if (!position().isNull())
+            m.translate(position());
+        if (!localTransform().isIdentity())
+            m *= localTransform();
+        QList<QGraphicsTransform3D *> tx = transforms();
+        for (int index = tx.size() - 1; index >= 0; --index)
+            tx.at(index)->applyTo(&m);
+
+        transformMatrix = m;
+    }
+
+};
+
+void tst_QGLSceneNode::position_QTBUG_17279()
+{
+    QGeometryData geom;
+    geom.appendVertex(QVector3D(0, 0, 0),
+                      QVector3D(1.414, 1.414, 0),
+                      QVector3D(2, 0, 0));
+    TestSceneNode *node = new TestSceneNode;
+
+    QVERIFY(node->resultingModelView.isIdentity());
+    QVERIFY(node->transformMatrix.isIdentity());
+
+    node->setGeometry(geom);
+    node->setCount(3);
+    node->setPosition(QVector3D(0.f, 0.f, -5.f));
+
+    QVERIFY(node->localTransform().isIdentity());
+    QCOMPARE(node->position().z(), -5.0);
+
+    QGLWidget w;
+    QGLPainter p(&w);
+    QGLCamera cam;
+    p.setCamera(&cam);
+
+    QMatrix4x4 m = p.modelViewMatrix().top();
+
+    node->draw(&p);
+
+    QVERIFY(m == p.modelViewMatrix().top());
+
+    QCOMPARE(node->resultingModelView(2, 3), -15.0);
+    QCOMPARE(node->transformMatrix(2, 3), -5.0);
+
+    QGeometryData geom2;
+    geom2.appendVertex(QVector3D(0, 0, 0),
+                      QVector3D(-1.414, 1.414, 0),
+                      QVector3D(-2, 0, 0));
+    TestSceneNode *node2 = new TestSceneNode;
+    node2->setGeometry(geom2);
+    node2->setCount(3);
+    node2->setPosition(QVector3D(0.f, -1.f, -5.f));
+
+    node2->draw(&p);
+
+    QVERIFY(m == p.modelViewMatrix().top());
+
+    QCOMPARE(node2->resultingModelView(1, 3), -1.0);
+    QCOMPARE(node2->transformMatrix(1, 3), -1.0);
+    QCOMPARE(node2->resultingModelView(2, 3), -15.0);
+    QCOMPARE(node2->transformMatrix(2, 3), -5.0);
+}
+
+QTEST_MAIN(tst_QGLSceneNode)
 
 #include "tst_qglscenenode.moc"

@@ -127,8 +127,8 @@ QT_BEGIN_NAMESPACE
     Double image stereo involves drawing the left and right eye
     images in a double-wide or double-high window, with the hardware
     combining the images.  Four different configurations are available:
-    DoubleWideLeftRight, DoubleWideRightLeft, DoubleHighLeftRight,
-    and DoubleHighRightLeft, according to the layout of the eye images.
+    LeftRight, RightLeft, TopBottom,
+    and BottomTop, according to the layout of the eye images.
     Double image stereo is selected by calling setStereoType().  It is
     the responsibility of the application to resize the window to
     twice its normal size to accommodate the images.
@@ -142,26 +142,30 @@ QT_BEGIN_NAMESPACE
 
     \table
     \row \o \c{-stereo-hw} \o \l Hardware.
-    \row \o \c{-stereo-nhd} \o DoubleHighLeftRight, nHD (640x360).
-    \row \o \c{-stereo-vga} \o DoubleHighLeftRight, VGA (640x480).
-    \row \o \c{-stereo-wvga} \o DoubleHighLeftRight, WVGA (800x480).
-    \row \o \c{-stereo-720p} \o DoubleHighLeftRight, 720p (1280x720).
-    \row \o \c{-stereo-nhd-rl} \o DoubleHighRightLeft, nHD (640x360).
-    \row \o \c{-stereo-vga-rl} \o DoubleHighRightLeft, VGA (640x480).
-    \row \o \c{-stereo-wvga-rl} \o DoubleHighRightLeft, WVGA (800x480).
-    \row \o \c{-stereo-720p-rl} \o DoubleHighRightLeft, 720p (1280x720).
-    \row \o \c{-stereo-nhd-wide} \o DoubleWideLeftRight, nHD (640x360).
-    \row \o \c{-stereo-vga-wide} \o DoubleWideLeftRight, VGA (640x480).
-    \row \o \c{-stereo-wvga-wide} \o DoubleWideLeftRight, WVGA (800x480).
-    \row \o \c{-stereo-720p-wide} \o DoubleWideLeftRight, 720p (1280x720).
-    \row \o \c{-stereo-nhd-wide-rl} \o DoubleWideRightLeft, nHD (640x360).
-    \row \o \c{-stereo-vga-wide-rl} \o DoubleWideRightLeft, VGA (640x480).
-    \row \o \c{-stereo-wvga-wide-rl} \o DoubleWideRightLeft, WVGA (800x480).
-    \row \o \c{-stereo-720p-wide-rl} \o DoubleWideRightLeft, 720p (1280x720).
-    \row \o \c{-stereo-lr} \o DoubleHighLeftRight, size set separately.
-    \row \o \c{-stereo-rl} \o DoubleHighRightLeft, size set separately.
-    \row \o \c{-stereo-wide-lr} \o DoubleWideLeftRight, size set separately.
-    \row \o \c{-stereo-wide-rl} \o DoubleWideRightLeft, size set separately.
+    \row \o \c{-stereo-nhd} \o LeftRight, nHD (640x360).
+    \row \o \c{-stereo-vga} \o LeftRight, VGA (640x480).
+    \row \o \c{-stereo-wvga} \o LeftRight, WVGA (800x480).
+    \row \o \c{-stereo-720p} \o LeftRight, 720p (1280x720).
+    \row \o \c{-stereo-nhd-lr} \o LeftRight, nHD (640x360).
+    \row \o \c{-stereo-vga-lr} \o LeftRight, VGA (640x480).
+    \row \o \c{-stereo-wvga-lr} \o LeftRight, WVGA (800x480).
+    \row \o \c{-stereo-720p-lr} \o LeftRight, 720p (1280x720).
+    \row \o \c{-stereo-nhd-rl} \o RightLeft, nHD (640x360).
+    \row \o \c{-stereo-vga-rl} \o RightLeft, VGA (640x480).
+    \row \o \c{-stereo-wvga-rl} \o RightLeft, WVGA (800x480).
+    \row \o \c{-stereo-720p-rl} \o RightLeft, 720p (1280x720).
+    \row \o \c{-stereo-nhd-tb} \o TopBottom, nHD (640x360).
+    \row \o \c{-stereo-vga-tb} \o TopBottom, VGA (640x480).
+    \row \o \c{-stereo-wvga-tb} \o TopBottom, WVGA (800x480).
+    \row \o \c{-stereo-720p-tb} \o TopBottom, 720p (1280x720).
+    \row \o \c{-stereo-nhd-bt} \o BottomTop, nHD (640x360).
+    \row \o \c{-stereo-vga-bt} \o BottomTop, VGA (640x480).
+    \row \o \c{-stereo-wvga-bt} \o BottomTop, WVGA (800x480).
+    \row \o \c{-stereo-720p-bt} \o BottomTop, 720p (1280x720).
+    \row \o \c{-stereo-lr} \o LeftRight, size set separately.
+    \row \o \c{-stereo-rl} \o RightLeft, size set separately.
+    \row \o \c{-stereo-tb} \o TopBottom, size set separately.
+    \row \o \c{-stereo-bt} \o BottomTop, size set separately.
     \endtable
 
     The option can also be supplied in the \c{QT3D_OPTIONS} environment
@@ -198,13 +202,13 @@ QT_BEGIN_NAMESPACE
     \value Hardware Specialized stereo hardware is being used.
     \value RedCyanAnaglyph Stereo is being simulated for viewing by
         red-cyan anaglyph classes.
-    \value DoubleWideLeftRight The view is double-wide with the left eye
+    \value LeftRight The view is double-wide with the left eye
         image on the left of the window.
-    \value DoubleWideRightLeft The view is double-wide with the left eye
+    \value RightLeft The view is double-wide with the left eye
         image on the right of the window.
-    \value DoubleHighLeftRight The view is double-high with the left eye
+    \value TopBottom The view is double-high with the left eye
         image on the top of the window.
-    \value DoubleHighRightLeft The view is double-high with the left eye
+    \value BottomTop The view is double-high with the left eye
         image on the bottom of the window.
 */
 
@@ -352,8 +356,7 @@ void QGLViewPrivate::processStereoOptions(QGLView *view, const QString &arg)
     // stereo window to use for a top-level QGLView.  Possible options:
     //
     //      nhd, vga, wvga, 720p - define the screen resolution
-    //      wide - use double-wide instead of double-high
-    //      rl - use right-left eye order instead of left-right
+    //      lr, rl, tb, bt - specify the eye order (default is left-right)
     //
     QStringList opts = arg.mid(8).split(QLatin1Char('-'));
     QGLView::StereoType stereoType;
@@ -368,18 +371,18 @@ void QGLViewPrivate::processStereoOptions(QGLView *view, const QString &arg)
         size = QSize(800, 480);
     else if (opts.contains(QLatin1String("720p")))
         size = QSize(1280, 720);
-    if (opts.contains(QLatin1String("wide"))) {
+    if (opts.contains(QLatin1String("rl"))) {
+        stereoType = QGLView::RightLeft;
         size = QSize(size.width() * 2, size.height());
-        if (opts.contains(QLatin1String("rl")))
-            stereoType = QGLView::DoubleWideRightLeft;
-        else
-            stereoType = QGLView::DoubleWideLeftRight;
-    } else {
+    } else if (opts.contains(QLatin1String("tb"))) {
         size = QSize(size.width(), size.height() * 2);
-        if (opts.contains(QLatin1String("rl")))
-            stereoType = QGLView::DoubleHighRightLeft;
-        else
-            stereoType = QGLView::DoubleHighLeftRight;
+        stereoType = QGLView::TopBottom;
+    } else if (opts.contains(QLatin1String("bt"))) {
+        size = QSize(size.width(), size.height() * 2);
+        stereoType = QGLView::BottomTop;
+    } else {
+        size = QSize(size.width() * 2, size.height());
+        stereoType = QGLView::LeftRight;
     }
     if (size.width() > 0 && size.height() > 0)
         view->resize(size);
@@ -407,16 +410,16 @@ QGLAbstractSurface *QGLViewPrivate::leftEyeSurface(const QSize &size)
                  QGLMaskedSurface::RedMask | QGLMaskedSurface::AlphaMask);
         }
         return leftSurface;
-    case QGLView::DoubleWideLeftRight:
+    case QGLView::LeftRight:
         viewport = QRect(0, 0, size.width() / 2, size.height());
         break;
-    case QGLView::DoubleWideRightLeft:
+    case QGLView::RightLeft:
         viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
         break;
-    case QGLView::DoubleHighLeftRight:
+    case QGLView::TopBottom:
         viewport = QRect(0, 0, size.width(), size.height() / 2);
         break;
-    case QGLView::DoubleHighRightLeft:
+    case QGLView::BottomTop:
         viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
         break;
     }
@@ -448,16 +451,16 @@ QGLAbstractSurface *QGLViewPrivate::rightEyeSurface(const QSize &size)
                  QGLMaskedSurface::GreenMask | QGLMaskedSurface::BlueMask);
         }
         return rightSurface;
-    case QGLView::DoubleWideLeftRight:
+    case QGLView::LeftRight:
         viewport = QRect(size.width() / 2, 0, size.width() / 2, size.height());
         break;
-    case QGLView::DoubleWideRightLeft:
+    case QGLView::RightLeft:
         viewport = QRect(0, 0, size.width() / 2, size.height());
         break;
-    case QGLView::DoubleHighLeftRight:
+    case QGLView::TopBottom:
         viewport = QRect(0, size.height() / 2, size.width(), size.height() / 2);
         break;
-    case QGLView::DoubleHighRightLeft:
+    case QGLView::BottomTop:
         viewport = QRect(0, 0, size.width(), size.height() / 2);
         break;
     }
@@ -807,8 +810,12 @@ void QGLView::paintGL()
         // Paint the scene twice, from the perspective of each camera.
         QSize size(this->size());
         painter.setEye(QGL::LeftEye);
-        earlyPaintGL(&painter);
+        if (d->stereoType != QGLView::Hardware)
+            earlyPaintGL(&painter);     // Clear both eyes at the same time.
         painter.pushSurface(d->leftEyeSurface(size));
+        if (d->stereoType == QGLView::Hardware)
+            earlyPaintGL(&painter);     // Clear the left eye only.
+        earlyPaintGL(&painter);
         painter.setCamera(d->camera);
         paintGL(&painter);
         if (d->stereoType == QGLView::RedCyanAnaglyph)
@@ -816,7 +823,7 @@ void QGLView::paintGL()
         painter.setEye(QGL::RightEye);
         painter.setSurface(d->rightEyeSurface(size));
         if (d->stereoType == QGLView::Hardware)
-            earlyPaintGL(&painter);
+            earlyPaintGL(&painter);     // Clear the right eye only.
         painter.setCamera(d->camera);
         paintGL(&painter);
         painter.popSurface();
@@ -1146,13 +1153,55 @@ void QGLView::keyPressEvent(QKeyEvent *e)
     QGLWidget::keyPressEvent(e);
 }
 
-// Find the next power of 2 which is "value" or greater.
-static inline int powerOfTwo(int value)
+class QGLViewPickSurface : public QGLAbstractSurface
 {
-    int p = 1;
-    while (p < value)
-        p <<= 1;
-    return p;
+public:
+    QGLViewPickSurface(QGLView *view, QGLFramebufferObject *fbo,
+                       const QSize &areaSize);
+
+    QPaintDevice *device() const;
+    bool activate(QGLAbstractSurface *prevSurface);
+    void deactivate(QGLAbstractSurface *nextSurface);
+    QRect viewportGL() const;
+
+private:
+    QGLView *m_view;
+    QGLFramebufferObject *m_fbo;
+    QRect m_viewportGL;
+};
+
+QGLViewPickSurface::QGLViewPickSurface
+        (QGLView *view, QGLFramebufferObject *fbo, const QSize &areaSize)
+    : QGLAbstractSurface(504)
+    , m_view(view)
+    , m_fbo(fbo)
+    , m_viewportGL(QPoint(0, 0), areaSize)
+{
+}
+
+QPaintDevice *QGLViewPickSurface::device() const
+{
+    return m_view;
+}
+
+bool QGLViewPickSurface::activate(QGLAbstractSurface *prevSurface)
+{
+    Q_UNUSED(prevSurface);
+    if (m_fbo)
+        m_fbo->bind();
+    return true;
+}
+
+void QGLViewPickSurface::deactivate(QGLAbstractSurface *nextSurface)
+{
+    Q_UNUSED(nextSurface);
+    if (m_fbo)
+        m_fbo->release();
+}
+
+QRect QGLViewPickSurface::viewportGL() const
+{
+    return m_viewportGL;
 }
 
 /*!
@@ -1165,9 +1214,27 @@ static inline int powerOfTwo(int value)
 */
 QObject *QGLView::objectForPoint(const QPoint &point)
 {
-    // Check the window boundaries in case a mouse move has
+    QPoint pt(point);
+
+    // What is the size of the drawing area after correcting for stereo?
+    // Also adjust the mouse position to always be in the left half.
+    QSize areaSize = size();
+    if (d->stereoType == QGLView::LeftRight ||
+            d->stereoType == QGLView::RightLeft) {
+        areaSize = QSize(areaSize.width() / 2, areaSize.height());
+        if (pt.x() >= areaSize.width())
+            pt.setX(pt.x() - areaSize.width());
+    } else if (d->stereoType == QGLView::TopBottom ||
+               d->stereoType == QGLView::BottomTop) {
+        areaSize = QSize(areaSize.width(), areaSize.height() / 2);
+        if (pt.y() >= areaSize.height())
+            pt.setY(pt.y() - areaSize.height());
+    }
+
+    // Check the area boundaries in case a mouse move has
     // moved the pointer outside the window.
-    if (!rect().contains(point))
+    if (pt.x() < 0 || pt.x() >= areaSize.width() ||
+            pt.y() < 0 || pt.y() >= areaSize.height())
         return 0;
 
     // Do we need to refresh the pick buffer contents?
@@ -1182,8 +1249,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
         // double-buffered, then use the window back buffer.
         bool useBackBuffer = doubleBuffer();
         if (!useBackBuffer) {
-            QSize fbosize = size();
-            fbosize = QSize(powerOfTwo(fbosize.width()), powerOfTwo(fbosize.height()));
+            QSize fbosize = QGL::nextPowerOfTwo(areaSize);
             if (!d->fbo) {
                 d->fbo = new QGLFramebufferObject(fbosize, QGLFramebufferObject::CombinedDepthStencil);
             } else if (d->fbo->size() != fbosize) {
@@ -1192,34 +1258,32 @@ QObject *QGLView::objectForPoint(const QPoint &point)
             }
         }
 
-        // Render the pick version of the scene into the framebuffer object.
-        if (d->fbo)
-            d->fbo->bind();
+        // Render the pick version of the scene.
+        QGLViewPickSurface surface(this, d->fbo, areaSize);
+        painter.pushSurface(&surface);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         painter.setEye(QGL::NoEye);
         painter.setCamera(d->camera);
         paintGL(&painter);
         painter.setPicking(false);
+        painter.popSurface();
 
         // The pick buffer contents are now valid, unless we are using
         // the back buffer - we cannot rely upon it being valid next time.
         d->pickBufferForceUpdate = useBackBuffer;
         d->pickBufferMaybeInvalid = false;
-    } else {
-        // Bind the framebuffer object to the window's context.
-        makeCurrent();
-        if (d->fbo)
-            d->fbo->bind();
     }
 
     // Pick the object under the mouse.
-    int objectId = painter.pickObject(point.x(), height() - 1 - point.y());
+    if (d->fbo)
+        d->fbo->bind();
+    int objectId = painter.pickObject(pt.x(), areaSize.height() - 1 - pt.y());
     QObject *object = d->objects.value(objectId, 0);
+    if (d->fbo)
+        d->fbo->release();
     
     // Release the framebuffer object and return.
     painter.end();
-    if (d->fbo)
-        d->fbo->release();
     doneCurrent();
     return object;
 }

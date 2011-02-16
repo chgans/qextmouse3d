@@ -39,27 +39,22 @@
 **
 ****************************************************************************/
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include "viewportfbonode_sg.h"
 #include "viewport_sg.h"
-#include <QtDeclarative/qsgcontext.h>
 #include "qglframebufferobjectsurface.h"
 
 QT_BEGIN_NAMESPACE
 
 ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     : m_viewport(viewport)
-    , m_context(context)
-    , m_opacity(1.0f)
+    , m_stereoInfo(context)
     , m_useAlpha(true)
     , m_linearFiltering(true)
     , m_leftWasDirty(true)
 {
     setFlag(Node::UsePreprocess);
-    setMaterial(&m_left.material);
+    setMaterial(&m_left.materialO);
+    setOpaqueMaterial(&m_left.material);
 
     QVector<QSGAttributeDescription> desc = QVector<QSGAttributeDescription>()
         << QSGAttributeDescription(0, 2, GL_FLOAT, 4 * sizeof(float))
@@ -123,18 +118,6 @@ void ViewportFboNodeSG::setSize(const QSize &size)
     markDirty(DirtyGeometry);
 }
 
-void ViewportFboNodeSG::setOpacity(qreal opacity)
-{
-    if (opacity == m_opacity)
-        return;
-
-    m_opacity = opacity;
-    m_left.materialO.setOpacity(opacity);
-    m_right.materialO.setOpacity(opacity);
-
-    markDirty(DirtyMaterial);
-}
-
 void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
 {
     if (useAlpha == m_useAlpha)
@@ -150,11 +133,7 @@ void ViewportFboNodeSG::setUseAlpha(bool useAlpha)
 
 void ViewportFboNodeSG::preprocess()
 {
-#if QSG_STEREO
-    QGL::Eye eye = QGL::Eye(m_context->eye());
-#else
-    QGL::Eye eye = QGL::NoEye;
-#endif
+    QGL::Eye eye = m_stereoInfo.eye();
 
     // Which eye buffer should we render into?
     EyeBuffer *buffer;
@@ -198,14 +177,12 @@ void ViewportFboNodeSG::preprocess()
         buffer->material.setLinearFiltering(m_linearFiltering);
         buffer->materialO.setTexture(buffer->texture, !m_useAlpha);
         buffer->materialO.setLinearFiltering(m_linearFiltering);
-        buffer->materialO.setOpacity(m_opacity);
     }
-    setMaterial(m_opacity == 1 ? &(buffer->material) : &(buffer->materialO));
+    setMaterial(&(buffer->materialO));
+    setOpaqueMaterial(&(buffer->material));
 
     QGLFramebufferObjectSurface surface(buffer->fbo);
     m_viewport->paint(&surface, eye);
 }
 
 QT_END_NAMESPACE
-
-#endif // QML_VERSION >= 0x020000

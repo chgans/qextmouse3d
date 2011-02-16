@@ -62,7 +62,7 @@ QT_BEGIN_NAMESPACE
 
     painter.translate(10, 25, 0);
     node->draw(&painter);
-    \endcode;
+    \endcode
 
     The QGLDome class specifies positions, normals and 2D texture
     co-ordinates for all of the vertices that make up the sphere.

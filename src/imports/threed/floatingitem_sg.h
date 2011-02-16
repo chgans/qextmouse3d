@@ -42,10 +42,6 @@
 #ifndef QFLOATINGITEM_SG_H
 #define QFLOATINGITEM_SG_H
 
-#include <QtDeclarative/qdeclarative.h>
-
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
-
 #include <QtDeclarative/qsgitem.h>
 
 QT_BEGIN_HEADER
@@ -81,7 +77,5 @@ QML_DECLARE_TYPE(FloatingItemSG)
 QT_END_NAMESPACE
 
 QT_END_HEADER
-
-#endif // QML_VERSION >= 0x020000
 
 #endif
