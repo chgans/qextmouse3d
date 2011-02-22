@@ -28,4 +28,13 @@ symbian {
     qt3dQuickFile=$$PWD\\features\\qt3dquick.prf
     qt3dQuickFile=$$replace(qt3dQuickFile,/,\\)
     system(copy "$$qt3dQuickFile $$featuresDir")
+
+    # symbian needs to be at the end, because opengl.pro does an ordered build,
+    # and symbian depends on all the others.
+    SUBDIRS += symbianinstall
+
+    symbianinstall.subdir = devices/symbian
+    symbianinstall.target = sub-symbianinstall
+    symbianinstall.depends = $$SUBDIRS
+    symbianinstall.depends -= symbianinstall
 }

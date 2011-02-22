@@ -29,6 +29,8 @@ tests/
     Unit tests for the Qt/3D libraries.
 doc/
     Documentation.
+devices/symbian/
+    Symbian deployment file
 
 The documentation can be generated with "make docs".  It will be placed
 into "doc/html" in the build directory.

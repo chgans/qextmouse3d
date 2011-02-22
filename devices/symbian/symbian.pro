@@ -22,12 +22,20 @@ symbian {
     qt3dlibraries.path = /sys/bin
     DEPLOYMENT += qt3dlibraries
 
-    qt3dsceneformats_plugins.sources = \
-                                qscene3ds$${QT_LIBINFIX}.dll \
-                                qsceneobj$${QT_LIBINFIX}.dll \
-                                qscenebezier$${QT_LIBINFIX}.dll
-    qt3dsceneformats_plugins.path = $$QT_PLUGINS_BASE_DIR/sceneformats
-    DEPLOYMENT += qt3dsceneformats_plugins
+    contains(CONFIG, old_importer): {
+        qt3dsceneformats_plugins.sources = \
+                                    qscene3ds$${QT_LIBINFIX}.dll \
+                                    qsceneobj$${QT_LIBINFIX}.dll \
+                                    qscenebezier$${QT_LIBINFIX}.dll
+        qt3dsceneformats_plugins.path = $$QT_PLUGINS_BASE_DIR/sceneformats
+        DEPLOYMENT += qt3dsceneformats_plugins
+    } else {
+        qt3dsceneformats_plugins.sources = \
+                                    qsceneai$${QT_LIBINFIX}.dll \
+                                    qscenebezier$${QT_LIBINFIX}.dll
+        qt3dsceneformats_plugins.path = $$QT_PLUGINS_BASE_DIR/sceneformats
+        DEPLOYMENT += qt3dsceneformats_plugins
+    }
 
     qt3dimageformats_plugins.sources = \
                                 qtga$${QT_LIBINFIX}.dll
@@ -35,6 +43,8 @@ symbian {
     DEPLOYMENT += qt3dimageformats_plugins
 
     contains(QT_CONFIG, declarative): {
+        qt3dquick.sources = Qt3DQuick$${QT_LIBINFIX}.dll
+        qt3dquick.path = /sys/bin
         qt3dthreedImports.sources = \
                                 qthreedqmlplugin.dll \
                                 $$PWD/../../src/imports/threed/qmldir
@@ -49,6 +59,6 @@ symbian {
                                 $$PWD/../../src/imports/shapes/teapot.bez \
                                 $$PWD/../../src/imports/shapes/qmldir
         qt3dshapesImports.path = $$QT_IMPORTS_BASE_DIR/Qt3D/Shapes
-        DEPLOYMENT += qt3dthreedImports qt3dshapesImports
+        DEPLOYMENT += qt3dquick qt3dthreedImports qt3dshapesImports
     }
 }
