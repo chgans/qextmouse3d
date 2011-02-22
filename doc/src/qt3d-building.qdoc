@@ -116,6 +116,17 @@
     set PATH=%PATH%;\build\qt-labs\qt3d\bin
     \endcode
 
+    On Symbian (with RVCT) those commands look like this:
+
+    \code
+    cd C:\depot\qt-labs\qt3d
+    qmake CONFIG+=old_importer
+    sbs -c armv5_urel
+    cd devices\symbian
+    createpackage Qt3D_template.pkg release-armv5
+    runonphone --sis Qt3D.sis
+    \endcode
+
     Once you have built Qt/3D, you can run the "teapot" example to test
     it as follows (ensure you've exported the library path as above):
 
