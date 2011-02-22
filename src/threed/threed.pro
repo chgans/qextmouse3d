@@ -45,32 +45,10 @@ DEFINES += QT_BUILD_QT3D_LIB
     install_headers.files = $$PUBLIC_HEADERS
     INSTALLS += install_headers
 } else {
-    load(data_caging_paths)
-
-    qt3dMwHeaders = painting/* \
-                       arrays/* \
-                       global/* \
-                       effects/* \
-                       materials/* \
-                       geometry/* \
-                       viewing/* \
-                       math3d/* \
-                       scene/* \
-                       graphicsview/* \
-                       animation/* \
-                       textures/* \
-                       surfaces/*
-
-    for(api, qt3dMwHeaders) {
-        entries=$$files($$api);
-        #files() attaches a ';' at the end which needs to be removed
-        entries=$$replace(entries, ;,)
-        for(entry, entries) {
-            exists($$entry) {
-                contains(PUBLIC_HEADERS, $$basename(entry)) {
-                    BLD_INF_RULES.prj_exports += "$$entry $$MW_LAYER_PUBLIC_EXPORT_PATH(Qt3D/$$basename(entry))"
-                }
-            }
-        }
-    }
+    exportHeaders.input = PUBLIC_HEADERS
+    exportHeaders.output = $$[QT_INSTALL_HEADERS]/Qt3D/${QMAKE_FILE_IN_BASE}${QMAKE_FILE_EXT}
+    exportHeaders.commands = $$QMAKE_COPY ${QMAKE_FILE_IN} ${QMAKE_FILE_OUT}
+    exportHeaders.CONFIG += no_link_no_clean
+    exportHeaders.variable_out = PRE_TARGETDEPS
+    QMAKE_EXTRA_COMPILERS += exportHeaders
 }
