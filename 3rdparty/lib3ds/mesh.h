@@ -7,13 +7,13 @@
  * All rights reserved.
  *
  * This program is  free  software;  you can redistribute it and/or modify it
- * under the terms of the  GNU Lesser General Public License  as published by 
- * the  Free Software Foundation;  either version 2.1 of the License,  or (at 
+ * under the terms of the  GNU Lesser General Public License  as published by
+ * the  Free Software Foundation;  either version 2.1 of the License,  or (at
  * your option) any later version.
  *
  * This  program  is  distributed in  the  hope that it will  be useful,  but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or  FITNESS FOR A  PARTICULAR PURPOSE.  See the  GNU Lesser General Public  
+ * or  FITNESS FOR A  PARTICULAR PURPOSE.  See the  GNU Lesser General Public
  * License for more details.
  *
  * You should  have received  a copy of the GNU Lesser General Public License
@@ -45,19 +45,19 @@ typedef struct Lib3dsPoint {
  * \sa Lib3dsFaceFlag
  */
 struct Lib3dsFace {
-    Lib3dsUserData user;	/*! Arbitrary user data */
-    char material[64];		/*! Material name */
-    Lib3dsWord points[3];	/*! Indices into mesh points list */
-    Lib3dsWord flags;		/*! See Lib3dsFaceFlag, below */
-    Lib3dsDword smoothing;	/*! Bitmask; each bit identifies a group */
+    Lib3dsUserData user; /*! Arbitrary user data */
+    char material[64];  /*! Material name */
+    Lib3dsWord points[3]; /*! Indices into mesh points list */
+    Lib3dsWord flags;  /*! See Lib3dsFaceFlag, below */
+    Lib3dsDword smoothing; /*! Bitmask; each bit identifies a group */
     Lib3dsVector normal;
 };
 
 
 /**
  * Vertex flags
- * Meaning of _Lib3dsFace::flags. ABC are points of the current face 
- * (A: is 1st vertex, B is 2nd vertex, C is 3rd vertex) 
+ * Meaning of _Lib3dsFace::flags. ABC are points of the current face
+ * (A: is 1st vertex, B is 2nd vertex, C is 3rd vertex)
  */
 typedef enum {
   LIB3DS_FACE_FLAG_VIS_AC = 0x1,       /*!< Bit 0: Edge visibility AC */
@@ -116,23 +116,23 @@ struct Lib3dsMapData {
  * \ingroup mesh
  */
 struct Lib3dsMesh {
-    Lib3dsUserData user;    	/*< Arbitrary user data */
+    Lib3dsUserData user;     /*< Arbitrary user data */
     Lib3dsMesh *next;
-    char name[64];		        /*< Mesh name. Don't use more than 8 characters  */
-    Lib3dsDword object_flags; /*< @see Lib3dsObjectFlags */ 
+    char name[64];          /*< Mesh name. Don't use more than 8 characters  */
+    Lib3dsDword object_flags; /*< @see Lib3dsObjectFlags */
     Lib3dsByte color;
-    Lib3dsMatrix matrix;    	/*< Transformation matrix for mesh data */
-    Lib3dsDword points;		    /*< Number of points in point list */
-    Lib3dsPoint *pointL;	    /*< Point list */
-    Lib3dsDword flags;		    /*< Number of flags in per-point flags list */
-    Lib3dsWord *flagL;		    /*< Per-point flags list */
-    Lib3dsDword texels;		    /*< Number of U-V texture coordinates */
-    Lib3dsTexel *texelL;	    /*< U-V texture coordinates */
-    Lib3dsDword faces;	    	/*< Number of faces in face list */
-    Lib3dsFace *faceL;		    /*< Face list */
+    Lib3dsMatrix matrix;     /*< Transformation matrix for mesh data */
+    Lib3dsDword points;      /*< Number of points in point list */
+    Lib3dsPoint *pointL;     /*< Point list */
+    Lib3dsDword flags;      /*< Number of flags in per-point flags list */
+    Lib3dsWord *flagL;      /*< Per-point flags list */
+    Lib3dsDword texels;      /*< Number of U-V texture coordinates */
+    Lib3dsTexel *texelL;     /*< U-V texture coordinates */
+    Lib3dsDword faces;      /*< Number of faces in face list */
+    Lib3dsFace *faceL;      /*< Face list */
     Lib3dsBoxMap box_map;
     Lib3dsMapData map_data;
-}; 
+};
 
 extern LIB3DSAPI Lib3dsMesh* lib3ds_mesh_new(const char *name);
 extern LIB3DSAPI void lib3ds_mesh_free(Lib3dsMesh *mesh);

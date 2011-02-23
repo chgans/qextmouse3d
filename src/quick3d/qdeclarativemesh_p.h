@@ -88,7 +88,7 @@ public:
     QUrl source() const;
     void setSource(const QUrl& value);
 
-    QString meshName() const;    
+    QString meshName() const;
     void setMeshName(const QString& value);
 
     QString options() const;
@@ -106,15 +106,15 @@ public:
     QStringList getSceneObjectNames();
     QGLSceneNode *getSceneObject();
     QGLSceneNode *getSceneObject(const QString &name);
-    
+
     //The following functions relate to splitting the main scene into sub-branches
-    int nextSceneBranchId() const;    
+    int nextSceneBranchId() const;
     int createSceneBranch(QString nodeName, QObject *parent = 0);
     int addSceneBranch(QGLSceneNode *rootSceneObject, QObject *previousParent=NULL);
     void restoreSceneBranch(int branchId);
     void resetSceneBranches();
     QGLSceneNode *getSceneBranch(int branchId) const;
-    
+
     void ref();
     bool deref();
 
@@ -132,7 +132,7 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void dataRequestFinished();
-    
+
 private:
     QDeclarativeMeshPrivate *d;
 

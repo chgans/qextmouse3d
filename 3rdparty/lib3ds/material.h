@@ -7,13 +7,13 @@
  * All rights reserved.
  *
  * This program is  free  software;  you can redistribute it and/or modify it
- * under the terms of the  GNU Lesser General Public License  as published by 
- * the  Free Software Foundation;  either version 2.1 of the License,  or (at 
+ * under the terms of the  GNU Lesser General Public License  as published by
+ * the  Free Software Foundation;  either version 2.1 of the License,  or (at
  * your option) any later version.
  *
  * This  program  is  distributed in  the  hope that it will  be useful,  but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or  FITNESS FOR A  PARTICULAR PURPOSE.  See the  GNU Lesser General Public  
+ * or  FITNESS FOR A  PARTICULAR PURPOSE.  See the  GNU Lesser General Public
  * License for more details.
  *
  * You should  have received  a copy of the GNU Lesser General Public License
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /**
- * \ingroup material 
+ * \ingroup material
  */
 typedef enum Lib3dsTextureMapFlags {
   LIB3DS_DECALE       =0x0001,
@@ -48,7 +48,7 @@ typedef enum Lib3dsTextureMapFlags {
 
 /**
  * Mateial texture map
- * \ingroup material 
+ * \ingroup material
  */
 typedef struct Lib3dsTextureMap {
     Lib3dsUserData user;
@@ -67,16 +67,16 @@ typedef struct Lib3dsTextureMap {
 } Lib3dsTextureMap;
 
 /**
- * \ingroup material 
+ * \ingroup material
  */
 typedef enum Lib3dsAutoReflMapFlags {
   LIB3DS_USE_REFL_MAP          =0x0001,
   LIB3DS_READ_FIRST_FRAME_ONLY =0x0004,
-  LIB3DS_FLAT_MIRROR           =0x0008 
+  LIB3DS_FLAT_MIRROR           =0x0008
 } Lib3dsAutoReflectionMapFlags;
 
 /**
- * \ingroup material 
+ * \ingroup material
  */
 typedef enum Lib3dsAutoReflMapAntiAliasLevel {
   LIB3DS_ANTI_ALIAS_NONE   =0,
@@ -87,7 +87,7 @@ typedef enum Lib3dsAutoReflMapAntiAliasLevel {
 
 /**
  * Auto reflection map settings
- * \ingroup material 
+ * \ingroup material
  */
 typedef struct Lib3dsAutoReflMap {
     Lib3dsDword flags;
@@ -97,28 +97,28 @@ typedef struct Lib3dsAutoReflMap {
 } Lib3dsAutoReflMap;
 
 /**
- * \ingroup material 
+ * \ingroup material
  */
 typedef enum Lib3dsMaterialShading {
   LIB3DS_WIRE_FRAME =0,
-  LIB3DS_FLAT       =1, 
-  LIB3DS_GOURAUD    =2, 
-  LIB3DS_PHONG      =3, 
+  LIB3DS_FLAT       =1,
+  LIB3DS_GOURAUD    =2,
+  LIB3DS_PHONG      =3,
   LIB3DS_METAL      =4
-} Lib3dsMaterialShading; 
+} Lib3dsMaterialShading;
 
 /**
  * Material
- * \ingroup material 
+ * \ingroup material
  */
 struct Lib3dsMaterial {
-    Lib3dsUserData user;		/*! Arbitrary user data */
+    Lib3dsUserData user;  /*! Arbitrary user data */
     Lib3dsMaterial *next;
-    char name[64];			/*! Material name */
-    Lib3dsRgba ambient;			/*! Material ambient reflectivity */
-    Lib3dsRgba diffuse;			/*! Material diffuse reflectivity */
-    Lib3dsRgba specular;		/*! Material specular reflectivity */
-    Lib3dsFloat shininess;		/*! Material specular exponent */
+    char name[64];   /*! Material name */
+    Lib3dsRgba ambient;   /*! Material ambient reflectivity */
+    Lib3dsRgba diffuse;   /*! Material diffuse reflectivity */
+    Lib3dsRgba specular;  /*! Material specular reflectivity */
+    Lib3dsFloat shininess;  /*! Material specular exponent */
     Lib3dsFloat shin_strength;
     Lib3dsBool use_blur;
     Lib3dsFloat blur;
@@ -131,7 +131,7 @@ struct Lib3dsMaterial {
     Lib3dsIntw shading;
     Lib3dsBool soften;
     Lib3dsBool face_map;
-    Lib3dsBool two_sided;		/*! Material visible from back */
+    Lib3dsBool two_sided;  /*! Material visible from back */
     Lib3dsBool map_decal;
     Lib3dsBool use_wire;
     Lib3dsBool use_wire_abs;

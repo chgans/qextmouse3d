@@ -52,11 +52,11 @@ QT_BEGIN_NAMESPACE
     \inherits Item3D
 
     The Line element in QML provides a means of drawing lines in a 3D
-    environment.  For example, the following QML code draws a line between 
-	point (0,0,0), (1,1,1), then to (-1,-1,-1).
+    environment.  For example, the following QML code draws a line between
+    point (0,0,0), (1,1,1), then to (-1,-1,-1).
 
     \code
-	
+
     Line {
         vertices: [
            0, 0, 0,

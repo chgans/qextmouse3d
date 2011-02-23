@@ -55,10 +55,10 @@ QT_BEGIN_NAMESPACE
     A triangle is defined by 3 points in 3D space.  Since any 3 points define
     a plane, the triangle can be thought of as defining a plane, and forming a
     geometric region in that plane.
-    
+
     If you need a simple plane, with no particular geometry, then
     QPlane3D is a more compact and mathematically sufficient class.
-    
+
     The three points are labelled p(), q() and r() for consistency with
     textbook treatments.  It is recommended that the points be supplied
     in counter-clockwise order for correct orientation of the

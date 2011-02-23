@@ -53,7 +53,7 @@ QT_BEGIN_NAMESPACE
 
     The Point element in QML provides a means of drawing points in a 3D
     environment.  For example, the following QML code draws points (0,0,0),
-	(1,1,1), and (-1,-1,-1).
+    (1,1,1), and (-1,-1,-1).
 
     \code
     Point {
@@ -61,7 +61,7 @@ QT_BEGIN_NAMESPACE
            0, 0, 0,
            1, 1, 1,
            -1, -1, -1
-		]
+        ]
         effect: Effect {
             color: "#aaca00"
         }
@@ -93,7 +93,7 @@ Point::Point(QObject *parent) :
 /*!
    \qmlproperty list<real> Point::vertices
 
-   This property defines the positions for all of the points to be drawn   
+   This property defines the positions for all of the points to be drawn
    Each vertex is given by three real values, defining
    the x, y, and z co-ordinates of the vertex.
 */

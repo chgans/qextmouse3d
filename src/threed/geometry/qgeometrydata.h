@@ -146,7 +146,7 @@ public:
     void appendAttributeArray(const QCustomDataArray &ary, QGL::VertexAttribute field = QGL::CustomVertex0);
     void appendNormalArray(const QVector3DArray &ary);
     void appendTexCoordArray(const QVector2DArray &ary, QGL::VertexAttribute field = QGL::TextureCoord0);
-    void appendColorArray(const QArray<QColor4ub> &ary);    
+    void appendColorArray(const QArray<QColor4ub> &ary);
 
     QLogicalVertex logicalVertexAt(int i) const;
 

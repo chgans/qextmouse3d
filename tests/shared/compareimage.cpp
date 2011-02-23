@@ -52,13 +52,13 @@
 // greater than the relevant threshold in RGB space, where 0.0 indicates that
 // every pixel matches, and 1.0 indicates that no pixels match.
 //
-// For example, the RGB colors 0x0088ff and 0x000000 have a red difference 
-// of 0, a green difference of 0x88, and a blue difference of 0xff.  If any 
+// For example, the RGB colors 0x0088ff and 0x000000 have a red difference
+// of 0, a green difference of 0x88, and a blue difference of 0xff.  If any
 // of these values is greater than the corresponding threshold, the pixel
 // would be considered "different".
 //
-// If the images are different sizes, the function compares those pixels that 
-// fall in the overlapping area.  If one image is simply smaller than the 
+// If the images are different sizes, the function compares those pixels that
+// fall in the overlapping area.  If one image is simply smaller than the
 // other, this will be the size of the smaller image.
 
 float qProportionDifferentRGBPixels(const QImage& img1, const QImage& img2, int redThreshold, int greenThreshold, int blueThreshold, int alphaThreshold)
@@ -68,7 +68,7 @@ float qProportionDifferentRGBPixels(const QImage& img1, const QImage& img2, int 
     int width = qMin(img1.width(), img2.width());
     int height = qMin(img1.height(), img2.height());
     int pixelcount = 0;
-    
+
 #ifdef DEBUG_QIMAGECOMPARE
     int sumDiff = 0;
     QImage *resultImage = new QImage (width,height,QImage::Format_RGB16);
@@ -96,11 +96,11 @@ float qProportionDifferentRGBPixels(const QImage& img1, const QImage& img2, int 
 #endif
 
             pixelcount++;
-            if(redDiff > redThreshold 
+            if(redDiff > redThreshold
                 || greenDiff > greenThreshold
                 || blueDiff > blueThreshold
                 || alphaDiff > alphaThreshold)
-            {   
+            {
                 result++;
 #ifdef DEBUG_QIMAGECOMPARE
                 resultImage->setPixel(x,y, colorDiff.rgba());
@@ -108,7 +108,7 @@ float qProportionDifferentRGBPixels(const QImage& img1, const QImage& img2, int 
             }
         }
     }
-#ifdef DEBUG_QIMAGECOMPARE            
+#ifdef DEBUG_QIMAGECOMPARE
     qDebug() << "qimageCompare result was: " << result << "/"<<pixelcount<<" = "<< (int)(((float)result/(float)pixelcount)*100) << "%";
     qDebug() << "Sum of absolute differences was:"<< sumDiff;
     qDebug() << "Average difference per pixel was:" << (float)sumDiff/(float)pixelcount;
@@ -129,7 +129,7 @@ bool qFuzzyCompare(const QImage& img1, const QImage& img2)
     if (img1.width() != img2.width() || img1.height() != img2.height())
         return false;
 
-    
+
     int count = 0;
     for (int y = 0; y < img1.height(); ++y) {
         for (int x = 0; x < img1.width(); ++x) {

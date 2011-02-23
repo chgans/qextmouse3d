@@ -69,7 +69,7 @@ protected:
     void changeEvent(QEvent *e);
     void closeEvent(QCloseEvent *e);
 
-private slots:    
+private slots:
     void on_actionShow_Picking_triggered();
     void on_lockButton_clicked();
     void on_zScaleSpin_valueChanged(QString );

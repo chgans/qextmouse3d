@@ -18,45 +18,45 @@ static const char* LEGAL_INFORMATION =
 
 // ------------------------------------------------------------------------------------------------
 // Get legal string
-ASSIMP_API const char*  aiGetLegalString  ()	{
-	return LEGAL_INFORMATION;
+ASSIMP_API const char*  aiGetLegalString  () {
+    return LEGAL_INFORMATION;
 }
 
 // ------------------------------------------------------------------------------------------------
 // Get Assimp minor version
-ASSIMP_API unsigned int aiGetVersionMinor ()	{
-	return 1;
+ASSIMP_API unsigned int aiGetVersionMinor () {
+    return 1;
 }
 
 // ------------------------------------------------------------------------------------------------
 // Get Assimp major version
-ASSIMP_API unsigned int aiGetVersionMajor ()	{
-	return 1;
+ASSIMP_API unsigned int aiGetVersionMajor () {
+    return 1;
 }
 
 // ------------------------------------------------------------------------------------------------
 // Get flags used for compilation
-ASSIMP_API unsigned int aiGetCompileFlags ()	{
+ASSIMP_API unsigned int aiGetCompileFlags () {
 
-	unsigned int flags = 0;
+    unsigned int flags = 0;
 
 #ifdef ASSIMP_BUILD_BOOST_WORKAROUND
-	flags |= ASSIMP_CFLAGS_NOBOOST;
+    flags |= ASSIMP_CFLAGS_NOBOOST;
 #endif
 #ifdef ASSIMP_BUILD_SINGLETHREADED
-	flags |= ASSIMP_CFLAGS_SINGLETHREADED;
+    flags |= ASSIMP_CFLAGS_SINGLETHREADED;
 #endif
 #ifdef ASSIMP_BUILD_DEBUG
-	flags |= ASSIMP_CFLAGS_DEBUG;
+    flags |= ASSIMP_CFLAGS_DEBUG;
 #endif
 #ifdef ASSIMP_BUILD_DLL_EXPORT
-	flags |= ASSIMP_CFLAGS_SHARED;
+    flags |= ASSIMP_CFLAGS_SHARED;
 #endif
 #ifdef _STLPORT_VERSION
-	flags |= ASSIMP_CFLAGS_STLPORT;
+    flags |= ASSIMP_CFLAGS_STLPORT;
 #endif
 
-	return flags;
+    return flags;
 }
 
 // include current build revision, which is even updated from time to time -- :-)
@@ -65,6 +65,6 @@ ASSIMP_API unsigned int aiGetCompileFlags ()	{
 // ------------------------------------------------------------------------------------------------
 ASSIMP_API unsigned int aiGetVersionRevision ()
 {
-	return SVNRevision;
+    return SVNRevision;
 }
 

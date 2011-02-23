@@ -2277,7 +2277,7 @@ QColor QGLPainter::pickColor() const
     QGLPAINTER_CHECK_PRIVATE();
     if (d->pick) {
         QColor color;
-        color.setRgb(d->pick->pickColor);        
+        color.setRgb(d->pick->pickColor);
         return color;
     } else {
         return Qt::black;
@@ -2310,7 +2310,7 @@ int QGLPainter::pickObject(int x, int y) const
 
     // Normalize the color to account for floating-point rounding.
     color = qt_qgl_normalize_pick_color(color); // XXX: detect RGB444 screens.
-    
+
     // Map the color back to an object identifier.
     return d->pick->pickColorToObject.value(color, -1);
 }

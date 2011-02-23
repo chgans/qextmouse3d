@@ -73,7 +73,7 @@ void Node::calculateForces()
         newPos = pos();
         return;
     }
-    
+
     // Sum up all forces pushing this item away
     qreal xvel = 0;
     qreal yvel = 0;
@@ -103,7 +103,7 @@ void Node::calculateForces()
         xvel += pos.x() / weight;
         yvel += pos.y() / weight;
     }
-    
+
     if (qAbs(xvel) < 0.1 && qAbs(yvel) < 0.1)
         xvel = yvel = 0;
 

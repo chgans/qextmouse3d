@@ -73,7 +73,7 @@ protected:
 
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-    
+
 private:
     QList<Edge *> edgeList;
     QPointF newPos;

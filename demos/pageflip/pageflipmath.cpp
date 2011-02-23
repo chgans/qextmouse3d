@@ -64,14 +64,14 @@ PageFlipMath::~PageFlipMath()
 void PageFlipMath::drawPage(int page) const
 {
     if (page < 0 || page >= 4 || pageCount[page] == 0)
-	return;
+    return;
     glDrawArrays(GL_TRIANGLE_FAN, page * 5, pageCount[page]);
 }
 
 void PageFlipMath::drawOutline(int page) const
 {
     if (page < 0 || page >= 4 || pageCount[page] == 0)
-	return;
+    return;
     glDrawArrays(GL_LINE_LOOP, page * 5, pageCount[page]);
 }
 
@@ -92,10 +92,10 @@ void PageFlipMath::compute(qreal t)
 
     case TopRight:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 vertices[page][vertex][1]
                     = m_pageRect.height() - 1 - vertices[page][vertex][1];
-	        vertices[page][vertex][3]
+            vertices[page][vertex][3]
                     = 1.0f - vertices[page][vertex][3];
             }
         }
@@ -103,11 +103,11 @@ void PageFlipMath::compute(qreal t)
 
     case BottomLeft:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
                 vertices[page][vertex][0] -= m_pageRect.width();
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
             }
         }
@@ -115,15 +115,15 @@ void PageFlipMath::compute(qreal t)
 
     case TopLeft:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
                 vertices[page][vertex][0] -= m_pageRect.width();
                 vertices[page][vertex][1]
                     = m_pageRect.height() - 1 - vertices[page][vertex][1];
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
-	        vertices[page][vertex][3]
+            vertices[page][vertex][3]
                     = 1.0f - vertices[page][vertex][3];
             }
         }
@@ -131,10 +131,10 @@ void PageFlipMath::compute(qreal t)
 
     case BottomLeftOnePage:
         for (page = 1; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
             }
         }
@@ -142,14 +142,14 @@ void PageFlipMath::compute(qreal t)
 
     case TopLeftOnePage:
         for (page = 1; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
                 vertices[page][vertex][1]
                     = m_pageRect.height() - 1 - vertices[page][vertex][1];
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
-	        vertices[page][vertex][3]
+            vertices[page][vertex][3]
                     = 1.0f - vertices[page][vertex][3];
             }
         }
@@ -157,16 +157,16 @@ void PageFlipMath::compute(qreal t)
 
     case VerticalBottomRight:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 qSwap(vertices[page][vertex][0], vertices[page][vertex][1]);
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
                 vertices[page][vertex][1]
                     = m_pageRect.height() - 1 - vertices[page][vertex][1];
                 qSwap(vertices[page][vertex][2], vertices[page][vertex][3]);
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
-	        vertices[page][vertex][3]
+            vertices[page][vertex][3]
                     = 1.0f - vertices[page][vertex][3];
             }
         }
@@ -174,12 +174,12 @@ void PageFlipMath::compute(qreal t)
 
     case VerticalTopRight:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 qSwap(vertices[page][vertex][0], vertices[page][vertex][1]);
                 vertices[page][vertex][0]
                     = m_pageRect.width() - 1 - vertices[page][vertex][0];
                 qSwap(vertices[page][vertex][2], vertices[page][vertex][3]);
-	        vertices[page][vertex][2]
+            vertices[page][vertex][2]
                     = 1.0f - vertices[page][vertex][2];
             }
         }
@@ -187,12 +187,12 @@ void PageFlipMath::compute(qreal t)
 
     case VerticalBottomLeft:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 qSwap(vertices[page][vertex][0], vertices[page][vertex][1]);
                 vertices[page][vertex][1]
                     = m_pageRect.height() - 1 - vertices[page][vertex][1];
                 qSwap(vertices[page][vertex][2], vertices[page][vertex][3]);
-	        vertices[page][vertex][3]
+            vertices[page][vertex][3]
                     = 1.0f - vertices[page][vertex][3];
             }
         }
@@ -200,7 +200,7 @@ void PageFlipMath::compute(qreal t)
 
     case VerticalTopLeft:
         for (page = 0; page < 4; ++page) {
-	    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        for (vertex = 0; vertex < pageCount[page]; ++vertex) {
                 qSwap(vertices[page][vertex][0], vertices[page][vertex][1]);
                 qSwap(vertices[page][vertex][2], vertices[page][vertex][3]);
             }
@@ -210,12 +210,12 @@ void PageFlipMath::compute(qreal t)
 
     // Adjust the vertices for the final rectangle position.
     for (page = 0; page < 4; ++page) {
-	for (vertex = 0; vertex < pageCount[page]; ++vertex) {
-	    vertices[page][vertex][0] += m_pageRect.x();
-	    vertices[page][vertex][1]
-		= m_pageRect.y() +
-		  (m_pageRect.height() - 1 - vertices[page][vertex][1]);
-	}
+    for (vertex = 0; vertex < pageCount[page]; ++vertex) {
+        vertices[page][vertex][0] += m_pageRect.x();
+        vertices[page][vertex][1]
+        = m_pageRect.y() +
+          (m_pageRect.height() - 1 - vertices[page][vertex][1]);
+    }
     }
 
     // Flip the x texture co-ordinates for page 2 if showing the page reverse.
@@ -239,141 +239,141 @@ void PageFlipMath::flip(qreal pageWidth, qreal pageHeight, qreal t)
 {
     // Handle the simple start and end position cases first.
     if (t <= 0.0f) {
-	// Starting position: pages 0 and 1 in their rest states
-	// and pages 2 and 3 not visible.
-	pageCount[0] = 4;
-	pageCount[1] = 4;
-	pageCount[2] = 0;
-	pageCount[3] = 0;
-
-	vertices[0][0][0] = -pageWidth;	// corner 0 at (-pageWidth, 0)
-	vertices[0][0][1] = 0.0f;
-	vertices[0][0][2] = 0.0f;	// texture co-ordinate
-	vertices[0][0][3] = 0.0f;
-	vertices[0][0][4] = 0.0f;	// gradient control
-
-	vertices[0][1][0] = 0.0f;	// corner 1 at (0, 0)
-	vertices[0][1][1] = 0.0f;
-	vertices[0][1][2] = 1.0f;
-	vertices[0][1][3] = 0.0f;
-	vertices[0][1][4] = 1.0f;	// gradient along fold on the right
-
-	vertices[0][2][0] = 0.0f;	// corner 2 at (0, pageHeight)
-	vertices[0][2][1] = pageHeight;
-	vertices[0][2][2] = 1.0f;
-	vertices[0][2][3] = 1.0f;
-	vertices[0][2][4] = 1.0f;
-
-	vertices[0][3][0] = -pageWidth;	// corner 3 at (-pageWidth, pageHeight)
-	vertices[0][3][1] = pageHeight;
-	vertices[0][3][2] = 0.0f;
-	vertices[0][3][3] = 1.0f;
-	vertices[0][3][4] = 0.0f;
-
-	vertices[1][0][0] = 0.0f;	// corner 0 at (0, 0)
-	vertices[1][0][1] = 0.0f;
-	vertices[1][0][2] = 0.0f;	// texture co-ordinate
-	vertices[1][0][3] = 0.0f;
-	vertices[1][0][4] = 1.0f;	// gradient along fold on the left
-
-	vertices[1][1][0] = pageWidth;	// corner 1 at (pageWidth, 0)
-	vertices[1][1][1] = 0.0f;
-	vertices[1][1][2] = 1.0f;
-	vertices[1][1][3] = 0.0f;
-    	vertices[1][1][4] = 0.0f;
-
-	vertices[1][2][0] = pageWidth;	// corner 2 at (pageWidth, pageHeight)
-	vertices[1][2][1] = pageHeight;
-	vertices[1][2][2] = 1.0f;
-	vertices[1][2][3] = 1.0f;
-	vertices[1][2][4] = 0.0f;
-
-	vertices[1][3][0] = 0.0f;	// corner 3 at (0, pageHeight)
-	vertices[1][3][1] = pageHeight;
-	vertices[1][3][2] = 0.0f;
-	vertices[1][3][3] = 1.0f;
-	vertices[1][3][4] = 1.0f;
-	return;
-    } else if (t >= 1.0f) {
-	// Ending position: pages 0 and 1 are not visible, but
-	// pages 2 and 3 are visible in the rest states.
-	pageCount[0] = 0;
-	pageCount[1] = 0;
-	pageCount[2] = 4;
-	pageCount[3] = 4;
-
-	vertices[2][0][0] = -pageWidth;	// corner 0 at (-pageWidth, 0)
-	vertices[2][0][1] = 0.0f;
-	vertices[2][0][2] = 0.0f;	// texture co-ordinate
-	vertices[2][0][3] = 0.0f;
-	vertices[2][0][4] = 0.0f;	// gradient control
-
-	vertices[2][1][0] = 0.0f;	// corner 1 at (0, 0)
-	vertices[2][1][1] = 0.0f;
-	vertices[2][1][2] = 1.0f;
-	vertices[2][1][3] = 0.0f;
-	vertices[2][1][4] = 1.0f;	// gradient along fold on the right
-
-	vertices[2][2][0] = 0.0f;	// corner 2 at (0, pageHeight)
-	vertices[2][2][1] = pageHeight;
-	vertices[2][2][2] = 1.0f;
-	vertices[2][2][3] = 1.0f;
-	vertices[2][2][4] = 1.0f;
-
-	vertices[2][3][0] = -pageWidth;	// corner 3 at (-pageWidth, pageHeight)
-	vertices[2][3][1] = pageHeight;
-	vertices[2][3][2] = 0.0f;
-	vertices[2][3][3] = 1.0f;
-	vertices[2][3][4] = 0.0f;
-
-	vertices[3][0][0] = 0.0f;	// corner 0 at (0, 0)
-	vertices[3][0][1] = 0.0f;
-	vertices[3][0][2] = 0.0f;	// texture co-ordinate
-	vertices[3][0][3] = 0.0f;
-	vertices[3][0][4] = 1.0f;	// gradient along fold on the left
-
-	vertices[3][1][0] = pageWidth;	// corner 1 at (pageWidth, 0)
-	vertices[3][1][1] = 0.0f;
-	vertices[3][1][2] = 1.0f;
-	vertices[3][1][3] = 0.0f;
-	vertices[3][1][4] = 0.0f;
-
-	vertices[3][2][0] = pageWidth;	// corner 2 at (pageWidth, pageHeight)
-	vertices[3][2][1] = pageHeight;
-	vertices[3][2][2] = 1.0f;
-	vertices[3][2][3] = 1.0f;
-	vertices[3][2][4] = 0.0f;
-
-	vertices[3][3][0] = 0.0f;	// corner 3 at (0, pageHeight)
-	vertices[3][3][1] = pageHeight;
-	vertices[3][3][2] = 0.0f;
-	vertices[3][3][3] = 1.0f;
-	vertices[3][3][4] = 1.0f;
-	return;
-    }
-
-    // Page 0 is the same for all other animation positions.
+    // Starting position: pages 0 and 1 in their rest states
+    // and pages 2 and 3 not visible.
     pageCount[0] = 4;
+    pageCount[1] = 4;
+    pageCount[2] = 0;
+    pageCount[3] = 0;
 
-    vertices[0][0][0] = -pageWidth;	// corner 0 at (-pageWidth, 0)
+    vertices[0][0][0] = -pageWidth; // corner 0 at (-pageWidth, 0)
     vertices[0][0][1] = 0.0f;
-    vertices[0][0][2] = 0.0f;		// texture co-ordinate
+    vertices[0][0][2] = 0.0f; // texture co-ordinate
     vertices[0][0][3] = 0.0f;
-    vertices[0][0][4] = 0.0f;		// gradient control
+    vertices[0][0][4] = 0.0f; // gradient control
 
-    vertices[0][1][0] = 0.0f;		// corner 1 at (0, 0)
+    vertices[0][1][0] = 0.0f; // corner 1 at (0, 0)
     vertices[0][1][1] = 0.0f;
     vertices[0][1][2] = 1.0f;
     vertices[0][1][3] = 0.0f;
-    vertices[0][1][4] = 1.0f;		// gradient along fold on the right
+    vertices[0][1][4] = 1.0f; // gradient along fold on the right
 
-    vertices[0][2][0] = 0.0f;		// corner 2 at (0, pageHeight)
+    vertices[0][2][0] = 0.0f; // corner 2 at (0, pageHeight)
     vertices[0][2][1] = pageHeight;
     vertices[0][2][2] = 1.0f;
     vertices[0][2][3] = 1.0f;
     vertices[0][2][4] = 1.0f;
 
-    vertices[0][3][0] = -pageWidth;	// corner 3 at (-pageWidth, pageHeight)
+    vertices[0][3][0] = -pageWidth; // corner 3 at (-pageWidth, pageHeight)
+    vertices[0][3][1] = pageHeight;
+    vertices[0][3][2] = 0.0f;
+    vertices[0][3][3] = 1.0f;
+    vertices[0][3][4] = 0.0f;
+
+    vertices[1][0][0] = 0.0f; // corner 0 at (0, 0)
+    vertices[1][0][1] = 0.0f;
+    vertices[1][0][2] = 0.0f; // texture co-ordinate
+    vertices[1][0][3] = 0.0f;
+    vertices[1][0][4] = 1.0f; // gradient along fold on the left
+
+    vertices[1][1][0] = pageWidth; // corner 1 at (pageWidth, 0)
+    vertices[1][1][1] = 0.0f;
+    vertices[1][1][2] = 1.0f;
+    vertices[1][1][3] = 0.0f;
+        vertices[1][1][4] = 0.0f;
+
+    vertices[1][2][0] = pageWidth; // corner 2 at (pageWidth, pageHeight)
+    vertices[1][2][1] = pageHeight;
+    vertices[1][2][2] = 1.0f;
+    vertices[1][2][3] = 1.0f;
+    vertices[1][2][4] = 0.0f;
+
+    vertices[1][3][0] = 0.0f; // corner 3 at (0, pageHeight)
+    vertices[1][3][1] = pageHeight;
+    vertices[1][3][2] = 0.0f;
+    vertices[1][3][3] = 1.0f;
+    vertices[1][3][4] = 1.0f;
+    return;
+    } else if (t >= 1.0f) {
+    // Ending position: pages 0 and 1 are not visible, but
+    // pages 2 and 3 are visible in the rest states.
+    pageCount[0] = 0;
+    pageCount[1] = 0;
+    pageCount[2] = 4;
+    pageCount[3] = 4;
+
+    vertices[2][0][0] = -pageWidth; // corner 0 at (-pageWidth, 0)
+    vertices[2][0][1] = 0.0f;
+    vertices[2][0][2] = 0.0f; // texture co-ordinate
+    vertices[2][0][3] = 0.0f;
+    vertices[2][0][4] = 0.0f; // gradient control
+
+    vertices[2][1][0] = 0.0f; // corner 1 at (0, 0)
+    vertices[2][1][1] = 0.0f;
+    vertices[2][1][2] = 1.0f;
+    vertices[2][1][3] = 0.0f;
+    vertices[2][1][4] = 1.0f; // gradient along fold on the right
+
+    vertices[2][2][0] = 0.0f; // corner 2 at (0, pageHeight)
+    vertices[2][2][1] = pageHeight;
+    vertices[2][2][2] = 1.0f;
+    vertices[2][2][3] = 1.0f;
+    vertices[2][2][4] = 1.0f;
+
+    vertices[2][3][0] = -pageWidth; // corner 3 at (-pageWidth, pageHeight)
+    vertices[2][3][1] = pageHeight;
+    vertices[2][3][2] = 0.0f;
+    vertices[2][3][3] = 1.0f;
+    vertices[2][3][4] = 0.0f;
+
+    vertices[3][0][0] = 0.0f; // corner 0 at (0, 0)
+    vertices[3][0][1] = 0.0f;
+    vertices[3][0][2] = 0.0f; // texture co-ordinate
+    vertices[3][0][3] = 0.0f;
+    vertices[3][0][4] = 1.0f; // gradient along fold on the left
+
+    vertices[3][1][0] = pageWidth; // corner 1 at (pageWidth, 0)
+    vertices[3][1][1] = 0.0f;
+    vertices[3][1][2] = 1.0f;
+    vertices[3][1][3] = 0.0f;
+    vertices[3][1][4] = 0.0f;
+
+    vertices[3][2][0] = pageWidth; // corner 2 at (pageWidth, pageHeight)
+    vertices[3][2][1] = pageHeight;
+    vertices[3][2][2] = 1.0f;
+    vertices[3][2][3] = 1.0f;
+    vertices[3][2][4] = 0.0f;
+
+    vertices[3][3][0] = 0.0f; // corner 3 at (0, pageHeight)
+    vertices[3][3][1] = pageHeight;
+    vertices[3][3][2] = 0.0f;
+    vertices[3][3][3] = 1.0f;
+    vertices[3][3][4] = 1.0f;
+    return;
+    }
+
+    // Page 0 is the same for all other animation positions.
+    pageCount[0] = 4;
+
+    vertices[0][0][0] = -pageWidth; // corner 0 at (-pageWidth, 0)
+    vertices[0][0][1] = 0.0f;
+    vertices[0][0][2] = 0.0f;  // texture co-ordinate
+    vertices[0][0][3] = 0.0f;
+    vertices[0][0][4] = 0.0f;  // gradient control
+
+    vertices[0][1][0] = 0.0f;  // corner 1 at (0, 0)
+    vertices[0][1][1] = 0.0f;
+    vertices[0][1][2] = 1.0f;
+    vertices[0][1][3] = 0.0f;
+    vertices[0][1][4] = 1.0f;  // gradient along fold on the right
+
+    vertices[0][2][0] = 0.0f;  // corner 2 at (0, pageHeight)
+    vertices[0][2][1] = pageHeight;
+    vertices[0][2][2] = 1.0f;
+    vertices[0][2][3] = 1.0f;
+    vertices[0][2][4] = 1.0f;
+
+    vertices[0][3][0] = -pageWidth; // corner 3 at (-pageWidth, pageHeight)
     vertices[0][3][1] = pageHeight;
     vertices[0][3][2] = 0.0f;
     vertices[0][3][3] = 1.0f;
@@ -404,188 +404,188 @@ void PageFlipMath::flip(qreal pageWidth, qreal pageHeight, qreal t)
     // on the page (k < d), then we need to generate similar trapezoids.
     qreal k = (pageHeight * cosAngle) / sinAngle;
     if (k >= d) {
-	// Generate similar triangles.  Find the intersection with
-	// the right-hand side of the page at x == pageWidth.
-	qreal intx = pageWidth;
-	qreal inty = refy + (d * sinAngle) / cosAngle;
+    // Generate similar triangles.  Find the intersection with
+    // the right-hand side of the page at x == pageWidth.
+    qreal intx = pageWidth;
+    qreal inty = refy + (d * sinAngle) / cosAngle;
 
-	// Find the opposite triangle corner on the back page.
-	qreal oppx = refx + d * cosAngle2;
-	qreal oppy = refy + d * sinAngle2;
+    // Find the opposite triangle corner on the back page.
+    qreal oppx = refx + d * cosAngle2;
+    qreal oppy = refy + d * sinAngle2;
 
-	// Generate vertices and texture co-ordinates for the back page.
-	qreal texa = 1.0f - (d * sinAngle) / (pageHeight * cosAngle);
-	qreal texb = d / pageWidth;
-	vertices[2][0][0] = intx;
-	vertices[2][0][1] = inty;
-	vertices[2][0][2] = 0.0f;
-	vertices[2][0][3] = 1.0f - texa;
-	vertices[2][0][4] = 1.0f;
+    // Generate vertices and texture co-ordinates for the back page.
+    qreal texa = 1.0f - (d * sinAngle) / (pageHeight * cosAngle);
+    qreal texb = d / pageWidth;
+    vertices[2][0][0] = intx;
+    vertices[2][0][1] = inty;
+    vertices[2][0][2] = 0.0f;
+    vertices[2][0][3] = 1.0f - texa;
+    vertices[2][0][4] = 1.0f;
 
-	vertices[2][1][0] = oppx;
-	vertices[2][1][1] = oppy;
-	vertices[2][1][2] = 0.0f;
-	vertices[2][1][3] = 0.0f;
-	vertices[2][1][4] = 1.0f - texb;
+    vertices[2][1][0] = oppx;
+    vertices[2][1][1] = oppy;
+    vertices[2][1][2] = 0.0f;
+    vertices[2][1][3] = 0.0f;
+    vertices[2][1][4] = 1.0f - texb;
 
-	vertices[2][2][0] = refx;
-	vertices[2][2][1] = refy;
-	vertices[2][2][2] = texb;
-	vertices[2][2][3] = 0.0f;
-	vertices[2][2][4] = 1.0f;
+    vertices[2][2][0] = refx;
+    vertices[2][2][1] = refy;
+    vertices[2][2][2] = texb;
+    vertices[2][2][3] = 0.0f;
+    vertices[2][2][4] = 1.0f;
 
-	pageCount[2] = 3;
+    pageCount[2] = 3;
 
-	// Generate vertices and texture co-ordinates for the next page.
-	vertices[3][0][0] = intx;
-	vertices[3][0][1] = inty;
-	vertices[3][0][2] = 1.0f;
-	vertices[3][0][3] = 1.0f - texa;
-	vertices[3][0][4] = 1.0f;
+    // Generate vertices and texture co-ordinates for the next page.
+    vertices[3][0][0] = intx;
+    vertices[3][0][1] = inty;
+    vertices[3][0][2] = 1.0f;
+    vertices[3][0][3] = 1.0f - texa;
+    vertices[3][0][4] = 1.0f;
 
-	vertices[3][1][0] = refx;
-	vertices[3][1][1] = refy;
-	vertices[3][1][2] = 1.0f - texb;
-	vertices[3][1][3] = 0.0f;
-	vertices[3][1][4] = 1.0f;
+    vertices[3][1][0] = refx;
+    vertices[3][1][1] = refy;
+    vertices[3][1][2] = 1.0f - texb;
+    vertices[3][1][3] = 0.0f;
+    vertices[3][1][4] = 1.0f;
 
-	vertices[3][2][0] = pageWidth;
-	vertices[3][2][1] = 0.0f;
-	vertices[3][2][2] = 1.0f;
-	vertices[3][2][3] = 0.0f;
-	vertices[3][2][4] = 1.0f - texb;
+    vertices[3][2][0] = pageWidth;
+    vertices[3][2][1] = 0.0f;
+    vertices[3][2][2] = 1.0f;
+    vertices[3][2][3] = 0.0f;
+    vertices[3][2][4] = 1.0f - texb;
 
-	pageCount[3] = 3;
+    pageCount[3] = 3;
 
-	// Set page 1's vertices to clip off pixels we don't need to draw.
-	vertices[1][0][0] = 0.0f;
-	vertices[1][0][1] = 0.0f;
-	vertices[1][0][2] = 0.0f;
-	vertices[1][0][3] = 0.0f;
-	vertices[1][0][4] = 1.0f;
+    // Set page 1's vertices to clip off pixels we don't need to draw.
+    vertices[1][0][0] = 0.0f;
+    vertices[1][0][1] = 0.0f;
+    vertices[1][0][2] = 0.0f;
+    vertices[1][0][3] = 0.0f;
+    vertices[1][0][4] = 1.0f;
 
-	vertices[1][1][0] = pageWidth - d;
-	vertices[1][1][1] = 0.0f;
-	vertices[1][1][2] = 1.0f - texb;
-	vertices[1][1][3] = 0.0f;
-	vertices[1][1][4] = texb;
+    vertices[1][1][0] = pageWidth - d;
+    vertices[1][1][1] = 0.0f;
+    vertices[1][1][2] = 1.0f - texb;
+    vertices[1][1][3] = 0.0f;
+    vertices[1][1][4] = texb;
 
-	vertices[1][2][0] = intx;
-	vertices[1][2][1] = inty;
-	vertices[1][2][2] = 1.0f;
-	vertices[1][2][3] = 1.0f - texa;
-	vertices[1][2][4] = 0.0f;
+    vertices[1][2][0] = intx;
+    vertices[1][2][1] = inty;
+    vertices[1][2][2] = 1.0f;
+    vertices[1][2][3] = 1.0f - texa;
+    vertices[1][2][4] = 0.0f;
 
-	vertices[1][3][0] = pageWidth;
-	vertices[1][3][1] = pageHeight;
-	vertices[1][3][2] = 1.0f;
-	vertices[1][3][3] = 1.0f;
-	vertices[1][3][4] = 0.0f;
+    vertices[1][3][0] = pageWidth;
+    vertices[1][3][1] = pageHeight;
+    vertices[1][3][2] = 1.0f;
+    vertices[1][3][3] = 1.0f;
+    vertices[1][3][4] = 0.0f;
 
-	vertices[1][4][0] = 0.0f;
-	vertices[1][4][1] = pageHeight;
-	vertices[1][4][2] = 0.0f;
-	vertices[1][4][3] = 1.0f;
-	vertices[1][4][4] = 1.0f;
+    vertices[1][4][0] = 0.0f;
+    vertices[1][4][1] = pageHeight;
+    vertices[1][4][2] = 0.0f;
+    vertices[1][4][3] = 1.0f;
+    vertices[1][4][4] = 1.0f;
 
-	pageCount[1] = 5;
+    pageCount[1] = 5;
     } else {
-	// Generate similar trapezoids.  Find the intersection with
-	// the top of the page at y == pageHeight.
-	qreal intx = refx + (pageHeight * cosAngle) / sinAngle;
-	qreal inty = pageHeight;
+    // Generate similar trapezoids.  Find the intersection with
+    // the top of the page at y == pageHeight.
+    qreal intx = refx + (pageHeight * cosAngle) / sinAngle;
+    qreal inty = pageHeight;
 
-	// Get the distance between the intersection and the right of the page.
-	qreal e = pageWidth - intx;
+    // Get the distance between the intersection and the right of the page.
+    qreal e = pageWidth - intx;
 
-	// Find the opposite trapezoid corners to "ref" and "int".
-	qreal opprefx = refx + d * cosAngle2;
-	qreal opprefy = refy + d * sinAngle2;
-	qreal oppintx = intx + e * cosAngle2;
-	qreal oppinty = inty + e * sinAngle2;
+    // Find the opposite trapezoid corners to "ref" and "int".
+    qreal opprefx = refx + d * cosAngle2;
+    qreal opprefy = refy + d * sinAngle2;
+    qreal oppintx = intx + e * cosAngle2;
+    qreal oppinty = inty + e * sinAngle2;
 
-	// Generate vertices and texture co-ordinates for the back page.
-	qreal texa = e / pageWidth;
-	qreal texb = d / pageWidth;
-	vertices[2][0][0] = intx;
-	vertices[2][0][1] = inty;
-	vertices[2][0][2] = texa;
-	vertices[2][0][3] = 1.0f;
-	vertices[2][0][4] = 1.0f;
+    // Generate vertices and texture co-ordinates for the back page.
+    qreal texa = e / pageWidth;
+    qreal texb = d / pageWidth;
+    vertices[2][0][0] = intx;
+    vertices[2][0][1] = inty;
+    vertices[2][0][2] = texa;
+    vertices[2][0][3] = 1.0f;
+    vertices[2][0][4] = 1.0f;
 
-	vertices[2][1][0] = oppintx;
-	vertices[2][1][1] = oppinty;
-	vertices[2][1][2] = 0.0f;
-	vertices[2][1][3] = 1.0f;
-	vertices[2][1][4] = 1.0f - texa;
+    vertices[2][1][0] = oppintx;
+    vertices[2][1][1] = oppinty;
+    vertices[2][1][2] = 0.0f;
+    vertices[2][1][3] = 1.0f;
+    vertices[2][1][4] = 1.0f - texa;
 
-	vertices[2][2][0] = opprefx;
-	vertices[2][2][1] = opprefy;
-	vertices[2][2][2] = 0.0f;
-	vertices[2][2][3] = 0.0f;
-	vertices[2][2][4] = 1.0f - texb;
+    vertices[2][2][0] = opprefx;
+    vertices[2][2][1] = opprefy;
+    vertices[2][2][2] = 0.0f;
+    vertices[2][2][3] = 0.0f;
+    vertices[2][2][4] = 1.0f - texb;
 
-	vertices[2][3][0] = refx;
-	vertices[2][3][1] = refy;
-	vertices[2][3][2] = texb;
-	vertices[2][3][3] = 0.0f;
-	vertices[2][3][4] = 1.0f;
+    vertices[2][3][0] = refx;
+    vertices[2][3][1] = refy;
+    vertices[2][3][2] = texb;
+    vertices[2][3][3] = 0.0f;
+    vertices[2][3][4] = 1.0f;
 
-	pageCount[2] = 4;
+    pageCount[2] = 4;
 
-	// Generate vertices and texture co-ordinates for the next page.
-	vertices[3][0][0] = intx;
-	vertices[3][0][1] = inty;
-	vertices[3][0][2] = 1.0f - texa;
-	vertices[3][0][3] = 1.0f;
-	vertices[3][0][4] = 1.0f;
+    // Generate vertices and texture co-ordinates for the next page.
+    vertices[3][0][0] = intx;
+    vertices[3][0][1] = inty;
+    vertices[3][0][2] = 1.0f - texa;
+    vertices[3][0][3] = 1.0f;
+    vertices[3][0][4] = 1.0f;
 
-	vertices[3][1][0] = refx;
-	vertices[3][1][1] = refy;
-	vertices[3][1][2] = 1.0f - texb;
-	vertices[3][1][3] = 0.0f;
-	vertices[3][1][4] = 1.0f;
+    vertices[3][1][0] = refx;
+    vertices[3][1][1] = refy;
+    vertices[3][1][2] = 1.0f - texb;
+    vertices[3][1][3] = 0.0f;
+    vertices[3][1][4] = 1.0f;
 
-	vertices[3][2][0] = pageWidth;
-	vertices[3][2][1] = 0.0f;
-	vertices[3][2][2] = 1.0f;
-	vertices[3][2][3] = 0.0f;
-	vertices[3][2][4] = 1.0f - texb;
+    vertices[3][2][0] = pageWidth;
+    vertices[3][2][1] = 0.0f;
+    vertices[3][2][2] = 1.0f;
+    vertices[3][2][3] = 0.0f;
+    vertices[3][2][4] = 1.0f - texb;
 
-	vertices[3][3][0] = pageWidth;
-	vertices[3][3][1] = pageHeight;
-	vertices[3][3][2] = 1.0f;
-	vertices[3][3][3] = 1.0f;
-	vertices[3][3][4] = 1.0f - texa;
+    vertices[3][3][0] = pageWidth;
+    vertices[3][3][1] = pageHeight;
+    vertices[3][3][2] = 1.0f;
+    vertices[3][3][3] = 1.0f;
+    vertices[3][3][4] = 1.0f - texa;
 
-	pageCount[3] = 4;
+    pageCount[3] = 4;
 
-	// Set page 1's vertices to clip off pixels we don't need to draw.
-	vertices[1][0][0] = 0.0f;
-	vertices[1][0][1] = 0.0f;
-	vertices[1][0][2] = 0.0f;
-	vertices[1][0][3] = 0.0f;
-	vertices[1][0][4] = 1.0f;
+    // Set page 1's vertices to clip off pixels we don't need to draw.
+    vertices[1][0][0] = 0.0f;
+    vertices[1][0][1] = 0.0f;
+    vertices[1][0][2] = 0.0f;
+    vertices[1][0][3] = 0.0f;
+    vertices[1][0][4] = 1.0f;
 
-	vertices[1][1][0] = pageWidth - d;
-	vertices[1][1][1] = 0.0f;
-	vertices[1][1][2] = 1.0f - texb;
-	vertices[1][1][3] = 0.0f;
-	vertices[1][1][4] = texb;
+    vertices[1][1][0] = pageWidth - d;
+    vertices[1][1][1] = 0.0f;
+    vertices[1][1][2] = 1.0f - texb;
+    vertices[1][1][3] = 0.0f;
+    vertices[1][1][4] = texb;
 
-	vertices[1][2][0] = pageWidth - e;
-	vertices[1][2][1] = pageHeight;
-	vertices[1][2][2] = 1.0f - texa;
-	vertices[1][2][3] = 1.0f;
-	vertices[1][2][4] = texa;
+    vertices[1][2][0] = pageWidth - e;
+    vertices[1][2][1] = pageHeight;
+    vertices[1][2][2] = 1.0f - texa;
+    vertices[1][2][3] = 1.0f;
+    vertices[1][2][4] = texa;
 
-	vertices[1][3][0] = 0.0f;
-	vertices[1][3][1] = pageHeight;
-	vertices[1][3][2] = 0.0f;
-	vertices[1][3][3] = 1.0f;
-	vertices[1][3][4] = 1.0f;
+    vertices[1][3][0] = 0.0f;
+    vertices[1][3][1] = pageHeight;
+    vertices[1][3][2] = 0.0f;
+    vertices[1][3][3] = 1.0f;
+    vertices[1][3][4] = 1.0f;
 
-	pageCount[1] = 4;
+    pageCount[1] = 4;
     }
 }
 

@@ -214,7 +214,7 @@ void QDeclarativeMesh::setMeshName(const QString& value)
     }
     if (d->loaded && d->scene) {
         QGLSceneNode *insertObject;
-        if (value.isEmpty())            
+        if (value.isEmpty())
             insertObject = getSceneObject();
         else
             insertObject = getSceneObject(value);
@@ -318,7 +318,7 @@ QGLSceneNode *QDeclarativeMesh::getSceneObject()
     scene object in this mesh which corresponds to it.
 */
 QGLSceneNode *QDeclarativeMesh::getSceneObject(const QString &name)
-{    
+{
     //This variant of the function gets the mesh scene object for a scene
     //based on the name of the object.
     if (d->sceneObjects.empty())
@@ -401,8 +401,8 @@ void QDeclarativeMesh::setScene(QGLAbstractScene *scene)
     d->scene = scene;
     if (!d->scene) {
         qWarning("Could not load %s (possibly plugin could not be found)",
-                 d->data.toString().toLatin1().constData());    
-    } 
+                 d->data.toString().toLatin1().constData());
+    }
     else {
         QGLSceneNode *insertObject;
         initSceneObjectList();
@@ -410,7 +410,7 @@ void QDeclarativeMesh::setScene(QGLAbstractScene *scene)
             insertObject = getSceneObject();
         else
             insertObject = getSceneObject(d->meshName);
-        //check if we found a valid/useful object to use based on the node name, 
+        //check if we found a valid/useful object to use based on the node name,
         //otherwise just output a list of valid names
         if (!insertObject && !d->meshName.isEmpty()) {
             qWarning() << "could not find" << d->meshName << "available:"
@@ -419,7 +419,7 @@ void QDeclarativeMesh::setScene(QGLAbstractScene *scene)
             qWarning() << "could not find main object in scene!";
         }
         //in either case we still need to add an object to the scene, so if we fail
-        //we simply add a null value to indicate that this object is non-drawable 
+        //we simply add a null value to indicate that this object is non-drawable
         addSceneBranch(insertObject);
 
 #ifndef QT_NO_DEBUG_STREAM
@@ -431,7 +431,7 @@ void QDeclarativeMesh::setScene(QGLAbstractScene *scene)
         }
 #endif
     }
-    emit dataChanged(); 
+    emit dataChanged();
     d->loaded = true;
     if (d->completed)
         emit loaded();
@@ -462,7 +462,7 @@ int QDeclarativeMesh::nextSceneBranchId() const
     required.
 */
 int QDeclarativeMesh::createSceneBranch(QString nodeName, QObject *parent)
-{    
+{
     if (!d->scene) {
         qWarning() << "Unable to split mesh: no scene initialised - attempt to add scene object failed.";
         return -1;
@@ -477,16 +477,16 @@ int QDeclarativeMesh::createSceneBranch(QString nodeName, QObject *parent)
         if (sceneNode) {
             QGLSceneNode *parentNode = qobject_cast<QGLSceneNode *>(sceneNode->parent());
             qDebug() << "retrieved parentNode:" << parentNode << "from:" << sceneNode->parent();
-            
+
             QObject *prevParent=parentNode;
             if (parentNode)
                 parentNode->removeNode(sceneNode);  //this becomes irrelevant.
-            
+
             //sceneNode->setParent(d->scene);     //TODO: currently this fails as sceneNode changes make problems.
             //If no specific parent is nominated, use the scene specified by the mesh
             parent ? sceneNode->setParent(parent)  : sceneNode->setParent(d->scene);
             addSceneBranch(sceneNode, prevParent);
-            
+
             return branchId;
         }
         else {
@@ -514,8 +514,8 @@ int QDeclarativeMesh::addSceneBranch(QGLSceneNode *rootSceneObject, QObject *pre
     newBranch.rootSceneObject = rootSceneObject;
 
     d->sceneBranches.insert(d->nextSceneBranchId, newBranch);
-    
-    return ++d->nextSceneBranchId;    
+
+    return ++d->nextSceneBranchId;
 }
 
 /*!
@@ -530,20 +530,20 @@ int QDeclarativeMesh::addSceneBranch(QGLSceneNode *rootSceneObject, QObject *pre
 */
 void QDeclarativeMesh::restoreSceneBranch(int branchId)
 {
-    
+
     if (d->sceneBranches.contains(branchId)) {
         qWarning() <<"Mesh does not contain branch " << branchId<<".  Ignoring.\n";
         return;
     }
-        
+
     QDeclarativeMeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
 
     if (!targetBranch.previousParent && branchId!=0) {
         targetBranch.rootSceneObject->setParent(getSceneObject());
     }
     else if (!targetBranch.previousParent){
-        qWarning() << "Unable to find a parent to reattach default scene object to. Skipping.";        
-        targetBranch.rootSceneObject->setParent(d->scene);                
+        qWarning() << "Unable to find a parent to reattach default scene object to. Skipping.";
+        targetBranch.rootSceneObject->setParent(d->scene);
     } else {
         targetBranch.rootSceneObject->setParent(targetBranch.previousParent);
     }
@@ -559,9 +559,9 @@ void QDeclarativeMesh::restoreSceneBranch(int branchId)
 */
 QGLSceneNode *QDeclarativeMesh::getSceneBranch(int branchId) const
 {
-    if (!d->sceneBranches.contains(branchId)) return NULL;    
+    if (!d->sceneBranches.contains(branchId)) return NULL;
     QDeclarativeMeshPrivate::branchObject targetBranch = d->sceneBranches.value(branchId);
-    return targetBranch.rootSceneObject;    
+    return targetBranch.rootSceneObject;
 }
 
 
@@ -626,27 +626,27 @@ bool QDeclarativeMesh::deref()
     either there is no current scene, or if the scene does not contain such a material.
 */
 QObject *QDeclarativeMesh::material(const QString& nodeName, const QString& materialName)
-{    
+{
     if (!d->scene)
         return 0;
-    
+
     QGLSceneNode *sceneObject;
-    
+
     if (nodeName.isEmpty())
         sceneObject = getSceneObject();
     else
         sceneObject = getSceneObject(nodeName);
-    
+
     if(!sceneObject || materialName.isEmpty()) {
-        qWarning()  << "Attempt to get material data " <<materialName << " from scene node " 
-                    << nodeName <<" failed.";        
+        qWarning()  << "Attempt to get material data " <<materialName << " from scene node "
+                    << nodeName <<" failed.";
         return NULL;
     }
 
-    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);   
-    
+    QGLSceneNode *node = qobject_cast<QGLSceneNode *>(sceneObject);
+
     QGLMaterialCollection *p = node->palette();
-    
+
     QGLMaterial *params =  p->material(materialName);
     if (params && !d->connected.contains(params)) {
         d->connected.append(params);

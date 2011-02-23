@@ -237,14 +237,14 @@ void FBOVideoSurface::paintYuvFrame(const QVideoFrame& frame, const QRectF &r)
 
         glBindTexture(GL_TEXTURE_2D, textureIds[i]);
         glTexImage2D(
-                GL_TEXTURE_2D, 
-                0, 
-                GL_LUMINANCE, 
-                widths[i], 
+                GL_TEXTURE_2D,
+                0,
+                GL_LUMINANCE,
+                widths[i],
                 heights[i],
                 0,
-                GL_LUMINANCE, 
-                GL_UNSIGNED_BYTE, 
+                GL_LUMINANCE,
+                GL_UNSIGNED_BYTE,
                 data[i]);
 
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

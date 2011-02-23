@@ -70,7 +70,7 @@ public:
             rows.append(n);
             n->addMVCChildren(c);
         }
-    
+
     }
     QGLSceneNode *node;
     Model *model;
@@ -146,15 +146,15 @@ QStringList Model::components() const
 
 void Model::setFullPath(const QString &path)
 {
-    if (!m_fullPath.isEmpty()) 
+    if (!m_fullPath.isEmpty())
         emit modelUnloaded(m_fullPath);
-        
+
     m_fullPath = path;
     importModel();
     buildModel();
     if (m_sceneRoot)
         emit modelLoaded(m_fullPath);
-    else 
+    else
         emit modelNotLoaded(m_fullPath);
     reset();
 }

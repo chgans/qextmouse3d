@@ -522,7 +522,7 @@ void Viewer::paintGL(QGLPainter *painter)
             m_warningDisplayed = true;
             QMessageBox::warning(this,
                                  tr("Model Error"),
-                                 tr("Could not load file %1").arg(m_model->fullPath()));                        
+                                 tr("Could not load file %1").arg(m_model->fullPath()));
         }
     }
 }

@@ -82,7 +82,7 @@ QT_BEGIN_NAMESPACE
     The QGLCylinder is divided into slices and layers.  The slices value
     indicate number of triangular sections into which the top and bottom
     circles of the cylinder are broken into.  Consequently it also sets the
-    number of facets which run the length of the cylinder.  More slices 
+    number of facets which run the length of the cylinder.  More slices
     results in a smoother circumference.
 
     The layers value indicates the number of longitudinal sections the
@@ -95,24 +95,24 @@ QT_BEGIN_NAMESPACE
     The end-caps and sides of the cylinder are independent sections of the
     scene-graph, and so may be textured separately.
 
-    Textures are wrapped around the sides of thecylinder in such a way that 
-    the texture may distort across the x axis if the top and bottom diameters 
-    of the cylinder differ (ie. the cylinder forms a truncated cone).  Textures 
+    Textures are wrapped around the sides of thecylinder in such a way that
+    the texture may distort across the x axis if the top and bottom diameters
+    of the cylinder differ (ie. the cylinder forms a truncated cone).  Textures
     begin and end at the centre points of the top and bottom end-caps of the
     cylinder.  This wrapping means that textures on either end-cap may be
     distorted.
 
     Texture coordinates are assigned as shown below.
 
-    \image cylinder-texture-coords.png   
+    \image cylinder-texture-coords.png
 
     It is worth noting that the cylinder class can, in fact, be used to generate
-    any regular solid polygonal prism.  A rectangular prism can be created, for 
-    example, by creating a 4 sided cylinder.  Likewise a hexagonal prism is 
+    any regular solid polygonal prism.  A rectangular prism can be created, for
+    example, by creating a 4 sided cylinder.  Likewise a hexagonal prism is
     simply a 6 sided cylinder.
 
     With this knowledge, and an understanding of the texture coordinate mapping,
-    it is possible to make custom textures which will be usable with these 
+    it is possible to make custom textures which will be usable with these
     three dimensional objects.
 
     \sa QGLBuilder
@@ -120,7 +120,7 @@ QT_BEGIN_NAMESPACE
 
 
 /*!
-    \fn QGLCylinder::QGLCylinder(qreal diameterTop, qreal diameterBase , qreal height, int slices, int layers, bool top, bool base)    
+    \fn QGLCylinder::QGLCylinder(qreal diameterTop, qreal diameterBase , qreal height, int slices, int layers, bool top, bool base)
 
     Constructs the geometry for a cylinder with top of diameter \a diameterTop,
     a base of diameter \a diameterBase, and a height of \a height.
@@ -129,7 +129,7 @@ QT_BEGIN_NAMESPACE
     into \a slices individual wedges, and shall be formed of \a layers stacked
     to form the cylinder.
 
-    If the values for \a top or \a base are true, then the cylinder will be 
+    If the values for \a top or \a base are true, then the cylinder will be
     created with solid endcaps.  Otherwise, it shall form a hollow pipe.
 
     units on a side.
@@ -287,7 +287,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     qreal numSlices = qreal(cylinder.slices());
     qreal numLayers = qreal(cylinder.layers());
     qreal topRadius = cylinder.diameterTop()/2.0;
-    qreal bottomRadius = cylinder.diameterBottom()/2.0;   
+    qreal bottomRadius = cylinder.diameterBottom()/2.0;
 
     qreal angle = 0;
     qreal angleIncrement = (2.0 * M_PI) / numSlices;
@@ -295,8 +295,8 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
     qreal radiusIncrement = qreal(bottomRadius-topRadius)/ numLayers;
     qreal height = qreal(cylinder.height());
     qreal heightDecrement = height/numLayers;
-    
-    qreal textureHeight = 1.0; 
+
+    qreal textureHeight = 1.0;
     qreal textureDecrement = 1.0/numLayers;
 
     QGeometryData oldLayer;
@@ -312,7 +312,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
                                             radius * qSin(angle),
                                             height));
             angle+=angleIncrement;
-        }        
+        }
         angle = 0;
         // Generate texture coordinates (including an extra seam vertex for textures).
         newLayer.appendVertex(newLayer.vertex(0));
@@ -329,16 +329,16 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             top.appendVertexArray(newLayer.vertices());
             //Generate a circle of texture vertices for this layer.
             top.appendTexCoord(QVector2D(0.5,0.5));
-            
+
             for (int i=1; i<top.count(); i++)
             {
                 top.appendTexCoord(QVector2D(0.5*qCos(angle)+0.5, 0.5*qSin(angle)+0.5));
                 angle+=angleIncrement;
-            }   
-            angle = 0;            
+            }
+            angle = 0;
             builder.addTriangulatedFace(top);
         }
-        
+
 
         //Add a new cylinder layer to the mesh
         if (layerCount>0)
@@ -353,7 +353,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
 
         //Special cases for bottom end-cap
         if (layerCount==cylinder.layers()  && cylinder.baseEnabled()) {
-            //Draw end-cap at bottom            
+            //Draw end-cap at bottom
             QGeometryData base;
             builder.newSection();
             builder.currentNode()->setObjectName("Cylinder Base");
@@ -371,7 +371,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLCylinder& cylinder)
             //we need to reverse the above to draw it properly - windings!
             builder.addTriangulatedFace(base.reversed());
         }
-        
+
         //Keep the current layer for drawing the next segment of the cylinder
         oldLayer.clear();
         oldLayer.appendGeometry(newLayer);

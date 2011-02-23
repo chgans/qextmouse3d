@@ -50,7 +50,7 @@
 
 /*!
     \qmlclass Effect QDeclarativeEffect
-    \brief The Effect item defines simple effects within the QML/3D environment.  Examples 
+    \brief The Effect item defines simple effects within the QML/3D environment.  Examples
     of such effects include textures, simple material and lighting effects, and so on.
     \since 4.8
     \ingroup qt3d::qml3d
@@ -217,7 +217,7 @@ void QDeclarativeEffect::setBlending(bool value)
 /*!
     \qmlproperty url Effect::texture
 
-    Texture effects are defined by this property.  A texture is 
+    Texture effects are defined by this property.  A texture is
     provided by means of a QUrl which is then used for texturing.
 
     Textures can also be defined directly as images using the textureImage

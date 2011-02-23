@@ -79,10 +79,10 @@ public:
 
     static QGLAbstractScene *loadScene
         (QIODevice *device, const QUrl& url, const QString& format = QString(),
-	 const QString& options = QString());
+     const QString& options = QString());
     static QGLAbstractScene *loadScene
         (const QString& fileName, const QString& format = QString(),
-	 const QString& options = QString());
+     const QString& options = QString());
 
     enum FormatListType {
         AsFilter, AsSuffix

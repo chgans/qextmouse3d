@@ -67,13 +67,13 @@ QMouse3DWin32InputDevice::QMouse3DWin32InputDevice
     : QMouse3DDevice(parent)
     , isOpen(false)
     , devName(dName)
-    , name(realName)  
-     , flatMiddle(15)    
+    , name(realName)
+     , flatMiddle(15)
     , sawTranslate(false)
     , sawRotate(false)
     , prevWasFlat(false)
     , deviceHandle(deviceHandle)
-{	    
+{
     //Initialise mouse data containers
     memset(values, 0, sizeof(values));
     memset(tempValues, 0, sizeof(tempValues));
@@ -87,7 +87,7 @@ QMouse3DWin32InputDevice::~QMouse3DWin32InputDevice()
 //Check if there are 3d mice available and save their details to the 'devices' list.
 bool QMouse3DWin32InputDevice::isAvailable() const
 {
-    // Not used 
+    // Not used
     return true;
 }
 
@@ -100,17 +100,17 @@ QStringList QMouse3DWin32InputDevice::deviceNames() const
 
 //Set the widget to which raw input processing will be applied - this should generally be the main window for the widget.
 void QMouse3DWin32InputDevice::setWidget(QWidget *widget)
-{	
-	QMouse3DDevice::setWidget(widget);
-	
+{
+    QMouse3DDevice::setWidget(widget);
+
     HWND windowHandle = 0;
     if (widget) windowHandle = widget->winId();
-	
+
     RAWINPUTDEVICE Rid[3];
 
     Rid[0].usUsagePage = 0x01;
     Rid[0].usUsage = 0x08;              //this is the usage identifier for 3d mice.
-    Rid[0].dwFlags = 0;   
+    Rid[0].dwFlags = 0;
     Rid[0].hwndTarget = windowHandle;
 
     if ((*_RegisterRawInputDevices)(Rid, 1, sizeof (Rid[0]))==FALSE) {
@@ -118,65 +118,65 @@ void QMouse3DWin32InputDevice::setWidget(QWidget *widget)
         return;
     }
 
-	initDevice();
+    initDevice();
 }
 
 void QMouse3DWin32InputDevice::initDevice()
 {
-	// Determine the size of the "flat middle", where we clamp values to
+    // Determine the size of the "flat middle", where we clamp values to
     // zero to filter out noise when the mouse is in the center position.
-    // windows doesn't give us much help here, so use 16 as we know the max 
-	// values are around 500, so that on 32 (for a good middle ground) we 
-	// get around 16... go figure.	
+    // windows doesn't give us much help here, so use 16 as we know the max
+    // values are around 500, so that on 32 (for a good middle ground) we
+    // get around 16... go figure.
     flatMiddle = 16;
 
-	// Connect up signals and slots to pass on the data
-	connect(&mouseSignaller, SIGNAL(rawInputDetected(HRAWINPUT)), this, SLOT(readyRead(HRAWINPUT)));
+    // Connect up signals and slots to pass on the data
+    connect(&mouseSignaller, SIGNAL(rawInputDetected(HRAWINPUT)), this, SLOT(readyRead(HRAWINPUT)));
 
     // Clear the current mouse state.
     memset(values, 0, sizeof(values));
-    memset(tempValues, 0, sizeof(tempValues));    
+    memset(tempValues, 0, sizeof(tempValues));
     sawTranslate = false;
     sawRotate = false;
     prevWasFlat = false;
 
 
-	RID_DEVICE_INFO deviceInfo;
+    RID_DEVICE_INFO deviceInfo;
     deviceInfo.cbSize = sizeof(RID_DEVICE_INFO);
     int dwSize = sizeof(RID_DEVICE_INFO);
 
     //Get the device information
-    if ((*_GetRawInputDeviceInfo)(deviceHandle, RIDI_DEVICEINFO, &deviceInfo, &dwSize)!=0) {		
-		mouseType =0;
-		switch(deviceInfo.hid.dwProductId)
-		{
-		case eSpacePilot: 
-			mouseType = QMouse3DWin32InputDevice::MouseSpacePilot;
-			break;
-		case eSpaceNavigator:
-			mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator;
-			break;
-		case eSpaceExplorer:
-			mouseType = QMouse3DWin32InputDevice::MouseSpaceExplorer;
-			break;
-		case eSpaceNavigatorForNotebooks:
-			mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator_nb;
-			break;
-		case eSpacePilotPRO:
-			mouseType = QMouse3DWin32InputDevice::MouseSpacePilotPRO;
-			break;
-		default:
-			mouseType = QMouse3DWin32InputDevice::MouseUnknown;
-			break;
-		};
-	} else {
-		qWarning() << "Failed to get mouse type.";
-	}
+    if ((*_GetRawInputDeviceInfo)(deviceHandle, RIDI_DEVICEINFO, &deviceInfo, &dwSize)!=0) {
+        mouseType =0;
+        switch(deviceInfo.hid.dwProductId)
+        {
+        case eSpacePilot:
+            mouseType = QMouse3DWin32InputDevice::MouseSpacePilot;
+            break;
+        case eSpaceNavigator:
+            mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator;
+            break;
+        case eSpaceExplorer:
+            mouseType = QMouse3DWin32InputDevice::MouseSpaceExplorer;
+            break;
+        case eSpaceNavigatorForNotebooks:
+            mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator_nb;
+            break;
+        case eSpacePilotPRO:
+            mouseType = QMouse3DWin32InputDevice::MouseSpacePilotPRO;
+            break;
+        default:
+            mouseType = QMouse3DWin32InputDevice::MouseUnknown;
+            break;
+        };
+    } else {
+        qWarning() << "Failed to get mouse type.";
+    }
 }
 
 static inline int clampRange(int value)
 {
-	return qMin(qMax(value, -32768), 32767);
+    return qMin(qMax(value, -32768), 32767);
 }
 
 void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
@@ -195,14 +195,14 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
 
     if ((*_GetRawInputData)(hRawInput, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
         qWarning()<<"Error getting raw input data.";
-		return;
+        return;
     }
-    
-    RAWINPUT* pRawInput = (RAWINPUT*)lpb;		
-	
-    if (pRawInput->header.dwType!= RIM_TYPEHID) 
+
+    RAWINPUT* pRawInput = (RAWINPUT*)lpb;
+
+    if (pRawInput->header.dwType!= RIM_TYPEHID)
     {
-        delete[] lpb; 
+        delete[] lpb;
         return;  //the data is from either keyboard or mouse, so ignore it.
     }
 
@@ -210,11 +210,11 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
 
     sRidDeviceInfo.cbSize = sizeof(RID_DEVICE_INFO);
     dwSize = sizeof(RID_DEVICE_INFO);
-    
+
     if ((*_GetRawInputDeviceInfo)(pRawInput->header.hDevice, RIDI_DEVICEINFO, &sRidDeviceInfo, &dwSize)!=0)
-    //if ((*_GetRawInputDeviceInfo)(pRawInput->header.hDevice, RIDI_DEVICENAME, &sRidDeviceInfo, &dwSize) == dwSize ) 
+    //if ((*_GetRawInputDeviceInfo)(pRawInput->header.hDevice, RIDI_DEVICENAME, &sRidDeviceInfo, &dwSize) == dwSize )
     {
-		
+
         if (sRidDeviceInfo.hid.dwVendorId == LOGITECH_VENDOR_ID)
         {
             //motion data comes in 2 packages
@@ -222,33 +222,33 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
             //this is the standard HID orientation
             BYTE* inputDataBytes = (BYTE*)(&pRawInput->data.hid.bRawData);
             if (inputDataBytes[0]==0x01)
-            {				
-				
-				//translation vector
+            {
+
+                //translation vector
                 short *pnData = reinterpret_cast <short*>(&pRawInput->data.hid.bRawData[1]);
                 tempValues[0] = pnData[0];
                 tempValues[1] = pnData[1];
                 tempValues[2] = pnData[2];
-				
-				sawTranslate = true;
+
+                sawTranslate = true;
             }
             else if (inputDataBytes[0]==0x02)
             {
-				sawRotate = true;
+                sawRotate = true;
                 //directed rotation vector
                 short *pnData = reinterpret_cast <short*>(&pRawInput->data.hid.bRawData[1]);
                 tempValues[3] = pnData[0];
                 tempValues[4] = pnData[1];
-                tempValues[5] = pnData[2];                
+                tempValues[5] = pnData[2];
             }
             else if (inputDataBytes[0]==0x03)
             {
                 //state of the keys
-                unsigned long dwKeystate= *reinterpret_cast<unsigned long *>(&pRawInput->data.hid.bRawData[1]);                                 
+                unsigned long dwKeystate= *reinterpret_cast<unsigned long *>(&pRawInput->data.hid.bRawData[1]);
                 int nVirtualKeyCode = rawInputToVirtualKeyCode(sRidDeviceInfo.hid.dwProductId, dwKeystate);
                 translateMscKey(nVirtualKeyCode, true);
-            }			
-			
+            }
+
             if (sawTranslate) {
                 deliverMotion = true;
                 sawTranslate = false;
@@ -295,12 +295,12 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
         }
     }
 
-    delete[] lpb;  
+    delete[] lpb;
 }
 
 
 // These are the keycodes that are reported by the 3Dconnection
-// SpacePilot PRO 
+// SpacePilot PRO
 //
 // The SpaceNavigator reports keypress events, but only has 2 buttons,
 // which we map to the same behavior as pan and rotation keys
@@ -334,14 +334,14 @@ void QMouse3DWin32InputDevice::translateMscKey(int code, bool press)
         }
         break;
 
-    case V3DK_TOP:		qtcode = QGL::Key_TopView; break;
+    case V3DK_TOP:  qtcode = QGL::Key_TopView; break;
     case V3DK_LEFT:     qtcode = QGL::Key_LeftView; break;
     case V3DK_RIGHT:    qtcode = QGL::Key_RightView; break;
     case V3DK_FRONT:    qtcode = QGL::Key_FrontView; break;
     case V3DK_BOTTOM:   qtcode = QGL::Key_BottomView; break;
     case V3DK_BACK:     qtcode = QGL::Key_BackView; break;
-    case V3DK_CW:		qtcode = QGL::Key_RotateCW90; break;
-    case V3DK_CCW:		qtcode = QGL::Key_RotateCCW90; break;
+    case V3DK_CW:  qtcode = QGL::Key_RotateCW90; break;
+    case V3DK_CCW:  qtcode = QGL::Key_RotateCCW90; break;
     case V3DK_ISO1:     qtcode = QGL::Key_ISO1; break;
     case V3DK_ISO2:     qtcode = QGL::Key_ISO2; break;
     case V3DK_1:        qtcode = QGL::Key_Button1; break;

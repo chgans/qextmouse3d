@@ -83,7 +83,7 @@ QT_BEGIN_NAMESPACE
     \enum QGLTextureCube::Face
     This enum defines the face of a cube map texture that is affected
     by a texture operation on QGLTextureCube instances.
-    
+
     \value PositiveX The positive X face of the cube map.
     \value NegativeX The negative X face of the cube map.
     \value PositiveY The positive Y face of the cube map.

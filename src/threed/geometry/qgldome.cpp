@@ -155,7 +155,7 @@ QGLDome::~QGLDome()
 
     Set whether the bottom of the dome will be created when
     building the mesh.  If \a base is true, the end-cap will be
-	created.
+    created.
 
     \sa baseEnabled()
 */
@@ -179,7 +179,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
     int stacks = 2 * (1 << divisions);
     int slices = 2 * stacks;
     stacks = stacks>>1;
-	
+
     // Precompute sin/cos values for the slices and stacks.
     const int maxSlices = 4 * (1 << 5) + 1;
     const int maxStacks = 2 * (1 << 5) + 1;
@@ -195,14 +195,14 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
     sliceSin[slices] = sliceSin[0]; // Join first and last slice.
     sliceCos[slices] = sliceCos[0];
 
-    const qreal halfPi=M_PI/2.0;  
-	
-    for (int stack = 0; stack <= stacks; ++stack) {		
+    const qreal halfPi=M_PI/2.0;
+
+    for (int stack = 0; stack <= stacks; ++stack) {
         qreal angle = halfPi * stack / stacks;
         stackSin[stack] = qFastSin(angle);
         stackCos[stack] = qFastCos(angle);
     }
-    stackSin[0] = 0.0f;             // Come to a point at the poles.    
+    stackSin[0] = 0.0f;             // Come to a point at the poles.
     stackSin[stacks] = 1.0f;
 
     builder.newSection();
@@ -237,7 +237,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
 
         //Generate a circle of vertices for this layer.
         QGeometryData tempBase;
-		
+
         tempBase.appendVertex(QVector3D(0,0,0));
         tempBase.appendTexCoord(QVector2D(0.5,0.5));
         for (int slice=0; slice<=slices+1; slice++)
@@ -245,7 +245,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLDome& dome)
             tempBase.appendVertex(QVector3D(radius * sliceCos[slice], radius * sliceSin[slice], 0));
             tempBase.appendTexCoord(QVector2D(0.5*sliceCos[slice]+0.5, 0.5*sliceSin[slice]+0.5));
         }
-		
+
         //we need to reverse the above to draw it properly - windings!
         builder.addTriangulatedFace(tempBase.reversed());
     }

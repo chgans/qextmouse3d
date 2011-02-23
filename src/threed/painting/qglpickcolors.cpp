@@ -756,7 +756,7 @@ static unsigned char singlePatterns[] = {
     1, 0, 1,
     0, 1, 1
 };
-#define	NUM_SINGLE_PATTERNS 7
+#define NUM_SINGLE_PATTERNS 7
 
 static unsigned char doublePatterns[] = {
     1, 2, 0,
@@ -773,7 +773,7 @@ static unsigned char doublePatterns[] = {
     1, 2, 2,
     2, 2, 1
 };
-#define	NUM_DOUBLE_PATTERNS 12
+#define NUM_DOUBLE_PATTERNS 12
 
 static unsigned char triplePatterns[] = {
     1, 2, 3,
@@ -783,17 +783,17 @@ static unsigned char triplePatterns[] = {
     2, 1, 3,
     3, 2, 1
 };
-#define	NUM_TRIPLE_PATTERNS 6
+#define NUM_TRIPLE_PATTERNS 6
 
 static unsigned char values[] = {
     0x00,
     0xff, 0x80, 0xc0, 0x40, 0xe0, 0x60, 0xa0, 0x20,
     0xf0, 0xb0, 0x50, 0xd0, 0x70, 0x30, 0x90, 0x10
 };
-#define	NUM_VALUES 16
-#define	NUM_VALUES_444 10
+#define NUM_VALUES 16
+#define NUM_VALUES_444 10
 
-#define	MAX_GENERATE 4096
+#define MAX_GENERATE 4096
 
 static unsigned char used[17][17][17];
 static int generated = 0;
@@ -804,35 +804,35 @@ static void genPattern(int red, int green, int blue)
     ++green;
     ++blue;
     if (used[red][green][blue] || generated >= MAX_GENERATE)
-	return;
+    return;
     used[red][green][blue] = 1;
     if ((generated % 7) == 0)
-	printf("\n    ");
+    printf("\n    ");
     printf("0x%02x%02x%02x", values[red], values[green], values[blue]);
     ++generated;
     if (generated < MAX_GENERATE && (generated % 7) != 0)
-	printf(", ");
+    printf(", ");
     else if (generated < MAX_GENERATE)
-	printf(",");
+    printf(",");
 }
 
 static void genSinglePatterns(int value)
 {
     int index, red, green, blue;
     for (index = 0; index < NUM_SINGLE_PATTERNS; ++index) {
-	if (singlePatterns[index * 3] == 0)
-	    red = -1;
-	else
-	    red = value;
-	if (singlePatterns[index * 3 + 1] == 0)
-	    green = -1;
-	else
-	    green = value;
-	if (singlePatterns[index * 3 + 2] == 0)
-	    blue = -1;
-	else
-	    blue = value;
-	genPattern(red, green, blue);
+    if (singlePatterns[index * 3] == 0)
+        red = -1;
+    else
+        red = value;
+    if (singlePatterns[index * 3 + 1] == 0)
+        green = -1;
+    else
+        green = value;
+    if (singlePatterns[index * 3 + 2] == 0)
+        blue = -1;
+    else
+        blue = value;
+    genPattern(red, green, blue);
     }
 }
 
@@ -840,25 +840,25 @@ static void genDoublePatterns(int value1, int value2)
 {
     int index, red, green, blue;
     for (index = 0; index < NUM_DOUBLE_PATTERNS; ++index) {
-	if (doublePatterns[index * 3] == 0)
-	    red = -1;
-	else if (doublePatterns[index * 3] == 1)
-	    red = value1;
-	else
-	    red = value2;
-	if (doublePatterns[index * 3 + 1] == 0)
-	    green = -1;
-	else if (doublePatterns[index * 3 + 1] == 1)
-	    green = value1;
-	else
-	    green = value2;
-	if (doublePatterns[index * 3 + 2] == 0)
-	    blue = -1;
-	else if (doublePatterns[index * 3 + 2] == 1)
-	    blue = value1;
-	else
-	    blue = value2;
-	genPattern(red, green, blue);
+    if (doublePatterns[index * 3] == 0)
+        red = -1;
+    else if (doublePatterns[index * 3] == 1)
+        red = value1;
+    else
+        red = value2;
+    if (doublePatterns[index * 3 + 1] == 0)
+        green = -1;
+    else if (doublePatterns[index * 3 + 1] == 1)
+        green = value1;
+    else
+        green = value2;
+    if (doublePatterns[index * 3 + 2] == 0)
+        blue = -1;
+    else if (doublePatterns[index * 3 + 2] == 1)
+        blue = value1;
+    else
+        blue = value2;
+    genPattern(red, green, blue);
     }
 }
 
@@ -866,31 +866,31 @@ static void genTriplePatterns(int value1, int value2, int value3)
 {
     int index, red, green, blue;
     for (index = 0; index < NUM_TRIPLE_PATTERNS; ++index) {
-	if (triplePatterns[index * 3] == 0)
-	    red = -1;
-	else if (triplePatterns[index * 3] == 1)
-	    red = value1;
-	else if (triplePatterns[index * 3] == 2)
-	    red = value2;
-	else
-	    red = value3;
-	if (triplePatterns[index * 3 + 1] == 0)
-	    green = -1;
-	else if (triplePatterns[index * 3 + 1] == 1)
-	    green = value1;
-	else if (triplePatterns[index * 3 + 1] == 2)
-	    green = value2;
-	else
-	    green = value3;
-	if (triplePatterns[index * 3 + 2] == 0)
-	    blue = -1;
-	else if (triplePatterns[index * 3 + 2] == 1)
-	    blue = value1;
-	else if (triplePatterns[index * 3 + 2] == 2)
-	    blue = value2;
-	else
-	    blue = value3;
-	genPattern(red, green, blue);
+    if (triplePatterns[index * 3] == 0)
+        red = -1;
+    else if (triplePatterns[index * 3] == 1)
+        red = value1;
+    else if (triplePatterns[index * 3] == 2)
+        red = value2;
+    else
+        red = value3;
+    if (triplePatterns[index * 3 + 1] == 0)
+        green = -1;
+    else if (triplePatterns[index * 3 + 1] == 1)
+        green = value1;
+    else if (triplePatterns[index * 3 + 1] == 2)
+        green = value2;
+    else
+        green = value3;
+    if (triplePatterns[index * 3 + 2] == 0)
+        blue = -1;
+    else if (triplePatterns[index * 3 + 2] == 1)
+        blue = value1;
+    else if (triplePatterns[index * 3 + 2] == 2)
+        blue = value2;
+    else
+        blue = value3;
+    genPattern(red, green, blue);
     }
 }
 
@@ -900,13 +900,13 @@ static void genPatternRange(int limit)
     // reasonably well-spaced in the RGB color cube.
     int first, second, third;
     for (first = 0; first < limit; ++first) {
-	genSinglePatterns(first);
-	for (second = first + 1; second < limit; ++second) {
-	    genDoublePatterns(first, second);
-	    for (third = second + 1; third < limit; ++third) {
-		genTriplePatterns(first, second, third);
-	    }
-	}
+    genSinglePatterns(first);
+    for (second = first + 1; second < limit; ++second) {
+        genDoublePatterns(first, second);
+        for (third = second + 1; third < limit; ++third) {
+        genTriplePatterns(first, second, third);
+        }
+    }
     }
 }
 
@@ -916,89 +916,89 @@ static void generateComponentMap(void)
     int index, value, index2;
 
     for (index = 0; index < 256; ++index)
-	map[index] = 0;
+    map[index] = 0;
 
     for (index = 0; index < NUM_VALUES; ++index) {
-	value = values[index + 1];
-	for (index2 = value - 8; index2 < (value + 8); ++index2) {
-	    if (index2 >= 0 && index2 < 256)
-		map[index2] = value;
-	}
+    value = values[index + 1];
+    for (index2 = value - 8; index2 < (value + 8); ++index2) {
+        if (index2 >= 0 && index2 < 256)
+        map[index2] = value;
+    }
     }
 
     for (index = 0; index < 256; ++index) {
-	if ((index % 8) == 0)
-	    printf("    ");
-	printf("0x%02x", map[index]);
-	if (index < 255)
-	    printf(",");
-	if ((index % 8) == 7)
-	    printf("\n");
-	else if (index < 255)
-	    printf(" ");
+    if ((index % 8) == 0)
+        printf("    ");
+    printf("0x%02x", map[index]);
+    if (index < 255)
+        printf(",");
+    if ((index % 8) == 7)
+        printf("\n");
+    else if (index < 255)
+        printf(" ");
     }
 
     // Validate the reversibility of RGB565 and RGB555 mappings.
     for (index = 0; index < 17; ++index) {
-	// Integer truncation test - 5-bit for red and blue (and green RGB555).
-	value = values[index] * 31 / 255;
-	index2 = value * 255 / 31;
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (i5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Integer truncation test - 5-bit for red and blue (and green RGB555).
+    value = values[index] * 31 / 255;
+    index2 = value * 255 / 31;
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (i5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Integer truncation test - 6-bit for green.
-	value = values[index] * 63 / 255;
-	index2 = value * 255 / 63;
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (i6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Integer truncation test - 6-bit for green.
+    value = values[index] * 63 / 255;
+    index2 = value * 255 / 63;
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (i6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Floating point rounding test - 5-bit for red and blue.
-	value = (int)((values[index] * 31.0 / 255.0) + 0.5);
-	index2 = (int)((value * 255.0 / 31.0) + 0.5);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (f5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Floating point rounding test - 5-bit for red and blue.
+    value = (int)((values[index] * 31.0 / 255.0) + 0.5);
+    index2 = (int)((value * 255.0 / 31.0) + 0.5);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (f5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Floating point rounding test - 6-bit for green.
-	value = (int)((values[index] * 63.0 / 255.0) + 0.5);
-	index2 = (int)((value * 255.0 / 63.0) + 0.5);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (f6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Floating point rounding test - 6-bit for green.
+    value = (int)((values[index] * 63.0 / 255.0) + 0.5);
+    index2 = (int)((value * 255.0 / 63.0) + 0.5);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (f6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Test 5-bit to 8-bit conversion using doubling (ABCDE -> ABCDEABC).
-	value = values[index] * 31 / 255;
-	index2 = (value << 3) | (value >> 2);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (di5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
-	value = (int)((values[index] * 31.0 / 255.0) + 0.5);
-	index2 = (value << 3) | (value >> 2);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (df5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Test 5-bit to 8-bit conversion using doubling (ABCDE -> ABCDEABC).
+    value = values[index] * 31 / 255;
+    index2 = (value << 3) | (value >> 2);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (di5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
+    value = (int)((values[index] * 31.0 / 255.0) + 0.5);
+    index2 = (value << 3) | (value >> 2);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (df5) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Test 6-bit to 8-bit conversion using doubling (ABCDEF -> ABCDEFAB).
-	value = values[index] * 63 / 255;
-	index2 = (value << 2) | (value >> 4);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (di6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
-	value = (int)((values[index] * 63.0 / 255.0) + 0.5);
-	index2 = (value << 2) | (value >> 4);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB565 (df6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Test 6-bit to 8-bit conversion using doubling (ABCDEF -> ABCDEFAB).
+    value = values[index] * 63 / 255;
+    index2 = (value << 2) | (value >> 4);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (di6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
+    value = (int)((values[index] * 63.0 / 255.0) + 0.5);
+    index2 = (value << 2) | (value >> 4);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB565 (df6) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
     }
 }
 
@@ -1008,79 +1008,79 @@ static void generateComponentMap444(void)
     int index, value, index2;
 
     for (index = 0; index < 256; ++index)
-	map[index] = 0;
+    map[index] = 0;
 
     // Populate mappings for integer conversion with truncation.
     for (index = 0; index < NUM_VALUES_444; ++index) {
-	value = values[index + 1] * 15 / 255;
-	value = value * 255 / 15;
-	if (value > 255)
-	    value = 255;
-	else if (value < 0)
-	    value = 0;
-	for (index2 = value - 8; index2 < (value + 7); ++index2) {
-	    if (index2 >= 0 && index2 < 256)
-		map[index2] = values[index + 1];
-	}
+    value = values[index + 1] * 15 / 255;
+    value = value * 255 / 15;
+    if (value > 255)
+        value = 255;
+    else if (value < 0)
+        value = 0;
+    for (index2 = value - 8; index2 < (value + 7); ++index2) {
+        if (index2 >= 0 && index2 < 256)
+        map[index2] = values[index + 1];
+    }
     }
 
     // Add some extra mappings for floating-point conversion with rounding.
     for (index = 0; index < NUM_VALUES_444; ++index) {
-	value = (int)((values[index + 1] * 15.0 / 255.0) + 0.5);
-	value = (int)((value * 255.0 / 15.0) + 0.5);
-	if (value > 255)
-	    value = 255;
-	else if (value < 0)
-	    value = 0;
-	for (index2 = value - 8; index2 < (value + 7); ++index2) {
-	    if (index2 >= 0 && index2 < 256 && map[index2] == 0)
-		map[index2] = values[index + 1];
-	}
+    value = (int)((values[index + 1] * 15.0 / 255.0) + 0.5);
+    value = (int)((value * 255.0 / 15.0) + 0.5);
+    if (value > 255)
+        value = 255;
+    else if (value < 0)
+        value = 0;
+    for (index2 = value - 8; index2 < (value + 7); ++index2) {
+        if (index2 >= 0 && index2 < 256 && map[index2] == 0)
+        map[index2] = values[index + 1];
+    }
     }
 
     for (index = 0; index < 256; ++index) {
-	if ((index % 8) == 0)
-	    printf("    ");
-	printf("0x%02x", map[index]);
-	if (index < 255)
-	    printf(",");
-	if ((index % 8) == 7)
-	    printf("\n");
-	else if (index < 255)
-	    printf(" ");
+    if ((index % 8) == 0)
+        printf("    ");
+    printf("0x%02x", map[index]);
+    if (index < 255)
+        printf(",");
+    if ((index % 8) == 7)
+        printf("\n");
+    else if (index < 255)
+        printf(" ");
     }
 
     // Validate the reversibility of RGB444 mappings.
     for (index = 0; index <= NUM_VALUES_444; ++index) {
-	// Integer truncation test.
-	value = values[index] * 15 / 255;
-	index2 = value * 255 / 15;
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB444 (i) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Integer truncation test.
+    value = values[index] * 15 / 255;
+    index2 = value * 255 / 15;
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB444 (i) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Floating point rounding test.
-	value = (int)((values[index] * 15.0 / 255.0) + 0.5);
-	index2 = (int)((value * 255.0 / 15.0) + 0.5);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB444 (f) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Floating point rounding test.
+    value = (int)((values[index] * 15.0 / 255.0) + 0.5);
+    index2 = (int)((value * 255.0 / 15.0) + 0.5);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB444 (f) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
 
-	// Test 4-bit to 8-bit conversion using doubling (ABCD -> ABCDABCD).
-	value = values[index] * 15 / 255;
-	index2 = value | (value << 4);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB444 (di) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
-	value = (int)((values[index] * 15.0 / 255.0) + 0.5);
-	index2 = value | (value << 4);
-	if (values[index] != map[index2]) {
-	    fprintf(stderr, "RGB444 (df) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
-		    values[index], index2, map[index2]);
-	}
+    // Test 4-bit to 8-bit conversion using doubling (ABCD -> ABCDABCD).
+    value = values[index] * 15 / 255;
+    index2 = value | (value << 4);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB444 (di) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
+    value = (int)((values[index] * 15.0 / 255.0) + 0.5);
+    index2 = value | (value << 4);
+    if (values[index] != map[index2]) {
+        fprintf(stderr, "RGB444 (df) failure: 0x%02X -> 0x%02X -> 0x%02X\n",
+            values[index], index2, map[index2]);
+    }
     }
 }
 
@@ -1102,7 +1102,7 @@ int main(int argc, char *argv[])
     // low-end devices with RGB565, RGB555, and RGB444 displays.
     printf("static int const pickColors[%d] = {", MAX_GENERATE);
     for (limit = 1; limit <= NUM_VALUES; ++limit)
-	genPatternRange(limit);
+    genPatternRange(limit);
     printf("\n};\n\n");
 
     // Generate a component mapping table for mapping 8-bit RGB

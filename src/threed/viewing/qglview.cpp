@@ -1338,7 +1338,7 @@ QObject *QGLView::objectForPoint(const QPoint &point)
     QObject *object = d->objects.value(objectId, 0);
     if (d->fbo)
         d->fbo->release();
-    
+
     // Release the framebuffer object and return.
     painter.end();
     doneCurrent();

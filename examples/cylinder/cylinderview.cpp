@@ -64,7 +64,7 @@ CylinderView::CylinderView(QWidget *parent)
     urlSides.setPath(QLatin1String(":/cupTexture.png"));
     urlSides.setScheme(QLatin1String("file"));
     matSides->setTextureUrl(urlSides);
-        
+
     QGLSceneNode *root = builder.sceneNode();
 
     QGLSceneNode *lid = root->findChild<QGLSceneNode *>("Cylinder Top");
@@ -79,7 +79,7 @@ CylinderView::CylinderView(QWidget *parent)
 
 
     cylinder = builder.finalizedSceneNode();
-    
+
     QGLMaterial *mat = new QGLMaterial;
     mat->setAmbientColor(Qt::gray);
     mat->setDiffuseColor(Qt::gray);
@@ -95,7 +95,7 @@ CylinderView::~CylinderView()
 void CylinderView::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().translate(0.0f, -1.0f, 0.0f);
-    painter->modelViewMatrix().rotate(-75.0f, 1.0f, 0.0f, 0.0f);    
+    painter->modelViewMatrix().rotate(-75.0f, 1.0f, 0.0f, 0.0f);
     cylinder->draw(painter);
 }
 

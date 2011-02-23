@@ -49,40 +49,40 @@ pGetRawInputDeviceList _GetRawInputDeviceList;
 
 QMouseEventTransmitter mouseSignaller;
 
-bool initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary() 
+bool initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary()
 {
-	//Initialise raw input functions from the user32.dll.
-	HMODULE user32DLL = LoadLibrary(L"user32.dll");
-	if (!user32DLL){
-		qWarning()<<"Load user32.dll failed.";
-		return false;
-	}
+    //Initialise raw input functions from the user32.dll.
+    HMODULE user32DLL = LoadLibrary(L"user32.dll");
+    if (!user32DLL){
+        qWarning()<<"Load user32.dll failed.";
+        return false;
+    }
 
-    
-	_RegisterRawInputDevices = (pRegisterRawInputDevices)GetProcAddress(user32DLL,"RegisterRawInputDevices");
-	if (!_RegisterRawInputDevices)  {
-		qWarning()<< "Failed to locate RegisterRawInputDevice method in user32.dll.";
-		return false;
-	}
 
-	_GetRawInputData = (pGetRawInputData)GetProcAddress(user32DLL,"GetRawInputData");
-	if (!_GetRawInputData)  {
-		qWarning()<< "Failed to locate GetRawInputData method in user32.dll.";
-		return false;
-	}
+    _RegisterRawInputDevices = (pRegisterRawInputDevices)GetProcAddress(user32DLL,"RegisterRawInputDevices");
+    if (!_RegisterRawInputDevices)  {
+        qWarning()<< "Failed to locate RegisterRawInputDevice method in user32.dll.";
+        return false;
+    }
 
-	_GetRawInputDeviceList = (pGetRawInputDeviceList)GetProcAddress(user32DLL,"GetRawInputDeviceList");
-	if (!_GetRawInputDeviceList) {
-		qWarning()<< "Failed to locate GetRawInputDeviceList method in user32.dll.";
-		return false;
-	}
+    _GetRawInputData = (pGetRawInputData)GetProcAddress(user32DLL,"GetRawInputData");
+    if (!_GetRawInputData)  {
+        qWarning()<< "Failed to locate GetRawInputData method in user32.dll.";
+        return false;
+    }
 
-	_GetRawInputDeviceInfo = (pGetRawInputDeviceInfoA)GetProcAddress(user32DLL,"GetRawInputDeviceInfoW");
-	if (!_GetRawInputDeviceInfo) {
-		qWarning()<< "Failed to locate GetRawInputDeviceInfoW method in user32.dll.";
-		return false;
-	}
-	return true;
+    _GetRawInputDeviceList = (pGetRawInputDeviceList)GetProcAddress(user32DLL,"GetRawInputDeviceList");
+    if (!_GetRawInputDeviceList) {
+        qWarning()<< "Failed to locate GetRawInputDeviceList method in user32.dll.";
+        return false;
+    }
+
+    _GetRawInputDeviceInfo = (pGetRawInputDeviceInfoA)GetProcAddress(user32DLL,"GetRawInputDeviceInfoW");
+    if (!_GetRawInputDeviceInfo) {
+        qWarning()<< "Failed to locate GetRawInputDeviceInfoW method in user32.dll.";
+        return false;
+    }
+    return true;
 }
 
 bool mouse3dEventFilterFunction(void *newMessage, long *result)
@@ -92,11 +92,11 @@ bool mouse3dEventFilterFunction(void *newMessage, long *result)
     //the "message" component is a MSG (it tagMSG as defined in windows.h)
     switch(message->message){
     case WM_INPUT:
-        {   
-			//OnRawInput(newMessage);
+        {
+            //OnRawInput(newMessage);
             // This feature requires Windows XP or greater.
-            // The symbol _WIN32_WINNT must be >= 0x0501.                        
-			mouseSignaller.sendDetectedSignal((HRAWINPUT)message->lParam);   
+            // The symbol _WIN32_WINNT must be >= 0x0501.
+            mouseSignaller.sendDetectedSignal((HRAWINPUT)message->lParam);
         }
         return true;
     }
@@ -110,5 +110,5 @@ QMouseEventTransmitter::~QMouseEventTransmitter() {
 }
 
 void QMouseEventTransmitter::sendDetectedSignal(HRAWINPUT hRawInput) {
-	emit rawInputDetected(hRawInput);	
+    emit rawInputDetected(hRawInput);
 }

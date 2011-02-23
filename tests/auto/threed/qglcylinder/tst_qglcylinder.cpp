@@ -150,12 +150,12 @@ void tst_QGLCylinder::modify()
 {
     //Modify all sphere parameters to ensure they're working.
     QGLCylinder cylinder1;
-    
-	cylinder1.setDiameterTop(0.5f);    
-	QCOMPARE(cylinder1.diameterTop(), qreal(0.5f));
-	
-	cylinder1.setDiameterBottom(1.5f);
-	QCOMPARE(cylinder1.diameterBottom(), qreal(1.5f));
+
+    cylinder1.setDiameterTop(0.5f);
+    QCOMPARE(cylinder1.diameterTop(), qreal(0.5f));
+
+    cylinder1.setDiameterBottom(1.5f);
+    QCOMPARE(cylinder1.diameterBottom(), qreal(1.5f));
 
     cylinder1.setHeight(3.0f);
     QCOMPARE(cylinder1.height(), qreal(3.0f));
@@ -167,7 +167,7 @@ void tst_QGLCylinder::modify()
     QCOMPARE(cylinder1.layers(), 5);
 
     cylinder1.setTopEnabled(false);
-	QCOMPARE(cylinder1.topEnabled(), false);
+    QCOMPARE(cylinder1.topEnabled(), false);
 
     cylinder1.setBaseEnabled(false);
     QCOMPARE(cylinder1.baseEnabled(), false);
@@ -183,35 +183,35 @@ bool tst_QGLCylinder::validateCylinder(QGLSceneNode *node, qreal topDiameter, qr
     QGLSceneNode *sides = node->findChild<QGLSceneNode *>("Cylinder Sides");
     QGLSceneNode *base = node->findChild<QGLSceneNode *>("Cylinder Base");
 
-	//Top of the cylinder - test the normals and vertical position
+    //Top of the cylinder - test the normals and vertical position
     if (topAttached)
-    {		
-		if (!lid) {
-			return false;
-		}
+    {
+        if (!lid) {
+            return false;
+        }
 
-		QGeometryData dataTop = lid->geometry();
-		int start = lid->start();
-		int count = lid->count();
+        QGeometryData dataTop = lid->geometry();
+        int start = lid->start();
+        int count = lid->count();
 
-		if (count <= 0) {
-			return false;
-		}
-		QGL::IndexArray indices = dataTop.indices();
+        if (count <= 0) {
+            return false;
+        }
+        QGL::IndexArray indices = dataTop.indices();
 
-		for (int index = 0; index < count; ++index) {
-			QVector3D v = dataTop.vertexAt(indices.at(index + start));
-			QVector3D n = dataTop.normalAt(indices.at(index + start));
-			if (v.z()!=height) {
-				return false;
-			}
-			QVector2D p(v.x(), v.y());
-			if (qAbs(p.length())>(topDiameter/2.0)) {
-				return false;
-			}
-			if (qAbs(n.length() - 1.0f) >= 0.0001) {
-				return false;
-			}
+        for (int index = 0; index < count; ++index) {
+            QVector3D v = dataTop.vertexAt(indices.at(index + start));
+            QVector3D n = dataTop.normalAt(indices.at(index + start));
+            if (v.z()!=height) {
+                return false;
+            }
+            QVector2D p(v.x(), v.y());
+            if (qAbs(p.length())>(topDiameter/2.0)) {
+                return false;
+            }
+            if (qAbs(n.length() - 1.0f) >= 0.0001) {
+                return false;
+            }
         }
     }
 
@@ -223,39 +223,39 @@ bool tst_QGLCylinder::validateCylinder(QGLSceneNode *node, qreal topDiameter, qr
         QGeometryData dataBase = sides->geometry();
         int start = sides->start();
         int count = sides->count();
-		if (count <= 0)
-			return false;
-		QGL::IndexArray indices = dataBase.indices();
+        if (count <= 0)
+            return false;
+        QGL::IndexArray indices = dataBase.indices();
         for (int index = 0; index < count; ++index) {
-			QVector3D v = dataBase.vertexAt(indices.at(index + start));
-			QVector3D n = dataBase.normalAt(indices.at(index + start));
-			QVector2D p(v.x(), v.y());
-			if (qAbs(p.length())>(baseDiameter/2.0)) {
-				return false;
-			}
-			if (qAbs(n.length() - 1.0f) >= 0.0001) {
-				return false;
-			}
+            QVector3D v = dataBase.vertexAt(indices.at(index + start));
+            QVector3D n = dataBase.normalAt(indices.at(index + start));
+            QVector2D p(v.x(), v.y());
+            if (qAbs(p.length())>(baseDiameter/2.0)) {
+                return false;
+            }
+            if (qAbs(n.length() - 1.0f) >= 0.0001) {
+                return false;
+            }
         }
     }
 
     //Sides of the cylinder - just a basic test of the normals here.
-	if (!sides) {
-		return false;
-	}
+    if (!sides) {
+        return false;
+    }
     QGeometryData dataSides = sides->geometry();
     int start = sides->start();
     int count = sides->count();
 
-	if (count <= 0) {
-		return false;
-	}
-	QGL::IndexArray indices = dataSides.indices();
+    if (count <= 0) {
+        return false;
+    }
+    QGL::IndexArray indices = dataSides.indices();
     for (int index = 0; index < count; ++index) {
-		QVector3D n = dataSides.normalAt(indices.at(index + start));
-		if (qAbs(n.length() - 1.0f) >= 0.0001) {
-			return false;
-		}
+        QVector3D n = dataSides.normalAt(indices.at(index + start));
+        if (qAbs(n.length() - 1.0f) >= 0.0001) {
+            return false;
+        }
     }
 
     //If we've made it this far, we must have passed the test.
@@ -267,15 +267,15 @@ void tst_QGLCylinder::build()
 {
     QGLBuilder builder1;
     builder1 << QGLCylinder(0.5f, 1.5f, 3.0f);
-	QGLSceneNode *root1 = builder1.finalizedSceneNode();
-	QVERIFY(validateCylinder(root1, 0.5f, 1.5f, 3.0f, true, true));
-	delete root1;
-	
-	QGLBuilder builder2;
-	builder2 << QGLCylinder(0.5f, 1.5f, 3.0f, 6,3,false, false);
-	QGLSceneNode *root2 = builder2.finalizedSceneNode();
-	QVERIFY(validateCylinder(root2, 0.5f, 1.5f, 3.0f, false, false));
-	delete root2;
+    QGLSceneNode *root1 = builder1.finalizedSceneNode();
+    QVERIFY(validateCylinder(root1, 0.5f, 1.5f, 3.0f, true, true));
+    delete root1;
+
+    QGLBuilder builder2;
+    builder2 << QGLCylinder(0.5f, 1.5f, 3.0f, 6,3,false, false);
+    QGLSceneNode *root2 = builder2.finalizedSceneNode();
+    QVERIFY(validateCylinder(root2, 0.5f, 1.5f, 3.0f, false, false));
+    delete root2;
 }
 
 QTEST_APPLESS_MAIN(tst_QGLCylinder)

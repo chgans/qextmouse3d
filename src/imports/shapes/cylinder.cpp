@@ -152,7 +152,7 @@ void Cylinder::setLength(qreal length)
     \row \o 8 \o 1024 \o 256
     \row \o 9 \o 2048 \o 512
     \row \o 10 \o 4096 \o 1024
-    \endtable    
+    \endtable
 */
 void Cylinder::setLevelOfDetail(int lod)
 {

@@ -543,7 +543,7 @@ void Viewport::draw(QGLPainter *painter)
     glDisable(GL_CULL_FACE);
 
     painter->setObjectPickId(-1);
-    QObjectList list = QObject::children();    
+    QObjectList list = QObject::children();
     painter->setMainLight(d->light, QMatrix4x4());
     painter->setLightModel(d->lightModel);
     foreach (QObject *child, list) {

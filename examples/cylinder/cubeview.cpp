@@ -72,6 +72,6 @@ CubeView::~CubeView()
 void CubeView::paintGL(QGLPainter *painter)
 {
     painter->modelViewMatrix().translate(0.0f, -1.0f, 0.0f);
-    painter->modelViewMatrix().rotate(-75.0f, 1.0f, 0.0f, 0.0f);    
+    painter->modelViewMatrix().rotate(-75.0f, 1.0f, 0.0f, 0.0f);
     cube->draw(painter);
 }

@@ -64,7 +64,7 @@ class QGLLitMaterialEffect : public QGLAbstractEffect
 public:
     QGLLitMaterialEffect();
     virtual ~QGLLitMaterialEffect();
-   
+
     void setActive(QGLPainter *painter, bool flag);
     void update(QGLPainter *painter, QGLPainter::Updates updates);
 

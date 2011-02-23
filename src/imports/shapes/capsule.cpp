@@ -137,7 +137,7 @@ void Capsule::setLength(qreal length)
     Values outside the range 1 to 10 will be clamped to the range
     when the capsule is generated.
 
-    The exact number of facets generated is consistent with the 
+    The exact number of facets generated is consistent with the
     level of detail as specified in the Cylinder and Sphere
     objects.
 

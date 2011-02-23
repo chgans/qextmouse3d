@@ -146,7 +146,7 @@ void tst_QGLCube::size()
     {
         QGLBuilder list;
         list.newSection(QGL::Faceted);
-	QGLSceneNode *node = list.currentNode();
+    QGLSceneNode *node = list.currentNode();
         list << cube;
         QGLSceneNode *root = list.finalizedSceneNode();
         QGeometryData ary = node->geometry();
@@ -164,7 +164,7 @@ void tst_QGLCube::size()
     {
         QGLBuilder list;
         list.newSection(QGL::Faceted);
-	QGLSceneNode *node = list.currentNode();
+    QGLSceneNode *node = list.currentNode();
         list << cube;
         QGLSceneNode *root = list.finalizedSceneNode();
         QGeometryData ary = node->geometry();

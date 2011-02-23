@@ -173,7 +173,7 @@ void QGL3dsLoader::loadNodes(Lib3dsNode *nodeList, QGLSceneNode *parentNode)
                 QGLSceneNode *sceneNode = new QGLSceneNode(parentNode);
                 sceneNode->setPalette(parentNode->palette());
                 sceneNode->setLocalTransform(getNodeMatrix(node));
-                //sceneNode->userTransform().setToIdentity();		//DP: set matrix to identity so it is initialised in a useful way at least.
+                //sceneNode->userTransform().setToIdentity();  //DP: set matrix to identity so it is initialised in a useful way at least.
                 QString nodeName(QString::fromLatin1(node->name));
                 if (nodeName == QLatin1String("$$$DUMMY"))
                 {
@@ -279,12 +279,12 @@ QUrl QGL3dsLoader::ensureResource(const QString &path)
                 else
                 {
                     if (fileList.contains(path))
-					{
+                    {
                         //return resDir.absoluteFilePath(path);
-						res.setScheme(QLatin1String("file"));
-						res.setPath(resDir.absoluteFilePath(path));
-						break;
-					}
+                        res.setScheme(QLatin1String("file"));
+                        res.setPath(resDir.absoluteFilePath(path));
+                        break;
+                    }
                 }
             }
             if (caseInsensitive)

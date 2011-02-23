@@ -473,7 +473,7 @@ void MainWindow::recentFileActionTriggered()
 };
 
 void MainWindow::on_actionMultiTexture_Shader_triggered()
-{    
+{
     setShadersFromFiles(QLatin1String(":/shaders/per_pixel_texture.vsh"),QLatin1String(":/shaders/multitexture.fsh"));
 }
 

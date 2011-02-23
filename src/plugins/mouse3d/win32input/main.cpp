@@ -47,15 +47,15 @@ QT_BEGIN_NAMESPACE
 class QMouse3DWin32InputPlugin : public QMouse3DDevicePlugin
 {
 public:
-	QMouse3DWin32InputPlugin();
+    QMouse3DWin32InputPlugin();
     QMouse3DDevice *create() const;
     QStringList keys() const;
 };
 
-QMouse3DWin32InputPlugin::QMouse3DWin32InputPlugin () 
+QMouse3DWin32InputPlugin::QMouse3DWin32InputPlugin ()
 {
-	if (!initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary())
-		qWarning()<<"Unable to initialise raw input functions.";
+    if (!initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary())
+        qWarning()<<"Unable to initialise raw input functions.";
 }
 
 QMouse3DDevice *QMouse3DWin32InputPlugin::create() const

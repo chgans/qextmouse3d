@@ -60,10 +60,10 @@
     QGLHeightMap makes it easy to create and draw simple height maps.  The
     surfaces created are characterized by being composed of vertices spaced
     equally between 0.0 and 1.0 in the x and y dimensions, but varying in the
-    z dimension.  
+    z dimension.
 
     After creation, general QGLPainter functions can be used to manipulate
-    these surfaces into any desired orientation or scale, and to apply 
+    these surfaces into any desired orientation or scale, and to apply
     materials or textures as desired.
 
     A QGLHeightmap is intended to be added to a display builder, using the
@@ -123,11 +123,11 @@
     It is not valid for a QGLHeightMap to have 0 or less points in either
     dimension.
 
-    The \a xSize and \ySize parameters determine the size of the created 
+    The \a xSize and \ySize parameters determine the size of the created
     height map in the x and y dimensions respectively.  The height-map will
     reach from 0 in the x and y dimensions to [xSize,ySize] (inclusive) in
     the x and y dimensions.  The default for both values is 1.0.
-    
+
     The \smoothing determines whether normals for a vertex are averaged.
     The default, QGL::Smooth will average the normals, making the surface look
     rounder and smoother. The alternative, QGL::Faceted, will give the

@@ -61,7 +61,7 @@ class QMouse3DWin32InputDevice : public QMouse3DDevice
     Q_OBJECT
 public:
     QMouse3DWin32InputDevice
-		(const QString &devName= "", const QString &realName= "", HANDLE deviceHandle = 0, QObject *parent = 0);
+        (const QString &devName= "", const QString &realName= "", HANDLE deviceHandle = 0, QObject *parent = 0);
     ~QMouse3DWin32InputDevice();
 
     bool isAvailable() const;
@@ -73,16 +73,16 @@ private Q_SLOTS:
     void readyRead(HRAWINPUT hRawInput);
 
 private:
-    bool isOpen;    
+    bool isOpen;
     QString devName;
-    QString name;      
-    int values[6];  
+    QString name;
+    int values[6];
     int tempValues[6];
-    int flatMiddle;    
+    int flatMiddle;
     bool sawTranslate;
-    bool sawRotate;   
+    bool sawRotate;
     bool prevWasFlat;
-	HANDLE deviceHandle;
+    HANDLE deviceHandle;
 
     enum
     {
@@ -93,7 +93,7 @@ private:
         MouseSpaceNavigator     = 0x0004,
         MouseSpacePilot         = 0x0008,
         MouseSpaceExplorer      = 0x0010,
-        MouseSpaceNavigator_nb  = 0x0020	//Notebook edition of the space navigator
+        MouseSpaceNavigator_nb  = 0x0020 //Notebook edition of the space navigator
     };
     int mouseType;
 

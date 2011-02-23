@@ -77,10 +77,10 @@ private:
     public:
         MouseInfo(HANDLE handle, const QString &name, const QString &brand, QMouse3DWin32InputDevice *pDevice)
             : deviceHandle(handle), devName(name), devBrand(brand), device(pDevice) {}
-        ~MouseInfo() { delete device; }        
+        ~MouseInfo() { delete device; }
         QString devName;
         QString devBrand;
-		HANDLE deviceHandle;
+        HANDLE deviceHandle;
         QMouse3DWin32InputDevice *device;
     };
 

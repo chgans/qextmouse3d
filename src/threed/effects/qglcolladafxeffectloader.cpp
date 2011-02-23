@@ -108,10 +108,10 @@ QGLColladaFxEffectLoader::~QGLColladaFxEffectLoader()
 
   The QGLColladaFxEffectFactory owns all the effects it generates, and destroys
   them when it is destroyed, or when a new file is loaded.
-  
+
   If effects are needed from multiple files, use one QGLColladaFxEffectLoader
   per file.
-  
+
   Returns true if at least one effect was generated.
 
   \sa effectNames(), effect(), operator[](), QGLColladaFxEffectFactory::loadEffectsFromFile()
