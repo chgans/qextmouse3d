@@ -1616,6 +1616,10 @@ void QGLPainter::draw(QGL::DrawingMode mode, const ushort *indices, int count)
     \c{glViewport()} should be adjusted to the extents of \a surface
     when update() is next called.
 
+    The new \a surface must be using the same QGLContext as the
+    current surface.  Use begin() to switch to a surface with a
+    different QGLContext.
+
     \sa popSurface(), currentSurface(), setSurface()
     \sa QGLAbstractSurface::activate()
 */
@@ -1642,6 +1646,8 @@ void QGLPainter::pushSurface(QGLAbstractSurface *surface)
     d->surfaceStack.append(psurf);
     current->switchTo(surface);
     d->updates |= UpdateViewport;
+    Q_ASSERT_X(d->context == QGLContext::currentContext(),
+               "QGLPainter", "pushSurface() switched to a different context");
 }
 
 /*!
