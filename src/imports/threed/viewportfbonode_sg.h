@@ -44,6 +44,7 @@
 
 #include <QtDeclarative/node.h>
 #include <QtDeclarative/texturematerial.h>
+#include <QtDeclarative/qsggeometry.h>
 #include <QtOpenGL/qglframebufferobject.h>
 #include "stereoinfo_sg.h"
 
@@ -71,6 +72,7 @@ public:
 
 private:
     ViewportSG *m_viewport;
+    QSGGeometry m_geometry;
     QSGStereoInfo m_stereoInfo;
     QSize m_size;
 

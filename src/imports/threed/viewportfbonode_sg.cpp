@@ -47,6 +47,7 @@ QT_BEGIN_NAMESPACE
 
 ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     : m_viewport(viewport)
+    , m_geometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4)
     , m_stereoInfo(context)
     , m_useAlpha(true)
     , m_linearFiltering(true)
@@ -55,11 +56,7 @@ ViewportFboNodeSG::ViewportFboNodeSG(ViewportSG *viewport, QSGContext *context)
     setFlag(Node::UsePreprocess);
     setMaterial(&m_left.materialO);
     setOpaqueMaterial(&m_left.material);
-
-    QVector<QSGAttributeDescription> desc = QVector<QSGAttributeDescription>()
-        << QSGAttributeDescription(0, 2, GL_FLOAT, 4 * sizeof(float))
-        << QSGAttributeDescription(1, 2, GL_FLOAT, 4 * sizeof(float));
-    updateGeometryDescription(desc, GL_UNSIGNED_SHORT);
+    setGeometry(&m_geometry);
 }
 
 ViewportFboNodeSG::~ViewportFboNodeSG()
@@ -70,51 +67,15 @@ void ViewportFboNodeSG::setSize(const QSize &size)
 {
     if (size == m_size)
         return;
-
     m_size = size;
-    setBoundingRect(QRectF(0, 0, size.width(), size.height()));
 
     m_left.reset();
     m_right.reset();
 
-    Geometry *geometry = this->geometry();
-    geometry->setDrawingMode(QSG::TriangleStrip);
-    geometry->setVertexCount(4);
-
     QRectF rect(0, 0, m_size.width(), m_size.height());
     QRectF sourceRect(0,1,1,-1);
 
-    const QVector<QSGAttributeDescription> &d = geometry->vertexDescription();
-    int offset = 0;
-    for (int i = 0; i < d.size(); ++i) {
-        if (d.at(i).attribute() == 0) {         // Position
-            Q_ASSERT(d.at(i).tupleSize() >= 2);
-            Q_ASSERT(d.at(i).type() == GL_FLOAT);
-            for (int j = 0; j < 4; ++j) {
-                float *f = (float *)((uchar *)geometry->vertexData() + geometry->stride() * j + offset);
-                f[0] = j & 2 ? rect.right() : rect.left();
-                f[1] = j & 1 ? rect.bottom() : rect.top();
-                for (int k = 2; k < d.at(i).tupleSize(); ++k)
-                    f[k] = k - 2;
-            }
-        } else if (d.at(i).attribute() == 1) {  // TextureCoord0
-            Q_ASSERT(d.at(i).tupleSize() >= 2);
-            Q_ASSERT(d.at(i).type() == GL_FLOAT);
-
-            qreal pw = 1.0f;
-            qreal ph = 1.0f;
-
-            for (int j = 0; j < 4; ++j) {
-                float *f = (float *)((uchar *)geometry->vertexData() + geometry->stride() * j + offset);
-                f[0] = (j & 2 ? sourceRect.right() : sourceRect.left()) / pw;
-                f[1] = (j & 1 ? sourceRect.bottom() : sourceRect.top()) / ph;
-                for (int k = 2; k < d.at(i).tupleSize(); ++k)
-                    f[k] = k - 2;
-            }
-        }
-        offset += d.at(i).tupleSize() * d.at(i).sizeOfType();
-    }
-
+    QSGGeometry::updateTexturedRectGeometry(&m_geometry, rect, sourceRect);
     markDirty(DirtyGeometry);
 }
 
