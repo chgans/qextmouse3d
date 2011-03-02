@@ -810,6 +810,14 @@ bool QGLPainter::isCullable(const QVector3D& point) const
 /*!
     Returns true if \a box is completely outside the current viewing volume.
     This is used to perform object culling checks.
+
+    This function assumes that the modelViewMatrix() has been oriented
+    so that the eye is at the origin looking down the negative z axis.
+    This assumption is used to determine if the \a box is behind the eye.
+    It is recommended that setCamera() be used to establish an
+    eye position and orientation that satisfies this assumption.
+
+    \sa setCamera()
 */
 bool QGLPainter::isCullable(const QBox3D& box) const
 {
