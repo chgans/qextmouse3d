@@ -58,6 +58,7 @@ scenegraph {
         stereoinfo_sg.h \
         viewport_sg.h \
         viewportfbonode_sg.h
+    DEFINES += QT_SCENEGRAPH_ENABLED
 }
 
 qdeclarativesources.files += \
