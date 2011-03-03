@@ -188,7 +188,7 @@ QGLBuilder& operator<<(QGLBuilder& builder, const QGLSphere& sphere)
     qreal stackSin[maxStacks];
     qreal stackCos[maxStacks];
     for (int slice = 0; slice < slices; ++slice) {
-        qreal angle = 2 * M_PI * slice / slices;
+        qreal angle = 2 * M_PI * (slices - 1 - slice) / slices;
         sliceSin[slice] = qFastSin(angle);
         sliceCos[slice] = qFastCos(angle);
     }
