@@ -156,7 +156,7 @@ static inline qreal b1(qreal v)
 }
 static inline qreal b2(qreal v)
 {
-    return 2.0f * v * v * (1.0f - v);
+    return 3.0f * v * v * (1.0f - v);
 }
 static inline qreal b3(qreal v)
 {
