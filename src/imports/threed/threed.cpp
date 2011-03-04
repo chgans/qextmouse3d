@@ -59,7 +59,7 @@
 #include "qglscenenode.h"
 #include "floatingitem.h"
 #include "stereoview.h"
-#if defined(QML_VERSION) && QML_VERSION >= 0x020000
+#if defined(QT_SCENEGRAPH_ENABLED) && defined(QML_VERSION) && QML_VERSION >= 0x020000
 #define QT_USE_SCENEGRAPH 1
 #include "floatingitem_sg.h"
 #include "viewport_sg.h"
