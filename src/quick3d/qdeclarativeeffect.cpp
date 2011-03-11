@@ -259,7 +259,7 @@ void QDeclarativeEffect::setTexture(const QUrl& value)
 #ifndef QT_NO_LOCALFILE_OPTIMIZED_QML
         async = d->textureUrl.scheme() != QLatin1String("file");
 #endif
-#if QT_VERSION >= 0x040702
+#if QT_VERSION >= 0x040703
         QDeclarativePixmap::Options options = QDeclarativePixmap::Cache;
         if (async)
             options |= QDeclarativePixmap::Asynchronous;
