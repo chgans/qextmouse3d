@@ -32,18 +32,24 @@
 
     \section1 Obtaining Qt/3D sources
 
-    The source for Qt/3D is hosted on Gitorious as the git repository
-    \l{http://qt.gitorious.org/qt-labs/qt3d}{\c{qt-labs/qt3d.git}}.
+    The source for QtQuick3D is hosted on Gitorious as the git repository
+    \l{http://qt.gitorious.org/qt-quick3d/qt-quick3d}{\c{qt-quick3d/qt-quick3d.git}}.
     It can be cloned as follows:
 
     \code
-    $ mkdir -p $HOME/depot/qt-labs
-    $ cd $HOME/depot/qt-labs
-    $ git clone git://gitorious.org/qt-labs/qt3d.git
+    $ mkdir -p $HOME/depot/qt
+    $ cd $HOME/depot/qt
+    $ git clone git://gitorious.org/qt-quick3d/qt-quick3d.git
     \endcode
 
     Once Qt/3D becomes a part of Qt it will be available with Qt binary packages.  Until
     then it must be built from sources.
+
+    \section2 IMPORTANT NOTE:
+
+    If you are using the version of Qt/3D from: git://gitorious.org/qt-labs/qt3d.git, then
+    you are using the research branch of Qt/3D.  This is not actively maintained, and you
+    should use the version of Qt/3D / Quick3D described earlier.
 
     \section1 Obtaining and building Qt sources for Qt/3D
 
