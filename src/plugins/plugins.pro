@@ -1,3 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = sceneformats imageformats mouse3d
-scenegraph:SUBDIRS += scenegraph
+SUBDIRS = mouse3d

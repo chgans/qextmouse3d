@@ -1,1 +1,0 @@
-The shaderwizard supports 3ds models, which requires 3ds libraries to be installed, and the 3ds sceneformat to be built and installed.  Please see qt3d/plugins/sceneformats/3ds/README.txt  for detailed instructions on how to achieve this.

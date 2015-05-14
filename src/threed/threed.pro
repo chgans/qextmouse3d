@@ -7,8 +7,6 @@ gcov {
 } else {
     CONFIG += dll warn_on
 }
-QT += opengl \
-    network
 DESTDIR = ../../lib
 
 win32 {

@@ -50,78 +50,8 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QSize;
-
 namespace QGL
 {
-    enum VertexAttribute {
-        Position,
-        Normal,
-        Color,
-        TextureCoord0,
-        TextureCoord1,
-        TextureCoord2,
-        CustomVertex0,
-        CustomVertex1,
-        UserVertex
-    };
-
-    enum Face
-    {
-        FrontFaces                  = 0x0404, // GL_FRONT
-        BackFaces                   = 0x0405, // GL_BACK
-        AllFaces                    = 0x0408  // GL_FRONT_AND_BACK
-    };
-
-    enum DrawingMode
-    {
-        Points                      = 0x0000, // GL_POINTS
-        Lines                       = 0x0001, // GL_LINES
-        LineLoop                    = 0x0002, // GL_LINE_LOOP
-        LineStrip                   = 0x0003, // GL_LINE_STRIP
-        Triangles                   = 0x0004, // GL_TRIANGLES
-        TriangleStrip               = 0x0005, // GL_TRIANGLE_STRIP
-        TriangleFan                 = 0x0006, // GL_TRIANGLE_FAN
-        LinesAdjacency              = 0x000A, // GL_LINES_ADJACENCY
-        LineStripAdjacency          = 0x000B, // GL_LINE_STRIP_ADJACENCY
-        TrianglesAdjacency          = 0x000C, // GL_TRIANGLES_ADJACENCY
-        TriangleStripAdjacency      = 0x000D  // GL_TRIANGLE_STRIP_ADJACENCY
-    };
-
-    enum StandardEffect
-    {
-        FlatColor,
-        FlatPerVertexColor,
-        FlatReplaceTexture2D,
-        FlatDecalTexture2D,
-        LitMaterial,
-        LitDecalTexture2D,
-        LitModulateTexture2D
-    };
-
-    enum TextureWrap
-    {
-        Repeat                      = 0x2901,   // GL_REPEAT
-        Clamp                       = 0x2900,   // GL_CLAMP
-        ClampToBorder               = 0x812D,   // GL_CLAMP_TO_BORDER
-        ClampToEdge                 = 0x812F,   // GL_CLAMP_TO_EDGE
-        MirroredRepeat              = 0x8370    // GL_MIRRORED_REPEAT
-    };
-
-    enum Eye
-    {
-        NoEye,
-        LeftEye,
-        RightEye
-    };
-
-    enum Smoothing
-    {
-        NoSmoothing,
-        Smooth,
-        Faceted
-    };
-
     enum Mouse3DKeys
     {
         Key_Fit                 = 0x01200002,
@@ -151,9 +81,6 @@ namespace QGL
         Key_IncreaseSensitivity = 0x0120001e,
         Key_DecreaseSensitivity = 0x0120001f
     };
-
-    Q_QT3D_EXPORT int nextPowerOfTwo(int value);
-    Q_QT3D_EXPORT QSize nextPowerOfTwo(const QSize& value);
 };
 
 QT_END_NAMESPACE
