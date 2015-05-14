@@ -62,9 +62,9 @@ extern pGetRawInputDeviceInfoA _GetRawInputDeviceInfo;
 extern pGetRawInputDeviceList _GetRawInputDeviceList;
 extern QMouseEventTransmitter mouseSignaller;
 
-QMouse3DWin32InputDevice::QMouse3DWin32InputDevice
+QExtMouse3DWin32InputDevice::QExtMouse3DWin32InputDevice
         (const QString &dName , const QString &realName , HANDLE deviceHandle, QObject *parent)
-    : QMouse3DDevice(parent)
+    : QExtMouse3DDevice(parent)
     , isOpen(false)
     , devName(dName)
     , name(realName)
@@ -79,29 +79,29 @@ QMouse3DWin32InputDevice::QMouse3DWin32InputDevice
     memset(tempValues, 0, sizeof(tempValues));
 }
 
-QMouse3DWin32InputDevice::~QMouse3DWin32InputDevice()
+QExtMouse3DWin32InputDevice::~QExtMouse3DWin32InputDevice()
 {
     //
 }
 
 //Check if there are 3d mice available and save their details to the 'devices' list.
-bool QMouse3DWin32InputDevice::isAvailable() const
+bool QExtMouse3DWin32InputDevice::isAvailable() const
 {
     // Not used
     return true;
 }
 
 //Get the names of devices attached - in Win32 this will usually be the type of 3dConnexion mouse attached.
-QStringList QMouse3DWin32InputDevice::deviceNames() const
+QStringList QExtMouse3DWin32InputDevice::deviceNames() const
 {
-    // Not used - QMouse3DHalDevice reports the name.
+    // Not used - QExtMouse3DHalDevice reports the name.
     return QStringList();
 }
 
 //Set the widget to which raw input processing will be applied - this should generally be the main window for the widget.
-void QMouse3DWin32InputDevice::setWidget(QWidget *widget)
+void QExtMouse3DWin32InputDevice::setWidget(QWidget *widget)
 {
-    QMouse3DDevice::setWidget(widget);
+    QExtMouse3DDevice::setWidget(widget);
 
     HWND windowHandle = 0;
     if (widget) windowHandle = widget->winId();
@@ -121,7 +121,7 @@ void QMouse3DWin32InputDevice::setWidget(QWidget *widget)
     initDevice();
 }
 
-void QMouse3DWin32InputDevice::initDevice()
+void QExtMouse3DWin32InputDevice::initDevice()
 {
     // Determine the size of the "flat middle", where we clamp values to
     // zero to filter out noise when the mouse is in the center position.
@@ -151,22 +151,22 @@ void QMouse3DWin32InputDevice::initDevice()
         switch(deviceInfo.hid.dwProductId)
         {
         case eSpacePilot:
-            mouseType = QMouse3DWin32InputDevice::MouseSpacePilot;
+            mouseType = QExtMouse3DWin32InputDevice::MouseSpacePilot;
             break;
         case eSpaceNavigator:
-            mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator;
+            mouseType = QExtMouse3DWin32InputDevice::MouseSpaceNavigator;
             break;
         case eSpaceExplorer:
-            mouseType = QMouse3DWin32InputDevice::MouseSpaceExplorer;
+            mouseType = QExtMouse3DWin32InputDevice::MouseSpaceExplorer;
             break;
         case eSpaceNavigatorForNotebooks:
-            mouseType = QMouse3DWin32InputDevice::MouseSpaceNavigator_nb;
+            mouseType = QExtMouse3DWin32InputDevice::MouseSpaceNavigator_nb;
             break;
         case eSpacePilotPRO:
-            mouseType = QMouse3DWin32InputDevice::MouseSpacePilotPRO;
+            mouseType = QExtMouse3DWin32InputDevice::MouseSpacePilotPRO;
             break;
         default:
-            mouseType = QMouse3DWin32InputDevice::MouseUnknown;
+            mouseType = QExtMouse3DWin32InputDevice::MouseUnknown;
             break;
         };
     } else {
@@ -179,7 +179,7 @@ static inline int clampRange(int value)
     return qMin(qMax(value, -32768), 32767);
 }
 
-void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
+void QExtMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
 {
     bool deliverMotion = false;
     int dwSize;
@@ -286,8 +286,8 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
                 prevWasFlat = isFlat;
             }
             if (deliverMotion) {
-                // Deliver the motion event and ask QMouse3DDevice to filter it.
-                QMouse3DEvent mevent
+                // Deliver the motion event and ask QExtMouse3DDevice to filter it.
+                QExtMouse3DEvent mevent
                     ((short)(values[0]), (short)(values[1]), (short)(values[2]),
                      (short)(values[3]), (short)(values[4]), (short)(values[5]));
                 motion(&mevent);
@@ -308,15 +308,15 @@ void QMouse3DWin32InputDevice::readyRead(HRAWINPUT hRawInput)
 // http://www.3dconnexion.com/products/spacepilot-pro.html
 // http://www.3dconnexion.com/products/spacenavigator.html
 
-void QMouse3DWin32InputDevice::translateMscKey(int code, bool press)
+void QExtMouse3DWin32InputDevice::translateMscKey(int code, bool press)
 {
     int qtcode = -1;
     switch (code) {
     case V3DK_MENU:
         // On the SpaceNavigator, map this key to "translation lock".
-        if (mouseType & QMouse3DWin32InputDevice::MouseSpaceNavigator) {
+        if (mouseType & QExtMouse3DWin32InputDevice::MouseSpaceNavigator) {
             if (press)
-                toggleFilter(QMouse3DEventProvider::Translations);
+                toggleFilter(QExtMouse3DEventProvider::Translations);
             qtcode = QGL::Key_Translations;
         } else {
             qtcode = Qt::Key_Menu;
@@ -325,9 +325,9 @@ void QMouse3DWin32InputDevice::translateMscKey(int code, bool press)
 
     case V3DK_FIT:
         // On the SpaceNavigator, map this key to "rotation lock".
-        if (mouseType & QMouse3DWin32InputDevice::MouseSpaceNavigator) {
+        if (mouseType & QExtMouse3DWin32InputDevice::MouseSpaceNavigator) {
             if (press)
-                toggleFilter(QMouse3DEventProvider::Rotations);
+                toggleFilter(QExtMouse3DEventProvider::Rotations);
             qtcode = QGL::Key_Rotations;
         } else {
             qtcode = QGL::Key_Fit;
@@ -361,17 +361,17 @@ void QMouse3DWin32InputDevice::translateMscKey(int code, bool press)
 
     case V3DK_ROTATE:
         if (press)
-            toggleFilter(QMouse3DEventProvider::Rotations);
+            toggleFilter(QExtMouse3DEventProvider::Rotations);
         qtcode = QGL::Key_Rotations;
         break;
     case V3DK_PANZOOM:
         if (press)
-            toggleFilter(QMouse3DEventProvider::Translations);
+            toggleFilter(QExtMouse3DEventProvider::Translations);
         qtcode = QGL::Key_Translations;
         break;
     case V3DK_DOMINANT:
         if (press)
-            toggleFilter(QMouse3DEventProvider::DominantAxis);
+            toggleFilter(QExtMouse3DEventProvider::DominantAxis);
         qtcode = QGL::Key_DominantAxis;
         break;
     case V3DK_PLUS:

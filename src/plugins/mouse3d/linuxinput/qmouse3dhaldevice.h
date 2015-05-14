@@ -52,19 +52,19 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DHalDevice : public QMouse3DDevice
+class QExtMouse3DHalDevice : public QExtMouse3DDevice
 {
     Q_OBJECT
 public:
-    QMouse3DHalDevice(QObject *parent = 0);
-    ~QMouse3DHalDevice();
+    QExtMouse3DHalDevice(QObject *parent = 0);
+    ~QExtMouse3DHalDevice();
 
     bool isAvailable() const;
     QStringList deviceNames() const;
 
-    void setProvider(QMouse3DEventProvider *provider);
+    void setProvider(QExtMouse3DEventProvider *provider);
     void setWidget(QWidget *widget);
-    void updateFilters(QMouse3DEventProvider::Filters filters);
+    void updateFilters(QExtMouse3DEventProvider::Filters filters);
     void updateSensitivity(qreal sensitivity);
 
 private Q_SLOTS:
@@ -79,14 +79,14 @@ private:
     {
     public:
         MouseInfo(const QString &path, const QString &dev,
-                  const QString &rName, QMouse3DLinuxInputDevice *idev)
+                  const QString &rName, QExtMouse3DLinuxInputDevice *idev)
             : halPath(path), devName(dev), realName(rName), device(idev) {}
         ~MouseInfo() { delete device; }
 
         QString halPath;
         QString devName;
         QString realName;
-        QMouse3DLinuxInputDevice *device;
+        QExtMouse3DLinuxInputDevice *device;
     };
 
     QList<MouseInfo *> devices;

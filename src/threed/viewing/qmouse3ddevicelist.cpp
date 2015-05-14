@@ -50,23 +50,23 @@ QT_BEGIN_NAMESPACE
 
 #if !defined (QT_NO_LIBRARY) && !defined(QT_NO_SETTINGS)
 Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, loader,
-    (QMouse3DDeviceFactoryInterface_iid, QLatin1String("/mouse3d")))
+    (QExtMouse3DDeviceFactoryInterface_iid, QLatin1String("/mouse3d")))
 #endif
 
-QMouse3DDeviceList::QMouse3DDeviceList(QObject *parent)
+QExtMouse3DDeviceList::QExtMouse3DDeviceList(QObject *parent)
     : QObject(parent)
     , currentWidget(0)
     , currentProvider(0)
 {
     ref = 1;
-    if (QMouse3DDevice::testDevice1) {
+    if (QExtMouse3DDevice::testDevice1) {
         // Special hook for auto-testing.
-        devices.append(QMouse3DDevice::testDevice1);
-        connect(QMouse3DDevice::testDevice1, SIGNAL(availableChanged()),
+        devices.append(QExtMouse3DDevice::testDevice1);
+        connect(QExtMouse3DDevice::testDevice1, SIGNAL(availableChanged()),
                 this, SLOT(availableDeviceChanged()));
-        if (QMouse3DDevice::testDevice2) {
-            devices.append(QMouse3DDevice::testDevice2);
-            connect(QMouse3DDevice::testDevice2,
+        if (QExtMouse3DDevice::testDevice2) {
+            devices.append(QExtMouse3DDevice::testDevice2);
+            connect(QExtMouse3DDevice::testDevice2,
                     SIGNAL(availableChanged()),
                     this, SIGNAL(availableChanged()));
         }
@@ -75,10 +75,10 @@ QMouse3DDeviceList::QMouse3DDeviceList(QObject *parent)
         QFactoryLoader *l = loader();
         QStringList keys = l->keys();
         for (int index = 0; index < keys.size(); ++index) {
-            if (QMouse3DDeviceFactoryInterface *factory
-                    = qobject_cast<QMouse3DDeviceFactoryInterface*>
+            if (QExtMouse3DDeviceFactoryInterface *factory
+                    = qobject_cast<QExtMouse3DDeviceFactoryInterface*>
                         (l->instance(keys.at(index)))) {
-                QMouse3DDevice *device = factory->create();
+                QExtMouse3DDevice *device = factory->create();
                 if (device) {
                     devices.append(device);
                     device->setParent(this);
@@ -91,16 +91,16 @@ QMouse3DDeviceList::QMouse3DDeviceList(QObject *parent)
 #endif
 }
 
-QMouse3DDeviceList::~QMouse3DDeviceList()
+QExtMouse3DDeviceList::~QExtMouse3DDeviceList()
 {
 }
 
-void QMouse3DDeviceList::attachWidget
-    (QMouse3DEventProvider *provider, QWidget *widget)
+void QExtMouse3DDeviceList::attachWidget
+    (QExtMouse3DEventProvider *provider, QWidget *widget)
 {
     // Add the (widget, provider) pair to the map.
     if (widgets.contains(widget)) {
-        qWarning("QMouse3DEventProvider: multiple providers for single widget");
+        qWarning("QExtMouse3DEventProvider: multiple providers for single widget");
         return;
     }
     widgets.insert(widget, provider);
@@ -111,15 +111,15 @@ void QMouse3DDeviceList::attachWidget
     // If the widget is already active, then set it as the current widget.
     // Also do this if we are running the autotests because activating a
     // widget during autotests is unstable at best.
-    if (widget->isActiveWindow() || QMouse3DDevice::testDevice1)
+    if (widget->isActiveWindow() || QExtMouse3DDevice::testDevice1)
         setWidget(provider, widget);
 }
 
-void QMouse3DDeviceList::detachWidget
-    (QMouse3DEventProvider *provider, QWidget *widget)
+void QExtMouse3DDeviceList::detachWidget
+    (QExtMouse3DEventProvider *provider, QWidget *widget)
 {
     // Check that this is the provider that was registered for the widget.
-    QMouse3DEventProvider *prov = widgets.value(widget, 0);
+    QExtMouse3DEventProvider *prov = widgets.value(widget, 0);
     if (prov != provider)
         return;
 
@@ -134,13 +134,13 @@ void QMouse3DDeviceList::detachWidget
         setWidget(0, 0);
 }
 
-void QMouse3DDeviceList::setWidget
-    (QMouse3DEventProvider *provider, QWidget *widget)
+void QExtMouse3DDeviceList::setWidget
+    (QExtMouse3DEventProvider *provider, QWidget *widget)
 {
     currentProvider = provider;
     currentWidget = widget;
     for (int index = 0; index < devices.size(); ++index) {
-        QMouse3DDevice *device = devices.at(index);
+        QExtMouse3DDevice *device = devices.at(index);
         if (device->isAvailable()) {
             device->setProvider(provider);
             device->setWidget(widget);
@@ -148,51 +148,51 @@ void QMouse3DDeviceList::setWidget
                 device->updateFilters(provider->filters());
                 device->updateSensitivity(provider->sensitivity());
             } else {
-                device->updateFilters(QMouse3DEventProvider::Translations |
-                                      QMouse3DEventProvider::Rotations);
+                device->updateFilters(QExtMouse3DEventProvider::Translations |
+                                      QExtMouse3DEventProvider::Rotations);
                 device->updateSensitivity(1.0f);
             }
         }
     }
 }
 
-void QMouse3DDeviceList::updateFilters
-    (QMouse3DEventProvider *provider, QMouse3DEventProvider::Filters value)
+void QExtMouse3DDeviceList::updateFilters
+    (QExtMouse3DEventProvider *provider, QExtMouse3DEventProvider::Filters value)
 {
     if (currentProvider == provider) {
         for (int index = 0; index < devices.size(); ++index) {
-            QMouse3DDevice *device = devices.at(index);
+            QExtMouse3DDevice *device = devices.at(index);
             if (device->isAvailable())
                 device->updateFilters(value);
         }
     }
 }
 
-void QMouse3DDeviceList::updateSensitivity
-    (QMouse3DEventProvider *provider, qreal value)
+void QExtMouse3DDeviceList::updateSensitivity
+    (QExtMouse3DEventProvider *provider, qreal value)
 {
     if (currentProvider == provider) {
         for (int index = 0; index < devices.size(); ++index) {
-            QMouse3DDevice *device = devices.at(index);
+            QExtMouse3DDevice *device = devices.at(index);
             if (device->isAvailable())
                 device->updateSensitivity(value);
         }
     }
 }
 
-static QMouse3DDeviceList *deviceList = 0;
+static QExtMouse3DDeviceList *deviceList = 0;
 
-QMouse3DDeviceList *QMouse3DDeviceList::attach()
+QExtMouse3DDeviceList *QExtMouse3DDeviceList::attach()
 {
     if (!deviceList) {
-        deviceList = new QMouse3DDeviceList();
+        deviceList = new QExtMouse3DDeviceList();
         return deviceList;
     }
     deviceList->ref.ref();
     return deviceList;
 }
 
-void QMouse3DDeviceList::detach(QMouse3DDeviceList *list)
+void QExtMouse3DDeviceList::detach(QExtMouse3DDeviceList *list)
 {
     if (!list->ref.deref()) {
         delete list;
@@ -200,9 +200,9 @@ void QMouse3DDeviceList::detach(QMouse3DDeviceList *list)
     }
 }
 
-void QMouse3DDeviceList::availableDeviceChanged()
+void QExtMouse3DDeviceList::availableDeviceChanged()
 {
-    QMouse3DDevice *device = qobject_cast<QMouse3DDevice *>(sender());
+    QExtMouse3DDevice *device = qobject_cast<QExtMouse3DDevice *>(sender());
     if (device && device->isAvailable()) {
         // Newly available devices need to be told the provider,
         // widget, filter state, and sensitivity state.
@@ -212,18 +212,18 @@ void QMouse3DDeviceList::availableDeviceChanged()
             device->updateFilters(currentProvider->filters());
             device->updateSensitivity(currentProvider->sensitivity());
         } else {
-            device->updateFilters(QMouse3DEventProvider::Translations |
-                                  QMouse3DEventProvider::Rotations);
+            device->updateFilters(QExtMouse3DEventProvider::Translations |
+                                  QExtMouse3DEventProvider::Rotations);
             device->updateSensitivity(1.0f);
         }
     }
     emit availableChanged();
 }
 
-bool QMouse3DDeviceList::eventFilter(QObject *watched, QEvent *event)
+bool QExtMouse3DDeviceList::eventFilter(QObject *watched, QEvent *event)
 {
     QWidget *widget = qobject_cast<QWidget *>(watched);
-    QMouse3DEventProvider *provider = widgets.value(widget, 0);
+    QExtMouse3DEventProvider *provider = widgets.value(widget, 0);
     if (event->type() == QEvent::WindowActivate) {
         if (provider && widget != currentWidget)
             setWidget(provider, widget);
@@ -231,7 +231,7 @@ bool QMouse3DDeviceList::eventFilter(QObject *watched, QEvent *event)
         if (provider && widget == currentWidget) {
             // Post a zero event to the deactivating widget to center
             // any actions that were in progress.
-            QMouse3DEvent *mouse = new QMouse3DEvent(0, 0, 0, 0, 0, 0);
+            QExtMouse3DEvent *mouse = new QExtMouse3DEvent(0, 0, 0, 0, 0, 0);
             QApplication::postEvent(widget, mouse);
             setWidget(0, 0);
         }

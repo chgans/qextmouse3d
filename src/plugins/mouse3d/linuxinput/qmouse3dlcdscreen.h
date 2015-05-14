@@ -54,16 +54,16 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DLcdScreen : public QObject
+class QExtMouse3DLcdScreen : public QObject
 {
     Q_OBJECT
 public:
-    QMouse3DLcdScreen(QObject *parent = 0);
-    ~QMouse3DLcdScreen();
+    QExtMouse3DLcdScreen(QObject *parent = 0);
+    ~QExtMouse3DLcdScreen();
 
     void setImage(const QImage &image) { m_image = image; }
     void setTitle(const QString &title) { m_title = title; }
-    void setFilters(QMouse3DEventProvider::Filters filters) { m_filters = filters; }
+    void setFilters(QExtMouse3DEventProvider::Filters filters) { m_filters = filters; }
 
     virtual void setActive(bool enable) = 0;
     void update();
@@ -77,15 +77,15 @@ private:
     QImage m_defaultImage;
     QImage m_image;
     QString m_title;
-    QMouse3DEventProvider::Filters m_filters;
+    QExtMouse3DEventProvider::Filters m_filters;
 };
 
-class QMouse3DSpacePilotPROScreen : public QMouse3DLcdScreen
+class QExtMouse3DSpacePilotPROScreen : public QExtMouse3DLcdScreen
 {
     Q_OBJECT
 public:
-    QMouse3DSpacePilotPROScreen(QObject *parent = 0);
-    ~QMouse3DSpacePilotPROScreen();
+    QExtMouse3DSpacePilotPROScreen(QObject *parent = 0);
+    ~QExtMouse3DSpacePilotPROScreen();
 
     void setActive(bool enable);
 

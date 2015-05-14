@@ -55,7 +55,7 @@ QT_BEGIN_NAMESPACE
     \enum QGL::Mouse3DKeys
     \since 4.8
     This enum defines extra key codes for QKeyEvent related to 3D mice
-    devices.  See QMouse3DEventProvider for further details.
+    devices.  See QExtMouse3DEventProvider for further details.
 
     \value Key_Fit Reset the transform so the model is centered to
            fit within the view.

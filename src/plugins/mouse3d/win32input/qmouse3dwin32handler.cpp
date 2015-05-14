@@ -51,8 +51,8 @@ extern pGetRawInputDeviceInfoA _GetRawInputDeviceInfo;
 extern pGetRawInputDeviceList _GetRawInputDeviceList;
 
 QT_BEGIN_NAMESPACE
-QMouse3DWin32Handler::QMouse3DWin32Handler(QObject *parent)
-    : QMouse3DDevice(parent)
+QExtMouse3DWin32Handler::QExtMouse3DWin32Handler(QObject *parent)
+    : QExtMouse3DDevice(parent)
 {
     // Find all mouse devices that are currently connected.
     int inputDeviceCount;
@@ -86,17 +86,17 @@ QMouse3DWin32Handler::QMouse3DWin32Handler(QObject *parent)
     }
 }
 
-QMouse3DWin32Handler::~QMouse3DWin32Handler()
+QExtMouse3DWin32Handler::~QExtMouse3DWin32Handler()
 {
     qDeleteAll(devices);
 }
 
-bool QMouse3DWin32Handler::isAvailable() const
+bool QExtMouse3DWin32Handler::isAvailable() const
 {
     return !devices.isEmpty();
 }
 
-QStringList QMouse3DWin32Handler::deviceNames() const
+QStringList QExtMouse3DWin32Handler::deviceNames() const
 {
     QStringList names;
     for (int index = 0; index < devices.size(); ++index)
@@ -104,35 +104,35 @@ QStringList QMouse3DWin32Handler::deviceNames() const
     return names;
 }
 
-void QMouse3DWin32Handler::setProvider(QMouse3DEventProvider *provider)
+void QExtMouse3DWin32Handler::setProvider(QExtMouse3DEventProvider *provider)
 {
-    QMouse3DDevice::setProvider(provider);
+    QExtMouse3DDevice::setProvider(provider);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->setProvider(provider);
 }
 
-void QMouse3DWin32Handler::setWidget(QWidget *widget)
+void QExtMouse3DWin32Handler::setWidget(QWidget *widget)
 {
-    QMouse3DDevice::setWidget(widget);
+    QExtMouse3DDevice::setWidget(widget);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->setWidget(widget);
 }
 
-void QMouse3DWin32Handler::updateFilters(QMouse3DEventProvider::Filters filters)
+void QExtMouse3DWin32Handler::updateFilters(QExtMouse3DEventProvider::Filters filters)
 {
-    QMouse3DDevice::updateFilters(filters);
+    QExtMouse3DDevice::updateFilters(filters);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->updateFilters(filters);
 }
 
-void QMouse3DWin32Handler::updateSensitivity(qreal sensitivity)
+void QExtMouse3DWin32Handler::updateSensitivity(qreal sensitivity)
 {
-    QMouse3DDevice::updateSensitivity(sensitivity);
+    QExtMouse3DDevice::updateSensitivity(sensitivity);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->updateSensitivity(sensitivity);
 }
 
-void QMouse3DWin32Handler::deviceAdded(HANDLE deviceHandle)
+void QExtMouse3DWin32Handler::deviceAdded(HANDLE deviceHandle)
 {
     Q_UNUSED(deviceHandle);
     //
@@ -142,7 +142,7 @@ void QMouse3DWin32Handler::deviceAdded(HANDLE deviceHandle)
     //
 }
 
-void QMouse3DWin32Handler::deviceRemoved(HANDLE deviceHandle)
+void QExtMouse3DWin32Handler::deviceRemoved(HANDLE deviceHandle)
 {
     for (int index = 0; index < devices.size(); ++index) {
         MouseInfo *info = devices[index];
@@ -155,7 +155,7 @@ void QMouse3DWin32Handler::deviceRemoved(HANDLE deviceHandle)
     }
 }
 
-void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
+void QExtMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
 {
     //Check if we already have this device in our list and bail out if we do
     for(int i=0; i< devices.size(); i++) {
@@ -184,7 +184,7 @@ void QMouse3DWin32Handler::mouseAdded (HANDLE deviceHandle)
                 devBrand = "Logitech";
             }
 
-            QMouse3DWin32InputDevice *device = new QMouse3DWin32InputDevice(devName, devBrand, deviceHandle, this);
+            QExtMouse3DWin32InputDevice *device = new QExtMouse3DWin32InputDevice(devName, devBrand, deviceHandle, this);
             MouseInfo *info = new MouseInfo(deviceHandle, devName, devBrand, device);
 
             devices.append(info);

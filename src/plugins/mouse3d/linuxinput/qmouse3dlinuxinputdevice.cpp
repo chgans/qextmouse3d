@@ -54,9 +54,9 @@
 
 QT_BEGIN_NAMESPACE
 
-QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice
+QExtMouse3DLinuxInputDevice::QExtMouse3DLinuxInputDevice
         (const QString &dName, const QString &realName, QObject *parent)
-    : QMouse3DDevice(parent)
+    : QExtMouse3DDevice(parent)
     , isOpen(false)
     , devName(dName)
     , name(realName)
@@ -68,35 +68,35 @@ QMouse3DLinuxInputDevice::QMouse3DLinuxInputDevice
     , sawRotate(false)
     , prevWasFlat(false)
     , lcdScreen(0)
-    , mouseType(QMouse3DLinuxInputDevice::MouseUnknown)
+    , mouseType(QExtMouse3DLinuxInputDevice::MouseUnknown)
 {
     memset(values, 0, sizeof(values));
     memset(tempValues, 0, sizeof(tempValues));
 }
 
-QMouse3DLinuxInputDevice::~QMouse3DLinuxInputDevice()
+QExtMouse3DLinuxInputDevice::~QExtMouse3DLinuxInputDevice()
 {
     delete notifier;
     if (fd != -1)
         ::close(fd);
 }
 
-bool QMouse3DLinuxInputDevice::isAvailable() const
+bool QExtMouse3DLinuxInputDevice::isAvailable() const
 {
-    // Not used - QMouse3DHalDevice reports the availability state.
-    // If the QMouse3DLinuxInputDevice object exists, the device is available.
+    // Not used - QExtMouse3DHalDevice reports the availability state.
+    // If the QExtMouse3DLinuxInputDevice object exists, the device is available.
     return true;
 }
 
-QStringList QMouse3DLinuxInputDevice::deviceNames() const
+QStringList QExtMouse3DLinuxInputDevice::deviceNames() const
 {
-    // Not used - QMouse3DHalDevice reports the name.
+    // Not used - QExtMouse3DHalDevice reports the name.
     return QStringList();
 }
 
-void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
+void QExtMouse3DLinuxInputDevice::setWidget(QWidget *widget)
 {
-    QMouse3DDevice::setWidget(widget);
+    QExtMouse3DDevice::setWidget(widget);
     if (isOpen && !widget) {
         // Close the device - we don't need it any more.
         delete notifier;
@@ -132,7 +132,7 @@ void QMouse3DLinuxInputDevice::setWidget(QWidget *widget)
     }
 }
 
-void QMouse3DLinuxInputDevice::initDevice(int fd)
+void QExtMouse3DLinuxInputDevice::initDevice(int fd)
 {
     // Remember the fd for later.
     this->fd = fd;
@@ -173,18 +173,18 @@ void QMouse3DLinuxInputDevice::initDevice(int fd)
     prevWasFlat = false;
 
     // What type of 3D mouse do we have?
-    mouseType = QMouse3DLinuxInputDevice::MouseUnknown;
+    mouseType = QExtMouse3DLinuxInputDevice::MouseUnknown;
     if (name.contains(QLatin1String("3Dconnexion"))) {
-        mouseType |= QMouse3DLinuxInputDevice::Mouse3Dconnexion;
+        mouseType |= QExtMouse3DLinuxInputDevice::Mouse3Dconnexion;
         if (name.contains(QLatin1String("SpaceNavigator")))
-            mouseType |= QMouse3DLinuxInputDevice::MouseSpaceNavigator;
+            mouseType |= QExtMouse3DLinuxInputDevice::MouseSpaceNavigator;
         else if (name.contains(QLatin1String("SpacePilot PRO")))
-            mouseType |= QMouse3DLinuxInputDevice::MouseSpacePilotPRO;
+            mouseType |= QExtMouse3DLinuxInputDevice::MouseSpacePilotPRO;
     }
 
     // Create a LCD screen handler if we have a SpacePilot PRO.
     if (!lcdScreen && (mouseType & MouseSpacePilotPRO) != 0)
-        lcdScreen = new QMouse3DSpacePilotPROScreen(this);
+        lcdScreen = new QExtMouse3DSpacePilotPROScreen(this);
 }
 
 static inline int clampRange(int value)
@@ -192,7 +192,7 @@ static inline int clampRange(int value)
     return qMin(qMax(value, -32768), 32767);
 }
 
-void QMouse3DLinuxInputDevice::readyRead()
+void QExtMouse3DLinuxInputDevice::readyRead()
 {
     // Read as many events as we can in case the event queue has gotten
     // backed up due to an application delay.  We only care about the
@@ -209,7 +209,7 @@ void QMouse3DLinuxInputDevice::readyRead()
                     sawTranslate = true;
             }
         } else if (event.type == EV_MSC && event.code == MSC_SCAN &&
-                   (mouseType & QMouse3DLinuxInputDevice::Mouse3Dconnexion) != 0) {
+                   (mouseType & QExtMouse3DLinuxInputDevice::Mouse3Dconnexion) != 0) {
             // If the value is between 0x90001 and 0x9001f then we
             // assume that it is a 3Dconnexion special key and then
             // wait for the EV_KEY to tell us the press/release state.
@@ -262,8 +262,8 @@ void QMouse3DLinuxInputDevice::readyRead()
         prevWasFlat = isFlat;
     }
     if (deliverMotion) {
-        // Deliver the motion event and ask QMouse3DDevice to filter it.
-        QMouse3DEvent mevent
+        // Deliver the motion event and ask QExtMouse3DDevice to filter it.
+        QExtMouse3DEvent mevent
             ((short)(values[0]), (short)(values[1]), (short)(values[2]),
              (short)(values[3]), (short)(values[4]), (short)(values[5]));
         motion(&mevent);
@@ -318,15 +318,15 @@ enum SpacePilotKeys
     SPKey_DecSensitivity    = 0x9001f   // Decrease sensitivity of movements
 };
 
-void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
+void QExtMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
 {
     int qtcode = -1;
     switch (code) {
     case SPKey_Menu:
         // On the SpaceNavigator, map this key to "translation lock".
-        if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
+        if (mouseType & QExtMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
-                toggleFilter(QMouse3DEventProvider::Translations);
+                toggleFilter(QExtMouse3DEventProvider::Translations);
             qtcode = QGL::Key_Translations;
         } else {
             qtcode = Qt::Key_Menu;
@@ -335,9 +335,9 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
 
     case SPKey_Fit:
         // On the SpaceNavigator, map this key to "rotation lock".
-        if (mouseType & QMouse3DLinuxInputDevice::MouseSpaceNavigator) {
+        if (mouseType & QExtMouse3DLinuxInputDevice::MouseSpaceNavigator) {
             if (press)
-                toggleFilter(QMouse3DEventProvider::Rotations);
+                toggleFilter(QExtMouse3DEventProvider::Rotations);
             qtcode = QGL::Key_Rotations;
         } else {
             qtcode = QGL::Key_Fit;
@@ -371,17 +371,17 @@ void QMouse3DLinuxInputDevice::translateMscKey(int code, bool press)
 
     case SPKey_Rotation:
         if (press)
-            toggleFilter(QMouse3DEventProvider::Rotations);
+            toggleFilter(QExtMouse3DEventProvider::Rotations);
         qtcode = QGL::Key_Rotations;
         break;
     case SPKey_Pan:
         if (press)
-            toggleFilter(QMouse3DEventProvider::Translations);
+            toggleFilter(QExtMouse3DEventProvider::Translations);
         qtcode = QGL::Key_Translations;
         break;
     case SPKey_Dominant:
         if (press)
-            toggleFilter(QMouse3DEventProvider::DominantAxis);
+            toggleFilter(QExtMouse3DEventProvider::DominantAxis);
         qtcode = QGL::Key_DominantAxis;
         break;
     case SPKey_IncSensitivity:

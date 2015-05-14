@@ -221,7 +221,7 @@
 
     \image mouse3dtest-screenshot.png
 
-    The QMouse3DEvent documentation describes the values that are expected
+    The QExtMouse3DEvent documentation describes the values that are expected
     for each of the fields: moving the mouse right increases the X value,
     rocking the mouse left increases the Y axis rotation, etc.  The
     "Dominant Movement" field can be used to verify this.

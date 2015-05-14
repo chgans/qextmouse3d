@@ -63,24 +63,24 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-struct Q_QT3D_EXPORT QMouse3DDeviceFactoryInterface : public QFactoryInterface
+struct Q_QT3D_EXPORT QExtMouse3DDeviceFactoryInterface : public QFactoryInterface
 {
-    virtual QMouse3DDevice *create() const = 0;
+    virtual QExtMouse3DDevice *create() const = 0;
 };
 
-#define QMouse3DDeviceFactoryInterface_iid \
-        "com.trolltech.Qt.QMouse3DDeviceFactoryInterface"
-Q_DECLARE_INTERFACE(QMouse3DDeviceFactoryInterface, QMouse3DDeviceFactoryInterface_iid)
+#define QExtMouse3DDeviceFactoryInterface_iid \
+        "com.trolltech.Qt.QExtMouse3DDeviceFactoryInterface"
+Q_DECLARE_INTERFACE(QExtMouse3DDeviceFactoryInterface, QExtMouse3DDeviceFactoryInterface_iid)
 
-class Q_QT3D_EXPORT QMouse3DDevicePlugin : public QObject, public QMouse3DDeviceFactoryInterface
+class Q_QT3D_EXPORT QExtMouse3DDevicePlugin : public QObject, public QExtMouse3DDeviceFactoryInterface
 {
     Q_OBJECT
-    Q_INTERFACES(QMouse3DDeviceFactoryInterface:QFactoryInterface)
+    Q_INTERFACES(QExtMouse3DDeviceFactoryInterface:QFactoryInterface)
 public:
-    explicit QMouse3DDevicePlugin(QObject *parent = 0);
-    virtual ~QMouse3DDevicePlugin();
+    explicit QExtMouse3DDevicePlugin(QObject *parent = 0);
+    virtual ~QExtMouse3DDevicePlugin();
 
-    virtual QMouse3DDevice *create() const = 0;
+    virtual QExtMouse3DDevice *create() const = 0;
 };
 
 QT_END_NAMESPACE

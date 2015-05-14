@@ -43,12 +43,12 @@
 
 QT_BEGIN_NAMESPACE
 
-QMouse3DDevicePlugin::QMouse3DDevicePlugin(QObject *parent)
+QExtMouse3DDevicePlugin::QExtMouse3DDevicePlugin(QObject *parent)
     : QObject(parent)
 {
 }
 
-QMouse3DDevicePlugin::~QMouse3DDevicePlugin()
+QExtMouse3DDevicePlugin::~QExtMouse3DDevicePlugin()
 {
 }
 

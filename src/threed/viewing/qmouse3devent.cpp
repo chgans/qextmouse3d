@@ -44,15 +44,15 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QMouse3DEvent
-    \brief The QMouse3DEvent class represents a motion in 3D space that was reported by a "3D mouse".
+    \class QExtMouse3DEvent
+    \brief The QExtMouse3DEvent class represents a motion in 3D space that was reported by a "3D mouse".
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::viewing
 
     3D mice usually have six degrees of freedom of motion, corresponding
     to translations along the X, Y, and Z axes, and rotations around
-    each of those axes.  QMouse3DEvent provides a way to encapsulate
+    each of those axes.  QExtMouse3DEvent provides a way to encapsulate
     these values for reporting the output of a 3D mouse to a QWidget.
 
     The translation components are given by translateX(), translateY(),
@@ -65,7 +65,7 @@ QT_BEGIN_NAMESPACE
     The mouse is assumed to automatically self-center back to zero on all
     axes in the manner of a joystick.
 
-    Applications use QMouse3DEventProvider to register a QWidget to
+    Applications use QExtMouse3DEventProvider to register a QWidget to
     receive 3D mouse events.  The events will arrive via the
     QObject::event() override in the widget subclass:
 
@@ -73,15 +73,15 @@ QT_BEGIN_NAMESPACE
     MyWidget::MyWidget(QWidget *parent)
         : QWidget(parent)
     {
-        QMouse3DEventProvider *provider;
-        provider = new QMouse3DEventProvider(this);
+        QExtMouse3DEventProvider *provider;
+        provider = new QExtMouse3DEventProvider(this);
         provider->setWidget(this);
     }
 
     bool MyWidget::event(QEvent *e)
     {
-        if (e->type() == QMouse3DEvent::type) {
-            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+        if (e->type() == QExtMouse3DEvent::type) {
+            QExtMouse3DEvent *mouse = static_cast<QExtMouse3DEvent *>(e);
             ...
             return true;
         }
@@ -89,11 +89,11 @@ QT_BEGIN_NAMESPACE
     }
     \endcode
 
-    \sa QMouse3DEventProvider
+    \sa QExtMouse3DEventProvider
 */
 
 /*!
-    \fn QMouse3DEvent::QMouse3DEvent(short translateX, short translateY, short translateZ, short rotateX, short rotateY, short rotateZ)
+    \fn QExtMouse3DEvent::QExtMouse3DEvent(short translateX, short translateY, short translateZ, short rotateX, short rotateY, short rotateZ)
 
     Constructs an event representing a motion in 3D space for the six degrees
     of freedom given by \a translateX, \a translateY, \a translateZ,
@@ -103,21 +103,21 @@ QT_BEGIN_NAMESPACE
 /*!
     Destroys this 3D mouse event.
 */
-QMouse3DEvent::~QMouse3DEvent()
+QExtMouse3DEvent::~QExtMouse3DEvent()
 {
 }
 
 /*!
-    \variable QMouse3DEvent::type
+    \variable QExtMouse3DEvent::type
 
     This constant defines the QEvent::type() for 3D mouse events.
     It is typically used inside a QWidget::event() override in a
     subclass to detect 3D mouse events.
 */
-const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
+const QEvent::Type QExtMouse3DEvent::type = QEvent::Type(750);
 
 /*!
-    \fn short QMouse3DEvent::translateX() const
+    \fn short QExtMouse3DEvent::translateX() const
 
     Returns the X axis translation value for this motion in 3D space.
 
@@ -129,7 +129,7 @@ const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 */
 
 /*!
-    \fn short QMouse3DEvent::translateY() const
+    \fn short QExtMouse3DEvent::translateY() const
 
     Returns the Y axis translation value for this motion in 3D space.
 
@@ -141,7 +141,7 @@ const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 */
 
 /*!
-    \fn short QMouse3DEvent::translateZ() const
+    \fn short QExtMouse3DEvent::translateZ() const
 
     Returns the Z axis translation value for this motion in 3D space.
 
@@ -153,7 +153,7 @@ const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 */
 
 /*!
-    \fn short QMouse3DEvent::rotateX() const
+    \fn short QExtMouse3DEvent::rotateX() const
 
     Returns the X axis rotation value for this motion in 3D space.
 
@@ -165,7 +165,7 @@ const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 */
 
 /*!
-    \fn short QMouse3DEvent::rotateY() const
+    \fn short QExtMouse3DEvent::rotateY() const
 
     Returns the Y axis rotation value for this motion in 3D space.
 
@@ -177,7 +177,7 @@ const QEvent::Type QMouse3DEvent::type = QEvent::Type(750);
 */
 
 /*!
-    \fn short QMouse3DEvent::rotateZ() const
+    \fn short QExtMouse3DEvent::rotateZ() const
 
     Returns the Z axis rotation value for this motion in 3D space.
 

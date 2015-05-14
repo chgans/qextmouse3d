@@ -44,34 +44,34 @@
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DWin32InputPlugin : public QMouse3DDevicePlugin
+class QExtMouse3DWin32InputPlugin : public QExtMouse3DDevicePlugin
 {
 public:
-    QMouse3DWin32InputPlugin();
-    QMouse3DDevice *create() const;
+    QExtMouse3DWin32InputPlugin();
+    QExtMouse3DDevice *create() const;
     QStringList keys() const;
 };
 
-QMouse3DWin32InputPlugin::QMouse3DWin32InputPlugin ()
+QExtMouse3DWin32InputPlugin::QExtMouse3DWin32InputPlugin ()
 {
     if (!initialiseMouse3dRawInputFunctionsUsingUser32DynamicLinkLibrary())
         qWarning()<<"Unable to initialise raw input functions.";
 }
 
-QMouse3DDevice *QMouse3DWin32InputPlugin::create() const
+QExtMouse3DDevice *QExtMouse3DWin32InputPlugin::create() const
 {
-    return new QMouse3DWin32Handler();
+    return new QExtMouse3DWin32Handler();
     return NULL;
 }
 
-QStringList QMouse3DWin32InputPlugin::keys() const
+QStringList QExtMouse3DWin32InputPlugin::keys() const
 {
     QStringList keys;
     keys += QLatin1String("win32input");
     return keys;
 }
 
-Q_EXPORT_STATIC_PLUGIN(QMouse3DWin32InputPlugin)
-Q_EXPORT_PLUGIN2(qmouse3dwin32input, QMouse3DWin32InputPlugin)
+Q_EXPORT_STATIC_PLUGIN(QExtMouse3DWin32InputPlugin)
+Q_EXPORT_PLUGIN2(qmouse3dwin32input, QExtMouse3DWin32InputPlugin)
 
 QT_END_NAMESPACE

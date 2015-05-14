@@ -51,15 +51,15 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DLcdScreen;
+class QExtMouse3DLcdScreen;
 
-class QMouse3DLinuxInputDevice : public QMouse3DDevice
+class QExtMouse3DLinuxInputDevice : public QExtMouse3DDevice
 {
     Q_OBJECT
 public:
-    QMouse3DLinuxInputDevice
+    QExtMouse3DLinuxInputDevice
         (const QString &devName, const QString &realName, QObject *parent = 0);
-    ~QMouse3DLinuxInputDevice();
+    ~QExtMouse3DLinuxInputDevice();
 
     bool isAvailable() const;
     QStringList deviceNames() const;
@@ -82,7 +82,7 @@ private:
     bool sawTranslate;
     bool sawRotate;
     bool prevWasFlat;
-    QMouse3DLcdScreen *lcdScreen;
+    QExtMouse3DLcdScreen *lcdScreen;
 
     enum
     {

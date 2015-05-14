@@ -64,25 +64,25 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QMouse3DDeviceList : public QObject
+class QExtMouse3DDeviceList : public QObject
 {
     Q_OBJECT
 public:
-    QMouse3DDeviceList(QObject *parent = 0);
-    ~QMouse3DDeviceList();
+    QExtMouse3DDeviceList(QObject *parent = 0);
+    ~QExtMouse3DDeviceList();
 
-    QList<QMouse3DDevice *> devices;
+    QList<QExtMouse3DDevice *> devices;
 
-    static QMouse3DDeviceList *attach();
-    static void detach(QMouse3DDeviceList *list);
+    static QExtMouse3DDeviceList *attach();
+    static void detach(QExtMouse3DDeviceList *list);
 
-    void attachWidget(QMouse3DEventProvider *provider, QWidget *widget);
-    void detachWidget(QMouse3DEventProvider *provider, QWidget *widget);
+    void attachWidget(QExtMouse3DEventProvider *provider, QWidget *widget);
+    void detachWidget(QExtMouse3DEventProvider *provider, QWidget *widget);
 
-    void updateFilters(QMouse3DEventProvider *provider,
-                       QMouse3DEventProvider::Filters value);
+    void updateFilters(QExtMouse3DEventProvider *provider,
+                       QExtMouse3DEventProvider::Filters value);
     void updateSensitivity
-        (QMouse3DEventProvider *provider, qreal value);
+        (QExtMouse3DEventProvider *provider, qreal value);
 
 private Q_SLOTS:
     void availableDeviceChanged();
@@ -94,12 +94,12 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event);
 
 private:
-    void setWidget(QMouse3DEventProvider *provider, QWidget *widget);
+    void setWidget(QExtMouse3DEventProvider *provider, QWidget *widget);
 
     QBasicAtomicInt ref;
     QWidget *currentWidget;
-    QMouse3DEventProvider *currentProvider;
-    QMap<QWidget *, QMouse3DEventProvider *> widgets;
+    QExtMouse3DEventProvider *currentProvider;
+    QMap<QWidget *, QExtMouse3DEventProvider *> widgets;
 };
 
 QT_END_NAMESPACE

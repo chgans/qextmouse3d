@@ -46,8 +46,8 @@
 QT_BEGIN_NAMESPACE
 
 /*!
-    \class QMouse3DEventProvider
-    \brief The QMouse3DEventProvider class handles 3D mouse devices, configuring delivery of events to widgets.
+    \class QExtMouse3DEventProvider
+    \brief The QExtMouse3DEventProvider class handles 3D mouse devices, configuring delivery of events to widgets.
     \since 4.8
     \ingroup qt3d
     \ingroup qt3d::viewing
@@ -57,25 +57,25 @@ QT_BEGIN_NAMESPACE
     each of those axes.  Such mice also typically have an array of
     special purpose buttons for 3D navigation operations.
 
-    QMouse3DEventProvider simplifies the process of interfacing a QWidget
+    QExtMouse3DEventProvider simplifies the process of interfacing a QWidget
     to a 3D mouse device.  Once initialized, the application can detect
     the presence of a 3D mouse with isAvailable() and availableChanged().
     If there are multiple 3D mice attached to the machine, then this
     class will make it appear as though there is a single event source.
 
-    Motions in 3D are delivered to widget() in the form of a QMouse3DEvent
+    Motions in 3D are delivered to widget() in the form of a QExtMouse3DEvent
     and special purpose buttons are delivered to widget() in the form of a
     QKeyEvent.  Any key code that appears in the Qt::Key enumeration may
     be delivered from a 3D mouse.  In addition, the QGL::Mouse3DKeys
     enumeration defines extra key codes that are specific to 3D mice.
 
-    Multiple QMouse3DEventProvider objects can be created by an
+    Multiple QExtMouse3DEventProvider objects can be created by an
     application, each associated with a separate widget().  Internally,
     the widget that is currently active will receive 3D mouse events.
-    QMouse3DEventProvider can also be used without a widget to
+    QExtMouse3DEventProvider can also be used without a widget to
     obtain information about the 3D mice that are attached to the machine.
 
-    Applications use QMouse3DEventProvider to register a QWidget to
+    Applications use QExtMouse3DEventProvider to register a QWidget to
     receive 3D mouse events.  The events will arrive via the
     QObject::event() and QWidget::keyPressEvent() overrides in
     the widget subclass:
@@ -84,15 +84,15 @@ QT_BEGIN_NAMESPACE
     MyWidget::MyWidget(QWidget *parent)
         : QWidget(parent)
     {
-        QMouse3DEventProvider *provider;
-        provider = new QMouse3DEventProvider(this);
+        QExtMouse3DEventProvider *provider;
+        provider = new QExtMouse3DEventProvider(this);
         provider->setWidget(this);
     }
 
     bool MyWidget::event(QEvent *e)
     {
-        if (e->type() == QMouse3DEvent::type) {
-            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+        if (e->type() == QExtMouse3DEvent::type) {
+            QExtMouse3DEvent *mouse = static_cast<QExtMouse3DEvent *>(e);
             ...
             return true;
         }
@@ -113,31 +113,31 @@ QT_BEGIN_NAMESPACE
     widget(), which can help the user navigate through 3D space
     more reliably.
 
-    \sa QMouse3DEvent
+    \sa QExtMouse3DEvent
 */
 
-class QMouse3DEventProviderPrivate
+class QExtMouse3DEventProviderPrivate
 {
 public:
-    QMouse3DEventProviderPrivate()
+    QExtMouse3DEventProviderPrivate()
         : widget(0)
-        , filters(QMouse3DEventProvider::Translations |
-                  QMouse3DEventProvider::Rotations |
-                  QMouse3DEventProvider::Sensitivity)
-        , keyFilters(QMouse3DEventProvider::AllFilters)
+        , filters(QExtMouse3DEventProvider::Translations |
+                  QExtMouse3DEventProvider::Rotations |
+                  QExtMouse3DEventProvider::Sensitivity)
+        , keyFilters(QExtMouse3DEventProvider::AllFilters)
         , sensitivity(1.0f)
     {
-        devices = QMouse3DDeviceList::attach();
+        devices = QExtMouse3DDeviceList::attach();
     }
-    ~QMouse3DEventProviderPrivate()
+    ~QExtMouse3DEventProviderPrivate()
     {
-        QMouse3DDeviceList::detach(devices);
+        QExtMouse3DDeviceList::detach(devices);
     }
 
     QWidget *widget;
-    QMouse3DDeviceList *devices;
-    QMouse3DEventProvider::Filters filters;
-    QMouse3DEventProvider::Filters keyFilters;
+    QExtMouse3DDeviceList *devices;
+    QExtMouse3DEventProvider::Filters filters;
+    QExtMouse3DEventProvider::Filters keyFilters;
     qreal sensitivity;
 };
 
@@ -145,11 +145,11 @@ public:
     Constructs an event provider for the 3D mice attached to this
     machine and associates it with \a parent.
 */
-QMouse3DEventProvider::QMouse3DEventProvider(QObject *parent)
+QExtMouse3DEventProvider::QExtMouse3DEventProvider(QObject *parent)
     : QObject(parent)
-    , d_ptr(new QMouse3DEventProviderPrivate)
+    , d_ptr(new QExtMouse3DEventProviderPrivate)
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
     connect(d->devices, SIGNAL(availableChanged()),
             this, SIGNAL(availableChanged()));
 }
@@ -157,9 +157,9 @@ QMouse3DEventProvider::QMouse3DEventProvider(QObject *parent)
 /*!
     Destroys this 3D mouse event provider.
 */
-QMouse3DEventProvider::~QMouse3DEventProvider()
+QExtMouse3DEventProvider::~QExtMouse3DEventProvider()
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
     if (d->widget)
         d->devices->detachWidget(this, d->widget);
 }
@@ -173,10 +173,10 @@ QMouse3DEventProvider::~QMouse3DEventProvider()
 
     \sa availableChanged(), deviceNames()
 */
-bool QMouse3DEventProvider::isAvailable() const
+bool QExtMouse3DEventProvider::isAvailable() const
 {
-    Q_D(const QMouse3DEventProvider);
-    QList<QMouse3DDevice *> devices = d->devices->devices;
+    Q_D(const QExtMouse3DEventProvider);
+    QList<QExtMouse3DDevice *> devices = d->devices->devices;
     for (int index = 0; index < devices.size(); ++index) {
         if (devices[index]->isAvailable())
             return true;
@@ -192,10 +192,10 @@ bool QMouse3DEventProvider::isAvailable() const
 
     \sa isAvailable()
 */
-QStringList QMouse3DEventProvider::deviceNames() const
+QStringList QExtMouse3DEventProvider::deviceNames() const
 {
-    Q_D(const QMouse3DEventProvider);
-    QList<QMouse3DDevice *> devices = d->devices->devices;
+    Q_D(const QExtMouse3DEventProvider);
+    QList<QExtMouse3DDevice *> devices = d->devices->devices;
     QStringList names;
     for (int index = 0; index < devices.size(); ++index) {
         if (devices[index]->isAvailable())
@@ -205,27 +205,27 @@ QStringList QMouse3DEventProvider::deviceNames() const
 }
 
 /*!
-    Returns the widget that will receive QMouse3DEvent and QKeyEvent
+    Returns the widget that will receive QExtMouse3DEvent and QKeyEvent
     events from the machine's 3D mouse device; or null if the widget
     has not yet been set.
 
     \sa setWidget()
 */
-QWidget *QMouse3DEventProvider::widget() const
+QWidget *QExtMouse3DEventProvider::widget() const
 {
-    Q_D(const QMouse3DEventProvider);
+    Q_D(const QExtMouse3DEventProvider);
     return d->widget;
 }
 
 /*!
-    Sets the \a widget that will receive QMouse3DEvent and QKeyEvent
+    Sets the \a widget that will receive QExtMouse3DEvent and QKeyEvent
     events from the machine's 3D mouse device.
 
     \sa widget()
 */
-void QMouse3DEventProvider::setWidget(QWidget *widget)
+void QExtMouse3DEventProvider::setWidget(QWidget *widget)
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
     if (d->widget != widget) {
         if (d->widget)
             d->devices->detachWidget(this, d->widget);
@@ -236,7 +236,7 @@ void QMouse3DEventProvider::setWidget(QWidget *widget)
 }
 
 /*!
-    \enum QMouse3DEventProvider::Filter
+    \enum QExtMouse3DEventProvider::Filter
     This enum defines filters that can be applied to incoming
     3D mouse events to constrain the reported axes.
 
@@ -254,9 +254,9 @@ void QMouse3DEventProvider::setWidget(QWidget *widget)
 
     \sa setFilters(), toggleFilter(), filtersChanged(), keyFilters()
 */
-QMouse3DEventProvider::Filters QMouse3DEventProvider::filters() const
+QExtMouse3DEventProvider::Filters QExtMouse3DEventProvider::filters() const
 {
-    Q_D(const QMouse3DEventProvider);
+    Q_D(const QExtMouse3DEventProvider);
     return d->filters;
 }
 
@@ -266,10 +266,10 @@ QMouse3DEventProvider::Filters QMouse3DEventProvider::filters() const
 
     \sa filters(), toggleFilter(), filtersChanged()
 */
-void QMouse3DEventProvider::setFilters
-    (QMouse3DEventProvider::Filters filters)
+void QExtMouse3DEventProvider::setFilters
+    (QExtMouse3DEventProvider::Filters filters)
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
     if ((filters & (Translations | Rotations)) == 0)
         filters |= Rotations;   // Need at least 1 of these set.
     if (d->filters != filters) {
@@ -286,19 +286,19 @@ void QMouse3DEventProvider::setFilters
 
     \sa filters(), setFilters(), filtersChanged()
 */
-void QMouse3DEventProvider::toggleFilter
-    (QMouse3DEventProvider::Filter filter)
+void QExtMouse3DEventProvider::toggleFilter
+    (QExtMouse3DEventProvider::Filter filter)
 {
-    Q_D(QMouse3DEventProvider);
-    QMouse3DEventProvider::Filters newFilters = d->filters ^ filter;
-    if ((newFilters & (QMouse3DEventProvider::Translations |
-                       QMouse3DEventProvider::Rotations)) == 0) {
+    Q_D(QExtMouse3DEventProvider);
+    QExtMouse3DEventProvider::Filters newFilters = d->filters ^ filter;
+    if ((newFilters & (QExtMouse3DEventProvider::Translations |
+                       QExtMouse3DEventProvider::Rotations)) == 0) {
         // Cannot turn off both Translations and Rotations, so turn
         // on the other one that wasn't toggled.
-        if (filter == QMouse3DEventProvider::Translations)
-            newFilters |= QMouse3DEventProvider::Rotations;
-        else if (filter == QMouse3DEventProvider::Rotations)
-            newFilters |= QMouse3DEventProvider::Translations;
+        if (filter == QExtMouse3DEventProvider::Translations)
+            newFilters |= QExtMouse3DEventProvider::Rotations;
+        else if (filter == QExtMouse3DEventProvider::Rotations)
+            newFilters |= QExtMouse3DEventProvider::Translations;
     }
     setFilters(newFilters);
 }
@@ -318,9 +318,9 @@ void QMouse3DEventProvider::toggleFilter
 
     \sa setKeyFilters(), filters()
 */
-QMouse3DEventProvider::Filters QMouse3DEventProvider::keyFilters() const
+QExtMouse3DEventProvider::Filters QExtMouse3DEventProvider::keyFilters() const
 {
-    Q_D(const QMouse3DEventProvider);
+    Q_D(const QExtMouse3DEventProvider);
     return d->keyFilters;
 }
 
@@ -330,10 +330,10 @@ QMouse3DEventProvider::Filters QMouse3DEventProvider::keyFilters() const
 
     \sa keyFilters()
 */
-void QMouse3DEventProvider::setKeyFilters
-    (QMouse3DEventProvider::Filters filters)
+void QExtMouse3DEventProvider::setKeyFilters
+    (QExtMouse3DEventProvider::Filters filters)
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
     d->keyFilters = filters;
 }
 
@@ -353,9 +353,9 @@ void QMouse3DEventProvider::setKeyFilters
 
     \sa setSensitivity(), sensitivityChanged()
 */
-qreal QMouse3DEventProvider::sensitivity() const
+qreal QExtMouse3DEventProvider::sensitivity() const
 {
-    Q_D(const QMouse3DEventProvider);
+    Q_D(const QExtMouse3DEventProvider);
     return d->sensitivity;
 }
 
@@ -366,16 +366,16 @@ qreal QMouse3DEventProvider::sensitivity() const
     are reported without any adjustment.
 
     The \a value is multiplied by incoming axis values to
-    generate the components of the QMouse3DEvent.  A \a value of 4
+    generate the components of the QExtMouse3DEvent.  A \a value of 4
     indicates that the mouse is four times more sensitive than
     normal, and a \a value of 1/4 (0.25) indicates that the mouse
     is four times less sensitive than normal.
 
     \sa sensitivity(), sensitivityChanged()
 */
-void QMouse3DEventProvider::setSensitivity(qreal value)
+void QExtMouse3DEventProvider::setSensitivity(qreal value)
 {
-    Q_D(QMouse3DEventProvider);
+    Q_D(QExtMouse3DEventProvider);
 
     // Clamp the value to the range 1/64 to 64.
     value = qMin(qMax(value, qreal(1.0f / 64.0f)), qreal(64.0f));
@@ -387,7 +387,7 @@ void QMouse3DEventProvider::setSensitivity(qreal value)
 }
 
 /*!
-    \fn void QMouse3DEventProvider::availableChanged()
+    \fn void QExtMouse3DEventProvider::availableChanged()
 
     Signal that is emitted when the set of available 3D mouse
     devices changes.  This can be used by an application to detect
@@ -402,7 +402,7 @@ void QMouse3DEventProvider::setSensitivity(qreal value)
 */
 
 /*!
-    \fn void QMouse3DEventProvider::filtersChanged()
+    \fn void QExtMouse3DEventProvider::filtersChanged()
 
     This signal is emitted when filters() changes.
 
@@ -410,7 +410,7 @@ void QMouse3DEventProvider::setSensitivity(qreal value)
 */
 
 /*!
-    \fn void QMouse3DEventProvider::sensitivityChanged()
+    \fn void QExtMouse3DEventProvider::sensitivityChanged()
 
     This signal is emitted when sensitivity() changes.
 

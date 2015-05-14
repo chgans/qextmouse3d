@@ -64,31 +64,31 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QMouse3DDevicePrivate;
+class QExtMouse3DDevicePrivate;
 class QWidget;
 
-class Q_QT3D_EXPORT QMouse3DDevice : public QObject
+class Q_QT3D_EXPORT QExtMouse3DDevice : public QObject
 {
     Q_OBJECT
 public:
-    QMouse3DDevice(QObject *parent = 0);
-    ~QMouse3DDevice();
+    QExtMouse3DDevice(QObject *parent = 0);
+    ~QExtMouse3DDevice();
 
     virtual bool isAvailable() const = 0;
     virtual QStringList deviceNames() const = 0;
 
-    QMouse3DEventProvider *provider() const;
-    virtual void setProvider(QMouse3DEventProvider *provider);
+    QExtMouse3DEventProvider *provider() const;
+    virtual void setProvider(QExtMouse3DEventProvider *provider);
 
     QWidget *widget() const;
     virtual void setWidget(QWidget *widget);
 
-    virtual void updateFilters(QMouse3DEventProvider::Filters filters);
+    virtual void updateFilters(QExtMouse3DEventProvider::Filters filters);
     virtual void updateSensitivity(qreal sensitivity);
 
     // Used for auto-testing only.
-    static QMouse3DDevice *testDevice1;
-    static QMouse3DDevice *testDevice2;
+    static QExtMouse3DDevice *testDevice1;
+    static QExtMouse3DDevice *testDevice2;
 
 Q_SIGNALS:
     void availableChanged();
@@ -96,15 +96,15 @@ Q_SIGNALS:
 protected:
     void keyPress(int key);
     void keyRelease(int key);
-    void toggleFilter(QMouse3DEventProvider::Filter filter);
+    void toggleFilter(QExtMouse3DEventProvider::Filter filter);
     void adjustSensitivity(qreal factor);
-    void motion(QMouse3DEvent *event);
+    void motion(QExtMouse3DEvent *event);
 
 private:
-    QScopedPointer<QMouse3DDevicePrivate> d_ptr;
+    QScopedPointer<QExtMouse3DDevicePrivate> d_ptr;
 
-    Q_DISABLE_COPY(QMouse3DDevice)
-    Q_DECLARE_PRIVATE(QMouse3DDevice)
+    Q_DISABLE_COPY(QExtMouse3DDevice)
+    Q_DECLARE_PRIVATE(QExtMouse3DDevice)
 };
 
 QT_END_NAMESPACE

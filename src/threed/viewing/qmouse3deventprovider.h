@@ -53,16 +53,16 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QMouse3DEventProviderPrivate;
+class QExtMouse3DEventProviderPrivate;
 
 class QWidget;
 
-class Q_QT3D_EXPORT QMouse3DEventProvider : public QObject
+class Q_QT3D_EXPORT QExtMouse3DEventProvider : public QObject
 {
     Q_OBJECT
 public:
-    QMouse3DEventProvider(QObject *parent = 0);
-    ~QMouse3DEventProvider();
+    QExtMouse3DEventProvider(QObject *parent = 0);
+    ~QExtMouse3DEventProvider();
 
     bool isAvailable() const;
     QStringList deviceNames() const;
@@ -81,12 +81,12 @@ public:
     };
     Q_DECLARE_FLAGS(Filters, Filter)
 
-    QMouse3DEventProvider::Filters filters() const;
-    void setFilters(QMouse3DEventProvider::Filters filters);
-    void toggleFilter(QMouse3DEventProvider::Filter filter);
+    QExtMouse3DEventProvider::Filters filters() const;
+    void setFilters(QExtMouse3DEventProvider::Filters filters);
+    void toggleFilter(QExtMouse3DEventProvider::Filter filter);
 
-    QMouse3DEventProvider::Filters keyFilters() const;
-    void setKeyFilters(QMouse3DEventProvider::Filters filters);
+    QExtMouse3DEventProvider::Filters keyFilters() const;
+    void setKeyFilters(QExtMouse3DEventProvider::Filters filters);
 
     qreal sensitivity() const;
     void setSensitivity(qreal value);
@@ -97,13 +97,13 @@ Q_SIGNALS:
     void sensitivityChanged();
 
 private:
-    QScopedPointer<QMouse3DEventProviderPrivate> d_ptr;
+    QScopedPointer<QExtMouse3DEventProviderPrivate> d_ptr;
 
-    Q_DISABLE_COPY(QMouse3DEventProvider)
-    Q_DECLARE_PRIVATE(QMouse3DEventProvider)
+    Q_DISABLE_COPY(QExtMouse3DEventProvider)
+    Q_DECLARE_PRIVATE(QExtMouse3DEventProvider)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(QMouse3DEventProvider::Filters)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QExtMouse3DEventProvider::Filters)
 
 QT_END_NAMESPACE
 

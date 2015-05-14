@@ -51,14 +51,14 @@ QT_BEGIN_NAMESPACE
 
 QT_MODULE(Qt3d)
 
-class QMouse3DEventPrivate;
+class QExtMouse3DEventPrivate;
 
-class Q_QT3D_EXPORT QMouse3DEvent : public QEvent
+class Q_QT3D_EXPORT QExtMouse3DEvent : public QEvent
 {
 public:
-    QMouse3DEvent(short translateX, short translateY, short translateZ,
+    QExtMouse3DEvent(short translateX, short translateY, short translateZ,
                   short rotateX, short rotateY, short rotateZ);
-    ~QMouse3DEvent();
+    ~QExtMouse3DEvent();
 
     static const QEvent::Type type;
 
@@ -73,15 +73,15 @@ public:
 private:
     short m_translateX, m_translateY, m_translateZ;
     short m_rotateX, m_rotateY, m_rotateZ;
-    QMouse3DEventPrivate *d_ptr;    // For future expansion.
+    QExtMouse3DEventPrivate *d_ptr;    // For future expansion.
 
-    Q_DISABLE_COPY(QMouse3DEvent)   // d_ptr is not default-copiable.
+    Q_DISABLE_COPY(QExtMouse3DEvent)   // d_ptr is not default-copiable.
 };
 
-inline QMouse3DEvent::QMouse3DEvent
+inline QExtMouse3DEvent::QExtMouse3DEvent
         (short translateX, short translateY, short translateZ,
          short rotateX, short rotateY, short rotateZ)
-    : QEvent(QMouse3DEvent::type)
+    : QEvent(QExtMouse3DEvent::type)
     , m_translateX(translateX)
     , m_translateY(translateY)
     , m_translateZ(translateZ)

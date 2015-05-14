@@ -61,8 +61,8 @@ QT_BEGIN_NAMESPACE
 #define HAL_DEVICE_INTERFACE "org.freedesktop.Hal.Device"
 #define HAL_DEVICES_PATH "/org/freedesktop/Hal/devices"
 
-QMouse3DHalDevice::QMouse3DHalDevice(QObject *parent)
-    : QMouse3DDevice(parent)
+QExtMouse3DHalDevice::QExtMouse3DHalDevice(QObject *parent)
+    : QExtMouse3DDevice(parent)
     , connection(QDBusConnection::systemBus())
     , iface(0)
 {
@@ -105,18 +105,18 @@ QMouse3DHalDevice::QMouse3DHalDevice(QObject *parent)
     }
 }
 
-QMouse3DHalDevice::~QMouse3DHalDevice()
+QExtMouse3DHalDevice::~QExtMouse3DHalDevice()
 {
     delete iface;
     qDeleteAll(devices);
 }
 
-bool QMouse3DHalDevice::isAvailable() const
+bool QExtMouse3DHalDevice::isAvailable() const
 {
     return !devices.isEmpty();
 }
 
-QStringList QMouse3DHalDevice::deviceNames() const
+QStringList QExtMouse3DHalDevice::deviceNames() const
 {
     QStringList names;
     for (int index = 0; index < devices.size(); ++index)
@@ -124,35 +124,35 @@ QStringList QMouse3DHalDevice::deviceNames() const
     return names;
 }
 
-void QMouse3DHalDevice::setProvider(QMouse3DEventProvider *provider)
+void QExtMouse3DHalDevice::setProvider(QExtMouse3DEventProvider *provider)
 {
-    QMouse3DDevice::setProvider(provider);
+    QExtMouse3DDevice::setProvider(provider);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->setProvider(provider);
 }
 
-void QMouse3DHalDevice::setWidget(QWidget *widget)
+void QExtMouse3DHalDevice::setWidget(QWidget *widget)
 {
-    QMouse3DDevice::setWidget(widget);
+    QExtMouse3DDevice::setWidget(widget);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->setWidget(widget);
 }
 
-void QMouse3DHalDevice::updateFilters(QMouse3DEventProvider::Filters filters)
+void QExtMouse3DHalDevice::updateFilters(QExtMouse3DEventProvider::Filters filters)
 {
-    QMouse3DDevice::updateFilters(filters);
+    QExtMouse3DDevice::updateFilters(filters);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->updateFilters(filters);
 }
 
-void QMouse3DHalDevice::updateSensitivity(qreal sensitivity)
+void QExtMouse3DHalDevice::updateSensitivity(qreal sensitivity)
 {
-    QMouse3DDevice::updateSensitivity(sensitivity);
+    QExtMouse3DDevice::updateSensitivity(sensitivity);
     for (int index = 0; index < devices.size(); ++index)
         devices[index]->device->updateSensitivity(sensitivity);
 }
 
-void QMouse3DHalDevice::deviceAdded(const QString &path)
+void QExtMouse3DHalDevice::deviceAdded(const QString &path)
 {
     QDBusInterface *deviceIface = new QDBusInterface
         (QLatin1String(HAL_DBUS_SERVICE), path,
@@ -168,7 +168,7 @@ void QMouse3DHalDevice::deviceAdded(const QString &path)
     delete deviceIface;
 }
 
-void QMouse3DHalDevice::deviceRemoved(const QString &path)
+void QExtMouse3DHalDevice::deviceRemoved(const QString &path)
 {
     for (int index = 0; index < devices.size(); ++index) {
         MouseInfo *info = devices[index];
@@ -181,7 +181,7 @@ void QMouse3DHalDevice::deviceRemoved(const QString &path)
     }
 }
 
-void QMouse3DHalDevice::mouseAdded
+void QExtMouse3DHalDevice::mouseAdded
     (const QString &path, QDBusInterface *deviceIface)
 {
     // Get the name of the /dev/input/eventN device for this mouse.
@@ -228,8 +228,8 @@ void QMouse3DHalDevice::mouseAdded
     ::close(fd);
 
     // Add an entry to the device list.
-    QMouse3DLinuxInputDevice *device =
-        new QMouse3DLinuxInputDevice(devName, realName);
+    QExtMouse3DLinuxInputDevice *device =
+        new QExtMouse3DLinuxInputDevice(devName, realName);
     MouseInfo *info = new MouseInfo(path, devName, realName, device);
     devices.append(info);
 

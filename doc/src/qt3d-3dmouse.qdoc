@@ -36,10 +36,10 @@
 
     \section2 Processing events from a 3D mouse
 
-    QMouse3DEventProvider simplifies the process of interfacing a QWidget
+    QExtMouse3DEventProvider simplifies the process of interfacing a QWidget
     to a 3D mouse device.  Motions in 3D are delivered to the widget in the
-    form of a QMouse3DEvent and special purpose buttons are delivered
-    in the form of a QKeyEvent.  Applications use QMouse3DEventProvider to
+    form of a QExtMouse3DEvent and special purpose buttons are delivered
+    in the form of a QKeyEvent.  Applications use QExtMouse3DEventProvider to
     register a QWidget to receive such events, as shown in the following
     example:
 
@@ -47,15 +47,15 @@
     MyWidget::MyWidget(QWidget *parent)
         : QWidget(parent)
     {
-        QMouse3DEventProvider *provider;
-        provider = new QMouse3DEventProvider(this);
+        QExtMouse3DEventProvider *provider;
+        provider = new QExtMouse3DEventProvider(this);
         provider->setWidget(this);
     }
 
     bool MyWidget::event(QEvent *e)
     {
-        if (e->type() == QMouse3DEvent::type) {
-            QMouse3DEvent *mouse = static_cast<QMouse3DEvent *>(e);
+        if (e->type() == QExtMouse3DEvent::type) {
+            QExtMouse3DEvent *mouse = static_cast<QExtMouse3DEvent *>(e);
             ...
             return true;
         }
@@ -71,7 +71,7 @@
     }
     \endcode
 
-    See the documentation for QMouse3DEventProvider for more information
+    See the documentation for QExtMouse3DEventProvider for more information
     on processing the events from a 3D mouse in an application.
 
     \section2 Hardware interfacing

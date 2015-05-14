@@ -45,18 +45,18 @@
 
 QT_BEGIN_NAMESPACE
 
-QMouse3DLcdScreen::QMouse3DLcdScreen(QObject *parent)
+QExtMouse3DLcdScreen::QExtMouse3DLcdScreen(QObject *parent)
     : QObject(parent)
     , m_defaultImage(QLatin1String(":/Qt3D/Icons/qt3dlogo.png"))
     , m_filters(0)
 {
 }
 
-QMouse3DLcdScreen::~QMouse3DLcdScreen()
+QExtMouse3DLcdScreen::~QExtMouse3DLcdScreen()
 {
 }
 
-void QMouse3DLcdScreen::update()
+void QExtMouse3DLcdScreen::update()
 {
     // Create a blank screen image.
     QSize screenSz = screenSize();
@@ -99,8 +99,8 @@ void QMouse3DLcdScreen::update()
     setScreen(screen);
 }
 
-QMouse3DSpacePilotPROScreen::QMouse3DSpacePilotPROScreen(QObject *parent)
-    : QMouse3DLcdScreen(parent)
+QExtMouse3DSpacePilotPROScreen::QExtMouse3DSpacePilotPROScreen(QObject *parent)
+    : QExtMouse3DLcdScreen(parent)
 #ifdef QT_HAVE_LIBUSB
     , m_handle(0)
     , m_interface(0)
@@ -111,7 +111,7 @@ QMouse3DSpacePilotPROScreen::QMouse3DSpacePilotPROScreen(QObject *parent)
 #endif
 }
 
-QMouse3DSpacePilotPROScreen::~QMouse3DSpacePilotPROScreen()
+QExtMouse3DSpacePilotPROScreen::~QExtMouse3DSpacePilotPROScreen()
 {
 #ifdef QT_HAVE_LIBUSB
     if (m_handle) {
@@ -122,7 +122,7 @@ QMouse3DSpacePilotPROScreen::~QMouse3DSpacePilotPROScreen()
 #endif
 }
 
-void QMouse3DSpacePilotPROScreen::setActive(bool enable)
+void QExtMouse3DSpacePilotPROScreen::setActive(bool enable)
 {
 #ifdef QT_HAVE_LIBUSB
     if (enable && !m_handle) {
@@ -179,17 +179,17 @@ void QMouse3DSpacePilotPROScreen::setActive(bool enable)
 #endif
 }
 
-QImage::Format QMouse3DSpacePilotPROScreen::screenFormat() const
+QImage::Format QExtMouse3DSpacePilotPROScreen::screenFormat() const
 {
     return QImage::Format_RGB16;
 }
 
-QSize QMouse3DSpacePilotPROScreen::screenSize() const
+QSize QExtMouse3DSpacePilotPROScreen::screenSize() const
 {
     return QSize(320, 240);
 }
 
-void QMouse3DSpacePilotPROScreen::setScreen(const QImage &screen)
+void QExtMouse3DSpacePilotPROScreen::setScreen(const QImage &screen)
 {
     Q_UNUSED(screen);
 
@@ -208,14 +208,14 @@ void QMouse3DSpacePilotPROScreen::setScreen(const QImage &screen)
 #endif
 }
 
-void QMouse3DSpacePilotPROScreen::clearScreen()
+void QExtMouse3DSpacePilotPROScreen::clearScreen()
 {
     QImage tempImage(320, 240, QImage::Format_RGB16);
     tempImage.fill(0);
     writeImage(tempImage);
 }
 
-void QMouse3DSpacePilotPROScreen::writeImage(const QImage &image)
+void QExtMouse3DSpacePilotPROScreen::writeImage(const QImage &image)
 {
 #ifdef QT_HAVE_LIBUSB
     char header[512];

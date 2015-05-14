@@ -44,26 +44,26 @@
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DLinuxInputPlugin : public QMouse3DDevicePlugin
+class QExtMouse3DLinuxInputPlugin : public QExtMouse3DDevicePlugin
 {
 public:
-    QMouse3DDevice *create() const;
+    QExtMouse3DDevice *create() const;
     QStringList keys() const;
 };
 
-QMouse3DDevice *QMouse3DLinuxInputPlugin::create() const
+QExtMouse3DDevice *QExtMouse3DLinuxInputPlugin::create() const
 {
-    return new QMouse3DHalDevice();
+    return new QExtMouse3DHalDevice();
 }
 
-QStringList QMouse3DLinuxInputPlugin::keys() const
+QStringList QExtMouse3DLinuxInputPlugin::keys() const
 {
     QStringList keys;
     keys += QLatin1String("linuxinput");
     return keys;
 }
 
-Q_EXPORT_STATIC_PLUGIN(QMouse3DLinuxInputPlugin)
-Q_EXPORT_PLUGIN2(qmouse3dlinuxinput, QMouse3DLinuxInputPlugin)
+Q_EXPORT_STATIC_PLUGIN(QExtMouse3DLinuxInputPlugin)
+Q_EXPORT_PLUGIN2(qmouse3dlinuxinput, QExtMouse3DLinuxInputPlugin)
 
 QT_END_NAMESPACE

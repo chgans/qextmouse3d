@@ -56,13 +56,13 @@ QT_BEGIN_HEADER
 
 QT_BEGIN_NAMESPACE
 
-class QMouse3DWin32InputDevice : public QMouse3DDevice
+class QExtMouse3DWin32InputDevice : public QExtMouse3DDevice
 {
     Q_OBJECT
 public:
-    QMouse3DWin32InputDevice
+    QExtMouse3DWin32InputDevice
         (const QString &devName= "", const QString &realName= "", HANDLE deviceHandle = 0, QObject *parent = 0);
-    ~QMouse3DWin32InputDevice();
+    ~QExtMouse3DWin32InputDevice();
 
     bool isAvailable() const;
     QStringList deviceNames() const;
