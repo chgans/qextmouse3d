@@ -1,5 +1,5 @@
 TEMPLATE = lib
-TARGET = Qt3D$${QT_LIBINFIX}
+TARGET = QExtMouse3D$${QT_LIBINFIX}
 gcov {
     CONFIG += staticlib warn_on
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
@@ -31,20 +31,18 @@ symbian {
 include(threed.pri)
 PUBLIC_HEADERS = $$HEADERS
 HEADERS += $$PRIVATE_HEADERS
-DEFINES += QT_BUILD_QT3D_LIB
-
-!contains(QT_CONFIG, egl):DEFINES += QT_NO_EGL
+DEFINES += QT_BUILD_QEXTMOUSE3D_LIB
 
 !symbian {
     target.path += $$[QT_INSTALL_LIBS]
     INSTALLS += target
 
-    install_headers.path = $$[QT_INSTALL_HEADERS]/Qt3D
+    install_headers.path = $$[QT_INSTALL_HEADERS]/QExtMouse3D
     install_headers.files = $$PUBLIC_HEADERS
     INSTALLS += install_headers
 } else {
     exportHeaders.input = PUBLIC_HEADERS
-    exportHeaders.output = $$[QT_INSTALL_HEADERS]/Qt3D/${QMAKE_FILE_IN_BASE}${QMAKE_FILE_EXT}
+    exportHeaders.output = $$[QT_INSTALL_HEADERS]/QExtMouse3D/${QMAKE_FILE_IN_BASE}${QMAKE_FILE_EXT}
     exportHeaders.commands = $$QMAKE_COPY ${QMAKE_FILE_IN} ${QMAKE_FILE_OUT}
     exportHeaders.CONFIG += no_link_no_clean
     exportHeaders.variable_out = PRE_TARGETDEPS
