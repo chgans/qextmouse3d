@@ -41,6 +41,7 @@
 
 #include "qmouse3ddeviceplugin_p.h"
 #include "qmouse3dhaldevice.h"
+#include "qextmouse3dudevdevice.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -53,7 +54,8 @@ public:
 
 QExtMouse3DDevice *QExtMouse3DLinuxInputPlugin::create() const
 {
-    return new QExtMouse3DHalDevice();
+    return new QExtMouse3DUdevDevice();
+    //return new QExtMouse3DHalDevice();
 }
 
 QStringList QExtMouse3DLinuxInputPlugin::keys() const
